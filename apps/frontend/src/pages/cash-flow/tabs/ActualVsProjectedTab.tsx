@@ -6,6 +6,7 @@ import { TrendingUp, TrendingDown } from "lucide-react";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { getActualVsProjected, type ActualVsProjectedResult, type AvpLineItem } from "../../../api/cashFlow";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
@@ -244,8 +245,8 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
           </label>
           <label className="text-xs font-semibold text-slate-600">
             Net variance
-            <select
-              className="mt-1 w-full max-w-xs rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            <SelectCombobox
+              className="mt-1 block w-full max-w-xs"
               value={staged.draft.varianceFilter}
               onChange={(event) =>
                 staged.setDraft({
@@ -259,7 +260,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
               <option value="over">Net over projected</option>
               <option value="under">Net under projected</option>
               <option value="flat">Net flat</option>
-            </select>
+            </SelectCombobox>
           </label>
         </div>
         {draftInvalid && (

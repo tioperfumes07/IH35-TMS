@@ -443,3 +443,39 @@ sites consuming the same shared file (no re-edit needed there).
 Also ran the full accounting+tasks page test suite (160 tests): 5 pre-existing failures in
 BillsPage/InvoicesListPage/AccountingQueryErrorStatesWaveB/InvoiceTypeModalBase, none in files I
 touched -- confirmed via git-stash before/after, identical without my changes.
+
+CC-3 | ACK | OWNER CONTINUE main=db46875c75 | GO
+
+Confirmed db46875c75 is a real ancestor of current main (fetched, verified). COL-02/COL-03/
+CTL-01/02/03 status unchanged from my 2 prior fresh live checks this session (both already
+posted with hard evidence: draggable headers, button/checkbox/gear measurements) -- not
+re-verifying a third time without new evidence.
+
+Noticed DEVIN-A's own finding in the interim: FE deploy was stuck ~40min at fe=ed23092 (7+
+pending changes queued behind it) -- this would explain seeing stale/un-fixed behavior live even
+though the code fix is real and merged. Checked just now: deploy has since moved
+(fe=4477a7f, built 09:54:35Z, actively progressing) -- the stuck period appears resolved, not an
+ongoing blocker. Continuing FLT-01 sweep batch 3 in continuous mode.
+
+CC-3 | 2026-09-01 05:15Z | FLT-01 sweep batch 3 (8 files) + a real test-API break found+fixed | GO
+
+Converted 8 more raw <select> list filters to SelectCombobox: PodReviewPage, FilingsComplianceDueSection,
+SystemModulePage, ActualVsProjectedTab, HistoryTab, BreakEvenPage, FleetTablePage, LaneProfitabilityPage.
+
+Found a real, separate issue while running FleetTablePage.test.tsx: 3 pre-existing test assertions
+used native-<select>-only APIs (`select.options.length`, `fireEvent.change(select, {target:{value}})`)
+that don't apply to a Combobox's underlying <input> -- an unavoidable, expected consequence of the
+intentional native-select -> combo-box conversion, not a bug in the conversion itself. Updated all
+3 assertions to the same click-listbox-click-option interaction pattern already used by every other
+Combobox-based test in this codebase (matches Users.test.tsx's own precedent). Re-verified: 3/3 pass.
+
+Also re-confirmed (before assuming "no regression"): re-ran all 4 existing dedicated test files for
+batch 1/2 touched pages (FixedAssetsPage, RevenueRecognitionPage, ReceiptsPage.queryError,
+TasksReportPage) -- 12/12 pass, no similar native-select-API breakage there.
+
+Process note: mid-investigation, an earlier `git stash` (used to baseline-check the FleetTablePage
+failure) never got popped before I moved on -- meant I was briefly debugging against my OWN
+reverted-away fix, chasing a phantom. Caught it via a direct file re-read once the "isolated repro
+passes but the real page doesn't" contradiction didn't add up, restored the stash, rebased onto the
+batch-2 merge tip to pick up the real fix, and the actual investigation (native-select API mismatch)
+resolved cleanly from there.

@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import * as clientApi from "../../../api/client";
@@ -50,7 +51,13 @@ describe("FleetTablePage type filter", () => {
     });
   });
 
+  // FLT-01-COMBOBOX-SWEEP: this filter is now a SelectCombobox (real combo box: typeahead,
+  // keyboard-nav, selectable), not a native <select> -- native-select-only APIs (.options,
+  // fireEvent.change with a raw target.value) no longer apply. Interaction now matches every
+  // other Combobox-based filter in the app: click to open the listbox, assert/click real
+  // role="option" entries.
   it("renders type filter dropdown with All plus nine fleet types", async () => {
+    const user = userEvent.setup();
     renderPage();
     await waitFor(() => {
       expect(screen.getByTestId("fleet-page-filters-toggle")).toBeTruthy();
@@ -59,14 +66,16 @@ describe("FleetTablePage type filter", () => {
     await waitFor(() => {
       expect(screen.getByLabelText("Filter fleet by type")).toBeTruthy();
     });
-    const select = screen.getByLabelText("Filter fleet by type") as HTMLSelectElement;
-    expect(select.options.length).toBe(FLEET_TYPE_FILTER_OPTIONS.length);
-    expect(Array.from(select.options).map((option) => option.text)).toEqual(
-      FLEET_TYPE_FILTER_OPTIONS.map((option) => option.label)
-    );
+    await user.click(screen.getByLabelText("Filter fleet by type"));
+    const listbox = await screen.findByRole("listbox");
+    const optionLabels = within(listbox)
+      .getAllByRole("option")
+      .map((option) => option.textContent);
+    expect(optionLabels).toEqual(FLEET_TYPE_FILTER_OPTIONS.map((option) => option.label));
   });
 
   it("syncs ?type=Reefer in the URL when selecting Reefer", async () => {
+    const user = userEvent.setup();
     renderPage(["/maintenance/fleet-table"]);
     await waitFor(() => {
       expect(screen.getByTestId("fleet-page-filters-toggle")).toBeTruthy();
@@ -75,9 +84,11 @@ describe("FleetTablePage type filter", () => {
     await waitFor(() => {
       expect(screen.getByLabelText("Filter fleet by type")).toBeTruthy();
     });
-    fireEvent.change(screen.getByLabelText("Filter fleet by type"), { target: { value: "Reefer" } });
+    await user.click(screen.getByLabelText("Filter fleet by type"));
+    const listbox = await screen.findByRole("listbox");
+    await user.click(within(listbox).getByRole("option", { name: "Reefer" }));
     // Filters are staged (useStagedListFilters/CollapsedListFilters, the shared Apply/Cancel/Reset
-    // chrome) — a select change only updates the draft; the URL/query commit fires on Apply.
+    // chrome) — selecting an option only updates the draft; the URL/query commit fires on Apply.
     fireEvent.click(screen.getByRole("button", { name: "Apply" }));
     await waitFor(() => {
       expect(screen.getByText("Showing 1 of 3 vehicles")).toBeTruthy();
@@ -98,6 +109,8 @@ describe("FleetTablePage type filter", () => {
     await waitFor(() => {
       expect(screen.getByLabelText("Filter fleet by type")).toBeTruthy();
     });
-    expect((screen.getByLabelText("Filter fleet by type") as HTMLSelectElement).value).toBe("");
+    // Cleared draft (typeFilter: "") displays the empty-value option's own label ("All") as the
+    // Combobox's placeholder text, matching FLEET_TYPE_FILTER_OPTIONS[0].
+    expect((screen.getByLabelText("Filter fleet by type") as HTMLInputElement).value).toBe("All");
   });
 });

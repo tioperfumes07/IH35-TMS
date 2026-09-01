@@ -6,6 +6,7 @@ import { listAllUnits } from "../../api/mdata";
 import { FleetTable, fleetRosterSearchText, type FleetRow, type SoftDeleteFilter } from "../../components/FleetTable";
 import { FLEET_TYPE_FILTER_OPTIONS, parseFleetTypeFilter } from "../../components/fleet/fleetTypeFilter";
 import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { downloadFleetLocationHosXlsx, getFleetLocationHos } from "../../api/reports";
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -415,10 +416,10 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
             </label>
             <label htmlFor="fleet-type-filter" className="block font-semibold text-gray-700">
               Type
-              <select
+              <SelectCombobox
                 id="fleet-type-filter"
                 aria-label="Filter fleet by type"
-                className="mt-1 w-full rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs"
+                className="mt-1 block w-full"
                 value={staged.draft.typeFilter}
                 onChange={(event) => staged.setDraft({ ...staged.draft, typeFilter: event.target.value })}
               >
@@ -427,7 +428,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
                     {option.label}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </label>
           </div>
         </CollapsedListFilters>

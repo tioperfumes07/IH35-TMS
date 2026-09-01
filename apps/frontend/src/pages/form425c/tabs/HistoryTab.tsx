@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import type { HistoryReportRow } from "../types";
 
 type Props = {
@@ -111,8 +112,8 @@ export function HistoryTab({ reports, loading, onOpen, onAmend, onPrint }: Props
             >
               <label className="text-sm text-gray-700">
                 Status{" "}
-                <select
-                  className="ml-1 rounded-sm border px-2 py-1"
+                <SelectCombobox
+                  className="ml-1"
                   value={staged.draft.statusFilter}
                   onChange={(e) =>
                     staged.setDraft({ statusFilter: e.target.value as HistoryReportRow["status"] | "" })
@@ -123,7 +124,7 @@ export function HistoryTab({ reports, loading, onOpen, onAmend, onPrint }: Props
                       {s || "All"}
                     </option>
                   ))}
-                </select>
+                </SelectCombobox>
               </label>
             </CollapsedListFilters>
           }
