@@ -166,6 +166,15 @@ export function sortableHeaderErrors({ hookSrc, parityTableSrc, pages, invRoutes
         failures.push(`${file} (${label}) — listBills must pass sort/dir from useUrlSort into the API`);
       }
     }
+    // COL-04 — Payments list: same SORT LAW.
+    if (file.includes("PaymentsListPage") && !file.includes("BillPayments")) {
+      if (!/sortMode=["']external["']/.test(src)) {
+        failures.push(`${file} (${label}) — must use sortMode="external" so ParityTable does not reorder a capped page`);
+      }
+      if (!/sort:\s*sortKey/.test(src) || !/dir:\s*sortKey\s*\?\s*sortDirection/.test(src)) {
+        failures.push(`${file} (${label}) — listPayments must pass sort/dir from useUrlSort into the API`);
+      }
+    }
   }
 
   const invRoutes =
@@ -181,11 +190,17 @@ export function sortableHeaderErrors({ hookSrc, parityTableSrc, pages, invRoutes
   function sliceExportedFn(src, name) {
     const start = src.indexOf(`function ${name}(`);
     if (start < 0) return "";
-    const nextExport = src.indexOf("\nexport function ", start + 1);
-    const nextFn = src.indexOf("\nfunction ", start + 1);
+    const rest = src.slice(start + 1);
+    const nextExportRel = rest.indexOf("\nexport function ");
+    const nextFnBareRel = rest.indexOf("\nfunction ");
+    const indentedMatch = rest.match(/\n[ \t]+function /);
+    const nextFnIndentedRel = indentedMatch && typeof indentedMatch.index === "number" ? indentedMatch.index : -1;
     let end = src.length;
-    for (const n of [nextExport, nextFn]) {
-      if (n > start && n < end) end = n;
+    for (const rel of [nextExportRel, nextFnBareRel, nextFnIndentedRel]) {
+      if (rel >= 0) {
+        const abs = start + 1 + rel;
+        if (abs < end) end = abs;
+      }
     }
     return src.slice(start, end);
   }
@@ -197,6 +212,10 @@ export function sortableHeaderErrors({ hookSrc, parityTableSrc, pages, invRoutes
   if (!/params\.sort/.test(listBillsFn) || !/query\.set\("sort"/.test(listBillsFn)) {
     failures.push("apps/frontend/src/api/accounting.ts — listBills must forward sort query param");
   }
+  const listPaymentsFn = sliceExportedFn(invApi, "listPayments");
+  if (!/params\.sort|filters\.sort/.test(listPaymentsFn) || !/query\.set\("sort"/.test(listPaymentsFn)) {
+    failures.push("apps/frontend/src/api/accounting.ts — listPayments must forward sort query param");
+  }
 
   const billRoutes = readFile("apps/backend/src/accounting/bills.routes.ts") ?? "";
   const billService = readFile("apps/backend/src/accounting/bills.service.ts") ?? "";
@@ -205,6 +224,14 @@ export function sortableHeaderErrors({ hookSrc, parityTableSrc, pages, invRoutes
   }
   if (!/sort:\s*z\.string\(\)/.test(billRoutes) || !/dir:\s*z\.enum\(\["asc", "desc"\]\)/.test(billRoutes)) {
     failures.push("apps/backend/src/accounting/bills.routes.ts — listBillsQuerySchema must accept sort + dir");
+  }
+
+  const payRoutes = readFile("apps/backend/src/accounting/payments.routes.ts") ?? "";
+  if (!/PAYMENT_LIST_SORT_SQL/.test(payRoutes) || !/paymentListOrderBy/.test(payRoutes)) {
+    failures.push("apps/backend/src/accounting/payments.routes.ts — must whitelist sort → SQL ORDER BY (PAYMENT_LIST_SORT_SQL)");
+  }
+  if (!/sort:\s*z\.string\(\)/.test(payRoutes) || !/dir:\s*z\.enum\(\["asc", "desc"\]\)/.test(payRoutes)) {
+    failures.push("apps/backend/src/accounting/payments.routes.ts — listQuerySchema must accept sort + dir");
   }
 
   return failures;
@@ -255,6 +282,17 @@ function selftest() {
     listBills(id, { sort: sortKey, dir: sortKey ? sortDirection : undefined, limit: 200 })
     <ParityTable sortKey={sortKey} sortDirection={sortDirection} onSortChange={onSortChange} sortMode="external" />
   `;
+  const goodPayments = `
+    import { useUrlSort } from "../../hooks/useUrlSort";
+    const { sortKey, sortDirection, onSortChange } = useUrlSort();
+    columns={[
+      { key: "date", sortable: true },
+      { key: "amount", sortable: true },
+      { key: "actions", label: "Actions" },
+    ]}
+    listPayments(id, { sort: sortKey, dir: sortKey ? sortDirection : undefined, limit: 100 })
+    <ParityTable sortKey={sortKey} sortDirection={sortDirection} onSortChange={onSortChange} sortMode="external" />
+  `;
   const goodExpenses = `${goodPage}
     { key: "payee", sortable: true, sortValue: (row) => row.payee }
   `;
@@ -274,6 +312,10 @@ function selftest() {
       if (params.sort) query.set("sort", params.sort);
       if (params.dir) query.set("dir", params.dir);
     }
+    function listPayments(operatingCompanyId, filters = {}) {
+      if (filters.sort) query.set("sort", filters.sort);
+      if (filters.dir) query.set("dir", filters.dir);
+    }
   `;
 
   const good = {
@@ -290,7 +332,9 @@ function selftest() {
           ? goodInvoices
           : file.includes("BillsPage")
             ? goodBills
-            : goodPage,
+            : file.includes("PaymentsListPage") && !file.includes("BillPayments")
+              ? goodPayments
+              : goodPage,
     })),
   };
 

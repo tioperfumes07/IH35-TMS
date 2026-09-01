@@ -609,6 +609,9 @@ export function listPayments(
     date_from?: string;
     date_to?: string;
     search?: string;
+    /** SORT LAW — ParityTable column key; server ORDER BY via PAYMENT_LIST_SORT_SQL. */
+    sort?: string;
+    dir?: "asc" | "desc";
     limit?: number;
     offset?: number;
   } = {}
@@ -620,10 +623,12 @@ export function listPayments(
   if (filters.date_from) query.set("date_from", filters.date_from);
   if (filters.date_to) query.set("date_to", filters.date_to);
   if (filters.search) query.set("search", filters.search);
+  if (filters.sort) query.set("sort", filters.sort);
+  if (filters.dir) query.set("dir", filters.dir);
   if (filters.limit !== undefined) query.set("limit", String(filters.limit));
   if (filters.offset !== undefined) query.set("offset", String(filters.offset));
   const qs = query.toString();
-  return apiRequest<{ rows: Payment[]; total: number }>(withCompany(`/api/v1/accounting/payments${qs ? `?${qs}` : ""}`, operatingCompanyId));
+  return apiRequest<{ rows: Payment[]; total: number; sort?: string | null; dir?: string | null }>(withCompany(`/api/v1/accounting/payments${qs ? `?${qs}` : ""}`, operatingCompanyId));
 }
 
 /** Exhaust a filtered payment range for mounted history/statement rollups. */
