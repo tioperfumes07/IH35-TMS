@@ -11,7 +11,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useForm, type FieldErrors, type UseFormSetValue } from "react-hook-form";
+import { useForm, type FieldErrors } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad } from "../../../api/dispatch";
 import { listAllDispatchCatalogRows, loadTypesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
@@ -52,7 +52,13 @@ import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 // old layout stays the default until LOAD_WIZARD_V5 is enabled. V5 changes are visual
 // density only — the submit payload is byte-identical.
 export const LOAD_WIZARD_V5_FLAG = "LOAD_WIZARD_V5";
-import { LoadTemplatePicker, applyLoadTemplateToBookForm, type MinimalBookForm } from "../LoadTemplateLibrary";
+import { LoadTemplatePicker } from "../LoadTemplateLibrary";
+import { applyBookLoadPrefillToForm } from "./book-load-v4/applyBookLoadPrefill";
+import {
+  createLiveLoadNumberUserTypedRef,
+  markLiveLoadNumberUserTyped,
+  resetLiveLoadNumberUserTyped,
+} from "./book-load-v4/liveLoadNumberFieldGuard";
 // RATECON-2: rate-con intake is now the single OcrDropZone block in §E (Documents). RateConUploadPanel
 // (button variant) still shares the useRateConExtraction hook and is retained for reuse, but is no longer
 // rendered here — one intake surface, no duplicate affordance.
@@ -280,6 +286,8 @@ export function BookLoadModalV4({
   const isEditMode = Boolean(editLoadId);
   const { pushToast } = useToast();
   const panelRef = useRef<HTMLDivElement>(null);
+  const liveLoadNumberUserTypedRef = useRef(createLiveLoadNumberUserTypedRef());
+  const autoPrefillAppliedKeyRef = useRef<string | null>(null);
   const { enabled: wizardV5 } = useFeatureFlag(LOAD_WIZARD_V5_FLAG, operatingCompanyId);
 
   const [gateBanner, setGateBanner] = useState<{
@@ -451,6 +459,8 @@ export function BookLoadModalV4({
       setShowDiscardConfirm(false);
       return;
     }
+    resetLiveLoadNumberUserTyped(liveLoadNumberUserTypedRef.current);
+    autoPrefillAppliedKeyRef.current = null;
     form.reset();
     setGateBanner(null);
     setSubmitErrorMessage(null);
@@ -461,13 +471,16 @@ export function BookLoadModalV4({
   }, [open, form]);
 
   useEffect(() => {
-    if (!open || !templatePrefillJson) return;
-    applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, templatePrefillJson);
+    if (!open || !templatePrefillJson || isEditMode) return;
+    const jsonKey = JSON.stringify(templatePrefillJson);
+    if (autoPrefillAppliedKeyRef.current === jsonKey) return;
+    autoPrefillAppliedKeyRef.current = jsonKey;
+    applyBookLoadPrefillToForm(form.setValue, templatePrefillJson, liveLoadNumberUserTypedRef.current);
     const ocrKey = templatePrefillJson.ocr_source_pdf_r2_key;
     if (typeof ocrKey === "string" && ocrKey) {
       form.setValue("ocr_source_pdf_r2_key", ocrKey, { shouldDirty: true });
     }
-  }, [open, templatePrefillJson, form]);
+  }, [open, templatePrefillJson, form, isEditMode]);
 
   // Dispatch per-truck "+ Book load" — prefill the assigned unit when opening a fresh (non-edit) booking.
   useEffect(() => {
@@ -1322,7 +1335,7 @@ export function BookLoadModalV4({
                       <RateConUploadPanel
                         operatingCompanyId={operatingCompanyId}
                         onPrefill={(prefill) => {
-                          applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, prefill.json);
+                          applyBookLoadPrefillToForm(form.setValue, prefill.json, liveLoadNumberUserTypedRef.current);
                           const accRows = rateConAccessorialRows(prefill.json);
                           if (accRows.length > 0) {
                             form.setValue("accessorial_rows", accRows, { shouldDirty: true });
@@ -1362,7 +1375,7 @@ export function BookLoadModalV4({
                     operatingCompanyId={operatingCompanyId}
                     onSelectTemplate={(row) => {
                       const json = row.template_json as Record<string, unknown>;
-                      applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, json);
+                      applyBookLoadPrefillToForm(form.setValue, json, liveLoadNumberUserTypedRef.current);
                       if (typeof json.accessorial_cents === "number" && json.accessorial_cents > 0) {
                         form.setValue("accessorial_rows", rowFromLegacyAccessorialCents(json.accessorial_cents), { shouldDirty: true });
                       }
@@ -1409,9 +1422,15 @@ export function BookLoadModalV4({
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       AlwaysTrack load # (legacy)
                       <input
-                        {...form.register("live_load_number")}
+                        {...form.register("live_load_number", {
+                          onChange: () => {
+                            markLiveLoadNumberUserTyped(liveLoadNumberUserTypedRef.current);
+                          },
+                        })}
                         className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs"
                         placeholder="e.g. 13521"
+                        autoComplete="off"
+                        data-lpignore="true"
                         data-testid="book-load-live-load-number"
                       />
                     </label>
@@ -1842,7 +1861,7 @@ export function BookLoadModalV4({
                   <OcrDropZone
                     operatingCompanyId={operatingCompanyId}
                     onPrefill={(prefill) => {
-                      applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, prefill.json);
+                      applyBookLoadPrefillToForm(form.setValue, prefill.json, liveLoadNumberUserTypedRef.current);
                       const accRows = rateConAccessorialRows(prefill.json);
                       if (accRows.length > 0) {
                         form.setValue("accessorial_rows", accRows, { shouldDirty: true });
