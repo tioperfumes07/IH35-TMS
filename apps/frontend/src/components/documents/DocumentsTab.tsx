@@ -20,7 +20,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { EditMetadataModal } from "./EditMetadataModal";
 import { PreviewModal } from "./PreviewModal";
 import { SoftDeleteModal } from "./SoftDeleteModal";
-import { UploadModal } from "./UploadModal";
+import { EntityDocumentUpload } from "./EntityDocumentUpload";
 import { VersionHistoryModal } from "./VersionHistoryModal";
 
 type DocumentsTabProps = {
@@ -53,7 +53,6 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
   const [dateTo, setDateTo] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
 
-  const [uploadOpen, setUploadOpen] = useState(false);
   const [selectedPreviewFile, setSelectedPreviewFile] = useState<DocsFile | null>(null);
   const [selectedEditFile, setSelectedEditFile] = useState<DocsFile | null>(null);
   const [selectedDeleteFile, setSelectedDeleteFile] = useState<DocsFile | null>(null);
@@ -138,9 +137,16 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
       <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div className="text-sm font-semibold text-gray-900">Documents ({filteredFiles.length})</div>
         {canUpload ? (
-          <Button type="button" onClick={() => setUploadOpen(true)}>
-            + Upload
-          </Button>
+          <EntityDocumentUpload
+            entityType={entityType}
+            entityId={entityId}
+            entityName={entityName}
+            operatingCompanyId={operatingCompanyId}
+            buttonTestId="documents-tab-upload"
+            onUploadSuccess={() => {
+              void queryClient.invalidateQueries({ queryKey: ["docs-files", entityType, entityId] });
+            }}
+          />
         ) : null}
       </div>
 
@@ -247,20 +253,6 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
           },
         ]}
       />
-
-      {uploadOpen ? (
-        <UploadModal
-          entityType={entityType}
-          entityId={entityId}
-          entityName={entityName}
-          operatingCompanyId={operatingCompanyId}
-          onClose={() => setUploadOpen(false)}
-          onUploadSuccess={() => {
-            setUploadOpen(false);
-            void queryClient.invalidateQueries({ queryKey: ["docs-files", entityType, entityId] });
-          }}
-        />
-      ) : null}
 
       {selectedPreviewFile ? (
         <PreviewModal

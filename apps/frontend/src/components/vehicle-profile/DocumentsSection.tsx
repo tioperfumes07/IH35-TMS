@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from "react";
-import { UploadModal } from "../documents/UploadModal";
+import type { ReactNode } from "react";
+import { EntityDocumentUpload } from "../documents/EntityDocumentUpload";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
@@ -42,8 +42,6 @@ export function DocumentsSection({
   photosSlot?: ReactNode;
   onUploaded?: () => void;
 }) {
-  const [uploadOpen, setUploadOpen] = useState(false);
-
   const columns: Array<ParityColumn<DocRow>> = [
     {
       key: "category",
@@ -82,28 +80,15 @@ export function DocumentsSection({
             link landed on the unfiltered company-wide library with no way to upload scoped to
             this unit — a dead drill-through. Wire a real, entity-linked upload using the same
             UploadModal every other entity profile (vendor/customer/driver/load) already uses. */}
-        <button
-          type="button"
-          data-testid="vp-docs-upload-button"
-          onClick={() => setUploadOpen(true)}
-          className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white hover:bg-[#0f1729]"
-        >
-          + Upload
-        </button>
-      </div>
-      {uploadOpen ? (
-        <UploadModal
+        <EntityDocumentUpload
           entityType="unit"
           entityId={unitId}
           entityName={unitNumber ?? unitId}
           operatingCompanyId={companyId}
-          onClose={() => setUploadOpen(false)}
-          onUploadSuccess={() => {
-            setUploadOpen(false);
-            onUploaded?.();
-          }}
+          buttonTestId="vp-docs-upload-button"
+          onUploadSuccess={onUploaded}
         />
-      ) : null}
+      </div>
       {photosSlot}
       <div className="mt-3">
         <ParityTable
