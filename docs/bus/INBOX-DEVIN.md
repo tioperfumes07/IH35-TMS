@@ -1,4 +1,3 @@
-# ★ DEVIN (non-A) · redirected
+# ★ DEVIN (non-A)
 
-Use **INBOX-DEVIN-A.md** only. This file is not a work queue.
-
+Redirect → **INBOX-DEVIN-A.md** only.
