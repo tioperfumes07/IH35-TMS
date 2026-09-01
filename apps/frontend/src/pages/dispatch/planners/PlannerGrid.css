@@ -78,6 +78,17 @@
   display: flex;
   align-items: center;
 }
+.planner-grid-canonical .pg-frz.pg-frz-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  gap: 0;
+  padding: 0 8px 0 10px;
+}
+.planner-grid-canonical .pg-frz-action {
+  border-left: 1px solid var(--rule-day);
+  padding-left: 8px;
+  text-align: right;
+}
 .planner-grid-canonical .pg-mon {
   flex: 0 0 auto;
   font-size: 10px;

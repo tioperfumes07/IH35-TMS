@@ -79,6 +79,10 @@ describe("UnifiedTimelinePlanner (Phase 1)", () => {
     expect(screen.getAllByText("Available").length).toBeGreaterThan(0); // d3 free + idle cell hint
     // Idle/available driver gets a + Book affordance.
     expect(screen.getByTestId("timeline-book-d3")).toBeTruthy();
+    expect(screen.getAllByText("Book").length).toBeGreaterThan(0);
+    const loadedRow = screen.getByText("Jane Driver").closest(".pg-name");
+    expect(loadedRow?.querySelector(".pg-col-action")).toBeTruthy();
+    expect(loadedRow?.querySelector(".pg-col-action")?.textContent).toBe("");
   });
 
   it("passes the planner row id as the canonical driver FK when booking its unit", async () => {
