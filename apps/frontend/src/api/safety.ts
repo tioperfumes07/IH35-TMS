@@ -449,6 +449,8 @@ export type SafetyBackgroundCheckRow = {
   checked_at: string;
   expiry_date: string | null;
   notes: string | null;
+  /** UPL-03 — count of docs.file_links rows (entity_type='background_check') attached to this check. */
+  document_count?: number;
 };
 
 export function listSafetyBackgroundChecks(companyId: string, driverId?: string, range: { limit?: number; offset?: number } = {}) {
@@ -486,6 +488,8 @@ export type SafetyMedicalCardRow = {
   notes: string | null;
   days_to_expiry: number | null;
   expiry_pill: "red" | "amber" | "green" | "unknown";
+  /** UPL-02 — count of docs.file_links rows (entity_type='medical_card') attached to this card. */
+  document_count?: number;
 };
 
 export function listSafetyMedicalCards(companyId: string, driverId?: string, range: { limit?: number; offset?: number } = {}) {

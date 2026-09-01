@@ -5,6 +5,7 @@ import { Button } from "../Button";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { DatePicker } from "../forms/DatePicker";
 import { Modal } from "../Modal";
+import { UploadModal } from "../documents/UploadModal";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
@@ -25,6 +26,10 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
   const [expiryDate, setExpiryDate] = useState("");
   const [notes, setNotes] = useState("");
   const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
+  // UPL-02: a medical card's upload target only exists once the row is saved (docs.file_links
+  // keys on entity_id=medical_card.id) -- so this is a per-row action, not a section-level one
+  // like DocumentsSection.tsx's unit/driver/vendor/customer/load pattern.
+  const [uploadCardId, setUploadCardId] = useState<string | null>(null);
   const query = useQuery({
     queryKey: ["safety", "medical-cards", operatingCompanyId, driverId ?? "all", page],
     enabled: Boolean(operatingCompanyId),
@@ -86,6 +91,16 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
     { key: "issued_date", label: "Issued", sortable: true, render: (row) => formatDateUS(row.issued_date) },
     { key: "expiry_date", label: "Expires", sortable: true, render: (row) => formatDateUS(row.expiry_date) },
     { key: "expiry_pill", label: "Status", sortable: true, render: (row) => <span className={row.expiry_pill === "red" ? "text-red-700" : "text-slate-700"}>{row.expiry_pill === "red" ? "Expired" : row.days_to_expiry == null ? "Unknown" : `${row.days_to_expiry} days`}</span> },
+    {
+      key: "document_count",
+      label: "Document",
+      render: (row) => (
+        <div className="flex items-center gap-2">
+          <span className={row.document_count ? "text-slate-700" : "text-gray-400"}>{row.document_count ? `${row.document_count} file${row.document_count > 1 ? "s" : ""}` : "No file"}</span>
+          <Button size="sm" variant="secondary" onClick={() => setUploadCardId(row.id)}>Upload</Button>
+        </div>
+      ),
+    },
   ];
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="medical-cards-history-section">
@@ -125,6 +140,19 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
           <div className="flex justify-end gap-2"><Button type="button" size="sm" variant="secondary" onClick={attemptClose} disabled={createMutation.isPending}>Cancel</Button><Button type="submit" size="sm" loading={createMutation.isPending} disabled={!selectedDriverId || !cardNumber.trim() || !issuedDate || !expiryDate}>Save card</Button></div>
         </form>
       </Modal>
+      {uploadCardId ? (
+        <UploadModal
+          entityType="medical_card"
+          entityId={uploadCardId}
+          entityName="DOT medical card"
+          operatingCompanyId={operatingCompanyId}
+          onClose={() => setUploadCardId(null)}
+          onUploadSuccess={() => {
+            setUploadCardId(null);
+            void queryClient.invalidateQueries({ queryKey: ["safety", "medical-cards", operatingCompanyId] });
+          }}
+        />
+      ) : null}
     </section>
   );
 }

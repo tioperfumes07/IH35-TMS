@@ -88,7 +88,11 @@ export async function registerSafetyBackgroundChecksRoutes(app: FastifyInstance)
       const res = await client.query(
         `
           SELECT bc.*,
-                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
+                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+                 -- UPL-03: same pattern as medical-cards.routes.ts (docs.file_links is the polymorphic
+                 -- attach table; the entity-type validation for 'background_check' already existed in
+                 -- files.routes.ts, DOC-01 D2 -- only the FE upload trigger was missing).
+                 (SELECT count(*)::int FROM docs.file_links fl WHERE fl.entity_type = 'background_check' AND fl.entity_id = bc.id AND fl.deleted_at IS NULL) AS document_count
           FROM safety.background_checks bc
           JOIN mdata.drivers d
             ON d.id = bc.driver_id
