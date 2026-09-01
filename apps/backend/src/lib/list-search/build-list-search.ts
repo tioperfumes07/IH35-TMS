@@ -186,6 +186,19 @@ export function invoiceListSearchFields(aliases: {
       kind: "text",
       sql: `(SELECT l.pickup_number FROM mdata.loads l WHERE l.id = ${i}.source_load_id AND l.operating_company_id = ${i}.operating_company_id LIMIT 1)`,
     },
+    {
+      kind: "text",
+      sql: `(SELECT l.customer_wo_number FROM mdata.loads l WHERE l.id = ${i}.source_load_id AND l.operating_company_id = ${i}.operating_company_id LIMIT 1)`,
+    },
+    {
+      kind: "text",
+      sql: `(SELECT b.pdf_r2_key FROM dispatch.bol_documents b
+             WHERE b.load_id = ${i}.source_load_id
+               AND b.operating_company_id = ${i}.operating_company_id
+               AND b.archived_at IS NULL
+             ORDER BY b.generated_at DESC
+             LIMIT 1)`,
+    },
     { kind: "text", sql: `${i}.internal_notes` },
     { kind: "text", sql: `${i}.customer_notes` },
   ];

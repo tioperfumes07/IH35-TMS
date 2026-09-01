@@ -52,6 +52,14 @@ function assertRoutesUseBuilder() {
   assert.match(builder, /catalogs\.expense_categories/);
   assert.match(builder, /expense_account_uuid/);
 
+  // SRC-01 — invoice list search covers amount, load, PO, BOL, date, status (not display-id-only).
+  assert.match(builder, /invoiceListSearchFields[\s\S]*?amount_cents/);
+  assert.match(builder, /invoiceListSearchFields[\s\S]*?issue_date/);
+  assert.match(builder, /invoiceListSearchFields[\s\S]*?kind: "status"/);
+  assert.match(builder, /invoiceListSearchFields[\s\S]*?load_number/);
+  assert.match(builder, /invoiceListSearchFields[\s\S]*?customer_po_number/);
+  assert.match(builder, /invoiceListSearchFields[\s\S]*?dispatch\.bol_documents/);
+
   // BILL-SEARCH-01 — bills use shared builder (display_id · bill_number · amount$ · …).
   const billsSvc = read("apps/backend/src/accounting/bills.service.ts");
   assert.match(billsSvc, /buildListSearchClause/);
