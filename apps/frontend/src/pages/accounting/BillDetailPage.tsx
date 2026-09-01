@@ -117,7 +117,7 @@ export function BillDetailPage() {
 
   if (!bill) return <div className="p-4 text-sm text-red-600">Bill not found.</div>;
 
-  const displayId = visibleDocumentLabel(bill.bill_number, bill.id, "Bill");
+  const displayId = visibleDocumentLabel(bill.display_id ?? bill.bill_number, bill.id, "Bill");
   const balance = Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0);
   const isVoided = bill.status === "voided";
   // Mirrors backend bill_has_payments_cannot_void: a bill with any active payment must have the
@@ -293,6 +293,10 @@ export function BillDetailPage() {
         ) : null}
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Bill #</span>
+          <span className="text-sm text-gray-900">{bill.display_id ?? "—"}</span>
+        </DataPanelRow>
+        <DataPanelRow>
+          <span className="text-xs font-semibold text-gray-600">Vendor Invoice #</span>
           <span className="text-sm text-gray-900">{bill.bill_number ?? "—"}</span>
         </DataPanelRow>
         <DataPanelRow>

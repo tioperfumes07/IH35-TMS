@@ -7,6 +7,7 @@ import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { enqueueTmsBillPushRequested } from "../qbo/tms-bill-push-chain.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { buildListSearchClause, billListSearchFields } from "../lib/list-search/build-list-search.js";
 import { postBillGlIfEnabled } from "./bill-gl.service.js";
 import {
   postSourceTransactionInClientTx,
@@ -112,6 +113,8 @@ type ListBillsOptions = {
   fromDate?: string;
   toDate?: string;
   hasBalance?: boolean;
+  /** SEARCH LAW — display_id · bill_number · vendor · amount$ · date · status · memo */
+  search?: string;
   /** ACCT-F5035 — claim→bill reverse list filter (accounting.bills.insurance_claim_id). */
   insuranceClaimId?: string;
   /** LINK-F5171 — legal matter→bill reverse list filter (accounting.bills.legal_matter_id). */
@@ -152,6 +155,9 @@ type BillRow = {
   mdata_vendor_id: string | null;
   /** Entity-scoped canonical label resolved by BILL_VENDOR_RESOLVE_JOIN_SQL on mounted list/detail reads. */
   vendor_name?: string | null;
+  /** TMS Bill # */
+  display_id?: string | null;
+  /** Vendor Invoice # */
   bill_number: string | null;
   bill_date: string;
   due_date: string | null;
@@ -840,6 +846,17 @@ export async function listBillsByVendor(
          )`
       );
     }
+
+    if (options.search?.trim()) {
+      const clause = buildListSearchClause({
+        search: options.search,
+        values,
+        fields: billListSearchFields({
+          vendorNameExpr: "COALESCE(v.vendor_name, b.vendor_id, b.vendor_uuid)",
+        }),
+      });
+      if (clause) where.push(clause);
+    }
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
       `
@@ -926,6 +943,17 @@ function buildAllBillsWhereClause(
        )`
     );
   }
+
+  if (options.search?.trim()) {
+    const clause = buildListSearchClause({
+      search: options.search,
+      values,
+      fields: billListSearchFields({
+        vendorNameExpr: "COALESCE(v.vendor_name, b.vendor_id, b.vendor_uuid)",
+      }),
+    });
+    if (clause) where.push(clause);
+  }
   return { where, values };
 }
 
@@ -992,6 +1020,7 @@ export async function countAllBillsForCompany(
       `
         SELECT COUNT(*)::int AS total
         FROM accounting.bills b
+        ${BILL_VENDOR_RESOLVE_JOIN_SQL}
         WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
       `,
       values
