@@ -79,8 +79,8 @@ function assert(files) {
       `${MODAL}: miles_shortest must not live only inside a hidden register block — operators must type miles.`,
     );
   }
-  if (!/onShortestChange=\{/.test(modal) || !/Stops · Miles \(manual\)/.test(modal)) {
-    problems.push(`${MODAL}: must wire MilesStrip onShortestChange and label section as manual miles (not PC*MILER-only).`);
+  if (!/onShortestChange=\{/.test(modal) || !/Stops and miles/.test(modal)) {
+    problems.push(`${MODAL}: must wire MilesStrip onShortestChange and label the section Stops and miles.`);
   }
   if (!/E_MILES_SHORTEST_REQUIRED/.test(src)) {
     problems.push(`${SVC}: must refuse book with seated driver when miles_shortest missing (E_MILES_SHORTEST_REQUIRED).`);

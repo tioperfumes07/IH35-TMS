@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createDispatchLoad } from "../../../api/dispatch";
+import { createDispatchLoad, getLaneMileage } from "../../../api/dispatch";
 import { listAllDispatchCatalogRows, loadTypesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -155,6 +155,7 @@ type FormValues = BookLoadFormValues & {
   miles_practical: number;
   miles_shortest: number;
   miles_deadhead: number;
+  mileage_source: "" | "History" | "Manual" | "Routing engine" | "Operator entered";
   pickup_number: string;
   border_routing: string;
   is_sample_data: boolean;
@@ -381,6 +382,7 @@ export function BookLoadModalV4({
       miles_practical: 0,
       miles_shortest: 0,
       miles_deadhead: 0,
+      mileage_source: "",
       pickup_number: "",
       border_routing: "",
       is_sample_data: false,
@@ -553,6 +555,56 @@ export function BookLoadModalV4({
   const milesDeadhead = form.watch("miles_deadhead");
   const reservedLoadNumber = form.watch("reserved_load_number");
   const factoringCompanyVendorId = form.watch("factoring_company_vendor_id");
+  const pickupStop = (stops ?? []).find((s) => s.stop_type === "pickup") ?? (stops ?? [])[0];
+  const deliveryStop = (stops ?? []).find((s) => s.stop_type === "delivery") ?? (stops ?? [])[1];
+  const originCity = String(pickupStop?.city ?? "").trim();
+  const originState = String(pickupStop?.state ?? "").trim();
+  const originZip = String(pickupStop?.postal_code ?? "").trim();
+  const destCity = String(deliveryStop?.city ?? "").trim();
+  const destState = String(deliveryStop?.state ?? "").trim();
+  const destZip = String(deliveryStop?.postal_code ?? "").trim();
+  const milesOperatorTouched = useRef(false);
+
+  const laneMileageQuery = useQuery({
+    queryKey: ["book-load-lane-mileage", operatingCompanyId, originCity, originState, originZip, destCity, destState, destZip],
+    queryFn: () =>
+      getLaneMileage({
+        operating_company_id: operatingCompanyId,
+        origin_city: originCity,
+        origin_state: originState,
+        origin_postal_code: originZip || undefined,
+        dest_city: destCity,
+        dest_state: destState,
+        dest_postal_code: destZip || undefined,
+      }),
+    enabled: Boolean(operatingCompanyId && originCity && originState && destCity && destState),
+    staleTime: 30_000,
+  });
+
+  useEffect(() => {
+    if (!(Number(form.getValues("miles_practical")) > 0) && !(Number(form.getValues("miles_shortest")) > 0)) {
+      milesOperatorTouched.current = false;
+    }
+  }, [destCity, destState, form, originCity, originState]);
+
+  useEffect(() => {
+    const lane = laneMileageQuery.data;
+    if (!lane) return;
+    if (milesOperatorTouched.current) return;
+    if (!lane.autofill_allowed) return;
+    if (!(Number(form.getValues("miles_practical")) > 0) && lane.practical_miles != null) {
+      form.setValue("miles_practical", lane.practical_miles, { shouldDirty: true, shouldValidate: true });
+    }
+    if (!(Number(form.getValues("miles_shortest")) > 0) && lane.short_miles != null) {
+      form.setValue("miles_shortest", lane.short_miles, { shouldDirty: true, shouldValidate: true });
+    }
+    if (!(Number(form.getValues("miles_deadhead")) > 0) && lane.empty_miles != null && lane.empty_miles > 0) {
+      form.setValue("miles_deadhead", lane.empty_miles, { shouldDirty: true, shouldValidate: true });
+    }
+    if (lane.practical_miles != null) {
+      form.setValue("mileage_source", "History", { shouldDirty: true });
+    }
+  }, [form, laneMileageQuery.data]);
 
   const customersQuery = useQuery({
     queryKey: ["book-load-v4-customers", operatingCompanyId, customerSearch],
@@ -654,15 +706,15 @@ export function BookLoadModalV4({
   }, [driverPayRatePerMile, milesShortest]);
   const driverBillMissing = useMemo(() => {
     const missing: string[] = [];
-    if (!(Number(milesShortest || 0) > 0)) missing.push("shortest miles");
+    if (!(Number(milesShortest || 0) > 0)) missing.push("short miles");
     if (!(Number(driverPayRatePerMile || 0) > 0)) missing.push("driver pay rate / mile");
     return missing;
   }, [milesShortest, driverPayRatePerMile]);
   const ratePerMile = useMemo(() => {
-    const miles = Number(milesShortest || 0);
+    const miles = Number(milesPractical || 0);
     if (miles <= 0) return 0;
     return (linehaul || 0) / miles / 100;
-  }, [linehaul, milesShortest]);
+  }, [linehaul, milesPractical]);
 
   const money = useMemo(
     () =>
@@ -787,13 +839,12 @@ export function BookLoadModalV4({
       pushToast("Select a Trip Type before booking", "error");
       return;
     }
-    // Manual miles (no PC*MILER): refuse silent 0 for both shortest (driver pay) and practical (fuel/ETA).
     const seatedDriver = Boolean(values.assigned_primary_driver_id?.trim?.() || values.assigned_primary_driver_id);
     if (saveMode === "book_dispatch") {
       if (!(Number(values.miles_practical) > 0)) {
         form.setError("miles_practical", {
           type: "required",
-          message: "Enter practical miles (fuel + ETA). PC*MILER is not connected — type them manually.",
+          message: "Enter practical miles so revenue per mile can be computed from the typed rate.",
         });
         pushToast("Enter practical miles before booking", "error");
         return;
@@ -801,9 +852,9 @@ export function BookLoadModalV4({
       if (seatedDriver && !(Number(values.miles_shortest) > 0)) {
         form.setError("miles_shortest", {
           type: "required",
-          message: "Enter shortest miles (driver pay). PC*MILER is not connected — type them manually.",
+          message: "Enter short miles (driver pay) before booking with a driver.",
         });
-        pushToast("Enter shortest miles before booking with a driver", "error");
+        pushToast("Enter short miles before booking with a driver", "error");
         return;
       }
     }
@@ -874,6 +925,8 @@ export function BookLoadModalV4({
         miles_practical: numOrUndef(values.miles_practical),
         miles_shortest: numOrUndef(values.miles_shortest),
         miles_deadhead: numOrUndef(values.miles_deadhead),
+        mileage_source: values.mileage_source || undefined,
+        stop_count: String((values.stops ?? []).length),
         pickup_number: values.pickup_number || undefined,
         border_routing: values.border_routing || undefined,
         // FAIL-D6 — send the flag explicitly. Sending `undefined` when false is fine (the column is NOT
@@ -934,7 +987,7 @@ export function BookLoadModalV4({
           // and this handler dropped it on the floor with no error. PROD 2026-08-08 (lucia bypass in a txn;
           // visible 20 == n_live_tup 20, a REAL zero): 0 of 20 stops have EVER carried a postal_code, while
           // city persists on 12 and address_line1 on 10 - they persist when supplied, this never has.
-          // Postal code is the PC*MILER routing key, so driver pay-per-mile, fuel/ETA and IFTA jurisdiction
+          // Postal code is the stop ZIP. Without it, ZIP-level lane match and IFTA jurisdiction
           // miles were all structurally unreachable.
           postal_code: stop.postal_code || undefined,
           latitude: numOrUndef(stop.latitude),
@@ -1752,8 +1805,8 @@ export function BookLoadModalV4({
             <section className="blw-sec">
               <div className="blw-sec-hd">
                 <span className="blw-sec-chip">C</span>
-                <span className="blw-sec-name">Stops · Miles (manual)</span>
-                <span className="blw-sec-meta">1 pickup · 1 delivery · type short + long</span>
+                <span className="blw-sec-name">Stops and miles</span>
+                <span className="blw-sec-meta">1 pickup, 1 delivery, practical and short miles</span>
               </div>
               <div className="space-y-2 p-3">
                 <BookLoadStopsSection
@@ -1772,15 +1825,28 @@ export function BookLoadModalV4({
                   shortest={milesShortest}
                   deadhead={milesDeadhead}
                   ratePerMile={ratePerMile}
+                  provenance={laneMileageQuery.data?.provenance}
                   shortestRequired={Boolean(assignedPrimaryDriverId)}
                   practicalRequired
-                  onPracticalChange={(n) => form.setValue("miles_practical", n, { shouldDirty: true, shouldValidate: true })}
-                  onShortestChange={(n) => form.setValue("miles_shortest", n, { shouldDirty: true, shouldValidate: true })}
-                  onDeadheadChange={(n) => form.setValue("miles_deadhead", n, { shouldDirty: true, shouldValidate: true })}
+                  onPracticalChange={(n) => {
+                    milesOperatorTouched.current = true;
+                    form.setValue("mileage_source", "Operator entered", { shouldDirty: true });
+                    form.setValue("miles_practical", n, { shouldDirty: true, shouldValidate: true });
+                  }}
+                  onShortestChange={(n) => {
+                    milesOperatorTouched.current = true;
+                    form.setValue("mileage_source", "Operator entered", { shouldDirty: true });
+                    form.setValue("miles_shortest", n, { shouldDirty: true, shouldValidate: true });
+                  }}
+                  onDeadheadChange={(n) => {
+                    milesOperatorTouched.current = true;
+                    form.setValue("mileage_source", "Operator entered", { shouldDirty: true });
+                    form.setValue("miles_deadhead", n, { shouldDirty: true, shouldValidate: true });
+                  }}
                 />
                 <p className="blw-note">
-                  Enter Shortest (driver pay) and Practical/long (fuel + ETA) by hand — PC*MILER is not connected yet.
-                  Practical must be greater than 0; with a driver seated, Shortest must also be greater than 0 or Book is refused.
+                  Enter destination and the customer rate. Practical miles fill revenue per mile. Short miles pay the driver.
+                  Practical miles must be greater than 0. With a driver seated, short miles must also be greater than 0 or Book is refused.
                 </p>
                 {/* border_routing stays form-backed but not operator-facing here */}
                 <div className="hidden">
@@ -1925,7 +1991,7 @@ export function BookLoadModalV4({
               <div className="text-[9.5px] text-gray-500">
                 {driverBillPreview === null
                   ? `Missing ${driverBillMissing.join(" and ")} for this preview. The load still books; the backend uses an active driver rate card when available, otherwise it records a skipped-no-rate event.`
-                  : `${Number(milesShortest || 0).toLocaleString()} short mi × $${Number(driverPayRatePerMile || 0).toFixed(2)}/mi · recalculates on field changes`}
+                  : `${Number(milesShortest || 0).toLocaleString()} short miles × $${Number(driverPayRatePerMile || 0).toFixed(2)} per mile. Recalculates when fields change.`}
               </div>
             </div>
             <div className="flex gap-2">

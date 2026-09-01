@@ -32,6 +32,7 @@ Last updated: 2026-05-12 by Jorge + Claude (Block K PR1 additions)
 13. Phase 8A Legal module (Option C approval)
 14. Phase 8C — Driver Scheduler / workforce planning (Block K)
 15. Data Sovereignty + Samsara capability invariants (2026-05-21 arbitration lock)
+16. Operator-facing labels and load miles (owner 2026-09-01)
 
 ---
 
@@ -1970,3 +1971,15 @@ silently reclassified.
 
 This governs source provenance only. Escrow-draw authorization remains the separate, editable
 `may_draw_escrow` control introduced by ND-ESC-01; DRV-02 must not recreate that column or alter posting.
+
+---
+
+## 16. Operator-facing labels and load miles (owner 2026-09-01)
+
+Source: Jorge chat 2026-09-01 (GO-16 lane miles + Book Load).
+
+**Customer revenue is the typed rate, not miles billed.** Dispatcher enters destination and the customer rate. Practical miles compute **revenue per mile** (linehaul ÷ practical miles). They are not the invoice quantity. Short miles are driver pay and already include empty (deadhead) miles. Do not label practical miles as “what we bill the customer.”
+
+**Every operator-facing string is English spelling.** Never show snake_case, kebab-case, enum codes, or raw tokens (`miles_practical`, `check_zip`, `lane_history`, `1/1` as a code dump). Show “Practical miles”, “Short miles”, “Empty miles”, “Check ZIP”, “Lane history”, “High”, “Thin”. Database columns and API keys stay machine names on the wire only. City names display in proper title case (Fort Worth, Hauppauge), never seed ALL CAPS or misspellings.
+
+**Lane history fills boxes only when the seed says it is safe (`autofill_allowed`).** High-confidence tight lanes (example: Laredo to Denton) fill Practical / Short / Empty from `catalogs.lane_mileage`. Check ZIP and Thin lanes show an English hint and leave the boxes empty. Reverse-direction history is a labeled hint, never a silent swap. Same-city (Laredo to Laredo) is no suggestion. Reuse `mdata.loads.miles_practical` and `miles_shortest`; do not add a second mileage pair. Never rebuild lane statistics from Pay ÷ RPM without the team flag (`mdata.driver_teams`). Never wait on PC*MILER. Never derive short miles from a practical ratio.
