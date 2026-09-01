@@ -1,4 +1,5 @@
 import { openWorkOrderPredicate } from "../kpi/canonical-kpis.js";
+import { operatorWorkOrderListSql } from "./work-order-visibility.js";
 
 export type WorkOrderBucket = "in_house" | "external" | "roadside";
 
@@ -31,7 +32,8 @@ export async function listWorkOrdersByBucket(
     `SELECT COUNT(*)::int AS total_count
        FROM maintenance.work_orders w
       WHERE w.operating_company_id = $1::uuid
-        AND ${openWorkOrderPredicate("w")}`,
+        AND ${openWorkOrderPredicate("w")}
+        AND ${operatorWorkOrderListSql("w")}`,
     [operatingCompanyId],
   );
   const result = await client.query(
@@ -55,6 +57,7 @@ export async function listWorkOrdersByBucket(
       LEFT JOIN mdata.drivers d ON d.id = w.driver_id AND d.operating_company_id = w.operating_company_id
       WHERE w.operating_company_id = $1::uuid
         AND ${openWorkOrderPredicate("w")}
+        AND ${operatorWorkOrderListSql("w")}
       ORDER BY w.opened_at DESC NULLS LAST, w.created_at DESC
       LIMIT $2 OFFSET $3
     `,
