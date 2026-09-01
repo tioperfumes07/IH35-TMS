@@ -13,6 +13,7 @@ import {
 } from "./coverage-gap-units.shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { excludeInsuranceFixtureSql } from "./insurance-visibility.js";
+import { FLEET_COVERED_SQL, type FleetCoveredRow } from "./fleet-covered.shared.js";
 
 // Insurance dashboard aggregate — the 6 KPI counts for /safety/insurance computed
 // server-side in ONE call (replacing the old 6-query / per-unit-coverage fan-out that
@@ -42,6 +43,25 @@ async function withCompanyScope<T>(userId: string, operatingCompanyId: string, f
 }
 
 export async function registerInsuranceSummaryRoutes(app: FastifyInstance) {
+  app.get("/api/v1/insurance/fleet-covered", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const parsed = querySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+
+    const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+      const result = await client.query<FleetCoveredRow>(FLEET_COVERED_SQL, [parsed.data.operating_company_id]);
+      return result.rows.map((row) => ({
+        ...row,
+        insured_value_cents: row.insured_value_cents == null ? null : Number(row.insured_value_cents),
+        premium_per_month_cents: Number(row.premium_per_month_cents),
+        coverages: row.coverages ?? [],
+      }));
+    });
+
+    return { units: rows };
+  });
+
   app.get("/api/v1/insurance/summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
@@ -95,11 +115,17 @@ export async function registerInsuranceSummaryRoutes(app: FastifyInstance) {
         null,
       ]);
       const coverage_gap_count = classifyCoverageGapUnits(coverageGapRows.rows).coverage_gap_count;
+      const fleetDetailRows = await client.query<CoverageGapUnitDetailRow>(COVERAGE_GAP_UNITS_DETAIL_SQL, [tenantId, null]);
+      const fleetDetails = buildCoverageGapUnitDetails(fleetDetailRows.rows);
+      const fleet_total_units = fleetDetails.length;
+      const fleet_covered_units = fleetDetails.filter((unit) => !unit.is_gap).length;
 
       return {
         total_active_policies,
         policies_expiring_30d,
         coverage_gap_count,
+        fleet_total_units,
+        fleet_covered_units,
         recent_coi_requests,
         open_claims,
         open_lawsuits,
