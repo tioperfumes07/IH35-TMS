@@ -1,3 +1,4 @@
+2026-09-01T13:30Z | CC-1 REWIRE | OFF purge/D1 forever this wave | ONLY DSP-05 API then insurance | no pause no Jorge | GO
 2026-09-01T13:25Z | D1-DONE-BY-CURSOR | active=19 | deactivated=79 | manifest=#19075 on main | CC-1 OFF D1 → insurance+DSP-05 | Jorge not messenger | GO
 2026-09-01T13:15Z | DEPLOY-LIVE | healthz=ccebe75 | API dep-dab6iknavr4c73ev6o1g LIVE | Devin REVERIFY WIR-02+DateTime+History now | GO
 2026-09-01T13:12Z | DEPLOY-BATCH | API dep-dab6iknavr4c73ev6o1g tip=ccebe751 pre_deploy | Devin 3FAIL=deploy-gap WIR-02+DateTime+#19067 history | reverify when healthz moves | GO
