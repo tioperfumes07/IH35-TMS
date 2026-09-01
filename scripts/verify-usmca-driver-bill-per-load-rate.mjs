@@ -27,8 +27,14 @@ export function run() {
   const bookModal = read("apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx");
 
   assert(
-    /load\.driver_pay_rate_per_mile/.test(bookLoad),
-    "book-load.service.ts must read load.driver_pay_rate_per_mile",
+    // Anchored to the actual resolution call site, not a bare substring-anywhere-in-file check.
+    // book-load.service.ts also mentions "load.driver_pay_rate_per_mile" in two comments and in the
+    // unrelated PATCH-side write `load.driver_pay_rate_per_mile = input....` further down — a loose
+    // /load\.driver_pay_rate_per_mile/ regex still matches those even if the real functional READ at
+    // the resolveDriverBasePayCents call site is broken, which is exactly how this guard's own
+    // selftest went blind to its own planted mutation (found live, 2026-09-01).
+    /perLoadRateDollars\s*=\s*Number\(load\.driver_pay_rate_per_mile/.test(bookLoad),
+    "book-load.service.ts's resolveDriverBasePayCents must read load.driver_pay_rate_per_mile",
     errors,
   );
   assert(
@@ -71,8 +77,15 @@ export function run() {
 }
 
 function selftest() {
+  // BUG FOUND LIVE (2026-09-01, verify-no-selftest-mutates-tracked-source.mjs caught it): the old
+  // version called process.exit(1) from INSIDE this try block on a failing assertion.
+  // process.exit() terminates the process immediately and does NOT run pending `finally` blocks
+  // (unlike a throw/return), so a failing selftest left the real, money-critical
+  // book-load.service.ts permanently mutated on disk instead of restored. Fixed by recording
+  // failure and exiting only AFTER the finally has restored the backup, unconditionally.
   const realPath = path.join(ROOT, "apps/backend/src/dispatch/book-load.service.ts");
   const backup = fs.readFileSync(realPath, "utf8");
+  let failed = false;
   try {
     fs.writeFileSync(
       realPath,
@@ -82,12 +95,14 @@ function selftest() {
     const planted = run();
     if (!planted.some((e) => e.includes("driver_pay_rate_per_mile"))) {
       console.error("[verify-usmca-driver-bill-per-load-rate] SELFTEST FAIL: planted override removal not detected");
-      process.exit(1);
+      failed = true;
+    } else {
+      console.log(`[verify-usmca-driver-bill-per-load-rate] SELFTEST PASS (${planted.length} planted failures detected)`);
     }
-    console.log(`[verify-usmca-driver-bill-per-load-rate] SELFTEST PASS (${planted.length} planted failures detected)`);
   } finally {
     fs.writeFileSync(realPath, backup, "utf8");
   }
+  if (failed) process.exit(1);
 }
 
 function main() {
