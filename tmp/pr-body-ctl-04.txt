@@ -1,0 +1,28 @@
+FINDING: ACCT-F6324
+LANE: NON-FINANCIAL
+
+ROOT CAUSE: AccountingSubNavWrapper always renders module "+ Create ▾" unless createControl is set; surfaces that put + Create in actions= therefore showed two create controls.
+
+FIX: Move Create/Record CTAs from actions= to createControl= on CreditMemos, VendorCredits, AccountingHub, PaymentMethodsCatalog, ExpenseCategoryMap, AccountTypeCatalog, PrepaidExpenses, BillPaymentsList. Expand verify-accounting-toolbar-one-create with CTL-04 asserts + directory scan forbidding Create/Record in actions without createControl.
+
+DOD-A: PASS
+DOD-B: N/A
+DOD-C: N/A
+DOD-D: N/A
+DOD-E: PASS
+VERIFY-1: PASS
+VERIFY-2: N/A
+VERIFY-3: PASS
+VERIFY-4: N/A
+VERIFY-5: N/A
+VERIFY-6: N/A
+VERIFY-7: N/A
+VERIFY-8: N/A
+MODULE_PROGRESS: accounting 38 of 40
+ITEMS_TOUCHED: CTL-04 ACCT-F6324
+MIGRATE: N/A
+Live=BLOCKED
+
+GUARD: scripts/verify-accounting-toolbar-one-create.mjs + scripts/verify-steps/10192-verify-accounting-toolbar-one-create.mjs
+LIVE PROOF: node scripts/verify-accounting-toolbar-one-create.mjs --selftest exit 0; live run exit 0 (16 asserts + CTL-04 scan).
+REMAINING: MOD-04/05 insurance unit picker; CTL-01/02/03 for CC-3 Live Chrome; Devin click-confirm one Create on Credit Memos / Bill Payments. Live=BLOCKED until Devin click.
