@@ -46,6 +46,7 @@ export function run() {
     ["combobox-escape-stop", /event\.key === "Escape"[\s\S]{0,120}stopPropagation\(\)/.test(combobox)],
     ["modal-escape-guard-combobox", /data-combobox-listbox="portal"/.test(modal)],
     ["modal-escape-guard-drawer", /data-parity-drawer-stack-above-modal="true"/.test(modal)],
+    ["modal-escape-guard-datepicker", /data-date-picker-popover="open"/.test(modal)],
     ["wo-new-page", /export function WorkOrderNewPage/.test(woNewPage)],
     ["manifest-wo-new-route", /path="\/maintenance\/work-orders\/new"/.test(manifest) && /WorkOrderNewPage/.test(manifest)],
     ["vehicle-actionbar-spa-link", /<Link[\s\S]{0,200}work-orders\/new/.test(vehicleActionBar)],

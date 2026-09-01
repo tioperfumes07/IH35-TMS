@@ -24,6 +24,9 @@ import { spawnSync } from "node:child_process";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const DATEPICKER = path.join(ROOT, "apps/frontend/src/components/forms/DatePicker.tsx");
+const DATETIMEPICKER = path.join(ROOT, "apps/frontend/src/components/forms/DateTimePicker.tsx");
+const MODAL = path.join(ROOT, "apps/frontend/src/components/Modal.tsx");
+const PARITY_DRAWER = path.join(ROOT, "apps/frontend/src/components/parity/ParityDrawer.tsx");
 const HISTORY = path.join(ROOT, "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx");
 const TRIP = path.join(ROOT, "apps/frontend/src/pages/dispatch/TripProfitability.tsx");
 const BORDER = path.join(ROOT, "apps/frontend/src/pages/dispatch/borders/BorderCrossingHistory.tsx");
@@ -156,6 +159,41 @@ function run() {
   }
   if (!dp.includes("${shell}") && !dp.includes("`relative ${shell}")) {
     errors.push("DatePicker outer wrapper must use partitioned shell classes only");
+  }
+
+  const dtp = fs.readFileSync(DATETIMEPICKER, "utf8");
+  if (!dtp.includes("parseDateUS")) {
+    errors.push("DateTimePicker must import/use parseDateUS for typed MM/DD/YYYY entry (MOD-03)");
+  }
+  if (!/type="text"/.test(dtp) || !/inputMode="numeric"/.test(dtp)) {
+    errors.push("DateTimePicker must render a text input for typed date entry (MOD-03) — not button-only value");
+  }
+  if (!dtp.includes('aria-label="Month"') || !dtp.includes('aria-label="Year"')) {
+    errors.push("DateTimePicker calendar must expose Month/Year selects for jump (MOD-03)");
+  }
+  if (!/stopPropagation\(\)/.test(dtp)) {
+    errors.push("DateTimePicker Escape must stopPropagation so parent wizards stay open (MOD-02)");
+  }
+  if (!dtp.includes('e.key !== "Escape"') && !dtp.includes("e.key !== 'Escape'")) {
+    errors.push("DateTimePicker must handle Escape on document capture to close picker only (MOD-02)");
+  }
+  if (!dtp.includes('addEventListener("keydown", onKey, true)')) {
+    errors.push("DateTimePicker Escape listener must use capture (true) so it beats parent modal handlers (MOD-02)");
+  }
+  if (!dtp.includes('data-date-picker-popover="open"')) {
+    errors.push("DateTimePicker popover must expose data-date-picker-popover=open while open (MOD-02 parent guard)");
+  }
+  if (!dp.includes('data-date-picker-popover="open"')) {
+    errors.push("DatePicker popover must expose data-date-picker-popover=open while open (MOD-02 parent guard)");
+  }
+
+  const modal = fs.readFileSync(MODAL, "utf8");
+  if (!modal.includes('[data-date-picker-popover="open"]')) {
+    errors.push("Modal useEscapeKey must yield when a date picker popover is open (MOD-02)");
+  }
+  const parityDrawer = fs.readFileSync(PARITY_DRAWER, "utf8");
+  if (!parityDrawer.includes('[data-date-picker-popover="open"]')) {
+    errors.push("ParityDrawer Escape must yield when a date picker popover is open (MOD-02 insurance wizard)");
   }
 
   const hist = fs.readFileSync(HISTORY, "utf8");

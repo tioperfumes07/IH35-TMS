@@ -152,6 +152,8 @@ export function Modal({
     // WO-CREATE-UX: Escape on an open Combobox list or nested QuickCreate must not discard the parent wizard.
     if (document.querySelector('[data-combobox-listbox="portal"]')) return;
     if (document.querySelector('[data-parity-drawer-stack-above-modal="true"]')) return;
+    // MOD-02: Escape must close the date calendar only — not the parent Modal/wizard.
+    if (document.querySelector('[data-date-picker-popover="open"]')) return;
     attemptClose();
   }, open);
 

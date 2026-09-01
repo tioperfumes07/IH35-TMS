@@ -243,6 +243,7 @@ export function DatePicker({
         <div
           role="dialog"
           aria-label="Choose date"
+          data-date-picker-popover="open"
           className="absolute z-50 mt-1 w-56 rounded-sm border border-gray-300 bg-white p-2 shadow-lg"
           onMouseDown={(e) => {
             e.preventDefault();
