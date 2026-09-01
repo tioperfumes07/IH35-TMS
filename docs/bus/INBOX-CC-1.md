@@ -91,6 +91,15 @@ inline once resolved; never delete a row.
     instruction here before acting.
     [DONE — this file adopted, OUTBOX-CC-1.md queue-status entry posted this turn]
 
+15. ALL-SEATS LAW: NO SEAT-CREATED FINANCIAL RECORDS IN PRODUCTION, effective now. Permitted
+    only: owner-ordered live-walk records, voided same-session with a reversing entry. Forbidden:
+    any standing fixture/probe/proof left in prod (owner had to personally adjudicate 17
+    unflagged expenses tonight, two carrying seat-written "do not void" instructions in his own
+    ledger memo field). CC-2 owns the guard (named in a workflow).
+    [Acknowledged -- this session created no financial records in prod this turn, nothing to
+    void. Applies going forward: any live-UI verification I do must be created, proven, and
+    voided in the same session, record ID + reversing JE id reported.]
+
 **STATED QUEUE ORDER (owner, most recent restatement):** SETL-SELECTION-BINDING (proof posted
 twice, freeze NOT lifted, awaiting Codex/CC-2 confirm) → SETL-NO-VOID-PATH-01 (DONE, PR #18989)
 → INV-OPEN-VOID-01 (DONE, PR #18997) → BANK-ORPHAN-01 (DONE, PR #18989 + #19001 — apply not yet
