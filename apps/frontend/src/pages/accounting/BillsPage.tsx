@@ -496,6 +496,27 @@ export function BillsPage() {
         render: (bill) => money(bill.balance_cents ?? Math.max(0, bill.amount_cents - bill.paid_cents)),
       },
       {
+        // COL-05 (owner requirement 4.3): "Total / Open / Variance, red when non-zero." Original
+        // (=Total) / Balance (=Open) already existed; Variance was the missing third column --
+        // same reconciliation-health check InvoicesListPage already runs (total - paid - open),
+        // mirrored here for the AP side. Compares against the SERVER's own balance_cents (not the
+        // client-recomputed billBalanceCents helper, which would always net to zero against itself)
+        // -- a nonzero variance means amount_cents - paid_cents disagrees with what the backend
+        // actually stored as the open balance, a genuine data-integrity signal, not decoration.
+        key: "variance_cents",
+        label: "Variance",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        sortValue: (bill) => Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0) - Number(bill.balance_cents ?? billBalanceCents(bill)),
+        render: (bill) => {
+          const variance = Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0) - Number(bill.balance_cents ?? billBalanceCents(bill));
+          return (
+            <span className={`font-semibold ${variance !== 0 ? "text-red-700" : "text-slate-400"}`}>{money(variance)}</span>
+          );
+        },
+      },
+      {
         key: "status",
         label: "Status",
         sortable: true,

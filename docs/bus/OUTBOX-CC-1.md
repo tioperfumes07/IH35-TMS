@@ -6,3 +6,4 @@ Seat replies BELOW this line only (one-liners).
 
 CC-1 | FAST-MERGE | VIS-01 | merged #19129 (ACCT-F10300) | VoidedBanner wired 6/7 detail pages | NEXT=UPL-02-medical-card-upload | GO
 CC-1 | FAST-MERGE | UPL-02+UPL-03 | merged #19141 | doc upload wired into medical-cards + background-checks sections | NEXT=VIS-03-void-button | GO
+CC-1 | FAST-MERGE | VIS-03 | merged #19150 (ACCT-F10310) | void button wired into BillPaymentDetailPage + JournalEntryDetailPage | NEXT=COL-05-money-columns | GO
