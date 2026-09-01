@@ -6,22 +6,22 @@ import { useQuery } from "@tanstack/react-query";
 import { getDriverHosStatus } from "../../../api/dispatch";
 import { ListErrorState } from "../../ListErrorState";
 import {
-  computeCertifiedHosClocks,
-  computeHosClocks,
   eldStatusDot,
   HOS_COLUMNS,
   HOS_PROJECTED_TOOLTIP,
   HOS_SOURCE_TOOLTIP,
   hosStatusDot,
+  mergeEldWithInAppFallback,
+  resolveDisplayHosClocks,
   type HosColumnKey,
-  type HosStatusRow,
 } from "./hosClocks";
 
-function useDriverHos(driverId: string | null | undefined, operatingCompanyId: string | undefined) {
-  const enabled = Boolean(driverId && operatingCompanyId);
+function useDriverHos(driverId: string | null | undefined, operatingCompanyId: string | null | undefined) {
+  const companyId = operatingCompanyId?.trim() || undefined;
+  const enabled = Boolean(driverId?.trim() && companyId);
   return useQuery({
-    queryKey: ["dispatch-driver-hos-clocks", operatingCompanyId, driverId],
-    queryFn: () => getDriverHosStatus(String(driverId), String(operatingCompanyId)),
+    queryKey: ["dispatch-driver-hos-clocks", companyId, driverId],
+    queryFn: () => getDriverHosStatus(String(driverId), String(companyId)),
     enabled,
     staleTime: 60_000,
     retry: false,
@@ -49,7 +49,7 @@ function HosRetryButton({ onRetry, compact = false }: { onRetry: () => void; com
 // Small duty/HOS-health dot for next to a driver name (ITEM 5 + ITEM 3). HOS-PRC2: prefer the
 // certified Samsara ELD violation flag; fall back to the in-app recompute only when Samsara has
 // never polled this driver.
-export function DriverHosStatusDot({ driverId, operatingCompanyId }: { driverId: string | null | undefined; operatingCompanyId: string | undefined }) {
+export function DriverHosStatusDot({ driverId, operatingCompanyId }: { driverId: string | null | undefined; operatingCompanyId: string | null | undefined }) {
   const q = useDriverHos(driverId, operatingCompanyId);
   if (q.isError) return <HosRetryButton compact onRetry={() => void q.refetch()} />;
   const eld = q.data?.eld_certified ?? null;
@@ -64,19 +64,13 @@ export function DriverHosClocksBlock({
   heading,
 }: {
   driverId: string | null | undefined;
-  operatingCompanyId: string | undefined;
+  operatingCompanyId: string | null | undefined;
   heading: string;
 }) {
   const q = useDriverHos(driverId, operatingCompanyId);
-  // render-v6 §B: the HOS block is ALWAYS mounted (never returns null) so the 6-clock set is visible in the
-  // wizard the moment Section B is shown — even before a driver is picked or while Samsara HOS is unseeded.
-  // Returning null here was the #1355 false-DONE: the JSX existed (guard passed) but rendered nothing live.
-  // HOS-PRC2: prefer the certified Samsara ELD snapshot (verbatim); fall back to the in-app recompute
-  // only when Samsara has never polled this driver yet.
-  const eld = q.data?.eld_certified ?? null;
-  const certified = computeCertifiedHosClocks(eld);
-  const clocks = certified ?? computeHosClocks(q.data as HosStatusRow | undefined);
-  const dot = eld ? eldStatusDot(eld) : hosStatusDot(q.data?.status ?? null);
+  const { clocks, eldRaw, mergedInAppFields } = resolveDisplayHosClocks(q.data);
+  const dotEld = mergeEldWithInAppFallback(eldRaw, q.data ?? null);
+  const dot = dotEld ? eldStatusDot(dotEld) : hosStatusDot(q.data?.status ?? null);
 
   if (q.isError) {
     return (
@@ -97,7 +91,7 @@ export function DriverHosClocksBlock({
       <div className="mb-1 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
         <span className={`inline-block h-2 w-2 rounded-full ${dot.cls}`} title={dot.label} />
         {heading}
-        {certified ? (
+        {eldRaw ? (
           <span className="ml-1 rounded-sm bg-emerald-100 px-1 text-[8px] font-semibold uppercase tracking-[0.3px] text-emerald-700">
             Certified ELD
           </span>
@@ -110,8 +104,6 @@ export function DriverHosClocksBlock({
       {q.isLoading ? (
         <div className="text-[11px] text-gray-400">Loading HOS…</div>
       ) : (
-        // Always render the 6 labeled clocks (Drive/Shift/Break/Cycle/Stop By/Resume At); values fall back to
-        // "—" until a driver is selected and HOS data flows. This keeps the design's clock set on screen.
         <div className="grid grid-cols-3 gap-x-3 gap-y-0.5 text-[11px] sm:grid-cols-6">
           {HOS_COLUMNS.map((col) => (
             <div key={col.key} title={col.derived ? HOS_PROJECTED_TOOLTIP : HOS_SOURCE_TOOLTIP}>
@@ -124,10 +116,11 @@ export function DriverHosClocksBlock({
           ))}
         </div>
       )}
-      {/* render-v6 §B hosNote — exact design text, + certified-source disclosure. */}
       <div className="hosnote mt-0.5 text-[9px] text-gray-400">
-        {certified
-          ? "Drive/Shift/Break/Cycle are Samsara's certified ELD values, verbatim. Stop by / Resume at are projected."
+        {eldRaw
+          ? mergedInAppFields
+            ? "Certified ELD values shown where Samsara returned them; missing clocks use the in-app HOS store on this response. Stop by / Resume at are projected."
+            : "Drive/Shift/Break/Cycle are Samsara's certified ELD values, verbatim. Stop by / Resume at are projected."
           : driverId && q.data
             ? "Certified ELD snapshot unavailable; showing in-app HOS fallback. Stop by / Resume at are projected."
             : "Select a driver to load HOS. Clocks populate from the Samsara feed. Stop by / Resume at are projected."}
@@ -136,16 +129,6 @@ export function DriverHosClocksBlock({
   );
 }
 
-// ITEM 5 (board) — a SINGLE HOS clock value for one column, for grids that wrap each column in their
-// own <td> (DispatchBoard's shared column model). Reuses the exact same store query + projection as the
-// 6-cell fragment so the List and the Board show identical numbers. Renders "—" until HOS data flows.
-//
-// HOS-RETRY-CONCAT: DispatchBoard/DispatchList each render one <DriverHosClockValue> PER HOS_COLUMNS
-// entry (6 per row) — all 6 share the same react-query cache key, so all 6 error together, and each one
-// independently rendered its own <HosRetryButton/> with no separator: "RetryRetryRetryRetryRetryRetry".
-// showRetryOnError defaults to false (render the same "—" every other error cell shows) — pass it true
-// on exactly ONE of the 6 column call sites (matching DriverHosClockCells' existing `index === 0`
-// convention below) so a row shows exactly one Retry control, not six concatenated.
 export function DriverHosClockValue({
   driverId,
   operatingCompanyId,
@@ -153,14 +136,12 @@ export function DriverHosClockValue({
   showRetryOnError = false,
 }: {
   driverId: string | null | undefined;
-  operatingCompanyId: string | undefined;
+  operatingCompanyId: string | null | undefined;
   colKey: HosColumnKey;
   showRetryOnError?: boolean;
 }) {
   const q = useDriverHos(driverId, operatingCompanyId);
-  // HOS-PRC2 — board reads the certified Samsara ELD snapshot verbatim; falls back to the in-app
-  // recompute only when Samsara has never polled this driver.
-  const clocks = computeCertifiedHosClocks(q.data?.eld_certified ?? null) ?? computeHosClocks(q.data as HosStatusRow | undefined);
+  const { clocks } = resolveDisplayHosClocks(q.data);
   const col = HOS_COLUMNS.find((c) => c.key === colKey);
   if (!driverId) return <span className="text-gray-300">—</span>;
   if (q.isError) {
@@ -177,12 +158,9 @@ export function DriverHosClockValue({
   );
 }
 
-// ITEM 5 — six list cells (one query per row). Returns a fragment of <td>s so it slots into the
-// existing <tr> exactly where the single HOS column was, keeping the grid aligned.
-export function DriverHosClockCells({ driverId, operatingCompanyId }: { driverId: string | null | undefined; operatingCompanyId: string | undefined }) {
+export function DriverHosClockCells({ driverId, operatingCompanyId }: { driverId: string | null | undefined; operatingCompanyId: string | null | undefined }) {
   const q = useDriverHos(driverId, operatingCompanyId);
-  // HOS-PRC2 — roster reads the same certified Samsara ELD snapshot verbatim as the board.
-  const clocks = computeCertifiedHosClocks(q.data?.eld_certified ?? null) ?? computeHosClocks(q.data as HosStatusRow | undefined);
+  const { clocks } = resolveDisplayHosClocks(q.data);
   if (q.isError) {
     return (
       <>

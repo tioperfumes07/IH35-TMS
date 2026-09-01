@@ -133,6 +133,46 @@ export function computeCertifiedHosClocks(eld: EldCertifiedLike, now: Date = new
   };
 }
 
+export type DriverHosStatusLike = HosStatusRow & {
+  eld_certified?: EldCertifiedLike;
+};
+
+// BOOK-LOAD-HOS-CYCLE-WIRING — Samsara snapshots can arrive partial (drive/shift/break populated,
+// cycle null). The old `certified ?? inApp` branch picked certified and left Cycle at "—" even when
+// the same API response carried in-app cycle_remaining_min. Prefer each certified field verbatim; fill
+// only null certified fields from the in-app recompute on the same row.
+export function mergeEldWithInAppFallback(eld: EldCertifiedLike, row: HosStatusRow | null | undefined) {
+  if (!eld && !row) return null;
+  const drive = eld?.drive_remaining_min ?? row?.drive_remaining_min ?? null;
+  const shift = eld?.shift_remaining_min ?? row?.window_remaining_min ?? null;
+  const brk = eld?.break_remaining_min ?? row?.break_remaining_min ?? null;
+  const cycle = eld?.cycle_remaining_min ?? row?.cycle_remaining_min ?? null;
+  if (drive == null && shift == null && cycle == null) return null;
+  return {
+    drive_remaining_min: drive,
+    shift_remaining_min: shift,
+    break_remaining_min: brk,
+    cycle_remaining_min: cycle,
+    violation: eld?.violation ?? false,
+    polled_at: eld?.polled_at ?? "",
+  } satisfies NonNullable<EldCertifiedLike>;
+}
+
+export function resolveDisplayHosClocks(row: DriverHosStatusLike | null | undefined, now: Date = new Date()) {
+  if (!row) return { clocks: null as HosClocks | null, eldRaw: null as EldCertifiedLike, mergedInAppFields: false };
+  const eldRaw = row.eld_certified ?? null;
+  const merged = mergeEldWithInAppFallback(eldRaw, row);
+  const clocks = merged ? computeCertifiedHosClocks(merged, now) : computeHosClocks(row, now);
+  const mergedInAppFields = Boolean(
+    eldRaw &&
+      ((eldRaw.cycle_remaining_min == null && row.cycle_remaining_min != null) ||
+        (eldRaw.drive_remaining_min == null && row.drive_remaining_min != null) ||
+        (eldRaw.shift_remaining_min == null && row.window_remaining_min != null) ||
+        (eldRaw.break_remaining_min == null && row.break_remaining_min != null))
+  );
+  return { clocks, eldRaw, mergedInAppFields };
+}
+
 // Health dot driven ONLY by Samsara's own certified violation flag — never the app recompute.
 export function eldStatusDot(eld: EldCertifiedLike): { cls: string; label: string } {
   if (!eld) return { cls: "bg-gray-300", label: "No certified ELD data" };
