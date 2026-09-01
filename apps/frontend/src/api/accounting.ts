@@ -890,6 +890,7 @@ export function listBillPayments(
     vendor_id?: string;
     date_from?: string;
     date_to?: string;
+    include_voided?: boolean;
     limit?: number;
     offset?: number;
   } = {}
@@ -898,6 +899,7 @@ export function listBillPayments(
   if (params.vendor_id) query.set("vendor_id", params.vendor_id);
   if (params.date_from) query.set("date_from", params.date_from);
   if (params.date_to) query.set("date_to", params.date_to);
+  if (params.include_voided) query.set("include_voided", "true");
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();

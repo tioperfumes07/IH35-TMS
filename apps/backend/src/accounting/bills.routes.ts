@@ -58,6 +58,11 @@ const listBillPaymentsQuerySchema = companyQuerySchema.extend({
   vendor_id: z.string().trim().min(1).optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  // HIDE-VOIDED-01 — default hide revoked; include_voided=true shows voided paper.
+  include_voided: z
+    .union([z.literal("true"), z.literal("false"), z.boolean()])
+    .optional()
+    .transform((v) => v === true || v === "true"),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -539,6 +544,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       vendorId: query.data.vendor_id,
       dateFrom: query.data.date_from,
       dateTo: query.data.date_to,
+      includeVoided: query.data.include_voided === true,
       limit: query.data.limit,
       offset: query.data.offset,
     });

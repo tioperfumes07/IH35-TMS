@@ -67,7 +67,18 @@ export function BillPaymentsListPage() {
   const [vendorId, setVendorId] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const staged = useStagedListFilters({ applied: { vendorId, dateFrom, dateTo }, empty: { vendorId: "", dateFrom: "", dateTo: "" }, onApply: (next) => { setVendorId(next.vendorId); setDateFrom(next.dateFrom); setDateTo(next.dateTo); } });
+  // HIDE-VOIDED-01 — default hide revoked bill payments; uncheck to include voided paper.
+  const [hideVoided, setHideVoided] = useState(true);
+  const staged = useStagedListFilters({
+    applied: { vendorId, dateFrom, dateTo, hideVoided },
+    empty: { vendorId: "", dateFrom: "", dateTo: "", hideVoided: true },
+    onApply: (next) => {
+      setVendorId(next.vendorId);
+      setDateFrom(next.dateFrom);
+      setDateTo(next.dateTo);
+      setHideVoided(next.hideVoided);
+    },
+  });
   const [search, setSearch] = useState("");
   const [selectedBillId, setSelectedBillId] = useState("");
   // ACCT-F5057 — Topbar Create→Bill payment uses ?create=1 (opens PayBillModal; select unpaid bill on page).
@@ -98,12 +109,13 @@ export function BillPaymentsListPage() {
   const [ccModalOpen, setCcModalOpen] = useState(false);
 
   const paymentsQuery = useQuery({
-    queryKey: ["accounting", "bill-payments-list", companyId, vendorId, dateFrom, dateTo],
+    queryKey: ["accounting", "bill-payments-list", companyId, vendorId, dateFrom, dateTo, hideVoided],
     queryFn: () =>
       listBillPayments(companyId, {
         vendor_id: vendorId || undefined,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
+        include_voided: hideVoided ? undefined : true,
         limit: 300,
       }),
     enabled: Boolean(companyId),
@@ -246,7 +258,7 @@ export function BillPaymentsListPage() {
         label: "Actions",
         alwaysVisible: true,
         render: (row) =>
-          canVoid ? (
+          canVoid && !row.revoked_at ? (
             <Button
               size="sm"
               variant="secondary"
@@ -257,6 +269,8 @@ export function BillPaymentsListPage() {
             >
               Void
             </Button>
+          ) : row.revoked_at ? (
+            <span className="text-[11px] font-medium text-slate-500">Voided</span>
           ) : (
             "-"
           ),
@@ -265,7 +279,7 @@ export function BillPaymentsListPage() {
     [canVoid, voidMutation],
   );
 
-  const billPayActiveFilterCount = (vendorId ? 1 : 0) + (dateFrom || dateTo ? 1 : 0);
+  const billPayActiveFilterCount = (vendorId ? 1 : 0) + (dateFrom || dateTo ? 1 : 0) + (hideVoided ? 0 : 1);
 
   const filterBar = (
     <div className="space-y-2 w-full">
@@ -306,7 +320,7 @@ export function BillPaymentsListPage() {
             />
           }
         >
-          <div className="grid gap-2 md:grid-cols-3">
+          <div className="grid gap-2 md:grid-cols-4">
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Vendor
               {/* C1 PICKER LAW: was a raw-UUID box. A list FILTER, so allowCreate={false} — vendor
@@ -336,6 +350,16 @@ export function BillPaymentsListPage() {
                 value={staged.draft.dateTo}
                 onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })}
               />
+            </label>
+            <label className="flex items-center gap-2 self-end pb-1 text-xs font-semibold text-gray-600">
+              <input
+                type="checkbox"
+                checked={staged.draft.hideVoided}
+                onChange={(event) => staged.setDraft({ ...staged.draft, hideVoided: event.target.checked })}
+                data-testid="bill-payments-hide-voided"
+                aria-label="Hide voided bill payments"
+              />
+              Hide voided
             </label>
           </div>
         </CollapsedListFilters>
