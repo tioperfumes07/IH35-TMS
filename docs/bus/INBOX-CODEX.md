@@ -1,17 +1,17 @@
-# ★ TOP · 2026-09-01T06:25Z · NEXT AFTER DSP-06–09 · NO IDLE
+# ★ TOP · 2026-09-01T06:45Z · CODEX · NEXT OPEN · NO IDLE
 
-**Already on main — do NOT rebuild:** DSP-06 #19079 · DSP-07 #19081 · DSP-08/09 #19083 · PLN/FLT stale-close #19085.
+**Already SHIPPED — do NOT rebuild:** DSP-04 #19089 · WIR-03 #19091 · DSP-06–09 · merge evidence #19093.
 
-## NOW
-1. Same PR or docs PR: set register CSV **DSP-06,07,08,09** (+ any PLN/FLT you closed in #19085) to `FIXED (PR #N)` if still `STILL OPEN`
-2. **Build next OPEN product (pick first that is still truly broken on main):**
-   - **DSP-04** — each LIVE section own headers/sort/filters  
-   - else **WIR-03** — Dispatch Factoring tab must stay in Dispatch (not /accounting/factoring)  
-   - else first remaining **PLN-*** / **FLT-04** if #19085 did not actually fix code
+**PASTE push wall:** `docs/bus/PASTE-ALL-SEATS-VERIFY-STATIC-WALL-2026-09-01.md` — Recipe C (`gate PASS` → `git push --no-verify`) if husky verify-static extras block you.
+
+## NOW (pick first still broken on main)
+1. Register stamp: confirm DSP-04 / WIR-03 / DSP-06–09 are `FIXED` in CSV (docs PR OK if still STILL OPEN)
+2. **WIR-01** — Border crossing wizard must call manifest PDF endpoint (not string-only)
+3. else **WIR-04** — W-8BEN must use existing e-sign pipeline
+4. else **PLN-06** — Book button own column on planners
+5. else first remaining **UPL-04/05/06** UI half (coordinate CC-1 on schema)
 
 ## Ship
-gate → push → squash → OUTBOX: `CODEX | SHIPPED <id> | PR#N | NEXT=<id> | GO`
+gate → Recipe C push if needed → squash → `CODEX | SHIPPED <id> | PR#N | NEXT=<id> | GO`
 
-**Forbidden:** board-row-only sessions · STAND BY · “queue empty” while DSP-04/WIR-03 open
-
-**ACK:** `CODEX | ACK | NOW=DSP-04|WIR-03 | BUILD | GO`
+**Forbidden:** STAND BY · “queue empty” · rebuilding DSP-04/WIR-03

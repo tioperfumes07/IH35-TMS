@@ -1,16 +1,13 @@
-# ★ TOP · 2026-09-01T06:36Z · HISTORY + ONE-CREATE CLICK · NO STAND BY
+# ★ TOP · 2026-09-01T06:45Z · DEVIN-A · NEXT SHA LOOP · NO IDLE
 
-## Facts (do not re-litigate)
-- API healthz can lag while **FE** `version.json` is ahead.
-- History is in **lazy** `assets/Dispatch-*.js` — preload-only search = false FAIL.
-- **CTL-04 merged** (#19092): Credit Memos / Vendor Credits / Bill Payments / Prepaid / Hub Manual JE — toolbar must show **ONE** create control (no `+ Create ▾` beside it).
+## Closed this cycle (do not re-prove)
+History · Receive Payment · SEL-01 · DatePicker/MOD-02/03 · LAY-04/05 · CTL-04/05 · WIR-02/03 · DSP-04 — all PASS on deployable FE.
 
-## NOW (same session, forever loop)
-1. `curl -sS https://app.ih35dispatch.com/version.json` → record `fe=` (need tip ancestry of `4ae3e086` for CTL-04)
-2. Hard-reload → `/dispatch` → click **Loads history** → PASS/FAIL
-3. `/accounting` → **Receive Payment** top-row leaf → PASS/FAIL
-4. `/accounting/credit-memos` + `/accounting/bill-payments` → confirm **exactly one** create control in toolbar → PASS/FAIL (CTL-04)
-5. CTL-01/02/03 — Live Chrome only; keep FAIL until CC-3 ships
-6. OUTBOX one line → goto 1 when new FE sha appears
+## NOW (continuous)
+1. Poll `https://app.ih35dispatch.com/version.json` every ~3–5 min
+2. When `fe=` advances past current: hard-reload → click new FIXED register rows from OUTBOX-CURSOR
+3. **Next click targets when tip includes MOD-05 (LST-F6325):** unit picker type a known cross-entity VIN → expect banner `entity-picker-vin-exists` + **no** `+ Add new unit "<VIN>"`
+4. CTL-01/02/03 stay **FAIL** until CC-3 ships — do not ask Cursor to rebuild
+5. OUTBOX one line per new sha: `DEVIN-A | VERIFY | fe=<sha> | <PASS/FAIL ids> | GO`
 
-**Forbidden:** STAND BY · asking Cursor to rebuild History · idle after one verify
+**Forbidden:** STAND BY · “INBOX unchanged so idle” · re-litigating History false-alarm
