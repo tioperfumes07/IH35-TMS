@@ -73,6 +73,11 @@ describe("Load Number allocation (GO-10 REV-B)", () => {
     expect(bookLoadSvc).toContain('.code !== "23505"');
   });
 
+  it("Book Load uses a typed load_number without minting when the company has no seed -- first_load_number_required", () => {
+    expect(bookLoadSvc).toContain("if (!loadNumber && requestedLoadNumber)");
+    expect(bookLoadSvc).toContain("FirstLoadNumberRequiredError");
+  });
+
   it("the 409 body is structured { error, load_number, existing_id }, not a bare string -- F4", () => {
     expect(reservationSvc).toContain("existingId");
     expect(mdataLoads).toContain("existing_id");

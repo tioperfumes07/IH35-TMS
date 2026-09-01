@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ApiError } from "../../../../api/client";
 import { releaseDispatchLoadReservation, reserveDispatchLoadId } from "../../../../api/dispatch";
 import { QboDocumentNumberField } from "../../../../components/forms/QboDocumentNumberField";
 
@@ -14,6 +15,18 @@ type Props = {
   onReservationUpdate: (r: LiveReservation | null) => void;
 };
 
+function reservationErrorText(err: unknown): string {
+  if (err instanceof ApiError) {
+    const payload = err.data;
+    const code =
+      payload && typeof payload === "object" && typeof (payload as { error?: unknown }).error === "string"
+        ? String((payload as { error: string }).error)
+        : err.message;
+    return code;
+  }
+  return err instanceof Error ? err.message : "Could not reserve a load number";
+}
+
 export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props) {
   const [display, setDisplay] = useState<LiveReservation | null>(null);
   const [manualNumber, setManualNumber] = useState("");
@@ -26,6 +39,16 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
   const activeGenerationRef = useRef<number | null>(null);
   const onUpdateRef = useRef(onReservationUpdate);
   onUpdateRef.current = onReservationUpdate;
+
+  const publishTypedNumber = useCallback((next: string) => {
+    const current = reservationRef.current;
+    onUpdateRef.current({
+      reservation_uuid: current?.reservationId ?? "",
+      load_number: next,
+      reserved_until: new Date(Date.now() + 60_000).toISOString(),
+      ttl_seconds: 60,
+    });
+  }, []);
 
   const bumpReserve = useCallback(async () => {
     const submittedGeneration = scopeGenerationRef.current;
@@ -50,15 +73,16 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
       setSecondsLeft(Math.max(0, Math.ceil((until - Date.now()) / 1000)));
     } catch (err) {
       if (scopeGenerationRef.current === submittedGeneration) {
+        reservationRef.current = null;
         setDisplay(null);
         setSecondsLeft(0);
-        onUpdateRef.current(null);
-        setError(err instanceof Error ? err.message : "Could not reserve a load number");
+        setError(reservationErrorText(err));
+        publishTypedNumber(manualNumberRef.current.trim());
       }
     } finally {
       if (activeGenerationRef.current === submittedGeneration) activeGenerationRef.current = null;
     }
-  }, [operatingCompanyId]);
+  }, [operatingCompanyId, publishTypedNumber]);
 
   useEffect(() => {
     scopeGenerationRef.current += 1;
@@ -93,48 +117,39 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
     return () => window.clearInterval(timer);
   }, [bumpReserve, display]);
 
+  const firstNumberRequired = error === "first_load_number_required";
+
   return (
     <div
       className="flex items-center gap-4 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white"
       style={{ background: "#0F1320" }}
     >
+      <div className="rounded-sm bg-white px-2 py-1 text-left text-slate-800 normal-case tracking-normal">
+        <QboDocumentNumberField
+          label="Load #"
+          value={manualNumber}
+          onChange={(next) => {
+            setManualNumber(next);
+            publishTypedNumber(next);
+          }}
+          operatingCompanyId={operatingCompanyId}
+          nextNumberPath="/api/v1/dispatch/loads/next-number"
+          checkPath="/api/v1/dispatch/loads/next-number"
+          fieldName="load"
+          hint={firstNumberRequired ? "Type the first load number (for example 13508). Later loads can be left blank." : undefined}
+          data-testid="qbo-document-number-load"
+        />
+      </div>
       {error ? (
         <>
           <span className="normal-case tracking-normal text-red-200">Load number unavailable: {error}</span>
-          <button type="button" className="ml-auto rounded-sm border border-white/30 px-2 py-1 normal-case" onClick={() => void bumpReserve()}>
+          <button type="button" className="rounded-sm border border-white/30 px-2 py-1 normal-case" onClick={() => void bumpReserve()}>
             Retry
           </button>
         </>
       ) : (
         <>
-          <div className="rounded-sm bg-white px-2 py-1 text-left text-slate-800 normal-case tracking-normal">
-          <QboDocumentNumberField
-            label="Load #"
-            value={manualNumber}
-            onChange={(next) => {
-              setManualNumber(next);
-              const current = reservationRef.current;
-              onUpdateRef.current(
-                display
-                  ? { ...display, load_number: next }
-                  : current
-                    ? {
-                        reservation_uuid: current.reservationId,
-                        load_number: next,
-                        reserved_until: new Date(Date.now() + 60_000).toISOString(),
-                        ttl_seconds: 60,
-                      }
-                    : null
-              );
-            }}
-            operatingCompanyId={operatingCompanyId}
-            nextNumberPath="/api/v1/dispatch/loads/next-number"
-            checkPath="/api/v1/dispatch/loads/next-number"
-            fieldName="load"
-            data-testid="qbo-document-number-load"
-          />
-          </div>
-          <span style={{ color: display ? "#6EE7B7" : "#A8B0C7" }}>{display ? "Reserved" : "Reserving…"}</span>
+          <span style={{ color: display ? "#6EE7B7" : "#A8B0C7" }}>{display ? "● Reserved" : "Reserving…"}</span>
           <span className="ml-auto normal-case tracking-normal" style={{ color: "#A8B0C7" }}>
             {secondsLeft}s
           </span>

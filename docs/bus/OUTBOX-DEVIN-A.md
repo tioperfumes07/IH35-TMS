@@ -1,6 +1,6 @@
 # ★ OUTBOX-DEVIN-A · LIVE TOP · 2026-09-01T06:25Z
 
-Cursor→DEVIN-A | FORCE | NOW=Live Chrome API ab65f45 · NO-SEAT money · GO-11 HOLD | READ INBOX-DEVIN-A | NO IDLE | GO
+Cursor→DEVIN-A | FORCE | NOW=Live Chrome · TYPE first Load # · NO-SEAT | READ INBOX-DEVIN-A | GO
 
 **Paste:** docs/bus/PASTE-ALL-SEATS-NO-IDLE-2026-09-01.md
 

@@ -16,6 +16,7 @@ import {
   assertLoadNumberAvailable,
   claimReservation,
   consumeLoadNumberReservation,
+  FirstLoadNumberRequiredError,
   reserveNextLoadId,
 } from "./load-id-reservation.service.js";
 import { toMdataStatus, type DispatchStatus } from "./load-state-machine.js";
@@ -1584,15 +1585,55 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       // LiveLoadIdBar re-issues reserve-id under load, so the uuid on submit can be stale) must NOT 409. The
       // user clearly intends to book; fall through and allocate a fresh, valid load number transparently.
     }
-    if (!loadNumber) {
-      const reservation = await reserveNextLoadId(client, {
-        operatingCompanyId: input.operating_company_id,
-        reservedByUserId: input.requestingUserUuid,
-      });
-      reservationId = reservation.reservationId;
-      loadNumber = reservation.loadNumber;
-    }
     const requestedLoadNumber = input.load_number?.trim() || input.requested_load_number?.trim();
+    // Typed first number must not call the mint allocator. USMCA has no digit-only seed yet, so
+    // reserveNextLoadId throws first_load_number_required even when the operator already typed 13508.
+    if (!loadNumber && requestedLoadNumber) {
+      try {
+        await assertLoadNumberAvailable(client, input.operating_company_id, requestedLoadNumber);
+      } catch (err) {
+        if ((err as { code?: string }).code === "duplicate_load_number") {
+          const winner = await client.query<{ id: string }>(
+            `SELECT id::text FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 LIMIT 1`,
+            [input.operating_company_id, requestedLoadNumber]
+          );
+          return {
+            kind: "error",
+            status: 409,
+            payload: {
+              error: "duplicate_load_number",
+              load_number: requestedLoadNumber,
+              existing_id: winner.rows[0]?.id ?? null,
+            },
+          };
+        }
+        throw err;
+      }
+      loadNumber = requestedLoadNumber;
+    }
+    if (!loadNumber) {
+      try {
+        const reservation = await reserveNextLoadId(client, {
+          operatingCompanyId: input.operating_company_id,
+          reservedByUserId: input.requestingUserUuid,
+        });
+        reservationId = reservation.reservationId;
+        loadNumber = reservation.loadNumber;
+      } catch (err) {
+        if (err instanceof FirstLoadNumberRequiredError) {
+          return {
+            kind: "error",
+            status: 422,
+            payload: {
+              error: err.code,
+              message:
+                "Type the first load number yourself (for example 13508). Leave later loads blank and the system will follow that sequence.",
+            },
+          };
+        }
+        throw err;
+      }
+    }
     if (requestedLoadNumber && requestedLoadNumber !== loadNumber) {
       try {
         await assertLoadNumberAvailable(client, input.operating_company_id, requestedLoadNumber, reservationId || undefined);
@@ -2105,12 +2146,14 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       });
     }
 
-    await consumeLoadNumberReservation(client, {
-      operatingCompanyId: input.operating_company_id,
-      reservationId,
-      reservedByUserId: input.requestingUserUuid,
-      loadId: String(load.id),
-    });
+    if (reservationId) {
+      await consumeLoadNumberReservation(client, {
+        operatingCompanyId: input.operating_company_id,
+        reservationId,
+        reservedByUserId: input.requestingUserUuid,
+        loadId: String(load.id),
+      });
+    }
 
     for (const stop of input.stops) {
       const tw = normalizeStopTimeWindow(stop.time_window_type);

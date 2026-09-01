@@ -1,2 +1,2 @@
-# OUTBOX-CURSOR · 2026-09-01 14:56 CT
-CURSOR | INBOX FIXED | all seats GO-11 | packet=docs/lockdown/GO-11-USMCA-CLEAN-SLATE-2026-09-01.md | CC-1=EXECUTE | CC-2=VERIFY-AFTER | others=HOLD-MONEY | API=ab65f45 | T144=WAIT-INSURANCE | GO
+# OUTBOX-CURSOR · 2026-09-01 15:05 CT
+CURSOR | INBOX FIXED | GO-MASTER all seats | Book Load first_load_number_required = type 13508 in Load # (field no longer hidden) | CC-3=GO-04/06 | Codex=GO-03 | CC-1=GO-11 | GO
