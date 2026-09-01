@@ -5,6 +5,7 @@ import {
   resolveBackendVersion,
   resolveBackendGitSha,
   resolveBuildTimestamp,
+  resolveBuildRef,
   backgroundJobRule,
   qboNamedJobsAreDormant,
   toPublicHealthErrorCode,
@@ -28,12 +29,16 @@ describe("health routes", () => {
       uptime_seconds: number;
       version: string;
       git_sha: string;
+      commit: string;
       built_at: string;
+      git_branch: string;
     };
     expect(body.ok).toBe(true);
     expect(Number.isFinite(body.uptime_seconds)).toBe(true);
     expect(body.version).toBe(resolveBackendVersion());
+    expect(body.commit).toBe(resolveBackendVersion());
     expect(body.git_sha).toBe(resolveBackendGitSha());
+    expect(body.git_branch).toBe(resolveBuildRef());
     expect(body.built_at).toBeTruthy();
     expect(Number.isNaN(Date.parse(body.built_at))).toBe(false);
   });
@@ -70,6 +75,31 @@ describe("health routes", () => {
     } finally {
       if (prior === undefined) delete process.env.IH35_BUILD_AT;
       else process.env.IH35_BUILD_AT = prior;
+    }
+  });
+
+  it("resolveBuildRef prefers RENDER_GIT_BRANCH then GITHUB_REF_NAME", () => {
+    const priorRender = process.env.RENDER_GIT_BRANCH;
+    const priorName = process.env.GITHUB_REF_NAME;
+    const priorRef = process.env.GITHUB_REF;
+    try {
+      delete process.env.RENDER_GIT_BRANCH;
+      delete process.env.GITHUB_REF_NAME;
+      delete process.env.GITHUB_REF;
+      expect(resolveBuildRef()).toBe("unknown");
+      process.env.GITHUB_REF = "refs/heads/feature/x";
+      expect(resolveBuildRef()).toBe("feature/x");
+      process.env.GITHUB_REF_NAME = "main";
+      expect(resolveBuildRef()).toBe("main");
+      process.env.RENDER_GIT_BRANCH = "main";
+      expect(resolveBuildRef()).toBe("main");
+    } finally {
+      if (priorRender === undefined) delete process.env.RENDER_GIT_BRANCH;
+      else process.env.RENDER_GIT_BRANCH = priorRender;
+      if (priorName === undefined) delete process.env.GITHUB_REF_NAME;
+      else process.env.GITHUB_REF_NAME = priorName;
+      if (priorRef === undefined) delete process.env.GITHUB_REF;
+      else process.env.GITHUB_REF = priorRef;
     }
   });
 

@@ -1,0 +1,35 @@
+# HEALTH-NO-SHA-01 — healthz must expose the SHA
+#
+# Named workflow so deploy identity is not honour-system. Fails closed if
+# GET /api/v1/healthz would ship checks-only (no version/git_sha/built_at/git_branch).
+name: healthz must expose the SHA
+
+on:
+  pull_request:
+    paths:
+      - "apps/backend/src/health/**"
+      - "scripts/verify-healthz-exposes-sha.mjs"
+      - "scripts/verify-steps/10206-verify-healthz-exposes-sha.mjs"
+      - ".github/workflows/healthz-exposes-sha.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/backend/src/health/**"
+      - "scripts/verify-healthz-exposes-sha.mjs"
+      - "scripts/verify-steps/10206-verify-healthz-exposes-sha.mjs"
+      - ".github/workflows/healthz-exposes-sha.yml"
+
+jobs:
+  healthz-sha:
+    name: HEALTH-NO-SHA — healthz must expose the SHA
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: verify-healthz-exposes-sha (--selftest + live source)
+        run: |
+          node scripts/verify-healthz-exposes-sha.mjs --selftest
+          node scripts/verify-healthz-exposes-sha.mjs
