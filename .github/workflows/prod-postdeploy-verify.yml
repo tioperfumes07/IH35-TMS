@@ -126,6 +126,21 @@ jobs:
           path: docs/module-completion/PROOF-ENGINE-REPLAY.json
           if-no-files-found: warn
 
+      - name: verify:no-seat-instruction-overrides-owner-void
+        id: no_seat_void_override
+        # Shadow mode, matching the proof-replay step above: this is a BRAND NEW live-prod check
+        # (2026-09-01) and it already finds 4 real, pre-existing violations at introduction time
+        # (three from CC-1's own GO-0030/GO-0031/ACCT-SURF-04 live-verification work, one from
+        # GO-1640) — continue-on-error until those specific records are corrected by whoever owns
+        # them; a hard block here would break this workflow for the whole team over debt this
+        # guard cannot fix itself (CC-2 verifies, never writes to live financial records).
+        continue-on-error: true
+        env:
+          # READ-ONLY prod role only — same secret and same rule as proof-replay above. Never a
+          # writable Neon credential in CI.
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+        run: node scripts/verify-no-seat-instruction-overrides-owner-void.mjs
+
       - name: Smoke PRODUCTION
         id: smoke
         continue-on-error: true

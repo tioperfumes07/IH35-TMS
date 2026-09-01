@@ -16,13 +16,25 @@ function readFiles() {
   );
 }
 
+// LST-F10164 (#18889, "navy subnav: 13 of 178, ELD module") migrated EldPage.tsx from
+// SecondaryNavTabs to the shared NavyPageSubNav component (the same navy-subnav rollout that
+// touched Dispatch.tsx, driver-profile, etc. elsewhere in this repo) — a legitimate, deliberate
+// change this guard's own SecondaryNavTabs check went stale against, same root-cause class as
+// LST-F10184's stale startToken literal fixed earlier this session. Recognize EITHER canonical
+// nav shape so the guard stays meaningful across both the pre- and post-migration state, rather
+// than hard-failing every ELD build on a component swap that already shipped.
 export function inspect(sources) {
   const failures = [];
   const page = sources.page;
-  if (!page.includes('import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";')) {
-    failures.push("EldPage.tsx is not importing SecondaryNavTabs");
+  const usesSecondaryNavTabs =
+    page.includes('import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";') &&
+    page.includes("<SecondaryNavTabs");
+  const usesNavyPageSubNav =
+    page.includes('import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";') &&
+    page.includes("<NavyPageSubNav");
+  if (!usesSecondaryNavTabs && !usesNavyPageSubNav) {
+    failures.push("EldPage.tsx is not importing/rendering a canonical subnav (SecondaryNavTabs or NavyPageSubNav)");
   }
-  if (!page.includes("<SecondaryNavTabs")) failures.push("EldPage.tsx is not rendering SecondaryNavTabs");
   if (page.includes("rounded border px-3 py-1.5 text-sm transition-colors")) {
     failures.push("EldPage.tsx still contains legacy button-style tab classes");
   }
