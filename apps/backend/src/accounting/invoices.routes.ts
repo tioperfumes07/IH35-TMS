@@ -28,9 +28,37 @@ const listQuerySchema = companyQuerySchema.extend({
   // Aging / open-AR drill: filter full entity set by open balance BEFORE LIMIT/OFFSET
   // (mirrors accounting bills has_balance). Excludes draft/voided; includes sent/partial/etc.
   has_balance: z.coerce.boolean().optional(),
+  // SORT LAW — allowlisted column → SQL ORDER BY. Unknown sort falls back to issue_date.
+  sort: z.string().trim().max(64).optional(),
+  dir: z.enum(["asc", "desc"]).optional(),
+  // Prefer explicit limit from the client (silent default hides truncation). Cap 500.
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
+
+/** Whitelist only — never interpolate raw client sort into SQL. */
+const INVOICE_LIST_SORT_SQL: Record<string, string> = {
+  display_id: "i.display_id",
+  customer_name:
+    "COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(i.customer_id, i.operating_company_id))",
+  issue_date: "i.issue_date",
+  due_date: "i.due_date",
+  status: "i.status",
+  source_load_chargeback_requested: "COALESCE(l.customer_chargeback_requested, false)",
+  total_cents: "i.total_cents",
+  amount_open_cents: "COALESCE(i.amount_open_cents, 0)",
+  source_load_id: "l.load_number",
+  memo: "COALESCE(i.internal_notes, i.customer_notes)",
+};
+
+function invoiceListOrderBy(sort: string | undefined, dir: "asc" | "desc" | undefined): string {
+  const expr = sort ? INVOICE_LIST_SORT_SQL[sort] : undefined;
+  const direction = dir === "asc" || dir === "desc" ? dir.toUpperCase() : "DESC";
+  if (!expr) {
+    return "i.issue_date DESC, i.created_at DESC";
+  }
+  return `${expr} ${direction} NULLS LAST, i.created_at DESC, i.id ASC`;
+}
 
 const createBodySchema = z.object({
   customer_id: z.string().uuid(),
@@ -346,7 +374,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
            AND l.operating_company_id = i.operating_company_id
           WHERE i.operating_company_id = $1::uuid
             ${extraSql}
-          ORDER BY i.issue_date DESC, i.created_at DESC
+          ORDER BY ${invoiceListOrderBy(q.sort, q.dir)}
           LIMIT $${limitIdx}
           OFFSET $${offsetIdx}
         `,
@@ -362,6 +390,8 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       limit: q.limit,
       offset: q.offset,
       has_more: q.offset + invoices.length < total,
+      sort: q.sort && INVOICE_LIST_SORT_SQL[q.sort] ? q.sort : null,
+      dir: q.dir ?? null,
     };
   });
 

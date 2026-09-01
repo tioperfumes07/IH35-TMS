@@ -62,6 +62,13 @@ function assert(files) {
     );
   }
 
+  // Cascade 2026-08-31 — full-cell hit target (DataTable already had w-full; ParityTable regressed).
+  if (!/inline-flex w-full items-center gap-1/.test(table)) {
+    problems.push(
+      `${TABLE}: sortable header <button> must use inline-flex w-full (label-only hit target is a silent no-op)`,
+    );
+  }
+
   return problems;
 }
 
@@ -91,7 +98,20 @@ if (SELFTEST) {
     console.error(`${LABEL} SELFTEST FAIL — stripped sort indicator was not caught`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — desc-first cycle caught, stripped ▲/▼ caught`);
+  // Cascade DEFECT 1 — label-only hit target (no w-full).
+  const noWfull = {
+    ...files,
+    [TABLE]: files[TABLE].replace(/inline-flex w-full items-center gap-1/g, "inline-flex items-center gap-1"),
+  };
+  if (noWfull[TABLE] === files[TABLE]) {
+    console.error(`${LABEL} SELFTEST FAIL — could not plant missing w-full mutation`);
+    process.exit(1);
+  }
+  if (!assert(noWfull).some((p) => /w-full/.test(p))) {
+    console.error(`${LABEL} SELFTEST FAIL — planted label-only hit target was not caught`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — desc-first cycle caught, stripped ▲/▼ caught, missing w-full caught`);
   process.exit(0);
 }
 
