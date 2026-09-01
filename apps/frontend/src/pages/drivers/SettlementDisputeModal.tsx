@@ -1,4 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
+import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listSettlements, openSettlementDispute } from "../../api/driverFinance";
@@ -47,6 +48,10 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
       (settlementsQuery.data ?? []).map((settlement) => ({
         value: settlement.id,
         label: entityLabel(settlement.display_id, settlement.id, "Settlement"),
+        // COL-06: Period Begin/End were already on the row (listSettlements already returns
+        // period_start/period_end) -- the picker just never surfaced them, so two settlements for
+        // the same driver were indistinguishable by display_id alone.
+        sublabel: `${formatDateUS(settlement.period_start)} – ${formatDateUS(settlement.period_end)}`,
       })),
     [settlementsQuery.data]
   );

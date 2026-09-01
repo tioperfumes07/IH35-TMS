@@ -1,4 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
+import { formatDateUS } from "../../lib/formatDate";
 import { useQuery } from "@tanstack/react-query";
 import { listSettlementDisputes } from "../../api/driverFinance";
 import { getLiabilitiesByDriver } from "../../api/liabilities";
@@ -89,6 +90,13 @@ export function DriverSettlementFinanceReverseSection({
                   label={entityLabel(d.settlement_display_id ?? null, d.settlement_id, "Settlement")}
                   className="font-semibold text-slate-700"
                 />
+                {/* COL-06: period_start/period_end are already on this row (listSettlementDisputes
+                    already selects s.period_start/s.period_end) -- just never rendered here. */}
+                {d.period_start || d.period_end ? (
+                  <span className="ml-2 text-xs text-gray-500">
+                    {formatDateUS(d.period_start ?? null)} – {formatDateUS(d.period_end ?? null)}
+                  </span>
+                ) : null}
                 <span className="ml-2 text-gray-600">
                   {d.dispute_category} — {d.status}
                   {typeof d.disputed_amount_cents === "number"
