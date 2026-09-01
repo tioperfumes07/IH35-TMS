@@ -12,6 +12,7 @@ import {
   createWorkOrderWithLines,
 } from "./two-section-service.js";
 import { openWorkOrderPredicate } from "../kpi/canonical-kpis.js";
+import { operatorWorkOrderListSql } from "./work-order-visibility.js";
 import { assertRoadsideFields, listWorkOrdersByBucket } from "./work-orders.service.js";
 import { emitMaintenanceSpineEvent } from "./maintenance-spine-emit.js";
 import { isWoInvoiceMismatch, validateWoVendorInvoiceTotals } from "./wo-cost-validation.js";
@@ -452,6 +453,9 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (!(await maintenanceReady(client))) return { rows: [], total: 0 };
       const values: unknown[] = [q.operating_company_id];
       const where: string[] = ["w.operating_company_id = $1::uuid"];
+      // MAINT-1 / MAINT-3: hide DEMO-/TEST- seed work orders from operator lists (read-only — rows
+      // stay in maintenance.work_orders). Matches /api/v1/work-orders list via work-order-visibility.ts.
+      where.push(operatorWorkOrderListSql("w"));
       // MAINT-2: Active WOs list + KPI share openWorkOrderPredicate (open status set + voided_at IS NULL).
       // Explicit status or equipment_id drill-through keeps caller-controlled scope; default list = open WOs only.
       if (q.status) {

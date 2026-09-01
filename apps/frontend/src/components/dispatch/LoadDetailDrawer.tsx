@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { type LoadDetail, updateLoad, useDispatchLoad, useLoad, useLoadAudit, useRemintDriverBill, useUpdateLoadStatus } from "../../api/loads";
+import { type LoadDetail, type LoadStatus, updateLoad, useDispatchLoad, useLoad, useLoadAudit, useRemintDriverBill, useUpdateLoadStatus } from "../../api/loads";
 import { createInvoiceFromLoad, listLoadExpenses, listLoadInvoices } from "../../api/accounting";
 import { cancelDispatchLoad, distributeLoadInstructions, getDispatchAssignmentHistory, getRecentAutoStatusSwitches } from "../../api/dispatch";
 import { AutoStatusSwitchedBadge } from "./AutoStatusSwitchedBadge";
@@ -48,7 +48,7 @@ import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 import { listDispatchFlagColors } from "../../api/catalogs";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
-import { getOfficeTransitionButtons } from "@ih35/shared-types";
+import { getOfficeTransitionButtons, type OfficeTransitionButton } from "@ih35/shared-types";
 
 type Props = {
   loadId: string | null;
@@ -179,8 +179,33 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
     void mdataLoadQuery.refetch();
   };
   const auditQuery = useLoadAudit(loadId, operatingCompanyId);
-  const statusMutation = useUpdateLoadStatus(load?.operating_company_id ?? operatingCompanyId ?? null);
-  const remintDriverBillMutation = useRemintDriverBill(load?.operating_company_id ?? operatingCompanyId ?? null);
+  // LOAD-DETAIL-MARK-IN-TRANSIT-DEAD-BUTTON — bind status writes to the drawer prop when the load
+  // payload omits operating_company_id; gate the strip on the same effective id so click → PATCH
+  // cannot silently no-op with zero network.
+  const effectiveOperatingCompanyId = load?.operating_company_id ?? operatingCompanyId ?? null;
+  const statusMutation = useUpdateLoadStatus(effectiveOperatingCompanyId);
+  const remintDriverBillMutation = useRemintDriverBill(effectiveOperatingCompanyId);
+  const handleOfficeStatusTransition = useCallback(
+    async (transition: OfficeTransitionButton) => {
+      if (!load) return;
+      if (!effectiveOperatingCompanyId) {
+        pushToast("Operating company is required before changing load status.", "error");
+        return;
+      }
+      try {
+        await statusMutation.mutateAsync({
+          id: load.id,
+          body: { new_status: transition.target as LoadStatus },
+        });
+        pushToast(`Load ${load.load_number} — ${transition.label}`, "success");
+        refetchLoad();
+        void queryClient.invalidateQueries({ queryKey: ["loads"] });
+      } catch (err) {
+        pushToast(userFacingApiError(err, `Could not transition load (${transition.label})`), "error");
+      }
+    },
+    [effectiveOperatingCompanyId, load, pushToast, queryClient, refetchLoad, statusMutation]
+  );
   const updateMutation = useMutation({
     mutationFn: ({ id, operatingCompanyId, body }: { id: string; operatingCompanyId: string; body: Record<string, unknown> }) =>
       updateLoad(id, operatingCompanyId, body),
@@ -626,30 +651,21 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                   </div>
                 </OverviewWizardSection>
 
-                {load.operating_company_id ? (
+                {effectiveOperatingCompanyId ? (
                   <div className="flex flex-wrap gap-2">
                     {canEdit && load
-                      ? getOfficeTransitionButtons(load.status).map((transition) => (
+                      ? getOfficeTransitionButtons(String(load.status ?? "").trim()).map((transition) => (
                           <Button
                             key={transition.target}
                             type="button"
                             variant="primary"
                             size="sm"
-                            loading={statusMutation.isPending}
+                            loading={
+                              statusMutation.isPending &&
+                              statusMutation.variables?.body.new_status === (transition.target as LoadStatus)
+                            }
                             data-testid={transition.testId}
-                            onClick={async () => {
-                              try {
-                                await statusMutation.mutateAsync({
-                                  id: load.id,
-                                  body: { new_status: transition.target },
-                                });
-                                pushToast(`Load ${load.load_number} — ${transition.label}`, "success");
-                                refetchLoad();
-                                void queryClient.invalidateQueries({ queryKey: ["loads"] });
-                              } catch (err) {
-                                pushToast(userFacingApiError(err, `Could not transition load (${transition.label})`), "error");
-                              }
-                            }}
+                            onClick={() => void handleOfficeStatusTransition(transition)}
                           >
                             {transition.label}
                           </Button>

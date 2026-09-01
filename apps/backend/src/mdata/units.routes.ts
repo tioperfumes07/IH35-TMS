@@ -28,6 +28,7 @@ import {
   fleetTypeFilterSchema,
   truckTypeSqlFilter,
 } from "./fleet-type-filter.js";
+import { excludeDemoPhantomSql } from "./fleet-visibility.js";
 import { fetchUnifiedFleetList } from "./units-unified-list.service.js";
 import {
   applyUnitPatchFields,
@@ -264,11 +265,13 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     const result = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];
-      // DISPATCH-4: onboarding sample/demo units (is_sample_data) must never surface on the live
-      // Fleet OOS / In-shop board or the units roster. Read-only exclusion — the sample rows stay in
-      // the table (void-not-delete), just hidden from operational views. is_sample_data is NOT NULL
-      // DEFAULT false (migration 0403), so `IS NOT TRUE` is a total, index-friendly predicate.
+      // DISPATCH-4: onboarding sample/demo units (is_sample_data + TEST/SAM/DEMO name markers) must
+      // never surface on the live Fleet OOS / In-shop board or the units roster. Read-only exclusion —
+      // the sample rows stay in the table (void-not-delete), just hidden from operational views.
+      // Unified fleet list (include=trailers) already applied both via fleet-visibility.ts; this path
+      // must match or TEST-U01-style fixtures with is_sample_data=false leak into Dispatch OOS.
       filters.push("is_sample_data IS NOT TRUE");
+      filters.push(excludeDemoPhantomSql("unit_number"));
       if (type) {
         filters.push(truckTypeSqlFilter(type));
       }

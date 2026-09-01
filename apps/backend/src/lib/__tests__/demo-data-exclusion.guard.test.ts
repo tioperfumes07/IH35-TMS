@@ -18,6 +18,7 @@ describe("DISPATCH-4: units list / OOS board excludes sample units", () => {
   const units = read("mdata/units.routes.ts");
   it("filters is_sample_data out of the non-unified /api/v1/mdata/units query", () => {
     expect(units).toMatch(/filters\.push\("is_sample_data IS NOT TRUE"\)/);
+    expect(units).toMatch(/excludeDemoPhantomSql\("unit_number"\)/);
     expect(units).toMatch(/DISPATCH-4/);
   });
 });
@@ -36,16 +37,17 @@ describe("DRIVERHUB-2: driver scheduler excludes demo/test drivers", () => {
 describe("MAINT-1: work-order lists exclude DEMO-/TEST- seed work orders", () => {
   const woList = read("work-orders/work-orders.routes.ts");
   const maintWoList = read("maintenance/work-orders.routes.ts");
-  it("filters DEMO-/TEST- display_id out of /api/v1/work-orders", () => {
-    expect(woList).toMatch(/COALESCE\(w\.display_id, ''\) NOT ILIKE 'DEMO-%'/);
-    expect(woList).toMatch(/COALESCE\(w\.display_id, ''\) NOT ILIKE 'TEST-%'/);
+  const maintWoService = read("maintenance/work-orders.service.ts");
+  const woVisibility = read("maintenance/work-order-visibility.ts");
+  it("filters DEMO-/TEST- display_id out of /api/v1/work-orders via shared helper", () => {
+    expect(woList).toMatch(/operatorWorkOrderListSql\("w"\)/);
     expect(woList).toMatch(/MAINT-1/);
+    expect(woVisibility).toMatch(/NOT ILIKE 'DEMO-%'/);
+    expect(woVisibility).toMatch(/NOT ILIKE 'TEST-%'/);
   });
-  it("excludes voided (demo/test) WOs out of /api/v1/maintenance/work-orders", () => {
-    // MAINT-2: the display_id ILIKE 'DEMO-%'/'TEST-%' name-pattern hack was replaced by the canonical void
-    // flag (maintenance.work_orders has no is_sample_data column; GUARD voided DEMO-WO-001/002 on prod). The
-    // list now shares openWorkOrderPredicate's voided_at exclusion with the KPI — a stronger, structural rule.
-    expect(maintWoList).toMatch(/w\.voided_at IS NULL/);
-    expect(maintWoList).toMatch(/MAINT-2/);
+  it("excludes TEST/DEMO display_id and voided WOs from /api/v1/maintenance/work-orders", () => {
+    expect(maintWoList).toMatch(/operatorWorkOrderListSql\("w"\)/);
+    expect(maintWoList).toMatch(/openWorkOrderPredicate/);
+    expect(maintWoService).toMatch(/operatorWorkOrderListSql\("w"\)/);
   });
 });

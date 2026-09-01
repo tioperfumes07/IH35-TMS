@@ -8,6 +8,7 @@ import {
   repairBooksExpenseCoaRole,
 } from "../accounting/capitalize-threshold.js";
 import { withCurrentUser } from "../auth/db.js";
+import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
 
 type SevereEstimateRow = {
   id: string;
@@ -68,6 +69,7 @@ export async function listOpenEstimates(client: PoolClient, operating_company_id
       WHERE e.operating_company_id = $1::uuid
         AND e.estimate_status IN ('open', 'awaiting_approval', 'approved')
         AND ($2::uuid IS NULL OR e.unit_id = $2::uuid)
+        AND (u.id IS NULL OR (${excludeDemoPhantomSql("u.unit_number")} AND ${excludeSampleDataSql("u.is_sample_data")}))
       ORDER BY e.estimated_total_cents DESC
     `,
     [operating_company_id, unit_id ?? null]

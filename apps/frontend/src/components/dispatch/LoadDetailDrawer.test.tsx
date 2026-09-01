@@ -15,13 +15,18 @@ expect.extend(jestDomMatchers);
 const mockUseDispatchLoad = vi.fn();
 const mockUseLoad = vi.fn();
 const mockUseLoadAudit = vi.fn();
+const statusMutateAsyncSpy = vi.fn();
 
 vi.mock("../../api/loads", () => ({
   useDispatchLoad: (...args: unknown[]) => mockUseDispatchLoad(...args),
   useLoad: (...args: unknown[]) => mockUseLoad(...args),
   useLoadAudit: (...args: unknown[]) => mockUseLoadAudit(...args),
   updateLoad: vi.fn(),
-  useUpdateLoadStatus: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUpdateLoadStatus: () => ({
+    mutateAsync: statusMutateAsyncSpy,
+    isPending: false,
+    variables: undefined,
+  }),
 }));
 
 vi.mock("../../api/accounting", () => ({
@@ -331,6 +336,54 @@ describe("DISPATCH-NO-IN-TRANSIT-UI-CONTROL — human sequence requires in_trans
 
     expect(screen.getByTestId("load-detail-transition-delivered-pending-docs")).toBeInTheDocument();
     expect(screen.queryByTestId("load-detail-transition-in-transit")).not.toBeInTheDocument();
+  });
+
+  it("dispatched Mark in transit click calls status mutateAsync with in_transit payload", async () => {
+    statusMutateAsyncSpy.mockReset();
+    statusMutateAsyncSpy.mockResolvedValue({ ok: true });
+    mockUseDispatchLoad.mockReturnValue({
+      data: mockLoadDetail({ status: "dispatched", operating_company_id: "co-1" }),
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUseLoad.mockReturnValue({ data: undefined, isLoading: false, isError: false, error: null, refetch: vi.fn() });
+    mockUseLoadAudit.mockReturnValue({ data: [], refetch: vi.fn() });
+
+    renderDrawer(<LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByTestId("load-detail-transition-in-transit"));
+    await waitFor(() =>
+      expect(statusMutateAsyncSpy).toHaveBeenCalledWith({
+        id: "load-1",
+        body: { new_status: "in_transit" },
+      })
+    );
+  });
+
+  it("dispatched Mark in transit still fires when load payload omits operating_company_id but drawer prop has it", async () => {
+    statusMutateAsyncSpy.mockReset();
+    statusMutateAsyncSpy.mockResolvedValue({ ok: true });
+    mockUseDispatchLoad.mockReturnValue({
+      data: mockLoadDetail({ status: "dispatched", operating_company_id: undefined as unknown as string }),
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUseLoad.mockReturnValue({ data: undefined, isLoading: false, isError: false, error: null, refetch: vi.fn() });
+    mockUseLoadAudit.mockReturnValue({ data: [], refetch: vi.fn() });
+
+    renderDrawer(<LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByTestId("load-detail-transition-in-transit"));
+    await waitFor(() =>
+      expect(statusMutateAsyncSpy).toHaveBeenCalledWith({
+        id: "load-1",
+        body: { new_status: "in_transit" },
+      })
+    );
   });
 });
 

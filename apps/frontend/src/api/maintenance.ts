@@ -1,4 +1,5 @@
 import { ApiError, apiRequest, resolveApiUrl } from "./client";
+import { isOperatorVisibleWorkOrder } from "../lib/operator-fleet-visibility";
 
 export type WorkOrderType = "pm" | "repair" | "tire" | "accident";
 export type WorkOrderStatus = "open" | "in_progress" | "waiting_parts" | "complete" | "cancelled";
@@ -633,7 +634,12 @@ export function listWorkOrdersFiltered(
   if (params.bucket) qs.set("bucket", params.bucket);
   if (params.load_id) qs.set("load_id", params.load_id);
   if (params.driver_id) qs.set("driver_id", params.driver_id);
-  return apiRequest<{ work_orders: WorkOrder[]; total_count: number }>(`/api/v1/maintenance/work-orders?${qs.toString()}`);
+  return apiRequest<{ work_orders: WorkOrder[]; total_count: number }>(`/api/v1/maintenance/work-orders?${qs.toString()}`).then(
+    (payload) => ({
+      ...payload,
+      work_orders: payload.work_orders.filter(isOperatorVisibleWorkOrder),
+    }),
+  );
 }
 
 export function getWorkOrder(id: string, companyId: string) {

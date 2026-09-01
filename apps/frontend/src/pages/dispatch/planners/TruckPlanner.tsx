@@ -7,6 +7,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { isOperatorVisibleUnit } from "../../../lib/operator-fleet-visibility";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { PlannerAxisHead } from "./PlannerAxisHead";
 import { PlannerGrid } from "./PlannerGrid";
@@ -103,6 +104,7 @@ export function TruckPlanner() {
       const unitId = String(unit.id ?? "");
       const unitNumber = String(unit.unit_number ?? unitId);
       if (!unitId) continue;
+      if (!isOperatorVisibleUnit({ unit_number: unitNumber, is_sample_data: unit.is_sample_data as boolean | null | undefined })) continue;
       if (!PLANNER_UNIT_STATUSES.has(String(unit.status ?? ""))) continue;
       // DISP-F6436: this used to check only 2 of the 4 OOS signals the sibling FleetOosStrip.tsx
       // (Dispatch Overview/Kanban "FLEET OOS / IN SHOP" strip) already checks against the same
