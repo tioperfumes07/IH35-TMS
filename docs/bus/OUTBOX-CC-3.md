@@ -41,3 +41,19 @@ Both gate-clean (money-pr-local-gate PASS), tsc clean both apps, existing test s
 comparison, not caused by this change). Live-Chrome re-verification of both fixes' actual rendered
 effect is owed post-deploy for each -- FLT-01 not yet re-walked live after its own deploy; COL-01
 walked live BEFORE the fix (that's how the gap was found), not yet re-walked after.
+
+CC-3 | 2026-09-01 02:44Z | Live-Chrome verification: COL-01 confirmed, FLT-01 caveat | GO
+
+COL-01 (#19146): confirmed live at app.ih35dispatch.com/dispatch/at-risk, fe=2bc4484 -- the
+"Delivery" column header now has a real sort button (was none before). Risk state/ETA signal
+correctly still show no sort control (documented, computed-value gap, not silently missed).
+
+FLT-01 (#19133): found while trying to live-verify -- apps/frontend/src/pages/profitability/
+ProfitabilityPage.tsx (which mounts FilterBar.tsx, the file I fixed) is NOT imported/mounted by
+any route in routes/manifest.tsx or anywhere else in the app (confirmed via grep, zero
+consumers besides itself). /profitability in the browser silently redirects to /home. The code
+fix itself is real and verified (tsc/tests/guards all green, matches the established Button/
+SelectCombobox pattern used elsewhere) -- but I cannot live-Chrome-verify it because there is no
+route to reach it. Flagging rather than inventing a live-check claim: this page/component is
+either orphaned dead code that should be removed, or a WIP surface someone intends to mount
+later -- not something for me to decide unilaterally.
