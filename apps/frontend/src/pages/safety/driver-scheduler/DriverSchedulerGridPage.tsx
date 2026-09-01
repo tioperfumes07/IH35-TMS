@@ -195,33 +195,43 @@ export function DriverSchedulerGridPage() {
     {
       key: "unit",
       label: "Unit",
+      sortable: true,
+      sortValue: (a) => a.unit_number ?? "",
       render: (a) => <EntityLink kind="unit" id={a.unit_id} label={entityLabel(a.unit_number, a.unit_id, "Unit")} />,
     },
     {
       key: "primary_driver",
       label: "Primary driver",
+      sortable: true,
+      sortValue: (a) => a.primary_driver_name ?? "",
       render: (a) => <EntityLink kind="driver" id={a.primary_driver_id} label={entityLabel(a.primary_driver_name, a.primary_driver_id, "Driver")} />,
     },
     {
       key: "cover_driver",
       label: "Cover driver",
+      sortable: true,
+      sortValue: (a) => a.cover_driver_name ?? "",
       render: (a) => <EntityLink kind="driver" id={a.cover_driver_id} label={entityLabel(a.cover_driver_name, a.cover_driver_id, "Driver")} />,
     },
     {
       key: "dates",
       label: "Dates",
+      sortable: true,
+      sortValue: (a) => a.start_date ?? "",
       cellClass: "text-gray-600",
       render: (a) => `${formatDateUS(a.start_date)}–${formatDateUS(a.end_date)}`,
     },
     {
       key: "notes",
       label: "Notes",
+      sortable: false, // free text — no meaningful sort order
       cellClass: "text-gray-600",
       render: (a) => a.notes || "—",
     },
     {
       key: "actions",
       label: "",
+      sortable: false, // action button, not data
       alwaysVisible: true,
       render: (a) => (
         <Button

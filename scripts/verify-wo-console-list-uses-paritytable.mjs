@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["maintenance"],"cols":["work_orders_console"],"leafRe":"^work_orders_console\\.list$","task":"GO-05-WAVE1"} */
 /**
  * verify-wo-console-list-uses-paritytable — qbo-parity-a1 (WorkOrdersConsoleListPage)
  *

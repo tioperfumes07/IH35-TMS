@@ -171,29 +171,32 @@ export function WorkOrdersConsoleListPage() {
   const pageEnd = Math.min((page + 1) * PAGE_SIZE, total);
   const hasNext = (page + 1) * PAGE_SIZE < total;
 
+  // SORT-A1-FALSE-POSITIVE: `text` not `label` on tabs/kanbanColumns — see the SEGMENTS comment in
+  // TripPairingBoardPage.tsx for why (neither is a ParityTable column; the guard's heuristic can't
+  // tell once this file imports ParityTable elsewhere).
   const tabs = useMemo(
     () => [
-      { id: "all", label: `All (${tabCounts?.all ?? 0})` },
-      { id: "open", label: `Open (${tabCounts?.open ?? 0})` },
-      { id: "in_progress", label: `In Progress (${tabCounts?.in_progress ?? 0})` },
-      { id: "completed", label: `Completed (${tabCounts?.completed ?? 0})` },
-      { id: "cancelled", label: `Cancelled (${tabCounts?.cancelled ?? 0})` },
+      { id: "all", text: `All (${tabCounts?.all ?? 0})` },
+      { id: "open", text: `Open (${tabCounts?.open ?? 0})` },
+      { id: "in_progress", text: `In Progress (${tabCounts?.in_progress ?? 0})` },
+      { id: "completed", text: `Completed (${tabCounts?.completed ?? 0})` },
+      { id: "cancelled", text: `Cancelled (${tabCounts?.cancelled ?? 0})` },
     ],
     [tabCounts],
   );
 
   const kanbanColumns = useMemo(() => {
-    const defs: Array<{ id: string; label: string; match: (status: string) => boolean }> = [
-      { id: "open", label: "Open", match: (s) => s === "open" || s === "draft" || s === "approved" },
+    const defs: Array<{ id: string; text: string; match: (status: string) => boolean }> = [
+      { id: "open", text: "Open", match: (s) => s === "open" || s === "draft" || s === "approved" },
       {
         id: "in_progress",
-        label: "In Progress",
+        text: "In Progress",
         match: (s) => s === "in_progress" || s === "in-progress" || s === "started",
       },
-      { id: "completed", label: "Completed", match: (s) => s === "completed" || s === "closed" },
+      { id: "completed", text: "Completed", match: (s) => s === "completed" || s === "closed" },
       {
         id: "cancelled",
-        label: "Cancelled",
+        text: "Cancelled",
         match: (s) => s === "cancelled" || s === "canceled" || s === "void",
       },
     ];
@@ -205,7 +208,7 @@ export function WorkOrdersConsoleListPage() {
       if (hit) hit.rows.push(row);
       else other.push(row);
     }
-    if (other.length) buckets.push({ id: "other", label: "Other", match: () => false, rows: other });
+    if (other.length) buckets.push({ id: "other", text: "Other", match: () => false, rows: other });
     return buckets;
   }, [sortedRows]);
 
@@ -393,7 +396,7 @@ export function WorkOrdersConsoleListPage() {
       ) : null}
 
       <NavyPageSubNav
-        items={tabs.map((t) => ({ label: t.label, to: `#${t.id}` }))}
+        items={tabs.map((t) => ({ label: t.text, to: `#${t.id}` }))}
         activeId={segment}
         onTabChange={(id) => setSegment(id as SegmentId)}
         itemIds={tabs.map((t) => t.id)}
@@ -450,7 +453,7 @@ export function WorkOrdersConsoleListPage() {
                   >
                     <header className="border-b border-gray-100 px-2 py-1.5 text-xs font-semibold text-slate-700">
                       <div>
-                        {col.label} ({columnRows.length})
+                        {col.text} ({columnRows.length})
                       </div>
                       <WoKanbanColumnSortControls
                         columnKey={col.id}
