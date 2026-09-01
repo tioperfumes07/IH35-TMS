@@ -1,7 +1,5 @@
-# LEAD CENSUS — 2026-09-01 15:07 CT · LEAD-SEAT=CURSOR
+# LEAD CENSUS — 2026-09-01 15:40 CT · LEAD-SEAT=CURSOR
 
-**ACK'd:** GO-MASTER INBOXes · Book Load first-number shipping
+Cascade asked A/B/C about SQL ON CONFLICT. **Wrong card.** CPA ANSWERS 1/2/4. INBOX rewritten. Search-before-ask.
 
-**Live API:** `ab65f45`
-
-Idle until OUTBOX ACK GO-MASTER: CC-1, CC-2, CC-3, Codex, Cascade, Devin-A.
+CC-1: GO-11 13 UUID delete authorized. CC-2: still no-git-history list + 72-upsert (that IS SQL).
