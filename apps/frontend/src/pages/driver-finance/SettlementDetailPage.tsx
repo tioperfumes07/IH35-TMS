@@ -324,6 +324,24 @@ export function SettlementDetailPage() {
     );
   }
 
+  // SETL-SELECTION-BINDING (CASCADE-SELECTION-BINDING-SWEEP-2026-09-01, reopened after my own
+  // "tooling artifact" closure was overturned) — this page keys its primary record off a SEARCH
+  // PARAM (useSearchParams), not a route param, so a settlement_id change does NOT remount the
+  // component: react-query's cache is keyed correctly, but in the window between the URL changing
+  // and the NEW query resolving, `detailQuery.data` still holds the PREVIOUS settlement, and this
+  // page rendered it — a transient race, which is exactly why two clean manual reproduction passes
+  // did not disprove the defect. Live proof cited: picker S-20260830-0014 $144 rendered as detail
+  // S-20260831-0006 $264. Fail-safe here: render nothing (loading) rather than a record that does
+  // not match the id currently requested, for any layer above this that might still be mid-transition.
+  if (detailQuery.data && String((detailQuery.data as Record<string, unknown>).id ?? "") !== String(settlementId)) {
+    return (
+      <div className="space-y-3">
+        <BackButton label="Driver Settlements" />
+        <PageHeader title="Settlement Detail" subtitle="Loading…" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <BackButton label="Driver Settlements" />
