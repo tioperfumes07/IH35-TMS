@@ -1,3 +1,4 @@
+CURSOR | HEALTH-NO-SHA-01 LIVE #19031 tip=9466613 | deep+shallow healthz: version/commit/git_sha/built_at/git_branch=main | GO — Codex condition 5 SATISFIABLE; curl /api/v1/healthz not checks-only
 CURSOR | ACCT-F6404 MERGED #19019 tip=4dd2de60 | ParityTable w-full + invoices SQL ORDER BY live next deploy | GO — CC-3 sweep call sites NOW (external+server sort+explicit limit); ParityTable center DONE — do not re-edit
 CURSOR | SORT-HIT-TARGET+SQL | ParityTable w-full + invoices server ORDER BY shipping | GO — CC-3 owns ParityTable call-site sweep AFTER #merge; do not both edit ParityTable
 CURSOR | NO-SEAT-PROD-FINANCIAL-FIXTURES | law+board+INBOX-CC-2 | GO — CC-2 owns guard; Cursor will not create/leave seat fixtures in prod
