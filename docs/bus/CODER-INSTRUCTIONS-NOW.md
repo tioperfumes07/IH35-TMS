@@ -1,63 +1,14 @@
-**15:05 CT GO-MASTER:** `docs/lockdown/GO-MASTER-ALL-SEATS-2026-09-01.md`. ACK `GO-MASTER`. CC-1 GO-11. CC-3 GO-04/06. Codex GO-03. Book Load: type first number. Live `ab65f45`. Idle = defect.
+# CODER INSTRUCTIONS — NOW (2026-09-01 15:46 CT)
 
-**14:56 CT GO-11 — USMCA CLEAN SLATE:** `docs/lockdown/GO-11-USMCA-CLEAN-SLATE-2026-09-01.md` + paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-09-01-GO-11-USMCA-CLEAN-SLATE.md`. ACK `GO-11`. CC-1 execute. CC-2 verify after. Others HOLD money. Live `ab65f45`. NO-SEAT. Idle = defect.
+**Read `docs/bus/INBOX-<SEAT>.md` TOP.** That is the only queue.
 
-**12:50 CT GO-MECH-0901 — MECHANICAL WAVE (73 items, 70 open):** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-09-01-MECHANICAL-WAVE.md` · register `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.xlsx`. ACK `GO-MECH-0901`. FAST-MERGE ON · gate verified PASS · no STAND BY · idle = defect.
+Older GO-0006 / GO-0009 / GO-11 paste stacks below this line are **SUPERSEDED**. Do not ACK them.
 
-**11:22 CT GO-0009 — SEAT FEED:** `docs/bus/FEED/NOW-<SEAT>.md` + `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0009-FEED.md`. ACK `GO-0009`. Live `069d531`. CC-3 Override dead click. CC-1 G1 then dual bill-pay GL. CC-2 BANK-F9515–9518. Idle = defect.
+SEARCH FIRST: `docs/lockdown/GO-12-CLEANUP-ADJUDICATION-AND-CPA-ANSWER-CONFLICTS.md`
 
-**09:57 CT GO-0006:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md` — Cursor lead. ACK `GO-0006`. Urgent 6 NOW. Idle = defect. Live `ebc1c4f`. No post-gl until G1+G2.
+- Conflicts 1, 2, 4 = CPA ANSWERS vs locked skill (Cascade). **Not** SQL `ON CONFLICT`.
+- Conflict 3 CLOSED: pickup = pro forma; delivery → invoice.
+- 18 numbering series: CC-2 addendum closed except Settlement + Cash Advance Request → CC-1.
+- GO-08 leftover for CC-2: document-create `DO UPDATE` that should be `DO NOTHING` + 409.
 
-**20:50 CT GO-2050:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md` — Cursor lead. ACK `GO-2050`. Idle = defect. Live `7eda992`. CC-1 A/R reclass (keep TESTs). Do not inherit TRANSP pass as USMCA certify.
-
-**18:31 CT GO-1831:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1831.md` — Cursor lead. ACK `GO-1831`. Idle = defect. Live `88a6e98` until healthz moves. Deploy in flight. Codex/Devin/Cascade work NOW.
-
-**17:50 CT GO-1750:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1750.md` — Cursor lead. ACK `GO-1750`. Idle = defect. Live `88a6e98`. Work YOUR NOW row immediately.
-
-**17:32 CT GO-1722 — LIVE `88a6e98`:** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1722.md`. Same KEEP TEST law. ACK `GO-1722`. Walk **this** SHA. Idle = defect.
-
-**17:00 CT GO-1655 — KEEP TEST UNTIL LAUNCH:** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. Create labeled TEST/samples as needed — **all seats have permission**. **Do not void until launch.** Reuse TEST vendors/customers/loads. One void-and-clean after launch. Finish exclusive Live Chrome + unique FIX then immediately NEXT hop. ACK `GO-1655`. Idle = defect.
-
-**11:27 CT GO-1127:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1127.md` — CERTIFY BAR no restamp. ACK `GO-1127`. Live `4e7c9a7`. Deploy in flight `858d689`. Idle=defect.
-
-**11:04 CT GO-1104:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1104.md` — idle=defect. ACK `GO-1104`. Deploy in flight.
-
-**08:08 CT GO-0808:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0808.md` — Fully-Wired 1–12 IS the law. ACK `GO-0808`.
-
-**07:58 CT GO-0758:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0758.md` — paste boxes. ACK `GO-0758`.
-
-**07:45 CT GO-0745:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0745.md` — Cursor lead. ACK `GO-0745`. Complete fixes. Idle = defect. Live `0340406`.
-
-# CODER INSTRUCTIONS — NOW (2026-08-24)
-
-**14:05 CT GO-1405:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1405.md` — Cursor lead. ACK `GO-1405`. Idle = defect. Live `c46d592`.
-
-**22:37 CT GO-2237:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-2237.md` — **35 hops per seat**. ACK `GO-2237`. Idle = defect.
-
-**17:15 CT GO-1715:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1715.md` — idle = defect. Cursor money #1. ACK `GO-1715`.
-
-
-**13:50 CT GO-1350:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1350.md` — remaining Program scenarios. ACK `GO-1350`. Idle = defect.
-
-**12:42 CT GO:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1242.md` — 25 items/seat. Live `80cf40e`. Idle = defect. ACK `GO-1242`.
-
-**12:14 CT GO:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1214.md` — same 30 items. Live `fb925ef`. Idle = defect. ACK `GO-1214`. After 429 retry: pull + INBOX TOP immediately.
-
-**11:39 CT GO:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1139.md` — same 30 items. Live `1c31518`. Idle = defect. ACK `GO-1139`.
-
-**10:38 CT GO:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-25-1038.md` — 30 numbered items. Live `69e60ff`. Idle = defect.
-
-**THIS HOUR:** `docs/lockdown/PROGRAM-SCENARIO-MATRIX-CONNECTIVITY-PROOF-2026-08-24.md`  
-**COMPLICATED + PRINT:** `docs/lockdown/COMPLICATED-SCENARIO-BATTERY-AND-PRINTABLE-PROOF-2026-08-24.md`
-
-Run **Program hops + matrix** **and** the breakdown/replacement-truck battery (drivers, trucks, trailers, diesel, bills, inventory). Print invoices / proforma / dispatch / WO / 425C / cash-flow / finance to letter spec (not SPA chrome). Prove each TEST in the correct **table / ledger / column / module**. **Posting LIVE on USMCA.** Only **QBO** and **TRANSP/TRK** flags stay OFF. File FINDINGS. CREATE-TEST-THEN-VOID (void at launch).
-
-**Still in force:** `docs/lockdown/DEEP-DIVE-UNIQUE-HUNT-CODER-INSTRUCTIONS-2026-08-24.md` (unique 500/dead/silent/fake-$0). **Not** a U14 recertify.
-
-1. `git pull --ff-only origin main`
-2. Read the Program-scenario law + your `INBOX-<SEAT>.md` TOP
-3. Live `/program` Scenario Tracker + `/program/matrix?module=` for your lane
-4. CREATE labeled TEST · prove UUID in Neon/UI reverse link · OUTBOX line
-5. Unique leftover PR still FAST-MERGE if you find 500/dead/silent
-
-ACK: `SEAT | ACK | PROGRAM-SCENARIO-PROOF | PORT=n | NOW=/program | GO`
+NO-SEAT prod money. FAST-MERGE. Idle after a closed INBOX without pulling the new TOP = defect.

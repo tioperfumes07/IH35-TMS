@@ -1,2 +1,2 @@
-# OUTBOX-CURSOR · 2026-09-01 15:40 CT
-CURSOR | CASCADE A/B/C=NONE | Conflicts 1,2,4 = CPA ANSWERS vs skill NOT sql ON CONFLICT | CC-2 owns 72-upsert | SEARCH GO-12 | GO
+# OUTBOX-CURSOR · 2026-09-01 15:46 CT
+CURSOR | GO-14 | Desktop+_Downloads+_bus archive purge | CC-2 INBOX=GO-08 DOC-CREATE UPSERTS | 18-series closed credited | SEARCH FIRST | GO

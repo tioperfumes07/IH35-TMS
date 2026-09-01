@@ -1,5 +1,7 @@
 # GO-MASTER ALL SEATS · 2026-09-01 (owner paste)
 
+> **SUPERSEDED AS NOW (2026-09-01 15:46 CT).** Seat queue = `docs/bus/NOW-ONE-SOURCE.md` + `docs/bus/INBOX-<SEAT>.md` TOP. This file is a closed index. Do not execute the Seat NOW table below as current work.
+
 Canonical seat NOW. USMCA only `5c854333-6ea5-4faa-af31-67cb272fef80`. TRANSP/TRK frozen.
 
 **Owner law:** do what the owner says, first time. NO-SEAT prod money. No CC `trigger_deploy`.
