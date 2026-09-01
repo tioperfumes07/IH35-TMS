@@ -73,13 +73,23 @@ function renderSettlementLinks(settlement: SettlementListRow) {
   );
 }
 
+// COL-06: both endpoints were already on SettlementListRow and already rendered, just collapsed
+// under one ambiguous "Date" header instead of the canonical Settlement # / Period Begin / Period
+// End contract (components/dispatch/LoadDetailSettlementTab.tsx) -- split to match it.
 const preSettlementColumns: DataTableColumn<SettlementListRow>[] = [
   {
-    key: "date",
-    label: "Date",
+    key: "period_start",
+    label: "Period Begin",
     sortable: true,
     sortValue: (row) => row.period_start,
-    render: (row) => `${formatDateUS(row.period_start)} – ${formatDateUS(row.period_end)}`,
+    render: (row) => formatDateUS(row.period_start),
+  },
+  {
+    key: "period_end",
+    label: "Period End",
+    sortable: true,
+    sortValue: (row) => row.period_end,
+    render: (row) => formatDateUS(row.period_end),
   },
   {
     key: "driver",
@@ -104,7 +114,7 @@ const preSettlementColumns: DataTableColumn<SettlementListRow>[] = [
   },
   {
     key: "settlement_number",
-    label: "Settlement / Bill Number",
+    label: "Settlement #",
     sortable: true,
     sortValue: (row) => row.display_id ?? row.id,
     render: renderSettlementLinks,

@@ -96,8 +96,12 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
               noun="Driver"
             />
           </div>
+          {/* COL-06: period_end was already on PreSettlementDetail.settlement -- just never
+              rendered, leaving Period End invisible on this panel. */}
           <div className="mt-0.5 text-[11px] text-gray-500">
             {settlement.period_start ? formatDateUS(settlement.period_start) : "—"}
+            {" – "}
+            {settlement.period_end ? formatDateUS(settlement.period_end) : "—"}
           </div>
         </div>
         <span

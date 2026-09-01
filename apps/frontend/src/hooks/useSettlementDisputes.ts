@@ -17,6 +17,10 @@ export type SettlementDisputeRow = {
   driver_id: string;
   driver_name?: string | null;
   settlement_display_id?: string | null;
+  /** COL-06 — the backend already selects these (settlement-dispute.service.ts listDisputes); the
+   * type just never declared them, so the list/picker surfaces had no field to render. */
+  period_start?: string | null;
+  period_end?: string | null;
   dispute_type: SettlementDisputeType;
   claimed_amount_cents: number;
   description: string;

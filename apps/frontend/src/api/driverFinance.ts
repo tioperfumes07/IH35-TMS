@@ -604,6 +604,10 @@ export type OpenPreSettlement = {
   deductions_total: number;
   net_pay: number;
   trip_started_at: string | null;
+  /** COL-06 — the backend already selects these (pre-settlement.routes.ts open-by-driver); the
+   * type just never declared period_end, so the picker had no field to render it from. */
+  period_start?: string | null;
+  period_end?: string | null;
 };
 
 export type PreSettlementLine = {

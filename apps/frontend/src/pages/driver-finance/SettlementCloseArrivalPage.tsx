@@ -21,6 +21,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { formatUsd } from "../../lib/money";
+import { formatDateUS } from "../../lib/formatDate";
 
 type DraftJeRow = { id: string; account: string; debit: string; credit: string };
 
@@ -72,10 +73,17 @@ export function SettlementCloseArrivalPage() {
     () =>
       (openQuery.data?.pre_settlements ?? []).map((row) => {
         const name = entityLabel((row.driver_name ?? "").trim() || null, row.driver_id, "Driver");
+        // COL-06: period_start/period_end are already on the row (pre-settlement.routes.ts
+        // open-by-driver already selects them) -- the picker just never surfaced them, so two
+        // open pre-settlements for the same driver were indistinguishable by settlement # alone.
+        const period =
+          row.period_start || row.period_end
+            ? `${formatDateUS(row.period_start ?? null)} – ${formatDateUS(row.period_end ?? null)} · `
+            : "";
         return {
           value: row.driver_id,
           label: `${name} — ${entityLabel(row.settlement_number, row.settlement_id, "Settlement")}`,
-          sublabel: `Net ${formatUsd(row.net_pay)} · ${row.status}`,
+          sublabel: `${period}Net ${formatUsd(row.net_pay)} · ${row.status}`,
         };
       }),
     [openQuery.data]
@@ -292,6 +300,12 @@ export function SettlementCloseArrivalPage() {
                       label={entityLabel(settlement.last_load_number, settlement.last_load_id, "Load")}
                     />{" "}
                     · status: {settlement.status}
+                  </div>
+                  {/* COL-06: period_start/period_end were already on this detail payload
+                      (pre-settlement.routes.ts by-driver already selects both) -- just never
+                      rendered on the close/arrival detail. */}
+                  <div className="text-xs text-gray-500">
+                    Period: {formatDateUS(settlement.period_start)} – {formatDateUS(settlement.period_end)}
                   </div>
                 </div>
               </div>

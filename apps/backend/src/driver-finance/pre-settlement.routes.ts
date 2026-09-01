@@ -92,7 +92,8 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
             s.deductions_total,
             s.net_pay,
             s.trip_started_at,
-            s.period_start
+            s.period_start,
+            s.period_end
           FROM driver_finance.driver_settlements s
           LEFT JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
           WHERE s.operating_company_id = $1::uuid

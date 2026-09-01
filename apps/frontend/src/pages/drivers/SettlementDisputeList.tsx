@@ -5,6 +5,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { StatusBadge } from "../../components/StatusBadge";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { entityLabel } from "../../lib/entity-label";
+import { formatDateUS } from "../../lib/formatDate";
 import { useAuth } from "../../auth/useAuth";
 import { useSettlementDisputes, type SettlementDisputeRow, type SettlementDisputeStatus } from "../../hooks/useSettlementDisputes";
 import { SettlementDisputeModal } from "./SettlementDisputeModal";
@@ -101,6 +102,18 @@ export function SettlementDisputeList() {
                 label={entityLabel(row.settlement_display_id, row.settlement_id, "Settlement")}
               />
             ),
+          },
+          {
+            // COL-06: Period Begin/End were available on the API row all along (settlement-dispute
+            // .service.ts already selects s.period_start/s.period_end) -- just never rendered here.
+            key: "period_start",
+            label: "Period Begin",
+            render: (row) => (row.period_start ? formatDateUS(row.period_start) : "—"),
+          },
+          {
+            key: "period_end",
+            label: "Period End",
+            render: (row) => (row.period_end ? formatDateUS(row.period_end) : "—"),
           },
           { key: "dispute_type", label: "Type" },
           { key: "claimed_amount_cents", label: "Claimed", render: (row) => money(row.claimed_amount_cents) },

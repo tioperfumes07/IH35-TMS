@@ -55,11 +55,16 @@ export function SettlementHeader({
           <EntityLink kind="driver" id={driverId} label={entityLabel(driverName, driverId, "Driver")} />
         </div>
       </div>
+      {/* COL-06: both dates were already rendered here, just under one collapsed "Settlement
+          Period" label instead of the canonical Period Begin / Period End contract
+          (components/dispatch/LoadDetailSettlementTab.tsx) -- split for consistency. */}
       <div>
-        <div className="text-[10px] uppercase text-gray-500">Settlement Period</div>
-        <div className="text-sm font-semibold">
-          {formatDateUS(periodStart)} — {formatDateUS(periodEnd)}
-        </div>
+        <div className="text-[10px] uppercase text-gray-500">Period Begin</div>
+        <div className="text-sm font-semibold">{formatDateUS(periodStart)}</div>
+      </div>
+      <div>
+        <div className="text-[10px] uppercase text-gray-500">Period End</div>
+        <div className="text-sm font-semibold">{formatDateUS(periodEnd)}</div>
       </div>
       <div>
         <div className="text-[10px] uppercase text-gray-500">Loads in cycle</div>
