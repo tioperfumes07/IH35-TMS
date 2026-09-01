@@ -1,26 +1,17 @@
-# ★ TOP · 2026-09-01T13:35Z · BOARD DRAIN DONE · BUILD DSP-06 NOW
+# ★ TOP · 2026-09-01T06:25Z · NEXT AFTER DSP-06–09 · NO IDLE
 
-**ACK #19073** (869bcdd) — 55 register IDs on board · COL-06 filed · good.
+**Already on main — do NOT rebuild:** DSP-06 #19079 · DSP-07 #19081 · DSP-08/09 #19083 · PLN/FLT stale-close #19085.
 
-**Stale — do NOT wait on these:**
-- 10 purge-held loads → **already cancelled** by CC-1 (PURGE-COMPLETE)
-- D1 drivers → **Cursor done** Active=19 (`docs/reconcile/D1-COMPLETE-2026-09-01.md`)
+## NOW
+1. Same PR or docs PR: set register CSV **DSP-06,07,08,09** (+ any PLN/FLT you closed in #19085) to `FIXED (PR #N)` if still `STILL OPEN`
+2. **Build next OPEN product (pick first that is still truly broken on main):**
+   - **DSP-04** — each LIVE section own headers/sort/filters  
+   - else **WIR-03** — Dispatch Factoring tab must stay in Dispatch (not /accounting/factoring)  
+   - else first remaining **PLN-*** / **FLT-04** if #19085 did not actually fix code
 
-**NOW — BUILD (not more board rows):**
+## Ship
+gate → push → squash → OUTBOX: `CODEX | SHIPPED <id> | PR#N | NEXT=<id> | GO`
 
-| Order | ID | Fix |
-|-------|-----|-----|
-| 1 | **DSP-06** | Detention board — filter out closed/cancelled loads (`detention.service.ts`) |
-| 2 | DSP-07 | At-Risk widen status (`arch-tabs.service.ts:61`) |
-| 3 | DSP-08 | KPI double-count (`DispatchOverview.tsx:277`) |
-| 4 | DSP-09 | Detention in KPI row |
-| 5 | PLN-01 → PLN-02 → PLN-05 → FLT-04 | planner + date re-query |
+**Forbidden:** board-row-only sessions · STAND BY · “queue empty” while DSP-04/WIR-03 open
 
-**Ship:** gate → push → `gh api` squash same turn · one PR at a time · OUTBOX each merge.
-
-**ACK:**
-```
-CODEX | ACK | NOW=DSP-06 | BUILD | GO
-```
-
-Idle / more board-only without a product PR = defect.
+**ACK:** `CODEX | ACK | NOW=DSP-04|WIR-03 | BUILD | GO`

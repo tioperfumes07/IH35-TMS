@@ -1,30 +1,17 @@
-# ★ TOP · 2026-09-01T12:50Z · ACK GO-MECH-0901
+# ★ TOP · 2026-09-01T06:25Z · COL-02 NOW · NO IDLE
 
-**PASTE:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-09-01-MECHANICAL-WAVE.md`  
-**Register:** `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`  
-**Reply:** `CC-3 | ACK | GO-MECH-0901 | NOW=ACCT-F10261 | GO`
+**Devin CTL-01/02/03 = FAIL/PARTIAL on live — your “reported done” is not done.**  
+But **COL-02 is the bigger hole** (zero drag-reorder on main). Build COL-02 first.
 
-**Unblocked:** ratchet PASS · gate PASS · push ACCT-F10261 first · dedup Samsara vs #19068 · ONE ParityTable PR at a time.
+## Serial order (one PR at a time · ParityTable hotfile)
+1. **COL-02** — column drag-reorder in `ParityTable.tsx` + guard + selftest  
+2. **COL-03** — column auto-fit / double-click header  
+3. **CTL-01** then **CTL-02** then **CTL-03** — fix so Live Chrome PASSes (not bundle h-count theater)  
+4. **FLT-01** filter combobox proportion  
+5. **CUS-01–07** after COL/CTL green
 
----
+If ACCT-F10261 insurance bill param still unmerged → merge that **before** COL-02 only if branch already green; else COL-02.
 
-**Wave 0 serial push order:**
-1. `cc3-insurance-policy-bill-param-fix-2026-08-31` — **ACCT-F10261 P0**
-2. `cc3-ui-control-law-build-2026-09-01` — then **sweep CTL-01–03** (owner: REPORTED DONE, not verified)
-3. **COL-02** column drag-reorder in ParityTable (zero on main — owner confirmed)
-4. **COL-03** column auto-fit (zero on main — owner confirmed)
-5. **COL-01** sort on non-ParityTable modules
-6. **FLT-01** filter combobox proportion
-7. **CUS-01–07** customers/vendors mechanical
+**Dedup:** do not reopen Samsara HOS (#19068 Cursor).
 
-**Dedup:** drop Samsara branch if same as Cursor **#19068**.
-
-**Baseline:** `node scripts/verify-static-ratchet.mjs` PASS on main. Rebase `6ae5b91+`, local gate, push — no wait.
-
----
-
-# ★ TOP · 2026-09-01T07:05Z · PUSH UNBLOCK + DEDUP SAMSARA
-
-(see above — superseded by mechanical register wave 0)
-
----
+**ACK:** `CC-3 | ACK | NOW=COL-02 | BUILD | GO`

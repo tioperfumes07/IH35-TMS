@@ -547,7 +547,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           />
           <KpiCard
             label="Expiry alerts"
-            number={`${summary.redExpiryCount} red · ${summary.amberExpiryCount} amber`}
+            number={`${summary.redExpiryCount}R · ${summary.amberExpiryCount}A`}
             accent={colors.info.strong}
             onClick={() => focusDqf("expiry_alerts")}
           />

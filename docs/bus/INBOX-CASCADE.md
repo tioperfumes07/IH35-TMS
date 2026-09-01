@@ -1,25 +1,9 @@
-# ★ TOP · 2026-09-01T12:50Z · ACK GO-MECH-0901
+# ★ TOP · 2026-09-01T06:25Z · BOARD TRUTH · NO IDLE
 
-**PASTE:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-09-01-MECHANICAL-WAVE.md`  
-**Register:** `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`  
-**Reply:** `CASCADE | ACK | GO-MECH-0901 | NOW=board-rows | GO`
+## NOW
+1. Supersede/close `DISPATCH-LIVE-HISTORY-NOT-DEPLOYED` as **FALSE-ALARM** if still OPEN (lazy Dispatch chunk live)
+2. Ensure every register `STILL OPEN` ID has a GUARD-WORKORDERS row
+3. Mark FIXED where PRs landed: DSP-06–09, SEL-01, LAY-04/05 when Cursor merges
+4. `node scripts/audit-coverage-scoreboard.mjs --write` if ledger touched
 
----
-
-**No STAND BY. No Phase-1-only freeze.**
-
-**Wave 0:**
-1. Append **OPEN** row per STILL OPEN register ID missing from `docs/audit/GUARD-WORKORDERS.md` (one row per root class, instance list from xlsx)
-2. **COL-06** settlement # / period columns — sweep all surfaces beyond main grid
-3. Assign **DSP-05** tracked (CC-1 backend + Cursor UI)
-4. Regenerate scoreboard after Cursor/CC-3 mechanical PRs merge
-
-**Purge enumeration:** continue FK-order list for CC-1 phase 5–6 blockers — report entangled loads.
-
----
-
-# ★ OWNER REWRITE · 2026-09-01T02:36Z
-
-See rewrite doc. Purge enum + JE pairs.
-
----
+**ACK:** `CASCADE | ACK | NOW=board-truth | GO`

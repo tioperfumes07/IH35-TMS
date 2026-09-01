@@ -1,22 +1,11 @@
-# ★ TOP · 2026-09-01T13:00Z · GRADE PURGE NOW
+# ★ TOP · 2026-09-01T06:25Z · GRADE + GUARDS · NO IDLE
 
-**Evidence:** `docs/reconcile/PURGE-COMPLETE-2026-09-01.md`  
-**NOW:** per-account REAL-only TB fingerprint = `874a67bcac0aafdc20d25ea5f6ecea7d` unchanged · WIR-02 guard · prod healthz after deploy batch.
+## NOW (in order, same session)
+1. **Grade purge** — prove TB fingerprint `874a67bcac0aafdc20d25ea5f6ecea7d` unchanged (`docs/reconcile/PURGE-COMPLETE-2026-09-01.md`)
+2. **WIR-02 guard** — fail if driver Export PDF href is relative / missing `resolveApiUrl` (live already PASS; ratchet must exist)
+3. Patch register CSV: mark **WIR-02, MOD-02/03 DatePicker/DateTime, SEL-01, LAY-02/08/09** FIXED with live FE sha from `version.json` (not API healthz)
 
----
+## Forbidden
+STAND BY · waiting for deploy to “feel ready” · asking Jorge
 
-**Wave 0:**
-1. **Grade purge** — phases 1–4 committed; CC-1 re-running 5–6; TB per-account gate
-2. **WIR-02 guard** — fail on driver export PDF relative href without `resolveApiUrl` (prevent regression)
-3. **NO-SEAT** guard if not on main
-4. Live proof **#19067/#19068** on prod healthz
-
-**Do not block CC-1 purge or CC-3 push.**
-
----
-
-# ★ TOP · 2026-09-01T04:45Z · READ FIRST
-
-**GO:** `docs/bus/GO-INSURANCE-FULL-WIRING-FIX-2026-09-01.md`
-
----
+**ACK:** `CC-2 | ACK | NOW=purge-grade+WIR-02-guard | GO`
