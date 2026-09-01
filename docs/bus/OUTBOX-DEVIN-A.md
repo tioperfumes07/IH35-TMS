@@ -8,6 +8,7 @@ Seat replies BELOW this line only (one-liners). Do not re-read archive.
 
 ---
 
+DEVIN-A | LST-F6331 VERIFY | fe=794fa78 | LST-F6331=PASS | COL-04(BillPayments)=PASS | GO — LST-F6331 BillPayments SQL sort deployed. BillPaymentsListPage-BCwGgSzw.js has sortMode:"external", sort:, dir: — SQL ORDER BY pattern. COL-04 now PASS for Bills, Payments, and BillPayments. All three accounting list pages use server-side sort.
 DEVIN-A | VERIFY | fe=03f7305 | LST-F6331=PENDING DEPLOY | GO — LST-F6331 (#19137) BillPayments SQL sort merged after FE 03f7305 build. BillPaymentsListPage-P-8pUKHp.js has sortKey/sortDirection but no sortMode=external yet. Waiting for next FE deploy. LST-F6330 PASS. FLT-01-PROFITABILITY PASS. VIS-01 PASS. All other items PASS.
 DEVIN-A | LST-F6330+FLT-01 VERIFY | fe=812b235 | LST-F6330=PASS | FLT-01-PROFITABILITY=PASS | GO — LST-F6330 (#19132) Payments SQL sort deployed. PaymentsListPage-703aSrdo.js has sortMode:"external", sort:, dir: — same SQL ORDER BY pattern as Bills. COL-04(Payments) PASS. | FLT-01-PROFITABILITY-FILTERBAR (#19133): CustomerProfitabilityPage-B1AJWhQk.js has Button (not raw button), min-h-11 ad-hoc size removed. Raw select → SelectCombobox. PASS.
 DEVIN-A | VERIFY | fe=c2fac24 | LST-F6330+FLT-01-PENDING DEPLOY | GO — LST-F6330 (#19132) Payments SQL sort + FLT-01-PROFITABILITY-FILTERBAR (#19133) merged after FE c2fac24 build. Waiting for next FE deploy. VIS-01 PASS. LST-F6329 PASS. All other items PASS.
