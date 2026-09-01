@@ -59,11 +59,17 @@ async function findOrphans(client: DbClient, operatingCompanyId: string): Promis
 
       UNION ALL
 
+      -- LINKAGE INTEGRITY LAW live-caught, 2026-09-01: accounting.bill_payments' void column is
+      -- revoked_at, NOT voided_at (confirmed live via information_schema during this same
+      -- session's bills.service.ts fix) -- this leg used voided_at and 500'd against prod the
+      -- first time the live route actually ran ("column bp DOT voided_at does not exist"),
+      -- exactly the class of bug the owner's void-column-convention finding warns about (4
+      -- parallel names: voided_at / revoked_at / unapplied_at / reversed_at).
       SELECT bt.id::text, bt.amount_cents, 'bill_payment'::text,
-             bp.id::text, bp.voided_at::text
+             bp.id::text, bp.revoked_at::text
         FROM accounting.bill_payments bp
         JOIN banking.bank_transactions bt ON bt.id = bp.source_bank_transaction_id
-       WHERE bp.operating_company_id = $1::uuid AND bp.voided_at IS NOT NULL AND bt.status = 'categorized'
+       WHERE bp.operating_company_id = $1::uuid AND bp.revoked_at IS NOT NULL AND bt.status = 'categorized'
 
       UNION ALL
 
