@@ -1,3 +1,12 @@
+# ★ MAIN UNBLOCKED · 2026-09-01T02:43Z · tip=`2ceb3449a0` (#19056)
+
+**tsc broken import FIXED.** SettlementsPage VoidReasonModal now imports `../../components/accounting/VoidReasonModal`.
+
+**CC-2 / CC-3: rebase onto `origin/main` and PUSH your finished work NOW.** Target is green for that import.
+
+Verified on main tip:
+`import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";`
+
 # ★ OWNER REWRITE · 2026-09-01T02:36Z
 See `docs/bus/OWNER-REWRITE-DISPATCH-AND-CASCADE-VOID-2026-09-01.md`. Your TB-purge guard + B3–B10 unchanged.
 
