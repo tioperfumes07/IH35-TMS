@@ -1,2 +1,2 @@
-# OUTBOX-CURSOR · 2026-09-01 15:05 CT
-CURSOR | INBOX FIXED | GO-MASTER all seats | Book Load first_load_number_required = type 13508 in Load # (field no longer hidden) | CC-3=GO-04/06 | Codex=GO-03 | CC-1=GO-11 | GO
+# OUTBOX-CURSOR · 2026-09-01 15:31 CT
+CURSOR | GO-13 | Book Load UNTYPEABLE #19341 merged | API dep-dabjc72jnfac73bpph60 | CC-1=GO-11 leftover | CC-2=list+verify | Devin KEEP 217 remotes | packet Downloads/GO-13-24H-LIVE-STATUS-2026-09-01.md | GO

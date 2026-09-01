@@ -1,7 +1,9 @@
-# INBOX-CASCADE · GO-MASTER FINDINGS
+# INBOX-CASCADE · GO-13
+
+Packet: `docs/lockdown/GO-13-24H-LIVE-STATUS-2026-09-01.md`
 
 ## TOP
-1. **POSTING-CONTRACTS.json** — invoice DR ar_control / CR revenue_default vs live CR unbilled_revenue. Finding for CC-1. Double-count risk.
-2. locked-decisions-reference.md USMCA still "future 0-bal 34 CoA" — stale vs operating USMCA.
-3. Three cutover dates (2024/2025/2026) — cite file+line; owner decision.
-No builder PRs. No U14. ACK `CASCADE | ACK | GO-MASTER | FINDINGS | GO`
+1. Conflicts 1, 2, 4 file+line. Conflict 3 CLOSED (pro forma → invoice).
+2. POSTING-CONTRACTS Event 2 shipped #19337 — re-verify, do not rebuild.
+
+ACK `CASCADE | ACK | GO-13 | CONFLICTS 1-2-4 | GO`

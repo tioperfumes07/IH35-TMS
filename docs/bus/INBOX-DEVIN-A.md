@@ -1,10 +1,7 @@
-# INBOX-DEVIN-A · GO-MASTER LIVE CHROME
+# INBOX-DEVIN-A · GO-13
 
-Hard-refresh. Type the **first load number** in Book Load (grey hint is not in the box). Create NOTHING in USMCA.
+**217 remotes = KEEP.** No glob delete.
 
-1. Book Load Load # clickable.
-2. Money creators empty No. box screenshots.
-3. Coverage Gaps per-coverage columns after GO-02 API.
-4. Bank register clean after GO-11 deploy.
-5. Maint KPI headings after GO-04.
-404 = API lag → Cursor OUTBOX. ACK `DEVIN-A | ACK | GO-MASTER | LIVE-CHROME | GO`
+After healthz ancestor of `218c9fb` (#19341): hard-refresh Book Load. Click white Load #. Type first number (e.g. 13508). Grey hint is not the value. No “unavailable + Retry”. NO-SEAT money.
+
+ACK `DEVIN-A | ACK | GO-13 | KEEP-REMOTES | TYPE-LOAD-NUMBER | GO`

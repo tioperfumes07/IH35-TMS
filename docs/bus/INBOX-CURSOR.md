@@ -1,9 +1,7 @@
-# INBOX-CURSOR · GO-MASTER
+# INBOX-CURSOR · GO-13
 
 ## TOP
-1. **Book Load first number** — this PR: field stays visible + typed number skips mint.
-2. **Deploy** after CC-1 GO-11 merges (owner blocked on deploy). One in-flight.
-3. GO-09 UI leftovers: driver bill, settlement, cash advance empty No. box (`QboDocumentNumberField`).
-4. UNITS / LOADS / TRANSACTIONS ParityTable drills.
-5. GO-04/06 **CC-3 unless you announce taking them back.**
-ACK in OUTBOX. FAST-MERGE.
+1. Book Load UNTYPEABLE #19341 merged. API deploy `dep-dabjc72jnfac73bpph60`. Wait healthz ancestor `218c9fb`. Then leftover number boxes (driver bill / settlement / cash advance).
+2. Coordinate from GO-13. No CI babysit.
+
+ACK in OUTBOX.
