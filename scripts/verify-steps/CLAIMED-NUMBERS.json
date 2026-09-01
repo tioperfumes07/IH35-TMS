@@ -7145,10 +7145,15 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1039,
+  "total_claimed": 1040,
   "10209": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-01",
     "purpose": "verify-three-dates-cleared-date (THREE-DATES-COVERAGE-GAP, owner ruling)"
+  },
+  "10213": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-01",
+    "purpose": "verify-negative-settlement-liability-posted (RULING B, owner ruling)"
   }
 }
