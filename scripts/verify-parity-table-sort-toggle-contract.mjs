@@ -63,11 +63,12 @@ function assert(files) {
   }
 
   // Cascade 2026-08-31 — full-cell hit target (DataTable already had w-full; ParityTable regressed).
-  if (!/inline-flex w-full items-center gap-1/.test(table)) {
+  // ParityTable #19258 — canonical: inline-flex h-full w-full (h-full optional in first gate).
+  if (!/inline-flex(?:\s+h-full)?\s+w-full items-center gap-1/.test(table)) {
     problems.push(
       `${TABLE}: sortable header <button> must use inline-flex h-full w-full (label-only hit target is a silent no-op)`,
     );
-  } else if (!/\bh-full\b/.test(table.match(/column\.sortable[\s\S]{0,800}?onClick=\{\(\) => toggleSort\(key\)\}/)?.[0] ?? "")) {
+  } else if (!/\bh-full\b/.test(table.match(/column\.sortable[\s\S]{0,1200}?onClick=\{\(\) => toggleSort\(key\)\}/)?.[0] ?? "")) {
     problems.push(
       `${TABLE}: sortable header <button> must include h-full (vertical hit target; SWEEP-A)`,
     );
