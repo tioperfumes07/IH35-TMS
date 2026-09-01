@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { formatDateUS } from "../../lib/formatDate";
 
 function cents(n: unknown) {
   const v = Number(n ?? 0);
@@ -11,6 +12,8 @@ function cents(n: unknown) {
 
 type WeekRow = {
   settlement_id: string;
+  settlement_display_id: string | null;
+  period_start: string;
   week_ending: string;
   gross: unknown;
   net: unknown;
@@ -22,21 +25,37 @@ type WeekRow = {
 // (driver-aggregate.service.ts last_4_weeks CTE) never selected driver_settlements.id, so there was no
 // id here to link to. Fixed at the root (added settlement_id to the SQL), not by inventing a client-side
 // workaround.
+//
+// COL-06: the link also used week_ending (the period END date) as its own label, so there was no
+// explicit Settlement # anywhere in this row, and no Period Begin column — added display_id + period_start
+// to the same CTE (driver-aggregate.service.ts) and use the real settlement number as the link label.
 const WEEK_COLUMNS: Array<ParityColumn<WeekRow>> = [
   {
-    key: "week_ending",
-    label: "Week ending",
+    key: "settlement_display_id",
+    label: "Settlement #",
     sortable: true,
     render: (row) =>
       row.settlement_id ? (
         <EntityLink
           kind="settlement"
           id={row.settlement_id}
-          label={entityLabel(row.week_ending || null, row.settlement_id, "Settlement")}
+          label={entityLabel(row.settlement_display_id, row.settlement_id, "Settlement")}
         />
       ) : (
-        String(row.week_ending || "—")
+        "—"
       ),
+  },
+  {
+    key: "period_start",
+    label: "Period Begin",
+    sortable: true,
+    render: (row) => (row.period_start ? formatDateUS(row.period_start) : "—"),
+  },
+  {
+    key: "week_ending",
+    label: "Period End",
+    sortable: true,
+    render: (row) => String(row.week_ending || "—"),
   },
   {
     key: "gross",
@@ -71,6 +90,8 @@ export function SettlementsSection({
     const raw = (settlements.last_4_weeks as Array<Record<string, unknown>>) ?? [];
     return raw.map((w) => ({
       settlement_id: w.settlement_id ? String(w.settlement_id) : "",
+      settlement_display_id: w.settlement_display_id ? String(w.settlement_display_id) : null,
+      period_start: String(w.period_start ?? ""),
       week_ending: String(w.week_ending ?? ""),
       gross: w.gross,
       net: w.net,
