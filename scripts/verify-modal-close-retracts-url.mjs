@@ -42,6 +42,9 @@ export function assertModalCloseRetracts(sources) {
   if (!/onBookPath[\s\S]*?searchParams\.get\("book_load"\)[\s\S]*?setNewLoadOpen\(true\)/.test(bookLoadEffect)) {
     problems.push(`${DISPATCH}: route/query transition effect must open Book Load without a remount`);
   }
+  if (!/bookLoadAutoOpenSuppressedRef\.current/.test(bookLoadEffect)) {
+    problems.push(`${DISPATCH}: route/query transition effect must respect bookLoadAutoOpenSuppressedRef after Cancel`);
+  }
   if (!/next\.delete\("book_load"\)/.test(dispatch)) {
     problems.push(`${DISPATCH}: must delete book_load query param`);
   }
@@ -50,6 +53,9 @@ export function assertModalCloseRetracts(sources) {
   }
   if (!/retractBookLoadUrl/.test(dispatch)) {
     problems.push(`${DISPATCH}: close + create success must share retractBookLoadUrl`);
+  }
+  if (!/openBookLoadModal/.test(dispatch) || !/bookLoadAutoOpenSuppressedRef/.test(dispatch)) {
+    problems.push(`${DISPATCH}: explicit + Book Load must re-arm via openBookLoadModal after URL dismiss`);
   }
 
   if (!/next\.delete\("assign_truck"\)/.test(profile)) {

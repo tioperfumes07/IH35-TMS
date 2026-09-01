@@ -40,7 +40,7 @@ const listBillsQuerySchema = companyQuerySchema.extend({
   vendor_id: z.string().trim().min(1).optional(),
   include_balance: z.coerce.boolean().optional(),
   has_balance: z.coerce.boolean().optional(),
-  status: z.enum(["open", "partial", "paid", "voided", "unpaid"]).optional(),
+  status: z.enum(["open", "partial", "paid", "voided", "unpaid", "active", "all"]).optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   search: z.string().trim().max(200).optional(),
@@ -189,7 +189,12 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
 
     const listOptions = {
-      status: query.data.status === "unpaid" ? ("open" as const) : query.data.status,
+      status:
+        query.data.status === "unpaid"
+          ? ("open" as const)
+          : query.data.status === "all"
+            ? ("all" as const)
+            : query.data.status,
       fromDate: query.data.date_from,
       toDate: query.data.date_to,
       hasBalance: query.data.has_balance,

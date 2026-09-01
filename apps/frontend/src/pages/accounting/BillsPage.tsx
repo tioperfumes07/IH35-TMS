@@ -224,10 +224,12 @@ export function BillsPage() {
   const [highlightedBillId, setHighlightedBillId] = useState<string | null>(() => deepLinkBillId);
   // RPT-155 / RPT-PAR-1: honor deep-link ?status=&vendor_id=&has_balance= so A/P Aging drill
   // (has_balance=true — includes partial) and legacy Pay-now unpaid land pre-filtered.
-  const STATUS_FILTER_VALUES = new Set(["unpaid", "partial", "paid", "voided"]);
+  const STATUS_FILTER_VALUES = new Set(["unpaid", "partial", "paid", "voided", "active", "all"]);
   const initialStatus = searchParams.get("status");
-  const [status, setStatus] = useState<"" | BillStatus | "unpaid">(
-    initialStatus && STATUS_FILTER_VALUES.has(initialStatus) ? (initialStatus as BillStatus | "unpaid") : ""
+  const [status, setStatus] = useState<"" | BillStatus | "unpaid" | "active" | "all">(
+    initialStatus && STATUS_FILTER_VALUES.has(initialStatus)
+      ? (initialStatus as BillStatus | "unpaid" | "active" | "all")
+      : "active"
   );
   const hasBalance = searchParams.get("has_balance") === "true";
   // BILLS-DATERANGE-01: From/To bill_date filter (server-side via listBills date_from/date_to).
@@ -417,7 +419,7 @@ export function BillsPage() {
     },
     empty: {
       category: "" as const,
-      status: "" as const,
+      status: "active" as const,
       vendorId: "",
       dateFrom: "",
       dateTo: "",
@@ -697,7 +699,8 @@ export function BillsPage() {
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="text-gray-600">Status:</span>
           <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1" value={staged.draft.status} onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value as typeof status })}>
-            <option value="">All open items</option>
+            <option value="active">Active (hide voided)</option>
+            <option value="all">All (include voided)</option>
             <option value="unpaid">Unpaid</option>
             <option value="partial">Partial</option>
             <option value="paid">Paid</option>
