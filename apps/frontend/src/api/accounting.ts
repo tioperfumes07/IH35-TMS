@@ -908,6 +908,8 @@ export function listBillPayments(
     date_from?: string;
     date_to?: string;
     include_voided?: boolean;
+    /** SEARCH LAW (SRC-02) — server-side true-field search. */
+    search?: string;
     /** SORT LAW (COL-04) — allowlisted BillPaymentsListPage column key. */
     sort?: string;
     dir?: "asc" | "desc";
@@ -920,6 +922,7 @@ export function listBillPayments(
   if (params.date_from) query.set("date_from", params.date_from);
   if (params.date_to) query.set("date_to", params.date_to);
   if (params.include_voided) query.set("include_voided", "true");
+  if (params.search) query.set("search", params.search);
   if (params.sort) query.set("sort", params.sort);
   if (params.dir) query.set("dir", params.dir);
   if (params.limit !== undefined) query.set("limit", String(params.limit));

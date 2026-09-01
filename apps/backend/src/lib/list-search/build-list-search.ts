@@ -257,3 +257,30 @@ export function billListSearchFields(aliases: {
     { kind: "text", sql: `${b}.memo` },
   ];
 }
+
+/**
+ * Bill-payment list preset — SEARCH LAW / SRC-02 (true fields, not capped-page client haystack).
+ */
+export function billPaymentListSearchFields(aliases: {
+  billPayment?: string;
+  vendorNameExpr: string;
+  billNumberExpr?: string;
+}): ListSearchField[] {
+  const bp = aliases.billPayment ?? "bp";
+  return [
+    { kind: "text", sql: `${bp}.id::text` },
+    { kind: "text", sql: aliases.billNumberExpr ?? "b.bill_number" },
+    { kind: "text", sql: `${bp}.bill_id::text` },
+    { kind: "text", sql: aliases.vendorNameExpr },
+    { kind: "text", sql: `${bp}.vendor_id` },
+    {
+      kind: "amount_cents",
+      sql: `COALESCE(${bp}.amount_cents, ROUND(COALESCE(${bp}.amount, 0) * 100)::integer)`,
+    },
+    { kind: "date", sql: `${bp}.payment_date` },
+    { kind: "status", sql: `${bp}.payment_method` },
+    { kind: "text", sql: `${bp}.reference_number` },
+    { kind: "text", sql: `${bp}.check_number` },
+    { kind: "text", sql: `${bp}.memo` },
+  ];
+}

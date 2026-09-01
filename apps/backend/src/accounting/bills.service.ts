@@ -7,7 +7,7 @@ import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { enqueueTmsBillPushRequested } from "../qbo/tms-bill-push-chain.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
-import { buildListSearchClause, billListSearchFields } from "../lib/list-search/build-list-search.js";
+import { buildListSearchClause, billListSearchFields, billPaymentListSearchFields } from "../lib/list-search/build-list-search.js";
 import { postBillGlIfEnabled } from "./bill-gl.service.js";
 import {
   postSourceTransactionInClientTx,
@@ -165,6 +165,8 @@ type ListBillPaymentsOptions = {
   dateTo?: string;
   /** HIDE-VOIDED-01 — default false (hide revoked). When true, include revoked_at rows. */
   includeVoided?: boolean;
+  /** SEARCH LAW (SRC-02) — server-side true-field search (not capped-page client filter). */
+  search?: string;
   /** SORT LAW (COL-04) — allowlisted BillPaymentsListPage column key. */
   sort?: string;
   dir?: "asc" | "desc";
@@ -1460,6 +1462,17 @@ export async function listBillPayments(
     if (options.dateTo) {
       values.push(options.dateTo);
       where.push(`bp.payment_date <= $${values.length}::date`);
+    }
+    if (options.search?.trim()) {
+      const clause = buildListSearchClause({
+        search: options.search,
+        values,
+        fields: billPaymentListSearchFields({
+          vendorNameExpr: BILL_PAYMENT_VENDOR_NAME_SQL,
+          billNumberExpr: "b.bill_number",
+        }),
+      });
+      if (clause) where.push(clause);
     }
     values.push(options.limit, options.offset);
     const res = await client.query<BillPaymentRow>(
