@@ -8037,7 +8037,7 @@ Source: remeasure at 5e94f941c7 (origin/main). These 77 guards are newly failing
 | verify-factoring-advances-write-role-gated.mjs | CC-1 | OPEN |
 | verify-finance-landing-hub.mjs | CURSOR | OPEN |
 | verify-finance-tabs-overflow-scrollable.mjs | CURSOR | OPEN |
-| verify-healthz-no-raw-error-leak.mjs | CODEX | OPEN |
+| verify-healthz-no-raw-error-leak.mjs | CODEX | FIXED (PR pending) — imported sanitizer is now audited; normal PASS; selftest 4/4; workflow step 1612 |
 | verify-je-type-fk.mjs | CC-2 | OPEN |
 | verify-je-type-inbound-density.mjs | CC-2 | OPEN |
 | verify-join-entity-scoped.mjs | CC-1 | OPEN |

@@ -47,6 +47,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BACKEND_SRC = path.join(ROOT, "apps", "backend", "src");
 const SESSION_MIDDLEWARE = path.join(BACKEND_SRC, "auth", "session-middleware.ts");
+const HEALTH_ERRORS = path.join(BACKEND_SRC, "health", "health-errors.ts");
 const LABEL = "verify-healthz-no-raw-error-leak";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -224,6 +225,11 @@ export function auditRepo() {
     ];
   }
   for (const file of files) problems.push(...auditUnauthHealthSource(read(file), rel(file)));
+  if (!fs.existsSync(HEALTH_ERRORS)) {
+    problems.push(`${rel(HEALTH_ERRORS)} is missing — cannot audit the imported public-error sanitizer.`);
+  } else {
+    problems.push(...auditUnauthHealthSource(read(HEALTH_ERRORS), rel(HEALTH_ERRORS)));
+  }
   return problems;
 }
 
@@ -232,12 +238,16 @@ export function auditRepo() {
 function selftest() {
   const target = path.join(BACKEND_SRC, "health", "health.routes.ts");
   const real = read(target);
+  const helperReal = read(HEALTH_ERRORS);
   const label = rel(target);
+  const helperLabel = rel(HEALTH_ERRORS);
   const failures = [];
 
   // positive control — the shipped source must be clean, or every mutation arm below is meaningless
   const clean = auditUnauthHealthSource(real, label);
   if (clean.length) failures.push(`real source is NOT clean: ${clean.join(" | ")}`);
+  const helperClean = auditUnauthHealthSource(helperReal, helperLabel);
+  if (helperClean.length) failures.push(`real sanitizer source is NOT clean: ${helperClean.join(" | ")}`);
 
   const mutations = [
     {
@@ -252,6 +262,7 @@ function selftest() {
     },
     {
       name: "sanitizer forwards the driver message",
+      source: "helper",
       apply: (s) => s.replace("return HEALTH_ERROR_GENERIC;", "return String((error as Error)?.message);"),
       expect: /forwards the driver text|no bounded generic fallback/,
     },
@@ -262,13 +273,14 @@ function selftest() {
     },
   ];
 
-  for (const { name, apply, expect } of mutations) {
-    const mutated = apply(real);
-    if (mutated === real) {
+  for (const { name, source, apply, expect } of mutations) {
+    const original = source === "helper" ? helperReal : real;
+    const mutated = apply(original);
+    if (mutated === original) {
       failures.push(`SELFTEST INERT: mutation "${name}" changed nothing — it proves nothing.`);
       continue;
     }
-    const hits = auditUnauthHealthSource(mutated, label);
+    const hits = auditUnauthHealthSource(mutated, source === "helper" ? helperLabel : label);
     if (!hits.some((h) => expect.test(h))) {
       failures.push(`SELFTEST FAILED: mutation "${name}" was NOT caught (got: ${hits.join(" | ") || "no problems"})`);
     }

@@ -10,3 +10,4 @@ CODEX | SHIPPED | UPL-06 | PR=#19162@78253f0dcbbc918a8a259525a90ae62dd10adca6 | 
 CODEX | FIXED | DSP-02 | existing product=#19059@a11d118d7275697f607c0756aec80bebace94e78 | current-main=4 independent stop schedule columns | guard=locked-workflow+selftest-20/20 | NEXT=board | GO
 CODEX | FIXED | verify-disp-wire-08-settlement-ping | normal=PASS | root=secondary-pay mutation escaped identifier-anywhere check | selftest=5/5 | NEXT=verify-disp-wire-10-cancel-economics | GO
 CODEX | FIXED | verify-disp-wire-10-cancel-economics | product=#19175 | normal=PASS | selftest=5/5 | workflow=verify-step-2517 | NEXT=board | GO
+CODEX | FIXED | verify-healthz-no-raw-error-leak | root=imported sanitizer escaped audit and mutation was inert | normal=PASS | selftest=4/4 | workflow=verify-step-1612 | NEXT=verify-load-cancellations-report | GO
