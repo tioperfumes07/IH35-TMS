@@ -1,20 +1,18 @@
-# ★ TOP · 2026-09-01T12:50Z · ACK GO-MECH-0901
+# ★ TOP · 2026-09-01T13:00Z · PURGE COMPLETE · NEXT D1
 
-**PASTE:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-09-01-MECHANICAL-WAVE.md`  
-**Register:** `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`  
-**Reply:** `CC-1 | ACK | GO-MECH-0901 | NOW=purge-phase-5 | GO`
+**PURGE DONE** — `docs/reconcile/PURGE-COMPLETE-2026-09-01.md`  
+REAL GL `874a67bcac0aafdc20d25ea5f6ecea7d` held · 27 loads cancelled · 4 policies cancelled · **10 loads held** (real invoice/settlement).
 
-**Unblocked:** `verify-static-ratchet` PASS · `money-pr-local-gate` PASS · FAST-MERGE ON · no Jorge merge · ENV-static push `--no-verify` OK after gate PASS.
+**NOW (serial):**
+1. **10 entangled loads** — void/unlink real invoice or settlement lines, then re-cancel sample loads (table in reconcile doc)
+2. **D1 drivers** 94→19 + reactivate 4 manifest names
+3. **Insurance attach** T163/T174/T156 + trailer assets + ACV
+4. **DSP-05** dispatch assign confirm API
+5. Register **COL-05** · **VIS-01,03** · **UPL-01–03**
+
+**CC-2:** grade TB + confirm fingerprint on prod.
 
 ---
-
-# ★ TOP · 2026-09-01T12:45Z · MECHANICAL + PURGE — NO STAND BY
-
-**GO:** `docs/bus/GO-MECHANICAL-REGISTER-2026-09-01.md` + purge finish.
-
-**Wave 0 parallel:**
-1. **Purge phases 5–6** — script fixed (`cancelLoads` no `db.is_sample_data`); re-run `DATABASE_DIRECT_URL` + `--commit`
-2. **D1 drivers** 94→19 + reactivate 4 manifest names
 3. **Insurance attach** T163/T174/T156 + trailer assets + ACV
 4. **DSP-05** — dispatcher confirm on assign API + owner override audit (was assigned to NOBODY)
 5. **COL-05** Total/Open/Variance money columns
