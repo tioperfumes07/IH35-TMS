@@ -8,8 +8,8 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ComplaintTypeModal } from "./ComplaintTypeModal";
 import { ListsSubNav } from "../ListsSubNav";
-import { STATUS_OPTIONS, statusPillClass, type StatusFilter } from "./shared";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { statusPillClass, type StatusFilter } from "./shared";
+import { CatalogStatusFilterCombobox } from "./CatalogStatusFilterCombobox";
 
 const SEVERITY_LABELS: Record<ComplaintSeverity, string> = {
   low: "Low",
@@ -92,13 +92,7 @@ export function ComplaintTypesListPage() {
       >
         <div className="grid gap-2 border-b border-gray-200 bg-gray-50 p-3 md:grid-cols-3">
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by type code or type name" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
-          <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </SelectCombobox>
+          <CatalogStatusFilterCombobox value={statusFilter} onChange={setStatusFilter} />
         </div>
 
         {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above

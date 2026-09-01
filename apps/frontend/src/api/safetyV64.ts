@@ -49,12 +49,13 @@ export function voidHosViolation(companyId: string, id: string, reason: string) 
 
 export function listDotInspections(
   companyId: string,
-  filters: { driver_id?: string; unit_id?: string; trailer_id?: string; limit?: number; offset?: number } = {}
+  filters: { driver_id?: string; unit_id?: string; trailer_id?: string; outcome?: string; limit?: number; offset?: number } = {}
 ) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (filters.driver_id) qs.set("driver_id", filters.driver_id);
   if (filters.unit_id) qs.set("unit_id", filters.unit_id);
   if (filters.trailer_id) qs.set("trailer_id", filters.trailer_id);
+  if (filters.outcome) qs.set("outcome", filters.outcome);
   if (filters.limit != null) qs.set("limit", String(filters.limit));
   if (filters.offset != null) qs.set("offset", String(filters.offset));
   return apiRequest<{ dot_inspections: Array<Record<string, unknown>>; total_count: number }>(`/api/v1/safety/dot-inspections?${qs.toString()}`);
