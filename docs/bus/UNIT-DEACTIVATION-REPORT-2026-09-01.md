@@ -7,7 +7,7 @@
 | Fact | Evidence |
 |------|----------|
 | `insurance.policy_unit` | Table exists (`asset_id` → `mdata.assets`) |
-| Density | **Sparse / mostly test** (CC-3 OUTBOX: ~4 `policy_unit` rows on 5 test policies; real AL/APD schedule not fully reconciled into `policy_unit`) |
+| Density | **4 rows** live (`insurance.policy_unit`, bypass_rls=lucia, counted 2026-09-01). Prior Cursor report of **0** was wrong (RLS/app-path miss). **4 ≠ coverage of 14–15 power units** — mass deactivate still BLOCKED (would be guessing). |
 | Owner keep | **T144** — keep (leased to 2EMS / pending carrier removal — do **not** deactivate as “uninsured”) |
 | Owner keep + flag | **T163** — keep; coverage-gap / NOT EVIDENCED flag is CC-3 item (AL liability COI pending) |
 | Hard rule | Never deactivate a unit that still has an **active** `policy_unit` row |

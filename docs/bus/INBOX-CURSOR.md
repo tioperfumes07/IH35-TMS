@@ -1,3 +1,15 @@
+# ★ OWNER WALK · STAND BY · 2026-09-01T03:07Z · LIVE=`d870922`
+
+**Allocation:** Owner drives the walk in live Chrome. Cursor FIXES UI/chrome the moment he posts a hop defect. Not queued.
+
+**LIVE CONFIRMED:** `GET /api/v1/healthz/shallow` → `version=d870922` · `git_sha=d87092285105a1c70e99fb8360ee46e99d01a127` · `built_at=2026-09-01T03:02:33Z` · deploy `dep-dab3v4710e5c739pm4d0` status=live. Hard-refresh NOW is valid.
+
+**DO NOT START:** Cascade Void dialog · movable columns · unit mass-deactivate · new audits/maps. Wait for his hop defects.
+
+**Corrections logged:** policy_unit=**4** (not 0); block still correct. 1.6 = PARTIAL (FactoringDetail free-text).
+
+Known walls (CC-1): driver bill auto-mint · settlement approval · PAID hop.
+
 # ★ APPROVED+4 · BUILD · 2026-09-01T02:46Z
 
 Owner approved Cascade Void WITH 4 CHANGES (Cursor agreed with Claude). Design file locked APPROVED.

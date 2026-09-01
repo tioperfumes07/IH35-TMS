@@ -23,7 +23,7 @@ STATUS KEY: **ACTIVE** = a seat is working it now · **QUEUED** = assigned, not 
 | 1.3 | Reversal JEs must inherit `is_sample_data` | CC-1 | **ACTIVE** — blocks the purge |
 | 1.4 | Trial balance identical before/after purge or roll back | CC-2 | **QUEUED** |
 | 1.5 | CASCADE VOID — one place, shows dependency tree, voids linked records together | CURSOR + CC-1 | **NEW** — design posted to owner FIRST |
-| 1.6 | Void reason = DROPDOWN CATALOG, optional memo. No free typing | CURSOR | **DONE** — `catalogs.void_cancel_reasons` + VoidReasonModal |
+| 1.6 | Void reason = DROPDOWN CATALOG, optional memo. No free typing | CURSOR | **PARTIAL** — catalog + VoidReasonModal on invoices/bills/expenses/payments/bill_payments/JE/settlements; **FactoringDetailPage still free-text textarea**; load cancel uses `load_cancellation_reasons` (correct domain). Existing ≠ all surfaces wired. |
 | 1.7 | Void restricted to Owner/Accountant; others greyed + "request from Owner" | CC-1 | **QUEUED** — reuse `identity.workflow_requests` |
 | 1.8 | Multi-select void on EVERY accounting table | CURSOR | **ACTIVE** — still missing on settlements + loads |
 | 1.9 | Bulk pre-validation — show unvoidable rows BEFORE running | CURSOR | **QUEUED** |
@@ -108,7 +108,7 @@ STATUS KEY: **ACTIVE** = a seat is working it now · **QUEUED** = assigned, not 
 
 | # | Requirement | Owner | Status |
 |---|---|---|---|
-| 9.1 | Deactivate trucks not active; leave only insured units | CURSOR | **REPORTED BLOCKED** — `docs/bus/UNIT-DEACTIVATION-REPORT-2026-09-01.md` (policy_unit=0) |
+| 9.1 | Deactivate trucks not active; leave only insured units | CURSOR | **REPORTED BLOCKED** — `docs/bus/UNIT-DEACTIVATION-REPORT-2026-09-01.md` (policy_unit=4) |
 
 ## 10 · PERMISSIONS
 

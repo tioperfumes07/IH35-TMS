@@ -1,3 +1,4 @@
+2026-09-01T03:07Z | LIVE serving SHA=d870922 (dep-dab3v471 live) | STAND BY owner walk | policy_unit=4 (block holds) | 1.6 PARTIAL FactoringDetail free-text | no new audits
 2026-09-01T02:54Z | #19059 board LIVE+History+dates | VOID rename+APPROVED+4 on main | perm wiring in flight | CC-1 void-tree API | CC-3 movable tokens
 2026-09-01T02:46Z | Cascade Void APPROVED+4 locked + VOID UI rename shipping | CC-1 build void-tree API | NEXT=unit-deact+board
 2026-09-01T02:43Z | ACCT-F10262 (#19056) main tip 2ceb344 | VoidReasonModal import fixed — CC-2/CC-3 PUSH NOW | NEXT=cascade-void APPROVED+4 + VOID rename
