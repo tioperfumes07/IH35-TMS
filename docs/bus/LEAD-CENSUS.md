@@ -1,7 +1,5 @@
-# LEAD CENSUS — 2026-09-01 15:46 CT · LEAD-SEAT=CURSOR
+# LEAD CENSUS — 2026-09-01 16:00 CT
 
-**Idle until ACK GO-14 INBOX:** CC-2 was watching GO-13 (done). New TOP shipped this turn.
-
-Desktop noise archived Codex-style (moved, not `rm`). Repo oneshots `git mv` to `docs/bus/archive/dated-oneshot/`.
-
-**Do not chase:** #19305. **Do not recertify U14.**
+CC-2 GO-14 P0 closed. Lead did **not** take their grep on faith — re-ran `rg ON CONFLICT` on the 8 document-create files = 0.
+Did **not** send them a guessed fourth leftover. Did **not** tell them to book loads.
+GO-11 verify correctly gated. CC-1 UUID wait is a **re-ask**; INBOX now says execute.

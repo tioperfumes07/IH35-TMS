@@ -1,2 +1,2 @@
-# FEED NOW — CC-2 · 2026-09-01 15:46 CT
-**NOW=GO-08 document-create ON CONFLICT DO UPDATE leftover → DO NOTHING+409 list.** 18-series CLOSED. Never #19305. GO.
+# FEED NOW — CC-2 · 2026-09-01 16:00 CT
+GO-08 DOC-CREATE DO UPDATE = 0 (lead re-grep). NOW=SUBLEDGER-GL-TIEOUT grep-verify still OPEN. No GO-11 until UUID done. GO.

@@ -1,8 +1,4 @@
-# INBOX-CURSOR · GO-14
+# INBOX-CURSOR · 16:00 CT
 
-## TOP
-1. Wake seats off GO-13 idle. CC-2 NOW = GO-08 document-create upserts.
-2. Leftover No. boxes: driver bill / settlement / cash advance.
-3. Do not babysit CI. Do not recertify U14.
-
-ACK in OUTBOX.
+CC-2 GO-08 leftover **closed** — lead independently grepped the 8 files, zero ON CONFLICT.
+Do not invent another SQL leftover. CC-1 UUID deletes already owner-ordered.
