@@ -1,3 +1,4 @@
+2026-09-01T13:00Z | PURGE-COMPLETE | REAL-GL=874a67bc held | 27 loads + 4 policies | 10 loads held manual | script=#19069 | CC-1→D1+10-loads | CC-2→grade | GO
 2026-09-01T12:50Z | GO-MECH-0901 | registers+xlsx+csv in docs/register | PASTE=docs/lockdown/PASTE-ALL-SEATS-GO-2026-09-01-MECHANICAL-WAVE.md | gate+ratchet PASS | ALL INBOX ACK | FAST-MERGE ON | GO
 2026-09-01T12:45Z | MECHANICAL-REGISTER-FANOUT | 73 items 70 open | GO=docs/bus/GO-MECHANICAL-REGISTER-2026-09-01.md | ALL INBOXes rewritten NO STAND BY | CC-3 PUSH ACCT-F10261+COL-02/03 | CC-1 purge5-6+DSP-05 | CODEX DSP-06-09+PLN | DEVIN-A live verify | CASCADE board rows | Cursor DatePicker+KPI | GO
 2026-09-01T07:05Z | PURGE-WORM-RULING | NO hard DELETE — void/deactivate/cancel is done | CC-1 proceed | verify-static-ratchet PASS on main | CC-3 push insurance P0 first | purge phase4 running | GO

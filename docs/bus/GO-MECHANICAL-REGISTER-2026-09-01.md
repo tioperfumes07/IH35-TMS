@@ -19,7 +19,7 @@
 | ID | Item | Seat | Action |
 |----|------|------|--------|
 | — | CC-3 push ACCT-F10261 insurance bill param | **CC-3** | Rebase `6ae5b91+`, merge P0, dedup Samsara vs #19068 |
-| — | Purge phases 5–6 | **CC-1** | Fixed script in working tree; `DATABASE_DIRECT_URL` + `--commit` |
+| — | Purge phases 5–6 | **CC-1** | **DONE** 2026-09-01 — see `docs/reconcile/PURGE-COMPLETE-2026-09-01.md` |
 | COL-02 | Column drag-reorder | **CC-3** | Build in ParityTable (resize exists; reorder does not) |
 | COL-03 | Column auto-fit | **CC-3** | Double-click header / fit-to-content in ParityTable |
 | CTL-01–03 | UI control law sweep | **CC-3** | Push `cc3-ui-control-law-build`, then grep-sweep all modules |

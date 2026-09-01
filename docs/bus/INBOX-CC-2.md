@@ -1,8 +1,7 @@
-# ★ TOP · 2026-09-01T12:50Z · ACK GO-MECH-0901
+# ★ TOP · 2026-09-01T13:00Z · GRADE PURGE NOW
 
-**PASTE:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-09-01-MECHANICAL-WAVE.md`  
-**Register:** `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`  
-**Reply:** `CC-2 | ACK | GO-MECH-0901 | NOW=purge-TB-grade | GO`
+**Evidence:** `docs/reconcile/PURGE-COMPLETE-2026-09-01.md`  
+**NOW:** per-account REAL-only TB fingerprint = `874a67bcac0aafdc20d25ea5f6ecea7d` unchanged · WIR-02 guard · prod healthz after deploy batch.
 
 ---
 
