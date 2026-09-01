@@ -7818,3 +7818,28 @@ journal_entries.is_sample_data (double-reversal chain) | **CC-2 grade first, the
 none yet — needs CC-2 confirmation the purge's own re-reversal flag is wrong (not the corrected
 middle layer) before any further write | same Neon query as above, 2026-09-01 | **OPEN · routed=
 CC-2 grade → CC-1 execute** |
+
+| **OPEN — GUARD-DESIGN-PARITY-WO-WIZARD-VENDOR-LABELS (CC-2 2026-09-01):** the ENFORCED
+`verify-design-parity.mjs` screen "Create/Edit Work Order Wizard" fails live on origin/main (pre-existing,
+unrelated to any of CC-2's in-flight PRs, confirmed via `git diff origin/main` empty on every file
+involved). Root cause: `CreateWorkOrderModal.tsx:1175`'s inline "+ Add vendor" mini-create
+(`kind="vendor"` → `QuickCreateEntityModal` → `VendorCreateModal` embedded) uses different field
+labels than the locked design contract requires — "Vendor display name" vs required "Company /
+Vendor name"; "Tax ID" vs required "Tax ID (1099)"; the 1099 checkbox reads "Track payments for
+1099 (Form 1099-NEC)" vs required "Track 1099?"; and there is no "Account no." field in
+`VendorCreateModal.tsx` at all (genuinely absent, not just relabeled). CC-2 fixed the guard's stale
+screen→component wiring (`VendorCreateModal.tsx` was missing from the SCREEN_COMPONENTS map
+entirely — same class as the already-documented "Load Book/Edit Wizard" re-map a few lines above it
+in that file), which correctly re-attributed Street/Zip (both genuinely render there) and narrowed
+the false "7 fields lost" down to the 4 real ones above — but relabeling a SHARED component used
+across Lists → Vendor create and everywhere else `VendorCreateModal` renders, or building a new
+Account no. field, is a content/product decision outside GUARD's lane; not attempted. | shared
+`apps/frontend/src/components/vendors/VendorCreateModal.tsx` (renders inside the WO Wizard AND
+every other vendor-create entry point) | `scripts/verify-design-parity.mjs` "Create/Edit Work Order
+Wizard" ENFORCED entry | **CC-3 mechanical/FE** | either relabel VendorCreateModal.tsx's 3
+mismatched labels + add the missing Account no. field (affects every caller, not just the wizard),
+or get owner sign-off to update `docs/design/design-parity-contract.json`'s required_labels for
+this screen to match the deliberate LST-F3368/LST-F3370 shared-chrome consolidation — do not
+silently drop the screen from ENFORCED or weaken the guard to route around this | `node
+scripts/verify-design-parity.mjs` FAIL, reproduced live 2026-09-01; wiring fix landing in
+CC-2's #19103/#19105/#19111 | **OPEN · wiring corrected by CC-2, label/content gap routed to CC-3** |
