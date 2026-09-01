@@ -84,6 +84,13 @@ export type DispatchLoadRow = {
   driver_instructions_file_id?: string | null;
   first_pickup_city: string | null;
   first_delivery_city: string | null;
+  pickup_scheduled_at?: string | null;
+  pickup_time_window_type?: string | null;
+  delivery_time_window_type?: string | null;
+  pickup_appointment_start_at?: string | null;
+  pickup_appointment_end_at?: string | null;
+  delivery_appointment_start_at?: string | null;
+  delivery_appointment_end_at?: string | null;
   // ETA-MODEL BLOCK 1 — two-date delivery model (scheduling/forecast only).
   scheduled_delivery_date?: string | null;
   predicted_delivery_date?: string | null;
@@ -209,6 +216,7 @@ export type LoadsListFilters = {
   operating_company_id?: string[];
   include_progress?: boolean;
   include_live_eta?: boolean;
+  board_scope?: "live" | "history";
 };
 
 type CreateLoadWizardBody = {
@@ -255,6 +263,7 @@ export function listLoads(filters: LoadsListFilters) {
   encodeMulti(query, "operating_company_id", filters.operating_company_id);
   if (filters.include_progress !== undefined) query.set("include_progress", String(filters.include_progress));
   if (filters.include_live_eta !== undefined) query.set("include_live_eta", String(filters.include_live_eta));
+  if (filters.board_scope) query.set("board_scope", filters.board_scope);
   const qs = query.toString();
   return apiRequest<LoadsListResponse>(`/api/v1/mdata/loads${qs ? `?${qs}` : ""}`);
 }

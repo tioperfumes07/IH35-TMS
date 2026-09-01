@@ -73,10 +73,13 @@ if (!/const tableColumns = boardColumns/.test(src)) fail("tableColumns must alia
 // distinct from both the load-level "status" chip and the Risk column's ETA prediction).
 // LOCKED COUNT CHANGE 2026-08-15 (Live ETA / Samsara ETA surface, additive): 17 → 20 columns —
 // "samsara_eta", "on_time", "eta_freshness" appended after "driver_status" (LiveEtaColumns).
-// This 20-column order is the contract going forward.
+// LOCKED COUNT CHANGE 2026-08-31 (Dispatch Board Phase 1, additive): 20 → 24 string-literal columns —
+// "pickup_date", "pickup_time" after "pickup"; "delivery_date", "delivery_time" after "delivery".
+// This 24-column order is the contract going forward.
 const expectedOrder = [
   "unit", "trailer", "load", "driver", "location", "customer",
-  "commodity", "pickup", "delivery", "wo", "cargo_temp", "linehaul", "status_signal",
+  "commodity", "pickup", "pickup_date", "pickup_time", "delivery", "delivery_date", "delivery_time",
+  "wo", "cargo_temp", "linehaul", "status_signal",
   "live_gps", "risk", "status", "driver_status",
   "samsara_eta", "on_time", "eta_freshness",
 ];

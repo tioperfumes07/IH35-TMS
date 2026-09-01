@@ -78,6 +78,20 @@ const statusFilterSchema = z
   }, z.array(loadStatusSchema).max(20).optional())
   .optional();
 
+/** Terminal load statuses — completed/cancelled cohort routed to Loads History (board_scope=history). */
+const TERMINAL_LOAD_STATUSES = [
+  "delivered",
+  "delivered_pending_docs",
+  "completed_docs_received",
+  "invoiced",
+  "paid",
+  "closed",
+  "cancelled",
+  "abandoned",
+  "driver_walkoff",
+  "driver_no_show",
+] as const satisfies readonly z.infer<typeof loadStatusSchema>[];
+
 const listLoadsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
@@ -122,6 +136,7 @@ const listLoadsQuerySchema = z.object({
   ),
   include_progress: z.coerce.boolean().default(false),
   include_live_eta: z.coerce.boolean().default(false),
+  board_scope: z.enum(["live", "history"]).optional(),
 });
 
 const loadStatusTransitionBodySchema = z.object({
@@ -615,6 +630,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       sort,
       include_progress,
       include_live_eta,
+      board_scope,
     } = parsedQuery.data;
     // DISP-FILTER-01: FE URL uses `statuses=` (plural); API historically only documented `status=`.
     // Accept both and merge (dedupe) so pending-docs filters do not 400 or no-op.
@@ -655,6 +671,12 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
       if (status && status.length > 0) {
         values.push(status);
+        filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
+      } else if (board_scope === "live") {
+        values.push(TERMINAL_LOAD_STATUSES);
+        filters.push(`NOT (l.status = ANY($${values.length}::mdata.load_status_enum[]))`);
+      } else if (board_scope === "history") {
+        values.push(TERMINAL_LOAD_STATUSES);
         filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
       }
       if (customer_id) {
@@ -719,7 +741,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
                                        AND load_list_dca.is_authorized = true AND load_list_dca.deactivated_at IS NULL
                                    ))
           LEFT JOIN LATERAL (
-            SELECT city, scheduled_arrival_at
+            SELECT city, scheduled_arrival_at, time_window_type, appointment_start_at, appointment_end_at
             FROM mdata.load_stops
             WHERE load_id = l.id
               AND stop_type = 'pickup'
@@ -728,7 +750,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             LIMIT 1
           ) sp ON true
           LEFT JOIN LATERAL (
-            SELECT city, scheduled_arrival_at
+            SELECT city, scheduled_arrival_at, time_window_type, appointment_start_at, appointment_end_at
             FROM mdata.load_stops
             WHERE load_id = l.id
               AND stop_type = 'delivery'
@@ -763,6 +785,14 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             END AS assigned_primary_driver_name,
             sp.city AS first_pickup_city,
             sd.city AS first_delivery_city,
+            sp.scheduled_arrival_at AS pickup_scheduled_at,
+            sd.scheduled_arrival_at AS delivery_scheduled_at,
+            sp.time_window_type AS pickup_time_window_type,
+            sd.time_window_type AS delivery_time_window_type,
+            sp.appointment_start_at AS pickup_appointment_start_at,
+            sp.appointment_end_at AS pickup_appointment_end_at,
+            sd.appointment_start_at AS delivery_appointment_start_at,
+            sd.appointment_end_at AS delivery_appointment_end_at,
             ${effectiveDeliverySelectSql("l", "sd")},
             df.flag_code, df.display_name AS flag_display_name, df.hex_color AS flag_hex_color,
             EXISTS (
@@ -809,7 +839,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           JOIN catalogs.dispatch_flag_colors df ON df.id = l.dispatch_flag_color_id
                                                 AND df.operating_company_id = l.operating_company_id
           LEFT JOIN LATERAL (
-            SELECT city, scheduled_arrival_at
+            SELECT city, scheduled_arrival_at, time_window_type, appointment_start_at, appointment_end_at
             FROM mdata.load_stops
             WHERE load_id = l.id
               AND stop_type = 'pickup'
@@ -818,7 +848,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             LIMIT 1
           ) sp ON true
           LEFT JOIN LATERAL (
-            SELECT city, scheduled_arrival_at
+            SELECT city, scheduled_arrival_at, time_window_type, appointment_start_at, appointment_end_at
             FROM mdata.load_stops
             WHERE load_id = l.id
               AND stop_type = 'delivery'
