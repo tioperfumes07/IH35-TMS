@@ -32,7 +32,7 @@
  * Guard: scripts/verify-picker-law-no-raw-uuid.mjs (verify-step 1551).
  */
 import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { CappedListNotice } from "../CappedListNotice";
 import { Combobox } from "../Combobox";
 import { CreateDriverModal } from "../drivers/CreateDriverModal";
@@ -174,7 +174,14 @@ export function EntityPicker({
         ...(effectiveEquipmentKind ? { equipmentKind: effectiveEquipmentKind } : {}),
       }),
     enabled: queryEnabled,
+    // DEFECT-6c: clearing search refetches the default roster — keep the last good page so a
+    // transient failure (or stale isError during refetch) does not paint a false red error while
+    // the operator still has valid committed selections on screen.
+    placeholderData: keepPreviousData,
   });
+
+  const rosterLoadFailed =
+    rosterQuery.isError && rosterQuery.data === undefined && !rosterQuery.isPlaceholderData;
 
   const options = useMemo(() => {
     const rows = mergePickerOptionsByValue(
@@ -239,7 +246,7 @@ export function EntityPicker({
           onSearch={config.serverSearch ? setRosterSearch : undefined}
           placeholder={placeholder ?? `Select ${config.label}`}
           loading={rosterQuery.isLoading}
-          error={rosterQuery.isError ? `Couldn't load ${config.label} list` : undefined}
+          error={rosterLoadFailed ? `Couldn't load ${config.label} list` : undefined}
           disabled={disabled || !operatingCompanyId}
           allowClear={allowClear}
           allowAddNew={createOffered ? { label: entityAddNewLabel(kind), onAdd: () => setCreateOpen(true) } : undefined}

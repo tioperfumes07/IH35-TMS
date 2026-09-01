@@ -74,6 +74,7 @@ function mockLoad(overrides: Partial<DispatchLoadRow> = {}): DispatchLoadRow {
 describe("DispatchBoard ETA chip (P5-T20)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.replaceState({}, "", "/dispatch");
   });
 
   it("renders ETA label for in_transit rows after fetch", async () => {
@@ -230,6 +231,38 @@ describe("DispatchBoard ETA chip (P5-T20)", () => {
     await screen.getAllByTestId("dispatch-board-mode-assignment")[0].click();
     fireEvent.click((await screen.findAllByText("T-1"))[0].closest("tr")!);
     expect(onRowClick).not.toHaveBeenCalled();
+  });
+
+  it("renders loads history without live truck roster sections", async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <ToastProvider>
+            <DispatchBoard
+              boardScope="history"
+              loads={[mockLoad({ status: "delivered", load_number: "L-HIST" })]}
+              totalCount={1}
+              limit={50}
+              offset={0}
+              loading={false}
+              sortField="created_at"
+              sortDirection="desc"
+              onSortChange={vi.fn()}
+              onPageChange={vi.fn()}
+              onRowClick={vi.fn()}
+              onExportCsv={vi.fn()}
+              operatingCompanyId="00000000-0000-4000-8000-0000000000bb"
+            />
+          </ToastProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByTestId("dispatch-board-section-history")).toBeTruthy();
+    expect(screen.queryByTestId("dispatch-board-section-awaiting")).toBeNull();
+    expect(screen.queryByTestId("dispatch-board-section-in_shop")).toBeNull();
+    expect(screen.getByText("L-HIST")).toBeTruthy();
   });
 
   it("does not disguise a failed pre-settlement linkage read as no open cycle", async () => {

@@ -49,16 +49,29 @@ describe("isoToDateTimeLocalValue", () => {
 });
 
 describe("DateTimePicker", () => {
-  it("shows the US-formatted value on the trigger, never the raw ISO string", () => {
+  it("shows the US-formatted value on the date input, never the raw ISO string", () => {
     render(<DateTimePicker value="2026-07-25T14:30" onChange={vi.fn()} aria-label="Occurred at" />);
-    const trigger = screen.getByLabelText("Occurred at");
-    expect(trigger).toHaveTextContent("07/25/2026, 2:30 PM");
-    expect(trigger).not.toHaveTextContent("2026-07-25");
+    const dateInput = screen.getByLabelText("Occurred at");
+    expect(dateInput).toHaveValue("07/25/2026");
+    expect(dateInput).not.toHaveValue("2026-07-25");
   });
 
   it("shows the MM/DD/YYYY placeholder when empty", () => {
     render(<DateTimePicker value="" onChange={vi.fn()} aria-label="Occurred at" />);
-    expect(screen.getByLabelText("Occurred at")).toHaveTextContent("MM/DD/YYYY");
+    expect(screen.getByLabelText("Occurred at")).toHaveAttribute("placeholder", "MM/DD/YYYY");
+  });
+
+  it("commits a typed MM/DD/YYYY date on blur", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<DateTimePicker value="2026-07-25T14:30" onChange={onChange} aria-label="Occurred at" />);
+
+    const dateInput = screen.getByLabelText("Occurred at");
+    await user.clear(dateInput);
+    await user.type(dateInput, "08/01/2026");
+    await user.tab();
+
+    expect(onChange).toHaveBeenCalledWith("2026-08-01T14:30");
   });
 
   it("emits a zoneless YYYY-MM-DDTHH:mm string — the native datetime-local contract", async () => {
@@ -66,7 +79,7 @@ describe("DateTimePicker", () => {
     const user = userEvent.setup();
     render(<DateTimePicker value="2026-07-25T14:30" onChange={onChange} aria-label="Occurred at" />);
 
-    await user.click(screen.getByLabelText("Occurred at"));
+    await user.click(screen.getByLabelText("Occurred at calendar"));
     await user.click(screen.getByRole("button", { name: "2026-07-10" }));
 
     expect(onChange).toHaveBeenCalledWith("2026-07-10T14:30");
@@ -77,25 +90,40 @@ describe("DateTimePicker", () => {
     const user = userEvent.setup();
     render(<DateTimePicker value="2026-07-25T23:45" onChange={onChange} aria-label="Occurred at" />);
 
-    await user.click(screen.getByLabelText("Occurred at"));
+    await user.click(screen.getByLabelText("Occurred at calendar"));
     await user.click(screen.getByRole("button", { name: "2026-07-01" }));
 
     expect(onChange).toHaveBeenCalledWith("2026-07-01T23:45");
   });
 
-  it("opens a dialog and closes on Escape (a11y)", async () => {
+  it("opens a dialog and closes on Escape without bubbling to parent handlers", async () => {
+    const parentEscape = vi.fn();
     const user = userEvent.setup();
-    render(<DateTimePicker value="2026-07-25T14:30" onChange={vi.fn()} aria-label="Occurred at" />);
+    render(
+      <div onKeyDown={(e) => e.key === "Escape" && parentEscape()}>
+        <DateTimePicker value="2026-07-25T14:30" onChange={vi.fn()} aria-label="Occurred at" />
+      </div>,
+    );
 
-    const trigger = screen.getByLabelText("Occurred at");
-    expect(trigger).toHaveAttribute("aria-expanded", "false");
-
-    await user.click(trigger);
+    await user.click(screen.getByLabelText("Occurred at calendar"));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(trigger).toHaveAttribute("aria-expanded", "true");
 
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(parentEscape).not.toHaveBeenCalled();
+  });
+
+  it("jumps month and year via selects instead of only arrow buttons", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<DateTimePicker value="2026-07-25T14:30" onChange={onChange} aria-label="Occurred at" />);
+
+    await user.click(screen.getByLabelText("Occurred at calendar"));
+    await user.selectOptions(screen.getByLabelText("Month"), "January");
+    await user.selectOptions(screen.getByLabelText("Year"), "2027");
+    await user.click(screen.getByRole("button", { name: "2027-01-15" }));
+
+    expect(onChange).toHaveBeenCalledWith("2027-01-15T14:30");
   });
 
   it("disables days that are entirely outside min/max, and keeps the boundary day selectable", async () => {
@@ -103,7 +131,7 @@ describe("DateTimePicker", () => {
     render(
       <DateTimePicker value="2026-07-25T14:30" onChange={vi.fn()} aria-label="Occurred at" min="2026-07-10T08:00" />
     );
-    await user.click(screen.getByLabelText("Occurred at"));
+    await user.click(screen.getByLabelText("Occurred at calendar"));
 
     expect(screen.getByRole("button", { name: "2026-07-09" })).toBeDisabled();
     // The boundary day still has in-range minutes (08:00-23:59), so the time field decides.
@@ -115,7 +143,7 @@ describe("DateTimePicker", () => {
     const user = userEvent.setup();
     render(<DateTimePicker value="2026-07-25T14:30" onChange={onChange} aria-label="Occurred at" />);
 
-    await user.click(screen.getByLabelText("Occurred at"));
+    await user.click(screen.getByLabelText("Occurred at calendar"));
     await user.click(screen.getByRole("button", { name: "Clear" }));
 
     expect(onChange).toHaveBeenCalledWith("");

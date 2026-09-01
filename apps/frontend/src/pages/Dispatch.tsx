@@ -26,7 +26,7 @@ import { DispatchSubnav } from "../components/dispatch/DispatchSubnav";
 import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../lib/api-error-message";
-import { companyToday } from "../lib/businessDate";
+import { companyToday, addDaysIso } from "../lib/businessDate";
 import { DISPATCH_SECONDARY_TAB_PATH, dispatchSecondaryTabFromPath } from "../router/route-manifest";
 
 type ViewMode = "overview" | "list" | "kanban" | "units";
@@ -358,10 +358,16 @@ export function DispatchPage({
                 const next = new URLSearchParams(searchParams);
                 next.set("board_scope", "history");
                 next.delete("offset");
+                if (!next.get("date_mode")) next.set("date_mode", "delivery");
+                if (!next.get("date_from") && !next.get("date_to")) {
+                  const today = companyToday();
+                  next.set("date_from", addDaysIso(today, -30));
+                  next.set("date_to", today);
+                }
                 setSearchParams(next);
               }}
             >
-              History
+              Loads history
             </Button>
             <Button
               type="button"
@@ -438,6 +444,7 @@ export function DispatchPage({
         ) : view === "list" ? (
           <DispatchBoard
             loads={loads}
+            boardScope={boardScope}
             operatingCompanyId={defaultCompanyIds[0] ?? ""}
             onBulkComplete={() => void loadsQuery.refetch()}
             activeGeofenceBreachVehicleIds={activeGeofenceBreachVehicleIds}

@@ -97,6 +97,8 @@ import { userFacingApiError } from "../../lib/api-error-message";
 export type DispatchBoardProps = Omit<DispatchListProps, "showEtaColumn"> & {
   operatingCompanyId?: string;
   onBulkComplete?: () => void;
+  /** LIVE = truck-centric sections (awaiting/booked/in shop). HISTORY = completed/cancelled loads only. */
+  boardScope?: "live" | "history";
   /** DB-6-style hook so a Kanban-equivalent "Book load for this unit" action is also reachable from
       List/Table/Assignment views (Unassigned Units band) — matches DispatchKanban's onBookForUnit. */
   onBookForUnit?: (unitId: string) => void;
@@ -235,10 +237,14 @@ function isAssignedLoad(load: DispatchLoadRow) {
 // BOOKED = loads that have a truck (one row per load).
 // IN SHOP = trucks down for maintenance/repair (live fleet-table feed; distinct from the pinned
 //   Fleet OOS strip = trucks fully out of service). A truck appears in exactly one place.
-const SECTION_META: Array<{ key: string; title: string; placeholder?: string }> = [
+const LIVE_SECTION_META: Array<{ key: string; title: string; placeholder?: string }> = [
   { key: "awaiting", title: "Awaiting assignment" },
   { key: "booked", title: "Booked" },
   { key: "in_shop", title: "In shop", placeholder: "No units in shop." },
+];
+
+const HISTORY_SECTION_META: Array<{ key: string; title: string; placeholder?: string }> = [
+  { key: "history", title: "Loads history", placeholder: "No completed or cancelled loads in this date range." },
 ];
 
 // A truck-without-a-load rendered as a board row: Unit (+Driver/Trailer when known) populated, all
@@ -421,6 +427,7 @@ function AssignmentBand({ title, count, children }: { title: string; count: numb
 export function DispatchBoard({
   operatingCompanyId,
   onBulkComplete,
+  boardScope = "live",
   loads,
   onExportCsv,
   totalCount,
@@ -459,12 +466,12 @@ export function DispatchBoard({
     staleTime: 30_000,
   });
 
+  const isHistoryBoard = boardScope === "history";
+
   const unitsWithoutLoadQuery = useQuery({
     queryKey: ["dispatch-board", "units-without-load", companyId],
     queryFn: () => listUnitsWithoutLoad(companyId),
-    // Needed in every mode now — the List/Table "Awaiting assignment" section is truck-derived
-    // (active fleet roster minus loaded trucks), not loads.filter.
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && !isHistoryBoard,
     staleTime: 30_000,
   });
   const unassignedUnits = unitsWithoutLoadQuery.isError ? [] : (unitsWithoutLoadQuery.data?.units ?? []);
@@ -475,7 +482,7 @@ export function DispatchBoard({
       const payload = await listDispatchInShopUnits(companyId);
       return (payload.rows ?? []).filter(isDispatchInShopUnit);
     },
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && !isHistoryBoard,
     staleTime: 60_000,
     refetchInterval: 60_000,
   });
@@ -581,30 +588,34 @@ export function DispatchBoard({
   // Booked = active loads (one row per load); In shop = live maintenance roster (InMaintenance or
   // open WO). Every active truck lands in exactly one place.
   const boardSections = useMemo(() => {
+    const seenLoadIds = new Set<string>();
+    const dedupedLoads = sortedLoads.filter((load) => {
+      if (seenLoadIds.has(load.id)) return false;
+      seenLoadIds.add(load.id);
+      return true;
+    });
+    if (isHistoryBoard) {
+      return HISTORY_SECTION_META.map((meta) => ({
+        ...meta,
+        rows: meta.key === "history" ? dedupedLoads : [],
+      }));
+    }
     const awaitingRows = unassignedUnits
       .filter((unit) => !inShopUnitIds.has(unit.id))
       .map(unitToBoardRow);
     const inShopRows = inShopUnits.map(inShopUnitToBoardRow);
-    // Defensive dedupe by load id — a load must never render twice in Booked (two DISTINCT loads on
-    // the same truck legitimately remain, since they have different ids).
-    const seenBooked = new Set<string>();
-    const bookedRows = sortedLoads.filter((load) => {
-      if (seenBooked.has(load.id)) return false;
-      seenBooked.add(load.id);
-      return true;
-    });
-    return SECTION_META.map((meta) => ({
+    return LIVE_SECTION_META.map((meta) => ({
       ...meta,
       rows:
         meta.key === "awaiting"
           ? awaitingRows
           : meta.key === "booked"
-            ? bookedRows
+            ? dedupedLoads
             : meta.key === "in_shop"
               ? inShopRows
               : [],
     }));
-  }, [unassignedUnits, inShopUnits, inShopUnitIds, sortedLoads]);
+  }, [isHistoryBoard, unassignedUnits, inShopUnits, inShopUnitIds, sortedLoads]);
 
   const from = totalCount === 0 ? 0 : offset + 1;
   const to = Math.min(offset + limit, totalCount);
@@ -614,12 +625,16 @@ export function DispatchBoard({
   // global sort). A bare "Showing X of Y" therefore read as if it described every visible row
   // (e.g. "Showing 1-5 of 5" with 44 rows on screen = 5 loads + 39 awaiting trucks). Scope the
   // pagination count to loads and surface the roster total separately so the numbers reconcile.
-  const awaitingTruckCount = boardSections.find((section) => section.key === "awaiting")?.rows.length ?? 0;
+  const awaitingTruckCount = isHistoryBoard
+    ? 0
+    : (boardSections.find((section) => section.key === "awaiting")?.rows.length ?? 0);
   const loadCountSummary =
     `Showing ${from}-${to} of ${totalCount} ${totalCount === 1 ? "load" : "loads"}` +
-    (awaitingTruckCount > 0
-      ? ` · ${awaitingTruckCount} ${awaitingTruckCount === 1 ? "truck" : "trucks"} awaiting (full roster)`
-      : "");
+    (isHistoryBoard
+      ? " (loads history)"
+      : awaitingTruckCount > 0
+        ? ` · ${awaitingTruckCount} ${awaitingTruckCount === 1 ? "truck" : "trucks"} awaiting (full roster)`
+        : "");
   const hasPrev = offset > 0;
   const hasNext = offset + limit < totalCount;
 
@@ -1153,7 +1168,7 @@ export function DispatchBoard({
                       const rows = section.rows;
                       return (
                         <Fragment key={section.key}>
-                          <tr className="border-b border-gray-200 bg-gray-100">
+                          <tr className="border-b border-gray-200 bg-gray-100" data-testid={`dispatch-board-section-${section.key}`}>
                             <td colSpan={columns.length + 1} className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                               {section.title}
                               <span className="ml-2 rounded-full bg-white px-1.5 text-[10px] font-bold text-gray-500">{rows.length}</span>

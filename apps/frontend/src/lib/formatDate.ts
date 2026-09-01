@@ -114,6 +114,26 @@ export function isoToDateTimeLocalValue(value: string | number | Date | null | u
   );
 }
 
+/**
+ * Parse operator-typed US date text into canonical "YYYY-MM-DD".
+ * Accepts M/D/YYYY, MM/DD/YYYY, and two-digit years (00–49 → 2000s, 50–99 → 1900s).
+ * Returns null when the text is empty or not a valid calendar date.
+ */
+export function parseDateUS(input: string): string | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/.exec(trimmed);
+  if (!m) return null;
+  const month = Number(m[1]);
+  const day = Number(m[2]);
+  let year = Number(m[3]);
+  if (m[3].length === 2) year = year < 50 ? 2000 + year : 1900 + year;
+  if (month < 1 || month > 12 || day < 1) return null;
+  const maxDay = new Date(year, month, 0).getDate();
+  if (day > maxDay) return null;
+  return `${year}-${pad2(month)}-${pad2(day)}`;
+}
+
 // The placeholder every date input should show. Single source of truth so the CI guard can assert it.
 export const DATE_PLACEHOLDER_US = "MM/DD/YYYY";
 
