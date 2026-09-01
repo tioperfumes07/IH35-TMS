@@ -263,12 +263,8 @@ export function PaymentsListPage() {
     <AccountingSubNavWrapper
       title="Payments"
       subtitle="Customer payment recording and application"
-      actions={
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => navigate("/accounting/invoices")}>Invoices</Button>
-          <Button onClick={() => setRecordOpen(true)}>+ Record Payment</Button>
-        </div>
-      }
+      actions={<Button variant="secondary" onClick={() => navigate("/accounting/invoices")}>Invoices</Button>}
+      createControl={<Button onClick={() => setRecordOpen(true)}>+ Record Payment</Button>}
     >
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
@@ -290,16 +286,17 @@ export function PaymentsListPage() {
         maxSelectable={200}
         onSelectionCapExceeded={() => pushToast("You can select up to 200 payments at once.", "error")}
         batchActions={(selected) => (
-          <button
+          <Button
+            size="sm"
+            variant="danger"
             type="button"
-            className="rounded-sm border border-slate-400 px-1.5 py-0.5 text-slate-800"
             onClick={() => {
               setPendingVoidIds(selected.filter((row) => !row.voided_at).map((row) => row.id));
               setBatchVoidOpen(true);
             }}
           >
             Void
-          </button>
+          </Button>
         )}
         emptyText="No payments found."
       />

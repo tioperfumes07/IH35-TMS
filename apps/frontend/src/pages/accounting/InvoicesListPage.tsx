@@ -476,12 +476,12 @@ export function InvoicesListPage() {
     <AccountingSubNavWrapper
       title="Invoices"
       subtitle="Accounts receivable invoice list"
-      actions={
+      createControl={
         <div className="flex items-center gap-2">
           <SelectCombobox
             value={createType}
             onChange={(event) => setCreateType(event.target.value as typeof createType)}
-            className="h-8 rounded-sm border border-gray-300 bg-white px-2 text-[12px]"
+            className="h-8 text-[13px]"
           >
             <option value="from_load">From load</option>
             <option value="driver_damage">Driver damage</option>
@@ -492,7 +492,10 @@ export function InvoicesListPage() {
           </SelectCombobox>
           <Button
             onClick={() => {
-              if (createType === "from_load") { setCreateFlowOpen(true); return; }
+              if (createType === "from_load") {
+                setCreateFlowOpen(true);
+                return;
+              }
               setOpenModalType(createType);
             }}
           >
@@ -523,36 +526,39 @@ export function InvoicesListPage() {
         onSelectionCapExceeded={() => pushToast("You can select up to 200 invoices at once.", "error")}
         batchActions={(selected) => (
           <>
-            <button
+            <Button
+              size="sm"
+              variant="secondary"
               type="button"
-              className="rounded-sm border border-gray-300 px-1.5 py-0.5"
               onClick={() => {
                 setPendingIds(selected.map((row) => row.id));
                 setSentModalOpen(true);
               }}
             >
               Mark sent
-            </button>
-            <button
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
               type="button"
-              className="rounded-sm border border-gray-300 px-1.5 py-0.5"
               onClick={() => {
                 setPendingIds(selected.map((row) => row.id));
                 setFactoredModalOpen(true);
               }}
             >
               Mark factored
-            </button>
-            <button
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
               type="button"
-              className="rounded-sm border border-slate-400 px-1.5 py-0.5 text-slate-800"
               onClick={() => {
                 setPendingIds(selected.map((row) => row.id));
                 setVoidModalOpen(true);
               }}
             >
               Void
-            </button>
+            </Button>
           </>
         )}
         emptyText="No invoices found for the selected filters."

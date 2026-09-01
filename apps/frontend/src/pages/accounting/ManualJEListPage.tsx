@@ -304,7 +304,7 @@ export function ManualJEListPage() {
     <AccountingSubNavWrapper
       title="Manual Journal Entries"
       subtitle="Filter, review, and void posted entries"
-      actions={<Button onClick={() => setCreateOpen(true)} disabled={!companyId}>+ Create</Button>}
+      createControl={<Button onClick={() => setCreateOpen(true)} disabled={!companyId}>+ Create</Button>}
     >
       {/* 0243-g8-5: a query error must surface a retryable banner, not a blank grid / forever spinner. */}
       {entriesQuery.isError ? <ListErrorBanner onRetry={() => void entriesQuery.refetch()} /> : null}

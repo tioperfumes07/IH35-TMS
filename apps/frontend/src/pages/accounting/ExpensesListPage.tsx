@@ -18,6 +18,7 @@ import { RecordExpenseModal } from "../../components/expenses/RecordExpenseModal
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
+import { Button } from "../../components/Button";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
@@ -485,15 +486,10 @@ export function ExpensesListPage() {
     <AccountingSubNavWrapper
       title="Expenses"
       subtitle="Recorded expenses (read-only)"
-      actions={
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          disabled={!companyId}
-          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-60"
-        >
+      createControl={
+        <Button type="button" onClick={() => setCreateOpen(true)} disabled={!companyId}>
           + Create
-        </button>
+        </Button>
       }
     >
       {/* Create = QBO-like right ParityDrawer (owner chrome). /accounting/expenses is the canonical
@@ -629,16 +625,17 @@ export function ExpensesListPage() {
           selectable
         maxSelectable={200}
         batchActions={(selected) => (
-          <button
+          <Button
+            size="sm"
+            variant="danger"
             type="button"
-            className="rounded-sm border border-slate-400 px-1.5 py-0.5 text-slate-800"
             onClick={() => {
               setPendingVoidIds(selected.map((row) => row.id));
               setBatchVoidOpen(true);
             }}
           >
             Void
-          </button>
+          </Button>
         )}
         emptyText="No expenses found for the selected filters."
         />

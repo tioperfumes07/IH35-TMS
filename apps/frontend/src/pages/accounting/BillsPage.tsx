@@ -18,6 +18,7 @@ import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { useToast } from "../../components/Toast";
 import { TasksTab } from "../../components/tasks/TasksTab";
+import { Button } from "../../components/Button";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -730,16 +731,10 @@ export function BillsPage() {
     <AccountingSubNavWrapper
       title="Bills"
       subtitle="Vendor bills with paid balance and partial payment history"
-      actions={
-        <button
-          type="button"
-          data-testid="bills-create-cta"
-          onClick={() => setCreateOpen(true)}
-          disabled={!companyId}
-          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-60"
-        >
+      createControl={
+        <Button type="button" data-testid="bills-create-cta" onClick={() => setCreateOpen(true)} disabled={!companyId}>
           + Create
-        </button>
+        </Button>
       }
       kpiStrip={
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
@@ -817,26 +812,28 @@ export function BillsPage() {
         rowClassName={(bill) => (highlightedBillId === bill.id ? "bg-slate-100" : "")}
         batchActions={(selected) => (
           <>
-            <button
+            <Button
+              size="sm"
+              variant="secondary"
               type="button"
-              className="rounded-sm border border-gray-300 px-1.5 py-0.5"
               onClick={() => {
                 setPendingIds(selected.map((bill) => bill.id));
                 setScheduleModalOpen(true);
               }}
             >
               Mark scheduled
-            </button>
-            <button
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
               type="button"
-              className="rounded-sm border border-slate-400 px-1.5 py-0.5 text-slate-800"
               onClick={() => {
                 setPendingIds(selected.map((bill) => bill.id));
                 setBatchVoidOpen(true);
               }}
             >
               Void
-            </button>
+            </Button>
           </>
         )}
         renderExpanded={(bill) => (
