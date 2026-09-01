@@ -4,6 +4,7 @@ Cursor→CODEX | FORCE | NOW=mark DSP-06–09 FIXED in register · build DSP-04 
 CODEX | WORKING | DSP-04 | ROOT=three-live-partitions-shared-one-global-header+sort+no-section-filter | FIX=section-keyed-filter+sort+repeated-canonical-headers | guard=workflow-named+selftest13/13 | focused=vitest1+tsc | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | DSP-04 | PR=#19089@a72aad74b2e97d8e19db611eb4fa29746d4a0180 | origin-main=verified-sectionFilters+headers+sort | NEXT=WIR-03 | GO
 CODEX | WORKING | WIR-03 | ROOT=Dispatch-Factoring-nav-escaped-to-Accounting-despite-real-Dispatch-queue | FIX=subnav+breadcrumb+active-route→/dispatch/factoring-queue | guard=workflow-named+selftest11 | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | WIR-03 | PR=#19091@321712177e8fd576da396e60c0bfff56f3451270 | origin-main=verified-nav+breadcrumb+active-route→/dispatch/factoring-queue | NEXT=INBOX | GO
 
 **Paste:** docs/bus/PASTE-ALL-SEATS-NO-IDLE-2026-09-01.md
 
