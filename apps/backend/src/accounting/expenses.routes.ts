@@ -15,6 +15,7 @@ import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { listExpenseDuplicateGroups } from "./expense-duplicate.service.js";
 import { nextExpenseDisplayId } from "./display-id.js";
+import { parseOperatorDocumentNumber, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 import { buildListSearchClause, expenseListSearchFields } from "../lib/list-search/build-list-search.js";
 
 export const EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED";
@@ -465,15 +466,37 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    const parsed = companyQuerySchema.extend({ check: z.string().trim().max(40).optional() }).safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
-    const document_number = await withCompanyScope(String(user.uuid), parsed.data.operating_company_id, async (client) => {
+    const payload = await withCompanyScope(String(user.uuid), parsed.data.operating_company_id, async (client) => {
       if (!(await relationExists(client, "accounting.expenses"))) return null;
       if (!(await columnExists(client, "accounting", "expenses", "expense_number"))) return null;
-      return nextExpenseDisplayId(client, parsed.data.operating_company_id);
+      const base = await suggestFromLastSaved(
+        client,
+        {
+          text: `
+            SELECT expense_number AS last_number
+              FROM accounting.expenses
+             WHERE operating_company_id = $1::uuid
+               AND COALESCE(expense_number, '') <> ''
+             ORDER BY created_at DESC NULLS LAST
+             LIMIT 1
+          `,
+          values: [parsed.data.operating_company_id],
+        },
+        () => nextExpenseDisplayId(client, parsed.data.operating_company_id)
+      );
+      if (!parsed.data.check) return base;
+      const check = parseOperatorDocumentNumber(parsed.data.check);
+      if (!check) return { ...base, taken: false };
+      const taken = await client.query(
+        `SELECT 1 FROM accounting.expenses WHERE operating_company_id = $1::uuid AND expense_number = $2 LIMIT 1`,
+        [parsed.data.operating_company_id, check]
+      );
+      return { ...base, taken: Boolean(taken.rows[0]) };
     });
-    if (!document_number) return reply.code(501).send({ error: "accounting_expenses_schema_missing" });
-    return { document_number };
+    if (!payload) return reply.code(501).send({ error: "accounting_expenses_schema_missing" });
+    return payload;
   });
 
   // Law §9 reverse drill-through: expense detail (header + lines + vendor/JE/load/unit/GL ids).

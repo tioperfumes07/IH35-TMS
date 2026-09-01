@@ -1,3 +1,10 @@
+import {
+  DuplicateDocumentNumberError,
+  parseOperatorDocumentNumber,
+} from "../lib/qbo-custom-document-number.js";
+
+export { DuplicateDocumentNumberError };
+
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
@@ -209,4 +216,136 @@ export async function nextExpenseDisplayId(client: Queryable, operatingCompanyId
   );
   const nextNumber = Number(res.rows[0]?.next_number ?? 1);
   return `${prefix}${String(nextNumber).padStart(5, "0")}`;
+}
+
+export async function resolveInvoiceDisplayId(
+  client: Queryable,
+  operatingCompanyId: string,
+  referenceDate: Date,
+  requested?: string | null,
+  autoFallback?: string | null
+): Promise<string> {
+  const manual = parseOperatorDocumentNumber(requested);
+  if (manual) {
+    await withDisplayLock(client, `accounting.invoice.display_id:${operatingCompanyId}`);
+    const taken = await client.query(
+      `
+        SELECT 1
+          FROM accounting.invoices
+         WHERE operating_company_id = $1::uuid
+           AND display_id = $2
+           AND voided_at IS NULL
+         LIMIT 1
+      `,
+      [operatingCompanyId, manual]
+    );
+    if (taken.rows[0]) throw new DuplicateDocumentNumberError("display_id", manual, "invoice");
+    return manual;
+  }
+  const fallback = autoFallback?.trim();
+  if (fallback) return fallback;
+  return nextInvoiceDisplayId(client, operatingCompanyId, referenceDate);
+}
+
+export async function resolvePaymentDisplayId(
+  client: Queryable,
+  operatingCompanyId: string,
+  referenceDate: Date,
+  requested?: string | null
+): Promise<string> {
+  const manual = parseOperatorDocumentNumber(requested);
+  if (manual) {
+    await withDisplayLock(client, `accounting.payment.display_id:${operatingCompanyId}`);
+    const taken = await client.query(
+      `
+        SELECT 1
+          FROM accounting.payments
+         WHERE operating_company_id = $1::uuid
+           AND display_id = $2
+           AND voided_at IS NULL
+         LIMIT 1
+      `,
+      [operatingCompanyId, manual]
+    );
+    if (taken.rows[0]) throw new DuplicateDocumentNumberError("display_id", manual, "payment");
+    return manual;
+  }
+  return nextPaymentDisplayId(client, operatingCompanyId, referenceDate);
+}
+
+export async function resolveBillDisplayId(
+  client: Queryable,
+  operatingCompanyId: string,
+  referenceDate: Date,
+  requested?: string | null
+): Promise<string> {
+  const manual = parseOperatorDocumentNumber(requested);
+  if (manual) {
+    await withDisplayLock(client, `accounting.bill.display_id:${operatingCompanyId}`);
+    const taken = await client.query(
+      `
+        SELECT 1
+          FROM accounting.bills
+         WHERE operating_company_id = $1::uuid
+           AND display_id = $2
+           AND revoked_at IS NULL
+           AND voided_at IS NULL
+         LIMIT 1
+      `,
+      [operatingCompanyId, manual]
+    );
+    if (taken.rows[0]) throw new DuplicateDocumentNumberError("display_id", manual, "bill");
+    return manual;
+  }
+  return nextBillDisplayId(client, operatingCompanyId, referenceDate);
+}
+
+export async function resolveCreditMemoDisplayId(
+  client: Queryable,
+  operatingCompanyId: string,
+  referenceDate: Date,
+  requested?: string | null
+): Promise<string> {
+  const manual = parseOperatorDocumentNumber(requested);
+  if (manual) {
+    await withDisplayLock(client, `accounting.credit_memo.display_id:${operatingCompanyId}`);
+    const taken = await client.query(
+      `
+        SELECT 1
+          FROM accounting.credit_memos
+         WHERE operating_company_id = $1::uuid
+           AND display_id = $2
+         LIMIT 1
+      `,
+      [operatingCompanyId, manual]
+    );
+    if (taken.rows[0]) throw new DuplicateDocumentNumberError("display_id", manual, "credit memo");
+    return manual;
+  }
+  return nextCreditMemoDisplayId(client, operatingCompanyId, referenceDate);
+}
+
+export async function resolveVendorCreditDisplayId(
+  client: Queryable,
+  operatingCompanyId: string,
+  referenceDate: Date,
+  requested?: string | null
+): Promise<string> {
+  const manual = parseOperatorDocumentNumber(requested);
+  if (manual) {
+    await withDisplayLock(client, `accounting.vendor_credit.display_id:${operatingCompanyId}`);
+    const taken = await client.query(
+      `
+        SELECT 1
+          FROM accounting.vendor_credits
+         WHERE operating_company_id = $1::uuid
+           AND display_id = $2
+         LIMIT 1
+      `,
+      [operatingCompanyId, manual]
+    );
+    if (taken.rows[0]) throw new DuplicateDocumentNumberError("display_id", manual, "vendor credit");
+    return manual;
+  }
+  return nextVendorCreditDisplayId(client, operatingCompanyId, referenceDate);
 }

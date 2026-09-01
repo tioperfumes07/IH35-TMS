@@ -1,0 +1,156 @@
+<title>IH35 KPI Drill-Through Spec</title>
+<style>
+:root{
+  --ink:#1a1f36; --ink2:#4a5170; --muted:#8a92ab;
+  --surface:#ffffff; --alt:#f8f8f4; --line:#e5e7eb;
+  --nav:#1a1f36; --accent:#14314f;
+  --ok:#1d6b3f; --okbg:#e6f2e6; --warn:#8a5a06; --warnbg:#fcf3d9;
+  --bad:#9b2c2c; --badbg:#f7e4e4; --neutbg:#eff3f7;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--alt);color:var(--ink);font:14px/1.5 var(--sans)}
+.wrap{max-width:1280px;margin:0 auto;padding:24px 20px 72px}
+h1{font-size:22px;margin:0 0 4px;letter-spacing:-.01em}
+h2{font-size:15px;margin:36px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--accent);letter-spacing:.02em;text-transform:uppercase}
+h3{font-size:13px;margin:22px 0 8px;color:var(--accent);text-transform:uppercase;letter-spacing:.04em}
+.sub{color:var(--ink2);font-size:13px;margin:0 0 18px;max-width:90ch}
+.note{font-size:12px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:14px;margin-bottom:14px}
+.rule{background:var(--neutbg);border-left:3px solid var(--accent);padding:10px 12px;margin:10px 0;font-size:13px}
+.bad{background:var(--badbg);border-left:3px solid var(--bad)}
+.good{background:var(--okbg);border-left:3px solid var(--ok)}
+
+/* ---- KPI ROW ---- */
+.kpisec{background:var(--surface);border:1px solid var(--line);border-radius:3px;overflow:hidden;margin-bottom:14px}
+.kpihead{background:var(--nav);color:#fff;padding:7px 12px;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;display:flex;justify-content:space-between}
+.kpihead span{font-weight:400;opacity:.72;letter-spacing:.02em;text-transform:none}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line)}
+.kpi{background:var(--surface);padding:11px 12px;cursor:pointer;border:0;text-align:left;font:inherit;color:inherit;display:block}
+.kpi:hover{background:var(--neutbg)}
+.kpi .l{font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em}
+.kpi .v{font-size:26px;font-weight:700;margin:3px 0 1px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.kpi .c{font-size:11px;color:var(--muted);line-height:1.35}
+.kpi.on{box-shadow:inset 0 0 0 2px var(--accent);background:var(--neutbg)}
+.kpi .v.w{color:var(--warn)} .kpi .v.b{color:var(--bad)}
+
+/* ---- TABLE ---- */
+table{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface)}
+th{background:var(--nav);color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+   padding:8px 9px;text-align:left;white-space:nowrap;border-right:1px solid rgba(255,255,255,.14);position:relative}
+th.n{text-align:right}
+th::after{content:"";position:absolute;right:0;top:0;bottom:0;width:4px;cursor:col-resize}
+td{padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr:nth-child(even){background:#fafbfc}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:3px}
+.chip{display:inline-block;padding:1px 7px;border-radius:2px;font-size:11px;font-weight:700;white-space:nowrap}
+.c-ok{background:var(--okbg);color:var(--ok)} .c-w{background:var(--warnbg);color:var(--warn)}
+.c-b{background:var(--badbg);color:var(--bad)} .c-n{background:var(--neutbg);color:var(--ink2)}
+.lk{color:var(--accent);font-weight:600;text-decoration:none;border-bottom:1px solid rgba(20,49,79,.3)}
+.mono{font-family:var(--mono);font-size:12px}
+tfoot td{background:var(--warnbg);font-weight:700;border-top:2px solid var(--accent)}
+.cols{font-family:var(--mono);font-size:12px;background:var(--alt);border:1px solid var(--line);padding:9px 11px;border-radius:3px;white-space:pre-wrap;line-height:1.6}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:820px){.two{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+<h1>IH35 — KPI drill-through specification</h1>
+<p class="sub">Every KPI that counts units, loads or transactions opens a real columned table. No KPI opens a page that
+shows something other than what it counted, and no KPI is a dead number. This file is the build spec: the tables below
+are the columns, in order, with the required states. Palette follows <span class="mono">design-tokens.css</span> — no purple, blue or pink, no emoji.</p>
+
+<div class="rule bad"><strong>The defect this replaces.</strong> Today the maintenance row renders seven bare tiles with no section heading and no captions, so the operator cannot tell whether they count units or work orders (they count work orders). And the dispatch overview computes <span class="mono">atRiskLateTotal = atRiskCount + lateCount</span>, double-counting any load that is both, then drills to <span class="mono">/dispatch/at-risk</span> which shows only half of what the tile counted.</div>
+
+<h2>1 · The KPI tile — required anatomy</h2>
+<div class="kpisec">
+  <div class="kpihead">Work orders — open, all statuses except closed <span>Source: maintenance.work_orders · live</span></div>
+  <div class="kpis">
+    <button class="kpi on"><div class="l">Open WOs</div><div class="v">17</div><div class="c">All statuses except closed</div></button>
+    <button class="kpi"><div class="l">Past Due</div><div class="v w">4</div><div class="c">Promised date older than today</div></button>
+    <button class="kpi"><div class="l">Avg Close</div><div class="v">6.2d</div><div class="c">Closed in the last 90 days</div></button>
+    <button class="kpi"><div class="l">Open $</div><div class="v">48,120.00</div><div class="c">Parts + labor on open WOs</div></button>
+    <button class="kpi"><div class="l">Tire Alerts</div><div class="v w">3</div><div class="c">Tread below 4/32in</div></button>
+    <button class="kpi"><div class="l">PM Due</div><div class="v w">6</div><div class="c">Within 1,000 mi or 14 days</div></button>
+    <button class="kpi"><div class="l">DOT O/O</div><div class="v b">2</div><div class="c">Out of service on inspection</div></button>
+  </div>
+</div>
+
+<div class="two">
+<div class="rule"><strong>Required on every tile.</strong><br>
+1. A <strong>section heading bar</strong> naming what the whole row counts and its time window.<br>
+2. A <strong>label</strong>, uppercase, 11px.<br>
+3. The <strong>value</strong>, tabular numerals, semantic colour only when it means attention.<br>
+4. A <strong>caption</strong> stating the exact rule and threshold, read from the service — never invented.<br>
+5. The whole tile is a <strong>button</strong>. A KPI that does not click is a defect.<br>
+6. The <strong>selected</strong> tile shows a 2px inset ring, not a colour tint alone.</div>
+<div class="rule good"><strong>The counting law.</strong> The number on the tile and the row count of the table it opens must be
+<em>identical</em>. If a load is both at-risk and late it is counted once. Before you ship any tile, assert
+<span class="mono">tile.value === drill.rowCount</span> in a test. A tile that disagrees with its own drill-through is a lie on the owner's screen.</div>
+</div>
+
+<h2>2 · Drill-through — UNITS</h2>
+<p class="sub">Used by: Total Units · Active · In Shop · Out of Service · Trucks · Reefers · Flatbeds · Other · PM Due · Tire Alerts · DOT O/O · Fleet Covered.</p>
+<div class="tw"><table>
+<thead><tr><th>Unit #</th><th>Class</th><th>Year / Make / Model</th><th>VIN</th><th>Status</th><th>Driver</th><th class="n">Odometer</th><th class="n">Next PM</th><th>Insurance</th><th class="n">Insured Value</th><th>Location</th></tr></thead>
+<tbody>
+<tr><td><a class="lk" href="#">T147</a></td><td>Truck</td><td>2022 Mack Anthem</td><td class="mono">…NM023604</td><td><span class="chip c-ok">Active</span></td><td>Leonel A. Morales</td><td class="n">418,220</td><td class="n">in 640 mi</td><td><span class="chip c-ok">AL · APD · MTC</span></td><td class="n">37,400.00</td><td>Laredo, TX</td></tr>
+<tr><td><a class="lk" href="#">T163</a></td><td>Truck</td><td>2023 Mack Anthem</td><td class="mono">…PM030370</td><td><span class="chip c-ok">Active</span></td><td>C. Cordova Dominguez</td><td class="n">262,905</td><td class="n"><span class="chip c-w">due</span></td><td><span class="chip c-b">AL missing</span></td><td class="n">42,415.00</td><td>In transit</td></tr>
+<tr><td><a class="lk" href="#">USMCA-APD-25</a></td><td>Reefer</td><td>2016 Wabash</td><td class="mono">…GL965870</td><td><span class="chip c-w">In shop</span></td><td>—</td><td class="n">—</td><td class="n">—</td><td><span class="chip c-n">APD only</span></td><td class="n">12,000.00</td><td>Shop — Laredo</td></tr>
+</tbody>
+<tfoot><tr><td colspan="9">3 units shown · matches tile</td><td class="n">91,815.00</td><td></td></tr></tfoot>
+</table></div>
+<div class="cols">UNITS — column contract
+unit_code · class · year_make_model · vin · status · assigned_driver · odometer_mi
+next_pm (miles or days, whichever is nearer — show the unit) · coverage (AL/APD/MTC chips)
+insured_value_cents · current_location
+Footer: row count + sum(insured_value). Footer must equal the tile.</div>
+
+<h2>3 · Drill-through — LOADS</h2>
+<p class="sub">Used by: Load board · Assignments · At-Risk · Late · Detention · Border · Unassigned · Delivered not invoiced.</p>
+<div class="tw"><table>
+<thead><tr><th>Load #</th><th>Status</th><th>Customer</th><th>W.O. / PO</th><th>Origin</th><th>Destination</th><th>Pickup</th><th>Delivery</th><th>Driver</th><th>Unit</th><th class="n">Loaded mi</th><th class="n">Rate</th><th class="n">RPM</th><th>Invoice</th></tr></thead>
+<tbody>
+<tr><td><a class="lk" href="#">13560</a></td><td><span class="chip c-ok">In transit</span></td><td>Rehmann Transportation</td><td class="mono">001523174</td><td>Keasbey, NJ</td><td>Waxahachie, TX</td><td>09-01 08:00</td><td>09-03 14:00</td><td>C. Cordova</td><td>T163</td><td class="n">1,559.9</td><td class="n">3,600.00</td><td class="n">2.31</td><td><span class="chip c-n">Not cut</span></td></tr>
+<tr><td><a class="lk" href="#">13561</a></td><td><span class="chip c-w">At risk</span></td><td>Semares Forwarding</td><td class="mono">SEM66495</td><td>Laredo, TX</td><td>Medley, FL</td><td>09-01 06:00</td><td>09-02 18:00</td><td>J. L. Infante</td><td>T175</td><td class="n">1,342.0</td><td class="n">4,900.00</td><td class="n">3.65</td><td><span class="chip c-n">Not cut</span></td></tr>
+</tbody>
+<tfoot><tr><td colspan="10">2 loads shown · matches tile</td><td class="n">2,901.9</td><td class="n">8,500.00</td><td class="n">2.93</td><td></td></tr></tfoot>
+</table></div>
+<div class="cols">LOADS — column contract
+load_number · status · customer · customer_wo_number · origin · destination
+pickup_date+time · delivery_date+time · driver · unit · loaded_miles · rate_total · rpm · invoice_state
+At-Risk / Late / Detention add: reason · hours_over · promised_at
+Footer: row count + sum(loaded_miles) + sum(rate) + weighted RPM. Never a straight average of RPM.</div>
+
+<h2>4 · Drill-through — TRANSACTIONS</h2>
+<p class="sub">Used by: Open $ · Open A/R · Open A/P · Unbilled revenue · Factored · Settlements due · any money KPI.</p>
+<div class="tw"><table>
+<thead><tr><th>Number</th><th>Type</th><th>Date</th><th>Party</th><th>Load #</th><th>Memo</th><th class="n">Total</th><th class="n">Open</th><th class="n">Variance</th><th>Status</th><th>Posted</th></tr></thead>
+<tbody>
+<tr><td><a class="lk" href="#">13560</a></td><td>Invoice</td><td>2026-09-03</td><td>Rehmann Transportation</td><td><a class="lk" href="#">13560</a></td><td>Line haul</td><td class="n">3,600.00</td><td class="n">3,600.00</td><td class="n">0.00</td><td><span class="chip c-w">Open</span></td><td><span class="chip c-ok">JE 4412</span></td></tr>
+<tr><td><a class="lk" href="#">13560-01</a></td><td>Expense</td><td>2026-09-02</td><td>Loves</td><td><a class="lk" href="#">13560</a></td><td>Fuel-DEF</td><td class="n">38.93</td><td class="n">0.00</td><td class="n">0.00</td><td><span class="chip c-ok">Paid</span></td><td><span class="chip c-ok">JE 4409</span></td></tr>
+<tr><td><a class="lk" href="#">BILL-1187</a></td><td>Bill</td><td>2026-09-02</td><td>EDSA Insurance Group</td><td>—</td><td>Down payment 1 of 2</td><td class="n">29,000.00</td><td class="n">29,000.00</td><td class="n">0.00</td><td><span class="chip c-w">Open</span></td><td><span class="chip c-b">No JE</span></td></tr>
+</tbody>
+<tfoot><tr><td colspan="6">3 transactions shown · matches tile</td><td class="n">32,638.93</td><td class="n">32,600.00</td><td class="n">0.00</td><td colspan="2"></td></tr></tfoot>
+</table></div>
+<div class="cols">TRANSACTIONS — column contract
+document_number · doc_type · date · party (customer or vendor) · load_number · memo
+total · open · variance (= total − open − applied; RED whenever non-zero)
+status · posted (JE id, or a red "No JE" chip when the document claims posted with no journal entry)
+Footer: row count + sum(total) + sum(open) + sum(variance). Footer must equal the tile.</div>
+
+<div class="rule bad"><strong>The "No JE" chip is not decoration.</strong> Three documents in this system currently claim POSTED with zero journal entries. The chip is how the operator sees that on the same screen as the money, instead of finding it at period close.</div>
+
+<h2>5 · Rules that bind every drill-through</h2>
+<div class="card">
+<div class="rule"><strong>ParityTable only.</strong> Every table above is a <span class="mono">ParityTable</span> — it inherits drag-resize, drag-reorder, auto-fit, the gear and the standard header. Do not hand-roll a <span class="mono">&lt;table&gt;</span>. Forty-six screens already did and none of them can be resized.</div>
+<div class="rule"><strong>Server-side sort and filter.</strong> The header sort must re-query. Sorting the 100 rows already fetched gives the operator the wrong answer on any longer list.</div>
+<div class="rule"><strong>Real date range.</strong> The range control must re-query, not filter rows in memory. "Late arrivals last Tuesday" has to be answerable.</div>
+<div class="rule"><strong>Every identifier is a link.</strong> Unit, load, driver, invoice, JE. A number the operator cannot click is a dead end.</div>
+<div class="rule"><strong>Money is right-aligned, tabular, two decimals.</strong> Variance is red when non-zero and never hidden.</div>
+<div class="rule"><strong>Empty state names the filter.</strong> "No loads at risk in the selected range" — never a blank panel.</div>
+<div class="rule good"><strong>Ship gate.</strong> For each KPI paste: the tile value, the drill row count, and a live screenshot showing them equal. If they differ, the KPI is the bug — do not adjust the table to match it.</div>
+</div>
+</div>

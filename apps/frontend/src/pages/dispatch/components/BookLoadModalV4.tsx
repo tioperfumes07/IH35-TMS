@@ -534,7 +534,6 @@ export function BookLoadModalV4({
     (r: LiveReservation | null) => {
       if (!r) {
         form.setValue("reservation_uuid", "", { shouldDirty: false });
-        form.setValue("reserved_load_number", "", { shouldDirty: false });
         return;
       }
       form.setValue("reservation_uuid", r.reservation_uuid, { shouldDirty: false });
@@ -852,6 +851,8 @@ export function BookLoadModalV4({
         customer_chargeback_requested: values.customer_chargeback_requested,
         customer_chargeback_reason: values.customer_chargeback_reason || undefined,
         live_load_number: values.live_load_number || undefined,
+        load_number: values.reserved_load_number || undefined,
+        requested_load_number: values.reserved_load_number || undefined,
         addToOpenPresettlement: values.addToOpenPresettlement,
         reservation_uuid: values.reservation_uuid || undefined,
         anticipated_chargeback_cents: numOrUndef(values.anticipated_chargeback_cents),

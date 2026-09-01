@@ -381,6 +381,7 @@ type ExpandedInvoiceBody = {
   customer_notes?: string;
   auto_deduct_settlement?: boolean;
   attachment_draft_id?: string;
+  display_id?: string;
 };
 
 function createExpandedInvoice(path: string, operatingCompanyId: string, payload: ExpandedInvoiceBody) {
@@ -1160,6 +1161,7 @@ export function createPayment(
     payment_method: PaymentMethod;
     payment_date: string;
     reference?: string;
+    display_id?: string;
     amount_cents: number;
     deposited_to_account_id?: string;
     notes?: string;

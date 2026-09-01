@@ -54,7 +54,7 @@ export function listVendorCredits(
 
 export function createVendorCredit(
   operatingCompanyId: string,
-  payload: { vendor_id: string; issue_date?: string; amount_cents: number; notes?: string }
+  payload: { vendor_id: string; issue_date?: string; amount_cents: number; notes?: string; display_id?: string }
 ): Promise<VendorCredit> {
   return apiRequest<VendorCredit>(
     `/api/v1/accounting/vendor-credits?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,

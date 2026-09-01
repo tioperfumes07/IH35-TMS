@@ -297,7 +297,11 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
 
   return (
     <div className="space-y-3" data-testid="dispatch-overview-page">
-      {/* Every derived KPI drills into the surface that exposes the exact rows behind the number. */}
+      <section className="space-y-1">
+        <h2 className="text-[10px] font-semibold uppercase tracking-wide text-gray-600">Loads — live board</h2>
+        <p className="text-[11px] text-gray-500">
+          Tile value must equal the drill table row count. At-risk / late counts each load once (union, not a sum).
+        </p>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
         <KpiCard
           label="Active loads"
@@ -332,6 +336,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
           to="/dispatch#units-needing-return"
         />
       </div>
+      </section>
 
       {dashboardQ.isError ? (
         <div data-testid="dispatch-overview-dashboard-error">

@@ -3,7 +3,8 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
-import { nextVendorCreditDisplayId } from "./display-id.js";
+import { DuplicateDocumentNumberError, nextVendorCreditDisplayId, resolveVendorCreditDisplayId } from "./display-id.js";
+import { duplicateDocumentNumberBody, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 import { resolveVendorIdentitySet } from "./vendor-identity.js";
 
 // CUSTVEND-PAR-1: Vendor credit CRUD + apply-to-bill + void.
@@ -23,6 +24,7 @@ const createBodySchema = z.object({
   // silently disappears is the "empty binding / silent skip" defect class.
   coa_account_id: z.string().uuid().optional().nullable(),
   notes: z.string().trim().max(2000).optional().nullable(),
+  display_id: z.string().trim().min(1).max(40).optional(),
 });
 
 const applyBodySchema = z.object({
@@ -117,10 +119,24 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
-    const document_number = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
-      nextVendorCreditDisplayId(client, query.data.operating_company_id)
-    );
-    return { document_number };
+    const check = typeof (req.query as { check?: string }).check === "string" ? String((req.query as { check?: string }).check).trim() : "";
+    return withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      if (check) {
+        const taken = await client.query(
+          `SELECT 1 FROM accounting.vendor_credits WHERE operating_company_id = $1::uuid AND display_id = $2 LIMIT 1`,
+          [query.data.operating_company_id, check]
+        );
+        return { taken: Boolean(taken.rows[0]), suggested: check, derived_from: null, document_number: check };
+      }
+      return suggestFromLastSaved(
+        client,
+        {
+          text: `SELECT display_id AS last_number FROM accounting.vendor_credits WHERE operating_company_id = $1::uuid AND COALESCE(display_id,'') <> '' ORDER BY created_at DESC LIMIT 1`,
+          values: [query.data.operating_company_id],
+        },
+        () => nextVendorCreditDisplayId(client, query.data.operating_company_id)
+      );
+    });
   });
 
   // Law §9 reverse drill-through: a credit must expose every bill it reduced.
@@ -212,7 +228,9 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
       });
     }
 
-    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    let result;
+    try {
+      result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const vendorRes = await client.query(
         `SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [body.data.vendor_id, query.data.operating_company_id]
@@ -224,10 +242,11 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
       // Canonical generator (same advisory-lock + MAX pattern as invoices/payments/credit memos).
       // The private COUNT(*)+1 this replaced took no lock, so two concurrent creates produced the
       // same VC number and one of them died on vendor_credits_operating_company_id_display_id_key.
-      const displayId = await nextVendorCreditDisplayId(
+      const displayId = await resolveVendorCreditDisplayId(
         client,
         query.data.operating_company_id,
-        new Date(`${issueDate}T00:00:00Z`)
+        new Date(`${issueDate}T00:00:00Z`),
+        body.data.display_id
       );
 
       const insRes = await client.query(
@@ -259,6 +278,12 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
 
       return { code: 201 as const, data: credit };
     });
+    } catch (error) {
+      if (error instanceof DuplicateDocumentNumberError) {
+        return reply.code(409).send(duplicateDocumentNumberBody(error));
+      }
+      throw error;
+    }
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
     return reply.code(result.code).send(result.data);

@@ -24,6 +24,12 @@ import {
   voidBillPayment,
 } from "./bills.service.js";
 import { nextBillDisplayId } from "./display-id.js";
+import {
+  DuplicateDocumentNumberError,
+  duplicateDocumentNumberBody,
+  parseOperatorDocumentNumber,
+  suggestFromLastSaved,
+} from "../lib/qbo-custom-document-number.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
 
@@ -168,12 +174,33 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = companyQuerySchema.extend({ check: z.string().trim().max(40).optional() }).safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
-    const document_number = await withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
-      nextBillDisplayId(client, query.data.operating_company_id)
-    );
-    return { document_number };
+    return withCompanyScope(String(user.uuid), query.data.operating_company_id, async (client) => {
+      const base = await suggestFromLastSaved(
+        client,
+        {
+          text: `
+            SELECT COALESCE(bill_number, display_id) AS last_number
+              FROM accounting.bills
+             WHERE operating_company_id = $1::uuid
+               AND COALESCE(bill_number, display_id, '') <> ''
+             ORDER BY created_at DESC NULLS LAST
+             LIMIT 1
+          `,
+          values: [query.data.operating_company_id],
+        },
+        () => nextBillDisplayId(client, query.data.operating_company_id)
+      );
+      if (!query.data.check) return base;
+      const check = parseOperatorDocumentNumber(query.data.check);
+      if (!check) return { ...base, taken: false };
+      const taken = await client.query(
+        `SELECT 1 FROM accounting.bills WHERE operating_company_id = $1::uuid AND (bill_number = $2 OR display_id = $2) AND revoked_at IS NULL AND voided_at IS NULL LIMIT 1`,
+        [query.data.operating_company_id, check]
+      );
+      return { ...base, taken: Boolean(taken.rows[0]) };
+    });
   });
 
   app.get("/api/v1/accounting/bills", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
@@ -435,6 +462,9 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           existing_bill_id: error.existingBillId,
           override_field: "duplicate_override_reason",
         });
+      }
+      if (error instanceof DuplicateDocumentNumberError) {
+        return reply.code(409).send(duplicateDocumentNumberBody(error));
       }
       throw error;
     }

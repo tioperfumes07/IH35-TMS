@@ -20,6 +20,7 @@ import {
 import { DriverNotQualifiedError } from "./driver-qualification.service.js";
 import { distributeLoadInstructions } from "./load-distribution.service.js";
 import { cancelLoadIdReservation, reserveNextLoadId } from "./load-id-reservation.service.js";
+import { parseOperatorDocumentNumber, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
 import {
@@ -219,6 +220,8 @@ const createDispatchLoadBodySchema = z.object({
   customer_chargeback_requested: z.boolean().default(false),
   customer_chargeback_reason: z.string().trim().max(1000).optional(),
   live_load_number: z.string().trim().max(60).optional(),
+  load_number: z.string().trim().min(1).max(40).optional(),
+  requested_load_number: z.string().trim().min(1).max(40).optional(),
   addToOpenPresettlement: z.boolean().optional(),
   reservation_uuid: z.string().uuid().optional(),
   anticipated_chargeback_cents: z.number().int().min(0).optional(),
@@ -493,6 +496,43 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       reserved_until: payload.reservedUntilIso,
       ttl_seconds: payload.ttlSeconds,
     };
+  });
+
+  app.get("/api/v1/dispatch/loads/next-number", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    const query = z
+      .object({
+        operating_company_id: z.string().uuid(),
+        check: z.string().trim().max(40).optional(),
+      })
+      .safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    return withCompanyScope(authUser.uuid, query.data.operating_company_id, async (client) => {
+      const base = await suggestFromLastSaved(
+        client,
+        {
+          text: `
+            SELECT load_number AS last_number
+              FROM mdata.loads
+             WHERE operating_company_id = $1::uuid
+               AND COALESCE(load_number, '') <> ''
+             ORDER BY created_at DESC NULLS LAST
+             LIMIT 1
+          `,
+          values: [query.data.operating_company_id],
+        },
+        async () => "1"
+      );
+      if (!query.data.check) return base;
+      const check = parseOperatorDocumentNumber(query.data.check);
+      if (!check) return { ...base, taken: false };
+      const taken = await client.query(
+        `SELECT 1 FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 LIMIT 1`,
+        [query.data.operating_company_id, check]
+      );
+      return { ...base, taken: Boolean(taken.rows[0]) };
+    });
   });
 
   app.delete("/api/v1/dispatch/loads/reserve-id/:reservation_uuid", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { releaseDispatchLoadReservation, reserveDispatchLoadId } from "../../../../api/dispatch";
+import { QboDocumentNumberField } from "../../../../components/forms/QboDocumentNumberField";
 
 export type LiveReservation = {
   reservation_uuid: string;
@@ -15,6 +16,9 @@ type Props = {
 
 export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props) {
   const [display, setDisplay] = useState<LiveReservation | null>(null);
+  const [manualNumber, setManualNumber] = useState("");
+  const manualNumberRef = useRef("");
+  manualNumberRef.current = manualNumber;
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const reservationRef = useRef<{ companyId: string; reservationId: string } | null>(null);
@@ -41,7 +45,7 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
       }
       reservationRef.current = { companyId: submittedCompanyId, reservationId: r.reservation_uuid };
       setDisplay(r);
-      onUpdateRef.current(r);
+      onUpdateRef.current({ ...r, load_number: manualNumberRef.current.trim() || r.load_number });
       const until = new Date(r.reserved_until).getTime();
       setSecondsLeft(Math.max(0, Math.ceil((until - Date.now()) / 1000)));
     } catch (err) {
@@ -103,11 +107,34 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
         </>
       ) : (
         <>
-          <span style={{ color: "#A8B0C7" }}>Load #</span>
-          <span className="rounded-sm border border-white/20 bg-white/10 px-2 py-0.5 font-mono text-xs normal-case tracking-normal">
-            {display?.load_number ?? "…"}
-          </span>
-          <span style={{ color: display ? "#6EE7B7" : "#A8B0C7" }}>{display ? "● Reserved" : "Reserving…"}</span>
+          <div className="rounded-sm bg-white px-2 py-1 text-left text-slate-800 normal-case tracking-normal">
+          <QboDocumentNumberField
+            label="Load #"
+            value={manualNumber}
+            onChange={(next) => {
+              setManualNumber(next);
+              const current = reservationRef.current;
+              onUpdateRef.current(
+                display
+                  ? { ...display, load_number: next }
+                  : current
+                    ? {
+                        reservation_uuid: current.reservationId,
+                        load_number: next,
+                        reserved_until: display?.reserved_until ?? new Date(Date.now() + 60_000).toISOString(),
+                        ttl_seconds: display?.ttl_seconds ?? 60,
+                      }
+                    : null
+              );
+            }}
+            operatingCompanyId={operatingCompanyId}
+            nextNumberPath="/api/v1/dispatch/loads/next-number"
+            checkPath="/api/v1/dispatch/loads/next-number"
+            fieldName="load"
+            data-testid="qbo-document-number-load"
+          />
+          </div>
+          <span style={{ color: display ? "#6EE7B7" : "#A8B0C7" }}>{display ? "Reserved" : "Reserving…"}</span>
           <span className="ml-auto normal-case tracking-normal" style={{ color: "#A8B0C7" }}>
             {secondsLeft}s
           </span>

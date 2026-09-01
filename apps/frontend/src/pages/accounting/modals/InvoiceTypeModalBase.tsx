@@ -22,6 +22,7 @@ import { addInvoiceLine, patchInvoice } from "../../../api/accounting";
 import { ApiError } from "../../../api/client";
 import { useAuth } from "../../../auth/useAuth";
 import { companyToday } from "../../../lib/businessDate";
+import { QboDocumentNumberField } from "../../../components/forms/QboDocumentNumberField";
 
 type CreditLimitBlock = {
   exposure_cents: number;
@@ -45,6 +46,7 @@ const invoiceModalSchema = z
     line_description: z.string(),
     line_amount_cents: z.number().int().min(0),
     load_id: z.string(),
+    display_id: z.string(),
   })
   .superRefine((value, ctx) => {
     // ACCT-F5051 — driver/vendor typed creates must stamp the real bill-to entity, not the customer.
@@ -87,6 +89,7 @@ type Props = {
     customer_notes?: string;
     attachment_draft_id?: string;
     override_credit_limit?: boolean;
+    display_id?: string;
   }) => Promise<{ id: string; display_id?: string | null }>;
 };
 
@@ -104,6 +107,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   const [notes, setNotes] = useState("");
   const [issueDate, setIssueDate] = useState(companyToday());
   const [dueDate, setDueDate] = useState("");
+  const [displayId, setDisplayId] = useState("");
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
   const [creditLimitBlock, setCreditLimitBlock] = useState<CreditLimitBlock | null>(null);
   const [overrideCreditLimit, setOverrideCreditLimit] = useState(false);
@@ -187,8 +191,9 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
       line_description: lineDescription,
       line_amount_cents: lineAmountCents ?? 0,
       load_id: loadId ?? "",
+      display_id: displayId,
     }),
-    [customerId, billToEntityType, billToEntityId, issueDate, dueDate, notes, incomeAccountId, lineDescription, lineAmountCents, loadId]
+    [customerId, billToEntityType, billToEntityId, issueDate, dueDate, notes, incomeAccountId, lineDescription, lineAmountCents, loadId, displayId]
   );
 
   const {
@@ -215,6 +220,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
           customer_notes: parsed.notes || undefined,
           attachment_draft_id: draftAttachmentEntityId,
           override_credit_limit: overrideCreditLimit || undefined,
+          display_id: parsed.display_id.trim() || undefined,
         });
 
         const loadKey = parsed.load_id.trim() || null;
@@ -268,6 +274,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     setNotes("");
     setIssueDate(companyToday());
     setDueDate("");
+    setDisplayId("");
     setCreditLimitBlock(null);
     setOverrideCreditLimit(false);
     setCreatedInvoice(null);
@@ -350,6 +357,18 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
         }}
       >
         <FormErrorBanner message={invoiceApiError} />
+        <div className="flex justify-start">
+          <QboDocumentNumberField
+            label="Invoice no."
+            value={displayId}
+            onChange={setDisplayId}
+            operatingCompanyId={operatingCompanyId}
+            nextNumberPath="/api/v1/accounting/invoices/next-number"
+            checkPath="/api/v1/accounting/invoices/next-number"
+            fieldName="invoice"
+            data-testid="qbo-document-number-invoice"
+          />
+        </div>
         <div className="grid gap-2 md:grid-cols-2">
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-600">Customer *</label>

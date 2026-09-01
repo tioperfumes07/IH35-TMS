@@ -16,6 +16,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { QboDocumentNumberField } from "../../components/forms/QboDocumentNumberField";
 import { companyToday } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
@@ -313,6 +314,14 @@ export function RecordTransferModal({
             </label>
           ))}
         </fieldset>
+        <QboDocumentNumberField
+          label="Reference number"
+          value={referenceNumber}
+          onChange={setReferenceNumber}
+          operatingCompanyId={operatingCompanyId}
+          fieldName="transfer"
+          data-testid="qbo-document-number-transfer"
+        />
         <label className="block">
           From Account
           <SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={fromAccountId} onChange={(e) => setFromAccountId(e.target.value)}>
@@ -349,10 +358,6 @@ export function RecordTransferModal({
         <label className="block">
           Memo
           <textarea className="mt-1 min-h-20 w-full rounded-sm border border-gray-300 px-2 py-1" value={memo} onChange={(e) => setMemo(e.target.value)} />
-        </label>
-        <label className="block">
-          Reference Number
-          <input className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} />
         </label>
         {!valid ? <p className="text-xs text-slate-700">Select both accounts, use different accounts, and enter an amount greater than zero.</p> : null}
       </div>
