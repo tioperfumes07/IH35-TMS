@@ -108,14 +108,20 @@ export function BillPaymentsListPage() {
   }
   const [ccModalOpen, setCcModalOpen] = useState(false);
 
+  // BANK-SORT-ROLLOUT-ACCT: ?sort=&dir= URL persistence (same as Bills/Expenses).
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
+
   const paymentsQuery = useQuery({
-    queryKey: ["accounting", "bill-payments-list", companyId, vendorId, dateFrom, dateTo, hideVoided],
+    queryKey: ["accounting", "bill-payments-list", companyId, vendorId, dateFrom, dateTo, hideVoided, sortKey, sortDirection],
     queryFn: () =>
       listBillPayments(companyId, {
         vendor_id: vendorId || undefined,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
         include_voided: hideVoided ? undefined : true,
+        // SORT LAW — push URL sort into SQL ORDER BY; never reorder only the silent ≤300 page.
+        sort: sortKey || undefined,
+        dir: sortKey ? sortDirection : undefined,
         limit: 300,
       }),
     enabled: Boolean(companyId),
@@ -188,8 +194,6 @@ export function BillPaymentsListPage() {
   const [batchVoidOpen, setBatchVoidOpen] = useState(false);
 
   const canVoid = user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Accountant";
-  // BANK-SORT-ROLLOUT-ACCT: ?sort=&dir= URL persistence (same as Bills/Expenses).
-  const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   const columns = useMemo<ParityColumn<BillPayment>[]>(
     () => [
@@ -422,6 +426,7 @@ export function BillPaymentsListPage() {
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSortChange={onSortChange}
+        sortMode="external"
         onRowClick={(row) => navigate(`/accounting/bill-payments/${row.id}`)}
         selectable={canVoid}
         maxSelectable={200}

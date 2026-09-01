@@ -70,7 +70,7 @@ Click-verify every PR that claims FIXED; file FAIL if register still red on prod
 | WIR-02 | Driver PDF uses `resolveApiUrl` on main — **verify prod** |
 | DSP-02/03 partial | PU/DEL columns + LIVE/History — **#19059/#19067** |
 
-**Owner audit stale cleared:** DateTimePicker + **DatePicker** typed/Escape/month-year on main (insurance uses DatePicker). Driver PDF + dispatch history fixed. Next Cursor OPEN: COL-04 Bills residue · SEL-03 · SRC-02 · VIS-02.
+**Owner audit stale cleared:** DateTimePicker + **DatePicker** typed/Escape/month-year on main (insurance uses DatePicker). Driver PDF + dispatch history fixed. **COL-04 FIXED** (Invoices+Bills+Payments+BillPayments SORT LAW). Next Cursor OPEN: SRC-02 · VIS-02 · UPL-05.
 
 ---
 

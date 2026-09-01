@@ -165,6 +165,9 @@ type ListBillPaymentsOptions = {
   dateTo?: string;
   /** HIDE-VOIDED-01 — default false (hide revoked). When true, include revoked_at rows. */
   includeVoided?: boolean;
+  /** SORT LAW (COL-04) — allowlisted BillPaymentsListPage column key. */
+  sort?: string;
+  dir?: "asc" | "desc";
   limit: number;
   offset: number;
 };
@@ -378,6 +381,39 @@ const BILL_PAYMENT_BANK_TRANSACTION_ID_SQL = `
     )
   )
 `;
+
+/** Vendor display name expression — same resolve as listBillPayments SELECT (COL-04 sort). */
+const BILL_PAYMENT_VENDOR_NAME_SQL = `(SELECT v.vendor_name
+                  FROM mdata.vendors v
+                 WHERE v.operating_company_id = bp.operating_company_id
+                   AND (v.id::text = bp.vendor_id OR v.qbo_vendor_id = bp.vendor_id)
+                 LIMIT 1)`;
+
+/**
+ * Whitelist only — never interpolate raw client sort into SQL (mirrors BILL_LIST_SORT_SQL).
+ * Keys match BillPaymentsListPage ParityTable column keys.
+ */
+export const BILL_PAYMENT_LIST_SORT_SQL: Record<string, string> = {
+  payment_date: "bp.payment_date",
+  amount_cents: "COALESCE(bp.amount_cents, ROUND(COALESCE(bp.amount, 0) * 100))",
+  payment_method: "bp.payment_method",
+  bill_id: "COALESCE(b.bill_number, bp.bill_id::text)",
+  vendor_id: `COALESCE(${BILL_PAYMENT_VENDOR_NAME_SQL}, bp.vendor_id)`,
+  reference_number: "COALESCE(bp.reference_number, bp.check_number)",
+  memo: "bp.memo",
+  journal_entry_id: "je_link.journal_entry_id",
+  matched_bank_transaction_id: `(${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL})`,
+  is_reconciled: `(${BILL_PAYMENT_IS_RECONCILED_SQL})`,
+};
+
+export function billPaymentListOrderBy(sort: string | undefined, dir: "asc" | "desc" | undefined): string {
+  const expr = sort ? BILL_PAYMENT_LIST_SORT_SQL[sort] : undefined;
+  const direction = dir === "asc" || dir === "desc" ? dir.toUpperCase() : "DESC";
+  if (!expr) {
+    return "bp.payment_date DESC, bp.created_at DESC";
+  }
+  return `${expr} ${direction} NULLS LAST, bp.created_at DESC`;
+}
 
 /**
  * OPEN BALANCE — must match the A/P aging definition.
@@ -1472,7 +1508,7 @@ export async function listBillPayments(
           ON bt.id = ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL}::uuid
          AND bt.operating_company_id = bp.operating_company_id
         WHERE bp.operating_company_id = $1::uuid AND ${where.join(" AND ")}
-        ORDER BY bp.payment_date DESC, bp.created_at DESC
+        ORDER BY ${billPaymentListOrderBy(options.sort, options.dir)}
         LIMIT $${values.length - 1}
         OFFSET $${values.length}
       `,
