@@ -21,7 +21,6 @@ import {
   type CustomerProfileFormValues,
 } from "../components/customers/CustomerProfileForm";
 import { Button } from "../components/Button";
-import { Button } from "../components/Button";
 import { ActionButton } from "../components/shared/ActionButton";
 import { ToolbarSegmentControl } from "../components/layout/ToolbarSegmentControl";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
