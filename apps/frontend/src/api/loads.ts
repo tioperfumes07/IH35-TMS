@@ -395,6 +395,34 @@ export function remintDriverBill(id: string, operatingCompanyId: string, reason:
   >(`/api/v1/mdata/loads/${id}/remint-driver-bill?${query.toString()}`, { method: "POST", body: { reason } });
 }
 
+export type NeedsDriverBillRemintRow = {
+  id: string;
+  load_number: string;
+  status: string;
+  driver_name: string | null;
+  is_sample_data: boolean;
+};
+
+// ACCT-F10164 REMINT SCREEN — the operational half of the same fix: lists every load sitting at
+// rest past delivery-evidence with zero driver_bills, so the affected set is visible without
+// already knowing each load number.
+export function listLoadsNeedingDriverBillRemint(operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ loads: NeedsDriverBillRemintRow[]; total_count: number; real_count: number }>(
+    `/api/v1/mdata/loads/needs-driver-bill-remint?${query.toString()}`
+  );
+}
+
+export type RemintAllOutcome = { load_id: string; load_number: string; outcome: string };
+
+export function remintAllDriverBills(operatingCompanyId: string, reason: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ candidate_count: number; outcomes: RemintAllOutcome[] }>(
+    `/api/v1/mdata/loads/remint-driver-bill/apply-all?${query.toString()}`,
+    { method: "POST", body: { reason } }
+  );
+}
+
 export function cancelLoad(
   id: string,
   cancellationReasonCode: string,

@@ -66,6 +66,7 @@ const DispatchAlertsPage = React.lazy(() => import("../pages/dispatch/DispatchAl
 const LateArrivalsPage = React.lazy(() => import("../pages/dispatch/LateArrivalsPage").then((m) => ({ default: m.LateArrivalsPage })));
 const AtRiskQueuePage = React.lazy(() => import("../pages/dispatch/AtRiskQueuePage").then((m) => ({ default: m.AtRiskQueuePage })));
 const FactoringQueuePage = React.lazy(() => import("../pages/dispatch/FactoringQueuePage").then((m) => ({ default: m.FactoringQueuePage })));
+const DriverBillRemintScreen = React.lazy(() => import("../pages/dispatch/DriverBillRemintScreen").then((m) => ({ default: m.DriverBillRemintScreen })));
 const InTransitIssuesPage = React.lazy(() => import("../pages/dispatch/InTransitIssuesPage").then((m) => ({ default: m.InTransitIssuesPage })));
 const AssignmentHistoryPage = React.lazy(() => import("../pages/dispatch/AssignmentHistoryPage").then((m) => ({ default: m.AssignmentHistoryPage })));
 const OwnerOverrideLogPage = React.lazy(() => import("../pages/dispatch/OwnerOverrideLogPage").then((m) => ({ default: m.OwnerOverrideLogPage })));
@@ -1166,6 +1167,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FactoringQueuePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/driver-bill-remint"
+          element={
+            <ProtectedRoute>
+              <DriverBillRemintScreen />
             </ProtectedRoute>
           }
         />

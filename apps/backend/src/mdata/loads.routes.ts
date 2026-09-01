@@ -1435,6 +1435,129 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     }
   );
 
+  // ACCT-F10164 REMINT SCREEN — bills-never-auto-created (LAW-FIX-INSTANTLY register item 8: 39
+  // delivered loads with zero driver_bills, ~16 real, $14,789.50). The single-load remint route
+  // above (ACCT-F10164) closed the code gap; this closes the OPERATIONAL one — nobody could see
+  // the 16 real affected loads as a set, only click through them one at a time if they already
+  // knew each load number. GET lists every load at rest past delivery-evidence with no
+  // driver_bills row (read-only, no writes, no calls into ensureDriverBillArtifactsForLoad — that
+  // function has no dry-run mode, so "would this resolve" is answerable only by actually running
+  // it, which the POST does). POST reuses the IDENTICAL ensureDriverBillArtifactsForLoad the
+  // single-load route calls — no new mint logic — looped across every candidate load for the
+  // company, one row per load in the response so a still-unresolved rate is visible per load, not
+  // just as an aggregate count.
+  app.get(
+    "/api/v1/mdata/loads/needs-driver-bill-remint",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      const parsedQuery = loadDetailQuerySchema.safeParse(req.query ?? {});
+      if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+      const scopedCompanyId = parsedQuery.data.operating_company_id;
+      await assertCompanyMembership(authUser.uuid, scopedCompanyId);
+
+      const rows = await withCurrentUser(authUser.uuid, (client) =>
+        client.query<{
+          id: string;
+          load_number: string;
+          status: string;
+          driver_name: string | null;
+          is_sample_data: boolean;
+        }>(
+          `
+            SELECT l.id::text, l.load_number, l.status::text,
+                   NULLIF(TRIM(CONCAT(d.first_name, ' ', d.last_name)), '') AS driver_name,
+                   COALESCE(l.is_sample_data, false) AS is_sample_data
+              FROM mdata.loads l
+              LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                        AND d.operating_company_id = l.operating_company_id
+              LEFT JOIN driver_finance.driver_bills db ON db.load_id = l.id
+             WHERE l.operating_company_id = $1::uuid
+               AND l.soft_deleted_at IS NULL
+               AND l.status IN ('delivered_pending_docs', 'completed_docs_received')
+               AND db.id IS NULL
+             ORDER BY l.is_sample_data ASC, l.load_number ASC
+          `,
+          [scopedCompanyId]
+        )
+      );
+
+      return reply.send({
+        loads: rows.rows,
+        total_count: rows.rows.length,
+        real_count: rows.rows.filter((r) => !r.is_sample_data).length,
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/mdata/loads/remint-driver-bill/apply-all",
+    { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      if (!REMINT_ROLES.has(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+      const body = remintBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return sendValidationError(reply, body.error);
+      const parsedQuery = loadDetailQuerySchema.safeParse(req.query ?? {});
+      if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+      const scopedCompanyId = parsedQuery.data.operating_company_id;
+      await assertCompanyMembership(authUser.uuid, scopedCompanyId);
+
+      const result = await withCurrentUser(authUser.uuid, async (client) => {
+        const candidates = await client.query<{ id: string; load_number: string }>(
+          `
+            SELECT l.id::text, l.load_number
+              FROM mdata.loads l
+              LEFT JOIN driver_finance.driver_bills db ON db.load_id = l.id
+             WHERE l.operating_company_id = $1::uuid
+               AND l.soft_deleted_at IS NULL
+               AND l.status IN ('delivered_pending_docs', 'completed_docs_received')
+               AND db.id IS NULL
+             ORDER BY l.load_number ASC
+          `,
+          [scopedCompanyId]
+        );
+
+        const outcomes: Array<{ load_id: string; load_number: string; outcome: string }> = [];
+        for (const row of candidates.rows) {
+          const outcome = await ensureDriverBillArtifactsForLoad(client, {
+            loadId: row.id,
+            operatingCompanyId: scopedCompanyId,
+            actorUserId: authUser.uuid,
+          });
+          outcomes.push({ load_id: row.id, load_number: row.load_number, outcome: outcome.outcome });
+        }
+
+        // LAW: every such edit is TRACEABLE — actor, timestamp, reason, before/after (here: the
+        // full per-load outcome list, not a bare count, so a later audit can see exactly which
+        // loads minted and which stayed skipped and why).
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "mdata.loads.driver_bill_remint_all_attempted",
+          {
+            resource_type: "mdata.loads",
+            operating_company_id: scopedCompanyId,
+            actor_role: authUser.role,
+            reason: body.data.reason,
+            candidate_count: candidates.rows.length,
+            minted_count: outcomes.filter((o) => o.outcome === "minted").length,
+            skipped_count: outcomes.filter((o) => o.outcome === "skipped_no_pay_rate").length,
+            outcomes,
+          },
+          "info",
+          "ACCT-F10164-REMINT-ALL"
+        );
+
+        return { candidate_count: candidates.rows.length, outcomes };
+      });
+
+      return reply.send(result);
+    }
+  );
+
   app.patch("/api/v1/mdata/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return reply;
