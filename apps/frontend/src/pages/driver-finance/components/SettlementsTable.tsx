@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { ReactNode } from "react";
 import type { SettlementListRow } from "../../../api/driverFinance";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
@@ -12,6 +13,10 @@ type Props = {
   onOpen: (id: string) => void;
   /** SETL-S01 — ParityTable emptyText only when settled (never mid-fetch). */
   loading?: boolean;
+  selectable?: boolean;
+  batchActions?: (selected: SettlementListRow[]) => ReactNode;
+  maxSelectable?: number;
+  onSelectionCapExceeded?: () => void;
 };
 
 function statusClass(status: SettlementListRow["status"]) {
@@ -22,7 +27,15 @@ function statusClass(status: SettlementListRow["status"]) {
   return "bg-gray-100 text-gray-700";
 }
 
-export function SettlementsTable({ rows, onOpen, loading = false }: Props) {
+export function SettlementsTable({
+  rows,
+  onOpen,
+  loading = false,
+  selectable = false,
+  batchActions,
+  maxSelectable,
+  onSelectionCapExceeded,
+}: Props) {
   // BANK-SORT-ROLLOUT-OPS — ?sort=/?dir= URL persistence via the shared useUrlSort hook
   // (BANK-SORT-ROLLOUT-ACCT), same contract as the dispatch board and fleet/WO lists so a
   // shared/bookmarked settlements link preserves the chosen column sort.
@@ -192,6 +205,10 @@ export function SettlementsTable({ rows, onOpen, loading = false }: Props) {
       sortDirection={sortDirection}
       onSortChange={onSortChange}
       enableColumnResize
+      selectable={selectable}
+      batchActions={batchActions}
+      maxSelectable={maxSelectable}
+      onSelectionCapExceeded={onSelectionCapExceeded}
     />
   );
 }

@@ -20,6 +20,8 @@ type Props = {
   operatingCompanyId: string;
   loadId?: string | null;
   loadNumber?: string | null;
+  /** Bulk cancel — same reason/notes apply once to N selected loads. */
+  affectedCount?: number;
   onClose: () => void;
   onSubmit: (payload: {
     // Canonical backend cancel contract (cancel-load.routes preValidation hook requires BOTH):
@@ -32,7 +34,15 @@ type Props = {
   }) => Promise<void>;
 };
 
-export function CancelLoadModal({ open, operatingCompanyId, loadId, loadNumber, onClose, onSubmit }: Props) {
+export function CancelLoadModal({
+  open,
+  operatingCompanyId,
+  loadId,
+  loadNumber,
+  affectedCount,
+  onClose,
+  onSubmit,
+}: Props) {
   const [reasonCode, setReasonCode] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [billable, setBillable] = useState(false);
@@ -106,8 +116,17 @@ export function CancelLoadModal({ open, operatingCompanyId, loadId, loadNumber, 
     onClose();
   };
 
+  const batchN = affectedCount && affectedCount > 1 ? affectedCount : null;
+  const modalTitle = batchN ? `Cancel ${batchN} loads` : "Cancel Load";
+
   return (
-    <Modal open={open} onClose={guardedClose} title="Cancel Load">
+    <Modal open={open} onClose={guardedClose} title={modalTitle}>
+      {batchN ? (
+        <p className="mb-2 text-sm text-slate-600" data-testid="cancel-load-modal-batch-note">
+          Reason and note apply once to all {batchN} selected loads. Fail-stop: one blocked row rolls back the
+          whole batch.
+        </p>
+      ) : null}
       {loadId ? (
         <div className="mb-2 text-xs text-slate-600" data-testid="cancel-load-modal-entitylinks">
           Load:{" "}

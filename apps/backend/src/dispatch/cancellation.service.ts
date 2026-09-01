@@ -93,25 +93,30 @@ export async function writeLoadCancellationRecord(
   return cancellation;
 }
 
-export async function cancelLoad(
+export type CancelLoadInput = {
+  operating_company_id: string;
+  load_id: string;
+  reason_code: string;
+  cancellation_notes: string;
+  billable_to_customer?: boolean;
+  cancellation_charge_cents?: number;
+};
+
+type CancelLoadClient = {
+  query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
+};
+
+/** Client-accepting cancel — used by single POST and bulk fail-stop (same txn). */
+export async function cancelLoadInClientTx(
+  client: CancelLoadClient,
   userId: string,
   role: string,
-  input: {
-    operating_company_id: string;
-    load_id: string;
-    reason_code: string;
-    cancellation_notes: string;
-    billable_to_customer?: boolean;
-    cancellation_charge_cents?: number;
-  }
+  input: CancelLoadInput
 ) {
   if (!input.cancellation_notes || input.cancellation_notes.trim().length < 20) {
     throw new Error("E_CANCELLATION_NOTES_MIN_20");
   }
-
-  return withCurrentUser(userId, async (client) => {
-    await setScopedCompanyContext(client, userId, input.operating_company_id);
-    try {
+  try {
       const loadRes = await client.query(
         `
           SELECT id, status
@@ -416,24 +421,27 @@ export async function cancelLoad(
         cancellation_id: cancellation.id,
         status: pendingOwnerApproval ? "pending_owner_approval" : "cancelled",
       };
-    } catch (error) {
-      throw translateCancellationDbError(error);
-    }
+  } catch (error) {
+    throw translateCancellationDbError(error);
+  }
+}
+
+export async function cancelLoad(
+  userId: string,
+  role: string,
+  input: CancelLoadInput
+) {
+  if (!input.cancellation_notes || input.cancellation_notes.trim().length < 20) {
+    throw new Error("E_CANCELLATION_NOTES_MIN_20");
+  }
+
+  return withCurrentUser(userId, async (client) => {
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
+    return cancelLoadInClientTx(client, userId, role, input);
   });
 }
 
-/**
- * FAIL-V1: a cancel that trips a void-state CHECK surfaced the raw Postgres constraint name to the
- * user — `invoices_void_state_authoritative` tells a dispatcher nothing, and it hid the fact that the
- * failure was a MONEY-cascade bug rather than anything about their cancellation. Both halves of the
- * void are now written together above, so this path should be unreachable for that constraint; it
- * stays because "unreachable" is exactly what was believed before — the failure was INTERMITTENT, a
- * retry succeeded, and an intermittent fault is precisely the kind that returns. The next void-state
- * divergence should announce itself in words instead of a constraint name.
- *
- * Only the void-state constraints are translated. Every other error is rethrown untouched — swallowing
- * unknown database errors behind a friendly string is how a real failure becomes invisible.
- */
+
 export function translateCancellationDbError(error: unknown): unknown {
   const constraint = (error as { constraint?: string } | null)?.constraint;
   const code = (error as { code?: string } | null)?.code;

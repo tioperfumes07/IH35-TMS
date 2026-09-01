@@ -65,6 +65,7 @@ import {
   useBulkSelection,
 } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
+import { CancelLoadModal } from "../../components/dispatch/CancelLoadModal";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { dataTableErrorState } from "../../lib/tableError";
@@ -124,7 +125,7 @@ const LOAD_TRANSITION_OPTIONS = [
   { value: "in_transit", label: "Mark in transit" },
   { value: "delivered_pending_docs", label: "Mark delivered (pending docs)" },
   { value: "completed_docs_received", label: "Mark docs received" },
-  { value: "cancelled", label: "Cancel load" },
+  // Cancel is NOT a set_status transition — use Cancel loads → cancelLoadInClientTx.
 ] as const;
 
 const BOARD_MODES: Array<{ id: BoardMode; label: string; testId: string }> = [
@@ -404,6 +405,7 @@ export function DispatchBoard({
   const queryClient = useQueryClient();
   const [boardMode, setBoardModeState] = useState<BoardMode>(readBoardModeFromLocation);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [pendingTransition, setPendingTransition] = useState<string>(LOAD_TRANSITION_OPTIONS[0].value);
   const [rowOverrides, setRowOverrides] = useState<Record<string, RowOverride>>({});
   const [quickAssignLoad, setQuickAssignLoad] = useState<BoardLoad | null>(null);
@@ -629,6 +631,47 @@ export function DispatchBoard({
     anchor.download = `dispatch-loads-selected-${companyToday()}.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
+  };
+
+  const runCancelBulk = async (payload: {
+    reason_code: string;
+    cancellation_notes: string;
+    billable_to_customer: boolean;
+    cancellation_charge_cents?: number;
+  }) => {
+    if (!companyId) {
+      pushToast("Select an operating company before bulk updates.", "error");
+      return;
+    }
+    const ids = Array.from(selection.selectedIds);
+    setCancelModalOpen(false);
+    try {
+      await bulk.runBulk(
+        {
+          domain: "dispatch",
+          resource: "loads",
+          ids,
+          action: "cancel",
+          payload: {
+            reason_code: payload.reason_code,
+            cancellation_notes: payload.cancellation_notes,
+            billable_to_customer: payload.billable_to_customer,
+            ...(payload.cancellation_charge_cents != null
+              ? { cancellation_charge_cents: payload.cancellation_charge_cents }
+              : {}),
+          },
+          reason: payload.cancellation_notes,
+          operatingCompanyId: companyId,
+          invalidateKeys: [["loads"]],
+        },
+        () => {
+          selection.clear();
+          onBulkComplete?.();
+        }
+      );
+    } catch (error) {
+      pushToast(userFacingApiError(error, "Bulk load cancel failed"), "error");
+    }
   };
 
   const runStatusBulk = async (reason?: string) => {
@@ -1337,6 +1380,11 @@ export function DispatchBoard({
             label: "Set status",
             onClick: () => setStatusModalOpen(true),
           },
+          {
+            id: "cancel-loads",
+            label: "Cancel loads",
+            onClick: () => setCancelModalOpen(true),
+          },
         ]}
         onClear={selection.clear}
       />
@@ -1361,7 +1409,7 @@ export function DispatchBoard({
         actionLabel="Set load status"
         affectedCount={selection.count}
         requiresReason
-        description="Apply a dispatch status transition to selected loads. Invalid transitions are reported per row."
+        description="Apply a dispatch status transition to selected loads. Invalid transitions are reported per row. To cancel loads, use Cancel loads (real cancellation service)."
         payloadFields={
           <label className="block text-sm text-gray-700">
             Transition
@@ -1380,6 +1428,21 @@ export function DispatchBoard({
         }
         onCancel={() => setStatusModalOpen(false)}
         onConfirm={({ reason }) => void runStatusBulk(reason)}
+      />
+
+      <CancelLoadModal
+        open={cancelModalOpen}
+        operatingCompanyId={companyId}
+        affectedCount={selection.count}
+        onClose={() => setCancelModalOpen(false)}
+        onSubmit={async (payload) => {
+          await runCancelBulk({
+            reason_code: payload.reason_code,
+            cancellation_notes: payload.cancellation_notes,
+            billable_to_customer: payload.billable_to_customer,
+            cancellation_charge_cents: payload.cancellation_charge_cents,
+          });
+        }}
       />
 
       <BulkProgressDialog

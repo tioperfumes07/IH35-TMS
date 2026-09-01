@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
-import { listSettlements, getOpenDriverBills, type OpenDriverBill } from "../../api/driverFinance";
+import { listSettlements, getOpenDriverBills, type OpenDriverBill, type SettlementListRow } from "../../api/driverFinance";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -18,6 +18,11 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
+import { BulkProgressDialog } from "../../components/bulk/BulkProgressDialog";
+import { VoidReasonModal } from "../accounting/VoidReasonModal";
+import { useToast } from "../../components/Toast";
+import { bulkRowLabelsFromRows } from "../../components/bulk/bulkRowLabels";
 
 type FocusFilter = "debt" | "pending_acks" | "held" | null;
 type PaymentStateFilter =
@@ -38,6 +43,11 @@ export function SettlementsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const [searchParams, setSearchParams] = useSearchParams();
   const companyId = selectedCompanyId ?? "";
+  const { pushToast } = useToast();
+  const bulk = useEntityBulkAction();
+  const [reverseOpen, setReverseOpen] = useState(false);
+  const [pendingReverseIds, setPendingReverseIds] = useState<string[]>([]);
+  const [pendingReverseLabels, setPendingReverseLabels] = useState<Record<string, string>>({});
   const activeTab = searchParams.get("tab") === "disputes" ? "disputes" : "settlements";
   const selectedSettlementId = searchParams.get("settlement_id");
   // Driver profile "Full settlements" → /settlements?driver_id= (PreserveSearchNavigate keeps param).
@@ -363,11 +373,74 @@ export function SettlementsPage() {
       <SettlementsTable
         rows={focusedSettlements}
         loading={listQuery.isPending || (listQuery.isFetching && focusedSettlements.length === 0)}
+        selectable
+        maxSelectable={200}
+        onSelectionCapExceeded={() => pushToast("You can select up to 200 settlements at once.", "error")}
+        batchActions={(selected) => (
+          <Button
+            size="sm"
+            variant="danger"
+            type="button"
+            onClick={() => {
+              setPendingReverseIds(selected.map((row) => row.id));
+              setPendingReverseLabels(
+                bulkRowLabelsFromRows(selected, (row: SettlementListRow) =>
+                  entityLabel(row.display_id, row.id, "Settlement")
+                )
+              );
+              setReverseOpen(true);
+            }}
+          >
+            {`Reverse ${selected.length} selected`}
+          </Button>
+        )}
         onOpen={(id) => {
           const next = new URLSearchParams(searchParams);
           next.set("settlement_id", id);
           setSearchParams(next);
         }}
+      />
+
+      <VoidReasonModal
+        open={reverseOpen}
+        title="Reverse settlements"
+        entityRef={`${pendingReverseIds.length} selected`}
+        minLength={10}
+        onClose={() => setReverseOpen(false)}
+        onSubmit={async (reason) => {
+          if (!companyId) return;
+          setReverseOpen(false);
+          await bulk.runBulk(
+            {
+              domain: "driver-finance",
+              resource: "settlements",
+              ids: pendingReverseIds,
+              action: "reverse",
+              reason,
+              operatingCompanyId: companyId,
+              invalidateKeys: [
+                ["driver-finance", "settlements", companyId],
+                ["driver-finance", "settlements-kpi-base", companyId],
+              ],
+              rowLabels: pendingReverseLabels,
+            },
+            () => {
+              setPendingReverseIds([]);
+              setPendingReverseLabels({});
+            }
+          );
+        }}
+      />
+
+      <BulkProgressDialog
+        open={bulk.progressOpen}
+        loading={bulk.progressLoading}
+        requested={bulk.progress.requested}
+        succeeded={bulk.progress.succeeded}
+        failed={bulk.progress.failed}
+        bulk_call_id={bulk.progress.bulk_call_id}
+        onClose={() => bulk.setProgressOpen(false)}
+        resolveRowHref={(id) => `/driver-finance/settlements?settlement_id=${encodeURIComponent(id)}`}
       />
         </>
       ) : (

@@ -18,12 +18,21 @@ import {
 import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
 // ACCT-F166 — settlement half of a delivery; see the call site for why this route needs it.
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
+import { cancelLoadInClientTx } from "./cancellation.service.js";
+import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 
 // Transitions that fire escrow-proposal + settlement side-effects on the per-load endpoint
 // (PATCH /dispatch/loads/:id/status). Bulk set_status does NOT run those financial hooks, so moving a
 // load into one of these states in bulk would silently skip the escrow proposal and the settlement ping.
 // Route them to the per-load action instead of losing the side-effects. (financial hooks are Jorge-gated)
-const PER_LOAD_ONLY_TRANSITIONS = new Set<DispatchStatus>(["abandoned", "driver_walkoff", "driver_no_show"]);
+// "cancelled" is also fenced — status flip without dispatch.load_cancellations is VOID-CANCEL-NOT-VOID;
+// use action "cancel" → cancelLoadInClientTx.
+const PER_LOAD_ONLY_TRANSITIONS = new Set<DispatchStatus>([
+  "abandoned",
+  "driver_walkoff",
+  "driver_no_show",
+  "cancelled",
+]);
 
 const setStatusPayloadSchema = z.object({
   transition: dispatchStatusSchema,
@@ -37,15 +46,63 @@ const markFactoredPayloadSchema = z.object({
 
 const markPaidPayloadSchema = z.object({});
 
+const cancelPayloadSchema = z.object({
+  reason_code: z.string().trim().min(1).max(100),
+  cancellation_notes: z.string().trim().min(20),
+  billable_to_customer: z.boolean().optional(),
+  cancellation_charge_cents: z.number().int().min(0).optional(),
+});
+
 type LoadBulkPayload =
   | z.infer<typeof setStatusPayloadSchema>
   | z.infer<typeof markFactoredPayloadSchema>
-  | z.infer<typeof markPaidPayloadSchema>;
+  | z.infer<typeof markPaidPayloadSchema>
+  | z.infer<typeof cancelPayloadSchema>;
 
 const PAID_ELIGIBLE_MDATA_STATUSES = new Set(["invoiced", "completed_docs_received", "delivered_pending_docs", "paid"]);
 
 async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promise<BulkPerEntityResult> {
-  const { id, action, payload, reason, operatingCompanyId, actorUserId, bulkCallId, client } = ctx;
+  const { id, action, payload, reason, operatingCompanyId, actorUserId, actorRole, bulkCallId, client } = ctx;
+
+  if (action === "cancel") {
+    const cancelPayload = payload as z.infer<typeof cancelPayloadSchema>;
+    if (!canVoidCancel(String(actorRole ?? ""))) {
+      return {
+        ok: false,
+        code: "E_FORBIDDEN",
+        message: "Owner, Administrator, or Accountant required to cancel loads",
+      };
+    }
+    try {
+      await cancelLoadInClientTx(client as never, actorUserId, String(actorRole ?? ""), {
+        operating_company_id: operatingCompanyId,
+        load_id: id,
+        reason_code: cancelPayload.reason_code,
+        cancellation_notes: cancelPayload.cancellation_notes,
+        billable_to_customer: cancelPayload.billable_to_customer,
+        cancellation_charge_cents: cancelPayload.cancellation_charge_cents,
+      });
+      await appendBulkCrudAudit(client, actorUserId, "load", "cancel", bulkCallId, {
+        resource_id: id,
+        resource_type: "mdata.loads",
+        operating_company_id: operatingCompanyId,
+        reason: reason ?? cancelPayload.cancellation_notes,
+        reason_code: cancelPayload.reason_code,
+      });
+      return { ok: true };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "load_cancel_failed";
+      const code =
+        typeof err === "object" && err && "code" in err && typeof (err as { code: unknown }).code === "string"
+          ? (err as { code: string }).code
+          : message.startsWith("E_")
+            ? message.split(":")[0]!.trim()
+            : message.startsWith("load_cancel_blocked_")
+              ? message.split(":")[0]!.trim()
+              : "E_CANCEL_FAILED";
+      return { ok: false, code, message };
+    }
+  }
 
   const oldRes = await client.query(
     `
@@ -77,7 +134,10 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
       return {
         ok: false,
         code: "E_REQUIRES_PER_LOAD",
-        message: `Transition to ${statusPayload.transition} runs escrow/settlement side-effects and must use the per-load status action`,
+        message:
+          statusPayload.transition === "cancelled"
+            ? "Use bulk action cancel (real cancellation service) — set_status cancelled is forbidden"
+            : `Transition to ${statusPayload.transition} runs escrow/settlement side-effects and must use the per-load status action`,
       };
     }
     const validation = validateLoadStatusTransition(String(oldRow.status), statusPayload.transition);
@@ -262,10 +322,23 @@ export async function registerLoadsBulkRoutes(app: FastifyInstance) {
     entityType: "load",
     requireReasonActions: ["set_status", "mark_paid"],
     destructiveActions: ["mark_paid"],
+    atomicFailStopActions: ["cancel"],
+    actionRoleGate: (role, action) => {
+      if (action !== "cancel") return { ok: true };
+      if (!canVoidCancel(role)) {
+        return {
+          ok: false,
+          code: "E_FORBIDDEN",
+          message: "Owner, Administrator, or Accountant required to cancel loads",
+        };
+      }
+      return { ok: true };
+    },
     actionMap: {
       set_status: setStatusPayloadSchema,
       mark_factored: markFactoredPayloadSchema,
       mark_paid: markPaidPayloadSchema,
+      cancel: cancelPayloadSchema,
     },
     perEntityHandler: handleLoadBulk,
   });
