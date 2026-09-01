@@ -1,5 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { listWorkOrdersConsole, type WoConsoleRow } from "../../api/workOrdersConsole";
@@ -9,18 +9,99 @@ import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
-import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { TableHeaderCell, useTablePref } from "../../components/table";
+import { useColumnReorder } from "../../components/lists/ListView/hooks/useColumnReorder";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 type SegmentId = "all" | "open" | "in_progress" | "completed" | "cancelled";
 type WoSort = "created_desc" | "cost_desc" | "wo_number_asc" | "labor_cost_desc";
 type ConsoleView = "list" | "kanban";
+type KanbanSortKey = "unit_number" | "display_id";
 
-const WO_SORT_VALUES = new Set<WoSort>(["created_desc", "cost_desc", "wo_number_asc", "labor_cost_desc"]);
+type ConsoleColumn = {
+  key: string;
+  header: string;
+  sortable: boolean;
+  cell: (row: WoConsoleRow) => ReactNode;
+  className?: string;
+  cellClass?: string;
+  numeric?: boolean;
+};
+
+const WO_CONSOLE_HEADER_SORTABLE = new Set(["unit_number", "display_id", "opened_at"]);
+const DEFAULT_HEADER_SORT_KEY = "opened_at";
 const PAGE_SIZE = 100;
 
-function parseWoSort(raw: string | null): WoSort {
-  return raw && WO_SORT_VALUES.has(raw as WoSort) ? (raw as WoSort) : "created_desc";
+function mapHeaderSortToServer(sortKey: string, sortDir: "asc" | "desc"): WoSort {
+  if (sortKey === "display_id" && sortDir === "asc") return "wo_number_asc";
+  if (sortKey === "total_estimated_cost" && sortDir === "desc") return "cost_desc";
+  if (sortKey === "labor_cost_cents" && sortDir === "desc") return "labor_cost_desc";
+  return "created_desc";
+}
+
+function consoleSortValue(row: WoConsoleRow, key: string): string | number {
+  switch (key) {
+    case "unit_number":
+      return String(row.unit_number ?? "");
+    case "display_id":
+      return String(row.display_id ?? "");
+    case "opened_at":
+      return String(row.opened_at ?? row.created_at ?? "");
+    case "total_estimated_cost":
+      return Number(row.total_estimated_cost ?? 0);
+    case "labor_cost_cents":
+      return Number(row.labor_cost_cents ?? 0);
+    default:
+      return String((row as Record<string, unknown>)[key] ?? "");
+  }
+}
+
+function compareConsoleRows(a: WoConsoleRow, b: WoConsoleRow, key: string): number {
+  const va = consoleSortValue(a, key);
+  const vb = consoleSortValue(b, key);
+  if (typeof va === "number" && typeof vb === "number") return va - vb;
+  return String(va).localeCompare(String(vb), undefined, { numeric: true, sensitivity: "base" });
+}
+
+function sortKanbanRows(rows: WoConsoleRow[], sort?: { key: KanbanSortKey; direction: "asc" | "desc" }): WoConsoleRow[] {
+  if (!sort) return rows;
+  return [...rows].sort((a, b) => {
+    const cmp = compareConsoleRows(a, b, sort.key);
+    return sort.direction === "asc" ? cmp : -cmp;
+  });
+}
+
+function WoKanbanColumnSortControls({
+  columnKey,
+  sort,
+  onToggleSort,
+}: {
+  columnKey: string;
+  sort?: { key: KanbanSortKey; direction: "asc" | "desc" };
+  onToggleSort: (columnKey: string, sortKey: KanbanSortKey) => void;
+}) {
+  const renderButton = (label: string, sortKey: KanbanSortKey) => {
+    const active = sort?.key === sortKey;
+    return (
+      <button
+        type="button"
+        className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[10px] font-semibold normal-case tracking-normal ${
+          active ? "bg-slate-200 text-slate-900" : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+        }`}
+        onClick={() => onToggleSort(columnKey, sortKey)}
+      >
+        {label}
+        {active ? (sort?.direction === "asc" ? " ▲" : " ▼") : null}
+      </button>
+    );
+  };
+  return (
+    <div className="mt-1 flex flex-wrap gap-1" data-testid={`work-orders-console-kanban-sort-${columnKey}`}>
+      {renderButton("Unit", "unit_number")}
+      {renderButton("WO #", "display_id")}
+    </div>
+  );
 }
 
 export function WorkOrdersConsoleListPage() {
@@ -32,13 +113,11 @@ export function WorkOrdersConsoleListPage() {
     "all" | "pm" | "corrective" | "accident" | "inspection_dot" | "inspection_state" | "warranty" | "other"
   >("all");
   const [search, setSearch] = useState("");
-  // BANK-SORT-ROLLOUT-OPS — ?sort= URL persistence so a shared/bookmarked work-orders link keeps the
-  // chosen sort. The backend column set here is a fixed enum (not per-column asc/desc — see the
-  // header-click contract on the fleet table / dispatch board), so only the sort VALUE round-trips.
   const [searchParams, setSearchParams] = useSearchParams();
-  const sort = parseWoSort(searchParams.get("sort"));
-  // LV-MAINT-WO-KANBAN-VIEW: ?view=kanban must render status columns (not silently ignore → table).
-  // Case-insensitive — Live FAIL when casing/stale param left the console stuck on ParityTable.
+  const { sortKey: headerSortKey, sortDirection: headerSortDir, toggleSort: toggleHeaderSort } = useUrlSort();
+  const effectiveSortKey = headerSortKey || DEFAULT_HEADER_SORT_KEY;
+  const effectiveSortDir = headerSortKey ? headerSortDir : "desc";
+  const serverSort = mapHeaderSortToServer(effectiveSortKey, effectiveSortDir);
   const viewParam = String(searchParams.get("view") ?? "").trim().toLowerCase();
   const view: ConsoleView = viewParam === "kanban" ? "kanban" : "list";
   const setView = (next: ConsoleView) => {
@@ -52,26 +131,24 @@ export function WorkOrdersConsoleListPage() {
       { replace: true },
     );
   };
-  const setSort = (next: WoSort) => {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        if (next === "created_desc") params.delete("sort");
-        else params.set("sort", next);
-        return params;
-      },
-      { replace: true },
-    );
-  };
   const [page, setPage] = useState(0);
+  const [kanbanColumnSorts, setKanbanColumnSorts] = useState<
+    Record<string, { key: KanbanSortKey; direction: "asc" | "desc" }>
+  >({});
 
-  // Any filter/segment/search/sort change returns to the first page.
+  const {
+    widths: consoleColWidths,
+    setColumnWidth: setConsoleColWidth,
+    columnOrder: savedConsoleColumnOrder,
+    setColumnOrder: persistConsoleColumnOrder,
+  } = useTablePref("work-orders-console-list", { pageSize: PAGE_SIZE });
+
   useEffect(() => {
     setPage(0);
-  }, [segment, billing, svc, search, sort]);
+  }, [segment, billing, svc, search, effectiveSortKey, effectiveSortDir]);
 
   const listQuery = useQuery({
-    queryKey: ["work-orders-console", companyId, segment, billing, svc, search, sort, page],
+    queryKey: ["work-orders-console", companyId, segment, billing, svc, search, serverSort, page],
     queryFn: () =>
       listWorkOrdersConsole({
         operating_company_id: companyId,
@@ -79,7 +156,7 @@ export function WorkOrdersConsoleListPage() {
         wo_billing_type: billing === "all" ? undefined : billing,
         wo_service_class: svc === "all" ? undefined : svc,
         search: search.trim() || undefined,
-        sort,
+        sort: serverSort,
         limit: PAGE_SIZE,
         offset: page * PAGE_SIZE,
       }),
@@ -88,8 +165,21 @@ export function WorkOrdersConsoleListPage() {
 
   const rows = useMemo(() => listQuery.data?.work_orders ?? [], [listQuery.data?.work_orders]);
 
+  const sortedRows = useMemo(() => {
+    if (
+      !WO_CONSOLE_HEADER_SORTABLE.has(effectiveSortKey) &&
+      effectiveSortKey !== "total_estimated_cost" &&
+      effectiveSortKey !== "labor_cost_cents"
+    ) {
+      return rows;
+    }
+    return [...rows].sort((a, b) => {
+      const cmp = compareConsoleRows(a, b, effectiveSortKey);
+      return effectiveSortDir === "asc" ? cmp : -cmp;
+    });
+  }, [rows, effectiveSortKey, effectiveSortDir]);
+
   const tabCounts = listQuery.data?.tab_counts;
-  // tab_counts keys mirror the segment ids, so the active segment's count is a real total.
   const total = tabCounts?.[segment] ?? 0;
   const pageStart = total === 0 ? 0 : page * PAGE_SIZE + 1;
   const pageEnd = Math.min((page + 1) * PAGE_SIZE, total);
@@ -123,7 +213,7 @@ export function WorkOrdersConsoleListPage() {
     ];
     const buckets = defs.map((d) => ({ ...d, rows: [] as WoConsoleRow[] }));
     const other: WoConsoleRow[] = [];
-    for (const row of rows) {
+    for (const row of sortedRows) {
       const status = String(row.status ?? "").toLowerCase();
       const hit = buckets.find((b) => b.match(status));
       if (hit) hit.rows.push(row);
@@ -131,38 +221,58 @@ export function WorkOrdersConsoleListPage() {
     }
     if (other.length) buckets.push({ id: "other", label: "Other", match: () => false, rows: other });
     return buckets;
-  }, [rows]);
+  }, [sortedRows]);
 
-  const columns = useMemo<Array<ParityColumn<WoConsoleRow>>>(
+  const consoleColumns = useMemo<ConsoleColumn[]>(
     () => [
       {
+        key: "unit_number",
+        header: "Unit",
+        sortable: true,
+        cell: (row) => (
+          <span className="font-mono text-xs text-slate-800">{String(row.unit_number ?? "—")}</span>
+        ),
+      },
+      {
         key: "display_id",
-        label: "WO #",
-        render: (row) => (
-          <EntityLink kind="work_order" id={String(row.id)} label={entityLabel(row.display_id, row.id, "Work order")} className="font-mono text-xs" data-testid="work-order-console-record-link" />
+        header: "WO #",
+        sortable: true,
+        cell: (row) => (
+          <EntityLink
+            kind="work_order"
+            id={String(row.id)}
+            label={entityLabel(row.display_id, row.id, "Work order")}
+            className="font-mono text-xs"
+            data-testid="work-order-console-record-link"
+          />
         ),
       },
       {
         key: "wo_billing_type",
-        label: "Billing",
-        render: (row) => (
+        header: "Billing",
+        sortable: false,
+        cell: (row) => (
           <span className="capitalize">{String(row.wo_billing_type ?? row.bucket ?? "")}</span>
         ),
       },
       {
         key: "wo_service_class",
-        label: "Class",
-        render: (row) => String(row.wo_service_class ?? row.wo_type ?? ""),
+        header: "Class",
+        sortable: false,
+        cell: (row) => String(row.wo_service_class ?? row.wo_type ?? ""),
       },
       {
         key: "status",
-        label: "Status",
-        render: (row) => String(row.status ?? ""),
+        header: "Status",
+        sortable: false,
+        cell: (row) => String(row.status ?? ""),
       },
       {
         key: "total_estimated_cost",
-        label: "Est / Act",
-        render: (row) => {
+        header: "Est / Act",
+        sortable: true,
+        numeric: true,
+        cell: (row) => {
           const est = row.total_estimated_cost ?? "—";
           const act = row.total_actual_cost ?? "—";
           return (
@@ -174,15 +284,18 @@ export function WorkOrdersConsoleListPage() {
       },
       {
         key: "labor_cost_cents",
-        label: "Labor ¢",
+        header: "Labor ¢",
+        sortable: true,
+        numeric: true,
         className: "text-right",
         cellClass: "text-right font-mono text-[11px] text-slate-700",
-        render: (row) => (row.labor_cost_cents != null ? String(row.labor_cost_cents) : "0"),
+        cell: (row) => (row.labor_cost_cents != null ? String(row.labor_cost_cents) : "0"),
       },
       {
         key: "opened_at",
-        label: "Opened",
-        render: (row) => (
+        header: "Opened",
+        sortable: true,
+        cell: (row) => (
           <span className="text-xs text-slate-600">
             {String(row.opened_at ?? row.created_at ?? "").slice(0, 10)}
           </span>
@@ -190,11 +303,11 @@ export function WorkOrdersConsoleListPage() {
       },
       {
         key: "actions",
-        label: "Actions",
-        alwaysVisible: true,
+        header: "Actions",
+        sortable: false,
         className: "text-right",
         cellClass: "text-right",
-        render: (row) => {
+        cell: (row) => {
           const id = String(row.id ?? "");
           return (
             <EntityLink
@@ -209,6 +322,35 @@ export function WorkOrdersConsoleListPage() {
     ],
     [],
   );
+
+  const defaultColumnKeys = useMemo(() => consoleColumns.map((column) => column.key), [consoleColumns]);
+  const { order: columnOrder, setOrder: setColumnOrder, dragHandleProps, dragOverId } = useColumnReorder(
+    savedConsoleColumnOrder.length > 0 ? savedConsoleColumnOrder : defaultColumnKeys,
+  );
+
+  useEffect(() => {
+    if (savedConsoleColumnOrder.length > 0) setColumnOrder(savedConsoleColumnOrder);
+  }, [savedConsoleColumnOrder, setColumnOrder]);
+
+  useEffect(() => {
+    if (columnOrder.length > 0) persistConsoleColumnOrder(columnOrder);
+  }, [columnOrder, persistConsoleColumnOrder]);
+
+  const orderedColumns = useMemo(() => {
+    const byKey = new Map(consoleColumns.map((column) => [column.key, column]));
+    const keys = columnOrder.length > 0 ? columnOrder : defaultColumnKeys;
+    return keys.map((key) => byKey.get(key)).filter((column): column is ConsoleColumn => Boolean(column));
+  }, [consoleColumns, columnOrder, defaultColumnKeys]);
+
+  const toggleKanbanColumnSort = (columnKey: string, sortKey: KanbanSortKey) => {
+    setKanbanColumnSorts((current) => {
+      const prior = current[columnKey];
+      if (prior?.key === sortKey) {
+        return { ...current, [columnKey]: { key: sortKey, direction: prior.direction === "asc" ? "desc" : "asc" } };
+      }
+      return { ...current, [columnKey]: { key: sortKey, direction: "asc" } };
+    });
+  };
 
   const filterBar = (
     <div className="flex flex-wrap items-center gap-2">
@@ -235,22 +377,69 @@ export function WorkOrdersConsoleListPage() {
         <option value="warranty">Warranty</option>
         <option value="other">Other</option>
       </SelectCombobox>
-      <SelectCombobox
-        value={sort}
-        onChange={(event) => setSort(event.target.value as typeof sort)}
-        className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
-      >
-        <option value="created_desc">Sort: Newest</option>
-        <option value="cost_desc">Sort: Cost</option>
-        <option value="labor_cost_desc">Sort: Labor cost</option>
-        <option value="wo_number_asc">Sort: WO #</option>
-      </SelectCombobox>
       <input
         value={search}
         onChange={(event) => setSearch(event.target.value)}
         placeholder="Search WO #, unit, vendor, driver…"
         className="h-8 min-w-[240px] flex-1 rounded-sm border border-gray-300 px-2 text-[13px]"
       />
+    </div>
+  );
+
+  const renderListTable = () => (
+    <div className="space-y-2" data-testid="work-orders-console-list">
+      {filterBar}
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
+        <table className="min-w-full text-left text-[11px]">
+          <thead className="border-b border-gray-200 bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
+            <tr data-testid="work-orders-console-headers">
+              {orderedColumns.map((column) => (
+                <TableHeaderCell
+                  key={column.key}
+                  columnKey={column.key}
+                  label={column.header}
+                  sortable={column.sortable}
+                  sortKey={effectiveSortKey}
+                  sortDir={effectiveSortDir}
+                  onToggleSort={toggleHeaderSort}
+                  width={consoleColWidths[column.key]}
+                  onResize={setConsoleColWidth}
+                  draggable
+                  dragHandleProps={dragHandleProps(column.key)}
+                  dragOver={dragOverId === column.key}
+                  className={column.className}
+                  numeric={column.numeric}
+                />
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {listQuery.isLoading ? (
+              <tr>
+                <td colSpan={orderedColumns.length} className="px-3 py-3 text-gray-400">
+                  Loading work orders…
+                </td>
+              </tr>
+            ) : sortedRows.length === 0 ? (
+              <tr>
+                <td colSpan={orderedColumns.length} className="px-3 py-6 text-center text-sm text-gray-500">
+                  No work orders match the current filters.
+                </td>
+              </tr>
+            ) : (
+              sortedRows.map((row) => (
+                <tr key={String(row.id)} className="border-b border-gray-100 hover:bg-slate-50">
+                  {orderedColumns.map((column) => (
+                    <td key={column.key} className={`px-2 py-1.5 ${column.cellClass ?? ""}`}>
+                      {column.cell(row)}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 
@@ -306,53 +495,52 @@ export function WorkOrdersConsoleListPage() {
           {filterBar}
           {listQuery.isLoading ? (
             <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-slate-600">Loading work orders…</div>
-          ) : rows.length === 0 ? (
+          ) : sortedRows.length === 0 ? (
             <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
               No work orders match the current filters.
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
-              {kanbanColumns.map((col) => (
-                <section
-                  key={col.id}
-                  className="rounded-sm border border-gray-200 bg-white"
-                  data-testid={`work-orders-console-kanban-col-${col.id}`}
-                >
-                  <header className="border-b border-gray-100 px-2 py-1.5 text-xs font-semibold text-slate-700">
-                    {col.label} ({col.rows.length})
-                  </header>
-                  <ul className="max-h-[28rem] space-y-1 overflow-y-auto p-2">
-                    {col.rows.map((row) => (
-                      <li key={String(row.id)} className="rounded-sm border border-gray-100 bg-slate-50 px-2 py-1.5 text-xs">
-                        <EntityLink
-                          kind="work_order"
-                          id={String(row.id)}
-                          label={entityLabel(row.display_id, row.id, "Work order")}
-                          className="font-mono font-semibold text-slate-800"
-                        />
-                        <div className="mt-0.5 text-[11px] capitalize text-slate-600">{String(row.status ?? "")}</div>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
+              {kanbanColumns.map((col) => {
+                const columnRows = sortKanbanRows(col.rows, kanbanColumnSorts[col.id]);
+                return (
+                  <section
+                    key={col.id}
+                    className="rounded-sm border border-gray-200 bg-white"
+                    data-testid={`work-orders-console-kanban-col-${col.id}`}
+                  >
+                    <header className="border-b border-gray-100 px-2 py-1.5 text-xs font-semibold text-slate-700">
+                      <div>
+                        {col.label} ({columnRows.length})
+                      </div>
+                      <WoKanbanColumnSortControls
+                        columnKey={col.id}
+                        sort={kanbanColumnSorts[col.id]}
+                        onToggleSort={toggleKanbanColumnSort}
+                      />
+                    </header>
+                    <ul className="max-h-[28rem] space-y-1 overflow-y-auto p-2">
+                      {columnRows.map((row) => (
+                        <li key={String(row.id)} className="rounded-sm border border-gray-100 bg-slate-50 px-2 py-1.5 text-xs">
+                          <EntityLink
+                            kind="work_order"
+                            id={String(row.id)}
+                            label={entityLabel(row.display_id, row.id, "Work order")}
+                            className="font-mono font-semibold text-slate-800"
+                          />
+                          <div className="mt-0.5 font-mono text-[10px] text-slate-500">{String(row.unit_number ?? "—")}</div>
+                          <div className="mt-0.5 text-[11px] capitalize text-slate-600">{String(row.status ?? "")}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                );
+              })}
             </div>
           )}
         </div>
       ) : (
-        <ParityTable<WoConsoleRow>
-          rows={rows}
-          columns={columns}
-          rowKey={(row) => String(row.id ?? "")}
-          loading={listQuery.isLoading}
-          storageKey="work-orders-console-list"
-          exportFilename="work-orders"
-          emptyText="No work orders match the current filters."
-          initialPageSize={PAGE_SIZE}
-          pageSizeOptions={[PAGE_SIZE]}
-          suppressToolbarSearch
-          filterBar={filterBar}
-        />
+        renderListTable()
       )}
 
       <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
