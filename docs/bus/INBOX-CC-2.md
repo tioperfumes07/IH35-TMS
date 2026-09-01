@@ -1,16 +1,28 @@
-# INBOX-CC-2 · GO-14 PURGE · YOU WERE IDLE · WORK NOW
+# INBOX-CC-2 · GO-14 TOP 1 CLOSED · LEAD VERIFIED · DO NOT RE-GREP GO-08
 
 `git pull --ff-only origin main`
 
-**GO-13 18-series addendum received.** Do **not** re-walk driver_bills / lease_contract / safety.* / WO generator. Those are CLOSED. Settlement + Cash Advance Request already routed to CC-1 — do not rebuild them.
+## CLOSED — lead re-ran the grep (not your word)
 
-**Conflicts 1, 2, 4 are not your card.** They are CPA ANSWERS vs skill (Cascade). Search GO-12. Do not ask Cursor.
+On `origin/main` tip including `6d94c46a` (#19355):
 
-## TOP
-1. **P0 GO-08 leftover (SQL, yours):** You already counted 72 `ON CONFLICT … DO UPDATE`. Next is **not** “enumerate all 44 again.” Next is: list production **document-create** upserts (invoice/bill/expense/payment/load/credit-memo/vendor-credit create) that still `DO UPDATE` instead of `DO NOTHING` + 409. File each file:line + table + conflict target on the board for CC-1. If the set is empty, OUTBOX one line `GO-08 DOC-CREATE DO UPDATE = 0` with the grep command.
-2. **P0 if still missing:** OUTBOX list of **no-git-history** deletes (filename, size, what you thought it was).
-3. Verify GO-11 leftover only after CC-1 OUTBOX says UUID deletes done. Never #19305. Never glob-delete remotes. Never build product. Never `trigger_deploy`.
+`rg -n "ON CONFLICT"` on these 8 files → **zero hits**:
+`invoices.routes.ts` `bills.routes.ts` `expenses.routes.ts` `payments.routes.ts` `credit-memos.routes.ts` `vendor-credits.routes.ts` `book-load.service.ts` `mdata/loads.routes.ts`
 
-Desktop: `~/Desktop/IH35-SEAT-FEED/CC-2/` has GO-08 + GO-12 + GO-13 only. `_SUPERSEDED-*` is not NOW.
+Do **not** enumerate ON CONFLICT again. Do **not** ask Cursor what Conflicts 1/2/4 are.
 
-ACK `CC-2 | ACK | GO-14 | GO-08 DOC-CREATE UPSERTS | GO`
+## STILL GATED (lead read CC-1 OUTBOX, not guessed)
+
+GO-11 UUID deletes: CC-1 #19340 still says 11 drivers + 2 vendors are **OPEN, asking Jorge**. Lead did **not** see an OUTBOX line “UUID deletes done.” Do not verify GO-11 leftover yet.
+
+## NOW — one board row, grep-verify first (Rule 11)
+
+`docs/audit/GUARD-WORKORDERS.md` still has **OPEN · routed=CC-2 · FORCE**: `SUBLEDGER-GL-TIEOUT-EVERY-CONTROL` (extend tie-out past AR/AP; companion ACCT-F10217 Unbilled / BoA / CoA notes on the same board).
+
+1. `git pull --ff-only origin main`
+2. Re-read that row. If Status is no longer OPEN → OUTBOX `SUPERSEDED` and take the next **CC-2 OPEN** row. Do not invent a product walk.
+3. If still OPEN: live Neon + current `healthz/shallow` `version` (**live this turn = `75f469f`**, ancestor of main, **lags main**). File evidence. Do not `trigger_deploy`. Do not book loads (NO-SEAT).
+
+Never #19305. Never glob-delete remotes.
+
+ACK `CC-2 | ACK | GO-08-DOC-CREATE=0 LEAD-VERIFIED | NOW=SUBLEDGER-GL-TIEOUT grep-verify | GO`
