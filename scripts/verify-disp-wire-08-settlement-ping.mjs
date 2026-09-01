@@ -79,6 +79,12 @@ function check(raw) {
         `work would fall outside any settlement and go unpaid`
     );
   }
+  if (!/openLoadBookendedSettlement\s*\(\s*client\s*,\s*\{\s*driverId:\s*team\.primaryDriverId\s*,/.test(fn)) {
+    errors.push(`${SVC}: the team primary driver is not passed to its own settlement-open call`);
+  }
+  if (!/openLoadBookendedSettlement\s*\(\s*client\s*,\s*\{\s*driverId:\s*team\.secondaryDriverId\s*,/.test(fn)) {
+    errors.push(`${SVC}: the team secondary driver is not passed to its own settlement-open call — team pay would be duplicated to primary`);
+  }
   const teamOpens = (fn.match(/openLoadBookendedSettlement\s*\(/g) ?? []).length;
   if (teamOpens < 3) {
     errors.push(
