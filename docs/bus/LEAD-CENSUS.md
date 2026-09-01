@@ -1,3 +1,6 @@
+# LEAD CENSUS · 2026-09-01T02:43Z
+MAIN tip `2ceb3449a0` — Settlements VoidReasonModal import FIXED (#19056). CC-2/CC-3: push.
+
 # LEAD-CENSUS · owner master fanout · 2026-09-01T02:12Z
 Live=`8112092` (HIDE-VOIDED #19052 + Phase1 bulk on ancestry)
 

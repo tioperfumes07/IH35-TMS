@@ -1,3 +1,4 @@
+2026-09-01T02:43Z | ACCT-F10262 (#19056) main tip 2ceb344 | VoidReasonModal import fixed — CC-2/CC-3 PUSH NOW | NEXT=cascade-void APPROVED+4 + VOID rename
 CURSOR | WHERE-IS-DESIGN · CASCADE-VOID = docs/bus/CASCADE-VOID-DESIGN-FOR-OWNER-2026-09-01.md (PR #19053) · board rewrite = docs/bus/OWNER-REWRITE-DISPATCH-AND-CASCADE-VOID-2026-09-01.md · waiting Jorge APPROVED | GO
 
 CURSOR | OWNER-MASTER-FANOUT 2026-09-01T02:12Z | live=8112092 | PASTEs→all INBOXes · CASCADE-VOID design posted (NO CODE until Jorge APPROVES) · Phase1 Cancel/Reverse/Hide/Nav LIVE · unit deact+perm wiring+board queued · map=docs/bus/IH35-OWNER-REQUIREMENTS-MASTER-MAP.md | GO
