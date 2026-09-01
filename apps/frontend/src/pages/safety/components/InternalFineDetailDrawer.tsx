@@ -43,7 +43,7 @@ export function InternalFineDetailDrawer({ open, fine, onClose }: Props) {
           />
         </div>
         <div><strong>Reason:</strong> {String(fine.reason_name ?? fine.reason_code ?? "—")}</div>
-        <div><strong>Amount:</strong> {formatUsd(fine.amount)}</div>
+        <div><strong>Amount:</strong> {formatUsd(fine.amount as string | number | null | undefined)}</div>
         <div><strong>Status:</strong> {toStatusLabel(String(fine.status ?? "pending"))}</div>
         <div>
           <strong>Related load:</strong>{" "}
