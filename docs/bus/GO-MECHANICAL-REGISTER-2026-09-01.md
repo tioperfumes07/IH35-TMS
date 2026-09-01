@@ -23,10 +23,11 @@
 | COL-02 | Column drag-reorder | **CC-3** | Build in ParityTable (resize exists; reorder does not) |
 | COL-03 | Column auto-fit | **CC-3** | Double-click header / fit-to-content in ParityTable |
 | CTL-01–03 | UI control law sweep | **CC-3** | Push `cc3-ui-control-law-build`, then grep-sweep all modules |
-| SEL-01 | Select-all scope | **CURSOR** | ParityTable/header: "select all matching" vs page-only — align UX + tests |
+| SEL-01 | Select-all scope | **CURSOR** | FIXED (selectMatching + verify-sel-01) |
+| SEL-02 | Bulk inFlight lockout | **CURSOR** | **DONE on main** — inFlight expiry + finally release |
 | LAY-04/05 | KPI tile width | **CURSOR** | KpiCard: drop `flex-1`, content-aware width + truncate |
-| MOD-03 | Date typing | **CURSOR** | DateTimePicker **fixed #19067** — extend same pattern to **DatePicker** (insurance uses DatePicker) |
-| MOD-02 | Escape closes wizard | **CURSOR** | DateTimePicker fixed; port stopPropagation to **DatePicker** popover |
+| MOD-03 | Date typing | **CURSOR** | **DONE on main** — DateTimePicker #19067 + DatePicker typed/month-year |
+| MOD-02 | Escape closes wizard | **CURSOR** | **DONE on main** — DatePicker Escape stopPropagation |
 | WIR-02 | Driver Export PDF | **CC-2 verify** | `resolveApiUrl` on main — prove live deploy + guard relative-href |
 | DSP-05 | Dispatcher confirm on assign | **CC-1 + CURSOR** | **ASSIGNED** — CC-1 API/audit; Cursor modal on dispatch assign |
 
@@ -69,7 +70,7 @@ Click-verify every PR that claims FIXED; file FAIL if register still red on prod
 | WIR-02 | Driver PDF uses `resolveApiUrl` on main — **verify prod** |
 | DSP-02/03 partial | PU/DEL columns + LIVE/History — **#19059/#19067** |
 
-**Owner audit stale on:** DateTimePicker (fixed), Driver PDF (fixed on main), dispatch history (fixed). **DatePicker** still button-only — insurance expiry pain is real.
+**Owner audit stale cleared:** DateTimePicker + **DatePicker** typed/Escape/month-year on main (insurance uses DatePicker). Driver PDF + dispatch history fixed. Next Cursor OPEN: COL-04 Bills residue · SEL-03 · SRC-02 · VIS-02.
 
 ---
 

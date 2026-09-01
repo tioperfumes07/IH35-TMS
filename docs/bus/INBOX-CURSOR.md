@@ -1,13 +1,13 @@
-# ★ TOP · 2026-09-01T06:50Z · CURSOR · GO-MECH DRAIN
+# ★ TOP · 2026-09-01 · CURSOR · GO-MECH
 
-**Register:** `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`  
-**GO:** `docs/bus/GO-MECHANICAL-REGISTER-2026-09-01.md`
+**Canonical:** `docs/bus/GO-MECHANICAL-REGISTER-2026-09-01.md`  
+**Push wall:** Recipe C (`docs/bus/PASTE-ALL-SEATS-VERIFY-STATIC-WALL-2026-09-01.md`)  
+**Worktree:** `/tmp/ih35-cursor-wt` ONLY — never share `/tmp/ih35-main-sb` with CC-3/Codex.
 
 ## NOW
-1. **DatePicker** — port MOD-02 Escape + MOD-03 typed date from DateTimePicker (insurance still button-only)
-2. **SEL-02** bulk inFlight no-expiry → then SEL-03/04
-3. **COL-04** server sort / limit-100
-4. Lead: keep INBOX TOP = register OPEN only; Recipe C if verify-static wall
+1. Register honesty catch-up (SEL-02 · MOD-02/03 DatePicker · SRC-01) → merge
+2. **COL-04 residue** — Bills (and Payments) server `sort`/`dir` like Invoices SORT LAW
+3. Then SEL-03 · SRC-02 · VIS-02 · UPL-05
+4. Do **not** touch ParityTable while CC-3 owns COL-02/03/CTL
 
-**Do not** edit ParityTable COL-02/03 (CC-3).  
-**ACK:** `CURSOR | ACK | NOW=DatePicker-MOD | GO`
+**ACK:** `CURSOR | ACK | NOW=COL-04-Bills | GO`
