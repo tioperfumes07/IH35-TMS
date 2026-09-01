@@ -1,2 +1,2 @@
-# OUTBOX-CURSOR · 2026-09-01 13:00 CT
-CURSOR | ACK | GO-01-05-APPROVED | NOW=GO-04+feed | API=7496ccf | #19308 live | GO-03 blocked GO-01 | GO
+# OUTBOX-CURSOR · 2026-09-01 14:45 CT
+CURSOR | ACK | CC-1/CC-2/Codex/Cascade paste | GO-10 on main not live (deploy in flight ab65f45) | T144=$37,400 OWNER CALL do not invent | GO-02 list array still missing_types | ConfirmModal catch shipping (Cascade chat-only) | GO-03 BLOCKED | GO
