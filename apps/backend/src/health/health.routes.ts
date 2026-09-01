@@ -4,6 +4,12 @@ import { withLuciaBypass } from "../auth/db.js";
 import { getAppReady } from "../lib/startup-ready.js";
 import { createResilientRedis, type RedisHealthStatus } from "../lib/redis.client.js";
 import { logger } from "../observability/structured-logger.js";
+import { LEDGER_FINANCIAL_HEALTH_CHECKS } from "./ledger-financial-health.checks.js";
+import {
+  HEALTH_ERROR_GENERIC,
+  HealthCheckError,
+  toPublicHealthErrorCode,
+} from "./health-errors.js";
 
 export type HealthCheck = {
   name: string;
@@ -43,33 +49,11 @@ export type HealthCheck = {
 // The rest of the response shape is unchanged on purpose — `name`, `ok`, `tier`, `duration_ms`,
 // the 200/503 split and `/healthz/shallow`'s `{version}` are consumed by deploy verification
 // (CLAUDE.md workflow step 7), scripts/verify-deploy-parity.mjs and the System module page.
-export const HEALTH_ERROR_GENERIC = "check_failed";
-
-/** A public health code is a fixed literal: lowercase, underscores, no interpolated values. */
-const PUBLIC_HEALTH_CODE = /^[a-z0-9_]{1,48}$/;
-
-/**
- * A check failure the endpoint is ALLOWED to name publicly. `publicCode` is the bounded token that
- * reaches anonymous callers; `detail` (counts, job names, stack) stays in the server-side log only.
- */
-export class HealthCheckError extends Error {
-  readonly publicCode: string;
-
-  constructor(publicCode: string, detail?: string) {
-    super(detail ? `${publicCode}: ${detail}` : publicCode);
-    this.name = "HealthCheckError";
-    // Fail closed: an out-of-vocabulary code is treated as undeclared.
-    this.publicCode = PUBLIC_HEALTH_CODE.test(publicCode) ? publicCode : HEALTH_ERROR_GENERIC;
-  }
-}
-
-/** The ONLY way an error may become response text. Undeclared ⇒ generic. */
-export function toPublicHealthErrorCode(error: unknown): string {
-  if (error instanceof HealthCheckError && PUBLIC_HEALTH_CODE.test(error.publicCode)) {
-    return error.publicCode;
-  }
-  return HEALTH_ERROR_GENERIC;
-}
+//
+// HEALTH-FINANCIAL-CHECKS-01 — ledger.* critical checks are wired below. Dollar amounts NEVER enter
+// the public body (SEC-HEALTHZ-01); variance details are server-logged only. /healthz/readyz stays
+// infrastructure-only so Render liveness is not taken down by known book variances.
+export { HEALTH_ERROR_GENERIC, HealthCheckError, toPublicHealthErrorCode };
 
 /** Full-fidelity server-side record of what the public body deliberately omits.
  * H4 RUNBOOK: GET /healthz/shallow is not a check verdict (always ok). Full GET /healthz
@@ -830,6 +814,11 @@ export async function runDeepHealthChecks(): Promise<HealthCheck[]> {
     () => timed("migrations.ledger", "critical", checkMigrationLedger),
     () => checkRedisPing(),
     () => timed("r2.head_bucket", "warning", checkR2HeadBucket),
+    // HEALTH-FINANCIAL-CHECKS-01 — Band A/B/C/F controls. Critical = deep /healthz 503 when books
+    // are out (owner). readyZ stays infra-only. Public errors are codes only (SEC-HEALTHZ-01).
+    ...LEDGER_FINANCIAL_HEALTH_CHECKS.map(
+      (c) => () => timed(c.name, "critical", () => promiseTimeout(c.run(), 8_000))
+    ),
   ];
 
   const warningFns = [
