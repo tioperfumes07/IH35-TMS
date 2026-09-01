@@ -1,2 +1,2 @@
-# FEED NOW — DEVIN-A · 2026-09-01 18:17 CT
-API LIVE 441ac88. NOW=GO-16 Live Chrome Laredo→Denton fill · Chicago empty. NO-SEAT. GO.
+# FEED NOW — DEVIN-A · 2026-09-01 18:23 CT
+FORCE NOW=https://app.ih35dispatch.com/dispatch · GO-16 Chrome Laredo→Denton fill · Chicago empty · CANCEL no book · Cursor browser MCP no tab · GO
