@@ -575,7 +575,7 @@ export function InvoicesListPage() {
                 setVoidModalOpen(true);
               }}
             >
-              Void
+              {`Void ${selected.length} selected`}
             </Button>
           </>
         )}

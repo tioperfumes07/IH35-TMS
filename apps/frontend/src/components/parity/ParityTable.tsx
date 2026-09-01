@@ -503,6 +503,25 @@ export function ParityTable<T>({
     [rows, selected, rowKey],
   );
   const pageAllSelected = pageRows.length > 0 && pageRows.every((r) => selected.has(rowKey(r)));
+  const pageOnlySelected =
+    pageAllSelected && selected.size === pageRows.length && sortedRows.length > pageRows.length;
+
+  // BULK-SELECTION-SCOPE-01 — clear when the visible row set changes (page / sort / filter).
+  const selectionScopeKey = `${safePage}|${sortKey}|${sortDirection}|${toolbarSearch}|${toolbarRange ? JSON.stringify(toolbarRange) : ""}`;
+  const prevSelectionScopeRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (prevSelectionScopeRef.current === null) {
+      prevSelectionScopeRef.current = selectionScopeKey;
+      return;
+    }
+    if (prevSelectionScopeRef.current === selectionScopeKey) return;
+    prevSelectionScopeRef.current = selectionScopeKey;
+    if (isSelectionControlled) {
+      if ((controlledSelectedKeys?.length ?? 0) > 0) onSelectionChange?.([]);
+      return;
+    }
+    setInternalSelected((prev) => (prev.size === 0 ? prev : new Set()));
+  }, [selectionScopeKey, isSelectionControlled, controlledSelectedKeys, onSelectionChange]);
 
   // Drag-to-resize: capture the column + start geometry on mousedown, update width on mousemove,
   // persist on mouseup. Widths drive the table-fixed column widths and survive reloads (storageKey).
@@ -694,13 +713,15 @@ export function ParityTable<T>({
   }
 
   function togglePageAll() {
+    // BULK-SELECTION-SCOPE-01 — page-scoped: selecting the header checkbox sets selection to
+    // EXACTLY this page's rows (never unions prior pages). Destructive bulk is fail-stop.
     const applyPageAll = (prev: Set<string>): Set<string> => {
-      const next = new Set(prev);
       if (pageAllSelected) {
+        const next = new Set(prev);
         pageRows.forEach((r) => next.delete(rowKey(r)));
         return next;
       }
-      pageRows.forEach((r) => next.add(rowKey(r)));
+      const next = new Set(pageRows.map((r) => rowKey(r)));
       if (maxSelectable != null && next.size > maxSelectable) {
         onSelectionCapExceeded?.(next.size);
         return prev;
@@ -710,12 +731,24 @@ export function ParityTable<T>({
     if (isSelectionControlled) {
       const prev = new Set(controlledSelectedKeys ?? []);
       const next = applyPageAll(prev);
-      // Cap no-op returns the same Set reference — do not notify.
       if (next === prev) return;
       onSelectionChange?.([...next]);
       return;
     }
     setInternalSelected((prev) => applyPageAll(prev));
+  }
+
+  function selectAllMatching() {
+    const ids = sortedRows.map((r) => rowKey(r));
+    if (maxSelectable != null && ids.length > maxSelectable) {
+      onSelectionCapExceeded?.(ids.length);
+      return;
+    }
+    if (isSelectionControlled) {
+      onSelectionChange?.(ids);
+      return;
+    }
+    setInternalSelected(new Set(ids));
   }
 
   function clearSelection() {
@@ -834,16 +867,32 @@ export function ParityTable<T>({
         />
         <div className="flex items-center gap-2 text-[11px] text-gray-600">
           {selectable && selected.size > 0 ? (
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-800">{selected.size} selected</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className="rounded-sm bg-slate-800 px-2 py-1 text-[12px] font-bold tracking-wide text-white"
+                data-testid="parity-selection-count"
+                title={`${selected.size} row(s) selected for bulk action`}
+              >
+                {selected.size} selected
+              </span>
               {batchActions ? batchActions(selectedRows) : null}
               <button
                 type="button"
-                className="rounded-sm border border-gray-300 px-1.5 py-0.5"
+                className="rounded-sm border border-gray-300 bg-white px-1.5 py-0.5 font-semibold text-slate-700 underline-offset-2 hover:underline"
                 onClick={clearSelection}
               >
-                Clear
+                Clear selection
               </button>
+              {pageOnlySelected ? (
+                <button
+                  type="button"
+                  className="rounded-sm border border-slate-400 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-800"
+                  data-testid="parity-select-all-matching"
+                  onClick={selectAllMatching}
+                >
+                  {`All ${pageRows.length} on this page are selected. Select all ${sortedRows.length} matching?`}
+                </button>
+              ) : null}
             </div>
           ) : (
             <span className="text-gray-400">{toolbar ? null : ""}</span>

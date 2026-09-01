@@ -641,7 +641,7 @@ export function ExpensesListPage() {
               setBatchVoidOpen(true);
             }}
           >
-            Void
+            {`Void ${selected.length} selected`}
           </Button>
         )}
         emptyText="No expenses found for the selected filters."
