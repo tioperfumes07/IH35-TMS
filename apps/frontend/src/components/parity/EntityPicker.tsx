@@ -54,6 +54,14 @@ import {
   type EntityPickerKind,
   type EntityPickerOption,
 } from "./entityPickerRegistry";
+import { lookupUnitByVin } from "../../api/mdata";
+
+/** MOD-05 — compact VIN-like query (11–17 alnum) for cross-entity existence probe. */
+function compactVinLikeQuery(raw: string): string {
+  const compact = raw.replace(/[^A-Za-z0-9]/gi, "").toUpperCase();
+  if (compact.length < 11 || compact.length > 17) return "";
+  return compact;
+}
 
 export type EntityPickerProps = {
   kind: EntityPickerKind;
@@ -180,6 +188,24 @@ export function EntityPicker({
     placeholderData: keepPreviousData,
   });
 
+  const vinProbeKey = kind === "unit" ? compactVinLikeQuery(rosterSearch) : "";
+  const vinLookupQuery = useQuery({
+    queryKey: ["entity-picker-vin-lookup", operatingCompanyId, vinProbeKey],
+    queryFn: () =>
+      lookupUnitByVin({
+        vin: vinProbeKey,
+        operating_company_id: operatingCompanyId,
+      }),
+    enabled: queryEnabled && kind === "unit" && Boolean(vinProbeKey),
+    staleTime: 30_000,
+  });
+  const crossEntityVin =
+    vinLookupQuery.data?.found &&
+    vinLookupQuery.data.unit &&
+    !vinLookupQuery.data.unit.in_current_company_scope
+      ? vinLookupQuery.data.unit
+      : null;
+
   const rosterLoadFailed =
     rosterQuery.isError && rosterQuery.data === undefined && !rosterQuery.isPlaceholderData;
 
@@ -198,7 +224,8 @@ export function EntityPicker({
   }, [rosterQuery.data, created, scopedValue, selectedOption]);
 
   // A kind may refuse inline create for a stated reason (transactions and money documents do).
-  const createOffered = allowCreate && config.inlineCreate.available;
+  // MOD-05: never offer create when the typed VIN already exists cross-entity.
+  const createOffered = allowCreate && config.inlineCreate.available && !crossEntityVin;
   const resolvedSelectedOption = scopedValue
     ? options.find((option) => option.value === scopedValue && option.label !== scopedValue) ?? null
     : null;
@@ -251,6 +278,17 @@ export function EntityPicker({
           allowClear={allowClear}
           allowAddNew={createOffered ? { label: entityAddNewLabel(kind), onAdd: () => setCreateOpen(true) } : undefined}
         />
+        {crossEntityVin ? (
+          <p
+            className="text-[11px] font-medium text-slate-700"
+            data-testid="entity-picker-vin-exists"
+            role="status"
+          >
+            Unit {crossEntityVin.unit_number} already exists (
+            {crossEntityVin.owner_company_code || crossEntityVin.owner_company_name || "another entity"}
+            ). Switch company or lease it to this entity — do not create a duplicate VIN.
+          </p>
+        ) : null}
       </div>
 
       {/* The inline create opens the entity's REAL create surface — the same one the module's own

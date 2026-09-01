@@ -33,6 +33,19 @@ export function collectProblems({ picker, test, referenceSelect, referenceTest }
   if (!/suppresses the prior-company FK even when a legacy parent ignores the null callback/.test(test)) {
     problems.push("stubborn-parent company-switch regression test is missing");
   }
+  // MOD-05 — cross-entity VIN must not invite "+ Add new unit <VIN>"
+  if (!/lookupUnitByVin/.test(picker)) {
+    problems.push("MOD-05: EntityPicker must probe lookupUnitByVin for typed VIN-like unit search");
+  }
+  if (!/__vin_exists__|entity-picker-vin-exists/.test(picker) || !/!crossEntityVin/.test(picker)) {
+    problems.push("MOD-05: EntityPicker must suppress create and surface cross-entity VIN existence");
+  }
+  if (!/\/api\/v1\/mdata\/units\/by-vin/.test(fs.readFileSync(path.join(ROOT, "apps/backend/src/mdata/units.routes.ts"), "utf8"))) {
+    problems.push("MOD-05: backend GET /api/v1/mdata/units/by-vin missing");
+  }
+  if (!/MOD-05: suppresses \+ Add new when typed VIN exists under another entity/.test(test)) {
+    problems.push("MOD-05: EntityPicker runtime test for cross-entity VIN suppress-create is missing");
+  }
 
   const referenceEffect = referenceSelect.match(/useEffect\(\(\) => \{[\s\S]*?\}, \[createKind, onChange, operatingCompanyId, value\]\);/)?.[0] ?? "";
   const referenceChecks = [

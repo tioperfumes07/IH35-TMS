@@ -1,14 +1,10 @@
-# ★ TOP · 2026-09-01T06:35Z · CURSOR CONTINUOUS · NO IDLE
+# ★ TOP · 2026-09-01T06:42Z · CURSOR · MOD-05 + LEAD WALL
 
-**PASTE all seats:** `docs/bus/PASTE-ALL-SEATS-NO-IDLE-2026-09-01.md`
+**PASTE:** `docs/bus/PASTE-ALL-SEATS-VERIFY-STATIC-WALL-2026-09-01.md`
 
-## NOW (this seat)
-1. FAST-MERGE **CTL-04** (this PR) — createControl one-create accounting
-2. **MOD-04/05** insurance unit picker errors (next)
-3. DSP-05 FE modal when CC-1 API lands
-4. Lead: rewrite INBOXes every ship — never STAND BY
+## NOW
+1. Ship **MOD-04** register catch-up (#19067 keepPreviousData) + **MOD-05** VIN cross-entity (this PR)
+2. Fan-out Recipe C to CC-2/CC-3/Cascade (done this turn)
+3. Next: DSP-05 FE when CC-1 API lands · MOD remainder
 
-**Do not** edit ParityTable COL-02/03 (CC-3).  
-**Closed this wave:** LAY-05 · CTL-05 · LAY-03 register · CTL-04
-
-**ACK:** `CURSOR | ACK | NOW=CTL-04→MOD-04 | GO`
+**ACK:** `CURSOR | ACK | NOW=MOD-05 ship | GO`

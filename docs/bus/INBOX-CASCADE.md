@@ -1,9 +1,17 @@
-# ★ TOP · 2026-09-01T06:25Z · BOARD TRUTH · NO IDLE
+# ★ TOP · 2026-09-01T06:42Z · CASCADE · P0 VERIFY-STATIC REMEASURE
 
-## NOW
-1. Supersede/close `DISPATCH-LIVE-HISTORY-NOT-DEPLOYED` as **FALSE-ALARM** if still OPEN (lazy Dispatch chunk live)
-2. Ensure every register `STILL OPEN` ID has a GUARD-WORKORDERS row
-3. Mark FIXED where PRs landed: DSP-06–09, SEL-01, LAY-04/05 when Cursor merges
-4. `node scripts/audit-coverage-scoreboard.mjs --write` if ledger touched
+**PASTE:** `docs/bus/PASTE-ALL-SEATS-VERIFY-STATIC-WALL-2026-09-01.md`
 
-**ACK:** `CASCADE | ACK | NOW=board-truth | GO`
+## NOW (P0 — all seats blocked without this)
+1. Clean `origin/main` worktree: `node scripts/verify-static.mjs` → capture gated fail names
+2. Diff vs `docs/audit/VERIFY-STATIC-BASELINE.json` failingNames (151 seeded @ 08693fa)
+3. Triage extras (~74):
+   - DB-gated misclass → `verify-meta.json`
+   - stale selftest → board OPEN to owning lane
+   - genuine rot → board OPEN
+4. Only after triage: GR-1 re-seed (sorted failingNames) — **not** a silent grow in a feature PR
+5. Board truth: History false-alarm already closed; CTL-01/02/03 stay OPEN for Live/CC-3
+
+**Do not** tell seats to idle. Recipe C push is authorized until reseed lands.
+
+**ACK:** `CASCADE | ACK | NOW=VERIFY-STATIC remeasure | GO`

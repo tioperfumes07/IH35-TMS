@@ -121,6 +121,16 @@ function isWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager";
 }
 
+/** MOD-05 — unit is in the picker's company roster when owned by or leased to that company. */
+function unitInCompanyScope(
+  ownerCompanyId: string,
+  leasedCompanyId: string | null,
+  operatingCompanyId: string | undefined,
+): boolean {
+  if (!operatingCompanyId) return false;
+  return ownerCompanyId === operatingCompanyId || leasedCompanyId === operatingCompanyId;
+}
+
 async function syncCanonicalDefaultDriver(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ id?: string }> }> },
   input: { unitId: string; driverId: string | null; operatingCompanyId: string; actorUserId: string },
@@ -318,6 +328,97 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     });
 
     return { units: result.rows, total: result.total };
+    },
+  );
+
+  // MOD-05 — cross-entity VIN probe for EntityPicker: when the operator types a VIN that already
+  // exists under another accessible company, the picker must NOT offer "+ Add new unit <VIN>"
+  // (global UNIQUE(vin) would only fail at POST). Read-only; scoped to companies the user can see.
+  app.get(
+    "/api/v1/mdata/units/by-vin",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      const parsed = z
+        .object({
+          vin: z.string().trim().min(11).max(100),
+          operating_company_id: z.string().uuid().optional(),
+        })
+        .safeParse(req.query ?? {});
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
+      const compactVin = parsed.data.vin.replace(/[^A-Za-z0-9]/gi, "").toUpperCase();
+      if (compactVin.length < 11) {
+        return reply.code(400).send({ error: "validation_error", details: { vin: ["too_short_after_normalize"] } });
+      }
+      const hit = await withCurrentUser(authUser.uuid, async (client) => {
+        const scopedCompanyId = parsed.data.operating_company_id
+          ? await resolveOperatingCompanyId(client, authUser.uuid, parsed.data.operating_company_id)
+          : null;
+        if (parsed.data.operating_company_id && !scopedCompanyId) {
+          return null;
+        }
+        if (scopedCompanyId) {
+          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
+        }
+        const res = await client.query<{
+          id: string;
+          unit_number: string;
+          vin: string;
+          owner_company_id: string;
+          currently_leased_to_company_id: string | null;
+          owner_code: string | null;
+          owner_name: string | null;
+          leased_code: string | null;
+          leased_name: string | null;
+        }>(
+          `
+          SELECT
+            u.id::text AS id,
+            u.unit_number,
+            u.vin,
+            u.owner_company_id::text AS owner_company_id,
+            u.currently_leased_to_company_id::text AS currently_leased_to_company_id,
+            o.code AS owner_code,
+            o.legal_name AS owner_name,
+            l.code AS leased_code,
+            l.legal_name AS leased_name
+          FROM mdata.units u
+          LEFT JOIN org.companies o ON o.id = u.owner_company_id
+          LEFT JOIN org.companies l ON l.id = u.currently_leased_to_company_id
+          WHERE u.deactivated_at IS NULL
+            AND upper(regexp_replace(coalesce(u.vin, ''), '[^A-Za-z0-9]', '', 'g')) = $1
+            AND (
+              u.owner_company_id = ANY (org.user_accessible_company_ids())
+              OR u.currently_leased_to_company_id = ANY (org.user_accessible_company_ids())
+            )
+          LIMIT 1
+          `,
+          [compactVin],
+        );
+        return res.rows[0] ?? null;
+      });
+      if (!hit) return { found: false as const, unit: null };
+      const inScope = unitInCompanyScope(
+        hit.owner_company_id,
+        hit.currently_leased_to_company_id,
+        parsed.data.operating_company_id,
+      );
+      return {
+        found: true as const,
+        unit: {
+          id: hit.id,
+          unit_number: hit.unit_number,
+          vin: hit.vin,
+          owner_company_id: hit.owner_company_id,
+          owner_company_code: hit.owner_code,
+          owner_company_name: hit.owner_name,
+          currently_leased_to_company_id: hit.currently_leased_to_company_id,
+          leased_company_code: hit.leased_code,
+          leased_company_name: hit.leased_name,
+          in_current_company_scope: inScope,
+        },
+      };
     },
   );
 

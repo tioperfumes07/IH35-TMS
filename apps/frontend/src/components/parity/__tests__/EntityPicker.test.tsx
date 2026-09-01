@@ -23,13 +23,16 @@ import { EntityPicker } from "../EntityPicker";
 const listDrivers = vi.fn();
 const listLoads = vi.fn();
 const listVendors = vi.fn();
+const listUnits = vi.fn().mockResolvedValue({ units: [] });
+const lookupUnitByVin = vi.fn().mockResolvedValue({ found: false, unit: null });
 const listInsuranceClaims = vi.fn();
 const listInsuranceLawsuits = vi.fn();
 
 vi.mock("../../../api/mdata", () => ({
   listDrivers: (...args: unknown[]) => listDrivers(...args),
-  listUnits: vi.fn().mockResolvedValue({ units: [] }),
+  listUnits: (...args: unknown[]) => listUnits(...args),
   listVendors: (...args: unknown[]) => listVendors(...args),
+  lookupUnitByVin: (...args: unknown[]) => lookupUnitByVin(...args),
 }));
 vi.mock("../../../api/loads", () => ({ listLoads: (...args: unknown[]) => listLoads(...args) }));
 vi.mock("../../../api/maintenance", () => ({ listWorkOrders: vi.fn().mockResolvedValue({ work_orders: [] }) }));
@@ -329,5 +332,33 @@ describe("EntityPicker (C1 picker law)", () => {
     await waitFor(() => expect(input).toHaveValue(""));
 
     expect(screen.queryByText("Couldn't load driver list")).toBeNull();
+  });
+
+  it("MOD-05: suppresses + Add new when typed VIN exists under another entity", async () => {
+    const user = userEvent.setup();
+    listUnits.mockResolvedValue({ units: [] });
+    lookupUnitByVin.mockResolvedValue({
+      found: true,
+      unit: {
+        id: "unit-trk-1",
+        unit_number: "T169",
+        vin: "1XPBDP9X0KD478221",
+        owner_company_id: "22222222-2222-4222-8222-222222222222",
+        owner_company_code: "TRK",
+        owner_company_name: "IH35 Trucking",
+        currently_leased_to_company_id: null,
+        leased_company_code: null,
+        leased_company_name: null,
+        in_current_company_scope: false,
+      },
+    });
+
+    wrap(<EntityPicker kind="unit" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} />);
+    const input = await screen.findByPlaceholderText("Select unit");
+    await user.click(input);
+    await user.type(input, "1XPBDP9X0KD478221");
+    await waitFor(() => expect(lookupUnitByVin).toHaveBeenCalled());
+    expect(await screen.findByTestId("entity-picker-vin-exists")).toHaveTextContent(/T169 already exists \(TRK\)/i);
+    expect(screen.queryByText(/\+ Add new unit/i)).toBeNull();
   });
 });

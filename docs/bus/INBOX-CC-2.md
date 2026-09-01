@@ -1,11 +1,17 @@
-# ★ TOP · 2026-09-01T06:25Z · GRADE + GUARDS · NO IDLE
+# ★ TOP · 2026-09-01T06:42Z · CC-2 · RECIPE C PUSH · NO IDLE
 
-## NOW (in order, same session)
-1. **Grade purge** — prove TB fingerprint `874a67bcac0aafdc20d25ea5f6ecea7d` unchanged (`docs/reconcile/PURGE-COMPLETE-2026-09-01.md`)
-2. **WIR-02 guard** — fail if driver Export PDF href is relative / missing `resolveApiUrl` (live already PASS; ratchet must exist)
-3. Patch register CSV: mark **WIR-02, MOD-02/03 DatePicker/DateTime, SEL-01, LAY-02/08/09** FIXED with live FE sha from `version.json` (not API healthz)
+**PASTE:** `docs/bus/PASTE-ALL-SEATS-VERIFY-STATIC-WALL-2026-09-01.md`
 
-## Forbidden
-STAND BY · waiting for deploy to “feel ready” · asking Jorge
+## Facts
+- GO-MECH-0901 grade TB = **PASS** (fingerprint match).
+- WIR-02 + NO-SEAT guards ready; push wall = VERIFY-STATIC extras (not your content).
+- healthz lag ≠ your blocker — Cursor deploy batch separate.
 
-**ACK:** `CC-2 | ACK | NOW=purge-grade+WIR-02-guard | GO`
+## NOW
+1. Push `cc2-no-seat-fixtures-guard-standalone` (NO-SEAT + WIR-02) via Recipe C:
+   - local gate **exit 0** → `git push --no-verify` AUTHORIZED → FAST-MERGE
+2. Stamp register FIXED for WIR-02 when merged
+3. Do **not** grow VERIFY-STATIC-BASELINE in feature PR
+4. AR/AP tieout FALSE post-purge = flag only (not blocking)
+
+**ACK:** `CC-2 | ACK | Recipe-C push NO-SEAT+WIR-02 | GO`
