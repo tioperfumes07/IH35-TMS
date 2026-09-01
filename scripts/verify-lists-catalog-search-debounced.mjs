@@ -61,15 +61,52 @@ export function check() {
     const src = fs.readFileSync(file, "utf8");
     assert(!/setSearch\(event\.target\.value\)/.test(src), `${rel}: raw per-keystroke search forbidden`);
     assert(!/setSearch\(e\.target\.value\)/.test(src), `${rel}: raw per-keystroke search forbidden`);
-    // Nested pages/lists/<seg>/*.tsx must import via ../../../ — ../../../../ escapes src/ (TS2307 / FE build_failed).
-    const underSeg = path.relative(LISTS_GLOB, file).includes(path.sep);
-    if (underSeg) {
-      assert(
-        !/from ["']\.\.\/\.\.\/\.\.\/\.\.\/(components\/lists\/CatalogListSearchInput|hooks\/catalogListSearchQueryOptions)/.test(
-          src,
-        ),
-        `${rel}: nested catalog page must use ../../../ import depth (not ../../../../)`,
-      );
+    const relToLists = path.relative(LISTS_GLOB, file);
+    const underSeg = relToLists.includes(path.sep);
+    const usesCatalogSearch =
+      /CatalogListSearchInput/.test(src) || /catalogListSearchQueryOptions/.test(src);
+    if (usesCatalogSearch) {
+      if (underSeg) {
+        // pages/lists/<seg>/*.tsx — three hops to src/
+        assert(
+          !/from ["']\.\.\/\.\.\/\.\.\/\.\.\/(components\/lists\/CatalogListSearchInput|hooks\/catalogListSearchQueryOptions)/.test(
+            src,
+          ),
+          `${rel}: nested catalog page must not use ../../../../ (escapes src/)`,
+        );
+        if (/CatalogListSearchInput/.test(src)) {
+          assert(
+            /from ["']\.\.\/\.\.\/\.\.\/components\/lists\/CatalogListSearchInput/.test(src),
+            `${rel}: nested catalog page must import CatalogListSearchInput via ../../../`,
+          );
+        }
+        if (/catalogListSearchQueryOptions/.test(src)) {
+          assert(
+            /from ["']\.\.\/\.\.\/\.\.\/hooks\/catalogListSearchQueryOptions/.test(src),
+            `${rel}: nested catalog page must import catalogListSearchQueryOptions via ../../../`,
+          );
+        }
+      } else {
+        // pages/lists/*.tsx — two hops to src/
+        assert(
+          !/from ["']\.\.\/\.\.\/\.\.\/(components\/lists\/CatalogListSearchInput|hooks\/catalogListSearchQueryOptions)/.test(
+            src,
+          ),
+          `${rel}: root lists/*.tsx must use ../../ import depth (not ../../../)`,
+        );
+        if (/CatalogListSearchInput/.test(src)) {
+          assert(
+            /from ["']\.\.\/\.\.\/components\/lists\/CatalogListSearchInput/.test(src),
+            `${rel}: root catalog page must import CatalogListSearchInput via ../../`,
+          );
+        }
+        if (/catalogListSearchQueryOptions/.test(src)) {
+          assert(
+            /from ["']\.\.\/\.\.\/hooks\/catalogListSearchQueryOptions/.test(src),
+            `${rel}: root catalog page must import catalogListSearchQueryOptions via ../../`,
+          );
+        }
+      }
     }
     if (/CatalogListSearchInput/.test(src)) continue;
     assert(
@@ -113,6 +150,24 @@ function selftest() {
   }
   fs.writeFileSync(nested, nestedGood);
   assert(depthFailed, "selftest: expected FAIL on ../../../../ import depth");
+
+  // Root depth regression: pages/lists/*.tsx must use ../../ not ../../../
+  const rootCatalog = path.join(ROOT, "apps/frontend/src/pages/lists/MaintenancePartsCatalog.tsx");
+  const rootGood = fs.readFileSync(rootCatalog, "utf8");
+  const rootBad = rootGood.replace(
+    'from "../../components/lists/CatalogListSearchInput"',
+    'from "../../../components/lists/CatalogListSearchInput"',
+  );
+  assert(rootBad !== rootGood, "selftest: root depth plant must change file");
+  fs.writeFileSync(rootCatalog, rootBad);
+  let rootDepthFailed = false;
+  try {
+    check();
+  } catch {
+    rootDepthFailed = true;
+  }
+  fs.writeFileSync(rootCatalog, rootGood);
+  assert(rootDepthFailed, "selftest: expected FAIL on root ../../../ import depth");
 
   console.log("verify-lists-catalog-search-debounced --selftest PASS");
 }

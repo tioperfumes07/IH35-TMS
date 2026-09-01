@@ -3,7 +3,8 @@
  * Route: /lists/maintenance/parts-catalog
  */
 import { useState } from "react";
-import { CatalogListSearchInput } from "../../../components/lists/CatalogListSearchInput";
+import { CatalogListSearchInput } from "../../components/lists/CatalogListSearchInput";
+import { catalogListSearchQueryOptions } from "../../hooks/catalogListSearchQueryOptions";
 import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -118,7 +119,7 @@ export function MaintenancePartsCatalog() {
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
         {/* MAINT-F3516: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
-        <CatalogListSearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Search by SKU, name, or UPC" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
+        <CatalogListSearchInput value={search} onChange={(v: string) => { setSearch(v); setPage(1); }} placeholder="Search by SKU, name, or UPC" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
         <SelectCombobox value={manufacturer} onChange={(e) => { setManufacturer(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
           {MANUFACTURERS.map((m) => <option key={m} value={m}>{m || "All manufacturers"}</option>)}
         </SelectCombobox>
