@@ -80,6 +80,12 @@ export function checkDetentionBoardCompleteRange(src) {
   if (!reader) offenders.push(`${SERVICE_FILE}: listDetentionBoard reader is missing`);
   if (!/WHERE de\.operating_company_id = \$1::uuid/.test(reader)) offenders.push(`${SERVICE_FILE}: detention board lost exact company scope`);
   if (!/de\.status IN \('accruing', 'closed'\)/.test(reader)) offenders.push(`${SERVICE_FILE}: detention board lost its operational status boundary`);
+  if (!/import \{ isTerminalLoadStatus \} from "\.\/load-state-machine\.js";/.test(src)) {
+    offenders.push(`${SERVICE_FILE}: detention board must import the canonical load terminal-state predicate`);
+  }
+  if (!/res\.rows\.filter\(\(row\) => !isTerminalLoadStatus\(String\(row\.load_status\)\)\)\.map/.test(reader)) {
+    offenders.push(`${SERVICE_FILE}: detention board must exclude every canonical terminal load before rendering the operational queue`);
+  }
   if (!/const orderBy = dispatchAlertOrderBy\(filters,/.test(reader) || !/ORDER BY \$\{orderBy\}, de\.id ASC/.test(reader)) {
     offenders.push(`${SERVICE_FILE}: detention board lost validated deterministic server ordering`);
   }
@@ -204,9 +210,22 @@ if (process.argv.includes("--selftest")) {
     "ORDER BY ${orderBy}, de.id ASC",
     "ORDER BY de.started_at ASC",
   );
+  const terminalLoadFilterRemoved = fixedService.replace(
+    ".filter((row) => !isTerminalLoadStatus(String(row.load_status)))",
+    "",
+  );
+  const copiedTerminalStatusList = fixedService
+    .replace('import { isTerminalLoadStatus } from "./load-state-machine.js";\n', "")
+    .replace(
+      ".filter((row) => !isTerminalLoadStatus(String(row.load_status)))",
+      ".filter((row) => !['closed', 'cancelled'].includes(String(row.load_status)))",
+    );
   const capFails = checkDetentionBoardCompleteRange(cappedService).some((item) => item.includes("silently caps"));
   const completePasses = checkDetentionBoardCompleteRange(fixedService).length === 0;
   const orderingMutationFails = checkDetentionBoardCompleteRange(unorderedService).some((item) => item.includes("deterministic server ordering"));
+  const terminalLoadMutationsFail = [terminalLoadFilterRemoved, copiedTerminalStatusList].every(
+    (mutant) => checkDetentionBoardCompleteRange(mutant).some((item) => item.includes("canonical load terminal-state") || item.includes("canonical terminal load")),
+  );
   const rejectMutationsFail = [
     fixedApprovalService.replace("operating_company_id = $2::uuid FOR UPDATE", "operating_company_id = $2::uuid"),
     fixedApprovalService.replace("WHERE id = $1 AND operating_company_id = $4::uuid AND status = 'pending_review'", "WHERE id = $1 AND operating_company_id = $4::uuid"),
@@ -232,7 +251,7 @@ if (process.argv.includes("--selftest")) {
     (mutant) => checkDetentionBoardMutationErrors(mutant).length > 0,
   );
 
-  if (buggyOffenders.length >= 6 && fixedOffenders.length === 0 && lifecycleMutationsFail && capFails && completePasses && orderingMutationFails && closeMutationsFail && closePasses && syncMutationsFail && syncPasses && rejectMutationsFail && rejectPasses) {
+  if (buggyOffenders.length >= 6 && fixedOffenders.length === 0 && lifecycleMutationsFail && capFails && completePasses && orderingMutationFails && terminalLoadMutationsFail && closeMutationsFail && closePasses && syncMutationsFail && syncPasses && rejectMutationsFail && rejectPasses) {
     console.log("verify-detention-board-mutation-errors-surfaced selftest OK (mutation errors + complete operational range)");
     process.exit(0);
   }
@@ -243,6 +262,7 @@ if (process.argv.includes("--selftest")) {
     capFails,
     completePasses,
     orderingMutationFails,
+    terminalLoadMutationsFail,
     closeMutationsFail,
     closePasses,
     syncMutationsFail,

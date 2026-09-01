@@ -14,6 +14,7 @@ import {
   shouldNotifyCustomerAtThreshold,
 } from "./detention.lib.js";
 import { dispatchAlertOrderBy, type DispatchAlertQuery } from "./dispatch-alert-query.js";
+import { isTerminalLoadStatus } from "./load-state-machine.js";
 
 async function withCompany<T>(userId: string, operatingCompanyId: string, fn: (client: PoolClient) => Promise<T>) {
   return withCurrentUser(userId, async (client) => {
@@ -238,7 +239,12 @@ export async function listDetentionBoard(
       [operatingCompanyId, filters.from ?? null, filters.to ?? null]
     );
     const nowMs = Date.now();
-    const events = res.rows.map((row) => {
+    // DSP-06 — this is the operational queue, not the load-detail history reader above. A detention
+    // event can remain `accruing`/`closed` after its load reaches a terminal state, which left closed,
+    // cancelled, abandoned, no-show and walk-off loads on this board forever. Reuse the canonical load
+    // state machine so legacy mdata aliases (`invoiced`/`paid`/`closed`) and current dispatch statuses
+    // cannot drift into a second hand-maintained SQL status list. Unknown status fails loud.
+    const events = res.rows.filter((row) => !isTerminalLoadStatus(String(row.load_status))).map((row) => {
       const accrual = rowAccrual(row, nowMs);
       return {
         ...row,
