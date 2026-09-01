@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../../components/Button";
-import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
+import { HoverDropdownNav } from "../../components/forms/shared/HoverDropdownNav";
 import { ACCOUNTING_SUB_NAV_ITEMS } from "./subnav-manifest";
 import { hasInAppHistory } from "../../lib/smart-back";
 
@@ -70,7 +70,6 @@ export function AccountingSubNavWrapper({
   const createMenuRef = useRef<HTMLDivElement | null>(null);
 
   const activeHref = useMemo(() => activeHrefFor(pathname), [pathname]);
-  void activeHref;
 
   useEffect(() => {
     const onDown = (event: MouseEvent) => {
@@ -143,13 +142,7 @@ export function AccountingSubNavWrapper({
       </div>
 
       <div className="relative z-10">
-        <NavyPageSubNav
-          items={ACCOUNTING_SUB_NAV_ITEMS.map((item) => ({
-            label: item.label,
-            to: item.href ?? "",
-            children: item.children?.map((c) => ({ label: c.label, to: c.href })),
-          }))}
-        />
+        <HoverDropdownNav items={ACCOUNTING_SUB_NAV_ITEMS} activeHref={activeHref} openOn="click" />
       </div>
 
       {kpiStrip}
