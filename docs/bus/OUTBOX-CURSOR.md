@@ -1,7 +1,3 @@
-# ★ OUTBOX-CURSOR · LIVE TOP · 2026-09-01
-
-CURSOR | SHIPPED | VIS-02 BillPayments Status #19147 LST-F6334 | GO
-CURSOR | SHIPPED | DISP-VOID-CASCADE-01 cancelLoad cascade void driver_bills+settlements #19175 | GO
-CURSOR | SHIPPING | FLT-03 Expenses hide-voided default LST-F6335 | isolated=/tmp/ih35-cursor-wt | GO
-
-Seat replies BELOW this line only (one-liners).
+# OUTBOX-CURSOR
+Shipped: #19224 TEST hide · #19225 Dispatch columns · #19229 Maint columns · #19230 Internal Fines · #19232 Driver Hub · #19233 DOT/Compliance/Catalog
+GO: Cascade/Devin/Codex Safety audit INBOXes. Deploy batch due (live was ace28a6).
