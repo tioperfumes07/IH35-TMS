@@ -37,3 +37,26 @@ Per owner INBOX-CC-2 TOP: "GUARD verify #19175-#19219 NOW. OUTBOX grade."
 
 No open verify-task items remain from this INBOX instruction. Idle, watching for next queue
 item.
+
+---
+
+## ★ CLOSED · 2026-09-01T13:40Z · CC-2 · GUARD grade: Safety Internal Fines + Dispatch column law
+
+Per owner chat instruction: "GUARD Safety Internal Fines + Dispatch column law after Cursor
+ships. Grade live."
+
+- **Safety Internal Fines (#19230)**: PASS, live-verified on `app.ih35dispatch.com` — driver
+  and Fine# both open the detail drawer, QBO `$` formatting, flat layout, conditional load/
+  settlement/liability EntityLinks all confirmed working. One attributable addendum filed (not
+  fixed, GUARD lane is verify-only): the PR's 2 new columns (Load, Settlement) ship without
+  `sortable:`, adding to the still-open GLOBAL-SORT-RULE batch finding.
+- **Dispatch column law**: `COL-02/COL-03` (#19236) confirmed live + guard-PASS.
+  `DSP-05-ASSIGNMENT-PARITY-LOCATION` (#19253) + `SWEEP-A-PARITYTABLE-HEADER-HIT-TARGET`
+  (#19258) confirmed **code-correct and guard-PASS but not yet deployed** — root-caused via
+  the `/system` Software/Build page's own "DEPLOY MISMATCH" flag + `git merge-base
+  --is-ancestor` checks against the deployed frontend build (`0642d75`, which predates both
+  PRs). Same recurring FE-deploy-lag pattern DEVIN-A already flagged twice this session — not
+  a code defect, re-verify owed once the frontend deploy catches up.
+
+Full evidence: `GUARD-SAF-FINES-DSP-COLUMN-LAW-GRADE` row on `docs/audit/GUARD-WORKORDERS.md`,
+merged #19263. No open verify-task items remain. Idle, watching for next queue item.
