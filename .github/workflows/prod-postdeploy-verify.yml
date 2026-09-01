@@ -141,6 +141,19 @@ jobs:
           DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
         run: node scripts/verify-no-seat-instruction-overrides-owner-void.mjs
 
+      - name: verify:no-unmanifested-prod-financial-fixtures
+        id: no_unmanifested_fixtures
+        # NO-SEAT-PROD-FINANCIAL-FIXTURES-LAW-2026-09-01.md §6: the manifest-cross-reference guard
+        # that verify-no-seat-instruction-overrides-owner-void.mjs (step above) explicitly deferred
+        # as future work. Baseline is 0 (live-measured at introduction, 2026-09-01 — no standing
+        # unmanifested seat fixtures found across accounting.bills/expenses/payments/invoices under
+        # its narrow named-incident/seat-adjacent pattern) so this blocks immediately rather than
+        # running in shadow mode: any find from here forward is a genuine NEW regression, not
+        # inherited debt.
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+        run: node scripts/verify-no-unmanifested-prod-financial-fixtures.mjs
+
       - name: Smoke PRODUCTION
         id: smoke
         continue-on-error: true

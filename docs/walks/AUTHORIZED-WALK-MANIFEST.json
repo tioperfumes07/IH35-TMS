@@ -1,0 +1,11 @@
+{
+  "_comment": "Owner-ordered live walk manifest (docs/lockdown/NO-SEAT-PROD-FINANCIAL-FIXTURES-LAW-2026-09-01.md §2/§6). Each entry exempts ONE specific record from verify-no-unmanifested-prod-financial-fixtures.mjs's ratchet — only add an entry for a record created during an owner-sanctioned live walk (decision in chat, not a label) that will be voided in the same session with a reversing entry. Never add a standing/unvoided record here to silence the guard.",
+  "_entry_shape": {
+    "table": "schema.table (must match one of the guard's SOURCES entries)",
+    "id": "record id (uuid)",
+    "walk_date": "YYYY-MM-DD",
+    "description": "one line: what the walk proved",
+    "reversing_evidence": "reversing JE id / voided_at timestamp / OUTBOX evidence citation, once voided same session"
+  },
+  "entries": []
+}
