@@ -115,19 +115,31 @@ CREATE UNIQUE INDEX IF NOT EXISTS driver_schedule_opco_policy_driver_key
   ON insurance.driver_schedule (operating_company_id, policy_id, driver_id)
   WHERE voided_at IS NULL;
 
-INSERT INTO insurance.driver_schedule (operating_company_id, policy_id, driver_id, submitted_at)
+WITH scheduled_driver(operating_company_id, policy_id, driver_id) AS (
 VALUES
-  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', 'fba21d80-628b-4228-ae54-336f9cbb73b6', current_date), -- Angel Alfonso Sosa (binder: "...Perez", DB last_name lacks it -- sole Active match, no ambiguity)
-  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '45fac397-860e-4fe8-ae18-67e12e1959c1', current_date), -- Jose Antonio Vicente Martinez
-  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', 'ac9ea24d-25a5-4e4f-b23e-aa90294357ac', current_date), -- Leonel Antonio Morales (DB: "...Noguez" appended -- sole Active match)
-  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '3445cf68-4a7f-4d73-89f7-04bf1fd207b4', current_date), -- Hugo Gaytan (binder: "...Sarabia", DB last_name lacks it -- sole Active match, no ambiguity)
-  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '1ec7654c-1ae9-4f3d-9af6-af9fd4b6bcc9', current_date), -- Ruben Pedro Perez Garcia
-  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', 'a32a35c8-7cd5-4368-83f0-35e185092433', current_date), -- Neftali Coronado Urbano
-  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '424a3bb9-60c2-4f16-8d9c-afa6be475ad7', current_date), -- Concepcion Cordova Dominguez
-  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '3e138476-06db-4b08-9ebe-527a5d8c591d', current_date), -- Jorge Luis Infante Corona
-  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '93be328f-ba1b-4175-adaf-bb619c1c51f2', current_date), -- Fernando Mecor Hernandez
-  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '4ff53886-41cc-434f-ae23-a36a0e3ec8e2', current_date), -- Luis Armando Sosa Perez
-  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '40022039-b657-4713-97de-439fba899946', current_date), -- Vicente Santos Contreras
-  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '40823a77-d8d4-481c-88cb-1387556aa98e', current_date), -- Alfonso Hidalgo Chavez
-  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', 'a785bea7-6dde-4bf9-81b9-b9135c2df4b5', current_date)  -- Pedro Abraham Lopez Collado
+  ('5c854333-6ea5-4faa-af31-67cb272fef80'::uuid, '7041aaaf-dbc3-41bc-8425-9a679f3dbb57'::uuid, 'fba21d80-628b-4228-ae54-336f9cbb73b6'::uuid), -- Angel Alfonso Sosa (binder: "...Perez", DB last_name lacks it -- sole Active match, no ambiguity)
+  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '45fac397-860e-4fe8-ae18-67e12e1959c1'), -- Jose Antonio Vicente Martinez
+  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', 'ac9ea24d-25a5-4e4f-b23e-aa90294357ac'), -- Leonel Antonio Morales (DB: "...Noguez" appended -- sole Active match)
+  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '3445cf68-4a7f-4d73-89f7-04bf1fd207b4'), -- Hugo Gaytan (binder: "...Sarabia", DB last_name lacks it -- sole Active match, no ambiguity)
+  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '1ec7654c-1ae9-4f3d-9af6-af9fd4b6bcc9'), -- Ruben Pedro Perez Garcia
+  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', 'a32a35c8-7cd5-4368-83f0-35e185092433'), -- Neftali Coronado Urbano
+  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '424a3bb9-60c2-4f16-8d9c-afa6be475ad7'), -- Concepcion Cordova Dominguez
+  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '3e138476-06db-4b08-9ebe-527a5d8c591d'), -- Jorge Luis Infante Corona
+  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '93be328f-ba1b-4175-adaf-bb619c1c51f2'), -- Fernando Mecor Hernandez
+  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '4ff53886-41cc-434f-ae23-a36a0e3ec8e2'), -- Luis Armando Sosa Perez
+  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '40022039-b657-4713-97de-439fba899946'), -- Vicente Santos Contreras
+  ('5c854333-6ea5-4faa-af31-67cb272fef80', '7041aaaf-dbc3-41bc-8425-9a679f3dbb57', '40823a77-d8d4-481c-88cb-1387556aa98e'), -- Alfonso Hidalgo Chavez
+  ('5c854333-6ea5-4faa-af31-67cb272fef80'::uuid, '7041aaaf-dbc3-41bc-8425-9a679f3dbb57'::uuid, 'a785bea7-6dde-4bf9-81b9-b9135c2df4b5'::uuid)  -- Pedro Abraham Lopez Collado
+)
+INSERT INTO insurance.driver_schedule (operating_company_id, policy_id, driver_id, submitted_at)
+SELECT sd.operating_company_id, sd.policy_id, sd.driver_id, current_date
+FROM scheduled_driver sd
+JOIN org.companies c
+  ON c.id = sd.operating_company_id
+JOIN insurance.policy p
+  ON p.id = sd.policy_id
+ AND p.tenant_id = sd.operating_company_id
+JOIN mdata.drivers d
+  ON d.id = sd.driver_id
+ AND d.operating_company_id = sd.operating_company_id
 ON CONFLICT (operating_company_id, policy_id, driver_id) WHERE voided_at IS NULL DO NOTHING;
