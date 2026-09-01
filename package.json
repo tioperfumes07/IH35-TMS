@@ -1124,7 +1124,8 @@
     "verify:sortable-columns-and-void-visibility": "node scripts/verify-sortable-columns-and-void-visibility.mjs",
     "verify:migration-lane-band": "node scripts/verify-migration-lane-band.mjs",
     "verify:husky-hooks-installed": "node scripts/verify-husky-hooks-installed.mjs",
-    "verify:no-seat-instruction-overrides-owner-void": "node scripts/verify-no-seat-instruction-overrides-owner-void.mjs"
+    "verify:no-seat-instruction-overrides-owner-void": "node scripts/verify-no-seat-instruction-overrides-owner-void.mjs",
+    "verify:no-unmanifested-prod-financial-fixtures": "node scripts/verify-no-unmanifested-prod-financial-fixtures.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1110.0",

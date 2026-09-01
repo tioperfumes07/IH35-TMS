@@ -7935,3 +7935,43 @@ the real route, not SQL. | dispatch.cancellation.service.ts cascade + CancelLoad
 `03e52655-9938-4782-ad1c-988f474a1460`, invoice `8149cc90-b98f-42dc-af3c-4cacd0aa2384` |
 **FIXED · LIVE-VERIFIED · invoice axis only, driver-bill/settlement axes unexercised (no fixture
 existed to test them)** |
+
+| **GUARD SHIPPED (CC-2 2026-09-01):** `NO-SEAT-PROD-FINANCIAL-FIXTURES` §6 — the manifest-
+cross-reference ratcheting guard `verify-no-seat-instruction-overrides-owner-void.mjs` explicitly
+deferred as future work is now built: `scripts/verify-no-unmanifested-prod-financial-fixtures.mjs`
+(named blocking in `.github/workflows/prod-postdeploy-verify.yml`, baseline 0, live-measured) +
+`docs/walks/AUTHORIZED-WALK-MANIFEST.json` (real, empty, documented entry shape for the next
+owner-ordered walk). Detects the law's own named incidents (TEST-VOID-LATER,
+DEVIN-LIFECYCLE-TEST, TEST CODEX ONBOARD, SAMPLE Cascade-<N>) plus a narrow seat-name-adjacent-to-
+fixture-token shape, on STANDING (voided_at IS NULL) rows only, across
+accounting.bills/expenses/payments/invoices — same "text matching is not a control" discipline as
+its sibling (12-assertion selftest proves both directions). This does not retroactively resolve
+the historical backlog (the 2 still-active vendor fixtures in the SUPPLEMENTARY row above remain a
+separate, already-tracked cleanup item) — it closes the ENFORCEMENT gap so a NEW unmanifested
+fixture cannot silently recur. | `scripts/verify-no-unmanifested-prod-financial-fixtures.mjs` |
+**CC-2** | `--selftest` 12/12 PASS; SKIP without DATABASE_URL; live-measured baseline via Neon
+matching the guard's own SQL predicate | PR routing this commit, 2026-09-01 | **GUARD SHIPPED ·
+§6 requirement satisfied · historical backlog tracked separately** |
+
+| **OPEN — BOARD-VS-LIVE DISCREPANCY, SECOND INSTANCE (CC-2 2026-09-01):** while establishing the
+baseline above, attempted to re-verify the 4 override-instruction records the P0 row above (line 5,
+`verify-no-seat-instruction-overrides-owner-void.mjs` finding) names by exact ID:
+`accounting.bills` `8cd6b69c-da93-4834-aad2-9b4aaa1eb970`, `accounting.expenses` `d64eb0ed-0a49-40c5-adac-0ffc9918de6d`
+and `ff68a730-4379-4a78-8d1f-c892c865ac12`, `accounting.payments` `704f5a67-2347-4ad3-95b2-74e48ebf3f02`.
+**None exist** — not by ID, and not by their own distinctive memo/notes substrings
+(`GO-0031`, `GO-0030`, `GO-1640`, `ACCT-SURF-04`) searched independently across the whole table.
+Same project/branch/RLS-bypass setup already confirmed correct this session (`tiny-field-89581227`,
+`production` branch `br-fancy-credit-akjnd07a`, `set_config('app.bypass_rls','lucia',false)`
+confirmed active). This is the SECOND independent instance this session of board prose describing
+live-Neon state that cannot be reproduced against production right now — the first was
+`REVERSAL-CHAIN-IS-SAMPLE-DATA-SECOND-HOP` (graded INCONCLUSIVE, merged PR #19189). Two
+explanations, not distinguished: these 4 records were corrected/removed by CC-1 (routed owner of
+the fix) since that row was written and the row was never updated to FIXED, or the citing session
+read against different data than what's live now. Given WORM law (no DELETE on money tables), a
+genuine hard-delete would itself be P0 — not confirmed either way, flagging rather than assuming.
+| `accounting.bills`, `accounting.expenses`, `accounting.payments` (named IDs above) | whoever owns
+the line-5 P0 row (CC-1, per its own routing) | confirm live whether these 4 records were corrected-
+in-place (still exist, different content) vs genuinely gone, and update the line-5 row's status
+accordingly — do not leave a P0 "still live" claim standing if it's actually resolved | live Neon
+queries this session, both by exact ID and by memo substring, zero rows either way | **OPEN ·
+second board-vs-live discrepancy this session · routed to whoever owns line-5's P0 row** |

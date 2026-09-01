@@ -1,0 +1,4 @@
+{
+  "count": 0,
+  "note": "Live-measured 2026-09-01 against tiny-field-89581227 production branch (bypass_rls confirmed active). 0 standing (voided_at IS NULL) records across accounting.bills/expenses/payments/invoices match the narrow named-incident or seat-adjacent-fixture patterns. Shrink-only ratchet: a future run finding MORE than this count fails the build."
+}
