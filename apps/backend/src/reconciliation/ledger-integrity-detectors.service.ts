@@ -1,5 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
+import {
+  loadControlBalanceCents,
+  sumBankSubledgerCents,
+  sumUnbilledRevenueSubledgerCents,
+  sumPrepaidSubledgerCents,
+  sumFixedAssetNetBookValueSubledgerCents,
+} from "../accounting/subledger-gl-control-rec.service.js";
 
 // LAUNCH-SAFE-LEDGER-MONITOR-DETECTORS (CURSOR-VERIFY-MASTER-LAUNCH-PLAN-2026-08-28.md /
 // STOP-CC1-ACCT-F5692-POD-GATE-2026-08-28.md §2): "stranded_intermediate detector must cover
@@ -618,6 +625,504 @@ export async function checkReversalIntegrityForCompany(client: DbClient, operati
   }
 }
 
+// LAW-TRANSACTION-HEALTH-REGISTER-2026-09-01 band A/C/F — CC-2's assigned bands. Each new check
+// below follows the SAME persistLedgerFinding/autoResolveLedgerFinding/resourceScope contract as
+// every detector above: read-only, one open finding per (company, finding_type, resource_scope),
+// auto-resolved (never human-resolved) the tick a condition clears.
+
+// A3 — every real (non-voided, non-sample) journal entry must carry at least two posting lines.
+// A single-leg entry with amount 0 would slip past checkPerEntryBalanceForCompany's diff<>0 filter
+// (0 - 0 = 0, "balanced") while still being structurally broken — no debit/credit pair at all.
+export async function checkMinimumPostingLinesForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  const res = await client.query<{ count: string; ids: string[] | null }>(
+    `
+      WITH je AS (
+        SELECT j.id, COUNT(p.id) AS lines
+        FROM accounting.journal_entries j
+        LEFT JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = j.id
+        WHERE j.operating_company_id = $1::uuid AND j.status <> 'voided' AND COALESCE(j.is_sample_data, false) = false
+        GROUP BY j.id
+      )
+      SELECT
+        COUNT(*) FILTER (WHERE lines < 2)::text AS count,
+        (ARRAY_AGG(id::text) FILTER (WHERE lines < 2))[1:10] AS ids
+      FROM je
+    `,
+    [operatingCompanyId]
+  );
+  const count = Number(res.rows[0]?.count ?? 0);
+  const ids = res.rows[0]?.ids ?? [];
+  const resourceScope: ResourceScope = { role: "journal_entry_min_lines", account_id: "", account_number: "" };
+
+  if (count > 0) {
+    await persistLedgerFinding(client, {
+      operatingCompanyId,
+      findingType: "journal_entry_fewer_than_two_postings",
+      severity: "critical",
+      runId,
+      resourceScope,
+      localValue: { count, sample_journal_entry_ids: ids },
+      thresholdSnapshot: { rule: "every_real_journal_entry_must_have_at_least_two_postings", threshold_cents: 0 },
+    });
+  } else {
+    const open = await findOpenLedgerFinding(client, operatingCompanyId, "journal_entry_fewer_than_two_postings", resourceScope);
+    if (open) await autoResolveLedgerFinding(client, open.id);
+  }
+}
+
+// A4 — every posting must reference a live catalogs.accounts row IN THE SAME COMPANY. An orphan
+// (account deleted/never existed) or a cross-company account_id (a posting silently landing on
+// another entity's chart) are both entity-integrity failures a raw FK alone cannot catch if the FK
+// target table has no company-scoped uniqueness — this is a defense-in-depth check, not a
+// substitute for the FK.
+export async function checkOrphanPostingsForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  const res = await client.query<{ count: string; ids: string[] | null }>(
+    `
+      SELECT COUNT(*)::text AS count, (ARRAY_AGG(p.id::text))[1:10] AS ids
+      FROM accounting.journal_entry_postings p
+      JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+      LEFT JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
+      WHERE p.operating_company_id = $1::uuid AND je.status <> 'voided' AND COALESCE(je.is_sample_data, false) = false
+        AND a.id IS NULL
+    `,
+    [operatingCompanyId]
+  );
+  const count = Number(res.rows[0]?.count ?? 0);
+  const resourceScope: ResourceScope = { role: "journal_entry_posting_orphan", account_id: "", account_number: "" };
+
+  if (count > 0) {
+    await persistLedgerFinding(client, {
+      operatingCompanyId,
+      findingType: "posting_orphan_or_cross_company_account",
+      severity: "critical",
+      runId,
+      resourceScope,
+      localValue: { count, sample_posting_ids: res.rows[0]?.ids ?? [] },
+      thresholdSnapshot: { rule: "every_posting_account_id_must_resolve_to_a_live_same_company_account", threshold_cents: 0 },
+    });
+  } else {
+    const open = await findOpenLedgerFinding(client, operatingCompanyId, "posting_orphan_or_cross_company_account", resourceScope);
+    if (open) await autoResolveLedgerFinding(client, open.id);
+  }
+}
+
+// A5-extend — checkNoGlDeltaForCompany (above) already covers invoices and bills; the law's own
+// live baseline names a THIRD real violation on this exact check shape: expense `8a1b3d84` $75.00.
+// expenses has no source_system column (grep-confirmed: every expense row is TMS-native by
+// construction, there is no QBO-import concept for this table), so this omits that filter rather
+// than guessing a column that does not exist.
+export async function checkExpenseNoGlDeltaForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  const res = await client.query<{ count: string; ids: string[] | null }>(
+    `
+      SELECT COUNT(*)::text AS count, (ARRAY_AGG(e.id::text))[1:10] AS ids
+      FROM accounting.expenses e
+      WHERE e.operating_company_id = $1::uuid AND e.status = 'posted'
+        AND COALESCE(e.is_sample_data, false) = false
+        AND NOT EXISTS (
+          SELECT 1 FROM accounting.journal_entry_postings p
+          WHERE p.source_transaction_type = 'expense' AND p.source_transaction_id = e.id::text
+        )
+    `,
+    [operatingCompanyId]
+  );
+  const count = Number(res.rows[0]?.count ?? 0);
+  const resourceScope: ResourceScope = { role: "expense", account_id: "", account_number: "" };
+
+  if (count > 0) {
+    await persistLedgerFinding(client, {
+      operatingCompanyId,
+      findingType: "document_no_gl_delta",
+      severity: "critical",
+      runId,
+      resourceScope,
+      localValue: { document_type: "expense", count, sample_ids: res.rows[0]?.ids ?? [] },
+      thresholdSnapshot: { rule: "posted_expense_must_have_a_gl_posting", threshold_cents: 0 },
+    });
+  } else {
+    const open = await findOpenLedgerFinding(client, operatingCompanyId, "document_no_gl_delta", resourceScope);
+    if (open) await autoResolveLedgerFinding(client, open.id);
+  }
+}
+
+// C1 + C5 combined — LAW's own trap warning for whoever builds this: the void path writes a
+// SEPARATE reversing JE and does NOT populate the LINE-level reversal_of_line_id/
+// reversed_by_line_id columns on accounting.journal_entry_postings (confirmed live: 0 non-null
+// rows for either). Asserting on those gives a false positive. The JE-LEVEL pointer
+// (journal_entries.reversed_by_je_id / reverses_je_id) is the one this repo's void path DOES
+// populate — checkReversalIntegrityForCompany above already proves that pointer pair is internally
+// consistent (117/117 at last live check). This check goes one step further: for every VOIDED
+// document with a real original posting, (C1) the original JE must actually HAVE a reversal
+// (reversed_by_je_id set), and (C5) the reversal's postings must mirror the original's EXACTLY —
+// same account, opposite side, same amount, for every line — not just "a reversal exists somewhere".
+// A document voided with NO original posting at all (nothing to reverse) is not a violation of
+// THIS check — that shape is A5/checkNoGlDeltaForCompany's concern, not C1's.
+async function checkVoidedDocumentReversalIntegrity(
+  client: DbClient,
+  operatingCompanyId: string,
+  runId: string,
+  docType: "invoice" | "bill"
+): Promise<void> {
+  const table = docType === "invoice" ? "accounting.invoices" : "accounting.bills";
+  const res = await client.query<{ doc_id: string; missing_reversal: boolean; mismatched_cents: string }>(
+    `
+      WITH voided_docs AS (
+        SELECT id FROM ${table}
+        WHERE operating_company_id = $1::uuid AND voided_at IS NOT NULL
+          AND COALESCE(is_sample_data, false) = false
+      ),
+      original_je AS (
+        SELECT vd.id AS doc_id, p.journal_entry_uuid AS je_id
+        FROM voided_docs vd
+        JOIN accounting.journal_entry_postings p
+          ON p.source_transaction_type = $2 AND p.source_transaction_id = vd.id::text
+        GROUP BY vd.id, p.journal_entry_uuid
+      ),
+      reversal_check AS (
+        SELECT
+          oj.doc_id,
+          je.reversed_by_je_id IS NULL AS missing_reversal,
+          COALESCE((
+            SELECT SUM(ABS(
+              (SELECT COALESCE(SUM(CASE WHEN p2.debit_or_credit = 'debit' THEN p2.amount_cents ELSE -p2.amount_cents END), 0)
+                 FROM accounting.journal_entry_postings p2 WHERE p2.journal_entry_uuid = oj.je_id AND p2.account_id = acct.account_id)
+              +
+              (SELECT COALESCE(SUM(CASE WHEN p3.debit_or_credit = 'debit' THEN p3.amount_cents ELSE -p3.amount_cents END), 0)
+                 FROM accounting.journal_entry_postings p3 WHERE p3.journal_entry_uuid = je.reversed_by_je_id AND p3.account_id = acct.account_id)
+            ))
+            FROM (SELECT DISTINCT account_id FROM accounting.journal_entry_postings WHERE journal_entry_uuid IN (oj.je_id, je.reversed_by_je_id)) acct
+          ), 0) AS mismatched_cents
+        FROM original_je oj
+        JOIN accounting.journal_entries je ON je.id = oj.je_id
+      )
+      SELECT doc_id, missing_reversal, mismatched_cents::text
+      FROM reversal_check
+      WHERE missing_reversal = true OR mismatched_cents <> 0
+    `,
+    [operatingCompanyId, docType]
+  );
+
+  const missingIds = res.rows.filter((r) => r.missing_reversal).map((r) => r.doc_id).slice(0, 10);
+  const mismatchedIds = res.rows.filter((r) => !r.missing_reversal).map((r) => r.doc_id).slice(0, 10);
+  const resourceScope: ResourceScope = { role: `${docType}_void_reversal`, account_id: "", account_number: "" };
+
+  if (res.rows.length > 0) {
+    await persistLedgerFinding(client, {
+      operatingCompanyId,
+      findingType: "voided_document_reversal_broken",
+      severity: "critical",
+      runId,
+      resourceScope,
+      localValue: {
+        document_type: docType,
+        missing_reversal_count: missingIds.length,
+        sample_missing_reversal_ids: missingIds,
+        mismatched_reversal_count: mismatchedIds.length,
+        sample_mismatched_reversal_ids: mismatchedIds,
+      },
+      thresholdSnapshot: {
+        rule: "every_voided_document_with_a_real_original_posting_must_have_a_balanced_mirroring_reversal_je",
+        threshold_cents: 0,
+      },
+    });
+  } else {
+    const open = await findOpenLedgerFinding(client, operatingCompanyId, "voided_document_reversal_broken", resourceScope);
+    if (open) await autoResolveLedgerFinding(client, open.id);
+  }
+}
+
+export async function checkVoidReversalIntegrityForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  await checkVoidedDocumentReversalIntegrity(client, operatingCompanyId, runId, "invoice");
+  await checkVoidedDocumentReversalIntegrity(client, operatingCompanyId, runId, "bill");
+}
+
+// C2 — void metadata completeness, SCHEMA-AWARE per document type on purpose: live-verified before
+// writing this (information_schema.columns) that invoices and bills do NOT share one void-column
+// convention (this repo has FOUR parallel conventions across its financial tables — that drift is
+// its own separate finding, C4, not fixed here). accounting.invoices has voided_at/void_reason but
+// NO voided_by_user_id column at all — asserting on a column that structurally does not exist
+// would either crash the query or silently mis-check; this function only asserts what each table
+// actually has. accounting.bills uses "revoked_at" as its real void timestamp (there is no
+// bills.voided_at column) but ALSO carries a separate voided_by_user_id/void_reason pair that
+// coexist with revoked_by_user_id/revoked_reason — exactly the C4 confusion made concrete: this
+// check requires bills' OWN "revoked" fields to be complete, since that is the column the void
+// path this repo actually uses for timestamping.
+export async function checkVoidMetadataCompletenessForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  const invoiceRes = await client.query<{ count: string; ids: string[] | null }>(
+    `
+      SELECT COUNT(*)::text AS count, (ARRAY_AGG(id::text))[1:10] AS ids
+      FROM accounting.invoices
+      WHERE operating_company_id = $1::uuid AND voided_at IS NOT NULL
+        AND (void_reason IS NULL OR btrim(void_reason) = '')
+    `,
+    [operatingCompanyId]
+  );
+  const invoiceCount = Number(invoiceRes.rows[0]?.count ?? 0);
+  const invoiceScope: ResourceScope = { role: "invoice_void_metadata", account_id: "", account_number: "" };
+  if (invoiceCount > 0) {
+    await persistLedgerFinding(client, {
+      operatingCompanyId,
+      findingType: "void_metadata_incomplete",
+      severity: "important",
+      runId,
+      resourceScope: invoiceScope,
+      localValue: { document_type: "invoice", count: invoiceCount, sample_ids: invoiceRes.rows[0]?.ids ?? [] },
+      thresholdSnapshot: { rule: "voided_invoice_must_have_a_non_empty_void_reason", threshold_cents: 0 },
+    });
+  } else {
+    const open = await findOpenLedgerFinding(client, operatingCompanyId, "void_metadata_incomplete", invoiceScope);
+    if (open) await autoResolveLedgerFinding(client, open.id);
+  }
+
+  const billRes = await client.query<{ count: string; ids: string[] | null }>(
+    `
+      SELECT COUNT(*)::text AS count, (ARRAY_AGG(id::text))[1:10] AS ids
+      FROM accounting.bills
+      WHERE operating_company_id = $1::uuid AND revoked_at IS NOT NULL
+        AND (revoked_reason IS NULL OR btrim(revoked_reason) = '' OR revoked_by_user_id IS NULL)
+    `,
+    [operatingCompanyId]
+  );
+  const billCount = Number(billRes.rows[0]?.count ?? 0);
+  const billScope: ResourceScope = { role: "bill_void_metadata", account_id: "", account_number: "" };
+  if (billCount > 0) {
+    await persistLedgerFinding(client, {
+      operatingCompanyId,
+      findingType: "void_metadata_incomplete",
+      severity: "important",
+      runId,
+      resourceScope: billScope,
+      localValue: { document_type: "bill", count: billCount, sample_ids: billRes.rows[0]?.ids ?? [] },
+      thresholdSnapshot: { rule: "revoked_bill_must_have_a_non_empty_revoked_reason_and_revoked_by_user_id", threshold_cents: 0 },
+    });
+  } else {
+    const open = await findOpenLedgerFinding(client, operatingCompanyId, "void_metadata_incomplete", billScope);
+    if (open) await autoResolveLedgerFinding(client, open.id);
+  }
+}
+
+// F1/F2 shared name-pattern detection — F-BAND-DATA-HONESTY-01 (Devin-A live sweep, 2026-09-01,
+// docs/audit/WORKORDER-F-BAND-DATA-HONESTY-SWEEP-2026-09-01.md, handed to CC-2 explicitly to build
+// these checks FROM). This module's OWN first draft of F2 (matching only TEST/CODEX-TEST/CC3TEST)
+// undercounted 4x — the real live sweep found 24 test-named accounts, not 6, because names shaped
+// like "ZZ-SAMPLE A ..." (accounts 9901/9902) or a bare "DEMO"/"SEED"/"FAKE" never matched TEST at
+// all. Corrected here before this ever shipped, using the sweep's own broader pattern list. The
+// sweep ALSO caught a real false-positive risk in that first draft: a bare `\bTEST\b` matches
+// "Antidoping-Drug Test Services" (QBO-1150040105, a real vendor account — "Drug Test" is a
+// legitimate business service, not a fixture marker) — EXCLUSIONS below block that confirmed trap
+// before it fires, per the same "text matching is not a control" discipline already applied to
+// verify-no-seat-instruction-overrides-owner-void.mjs elsewhere in this repo.
+const TEST_NAME_PATTERNS = [
+  /\bTEST\b/i,
+  /\bDEMO\b/i,
+  /\bSEED\b/i,
+  /\bSAMPLE\b/i,
+  /\bFAKE\b/i,
+  /\bCODEX\b.*\bTEST\b/i,
+  /\bTEST\b.*\bCODEX\b/i,
+  /\bCC3TEST\b/i,
+  /\bARCHIVED-TEST\b/i,
+  /\bZZ-SAMPLE\b/i,
+] as const;
+const TEST_NAME_EXCLUSIONS = [/\bDRUG\s+TEST\b/i, /\bEMISSIONS?\s+TEST\b/i] as const;
+
+function isTestNamedRecord(name: string): boolean {
+  if (TEST_NAME_EXCLUSIONS.some((p) => p.test(name))) return false;
+  return TEST_NAME_PATTERNS.some((p) => p.test(name));
+}
+
+// F1 — a financial document whose NAME/customer/vendor looks test-shaped (per isTestNamedRecord
+// above) but is NOT flagged is_sample_data=true. This is a REWRITE of this check's first draft,
+// which asserted `is_sample_data IS NULL` — the F-BAND sweep proved that assertion is structurally
+// inert: all 14 tables that carry is_sample_data are NOT NULL DEFAULT false with ZERO NULL rows
+// across the entire database, so an IS-NULL check could never fire, on this table or any other — an
+// always-green check masquerading as coverage. The REAL gap the law's own baseline named ("17
+// unflagged expenses, 34 of 49 invoices") is test-shaped records sitting at is_sample_data=false,
+// not NULL ones. invoices.routes.ts derives an invoice's flag from its CUSTOMER's flag (sweep
+// finding) — an unflagged test customer silently produces unflagged test invoices, which is
+// exactly why this checks invoices/bills/expenses by their OWN visible name/memo text, not by
+// trusting an upstream flag that may itself be wrong.
+export async function checkSampleDataFlagExplicitForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  for (const doc of [
+    { table: "accounting.invoices", nameExpr: "COALESCE(customer_notes, internal_notes, '')", label: "invoice" },
+    { table: "accounting.bills", nameExpr: "COALESCE(memo, '')", label: "bill" },
+    { table: "accounting.expenses", nameExpr: "COALESCE(memo, '')", label: "expense" },
+  ] as const) {
+    const res = await client.query<{ id: string; text: string }>(
+      `SELECT id::text AS id, ${doc.nameExpr} AS text FROM ${doc.table} WHERE operating_company_id = $1::uuid AND COALESCE(is_sample_data, false) = false`,
+      [operatingCompanyId]
+    );
+    const offenders = res.rows.filter((r) => isTestNamedRecord(r.text));
+    const resourceScope: ResourceScope = { role: `${doc.label}_is_sample_data_unset`, account_id: "", account_number: "" };
+    if (offenders.length > 0) {
+      await persistLedgerFinding(client, {
+        operatingCompanyId,
+        findingType: "is_sample_data_not_explicit",
+        severity: "important",
+        runId,
+        resourceScope,
+        localValue: { document_type: doc.label, count: offenders.length, sample_ids: offenders.slice(0, 10).map((o) => o.id) },
+        thresholdSnapshot: { rule: "test_shaped_record_must_be_flagged_is_sample_data_true", threshold_cents: 0 },
+      });
+    } else {
+      const open = await findOpenLedgerFinding(client, operatingCompanyId, "is_sample_data_not_explicit", resourceScope);
+      if (open) await autoResolveLedgerFinding(client, open.id);
+    }
+  }
+}
+
+// F2 — no test-named record in real master data. Live-verified before writing this (and expanded
+// after the Devin-A sweep proved the first draft's scope was too narrow — see the shared pattern
+// comment above): scans catalogs.accounts (a coding seat creating a GL ACCOUNT that appears on the
+// owner's real chart is the worst instance of this class) plus mdata.drivers/customers/vendors/
+// units, since the same F-BAND sweep found 20/20/47/23 test-named records respectively across
+// those tables — accounts alone was a fraction of the real contamination surface.
+const F2_TARGETS = [
+  { table: "catalogs.accounts", idCol: "id", nameExpr: "account_name", numberCol: "account_number", label: "account" },
+  { table: "mdata.drivers", idCol: "id", nameExpr: "first_name || ' ' || last_name", numberCol: null, label: "driver" },
+  { table: "mdata.customers", idCol: "id", nameExpr: "customer_name", numberCol: null, label: "customer" },
+  { table: "mdata.vendors", idCol: "id", nameExpr: "vendor_name", numberCol: null, label: "vendor" },
+  { table: "mdata.units", idCol: "id", nameExpr: "unit_number", numberCol: null, label: "unit" },
+] as const;
+
+export async function checkTestNamedAccountForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  for (const target of F2_TARGETS) {
+    const numberSelect = target.numberCol ? `${target.numberCol} AS number_val,` : "NULL AS number_val,";
+    const res = await client.query<{ id: string; number_val: string | null; name_val: string }>(
+      `
+        SELECT ${target.idCol}::text AS id, ${numberSelect} ${target.nameExpr} AS name_val
+        FROM ${target.table}
+        WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL
+      `,
+      [operatingCompanyId]
+    );
+    const offenders = res.rows.filter((r) => isTestNamedRecord(r.name_val ?? ""));
+    const resourceScope: ResourceScope = { role: `test_named_${target.label}`, account_id: "", account_number: "" };
+
+    if (offenders.length > 0) {
+      await persistLedgerFinding(client, {
+        operatingCompanyId,
+        findingType: "test_named_account_in_coa",
+        severity: "important",
+        runId,
+        resourceScope,
+        localValue: {
+          record_type: target.label,
+          count: offenders.length,
+          sample_records: offenders.slice(0, 10).map((o) => ({ id: o.id, number: o.number_val, name: o.name_val })),
+        },
+        thresholdSnapshot: { rule: "no_test_or_sample_named_record_active_in_real_master_data", threshold_cents: 0 },
+      });
+      continue;
+    }
+    const open = await findOpenLedgerFinding(client, operatingCompanyId, "test_named_account_in_coa", resourceScope);
+    if (open) await autoResolveLedgerFinding(client, open.id);
+  }
+}
+
+// B6 — driver cash advance does not fit subledger-gl-control-rec.service.ts's single-role-account
+// report row shape: driver_finance.driver_advance_accounts.coa_account_id is a DISTINCT GL account
+// PER DRIVER (26 of them on USMCA alone), not one company-wide control account. This check sums
+// the sign-normalized GL balance across every one of those per-driver accounts and compares it to
+// the sum of outstanding driver_advances — reusing loadControlBalanceCents (imported from
+// subledger-gl-control-rec.service.ts) for the per-account GL read, per account, exactly the "reuse
+// it, do not rebuild it" instruction.
+export async function checkDriverCashAdvanceTieOutForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  const asOfDate = new Date().toISOString().slice(0, 10);
+  const accountsRes = await client.query<{ account_id: string }>(
+    `
+      SELECT DISTINCT coa_account_id AS account_id
+      FROM driver_finance.driver_advance_accounts
+      WHERE operating_company_id = $1::uuid AND is_active = true AND coa_account_id IS NOT NULL
+    `,
+    [operatingCompanyId]
+  );
+
+  let glCents = 0;
+  for (const row of accountsRes.rows) {
+    glCents += await loadControlBalanceCents(client, operatingCompanyId, asOfDate, row.account_id);
+  }
+
+  const subRes = await client.query<{ cents: string | number }>(
+    `
+      SELECT COALESCE(SUM(ROUND(outstanding_balance * 100)), 0)::bigint AS cents
+      FROM driver_finance.driver_advances
+      WHERE operating_company_id = $1::uuid AND status = 'outstanding'
+    `,
+    [operatingCompanyId]
+  );
+  const subCents = Number(subRes.rows[0]?.cents ?? 0);
+  const diffCents = glCents - subCents;
+  const resourceScope: ResourceScope = { role: "driver_cash_advance", account_id: "", account_number: "" };
+
+  if (accountsRes.rows.length === 0) return; // nothing bound yet — not a false "$0 tie" claim
+
+  if (diffCents !== 0) {
+    await persistLedgerFinding(client, {
+      operatingCompanyId,
+      findingType: "subledger_tie_out_diff",
+      severity: "critical",
+      runId,
+      resourceScope,
+      localValue: { ledger: "driver_cash_advance", gl_cents: glCents, subledger_cents: subCents, diff_cents: diffCents },
+      thresholdSnapshot: { rule: "driver_cash_advance_gl_must_equal_outstanding_driver_advances_subledger", threshold_cents: 0 },
+    });
+  } else {
+    const open = await findOpenLedgerFinding(client, operatingCompanyId, "subledger_tie_out_diff", resourceScope);
+    if (open) await autoResolveLedgerFinding(client, open.id);
+  }
+}
+
+// B3/B4/B7/B8 — the existing checkSubledgerTieOutForCompany above hand-rolls JUST ar_control/
+// ap_control with its own inline SQL, never calling subledger-gl-control-rec.service.ts's report
+// function at all — that function is currently reachable ONLY via its authenticated HTTP route,
+// not by this cron. Rather than route the automated tick through the full report function (which
+// pulls in getArAgingReport/getApAgingReport and assertCompanyMembership — a real "logged-in user"
+// dependency chain this system-context cron does not have), this reuses the report's OWN exported
+// per-role primitives (resolveRoleAccountOptional + loadControlBalanceCents + the sum functions)
+// directly — same math, no duplicated SQL, no borrowed auth context.
+const EXTENDED_TIE_OUT_ROLES = [
+  { role: "operating_bank" as const, ledger: "bank", needsAccountId: true },
+  { role: "unbilled_revenue" as const, ledger: "unbilled_revenue", needsAccountId: false },
+  { role: "prepaid_asset_default" as const, ledger: "prepaid", needsAccountId: false },
+  { role: "fixed_asset_default" as const, ledger: "fixed_assets", needsAccountId: false },
+];
+
+export async function checkExtendedSubledgerTieOutForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  const asOfDate = new Date().toISOString().slice(0, 10);
+  for (const { role, ledger, needsAccountId } of EXTENDED_TIE_OUT_ROLES) {
+    const controlAccountId = await resolveRoleAccountOptional(client as never, operatingCompanyId, role);
+    const resourceScope: ResourceScope = { role, account_id: controlAccountId ?? "", account_number: "" };
+
+    if (controlAccountId == null) continue; // unbound — nothing to compare, not a false "$0" claim
+
+    const glCents = await loadControlBalanceCents(client, operatingCompanyId, asOfDate, controlAccountId);
+    const subCents =
+      role === "operating_bank" && needsAccountId
+        ? await sumBankSubledgerCents(client, operatingCompanyId, controlAccountId)
+        : role === "unbilled_revenue"
+          ? await sumUnbilledRevenueSubledgerCents(client, operatingCompanyId)
+          : role === "prepaid_asset_default"
+            ? await sumPrepaidSubledgerCents(client, operatingCompanyId)
+            : await sumFixedAssetNetBookValueSubledgerCents(client, operatingCompanyId);
+
+    const diffCents = glCents - subCents;
+    if (diffCents !== 0) {
+      await persistLedgerFinding(client, {
+        operatingCompanyId,
+        findingType: "subledger_tie_out_diff",
+        severity: "critical",
+        runId,
+        resourceScope,
+        localValue: { ledger, gl_cents: glCents, subledger_cents: subCents, diff_cents: diffCents },
+        thresholdSnapshot: { rule: `${role}_gl_must_equal_subledger`, threshold_cents: 0 },
+      });
+    } else {
+      const open = await findOpenLedgerFinding(client, operatingCompanyId, "subledger_tie_out_diff", resourceScope);
+      if (open) await autoResolveLedgerFinding(client, open.id);
+    }
+  }
+}
+
 export async function runLedgerIntegrityTick(client: DbClient): Promise<void> {
   const companies = await listActiveCompanies(client);
   for (const operatingCompanyId of companies) {
@@ -630,5 +1135,15 @@ export async function runLedgerIntegrityTick(client: DbClient): Promise<void> {
     await checkNoGlDeltaForCompany(client, operatingCompanyId, runId);
     await checkFutureDatedEntriesForCompany(client, operatingCompanyId, runId);
     await checkReversalIntegrityForCompany(client, operatingCompanyId, runId);
+    // LAW-TRANSACTION-HEALTH-REGISTER-2026-09-01 bands A/C/F — CC-2.
+    await checkMinimumPostingLinesForCompany(client, operatingCompanyId, runId);
+    await checkOrphanPostingsForCompany(client, operatingCompanyId, runId);
+    await checkExpenseNoGlDeltaForCompany(client, operatingCompanyId, runId);
+    await checkVoidReversalIntegrityForCompany(client, operatingCompanyId, runId);
+    await checkVoidMetadataCompletenessForCompany(client, operatingCompanyId, runId);
+    await checkSampleDataFlagExplicitForCompany(client, operatingCompanyId, runId);
+    await checkTestNamedAccountForCompany(client, operatingCompanyId, runId);
+    await checkDriverCashAdvanceTieOutForCompany(client, operatingCompanyId, runId);
+    await checkExtendedSubledgerTieOutForCompany(client, operatingCompanyId, runId);
   }
 }
