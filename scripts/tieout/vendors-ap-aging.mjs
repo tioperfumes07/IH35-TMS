@@ -15,15 +15,20 @@
  *     liability account like ap_control must be sign-flipped before comparing to a subledger total
  *     expressed as a positive magnitude — comparing raw would double the apparent variance).
  *
- * Runs against every operating company that has an ap_control role bound (TRANSP/TRK/USMCA today).
- * Empty result set (no companies with the role bound) is NEVER a pass — that is UNVERIFIED, not
- * green. is_sample_data is excluded by the reused query itself, never re-filtered here; is_duplicate
+ * Launch scoreboard scope: USMCA only (the active operating entity). TRANSP/TRK frozen QBO/TMS
+ * mirrors would dominate variance and contaminate the USMCA number that matters for launch.
+ * Empty result set (USMCA ap_control not bound) is NEVER a pass — that is UNVERIFIED, not green.
+ * is_sample_data is excluded by the reused query itself, never re-filtered here; is_duplicate
  * is not a concept on accounting.bills, so it is not touched.
  */
 import pg from "pg";
 import { fail, requireDb, unverified } from "./_lib.mjs";
 
-export const EXPECTED = { open_bills_eq_ap_control: true, tolerance_cents: 0 };
+export const EXPECTED = {
+  operating_company_code: "USMCA",
+  open_bills_eq_ap_control: true,
+  tolerance_cents: 0,
+};
 
 if (process.argv.includes("--expected-only")) {
   console.log(JSON.stringify(EXPECTED));
@@ -160,13 +165,13 @@ async function main() {
            FROM accounting.chart_of_accounts_roles r
            JOIN org.companies o ON o.id = r.operating_company_id
            JOIN catalogs.accounts a ON a.id = r.account_id
-          WHERE r.role = 'ap_control' AND r.is_active`
+          WHERE r.role = 'ap_control' AND r.is_active AND o.code = 'USMCA'`
       );
 
       await client.query("ROLLBACK");
 
       if (companiesRes.rows.length === 0) {
-        unverified("no operating company has an ap_control role bound — nothing to compare (empty is never PASS)");
+        unverified("USMCA has no ap_control role bound — nothing to compare (empty is never PASS)");
         return;
       }
 
@@ -231,7 +236,7 @@ async function main() {
         fail(`VEND-TIEOUT-01 AP aging vs AP control variance (tolerance 0): ${summary}`);
         return;
       }
-      console.log(`TIEOUT PASS: VEND-TIEOUT-01 AP aging == AP control for all ${results.length} entit${results.length === 1 ? "y" : "ies"} as of ${asOfDate} (${summary})`);
+      console.log(`TIEOUT PASS: VEND-TIEOUT-01 USMCA AP aging == AP control as of ${asOfDate} (${summary})`);
       process.exit(0);
     } finally {
       client.release();
