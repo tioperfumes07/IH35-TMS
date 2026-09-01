@@ -18,12 +18,13 @@ const detentionService = fs.readFileSync(path.join(root, "apps/backend/src/dispa
 const latePage = fs.readFileSync(path.join(root, "apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx"), "utf8");
 const detentionPage = fs.readFileSync(path.join(root, "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx"), "utf8");
 const serverControls = fs.readFileSync(path.join(root, "apps/frontend/src/components/dispatch/DispatchAlertServerControls.tsx"), "utf8");
+const alertSortMapper = fs.readFileSync(path.join(root, "apps/frontend/src/pages/dispatch/dispatchAlertBoardSort.ts"), "utf8");
 
 function subject(source) {
   return source.slice(source.indexOf("export async function listAtRiskLoads"), source.indexOf("export async function listIntransitIssues"));
 }
 
-function failures(serviceSource, lateServiceSource, statusesSource, apiSource, pageSource, overviewSource, subnavSource, routeSources = [atRiskRoute, lateRoute, detentionRoute], detentionServiceSource = detentionService, latePageSource = latePage, detentionPageSource = detentionPage, controlsSource = serverControls) {
+function failures(serviceSource, lateServiceSource, statusesSource, apiSource, pageSource, overviewSource, subnavSource, routeSources = [atRiskRoute, lateRoute, detentionRoute], detentionServiceSource = detentionService, latePageSource = latePage, detentionPageSource = detentionPage, controlsSource = serverControls, sortMapperSource = alertSortMapper) {
   const found = [];
   const query = subject(serviceSource);
   if (!query.includes("views.dispatch_load_with_driver_status l")) found.push("canonical dispatch source missing");
@@ -65,9 +66,11 @@ function failures(serviceSource, lateServiceSource, statusesSource, apiSource, p
     if (!source.includes("DispatchAlertServerControls")) found.push(`${label} has no applied server range controls`);
     if (!source.includes("suppressToolbarRange")) found.push(`${label} still exposes competing client-only range`);
     if (!source.includes('sortMode="external"')) found.push(`${label} still sorts only the loaded client rows`);
-    if (!source.includes("sort.sort ??")) found.push(`${label} external sort key can become undefined`);
-    if (!source.includes('NonNullable<DispatchAlertQuery["sort"]>')) found.push(`${label} sort callback retains the optional API type`);
+    if (!source.includes("serverDispatchAlertQueryFromSortState")) found.push(`${label} bypasses the shared external-sort mapper`);
   }
+  if (!sortMapperSource.includes('): NonNullable<DispatchAlertQuery["sort"]>')) found.push("shared external-sort mapper can return undefined");
+  if (!sortMapperSource.includes('return "event_at";')) found.push("shared external-sort mapper lacks a stable fallback");
+  if (!sortMapperSource.includes('return { sort: paritySortKeyToDispatchAlertQuery(paritySortKey), direction };')) found.push("server query bypasses the non-optional sort mapper");
   for (const token of ["Apply", "Cancel", "Reset", "From must be on or before To."]) {
     if (!controlsSource.includes(token)) found.push(`server range controls missing ${token}`);
   }
@@ -100,8 +103,8 @@ if (process.argv.includes("--selftest")) {
     [service, lateService, statuses, api, page.replace("suppressToolbarRange", "removedToolbarRange"), overview, subnav],
     [service, lateService, statuses, api.replace("function dispatchAlertParams", "function removedAlertParams"), page, overview, subnav],
     [service, lateService, statuses, api, page, overview, subnav, [atRiskRoute.replace("...dispatchAlertQueryFields", ""), lateRoute, detentionRoute]],
-    [service, lateService, statuses, api, page.replace("sort.sort ??", "sort.sort ||"), overview, subnav],
-    [service, lateService, statuses, api, page.replace('NonNullable<DispatchAlertQuery["sort"]>', 'DispatchAlertQuery["sort"]'), overview, subnav],
+    [service, lateService, statuses, api, page, overview, subnav, undefined, undefined, undefined, undefined, undefined, alertSortMapper.replace('): NonNullable<DispatchAlertQuery["sort"]>', '): DispatchAlertQuery["sort"]')],
+    [service, lateService, statuses, api, page, overview, subnav, undefined, undefined, undefined, undefined, undefined, alertSortMapper.replaceAll('return "event_at";', 'return undefined;')],
     [service, lateService, statuses, api, page, overview, subnav, undefined, undefined, undefined, undefined, serverControls.replace('variant="tertiary"', 'variant="ghost"')],
   );
   const missed = mutations.filter((parts) => failures(...parts).length === 0);
