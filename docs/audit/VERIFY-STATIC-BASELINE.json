@@ -3,7 +3,7 @@
   "measured_at": "2026-09-01T19:30Z",
   "measured_sha": "23a5776217",
   "measured_branch": "origin/main",
-  "total_failures": 189,
+  "total_failures": 190,
   "breakdown": {
     "selftest_failed": "see note",
     "registry_threshold": "see note",
@@ -101,6 +101,7 @@
     "verify-healthz-no-raw-error-leak.mjs",
     "verify-hold-merge-gate.mjs",
     "verify-honest-built-launch-law-present.mjs",
+    "verify-insurance-dashboard-excludes-fixture-data.mjs",
     "verify-insurance-policy-type-human-label.mjs",
     "verify-invoice-line-no-uuid-description.mjs",
     "verify-invoice-pickup-sort.mjs",
