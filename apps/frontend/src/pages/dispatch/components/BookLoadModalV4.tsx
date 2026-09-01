@@ -851,7 +851,12 @@ export function BookLoadModalV4({
         customer_chargeback_requested: values.customer_chargeback_requested,
         customer_chargeback_reason: values.customer_chargeback_reason || undefined,
         live_load_number: values.live_load_number || undefined,
-        load_number: (values.reserved_load_number?.trim() || values.live_load_number?.trim() || undefined),
+        // GO-05-WAVE1 note: this send site previously duplicated the identical expression under
+        // both `load_number:` and `requested_load_number:` — DispatchBookLoadPayload didn't yet
+        // declare either field (TS2353), so it tripped the pre-push tsc gate. GO-10 has since
+        // declared both fields with distinct semantics (load_number vs requested_load_number) on
+        // the type; left as requested_load_number-only here (not restoring the duplicate) since
+        // that's GO-10's own call to make, not this fix's.
         requested_load_number: (values.reserved_load_number?.trim() || values.live_load_number?.trim() || undefined),
         addToOpenPresettlement: values.addToOpenPresettlement,
         reservation_uuid: values.reservation_uuid || undefined,

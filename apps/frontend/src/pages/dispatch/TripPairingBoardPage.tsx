@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -12,6 +12,7 @@ import { Button } from "../../components/Button";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { companyToday } from "../../lib/businessDate";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 // §7 navy ruling (Jorge 2026-06-23): NB/TR/SB render in the navy family — no blue/purple/green pills.
 // Three distinguishable navy-family shades replace the old SB green (#16a34a) and any blue/purple.
@@ -63,6 +64,102 @@ function LegendSwatch({ color, dashed, label }: { color?: string; dashed?: boole
   );
 }
 
+// TRIP-PAIRING-BOARD-PARITYTABLE (GO-05 wave 1): "Assigned trips" is a genuine row-list (one row
+// per unit/tour) — the raw <table> had no existing sort/resize to preserve, so this is a straight
+// column-parity conversion onto ParityTable's drag-resize + drag-reorder + gear chrome. A factory
+// (not a bare module-level array) because the Southbound column's "+ Find Southbound" button needs
+// the component's own setBookUnitId.
+function buildTripPairingColumns(onBookReturn: (unitId: string) => void): ParityColumn<TripPairingUnitRow>[] {
+  return [
+  {
+    key: "unit",
+    label: "Unit",
+    sortable: true,
+    sortValue: (t) => t.unit_number ?? "",
+    className: "font-medium",
+    render: (t) => <EntityLinkOrTombstone kind="unit" id={t.unit_id} name={t.unit_number} noun="Unit" />,
+  },
+  {
+    key: "driver",
+    label: "Driver",
+    sortable: true,
+    sortValue: (t) => t.driver_name ?? "",
+    render: (t) => <EntityLinkOrTombstone kind="driver" id={t.driver_id} name={t.driver_name} noun="Driver" />,
+  },
+  {
+    key: "northbound",
+    label: "▲ Northbound (out)",
+    render: (t) => {
+      const nbLegs = t.legs.filter((l) => l.trip_type === "NB");
+      return (
+        <div className="flex flex-col gap-1">
+          {nbLegs.map((l) => legChip(l))}
+          {nbLegs.length === 0 ? <span className="text-slate-400">—</span> : null}
+        </div>
+      );
+    },
+  },
+  {
+    key: "triangulation",
+    label: "▶ Triangulation(s)",
+    render: (t) => {
+      const trLegs = t.legs.filter((l) => l.trip_type === "TR");
+      return (
+        <div className="flex flex-col gap-1">
+          {trLegs.map((l, i) => (
+            <span key={l.load_id} className="flex items-center gap-1">
+              {i > 0 ? <span className="text-slate-400">↳ leg {i + 1}</span> : null}
+              {legChip(l)}
+            </span>
+          ))}
+          {trLegs.length === 0 ? <span className="text-slate-400">—</span> : null}
+        </div>
+      );
+    },
+  },
+  {
+    key: "southbound",
+    label: "▼ Southbound (return)",
+    render: (t) => {
+      const sb = t.legs.find((l) => l.trip_type === "SB") ?? null;
+      if (sb) return legChip(sb);
+      if (t.open_return) {
+        return (
+          <button
+            type="button"
+            onClick={() => onBookReturn(t.unit_id)}
+            className="inline-flex items-center rounded-sm border border-dashed border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-700 hover:border-slate-500 hover:bg-slate-200"
+            aria-label={`Book Southbound return for ${t.unit_number ?? "unit"}`}
+          >
+            + Find Southbound{t.return_city ? ` · empty in ${t.return_city}` : ""}{t.return_avail_date ? ` · avail ${new Date(t.return_avail_date).toLocaleDateString()}` : ""}
+          </button>
+        );
+      }
+      return <span className="text-slate-400">—</span>;
+    },
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    sortValue: (t) => t.settlement_signal ?? t.status ?? "",
+    render: (t) => {
+      if (t.settlement_signal === "round_trip") {
+        return <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">Round trip</span>;
+      }
+      if (t.settlement_signal === "settlement_open") {
+        return (
+          <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
+            Up north · settlement open{t.up_north_days != null ? ` · ${t.up_north_days}d` : ""}
+          </span>
+        );
+      }
+      return <span className="text-slate-400">{t.status ?? "—"}</span>;
+    },
+  },
+  ];
+}
+
 export function TripPairingBoardPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -70,6 +167,7 @@ export function TripPairingBoardPage() {
   const [segment, setSegment] = useState<Segment>("All");
   // C1a "+ Book NB" shell — opens the Book Load wizard prefilled with the unit.
   const [bookUnitId, setBookUnitId] = useState<string | null>(null);
+  const tripPairingColumns = useMemo(() => buildTripPairingColumns(setBookUnitId), []);
 
   const query = useQuery({
     queryKey: ["trip-pairing-board", companyId],
@@ -263,84 +361,16 @@ export function TripPairingBoardPage() {
               <span className="rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700">{tours.length}</span>
               <span className="text-[11px] text-slate-500">— multi-leg tours stack under the unit; SB return = settlement closes</span>
             </div>
-            <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
-                  <tr>
-                    <th className="px-2 py-2">Unit</th>
-                    <th className="px-2 py-2">Driver</th>
-                    <th className="px-2 py-2">▲ Northbound (out)</th>
-                    <th className="px-2 py-2">▶ Triangulation(s)</th>
-                    <th className="px-2 py-2">▼ Southbound (return)</th>
-                    <th className="px-2 py-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tours.map((t: TripPairingUnitRow) => {
-                    const nbLegs = t.legs.filter((l) => l.trip_type === "NB");
-                    const trLegs = t.legs.filter((l) => l.trip_type === "TR");
-                    const sb = t.legs.find((l) => l.trip_type === "SB") ?? null;
-                    return (
-                      <tr key={t.unit_id} className="border-t border-slate-100 align-top hover:bg-slate-50">
-                        <td className="px-2 py-1.5 font-medium">
-                          <EntityLinkOrTombstone kind="unit" id={t.unit_id} name={t.unit_number} noun="Unit" />
-                        </td>
-                        <td className="px-2 py-1.5">
-                          <EntityLinkOrTombstone kind="driver" id={t.driver_id} name={t.driver_name} noun="Driver" />
-                        </td>
-                        <td className="px-2 py-1.5">
-                          <div className="flex flex-col gap-1">
-                            {nbLegs.map((l) => legChip(l))}
-                            {nbLegs.length === 0 ? <span className="text-slate-400">—</span> : null}
-                          </div>
-                        </td>
-                        <td className="px-2 py-1.5">
-                          <div className="flex flex-col gap-1">
-                            {trLegs.map((l, i) => (
-                              <span key={l.load_id} className="flex items-center gap-1">
-                                {i > 0 ? <span className="text-slate-400">↳ leg {i + 1}</span> : null}
-                                {legChip(l)}
-                              </span>
-                            ))}
-                            {trLegs.length === 0 ? <span className="text-slate-400">—</span> : null}
-                          </div>
-                        </td>
-                        <td className="px-2 py-1.5">
-                          {sb ? (
-                            legChip(sb)
-                          ) : t.open_return ? (
-                            <button
-                              type="button"
-                              onClick={() => setBookUnitId(t.unit_id)}
-                              className="inline-flex items-center rounded-sm border border-dashed border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-700 hover:border-slate-500 hover:bg-slate-200"
-                              aria-label={`Book Southbound return for ${t.unit_number ?? "unit"}`}
-                            >
-                              + Find Southbound{t.return_city ? ` · empty in ${t.return_city}` : ""}{t.return_avail_date ? ` · avail ${new Date(t.return_avail_date).toLocaleDateString()}` : ""}
-                            </button>
-                          ) : (
-                            <span className="text-slate-400">—</span>
-                          )}
-                        </td>
-                        <td className="px-2 py-1.5">
-                          {t.settlement_signal === "round_trip" ? (
-                            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">Round trip</span>
-                          ) : t.settlement_signal === "settlement_open" ? (
-                            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
-                              Up north · settlement open{t.up_north_days != null ? ` · ${t.up_north_days}d` : ""}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400">{t.status ?? "—"}</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {tours.length === 0 ? (
-                    <tr><td colSpan={6} className="px-3 py-6 text-center text-slate-500">No assigned trips.</td></tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
+            <ParityTable<TripPairingUnitRow>
+              columns={tripPairingColumns}
+              rows={tours}
+              rowKey={(t) => t.unit_id}
+              emptyText="No assigned trips."
+              tableTestId="dispatch-trip-pairing-assigned-table"
+              storageKey="dispatch-trip-pairing-assigned"
+              suppressToolbarSearch
+              suppressToolbarRange
+            />
           </section>
 
           {/* Legend — five states (NB/TR/SB navy-family per §7; open-return dashed; settlement-open amber). */}
