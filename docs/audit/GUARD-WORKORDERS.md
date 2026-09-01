@@ -8269,3 +8269,38 @@ remains open in the CUS-01..07 series.
 | **OPEN — accounting subnav wrong component (CC-1 2026-09-01):** `MAIN-ACCOUNTING-SUBNAV-GROUPED-DROPDOWN-BREAK` — `verify-accounting-subnav-grouped.mjs` is red on `origin/main` right now: `apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx` renders `NavyPageSubNav`, not the required shared `HoverDropdownNav` (top-bar grouped dropdowns, `openOn="click"`). Confirmed on `origin/main` directly (guard fails locally on an unmodified checkout, and the file has zero diff against `origin/main` in this session's own branches) — not caused by this session's diffs, a case of concurrent-lane churn breaking a mechanical FE-chrome guard. Not fixed here — swapping the nav component on 49 Accounting pages is a real UI-pattern change (Design-Parity Lock territory), not a one-line fix, and out of scope for the unrelated hotfix PR that surfaced it; filed for whoever owns Accounting subnav chrome next rather than rushed blind. | `apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx`; `scripts/verify-accounting-subnav-grouped.mjs` | **CC-3 (FE chrome)** | swap `NavyPageSubNav` for the shared `HoverDropdownNav` from `ACCOUNTING_SUB_NAV_ITEMS`, `openOn="click"`, verify no visual/behavior regression across all 49 Accounting pages before merge | `node scripts/verify-accounting-subnav-grouped.mjs` on `origin/main` (cdafd357) → FAIL: both required markers missing; PR #19214 (unrelated bulk-hotfix) surfaced it via `locked-guards-heavy` | **OPEN · pre-existing, unrelated to PR #19214/#19211** |
 
 | **OPEN — Work Order wizard lost 4 vendor/1099 fields, ENFORCED REGRESSION (CC-1 2026-09-01):** `WO-WIZARD-VENDOR-1099-FIELDS-REGRESSION` — `verify-design-parity.mjs` is red on `origin/main` right now: `Create/Edit Work Order Wizard` is an `ENFORCED` (parity-locked) screen and has lost 4 design-contracted fields — Company / Vendor name, Account no., Tax ID (1099), Track 1099?. Confirmed live: grepped the full render file for those labels — none render; the only surviving 1099 reference is a static note div ("Registers as a Bill (A/P) — payable later, 1099-tracked.") with no actual Tax-ID/Track-1099 input fields behind it. Tax-relevant (1099 vendor tracking on a payable-creating flow) — flagging as higher priority than a pure-chrome regression. Not caused by this session's diffs (file untouched by any branch in this session) — another concurrent-lane regression. Not fixed here — diagnosing why 4 fields were dropped from a multi-section wizard needs real investigation, out of scope for the unrelated PR that surfaced it. | `apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx`; `scripts/verify-design-parity.mjs`; `docs/design/DESIGN-PARITY-ENFORCEMENT.md` | **CC-1 or CC-3 (tax-adjacent but Maintenance-module UI — either lane, prioritize)** | restore the 4 missing fields to the vendor/company section of the wizard, confirm they write to the correct columns (or are legitimately DEFERRED with a named gating migration per DESIGN-PARITY rule #2, not silently dropped), re-run `verify-design-parity` clean | `node scripts/verify-design-parity.mjs` on `origin/main` (772d80a) → FAIL: 4 fields lost; direct grep of `CreateWorkOrderModal.tsx` for the 4 field labels → 0 matches; PR #19214 (unrelated bulk-hotfix) surfaced it via `build-typecheck-heavy`'s `verify:arch-design` step | **OPEN · pre-existing, unrelated to PR #19214/#19211, tax-relevant** |
+| **OPEN — SELF-GRADE: `checkVoidedDocumentReversalIntegrityForCompany` (ACCT-F10217 C1+C5) is
+structurally near-blind for most real invoices (CC-2 2026-09-01, found while independently
+re-verifying DISP-VOID-CASCADE-01's #19186 live proof):** the guard's `original_je` CTE joins
+voided invoices to their GL posting via `journal_entry_postings.source_transaction_type='invoice'
+AND source_transaction_id=<invoice id>`. Live query: **only 6 postings in the ENTIRE database
+carry `source_transaction_type='invoice'`, linked to just 2 distinct invoice IDs — out of 11,943
+total invoices (11,687 of them real, paid)**. Read the code that tags this: `revrec-delivery-
+posting/poster.service.ts`'s `INVOICE-SENT-WITHOUT-AR-RECOGNITION-JE` fix (itself a real,
+deliberate, well-reasoned prior fix) only tags a posting the FIRST time its `bill` (Event 2)
+revrec leg runs AND the row's `source_transaction_type IS NULL` — a forward-only backfill on
+write, never a retroactive sweep across historical postings. Every invoice whose Event-2 JE
+posted before that fix landed — almost certainly most of the 11,687 real paid ones — has an
+UNTAGGED posting the guard's join can never find. Consequence: `original_je` returns empty for
+those invoices, `reversal_check` finds nothing, and the guard reports **0 violations even for a
+real voided invoice with a genuine unreversed GL impact** — the guard can currently only ever
+catch the narrow slice of invoices created/posted after the tagging fix. This likely also connects
+to the still-open P0 `ACCT-F10217 · Bank + Unbilled Revenue variance` row above (**$40,059.00
+stranded, "Revrec Event 2 never relieving Event 1"**) — an untagged Event-2 posting is exactly the
+shape that would leave 1150 Unbilled Revenue overstated with no visible link back to its invoice.
+**Not fixed this pass** — a real retroactive-backfill fix (or a join that doesn't depend on the
+tag at all, e.g., via `transaction_source_links`/`writeTransactionSourceLink`, used a few lines
+above the tagging code and possibly more complete) needs its own design pass, not a rushed patch
+under this batch-verify turn. | `apps/backend/src/reconciliation/ledger-integrity-detectors.service.ts`
+(`checkVoidedDocumentReversalIntegrityForCompany`), `accounting.journal_entry_postings.source_transaction_type`,
+`revrec-delivery-posting/poster.service.ts` (the forward-only tagging fix) | **CC-2 GUARD** (self-
+grade; fix decision may need CC-1 for the money-path implications) | determine whether
+`transaction_source_links` (already written for every revrec posting via `writeTransactionSourceLink`,
+not just the Event-2 leg) is a complete-enough join to replace the source_transaction_type
+dependency, or whether a one-time backfill migration is the right fix; re-verify the guard finds
+real violations across historical invoices, not just post-fix ones | live Neon
+`run_sql_transaction`, `set_config('app.bypass_rls','lucia',false)`, `tiny-field-89581227`: 6
+tagged postings / 2 invoices total; 11,687 real paid invoices with 0 tagged postings matched via
+the guard's own join predicate, reproduced directly from the guard's own SQL text | **OPEN ·
+guard structurally under-scoped since it shipped this session · connects to the open $40,059
+Unbilled Revenue variance · not yet fixed** |
