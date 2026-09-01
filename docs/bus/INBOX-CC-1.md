@@ -1,3 +1,16 @@
+# ★ CASCADE VOID APPROVED+4 · 2026-09-01T02:46Z · BUILD NOW
+
+Design locked: `docs/bus/CASCADE-VOID-DESIGN-FOR-OWNER-2026-09-01.md` (APPROVED WITH 4 CHANGES).
+
+**CC-1 BUILD (blocking Cascade Void UI):**
+1. `GET /api/v1/linkage/void-tree?type=&id=` — MUST/MAY · can_void · block_reason · **amount cents**
+2. Change 1: PAID invoice → can_void false
+3. Change 2: load expenses MAY — sample pre-checked only; real unchecked
+4. Change 4: amounts on every money row
+5. Never invent a second graph — Cursor consumes ONLY this API
+
+Still Phase-1 money first if not done: is_sample_data backfill 233 · recover-from-driver HTTP proof.
+
 # ★ OWNER REWRITE · 2026-09-01T02:36Z
 **DESIGN FILE:** `docs/bus/CASCADE-VOID-DESIGN-FOR-OWNER-2026-09-01.md` · rewrite: `docs/bus/OWNER-REWRITE-DISPATCH-AND-CASCADE-VOID-2026-09-01.md` · NO Cascade Void code until Jorge APPROVED.
 

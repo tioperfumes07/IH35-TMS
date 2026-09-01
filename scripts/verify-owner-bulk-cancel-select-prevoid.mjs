@@ -31,8 +31,12 @@ if (!/export async function cancelLoadInClientTx/.test(cancelSvc)) {
 }
 
 const board = read("apps/frontend/src/pages/dispatch/DispatchBoard.tsx");
-if (!/Cancel loads/.test(board) || !/action:\s*["']cancel["']/.test(board)) {
-  failures.push("DispatchBoard must expose Cancel loads → bulk action cancel");
+// Change 3 (Cascade Void APPROVED): UI verb is Void; engine action remains cancel.
+if (!/label:\s*["']Void["']/.test(board) || !/action:\s*["']cancel["']/.test(board)) {
+  failures.push("DispatchBoard must expose Void → bulk action cancel");
+}
+if (/label:\s*["']Cancel loads["']/.test(board)) {
+  failures.push("DispatchBoard must not label bulk cancel as Cancel loads (one verb: Void)");
 }
 
 const setlTable = read("apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx");
@@ -41,8 +45,11 @@ if (!/selectable=\{selectable\}/.test(setlTable)) {
 }
 
 const setlPage = read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
-if (!/selectable/.test(setlPage) || !/Reverse \$\{/.test(setlPage)) {
-  failures.push("SettlementsPage must enable selection + Reverse N selected");
+if (!/selectable/.test(setlPage) || !/Void \$\{/.test(setlPage)) {
+  failures.push("SettlementsPage must enable selection + Void N selected");
+}
+if (/Reverse \$\{/.test(setlPage) || /title="Reverse settlements"/.test(setlPage)) {
+  failures.push("SettlementsPage must not use Reverse verb in UI (one verb: Void)");
 }
 if (
   !/import\s*\{\s*VoidReasonModal\s*\}\s*from\s*["']\.\.\/\.\.\/components\/accounting\/VoidReasonModal["']/.test(

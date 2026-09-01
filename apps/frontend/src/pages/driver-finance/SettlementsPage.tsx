@@ -409,7 +409,7 @@ export function SettlementsPage() {
               setReverseOpen(true);
             }}
           >
-            {`Reverse ${selected.length} selected`}
+            {`Void ${selected.length} selected`}
           </Button>
         )}
         onOpen={(id) => {
@@ -421,7 +421,7 @@ export function SettlementsPage() {
 
       <VoidReasonModal
         open={reverseOpen}
-        title="Reverse settlements"
+        title="Void settlements"
         entityRef={`${pendingReverseIds.length} selected`}
         minLength={10}
         onClose={() => setReverseOpen(false)}

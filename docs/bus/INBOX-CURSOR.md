@@ -1,3 +1,15 @@
+# ★ APPROVED+4 · BUILD · 2026-09-01T02:46Z
+
+Owner approved Cascade Void WITH 4 CHANGES (Cursor agreed with Claude). Design file locked APPROVED.
+
+**THIS CYCLE (no idle):**
+1. DONE-soon: UI one-verb VOID (loads+settlements) + design lock
+2. Unit deactivation 9.1 report+execute
+3. Dispatch board LIVE+History + PU/DEL date/time
+4. Void-reason catalog 1.6 (migration catalogs.void_reasons)
+5. Permission wiring 10.4 (has_permission behind flag OFF)
+6. Cascade Void dialog when CC-1 void-tree API lands — do NOT invent FE graph
+
 # ★ OWNER REWRITE · 2026-09-01T02:36Z
 **DESIGN FILE:** `docs/bus/CASCADE-VOID-DESIGN-FOR-OWNER-2026-09-01.md` · rewrite: `docs/bus/OWNER-REWRITE-DISPATCH-AND-CASCADE-VOID-2026-09-01.md` · NO Cascade Void code until Jorge APPROVED.
 
