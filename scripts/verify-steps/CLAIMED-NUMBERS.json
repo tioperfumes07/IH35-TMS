@@ -5201,6 +5201,7 @@
     "purpose": "verify-load-mark-invoiced-ui (completed_docs_received→invoiced live path)"
   },
   "10220": "verify-lists-catalog-search-debounced",
+  "10222": "verify-driver-pay-rate-create-writes-billing-table",
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
