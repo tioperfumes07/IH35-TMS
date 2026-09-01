@@ -61,11 +61,17 @@ const SCREEN_COMPONENTS = {
     `${FE}/maintenance/components/CreateWOSectionReconcile.tsx`,
     `${FE}/maintenance/components/CreateWOSectionValidation.tsx`,
     // Parts/labor line fields (Part # / Task, Qty/Hr, Unit/Rate, Total) render via the shared line editor;
-    // the inline "+ Add vendor" mini-create (Street/Zip/Account no./Tax ID/Track 1099?/Default expense
-    // account) renders via QuickCreateEntityModal — both reached from this modal.
+    // the inline "+ Add vendor" mini-create (kind="vendor" at CreateWorkOrderModal.tsx:1175) is reached
+    // through QuickCreateEntityModal, but that component no longer renders vendor fields inline — it
+    // delegates kind==="vendor" to VendorCreateModal (the same shared Lists → Vendor create chrome,
+    // LST-F3368/LST-F3370). Street/ZIP/Tax ID/Default expense account genuinely live in VendorCreateModal.tsx
+    // now; QuickCreateEntityModal.tsx itself only wires it up, so it's kept in this list too (parts/category/
+    // class fields still render inline there) but the guard needs the actual field-bearing file mapped, same
+    // stale-mapping-after-refactor class the "Load Book/Edit Wizard" re-map above already fixed.
     `apps/frontend/src/components/forms/TwoSectionLineEditor.tsx`,
     `apps/frontend/src/components/forms/shared/CostBreakdownBox.tsx`,
     `apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx`,
+    `apps/frontend/src/components/vendors/VendorCreateModal.tsx`,
   ],
   "Maintenance Shell": [
     `${FE}/maintenance/MaintenanceHome.tsx`,
