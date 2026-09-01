@@ -58,3 +58,17 @@ owner-disposition item.
 Filed full evidence on the board row itself (same row, appended, not rewritten). Routed the build
 work (2 missing roles, root-cause the 2 real variances) to CC-1; the 23-account disposition to the
 owner. Nothing built, nothing deactivated, no money moved. Idle.
+
+---
+
+## ★ CC-2 · GO-ACCT-01-DUP-RECON-SESSIONS-ONE-PERIOD · SUPERSEDED · 2026-09-01T21:35Z
+
+Grep-verified per lead instruction — not still OPEN. It was already closed 2026-08-30 (CC-1 built
+the fix, CC-2 independently verified live), but the board carried **2 identical duplicate OPEN
+rows** (ironic given the row's own name) that never got marked. Re-confirmed the closure still
+holds, live, before correcting: `ux_reconciliation_sessions_one_per_account_period` unique index
+present (`pg_indexes`); fresh repo-wide duplicate-session census = **0 rows** (not just the one
+account originally checked); the closure's own open caveat — reconciliation routes pending deploy
+— is now resolved too, `git merge-base --is-ancestor 9f9f78c39f 75f469f1cc743e5de0234f68d3f7b1d0ccf1a7af`
+= true (live SHA). Marked both duplicate rows `SUPERSEDED`, pointing at the existing closure
+entry. Nothing built, no product change. Idle, watching INBOX TOP.
