@@ -7,7 +7,7 @@ import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { nextPaymentDisplayId } from "./display-id.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
-import { requireVoidCancelExecutor, canVoidCancel } from "../lib/authz/void-cancel-authz.js";
+import { requireVoidCancelExecutorWired, canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -597,10 +597,6 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/payments/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    // G9-C3: voiding a financial record is an EXECUTOR-only action (Owner|Administrator|Accountant).
-    // Route through the shared governance authz — OUTSIDE any feature flag — so anyone else must FILE a
-    // void/cancel request for approval. Non-executors get the canonical 403 here.
-    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
 
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
@@ -610,6 +606,18 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      // PERMISSION WIRING 10.4: role floor when PERMISSION_MODEL_ENFORCED OFF; payment.void when ON.
+      if (
+        !(await requireVoidCancelExecutorWired(reply, {
+          role: String(user.role ?? ""),
+          client,
+          permissionKey: "payment.void",
+          operatingCompanyId: query.data.operating_company_id,
+          userUuid: user.uuid,
+        }))
+      ) {
+        return { code: 403 as const, error: "void_requires_request" };
+      }
       // ACCT-F5026 — payment_date::text alias (same LV-BILLVOID class as bill void). SELECT *
       // hands node-postgres a JS Date; String(date).slice(0,10) → "Thu Aug 06" → ::date 500.
       // ACCT-F5636 — FOR UPDATE, matching the sibling row-lock pattern this codebase already uses on

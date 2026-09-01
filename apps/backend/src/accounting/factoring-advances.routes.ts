@@ -17,7 +17,7 @@ import {
 } from "./factoring-posting/reserve-tracker.service.js";
 import { nextFactoringDisplayId } from "./display-id.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
-import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
+import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
 
 const idParamsSchema = z.object({
   id: z.string().uuid(),
@@ -377,11 +377,21 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     // a session. Reusing the file's own void/cancel executor role set (Owner/Administrator/Accountant,
     // Jorge-locked 2026-06-29) since creating/advancing/holding/releasing a factoring advance is the
     // same tier of financial-executor operation as this file's own already-gated void route.
-    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const body = createBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+
+    const allowedCreate = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+      requireVoidCancelExecutorWired(reply, {
+        role: String(user.role ?? ""),
+        client,
+        // no factoring.* permission seeded — role floor until catalog grows
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+      })
+    );
+    if (!allowedCreate) return;
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const vendorRes = await client.query(
@@ -522,13 +532,23 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     // ACCT-F5578: see the create route above for why this reuses the void/cancel executor role set.
-    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const body = advanceBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+
+    const allowedAdvance = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+      requireVoidCancelExecutorWired(reply, {
+        role: String(user.role ?? ""),
+        client,
+        // no factoring.* permission seeded — role floor until catalog grows
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+      })
+    );
+    if (!allowedAdvance) return;
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
@@ -602,13 +622,23 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     // ACCT-F5578: see the create route above for why this reuses the void/cancel executor role set.
-    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const body = reserveHeldBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+
+    const allowedReserveHeld = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+      requireVoidCancelExecutorWired(reply, {
+        role: String(user.role ?? ""),
+        client,
+        // no factoring.* permission seeded — role floor until catalog grows
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+      })
+    );
+    if (!allowedReserveHeld) return;
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
@@ -684,13 +714,23 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     // ACCT-F5578: see the create route above for why this reuses the void/cancel executor role set.
-    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const body = releaseBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+
+    const allowedRelease = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+      requireVoidCancelExecutorWired(reply, {
+        role: String(user.role ?? ""),
+        client,
+        // no factoring.* permission seeded — role floor until catalog grows
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+      })
+    );
+    if (!allowedRelease) return;
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
@@ -802,13 +842,23 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     // ACCT-F5578: see the create route above for why this reuses the void/cancel executor role set.
-    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const body = recourseBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+
+    const allowedRecourse = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+      requireVoidCancelExecutorWired(reply, {
+        role: String(user.role ?? ""),
+        client,
+        // no factoring.* permission seeded — role floor until catalog grows
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+      })
+    );
+    if (!allowedRecourse) return;
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
@@ -879,10 +929,6 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/factoring-advances/:id/void", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    // G9-C3: voiding a factoring advance is an EXECUTOR-only action (Owner|Administrator|Accountant).
-    // Route through the shared governance authz — OUTSIDE any feature flag — so anyone else must FILE a
-    // void/cancel request for approval. Non-executors get the canonical 403 here.
-    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -891,6 +937,17 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      // PERMISSION WIRING 10.4: no factoring.* permission seeded — role floor until catalog grows
+      if (
+        !(await requireVoidCancelExecutorWired(reply, {
+          role: String(user.role ?? ""),
+          client,
+          operatingCompanyId: query.data.operating_company_id,
+          userUuid: user.uuid,
+        }))
+      ) {
+        return { code: 403 as const, error: "void_requires_request" };
+      }
       const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
         query.data.operating_company_id,

@@ -23,7 +23,7 @@ import {
 } from "./bills.service.js";
 import { nextBillDisplayId } from "./display-id.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
-import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
+import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
 
 const idParamsSchema = z.object({
   id: z.string().uuid(),
@@ -471,14 +471,23 @@ export async function registerBillsRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/bills/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    // Role is enforced inside voidBill (flag-aware): Owner-only when the void engine is OFF,
-    // Owner+Accountant when it is ON (VOID-EVERYWHERE PR-2).
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const body = voidBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+
+    const allowed = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+      requireVoidCancelExecutorWired(reply, {
+        role: String(user.role ?? ""),
+        client,
+        permissionKey: "bill.void",
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+      })
+    );
+    if (!allowed) return;
 
     // G1-2: assert the caller is a member of the target operating company BEFORE voiding.
     await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
@@ -506,16 +515,24 @@ export async function registerBillsRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/bill-payments/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    // VOID-EVERYWHERE PR-3: replaced the hand-rolled Owner-only gate with the shared executor check
-    // (Owner|Administrator|Accountant, Jorge-locked 2026-06-29) — non-executors now file a governed
-    // void/cancel request instead of getting a bare 403 with no path forward.
-    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const body = voidBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+
+    const allowed = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+      requireVoidCancelExecutorWired(reply, {
+        role: String(user.role ?? ""),
+        client,
+        permissionKey: "bill_payment.void",
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+      })
+    );
+    if (!allowed) return;
+
     // G1-2: assert the caller is a member of the target operating company BEFORE voiding the payment.
     await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
     try {
