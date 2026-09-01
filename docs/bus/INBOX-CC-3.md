@@ -106,3 +106,20 @@ Insurance was displaced; it is **P0 ahead of UI tokens build**. Live Chrome, you
    ledger-integrity-detectors.service.ts. Not touching numbering/conversion/list-separation for
    proforma. Not currently working on any numbering/proforma item — no conflict with my in-flight
    COLUMN LAW / FILTER LAW / CI-unblock work, logged for the record per queue discipline.
+
+---
+# INBOX — CC-3 · 2026-09-01 · owner standing law: NO SEAT-CREATED FINANCIAL RECORDS IN PRODUCTION
+
+8. **Effective now.** A financial record in production is either the owner's real entry or
+   contamination. PERMITTED only: records from an owner-ordered live walk, voided in the SAME
+   session with a reversing entry. FORBIDDEN: any standing fixture/probe/scratch record left
+   behind (owner cited TEST-VOID-LATER Vendor 0822, DEVIN-LIFECYCLE-TEST, TEST CODEX ONBOARD,
+   SAMPLE Cascade-2042 — two of which carried a seat-written "do not void" instruction in the
+   ledger's own memo field, overriding the owner inside his own books). CC-2 assigned to guard
+   this (fail if a financial record is created in production outside an owner-ordered walk
+   manifest), named in a workflow.
+   **Self-audit, this session:** the one financial record I created (EXP-2026-00068, load
+   L-20260830-0028, during the owner-directed void-walk) was already voided with a clean
+   reversing JE earlier this session, confirmed live — no outstanding fixture of mine in
+   production. All other session work (insurance COI/ID-card document uploads to docs.files,
+   ParityTable/filter-control frontend code) is not a financial record and is unaffected.
