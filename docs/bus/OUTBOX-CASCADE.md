@@ -21,3 +21,5 @@ CASCADE | STAMP | GUARD-2-NON-MONEY | ITEM=LST-A-01 | MODULE=lists | SHA=14daeed
 CASCADE | ACK | GO-MECH-0901 | NOW=board-rows | GO
 CASCADE | POST-U14 | UNIQUE FINDING | FK-MISSING-SCHEDULE-CONFIRMATIONS-POLICY-UNIT | insurance.schedule_confirmations.policy_id + unit_id lack FK constraints | guard=verify-linkage-required-edges FAIL | board row OPEN | OWNER-GATED=yes migration | GO
 CASCADE | GUARD-FIX | 13 guards fixed this session | PRs=#19242 #19244 #19300 #19311 | baseline 157->139 | GO
+CASCADE | FAST-MERGE | gate=exit0 | merged #19388 @ b06c237fb2 | neon=N/A | NEXT=go12-doc-append | GO
+CASCADE | ACK | FAST-MERGE-4MIN ON | CPA 1-2-4 FILE+LINE | NEVER WATCH CI | NEVER trigger_deploy | GO
