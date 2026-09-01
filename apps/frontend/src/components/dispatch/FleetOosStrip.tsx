@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listUnits } from "../../api/mdata";
 import { listSevereRepairEstimates } from "../../api/maintenance";
@@ -7,7 +7,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { isOperatorVisibleUnit } from "../../lib/operator-fleet-visibility";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
-import { TableHeaderCell } from "../table";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
 /**
  * The route's own maximum (units.routes.ts). Named rather than inlined so the cap and the truncation
@@ -50,28 +50,56 @@ function statusLabelForUnit(unit: UnitRecord): string {
   return "Unavailable";
 }
 
-type FleetOosSortKey = "unit" | "status" | "reason" | "eta_back";
-
-function compareFleetOosRows(a: OosUnitRow, b: OosUnitRow, key: FleetOosSortKey): number {
-  switch (key) {
-    case "unit":
-      return a.unitNumber.localeCompare(b.unitNumber, undefined, { numeric: true, sensitivity: "base" });
-    case "status":
-      return a.statusLabel.localeCompare(b.statusLabel, undefined, { sensitivity: "base" });
-    case "reason":
-      return (a.reason || "—").localeCompare(b.reason || "—", undefined, { sensitivity: "base" });
-    case "eta_back": {
-      const aTbd = a.etaBack === "TBD";
-      const bTbd = b.etaBack === "TBD";
-      if (aTbd && bTbd) return 0;
-      if (aTbd) return 1;
-      if (bTbd) return -1;
-      return a.etaBack.localeCompare(b.etaBack, undefined, { numeric: true, sensitivity: "base" });
-    }
-    default:
-      return 0;
-  }
-}
+// FLEET-OOS-STRIP-PARITYTABLE (GO-05 wave 1): sort/resize/reorder now come from ParityTable's own
+// grammar. The strip keeps a fixed default order (Unit ascending, same as the old initial sort
+// state) and lets ParityTable's header-click sort take over from there — column-specific compare
+// rules (TBD-eta-last, dash-for-blank-reason) now live in each column's `sortValue`.
+const oosColumns: ParityColumn<OosUnitRow>[] = [
+  {
+    key: "unit",
+    label: "Unit",
+    sortable: true,
+    sortValue: (row) => row.unitNumber,
+    render: (row) => (
+      <EntityLink
+        kind="unit"
+        id={row.unitId}
+        label={entityLabel(row.unitNumber, row.unitId, "Unit")}
+        className="font-semibold text-gray-900"
+        data-testid="fleet-oos-unit-link"
+      />
+    ),
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    sortValue: (row) => row.statusLabel,
+    render: (row) => (
+      <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
+        {row.statusLabel}
+      </span>
+    ),
+  },
+  {
+    key: "reason",
+    label: "Reason",
+    sortable: true,
+    sortValue: (row) => row.reason || "—",
+    cellClass: "text-gray-700",
+    render: (row) => row.reason || "—",
+  },
+  {
+    key: "eta_back",
+    label: "ETA back",
+    sortable: true,
+    // null pushes TBD rows last (ParityTable's own null-last rule), matching the old TBD-always-last
+    // compare special-case exactly.
+    sortValue: (row) => (row.etaBack === "TBD" ? null : row.etaBack),
+    cellClass: "text-gray-500",
+    render: (row) => <span className="font-medium text-gray-800">{row.etaBack}</span>,
+  },
+];
 
 type Props = {
   operatingCompanyId: string;
@@ -79,17 +107,6 @@ type Props = {
 
 export function FleetOosStrip({ operatingCompanyId }: Props) {
   const enabled = Boolean(operatingCompanyId);
-  const [sortKey, setSortKey] = useState<FleetOosSortKey>("unit");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-
-  const onToggleSort = (key: string) => {
-    const next = key as FleetOosSortKey;
-    if (next === sortKey) setSortDir((dir) => (dir === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(next);
-      setSortDir("asc");
-    }
-  };
 
   const unitsQuery = useQuery({
     queryKey: ["dispatch", "fleet-oos-units", operatingCompanyId],
@@ -162,11 +179,12 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
       });
     }
 
-    return [...byUnitId.values()].sort((a, b) => {
-      const cmp = compareFleetOosRows(a, b, sortKey);
-      return sortDir === "asc" ? cmp : -cmp;
-    });
-  }, [severeQuery.data?.data, unitsQuery.data?.units, sortKey, sortDir]);
+    // Fixed default order (Unit ascending) — matches the old initial sortKey="unit" state. A user's
+    // own header click takes over from here via ParityTable's own sort.
+    return [...byUnitId.values()].sort((a, b) =>
+      a.unitNumber.localeCompare(b.unitNumber, undefined, { numeric: true, sensitivity: "base" }),
+    );
+  }, [severeQuery.data?.data, unitsQuery.data?.units]);
 
   if (!enabled) return null;
   const fleetReadFailed = unitsQuery.isError || severeQuery.isError;
@@ -211,73 +229,20 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
       ) : rows.length === 0 ? (
         <div className="px-3 py-2 text-xs text-slate-700">All units in service.</div>
       ) : (
-        <div className="overflow-x-auto px-3 py-2" data-testid="dispatch-fleet-oos-table-wrap">
-          <table className="min-w-full text-left text-[11px]" data-testid="dispatch-fleet-oos-table">
-            <thead className="bg-white text-[10px] uppercase tracking-wide text-gray-600">
-              <tr data-testid="dispatch-fleet-oos-headers">
-                <TableHeaderCell
-                  columnKey="unit"
-                  label="Unit"
-                  sortable
-                  sortKey={sortKey}
-                  sortDir={sortDir}
-                  onToggleSort={onToggleSort}
-                  resizable={false}
-                />
-                <TableHeaderCell
-                  columnKey="status"
-                  label="Status"
-                  sortable
-                  sortKey={sortKey}
-                  sortDir={sortDir}
-                  onToggleSort={onToggleSort}
-                  resizable={false}
-                />
-                <TableHeaderCell
-                  columnKey="reason"
-                  label="Reason"
-                  sortable
-                  sortKey={sortKey}
-                  sortDir={sortDir}
-                  onToggleSort={onToggleSort}
-                  resizable={false}
-                />
-                <TableHeaderCell
-                  columnKey="eta_back"
-                  label="ETA back"
-                  sortable
-                  sortKey={sortKey}
-                  sortDir={sortDir}
-                  onToggleSort={onToggleSort}
-                  resizable={false}
-                />
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.unitId} className="border-t border-slate-200" data-testid={`fleet-oos-unit-${row.unitNumber}`}>
-                  <td className="px-2 py-1.5">
-                    <EntityLink
-                      kind="unit"
-                      id={row.unitId}
-                      label={entityLabel(row.unitNumber, row.unitId, "Unit")}
-                      className="font-semibold text-gray-900"
-                      data-testid="fleet-oos-unit-link"
-                    />
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
-                      {row.statusLabel}
-                    </span>
-                  </td>
-                  <td className="px-2 py-1.5 text-gray-700">{row.reason || "—"}</td>
-                  <td className="px-2 py-1.5 text-gray-500">
-                    <span className="font-medium text-gray-800">{row.etaBack}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="px-3 py-2" data-testid="dispatch-fleet-oos-table-wrap">
+          <ParityTable<OosUnitRow>
+            columns={oosColumns}
+            rows={rows}
+            rowKey={(row) => row.unitId}
+            tableTestId="dispatch-fleet-oos-table"
+            rowTestId={(row) => `fleet-oos-unit-${row.unitNumber}`}
+            storageKey="dispatch-fleet-oos-strip"
+            embedded
+            suppressToolbarSearch
+            suppressToolbarRange
+            hidePager
+            pageSizeOptions={[100]}
+          />
         </div>
       )}
     </div>

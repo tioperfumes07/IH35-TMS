@@ -170,16 +170,24 @@ function kanbanColumnSortIssues(kanbanSrc = readFileSync(join(root, "apps/fronte
   return issues;
 }
 
+// FLEET-OOS-STRIP-PARITYTABLE (GO-05 wave 1): migrated off hand-rolled TableHeaderCell onto
+// ParityTable (drag-resize + drag-reorder + gear, owner's "every table" law). The guard now checks
+// for the CHROME contract (ParityTable + a sortable Unit column + the same two testids, now carried
+// via tableTestId/rowTestId props rather than literal data-testid attributes), not the literal
+// TableHeaderCell markup that chrome used to require.
 function fleetOosSortIssues(oosSrc = readFileSync(join(root, "apps/frontend/src/components/dispatch/FleetOosStrip.tsx"), "utf8")) {
   const issues = [];
-  if (!oosSrc.includes('data-testid="dispatch-fleet-oos-table"')) {
-    issues.push("FleetOosStrip must render a sortable table for OOS/In shop units (DSP-05)");
+  if (!/<ParityTable\b/.test(oosSrc)) {
+    issues.push("FleetOosStrip must render its OOS/In shop table via ParityTable (drag-resize + reorder, DSP-05)");
   }
-  if (!oosSrc.includes('data-testid="dispatch-fleet-oos-headers"')) {
-    issues.push("FleetOosStrip table must expose a header row (DSP-05)");
+  if (!oosSrc.includes('tableTestId="dispatch-fleet-oos-table"')) {
+    issues.push("FleetOosStrip must expose tableTestId=dispatch-fleet-oos-table (DSP-05)");
   }
-  if (!/TableHeaderCell[\s\S]{0,400}columnKey="unit"[\s\S]{0,200}onToggleSort/.test(oosSrc)) {
-    issues.push("FleetOosStrip Unit header must be click-sortable ASC/DESC (DSP-05)");
+  if (!/rowTestId=\{.*fleet-oos-unit-/.test(oosSrc)) {
+    issues.push("FleetOosStrip must expose per-row fleet-oos-unit-* testids (DSP-05)");
+  }
+  if (!/key:\s*"unit"[\s\S]{0,200}sortable:\s*true/.test(oosSrc)) {
+    issues.push("FleetOosStrip Unit column must be click-sortable ASC/DESC (DSP-05)");
   }
   return issues;
 }
@@ -351,9 +359,10 @@ if (process.argv.includes("--selftest")) {
   const oosFile = join(root, "apps/frontend/src/components/dispatch/FleetOosStrip.tsx");
   const oosSrc = readFileSync(oosFile, "utf8");
   const oosMutants = [
-    oosSrc.replace('data-testid="dispatch-fleet-oos-table"', 'data-testid="dispatch-fleet-oos-cards"'),
-    oosSrc.replaceAll("TableHeaderCell", "th"),
-    oosSrc.replace('data-testid="dispatch-fleet-oos-headers"', 'data-testid="dispatch-fleet-oos-header-row"'),
+    oosSrc.replace('tableTestId="dispatch-fleet-oos-table"', 'tableTestId="dispatch-fleet-oos-cards"'),
+    oosSrc.replaceAll("<ParityTable", "<table"),
+    oosSrc.replace(/rowTestId=\{.*fleet-oos-unit-.*\}/, 'rowTestId={(row) => `removed-${row.unitNumber}`}'),
+    oosSrc.replace('key: "unit",\n    label: "Unit",\n    sortable: true,', 'key: "unit",\n    label: "Unit",\n    sortable: false,'),
   ];
   if (!oosMutants.every((mutant) => fleetOosSortIssues(mutant).length > 0)) {
     fail("selftest mutation escaped DSP-05 fleet OOS sort guard");

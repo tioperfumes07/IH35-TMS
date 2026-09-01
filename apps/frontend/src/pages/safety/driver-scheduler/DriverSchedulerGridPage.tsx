@@ -19,6 +19,7 @@ import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { useSearchParams } from "react-router-dom";
 import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 function addDaysIso(iso: string, days: number): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -188,6 +189,66 @@ export function DriverSchedulerGridPage() {
     || tempCoverForm.endDate !== companyToday()
     || Boolean(tempCoverForm.notes.trim());
 
+  // TEMP-COVER-PARITYTABLE (GO-05 wave 1): row-list only — the driver×day leave grid above stays a
+  // raw matrix (owner ruling: calendars/matrices STOP, same class as the financial-statement rule).
+  const tempCoverColumns = useMemo<ParityColumn<TempAssignment>[]>(() => [
+    {
+      key: "unit",
+      label: "Unit",
+      sortable: true,
+      sortValue: (a) => a.unit_number ?? "",
+      render: (a) => <EntityLink kind="unit" id={a.unit_id} label={entityLabel(a.unit_number, a.unit_id, "Unit")} />,
+    },
+    {
+      key: "primary_driver",
+      label: "Primary driver",
+      sortable: true,
+      sortValue: (a) => a.primary_driver_name ?? "",
+      render: (a) => <EntityLink kind="driver" id={a.primary_driver_id} label={entityLabel(a.primary_driver_name, a.primary_driver_id, "Driver")} />,
+    },
+    {
+      key: "cover_driver",
+      label: "Cover driver",
+      sortable: true,
+      sortValue: (a) => a.cover_driver_name ?? "",
+      render: (a) => <EntityLink kind="driver" id={a.cover_driver_id} label={entityLabel(a.cover_driver_name, a.cover_driver_id, "Driver")} />,
+    },
+    {
+      key: "dates",
+      label: "Dates",
+      sortable: true,
+      sortValue: (a) => a.start_date ?? "",
+      cellClass: "text-gray-600",
+      render: (a) => `${formatDateUS(a.start_date)}–${formatDateUS(a.end_date)}`,
+    },
+    {
+      key: "notes",
+      label: "Notes",
+      sortable: false, // free text — no meaningful sort order
+      cellClass: "text-gray-600",
+      render: (a) => a.notes || "—",
+    },
+    {
+      key: "actions",
+      label: "",
+      sortable: false, // action button, not data
+      alwaysVisible: true,
+      render: (a) => (
+        <Button
+          size="sm"
+          variant="danger"
+          data-testid="driver-scheduler-temp-cover-cancel"
+          onClick={() => {
+            setCancelTarget(a);
+            setCancelReason("");
+          }}
+        >
+          Cancel
+        </Button>
+      ),
+    },
+  ], []);
+
   return (
     <div className="space-y-3">
       <PageHeader
@@ -322,50 +383,18 @@ export function DriverSchedulerGridPage() {
           <p className="text-xs text-gray-500">No active temp cover assignments.</p>
         ) : null}
         {tempAssignments.length > 0 ? (
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-gray-200 text-left uppercase tracking-wide text-gray-500">
-                <th className="py-1 pr-2">Unit</th>
-                <th className="py-1 pr-2">Primary driver</th>
-                <th className="py-1 pr-2">Cover driver</th>
-                <th className="py-1 pr-2">Dates</th>
-                <th className="py-1 pr-2">Notes</th>
-                <th className="py-1 pr-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {tempAssignments.map((a) => (
-                <tr key={a.id} className="border-b border-gray-100 last:border-0" data-testid="driver-scheduler-temp-cover-row">
-                  <td className="py-1 pr-2">
-                    <EntityLink kind="unit" id={a.unit_id} label={entityLabel(a.unit_number, a.unit_id, "Unit")} />
-                  </td>
-                  <td className="py-1 pr-2">
-                    <EntityLink kind="driver" id={a.primary_driver_id} label={entityLabel(a.primary_driver_name, a.primary_driver_id, "Driver")} />
-                  </td>
-                  <td className="py-1 pr-2">
-                    <EntityLink kind="driver" id={a.cover_driver_id} label={entityLabel(a.cover_driver_name, a.cover_driver_id, "Driver")} />
-                  </td>
-                  <td className="py-1 pr-2 text-gray-600">
-                    {formatDateUS(a.start_date)}–{formatDateUS(a.end_date)}
-                  </td>
-                  <td className="py-1 pr-2 text-gray-600">{a.notes || "—"}</td>
-                  <td className="py-1 pr-2">
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      data-testid="driver-scheduler-temp-cover-cancel"
-                      onClick={() => {
-                        setCancelTarget(a);
-                        setCancelReason("");
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ParityTable<TempAssignment>
+            columns={tempCoverColumns}
+            rows={tempAssignments}
+            rowKey={(a) => a.id}
+            rowTestId={() => "driver-scheduler-temp-cover-row"}
+            tableTestId="driver-scheduler-temp-cover-table"
+            storageKey="driver-scheduler-temp-cover"
+            suppressToolbarSearch
+            suppressToolbarRange
+            hidePager
+            pageSize={tempAssignments.length}
+          />
         ) : null}
         {!tempAssignmentsQuery.isError && tempAssignmentTotal > tempPageSize ? (
           <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2 text-xs text-slate-600">
