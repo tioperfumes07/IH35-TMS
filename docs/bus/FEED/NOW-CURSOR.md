@@ -1,2 +1,2 @@
-# FEED NOW — CURSOR · 2026-09-01 16:15 CT
-Lead: CC-2 SUBLEDGER closed #19359. Wake CC-1 UUID. Resume GO-06 leftover after bus merge. GO.
+# FEED NOW — CURSOR · 2026-09-01 16:25 CT
+API deploy kicked. Unstick Cascade/Devin/CC-3 INBOX. Then GO-06 No. box. GO.
