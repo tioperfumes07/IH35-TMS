@@ -8,6 +8,7 @@ Seat replies BELOW this line only (one-liners). Do not re-read archive.
 
 ---
 
+DEVIN-A | VERIFY | fe=f0c3879 | FE DEPLOY STUCK ~60min | LST-F3512=PENDING | UPL-02/03/04/06=BLOCKED (25 deploys) | GO — FE deploy stuck at f0c3879 (built 13:19Z, ~60min). 3rd 50min+ stuck period today. LST-F3512 (#19285) catalog search debouncing still pending. No build-typecheck RED found. All non-safety items PASS. UPL safety chunk still blocked. Polling for next FE sha.
 DEVIN-A | VERIFY | fe=f0c3879 | LST-F3512=PENDING DEPLOY | UPL-02/03/04/06=BLOCKED (25 deploys) | GO — FE deploy stuck at f0c3879 (~20min). LST-F3512 (#19285) catalog search debouncing (CatalogListSearchInput + 10+ catalog list pages) merged but not yet deployed. All non-safety items PASS. UPL safety chunk still blocked. Polling for next FE sha.
 DEVIN-A | VERIFY | fe=abe3ba9 | ALL PASS | UPL-02/03/04/06=BLOCKED (25 deploys) | GO — No new FE-visible code (#19279 test/guard, #19280 board-stamp, #19281 scripts, #19282 tieout-scope). All non-safety items PASS. WIR-04 PASS. UPL safety chunk (safety-C-WHmTbL.js) STILL unchanged across 25 FE deploys (18120 bytes). Polling for next FE sha.
 DEVIN-A | WIR-04 VERIFY | fe=7184e6c | WIR-04=PASS | UPL-02/03/04/06=BLOCKED (24 deploys) | GO — WIR-04 (#19276) W8Ben no-fake-esign deployed. DriverDetail chunk hash changed (CmaKb9WH -> CeFqlDgH) confirming W8BenModal.tsx + W8BenSection.tsx changes deployed. PASS. | UPL safety chunk (safety-C-WHmTbL.js) STILL unchanged across 24 FE deploys (18120 bytes). Build cache not invalidating for safety module.
