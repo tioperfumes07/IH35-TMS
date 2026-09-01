@@ -7559,3 +7559,104 @@ main stabilizes rather than retrying against a target that is itself currently b
 **34 driver row IDs staying Active (20 real persons):** posted in OUTBOX-CC-3.md with per-person reasons (HOS<=40d / REAL-Aug-settlement).
 
 **Not yet executed** — status changes pending Codex sync per queue discipline, joint task.
+
+## 2026-09-01 01:15 CC-3 — VERIFY-STATIC-BASELINE.json wall is real, reproduced, 74 names (blocks ALL seats)
+
+Owner said "verify-static-ratchet.mjs -> PASS on current main (seeded/151) -- baseline ratchet is
+not the blocker on tip main." That check PASSES (confirmed, re-run live) but it ONLY validates that
+the COMMITTED docs/audit/VERIFY-STATIC-BASELINE.json is internally shrink-consistent vs origin/main's
+copy of the same file -- it does NOT execute a single guard. It is not the same check as the
+precheck-push fallback.
+
+The actual blocking step (`verify-static-fallback: node scripts/verify-static.mjs`, invoked because
+block-ready is SKIP-CAPABILITY'd for no local DATABASE_URL) DOES execute every scripts/verify-*.mjs
+for real, then reports every genuine failure NOT already listed in that same baseline's failingNames[].
+
+Ran it directly (not via the git hook) on cc3-insurance-policy-bill-param-fix-2026-08-31, rebased
+onto current origin/main (29f8614487, tip at test time): **74 gated fail(s) NOT in VERIFY-STATIC-BASELINE**.
+Full list posted below. This reproduced IDENTICALLY across 2 separate push attempts (both rebased
+onto the then-current main tip) -- not stale-tip drift, not caused by my branch (my only touched
+file is apps/backend/src/insurance/policy-create-atomic.service.ts, not referenced by any of the 74).
+
+Spot-checked 4 of the 74 directly against the dead-DB sentinel to rule out a false-DB-skip:
+- verify-schema-parity.mjs: REAL, legitimate self-heal available -- a merged migration added
+  accounting.payments.cleared_date + accounting.bill_payments.cleared_date; docs/schema-parity-baseline.json
+  was never regenerated. `node scripts/verify-schema-parity.mjs --update` fixes it cleanly (2-line
+  diff, tables tracked count unchanged at 618). Tested, not yet committed anywhere.
+- verify-sql-column-existence.mjs: REAL, same baseline-drift family (catalogs.accounts.name flagged
+  as not-in-baseline; likely also clears once schema-parity-baseline.json is current, not re-tested
+  after the --update above).
+- verify-void-predicate-map-current.mjs: REAL, separate cause (docs/audit/void-predicate-map.json drift).
+- verify-vendor-category-picker-law.mjs: REAL, separate cause (By Category picker not using
+  ReferenceSelect + missing canonical vendor_type creator + missing first-row "+ Add new" label) --
+  a genuine FE/vendor-lane defect, not something I'm scoping into right now.
+- verify-vend-verify-01.mjs: ran standalone -> PASS. Only fails inside the full 150+-guard sweep --
+  smells like cross-guard order/resource contention on this heavily-loaded shared machine, not a
+  real code defect. Flagging as a possible flaky-guard, not confirmed root-caused.
+
+This blocks EVERY seat's push through this exact fallback path identically -- not lane-specific.
+Not something a rebase fixes (reproduced twice, onto two different main tips, same list both times).
+Not something I can/should bulk-fix (73 of 74 span accounting/banking/dispatch/drivers/factoring/
+linkage/migration/scoreboard -- every lane but mine) or bulk-allowlist (VERIFY-STATIC-BASELINE.json's
+own contract: never grow it to hide rot -- and this isn't rot I introduced).
+
+ASK: whoever owns VERIFY-STATIC-BASELINE.json (Cascade per convention) needs to reseed it against
+CURRENT main's real guard-execution state (not just re-validate the committed file's own internal
+shrink-consistency) -- that's the actual global unblock. Until then this wall reproduces for every
+seat's push identically, regardless of branch content.
+
+Full 74-name list (verbatim from the direct run):
+verify-accounting-subnav-grouped.mjs, verify-acct-period-close-01-ensureopenperiod-wired.mjs,
+verify-acct-surf-03-bill-payment.mjs, verify-acct-surf-04-receive-payment.mjs,
+verify-acct-surface-dod-sweep.mjs, verify-bank-automatch-memo-threshold-calibrated.mjs,
+verify-bank-surface-dod-sweep.mjs, verify-bill-detail-panel-visible-label.mjs,
+verify-bills-bulk-void-reverses-gl.mjs, verify-canonical-load-nav.mjs,
+verify-cash-advance-load-trailer-entity-picker.mjs, verify-compliance-notification-rule-visible-errors.mjs,
+verify-customers-list-master-detail.mjs, verify-customers-load-column-remainder.mjs,
+verify-customers-vendors-list-segment-tabs.mjs, verify-deactivated-counterparty-resolver-coverage.mjs,
+verify-disp-wire-08-settlement-ping.mjs, verify-disp-wire-10-cancel-economics.mjs,
+verify-dispatch-secondary-nav-depth.mjs, verify-display-id-lookups-entity-scoped.mjs,
+verify-drivers-active-path.mjs, verify-drivers-qbo-chrome-leaves.mjs,
+verify-drivers-teams-view-url-sync.mjs, verify-eld-tabs-canonical.mjs,
+verify-entity-label-rejects-uuid-shaped-name.mjs, verify-factoring-advances-write-role-gated.mjs,
+verify-factoring-void-reverses-funding-je.mjs, verify-finance-landing-hub.mjs,
+verify-finance-tabs-overflow-scrollable.mjs, verify-guard-selftests-are-real.mjs,
+verify-guard-wired.mjs, verify-healthz-no-raw-error-leak.mjs, verify-invoices-bulk-void-reverses-gl.mjs,
+verify-je-type-fk.mjs, verify-je-type-inbound-density.mjs, verify-join-entity-scoped.mjs,
+verify-linkage-required-edges.mjs, verify-list-segment-tabs-present.mjs,
+verify-live-load-number-not-self-referential.mjs, verify-load-cancellations-report.mjs,
+verify-local-ci-parity.mjs, verify-lst-picker01-equipment-type-inline-create.mjs,
+verify-matrix-metrics-tally.mjs, verify-migration-void-posts-reversal.mjs,
+verify-module-completion-requires-tieout.mjs, verify-module-hub-navigation-connectivity.mjs,
+verify-no-circular-dependencies.mjs, verify-no-closed-loop-guards.mjs,
+verify-no-execsync-on-request-path.mjs, verify-one-load-one-open-invoice.mjs,
+verify-operator-record-surface-connectivity.mjs, verify-orphan-fk-inventory.mjs,
+verify-payments-create-role-gated.mjs, verify-pre-settlements-reverse-drill.mjs,
+verify-primary-module-navigation-connectivity.mjs, verify-primary-record-selector-reverse-links.mjs,
+verify-prod-verified-live-binding.mjs, verify-program-audit-scoreboard-api-url.mjs,
+verify-program-scoreboard-13gate-prodread.mjs, verify-push-gate-classification.mjs,
+verify-reports-hub-connectivity.mjs, verify-required-surface-inventory-complete.mjs,
+verify-scenario-tracker-live-binding.mjs, verify-scheduler-tenant-context.mjs,
+verify-settlement-dispute-adjustment-lines-and-aggregation.mjs, verify-settlements-qbo-chrome-surfaces.mjs,
+verify-sql-column-existence.mjs, verify-sweep-c6-money-insert-requires-je-poster.mjs,
+verify-test-provider-completeness.mjs, verify-vend-s03-s04-dedup-and-types.mjs,
+verify-vend-verify-01.mjs, verify-vendor-category-picker-law.mjs, verify-void-predicate-map-current.mjs,
+verify-wo-console-list-uses-paritytable.mjs
+
+## 2026-09-01 01:20 CC-3 — URGENT: no branch can currently push clean (73-name wall is content-independent)
+
+Realized after preparing a 2nd, unrelated, 1-file mechanical PR (cc3-schema-parity-baseline-regen-2026-09-01,
+fixing exactly 1 of the 74 gated fails logged above): pushing it would hit the IDENTICAL remaining
+~73-name wall, because verify-static.mjs globs and runs EVERY scripts/verify-*.mjs unconditionally --
+it does not scope to files touched by the branch's own diff. Killed that push before wasting another
+~10min sweep on a guaranteed-identical result (confirmed: still in money-pr-local-gate stage, not yet
+at the slow step, zero waste).
+
+This means: **no seat can currently get a clean push through the normal hook path, on any branch,
+regardless of what it touches** -- until docs/audit/VERIFY-STATIC-BASELINE.json is reseeded against
+current main's real guard-execution state (see the 01:15 entry above for the full 74-name list and
+root-cause detail). This supersedes "push now" as an achievable instruction until that reseed happens
+-- not a stall, a reproduced structural fact.
+
+The schema-parity-baseline-regen branch is committed, gate-tested clean (money-pr-local-gate PASS),
+and ready to push the moment the wall clears -- holding it rather than burning another cycle.
