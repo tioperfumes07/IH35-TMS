@@ -13,6 +13,7 @@
  * Self-test: node scripts/verify-settlements-qbo-chrome-surfaces.mjs --selftest
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -43,17 +44,27 @@ const CHECKS = [
     // verify-load-detail-driver-pay-bills.mjs's own comment: B-20260810-0003 -> 31f155f3-...).
     // These are OPEN (unsettled) bills — no settlement exists yet to reverse-link to either — so
     // driver + load are the only legitimate drills; the bill number itself stays honest plain text.
+    //
+    // Re-anchored (found live, 2026-09-01): OpenDriverBillsPanel was refactored to a DataTable +
+    // openDriverBillColumns config (the EntityLink drills now live in the columns array, which is
+    // defined ABOVE `function OpenDriverBillsPanel` in the file) — a legitimate change that left
+    // the guard's driver/load JSX still fully correct, just textually before the old anchor instead
+    // of after it, so `function OpenDriverBillsPanel[\s\S]*kind="driver"` could never match again.
+    // Anchoring on `openDriverBillColumns` instead covers both the columns array and the panel
+    // function (columns is always defined immediately before the panel that renders it).
     name: "SettlementsPage OpenDriverBillsPanel EntityLink drill (driver/load, never bill)",
     file: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
-    pattern: /function OpenDriverBillsPanel[\s\S]*kind="driver"[\s\S]*kind="load"/,
+    pattern: /openDriverBillColumns[\s\S]*kind="driver"[\s\S]*kind="load"/,
     forbiddenNear: {
       // Forbid a REAL JSX kind="bill" prop near this function — not a prose mention of it in a
       // comment (which is exactly why this check exists and cites the live repro). Fixed-width
       // window, not a "match to closing brace" regex: OpenDriverBillsPanel's own destructured
       // props parameter list has its own `\n}` well before the function body even starts, so a
       // lazy [\s\S]*?\n} stops there instead of reaching the real body (found live: matched only
-      // 86 chars, the props list, never the JSX). The real function body runs ~2400 chars total.
-      pattern: /function OpenDriverBillsPanel[\s\S]{0,3000}/,
+      // 86 chars, the props list, never the JSX). Window covers openDriverBillColumns (~1540
+      // chars) through the end of OpenDriverBillsPanel (~2426 chars total, measured live) with
+      // margin — wide enough for both blocks, not so wide it reaches unrelated later code.
+      pattern: /openDriverBillColumns[\s\S]{0,2600}/,
       forbid: /<EntityLink[\s\S]{0,200}?kind\s*=\s*["']bill["']/,
       message: 'must NOT EntityLink kind="bill" in OpenDriverBillsPanel — driver_finance.driver_bills has no /accounting/bills/:id row, this 404s live',
     },
@@ -114,7 +125,12 @@ function runChecks(root = ROOT) {
 
 function selftest() {
   const live = runChecks();
-  const tmp = fs.mkdtempSync(path.join(ROOT, "scripts", ".settlements-qbo-chrome-selftest-"));
+  // GUARD-SELFTEST-LEAVES-UNTRACKED-DROPPINGS — this used to mkdtempSync inside the tracked
+  // scripts/ tree; a killed/interrupted run left `scripts/.settlements-qbo-chrome-selftest-<rand>/`
+  // as untracked git-status noise on every contributor's next commit (found live during a push
+  // retry, same root-cause class as GUARD-SELFTEST-MUTATES-SOURCE — a selftest fixture belongs in
+  // the real OS temp dir, never under the repo root, whether or not it's a tracked path).
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "settlements-qbo-chrome-selftest-"));
   try {
     for (const c of CHECKS) {
       const abs = path.join(tmp, c.file);
