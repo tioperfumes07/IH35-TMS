@@ -29,8 +29,8 @@ FLT-04,2 Filters,"Date range must actually re-query, not filter rows already in 
 SRC-01,2 Search,"Search must cover amount, load #, PO, BOL, date and status",Systemwide,STILL OPEN,Invoice search is only display_id + customer name (invoices.routes.ts:261-271). Needs one shared search builder.,CURSOR
 SRC-02,2 Search,Search must render TRUE data,Systemwide,STILL OPEN,Owner requirement 2.6.,CURSOR
 MOD-01,Modal,Book Load wizard reopens forever — you are trapped until you reload,/dispatch,NOT VERIFIED,"Dispatch.tsx:125 derives open state from the URL on EVERY mount, and the effect at 211-225 clears only the query string, not the path. Cancel + click any tab = it reopens.",CURSOR
-MOD-02,Modal,Escape inside a date picker closes the ENTIRE wizard and discards everything typed,"Insurance policy wizard, any form with a date",STILL OPEN,Hit live 2026-09-01 — lost a fully completed policy form. Escape must close the picker only.,CURSOR
-MOD-03,Modal,Date fields accept no typing at all — 12 clicks to reach an expiry year,Everywhere a date is entered,STILL OPEN,"components/forms/DateTimePicker.tsx renders the value in a <button>, not an <input>. No text entry, no month or year jump. A one-year policy takes twelve clicks on the arrow.",CURSOR
+MOD-02,Modal,Escape inside a date picker closes the ENTIRE wizard and discards everything typed,"Insurance policy wizard, any form with a date",FIXED,DateTimePicker Escape stopPropagation (#19067); Devin Live PASS,CURSOR
+MOD-03,Modal,Date fields accept no typing at all — 12 clicks to reach an expiry year,Everywhere a date is entered,FIXED,DateTimePicker typed input + month/year (#19067); Devin Live PASS,CURSOR
 MOD-04,Modal,'Couldn't load unit list' shows in red on an empty search box,Insurance policy form,FIXED,EntityPicker keepPreviousData + error only when no prior data (#19067); register catch-up,CURSOR
 MOD-05,Modal,Picker offers '+ Add new unit <VIN>' for a VIN that already exists,Unit pickers,FIXED,GET /mdata/units/by-vin + EntityPicker suppresses Add new and shows exists-under-entity row,CURSOR
 SEL-01,Selection,Select-all only selects the current page,Every bulk grid,FIXED (shipping),"selectAll=selectMatching; TableSelectionHeader matchingRowIds; Fleet listFiltered scope; verify-sel-01 + step 6198",CURSOR
@@ -43,7 +43,7 @@ VIS-03,4 Void visibility,"Void button inside the transaction, not only in the li
 VIS-04,4 Void visibility,"Void reason must be a dropdown catalog, memo optional — no free typing",Void dialog,STILL OPEN,catalogs.void_reasons does not exist.,CURSOR
 DSP-01,5 Dispatch board,Keep pickup city and delivery city columns,Dispatch board,NOT VERIFIED,Owner requirement 5.1.,CURSOR
 DSP-02,5 Dispatch board,"Add pickup DATE, pickup TIME, delivery DATE, delivery TIME",Dispatch board,STILL OPEN,The data already exists in mdata.load_stops. Four columns.,CURSOR
-DSP-03,5 Dispatch board,Board shows LIVE loads only — completed and cancelled to a History tab,Dispatch board,STILL OPEN,65 of 78 loads on the board are already finished.,CURSOR
+DSP-03,5 Dispatch board,Board shows LIVE loads only — completed and cancelled to a History tab,Dispatch board,FIXED,#19067 history-only board; Devin Live PASS lazy chunk,CURSOR
 DSP-04,5 Dispatch board,"Each section gets its OWN headers, sort and filters",Dispatch board,FIXED (PR #19089),Owner requirement 5.4.,CURSOR
 DSP-05,5 Dispatch board,Dispatcher on-screen confirmation on assignment + owner override,Dispatch board,DROPPED — ASSIGNED TO NOBODY,Owner requirement 5.5.,NOBODY
 DSP-06,5 Dispatch board,Detention board never clears — closed loads stay on it forever,/dispatch detention,FIXED (PR #19079),"detention.service.ts:220 filters on the detention event status, joins mdata.loads, selects l.status and never filters on it.",CODEX
@@ -63,7 +63,7 @@ UPL-04,1 Upload,"No upload on: drug test, company violation, HOS violation, bord
 UPL-05,1 Upload,MVR check has no create surface at all,Safety,STILL OPEN,Not a missing button — the screen does not exist.,CURSOR
 UPL-06,1 Upload,"DOT inspection: row-action PDF only, the create form has none",Safety,STILL OPEN,Partial by design accident.,CURSOR
 WIR-01,8 Wired?,Border crossing manifest PDF is never generated,Border crossing wizard,STILL OPEN,The endpoint and renderer both exist. WizardStep6.tsx:101 shows the reference string and never calls it. Not saved to the load either.,CURSOR
-WIR-02,8 Wired?,Driver Export PDF downloads index.html renamed as a PDF,Drivers,STILL OPEN,"ActionBar.tsx:31 builds a relative href and never calls resolveApiUrl. Production is split-hosted, so it hits the static host which answers index.html with HTTP 200. The backend route is fine.",CURSOR
+WIR-02,8 Wired?,Driver Export PDF downloads index.html renamed as a PDF,Drivers,FIXED,resolveApiUrl on ActionBar (#17862); guard CC-2; Devin Live PASS,CURSOR
 WIR-03,8 Wired?,Dispatch Factoring tab leaves the Dispatch module,/dispatch,FIXED (PR #19091),"/dispatch/factoring-queue is routed and real but has no tab, while the Dispatch 'Factoring' tab points at /accounting/factoring. Factoring appears in Dispatch three times pointing two places.",CURSOR
 WIR-04,8 Wired?,A complete e-signature pipeline exists and W-8BEN does not use it,Legal / onboarding,STILL OPEN,"Working OTP + drawn-signature canvas + signed PDF pipeline in LegalSignPage, and a second one in the driver PWA. W-8BEN captures a typed name in a text box and stores no artifact at all.",CURSOR
 CUS-01,7 Customers,Two competing customer pages with different tab sets,Customers,STILL OPEN,"Customers.tsx has 12 tabs, CustomerDetail.tsx has a different 13. Each has sections the other lacks.",CC-3
