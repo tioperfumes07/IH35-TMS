@@ -1,12 +1,7 @@
-# ★ TOP · 2026-09-01 · CURSOR · GO-MECH
+# INBOX-CURSOR · OWNER NO PAUSE · FAST-MERGE
 
-**Canonical:** `docs/bus/GO-MECHANICAL-REGISTER-2026-09-01.md`  
-**Push wall:** Recipe C (`docs/bus/PASTE-ALL-SEATS-VERIFY-STATIC-WALL-2026-09-01.md`)  
-**Worktree:** `/tmp/ih35-cursor-wt` ONLY — never share `/tmp/ih35-main-sb` with CC-3/Codex.
-
-## NOW
-1. **COL-04 FIXED** · **SRC-02/VIS-02/FLT-03 PARTIAL** · **UPL-05 FIXED**
-2. Next: **VIS-04** (needs `catalogs.void_reasons` — file CC-1 if schema) · UPL-04/06 · Bills FLT-03
-3. Do **not** touch ParityTable while CC-3 owns COL-02/03/CTL
-
-**ACK:** `CURSOR | ACK | NOW=UPL-04|Bills-FLT-03 | GO`
+## TOP
+1. Register stamp honesty + keep CC GOs hot.
+2. Cursor OPEN leftover after LAY/UPL wave: only WIR-04 (blocked — no W-8BEN template) unless new FAIL appears.
+3. Help drain: if CC-3 idle >5m on COL-02, ping again; do not steal ParityTable.
+4. Deploy every 5–10 merges (not per-merge). Continuous — no pause.
