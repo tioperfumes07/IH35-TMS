@@ -8025,7 +8025,7 @@ Source: remeasure at 5e94f941c7 (origin/main). These 77 guards are newly failing
 | verify-customers-vendors-list-segment-tabs.mjs | CC-3 | OPEN |
 | verify-datepicker-label-clickthrough-reopen.mjs | CURSOR | OPEN |
 | verify-deactivated-counterparty-resolver-coverage.mjs | CC-1 | OPEN |
-| verify-disp-wire-08-settlement-ping.mjs | CODEX | OPEN |
+| verify-disp-wire-08-settlement-ping.mjs | CODEX | FIXED (PR pending) — product normal PASS; selftest now proves distinct primary/secondary open calls |
 | verify-disp-wire-10-cancel-economics.mjs | CODEX | OPEN |
 | verify-dispatch-secondary-nav-depth.mjs | CURSOR | OPEN |
 | verify-display-id-lookups-entity-scoped.mjs | CC-1 | OPEN |
