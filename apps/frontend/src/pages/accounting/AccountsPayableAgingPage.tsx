@@ -7,6 +7,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getApAgingByVendor, type ApAgingVendor, type ApAgingDisplayGroup } from "../../api/accounting";
 import { formatDateUS } from "../../lib/formatDate";
@@ -321,10 +322,10 @@ export function AccountsPayableAgingPage() {
             </label>
             <label className="text-xs font-semibold text-slate-600">
               Vendor type
-              <select className="mt-1 block h-9 rounded-sm border border-slate-300 px-2 text-sm" value={staged.draft.typeFilter} onChange={(e) => staged.setDraft({ ...staged.draft, typeFilter: e.target.value as ApAgingDisplayGroup | "all" })}>
+              <SelectCombobox className="mt-1 block" value={staged.draft.typeFilter} onChange={(e) => staged.setDraft({ ...staged.draft, typeFilter: e.target.value as ApAgingDisplayGroup | "all" })}>
                 <option value="all">All types</option>
                 {GROUP_ORDER.map((g) => <option key={g} value={g}>{g}</option>)}
-              </select>
+              </SelectCombobox>
             </label>
           </div>
         </CollapsedListFilters>

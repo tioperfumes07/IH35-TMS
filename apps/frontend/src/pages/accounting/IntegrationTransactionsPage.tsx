@@ -10,6 +10,7 @@ import { getIntegrationTransactions, type IntegrationTxnItem } from "../../api/i
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { CollapsedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
@@ -234,11 +235,10 @@ export function IntegrationTransactionsPage() {
         }
       >
         <div className="flex flex-wrap gap-2">
-          <select
+          <SelectCombobox
             aria-label="Filter by sync status"
             value={syncStatus}
             onChange={(e) => setSyncStatus(e.target.value)}
-            className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
           >
             <option value="">All statuses</option>
             {(["pending", "in_flight", "synced", "failed", "blocked"] as const).map((s) => (
@@ -246,12 +246,11 @@ export function IntegrationTransactionsPage() {
                 {s}
               </option>
             ))}
-          </select>
-          <select
+          </SelectCombobox>
+          <SelectCombobox
             aria-label="Filter by entity type"
             value={entityType}
             onChange={(e) => setEntityType(e.target.value)}
-            className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
           >
             <option value="">All types</option>
             {Object.entries(ENTITY_LABELS).map(([k, v]) => (
@@ -259,7 +258,7 @@ export function IntegrationTransactionsPage() {
                 {v}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </div>
       </CollapsedListFilters>
       <span className="ml-auto self-center text-xs text-gray-500">
