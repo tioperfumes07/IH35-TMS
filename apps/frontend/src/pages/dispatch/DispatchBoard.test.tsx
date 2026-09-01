@@ -265,6 +265,41 @@ describe("DispatchBoard ETA chip (P5-T20)", () => {
     expect(screen.getByText("L-HIST")).toBeTruthy();
   });
 
+  it("gives every live section independent headers, sorting, and filtering", async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <ToastProvider>
+            <DispatchBoard
+              loads={[mockLoad({ load_number: "L-BOOKED" })]}
+              totalCount={1}
+              limit={50}
+              offset={0}
+              loading={false}
+              sortField="created_at"
+              sortDirection="desc"
+              onSortChange={vi.fn()}
+              onPageChange={vi.fn()}
+              onRowClick={vi.fn()}
+              onExportCsv={vi.fn()}
+              operatingCompanyId="00000000-0000-4000-8000-0000000000bb"
+            />
+          </ToastProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByTestId("dispatch-board-headers-awaiting")).toBeTruthy();
+    expect(screen.getByTestId("dispatch-board-headers-booked")).toBeTruthy();
+    expect(screen.getByTestId("dispatch-board-headers-in_shop")).toBeTruthy();
+
+    fireEvent.change(screen.getByTestId("dispatch-board-filter-awaiting"), { target: { value: "no-match" } });
+    expect(screen.getByText("No awaiting assignment rows match this section filter.")).toBeTruthy();
+    expect(screen.getByText("L-BOOKED")).toBeTruthy();
+    expect((screen.getByTestId("dispatch-board-filter-booked") as HTMLInputElement).value).toBe("");
+  });
+
   it("does not disguise a failed pre-settlement linkage read as no open cycle", async () => {
     vi.mocked(listOpenPreSettlements).mockRejectedValueOnce(new Error("pre-settlement unavailable"));
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
