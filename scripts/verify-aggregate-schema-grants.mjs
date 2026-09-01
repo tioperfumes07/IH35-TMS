@@ -84,6 +84,18 @@ export function extractSchemaReferences(src) {
     // the list stops growing. (It is left in place — entries also cover other shapes, and pruning it
     // here would be unrelated churn on a guard this change is only passing through.)
     if (/\bDISTINCT\s+$/i.test(src.slice(Math.max(0, idx - 32), idx))) continue;
+    // work-orders.routes.ts:923 — a user-facing message string, "...Reopen it from triage.",
+    // matched `\b(FROM|JOIN)\s+([a-z_]\w*)\.` as if it were `FROM triage.<table>` and demanded a
+    // GRANT USAGE for a schema that has never existed. Same root-cause class as the R2./comment
+    // false positives this function already guards against (see doc comment above) — English
+    // prose ending a sentence right after the word that looks like a schema name. A REAL
+    // `FROM schema.table` / `JOIN schema.table` always has an identifier character immediately
+    // after the dot (the table/function name); prose ending in "<word>." is followed by
+    // whitespace, a quote, a backtick, or end-of-string instead. Requiring an identifier char
+    // after the dot only ADDS an exclusion — it can never drop a genuine schema reference, since
+    // SQL never writes `FROM schema.` with nothing after the dot.
+    const afterDot = src[m.index + m[0].length];
+    if (!afterDot || !/[a-zA-Z_]/.test(afterDot)) continue;
     schemas.add(m[2].toLowerCase());
   }
   return schemas;
