@@ -21,6 +21,7 @@ import { useStagedListFilters } from "../../../components/table";
 import { entityLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
+import { uploadSourceDocumentFromFile } from "../../../api/docs";
 
 const EMPTY_FILTERS = { driverId: "", unitId: "", trailerId: "" };
 
@@ -83,10 +84,12 @@ export function DOTInspectionsTab() {
   const draft = staged.draft;
 
   const [form, setForm] = useState(() => emptyInspectionForm());
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
   type CreateInput = {
     companyId: string;
     generation: number;
     payload: Parameters<typeof createDotInspection>[1];
+    evidenceFile: File | null;
   };
   const [pendingOosCreate, setPendingOosCreate] = useState<CreateInput | null>(null);
 
@@ -124,10 +127,24 @@ export function DOTInspectionsTab() {
   useEffect(() => setPage(1), [companyId, applied.driverId, applied.unitId, applied.trailerId]);
 
   const createMutation = useMutation({
-    mutationFn: (input: CreateInput) => createDotInspection(input.companyId, input.payload),
+    mutationFn: async (input: CreateInput) => {
+      const pdfEvidenceId = await uploadSourceDocumentFromFile(input.evidenceFile, {
+        operating_company_id: input.companyId,
+        entity_links: [
+          ...(input.payload.driver_id ? [{ entity_type: "driver" as const, entity_id: String(input.payload.driver_id) }] : []),
+          ...(input.payload.unit_id ? [{ entity_type: "unit" as const, entity_id: String(input.payload.unit_id) }] : []),
+          ...(input.payload.trailer_id ? [{ entity_type: "equipment" as const, entity_id: String(input.payload.trailer_id) }] : []),
+        ],
+      });
+      return createDotInspection(input.companyId, {
+        ...input.payload,
+        pdf_evidence_id: pdfEvidenceId ?? undefined,
+      });
+    },
     onSuccess: async (_result, input) => {
       if (input.generation !== companyGenerationRef.current) return;
       setForm((prev) => ({ ...prev, inspector_name: "", notes: "", csa_points: 0, trailer_id: trailerIdFromUrl || "" }));
+      setEvidenceFile(null);
       await queryClient.invalidateQueries({ queryKey: ["safety-v64", "dot-inspections", input.companyId] });
     },
   });
@@ -268,6 +285,7 @@ export function DOTInspectionsTab() {
     setPendingOosCreate(null);
     setVoidTargetId(null);
     setForm(emptyInspectionForm(trailerIdFromUrl));
+    setEvidenceFile(null);
     setDwellPage(0);
   }, [companyId]);
 
@@ -281,7 +299,7 @@ export function DOTInspectionsTab() {
         <h2 className="text-sm font-semibold text-slate-900">DOT Inspections</h2>
         <InspectionScoreBadge companyId={companyId} />
       </div>
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5 lg:grid-cols-10">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5 lg:grid-cols-11">
         <div>
           <label className="sr-only" htmlFor="dot-inspection-tab-date">Inspection date</label>
           <DatePicker id="dot-inspection-tab-date" className="" value={form.inspection_date} onChange={(next) => setForm((v) => ({ ...v, inspection_date: next }))} />
@@ -323,10 +341,15 @@ export function DOTInspectionsTab() {
         </SelectCombobox>
         <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Location" value={form.location} onChange={(e) => setForm((v) => ({ ...v, location: e.target.value }))} />
         <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" type="number" min={0} placeholder="CSA pts" value={form.csa_points} onChange={(e) => setForm((v) => ({ ...v, csa_points: Number(e.target.value || 0) }))} />
+        <label className="flex cursor-pointer items-center justify-center rounded-sm border border-gray-300 px-2 py-1 text-xs text-slate-700">
+          {evidenceFile ? evidenceFile.name : "Inspection PDF"}
+          <input type="file" accept="application/pdf" className="sr-only" onChange={(event) => setEvidenceFile(event.target.files?.[0] ?? null)} />
+        </label>
         <button type="button" className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60" disabled={!form.inspector_name || createMutation.isPending} onClick={() => {
           const input: CreateInput = {
             companyId,
             generation: companyGenerationRef.current,
+            evidenceFile,
             payload: {
               inspection_date: form.inspection_date,
               driver_id: form.driver_id || undefined,

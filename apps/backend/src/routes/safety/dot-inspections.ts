@@ -58,6 +58,7 @@ const dotInspectionSchema = z.object({
   csa_points_vehicle_maintenance: z.number().int().optional(),
   csa_points_controlled_substances: z.number().int().optional(),
   csa_points_driver_fitness: z.number().int().optional(),
+  pdf_evidence_id: z.string().uuid().optional(),
 });
 
 function currentUser(req: FastifyRequest, reply: FastifyReply) {
@@ -279,6 +280,19 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
         if (!integrity?.driver_ok || !integrity.unit_ok || !integrity.trailer_ok) {
           return null;
         }
+        if (body.data.pdf_evidence_id) {
+          const evidence = await client.query(
+            `SELECT id
+               FROM docs.files
+              WHERE id = $2::uuid
+                AND operating_company_id = $1::uuid
+                AND upload_completed_at IS NOT NULL
+                AND deleted_at IS NULL
+              LIMIT 1`,
+            [query.data.operating_company_id, body.data.pdf_evidence_id]
+          );
+          if (!evidence.rows[0]?.id) return { kind: "evidence_not_found" as const };
+        }
         const csaPointBreakdown = Object.fromEntries(
           Object.entries({
             unsafe_driving: body.data.csa_points_unsafe_driving,
@@ -300,9 +314,9 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
             INSERT INTO safety.dot_inspections (
               operating_company_id, driver_id, unit_id, trailer_id, inspection_date, inspector_name,
               inspection_level, fmcsa_level, location, outcome,
-              csa_basic_categories, csa_points, violations_jsonb, auto_spawned_wo_id, created_by, notes
+              csa_basic_categories, csa_points, violations_jsonb, pdf_evidence_id, auto_spawned_wo_id, created_by, notes
             )
-            VALUES ($1,$2,$3,$4,$5::date,$6,$7::smallint,$7::integer,$8,$9,$10,$11,$12,NULL,$13,$14)
+            VALUES ($1,$2,$3,$4,$5::date,$6,$7::smallint,$7::integer,$8,$9,$10,$11,$12,$13,NULL,$14,$15)
             RETURNING *
           `,
           [
@@ -318,6 +332,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
             categoryList,
             totalPoints,
             violationsJson,
+            body.data.pdf_evidence_id ?? null,
             user.uuid,
             body.data.notes ?? null,
           ]
@@ -396,6 +411,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
     });
 
     if (!payload) return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
+    if ("kind" in payload && payload.kind === "evidence_not_found") return reply.code(404).send({ error: "document_not_found" });
     return reply.code(201).send(payload);
   });
 
