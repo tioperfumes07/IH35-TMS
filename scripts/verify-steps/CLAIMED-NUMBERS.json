@@ -5200,6 +5200,7 @@
     "claimed_at": "2026-09-01",
     "purpose": "verify-load-mark-invoiced-ui (completed_docs_received→invoiced live path)"
   },
+  "10220": "verify-lists-catalog-search-debounced",
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
