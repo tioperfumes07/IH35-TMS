@@ -52,6 +52,21 @@ function preSettlementPanelReadIssues(content) {
   return issues;
 }
 
+/** DSP-01 — pickup/delivery columns must stay city-only (first_pickup_city / first_delivery_city). */
+function dsp01CityColumnIssues(content) {
+  const issues = [];
+  if (!/key:\s*"pickup"[\s\S]{0,120}header:\s*"Pickup"[\s\S]{0,120}first_pickup_city/.test(content)) {
+    issues.push("pickup column must header Pickup and render load.first_pickup_city (DSP-01)");
+  }
+  if (!/function renderDeliveryCell[\s\S]{0,120}first_delivery_city/.test(content)) {
+    issues.push("renderDeliveryCell must return first_delivery_city (DSP-01)");
+  }
+  if (!/key:\s*"delivery"[\s\S]{0,120}header:\s*"Delivery"[\s\S]{0,120}renderDeliveryCell/.test(content)) {
+    issues.push('delivery column must header Delivery and use renderDeliveryCell (DSP-01)');
+  }
+  return issues;
+}
+
 function sectionControlIssues(content) {
   const issues = [];
   if (!content.includes('data-testid={`dispatch-board-headers-${section.key}`}')) {
@@ -159,6 +174,7 @@ if (/Showing \{from\}-\{to\} of \{totalCount\}\s*<\/(div|span)>/.test(src)) {
 for (const issue of preSettlementReadIssues(src)) fail(issue);
 for (const issue of preSettlementPanelReadIssues(panelSrc)) fail(issue);
 for (const issue of sectionControlIssues(src)) fail(issue);
+for (const issue of dsp01CityColumnIssues(src)) fail(issue);
 
 if (process.argv.includes("--selftest")) {
   const mutants = [
@@ -195,7 +211,15 @@ if (process.argv.includes("--selftest")) {
   if (!sectionMutants.every((mutant) => sectionControlIssues(mutant).length > 0)) {
     fail("selftest mutation escaped DSP-04 per-section control guard");
   }
-  console.log("PASS verify-dispatch-board-sections-and-columns SELFTEST — 13/13 defects caught");
+  const dsp01Mutants = [
+    src.replace('header: "Pickup", cell: (load) => load.first_pickup_city', 'header: "Pickup", cell: (load) => laneSummary(load)'),
+    src.replace("return load.first_delivery_city ??", 'return laneSummary(load) ??'),
+    src.replace('header: "Delivery", cell: (load) => renderDeliveryCell(load)', 'header: "Delivery", cell: (load) => laneSummary(load)'),
+  ];
+  if (!dsp01Mutants.every((mutant) => dsp01CityColumnIssues(mutant).length > 0)) {
+    fail("selftest mutation escaped DSP-01 pickup/delivery city column guard");
+  }
+  console.log("PASS verify-dispatch-board-sections-and-columns SELFTEST — 16/16 defects caught");
 }
 
 console.log("PASS verify-dispatch-board-sections-and-columns");
