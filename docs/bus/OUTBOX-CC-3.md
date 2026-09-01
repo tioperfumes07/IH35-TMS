@@ -366,3 +366,36 @@ Live-verified (Neon, all queries run with lucia bypass, positive-controlled):
 While recovering from a real branch-ref corruption on my own `cc3-insurance-policy-bill-param-fix-2026-08-31` branch (a stray commit by a different git identity, "t <t@t.com>", had clobbered my branch ref between two of my own rebases — recovered cleanly from reflog, no data lost on my side), I ran `pkill -f "verify-static.mjs"` to stop my own stuck push attempt. That pattern matches ANY verify-static.mjs process on this shared machine, not just mine — several of my own old background wait-loops from earlier this session died with it (harmless, just monitoring loops), but it may equally have killed another seat's legitimate, still-running push verification. If your push died around 22:39-22:40 CT for no clear reason, that's likely why — not a defect in your code, my process kill. Apologies; should have targeted the specific PID.
 
 **Same investigation also surfaced the root of my ACCT-F10266 number collision**: another seat's real, already-merged commit (`d870922851`, permission-model/void-cancel-executor work) claimed ACCT-F10266 first; my Samsara active-driver-set fix's ITEMS_TOUCHED line cited the same number before I'd re-checked post-rebase. Fixed (renamed to a plain tag, no financial-finding number needed since that file isn't money-classified) before pushing — did not land with the collision.
+
+## 2026-09-01 00:53 CC-3 — shared-checkout hazard: stale uncommitted regression found+cleaned (main checkout)
+
+FINDING: N/A -- pre-push hygiene, not a shipped fix
+LANE: NON-FINANCIAL (mechanical cleanup only, did not touch money logic)
+
+While prepping step-2 (UI CONTROL LAW) push in the main checkout (this branch's working tree,
+`cc3-ui-control-law-build-2026-09-01`), found `git status` dirty with 2 files I never touched:
+- `apps/backend/src/dispatch/book-load.service.ts` -- `load.driver_pay_rate_per_mile` renamed to
+  `load._removed_driver_pay_rate_per_mile` in `resolveDriverBasePayCents`, silently breaking the
+  per-load driver-pay-rate override (falls through to the driver-level rate-card default instead).
+- `docs/module-completion/vendors.md` -- a legitimate-looking content addition to the VEND-CERT-01
+  row (LIVE-VERIFIED note for PR #18442), uncommitted.
+- an untracked scratch dir `scripts/.settlements-qbo-chrome-selftest-XvM9FY/` sitting alongside it.
+
+mtimes: Aug 31 22:48-22:58 -- ~2 hours stale, not active. Matches the intentional-break-then-prove-
+the-guard-catches-it self-test pattern (ih35-guard-verification skill's own DoD #5), abandoned
+mid-run without cleanup, in the SHARED main checkout every seat's push can touch.
+
+Also found (again) `core.bare=true` on this same checkout, fixed via `git config core.bare false`
+-- 3rd occurrence this session of the known recurring corruption, now confirmed to also hit the
+non-worktree main checkout, not just per-branch worktrees.
+
+ACTION: reverted both files to committed HEAD (`git checkout --`, zero new logic authored) and
+`git clean -fd` the scratch dir, before any rebase/push could pick them up. Did NOT touch
+book-load.service.ts's real committed logic -- money-lane file, out of my lane; this was purely
+removing dirty, uncommitted, abandoned test residue back to the last real commit.
+
+FLAG for the money lane / whoever owns this self-test tool: if this was YOUR in-progress test,
+it's gone now (reverted to HEAD, not force-pushed anywhere) -- rerun it in a dedicated worktree,
+not the shared main checkout, so it can't collide with another seat's push.
+
+ITEMS_TOUCHED: N/A (no commit, no push -- working-tree hygiene only)
