@@ -11,3 +11,4 @@ CODEX | FIXED | DSP-02 | existing product=#19059@a11d118d7275697f607c0756aec80be
 CODEX | FIXED | verify-disp-wire-08-settlement-ping | normal=PASS | root=secondary-pay mutation escaped identifier-anywhere check | selftest=5/5 | NEXT=verify-disp-wire-10-cancel-economics | GO
 CODEX | FIXED | verify-disp-wire-10-cancel-economics | product=#19175 | normal=PASS | selftest=5/5 | workflow=verify-step-2517 | NEXT=board | GO
 CODEX | FIXED | verify-healthz-no-raw-error-leak | root=imported sanitizer escaped audit and mutation was inert | normal=PASS | selftest=4/4 | workflow=verify-step-1612 | NEXT=verify-load-cancellations-report | GO
+CODEX | FIXED | verify-load-cancellations-report | root=guard expected retired href key after shared navy subnav moved to to | normal=PASS | selftest=6/6 | workflow=verify-step-4155 | NEXT=verify-no-boot-throwing-env-checks | GO

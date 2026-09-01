@@ -17,7 +17,8 @@
  *   - `apps/frontend/src/pages/reports/CancellationsReportPage.tsx` (real ParityTable +
  *     PageHeader + ReportsSubNav) calls `getCancellationsReport()`, which hits that exact route.
  *   - `apps/frontend/src/pages/reports/ReportsSubNav.tsx` carries a real
- *     `{ label: "Cancellations", href: "/reports/cancellations" }` nav entry.
+ *     `{ label: "Cancellations", to: "/reports/cancellations" }` nav entry through the shared
+ *     NavyPageSubNav contract.
  *   - `apps/frontend/src/routes/manifest.tsx` mounts `CancellationsReportPage` at
  *     `/reports/cancellations`.
  *
@@ -60,7 +61,7 @@ const CHECKS = [
   {
     name: "frontend subnav: real Cancellations nav entry",
     file: "apps/frontend/src/pages/reports/ReportsSubNav.tsx",
-    pattern: /\{ label: "Cancellations", href: "\/reports\/cancellations" \}/,
+    pattern: /\{ label: "Cancellations", to: "\/reports\/cancellations" \}/,
   },
   {
     name: "route manifest: real /reports/cancellations mount",

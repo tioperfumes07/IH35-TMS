@@ -8044,7 +8044,7 @@ Source: remeasure at 5e94f941c7 (origin/main). These 77 guards are newly failing
 | verify-linkage-required-edges.mjs | CASCADE | OPEN |
 | verify-list-segment-tabs-present.mjs | CURSOR | OPEN |
 | verify-live-load-number-not-self-referential.mjs | CASCADE | OPEN |
-| verify-load-cancellations-report.mjs | CODEX | OPEN |
+| verify-load-cancellations-report.mjs | CODEX | FIXED (PR pending) — shared navy subnav `to` contract guarded; normal PASS; selftest 6/6; workflow step 4155 |
 | verify-local-ci-parity.mjs | CASCADE | OPEN |
 | verify-lst-picker01-equipment-type-inline-create.mjs | CURSOR | OPEN |
 | verify-matrix-metrics-tally.mjs | CASCADE | OPEN |
