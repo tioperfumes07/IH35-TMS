@@ -29,9 +29,11 @@ describe("LiveLoadIdBar first load number", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Load number unavailable: first_load_number_required/)).toBeTruthy();
+      expect(screen.getByText(/First load for this company/)).toBeTruthy();
     });
+    expect(screen.queryByText(/Load number unavailable/)).toBeNull();
     const input = screen.getByTestId("qbo-document-number-load");
+    expect(input).not.toBeDisabled();
     await userEvent.type(input, "13508");
     expect(onReservationUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ load_number: "13508", reservation_uuid: "" })
