@@ -34,6 +34,9 @@ function audit(src) {
   if (guardIndex !== -1 && closeIndex !== -1 && guardIndex > closeIndex) {
     failures.push("the open-Combobox guard must run BEFORE onClose(), not after");
   }
+  if (!onKeyBody.includes('[data-date-picker-popover="open"]')) {
+    failures.push('onKey must check document.querySelector(\'[data-date-picker-popover="open"]\') before closing (MOD-02)');
+  }
   return failures;
 }
 

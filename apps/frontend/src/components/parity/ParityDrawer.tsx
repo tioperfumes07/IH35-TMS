@@ -89,6 +89,8 @@ export function ParityDrawer({
       // capture-phase listener just has to step aside while a Combobox listbox is open and let that
       // bubble-phase handler run instead of pre-empting it.
       if (document.querySelector('[data-combobox-listbox="portal"]')) return;
+      // MOD-02: insurance PolicyCreate (ParityDrawer) must not discard on Escape while date calendar open.
+      if (document.querySelector('[data-date-picker-popover="open"]')) return;
       e.preventDefault();
       // Capture + stop so parent Modal (Create WO) does not treat Escape as discard.
       if (stackAboveModal) {
