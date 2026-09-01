@@ -177,6 +177,14 @@ export function DispatchPage({
   const effectiveDateMode =
     boardScope === "history" && !searchParams.has("date_mode") ? "delivery" : filters.dateMode;
 
+  // DSP-03 — history scope is list-only (terminal loads); live-only views cannot stay selected via URL.
+  useEffect(() => {
+    if (boardScope !== "history" || view === "list") return;
+    const next = new URLSearchParams(searchParams);
+    next.set("view", "list");
+    setSearchParams(next, { replace: true });
+  }, [boardScope, view, searchParams, setSearchParams]);
+
   const loadsQuery = useLoadsList({
     limit,
     offset,
@@ -302,6 +310,8 @@ export function DispatchPage({
               variant={view === "overview" ? "primary" : "secondary"}
               size="sm"
               data-testid="dispatch-view-overview"
+              disabled={boardScope === "history"}
+              title={boardScope === "history" ? "Overview is live-board only — switch to Live" : undefined}
               onClick={() => {
                 const next = new URLSearchParams(searchParams);
                 next.set("view", "overview");
@@ -314,6 +324,8 @@ export function DispatchPage({
               type="button"
               variant={view === "kanban" ? "primary" : "secondary"}
               size="sm"
+              disabled={boardScope === "history"}
+              title={boardScope === "history" ? "Kanban is live-board only — switch to Live" : undefined}
               onClick={() => {
                 const next = new URLSearchParams(searchParams);
                 next.set("view", "kanban");
@@ -339,6 +351,8 @@ export function DispatchPage({
               variant={view === "units" ? "primary" : "secondary"}
               size="sm"
               data-testid="dispatch-view-round-trips"
+              disabled={boardScope === "history"}
+              title={boardScope === "history" ? "Round trips is live-board only — switch to Live" : undefined}
               onClick={() => {
                 const next = new URLSearchParams(searchParams);
                 next.set("view", "units");
@@ -356,6 +370,10 @@ export function DispatchPage({
                 const next = new URLSearchParams(searchParams);
                 next.set("board_scope", "live");
                 next.delete("offset");
+                if (view === "list" && boardScope === "history") {
+                  // Restore a sensible live default when leaving history-only list mode.
+                  next.set("view", "list");
+                }
                 setSearchParams(next);
               }}
             >
@@ -369,6 +387,8 @@ export function DispatchPage({
               onClick={() => {
                 const next = new URLSearchParams(searchParams);
                 next.set("board_scope", "history");
+                next.set("view", "list");
+                next.delete("statuses");
                 next.delete("offset");
                 if (!next.get("date_mode")) next.set("date_mode", "delivery");
                 if (!next.get("date_from") && !next.get("date_to")) {
