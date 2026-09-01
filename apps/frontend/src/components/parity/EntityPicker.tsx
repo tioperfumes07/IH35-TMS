@@ -199,20 +199,32 @@ export function EntityPicker({
     enabled: queryEnabled && kind === "unit" && Boolean(vinProbeKey),
     staleTime: 30_000,
   });
+  const existingVinUnit =
+    vinLookupQuery.data?.found && vinLookupQuery.data.unit ? vinLookupQuery.data.unit : null;
   const crossEntityVin =
-    vinLookupQuery.data?.found &&
-    vinLookupQuery.data.unit &&
-    !vinLookupQuery.data.unit.in_current_company_scope
-      ? vinLookupQuery.data.unit
-      : null;
+    existingVinUnit && !existingVinUnit.in_current_company_scope ? existingVinUnit : null;
+  const inScopeVinUnit =
+    existingVinUnit && existingVinUnit.in_current_company_scope ? existingVinUnit : null;
 
   const rosterLoadFailed =
     rosterQuery.isError && rosterQuery.data === undefined && !rosterQuery.isPlaceholderData;
 
   const options = useMemo(() => {
+    const vinScopedOption: EntityPickerOption[] = inScopeVinUnit
+      ? [
+          {
+            value: inScopeVinUnit.id,
+            label: inScopeVinUnit.unit_number,
+            sublabel: inScopeVinUnit.vin,
+          },
+        ]
+      : [];
     const rows = mergePickerOptionsByValue(
       rosterQuery.data ?? [],
-      selectedOption ? [selectedOption, ...created] : created,
+      mergePickerOptionsByValue(
+        selectedOption ? [selectedOption, ...created] : created,
+        vinScopedOption,
+      ),
     );
     // A value that is not in the roster (an archived driver still referenced by an old record, a
     // load outside the 200-row page) must stay VISIBLE and selected rather than silently blanking
@@ -221,11 +233,11 @@ export function EntityPicker({
       rows.unshift({ value: scopedValue, label: scopedValue, sublabel: "not in the current list" });
     }
     return rows;
-  }, [rosterQuery.data, created, scopedValue, selectedOption]);
+  }, [rosterQuery.data, created, scopedValue, selectedOption, inScopeVinUnit]);
 
   // A kind may refuse inline create for a stated reason (transactions and money documents do).
-  // MOD-05: never offer create when the typed VIN already exists cross-entity.
-  const createOffered = allowCreate && config.inlineCreate.available && !crossEntityVin;
+  // MOD-05: never offer create when the typed VIN already exists (cross-entity → warn; in-scope → select).
+  const createOffered = allowCreate && config.inlineCreate.available && !existingVinUnit;
   const resolvedSelectedOption = scopedValue
     ? options.find((option) => option.value === scopedValue && option.label !== scopedValue) ?? null
     : null;
@@ -287,6 +299,14 @@ export function EntityPicker({
             Unit {crossEntityVin.unit_number} already exists (
             {crossEntityVin.owner_company_code || crossEntityVin.owner_company_name || "another entity"}
             ). Switch company or lease it to this entity — do not create a duplicate VIN.
+          </p>
+        ) : inScopeVinUnit ? (
+          <p
+            className="text-[11px] font-medium text-slate-700"
+            data-testid="entity-picker-vin-in-scope"
+            role="status"
+          >
+            Unit {inScopeVinUnit.unit_number} matches this VIN — select it from the list above.
           </p>
         ) : null}
       </div>
