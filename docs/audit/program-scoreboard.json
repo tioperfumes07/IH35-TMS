@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 19396,
+      "title": "FINDING: GO-06-EMPTY-NO-BOX",
+      "state": "merged",
+      "mergedAtCt": "09/01/2026, 05:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19396",
+      "sha": "970c2fda37",
+      "committedAtIso": "2026-09-01T17:39:45-05:00"
+    },
+    {
+      "number": 19395,
+      "title": "FINDING: N/A -- B-2-VENDOR-PATCH-BIND + GUARD-F7316 SUPERSEDED, 2 stale duplicate rows corrected",
+      "state": "merged",
+      "mergedAtCt": "09/01/2026, 05:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19395",
+      "sha": "e96f6dc18a",
+      "committedAtIso": "2026-09-01T17:39:06-05:00"
+    },
+    {
       "number": 19394,
       "title": "FINDING: DEVIN-A-TYPE-LOAD-ACK — API ancestor of 218c9fb, browser unavailable",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19382",
       "sha": "54a0c7f9b1",
       "committedAtIso": "2026-09-01T16:58:47-05:00"
-    },
-    {
-      "number": 19381,
-      "title": "FINDING: CLS-GL-DARK-REVERIFIED-CLEAN -- live guard re-run shows zero uncovered money events, flipping stale false drain_proof back to true",
-      "state": "merged",
-      "mergedAtCt": "09/01/2026, 04:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19381",
-      "sha": "d63eae2a34",
-      "committedAtIso": "2026-09-01T16:56:50-05:00"
-    },
-    {
-      "number": 19379,
-      "title": "FINDING: DEVIN-A-GO-14-ACK — TYPE-LOAD-NUMBER, bundle proof already shipped",
-      "state": "merged",
-      "mergedAtCt": "09/01/2026, 04:54 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19379",
-      "sha": "677decd90c",
-      "committedAtIso": "2026-09-01T16:54:42-05:00"
     }
   ]
 }
