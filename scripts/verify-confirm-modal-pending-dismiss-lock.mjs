@@ -30,6 +30,9 @@ function sharedFailures(source) {
   if (!/await onConfirm\(\);[\s\S]{0,80}onClose\(\);/.test(source)) {
     problems.push("success close does not wait for confirmation promise");
   }
+  if (!/catch \(err\)/.test(source) || !/data-testid="confirm-modal-error"/.test(source)) {
+    problems.push("ConfirmModal must catch onConfirm rejection and render confirm-modal-error (silent no-op is a FAIL)");
+  }
   return problems;
 }
 
@@ -84,6 +87,7 @@ if (process.argv.includes("--selftest")) {
     ["onClose={closeUnlessBusy}", "onClose={onClose}"],
     ['onClick={closeUnlessBusy} disabled={busy}', "onClick={onClose}"],
     ["await onConfirm();", "void onConfirm();"],
+    ['data-testid="confirm-modal-error"', "data-testid=\"confirm-modal-ok\""],
   ];
   for (const [from, to] of mutations) {
     const mutated = live.replace(from, to);
