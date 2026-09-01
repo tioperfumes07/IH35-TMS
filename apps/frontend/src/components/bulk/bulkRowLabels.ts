@@ -38,6 +38,19 @@ export function billPaymentBulkRowLabel(row: BillPayment): string {
   return `${vendor} · ${billRef} · ${formatDateUS(row.payment_date)} · ${money(row.amount_cents)}`;
 }
 
+export function loadBulkRowLabel(row: {
+  id: string;
+  load_number?: string | null;
+  customer_name?: string | null;
+  status?: string | null;
+}): string {
+  const display = entityLabel(row.load_number, row.id, "Load");
+  const customer = row.customer_name?.trim();
+  const customerPart = customer ? ` · ${customer}` : "";
+  const statusPart = row.status?.trim() ? ` · ${row.status}` : "";
+  return `${display}${customerPart}${statusPart}`;
+}
+
 export function bulkRowLabelsFromRows<T extends { id: string }>(
   rows: T[],
   labelFn: (row: T) => string

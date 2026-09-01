@@ -81,6 +81,31 @@ function main() {
   assert.match(feExp, /action:\s*"void"/);
   assert.match(feExp, /rowLabels/);
 
+  // SEL-04 — settlements + loads bulk void/cancel (same pre-validate + fail-stop bar as money lists)
+  const setlBulk = read("apps/backend/src/driver-finance/settlements-bulk.routes.ts");
+  assert.match(setlBulk, /atomicFailStopActions:\s*\[["']reverse["']\]/);
+  assert.match(setlBulk, /reverseSettlementBillPaymentInClientTx/);
+  assert.match(setlBulk, /driver-finance\/settlements\/bulk-update/);
+
+  const loadsBulk = read("apps/backend/src/dispatch/loads-bulk.routes.ts");
+  assert.match(loadsBulk, /atomicFailStopActions:\s*\[["']cancel["']\]/);
+  assert.match(loadsBulk, /cancelLoadInClientTx/);
+  assert.match(loadsBulk, /dispatch\/loads\/bulk-update/);
+
+  const feSetl = read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
+  assert.match(feSetl, /selectable/);
+  assert.match(feSetl, /Void \$\{/);
+  assert.match(feSetl, /VoidReasonModal/);
+  assert.match(feSetl, /action: "reverse"/);
+  assert.match(feSetl, /rowLabels/);
+
+  const feDispatch = read("apps/frontend/src/pages/dispatch/DispatchBoard.tsx");
+  assert.match(feDispatch, /label:\s*["']Void["']/);
+  assert.match(feDispatch, /action:\s*["']cancel["']/);
+  assert.match(feDispatch, /CancelLoadModal/);
+  assert.match(feDispatch, /rowLabels/);
+  assert.match(feDispatch, /loadBulkRowLabel/);
+
   assert.match(factory, /rateLimit/);
 
   if (process.argv.includes("--selftest")) {
