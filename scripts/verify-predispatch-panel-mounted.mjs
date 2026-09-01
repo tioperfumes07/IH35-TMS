@@ -37,17 +37,17 @@ function failureContractHolds(source) {
   const catchBlock = catchStart >= 0 && catchEnd > catchStart ? source.slice(catchStart, catchEnd) : "";
   return (
     catchBlock.includes("setError(") &&
-    catchBlock.includes("onValidationChange?.(false, false, false)") &&
-    !catchBlock.includes("onValidationChange?.(true, false, false)")
+    catchBlock.includes("onValidationChange?.(false, false, false, false)") &&
+    !catchBlock.includes("onValidationChange?.(true, false, false")
   );
 }
 
 function warningContractHolds(panelSource, modalSource) {
   return (
-    panelSource.includes("onValidationChange?.(data.can_dispatch, data.blockers.length > 0, data.warnings.length > 0)") &&
-    modalSource.includes("hasWarnings: boolean") &&
-    modalSource.includes("preDispatch.hasWarnings") &&
-    modalSource.includes('"Warnings to review · booking allowed"')
+    panelSource.includes("hasUnackedInsScheduleConfirm") &&
+    modalSource.includes("hasUnackedInsScheduleConfirm") &&
+    modalSource.includes("preDispatch.hasUnackedInsScheduleConfirm") &&
+    modalSource.includes("Insurance schedule confirmation required before booking")
   );
 }
 
@@ -77,11 +77,11 @@ if (!warningContractHolds(panel, modal)) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["failure reports passing", panel.replace("onValidationChange?.(false, false, false);", "onValidationChange?.(true, false, false);")],
-    ["failure drops parent signal", panel.replace("onValidationChange?.(false, false, false);", "")],
+    ["failure reports passing", panel.replace("onValidationChange?.(false, false, false, false);", "onValidationChange?.(true, false, false, false);")],
+    ["failure drops parent signal", panel.replace("onValidationChange?.(false, false, false, false);", "")],
     ["empty identity stays loading", panel.replace("setLoading(false);", "")],
     ["failed read has no retry", panel.replace(/onClick=\{\(\) => setRetryGeneration\([\s\S]*?\}\n/, "")],
-    ["warning count dropped", panel.replace(", data.warnings.length > 0);", ", false);")],
+    ["warning count dropped", panel.replace("hasUnackedInsScheduleConfirm", "nope")],
   ];
   let caught = 0;
   for (const [name, source] of mutations) {
