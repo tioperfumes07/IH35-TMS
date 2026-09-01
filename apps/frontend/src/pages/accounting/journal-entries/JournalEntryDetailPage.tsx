@@ -1,10 +1,12 @@
 import { formatDateUS } from "../../../lib/formatDate";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getJournalEntry,
   getJournalEntrySourceLinks,
+  voidJournalEntry,
   type JournalEntryPosting,
   type JournalEntrySourceLink,
 } from "../../../api/accounting";
@@ -20,6 +22,9 @@ import { formatUsdCents } from "../../../lib/money";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 import { VoidedBanner } from "../../../components/accounting/VoidedBanner";
+import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
+import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { humanMemo } from "../ManualJEListPage";
 
 /** LST-F105: page chrome must not lead with a bare UUID fragment as the JE identity. */
@@ -240,11 +245,27 @@ export function JournalEntryDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
+  const { pushToast } = useToast();
+  const queryClient = useQueryClient();
+  const [voidOpen, setVoidOpen] = useState(false);
 
   const detailQuery = useQuery({
     queryKey: ["accounting", "journal-entry", selectedCompanyId, id],
     queryFn: () => getJournalEntry(id, selectedCompanyId!),
     enabled: Boolean(selectedCompanyId && id),
+  });
+
+  // VIS-03: voidJournalEntry (reversing-void, role-gated Owner/Accountant server-side) already
+  // existed with an FE client wrapper -- this detail page never rendered a trigger for it, so the
+  // only void surface was ManualJEListPage's row action, not "inside the transaction".
+  const voidMutation = useMutation({
+    mutationFn: (reason: string) => voidJournalEntry(id, selectedCompanyId!, reason),
+    onSuccess: () => {
+      pushToast("Journal entry voided", "success");
+      void queryClient.invalidateQueries({ queryKey: ["accounting", "journal-entry", selectedCompanyId, id] });
+      void queryClient.invalidateQueries({ queryKey: ["accounting", "journal-entries"] });
+    },
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to void journal entry"), "error"),
   });
 
   const sourceLinksQuery = useQuery({
@@ -297,10 +318,33 @@ export function JournalEntryDetailPage() {
           { label: chromeLabel },
         ]}
         actions={
-          <Button type="button" variant="secondary" onClick={() => navigate("/accounting/journal-entries")}>
-            Back to list
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="secondary" onClick={() => navigate("/accounting/journal-entries")}>
+              Back to list
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
+              onClick={() => setVoidOpen(true)}
+              disabled={entry.status === "voided"}
+              title={entry.status === "voided" ? "Journal entry already voided." : undefined}
+            >
+              Void
+            </Button>
+          </div>
         }
+      />
+
+      <VoidReasonModal
+        open={voidOpen}
+        title="Void Journal Entry"
+        entityRef={`${chromeLabel} · ${formatUsdCents(entry.debit_total_cents ?? 0)}`}
+        minLength={3}
+        onClose={() => setVoidOpen(false)}
+        onSubmit={async (reason) => {
+          await voidMutation.mutateAsync(reason);
+        }}
       />
 
       <DataPanel title="Entry Header">
