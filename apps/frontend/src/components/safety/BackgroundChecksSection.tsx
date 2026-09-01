@@ -7,6 +7,7 @@ import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 import { Modal } from "../Modal";
+import { UploadModal } from "../documents/UploadModal";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { Combobox } from "../Combobox";
 import { companyToday } from "../../lib/businessDate";
@@ -34,6 +35,9 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
   const [expiryDate, setExpiryDate] = useState("");
   const [notes, setNotes] = useState("");
   const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
+  // UPL-03: per-row action (docs.file_links keys on entity_id=background_check.id, so the target
+  // only exists once the row is saved) -- same reasoning as MedicalCardsHistorySection.tsx.
+  const [uploadCheckId, setUploadCheckId] = useState<string | null>(null);
 
   const query = useQuery({
     queryKey: ["safety", "background-checks", operatingCompanyId, driverId ?? "all", page],
@@ -103,6 +107,16 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
     { key: "check_type", label: "Check", sortable: true, render: (row) => CHECK_TYPES.find((type) => type.value === row.check_type)?.label ?? row.check_type },
     { key: "result", label: "Result", sortable: true, render: (row) => <span className={row.result === "pass" ? "text-slate-700" : "text-red-700"}>{row.result}</span> },
     { key: "expiry_date", label: "Expires", sortable: true, render: (row) => row.expiry_date ? formatDateUS(row.expiry_date) : "—" },
+    {
+      key: "document_count",
+      label: "Document",
+      render: (row) => (
+        <div className="flex items-center gap-2">
+          <span className={row.document_count ? "text-slate-700" : "text-gray-400"}>{row.document_count ? `${row.document_count} file${row.document_count > 1 ? "s" : ""}` : "No file"}</span>
+          <Button size="sm" variant="secondary" onClick={() => setUploadCheckId(row.id)}>Upload</Button>
+        </div>
+      ),
+    },
   ];
 
   return (
@@ -166,6 +180,19 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
           <div className="flex justify-end gap-2"><Button type="button" size="sm" variant="secondary" onClick={attemptClose} disabled={createMutation.isPending}>Cancel</Button><Button type="submit" size="sm" loading={createMutation.isPending} disabled={!selectedDriverId}>Save check</Button></div>
         </form>
       </Modal>
+      {uploadCheckId ? (
+        <UploadModal
+          entityType="background_check"
+          entityId={uploadCheckId}
+          entityName="Background check"
+          operatingCompanyId={operatingCompanyId}
+          onClose={() => setUploadCheckId(null)}
+          onUploadSuccess={() => {
+            setUploadCheckId(null);
+            void queryClient.invalidateQueries({ queryKey: ["safety", "background-checks", operatingCompanyId] });
+          }}
+        />
+      ) : null}
     </section>
   );
 }

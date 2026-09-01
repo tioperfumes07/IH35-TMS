@@ -123,7 +123,13 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
         `
           SELECT mc.*,
                  NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
-                 CASE WHEN mc.expiry_date IS NULL THEN NULL ELSE (mc.expiry_date - CURRENT_DATE) END AS days_to_expiry
+                 CASE WHEN mc.expiry_date IS NULL THEN NULL ELSE (mc.expiry_date - CURRENT_DATE) END AS days_to_expiry,
+                 -- UPL-02: docs.file_links is the polymorphic attach table (entity_type='medical_card',
+                 -- entity_id=mc.id); this table has no document column of its own by design. The
+                 -- backend entity-validation for this type already existed (files.routes.ts, DOC-01
+                 -- D2); only the FE upload trigger was missing. Surfaced here so the FE can render an
+                 -- honest "1 file" / "No file" state instead of a bare upload button with no feedback.
+                 (SELECT count(*)::int FROM docs.file_links fl WHERE fl.entity_type = 'medical_card' AND fl.entity_id = mc.id AND fl.deleted_at IS NULL) AS document_count
           FROM safety.medical_cards mc
           JOIN mdata.drivers d
             ON d.id = mc.driver_id
