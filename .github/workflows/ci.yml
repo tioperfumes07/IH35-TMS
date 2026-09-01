@@ -475,6 +475,9 @@ jobs:
       - name: verify:home-quickjump-counts
         run: node scripts/verify-home-quickjump-counts.mjs
 
+      - name: verify:driver-export-pdf-resolves-api-url
+        run: node scripts/verify-driver-export-pdf-resolves-api-url.mjs
+
       - name: verify:parts-canonical-source
         run: npm run verify:parts-canonical-source
 
