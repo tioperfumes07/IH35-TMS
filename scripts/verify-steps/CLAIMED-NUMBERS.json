@@ -5185,6 +5185,11 @@
     "claimed_at": "2026-09-01",
     "purpose": "verify-exp-posted-no-je-void-and-bulk (EXP-POSTED-NO-JE-01, owner ruling)"
   },
+  "10218": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-01",
+    "purpose": "verify-load-mark-invoiced-ui (completed_docs_received→invoiced live path)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
