@@ -247,3 +247,7 @@ CODEX | WORKING | DSP-06 | ROOT=detention-operational-reader-kept-terminal-load-
 CODEX | FAST-MERGE | DSP-06 | gate=exit0 | merged=#19079@a4a4746064708636c6bd0b555f5438d4fb8b283a | live=UNVERIFIED-pending-deploy | NEXT=DSP-07 | GO
 CODEX | CLOSED-STALE | DSP-07 | current-main=shared-dispatched+at_pickup+in_transit+at_delivery | prior-fix=1b06cf8517 | guard=PASS+selftest23/23 | product-code=NONE | NEXT=DSP-08 | GO
 CODEX | WORKING | DSP-08=STALE-fixed-by-dedup-count | DSP-09=Detention-KPI-added | guard=derived-action-contract+selftest | NEXT=focused+gate+FAST-MERGE | GO
+CODEX | CLOSED-STALE | PLN-01 | current-main=PlannerControls.applyFilters→PlannerRangeProvider.setRange | prior-fix=e35d6602470bdb5cafa208fc8bbe4aa842ecf87f | focused=DispatchPlanners.test.tsx-2/2 | guard=verify-planner-universal-grid | product-code=NONE | GO
+CODEX | CLOSED-STALE | PLN-02 | current-main=buildPlannerRange-end-anchored+setWindowDays-retains-range.end | prior-fix=e35d6602470bdb5cafa208fc8bbe4aa842ecf87f | guard=verify-planner-universal-grid+selftest6 | product-code=NONE | GO
+CODEX | CLOSED-STALE | PLN-05 | current-main=drivers-Active+not-deactivated;units-InService | prior-fix=8d7e5ce1d04cb96d908479e264b996d246f106cd | guard=verify-truck-planner-complete-unit-roster+selftest11 | product-code=NONE | GO
+CODEX | CLOSED-STALE | FLT-04 | current-main=at-risk+late-arrivals+detention-server-from/to+controlled-sort | prior-fix=1b06cf8517331b5182cd97e25d04bde685198c32 | guard=verify-dispatch-at-risk-complete-range+selftest23 | product-code=NONE | GO
