@@ -4,6 +4,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { resolveApiUrl } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -143,7 +144,7 @@ export function BookingGapReport() {
       >
         <label className="text-xs text-gray-600">
           Period
-          <select
+          <SelectCombobox
             className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
             value={staged.draft.period}
             onChange={(event) =>
@@ -157,7 +158,7 @@ export function BookingGapReport() {
                 {PERIOD_LABELS[p]}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
       </CollapsedListFilters>
 

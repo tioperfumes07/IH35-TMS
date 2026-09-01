@@ -1008,5 +1008,49 @@ describe("ParityTable (A1 grammar)", () => {
       expect(nameHeader).not.toHaveAttribute("draggable", "true");
       window.localStorage.clear();
     });
+
+    it("controlled columnOrder: drag notifies onColumnOrderChange without mutating internal state", () => {
+      const onColumnOrderChange = vi.fn();
+      render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          columnOrder={["name", "amount"]}
+          onColumnOrderChange={onColumnOrderChange}
+        />,
+      );
+      const nameHeader = screen.getAllByRole("columnheader")[0];
+      const amountHeader = screen.getAllByRole("columnheader")[1];
+      fireEvent.dragStart(nameHeader);
+      fireEvent.dragOver(amountHeader);
+      fireEvent.drop(amountHeader);
+      expect(onColumnOrderChange).toHaveBeenCalledWith(["amount", "name"]);
+    });
+
+    it("autoFitColumns=false skips content-based width measurement", () => {
+      window.localStorage.clear();
+      type WideRow = { id: string; short: string; long: string };
+      const wideColumns: Array<ParityColumn<WideRow>> = [
+        { key: "short", label: "S" },
+        { key: "long", label: "L" },
+      ];
+      const wideRows: WideRow[] = [
+        { id: "1", short: "A", long: "A very long piece of content that should not truncate" },
+      ];
+      render(
+        <ParityTable<WideRow>
+          columns={wideColumns}
+          rows={wideRows}
+          rowKey={(r) => r.id}
+          storageKey="test-autofit-off"
+          autoFitColumns={false}
+        />,
+      );
+      const headers = screen.getAllByRole("columnheader");
+      expect((headers[0] as HTMLElement).style.width).toBe("");
+      expect((headers[1] as HTMLElement).style.width).toBe("");
+      window.localStorage.clear();
+    });
   });
 });

@@ -7,6 +7,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -111,14 +112,14 @@ export function DispatchMarginPage() {
           </label>
           <label className="text-sm">
             Basis
-            <select
+            <SelectCombobox
               className="ml-2 rounded-sm border px-2 py-1"
               value={staged.draft.basis}
               onChange={(e) => staged.setDraft((p) => ({ ...p, basis: e.target.value as "accrual" | "cash" }))}
             >
               <option value="accrual">Accrual</option>
               <option value="cash">Cash</option>
-            </select>
+            </SelectCombobox>
           </label>
         </div>
       </CollapsedListFilters>

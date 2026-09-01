@@ -41,6 +41,15 @@ const LABEL = "verify-docs-upload-viewed-entity";
 
 const UPLOAD_MODAL = "apps/frontend/src/components/documents/UploadModal.tsx";
 const DOCUMENTS_TAB = "apps/frontend/src/components/documents/DocumentsTab.tsx";
+// EntityDocumentUpload.tsx ("One component so profiles/lists stop re-implementing UploadModal
+// wiring") is a thin wrapper around UploadModal, added after this guard shipped — DocumentsTab.tsx
+// and the direct mount sites below now mount THIS instead of <UploadModal> directly (confirmed
+// live: both still correctly thread operatingCompanyId down to the real <UploadModal>). The
+// mount-site regexes below accept either component name; a NEW check just below asserts
+// EntityDocumentUpload.tsx itself keeps forwarding the prop, so this indirection can't quietly
+// break the thread a second time without this guard catching it.
+const ENTITY_DOCUMENT_UPLOAD = "apps/frontend/src/components/documents/EntityDocumentUpload.tsx";
+const MOUNT_MARKER_RE = "(?:UploadModal|EntityDocumentUpload)";
 
 // Mount sites that render <UploadModal> directly and MUST pass operatingCompanyId=.
 const DIRECT_MOUNT_SITES = [
@@ -77,9 +86,10 @@ function stripComments(text) {
  * }} args raw file text keyed by relative path (for the mount maps)
  * @returns {string[]} errors
  */
-export function assertGuard({ uploadModal, documentsTab, directMounts, documentsTabMounts }) {
+export function assertGuard({ uploadModal, documentsTab, directMounts, documentsTabMounts, entityDocumentUpload }) {
   const errors = [];
   const um = stripComments(uploadModal);
+  const mountMarkerRe = new RegExp(`<${MOUNT_MARKER_RE}`);
 
   // 1. UploadModal must declare + accept + forward operatingCompanyId.
   if (!/operatingCompanyId\??:\s*string/.test(um)) {
@@ -92,17 +102,33 @@ export function assertGuard({ uploadModal, documentsTab, directMounts, documents
     errors.push(`${UPLOAD_MODAL}: requestUploadUrl() call no longer forwards operatingCompanyId as operating_company_id`);
   }
 
+  // 1b. EntityDocumentUpload.tsx (a thin wrapper introduced after this guard shipped — see the
+  //     comment on ENTITY_DOCUMENT_UPLOAD above) must keep forwarding operatingCompanyId down to
+  //     its own <UploadModal> mount. Only checked when the file exists, so this guard still works
+  //     against a repo state from before the wrapper existed (e.g. the selftest fixtures below).
+  if (entityDocumentUpload != null) {
+    const edu = stripComments(entityDocumentUpload);
+    if (!/operatingCompanyId\??:\s*string/.test(edu)) {
+      errors.push(`${ENTITY_DOCUMENT_UPLOAD}: EntityDocumentUploadProps lost the operatingCompanyId prop`);
+    }
+    if (!/<UploadModal[\s\S]{0,400}?operatingCompanyId=\{operatingCompanyId\}/.test(edu)) {
+      errors.push(`${ENTITY_DOCUMENT_UPLOAD}: <UploadModal> no longer receives operatingCompanyId={operatingCompanyId}`);
+    }
+  }
+
   // 2. DocumentsTab (the generic entity-doc tab used by driver/customer/vendor/load) must accept
-  //    operatingCompanyId and forward it to its own <UploadModal operatingCompanyId=...>.
+  //    operatingCompanyId and forward it to its own <UploadModal operatingCompanyId=...> (or the
+  //    <EntityDocumentUpload> wrapper mounting one).
   const dt = stripComments(documentsTab);
   if (!/operatingCompanyId\??:\s*string/.test(dt)) {
     errors.push(`${DOCUMENTS_TAB}: DocumentsTabProps lost the operatingCompanyId prop`);
   }
-  if (!/<UploadModal[\s\S]{0,400}?operatingCompanyId=\{operatingCompanyId\}/.test(dt)) {
+  if (!mountMarkerRe.test(dt) || !new RegExp(`<${MOUNT_MARKER_RE}[\\s\\S]{0,400}?operatingCompanyId=\\{operatingCompanyId\\}`).test(dt)) {
     errors.push(`${DOCUMENTS_TAB}: <UploadModal> no longer receives operatingCompanyId={operatingCompanyId}`);
   }
 
-  // 3. Every direct mount site must pass operatingCompanyId= into <UploadModal>.
+  // 3. Every direct mount site must pass operatingCompanyId= into <UploadModal> (or the
+  //    <EntityDocumentUpload> wrapper).
   for (const rel of DIRECT_MOUNT_SITES) {
     const src = directMounts[rel];
     if (src == null) {
@@ -110,7 +136,7 @@ export function assertGuard({ uploadModal, documentsTab, directMounts, documents
       continue;
     }
     const stripped = stripComments(src);
-    if (!/<UploadModal[\s\S]{0,400}?operatingCompanyId=/.test(stripped)) {
+    if (!mountMarkerRe.test(stripped) || !new RegExp(`<${MOUNT_MARKER_RE}[\\s\\S]{0,400}?operatingCompanyId=`).test(stripped)) {
       errors.push(`${rel}: <UploadModal> mount no longer passes operatingCompanyId= (viewed-company thread dropped)`);
     }
   }
@@ -170,6 +196,20 @@ function selftest() {
   `;
   const goodDirectMount = `<UploadModal entityType="unit" entityId={unitId} operatingCompanyId={companyId} onClose={close} />`;
   const goodTabMount = `<DocumentsTab entityType="driver" entityId={id} entityName={name} operatingCompanyId={companyId} />`;
+  const goodEntityDocumentUpload = `
+    type EntityDocumentUploadProps = { entityType: string; entityId: string; operatingCompanyId?: string; };
+    export function EntityDocumentUpload({ entityType, entityId, operatingCompanyId }: EntityDocumentUploadProps) {
+      return (
+        <UploadModal
+          entityType={entityType}
+          entityId={entityId}
+          operatingCompanyId={operatingCompanyId}
+          onClose={() => setOpen(false)}
+        />
+      );
+    }
+  `;
+  const goodDirectMountViaWrapper = `<EntityDocumentUpload entityType="unit" entityId={unitId} operatingCompanyId={companyId} />`;
 
   function mounts(overrideRel, overrideSrc, list, goodSrc) {
     const m = {};
@@ -258,6 +298,28 @@ function selftest() {
       },
       wantMin: 1,
     },
+    {
+      name: "mount sites through <EntityDocumentUpload> wrapper, correctly wired → 0 errors",
+      in: {
+        uploadModal: goodUploadModal,
+        documentsTab: goodDocumentsTab.replace(/<UploadModal/, "<EntityDocumentUpload"),
+        directMounts: mounts(null, null, DIRECT_MOUNT_SITES, goodDirectMountViaWrapper),
+        documentsTabMounts: mounts(null, null, DOCUMENTS_TAB_MOUNT_SITES, goodTabMount),
+        entityDocumentUpload: goodEntityDocumentUpload,
+      },
+      want: 0,
+    },
+    {
+      name: "EntityDocumentUpload wrapper stops forwarding operatingCompanyId to UploadModal → FAIL",
+      in: {
+        uploadModal: goodUploadModal,
+        documentsTab: goodDocumentsTab.replace(/<UploadModal/, "<EntityDocumentUpload"),
+        directMounts: mounts(null, null, DIRECT_MOUNT_SITES, goodDirectMountViaWrapper),
+        documentsTabMounts: mounts(null, null, DOCUMENTS_TAB_MOUNT_SITES, goodTabMount),
+        entityDocumentUpload: goodEntityDocumentUpload.replace("operatingCompanyId={operatingCompanyId}", ""),
+      },
+      wantMin: 1,
+    },
   ];
 
   let failed = 0;
@@ -317,6 +379,7 @@ if (process.argv.includes("--selftest")) { selftest(); process.exit(0); }
 
 const uploadModal = readReal(UPLOAD_MODAL);
 const documentsTab = readReal(DOCUMENTS_TAB);
+const entityDocumentUpload = readReal(ENTITY_DOCUMENT_UPLOAD);
 if (uploadModal === null) { console.error(`[${LABEL}] FAILED — missing file ${UPLOAD_MODAL}`); process.exit(1); }
 if (documentsTab === null) { console.error(`[${LABEL}] FAILED — missing file ${DOCUMENTS_TAB}`); process.exit(1); }
 
@@ -325,7 +388,7 @@ for (const rel of DIRECT_MOUNT_SITES) directMounts[rel] = readReal(rel);
 const documentsTabMounts = {};
 for (const rel of DOCUMENTS_TAB_MOUNT_SITES) documentsTabMounts[rel] = readReal(rel);
 
-const errors = assertGuard({ uploadModal, documentsTab, directMounts, documentsTabMounts });
+const errors = assertGuard({ uploadModal, documentsTab, directMounts, documentsTabMounts, entityDocumentUpload });
 errors.push(...scanDirectRequestUploadCallers());
 if (errors.length) {
   console.error(`[${LABEL}] FAILED — ${errors.length} issue(s):`);
