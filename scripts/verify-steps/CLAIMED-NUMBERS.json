@@ -5155,6 +5155,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-healthz-exposes-sha"
   },
+  "10208": {
+    "claimed_at": "2026-09-01",
+    "claimed_by": "cursor",
+    "purpose": "verify-driver-hub-overview-request-surfaces"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
