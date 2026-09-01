@@ -126,7 +126,7 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
           <h2 className="text-sm font-semibold text-slate-900">Background & MVR checks</h2>
           <p className="mt-1 text-xs text-slate-600">Company-scoped driver screening history and expirations.</p>
         </div>
-        <Button size="sm" onClick={() => { setSelectedDriverId(driverId ?? ""); setOpen(true); }}>+ Add check</Button>
+        <Button size="sm" onClick={() => { setSelectedDriverId(driverId ?? ""); setOpen(true); }}>+ Create check</Button>
       </div>
       <div className="mt-3">
         {query.isError ? <ListErrorBanner message="Background checks could not be loaded." onRetry={() => void query.refetch()} /> : (
@@ -150,7 +150,7 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
           </div>
         ) : null}
       </div>
-      <Modal variant="drawer" open={open} onClose={closeCreate} title="Add background check" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
+      <Modal variant="drawer" open={open} onClose={closeCreate} title="Create background / MVR check" confirmDiscardOnClose isDirty={isCreateDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
         <form className="space-y-3" onSubmit={(event) => {
           event.preventDefault();
           createMutation.mutate({
