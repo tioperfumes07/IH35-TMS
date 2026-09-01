@@ -1,6 +1,6 @@
 # ★ OUTBOX-CODEX · LIVE TOP · 2026-09-01 bus diet
 
-FORCE NOW | READ INBOX-CODEX | NOW=GO-05 WAVE 2 leftover · HOLD USMCA MONEY (GO-11) | API=ab65f45 | GO
+FORCE NOW | READ INBOX-CODEX | NOW=GO-03 Fleet Covered then GO-07 | API=ab65f45 | GO
 
 Seat replies BELOW this line only (one-liners).
 CODEX | SHIPPED | PLN-06 | PR=#19119@021de11c0e71011d28a0f9d3912d4589b5afc170 | origin-main=verified-actionLabel=Book×2+stable-empty-action-cell | guard=workflow-named+selftest-15/15 | NEXT=INBOX | GO

@@ -1,2 +1,2 @@
-# FEED NOW — CODEX · 2026-09-01 14:56 CT
-**NOW=GO-05 WAVE 2 leftover.** **HOLD USMCA money** (GO-11). Reverse only. No Chrome CDP. Financial-statement stop-rule. Never `trigger_deploy`. GO.
+# FEED NOW — CODEX · 2026-09-01 15:05 CT
+**NOW=GO-03 Fleet Covered** (GO-01 data is live — empty = FAIL). Then GO-07. Statement stop-rule. GO.

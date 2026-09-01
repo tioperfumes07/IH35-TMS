@@ -1,6 +1,6 @@
 # ★ OUTBOX-CC-1 · LIVE TOP · 2026-09-01 bus diet
 
-FORCE NOW | READ INBOX-CC-1 + GO-11 packet | NOW=GO-11 USMCA CLEAN SLATE EXECUTE | API=ab65f45 | NO IDLE | GO
+FORCE NOW | READ INBOX-CC-1 + GO-MASTER | NOW=GO-11 EXECUTE | API=ab65f45 | GO
 
 Seat replies BELOW this line only (one-liners).
 

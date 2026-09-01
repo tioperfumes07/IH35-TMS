@@ -1,10 +1,10 @@
-# INBOX-DEVIN-A · LIVE CHROME · NO MONEY FIXTURES
+# INBOX-DEVIN-A · GO-MASTER LIVE CHROME
 
-`git pull --ff-only origin main`. Packet: `docs/lockdown/GO-11-USMCA-CLEAN-SLATE-2026-09-01.md`
+Hard-refresh. Type the **first load number** in Book Load (grey hint is not in the box). Create NOTHING in USMCA.
 
-## TOP
-1. Hard-refresh. Live API **`ab65f45`**. Walk maintenance KPIs + insurance Coverage Gaps (still `missing_types` until CC-1 GO-02).
-2. **NO-SEAT** — do not create TEST expenses/bills/payments/bank rows. Owner will enter real numbers after GO-11 purge.
-3. T144 / Fleet Covered: wait insurance. Honest TIV `$1,040,540.00` / 34 if shown.
-
-ACK: `DEVIN-A | ACK | GO-11-HOLD-MONEY | LIVE-CHROME ab65f45 | GO`
+1. Book Load Load # clickable.
+2. Money creators empty No. box screenshots.
+3. Coverage Gaps per-coverage columns after GO-02 API.
+4. Bank register clean after GO-11 deploy.
+5. Maint KPI headings after GO-04.
+404 = API lag → Cursor OUTBOX. ACK `DEVIN-A | ACK | GO-MASTER | LIVE-CHROME | GO`
