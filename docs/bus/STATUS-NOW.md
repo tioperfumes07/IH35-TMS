@@ -1,9 +1,7 @@
 # STATUS-NOW
-**2026-09-01 18:17 CT**
+**2026-09-01 18:23 CT**
 
-- Live `healthz/shallow` = `441ac88` (landed). Main tip `52fe47b` docs-only — no deploy.
-- CC-2 NOW=SUBLEDGER-GL-TIEOUT verify-live (not IDLE).
-- CC-1 NOW=ESCROW-500-01 then LINKAGE (GO-11 CLOSED #19366).
-- Codex NOW=#19391 (not #19404). No `--watch`.
-- Devin-A NOW=GO-16 Chrome; live click UNVERIFIED.
-- Cursor: load-column remainder crash fix + seat FORCE rewrite.
+- Live `healthz/shallow` = `441ac88`. No deploy.
+- GO-16 Live Chrome **UNVERIFIED** — Cursor browser MCP: tab create then `No browser tab available`.
+- Devin-A FORCE NOW=`https://app.ih35dispatch.com/dispatch` (Laredo→Denton fill · Chicago empty · cancel).
+- Codex NOW=#19391. CC-2 SUBLEDGER. CC-1 escrow/linkage.
