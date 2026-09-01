@@ -43,8 +43,8 @@ function failures(overrides = {}) {
     ["shared page honest states", cp.includes("Loading report category") && cp.includes("Couldn't load report category") && cp.includes("Report category not found")],
     ["hub category EntityLink", h.includes('kind="report_category"') && h.includes("id={category.id}")],
     ["hub route mounted", manifest.includes('path="/reports/hub"')],
-    ["category subnav", nav.includes('{ label: "Category hub", href: "/reports/hub" }')],
-    ["run-report flyout", /label:\s*"Run report"[\s\S]*?href:\s*"\/reports\/hub"[\s\S]*?children:\s*flattenReportRunLinks\(\)/.test(nav)],
+    ["category subnav", nav.includes('{ label: "Category hub", to: "/reports/hub" }')],
+    ["run-report flyout", /label:\s*"Run report"[\s\S]*?to:\s*"\/reports\/hub"[\s\S]*?children:\s*flattenReportRunLinks\(\)/.test(nav)],
   ].filter(([, ok]) => !ok).map(([name]) => name);
   for (const [id, , source] of ws) {
     if (!source.includes("<ReportCategoryPage") || !source.includes(`categoryId="${id}"`)) out.push(`${id} canonical wrapper`);
