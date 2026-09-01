@@ -2971,16 +2971,41 @@ export async function voidBillInClientTx(
   );
   if (Number(paymentsRes.rows[0]?.count ?? 0) !== 0) throw new Error("bill_has_payments_cannot_void");
 
-  const reversal = await reversePostedSourceTransactionInClientTx(
-    client,
-    {
-      operating_company_id: input.operatingCompanyId,
-      source_transaction_type: "bill",
-      source_transaction_id: input.billId,
-    },
-    { userId: input.userId },
-    input.currentBusinessDate
+  // EXP-POSTED-NO-JE-01 (owner-verified live 2026-09-01: BILL-2026-00018 $750.00 and
+  // BILL-2026-00019 $300.00, both status='unpaid', zero postings). Same class as ACCT-F327's fix
+  // just above for bill_payments -- intent is not existence. A bill written/left in a state that
+  // reads posted-ish but never actually posted (BILL_GL_POSTING_ENABLED off at create time, or a
+  // failed post surfaced as unposted) has no batch to reverse, and
+  // reversePostedSourceTransactionInClientTx correctly throws SOURCE_NOT_FOUND -- but unconditionally
+  // calling it here meant that bill, and the whole void-run around it, could NEVER be voided.
+  // Pre-checked (not try/catch, matching ACCT-F327's own reasoning): swallowing SOURCE_NOT_FOUND
+  // blind would also swallow a real reversal failure on a bill that IS posted.
+  const postedBatchRes = await client.query<{ exists: boolean }>(
+    `
+      SELECT EXISTS (
+        SELECT 1
+        FROM accounting.journal_entry_postings
+        WHERE operating_company_id = $1::uuid
+          AND source_transaction_type = 'bill'
+          AND source_transaction_id = $2::text
+      ) AS exists
+    `,
+    [input.operatingCompanyId, input.billId]
   );
+  const hasPostedBatch = Boolean(postedBatchRes.rows[0]?.exists);
+
+  const reversal = hasPostedBatch
+    ? await reversePostedSourceTransactionInClientTx(
+        client,
+        {
+          operating_company_id: input.operatingCompanyId,
+          source_transaction_type: "bill",
+          source_transaction_id: input.billId,
+        },
+        { userId: input.userId },
+        input.currentBusinessDate
+      )
+    : null;
 
   const updated = await client.query<{ id: string }>(
     `UPDATE accounting.bills
@@ -3010,12 +3035,12 @@ export async function voidBillInClientTx(
       resource_id: input.billId,
       operating_company_id: input.operatingCompanyId,
       reason: input.reason,
-      reversal_journal_entry_id: reversal.journal_entry_id,
+      reversal_journal_entry_id: reversal?.journal_entry_id ?? null,
     },
     "warning",
     "SETTLEMENT-BILL-PAYMENT"
   );
-  return { ok: true, reversal_journal_entry_id: reversal.journal_entry_id };
+  return { ok: true, reversal_journal_entry_id: reversal?.journal_entry_id ?? null };
 }
 
 export async function voidBillPayment(operatingCompanyId: string, paymentId: string, reason: string, userId: string) {
