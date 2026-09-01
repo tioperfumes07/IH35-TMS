@@ -1,7 +1,9 @@
 # STATUS-NOW
-**2026-09-01 16:15 CT**
+**2026-09-01 16:25 CT**
 
-- Live `healthz/shallow` = `75f469f` (lags main).
-- CC-2 #19359 SUBLEDGER re-measure **on main** — Unbilled $109k retired; new bank -$13,036.62 + escrow $500.01; 2 of 8 roles unbuilt.
-- CC-1 still has not executed 13 UUID deletes (OUTBOX asks Jorge; already ordered).
-- Next CC-2 = grep-verify `GO-ACCT-01-DUP-RECON-SESSIONS-ONE-PERIOD` (do not re-run SUBLEDGER).
+- API deploy **in flight** `dep-dabk5fid0e5s739lhq5g` → `fe9f16eeb3` (was live `75f469f`).
+- FE `ih35-tms-web` **build_in_progress** `8741a677` #19364 GO-05 WAVE1.
+- CC-3 is **not** blocked on Cursor push.
+- Cascade NOW = file CPA 1/2/4 with cited paths (INBOX table).
+- Devin-A NOW = type Load #; stop UPL poll loop.
+- CC-1 UUID deletes still not executed per OUTBOX #19340.
