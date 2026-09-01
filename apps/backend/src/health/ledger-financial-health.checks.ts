@@ -167,6 +167,9 @@ export async function assertOrphanedBankMatchesZero(): Promise<void> {
  */
 export async function assertPostedWithoutPostingZero(): Promise<void> {
   await withHealthOpco(async (client) => {
+    // EXP-POSTED-NO-JE-01 class: status claims posted but no journal_entry_id.
+    // Do not join posting_batches here — column typing differs across cohorts and caused
+    // healthz check_failed (generic) instead of a named public code.
     const expenseRes = await client.query<{ count: string }>(
       `
         SELECT COUNT(*)::text AS count
@@ -176,13 +179,6 @@ export async function assertPostedWithoutPostingZero(): Promise<void> {
            AND e.posting_status = 'posted'
            AND e.journal_entry_id IS NULL
            AND COALESCE(e.is_sample_data, false) = false
-           AND NOT EXISTS (
-             SELECT 1 FROM accounting.posting_batches pb
-              WHERE pb.operating_company_id = e.operating_company_id
-                AND pb.source_transaction_type = 'expense'
-                AND pb.source_transaction_id = e.id
-                AND pb.batch_status = 'posted'
-           )
       `,
       [HEALTH_LEDGER_OPCO]
     );
