@@ -298,7 +298,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
   return (
     <div className="space-y-3" data-testid="dispatch-overview-page">
       {/* Every derived KPI drills into the surface that exposes the exact rows behind the number. */}
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
         <KpiCard
           label="Active loads"
           value={dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.active_loads ?? 0)}
@@ -312,6 +312,12 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
           }
           hint={atRiskLateTotal > 0 ? `${atRiskCount} at-risk · ${lateCount} late` : "none flagged"}
           to="/dispatch/at-risk"
+        />
+        <KpiCard
+          label="Detention"
+          value={detentionQ.isLoading || detentionQ.isError ? "—" : (detentionQ.data?.count ?? 0)}
+          hint={detentionQ.data ? `${detentionQ.data.active_count} actively accruing` : undefined}
+          to="/dispatch/detention"
         />
         <KpiCard
           label="Units available"
