@@ -44,6 +44,15 @@ const setlPage = read("apps/frontend/src/pages/driver-finance/SettlementsPage.ts
 if (!/selectable/.test(setlPage) || !/Reverse \$\{/.test(setlPage)) {
   failures.push("SettlementsPage must enable selection + Reverse N selected");
 }
+if (
+  !/import\s*\{\s*VoidReasonModal\s*\}\s*from\s*["']\.\.\/\.\.\/components\/accounting\/VoidReasonModal["']/.test(
+    setlPage
+  )
+) {
+  failures.push(
+    "SettlementsPage must import VoidReasonModal from ../../components/accounting/VoidReasonModal (not pages/accounting)"
+  );
+}
 
 const setlBulk = read("apps/backend/src/driver-finance/settlements-bulk.routes.ts");
 if (!/atomicFailStopActions:\s*\[["']reverse["']\]/.test(setlBulk)) {
