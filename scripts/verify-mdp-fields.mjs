@@ -22,9 +22,14 @@ if (!/expense:\s*\[\s*\{\s*key:\s*"invoice_no",\s*label:\s*"Bill\/Exp No\."[\s\S
   fail("expense must lead with Bill/Exp No.(invoice_no), then Vendor/Driver(party_name), then Expense(category)");
 }
 
-// Both panels sum a Total (footer) — defect 1.
+// Both panels sum a Total (footer) — defect 1; totals flow from parent computeProjectionTotals via panelTotalCents.
 if (!/data-mdp-footer-total=\{direction\}/.test(tab)) fail("each panel must render a summed Total footer (data-mdp-footer-total)");
-if (!/const total = sumCents\(entries\)/.test(tab)) fail("panel total must use sumCents(entries) (integer-cents summing, #1084)");
+if (!/panelTotalCents=\{totalIncome\}/.test(tab) || !/panelTotalCents=\{totalExpense\}/.test(tab)) {
+  fail("panels must receive panelTotalCents from computeProjectionTotals (shared with KPI row)");
+}
+if (!/data-mdp-header-total=\{direction\}[\s\S]{0,60}panelTotalCents/.test(tab)) {
+  fail("panel header total must display panelTotalCents (same source as KPI + footer)");
+}
 
 // Net + KPI totals use computeProjectionTotals (income/expense/net all recompute).
 if (!/computeProjectionTotals\(entries\)/.test(tab)) fail("tab must compute income/expense/net via computeProjectionTotals");

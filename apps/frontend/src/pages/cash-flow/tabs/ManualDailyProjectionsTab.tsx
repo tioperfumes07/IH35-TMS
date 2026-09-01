@@ -13,7 +13,7 @@ import {
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
-import { sumCents, toCents, computeProjectionTotals } from "./manualProjectionMath";
+import { toCents, computeProjectionTotals } from "./manualProjectionMath";
 import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
@@ -93,6 +93,7 @@ function ProjectionPanel({
   direction,
   title,
   entries,
+  panelTotalCents,
   operatingCompanyId,
   projectionDate,
   onChanged,
@@ -100,6 +101,8 @@ function ProjectionPanel({
   direction: Direction;
   title: string;
   entries: ForecastEntry[];
+  /** Same cents total as KPI cards — from parent computeProjectionTotals. */
+  panelTotalCents: number;
   operatingCompanyId: string;
   projectionDate: string;
   onChanged: () => void;
@@ -178,15 +181,15 @@ function ProjectionPanel({
   };
 
   const cellValue = (e: ForecastEntry, key: MdpColKey) => (e[key] ?? "") || "—";
-  const total = sumCents(entries);
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white" data-mdp-panel={direction}>
-      <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+    <div className="flex h-full min-h-[24rem] flex-col rounded-lg border border-gray-200 bg-white" data-mdp-panel={direction}>
+      <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-3 py-2">
         <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-        <span className={`text-sm font-semibold ${accent}`} data-mdp-header-total={direction}>{fmtCents(total)}</span>
+        <span className={`text-sm font-semibold ${accent}`} data-mdp-header-total={direction}>{fmtCents(panelTotalCents)}</span>
       </div>
 
+      <div className="min-h-0 flex-1 overflow-auto" data-mdp-panel-list={direction}>
       {entries.length === 0 ? (
         <div className="px-3 py-4 text-center text-xs text-gray-400">No {direction} lines yet.</div>
       ) : (
@@ -225,14 +228,15 @@ function ProjectionPanel({
           {/* DEFECT 1 — explicit summed Total footer (recomputes live with the rows). */}
           <div className="flex items-center gap-2 border-t border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-semibold">
             <span className="flex-1 text-right text-gray-500 uppercase tracking-wide">Total</span>
-            <span className={`w-24 shrink-0 text-right ${accent}`} data-mdp-footer-total={direction}>{fmtCents(total)}</span>
+            <span className={`w-24 shrink-0 text-right ${accent}`} data-mdp-footer-total={direction}>{fmtCents(panelTotalCents)}</span>
             <span className="w-16 shrink-0" />
           </div>
         </div>
       )}
+      </div>
 
       {/* Single horizontal add / edit row: the named columns, then optional "+ more". */}
-      <div className="space-y-1.5 border-t border-gray-100 bg-gray-50 px-3 py-2 text-xs">
+      <div className="shrink-0 space-y-1.5 border-t border-gray-100 bg-gray-50 px-3 py-2 text-xs">
         {form.id ? (
           <div className="rounded-sm bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700" data-mdp-editing={direction}>
             Editing existing {direction} line — change fields then press Save.
@@ -541,19 +545,19 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
           Loading projections…
         </div>
       )}
-      {/* KPI cards (kept). */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Expected Income</p>
-          <p className="mt-1 text-lg font-semibold text-slate-700">{fmtCents(totalIncome)}</p>
+      {/* KPI cards — uniform height; totals from computeProjectionTotals(entries). */}
+      <div className="grid grid-cols-3 gap-3" data-mdp-kpi-row="true">
+        <div className="flex min-h-[5.5rem] flex-col rounded-lg border border-slate-200 bg-white px-4 py-3" data-mdp-kpi="income">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Expected Income</p>
+          <p className="mt-1 text-lg font-semibold text-slate-700" data-mdp-kpi-total="income">{fmtCents(totalIncome)}</p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Expected Expenses</p>
-          <p className="mt-1 text-lg font-semibold text-red-700">{fmtCents(totalExpense)}</p>
+        <div className="flex min-h-[5.5rem] flex-col rounded-lg border border-slate-200 bg-white px-4 py-3" data-mdp-kpi="expense">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Expected Expenses</p>
+          <p className="mt-1 text-lg font-semibold text-slate-700" data-mdp-kpi-total="expense">{fmtCents(totalExpense)}</p>
         </div>
-        <div className={`rounded-lg border px-4 py-3 ${netPositive ? "border-slate-200 bg-slate-50" : "border-red-200 bg-red-50"}`}>
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Predicted Net</p>
-          <p className={`mt-1 text-lg font-semibold ${netPositive ? "text-slate-700" : "text-red-700"}`}>{fmtCents(net)}</p>
+        <div className={`flex min-h-[5.5rem] flex-col rounded-lg border px-4 py-3 ${netPositive ? "border-slate-200 bg-slate-50" : "border-slate-300 bg-slate-100"}`} data-mdp-kpi="net">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Predicted Net</p>
+          <p className={`mt-1 text-lg font-semibold ${netPositive ? "text-slate-700" : "text-slate-900"}`} data-mdp-kpi-total="net">{fmtCents(net)}</p>
         </div>
       </div>
 
@@ -641,10 +645,10 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
       </div>
       {pullError ? <p className="text-xs text-red-600" role="alert">{pullError}</p> : null}
 
-      {/* Income (left) / Expenses (right). */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ProjectionPanel direction="income" title="Expected Income" entries={income} operatingCompanyId={operatingCompanyId} projectionDate={projectionDate} onChanged={onChanged} />
-        <ProjectionPanel direction="expense" title="Expected Expenses" entries={expense} operatingCompanyId={operatingCompanyId} projectionDate={projectionDate} onChanged={onChanged} />
+      {/* Income (left) / Expenses (right) — equal-height stretch panels. */}
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2" data-mdp-panels="equal-height">
+        <ProjectionPanel direction="income" title="Expected Income" entries={income} panelTotalCents={totalIncome} operatingCompanyId={operatingCompanyId} projectionDate={projectionDate} onChanged={onChanged} />
+        <ProjectionPanel direction="expense" title="Expected Expenses" entries={expense} panelTotalCents={totalExpense} operatingCompanyId={operatingCompanyId} projectionDate={projectionDate} onChanged={onChanged} />
       </div>
     </div>
   );
