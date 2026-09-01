@@ -49,7 +49,7 @@ export function W8BenSection({
       </div>
 
       <div
-        className="mt-3 rounded-sm border border-slate-300 bg-slate-100 p-3 text-xs text-slate-700"
+        className="mt-3 bg-slate-100 p-3 text-xs text-slate-700"
         data-testid="w8ben-esign-blocked"
       >
         <p className="font-semibold">E-signature blocked — no attorney-approved W-8BEN template (Codex)</p>
