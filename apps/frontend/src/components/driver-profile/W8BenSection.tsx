@@ -44,8 +44,18 @@ export function W8BenSection({
           onClick={onCapture}
           disabled={!onCapture}
         >
-          {onFile ? "+ Create renewal" : "+ Create"}
+          {onFile ? "+ Save renewal data" : "+ Save field data"}
         </button>
+      </div>
+
+      <div
+        className="mt-3 rounded-sm border border-slate-300 bg-slate-100 p-3 text-xs text-slate-700"
+        data-testid="w8ben-esign-blocked"
+      >
+        <p className="font-semibold">E-signature blocked — no attorney-approved W-8BEN template (Codex)</p>
+        <p className="mt-1">
+          LegalSign is not wired for W-8BEN. Capture saves typed field data only — no signed IRS PDF artifact.
+        </p>
       </div>
 
       {unavailable ? <p className="mt-3 text-xs font-medium text-red-700">W-8BEN data could not be loaded.</p> : null}
@@ -78,7 +88,7 @@ export function W8BenSection({
         </>
       ) : !unavailable ? (
         <p className="mt-3 text-xs text-red-700">
-          No W-8BEN on file. Required at hire for foreign (B-1) drivers — capture the certificate.
+          No W-8BEN field data on file. Required at hire for foreign (B-1) drivers — save typed fields until e-sign ships.
         </p>
       ) : null}
     </section>

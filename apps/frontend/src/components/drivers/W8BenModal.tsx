@@ -181,9 +181,19 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
           void submit();
         }}
       >
+        <div
+          className="rounded-sm border border-slate-300 bg-slate-100 p-3 text-xs text-slate-700"
+          data-testid="w8ben-esign-blocked"
+        >
+          <p className="font-semibold">E-signature blocked — no attorney-approved W-8BEN template (Codex)</p>
+          <p className="mt-1">
+            LegalSign and the driver PWA signature pipeline are not wired here. This form saves field
+            data to the driver profile only — it does not produce a signed IRS W-8BEN artifact.
+          </p>
+        </div>
         <p className="text-xs text-slate-600">
           IRS Certificate of Foreign Status of Beneficial Owner. Required at hire for foreign (B-1)
-          drivers; IH35 policy renews yearly.
+          drivers; IH35 policy renews yearly. Field-data capture only until an attorney-approved template ships.
         </p>
 
         <div className="text-[11px] font-semibold uppercase text-slate-500">Part I — Beneficial owner</div>
@@ -250,10 +260,10 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
           </div>
         </div>
 
-        <div className="text-[11px] font-semibold uppercase text-slate-500">Part III — Certification</div>
+        <div className="text-[11px] font-semibold uppercase text-slate-500">Part III — Certification (typed metadata only)</div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
-            <label className={labelCls}>Certification signature name</label>
+            <label className={labelCls}>Certification name (typed — not e-signed)</label>
             <input value={certName} onChange={(e) => setCertName(e.target.value)} className={inputCls} data-testid="w8ben-cert-name" />
           </div>
           <div className="flex flex-col gap-1">
@@ -279,7 +289,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
             Cancel
           </Button>
           <Button type="submit" loading={pending} data-testid="w8ben-submit">
-            Create Record
+            Save field data
           </Button>
         </div>
       </form>

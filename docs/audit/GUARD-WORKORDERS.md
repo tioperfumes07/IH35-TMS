@@ -8196,7 +8196,7 @@ Source: `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`. Every ST
 | **OPEN:** `WIR-01` — border crossing manifest PDF is never generated (WizardStep6.tsx:101). | CURSOR | **OPEN** |
 | **OPEN:** `WIR-02` — driver export PDF downloads index.html renamed as PDF (ActionBar.tsx:31). | CURSOR | **OPEN** |
 | **OPEN:** `WIR-03` — dispatch Factoring tab leaves the Dispatch module. | CURSOR | **OPEN** |
-| **OPEN:** `WIR-04` — complete e-signature pipeline exists, W-8BEN does not use it. | CURSOR | **OPEN** |
+| **BLOCKED (honest):** `WIR-04` — complete e-signature pipeline exists; W-8BEN blocked until attorney-approved template (Codex). Field-data save only — no fake LegalSign claim. | CURSOR | **BLOCKED — no attorney-approved W-8BEN template (Codex)** |
 
 ### Root 7 — Customers (CC-3)
 
