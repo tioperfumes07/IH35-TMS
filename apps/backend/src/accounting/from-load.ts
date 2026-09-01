@@ -1,6 +1,7 @@
 import { resolveInvoiceDisplayId } from "./display-id.js";
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { recomputeInvoiceTotals } from "./shared.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
