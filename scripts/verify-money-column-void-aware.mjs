@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * GUARD: verify-money-column-void-aware.mjs — generated money columns must read 0 on voided rows.
+ * @ratchet — reads docs/schema-parity-baseline.json only; a declaration ratchet, not a live proof.
  *
  * MONEY COLUMN LAW: everywhere money is listed, three columns: TOTAL · OPEN · VARIANCE.
  * OPEN must read 0 on a voided document IN THE DATA, not just in the display.

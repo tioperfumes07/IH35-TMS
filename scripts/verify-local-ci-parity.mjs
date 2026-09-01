@@ -20,8 +20,8 @@ const SUBSET_MARKERS = ["verify:arch-design", "verify:schema-parity", "build:bac
 
 export function check(ciYml, localCi) {
   const errs = [];
-  // scope to the build-typecheck job block
-  const job = ciYml.split(/\n(?=\s{2}\S)/).find((b) => /^\s{2}build-typecheck:/m.test(b)) || ciYml;
+  // scope to the build-typecheck job block (including build-typecheck-heavy which runs the gate)
+  const job = ciYml.split(/\n(?=\s{2}\S)/).find((b) => /^\s{2}build-typecheck[-:]?/m.test(b) && /verify:pre-commit/.test(b)) || ciYml;
   if (!new RegExp(GATE).test(job))
     errs.push(`CI build-typecheck no longer runs '${GATE}' — update this guard AND ${LOCAL_CI} to the new gate command in lockstep.`);
   if (!new RegExp(`["'\`]${GATE}["'\`]`).test(localCi))
