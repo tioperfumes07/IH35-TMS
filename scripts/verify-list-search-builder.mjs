@@ -60,6 +60,11 @@ function assertRoutesUseBuilder() {
   const billsRoutes = read("apps/backend/src/accounting/bills.routes.ts");
   assert.match(billsRoutes, /search: z\.string\(\)/);
   assert.match(billsRoutes, /search: query\.data\.search/);
+
+  // SRC-02 — bill payments use shared builder (not capped-page client haystack).
+  assert.match(builder, /billPaymentListSearchFields/);
+  assert.match(billsSvc, /billPaymentListSearchFields/);
+  assert.match(billsRoutes, /listBillPaymentsQuerySchema[\s\S]*?search: z\.string\(\)/);
 }
 
 async function assertRuntimeAmountSemantics() {

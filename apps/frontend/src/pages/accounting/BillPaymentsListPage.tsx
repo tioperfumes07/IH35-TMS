@@ -112,13 +112,15 @@ export function BillPaymentsListPage() {
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   const paymentsQuery = useQuery({
-    queryKey: ["accounting", "bill-payments-list", companyId, vendorId, dateFrom, dateTo, hideVoided, sortKey, sortDirection],
+    queryKey: ["accounting", "bill-payments-list", companyId, vendorId, dateFrom, dateTo, hideVoided, search, sortKey, sortDirection],
     queryFn: () =>
       listBillPayments(companyId, {
         vendor_id: vendorId || undefined,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
         include_voided: hideVoided ? undefined : true,
+        // SEARCH LAW — server true-field search (amount/date/vendor/bill/ref); not capped-page client filter.
+        search: search.trim() || undefined,
         // SORT LAW — push URL sort into SQL ORDER BY; never reorder only the silent ≤300 page.
         sort: sortKey || undefined,
         dir: sortKey ? sortDirection : undefined,
@@ -144,27 +146,9 @@ export function BillPaymentsListPage() {
   }, [unpaidBillsQuery.data?.rows]);
 
   const rows = useMemo(() => {
-    const base = paymentsQuery.data?.rows ?? [];
-    const needle = search.trim().toLowerCase();
-    if (!needle) return base;
-    return base.filter((row) => {
-      const haystack = [
-        row.id,
-        row.bill_id,
-        row.bill_number,
-        row.vendor_id,
-        row.vendor_name,
-        row.payment_method,
-        row.reference_number,
-        row.check_number,
-        row.memo,
-        row.journal_entry_memo,
-      ]
-        .map((part) => String(part ?? "").toLowerCase())
-        .join(" ");
-      return haystack.includes(needle);
-    });
-  }, [paymentsQuery.data?.rows, search]);
+    // SEARCH LAW — filtering is server-side via listBillPayments search=; do not re-filter the capped page.
+    return paymentsQuery.data?.rows ?? [];
+  }, [paymentsQuery.data?.rows]);
 
   const totals = useMemo(
     () => rows.reduce((sum, row) => sum + Number(row.amount_cents ?? 0), 0),

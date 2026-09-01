@@ -68,6 +68,8 @@ const listBillPaymentsQuerySchema = companyQuerySchema.extend({
     .union([z.literal("true"), z.literal("false"), z.boolean()])
     .optional()
     .transform((v) => v === true || v === "true"),
+  // SEARCH LAW (SRC-02) — server-side true-field search.
+  search: z.string().trim().max(200).optional(),
   // SORT LAW (COL-04) — allowlisted column → SQL ORDER BY (see BILL_PAYMENT_LIST_SORT_SQL).
   sort: z.string().trim().max(64).optional(),
   dir: z.enum(["asc", "desc"]).optional(),
@@ -579,6 +581,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       dateFrom: query.data.date_from,
       dateTo: query.data.date_to,
       includeVoided: query.data.include_voided === true,
+      search: query.data.search,
       sort: query.data.sort,
       dir: query.data.dir,
       limit: query.data.limit,

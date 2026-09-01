@@ -5,8 +5,8 @@
 **Worktree:** `/tmp/ih35-cursor-wt` ONLY — never share `/tmp/ih35-main-sb` with CC-3/Codex.
 
 ## NOW
-1. **COL-04 FIXED** (Invoices+Bills+Payments+BillPayments SORT LAW) — LST-F6331
-2. Next OPEN: **SRC-02** · **VIS-02** · **UPL-05**
+1. **COL-04 FIXED** · **SRC-02 PARTIAL** (BillPayments SEARCH LAW) — LST-F6331/6332
+2. Next OPEN: **VIS-02** · **UPL-05** · SRC-02 dispatch residue
 3. Do **not** touch ParityTable while CC-3 owns COL-02/03/CTL
 
-**ACK:** `CURSOR | ACK | NOW=SRC-02|VIS-02|UPL-05 | GO`
+**ACK:** `CURSOR | ACK | NOW=VIS-02|UPL-05 | GO`
