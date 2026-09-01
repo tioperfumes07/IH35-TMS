@@ -1,3 +1,15 @@
+# ★ TOP · 2026-09-01T04:50Z · OWNER RULING
+
+**EXCLUDE from all USMCA insurance:** `docs/lockdown/OWNER-RULING-INSURANCE-EXCLUDED-UNITS-2026-09-01.md`
+
+- **2EMS lease-to-own:** T144, T162, T167, T169 (+ Exhibit A list) — never attach
+- **Repo tractors:** T159 (Aux Aug), T160/T161 (Mitsu Jul)
+- **Repo trailers:** 10873, 10876/USMCA-APD-31, 10456 — never on 437539
+
+**Live:** excluded units **not** on CIMD/437539/437540 today (11 each). Recalc APD TIV minus exclusions.
+
+---
+
 # ★ TOP · 2026-09-01T04:45Z · READ FIRST
 
 **GO:** `docs/bus/GO-INSURANCE-FULL-WIRING-FIX-2026-09-01.md` — single source for all insurance wiring.

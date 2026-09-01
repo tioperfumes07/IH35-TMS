@@ -70,19 +70,33 @@ See APD schedule table in owner Desktop doc / Claude paste (35 rows, tractors $7
 
 ---
 
-## DEFECT 3 — three units cannot attach · **CC-1 + OWNER ruling once**
+## OWNER RULINGS — EXCLUDED FROM USMCA INSURANCE (2026-09-01, CLOSED)
 
-| Unit | VIN | USMCA asset | Issue |
-|---|---|---|---|
-| T144 | 1M1AN4GYXNM023603 | 0 | TRANSP asset only; leased to TRANSP; on USMCA policy |
-| T174 | 4V4WC9EH1PN631152 | 0 | TRANSP asset only; unit leased to USMCA |
-| T156 | 4V4NC9EH3NN605709 | 0 | `156-provisional`, status **Sold**; on AL + APD at $38,250 |
+**Canonical:** `docs/lockdown/OWNER-RULING-INSURANCE-EXCLUDED-UNITS-2026-09-01.md`
 
-**Build:** create USMCA `mdata.assets` for three VINs (`unit_id` = existing units — **never** `+ Add new unit` duplicate).
+| Class | Units | Rule |
+|---|---|---|
+| **Lease-to-own → 2EMS (TRANSP)** | T144, T162, T167, T169 (+ Exhibit A trucks) | **Never on USMCA insurance** — owner fixed prior mistake |
+| **Repo tractors** | T159 (Auxilior Aug), T160/T161 (Mitsubishi Jul) | **Exclude** |
+| **Repo trailers (Aug, Auxilior)** | 10873 / 10876 / 10456 · VINs ending …5873, …5876 (USMCA-APD-31), …2456 | **Exclude** — do not attach to 437539 |
 
-**Owner ruling (ask once, then act):** T156 Sold-but-scheduled · T144 TRANSP lease on USMCA policy · down payment second date · SAM-* rows (Defect 4).
+**Live verified:** CIMD + 437539 + 437540 each have **11 units** (T147–T177 subset); **none** of excluded units are attached.
 
-After assets: attach **14** to `CIMD-2026-0720`, **15** to `437539`; paste `insurance.policy_unit` counts.
+**APD TIV:** Recalc after exclusions if binder PDF still lists repo/2EMS units; paste adjusted sum.
+
+---
+
+## DEFECT 3 — units still to attach · **CC-1**
+
+| Unit | VIN | Action |
+|---|---|---|
+| T174 | 4V4WC9EH1PN631152 | Create USMCA asset · **attach** |
+| T163 | 1M1AN4GY0PM030370 | Already has asset · **attach** to AL + APD |
+| T156 | 4V4NC9EH3NN605709 | Sold — **confirm with owner** before attach |
+
+**T144 and all §excluded units — do NOT attach.**
+
+After assets: attach remaining binder units; paste `insurance.policy_unit` counts.
 
 ---
 
