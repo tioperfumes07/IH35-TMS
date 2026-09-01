@@ -226,7 +226,10 @@ export function registerBulkRoute<TPayload>(options: RegisterBulkRouteOptions<TP
   const requireReasonActions = new Set(options.requireReasonActions ?? []);
   const destructiveActions = options.destructiveActions ?? [];
 
-  options.app.post(options.path, async (req, reply) => {
+  options.app.post(
+    options.path,
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const authUser = currentBulkAuthUser(req, reply);
     if (!authUser) return reply;
 
@@ -325,7 +328,8 @@ export function registerBulkRoute<TPayload>(options: RegisterBulkRouteOptions<TP
     } finally {
       releaseBulkInFlight(authUser.uuid);
     }
-  });
+  }
+  );
 }
 
 export type LegacyBulkAuditParams = {

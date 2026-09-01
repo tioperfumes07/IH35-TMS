@@ -66,6 +66,23 @@ function main() {
   assert.match(feBp, /resource: "bill-payments"/);
   assert.match(feBp, /action: "void"/);
 
+  const bulkHook = read("apps/frontend/src/components/bulk/useEntityBulkAction.ts");
+  assert.doesNotMatch(bulkHook, /failed:\s*args\.ids\.map\(\(id\)\s*=>\s*\(\{\s*id,\s*message\s*\}\)\)/);
+  assert.match(bulkHook, /ApiError/);
+  assert.match(bulkHook, /parseStructuredBulkBody/);
+  assert.match(bulkHook, /id:\s*"batch"/);
+  assert.match(bulkHook, /rowLabels/);
+
+  const bulkDialog = read("apps/frontend/src/components/bulk/BulkProgressDialog.tsx");
+  assert.match(bulkDialog, /label\?:/);
+  assert.match(bulkDialog, /item\.label/);
+
+  const feExp = read("apps/frontend/src/pages/accounting/ExpensesListPage.tsx");
+  assert.match(feExp, /action:\s*"void"/);
+  assert.match(feExp, /rowLabels/);
+
+  assert.match(factory, /rateLimit/);
+
   if (process.argv.includes("--selftest")) {
     const target = path.join(ROOT, "apps/backend/src/accounting/invoices-bulk.routes.ts");
     const original = fs.readFileSync(target, "utf8");

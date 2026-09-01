@@ -22,6 +22,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
 import { customerFilterReferenceOptions } from "../../components/parity/referenceOptionLabels";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
+import { bulkRowLabelsFromRows, invoiceBulkRowLabel } from "../../components/bulk/bulkRowLabels";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -106,6 +107,7 @@ export function InvoicesListPage() {
   const [factoredModalOpen, setFactoredModalOpen] = useState(false);
   const [voidModalOpen, setVoidModalOpen] = useState(false);
   const [pendingIds, setPendingIds] = useState<string[]>([]);
+  const [pendingVoidLabels, setPendingVoidLabels] = useState<Record<string, string>>({});
   const [batchId, setBatchId] = useState("");
   // Bidirectional URL sync: customer_id / status / has_balance are searchParams-driven so
   // same-route updates and browser back/forward stay truthful (no local-only stale seed).
@@ -254,7 +256,12 @@ export function InvoicesListPage() {
     [query.data?.total, query.data?.has_more]
   );
 
-  const runInvoiceBulk = async (action: "mark_sent" | "mark_factored" | "void", payload?: Record<string, unknown>, reason?: string) => {
+  const runInvoiceBulk = async (
+    action: "mark_sent" | "mark_factored" | "void",
+    payload?: Record<string, unknown>,
+    reason?: string,
+    rowLabels?: Record<string, string>
+  ) => {
     if (!selectedCompanyId) {
       pushToast("Select an operating company before bulk updates.", "error");
       return;
@@ -270,9 +277,11 @@ export function InvoicesListPage() {
           reason,
           operatingCompanyId: selectedCompanyId,
           invalidateKeys: [["accounting", "invoices", selectedCompanyId]],
+          rowLabels,
         },
         () => {
           setPendingIds([]);
+          setPendingVoidLabels({});
           setTableResetKey((k) => k + 1);
           void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
         }
@@ -554,6 +563,7 @@ export function InvoicesListPage() {
               type="button"
               onClick={() => {
                 setPendingIds(selected.map((row) => row.id));
+                setPendingVoidLabels(bulkRowLabelsFromRows(selected, invoiceBulkRowLabel));
                 setVoidModalOpen(true);
               }}
             >
@@ -613,7 +623,7 @@ export function InvoicesListPage() {
         onClose={() => setVoidModalOpen(false)}
         onSubmit={async (reason) => {
           setVoidModalOpen(false);
-          await runInvoiceBulk("void", {}, reason);
+          await runInvoiceBulk("void", {}, reason, pendingVoidLabels);
         }}
       />
 

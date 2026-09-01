@@ -6,6 +6,8 @@ export type BulkFailure = {
   id: string;
   message: string;
   code?: string;
+  /** Human row label (number/memo · date · amount) when id alone is not meaningful. */
+  label?: string;
 };
 
 export type BulkProgressResult = {
@@ -82,16 +84,20 @@ export function BulkProgressDialog({
           <div className="max-h-48 overflow-y-auto rounded-sm border border-red-100 bg-red-50 p-2">
             <p className="mb-2 text-xs font-semibold uppercase text-red-800">Failures</p>
             <ul className="space-y-1 text-xs text-red-900">
-              {failed.map((item) => {
-                const href = resolveRowHref?.(item.id);
+              {failed.map((item, index) => {
+                const isBatch = item.id === "batch";
+                const display =
+                  item.label ??
+                  (isBatch ? "Bulk request" : entityLabel(null, item.id, "Item"));
+                const href = isBatch ? undefined : resolveRowHref?.(item.id);
                 return (
-                  <li key={item.id}>
+                  <li key={isBatch ? `batch-${index}` : item.id}>
                     {href ? (
                       <a href={href} className="font-mono underline">
-                        {entityLabel(null, item.id, "Item")}
+                        {display}
                       </a>
                     ) : (
-                      <span>{entityLabel(null, item.id, "Item")}</span>
+                      <span>{display}</span>
                     )}
                     {": "}
                     {item.message}

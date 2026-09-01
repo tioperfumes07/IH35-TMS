@@ -26,6 +26,7 @@ import { humanMemo } from "./ManualJEListPage";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { BulkProgressDialog } from "../../components/bulk";
+import { bulkRowLabelsFromRows, expenseBulkRowLabel } from "../../components/bulk/bulkRowLabels";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 
 const STATUS_OPTIONS: Array<{ value: "" | ExpenseListStatus; label: string }> = [
@@ -160,6 +161,7 @@ export function ExpensesListPage() {
   // LST-F5195 — reverse entity filters commit via staged Apply (no silent URL helper).
   const bulk = useEntityBulkAction();
   const [pendingVoidIds, setPendingVoidIds] = useState<string[]>([]);
+  const [pendingVoidLabels, setPendingVoidLabels] = useState<Record<string, string>>({});
   const [batchVoidOpen, setBatchVoidOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
   const [voidTarget, setVoidTarget] = useState<{ id: string; displayId: string } | null>(null);
@@ -523,8 +525,12 @@ export function ExpensesListPage() {
               reason,
               operatingCompanyId: selectedCompanyId,
               invalidateKeys: [["accounting", "expenses", selectedCompanyId]],
+              rowLabels: pendingVoidLabels,
             },
-            () => setPendingVoidIds([])
+            () => {
+              setPendingVoidIds([]);
+              setPendingVoidLabels({});
+            }
           );
         }}
       />
@@ -631,6 +637,7 @@ export function ExpensesListPage() {
             type="button"
             onClick={() => {
               setPendingVoidIds(selected.map((row) => row.id));
+              setPendingVoidLabels(bulkRowLabelsFromRows(selected, expenseBulkRowLabel));
               setBatchVoidOpen(true);
             }}
           >

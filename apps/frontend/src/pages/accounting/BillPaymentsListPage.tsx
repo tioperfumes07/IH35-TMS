@@ -11,6 +11,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { BulkProgressDialog } from "../../components/bulk";
+import { billPaymentBulkRowLabel, bulkRowLabelsFromRows } from "../../components/bulk/bulkRowLabels";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -171,6 +172,7 @@ export function BillPaymentsListPage() {
   const [voidTarget, setVoidTarget] = useState<string | null>(null);
   const bulk = useEntityBulkAction();
   const [pendingVoidIds, setPendingVoidIds] = useState<string[]>([]);
+  const [pendingVoidLabels, setPendingVoidLabels] = useState<Record<string, string>>({});
   const [batchVoidOpen, setBatchVoidOpen] = useState(false);
 
   const canVoid = user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Accountant";
@@ -406,7 +408,9 @@ export function BillPaymentsListPage() {
               type="button"
               className="rounded-sm border border-slate-400 px-1.5 py-0.5 text-slate-800"
               onClick={() => {
-                setPendingVoidIds(selected.filter((row) => !row.revoked_at).map((row) => row.id));
+                const voidable = selected.filter((row) => !row.revoked_at);
+                setPendingVoidIds(voidable.map((row) => row.id));
+                setPendingVoidLabels(bulkRowLabelsFromRows(voidable, billPaymentBulkRowLabel));
                 setBatchVoidOpen(true);
               }}
             >
@@ -471,8 +475,12 @@ export function BillPaymentsListPage() {
                 ["accounting", "vendor-balances", companyId],
                 ["accounting", "bills-has-balance", companyId],
               ],
+              rowLabels: pendingVoidLabels,
             },
-            () => setPendingVoidIds([])
+            () => {
+              setPendingVoidIds([]);
+              setPendingVoidLabels({});
+            }
           );
         }}
       />
