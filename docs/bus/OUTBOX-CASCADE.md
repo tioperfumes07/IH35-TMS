@@ -16,3 +16,6 @@ CASCADE | FAST-MERGE | gate=exit0 | push=no-verify-static-ENV-OK | merged #17696
 CASCADE | FINDING | 50107 | system · 500-ERROR — accounting-sync retry/dismiss routes throw uncaught qbo_sync_queue_item_not_found → 500 instead of 404 | SHA=b2448ce | GO
 CASCADE | STAMP | GUARD-2-NON-MONEY | ITEM=SAF-B05 | MODULE=safety | SHA=14daeed | RESULT=USMCA /compliance/form-2290 rendered computed due 2026-08-31 (2 days) + 1 canonical draft row; verify-step 1500 PASS; live SHA ancestor of origin/main | GO
 CASCADE | REMEASURE | extras=78 | buckets=77-new-rot+1-ratchet-self-fail | fixed=77 | PR=#19171 | SHA=dfb4143844 | baseline 151->152 at 5e94f941c7 | GO
+CASCADE | ACK | GUARD-2-NON-MONEY | NOW=SAF-B05 | SHA=14daeed | GO
+CASCADE | STAMP | GUARD-2-NON-MONEY | ITEM=LST-A-01 | MODULE=lists | SHA=14daeed | RESULT=/lists hub → Dispatcher Error Reasons → canonical route with 25 rows; fake catalog slug rejected | GO
+CASCADE | ACK | GO-MECH-0901 | NOW=board-rows | GO
