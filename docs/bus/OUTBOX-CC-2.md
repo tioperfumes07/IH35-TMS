@@ -146,3 +146,24 @@ happen. Did **not** zero or touch `balance_cents`, per instruction. This is CC-1
 
 Filed full evidence on the board row (appended, not rewritten). Nothing built, nothing zeroed, no
 money touched. Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 · VERIFY-STATIC-37 SKIP-vs-FAIL · corroborated · 2026-09-01T22:30Z
+
+INBOX item 4 (optional hygiene, only after SUBLEDGER — delivered). Root cause of the SKIP-vs-FAIL
+suspicion from earlier this session, confirmed precisely, not just theorized:
+
+`verify-static.mjs`'s dead-env doesn't unset `DATABASE_URL`, it points it at a dead-port
+sentinel. `verify-no-seat-instruction-overrides-owner-void.mjs` and
+`verify-no-unmanifested-prod-financial-fixtures.mjs` both check `if (!databaseUrl)` for SKIP —
+false when pointed at the sentinel (a truthy string) — so both attempt to connect and crash on an
+**uncaught `ECONNREFUSED`**, reproduced live verbatim. Neither is registered in
+`push-gate-capability-policy.mjs`'s `dbGated` set, so the preflight never catches them first. Real
+guard-infra bug, not a stale baseline.
+
+**Did not re-audit the full 37** — spot-checked 3 more names from the original list under the same
+dead-sentinel env, all 3 now PASS clean, confirming the count has already drifted hours out from
+when it was captured. Not fixing the policy file or either guard myself, per instruction.
+
+Nothing built, nothing rebuilt. Idle, watching INBOX TOP.
