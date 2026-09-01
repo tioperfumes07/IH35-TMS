@@ -340,7 +340,13 @@ const BANK_TX_UNMATCH_RESET_SQL = `
          categorization_driver_id = NULL,
          categorization_unit_id = NULL,
          categorization_load_id = NULL,
-         categorization_recover_from_driver = NULL,
+         -- BANK-ORPHAN-01 live-catch, 2026-09-01: categorization_recover_from_driver is
+         -- NOT NULL DEFAULT false on prod (confirmed via information_schema, not assumed) --
+         -- setting it to NULL threw "null value ... violates not-null constraint" the first
+         -- time this reset actually ran against a row that had it set, which every prior
+         -- selftest/guard pass missed because none of them execute real SQL against a live
+         -- schema. Reset to its own default, not NULL.
+         categorization_recover_from_driver = false,
          categorization_recover_deduction_type = NULL,
          categorization_deduction_id = NULL,
          categorization_item_id = NULL,

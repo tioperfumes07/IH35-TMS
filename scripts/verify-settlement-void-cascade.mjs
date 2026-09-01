@@ -89,6 +89,14 @@ export function assertBankOrphanGuard(src) {
   if (!/status = 'pending_categorization'/.test(src)) {
     errs.push(`${VOID_SERVICE_FILE}: un-match must return the bank transaction to 'pending_categorization' (the review worklist), not leave status untouched`);
   }
+  // Live-caught 2026-09-01: categorization_recover_from_driver is NOT NULL DEFAULT false on
+  // banking.bank_transactions -- setting it to NULL throws a not-null-constraint violation the
+  // first time this reset actually runs against a row that has it set. No selftest catches this
+  // class (it's a live-schema fact, not a code-structure one) -- asserted here so the fix can
+  // never silently regress back to NULL.
+  if (!/categorization_recover_from_driver = false/.test(src)) {
+    errs.push(`${VOID_SERVICE_FILE}: categorization_recover_from_driver is NOT NULL on prod -- the reset must set it to false, not NULL, or every un-match on a row with it set throws`);
+  }
   if (!/linked_entity_id = \$2::uuid OR id = \$\{reverseIdSql\}/.test(src)) {
     errs.push(`${VOID_SERVICE_FILE}: must check BOTH pointer shapes (forward linked_entity_id AND reverse source_bank_transaction_id) in one statement — the 4 live orphans had linked_entity_id=NULL, so a forward-only check misses them`);
   }
@@ -132,6 +140,7 @@ function selftest() {
   const voidServiceMutations = [
     ["bad7-forward-only", assertBankOrphanGuard(goodVoidService.replace("linked_entity_id = $2::uuid OR id = ${reverseIdSql}", "linked_entity_id = $2::uuid"))],
     ["bad8-not-called", assertBankOrphanGuard(goodVoidService.replace("await unmatchBankTransactionsForVoid(client, {", "await unmatchBankTransactionsForVoidXXX(client, {"))],
+    ["bad9-recover-from-driver-null", assertBankOrphanGuard(goodVoidService.replace("categorization_recover_from_driver = false", "categorization_recover_from_driver = NULL"))],
   ];
 
   for (const [name, res] of [...routeMutations, ...voidServiceMutations]) {
