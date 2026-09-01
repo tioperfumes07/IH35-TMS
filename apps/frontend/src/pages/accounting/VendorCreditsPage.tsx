@@ -251,17 +251,16 @@ export function VendorCreditsPage() {
               dataTestId="vendor-credits-filter-vendor"
             />
           </label>
-          <select
+          <SelectCombobox
             value={staged.draft.statusFilter}
             onChange={(e) => staged.setDraft({ ...staged.draft, statusFilter: e.target.value as VendorCreditStatus | "" })}
-            className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm"
             aria-label="Vendor credit status filter"
           >
             <option value="">All statuses</option>
             <option value="open">Open</option>
             <option value="applied">Applied</option>
             <option value="voided">Voided</option>
-          </select>
+          </SelectCombobox>
         </div>
       </CollapsedListFilters>
       {vendorFilter ? (

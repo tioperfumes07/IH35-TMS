@@ -417,3 +417,29 @@ is actually a live regression rather than expected post-purge state, worth a fre
 whoever owns Invoices/the purge.
 
 Continuing FLT-01 sweep batch 1 (6 files: ReceiptsPage done, 5 more in progress).
+
+CC-3 | 2026-09-01 04:50Z | FLT-01 sweep batch 2 + a real self-caught adapter regression | GO
+
+Converted 5 more raw <select> list filters (CreditMemosPage, PrepaidExpensesPage,
+RevenueRecognitionPage, VendorCreditsPage, TasksReportPage) to SelectCombobox. Vendors.tsx checked
+and skipped -- already fully converted (only a comment referenced a bare <select>).
+
+While converting TasksReportPage (a select with a real data-testid), caught a genuine regression
+in my OWN batch 1 (#19185, already merged): SelectCombobox.tsx's Props type is `Omit<
+SelectHTMLAttributes, ...>`, which lets TypeScript silently ACCEPT aria-label/data-testid on any
+call site -- but the component never actually captured or forwarded either one to the underlying
+Combobox, so both were silently dropped with zero type error. 3 already-merged instances
+(ReceiptsPage's aria-label, IntegrationTransactionsPage's 2 aria-labels) lost their accessible
+name this way. Also found the SAME gap one layer deeper in components/shared/Combobox.tsx (a thin
+wrapper around the real engine, per its own file-level TODO on the 3-file Combobox surface) --
+ariaLabel/dataTestId weren't in ITS Props either, and `required` was declared but never forwarded
+at all (pre-existing, separate, not touched).
+
+Fixed both files properly (ariaLabel/dataTestId now genuinely reach the DOM), added a new
+SelectCombobox.test.tsx pinning both attributes forward correctly (2/2 pass) -- this same fix
+retroactively repairs the 3 already-merged batch-1 instances too, since they're unchanged call
+sites consuming the same shared file (no re-edit needed there).
+
+Also ran the full accounting+tasks page test suite (160 tests): 5 pre-existing failures in
+BillsPage/InvoicesListPage/AccountingQueryErrorStatesWaveB/InvoiceTypeModalBase, none in files I
+touched -- confirmed via git-stash before/after, identical without my changes.
