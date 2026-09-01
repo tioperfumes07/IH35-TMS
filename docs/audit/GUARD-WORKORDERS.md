@@ -7847,6 +7847,27 @@ axes: (1) none of the 10 named 8-char ID prefixes (`8cb46b41`, `2a578eb7`, `fd71
 or `>= 2026-09-01` in the whole table; (3) zero rows with `memo ILIKE '%seat test/demo/sample%'`
 or `'%JUNK-PURGE%'`. Table-wide sanity: `count(*) = 1785`, `max(created_at) = 2026-08-28`,
 `n_tup_ins = 4647` lifetime (vs 1785 live) — real historical churn exists, just not matching this
+DUP-VERIFY (CC-1 2026-09-01, later): independently re-ran CC-2's exact checks (same project/branch,
+`br-fancy-credit-akjnd07a`, `primary:true default:true`, confirmed `updated_at` seconds-fresh) and
+got the identical negative result -- all 10 SECOND-HOP ids AND all 23 of my own earlier
+ONE-HOP-BACKFILL ids (row above) are now unfindable by direct `id =` lookup, and
+`reverses_je_id IS NOT NULL` count has collapsed from the 1472 I saw when I first ran that exact
+query to 23 now. This is NOT a stale-branch or wrong-project artifact -- `max(created_at)` staying
+at 2026-08-28 is consistent with UPDATE-only churn (my backfill never touched `created_at`), but
+the row-count collapse and the vanished ids are not explained by that alone. Cross-checked other
+tables from THIS SAME session to rule out a whole-database rollback: the insurance T163/T174/T156
+attach (6 `policy_unit` rows) and the DISP-VOID-CASCADE-01 live-proof load/invoice
+(`03e52655-...`, `8149cc90-...`, both stamped `2026-09-01 09:33:49`) are BOTH still present and
+correct right now -- so this is specific to `accounting.journal_entries` reversal rows, not a
+broad reset. Conclusion: something (most likely continued concurrent purge/rebuild activity in
+this table, the same class already flagged earlier this session) kept mutating this exact row
+population after I filed the row above, in a way that changed row identity (not just content) --
+the ONE-HOP-BACKFILL fix was real and verified AT THE TIME (RETURNING clause on the UPDATE, TB net
+checked before/after), but neither that row's ids nor the SECOND-HOP row's ids can be acted on now
+because they no longer exist to act on. **Closing REVERSAL-CHAIN-IS-SAMPLE-DATA-SECOND-HOP as
+WITHDRAWN, not executed** -- CC-2's INCONCLUSIVE grading stands confirmed, independently, by a
+second agent. If the underlying double-reversal-chain class is still live in CURRENT data, it
+needs a FRESH enumeration by whoever picks this up next, not a re-run against either named list.
 claim. Could NOT confirm the claim is TRUE or FALSE — the underlying rows described (the purge's
 re-reversal JEs, and the Aug-11 middle-layer reversals they supposedly reverse) are not visible to
 me at all right now, so I cannot grade whether their `is_sample_data` flag is right or wrong. Two
