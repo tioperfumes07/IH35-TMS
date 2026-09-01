@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDateUS, formatDateTimeUS, DATE_PLACEHOLDER_US } from "./formatDate";
+import { formatDateUS, formatDateTimeUS, parseDateUS, DATE_PLACEHOLDER_US } from "./formatDate";
 
 describe("formatDateUS", () => {
   it("formats a bare ISO date as MM/DD/YYYY with no timezone shift", () => {
@@ -45,5 +45,17 @@ describe("formatDateTimeUS", () => {
 describe("DATE_PLACEHOLDER_US", () => {
   it("is the US mask, not the ISO mask", () => {
     expect(DATE_PLACEHOLDER_US).toBe("MM/DD/YYYY");
+  });
+});
+
+describe("parseDateUS", () => {
+  it("parses MM/DD/YYYY to ISO date without timezone shift", () => {
+    expect(parseDateUS("07/25/2026")).toBe("2026-07-25");
+    expect(parseDateUS("1/5/2026")).toBe("2026-01-05");
+  });
+
+  it("rejects invalid calendar dates", () => {
+    expect(parseDateUS("02/30/2026")).toBeNull();
+    expect(parseDateUS("not-a-date")).toBeNull();
   });
 });

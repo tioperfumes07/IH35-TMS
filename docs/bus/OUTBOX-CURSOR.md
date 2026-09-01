@@ -1,3 +1,6 @@
+2026-09-01T06:55Z | DISPATCH-HISTORY-FIX | history=flat Loads history no truck sections | guards PASS | tests 7/7 | branch=cursor/defect6-datetime-picker-escape mixed w/ Defect6 | PR next | GO
+2026-09-01T06:50Z | DEFECT-6a-c BUILT | branch=cursor/defect6-datetime-picker-escape | tests=41/41 | 6d OPEN cross-entity VIN API | PR next | GO
+2026-09-01T06:45Z | SAMSARA-HOS-ROSTER-FIX | paired-only 5→Active+samsara LEFT JOIN | GO=docs/bus/GO-SAMSARA-HOS-ROSTER-FIX-2026-09-01.md | branch=cursor/dispatch-board-live-history | CC-1 D1+reactivate 4 | GO
 2026-09-01T03:07Z | LIVE serving SHA=d870922 (dep-dab3v471 live) | STAND BY owner walk | policy_unit=4 (block holds) | 1.6 PARTIAL FactoringDetail free-text | no new audits
 2026-09-01T02:54Z | #19059 board LIVE+History+dates | VOID rename+APPROVED+4 on main | perm wiring in flight | CC-1 void-tree API | CC-3 movable tokens
 2026-09-01T02:46Z | Cascade Void APPROVED+4 locked + VOID UI rename shipping | CC-1 build void-tree API | NEXT=unit-deact+board

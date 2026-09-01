@@ -118,10 +118,10 @@ Insert 13 drivers on `CIMD-2026-0720` (names in binder). Wire dispatch gate: loa
 
 ## DEFECT 6 — UI blockers · **CURSOR**
 
-1. `DateTimePicker.tsx` — typed MM/DD/YYYY + month/year jump (not 12× `›` clicks).
-2. Escape in date picker must not close whole wizard.
-3. No red "Couldn't load unit list" on empty search when selections valid.
-4. Block `+ Add new unit "<VIN>"` when VIN exists in any entity — offer scope, never duplicate.
+1. `DateTimePicker.tsx` — typed MM/DD/YYYY + month/year jump — **BUILT** branch `cursor/defect6-datetime-picker-escape` (6a)
+2. Escape in date picker must not close whole wizard — **BUILT** (6b)
+3. No red "Couldn't load unit list" on empty search when selections valid — **BUILT** EntityPicker `keepPreviousData` (6c)
+4. Block `+ Add new unit "<VIN>"` when VIN exists in any entity — **OPEN** (6d) — cross-entity VIN lookup API + picker; DB guard `-U` suffix only today
 
 **Also shipped PR #19063:** dispatch load board column drag-reorder + sort + resize.
 

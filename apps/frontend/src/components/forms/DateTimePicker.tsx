@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Calendar } from "lucide-react";
-import { formatDateTimeLocalUS, DATETIME_PLACEHOLDER_US } from "../../lib/formatDate";
+import {
+  formatDateTimeLocalUS,
+  formatDateUS,
+  parseDateUS,
+  DATETIME_PLACEHOLDER_US,
+  DATE_PLACEHOLDER_US,
+} from "../../lib/formatDate";
 
 // Shared QuickBooks-style date+time field (C3) — the time-of-day sibling of DatePicker.
 //
@@ -40,6 +46,20 @@ type Props = {
 
 const DOW = ["S", "M", "T", "W", "T", "F", "S"];
 const DEFAULT_TIME = "09:00";
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 function pad(n: number) {
   return String(n).padStart(2, "0");
@@ -60,6 +80,16 @@ function parseDate(dateStr: string): { y: number; m: number; d: number } | null 
   return { y: Number(mt[1]), m: Number(mt[2]) - 1, d: Number(mt[3]) };
 }
 
+function yearRange(viewY: number, min?: string, max?: string): number[] {
+  const parsedMin = min ? parseDate(splitValue(min).date) : null;
+  const parsedMax = max ? parseDate(splitValue(max).date) : null;
+  const start = parsedMin?.y ?? viewY - 50;
+  const end = parsedMax?.y ?? viewY + 10;
+  const years: number[] = [];
+  for (let y = start; y <= end; y += 1) years.push(y);
+  return years.length > 0 ? years : [viewY];
+}
+
 export function DateTimePicker({
   value,
   onChange,
@@ -74,8 +104,11 @@ export function DateTimePicker({
   "data-testid": dataTestId,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [dateDraft, setDateDraft] = useState("");
+  const [editingDate, setEditingDate] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+  const calendarButtonRef = useRef<HTMLButtonElement>(null);
 
   const { date: valueDate, time: valueTime } = splitValue(value);
   const parsed = parseDate(valueDate);
@@ -95,20 +128,21 @@ export function DateTimePicker({
     function onDoc(e: PointerEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
-    // Escape closes and returns focus to the trigger (a11y — L4).
+    // Escape closes ONLY this popover — stopPropagation so parent wizard modals stay open (Defect 6b).
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        setOpen(false);
-        triggerRef.current?.focus();
-      }
+      if (e.key !== "Escape" || !open) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setOpen(false);
+      (dateInputRef.current ?? calendarButtonRef.current)?.focus();
     }
     if (open) {
       document.addEventListener("pointerdown", onDoc);
-      document.addEventListener("keydown", onKey);
+      document.addEventListener("keydown", onKey, true);
     }
     return () => {
       document.removeEventListener("pointerdown", onDoc);
-      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("keydown", onKey, true);
     };
   }, [open]);
 
@@ -131,9 +165,20 @@ export function DateTimePicker({
     onChange(`${nextDate}T${nextTime || DEFAULT_TIME}`);
   };
 
+  const commitDateDraft = () => {
+    setEditingDate(false);
+    const parsedDate = parseDateUS(dateDraft);
+    if (!parsedDate) {
+      setDateDraft(valueDate ? formatDateUS(valueDate) : "");
+      return;
+    }
+    const candidate = `${parsedDate}T${valueTime || DEFAULT_TIME}`;
+    if (isOutOfRange(candidate)) return;
+    commit(parsedDate, valueTime);
+  };
+
   const firstDay = new Date(viewY, viewM, 1).getDay();
   const daysInMonth = new Date(viewY, viewM + 1, 0).getDate();
-  const monthLabel = new Date(viewY, viewM, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
   const cells: (number | null)[] = [];
   for (let i = 0; i < firstDay; i += 1) cells.push(null);
   for (let d = 1; d <= daysInMonth; d += 1) cells.push(d);
@@ -151,35 +196,114 @@ export function DateTimePicker({
     } else setViewM(viewM + 1);
   };
 
-  const display = value ? formatDateTimeLocalUS(value) : "";
+  const timeDisplay = valueTime
+    ? formatDateTimeLocalUS(value).replace(/^[^,]+,\s*/, "") || valueTime
+    : "--:-- --";
+  const dateInputValue = editingDate ? dateDraft : valueDate ? formatDateUS(valueDate) : "";
+  const years = yearRange(viewY, min, max);
 
   return (
     <div className={`relative ${className}`} ref={ref} data-testid={dataTestId}>
-      <button
-        id={id}
-        ref={triggerRef}
-        type="button"
-        disabled={disabled}
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-label={ariaLabel}
-        aria-describedby={ariaDescribedBy}
-        className="flex min-h-11 w-full items-center justify-between gap-1 rounded-sm border border-gray-300 px-2 py-1 text-left text-xs disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 sm:min-h-0"
+      <div
+        className={`flex min-h-11 w-full items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-left text-xs disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 sm:min-h-0 ${
+          disabled ? "cursor-not-allowed bg-gray-50 text-gray-400" : "bg-white"
+        }`}
       >
-        <span className={display ? "" : "text-gray-400"}>{display || placeholder || DATETIME_PLACEHOLDER_US}</span>
-        <Calendar className="h-3.5 w-3.5 text-gray-400" />
-      </button>
+        <input
+          id={id}
+          ref={dateInputRef}
+          type="text"
+          inputMode="numeric"
+          disabled={disabled}
+          aria-label={ariaLabel}
+          aria-describedby={ariaDescribedBy}
+          placeholder={placeholder ? placeholder.split(",")[0]?.trim() || DATE_PLACEHOLDER_US : DATE_PLACEHOLDER_US}
+          className="min-w-0 flex-1 bg-transparent outline-hidden placeholder:text-gray-400 disabled:cursor-not-allowed"
+          value={dateInputValue}
+          onFocus={() => {
+            setEditingDate(true);
+            setDateDraft(valueDate ? formatDateUS(valueDate) : "");
+          }}
+          onChange={(e) => setDateDraft(e.target.value)}
+          onBlur={commitDateDraft}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commitDateDraft();
+              dateInputRef.current?.blur();
+            }
+            if (e.key === "Escape" && open) {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen(false);
+            }
+          }}
+        />
+        <span className="shrink-0 text-gray-500">,</span>
+        <span className="shrink-0 text-gray-700">{timeDisplay}</span>
+        <button
+          ref={calendarButtonRef}
+          type="button"
+          disabled={disabled}
+          onClick={() => setOpen((o) => !o)}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-label={ariaLabel ? `${ariaLabel} calendar` : "Open calendar"}
+          className="shrink-0 rounded-sm p-0.5 hover:bg-gray-100 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+        >
+          <Calendar className="h-3.5 w-3.5 text-gray-400" />
+        </button>
+      </div>
+      {!valueDate && !editingDate && !open ? (
+        <span className="sr-only">{placeholder || DATETIME_PLACEHOLDER_US}</span>
+      ) : null}
       {open && (
         <div
           role="dialog"
           aria-label="Choose date and time"
           className="absolute z-50 mt-1 w-56 rounded-sm border border-gray-300 bg-white p-2 shadow-lg"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen(false);
+              (dateInputRef.current ?? calendarButtonRef.current)?.focus();
+            }
+          }}
         >
-          <div className="mb-1 flex items-center justify-between">
-            <button type="button" className="min-h-11 rounded-sm px-3 hover:bg-gray-100 sm:min-h-0" onClick={prevMonth} aria-label="Previous month">‹</button>
-            <span className="text-xs font-semibold">{monthLabel}</span>
-            <button type="button" className="min-h-11 rounded-sm px-3 hover:bg-gray-100 sm:min-h-0" onClick={nextMonth} aria-label="Next month">›</button>
+          <div className="mb-1 flex items-center justify-between gap-1">
+            <button type="button" className="min-h-11 rounded-sm px-2 hover:bg-gray-100 sm:min-h-0" onClick={prevMonth} aria-label="Previous month">
+              ‹
+            </button>
+            <div className="flex min-w-0 flex-1 items-center gap-1">
+              <select
+                aria-label="Month"
+                className="min-w-0 flex-1 rounded-sm border border-gray-200 px-1 py-0.5 text-[11px]"
+                value={viewM}
+                onChange={(e) => setViewM(Number(e.target.value))}
+              >
+                {MONTHS.map((label, index) => (
+                  <option key={label} value={index}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <select
+                aria-label="Year"
+                className="w-16 rounded-sm border border-gray-200 px-1 py-0.5 text-[11px]"
+                value={viewY}
+                onChange={(e) => setViewY(Number(e.target.value))}
+              >
+                {years.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button type="button" className="min-h-11 rounded-sm px-2 hover:bg-gray-100 sm:min-h-0" onClick={nextMonth} aria-label="Next month">
+              ›
+            </button>
           </div>
           <div className="grid grid-cols-7 gap-0.5 text-center text-[10px] text-gray-400">
             {DOW.map((d, i) => (
@@ -223,9 +347,6 @@ export function DateTimePicker({
             <label className="text-[10px] font-semibold uppercase text-gray-500" htmlFor={id ? `${id}-time` : undefined}>
               Time
             </label>
-            {/* A native time field is intentional and is NOT the defect this block fixes: HH:mm has
-                no MM/DD-vs-DD/MM ambiguity, so there is no locale hazard, and the OS time control is
-                the best keyboard/AT experience available. Only the DATE half was locale-unsafe. */}
             <input
               id={id ? `${id}-time` : undefined}
               type="time"
@@ -243,6 +364,7 @@ export function DateTimePicker({
               className="mt-1 w-full rounded-sm py-1 text-[10px] text-gray-500 hover:bg-gray-100"
               onClick={() => {
                 onChange("");
+                setDateDraft("");
                 setOpen(false);
               }}
             >

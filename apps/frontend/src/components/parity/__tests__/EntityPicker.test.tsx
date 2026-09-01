@@ -308,4 +308,26 @@ describe("EntityPicker (C1 picker law)", () => {
     const input = (await screen.findByTestId("picker-under-test")) as HTMLInputElement;
     await waitFor(() => expect(input.value).toBe("drv-archived"));
   });
+
+  it("DEFECT-6c: does not show a load error after clearing search when prior roster data exists", async () => {
+    const user = userEvent.setup();
+    listDrivers
+      .mockResolvedValueOnce({
+        drivers: [{ id: "drv-1", first_name: "Jane", last_name: "Driver" }],
+      })
+      .mockRejectedValueOnce(new Error("network"));
+
+    wrap(<EntityPicker kind="driver" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} />);
+    await waitFor(() => expect(listDrivers).toHaveBeenCalled());
+
+    const input = await screen.findByPlaceholderText("Select driver");
+    await user.click(input);
+    await user.type(input, "x");
+    await waitFor(() => expect(listDrivers.mock.calls.some((call) => call[0]?.search === "x")).toBe(true));
+
+    await user.clear(input);
+    await waitFor(() => expect(input).toHaveValue(""));
+
+    expect(screen.queryByText("Couldn't load driver list")).toBeNull();
+  });
 });
