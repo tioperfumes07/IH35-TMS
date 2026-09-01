@@ -6,6 +6,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   operatingCompanyId: string;
@@ -177,8 +178,8 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
               />
               <label className="text-sm">
                 Program{" "}
-                <select
-                  className="ml-1 rounded-sm border px-2 py-1"
+                <SelectCombobox
+                  className="ml-1"
                   value={staged.draft.categoryFilter}
                   onChange={(e) => staged.setDraft({ ...staged.draft, categoryFilter: e.target.value })}
                 >
@@ -188,7 +189,7 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
                       {p}
                     </option>
                   ))}
-                </select>
+                </SelectCombobox>
               </label>
             </div>
           </CollapsedListFilters>

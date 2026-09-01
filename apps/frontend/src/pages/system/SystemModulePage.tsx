@@ -20,6 +20,7 @@ import {
 } from "../../api/transaction-health";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useToast } from "../../components/Toast";
 import { ListErrorState } from "../../components/ListErrorState";
 import { companyToday, ctDateTime } from "../../lib/businessDate";
@@ -898,8 +899,8 @@ function ProgramTab({ data }: { data: SystemData }) {
             >
               <label className="text-xs font-semibold text-slate-600">
                 Phase progress
-                <select
-                  className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                <SelectCombobox
+                  className="mt-1 block w-full"
                   value={staged.draft.phaseFilter}
                   onChange={(event) =>
                     staged.setDraft({ phaseFilter: event.target.value as PhaseFilter })
@@ -909,7 +910,7 @@ function ProgramTab({ data }: { data: SystemData }) {
                   <option value="all">All phases</option>
                   <option value="has_open">Has open work</option>
                   <option value="complete">Complete</option>
-                </select>
+                </SelectCombobox>
               </label>
             </CollapsedListFilters>
             <ParityTable<TrackerPhase>

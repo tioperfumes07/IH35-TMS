@@ -5,6 +5,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
@@ -223,16 +224,16 @@ export function BreakEvenPage() {
           </label>
           <label className="flex flex-col text-xs font-medium text-slate-600">
             Revenue basis
-            <select
+            <SelectCombobox
               value={staged.draft.revenueBasis}
               onChange={(e) =>
                 staged.setDraft((p) => ({ ...p, revenueBasis: e.target.value as "gl" | "loads" }))
               }
-              className="mt-1 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
+              className="mt-1"
             >
               <option value="gl">GL recognized revenue</option>
               <option value="loads">Loads gross rate</option>
-            </select>
+            </SelectCombobox>
           </label>
           <label className="flex flex-col text-xs font-medium text-slate-600">
             Miles (override)

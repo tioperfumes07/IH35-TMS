@@ -23,6 +23,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LaneDetailModal } from "../../components/reports/LaneDetailModal";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
@@ -199,8 +200,8 @@ export function LaneProfitabilityPage() {
           <div className="flex flex-wrap items-end gap-3">
             <label className="text-xs text-slate-600">
               Period
-              <select
-                className="mt-1 block rounded-sm border border-slate-300 px-2 py-1 text-sm"
+              <SelectCombobox
+                className="mt-1 block"
                 value={staged.draft.period}
                 onChange={(e) => staged.setDraft((p) => ({ ...p, period: e.target.value as LaneProfitabilityPeriod }))}
               >
@@ -208,7 +209,7 @@ export function LaneProfitabilityPage() {
                 <option value="quarter">Last quarter</option>
                 <option value="month">Last month</option>
                 <option value="custom">Custom</option>
-              </select>
+              </SelectCombobox>
             </label>
             {staged.draft.period === "custom" ? (
               <>
