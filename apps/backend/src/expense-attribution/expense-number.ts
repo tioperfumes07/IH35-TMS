@@ -1,5 +1,18 @@
 import type { PoolClient } from "pg";
 
+/**
+ * Load-scoped expense identity (owner 2026-09-01 USMCA chain).
+ * First diesel on load 12225 is `12225`. Second is `12225-1`, third `12225-2`.
+ * Do not emit `12225-1` as the first number.
+ */
+export function formatLoadExpenseNumber(loadNumber: string, seq: number): string {
+  if (!Number.isInteger(seq) || seq < 1) {
+    throw new Error("expense_sequence_failed");
+  }
+  if (seq === 1) return loadNumber;
+  return `${loadNumber}-${seq - 1}`;
+}
+
 export async function generateExpenseNumber(
   tx: Pick<PoolClient, "query">,
   loadId: string,
@@ -44,6 +57,6 @@ export async function generateExpenseNumber(
   const loadNumber = String(loadRow.rows[0]?.load_number ?? "");
   if (!loadNumber) throw new Error("load_number_missing");
 
-  const number = `${loadNumber}-${seq}`;
+  const number = formatLoadExpenseNumber(loadNumber, seq);
   return { number, seq, loadNumber };
 }
