@@ -94,3 +94,30 @@ Both were stale duplicate OPEN rows, same pattern as `GO-ACCT-01-DUP-RECON-SESSI
 earlier this session. Marked both `SUPERSEDED`, pointing at their existing closures. Nothing
 built, no product change. Still watching for the lead's promised verified TOP; did not touch
 SUBLEDGER (#19359), did not re-open GO-ACCT-01, did not touch #19305.
+
+---
+
+## ★ CC-2 · SETL-45-UNSETTLED-COMPLETED-DOCS · SUPERSEDED (moot) · 2026-09-01T22:00Z
+
+The lead's promised verified TOP still hadn't landed. Ran a precise scan (`OPEN` + `routed=CC-2`
+literally on the same line) instead of a broad "hunt" — found exactly one genuinely-open row,
+`SUBLEDGER-GL-TIEOUT-EVERY-CONTROL`, already fully handled and explicitly off-limits to re-run.
+Widened one notch to `**CC-2` + `**OPEN` (still precise, not the loose multi-keyword scan from
+earlier) and picked `SETL-45-UNSETTLED-COMPLETED-DOCS` — genuinely open, no closure entry
+anywhere in the file, and its own item 1 ("CC-2 LIVE-prove pay-rate CREATE") is squarely GUARD
+work.
+
+**Item 1, proven without fabricating a record:** `driver_finance.driver_pay_rates` has exactly
+one row created after `#18666` merged — `2026-08-31T16:09:02Z`, `is_test_data=true` — real,
+organic, post-fix evidence the CREATE path works.
+
+**Then checked the class's own precondition and found it gone.** USMCA `mdata.loads` with
+`status='completed_docs_received'` = **0** (not 54). `settlement_lines` = **0**. Positive-
+controlled as `neondb_owner` (RLS-bypass-unconditional) — genuine zero. This is not "the 45 got
+settled" — almost certainly GO-11's same-day purge removed the sample/test load cohort this row
+was measuring. Items 2–4 are moot for the same reason. Marked `SUPERSEDED`, full evidence on the
+row, explicit note to re-measure fresh (not resurrect the old 45/54/$95,035.50 numbers) if real
+loads reach that status later.
+
+Nothing built, no record fabricated, no settlement touched. Idle, still watching for the lead's
+TOP.
