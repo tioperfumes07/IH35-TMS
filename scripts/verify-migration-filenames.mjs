@@ -82,6 +82,12 @@ const HISTORICAL_TIMESTAMP_DUP_ALLOWLIST = new Set([
   // third file on this number is still a NEW collision. That guard is the CI-wired one (verify-step
   // 1561), so the ratchet survives; this entry only stops a duplicate red for the same accepted pair.
   "202612350000",
+  // Both exact pairs were already applied on prod before the duplicate was detected. Renaming an
+  // applied migration would create a second ledger identity and re-run its body. The exact-pair
+  // ratchet in verify-migration-no-number-collision freezes these filenames and still rejects a
+  // third file on either number.
+  "202613210000",
+  "202613311300",
 ]);
 
 function fail(lines) {
