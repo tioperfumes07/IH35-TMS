@@ -33,11 +33,18 @@ export function collectProblems({ picker, test, referenceSelect, referenceTest }
   if (!/suppresses the prior-company FK even when a legacy parent ignores the null callback/.test(test)) {
     problems.push("stubborn-parent company-switch regression test is missing");
   }
+  // MOD-04 — empty search must not paint a false roster error when prior data exists (DEFECT-6c).
+  if (!/keepPreviousData/.test(picker) || !/rosterLoadFailed/.test(picker)) {
+    problems.push("MOD-04: EntityPicker must keepPreviousData and gate error on rosterLoadFailed");
+  }
+  if (!/DEFECT-6c: does not show a load error after clearing search/.test(test)) {
+    problems.push("MOD-04: EntityPicker runtime test for empty-search false error is missing");
+  }
   // MOD-05 — cross-entity VIN must not invite "+ Add new unit <VIN>"
   if (!/lookupUnitByVin/.test(picker)) {
     problems.push("MOD-05: EntityPicker must probe lookupUnitByVin for typed VIN-like unit search");
   }
-  if (!/__vin_exists__|entity-picker-vin-exists/.test(picker) || !/!crossEntityVin/.test(picker)) {
+  if (!/entity-picker-vin-exists/.test(picker) || !/!existingVinUnit/.test(picker)) {
     problems.push("MOD-05: EntityPicker must suppress create and surface cross-entity VIN existence");
   }
   if (!/\/api\/v1\/mdata\/units\/by-vin/.test(fs.readFileSync(path.join(ROOT, "apps/backend/src/mdata/units.routes.ts"), "utf8"))) {

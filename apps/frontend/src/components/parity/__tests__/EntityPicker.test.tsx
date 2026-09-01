@@ -334,6 +334,36 @@ describe("EntityPicker (C1 picker law)", () => {
     expect(screen.queryByText("Couldn't load driver list")).toBeNull();
   });
 
+  it("MOD-04: unit picker does not show load error after clearing VIN search", async () => {
+    const user = userEvent.setup();
+    listUnits
+      .mockResolvedValueOnce({
+        units: [{ id: "unit-1", unit_number: "T169", vin: "1XPBDP9X0KD478221" }],
+      })
+      .mockRejectedValueOnce(new Error("network"));
+
+    wrap(
+      <EntityPicker
+        kind="unit"
+        operatingCompanyId={COMPANY}
+        value={null}
+        onChange={vi.fn()}
+        dataTestId="unit-picker-mod04"
+      />,
+    );
+    await waitFor(() => expect(listUnits).toHaveBeenCalled());
+
+    const input = await screen.findByTestId("unit-picker-mod04");
+    await user.click(input);
+    await user.type(input, "T169");
+    await waitFor(() => expect(listUnits.mock.calls.some((call) => call[0]?.search === "T169")).toBe(true));
+
+    await user.clear(input);
+    await waitFor(() => expect(input).toHaveValue(""));
+
+    expect(screen.queryByText("Couldn't load unit list")).toBeNull();
+  });
+
   it("MOD-05: suppresses + Add new when typed VIN exists under another entity", async () => {
     const user = userEvent.setup();
     listUnits.mockResolvedValue({ units: [] });
@@ -359,6 +389,34 @@ describe("EntityPicker (C1 picker law)", () => {
     await user.type(input, "1XPBDP9X0KD478221");
     await waitFor(() => expect(lookupUnitByVin).toHaveBeenCalled());
     expect(await screen.findByTestId("entity-picker-vin-exists")).toHaveTextContent(/T169 already exists \(TRK\)/i);
+    expect(screen.queryByText(/\+ Add new unit/i)).toBeNull();
+  });
+
+  it("MOD-05: in-scope existing VIN injects unit option and suppresses create", async () => {
+    const user = userEvent.setup();
+    listUnits.mockResolvedValue({ units: [] });
+    lookupUnitByVin.mockResolvedValue({
+      found: true,
+      unit: {
+        id: "unit-usmca-1",
+        unit_number: "USMCA-001",
+        vin: "1XPBDP9X0KD478221",
+        owner_company_id: COMPANY,
+        owner_company_code: "USMCA",
+        owner_company_name: "IH35 USMCA",
+        currently_leased_to_company_id: null,
+        leased_company_code: null,
+        leased_company_name: null,
+        in_current_company_scope: true,
+      },
+    });
+
+    wrap(<EntityPicker kind="unit" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} />);
+    const input = await screen.findByPlaceholderText("Select unit");
+    await user.click(input);
+    await user.type(input, "1XPBDP9X0KD478221");
+    await waitFor(() => expect(lookupUnitByVin).toHaveBeenCalled());
+    expect(await screen.findByTestId("entity-picker-vin-in-scope")).toHaveTextContent(/USMCA-001 matches this VIN/i);
     expect(screen.queryByText(/\+ Add new unit/i)).toBeNull();
   });
 });
