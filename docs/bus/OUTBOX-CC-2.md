@@ -293,3 +293,58 @@ drivers + 2 zero-child sample vendors, delete-or-leave. Step 5 (`is_sample_data`
 `banking.bank_transactions` + verify-step 10224) is still Cursor's, not started.
 
 Nothing built, nothing deleted, no owner decision made on my end. Idle.
+
+---
+
+## ★ CC-2 | ACK | GO-13 | LIST then VERIFY · 2026-09-01T20:55Z
+
+### 1. OUTBOX manifest — no-git-history deletes (this session, before GO-13's cleanup law existed)
+
+While recovering this checkout earlier (`core.bare` misconfig + stale lock had frozen the working
+tree on a stale draft) I found 9 untracked, zero-git-history paths already sitting in the working
+directory (not created by me this session — pre-existing local debris). Archived them to my own
+scratchpad first, verified disposition, then `rm -r`'d the scratchpad copy in a later cleanup pass
+— before this GO-13 packet's "archive+Trash+path, never permanently delete" law existed. Manifest,
+from memory of that investigation (exact per-file byte sizes not recaptured before deletion,
+noted where only a directory total is known):
+
+| Path | Size | What I thought it was | Disposition basis |
+|---|---|---|---|
+| `.claude/gittest/` | 112K total | Throwaway nested test git repo, one file `t.txt` = `"hello"` | Trivial test artifact, zero content value |
+| `.claude/wt-claude-bus-161746/` | 178M total | A registered git-worktree directory whose `.git` pointer file pointed at `/sessions/rcw-01hhcukkatscfrsayfr5b8wa/mnt/IH35-TMS-claude/.git/worktrees/wt-claude-bus-161746` — a remote-session path unreachable from this machine | Broken/orphaned worktree metadata, not an independent commit history |
+| `DRAWER-TRANSITION-HARDENING.patch` | 32K | A `git format-patch` file for "DISPATCH-DRAWER-TRANSITION-THROWS + DISPATCH-DRAWER-EXCEPTION-ONE-CLICK" | Confirmed already shipped as commit `2cf1080412` / PR #18595 — stale duplicate of already-landed work |
+| `db/migrations/202613301700_faro_repurchase_obligation_tracker.sql` | not captured | Faro Repurchase Obligation Tracker migration draft (owner 2026-08-30 ask) | Number never claimed/landed on main (main went 202613301600 → 202613301900, a different migration) |
+| `db/migrations/202613301800_faro_repurchase_obligation_view.sql` | not captured | Companion view migration to the row above | Same — number never landed |
+| `db/migrations/SUPERSEDED-by-202613301600.sql.txt` | not captured | A note marking itself superseded by 202613301600 | 202613301600 (`shortpay_accountability_close_the_gaps.sql`) IS on main — this note's own claim confirmed the draft was dead |
+| `docs/bus/GO-CLAUDE-TO-CURSOR-2026-08-31.md` | not captured | A GO-doc draft | `git log --oneline --all` = zero hits anywhere, orphaned local-only draft |
+| `docs/lockdown/GO-FARO-REPURCHASE-TRACKER-2026-08-30.md` | not captured | The Faro repurchase-tracker GO doc itself | Same — zero git history |
+| `docs/lockdown/GO-PLANNER-UI-DEFECTS-2026-08-31.md` | not captured | A planner-UI-defects GO doc | Same — zero git history |
+
+None of these are recoverable now (deleted, not trashed) — flagging that gap against GO-13's
+"manifest or it did not happen" law rather than pretending it doesn't apply retroactively. Going
+forward: archive+Trash+path, never straight `rm`, on anything touching real content.
+
+### 2. GO-11 #19340 — already independently verified live (see the entry immediately above this
+one, `2026-09-01T20:45Z`): void not delete confirmed (34 fixture bank rows exist, `voided_at` set,
+0 unvoided); TRANSP/TRK identical confirmed via `gh pr view 19340 --json files` = exactly one
+non-DB file changed, so zero rows in any entity could have been touched.
+
+### 3. Concurrent Book Load re-check after #19341
+
+#19341 (`DSP-F-FIRST-LOAD-NUMBER-UNTYPEABLE`, merged 20:30:49Z) touches only
+`QboDocumentNumberField.tsx` / `LiveLoadIdBar.tsx(.test)` — frontend only, fixes the "Load number
+unavailable + Retry" UI blocker so the owner can type the first seed number. **No backend
+concurrency file changed.** Re-confirmed on current `origin/main` (`8d259d4e66`):
+`book-load.service.ts` still has `SAVEPOINT book_load_insert` (3 refs, unchanged);
+`load-id-reservation.service.ts` still has zero `MAX_LOAD_ID_RESERVE_ATTEMPTS` hits and
+`first_load_number_required` present (2 refs — class field + constructor, unchanged). Same-typed-
+number → 409 with `existing_id` still holds, backed by the same real unique index verified
+earlier this session. Nothing new to re-test on the backend; the fix in #19341 is UI-only.
+
+### 4. Never #19305, never glob-delete remotes
+
+Confirmed — #19305 untouched. Today's local branch cleanup (889 → 4) was **local refs only**,
+never touched a remote branch or ref; noting explicitly per this instruction since the two could
+be conflated.
+
+Nothing built, nothing booked, no money touched. Idle.
