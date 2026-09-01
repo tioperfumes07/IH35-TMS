@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { CatalogListSearchInput } from "../../../../components/lists/CatalogListSearchInput";
-import { catalogListSearchQueryOptions } from "../../../../hooks/catalogListSearchQueryOptions";
+import { CatalogListSearchInput } from "../../../components/lists/CatalogListSearchInput";
+import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";

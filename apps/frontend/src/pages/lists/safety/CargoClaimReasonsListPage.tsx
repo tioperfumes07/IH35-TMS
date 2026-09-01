@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { CatalogListSearchInput } from "../../../../components/lists/CatalogListSearchInput";
-import { catalogListSearchQueryOptions } from "../../../../hooks/catalogListSearchQueryOptions";
+import { CatalogListSearchInput } from "../../../components/lists/CatalogListSearchInput";
+import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { useQuery } from "@tanstack/react-query";
 import { listCargoClaimReasons, type CargoClaimCategory, type CargoClaimReasonRow } from "../../../api/catalogs-safety";

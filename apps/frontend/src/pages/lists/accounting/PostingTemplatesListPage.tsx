@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { CatalogListSearchInput } from "../../../../components/lists/CatalogListSearchInput";
-import { catalogListSearchQueryOptions } from "../../../../hooks/catalogListSearchQueryOptions";
+import { CatalogListSearchInput } from "../../../components/lists/CatalogListSearchInput";
+import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { postingTemplatesCatalogClient } from "../../../api/catalogs-accounting";

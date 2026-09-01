@@ -6,8 +6,8 @@
  * we resolve them to names here for display.
  */
 import { useEffect, useMemo, useState } from "react";
-import { CatalogListSearchInput } from "../../../../components/lists/CatalogListSearchInput";
-import { catalogListSearchQueryOptions } from "../../../../hooks/catalogListSearchQueryOptions";
+import { CatalogListSearchInput } from "../../../components/lists/CatalogListSearchInput";
+import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { itemsCatalogClient, qboCategoriesCatalogClient } from "../../../api/catalogs-accounting";

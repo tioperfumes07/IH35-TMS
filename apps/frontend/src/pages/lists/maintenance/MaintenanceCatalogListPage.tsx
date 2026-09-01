@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { CatalogListSearchInput } from "../../../../components/lists/CatalogListSearchInput";
-import { catalogListSearchQueryOptions } from "../../../../hooks/catalogListSearchQueryOptions";
+import { CatalogListSearchInput } from "../../../components/lists/CatalogListSearchInput";
+import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
 import { useQuery } from "@tanstack/react-query";
 import type { MaintenanceCatalogRow } from "../../../api/catalogs-maintenance";
 import { Button } from "../../../components/Button";
