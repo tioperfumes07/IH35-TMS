@@ -767,11 +767,39 @@ async function checkSentryHeartbeat(): Promise<void> {
 }
 
 export function resolveBackendVersion(): string {
+  return resolveBackendGitSha().slice(0, 7);
+}
+
+/** Full commit SHA when available (Render / GitHub CI); else `"dev"`. */
+export function resolveBackendGitSha(): string {
   const renderCommit = process.env.RENDER_GIT_COMMIT?.trim();
-  if (renderCommit) return renderCommit.slice(0, 7);
+  if (renderCommit) return renderCommit;
   const githubSha = process.env.GITHUB_SHA?.trim();
-  if (githubSha) return githubSha.slice(0, 7);
+  if (githubSha) return githubSha;
   return "dev";
+}
+
+/**
+ * HEALTH-NO-SHA-01 — build/serving identity timestamp (ISO-8601).
+ * Prefer explicit bake env (`IH35_BUILD_AT` / `BUILD_TIMESTAMP`); else this Node process boot time
+ * (on Render, a new deploy replaces the process — boot ≈ deploy of this instance).
+ */
+export function resolveBuildTimestamp(): string {
+  const baked =
+    process.env.IH35_BUILD_AT?.trim() ||
+    process.env.BUILD_TIMESTAMP?.trim() ||
+    process.env.SOURCE_DATE?.trim();
+  if (baked) return baked;
+  return new Date(Date.now() - process.uptime() * 1000).toISOString();
+}
+
+/** Shared identity fields — full `/healthz` and `/healthz/shallow` must both expose SHA. */
+export function healthzBuildIdentity() {
+  return {
+    version: resolveBackendVersion(),
+    git_sha: resolveBackendGitSha(),
+    built_at: resolveBuildTimestamp(),
+  };
 }
 
 export async function runDeepHealthChecks(): Promise<HealthCheck[]> {
@@ -800,7 +828,7 @@ export async function registerHealthRoutes(app: FastifyInstance) {
     return {
       ok: true,
       uptime_seconds: Math.floor(process.uptime()),
-      version: resolveBackendVersion(),
+      ...healthzBuildIdentity(),
     };
   });
 
@@ -811,10 +839,17 @@ export async function registerHealthRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  // HEALTH-NO-SHA-01 — deep health MUST carry the same build identity as /shallow.
+  // Seats (and CC-1 Codex re-entry) confirm deploy via this payload; checks-only is a defect.
   app.get("/api/v1/healthz", async (_req, reply) => {
     const checks = await runDeepHealthChecks();
     const criticalOk = checks.filter((c) => c.tier === "critical").every((c) => c.ok);
     const overallOk = checks.every((c) => c.ok);
-    return reply.code(criticalOk ? 200 : 503).send({ ok: overallOk, checks });
+    return reply.code(criticalOk ? 200 : 503).send({
+      ok: overallOk,
+      uptime_seconds: Math.floor(process.uptime()),
+      ...healthzBuildIdentity(),
+      checks,
+    });
   });
 }

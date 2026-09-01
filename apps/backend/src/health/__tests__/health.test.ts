@@ -3,6 +3,8 @@ import Fastify from "fastify";
 import {
   registerHealthRoutes,
   resolveBackendVersion,
+  resolveBackendGitSha,
+  resolveBuildTimestamp,
   backgroundJobRule,
   qboNamedJobsAreDormant,
   toPublicHealthErrorCode,
@@ -16,15 +18,24 @@ describe("health routes", () => {
     setAppReady(false);
   });
 
-  it("GET /api/v1/healthz/shallow returns ok + uptime", async () => {
+  it("GET /api/v1/healthz/shallow returns ok + uptime + build identity", async () => {
     const app = Fastify();
     await registerHealthRoutes(app);
     const res = await app.inject({ method: "GET", url: "/api/v1/healthz/shallow" });
     expect(res.statusCode).toBe(200);
-    const body = JSON.parse(res.body) as { ok: boolean; uptime_seconds: number; version: string };
+    const body = JSON.parse(res.body) as {
+      ok: boolean;
+      uptime_seconds: number;
+      version: string;
+      git_sha: string;
+      built_at: string;
+    };
     expect(body.ok).toBe(true);
     expect(Number.isFinite(body.uptime_seconds)).toBe(true);
     expect(body.version).toBe(resolveBackendVersion());
+    expect(body.git_sha).toBe(resolveBackendGitSha());
+    expect(body.built_at).toBeTruthy();
+    expect(Number.isNaN(Date.parse(body.built_at))).toBe(false);
   });
 
   it("resolveBackendVersion prefers RENDER_GIT_COMMIT then GITHUB_SHA", () => {
@@ -34,17 +45,31 @@ describe("health routes", () => {
       delete process.env.RENDER_GIT_COMMIT;
       delete process.env.GITHUB_SHA;
       expect(resolveBackendVersion()).toBe("dev");
+      expect(resolveBackendGitSha()).toBe("dev");
 
       process.env.GITHUB_SHA = "abcdef1234567890";
       expect(resolveBackendVersion()).toBe("abcdef1");
+      expect(resolveBackendGitSha()).toBe("abcdef1234567890");
 
       process.env.RENDER_GIT_COMMIT = "1234567890abcdef";
       expect(resolveBackendVersion()).toBe("1234567");
+      expect(resolveBackendGitSha()).toBe("1234567890abcdef");
     } finally {
       if (priorRender === undefined) delete process.env.RENDER_GIT_COMMIT;
       else process.env.RENDER_GIT_COMMIT = priorRender;
       if (priorGithub === undefined) delete process.env.GITHUB_SHA;
       else process.env.GITHUB_SHA = priorGithub;
+    }
+  });
+
+  it("resolveBuildTimestamp prefers IH35_BUILD_AT", () => {
+    const prior = process.env.IH35_BUILD_AT;
+    try {
+      process.env.IH35_BUILD_AT = "2026-09-01T12:00:00.000Z";
+      expect(resolveBuildTimestamp()).toBe("2026-09-01T12:00:00.000Z");
+    } finally {
+      if (prior === undefined) delete process.env.IH35_BUILD_AT;
+      else process.env.IH35_BUILD_AT = prior;
     }
   });
 
