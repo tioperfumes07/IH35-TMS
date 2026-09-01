@@ -7833,6 +7833,34 @@ none yet — needs CC-2 confirmation the purge's own re-reversal flag is wrong (
 middle layer) before any further write | same Neon query as above, 2026-09-01 | **OPEN · routed=
 CC-2 grade → CC-1 execute** |
 
+| **GRADED — INCONCLUSIVE, DATA NOT FOUND LIVE (CC-2 2026-09-01):** graded
+`REVERSAL-CHAIN-IS-SAMPLE-DATA-SECOND-HOP` (row above) against `tiny-field-89581227` /
+`accounting.journal_entries` on the `production` branch (confirmed correct project via
+`list_organizations`/`list_projects`; confirmed correct branch — `br-fancy-credit-akjnd07a`,
+`primary:true, default:true`; confirmed RLS bypass active — `set_config('app.bypass_rls','lucia',false)`
+returned `lucia` in the same transaction as every query below, run via `run_sql_transaction` per
+the established two-step pattern). Could NOT locate the claimed data on ANY of three independent
+axes: (1) none of the 10 named 8-char ID prefixes (`8cb46b41`, `2a578eb7`, `fd71f36a`, `e57068df`,
+`ed1dae85`, `eb8670ec`, `74f011df`, `d4013990`, `0e7805da`, `1cace7df`) match any row in
+`accounting.journal_entries` (0 rows); (2) zero rows with `created_at::date` on either 2026-08-11
+or `>= 2026-09-01` in the whole table; (3) zero rows with `memo ILIKE '%seat test/demo/sample%'`
+or `'%JUNK-PURGE%'`. Table-wide sanity: `count(*) = 1785`, `max(created_at) = 2026-08-28`,
+`n_tup_ins = 4647` lifetime (vs 1785 live) — real historical churn exists, just not matching this
+claim. Could NOT confirm the claim is TRUE or FALSE — the underlying rows described (the purge's
+re-reversal JEs, and the Aug-11 middle-layer reversals they supposedly reverse) are not visible to
+me at all right now, so I cannot grade whether their `is_sample_data` flag is right or wrong. Two
+explanations, not distinguished: (a) this data was already resolved/removed by a later action
+(another purge pass, a rollback, CC-1 already executing without updating this row) since the row
+was written, or (b) the citing session read against different data (a different branch/snapshot,
+or a local/dev DB) than what's live now. **CC-1: do not execute against this row's named IDs as
+written — they do not currently exist.** If the underlying concern is still live, it needs a fresh
+enumeration against current data, not this stale ID list. | accounting.journal_entries (query
+only, no write) | `mcp__claude_ai_Neon__run_sql_transaction` against `tiny-field-89581227` | **CC-2
+GUARD** | re-run the original enumeration query fresh against current data if the double-reversal
+concern is still believed live; do not act on the ID list above | live Neon queries, 2026-09-01,
+this session | **GRADED · INCONCLUSIVE · claimed data not found live · routed back for
+re-enumeration if still relevant** |
+
 | **OPEN — GUARD-DESIGN-PARITY-WO-WIZARD-VENDOR-LABELS (CC-2 2026-09-01):** the ENFORCED
 `verify-design-parity.mjs` screen "Create/Edit Work Order Wizard" fails live on origin/main (pre-existing,
 unrelated to any of CC-2's in-flight PRs, confirmed via `git diff origin/main` empty on every file
