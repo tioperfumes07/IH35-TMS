@@ -94,6 +94,21 @@ jobs:
       - name: verify:driver-pwa-load-status-gate
         run: npm run verify:driver-pwa-load-status-gate
 
+      - name: verify:health-financial-checks --selftest
+        run: node scripts/verify-health-financial-checks.mjs --selftest
+      - name: verify:health-financial-checks
+        run: node scripts/verify-health-financial-checks.mjs
+
+      - name: verify:hide-voided-filter --selftest
+        run: node scripts/verify-hide-voided-filter.mjs --selftest
+      - name: verify:hide-voided-filter
+        run: node scripts/verify-hide-voided-filter.mjs
+
+      - name: verify:owner-bulk-cancel-select-prevoid --selftest
+        run: node scripts/verify-owner-bulk-cancel-select-prevoid.mjs --selftest
+      - name: verify:owner-bulk-cancel-select-prevoid
+        run: node scripts/verify-owner-bulk-cancel-select-prevoid.mjs
+
       - name: verify:guard-wired --selftest
         run: node scripts/verify-guard-wired.mjs --selftest
 
@@ -1375,4 +1390,3 @@ jobs:
           fi
           echo "Heavy locked-guards did not succeed: $HEAVY"
           exit 1
-

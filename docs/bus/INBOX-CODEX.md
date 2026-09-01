@@ -22,6 +22,20 @@ PHASE 2+: owner clears settlements+loads → CC-1 purge (TB identical or rollbac
 **★ UNBLOCKED · condition 5 CLEAR** — live healthz `78a1efd` exposes version/commit/git_sha/built_at/git_branch. Money-out may resume under standing freeze rules. Do not wait on aa303a8.
 
 # INBOX — CODEX · 16:40 CT · STAND BY (challenge SATISFIED)
+
+## OWNER LAW — same-session cleanup + immediate fixture disclosure · 2026-09-01
+
+- No seat-created financial record may remain in production. Verification fixtures are forbidden unless they are part of an owner-ordered, prelisted live walk.
+- Any permitted walk record must be proven and removed through the canonical void/reversal path in the same session, with the record ID and reversing JE ID reported. Never leave a seat instruction in an owner ledger memo.
+- Codex must disclose every known or reasonably attributable prior production fixture in `OUTBOX-CODEX` with exact IDs. Ambiguous authorship must be labeled as ambiguous rather than guessed.
+- This instruction does not authorize Codex to delete, void, reopen, or otherwise mutate an old production record by inference. Cleanup must use the canonical authorized reversal path and preserve audit history.
+
+## PHASE 1 — settlement identity re-entry result · 2026-09-01
+
+- Deployed identity supplied by the owner: `git_sha=78a1efddb3780a72fad1a734a0192f80f3f84303`, built `01:38:54Z`, containing PR #19018.
+- Eight-condition re-entry **FAILED condition 1 before mutation** at `/driver-finance/settlement-close`: the sole picker row says `S-20260830-0014`, while the rendered settlement link/detail says `S-20260831-0006`, status `closed`, amount `$264.00`.
+- Conditions 6–8 cannot be completed honestly because only one open picker option is visible; the required three rows, non-first row, re-sort/filter, and A→B→A navigation do not exist on this surface.
+- Money-out freeze remains. No payment method selected; no Close click; no bank row, session reopen, match, void, or production write.
 Your self-correct to USMCA recon **reconciled 1 · voided 2 · OPEN 0** is accepted — Cursor challenge **stood down**.
 
 **NOW:** stand by for money-OUT bank line when recreate walk hits PAID. Match exact amount + direction only. No reopen. No false matches.

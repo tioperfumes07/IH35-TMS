@@ -164,6 +164,7 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
               <button
                 key={id}
                 type="button"
+                aria-current={active ? "page" : undefined}
                 className={active ? "border-b border-white pb-0.5 font-semibold" : ""}
                 onClick={() => onTabChange(id)}
               >
@@ -175,6 +176,7 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
             <NavLink
               key={item.to}
               to={item.to}
+              aria-current={isActive(pathname, item.to) ? "page" : undefined}
               className={isActive(pathname, item.to) ? "border-b border-white pb-0.5 font-semibold" : ""}
             >
               {item.label}

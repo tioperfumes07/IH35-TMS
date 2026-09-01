@@ -11,6 +11,10 @@ const LEGACY_REDIRECT_ALLOWLIST = new Set([
   "apps/frontend/src/pages/lists/ListsHubPage.tsx",
 ]);
 
+// Redirect-only compatibility aliases are not canonical routes. Keep this exact-path list
+// narrow so any new underscore route still fails closed.
+const LEGACY_REDIRECT_PATH_ALLOWLIST = new Set(["/dispatch/book_load"]);
+
 function listPageFiles(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const abs = path.join(dir, entry.name);
@@ -42,6 +46,7 @@ function findUnderscoreRoutePaths(source, relPath) {
     while ((match = pattern.exec(source))) {
       const routePath = match[1];
       if (routePath.includes(":")) continue;
+      if (LEGACY_REDIRECT_PATH_ALLOWLIST.has(routePath)) continue;
       hits.push(routePath);
     }
   }

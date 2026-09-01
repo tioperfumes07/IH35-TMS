@@ -45,10 +45,13 @@ function hasMembershipGuard(source, category) {
   if (category === "banking") {
     const localScopedHelper =
       source.includes("async function withCompanyScope") && source.includes("assertCompanyMembership(");
+    const importsBankingSharedScope =
+      /\bwithCompanyScope\b/.test(source) &&
+      /import\s*\{[^}]*\bwithCompanyScope\b[^}]*\}\s*from\s*["']\.\/shared\.js["']/.test(source);
     const importsAccountingSharedScope =
       /\bwithCompanyScope\b/.test(source) &&
       /import\s*\{[^}]*\bwithCompanyScope\b[^}]*\}\s*from\s*["']..\/accounting\/shared\.js["']/.test(source);
-    if (localScopedHelper || importsAccountingSharedScope) return true;
+    if (localScopedHelper || importsBankingSharedScope || importsAccountingSharedScope) return true;
   }
 
   return false;

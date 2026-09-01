@@ -123,13 +123,13 @@ const SUB_NAV_SOURCES: SubNavSource[] = [
   {
     module: "reports",
     file: "apps/frontend/src/pages/reports/ReportsSubNav.tsx",
-    startToken: "export const REPORTS_SUB_NAV_ITEMS: NavItem[] = [",
+    startToken: "export const REPORTS_SUB_NAV_ITEMS: NavyPageSubNavItem[] = [",
     valueField: "label",
   },
   {
     module: "lists",
     file: "apps/frontend/src/pages/lists/ListsSubNav.tsx",
-    startToken: "export const LISTS_SUB_NAV_ITEMS: NavItem[] = [",
+    startToken: "export const LISTS_SUB_NAV_ITEMS: NavyPageSubNavItem[] = [",
     valueField: "label",
   },
   {
