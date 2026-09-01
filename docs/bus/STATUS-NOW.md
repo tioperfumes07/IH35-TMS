@@ -1,7 +1,8 @@
 # STATUS-NOW
-**2026-09-01 18:23 CT**
+**2026-09-01 18:46 CT**
 
 - Live `healthz/shallow` = `441ac88`. No deploy.
-- GO-16 Live Chrome **UNVERIFIED** — Cursor browser MCP: tab create then `No browser tab available`.
-- Devin-A FORCE NOW=`https://app.ih35dispatch.com/dispatch` (Laredo→Denton fill · Chicago empty · cancel).
-- Codex NOW=#19391. CC-2 SUBLEDGER. CC-1 escrow/linkage.
+- CC-3 AskQuestion ZIP source = **VOID**. Law = **Option 1** (`mdata.load_stops.postal_code` history). Never default ZIP. Check ZIP `autofill_allowed=false`.
+- GO-16 city-alias **#19414 63/63 drained**.
+- Cursor Book Load miles P0 **not shipped** (stash `wip-go16-miles-create-block`). Resume after this bus merge.
+- Devin-A FORCE `https://app.ih35dispatch.com/dispatch`. Codex #19391.
