@@ -13,6 +13,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { useListState } from "../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import {
   formatProfitPerTruckFlagLabel,
@@ -338,7 +339,7 @@ export function ProfitPerTruckPage() {
           </label>
           <label className="text-xs text-gray-600">
             Flag
-            <select
+            <SelectCombobox
               className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
               value={staged.draft.flagFilter}
               onChange={(event) => staged.setDraft((p) => ({ ...p, flagFilter: event.target.value as FlagFilter }))}
@@ -348,7 +349,7 @@ export function ProfitPerTruckPage() {
               <option value="least_profitable">{PROFIT_PER_TRUCK_FLAG_LABELS.least_profitable}</option>
               <option value="high_maintenance">{PROFIT_PER_TRUCK_FLAG_LABELS.high_maintenance}</option>
               <option value="underutilized">{PROFIT_PER_TRUCK_FLAG_LABELS.underutilized}</option>
-            </select>
+            </SelectCombobox>
           </label>
         </div>
       </CollapsedListFilters>

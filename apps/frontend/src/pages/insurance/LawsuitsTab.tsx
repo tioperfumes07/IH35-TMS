@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { listInsuranceLawsuits, type InsuranceLawsuit, type InsuranceLawsuitStatus } from "../../api/insurance";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { entityLabel } from "../../lib/entity-label";
 import { Button } from "../../components/Button";
 import { LawsuitCreateModal } from "../../components/insurance/LawsuitCreateModal";
@@ -192,7 +193,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
           >
             <label className="text-xs font-semibold text-slate-600">
               Status
-              <select
+              <SelectCombobox
                 className="mt-1 w-full max-w-xs rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={staged.draft.status}
                 onChange={(event) =>
@@ -205,7 +206,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
                     {option.label}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </label>
           </CollapsedListFilters>
         }
