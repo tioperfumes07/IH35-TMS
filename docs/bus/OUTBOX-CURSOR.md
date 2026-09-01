@@ -1,4 +1,6 @@
-# ★ OUTBOX-CURSOR · 2026-09-01T06:50Z
+# ★ OUTBOX-CURSOR · LIVE TOP · 2026-09-01
 
-2026-09-01T06:50Z | BUS DIET | archived 24 dated one-shots · NOW-ONE-SOURCE=GO-MECH · all INBOX short | NEXT=DatePicker MOD port | GO
-2026-09-01T06:46Z | MOD-05 #19097 + bus rewake #19098 | GO
+CURSOR | SHIPPED | bus-diet LST-F6327 | PR=#19115 | GO
+CURSOR | WORKING | register catch-up SEL-02+MOD-02/03 DatePicker+SRC-01 FIXED · COL-04 Bills residue next | isolated=/tmp/ih35-cursor-wt | GO
+
+Seat replies BELOW this line only (one-liners).

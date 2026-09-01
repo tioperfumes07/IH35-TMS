@@ -99,10 +99,8 @@ describe("PolicyDetail edit and archive", () => {
     // Anchored: the policy edit panel's "Status" label must not match the Payment Schedule
     // panel's "Payment status filter" label (added when PaymentScheduleTab was wired in).
     await user.selectOptions(screen.getByLabelText(/^Status$/i), "expired");
-    // These are DatePickers (button + calendar popover), not editable inputs, so `user.clear`/`user.type`
-    // threw "clear() is only supported on editable elements". The assertion below checks the EXACT dates
-    // reach the API, so the helper navigates to the target month rather than picking an arbitrary day —
-    // weakening the assertion would delete the only proof the edited dates are actually submitted.
+    // DatePicker is typed (MOD-02/03) but pickExactDate still proves EXACT calendar days reach the API —
+    // typing alone would not exercise the month/year jump path this helper covers.
     pickExactDate(screen.getByText(/Effective date/i).closest("label") as HTMLElement, "2026-02-15");
     pickExactDate(screen.getByText(/Expiry date/i).closest("label") as HTMLElement, "2027-02-15");
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
