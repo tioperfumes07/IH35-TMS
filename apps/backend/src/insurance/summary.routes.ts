@@ -4,9 +4,12 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
   COVERAGE_GAP_UNITS_SQL,
+  COVERAGE_GAP_UNITS_DETAIL_SQL,
   REQUIRED_COVERAGE_TYPES,
   classifyCoverageGapUnits,
+  buildCoverageGapUnitDetails,
   type CoverageGapUnitRow,
+  type CoverageGapUnitDetailRow,
 } from "./coverage-gap-units.shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { excludeInsuranceFixtureSql } from "./insurance-visibility.js";
@@ -117,16 +120,31 @@ export async function registerInsuranceSummaryRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const tenantId = parsed.data.operating_company_id;
 
-    const result = await withCompanyScope(user.uuid, tenantId, async (client) => {
+    const { classification, units } = await withCompanyScope(user.uuid, tenantId, async (client) => {
       const rows = await client.query<CoverageGapUnitRow>(COVERAGE_GAP_UNITS_SQL, [tenantId, REQUIRED_COVERAGE_TYPES, parsed.data.unit_id ?? null]);
-      return classifyCoverageGapUnits(rows.rows);
+      // GO-02 LIST API (INBOX-CC-1 2026-09-01) — the per-unit, per-catalog-type array Cursor's
+      // column-per-type UI needs to render a COVERED chip that actually links a policy_id/
+      // policy_number, and a not_required chip for trailer auto_liability instead of a false
+      // "missing". Additive: classification (uncovered/mismatched/coverage_gap_count) is the
+      // SAME query + SAME function as before, byte-for-byte -- the summary KPI cannot regress.
+      const detailRows = await client.query<CoverageGapUnitDetailRow>(COVERAGE_GAP_UNITS_DETAIL_SQL, [
+        tenantId,
+        parsed.data.unit_id ?? null,
+      ]);
+      return {
+        classification: classifyCoverageGapUnits(rows.rows),
+        units: buildCoverageGapUnitDetails(detailRows.rows),
+      };
     });
 
     return {
       required_types: REQUIRED_COVERAGE_TYPES,
-      uncovered_units: result.uncovered_units,
-      mismatched_units: result.mismatched_units,
-      coverage_gap_count: result.coverage_gap_count,
+      uncovered_units: classification.uncovered_units,
+      mismatched_units: classification.mismatched_units,
+      coverage_gap_count: classification.coverage_gap_count,
+      // GO-02 LIST API — catalog-driven per-unit array: { coverage_type, status, policy_id,
+      // policy_number, expiry_date }[] per unit/asset, status one of covered|missing|not_required.
+      units,
     };
   });
 }
