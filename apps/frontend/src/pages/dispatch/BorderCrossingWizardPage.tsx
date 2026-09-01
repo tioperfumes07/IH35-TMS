@@ -200,7 +200,7 @@ export function BorderCrossingWizardPage() {
               checking={false}
             />
           )}
-          {step === 5 && <WizardStep6 form={form} ports={ports} result={result} />}
+          {step === 5 && <WizardStep6 form={form} ports={ports} result={result} pdfUrl={pdfUrl} />}
 
           {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
 

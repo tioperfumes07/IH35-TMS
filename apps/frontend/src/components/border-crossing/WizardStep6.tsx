@@ -11,9 +11,10 @@ type Props = {
     emanifestReference?: string;
     fastCardWarning?: string | null;
   } | null;
+  pdfUrl: string | null;
 };
 
-export function WizardStep6({ form, ports, result }: Props) {
+export function WizardStep6({ form, ports, result, pdfUrl }: Props) {
   const port = ports.find((p) => p.id === form.portOfEntryId);
   const hasIds = Boolean(form.loadId || form.unitId || form.driverId || form.customsBrokerId);
 
@@ -104,6 +105,17 @@ export function WizardStep6({ form, ports, result }: Props) {
             Crossing logged · eManifest ref <strong>{result.emanifestReference}</strong>
           </p>
           {result.fastCardWarning ? <p className="mt-1 text-amber-800">{result.fastCardWarning}</p> : null}
+          {pdfUrl ? (
+            <a
+              href={pdfUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-flex rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#172033]"
+              data-testid="border-wizard-generate-emanifest-pdf"
+            >
+              Generate eManifest PDF
+            </a>
+          ) : null}
         </div>
       ) : null}
     </section>
