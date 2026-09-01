@@ -21,6 +21,8 @@
 //        sort (ParityTable's own default — ParityTable.tsx:319) only reorders the fetched page;
 //        exactly the invoice defect Cascade root-caused (InvoicesListPage.tsx:227-235 fetches no
 //        offset/limit, relies on the backend's own default cap, then sorts only that page).
+//   A3 — ParityTable sortable header <button> must use h-full w-full (SWEEP-A / SORT-01 hit target).
+//        Label-only inline-flex left most of <th> dead; resize grip keeps the right w-2 edge only.
 //
 // B) VOID VISIBILITY
 //   For the 6 document types that use the literal 'void' domain (not 'cancel' — Cascade
@@ -101,6 +103,27 @@ function scanSortable() {
     }
   }
   return { missingSortableCount, internalSortOnPaginatedCount, internalSortFiles };
+}
+
+const PARITY_TABLE_PATH = "apps/frontend/src/components/parity/ParityTable.tsx";
+
+/** A3 — ParityTable sort header must fill the cell, not just the label (SORT-01 / SWEEP-A). */
+function parityTableSortHitTargetOk(src) {
+  const body =
+    src ??
+    (fs.existsSync(path.join(ROOT, PARITY_TABLE_PATH))
+      ? fs.readFileSync(path.join(ROOT, PARITY_TABLE_PATH), "utf8")
+      : null);
+  if (body == null) {
+    return { ok: false, reason: `${PARITY_TABLE_PATH} missing` };
+  }
+  const m = body.match(/column\.sortable \? \(\s*<button[\s\S]{0,1200}?onClick=\{\(\) => toggleSort\(key\)\}/);
+  if (!m) return { ok: false, reason: "could not locate sortable header <button>" };
+  const block = m[0];
+  if (!/\bw-full\b/.test(block) || !/\bh-full\b/.test(block)) {
+    return { ok: false, reason: "sortable header button lost h-full w-full — label-only hit target regression" };
+  }
+  return { ok: true };
 }
 
 // --- B: void visibility, 6 literal-'void' document types ------------------------------------
@@ -197,6 +220,12 @@ function run() {
   const sortable = scanSortable();
   const voidVis = scanVoidVisibility();
   const baseline = loadBaseline();
+
+  const hitTarget = parityTableSortHitTargetOk();
+  if (!hitTarget.ok) {
+    console.error(`verify:sortable-columns-and-void-visibility FAIL (A3) — ${hitTarget.reason}`);
+    process.exit(1);
+  }
 
   const failures = [];
   console.log(
@@ -299,6 +328,14 @@ if (process.argv.includes("--selftest")) {
     false,
     "a bare status-equality guard must NOT be mistaken for a filter option"
   );
+
+  // A3: ParityTable sort button must stay h-full w-full (not label-only).
+  const a3Good = `{column.sortable ? (
+<button type="button" className="inline-flex h-full w-full items-center gap-1" onClick={() => toggleSort(key)}>Label</button>) : null}`;
+  assert.equal(parityTableSortHitTargetOk(a3Good).ok, true, "A3 good shape passes");
+  const a3Bad = `{column.sortable ? (
+<button type="button" className="inline-flex items-center gap-1" onClick={() => toggleSort(key)}>Label</button>) : null}`;
+  assert.equal(parityTableSortHitTargetOk(a3Bad).ok, false, "A3 label-only regression fails");
 
   console.log("verify:sortable-columns-and-void-visibility --selftest PASS");
   process.exit(0);

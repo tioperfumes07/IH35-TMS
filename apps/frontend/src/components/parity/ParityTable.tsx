@@ -1226,7 +1226,7 @@ export function ParityTable<T>({
                       // (CC-3 note: this SORT-01 fix landed via Cursor's own parallel branch first
                       // — per owner coordination, my own equivalent hunk was dropped in favor of
                       // this one rather than double-editing ParityTable's sort button.)
-                      className={`inline-flex w-full items-center gap-1 ${
+                      className={`inline-flex h-full w-full items-center gap-1 ${
                         /\btext-right\b/.test(column.className ?? "") ? "justify-end" : "justify-start"
                       }`}
                       onClick={() => toggleSort(key)}
