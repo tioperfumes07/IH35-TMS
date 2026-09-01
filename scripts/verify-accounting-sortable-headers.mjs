@@ -107,7 +107,9 @@ export function sortableHeaderErrors({ hookSrc, parityTableSrc, pages, invRoutes
       failures.push(`${PARITY_TABLE_FILE} — must branch controlled vs internal sort state (isSortControlled)`);
     }
     // Cascade 2026-08-31 DEFECT 1 — label-only button left most of <th> dead (DataTable already w-full).
-    if (!/className=\{`inline-flex w-full items-center gap-1/.test(parityTableSrc) && !/inline-flex w-full items-center gap-1/.test(parityTableSrc)) {
+    // ParityTable #19258 — canonical shape is inline-flex h-full w-full (h-full optional in regex for forward compat).
+    const sortBtnHitTarget = /inline-flex(?:\s+h-full)?\s+w-full items-center gap-1/;
+    if (!sortBtnHitTarget.test(parityTableSrc)) {
       failures.push(
         `${PARITY_TABLE_FILE} — sortable header button must include w-full (full cell hit target; not label-only)`,
       );
@@ -267,7 +269,7 @@ function selftest() {
     onSortChange?: (key: string, dir: "asc" | "desc") => void;
     sortValue?: (row: T) => string | number | null;
     const isSortControlled = sortKey != null;
-    className={\`inline-flex w-full items-center gap-1 \${x}\`}
+    className={\`inline-flex h-full w-full items-center gap-1 \${x}\`}
   `;
   const goodPage = `
     import { useUrlSort } from "../../hooks/useUrlSort";
