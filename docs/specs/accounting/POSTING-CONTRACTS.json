@@ -612,6 +612,32 @@
       }
     },
     {
+      "flag": "REVENUE_RECOGNITION_POST_ENABLED_EVENT_2",
+      "source_type": "invoice",
+      "note": "Same gate as REVENUE_RECOGNITION_POST_ENABLED (Event 1, row above) — this is Event 2 of the SAME two-event delivery latch (apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts), fired on invoice-sent, not a second flag. Documented as its own contract row because Event 2's DR/CR shape differs from Event 1's and byFlag lookups in verify-posting-hits-designed-accounts.mjs key on `flag`, so reusing the same key would silently drop one event's contract.",
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "ar_control"
+        },
+        {
+          "side": "CR",
+          "account_role": "unbilled_revenue"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
       "flag": "SAFETY_FINE_GL_POSTING_ENABLED",
       "source_type": "safety_fine",
       "lines": [
