@@ -21,7 +21,9 @@ import {
   type CustomerProfileFormValues,
 } from "../components/customers/CustomerProfileForm";
 import { Button } from "../components/Button";
+import { Button } from "../components/Button";
 import { ActionButton } from "../components/shared/ActionButton";
+import { ToolbarSegmentControl } from "../components/layout/ToolbarSegmentControl";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -892,22 +894,15 @@ export function CustomersPage() {
         subtitle="Customer list and transactions"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-view-mode-toggle="customers">
-              <button
-                type="button"
-                className={`rounded-sm px-2 py-1 font-medium ${viewMode === "list" ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
-                onClick={() => setViewMode("list")}
-              >
-                List view
-              </button>
-              <button
-                type="button"
-                className={`rounded-sm px-2 py-1 font-medium ${viewMode === "master-detail" ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
-                onClick={() => setViewMode("master-detail")}
-              >
-                Master-detail
-              </button>
-            </div>
+            <ToolbarSegmentControl
+              value={viewMode}
+              onChange={setViewMode}
+              dataAttributes={{ "data-view-mode-toggle": "customers" }}
+              options={[
+                { value: "list", label: "List view", testId: "customers-view-list" },
+                { value: "master-detail", label: "Master-detail", testId: "customers-view-master-detail" },
+              ]}
+            />
             {/* CHROME-04 — roster-level Status/Type/Credit-status chips collapsed behind a
                 QBO-style Filters popover (Dispatch FilterBar / CollapsedListFilters gold pattern).
                 Filters the left customer list in BOTH list and master-detail view modes. */}
@@ -919,20 +914,16 @@ export function CustomersPage() {
             >
               <div className="space-y-1.5">
                 <div className="text-xs font-semibold text-gray-600">Status</div>
-                <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="customers">
-                  {(["active", "inactive", "all"] as const).map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      className={`rounded-sm px-2 py-1 font-medium capitalize ${rosterFilters.draft.listTab === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
-                      // Same single source of truth as the segment tabs — this older Filters control now
-                      // writes the same `listTab` param, so the two can never disagree.
-                      onClick={() => rosterFilters.setDraft({ ...rosterFilters.draft, listTab: value })}
-                    >
-                      {value}
-                    </button>
-                  ))}
-                </div>
+                <ToolbarSegmentControl
+                  value={rosterFilters.draft.listTab}
+                  onChange={(value) => rosterFilters.setDraft({ ...rosterFilters.draft, listTab: value })}
+                  dataAttributes={{ "data-list-status-filter": "customers" }}
+                  options={(["active", "inactive", "all"] as const).map((value) => ({
+                    value,
+                    label: value.charAt(0).toUpperCase() + value.slice(1),
+                    testId: `customers-roster-status-${value}`,
+                  }))}
+                />
               </div>
               {/* V8 — roster Type + Credit-status filters (filter the left customer list, not transactions). */}
               <div className="space-y-1.5">
@@ -965,14 +956,9 @@ export function CustomersPage() {
               </div>
             </CollapsedListFilters>
             <div className="relative z-50" onClick={(event) => event.stopPropagation()}>
-              <ActionButton
-                type="button"
-                className="relative z-50"
-                data-testid="customers-create-open"
-                onClick={openCreate}
-              >
+              <Button type="button" className="relative z-50" data-testid="customers-create-open" onClick={openCreate}>
                 + Create Customer
-              </ActionButton>
+              </Button>
             </div>
           </div>
         }

@@ -162,7 +162,7 @@ export function PreDispatchValidationPanel({
           validation used UUIDs as query params only; expose real EntityLinks for selected identities. */}
       {(driverUuid || unitUuid || trailerUuid || customerId) ? (
         <div
-          className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700"
+          className="flex flex-wrap gap-x-3 gap-y-1 border-t border-slate-200 pt-2 text-[11px] text-slate-700"
           data-testid="pre-dispatch-validation-entitylinks"
         >
           {driverUuid ? (
@@ -192,11 +192,11 @@ export function PreDispatchValidationPanel({
       ) : null}
 
       {error ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+        <div className="border-t border-slate-200 bg-slate-50 px-0 py-2 text-xs text-slate-700" role="alert">
           <span>Pre-dispatch check unavailable: {error}</span>
           <button
             type="button"
-            className="ml-3 rounded-sm border border-slate-300 bg-white px-2 py-1 font-medium"
+            className="ml-3 font-semibold underline"
             onClick={() => setRetryGeneration((generation) => generation + 1)}
             disabled={loading}
           >
