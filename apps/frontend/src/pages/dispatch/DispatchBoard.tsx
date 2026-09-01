@@ -83,7 +83,7 @@ import {
 } from "../../components/dispatch/LiveEtaColumns";
 import { CargoTempBadge, isReeferCommodity } from "../../components/dispatch/CargoTempBadge";
 import { DriverHosClockValue } from "../../components/dispatch/hos/DriverHosClocks";
-import { formatInCompanyTimeZone } from "../../lib/businessDate";
+import { formatClockTimeCT, formatInCompanyTimeZone } from "../../lib/businessDate";
 import { HOS_COLUMNS } from "../../components/dispatch/hos/hosClocks";
 import { LoadLivePositionCell } from "../../components/dispatch/LoadLivePositionCell";
 import { TriSignalPill } from "../../components/dispatch/TriSignalPill";
@@ -160,38 +160,55 @@ function laneSummary(load: DispatchLoadRow) {
   return toRouteSummary(load.first_pickup_city, load.first_delivery_city);
 }
 
-function formatApptDate(value?: string | null) {
+function formatStopDate(scheduledAt?: string | null, appointmentStartAt?: string | null) {
+  const value = scheduledAt ?? appointmentStartAt;
   if (!value) return null;
-  // Central Time (CLAUDE.md §8 "Central Time always") — a bare toLocaleDateString() on a full
-  // timestamp rolls to the wrong calendar day near midnight in whatever zone the browser happens to
-  // be in; force America/Chicago so the appt date always matches the company's wall-clock day.
-  const formatted = formatInCompanyTimeZone(value, { month: "short", day: "numeric" });
-  return formatted || null;
+  return formatInCompanyTimeZone(value, { month: "short", day: "numeric" }) || null;
 }
 
-// ETA-MODEL BLOCK 1 — Delivery cell shows the destination city PLUS the effective delivery date
-// (= predicted if confirmed-late, else scheduled appt). When predicted > scheduled it turns amber
-// with a "late vs appt" tag; hover shows BOTH dates. The scheduled appt is never overwritten.
-function renderDeliveryCell(load: DispatchLoadRow) {
-  const city = load.first_delivery_city ?? "—";
-  const effective = formatApptDate(load.effective_delivery_date);
-  const scheduled = formatApptDate(load.scheduled_delivery_date);
-  const predicted = formatApptDate(load.predicted_delivery_date);
+function formatStopTime(
+  timeWindowType?: string | null,
+  scheduledAt?: string | null,
+  appointmentStartAt?: string | null
+) {
+  if (timeWindowType === "open_window") return "FCFS";
+  const timeSource = appointmentStartAt ?? scheduledAt;
+  if (!timeSource) return "—";
+  return formatClockTimeCT(timeSource) || "—";
+}
+
+function renderPickupDateCell(load: DispatchLoadRow) {
+  const date = formatStopDate(load.pickup_scheduled_at, load.pickup_appointment_start_at);
+  return date ?? "—";
+}
+
+function renderPickupTimeCell(load: DispatchLoadRow) {
+  return formatStopTime(load.pickup_time_window_type, load.pickup_scheduled_at, load.pickup_appointment_start_at);
+}
+
+function renderDeliveryDateCell(load: DispatchLoadRow) {
+  const date = formatStopDate(load.delivery_scheduled_at, load.delivery_appointment_start_at);
   const late = Boolean(load.delivery_late_vs_appt);
+  if (!date) return "—";
   return (
-    <div className="flex flex-col leading-tight">
-      <span>{city}</span>
-      {effective ? (
-        <span
-          className={late ? "font-medium text-slate-700" : "text-gray-500"}
-          title={`Scheduled appt: ${scheduled ?? "—"}${predicted ? ` · Predicted: ${predicted}` : ""}`}
-        >
-          {effective}
-          {late ? " · late vs appt" : ""}
-        </span>
-      ) : null}
-    </div>
+    <span className={late ? "font-medium text-slate-700" : undefined} title={late ? "Late vs appointment" : undefined}>
+      {date}
+      {late ? " · late" : ""}
+    </span>
   );
+}
+
+function renderDeliveryTimeCell(load: DispatchLoadRow) {
+  return formatStopTime(
+    load.delivery_time_window_type,
+    load.delivery_scheduled_at,
+    load.delivery_appointment_start_at
+  );
+}
+
+// Delivery column is city-only; date/time live in delivery_date + delivery_time columns.
+function renderDeliveryCell(load: DispatchLoadRow) {
+  return load.first_delivery_city ?? "—";
 }
 
 function isUnassignedLoad(load: DispatchLoadRow) {
@@ -270,7 +287,9 @@ function sortUnassignedFirst(loads: DispatchLoadRow[]) {
 // widget cells (HOS clocks, cargo temp, live GPS, status signal, risk, driver status) are excluded,
 // same exemption class as the GLOBAL-SORT-RULE action-column carve-out (docs/specs/GLOBAL-SORT-RULE.md).
 const DISPATCH_SORTABLE_COLS = new Set([
-  "load", "unit", "trailer", "driver", "customer", "commodity", "pickup", "delivery", "wo", "linehaul", "status",
+  "load", "unit", "trailer", "driver", "customer", "commodity",
+  "pickup", "pickup_date", "pickup_time", "delivery", "delivery_date", "delivery_time",
+  "wo", "linehaul", "status",
 ]);
 
 function compareDispatch(a: string | number | null | undefined, b: string | number | null | undefined): number {
@@ -290,7 +309,19 @@ function dispatchSortValue(load: BoardLoad, key: string): string | number | null
     case "customer": return load.customer_name ?? null;
     case "commodity": return load.commodity ?? null;
     case "pickup": return load.first_pickup_city ?? null;
+    case "pickup_date":
+      return load.pickup_scheduled_at ?? load.pickup_appointment_start_at ?? null;
+    case "pickup_time":
+      return load.pickup_time_window_type === "open_window"
+        ? "FCFS"
+        : (load.pickup_appointment_start_at ?? load.pickup_scheduled_at ?? null);
     case "delivery": return load.first_delivery_city ?? null;
+    case "delivery_date":
+      return load.delivery_scheduled_at ?? load.delivery_appointment_start_at ?? null;
+    case "delivery_time":
+      return load.delivery_time_window_type === "open_window"
+        ? "FCFS"
+        : (load.delivery_appointment_start_at ?? load.delivery_scheduled_at ?? null);
     case "wo": return load.customer_wo_number ?? null;
     case "linehaul": return load.rate_total_cents ?? null;
     case "status": return load.status ?? null;
@@ -934,7 +965,11 @@ export function DispatchBoard({
     { key: "customer", header: "Customer", cell: renderCustomerCell },
     { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—" },
     { key: "pickup", header: "Pickup", cell: (load) => load.first_pickup_city ?? "—" },
+    { key: "pickup_date", header: "PU date", cell: (load) => renderPickupDateCell(load) },
+    { key: "pickup_time", header: "PU time", cell: (load) => renderPickupTimeCell(load) },
     { key: "delivery", header: "Delivery", cell: (load) => renderDeliveryCell(load) },
+    { key: "delivery_date", header: "Del date", cell: (load) => renderDeliveryDateCell(load) },
+    { key: "delivery_time", header: "Del time", cell: (load) => renderDeliveryTimeCell(load) },
     { key: "wo", header: "WO #", cell: (load) => load.customer_wo_number ?? "—" },
     {
       key: "cargo_temp",

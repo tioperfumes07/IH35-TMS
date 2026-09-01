@@ -162,6 +162,9 @@ export function DispatchPage({
     return companies.length > 0 ? [companies[0].id] : [];
   }, [companies, selectedCompanyId]);
   const filters = useMemo(() => parseFilters(searchParams, defaultCompanyIds), [defaultCompanyIds, searchParams]);
+  const boardScope: "live" | "history" = searchParams.get("board_scope") === "history" ? "history" : "live";
+  const effectiveDateMode =
+    boardScope === "history" && !searchParams.has("date_mode") ? "delivery" : filters.dateMode;
 
   const loadsQuery = useLoadsList({
     limit,
@@ -172,12 +175,13 @@ export function DispatchPage({
     driver_id: filters.driverId,
     operating_company_id: filters.companyIds,
     status: filters.statuses,
-    pickup_date_from: filters.dateMode === "pickup" ? filters.dateFrom || undefined : undefined,
-    pickup_date_to: filters.dateMode === "pickup" ? filters.dateTo || undefined : undefined,
-    delivery_date_from: filters.dateMode === "delivery" ? filters.dateFrom || undefined : undefined,
-    delivery_date_to: filters.dateMode === "delivery" ? filters.dateTo || undefined : undefined,
+    pickup_date_from: effectiveDateMode === "pickup" ? filters.dateFrom || undefined : undefined,
+    pickup_date_to: effectiveDateMode === "pickup" ? filters.dateTo || undefined : undefined,
+    delivery_date_from: effectiveDateMode === "delivery" ? filters.dateFrom || undefined : undefined,
+    delivery_date_to: effectiveDateMode === "delivery" ? filters.dateTo || undefined : undefined,
     include_progress: true,
     include_live_eta: true,
+    board_scope: boardScope,
   });
 
   const preSettlementsQuery = useQuery({
@@ -330,6 +334,34 @@ export function DispatchPage({
               }}
             >
               Round Trips
+            </Button>
+            <Button
+              type="button"
+              variant={boardScope === "live" ? "primary" : "secondary"}
+              size="sm"
+              data-testid="dispatch-board-scope-live"
+              onClick={() => {
+                const next = new URLSearchParams(searchParams);
+                next.set("board_scope", "live");
+                next.delete("offset");
+                setSearchParams(next);
+              }}
+            >
+              Live
+            </Button>
+            <Button
+              type="button"
+              variant={boardScope === "history" ? "primary" : "secondary"}
+              size="sm"
+              data-testid="dispatch-board-scope-history"
+              onClick={() => {
+                const next = new URLSearchParams(searchParams);
+                next.set("board_scope", "history");
+                next.delete("offset");
+                setSearchParams(next);
+              }}
+            >
+              History
             </Button>
             <Button
               type="button"
