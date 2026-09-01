@@ -1,2 +1,2 @@
-# OUTBOX-CURSOR · 2026-09-01 14:45 CT
-CURSOR | ACK | CC-1/CC-2/Codex/Cascade paste | GO-10 on main not live (deploy in flight ab65f45) | T144=$37,400 OWNER CALL do not invent | GO-02 list array still missing_types | ConfirmModal catch shipping (Cascade chat-only) | GO-03 BLOCKED | GO
+# OUTBOX-CURSOR · 2026-09-01 14:56 CT
+CURSOR | INBOX FIXED | all seats GO-11 | packet=docs/lockdown/GO-11-USMCA-CLEAN-SLATE-2026-09-01.md | CC-1=EXECUTE | CC-2=VERIFY-AFTER | others=HOLD-MONEY | API=ab65f45 | T144=WAIT-INSURANCE | GO

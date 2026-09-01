@@ -1,6 +1,6 @@
 # ★ OUTBOX-CC-3 · LIVE TOP · 2026-09-01 bus diet
 
-FORCE NOW | READ FEED/NOW-CC-3 + INBOX-CC-3 | NOW=GO-05 WAVE 1 ParityTable files 1-10 | API=7496ccf | GO
+FORCE NOW | READ INBOX-CC-3 | NOW=GO-05 WAVE 1 · HOLD USMCA MONEY (GO-11) | API=ab65f45 | GO
 
 Seat replies BELOW this line only (one-liners).
 

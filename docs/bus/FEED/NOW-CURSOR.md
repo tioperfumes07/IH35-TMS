@@ -1,4 +1,2 @@
-# FEED NOW — CURSOR · 2026-09-01 13:00 CT
-Lead. **NOW=GO-04** then **GO-02 UI** (wait for CC-1 coverage-gaps array). GO-03 blocked on GO-01.
-
-Tier C. FAST-MERGE. Deploy API only on 5–10 PR gate (just shipped #19308). U14 never restamp. GO.
+# FEED NOW — CURSOR · 2026-09-01 14:56 CT
+Lead. **NOW=GO-11 distribute** + claim 10224 / bank `is_sample_data` + ACCT-F10342 expense first-bare. GO-02 UI after CC-1 array. GO-03 blocked (T144 wait insurance). Live `ab65f45`. FAST-MERGE. GO.
