@@ -1188,5 +1188,6 @@
   "verify-wo-posting-preview-fails-closed.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-wo-time-entry-identity-audit-lifecycle.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-wo-time-tracking-rate-modal-scope-snapshot.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
-  "verify-work-order-create-clears-stale-entity-fks.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt"
+  "verify-work-order-create-clears-stale-entity-fks.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
+  "verify-money-column-void-aware.mjs": "baselined 2026-09-01 ACCT-F10187 — DEVIN-A chrome-only lane cannot author verify-steps (Rule 37 claim-then-feature); guard runs via selftest + direct invocation; CC-1 owns the schema migration that this guard spec'd; wire into a verify-step once a claim PR lands on main"
 }
