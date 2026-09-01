@@ -246,3 +246,4 @@ CODEX | ACK | GO-MECH-0901 | NOW=board-rows | register-missing=55/55-filed-by-ro
 CODEX | WORKING | DSP-06 | ROOT=detention-operational-reader-kept-terminal-load-events | CANON=isTerminalLoadStatus | blast=1-operational+1-history-unchanged | focused=guard+selftest+vitest6+backend-tsc | NEXT=gate+FAST-MERGE | GO
 CODEX | FAST-MERGE | DSP-06 | gate=exit0 | merged=#19079@a4a4746064708636c6bd0b555f5438d4fb8b283a | live=UNVERIFIED-pending-deploy | NEXT=DSP-07 | GO
 CODEX | CLOSED-STALE | DSP-07 | current-main=shared-dispatched+at_pickup+in_transit+at_delivery | prior-fix=1b06cf8517 | guard=PASS+selftest23/23 | product-code=NONE | NEXT=DSP-08 | GO
+CODEX | WORKING | DSP-08=STALE-fixed-by-dedup-count | DSP-09=Detention-KPI-added | guard=derived-action-contract+selftest | NEXT=focused+gate+FAST-MERGE | GO

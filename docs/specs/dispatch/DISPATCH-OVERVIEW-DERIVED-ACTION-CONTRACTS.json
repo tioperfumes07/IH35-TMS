@@ -14,6 +14,12 @@
       "required_tokens": ["atRiskLateTotal", "to=\"/dispatch/at-risk\""]
     },
     {
+      "id": "detention",
+      "label": "Detention",
+      "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
+      "required_tokens": ["detentionQ.data?.count", "detentionQ.data.active_count", "to=\"/dispatch/detention\""]
+    },
+    {
       "id": "units-available",
       "label": "Units available",
       "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
