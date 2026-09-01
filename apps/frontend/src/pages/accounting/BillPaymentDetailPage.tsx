@@ -1,9 +1,10 @@
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { humanMemo } from "./ManualJEListPage";
 import { formatDateUS } from "../../lib/formatDate";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { getBillPayment } from "../../api/accounting";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getBillPayment, voidVendorBillPayment } from "../../api/accounting";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
@@ -15,6 +16,9 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -23,11 +27,28 @@ function money(cents: number) {
 export function BillPaymentDetailPage() {
   const { id = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
+  const { pushToast } = useToast();
+  const queryClient = useQueryClient();
+  const [voidOpen, setVoidOpen] = useState(false);
 
   const detailQuery = useQuery({
     queryKey: ["accounting", "bill-payment", selectedCompanyId, id],
     queryFn: () => getBillPayment(id, selectedCompanyId!),
     enabled: Boolean(id && selectedCompanyId),
+  });
+
+  // VIS-03: a void endpoint (voidVendorBillPayment) already existed server-side (bills.routes.ts
+  // POST .../bill-payments/:id/void) and had an FE client wrapper -- this page just never rendered
+  // a trigger for it, so the only way to void a bill payment was BillsPage/BillPaymentsListPage's
+  // list-row action, not "inside the transaction" (owner requirement 4.4).
+  const voidMutation = useMutation({
+    mutationFn: (reason: string) => voidVendorBillPayment(id, selectedCompanyId!, reason),
+    onSuccess: () => {
+      pushToast("Bill payment voided", "success");
+      void queryClient.invalidateQueries({ queryKey: ["accounting", "bill-payment", selectedCompanyId, id] });
+      void queryClient.invalidateQueries({ queryKey: ["accounting", "bill-payments"] });
+    },
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to void bill payment"), "error"),
   });
 
   // LV-JE-DETAIL-COLD-NAV-FALSE-NOT-FOUND class fix: react-query v5 isLoading = isPending &&
@@ -77,8 +98,28 @@ export function BillPaymentDetailPage() {
             >
               Print
             </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => setVoidOpen(true)}
+              disabled={isVoided}
+              title={isVoided ? "Bill payment already voided." : undefined}
+            >
+              Void
+            </Button>
           </div>
         }
+      />
+
+      <VoidReasonModal
+        open={voidOpen}
+        title="Void Bill Payment"
+        entityRef={`${displayId} · ${money(payment.amount_cents)} · ${formatDateUS(payment.payment_date)}`}
+        minLength={3}
+        onClose={() => setVoidOpen(false)}
+        onSubmit={async (reason) => {
+          await voidMutation.mutateAsync(reason);
+        }}
       />
 
       <div data-testid="bill-payment-detail">
