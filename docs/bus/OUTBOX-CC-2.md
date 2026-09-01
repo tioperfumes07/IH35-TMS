@@ -150,3 +150,64 @@ the actual document-create/link table — has **zero** `DO UPDATE` sites; both i
 
 Full evidence + prior GO-10 (display_id) numbering findings on `docs/audit/GUARD-WORKORDERS.md`
 and this file's earlier entries. Nothing built. Idle, watching for GO-10 merge to run A–E.
+
+---
+
+## ★ CLOSED · 2026-09-01T14:15Z FROZEN PASTE re-run · CC-2 · GO-10 A–E PASS + GO-01/GO-02
+
+API `healthz/shallow` = `ab65f45` confirmed live before this pass, matching the target SHA.
+`load-id-reservation.service.ts` re-read on current `origin/main` (#19325 landed): `{4}` regex
+gone, `MAX_LOAD_ID_RESERVE_ATTEMPTS` gone, `first_load_number_required` present, allocator is
+`lib.next_trace_no`. Confirmed via code + live schema, **no loads booked** (owner-only per this
+GO's own packet):
+
+- **A (concurrent blanks, no 500):** `allocateNextLoadNumber` seeds once (`MAX(load_number::bigint)
+  WHERE load_number ~ '^[0-9]+$'`, full-string parse not last-4-digits), then every call after
+  goes through `lib.next_trace_no(opco,'LOAD')` — `pg_get_functiondef` confirms it's a single
+  `INSERT ... ON CONFLICT (operating_company_id, doc_type) DO UPDATE SET last_trace_no =
+  last_trace_no + 1 ... RETURNING`, backed by the real PK `trace_counters_pkey (operating_company_id,
+  doc_type)` (pg_index, confirmed unique). One atomic statement, no read-then-write gap — two
+  concurrent blanks get sequentially different numbers by construction. **PASS.**
+- **B/C (typed number — one 2xx one 409 existing_id, retype existing → 409, no 500):**
+  `assertLoadNumberAvailable` is a fast pre-check only; the real protection is
+  `book-load.service.ts`'s `SAVEPOINT book_load_insert` around the actual INSERT, catching `23505`,
+  rolling back to the savepoint (not the whole booking), looking up the winner, and returning
+  `{status:409, error:"duplicate_load_number", load_number, existing_id}`. This requires a REAL
+  backing unique index — confirmed live: `loads_operating_company_id_load_number_key UNIQUE
+  (operating_company_id, load_number)` in `pg_index` on `mdata.loads`. Same pattern (SAVEPOINT +
+  23505 catch + `existing_id`) repeated in both `dispatch/loads.routes.ts` and
+  `mdata/loads.routes.ts`. **PASS**, both scenarios, and — unlike the GO-06 display_id 409 body I
+  flagged as missing `existing_id` in the earlier verify pass — this one already includes it.
+- **D (blank before any numeric load → 422 first_load_number_required):**
+  `FirstLoadNumberRequiredError` thrown when the seed `MAX()` is NULL; mapped to
+  `reply.code(422).send({error: err.code})` in `dispatch/loads.routes.ts:506` and
+  `mdata/loads.routes.ts:574`, code = `"first_load_number_required"`. **PASS.**
+- **E ({4}-regex + MAX_LOAD_ID_RESERVE_ATTEMPTS gone):** confirmed absent, both greps zero hits.
+  **PASS.**
+
+**GO-01:** independently re-confirmed 34 units / $1,040,540.00 (unchanged since #19321 — no
+attach activity since). Cross-checked CIMD-2026-0720 vs 437539 tractor sets hoping to isolate
+the missing unit — both are equally at 14 tractors, CIMD's 14 are a subset of/identical to
+437539's 14, so that comparison doesn't isolate anything. Checked for a USMCA tractor unit
+(`T14x`–`T17x` pattern, leased to USMCA) with no `mdata.assets` row at all — zero found, so
+it isn't an unbuilt-asset gap either. **Could not name the missing unit without guessing** —
+the base-11 + T163/T174/T156 = 14 named units are fully accounted for against
+`OWNER-RULING-INSURANCE-EXCLUDED-UNITS-2026-09-01.md`'s own list, and the excluded set is also
+fully accounted for; the 15th target tractor isn't named in any repo-committed doc I can reach.
+Confirmed T144 correctly NOT attached to 437539 (count=0) — exclusion ruling holding. The
+schedule that would name the 15th unit is on Desktop/Downloads, which this session cannot read
+(EPERM, same as last pass) — need either that file readable here or CC-1 to name it directly.
+
+**GO-02:** `coverage-gap-units.shared.ts:94` (`missing_types: InsuranceCoverageType[]`) and
+`apps/frontend/src/api/insurance.ts:634` both already type it as an array, not a string — this
+looks already shipped, not still-string. Flagging the mismatch with the inbox's framing rather
+than asserting either way without a live HTTP round-trip (didn't fire one — no safe read-only
+angle found in the time this pass had; would need an authenticated session).
+
+Nothing built, nothing booked. Idle.
+
+**GO-02 update (same pass, caught mid-write):** confirmed via `git diff` against a fresher
+`origin/main` fetch — PR #19334 ("GO-02 LIST API -- catalog-driven per-type coverage-gaps array")
+landed while this pass was running. Resolves the flag above; array shape is now definitively
+shipped end to end, not just type-level. Also noticed `docs/bus/OUTBOX-CC-2.md`'s own banner
+line was updated to point at a new **GO-11** packet — reading `INBOX-CC-2.md` next.
