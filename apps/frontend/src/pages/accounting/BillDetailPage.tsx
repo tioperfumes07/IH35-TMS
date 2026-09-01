@@ -13,6 +13,7 @@ import {
 import { ApiError } from "../../api/client";
 import { Button } from "../../components/Button";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
+import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
@@ -205,6 +206,7 @@ export function BillDetailPage() {
 
   return (
     <AccountingSubNavWrapper>
+      <VoidedBanner voidedAt={bill.revoked_at} voidReason={bill.revoked_reason} documentLabel="Bill" />
       <PageHeader
         title={displayId}
         backHref="/accounting/bills"

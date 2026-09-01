@@ -14,6 +14,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
+import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -53,6 +54,7 @@ export function BillPaymentDetailPage() {
 
   return (
     <AccountingSubNavWrapper>
+      <VoidedBanner voidedAt={payment.revoked_at} voidReason={payment.revoked_reason} documentLabel="Bill payment" />
       <PageHeader
         title={displayId}
         backHref="/accounting/bill-payments"

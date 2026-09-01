@@ -14,6 +14,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
+import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
@@ -127,6 +128,7 @@ export function ExpenseDetailPage() {
 
   return (
     <AccountingSubNavWrapper>
+      <VoidedBanner voidedAt={expense.voided_at} voidReason={expense.void_reason} documentLabel="Expense" />
       <PageHeader
         title={displayId}
         backHref="/accounting/expenses/list"

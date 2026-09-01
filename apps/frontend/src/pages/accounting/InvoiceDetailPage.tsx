@@ -10,6 +10,7 @@ import { getLoad } from "../../api/loads";
 import { Button } from "../../components/Button";
 import { openCanonicalDocument, openPrintableDocument } from "../../lib/openPrintableDocument";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
+import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
@@ -299,6 +300,7 @@ export function InvoiceDetailPage() {
 
   return (
     <AccountingSubNavWrapper>
+      <VoidedBanner voidedAt={invoice.voided_at} voidReason={invoice.void_reason} documentLabel="Invoice" />
       <PageHeader
         title={entityLabel(invoice.display_id, invoice.id, "Invoice")}
         backHref="/accounting/invoices"
