@@ -505,6 +505,11 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             e.status                                     AS status,
             e.posting_status                             AS posting_status,
             e.memo                                       AS memo,
+            -- VIS-01: the DETAIL payload never exposed voided_at/void_reason at all (list-page callers
+            -- can infer void from status='void' alone, but the detail page needs the date + reason for
+            -- the top-of-page VoidedBanner -- same fields invoices.routes.ts already returns).
+            e.voided_at::text                            AS voided_at,
+            e.void_reason                                AS void_reason,
             e.load_id::text                              AS load_id,
             e.vendor_uuid::text                          AS vendor_uuid,
             e.driver_uuid::text                          AS driver_uuid,

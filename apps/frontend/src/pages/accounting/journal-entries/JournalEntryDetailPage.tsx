@@ -19,6 +19,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { formatUsdCents } from "../../../lib/money";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
+import { VoidedBanner } from "../../../components/accounting/VoidedBanner";
 import { humanMemo } from "../ManualJEListPage";
 
 /** LST-F105: page chrome must not lead with a bare UUID fragment as the JE identity. */
@@ -286,6 +287,7 @@ export function JournalEntryDetailPage() {
 
   return (
     <AccountingSubNavWrapper>
+      <VoidedBanner voidedAt={entry.voided_at} voidReason={entry.void_reason} documentLabel="Journal entry" />
       <PageHeader
         title={chromeLabel}
         backHref="/accounting/journal-entries"

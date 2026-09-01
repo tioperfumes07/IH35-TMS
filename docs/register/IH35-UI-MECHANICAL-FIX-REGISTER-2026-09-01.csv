@@ -37,7 +37,7 @@ SEL-01,Selection,Select-all only selects the current page,Every bulk grid,FIXED 
 SEL-02,Selection,Bulk actions lock out permanently after one failure,Bulk void / bulk ops,FIXED,"BULK_IN_FLIGHT_MAX_AGE_MS+inFlightSinceMs expire stranded flags; factory finally{releaseBulkInFlight}; points 30/60s not 1/5s; bulk-update.factory.test.ts",CURSOR
 SEL-03,Selection,Bulk must pre-validate and show what cannot be voided BEFORE running,Bulk void,STILL OPEN,One unreversible row rolled back all 11 selected bills: '0 of 11 succeeded; 1 failed.',CURSOR
 SEL-04,Selection,Multi-select void on EVERY accounting table,"Settlements, loads",STILL OPEN,"Present elsewhere, absent on settlements and loads.",CURSOR
-VIS-01,4 Void visibility,VOID banner at the top of the detail view,Every document,STILL OPEN,A voided document does not announce itself when you open it.,CC-1
+VIS-01,4 Void visibility,VOID banner at the top of the detail view,Every document,FIXED (shipping),"Shared VoidedBanner component, wired into Invoice/Bill/Expense/Payment/BillPayment/JournalEntry detail pages (6 of 7). Settlements intentionally excluded -- they use cancelled/locked status, not void/voided_at, per the void/cancel governance split.",CC-1
 VIS-02,4 Void visibility,Void as a first-class status column + filter + gear option,Every grid,STILL OPEN,Owner requirement 4.2.,CURSOR
 VIS-03,4 Void visibility,"Void button inside the transaction, not only in the list",Every document,STILL OPEN,Owner requirement 4.4.,CC-1
 VIS-04,4 Void visibility,"Void reason must be a dropdown catalog, memo optional — no free typing",Void dialog,STILL OPEN,catalogs.void_reasons does not exist.,CURSOR

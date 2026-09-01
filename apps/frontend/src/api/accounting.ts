@@ -273,6 +273,8 @@ export type VendorBill = {
   created_at: string;
   updated_at: string;
   revoked_at: string | null;
+  /** VIS-01 — bill void reason (accounting.bills.revoked_reason), shown by VoidedBanner. */
+  revoked_reason?: string | null;
   // BANKREC-LISTSTATUS-01: true iff any of this bill's payments has an active (not-rejected)
   // bank.reconciliation_matches row. Read-only, derived server-side.
   is_reconciled?: boolean;
@@ -348,6 +350,8 @@ export type BillPayment = {
   created_by_user_id: string | null;
   created_at: string;
   revoked_at: string | null;
+  /** VIS-01 — bill payment void reason (accounting.bill_payments.revoked_reason), shown by VoidedBanner. */
+  revoked_reason?: string | null;
   // BANKREC-LISTSTATUS-01: true iff this bill_payment has an active (not-rejected)
   // bank.reconciliation_matches row. Read-only, derived server-side.
   is_reconciled?: boolean;
@@ -807,6 +811,9 @@ export type ExpenseDetail = {
   status: ExpenseListStatus;
   posting_status: ExpensePostingStatus;
   memo: string | null;
+  /** VIS-01 — expense void date/reason, shown by VoidedBanner. */
+  voided_at?: string | null;
+  void_reason?: string | null;
   load_id: string | null;
   load_number: string | null;
   vendor_uuid: string | null;

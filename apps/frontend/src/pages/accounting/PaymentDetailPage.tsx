@@ -6,6 +6,7 @@ import { applyPayment, getPayment, listInvoices, unapplyPayment, voidPayment, ty
 import { Button } from "../../components/Button";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
+import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
@@ -163,6 +164,7 @@ export function PaymentDetailPage() {
 
   return (
     <AccountingSubNavWrapper>
+      <VoidedBanner voidedAt={payment.voided_at} voidReason={payment.void_reason} documentLabel="Payment" />
       <PageHeader
         title={entityLabel(payment.display_id, payment.id, "Payment")}
         backHref="/accounting/payments"
