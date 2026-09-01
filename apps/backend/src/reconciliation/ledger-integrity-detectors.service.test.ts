@@ -1,11 +1,20 @@
 import { describe, expect, it } from "vitest";
 import {
   checkAskMyAccountantForCompany,
+  checkDriverCashAdvanceTieOutForCompany,
+  checkExpenseNoGlDeltaForCompany,
+  checkExtendedSubledgerTieOutForCompany,
   checkFutureDatedEntriesForCompany,
+  checkMinimumPostingLinesForCompany,
   checkNoGlDeltaForCompany,
+  checkOrphanPostingsForCompany,
   checkPerEntryBalanceForCompany,
   checkReversalIntegrityForCompany,
+  checkSampleDataFlagExplicitForCompany,
   checkSubledgerTieOutForCompany,
+  checkTestNamedAccountForCompany,
+  checkVoidMetadataCompletenessForCompany,
+  checkVoidReversalIntegrityForCompany,
 } from "./ledger-integrity-detectors.service.js";
 
 const COMPANY = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -377,5 +386,300 @@ describe("ledger-integrity-detectors.service — INV-11 reversal symmetry", () =
 
     expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
     expect(client.calls.some((c) => c.sql.includes("UPDATE"))).toBe(false);
+  });
+});
+
+// LAW-TRANSACTION-HEALTH-REGISTER-2026-09-01 bands A/C/F (CC-2). Each test below uses a small,
+// self-contained mock client scoped to exactly the queries its own check issues, rather than
+// extending the shared makeClient() above — several of these new checks share SQL substrings
+// ("WITH je AS", "FROM catalogs.accounts") with the EXISTING checks tested above, and a single
+// shared router risks one check's mock silently answering a different check's query.
+function simpleClient(responses: Array<{ match: (sql: string, values?: unknown[]) => boolean; rows: unknown[] }>) {
+  const calls: Call[] = [];
+  return {
+    calls,
+    async query(sql: string, values?: unknown[]) {
+      calls.push({ sql, values });
+      for (const r of responses) {
+        if (r.match(sql, values)) return { rows: r.rows };
+      }
+      return { rows: [] };
+    },
+  };
+}
+
+describe("ledger-integrity-detectors.service — A3 minimum posting lines", () => {
+  it("files journal_entry_fewer_than_two_postings when a real entry has under two postings", async () => {
+    const client = simpleClient([
+      { match: (sql) => sql.includes("lines < 2"), rows: [{ count: "2", ids: ["je-x", "je-y"] }] },
+    ]);
+
+    await checkMinimumPostingLinesForCompany(client as never, COMPANY, "run-1");
+
+    const insert = client.calls.find((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    expect(insert).toBeDefined();
+    const values = insert!.values as unknown[];
+    expect(values[1]).toBe("journal_entry_fewer_than_two_postings");
+    expect(JSON.parse(values[5] as string)).toMatchObject({ count: 2, sample_journal_entry_ids: ["je-x", "je-y"] });
+  });
+
+  it("does nothing when every real entry has at least two postings", async () => {
+    const client = simpleClient([{ match: (sql) => sql.includes("lines < 2"), rows: [{ count: "0", ids: [] }] }]);
+
+    await checkMinimumPostingLinesForCompany(client as never, COMPANY, "run-1");
+
+    expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
+  });
+});
+
+describe("ledger-integrity-detectors.service — A4 orphan postings", () => {
+  it("files posting_orphan_or_cross_company_account when a posting's account doesn't resolve", async () => {
+    const client = simpleClient([
+      { match: (sql) => sql.includes("a.id IS NULL"), rows: [{ count: "1", ids: ["posting-1"] }] },
+    ]);
+
+    await checkOrphanPostingsForCompany(client as never, COMPANY, "run-1");
+
+    const insert = client.calls.find((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    expect(insert).toBeDefined();
+    expect((insert!.values as unknown[])[1]).toBe("posting_orphan_or_cross_company_account");
+  });
+});
+
+describe("ledger-integrity-detectors.service — A5-extend expense no-GL-delta", () => {
+  it("files document_no_gl_delta for a posted expense with zero postings", async () => {
+    const client = simpleClient([
+      { match: (sql) => sql.includes("FROM accounting.expenses e"), rows: [{ count: "1", ids: ["exp-1"] }] },
+    ]);
+
+    await checkExpenseNoGlDeltaForCompany(client as never, COMPANY, "run-1");
+
+    const insert = client.calls.find((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    const values = insert!.values as unknown[];
+    expect(JSON.parse(values[5] as string)).toMatchObject({ document_type: "expense", count: 1, sample_ids: ["exp-1"] });
+  });
+});
+
+describe("ledger-integrity-detectors.service — C1+C5 voided document reversal integrity", () => {
+  it("files voided_document_reversal_broken when a voided invoice's original JE has no reversal", async () => {
+    const client = simpleClient([
+      {
+        match: (sql, values) => sql.includes("reversal_check") && values?.[1] === "invoice",
+        rows: [{ doc_id: "inv-1", missing_reversal: true, mismatched_cents: "31390" }],
+      },
+      { match: (sql, values) => sql.includes("reversal_check") && values?.[1] === "bill", rows: [] },
+    ]);
+
+    await checkVoidReversalIntegrityForCompany(client as never, COMPANY, "run-1");
+
+    const inserts = client.calls.filter((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    expect(inserts).toHaveLength(1); // bill leg is clean
+    const values = inserts[0].values as unknown[];
+    expect(values[1]).toBe("voided_document_reversal_broken");
+    expect(JSON.parse(values[5] as string)).toMatchObject({
+      document_type: "invoice",
+      missing_reversal_count: 1,
+      sample_missing_reversal_ids: ["inv-1"],
+    });
+  });
+
+  it("does nothing for either document type when nothing is broken", async () => {
+    const client = simpleClient([{ match: (sql) => sql.includes("reversal_check"), rows: [] }]);
+
+    await checkVoidReversalIntegrityForCompany(client as never, COMPANY, "run-1");
+
+    expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
+  });
+});
+
+describe("ledger-integrity-detectors.service — C2 void metadata completeness", () => {
+  it("files void_metadata_incomplete for a voided invoice with an empty void_reason", async () => {
+    const client = simpleClient([
+      { match: (sql) => sql.includes("void_reason IS NULL"), rows: [{ count: "1", ids: ["inv-2"] }] },
+      { match: (sql) => sql.includes("revoked_reason IS NULL"), rows: [{ count: "0", ids: [] }] },
+    ]);
+
+    await checkVoidMetadataCompletenessForCompany(client as never, COMPANY, "run-1");
+
+    const inserts = client.calls.filter((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    expect(inserts).toHaveLength(1);
+    expect(JSON.parse((inserts[0].values as unknown[])[5] as string)).toMatchObject({
+      document_type: "invoice",
+      count: 1,
+    });
+  });
+
+  it("files void_metadata_incomplete for a revoked bill missing revoked_by_user_id (the C4 mixed-convention shape)", async () => {
+    const client = simpleClient([
+      { match: (sql) => sql.includes("void_reason IS NULL"), rows: [{ count: "0", ids: [] }] },
+      { match: (sql) => sql.includes("revoked_reason IS NULL"), rows: [{ count: "1", ids: ["bill-1"] }] },
+    ]);
+
+    await checkVoidMetadataCompletenessForCompany(client as never, COMPANY, "run-1");
+
+    const inserts = client.calls.filter((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    expect(inserts).toHaveLength(1);
+    expect(JSON.parse((inserts[0].values as unknown[])[5] as string)).toMatchObject({ document_type: "bill", count: 1 });
+  });
+});
+
+describe("ledger-integrity-detectors.service — F1 test-shaped-but-unflagged documents (F-BAND rewrite)", () => {
+  it("files is_sample_data_not_explicit per document type independently, by NAME not by IS NULL", async () => {
+    const client = simpleClient([
+      {
+        match: (sql) => sql.includes("accounting.invoices") && sql.includes("is_sample_data, false) = false"),
+        rows: [{ id: "inv-1", text: "regular customer invoice notes" }],
+      },
+      {
+        match: (sql) => sql.includes("accounting.bills") && sql.includes("is_sample_data, false) = false"),
+        rows: [{ id: "bill-1", text: "regular vendor bill memo" }],
+      },
+      {
+        match: (sql) => sql.includes("accounting.expenses") && sql.includes("is_sample_data, false) = false"),
+        rows: [
+          { id: "exp-a", text: "TEST DATA launch-16 GO-1640 do not void" },
+          { id: "exp-b", text: "regular fuel expense" },
+        ],
+      },
+    ]);
+
+    await checkSampleDataFlagExplicitForCompany(client as never, COMPANY, "run-1");
+
+    const inserts = client.calls.filter((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    expect(inserts).toHaveLength(1); // only the expense leg has a test-shaped, unflagged row
+    expect(JSON.parse((inserts[0].values as unknown[])[5] as string)).toMatchObject({
+      document_type: "expense",
+      count: 1,
+      sample_ids: ["exp-a"],
+    });
+  });
+
+  it("never fires on IS NULL alone (the bug this rewrite fixed: zero NULLs exist anywhere per the F-BAND sweep)", async () => {
+    const client = simpleClient([
+      { match: (sql) => sql.includes("is_sample_data, false) = false"), rows: [{ id: "x", text: "ordinary real record" }] },
+    ]);
+
+    await checkSampleDataFlagExplicitForCompany(client as never, COMPANY, "run-1");
+
+    expect(client.calls.some((c) => c.sql.includes("IS NULL"))).toBe(false);
+    expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
+  });
+});
+
+describe("ledger-integrity-detectors.service — F2 test-named master data (F-BAND rewrite, multi-table)", () => {
+  it("files test_named_account_in_coa for accounts matching the broadened test-name shape", async () => {
+    const client = simpleClient([
+      {
+        match: (sql) => sql.includes("FROM catalogs.accounts"),
+        rows: [
+          { id: "acct-1", number_val: "2100-00-012", name_val: "CODEX FLEET TEST 20260821 — Driver Escrow" },
+          { id: "acct-2", number_val: "9901", name_val: "ZZ-SAMPLE A USMCA_GATEB_SAMPLE_2026-08-07" },
+          { id: "acct-3", number_val: "1000", name_val: "Bank of America - Operating (USMCA)" },
+        ],
+      },
+    ]);
+
+    await checkTestNamedAccountForCompany(client as never, COMPANY, "run-1");
+
+    const insert = client.calls.find((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    const values = insert!.values as unknown[];
+    const local = JSON.parse(values[5] as string);
+    expect(local.record_type).toBe("account");
+    expect(local.count).toBe(2); // the real bank account must NOT be flagged; ZZ-SAMPLE now IS caught
+    expect(local.sample_records.map((r: { id: string }) => r.id)).toEqual(["acct-1", "acct-2"]);
+  });
+
+  it("excludes the confirmed false positive: a real vendor account with 'Drug Test' in its name", async () => {
+    const client = simpleClient([
+      {
+        match: (sql) => sql.includes("FROM catalogs.accounts"),
+        rows: [{ id: "acct-real", number_val: "QBO-1150040105", name_val: "Antidoping-Drug Test Services" }],
+      },
+    ]);
+
+    await checkTestNamedAccountForCompany(client as never, COMPANY, "run-1");
+
+    expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
+  });
+
+  it("scans drivers/customers/vendors/units too, independently of accounts", async () => {
+    const client = simpleClient([
+      { match: (sql) => sql.includes("FROM catalogs.accounts"), rows: [] },
+      {
+        match: (sql) => sql.includes("FROM mdata.drivers"),
+        rows: [{ id: "drv-1", number_val: null, name_val: "TEST CODEX ONBOARD 20260824" }],
+      },
+      { match: (sql) => sql.includes("FROM mdata.customers"), rows: [] },
+      {
+        match: (sql) => sql.includes("FROM mdata.vendors"),
+        rows: [{ id: "vnd-1", number_val: null, name_val: "TEST-VOID-LATER Vendor 0822" }],
+      },
+      { match: (sql) => sql.includes("FROM mdata.units"), rows: [] },
+    ]);
+
+    await checkTestNamedAccountForCompany(client as never, COMPANY, "run-1");
+
+    const inserts = client.calls.filter((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    expect(inserts).toHaveLength(2); // drivers + vendors leg; accounts/customers/units are clean
+    const recordTypes = inserts.map((i) => JSON.parse((i.values as unknown[])[5] as string).record_type).sort();
+    expect(recordTypes).toEqual(["driver", "vendor"]);
+  });
+
+  it("does not false-positive on a real account name with no test-shaped substring", async () => {
+    const client = simpleClient([
+      {
+        match: (sql) => sql.includes("FROM catalogs.accounts"),
+        rows: [{ id: "acct-1", number_val: "1100", name_val: "Accounts Receivable (A/R)" }],
+      },
+    ]);
+
+    await checkTestNamedAccountForCompany(client as never, COMPANY, "run-1");
+
+    expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
+  });
+});
+
+describe("ledger-integrity-detectors.service — B6 driver cash advance tie-out (multi-account)", () => {
+  it("files subledger_tie_out_diff summing GL across every per-driver control account", async () => {
+    const client = simpleClient([
+      {
+        match: (sql) => sql.includes("driver_advance_accounts"),
+        rows: [{ account_id: "drv-acct-1" }, { account_id: "drv-acct-2" }],
+      },
+      {
+        match: (sql) => sql.includes("fn_account_balances_as_of") && sql.includes("closing_balance_cents"),
+        rows: [{ closing_balance_cents: "10000", normal_balance: "debit" }],
+      },
+      {
+        match: (sql) => sql.includes("driver_finance.driver_advances") && sql.includes("outstanding_balance"),
+        rows: [{ cents: "15000" }],
+      },
+    ]);
+
+    await checkDriverCashAdvanceTieOutForCompany(client as never, COMPANY, "run-1");
+
+    const insert = client.calls.find((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    const values = insert!.values as unknown[];
+    // gl = 10000 + 10000 (both accounts stubbed identically) = 20000; sub = 15000; diff = 5000
+    expect(JSON.parse(values[5] as string)).toMatchObject({ ledger: "driver_cash_advance", gl_cents: 20000, subledger_cents: 15000, diff_cents: 5000 });
+  });
+
+  it("does nothing when no company has any per-driver cash-advance account bound yet", async () => {
+    const client = simpleClient([{ match: (sql) => sql.includes("driver_advance_accounts"), rows: [] }]);
+
+    await checkDriverCashAdvanceTieOutForCompany(client as never, COMPANY, "run-1");
+
+    expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
+  });
+});
+
+describe("ledger-integrity-detectors.service — extended B3/B4/B7/B8 subledger tie-out", () => {
+  it("skips a role entirely when its control account is unbound (never claims a false $0 tie)", async () => {
+    const client = simpleClient([{ match: (sql) => sql.includes("FROM accounting.chart_of_accounts_roles"), rows: [] }]);
+
+    await checkExtendedSubledgerTieOutForCompany(client as never, COMPANY, "run-1");
+
+    expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
+    expect(client.calls.some((c) => c.sql.includes("fn_account_balances_as_of"))).toBe(false);
   });
 });
