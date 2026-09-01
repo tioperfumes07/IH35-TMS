@@ -68,10 +68,12 @@ for (const [alias, source] of dcaSources) {
   if (new RegExp(`\\b${alias}\\.operating_company_id`).test(source))
     fail(`${alias} references phantom driver_company_authorizations.operating_company_id`);
 }
-// SCOPE: pull only the tenant's ACTIVE board drivers (OPEN vehicle assignment) via the board-proven key — NOT the
-// whole account (1358 drivers -> 1204 unmapped, missing the 8 that matter). Resolve their local+samsara ids here.
-if (!/JOIN telematics\.vehicle_driver_assignments[\s\S]{0,220}ended_at IS NULL/.test(roster))
-  fail("hos pull must scope to drivers with an OPEN vehicle assignment (the active board drivers), not account-wide");
+// SCOPE: poll every Active driver with samsara_driver_id for the tenant (HOS is per driver, not per pairing).
+// Optional LEFT JOIN on OPEN assignment supplies unit_id when paired — do NOT require pairing to poll.
+if (!/LEFT JOIN telematics\.vehicle_driver_assignments[\s\S]{0,220}ended_at IS NULL/.test(roster))
+  fail("hos pull must LEFT JOIN open vehicle assignment for optional unit_id — Active+samsara drivers must poll without pairing");
+if (!/d\.status = 'Active'/.test(roster))
+  fail("hos pull roster must filter to status='Active' drivers with samsara_driver_id");
 if (!/mdata\.drivers[\s\S]{0,700}samsara_driver_id IS NOT NULL/.test(roster))
   fail("hos pull must resolve active drivers via mdata.drivers.samsara_driver_id (the board-proven key)");
 if (!/\ba\.operating_company_id = \$1::uuid/.test(roster))
