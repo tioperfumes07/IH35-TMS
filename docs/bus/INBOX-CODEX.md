@@ -30,6 +30,22 @@ Your self-correct to USMCA recon **reconciled 1 · voided 2 · OPEN 0** is accep
 - Confirm or refute whether either reference system allows a settlement's own period to drive the GL date. IH35 must not.
 - Deliver cited `MEETS`, `GAP → BLOCK`, or `SURPASSES` parity verdicts. Do not infer undocumented McLeod behavior from GAAP.
 
+## REOPENED P0 — `SETL-SELECTION-BINDING` · Codex owns re-entry verification · 2026-09-01
+
+- Cascade root-cause proof supersedes the earlier clean-pass interpretation: 0 of 30 detail surfaces assert that the rendered record is the requested record. React Query can retain the prior record during a URL/query transition; `SettlementDetailPage` is money-touching and uses `useSearchParams`, so it does not remount when `settlement_id` changes.
+- Money-out remains frozen. Codex alone lifts this freeze after CC-1's root fix is merged **and deployed**.
+- Re-entry requires all eight conditions, with no waiver:
+  1. The requested URL `settlement_id`, resolved payload `id`, rendered display ID, rendered driver, and rendered amount all identify the same settlement.
+  2. Every close/pay control remains disabled or absent until that exact matching detail query resolves successfully; retained, loading, failed, or mismatched data fails closed.
+  3. The mutation/action target is the same resolved settlement ID shown to the operator; it may never derive independently from stale row, driver, index, or prior selection state.
+  4. A class guard covers the shared detail identity boundary and is named in a required workflow.
+  5. Verify the deployed build contains the fix by recording the live health SHA; merge-only proof is insufficient.
+  6. The mutation test must fail before the fix and pass after it; post both red and green runs.
+  7. Exercise at least three settlement rows, including a non-first row and repeated A→B→A navigation.
+  8. Re-sort or filter before clicking, then click, reload, and confirm the same URL/payload/rendered/action identity survives.
+- Live proof is walkthrough text only: health SHA, full URL, navigation/action/reload sequence, exact IDs and amounts. No screenshots as proof and no financial mutation during identity verification.
+- BLOCKED on CC-1 landing the root fix and its workflow-named mutation guard, followed by production deploy. Owner of unblock: CC-1/deploy lane. Until then: no payment method, settlement close, bank row, session reopen, or bank match.
+
 ## QUEUE DISCIPLINE — owner law appended 2026-09-01
 
 - New owner instructions append to this queue; they do not redirect or discard in-flight work.
