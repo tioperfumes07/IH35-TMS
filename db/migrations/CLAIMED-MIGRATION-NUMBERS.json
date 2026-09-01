@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202613330000": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-01",
+      "purpose": "go08_dual_numbering_trace_key (GO-08: immutable per-(operating_company_id,doc_type) trace_no/trace_key on all 10 document tables -- loads/invoices/bills/expenses/payments/bill_payments/credit_memos/vendor_credits/driver_bills/driver_settlements -- via lib.trace_counters upsert-counter + BEFORE INSERT assign trigger + BEFORE UPDATE immutability-block trigger; backfilled by created_at,id; carried into accounting.journal_entry_postings.source_trace_key for the 4 mapped source_transaction_type values.)"
+    },
     "202613320000": {
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-01",
