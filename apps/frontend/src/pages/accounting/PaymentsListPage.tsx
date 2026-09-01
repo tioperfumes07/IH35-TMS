@@ -26,6 +26,18 @@ function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
 
+function paymentOpenCentsForDisplay(payment: Payment): number {
+  if (payment.voided_at) return 0;
+  return Number(payment.amount_unapplied_cents ?? 0) || 0;
+}
+
+function paymentVarianceCents(payment: Payment): number {
+  const total = Number(payment.amount_cents ?? 0) || 0;
+  const applied = payment.voided_at ? 0 : Number(payment.amount_applied_cents ?? 0) || 0;
+  const open = paymentOpenCentsForDisplay(payment);
+  return total - applied - open;
+}
+
 function paymentStatusSortKey(payment: Payment): string {
   if (payment.voided_at) return "voided";
   if (Number(payment.amount_unapplied_cents) === 0) return "fully applied";
@@ -143,12 +155,12 @@ export function PaymentsListPage() {
   const totals = useMemo(() => {
     return rows.reduce(
       (acc, row) => {
-        acc.amount += Number(row.amount_cents ?? 0);
-        acc.applied += Number(row.amount_applied_cents ?? 0);
-        acc.unapplied += Number(row.amount_unapplied_cents ?? 0);
+        acc.total += Number(row.amount_cents ?? 0);
+        acc.open += paymentOpenCentsForDisplay(row);
+        acc.variance += paymentVarianceCents(row);
         return acc;
       },
-      { amount: 0, applied: 0, unapplied: 0 }
+      { total: 0, open: 0, variance: 0 }
     );
   }, [rows]);
 
@@ -178,15 +190,38 @@ export function PaymentsListPage() {
         sortValue: (row) => row.reference ?? "",
         render: (row) => row.reference ?? "-",
       },
-      { key: "amount_cents", label: "Amount", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_cents) },
-      { key: "amount_applied_cents", label: "Applied", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_applied_cents) },
+      { key: "amount_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_cents) },
       {
         key: "amount_unapplied_cents",
-        label: "Unapplied",
+        label: "Open",
         sortable: true,
         className: "text-right",
         cellClass: "text-right tabular-nums",
-        render: (row) => money(row.amount_unapplied_cents),
+        sortValue: (row) => paymentOpenCentsForDisplay(row),
+        render: (row) => money(paymentOpenCentsForDisplay(row)),
+      },
+      {
+        key: "variance_cents",
+        label: "Variance",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        sortValue: (row) => paymentVarianceCents(row),
+        render: (row) => {
+          const variance = paymentVarianceCents(row);
+          return (
+            <span className={`font-semibold ${variance !== 0 ? "text-red-700" : "text-slate-400"}`}>{money(variance)}</span>
+          );
+        },
+      },
+      {
+        key: "amount_applied_cents",
+        label: "Applied",
+        sortable: true,
+        defaultHidden: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        render: (row) => money(row.amount_applied_cents),
       },
       {
         key: "matched_bank_transaction_id",
@@ -276,9 +311,11 @@ export function PaymentsListPage() {
       <div className="flex items-center gap-3 text-xs text-gray-600">
         {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-PAYMENTS — Amount/Applied/Unapplied used to render
             money(totals.*) with no isError awareness next to ListErrorBanner (ACCT-F5038). */}
-        <span>Amount: {query.isError ? "—" : money(totals.amount)}</span>
-        <span>Applied: {query.isError ? "—" : money(totals.applied)}</span>
-        <span>Unapplied: {query.isError ? "—" : money(totals.unapplied)}</span>
+        <span>Total: {query.isError ? "—" : money(totals.total)}</span>
+        <span>Open: {query.isError ? "—" : money(totals.open)}</span>
+        <span className={totals.variance !== 0 ? "font-semibold text-red-700" : ""}>
+          Variance: {query.isError ? "—" : money(totals.variance)}
+        </span>
       </div>
     </div>
   );
