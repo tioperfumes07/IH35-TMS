@@ -536,6 +536,11 @@
       "claimed_by": "cursor",
       "claimed_at": "2026-09-01",
       "purpose": "permission_model (dual is_primary_owner seed tioperfumes07+jpm · no lucia escalation escape · allow_owner_bootstrap recovery · PERMISSION_MODEL_ENFORCED OFF)"
+    },
+    "202613340001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-01",
+      "purpose": "settlement_cash_advance_display_id_advisory_lock (ACCT-F19367: SETTLEMENT-DISPLAY-ID-UNPROTECTED-RACE + CASH-ADVANCE-REQUEST-DISPLAY-ID-UNPROTECTED-RACE board rows -- add pg_advisory_xact_lock to both bare MAX()+1 generators)"
     }
   }
 }
