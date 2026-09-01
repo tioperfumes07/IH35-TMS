@@ -29,6 +29,16 @@ function walk(dir, out = []) {
 function isBareHealthLine(line) {
   if (!line.includes("/health")) return false;
   if (line.includes("verify-no-bare-health-references")) return false;
+  // A COMMENT can say "status/health" as English prose (slash-as-"or") without ever meaning the
+  // literal endpoint path — live-caught in verify-transaction-health-computed-not-stored.mjs:12/86
+  // ("...status/health column...", a comment about a DB column naming convention, zero relation to
+  // any HTTP call). \b/health\b does not require the slash to open a URL — "s" (word) -> "/"
+  // (non-word) is itself a \b transition, so prose like that trips the same regex a real bare
+  // `fetch("/health")` would. Narrowly excluding comment lines (not weakening the check on real
+  // code) fixes this without touching the actual bare-URL detection below, which still fires on
+  // every non-comment line.
+  const trimmed = line.trim();
+  if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("#")) return false;
   // A SOURCE PATH is not an endpoint reference. `apps/backend/src/health/health.routes.ts` contains
   // the substring "/health" and was flagged as a bare URL, which it is not — the backend route file
   // simply lives in a directory called health. A guard that cannot tell a filesystem path from a URL
