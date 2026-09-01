@@ -20,6 +20,7 @@ type Props = {
   locked?: boolean;
   lockReason?: string;
   disabled?: boolean;
+  hint?: string;
   "data-testid"?: string;
 };
 
@@ -39,6 +40,7 @@ export function QboDocumentNumberField({
   locked = false,
   lockReason,
   disabled,
+  hint,
   "data-testid": testId = "qbo-document-number",
 }: Props) {
   const nextQuery = useQuery({
@@ -72,10 +74,10 @@ export function QboDocumentNumberField({
       <input
         data-testid={testId}
         aria-label={label}
-        className="h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-right text-xs font-mono"
+        className="h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-right text-xs font-mono placeholder:text-gray-400"
         value={value}
         disabled={disabled || locked}
-        placeholder=""
+        placeholder={suggested}
         onChange={(event) => onChange(event.target.value)}
         onFocus={(event) => event.currentTarget.select()}
       />
@@ -83,9 +85,10 @@ export function QboDocumentNumberField({
         <span className="font-normal text-red-700">Already used on {fieldName} {value.trim()}.</span>
       ) : (
         <span className="font-normal text-gray-500">
-          {suggested
-            ? `Leave blank to mint, or type over. Next suggested ${suggested}.`
-            : "Leave blank to mint. Type any number you want."}
+          {hint
+            ?? (suggested
+              ? "Leave blank to mint. Grey text is a hint only — it is not in the box."
+              : "Leave blank to mint. Type any number you want.")}
         </span>
       )}
       {locked && lockReason ? <span className="font-normal text-gray-500">{lockReason}</span> : null}

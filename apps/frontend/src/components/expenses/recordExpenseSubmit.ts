@@ -36,8 +36,10 @@ export type RecordExpenseFormValues = {
   amount: number | null; // M-1: dollar number (was a dollars-string); amount_cents = round(amount*100) byte-for-byte
   description: string;
   paymentMethod: RecordExpensePaymentMethod | "";
-  /** QBO Ref no. — auto-preview EXP-YYYY-#####, operator may override. */
+  /** QBO Ref no. — operator may override; blank = server mints ours. */
   expenseNumber: string;
+  /** Vendor's document. Blank allowed. Never auto-filled. */
+  vendorDocumentNumber: string;
 };
 
 export function dollarsToCents(value: number | null) {
@@ -131,6 +133,7 @@ export async function submitRecordExpense(
     // FAIL-F2 class-B: always SUPPLIED, never omitted — an absent field is what left the merged writer inert.
     is_sample_data: values.isSampleData === true,
     ...(values.expenseNumber.trim() ? { expense_number: values.expenseNumber.trim() } : {}),
+    ...(values.vendorDocumentNumber.trim() ? { vendor_document_number: values.vendorDocumentNumber.trim() } : {}),
   });
 }
 
@@ -167,5 +170,6 @@ export function initialRecordExpenseFormValues(): RecordExpenseFormValues {
     description: "",
     paymentMethod: "",
     expenseNumber: "",
+    vendorDocumentNumber: "",
   };
 }

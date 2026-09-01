@@ -6,6 +6,7 @@ import {
   listInsurancePolicies,
   listInsuranceTypeCatalog,
   type InsuranceCoverageGapUnit,
+  type InsuranceCoverageType,
   type InsurancePolicy,
 } from "../../api/insurance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -32,8 +33,31 @@ function unitLabel(unit: InsuranceCoverageGapUnit) {
   return entityLabel(unit.unit_number, unit.unit_id, "Unit");
 }
 
-function missingTypeLabels(codes: string[], typeNameByCode: ReadonlyMap<string, string>) {
-  return codes.map((code) => insuranceTypeLabel(code, typeNameByCode.get(code))).join(", ");
+type CoverageCell = "covered" | "missing" | "na";
+type CoverageFilter = "all" | "covered" | "missing";
+
+function coverageCell(code: InsuranceCoverageType, missing: InsuranceCoverageType[], required: InsuranceCoverageType[]): CoverageCell {
+  if (!required.includes(code)) return "na";
+  if (missing.includes(code)) return "missing";
+  return "covered";
+}
+
+function CoverageChip({ status }: { status: CoverageCell }) {
+  if (status === "na") {
+    return <span className="text-gray-400" data-coverage-cell="na">—</span>;
+  }
+  if (status === "missing") {
+    return (
+      <span className="inline-flex rounded-sm border border-red-300 bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-red-800" data-coverage-cell="missing">
+        Missing
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex rounded-sm border border-gray-400 bg-white px-1.5 py-0.5 text-[10px] font-semibold uppercase text-gray-800" data-coverage-cell="covered">
+      Covered
+    </span>
+  );
 }
 
 export function CoverageGapDashboard() {
@@ -58,6 +82,8 @@ export function CoverageGapDashboard() {
     empty: { unitId: "" },
     onApply: (next) => setUnitFilter(next.unitId),
   });
+  const [coverageFilter, setCoverageFilter] = useState<Record<string, CoverageFilter>>({});
+
   const unitId = unitPickerId.trim() || deepLinkUnitId || undefined;
 
   // INSURANCE-1: the uncovered/mismatched lists come from the SAME backend endpoint that feeds the
@@ -107,21 +133,46 @@ export function CoverageGapDashboard() {
     };
   }, [coverageGapsQuery.data, policiesQuery.data]);
 
-  const uncoveredColumns = useMemo<ParityColumn<InsuranceCoverageGapUnit>[]>(
-    () => [
-      { key: "unit_number", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={unitLabel(row)} /> },
-      { key: "missing_types", label: "Missing Required Types", render: (row) => missingTypeLabels(row.missing_types, typeNameByCode) || "All required coverage" },
-    ],
-    [typeNameByCode],
+  const requiredTypes = coverageGapsQuery.data?.required_types ?? [];
+  const gapRows = useMemo(
+    () => [...summary.unitsWithoutActiveCoverage, ...summary.unitsWithMismatchedCoverageRequirements],
+    [summary.unitsWithoutActiveCoverage, summary.unitsWithMismatchedCoverageRequirements],
   );
 
-  const mismatchedColumns = useMemo<ParityColumn<InsuranceCoverageGapUnit>[]>(
-    () => [
-      { key: "unit_number", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={unitLabel(row)} /> },
-      { key: "missing_types", label: "Missing Required Types", render: (row) => missingTypeLabels(row.missing_types, typeNameByCode) },
-    ],
-    [typeNameByCode],
-  );
+  const catalogCodes = useMemo<InsuranceCoverageType[]>(() => {
+    const fromCatalog = (typesQuery.data ?? []).filter((entry) => entry.active).map((entry) => entry.code);
+    if (fromCatalog.length > 0) return fromCatalog;
+    return requiredTypes;
+  }, [typesQuery.data, requiredTypes]);
+
+  const visibleRows = useMemo(() => {
+    return gapRows.filter((row) =>
+      catalogCodes.every((code) => {
+        const wanted = coverageFilter[code] ?? "all";
+        if (wanted === "all") return true;
+        const cell = coverageCell(code, row.missing_types, requiredTypes);
+        return cell === wanted;
+      }),
+    );
+  }, [gapRows, catalogCodes, coverageFilter, requiredTypes]);
+
+  const gapColumns = useMemo<ParityColumn<InsuranceCoverageGapUnit>[]>(() => {
+    const unitCol: ParityColumn<InsuranceCoverageGapUnit> = {
+      key: "unit_number",
+      label: "Unit",
+      render: (row) => <EntityLink kind="unit" id={row.unit_id} label={unitLabel(row)} />,
+    };
+    const typeCols: ParityColumn<InsuranceCoverageGapUnit>[] = catalogCodes.map((code) => ({
+      key: code,
+      label: insuranceTypeLabel(code, typeNameByCode.get(code)),
+      sortValue: (row) => {
+        const cell = coverageCell(code, row.missing_types, requiredTypes);
+        return cell === "missing" ? 0 : cell === "covered" ? 1 : 2;
+      },
+      render: (row) => <CoverageChip status={coverageCell(code, row.missing_types, requiredTypes)} />,
+    }));
+    return [unitCol, ...typeCols];
+  }, [catalogCodes, typeNameByCode, requiredTypes]);
 
   if (!companyId) {
     return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view coverage gap dashboard.</div>;
@@ -148,7 +199,9 @@ export function CoverageGapDashboard() {
     <div className="space-y-4">
       <header className="rounded-sm border border-gray-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">Coverage Gap Dashboard</h2>
-        <p className="mt-1 text-xs text-slate-600">Identify units without coverage, policies approaching expiration, and requirement mismatches.</p>
+        <p className="mt-1 text-xs text-slate-600">
+          One column per coverage type from the catalog. Gap count {coverageGapsQuery.data?.coverage_gap_count ?? gapRows.length} must equal units with at least one Missing.
+        </p>
         <CollapsedListFilters
           activeFilterCount={unitPickerId ? 1 : 0}
           onApply={stagedFilters.apply}
@@ -197,29 +250,36 @@ export function CoverageGapDashboard() {
       </section>
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-sm font-semibold text-slate-900">Units Without Active Coverage</h3>
-        <div className="mt-2">
-          <ParityTable
-            rows={summary.unitsWithoutActiveCoverage}
-            columns={uncoveredColumns}
-            rowKey={(row) => row.unit_id}
-            loading={coverageGapsQuery.isPending || (coverageGapsQuery.isFetching && summary.unitsWithoutActiveCoverage.length === 0)}
-            storageKey="insurance-coverage-gap-uncovered"
-            emptyText="No uncovered units."
-          />
+        <h3 className="text-sm font-semibold text-slate-900">Coverage by type</h3>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {catalogCodes.map((code) => (
+            <label key={code} className="text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+              {insuranceTypeLabel(code, typeNameByCode.get(code))}
+              <select
+                className="ml-1 h-7 rounded-sm border border-gray-300 bg-white px-1 text-[11px] font-normal normal-case"
+                value={coverageFilter[code] ?? "all"}
+                onChange={(event) =>
+                  setCoverageFilter((prev) => ({ ...prev, [code]: event.target.value as CoverageFilter }))
+                }
+                aria-label={`Filter ${code}`}
+              >
+                <option value="all">All</option>
+                <option value="covered">Covered</option>
+                <option value="missing">Missing</option>
+              </select>
+            </label>
+          ))}
         </div>
-      </section>
-
-      <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-sm font-semibold text-slate-900">Units With Mismatched Coverage Requirements</h3>
-        <div className="mt-2">
+        <div className="mt-2" data-testid="kpi-drill-row-count">
           <ParityTable
-            rows={summary.unitsWithMismatchedCoverageRequirements}
-            columns={mismatchedColumns}
-            rowKey={(row) => `${row.unit_id}-mismatch`}
-            loading={coverageGapsQuery.isPending || (coverageGapsQuery.isFetching && summary.unitsWithMismatchedCoverageRequirements.length === 0)}
-            storageKey="insurance-coverage-gap-mismatched"
-            emptyText="No mismatched coverage requirements."
+            rows={visibleRows}
+            columns={gapColumns}
+            rowKey={(row) => row.unit_id}
+            loading={coverageGapsQuery.isPending || (coverageGapsQuery.isFetching && gapRows.length === 0)}
+            storageKey="insurance-coverage-gap-by-type"
+            emptyText="No coverage-gap units."
+            enableColumnResize
+            enableColumnReorder
           />
         </div>
       </section>

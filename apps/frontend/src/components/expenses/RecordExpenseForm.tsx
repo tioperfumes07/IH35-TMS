@@ -288,9 +288,9 @@ export function RecordExpenseForm({
           />
         </div>
       </label>
-      <div className="ml-auto w-44 shrink-0 text-right">
+      <div className="ml-auto flex w-[22rem] shrink-0 flex-col gap-2 text-right">
         <QboDocumentNumberField
-          label="Ref no."
+          label="Expense no. (ours)"
           value={values.expenseNumber}
           onChange={(next) => setValues((prev) => ({ ...prev, expenseNumber: next }))}
           operatingCompanyId={operatingCompanyId}
@@ -298,6 +298,15 @@ export function RecordExpenseForm({
           checkPath="/api/v1/expenses/next-number"
           fieldName="expense"
           data-testid="record-expense-number"
+        />
+        <QboDocumentNumberField
+          label="Vendor invoice no."
+          value={values.vendorDocumentNumber}
+          onChange={(next) => setValues((prev) => ({ ...prev, vendorDocumentNumber: next }))}
+          operatingCompanyId={operatingCompanyId}
+          fieldName="vendor invoice"
+          data-testid="record-expense-vendor-document-number"
+          hint="Vendor's invoice. Blank allowed. Never auto-filled."
         />
       </div>
       </div>
