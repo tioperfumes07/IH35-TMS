@@ -1352,7 +1352,8 @@ export function submitFactoringBatch(
     factoring_company_vendor_id: string;
     submission_batch_ref?: string;
     invoice_ids: string[];
-    advance_rate_pct: number;
+    // FACT-RESERVE-01 STEP 3 — advance_rate_pct is NOT a caller input; the backend derives it as
+    // 100 - reserve_pct - factor_fee_pct (there is no independent advance rate under the agreement).
     reserve_pct: number;
     factor_fee_pct?: number;
     notes?: string;
