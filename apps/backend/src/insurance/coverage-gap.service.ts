@@ -7,6 +7,28 @@ export const DISPATCH_REQUIRED_INSURANCE_COVERAGE_TYPES: InsuranceCoverageType[]
   "cargo",
 ];
 
+/**
+ * GO-02: auto_liability (bodily injury/property damage from OPERATING a vehicle on the road) is
+ * physically a power-unit coverage — a trailer is never itself driven, it is towed under the
+ * TOWING tractor's own auto_liability policy. mdata.assets.asset_type values that are trailer
+ * sub-types (see the CHECK constraint: tractor/dry_van/reefer/flatbed/personnel_vehicle/other)
+ * must not be flagged as having an auto_liability "gap" -- that coverage was never required of
+ * them in the first place, not merely missing. personnel_vehicle and other stay on the full
+ * dispatch-required list (a personnel vehicle IS independently road-operated); do not widen this
+ * exemption to asset types not asked for.
+ */
+const TRAILER_ASSET_TYPES = new Set(["dry_van", "reefer", "flatbed"]);
+
+export function requiredCoverageTypesForAssetType(
+  assetType: string | null | undefined,
+  base: InsuranceCoverageType[] = DISPATCH_REQUIRED_INSURANCE_COVERAGE_TYPES
+): InsuranceCoverageType[] {
+  if (assetType && TRAILER_ASSET_TYPES.has(assetType)) {
+    return base.filter((type) => type !== "auto_liability");
+  }
+  return [...base];
+}
+
 type CoveragePolicyRow = {
   policy_id: string;
   coverage_type: string;
@@ -95,9 +117,9 @@ export async function detectAssetCoverageGap(
     requiredTypes?: InsuranceCoverageType[];
   }
 ): Promise<AssetCoverageGapResult> {
-  const assetRes = await client.query<{ id: string }>(
+  const assetRes = await client.query<{ id: string; asset_type: string | null }>(
     `
-      SELECT id::text
+      SELECT id::text, asset_type::text
       FROM mdata.assets
       WHERE tenant_id = $1::uuid
         AND id = $2::uuid
@@ -113,6 +135,10 @@ export async function detectAssetCoverageGap(
       assetExists: false,
     });
   }
+
+  // Caller-supplied requiredTypes wins outright (explicit intent); otherwise derive from the
+  // asset's own type so a trailer never shows a false auto_liability gap by default.
+  const requiredTypes = input.requiredTypes ?? requiredCoverageTypesForAssetType(assetRes.rows[0].asset_type);
 
   const coverageRes = await client.query<CoveragePolicyRow>(
     `
@@ -134,7 +160,7 @@ export async function detectAssetCoverageGap(
 
   return buildAssetCoverageGapResult(coverageRes.rows, {
     asOfDate: input.asOfDate,
-    requiredTypes: input.requiredTypes,
+    requiredTypes,
     assetExists: true,
   });
 }

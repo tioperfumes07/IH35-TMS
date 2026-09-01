@@ -12,6 +12,7 @@ import { createPolicyBillSchedule } from "./policy-bill-schedule.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { resolveMdataAssetId } from "./resolve-asset-id.shared.js";
 import { excludeInsuranceFixtureSql } from "./insurance-visibility.js";
+import { requiredCoverageTypesForAssetType } from "./coverage-gap.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -844,7 +845,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `,
         [query.data.operating_company_id, resolvedAssetId]
       );
-      const assetRow = assetRes.rows[0] as { id: string } | undefined;
+      const assetRow = assetRes.rows[0] as { id: string; asset_type?: string | null } | undefined;
       if (!assetRow) return null;
 
       const coveragesRes = await client.query(
@@ -870,13 +871,22 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       const coveredTypes = new Set(
         coveragesRes.rows.map((row) => String((row as { coverage_type?: string }).coverage_type ?? ""))
       );
-      const gaps = INSURANCE_COVERAGE_TYPES.filter((coverageType) => !coveredTypes.has(coverageType));
+      // GO-02: gap_types must be scoped to what this asset actually NEEDS, not the full 15-type
+      // enum -- flagging general_liability/workers_comp/umbrella/etc. as "gaps" on every asset
+      // that doesn't carry them is noise, not a finding. requiredCoverageTypesForAssetType also
+      // excludes auto_liability for trailer sub-types (dry_van/reefer/flatbed): a trailer is
+      // never itself road-operated, so that coverage was never required of it in the first place.
+      const requiredTypes = requiredCoverageTypesForAssetType(assetRow?.asset_type);
+      const gaps = requiredTypes.filter((coverageType) => !coveredTypes.has(coverageType));
+      const notRequiredTypes = INSURANCE_COVERAGE_TYPES.filter((type) => !requiredTypes.includes(type));
 
       return {
         asset: assetRes.rows[0],
         coverages: coveragesRes.rows,
         covered_types: [...coveredTypes],
+        required_types: requiredTypes,
         gap_types: gaps,
+        not_required_types: notRequiredTypes,
       };
     });
 
