@@ -128,8 +128,28 @@ function run() {
   if (!/onMouseDown=\{\(e\) => \{[\s\S]*setOpen\(false\)/.test(dp)) {
     errors.push("DatePicker day cells must commit on mousedown (not click) so the popover unmount cannot retoggle");
   }
-  if (!/border-gray-300/.test(dp) || !/<button[\s\S]*border border-gray-300/.test(dp)) {
-    errors.push("DatePicker button must keep the single QBO border chrome");
+  // MOD-02/03 — typed MM/DD/YYYY + Escape closes picker only (insurance expiry pain).
+  // Chrome lives on the input shell (same as DateTimePicker), not a button-only value display.
+  if (!dp.includes("parseDateUS")) {
+    errors.push("DatePicker must import/use parseDateUS for typed MM/DD/YYYY entry (MOD-03)");
+  }
+  if (!/type="text"/.test(dp) || !/inputMode="numeric"/.test(dp)) {
+    errors.push("DatePicker must render a text input for typed date entry (MOD-03) — not button-only value");
+  }
+  if (!dp.includes('aria-label="Month"') || !dp.includes('aria-label="Year"')) {
+    errors.push("DatePicker calendar must expose Month/Year selects for jump (MOD-03)");
+  }
+  if (!/stopPropagation\(\)/.test(dp)) {
+    errors.push("DatePicker Escape must stopPropagation so parent wizards stay open (MOD-02)");
+  }
+  if (!dp.includes('e.key !== "Escape"') && !dp.includes("e.key !== 'Escape'")) {
+    errors.push("DatePicker must handle Escape on document capture to close picker only (MOD-02)");
+  }
+  if (!dp.includes('addEventListener("keydown", onKey, true)')) {
+    errors.push("DatePicker Escape listener must use capture (true) so it beats parent modal handlers (MOD-02)");
+  }
+  if (!/border-gray-300/.test(dp)) {
+    errors.push("DatePicker must keep the single QBO border chrome on the input shell");
   }
   if (/className=\{`relative \$\{className\}`\}/.test(dp) || /className=\{`relative \$\{className\}/.test(dp)) {
     errors.push("DatePicker must not apply raw className onto the outer relative wrapper (box-in-box)");
