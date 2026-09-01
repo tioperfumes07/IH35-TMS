@@ -155,7 +155,11 @@ export async function loadControlBalanceCents(
   }, 0);
 }
 
-async function sumEscrowSubledgerCents(client: DbClient, operatingCompanyId: string): Promise<number> {
+// Exported (SUBLEDGER-GL-TIEOUT-EVERY-CONTROL, board-routed CC-2) — this computation already
+// backed the on-demand getSubledgerGlControlRecReport below; the automated hourly
+// checkExtendedSubledgerTieOutForCompany cron (ledger-integrity-detectors.service.ts) reuses it
+// verbatim rather than re-deriving escrow subledger math a second time.
+export async function sumEscrowSubledgerCents(client: DbClient, operatingCompanyId: string): Promise<number> {
   const res = await client.query<{ total_cents: string | number }>(
     `
       SELECT COALESCE(SUM(balance_cents), 0)::bigint AS total_cents
@@ -168,7 +172,10 @@ async function sumEscrowSubledgerCents(client: DbClient, operatingCompanyId: str
   return Number(res.rows[0]?.total_cents ?? 0);
 }
 
-async function sumFactoringLiabilitySubledgerCents(
+// Exported (SUBLEDGER-GL-TIEOUT-EVERY-CONTROL, board-routed CC-2) — same reuse rationale as
+// sumEscrowSubledgerCents above; the cron calls this instead of re-deriving factoring liability
+// math a second time.
+export async function sumFactoringLiabilitySubledgerCents(
   client: DbClient,
   operatingCompanyId: string,
   asOfDate: string

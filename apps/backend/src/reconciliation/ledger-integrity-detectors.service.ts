@@ -6,6 +6,8 @@ import {
   sumUnbilledRevenueSubledgerCents,
   sumPrepaidSubledgerCents,
   sumFixedAssetNetBookValueSubledgerCents,
+  sumEscrowSubledgerCents,
+  sumFactoringLiabilitySubledgerCents,
 } from "../accounting/subledger-gl-control-rec.service.js";
 
 // LAUNCH-SAFE-LEDGER-MONITOR-DETECTORS (CURSOR-VERIFY-MASTER-LAUNCH-PLAN-2026-08-28.md /
@@ -1085,6 +1087,14 @@ const EXTENDED_TIE_OUT_ROLES = [
   { role: "unbilled_revenue" as const, ledger: "unbilled_revenue", needsAccountId: false },
   { role: "prepaid_asset_default" as const, ledger: "prepaid", needsAccountId: false },
   { role: "fixed_asset_default" as const, ledger: "fixed_assets", needsAccountId: false },
+  // SUBLEDGER-GL-TIEOUT-EVERY-CONTROL (board-routed CC-2) — escrow_liability_default and
+  // factoring_advance_liability were already registered CoaRoles with real, already-shipped sum
+  // functions (getSubledgerGlControlRecReport already used them, live-verified, in the on-demand
+  // report) but were never wired into THIS automated hourly cron — the report existed, continuous
+  // monitoring didn't. Added here, not built from scratch: same functions, same math, just now
+  // running on the cron's own schedule instead of only when someone opens the report.
+  { role: "escrow_liability_default" as const, ledger: "escrow", needsAccountId: false },
+  { role: "factoring_advance_liability" as const, ledger: "factoring", needsAccountId: false },
 ];
 
 export async function checkExtendedSubledgerTieOutForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
@@ -1096,14 +1106,26 @@ export async function checkExtendedSubledgerTieOutForCompany(client: DbClient, o
     if (controlAccountId == null) continue; // unbound — nothing to compare, not a false "$0" claim
 
     const glCents = await loadControlBalanceCents(client, operatingCompanyId, asOfDate, controlAccountId);
-    const subCents =
-      role === "operating_bank" && needsAccountId
-        ? await sumBankSubledgerCents(client, operatingCompanyId, controlAccountId)
-        : role === "unbilled_revenue"
-          ? await sumUnbilledRevenueSubledgerCents(client, operatingCompanyId)
-          : role === "prepaid_asset_default"
-            ? await sumPrepaidSubledgerCents(client, operatingCompanyId)
-            : await sumFixedAssetNetBookValueSubledgerCents(client, operatingCompanyId);
+    // Explicit per-role dispatch, no catch-all default — an unhandled future role must fail loud
+    // (thrown error surfaces as a cron error) rather than silently reuse the wrong sum function,
+    // the exact class of bug an implicit trailing `: else` branch invites the moment a 7th role
+    // is added and someone forgets to extend this chain.
+    let subCents: number;
+    if (role === "operating_bank" && needsAccountId) {
+      subCents = await sumBankSubledgerCents(client, operatingCompanyId, controlAccountId);
+    } else if (role === "unbilled_revenue") {
+      subCents = await sumUnbilledRevenueSubledgerCents(client, operatingCompanyId);
+    } else if (role === "prepaid_asset_default") {
+      subCents = await sumPrepaidSubledgerCents(client, operatingCompanyId);
+    } else if (role === "fixed_asset_default") {
+      subCents = await sumFixedAssetNetBookValueSubledgerCents(client, operatingCompanyId);
+    } else if (role === "escrow_liability_default") {
+      subCents = await sumEscrowSubledgerCents(client, operatingCompanyId);
+    } else if (role === "factoring_advance_liability") {
+      subCents = await sumFactoringLiabilitySubledgerCents(client, operatingCompanyId, asOfDate);
+    } else {
+      throw new Error(`checkExtendedSubledgerTieOutForCompany: unhandled EXTENDED_TIE_OUT_ROLES role "${role}"`);
+    }
 
     const diffCents = glCents - subCents;
     if (diffCents !== 0) {
