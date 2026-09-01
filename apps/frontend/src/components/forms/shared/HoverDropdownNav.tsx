@@ -16,7 +16,7 @@ export type NavItem = { label: string; href?: string; children?: readonly NavChi
 export type NavOpenTrigger = "hover" | "click";
 
 export type HoverDropdownNavProps = {
-  items: NavItem[];
+  items: readonly NavItem[];
   activeHref?: string;
   openOn?: NavOpenTrigger;
 };
