@@ -70,6 +70,16 @@ export function assertGuard(routesSrc, serviceSrc, indexSrc) {
     if (!/apply === true/.test(serviceSrc)) {
       errs.push(`${SERVICE_FILE}: default mode must be dry-run (apply !== true means zero writes)`);
     }
+    // LINKAGE INTEGRITY LAW live-caught, 2026-09-01: the bill_payments leg used voided_at, but
+    // accounting.bill_payments' actual void column is revoked_at -- the live route 500'd on
+    // first real execution ("column bp.voided_at does not exist"). Locks the correct column per
+    // table, the exact class of bug the void-column-convention finding exists to prevent.
+    if (!/bp\.revoked_at/.test(serviceSrc)) {
+      errs.push(`${SERVICE_FILE}: accounting.bill_payments' void column is revoked_at, not voided_at — using the wrong name 500s the live route`);
+    }
+    if (/bp\.voided_at/.test(serviceSrc)) {
+      errs.push(`${SERVICE_FILE}: accounting.bill_payments has no voided_at column — this reference will 500 the live route`);
+    }
   }
 
   if (!indexSrc || !/registerBankOrphanBackfillRoutes\(app\)/.test(indexSrc)) {
@@ -98,6 +108,7 @@ function selftest() {
     ["bad6-not-reused", assertGuard(goodRoutes.replace(/runBankOrphanBackfill\(/g, "runBankOrphanBackfillXXX("), goodService, goodIndex)],
     ["bad7-not-registered", assertGuard(goodRoutes, goodService, goodIndex.replace(/registerBankOrphanBackfillRoutes\(app\)/g, "// removed"))],
     ["bad8-forward-only-sweep", assertGuard(goodRoutes, goodService.replace(/linked_entity_id/g, "REMOVED_COL"), goodIndex)],
+    ["bad9-wrong-bill-payment-void-column", assertGuard(goodRoutes, goodService.replace(/bp\.revoked_at/g, "bp.voided_at"), goodIndex)],
   ];
 
   for (const [name, res] of mutations) {
