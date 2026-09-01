@@ -1,3 +1,3 @@
-# ★ OUTBOX-DEVIN · redirected
+# ★ OUTBOX-DEVIN · redirect
 
-Use **OUTBOX-DEVIN-A.md**. This file is not a work queue.
+Use OUTBOX-DEVIN-A / INBOX-DEVIN-A only.
