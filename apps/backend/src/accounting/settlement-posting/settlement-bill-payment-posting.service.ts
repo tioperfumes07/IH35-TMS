@@ -938,6 +938,14 @@ export async function reverseSettlementBillPaymentInClientTx(
           currentBusinessDate,
         }
       );
+      // EXP-POSTED-NO-JE-01: voidBillInClientTx can now legitimately return a null
+      // reversal_journal_entry_id for a bill that was never posted. That is not possible HERE —
+      // this cascade only ever reaches a bill that was already part of a PAID settlement's own GL
+      // run (driver_settlement_gl_bills), so its bill_journal_entry_id was already asserted
+      // non-null above. A null reversal at this point means that bill's own posting silently
+      // never happened despite the settlement reaching PAID — a real integrity gap, not something
+      // to push a null into the equal-and-opposite proof below and let fail cryptically later.
+      if (!billReversal.reversal_journal_entry_id) throw new Error("settlement_bill_reversal_missing");
       reversalJeIds.push(billReversal.reversal_journal_entry_id);
     }
 
