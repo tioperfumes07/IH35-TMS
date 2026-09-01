@@ -1598,10 +1598,20 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         await assertLoadNumberAvailable(client, input.operating_company_id, requestedLoadNumber, reservationId || undefined);
       } catch (err) {
         if ((err as { code?: string }).code === "duplicate_load_number") {
+          // Fast pre-check only (F4) -- this is NOT the collision guarantee, the INSERT-level
+          // 23505 catch below is. Look up the winning row's id so the 409 body is actionable.
+          const winner = await client.query<{ id: string }>(
+            `SELECT id::text FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 LIMIT 1`,
+            [input.operating_company_id, requestedLoadNumber]
+          );
           return {
             kind: "error",
             status: 409,
-            payload: { error: "duplicate_load_number", load_number: requestedLoadNumber },
+            payload: {
+              error: "duplicate_load_number",
+              load_number: requestedLoadNumber,
+              existing_id: winner.rows[0]?.id ?? null,
+            },
           };
         }
         throw err;
@@ -1686,7 +1696,14 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       input.load_trailer_equipment_id
     );
 
-    const loadRes = await client.query(
+    // GO-10 REV-B / F4 — the assertLoadNumberAvailable() pre-check above is a fast path only; it
+    // cannot close the race between the check and this INSERT. SAVEPOINT so a genuine collision
+    // rolls back in isolation (not the whole booking transaction), and surface it as a structured
+    // 409 rather than letting Postgres 23505 bubble to a raw 500.
+    await client.query(`SAVEPOINT book_load_insert`);
+    let loadRes: { rows: Record<string, unknown>[] };
+    try {
+      loadRes = await client.query(
       `
         INSERT INTO mdata.loads (
           operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
@@ -1765,7 +1782,21 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         input.commodity?.trim() || null,
         input.weight_lbs ?? null,
       ]
-    );
+      );
+      await client.query(`RELEASE SAVEPOINT book_load_insert`);
+    } catch (err) {
+      await client.query(`ROLLBACK TO SAVEPOINT book_load_insert`).catch(() => undefined);
+      if ((err as { code?: string }).code !== "23505") throw err;
+      const winner = await client.query<{ id: string }>(
+        `SELECT id::text FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 LIMIT 1`,
+        [input.operating_company_id, loadNumber]
+      );
+      return {
+        kind: "error",
+        status: 409,
+        payload: { error: "duplicate_load_number", load_number: loadNumber, existing_id: winner.rows[0]?.id ?? null },
+      };
+    }
     const load = loadRes.rows[0] as Record<string, unknown>;
 
     for (const [index, charge] of input.charges.entries()) {
