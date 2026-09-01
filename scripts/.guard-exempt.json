@@ -712,7 +712,6 @@
   "verify-driver-nonmoney-business-date.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-driver-onboarding-action-company-lifecycle.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-driver-onboarding-completion-fail-loud.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
-  "verify-driver-pay-rate-create-writes-billing-table.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-driver-phone-login-disable-reenable.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-driver-phone-login-link-cas.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-driver-profile-deactivate-failure-lifecycle.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
