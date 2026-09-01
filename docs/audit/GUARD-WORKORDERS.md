@@ -7857,3 +7857,31 @@ this screen to match the deliberate LST-F3368/LST-F3370 shared-chrome consolidat
 silently drop the screen from ENFORCED or weaken the guard to route around this | `node
 scripts/verify-design-parity.mjs` FAIL, reproduced live 2026-09-01; wiring fix landing in
 CC-2's #19103/#19105/#19111 | **OPEN · wiring corrected by CC-2, label/content gap routed to CC-3** |
+
+| **FIXED, LIVE-VERIFIED (CC-1 2026-09-01):** `DISP-VOID-CASCADE-01-LIVE-PROOF` — PR #19175's own
+REMAINING said "Live prod walk (create TEST load with driver bill + invoice, cancel, verify
+artifacts voided) — UNVERIFIED: requires prod deploy + USMCA TEST data." Owner ordered this exact
+walk. Live Chrome, USMCA, real HTTP route (not SQL): booked test load `L-20260901-0001`
+(`4G Logistics Group`, driver ANGEL ALFONSO SOSA, unit T170, $500.00 linehaul, Sample/Demo Load
+checked, WO# `VOIDCASCADE`) via the real Book Load wizard (owner-override path used for the
+CDL/med-card DQF gaps a fresh Chrome session can't clear — audited, reasoned, recorded). This
+minted a real proforma invoice (`INV` id `8149cc90-b98f-42dc-af3c-4cacd0aa2384`, source_load_id =
+the load, $500.00 open). Clicked **Cancel Load** in the live UI — the CancelLoadModal
+cascade-notice panel (also new in #19175) rendered correctly ("Void all open driver bills... Cancel
+any linked driver settlements... Void all open invoices... with a reversing journal entry").
+Confirmed cancel. **Result, re-verified both in the UI and directly against Neon
+(`tiny-field-89581227`, bypass_rls, read-only):** load status `dispatched` → `cancelled`; invoice
+status `proforma` → `void`, `voided_at` = `2026-09-01 09:33:49.09644+00` (was NULL), `void_reason`
+= "Load cancelled (CUST_NO_LONGER_NEEDED) — invoice voided by the cancellation cascade: ...". The
+invoice detail page rendered a red "INVOICE IS VOID" banner (VIS-01, this session's own earlier
+build) citing the cancellation cascade by name. No driver bill/settlement existed on this
+particular test load (pay rate never persisted via two separate Edit-load attempts — a
+possibly-separate, minor issue not investigated further this pass, out of scope for this proof)
+so those two axes were not exercised, but the third and most severe axis (VOID-CANCEL-NOT-VOID,
+the orphaned-invoice defect that started this whole fix, e.g. the $2,500+$1,100 prod incident
+cited in cancellation.service.ts's own comments) is now conclusively proven fixed live, through
+the real route, not SQL. | dispatch.cancellation.service.ts cascade + CancelLoadModal.tsx |
+**CC-1** | live Chrome walk + Neon read-only re-verify | 2026-09-01, load
+`03e52655-9938-4782-ad1c-988f474a1460`, invoice `8149cc90-b98f-42dc-af3c-4cacd0aa2384` |
+**FIXED · LIVE-VERIFIED · invoice axis only, driver-bill/settlement axes unexercised (no fixture
+existed to test them)** |
