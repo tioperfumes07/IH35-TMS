@@ -1118,7 +1118,13 @@
     "verify:home-quickjump-counts": "node scripts/verify-home-quickjump-counts.mjs",
     "verify:banking-bankaccountdetail-is-credit-amounts": "node scripts/verify-banking-bankaccountdetail-is-credit-amounts.mjs",
     "verify:h02-qbo-topbar-sync-now": "node scripts/verify-h02-qbo-topbar-sync-now.mjs",
-    "verify:inventory-reorder-threshold-ui": "node scripts/verify-inventory-reorder-threshold-ui.mjs"
+    "verify:inventory-reorder-threshold-ui": "node scripts/verify-inventory-reorder-threshold-ui.mjs",
+    "verify:selftest-safe-mutation:test": "node --test scripts/__tests__/selftest-safe-mutation.test.mjs",
+    "verify:no-selftest-mutates-tracked-source": "node scripts/verify-no-selftest-mutates-tracked-source.mjs",
+    "verify:sortable-columns-and-void-visibility": "node scripts/verify-sortable-columns-and-void-visibility.mjs",
+    "verify:migration-lane-band": "node scripts/verify-migration-lane-band.mjs",
+    "verify:husky-hooks-installed": "node scripts/verify-husky-hooks-installed.mjs",
+    "verify:no-seat-instruction-overrides-owner-void": "node scripts/verify-no-seat-instruction-overrides-owner-void.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1110.0",
