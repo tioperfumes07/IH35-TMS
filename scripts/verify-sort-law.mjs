@@ -51,6 +51,9 @@ export function parityTableHitTargetOk(src) {
   if (!/className=\{`[^`]*\bw-full\b/.test(block)) {
     return { ok: false, reason: "sortable header button lost `w-full` — header clicks regress to label-only hit target" };
   }
+  if (!/className=\{`[^`]*\bh-full\b/.test(block)) {
+    return { ok: false, reason: "sortable header button lost `h-full` — vertical header clicks regress to label-only hit target" };
+  }
   return { ok: true };
 }
 
@@ -95,14 +98,21 @@ if (SELFTEST) {
       name: "SORT-01 fixed shape passes",
       fn: () =>
         parityTableHitTargetOk(
-          '{column.sortable ? (\n<button\ntype="button"\nclassName={`inline-flex w-full items-center gap-1 ${x}`}\nonClick={() => toggleSort(key)}\n>label</button>) : null}',
+          '{column.sortable ? (\n<button\ntype="button"\nclassName={`inline-flex h-full w-full items-center gap-1 ${x}`}\nonClick={() => toggleSort(key)}\n>label</button>) : null}',
         ).ok === true,
     },
     {
-      name: "SORT-01 label-only regression fails",
+      name: "SORT-01 label-only regression fails (no w-full)",
       fn: () =>
         parityTableHitTargetOk(
           '{column.sortable ? (\n<button\ntype="button"\nclassName="inline-flex items-center gap-1"\nonClick={() => toggleSort(key)}\n>label</button>) : null}',
+        ).ok === false,
+    },
+    {
+      name: "SORT-01 missing h-full fails",
+      fn: () =>
+        parityTableHitTargetOk(
+          '{column.sortable ? (\n<button\ntype="button"\nclassName={`inline-flex w-full items-center gap-1 ${x}`}\nonClick={() => toggleSort(key)}\n>label</button>) : null}',
         ).ok === false,
     },
     {

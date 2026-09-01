@@ -350,6 +350,16 @@ describe("ParityTable (A1 grammar)", () => {
     expect(renderedOrder()).toEqual(["Alpha", "Bravo"]);
   });
 
+  // SWEEP-A-PARITYTABLE-HEADER-HIT-TARGET — sort control must fill the <th> (w-full + h-full),
+  // not just the label text; the resize grip keeps the right w-2 edge only.
+  it("SWEEP-A — sortable header button fills the th cell (w-full h-full hit target)", () => {
+    render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
+    const sortBtn = screen.getByRole("button", { name: /^Name/ });
+    expect(sortBtn.className).toMatch(/\bw-full\b/);
+    expect(sortBtn.className).toMatch(/\bh-full\b/);
+    expect(screen.getByLabelText("Resize Name")).toBeInTheDocument();
+  });
+
   it("renders resize handles by default and omits them when disabled", () => {
     const { rerender } = render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
     expect(screen.getByLabelText("Resize Name")).toBeInTheDocument();

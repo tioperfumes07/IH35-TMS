@@ -66,6 +66,19 @@ function assertComponent(src) {
   if (!/if \(!autoFitColumns\) return \{\}/.test(src)) {
     errors.push(`${COMPONENT}: autoFitColumns=false must skip auto-fit width computation`);
   }
+  // SWEEP-A / SORT-01 — sortable header button must fill the <th> (DataTable already w-full);
+  // label-only inline-flex left most of the header dead; resize grip keeps the right w-2 edge.
+  const sortBtn = src.match(/column\.sortable \? \(\s*<button[\s\S]{0,1200}?onClick=\{\(\) => toggleSort\(key\)\}/);
+  if (!sortBtn) {
+    errors.push(`${COMPONENT}: could not locate sortable header <button> (structure drift)`);
+  } else if (!/\bh-full\b/.test(sortBtn[0]) || !/\bw-full\b/.test(sortBtn[0])) {
+    errors.push(
+      `${COMPONENT}: sortable header <button> must use h-full w-full (full-cell hit target; not label-only)`,
+    );
+  }
+  if (!/data-testid="parity-table-col-resize"/.test(src)) {
+    errors.push(`${COMPONENT}: column resize grip must stay a separate absolute w-2 edge (parity-table-col-resize)`);
+  }
   return errors;
 }
 
@@ -78,6 +91,7 @@ function assertTests(src) {
     "dragging a header onto another reorders the columns and persists the order",
     "controlled columnOrder: drag notifies onColumnOrderChange without mutating internal state",
     "autoFitColumns=false skips content-based width measurement",
+    "SWEEP-A — sortable header button fills the th cell (w-full h-full hit target)",
   ];
   for (const name of required) {
     if (!src.includes(name)) {
@@ -133,6 +147,9 @@ function selftest() {
     onDragStart={enableColumnReorder ? () => {} : undefined}
     onDrop={enableColumnReorder ? (e) => { if (dragKey) moveColumn(dragKey, key); } : undefined}
     const w = colWidths[key] ?? autoFitWidths[key];
+    {column.sortable ? (
+    <button type="button" className="inline-flex h-full w-full items-center gap-1" onClick={() => toggleSort(key)}>label</button>) : null}
+    data-testid="parity-table-col-resize"
   `;
   const badComponent = `export function ParityTable() { return <table />; }`;
   const goodTests = `
@@ -142,6 +159,7 @@ function selftest() {
       it("dragging a header onto another reorders the columns and persists the order", () => {});
       it("controlled columnOrder: drag notifies onColumnOrderChange without mutating internal state", () => {});
       it("autoFitColumns=false skips content-based width measurement", () => {});
+      it("SWEEP-A — sortable header button fills the th cell (w-full h-full hit target)", () => {});
     });
   `;
   const badTests = `it("renders", () => {});`;
@@ -158,8 +176,8 @@ function selftest() {
     console.error(`${LABEL} --selftest FAIL good tests:`, assertTests(goodTests));
     process.exit(1);
   }
-  if (assertTests(badTests).length !== 6) {
-    console.error(`${LABEL} --selftest FAIL bad tests should miss all 6`);
+  if (assertTests(badTests).length !== 7) {
+    console.error(`${LABEL} --selftest FAIL bad tests should miss all 7`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
