@@ -546,6 +546,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-01",
       "purpose": "settlement_cash_advance_display_id_advisory_lock (ACCT-F19367: SETTLEMENT-DISPLAY-ID-UNPROTECTED-RACE + CASH-ADVANCE-REQUEST-DISPLAY-ID-UNPROTECTED-RACE board rows -- add pg_advisory_xact_lock to both bare MAX()+1 generators)"
+    },
+    "202613350001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-01",
+      "purpose": "linkage_integrity_law_reconciliation_matches_widen (LINKAGE-INTEGRITY-LAW board row: widen banking.reconciliation_matches.ledger_entry_kind CHECK to cover load/bill/settlement, the 3 kinds currently written as bare bank_transactions pointers with no matches-record at all)"
     }
   }
 }
