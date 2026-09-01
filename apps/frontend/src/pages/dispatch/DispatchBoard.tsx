@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -90,6 +90,7 @@ import { TriSignalPill } from "../../components/dispatch/TriSignalPill";
 import { UnitsWithoutLoadTable } from "./components/UnitsWithoutLoadTable";
 import { QuickAssignModal } from "./components/QuickAssignModal";
 import { TableHeaderCell, useTablePref } from "../../components/table";
+import { useColumnReorder } from "../../components/lists/ListView/hooks/useColumnReorder";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
 
@@ -522,7 +523,7 @@ export function DispatchBoard({
     [loads, rowOverrides]
   );
 
-  const { widths: dispatchColWidths, setColumnWidth: setDispatchColWidth } = useTablePref("dispatch-board", { pageSize: 200 });
+  const { widths: dispatchColWidths, setColumnWidth: setDispatchColWidth, columnOrder: savedColumnOrder, setColumnOrder: persistColumnOrder } = useTablePref("dispatch-board", { pageSize: 200 });
   // BANK-SORT-ROLLOUT-OPS — ?sort=/?dir= URL persistence so a dispatcher's chosen column sort
   // survives a refresh or a shared/bookmarked board link (same contract as ?board= board-mode above).
   // Uses the shared useUrlSort hook (BANK-SORT-ROLLOUT-ACCT); TableHeaderCell wants sortKey as
@@ -1007,6 +1008,28 @@ export function DispatchBoard({
   const listColumns = boardColumns;
   const tableColumns = boardColumns;
 
+  const defaultColumnKeys = useMemo(() => boardColumns.map((column) => column.key), [boardColumns]);
+  const { order: columnOrder, setOrder: setColumnOrder, dragHandleProps, dragOverId } = useColumnReorder(
+    savedColumnOrder.length > 0 ? savedColumnOrder : defaultColumnKeys
+  );
+
+  useEffect(() => {
+    if (savedColumnOrder.length > 0) setColumnOrder(savedColumnOrder);
+  }, [savedColumnOrder, setColumnOrder]);
+
+  useEffect(() => {
+    if (columnOrder.length > 0) persistColumnOrder(columnOrder);
+  }, [columnOrder, persistColumnOrder]);
+
+  const orderColumns = (columns: typeof boardColumns) => {
+    const byKey = new Map(columns.map((column) => [column.key, column]));
+    const keys = columnOrder.length > 0 ? columnOrder : columns.map((column) => column.key);
+    return keys.map((key) => byKey.get(key)).filter((column): column is (typeof boardColumns)[number] => Boolean(column));
+  };
+
+  const orderedListColumns = useMemo(() => orderColumns(listColumns), [listColumns, columnOrder]);
+  const orderedTableColumns = useMemo(() => orderColumns(tableColumns), [tableColumns, columnOrder]);
+
   const renderListOrTable = (columns: typeof listColumns) => {
     if (listError) {
       return (
@@ -1107,6 +1130,9 @@ export function DispatchBoard({
                         onToggleSort={toggleDispatchSort}
                         width={dispatchColWidths[column.key]}
                         onResize={setDispatchColWidth}
+                        draggable
+                        dragHandleProps={dragHandleProps(column.key)}
+                        dragOver={dragOverId === column.key}
                       />
                     ))}
                   </tr>
@@ -1436,8 +1462,8 @@ export function DispatchBoard({
       {boardMode === "assignment"
         ? renderAssignmentView()
         : boardMode === "table"
-          ? renderListOrTable(tableColumns)
-          : renderListOrTable(listColumns)}
+          ? renderListOrTable(orderedTableColumns)
+          : renderListOrTable(orderedListColumns)}
 
       <BulkActionModal
         open={statusModalOpen}

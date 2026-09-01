@@ -1,4 +1,4 @@
-import { useCallback, useRef, type MouseEvent as ReactMouseEvent } from "react";
+import { useCallback, useRef, type DragEvent, type MouseEvent as ReactMouseEvent } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { SortDir } from "./useTableController";
 import { resolveAlign } from "../DataTable";
@@ -21,6 +21,15 @@ type Props = {
   className?: string;
   align?: "left" | "center" | "right";
   numeric?: boolean;
+  draggable?: boolean;
+  dragHandleProps?: {
+    draggable: true;
+    onDragStart: (e: DragEvent) => void;
+    onDragOver: (e: DragEvent) => void;
+    onDrop: (e: DragEvent) => void;
+    onDragEnd: () => void;
+  };
+  dragOver?: boolean;
 };
 
 export function TableHeaderCell({
@@ -36,6 +45,9 @@ export function TableHeaderCell({
   className = "",
   align,
   numeric,
+  draggable = false,
+  dragHandleProps,
+  dragOver = false,
 }: Props) {
   const thRef = useRef<HTMLTableCellElement>(null);
   const active = sortKey === columnKey;
@@ -61,7 +73,8 @@ export function TableHeaderCell({
   return (
     <th
       ref={thRef}
-      className={`relative px-2 py-1 ${a.textClass} ${a.numeric ? "tabular-nums" : ""} ${className}`}
+      {...(draggable && dragHandleProps ? dragHandleProps : {})}
+      className={`relative px-2 py-1 ${a.textClass} ${a.numeric ? "tabular-nums" : ""} ${dragOver ? "bg-slate-100 border-l-2 border-slate-300" : ""} ${className}`}
       style={width ? { width } : undefined}
       aria-sort={active ? (sortDir === "asc" ? "ascending" : "descending") : undefined}
     >

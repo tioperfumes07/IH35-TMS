@@ -139,7 +139,7 @@ async function persistBillsOnClient(
          -- ACCT-F353 — derived from the insurer vendor above (vendorIsSampleData).
          is_sample_data
        )
-       VALUES ($1,$2,$2,$2,$3,$3,$4,$5,0,0,'unpaid',$6,$7,$8,now(),now(),$9)
+       VALUES ($1,$2,$2,$2::uuid,$3,$3,$4,$5,0,0,'unpaid',$6,$7,$8,now(),now(),$9)
        ON CONFLICT (operating_company_id, qbo_idempotency_key)
          WHERE qbo_idempotency_key IS NOT NULL DO NOTHING
        RETURNING id::text`,

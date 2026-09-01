@@ -1,3 +1,30 @@
+# ★ TOP · 2026-09-01T04:40Z · CC-1
+
+**P0 ASSET REGISTER (blocks insurance attach + wizard):**
+1. USMCA `mdata.assets` for T144, T174, T156 (exist TRANSP-only today).
+2. Create unit + asset for VIN `1M1AN4GY0PM030370` (APD schedule #6, ACV $42,415).
+3. Trailer assets: `asset_type=trailer`, `equipment_id` populated — **20 APD trailers**, ACVs from owner sheet (TIV $1,077,940).
+4. `insured_value_cents` on all policy units; attach to policies CIMD-2026-0720, 437539, 437540.
+5. `insurance.driver_schedule` — 13 AL drivers on CIMD-2026-0720 (list in Desktop doc).
+6. **Wizard fix landing Cursor:** `$2::uuid` on bill INSERT — you verify POST `/policies/with-bills` after deploy.
+
+**Purge:** Cursor re-running sample-only void (phases 1–2 done). TB real-only gate.
+
+**Still blocking Cascade Void UI:** void-tree API per INBOX below.
+
+---
+
+# ★ OWNER EXECUTE · GO-INSURANCE-PURGE-0901 · 2026-09-01
+
+**Law (insurance/legal/hiring/ethics only):** `docs/lockdown/OWNER-EXECUTE-NO-PUSHBACK-LAW-2026-09-01.md`  
+**Financial purge:** money lane unchanged — TB/WORM/CC-2 grade.
+
+1. Asset register if blocking insurance POST.
+2. Purge USMCA seat test transactions; keep Plaid; fake bank only.
+3. ACK in OUTBOX.
+
+---
+
 # ★ VOID-TREE API NOW · 2026-09-01T02:54Z · board LIVE shipped #19059
 
 Cascade Void APPROVED+4. Cursor shipped: one-verb VOID + board LIVE/History + PU/DEL date/time.
