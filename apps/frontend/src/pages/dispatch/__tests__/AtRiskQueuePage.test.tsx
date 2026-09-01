@@ -56,6 +56,9 @@ describe("AtRiskQueuePage", () => {
     expect(screen.getByRole("link", { name: "Acme Freight" }).getAttribute("href")).toBe("/customers/customer-1");
     expect(screen.getByRole("link", { name: "Jane Driver" }).getAttribute("href")).toBe("/drivers/driver-1");
     expect(screen.getByRole("link", { name: "T169" }).getAttribute("href")).toBe("/fleet/units/unit-1");
+    expect(screen.getByText("Origin")).toBeTruthy();
+    expect(screen.getByText("Loaded mi")).toBeTruthy();
+    expect(screen.getByTestId("kpi-drill-row-count").textContent).toMatch(/^1 loads/);
   });
 
   it("renders unavailable related identities as non-interactive tombstones", async () => {
@@ -107,7 +110,7 @@ describe("AtRiskQueuePage", () => {
 
     const callsBeforeRetry = listSpy.mock.calls.length;
     await user.click(screen.getByRole("button", { name: /Retry/i }));
-    expect(await screen.findByText("No at-risk or late loads right now.")).toBeTruthy();
+    expect(await screen.findByText("No loads at risk in the selected range.")).toBeTruthy();
     expect(listSpy.mock.calls.length).toBeGreaterThan(callsBeforeRetry);
   });
 });

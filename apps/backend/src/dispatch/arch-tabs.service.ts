@@ -2,6 +2,7 @@ import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { DISPATCH_ALERT_ACTIVE_STATUSES_SQL } from "./dispatch-alert-statuses.js";
 import { dispatchAlertOrderBy, type DispatchAlertQuery } from "./dispatch-alert-query.js";
+import { KPI_LOAD_DRILL_JOINS, KPI_LOAD_DRILL_SELECT } from "./kpi-load-drill-sql.js";
 
 export async function listAtRiskLoads(userId: string, operatingCompanyId: string, filters: DispatchAlertQuery) {
   return withCurrentUser(userId, async (client) => {
@@ -28,7 +29,8 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
           l.latest_eta_prediction,
           sp.scheduled_arrival_at AS next_stop_scheduled_at,
           sd.city AS delivery_city,
-          sd.state AS delivery_state
+          sd.state AS delivery_state,
+${KPI_LOAD_DRILL_SELECT}
         FROM views.dispatch_load_with_driver_status l
         LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                    AND c.operating_company_id = l.operating_company_id
@@ -64,6 +66,7 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
           ORDER BY scheduled_arrival_at ASC
           LIMIT 1
         ) sp ON true
+${KPI_LOAD_DRILL_JOINS}
         WHERE l.operating_company_id = $1::uuid
           AND ($2::date IS NULL OR sp.scheduled_arrival_at >= $2::date)
           AND ($3::date IS NULL OR sp.scheduled_arrival_at < $3::date + interval '1 day')
