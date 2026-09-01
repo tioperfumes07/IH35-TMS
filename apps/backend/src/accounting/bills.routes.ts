@@ -4,6 +4,7 @@ import { z } from "zod";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { resolveAllocation } from "./allocation.js";
 import {
+  BILL_LIST_SORT_SQL,
   countAllBillsForCompany,
   createBill,
   getBillDetail,
@@ -50,6 +51,9 @@ const listBillsQuerySchema = companyQuerySchema.extend({
   unit_id: z.string().uuid().optional(),
   // ACCT-F5037 — load→bill reverse via accounting.bill_lines.load_id (header has no load_id).
   load_id: z.string().uuid().optional(),
+  // SORT LAW (COL-04) — allowlisted column → SQL ORDER BY (see BILL_LIST_SORT_SQL).
+  sort: z.string().trim().max(64).optional(),
+  dir: z.enum(["asc", "desc"]).optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -188,6 +192,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       legalMatterId: query.data.legal_matter_id,
       unitId: query.data.unit_id,
       loadId: query.data.load_id,
+      sort: query.data.sort,
+      dir: query.data.dir,
     };
     const rows = await listBills(String(user.uuid), query.data.operating_company_id, {
       ...listOptions,
@@ -203,7 +209,14 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     const total = query.data.vendor_id
       ? undefined
       : await countAllBillsForCompany(String(user.uuid), query.data.operating_company_id, listOptions);
-    return { rows, total, limit: query.data.limit, offset: query.data.offset };
+    return {
+      rows,
+      total,
+      limit: query.data.limit,
+      offset: query.data.offset,
+      sort: query.data.sort && BILL_LIST_SORT_SQL[query.data.sort] ? query.data.sort : null,
+      dir: query.data.dir ?? null,
+    };
   });
 
   // Reverse drill-through for the WO↔bill/expense HARD link: list the bills + expenses that FK-reference
