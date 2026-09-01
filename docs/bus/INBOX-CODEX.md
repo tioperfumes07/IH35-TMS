@@ -46,6 +46,14 @@ Your self-correct to USMCA recon **reconciled 1 · voided 2 · OPEN 0** is accep
 - Live proof is walkthrough text only: health SHA, full URL, navigation/action/reload sequence, exact IDs and amounts. No screenshots as proof and no financial mutation during identity verification.
 - BLOCKED on CC-1 landing the root fix and its workflow-named mutation guard, followed by production deploy. Owner of unblock: CC-1/deploy lane. Until then: no payment method, settlement close, bank row, session reopen, or bank match.
 
+### Blocker update — `HEALTH-NO-SHA-01` · 2026-09-01
+
+- CC-1's settlement identity guard shipped as PR #19018 (`919a4b685e`), but Codex cannot credit or exercise it until the serving build is identifiable.
+- Cursor's `HEALTH-NO-SHA-01` fix shipped as PR #19024 (`b8551aee35`): both deep and shallow health routes are intended to return `version`, full `git_sha`, and `built_at`.
+- Live read-only check after that merge still proves the old deployment: `GET https://api.ih35dispatch.com/api/v1/healthz` returns only `ok` + `checks`; `/healthz/shallow` returns `version=aa303a8` with no full SHA or build timestamp.
+- Active unblock owner is Cursor/deploy for `HEALTH-NO-SHA-01`, not CC-1. Condition 5 remains unmet; no other condition is tested early and no clean manual pass can lift the freeze.
+- When live health exposes the serving full SHA, first prove it contains PR #19018, then execute all eight conditions in one fresh Live Chrome walkthrough. Codex alone records PASS/FAIL and lifts or retains the freeze.
+
 ## QUEUE DISCIPLINE — owner law appended 2026-09-01
 
 - New owner instructions append to this queue; they do not redirect or discard in-flight work.
