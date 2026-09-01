@@ -84,6 +84,31 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
     });
   }, []);
 
+  /**
+   * SEL-01 — toggle a page into/out of the selection without clearing other pages.
+   * When every id on the page is already selected, removes only those ids; otherwise unions them in.
+   */
+  const togglePage = useCallback(
+    (ids: string[]) => {
+      setSelectedIds((prev) => {
+        const pageSet = new Set(ids);
+        const allPageSelected = ids.length > 0 && ids.every((id) => prev.has(id));
+        const next = new Set(prev);
+        if (allPageSelected) {
+          for (const id of ids) next.delete(id);
+          return next;
+        }
+        for (const id of ids) next.add(id);
+        if (wouldExceedCap(next)) {
+          emitCapError(next.size);
+          return prev;
+        }
+        return next;
+      });
+    },
+    [emitCapError, wouldExceedCap]
+  );
+
   /** Deliberate: select an explicit matching set (still capped). Same as selectAll. */
   const selectMatching = useCallback(
     (ids: string[]) => {
@@ -113,6 +138,7 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
       setSelectedIds,
       toggle,
       selectPage,
+      togglePage,
       selectAll,
       selectMatching,
       deselectPage,
@@ -120,6 +146,6 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
       count,
       cap,
     }),
-    [cap, clear, count, deselectPage, selectAll, selectMatching, selectPage, selectedIds, setSelectedIds, toggle]
+    [cap, clear, count, deselectPage, selectAll, selectMatching, selectPage, selectedIds, setSelectedIds, toggle, togglePage]
   );
 }

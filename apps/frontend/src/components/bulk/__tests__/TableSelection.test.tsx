@@ -118,6 +118,30 @@ describe("TableSelection", () => {
     expect(screen.getByLabelText("Select Three")).toBeChecked();
   });
 
+  it("SEL-01: page header unions rows across pages", () => {
+    function TwoPageDemo() {
+      const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(["other-page"]));
+      const pageRowIds = rows.slice(0, 2).map((row) => row.id);
+      return (
+        <>
+          <TableSelectionHeader
+            selectedIds={selectedIds}
+            pageRowIds={pageRowIds}
+            onSelectionChange={setSelectedIds}
+          />
+          <div data-testid="selected-count">{selectedIds.size}</div>
+          <div data-testid="has-other">{selectedIds.has("other-page") ? "yes" : "no"}</div>
+          <div data-testid="has-one">{selectedIds.has("1") ? "yes" : "no"}</div>
+        </>
+      );
+    }
+    render(<TwoPageDemo />);
+    fireEvent.click(screen.getByLabelText("Select all rows on this page"));
+    expect(screen.getByTestId("selected-count").textContent).toBe("3");
+    expect(screen.getByTestId("has-other").textContent).toBe("yes");
+    expect(screen.getByTestId("has-one").textContent).toBe("yes");
+  });
+
   it("blocks selection above cap", () => {
     render(<DemoTable rows={rows} cap={2} />);
     fireEvent.click(screen.getByLabelText("Select all rows on this page"));

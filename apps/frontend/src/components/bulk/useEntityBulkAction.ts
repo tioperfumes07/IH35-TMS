@@ -3,6 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
 import { bulkUpdate, type BulkUpdateResponse } from "../../api/bulk";
 import type { BulkFailure } from "./BulkProgressDialog";
+import { BulkPreValidationDialog } from "./BulkPreValidationDialog";
+import { partitionBulkPrecheck, type BulkPrecheckRow } from "./bulkClientPrecheck";
 
 type RunBulkArgs = {
   domain: string;
@@ -14,6 +16,8 @@ type RunBulkArgs = {
   operatingCompanyId: string;
   invalidateKeys?: string[][];
   rowLabels?: Record<string, string>;
+  /** SEL-03 — client-side blocked rows surfaced before POST (backend probe remains authoritative). */
+  precheck?: BulkPrecheckRow[];
 };
 
 function attachRowLabels(failed: BulkFailure[], rowLabels?: Record<string, string>): BulkFailure[] {
@@ -65,6 +69,11 @@ export function useEntityBulkAction() {
   const queryClient = useQueryClient();
   const [progressOpen, setProgressOpen] = useState(false);
   const [progressLoading, setProgressLoading] = useState(false);
+  const [precheckOpen, setPrecheckOpen] = useState(false);
+  const [precheckBlocked, setPrecheckBlocked] = useState<BulkFailure[]>([]);
+  const [precheckVoidableCount, setPrecheckVoidableCount] = useState(0);
+  const [precheckPending, setPrecheckPending] = useState<RunBulkArgs | null>(null);
+  const [precheckOnSuccess, setPrecheckOnSuccess] = useState<(() => void) | undefined>();
   const [progress, setProgress] = useState({
     requested: 0,
     succeeded: 0,
@@ -73,6 +82,25 @@ export function useEntityBulkAction() {
   });
 
   const runBulk = async (args: RunBulkArgs, onSuccess?: () => void) => {
+    if (args.precheck?.length) {
+      const { voidable, blocked } = partitionBulkPrecheck(args.precheck);
+      if (blocked.length > 0) {
+        setPrecheckBlocked(
+          blocked.map((row) => ({
+            id: row.id,
+            message: row.blockedReason ?? "Blocked",
+            code: "E_PRECHECK_BLOCKED",
+            label: row.label ?? args.rowLabels?.[row.id],
+          }))
+        );
+        setPrecheckVoidableCount(voidable.length);
+        setPrecheckPending({ ...args, ids: voidable.map((row) => row.id), precheck: undefined });
+        setPrecheckOnSuccess(() => onSuccess);
+        setPrecheckOpen(true);
+        return undefined;
+      }
+    }
+
     setProgressOpen(true);
     setProgressLoading(true);
     setProgress({ requested: args.ids.length, succeeded: 0, failed: [], bulk_call_id: "" });
@@ -139,5 +167,25 @@ export function useEntityBulkAction() {
     progressLoading,
     progress,
     runBulk,
+    precheckDialogProps: {
+      open: precheckOpen,
+      blocked: precheckBlocked,
+      voidableCount: precheckVoidableCount,
+      onCancel: () => {
+        setPrecheckOpen(false);
+        setPrecheckPending(null);
+        setPrecheckOnSuccess(undefined);
+      },
+      onProceedVoidable: () => {
+        const pending = precheckPending;
+        const success = precheckOnSuccess;
+        setPrecheckOpen(false);
+        setPrecheckPending(null);
+        setPrecheckOnSuccess(undefined);
+        if (pending && pending.ids.length > 0) {
+          void runBulk(pending, success);
+        }
+      },
+    },
   };
 }

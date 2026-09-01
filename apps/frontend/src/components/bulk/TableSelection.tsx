@@ -97,7 +97,16 @@ export function TableSelectionHeader({
       applyWithCap(next, cap, onSelectionChange, onCapExceeded);
       return;
     }
-    applyWithCap(new Set(scopeIds), cap, onSelectionChange, onCapExceeded);
+    // Page scope unions across pages; matching scope replaces with the full filtered set.
+    const next =
+      matchingRowIds != null
+        ? new Set(scopeIds)
+        : (() => {
+            const merged = new Set(selectedIds);
+            for (const id of scopeIds) merged.add(id);
+            return merged;
+          })();
+    applyWithCap(next, cap, onSelectionChange, onCapExceeded);
   };
 
   return (

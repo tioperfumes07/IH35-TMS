@@ -23,8 +23,20 @@ function audit(hookSrc, headerSrc) {
   if (!/const selectAll = selectMatching\b/.test(hookSrc)) {
     failures.push("useBulkSelection: selectAll must equal selectMatching (SEL-01)");
   }
+  if (!/const togglePage = useCallback/.test(hookSrc)) {
+    failures.push("useBulkSelection: togglePage must union pages for cross-page accumulation (SEL-01)");
+  }
+  if (!/for \(const id of ids\) next\.add\(id\)/.test(hookSrc)) {
+    failures.push("useBulkSelection: togglePage must union page ids into selection (SEL-01)");
+  }
+  if (/toggleAll: base\.selectPage/.test(read(path.join(ROOT, "apps/frontend/src/hooks/useBulkSelection.ts")))) {
+    failures.push("hooks/useBulkSelection: toggleAll must not alias selectPage (SEL-01)");
+  }
   if (!/matchingRowIds\??:\s*string\[\]/.test(headerSrc) && !/matchingRowIds\?:/.test(headerSrc)) {
     failures.push("TableSelectionHeader: missing matchingRowIds prop");
+  }
+  if (!/matchingRowIds != null[\s\S]*new Set\(scopeIds\)[\s\S]*merged\.add\(id\)/.test(headerSrc)) {
+    failures.push("TableSelectionHeader: page scope must union ids across pages (SEL-01)");
   }
   if (!/data-select-scope=\{matchingRowIds != null \? "matching" : "page"\}/.test(headerSrc)) {
     failures.push("TableSelectionHeader: missing data-select-scope matching|page marker");

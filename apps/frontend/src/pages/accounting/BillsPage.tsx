@@ -14,6 +14,8 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
 import { vendorFilterReferenceOptions } from "../../components/parity/referenceOptionLabels";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
+import { BulkPreValidationDialog } from "../../components/bulk/BulkPreValidationDialog";
+import { billBulkPrecheckRows } from "../../components/bulk/billBulkPrecheck";
 import { billBulkRowLabel, bulkRowLabelsFromRows } from "../../components/bulk/bulkRowLabels";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
@@ -886,6 +888,7 @@ export function BillsPage() {
         onSubmit={async (reason) => {
           if (!companyId) return;
           setBatchVoidOpen(false);
+          const selectedBills = rows.filter((bill) => pendingIds.includes(bill.id));
           await bulk.runBulk(
             {
               domain: "accounting",
@@ -896,6 +899,7 @@ export function BillsPage() {
               operatingCompanyId: companyId,
               invalidateKeys: [["accounting", "bills", companyId]],
               rowLabels: pendingVoidLabels,
+              precheck: billBulkPrecheckRows(selectedBills),
             },
             () => {
               setPendingIds([]);
@@ -922,6 +926,12 @@ export function BillsPage() {
         }
         onCancel={() => setScheduleModalOpen(false)}
         onConfirm={() => void runScheduleBulk()}
+      />
+
+      <BulkPreValidationDialog
+        {...bulk.precheckDialogProps}
+        actionLabel="Void"
+        entityKind="bill"
       />
 
       <BulkProgressDialog
