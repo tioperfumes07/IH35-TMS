@@ -1,10 +1,7 @@
-# ★ TOP · 2026-09-01T06:50Z · CC-1 · GO-MECH
+# INBOX-CC-1 · OWNER NO PAUSE · 2026-09-01
 
-**GO:** `docs/bus/GO-MECHANICAL-REGISTER-2026-09-01.md` · Recipe C paste if push wall.
-
-## NOW
-1. **DSP-05** assignment confirm API + audit + owner-override
-2. Insurance attach (after wizard smoke)
-3. **COL-05** Total/Open/Variance · **VIS-01/03** · **UPL-02/03** schema
-
-**ACK:** `CC-1 | ACK | NOW=DSP-05 | GO`
+## TOP (execute NOW — FAST-MERGE ~4 min)
+1. **VOID-CASCADE live prove** USMCA — TEST load→bill→settlement→cancel→void sequence→VOID TEST same session (NO-SEAT). Deploy ancestry must include #19175+.
+2. Wire CancelLoadModal to `catalogs.void_cancel_reasons` if present.
+3. **COL-05/06** finish PARTIAL money columns — one PR.
+4. **VIS-01 · VIS-03 · UPL-02 · UPL-03 · DSP-05** — serial FAST-MERGE. Never idle. OUTBOX one-liner each ship. USMCA only.
