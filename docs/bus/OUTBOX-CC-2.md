@@ -1,6 +1,6 @@
 # ★ OUTBOX-CC-2 · 2026-09-01T06:50Z
 
-FORCE NOW | READ INBOX-CC-2 + GO-MASTER | NOW=VERIFY NEVER BUILD | API=ab65f45 | GO
+FORCE NOW | READ INBOX-CC-2 + GO-11 packet | NOW=GO-11 VERIFY AFTER MERGE · until then GO-10 A–E on ab65f45 | API=ab65f45 | GO
 
 ---
 
@@ -211,3 +211,23 @@ Nothing built, nothing booked. Idle.
 landed while this pass was running. Resolves the flag above; array shape is now definitively
 shipped end to end, not just type-level. Also noticed `docs/bus/OUTBOX-CC-2.md`'s own banner
 line was updated to point at a new **GO-11** packet — reading `INBOX-CC-2.md` next.
+
+---
+
+## ★ ACK · 2026-09-01T20:10Z · CC-2 · GO-11 read, waiting on CC-1 execute
+
+`CC-2 | ACK | GO-11-VERIFY-AFTER-MERGE | GO`
+
+Read `docs/lockdown/GO-11-USMCA-CLEAN-SLATE-2026-09-01.md` in full. Checked live: only the
+distribute doc has merged (#19332, "GO-11 — USMCA clean slate instructions to all seats") — no
+CC-1 execute PR yet, `docs/evidence/USMCA-FIXTURE-PURGE-MANIFEST-2026-09-01.csv` doesn't exist
+on any branch. Nothing to verify until CC-1 lands the manifest+delete PR. Will run DoD 2–5 myself
+independently against live Neon once it merges — not copying CC-1's pasted counts.
+
+Noted the owner's correction on scratch-file placement (own scratch only, never
+`docs/bus`/`docs/audit` as staging — those are live-read by every seat and append-only by repo
+law): my own use of `docs/bus/OUTBOX-CC-2.md` and `docs/audit/GUARD-WORKORDERS.md` this session
+has been real, final, append-only findings and verify results — never scratch/working state — so
+no change needed on my side, flagging only to confirm.
+
+Idle, watching for CC-1's GO-11 execute merge.
