@@ -13,6 +13,17 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => readFileSync(join(root, p), "utf8");
 const fail = (m) => { console.error(`FAIL verify-dispatch-load-patch-money-evidence-guard: ${m}`); process.exit(1); };
 
+function linkageBypassEvidenceFailures(source) {
+  const failures = [];
+  if (!/live_load_number-only is linkage metadata/.test(source)) {
+    failures.push("live_load_number bypass must be documented as linkage metadata");
+  }
+  if (!/linkage \/ ops metadata only, never revenue\/pay/.test(source)) {
+    failures.push("linkage override allowlist must explicitly exclude revenue/pay");
+  }
+  return failures;
+}
+
 const svc = read("apps/backend/src/dispatch/update-load.service.ts");
 
 // 1) NEVER delete a load_stop.
@@ -32,8 +43,8 @@ if (!/FROM driver_finance\.driver_bills[\s\S]*status <> 'open'/.test(svc))
 if (!/LoadEditLockedError/.test(svc)) fail("must throw LoadEditLockedError when locked");
 if (!/isLiveLoadNumberOnlyPatch/.test(svc))
   fail("must allow live_load_number-only linkage backfill to bypass money lock");
-if (!/LIVE-LOAD-NUMBER-NULL-REV-E/.test(svc))
-  fail("live_load_number bypass must be documented as linkage-only (not revenue/pay)");
+const linkageEvidenceFailures = linkageBypassEvidenceFailures(svc);
+if (linkageEvidenceFailures.length) fail(linkageEvidenceFailures.join("; "));
 
 // 3) Route maps the lock to 409 and never self-merges (gated comment present).
 const route = read("apps/backend/src/dispatch/loads.routes.ts");
@@ -43,3 +54,15 @@ if (!/app\.patch\("\/api\/v1\/dispatch\/loads\/:id"/.test(route))
   fail("PATCH /api/v1/dispatch/loads/:id route must be registered");
 
 console.log("OK verify-dispatch-load-patch-money-evidence-guard: stop archive-not-delete + 3 money guards locked.");
+
+if (process.argv.includes("--selftest")) {
+  const moneyMutation = svc.replace("never revenue/pay", "may change revenue/pay");
+  const linkageMutation = svc.replace("live_load_number-only is linkage metadata", "live_load_number-only bypass");
+  if (!linkageBypassEvidenceFailures(moneyMutation).some((message) => message.includes("revenue/pay"))) {
+    fail("selftest money-boundary mutation escaped");
+  }
+  if (!linkageBypassEvidenceFailures(linkageMutation).some((message) => message.includes("linkage metadata"))) {
+    fail("selftest linkage-evidence mutation escaped");
+  }
+  console.log("verify-dispatch-load-patch-money-evidence-guard SELFTEST PASS (2/2 planted defects rejected)");
+}
