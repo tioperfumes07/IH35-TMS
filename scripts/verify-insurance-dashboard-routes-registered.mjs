@@ -25,6 +25,9 @@ const CHECKS = [
   ["fleet:tiv-source", "fleetSql", /MAX\(pu\.insured_value_cents\) FILTER \(WHERE p\.id IS NOT NULL\)/],
   ["fleet:premium-source", "fleetSql", /SUM\(pu\.cost_per_month_cents\) FILTER \(WHERE p\.id IS NOT NULL\)/],
   ["fleet:company-scope", "fleetSql", /a\.tenant_id = \$1::uuid/],
+  ["fleet:t144-excluded", "fleetSql", /a\.unit_code <> 'T144'/],
+  ["fleet:honest-tiv", "fleet", /POLICY_437539_TIV_CENTS = 104_054_000/],
+  ["fleet:data-gap-fails-loud", "fleet", />DATA GAP<\/span>/],
 ];
 
 export function collectProblems(sources) {

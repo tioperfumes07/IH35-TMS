@@ -46,6 +46,7 @@ export const FLEET_COVERED_SQL = `
   WHERE a.tenant_id = $1::uuid
     AND a.status NOT IN ('sold', 'retired')
     AND a.asset_type IN ('tractor', 'dry_van', 'reefer', 'flatbed')
+    AND a.unit_code <> 'T144'
     AND ${excludeDemoPhantomSql("a.unit_code")}
   GROUP BY a.id, a.unit_id, a.equipment_id, a.unit_code, a.asset_type,
            a.year, a.make, a.model, a.vin, a.status
