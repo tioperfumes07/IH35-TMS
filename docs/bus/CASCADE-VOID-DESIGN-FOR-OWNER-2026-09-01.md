@@ -1,14 +1,27 @@
-# CASCADE VOID — DESIGN FOR OWNER REVIEW (no code until approved)
+# CASCADE VOID — DESIGN (APPROVED WITH 4 CHANGES)
 
-**Status:** DESIGN ONLY · Cursor will not implement until Jorge rules on this file.  
-**Date:** 2026-09-01 · Seat: CURSOR · Companion: CC-1 owns the dependency-tree API (same model — one truth).  
-**Canonical law:** LINKAGE INTEGRITY LAW (data) + this UI contract.
+**Status:** **APPROVED WITH 4 CHANGES** · 2026-09-01 · Owner: “I follow Cursor recommendations if Cursor agrees with Claude.” Cursor **AGREES** with Claude Coder on all four changes (QBO / NetSuite / McLeod / Alvys + integrity bar below).  
+**Build gate:** Cursor UI + CC-1 void-tree API may proceed against **this** file. No second graph.  
+**Canonical law:** LINKAGE INTEGRITY LAW (data) + this UI contract · Claude-green standards on every money PR.
 
 ---
 
 ## 0. Why this exists
 
 Owner tried to void a load and was refused because a linked bill was still live. The refusal was correct; the experience was wrong. Walking module-by-module discovering dependencies one error at a time is forbidden. Cascade Void is the UI expression of linkage integrity.
+
+---
+
+## APPROVED CHANGES (Claude · Cursor concurs · owner follows)
+
+| # | Change | Why (standards) |
+|---|--------|-----------------|
+| **1** | **PAID invoice → §4 CANNOT** | Same class as paid-settlement clawback. QBO/NetSuite: paid A/R is not a silent void — needs refund / credit memo path. Voiding hides the cash obligation. |
+| **2** | **Load→expenses MAY: pre-check SAMPLE ONLY** | Real fuel/cash left the bank. Cancelling a load does not erase the outflow. McLeod/ops + GAAP honesty: show real expenses unchecked; operator must deliberately check. |
+| **3** | **ONE verb in UI: VOID** | Engine may reverse / cancel / status-close; owner always sees **Void**. Two verbs caused “no multi-select void” while Reverse/Cancel sat on screen. |
+| **4** | **Tree shows MONEY** | Per-row amount + **TOTAL BEING REVERSED** above confirm. NetSuite/QBO-grade: the number that catches a wrong selection before commit. |
+
+**Questions 3 & 5 (confirmed as written):** never-posted = delete/status-only, no fabricated JE. Void-reason catalog lands **before** the Cascade Void dialog ships (Cursor 1.6).
 
 ---
 
@@ -22,7 +35,7 @@ For each **root** document type, linked children and void coupling:
 | **Load** | Issued invoice | MUST (or refuse load void) | Cannot leave A/R open against a cancelled load |
 | **Load** | Driver bill | MUST | Pay artifact for the load |
 | **Load** | Settlement lines pointing at that bill | MUST release / reverse line | May force settlement reverse if only line |
-| **Load** | Expenses with `load_id` | MAY | Operator chooses; default pre-checked for sample/test |
+| **Load** | Expenses with `load_id` | MAY | **Pre-check SAMPLE (`is_sample_data`) only.** Real expenses shown **unchecked**; require deliberate click (Change 2) |
 | **Load** | Work orders / claims | MAY / advisory | Show; do not auto-void legal/insurance without explicit check |
 | **Invoice** | Payment applications | MUST unapply / void applications | Then payment may remain with unapplied cash or void |
 | **Invoice** | Factoring assignment | BLOCK until factoring released | Surface as CANNOT until factor path clears |
@@ -32,13 +45,13 @@ For each **root** document type, linked children and void coupling:
 | **Bill payment** | Bank match | MUST release | Then revoke payment + reverse JE |
 | **Payment (AR)** | Applications | MUST unapply | Then void payment + reverse JE |
 | **Expense** | Bank match / JE | MUST | Never-posted → delete/status only, no fabricated JE (ACCT-F10217) |
-| **Settlement** | Lines, deductions, escrow posts, bank pay | MUST reverse via existing reverse engine | Label in UI: **Reverse** (settlements) not Void — same cascade dialog |
+| **Settlement** | Lines, deductions, escrow posts, bank pay | MUST reverse via existing reverse engine | **UI label: Void** (Change 3); engine action may remain `reverse` |
 | **Settlement line** | Driver bill link | MUST | |
 | **Driver bill** | Settlement line | MUST detach/reverse | |
 | **Bank match** | Payment/bill payment/expense/JE | MUST unmatch both sides | |
 | **JE** | Source document | Prefer void source, not orphan JE | Manual JE: void JE alone if no source |
 
-### Proforma vs issued invoice (item 5 of owner ask)
+### Proforma vs issued invoice
 
 | State | On load cascade |
 |-------|-----------------|
@@ -49,14 +62,15 @@ For each **root** document type, linked children and void coupling:
 
 ## 2. THE DIALOG (what the owner sees)
 
-1. **Entry:** Void / Cancel / Reverse from detail OR multi-select → "Cascade void…"
+1. **Entry:** **Void** from detail OR multi-select → **Void** (Change 3 — one verb everywhere)
 2. **Header:** Root document label + id (e.g. `L-20260831-0004`)
-3. **Tree (from CC-1 API):** nested rows — type · display id · EntityLink · state · MUST/MAY · CAN void? · block reason
-4. **Pre-check:** MUST rows pre-checked and locked; MAY rows checked by default for `is_sample_data` / owner can uncheck
-5. **Cannot void rows:** shown in red section **before** confirm — deselect / fix path named (same class as bulk pre-validation)
-6. **Reason:** ONE catalog dropdown (`catalogs.void_reasons`) + optional memo (VOID-REASON-CATALOG-01 — if catalog not live yet, design assumes it; build blocked on catalog)
-7. **Confirm copy:** "Void N documents in one transaction. Each money document gets its own reversing JE."
-8. **Result screen:** per-row succeeded / failed / skipped + reversing JE id link + bulk_call_id
+3. **Tree (from CC-1 API):** nested rows — type · display id · EntityLink · state · MUST/MAY · CAN void? · block reason · **amount** (Change 4)
+4. **Pre-check:** MUST rows pre-checked and locked; MAY sample/test pre-checked; **MAY real expenses unchecked** (Change 2)
+5. **Cannot void rows:** shown in red section **before** confirm — deselect / fix path named
+6. **Money footer:** **TOTAL BEING REVERSED** = sum of checked voidable money rows (Change 4) — above confirm
+7. **Reason:** ONE catalog dropdown (`catalogs.void_reasons`) + optional memo (build blocked until catalog live)
+8. **Confirm copy:** "Void N documents in one transaction. Each money document gets its own reversing JE."
+9. **Result screen:** per-row succeeded / failed / skipped + reversing JE id link + bulk_call_id
 
 ---
 
@@ -81,10 +95,11 @@ On failure: full rollback; result screen shows the blocking row and reason (neve
 
 ## 4. WHAT CANNOT BE VOIDED (surfaced BEFORE commit)
 
-Examples (API returns `can_void: false`, `block_reason`):
+API returns `can_void: false`, `block_reason`:
 
 - Locked settlement without unlock
 - Paid settlement (needs clawback path — not silent status flip)
+- **Paid invoice** (needs refund / credit memo path — **Change 1**; same class as paid settlement)
 - Factored invoice still assigned
 - Bank line inside closed recon session
 - Period-closed postings
@@ -96,7 +111,7 @@ Examples (API returns `can_void: false`, `block_reason`):
 
 | Layer | Owner |
 |-------|--------|
-| Dependency graph + can_void | **CC-1** `GET /api/v1/linkage/void-tree?type=&id=` (name TBD) |
+| Dependency graph + can_void + amounts | **CC-1** `GET /api/v1/linkage/void-tree?type=&id=` (name TBD) |
 | Dialog + multi-select entry points | **CURSOR** |
 | Bidirectional bank match / void column unify | **CC-1** LINKAGE INTEGRITY LAW |
 
@@ -109,22 +124,21 @@ Cursor will **not** invent a second graph in the frontend.
 | Capability | Live now? | Gap vs Cascade Void |
 |------------|-----------|---------------------|
 | Bulk void invoices/bills/expenses/payments | YES (accounting lists) | No dependency tree |
-| Settlements multi-select **Reverse** | YES (#19042) | Label is Reverse; no tree |
-| Loads multi-select **Cancel** | YES (#19042) | Cancel service only; refuses if deps — no tree |
+| Settlements multi-select (engine: reverse) | YES (#19042) | UI renamed to **Void** (Change 3); still no tree |
+| Loads multi-select (engine: cancel) | YES (#19042) | UI renamed to **Void**; cancel refuses if deps — no tree |
 | Bulk pre-validation | YES (#19038 factory) | Per-type, not cross-module tree |
 | Hide voided / Hide cancelled | YES (#19052) | Done |
 | Receive Payment top nav | YES (#19036) | Done |
 
-**Owner report "still no multi-select void" on settlements/loads:** the actions exist as **Reverse** / **Cancel loads**, not a button labeled Void. Cascade Void unifies naming + tree. Until design approved, hard-refresh live `8112092` and use those batch actions for Phase 2 clearing.
-
 ---
 
-## 7. OWNER RULINGS NEEDED (before code)
+## 7. OWNER RULINGS — CLOSED
 
-1. Approve dependency MUST/MAY table above (or mark changes).
-2. Confirm settlements keep verb **Reverse** inside cascade UI, or rename to Void everywhere.
-3. Confirm never-posted docs: delete/status-only (already CC-1 law) inside cascade.
-4. Confirm MAY expenses default: pre-check sample only vs pre-check all load expenses.
-5. Void-reason catalog must land before dialog ships (Cursor 1.6 / CC-1 migration band).
+1. ~~Approve MUST/MAY~~ → **APPROVED** with Changes 1–2.
+2. ~~Reverse vs Void~~ → **ONE verb VOID** (Change 3).
+3. Never-posted → delete/status-only — **CONFIRMED**.
+4. MAY expenses pre-check → **SAMPLE ONLY** (Change 2).
+5. Void-reason catalog before dialog — **CONFIRMED** (Cursor 1.6).
+6. Tree amounts + total — **REQUIRED** (Change 4).
 
-**Reply with APPROVED / CHANGES — then Cursor builds against CC-1 tree API.**
+**Build order:** (a) UI verb rename Void live now · (b) CC-1 void-tree API with amounts + Change 1–2 rules · (c) Cursor Cascade Void dialog · (d) void-reason catalog before dialog ships.

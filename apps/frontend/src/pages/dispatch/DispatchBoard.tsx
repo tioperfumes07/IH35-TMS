@@ -125,7 +125,7 @@ const LOAD_TRANSITION_OPTIONS = [
   { value: "in_transit", label: "Mark in transit" },
   { value: "delivered_pending_docs", label: "Mark delivered (pending docs)" },
   { value: "completed_docs_received", label: "Mark docs received" },
-  // Cancel is NOT a set_status transition — use Cancel loads → cancelLoadInClientTx.
+  // Void/cancel is NOT a set_status transition — use Void → cancelLoadInClientTx.
 ] as const;
 
 const BOARD_MODES: Array<{ id: BoardMode; label: string; testId: string }> = [
@@ -1382,7 +1382,7 @@ export function DispatchBoard({
           },
           {
             id: "cancel-loads",
-            label: "Cancel loads",
+            label: "Void",
             onClick: () => setCancelModalOpen(true),
           },
         ]}
@@ -1409,7 +1409,7 @@ export function DispatchBoard({
         actionLabel="Set load status"
         affectedCount={selection.count}
         requiresReason
-        description="Apply a dispatch status transition to selected loads. Invalid transitions are reported per row. To cancel loads, use Cancel loads (real cancellation service)."
+        description="Apply a dispatch status transition to selected loads. Invalid transitions are reported per row. To void loads, use Void (real cancellation service)."
         payloadFields={
           <label className="block text-sm text-gray-700">
             Transition

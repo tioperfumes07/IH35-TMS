@@ -1,3 +1,4 @@
+2026-09-01T02:46Z | Cascade Void APPROVED+4 locked + VOID UI rename shipping | CC-1 build void-tree API | NEXT=unit-deact+board
 2026-09-01T02:43Z | ACCT-F10262 (#19056) main tip 2ceb344 | VoidReasonModal import fixed — CC-2/CC-3 PUSH NOW | NEXT=cascade-void APPROVED+4 + VOID rename
 CURSOR | WHERE-IS-DESIGN · CASCADE-VOID = docs/bus/CASCADE-VOID-DESIGN-FOR-OWNER-2026-09-01.md (PR #19053) · board rewrite = docs/bus/OWNER-REWRITE-DISPATCH-AND-CASCADE-VOID-2026-09-01.md · waiting Jorge APPROVED | GO
 
