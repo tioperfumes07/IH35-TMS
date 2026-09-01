@@ -5201,6 +5201,11 @@
     "purpose": "verify-load-mark-invoiced-ui (completed_docs_received\u2192invoiced live path)"
   },
   "10220": "verify-lists-catalog-search-debounced",
+  "10221": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-01",
+    "purpose": "verify-settlement-header-backlink-written (repair duplicate 3909 claim collision)"
+  },
   "10222": "verify-driver-pay-rate-create-writes-billing-table",
   "_band": {
     "cc-1": "n%4===1",
