@@ -7,6 +7,9 @@ type Props = Omit<SelectHTMLAttributes<HTMLSelectElement>, "onChange" | "value" 
   defaultValue?: string | number | readonly string[];
   onChange?: (event: ChangeEvent<HTMLSelectElement>) => void;
   children?: ReactNode;
+  // SelectHTMLAttributes does not itself declare data-testid (it is a JSX-level allowance, not a
+  // typed HTML attribute) -- declared explicitly so it can be captured and forwarded below.
+  "data-testid"?: string;
 };
 
 type OptionRow = {
@@ -47,6 +50,14 @@ function flattenOptions(children: ReactNode): OptionRow[] {
 // OUTER positioning wrapper draws a second box around the real control (especially obvious inside
 // right drawers such as Lists > Accounting > Detail Type). Keep layout/spacing/typography hooks, but
 // discard frame chrome at this one shared boundary so every module gets one control frame.
+//
+// FLT-01-COMBOBOX-SWEEP-ARIA-TESTID-GAP: this adapter's own Props type is `Omit<SelectHTMLAttributes,
+// ...>`, which lets TypeScript accept `aria-label` / `data-testid` on a call site silently -- but the
+// destructuring below never captured either one, so both were dropped without a type error. A raw
+// <select aria-label="…" data-testid="…"> converted to <SelectCombobox aria-label="…"
+// data-testid="…"> compiled clean and looked identical in a diff, but lost its accessible name and
+// its test hook. Now explicitly captured and forwarded to Combobox's own `ariaLabel`/`dataTestId`
+// props (which already existed and already render real `aria-label`/`data-testid` DOM attributes).
 export function SelectCombobox({
   value,
   defaultValue,
@@ -58,6 +69,8 @@ export function SelectCombobox({
   name,
   id,
   onBlur,
+  "aria-label": ariaLabel,
+  "data-testid": dataTestId,
 }: Props) {
   const controlled = value !== undefined;
   const [internalValue, setInternalValue] = useState<string | null>(() => normalizeValue(defaultValue));
@@ -86,6 +99,8 @@ export function SelectCombobox({
     >
       <Combobox
         id={id}
+        ariaLabel={ariaLabel}
+        dataTestId={dataTestId}
         options={options
           .filter((opt) => !opt.disabled)
           .map((opt) => ({

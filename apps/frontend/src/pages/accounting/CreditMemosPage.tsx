@@ -248,10 +248,9 @@ export function CreditMemosPage() {
               dataTestId="credit-memos-filter-customer"
             />
           </label>
-          <select
+          <SelectCombobox
             value={staged.draft.statusFilter}
             onChange={(e) => staged.setDraft({ ...staged.draft, statusFilter: e.target.value as CreditMemoStatus | "" })}
-            className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm"
             aria-label="Credit memo status filter"
           >
             <option value="">All statuses</option>
@@ -259,7 +258,7 @@ export function CreditMemosPage() {
             <option value="issued">Issued</option>
             <option value="applied">Applied</option>
             <option value="voided">Voided</option>
-          </select>
+          </SelectCombobox>
         </div>
       </CollapsedListFilters>
       {customerFilter ? (

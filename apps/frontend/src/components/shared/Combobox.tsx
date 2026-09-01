@@ -28,6 +28,14 @@ type Props = {
   onSearch?: (query: string) => void;
   /** C1-A11Y — forwarded to the input so `<label htmlFor>` actually binds. See components/Combobox.tsx. */
   id?: string;
+  /**
+   * FLT-01-COMBOBOX-SWEEP-ARIA-TESTID-GAP: this thin wrapper (see the file-level TODO on the
+   * 3-file Combobox surface) previously had neither of these in its own Props at all, even though
+   * the real engine (components/Combobox.tsx) has always supported both -- silently stranding
+   * SelectCombobox.tsx's own forwarding attempt.
+   */
+  ariaLabel?: string;
+  dataTestId?: string;
 };
 
 export function Combobox({
@@ -42,6 +50,8 @@ export function Combobox({
   onSearch,
   id,
   loading,
+  ariaLabel,
+  dataTestId,
 }: Props) {
   const mapped: BaseOption[] = options.map((option) => ({
     value: option.value,
@@ -59,6 +69,8 @@ export function Combobox({
       onSearch={onSearch}
       id={id}
       loading={loading}
+      ariaLabel={ariaLabel}
+      dataTestId={dataTestId}
       allowAddNew={
         allowAddNew && onAddNew
           ? {

@@ -5,6 +5,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { fetchPlannerTasks, type Task, type TaskStatus } from "../../api/tasks";
@@ -186,8 +187,8 @@ export function TasksReportPage() {
               <div className="flex flex-wrap items-end gap-3">
                 <label className="text-xs font-semibold text-slate-600">
                   Window
-                  <select
-                    className="mt-1 block w-full max-w-xs rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                  <SelectCombobox
+                    className="mt-1 block w-full max-w-xs"
                     value={staged.draft.windowDays}
                     onChange={(event) =>
                       staged.setDraft({ ...staged.draft, windowDays: Number(event.target.value) })
@@ -199,7 +200,7 @@ export function TasksReportPage() {
                         {label}
                       </option>
                     ))}
-                  </select>
+                  </SelectCombobox>
                 </label>
                 <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
                   <input
