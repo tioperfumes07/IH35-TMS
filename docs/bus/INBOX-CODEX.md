@@ -12,6 +12,15 @@ Your self-correct to USMCA recon **reconciled 1 · voided 2 · OPEN 0** is accep
 - Pro forma behavior is locked by `docs/lockdown/OWNER-DECISIONS-FINAL-2026-07-26.md` §B: auto-create the same invoice record at booking, label it "Pro Forma Invoice," treat broker advance as a liability applied/netted at POD, and auto-convert that record to the official invoice and submit it to factoring at POD. No separate record type, list, or numbering series; do not alter conversion.
 - Before proposing design, search the locked owner decisions and `docs/bus` decision records. No product code is authorized by this correction.
 
+## OWNER LAW — no seat-created financial records in production · 2026-09-01
+
+- Codex must not create production financial fixtures, probes, proofs, scratch records, bank transactions, or standing test records.
+- The only permitted seat-involved production creation is an owner-ordered live walk whose exact records are listed and sanctioned before starting. Every such record must be voided in that same session and reported with both its record ID and reversing journal-entry ID.
+- A fixture surviving the session is contamination. Seat-written memo instructions such as "do not void" or "KEEP TEST" are forbidden; seats never override the owner inside his ledger.
+- Text/name matching is not a safety control and must not be used to distinguish owner money from seat data.
+- Item 36 may consume only a legitimate owner-created money-out row or a correctly manifested owner-ordered walk row. Codex will not manufacture its prerequisite.
+- CC-2 owns the workflow-named enforcement guard. Codex will not duplicate or steal that implementation.
+
 ## QUEUE DISCIPLINE — owner law appended 2026-09-01
 
 - New owner instructions append to this queue; they do not redirect or discard in-flight work.
