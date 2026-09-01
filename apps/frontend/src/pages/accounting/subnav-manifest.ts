@@ -248,6 +248,9 @@ export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [
   { label: GROUP_LABELS.billpay, href: "/accounting/bill-payments", children: childrenOf("billpay") },
   // ACCT-F5050 — Invoices ▾ peer of Bills / Expenses / Bill payment (group label → list).
   { label: GROUP_LABELS.invoices, href: "/accounting/invoices", children: childrenOf("invoices") },
+  // NAV-RECEIVE-PAYMENT-01 — top-row leaf (not only under Invoices ▾). Owner reported missing
+  // from the accounting nav row three times; route + hub tab already exist.
+  leafOf("/accounting/payments"),
   {
     label: GROUP_LABELS.maint_shop,
     href: "/accounting/maintenance-shop",
