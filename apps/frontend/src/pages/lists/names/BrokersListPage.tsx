@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { CatalogListSearchInput } from "../../../../components/lists/CatalogListSearchInput";
+import { catalogListSearchQueryOptions } from "../../../../hooks/catalogListSearchQueryOptions";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listAllCustomers, type Customer } from "../../../api/mdata";
@@ -34,6 +36,7 @@ export function BrokersListPage() {
         status: "active",
       }),
     enabled: Boolean(companyId),
+    ...catalogListSearchQueryOptions,
   });
 
   const rows = query.data?.customers ?? [];
@@ -70,12 +73,7 @@ export function BrokersListPage() {
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search by name, code, MC# or DOT#"
-          className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
-        />
+        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by name, code, MC# or DOT#" className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
       </div>
 
       {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search filter above feeds

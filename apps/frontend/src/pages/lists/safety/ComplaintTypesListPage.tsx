@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { CatalogListSearchInput } from "../../../../components/lists/CatalogListSearchInput";
+import { catalogListSearchQueryOptions } from "../../../../hooks/catalogListSearchQueryOptions";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { useQuery } from "@tanstack/react-query";
 import { listComplaintTypes, type ComplaintSeverity, type ComplaintTypeRow } from "../../../api/catalogs-safety";
@@ -52,6 +54,7 @@ export function ComplaintTypesListPage() {
     queryKey: ["catalogs", "safety", "complaint-types", companyId, search, statusFilter],
     queryFn: () => listComplaintTypes(companyId, { search: search || undefined, is_active: statusFilter, limit: 200, offset: 0 }),
     enabled: Boolean(companyId),
+    ...catalogListSearchQueryOptions,
   });
 
   const rows = query.data?.rows ?? [];
@@ -91,7 +94,7 @@ export function ComplaintTypesListPage() {
         data-testid="complaint-types-list-frame"
       >
         <div className="grid gap-2 border-b border-gray-200 bg-gray-50 p-3 md:grid-cols-3">
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by type code or type name" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
+          <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by type code or type name" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
           <CatalogStatusFilterCombobox value={statusFilter} onChange={setStatusFilter} />
         </div>
 

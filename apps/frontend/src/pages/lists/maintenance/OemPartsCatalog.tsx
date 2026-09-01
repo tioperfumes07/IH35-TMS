@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { CatalogListSearchInput } from "../../../../components/lists/CatalogListSearchInput";
+import { catalogListSearchQueryOptions } from "../../../../hooks/catalogListSearchQueryOptions";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -181,6 +183,7 @@ export function OemPartsCatalog() {
         fleet_only: fleetOnly,
       }),
     enabled: Boolean(companyId),
+    ...catalogListSearchQueryOptions,
   });
 
   const brandsQuery = useQuery({
@@ -222,12 +225,7 @@ export function OemPartsCatalog() {
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
         {/* MAINT-F3508: server-bound OEM search (q) — keep; ParityTable toolbar Search suppressed */}
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search name or part #"
-          className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
-        />
+        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search name or part #" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
         <SelectCombobox
           value={brandFilter}
           onChange={(event) => setBrandFilter(event.target.value)}

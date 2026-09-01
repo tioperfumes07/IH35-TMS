@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { CatalogListSearchInput } from "../../../../components/lists/CatalogListSearchInput";
+import { catalogListSearchQueryOptions } from "../../../../hooks/catalogListSearchQueryOptions";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
@@ -84,6 +86,7 @@ export function AccountingCatalogListPage({
     queryKey: ["catalogs", "accounting", displayName, companyId, search, status],
     queryFn: () => client.list({ operating_company_id: companyId, search: search || undefined, is_active: status, limit: 200, offset: 0 }),
     enabled: Boolean(companyId),
+    ...catalogListSearchQueryOptions,
   });
 
   const rows = query.data?.rows ?? [];
@@ -186,12 +189,7 @@ export function AccountingCatalogListPage({
           suppressToolbarSearch
           filterBar={
             <div className="grid gap-2 md:grid-cols-3">
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by code or display name"
-                className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
-              />
+              <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
               <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "true" | "false" | "all")} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
                 <option value="true">Active</option>
                 <option value="false">Inactive</option>

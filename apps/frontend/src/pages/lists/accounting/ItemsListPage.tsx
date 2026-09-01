@@ -6,6 +6,8 @@
  * we resolve them to names here for display.
  */
 import { useEffect, useMemo, useState } from "react";
+import { CatalogListSearchInput } from "../../../../components/lists/CatalogListSearchInput";
+import { catalogListSearchQueryOptions } from "../../../../hooks/catalogListSearchQueryOptions";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { itemsCatalogClient, qboCategoriesCatalogClient } from "../../../api/catalogs-accounting";
@@ -83,16 +85,19 @@ export function ItemsListPage() {
     queryKey: ["catalogs", "accounting", "items", companyId, search],
     queryFn: () => itemsCatalogClient.list({ operating_company_id: companyId, search: search || undefined, is_active: "all", limit: 200, offset: 0 }),
     enabled: Boolean(companyId),
+    ...catalogListSearchQueryOptions,
   });
   const accountsQuery = useQuery({
     queryKey: ["catalogs", "accounts", "for-items", companyId],
     queryFn: () => getCoaAccounts(companyId),
     enabled: Boolean(companyId),
+    ...catalogListSearchQueryOptions,
   });
   const categoriesQuery = useQuery({
     queryKey: ["catalogs", "accounting", "qbo-categories", companyId],
     queryFn: () => qboCategoriesCatalogClient.list({ operating_company_id: companyId, is_active: "all", limit: 200 }),
     enabled: Boolean(companyId),
+    ...catalogListSearchQueryOptions,
   });
 
   const rows = query.data?.rows ?? [];
@@ -182,13 +187,7 @@ export function ItemsListPage() {
       testIdPrefix="items"
       dataAttributes={{ "data-items-filter-toolbar": "collapsed" }}
       searchSlot={
-        <input
-          className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-sm"
-          placeholder="Search items…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          aria-label="Search items"
-        />
+        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search items…" className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-sm" />
       }
     >
       <label className="flex items-center gap-2 text-xs text-gray-700">

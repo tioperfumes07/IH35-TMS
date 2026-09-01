@@ -3,6 +3,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../api/client";
+import { catalogListSearchQueryOptions } from "./catalogListSearchQueryOptions";
 
 export type MaintPartRow = {
   id: string;
@@ -46,6 +47,7 @@ export function useMaintenancePartsCatalog(filters: MaintPartsFilters) {
     queryKey: ["catalogs", "maintenance", "parts-master", filters],
     queryFn: () => apiRequest<MaintPartsListResponse>(`/api/v1/catalogs/maintenance/parts-master?${params.toString()}`),
     enabled: Boolean(filters.operating_company_id),
+    ...catalogListSearchQueryOptions,
   });
 }
 
