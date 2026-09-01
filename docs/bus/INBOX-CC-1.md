@@ -100,11 +100,53 @@ inline once resolved; never delete a row.
     void. Applies going forward: any live-UI verification I do must be created, proven, and
     voided in the same session, record ID + reversing JE id reported.]
 
-**STATED QUEUE ORDER (owner, most recent restatement):** SETL-SELECTION-BINDING (proof posted
-twice, freeze NOT lifted, awaiting Codex/CC-2 confirm) → SETL-NO-VOID-PATH-01 (DONE, PR #18989)
-→ INV-OPEN-VOID-01 (DONE, PR #18997) → BANK-ORPHAN-01 (DONE, PR #18989 + #19001 — apply not yet
-run against prod, awaiting authorized session).
+16. bills-never-auto-created: 39 delivered loads / 16 real / $14,789.50. Shared mint already
+    wired everywhere; build the remint screen (list + bulk apply).
+    [DONE — PR #19014/ACCT-F10201, /dispatch/driver-bill-remint, linked from Dispatch Overview.
+    Apply not yet run against prod.]
+17. RECON-NO-OPEN-SESSION correction (owner): my read conflated TRANSP's July session into a
+    USMCA read, and conflated accounting.periods with banking.reconciliation_sessions.
+    [DONE — PR #19015 correction posted. No September USMCA session exists; August's own is
+    reconciled/voided x2.]
+18. ACCOUNTABILITY: CC-2's guard found 4 prod financial records with seat instructions in the
+    memo field telling the owner not to void his own ledger entry; 3 are mine (accounting.bills
+    8cd6b69c, accounting.expenses d64eb0ed, accounting.payments 704f5a67).
+    [DONE — acknowledged by record ID in OUTBOX, not disputed. Owner voiding all 4 himself, not
+    touched.]
+19. OWNER RULINGS A/B/C, all three answered, build to them:
+    A. SETTLEMENT APPROVAL — wire it, do not retire. Owner popup modal + audible alarm when a
+       settlement needs approval. Gate on settlement.approve (seeded Owner+Administrator);
+       settlement.pay stays separate so approving never pays. Full actor/timestamp/before-after
+       audit. [NOT STARTED]
+    B. NEGATIVE SETTLEMENTS — never forgive, never write off. Auto-post to
+       driver_finance.driver_liabilities (receivable side, Cash Advance=ASSET precedent), carry
+       forward, deduct on next settlement. No settlement may close negative without the entry —
+       guard it. Write-off is separate/deliberate/permissioned, not built here. List (do not
+       backfill) the 7 existing negative settlements for owner approval. [DOING]
+    C. THREE DATES — incurred/earned, payment-issued, cleared, never collapsed. Cleared date
+       drives ONLY reconciliation session assignment, never GL period/cash-basis/tax year
+       (constructive-payment doctrine). Both created and cleared dates visible in reconciliation
+       UI, as QuickBooks shows. [PARTIAL — PR #19028: schema (cleared_date on payments/
+       bill_payments) + the 2 bank-feed write-path sites DONE. Pay-later/customer-payment flows
+       and the reconciliation UI display REMAIN.]
+20. SETL-SELECTION-BINDING REOPENED (Cascade root-caused): zero of 30 detail surfaces assert
+    the fetched record matches the requested id — a transient cache race, not a tooling artifact.
+    My "tooling artifact" closure overturned; correctly reopening + stating "two clean passes
+    are consistent with the bug existing, not proof against it" was the right standard.
+    [PARTIAL — PR #19018: identity guard shipped on SettlementDetailPage.tsx (my worst-cited
+    surface, useSearchParams widens the stale window). Guard pattern sent to CC-2 for the other
+    29 surfaces in the sweep — not built here. Codex's money-out freeze stays until Codex
+    re-verifies, not unilaterally lifted.]
+21. Cascade's void-path sweep, queued behind items 19 A/B/C: driver bills have NO void path at
+    all (status='void' in the CHECK constraint, migration 0141:25, nothing ever writes it — no
+    endpoint, no UI, no service). Settlement lines have no void path (is_active=false written
+    only by posting services, no user-facing endpoint). Only 6 of 15 voidable types route through
+    void.service.ts; 4 have no void UI at all. Settlements specifically: 3 dead columns PLUS a
+    dead CHECK constraint (driver_settlements_void_reason_required) that can never fire since
+    voided_at is never set — schema that LOOKS wired and isn't, the most dangerous shape since a
+    reviewer reading the schema concludes void is implemented. [NOT STARTED, queued behind 19]
 
-All four P0s now shipped or proof-posted. Next: LAW-FIX-INSTANTLY-FULL-REGISTER items 4-10
-(VOID LAW sweep beyond settlements, SETL-DUAL-APPROVAL, SETL-NEGATIVE-NET-01,
-RECON-NO-OPEN-SESSION, bills-never-auto-created) — none started yet.
+**STATED QUEUE ORDER (owner, most recent restatement):** 19A (settlement approval wire-up) →
+19B (negative settlements, DOING now) → 19C remainder (pay-later dates + recon UI) → item 21
+(void-path sweep: driver bills, settlement lines, the other 9 voidable types, the dead
+settlement void CHECK constraint).
