@@ -686,7 +686,7 @@ export function listVendorBills(
 
 /** All vendors when `vendor_id` omitted; supports balance columns from list API. */
 // GAP-EXPENSES browse (read-only). Mirrors listBills; hits GET /api/v1/expenses.
-export type ExpenseListStatus = "draft" | "posted" | "void";
+export type ExpenseListStatus = "draft" | "posted" | "void" | "active";
 export type ExpensePostingStatus = "unposted" | "posted" | "reversed";
 
 export type ExpenseListRow = {

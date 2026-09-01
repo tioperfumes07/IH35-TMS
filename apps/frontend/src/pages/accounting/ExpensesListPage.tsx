@@ -30,6 +30,8 @@ import { bulkRowLabelsFromRows, expenseBulkRowLabel } from "../../components/bul
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 
 const STATUS_OPTIONS: Array<{ value: "" | ExpenseListStatus; label: string }> = [
+  // FLT-03 — default Active = hide voided; All includes void; Void = void-only.
+  { value: "active", label: "Active (hide voided)" },
   { value: "", label: "All statuses" },
   { value: "draft", label: "Draft" },
   { value: "posted", label: "Posted" },
@@ -56,7 +58,7 @@ function expenseListLabel(number: unknown): string {
   return expenseHumanNumber(number) ?? "No expense #";
 }
 
-function StatusPill({ status }: { status: ExpenseListStatus }) {
+function StatusPill({ status }: { status: Exclude<ExpenseListStatus, "active"> | string }) {
   // §7: slate tones only — no green/red section coloring on a browse list.
   const cls =
     status === "void"
@@ -101,7 +103,8 @@ export function ExpensesListPage() {
   const deepLinkUnitId = searchParams.get("unit_id");
   const deepLinkWorkOrderId = searchParams.get("work_order_id");
   const deepLinkInsuranceClaimId = searchParams.get("insurance_claim_id");
-  const [status, setStatus] = useState<"" | ExpenseListStatus>("");
+  // FLT-03 — hide voided by default (toggle via Status → All / Void).
+  const [status, setStatus] = useState<"" | ExpenseListStatus>("active");
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
@@ -116,7 +119,7 @@ export function ExpensesListPage() {
       trailerId: deepLinkTrailerId || "",
     },
     empty: {
-      status: "" as const,
+      status: "active" as const,
       fromDate: "",
       toDate: "",
       loadId: "",
