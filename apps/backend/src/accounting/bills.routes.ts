@@ -5,6 +5,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { resolveAllocation } from "./allocation.js";
 import {
   BILL_LIST_SORT_SQL,
+  BILL_PAYMENT_LIST_SORT_SQL,
   countAllBillsForCompany,
   createBill,
   getBillDetail,
@@ -67,6 +68,9 @@ const listBillPaymentsQuerySchema = companyQuerySchema.extend({
     .union([z.literal("true"), z.literal("false"), z.boolean()])
     .optional()
     .transform((v) => v === true || v === "true"),
+  // SORT LAW (COL-04) — allowlisted column → SQL ORDER BY (see BILL_PAYMENT_LIST_SORT_SQL).
+  sort: z.string().trim().max(64).optional(),
+  dir: z.enum(["asc", "desc"]).optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -575,10 +579,16 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       dateFrom: query.data.date_from,
       dateTo: query.data.date_to,
       includeVoided: query.data.include_voided === true,
+      sort: query.data.sort,
+      dir: query.data.dir,
       limit: query.data.limit,
       offset: query.data.offset,
     });
-    return { rows };
+    return {
+      rows,
+      sort: query.data.sort && BILL_PAYMENT_LIST_SORT_SQL[query.data.sort] ? query.data.sort : null,
+      dir: query.data.sort && BILL_PAYMENT_LIST_SORT_SQL[query.data.sort] ? (query.data.dir ?? "desc") : null,
+    };
   });
 
   // Law §9 reverse drill-through — must be registered after the list route.

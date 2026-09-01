@@ -908,6 +908,9 @@ export function listBillPayments(
     date_from?: string;
     date_to?: string;
     include_voided?: boolean;
+    /** SORT LAW (COL-04) — allowlisted BillPaymentsListPage column key. */
+    sort?: string;
+    dir?: "asc" | "desc";
     limit?: number;
     offset?: number;
   } = {}
@@ -917,10 +920,14 @@ export function listBillPayments(
   if (params.date_from) query.set("date_from", params.date_from);
   if (params.date_to) query.set("date_to", params.date_to);
   if (params.include_voided) query.set("include_voided", "true");
+  if (params.sort) query.set("sort", params.sort);
+  if (params.dir) query.set("dir", params.dir);
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();
-  return apiRequest<{ rows: BillPayment[] }>(withCompany(`/api/v1/accounting/bill-payments${qs ? `?${qs}` : ""}`, operatingCompanyId));
+  return apiRequest<{ rows: BillPayment[]; sort?: string | null; dir?: string | null }>(
+    withCompany(`/api/v1/accounting/bill-payments${qs ? `?${qs}` : ""}`, operatingCompanyId)
+  );
 }
 
 export function listPaymentsForBill(billId: string, operatingCompanyId: string) {

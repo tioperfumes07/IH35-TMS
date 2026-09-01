@@ -19,7 +19,7 @@ CTL-05,UI control law,Receive Payments missing from the accounting nav,Accountin
 COL-01,2 Columns,"Every column sortable ascending and descending, every module",Systemwide,PARTIAL,ParityTable has sort wired (23 references). Not every module uses ParityTable — the alert boards hardcode ORDER BY and sort client-side over one page only.,CC-3
 COL-02,2 Columns,Columns MOVABLE — drag to reorder,Systemwide,STILL OPEN — DOES NOT EXIST,Zero matches for onDragStart / columnOrder in ParityTable.tsx on main today. Nothing has been built.,CC-3
 COL-03,2 Columns,"Column AUTO-FIT — payee, vendor, state must show fully, not truncate",Systemwide,STILL OPEN — DOES NOT EXIST,Zero matches for autoFit in ParityTable.tsx on main today. This is your 'auto-adjusting' item and nothing has been built.,CC-3
-COL-04,2 Columns,Sort click target too small / limit-100 caps the sort,Invoice + list grids,PARTIAL,"Invoices+Bills+Payments SORT LAW (sortMode=external + SQL whitelist). BillPayments residue still client-page.",CURSOR
+COL-04,2 Columns,Sort click target too small / limit-100 caps the sort,Invoice + list grids,FIXED,"Invoices+Bills+Payments+BillPayments SORT LAW (sortMode=external + SQL whitelist). LST-F6331.",CURSOR
 COL-05,2 Columns,"Three money columns everywhere: Total / Open / Variance, red when non-zero",Every money grid,STILL OPEN,Owner requirement 4.3.,CC-1
 COL-06,2 Columns,Settlement # / Period Begin / Period End on EVERY surface,Settlements,PARTIAL,Main grid verified compliant. Other surfaces never swept.,CASCADE+CC-1
 FLT-01,2 Filters,Filters must be COMBO BOXES in correct proportion,Systemwide,STILL OPEN,Owner requirement 2.4.,CC-3

@@ -175,6 +175,15 @@ export function sortableHeaderErrors({ hookSrc, parityTableSrc, pages, invRoutes
         failures.push(`${file} (${label}) — listPayments must pass sort/dir from useUrlSort into the API`);
       }
     }
+    // COL-04 — Bill Payments list: same SORT LAW.
+    if (file.includes("BillPaymentsListPage")) {
+      if (!/sortMode=["']external["']/.test(src)) {
+        failures.push(`${file} (${label}) — must use sortMode="external" so ParityTable does not reorder a capped page`);
+      }
+      if (!/sort:\s*sortKey/.test(src) || !/dir:\s*sortKey\s*\?\s*sortDirection/.test(src)) {
+        failures.push(`${file} (${label}) — listBillPayments must pass sort/dir from useUrlSort into the API`);
+      }
+    }
   }
 
   const invRoutes =
@@ -216,14 +225,24 @@ export function sortableHeaderErrors({ hookSrc, parityTableSrc, pages, invRoutes
   if (!/params\.sort|filters\.sort/.test(listPaymentsFn) || !/query\.set\("sort"/.test(listPaymentsFn)) {
     failures.push("apps/frontend/src/api/accounting.ts — listPayments must forward sort query param");
   }
+  const listBillPaymentsFn = sliceExportedFn(invApi, "listBillPayments");
+  if (!/params\.sort/.test(listBillPaymentsFn) || !/query\.set\("sort"/.test(listBillPaymentsFn)) {
+    failures.push("apps/frontend/src/api/accounting.ts — listBillPayments must forward sort query param");
+  }
 
   const billRoutes = readFile("apps/backend/src/accounting/bills.routes.ts") ?? "";
   const billService = readFile("apps/backend/src/accounting/bills.service.ts") ?? "";
   if (!/BILL_LIST_SORT_SQL/.test(billService) || !/billListOrderBy/.test(billService)) {
     failures.push("apps/backend/src/accounting/bills.service.ts — must whitelist sort → SQL ORDER BY (BILL_LIST_SORT_SQL)");
   }
+  if (!/BILL_PAYMENT_LIST_SORT_SQL/.test(billService) || !/billPaymentListOrderBy/.test(billService)) {
+    failures.push("apps/backend/src/accounting/bills.service.ts — must whitelist sort → SQL ORDER BY (BILL_PAYMENT_LIST_SORT_SQL)");
+  }
   if (!/sort:\s*z\.string\(\)/.test(billRoutes) || !/dir:\s*z\.enum\(\["asc", "desc"\]\)/.test(billRoutes)) {
     failures.push("apps/backend/src/accounting/bills.routes.ts — listBillsQuerySchema must accept sort + dir");
+  }
+  if (!/listBillPaymentsQuerySchema[\s\S]*?sort:\s*z\.string\(\)/.test(billRoutes) || !/listBillPaymentsQuerySchema[\s\S]*?dir:\s*z\.enum\(\["asc", "desc"\]\)/.test(billRoutes)) {
+    failures.push("apps/backend/src/accounting/bills.routes.ts — listBillPaymentsQuerySchema must accept sort + dir");
   }
 
   const payRoutes = readFile("apps/backend/src/accounting/payments.routes.ts") ?? "";
@@ -293,6 +312,17 @@ function selftest() {
     listPayments(id, { sort: sortKey, dir: sortKey ? sortDirection : undefined, limit: 100 })
     <ParityTable sortKey={sortKey} sortDirection={sortDirection} onSortChange={onSortChange} sortMode="external" />
   `;
+  const goodBillPayments = `
+    import { useUrlSort } from "../../hooks/useUrlSort";
+    const { sortKey, sortDirection, onSortChange } = useUrlSort();
+    columns={[
+      { key: "payment_date", sortable: true },
+      { key: "amount_cents", sortable: true },
+      { key: "actions", label: "Actions" },
+    ]}
+    listBillPayments(id, { sort: sortKey, dir: sortKey ? sortDirection : undefined, limit: 300 })
+    <ParityTable sortKey={sortKey} sortDirection={sortDirection} onSortChange={onSortChange} sortMode="external" />
+  `;
   const goodExpenses = `${goodPage}
     { key: "payee", sortable: true, sortValue: (row) => row.payee }
   `;
@@ -316,6 +346,10 @@ function selftest() {
       if (filters.sort) query.set("sort", filters.sort);
       if (filters.dir) query.set("dir", filters.dir);
     }
+    function listBillPayments(operatingCompanyId, params = {}) {
+      if (params.sort) query.set("sort", params.sort);
+      if (params.dir) query.set("dir", params.dir);
+    }
   `;
 
   const good = {
@@ -334,7 +368,9 @@ function selftest() {
             ? goodBills
             : file.includes("PaymentsListPage") && !file.includes("BillPayments")
               ? goodPayments
-              : goodPage,
+              : file.includes("BillPaymentsListPage")
+                ? goodBillPayments
+                : goodPage,
     })),
   };
 
