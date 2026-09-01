@@ -131,6 +131,11 @@ async function persistBillsOnClient(
       // LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep — vendorId is already a resolved, entity-scoped
       // mdata.vendors.id (looked up above by name), so it stamps the typed FK directly — no
       // separate resolution needed, unlike the other 5 writers in the sweep.
+      // INSURANCE-POLICY-BILL-PARAM-FIX: vendor_id/vendor_uuid are text but mdata_vendor_id is uuid — reusing the
+      // bare $2 placeholder across all three left Postgres unable to deduce one consistent type
+      // for it ("inconsistent types deduced for parameter $2"), failing this insert every time
+      // regardless of vehicle count or premium. The first two occurrences infer text from their
+      // column context; only the mdata_vendor_id occurrence needs an explicit cast.
       `INSERT INTO accounting.bills (
          operating_company_id, vendor_id, vendor_uuid, mdata_vendor_id,
          bill_date, due_date, amount_cents, total_amount,
