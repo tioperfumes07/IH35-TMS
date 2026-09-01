@@ -10,14 +10,14 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 
 const createConfirmationSchema = z.object({
   operating_company_id: z.string().uuid(),
-  driver_id: z.string().uuid(),
+  driver_id: z.string().uuid().optional().nullable(),
   load_id: z.string().uuid().optional().nullable(),
   unit_id: z.string().uuid().optional().nullable(),
   policy_id: z.string().uuid().optional().nullable(),
   reason: z.string().optional().nullable(),
   confirmation_type: z.enum(["warning", "owner_override"]).default("warning"),
   rule_id: z.string().default("INS-SCHEDULE-NOT-ON-POLICY"),
-});
+}).refine((b) => Boolean(b.driver_id || b.unit_id), { message: "driver_id or unit_id required" });
 
 const listConfirmationsSchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -50,7 +50,7 @@ export async function registerScheduleConfirmationRoutes(app: FastifyInstance) {
            (operating_company_id, driver_id, load_id, unit_id, policy_id, confirmed_by_user_id, reason, confirmation_type, rule_id)
          VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6::uuid, $7, $8, $9)
          RETURNING id::text`,
-        [body.operating_company_id, body.driver_id, body.load_id ?? null, body.unit_id ?? null, body.policy_id ?? null,
+        [body.operating_company_id, body.driver_id ?? null, body.load_id ?? null, body.unit_id ?? null, body.policy_id ?? null,
          user.uuid, body.reason ?? null, body.confirmation_type, body.rule_id]
       );
       return res.rows[0];

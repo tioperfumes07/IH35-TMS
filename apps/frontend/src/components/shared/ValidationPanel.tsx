@@ -77,7 +77,7 @@ function ValidationRow({
           onClick={() => onAck(item.rule_id)}
           className="ml-1 shrink-0 rounded-sm border border-amber-400 bg-white px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 hover:bg-amber-50"
         >
-          Ack
+          {item.evidence?.confirmation_required ? "Confirm" : "Ack"}
         </button>
       )}
     </div>

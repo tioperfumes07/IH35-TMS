@@ -74,6 +74,43 @@ export function isSortLawViolation(src) {
   return /\boffset\b/.test(src) || /\bhas_more\b/.test(src) || /\.limit\(/.test(src);
 }
 
+const DISPATCH_ALERT_BOARD_PATHS = [
+  "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
+  "apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx",
+  "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx",
+];
+const FLEET_OOS_STRIP = "apps/frontend/src/components/dispatch/FleetOosStrip.tsx";
+
+/** SORT-03 — COL-01 dispatch alert boards: external server sort + every data column sortable. */
+export function auditDispatchAlertBoardSort(src) {
+  const failures = [];
+  if (!src.includes('sortMode="external"')) {
+    failures.push('missing sortMode="external"');
+    return failures;
+  }
+  const columnBlocks = [...src.matchAll(/\{\s*key:\s*"([^"]+)"[\s\S]{0,280}?\}/g)];
+  for (const m of columnBlocks) {
+    const key = m[1];
+    if (key === "actions") continue;
+    if (!m[0].includes("sortable: true") && !m[0].includes("sortable:true")) {
+      failures.push(`column "${key}" missing sortable: true`);
+    }
+  }
+  return failures;
+}
+
+export function auditFleetOosStripSort(src) {
+  const failures = [];
+  for (const col of ["unit", "status", "reason", "eta_back"]) {
+    const re = new RegExp(
+      `columnKey="${col}"[\\s\\S]{0,400}?sortable[\\s\\S]{0,120}?onToggleSort`,
+    );
+    if (!re.test(src)) failures.push(`column "${col}" missing sortable TableHeaderCell`);
+  }
+  if (/<th\s/.test(src)) failures.push("plain <th> header remains — use TableHeaderCell for every column");
+  return failures;
+}
+
 function allSourceFiles() {
   const out = [];
   const abs = path.join(ROOT, SCAN_DIR);
@@ -137,6 +174,24 @@ if (SELFTEST) {
       name: "SORT-02: no ParityTable mount at all = not applicable",
       fn: () => isSortLawViolation('listThing({ offset, limit })') === false,
     },
+    {
+      name: "SORT-03: alert board missing sortable column fails",
+      fn: () =>
+        auditDispatchAlertBoardSort(
+          'sortMode="external"\n{ key: "load_number", label: "Load", sortable: true },\n{ key: "risk_state", label: "Risk" },',
+        ).length > 0,
+    },
+    {
+      name: "SORT-03: alert board with sortable columns passes",
+      fn: () =>
+        auditDispatchAlertBoardSort(
+          'sortMode="external"\n{ key: "load_number", label: "Load", sortable: true },\n{ key: "risk_state", label: "Risk", sortable: true },',
+        ).length === 0,
+    },
+    {
+      name: "SORT-03: FleetOosStrip plain th fails",
+      fn: () => auditFleetOosStripSort('<th className="px-2 py-1 font-semibold">Status</th>').length > 0,
+    },
   ];
   let failed = false;
   for (const c of cases) {
@@ -158,6 +213,25 @@ if (!fs.existsSync(parityTableAbs)) {
 const sort01 = parityTableHitTargetOk(fs.readFileSync(parityTableAbs, "utf8"));
 if (!sort01.ok) {
   console.error(`${LABEL} FAIL (SORT-01) — ${sort01.reason} (${PARITY_TABLE_PATH})`);
+  process.exit(1);
+}
+
+// --- SORT-03 (dispatch alert boards + FleetOosStrip — COL-01 remainder) ---
+const sort03Failures = [];
+for (const rel of DISPATCH_ALERT_BOARD_PATHS) {
+  const abs = path.join(ROOT, rel);
+  if (!fs.existsSync(abs)) {
+    sort03Failures.push(`${rel}: file missing`);
+    continue;
+  }
+  for (const f of auditDispatchAlertBoardSort(fs.readFileSync(abs, "utf8"))) sort03Failures.push(`${rel}: ${f}`);
+}
+const fleetAbs = path.join(ROOT, FLEET_OOS_STRIP);
+if (!fs.existsSync(fleetAbs)) sort03Failures.push(`${FLEET_OOS_STRIP}: file missing`);
+else for (const f of auditFleetOosStripSort(fs.readFileSync(fleetAbs, "utf8"))) sort03Failures.push(`${FLEET_OOS_STRIP}: ${f}`);
+if (sort03Failures.length) {
+  console.error(`${LABEL} FAIL (SORT-03) — dispatch alert board sort regression:`);
+  for (const f of sort03Failures.slice(0, 20)) console.error(`  - ${f}`);
   process.exit(1);
 }
 
@@ -215,6 +289,6 @@ if (added.length || violations.length > baseline.size) {
 }
 
 console.log(
-  `${LABEL}: OK — SORT-01 hit-target fix in place; SORT-02 ratchet holding at ${violations.length}/${baseline.size} across ${files.length} file(s).`,
+  `${LABEL}: OK — SORT-01 hit-target fix in place; SORT-03 alert-board sort wired; SORT-02 ratchet holding at ${violations.length}/${baseline.size} across ${files.length} file(s).`,
 );
 process.exit(0);

@@ -5165,6 +5165,31 @@
     "claimed_by": "cursor",
     "purpose": "verify-driver-hub-overview-request-surfaces"
   },
+  "10209": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-01",
+    "purpose": "verify-three-dates-cleared-date (THREE-DATES-COVERAGE-GAP, owner ruling)"
+  },
+  "10210": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-01",
+    "purpose": "verify-w8ben-no-fake-esign (WIR-04 blocked honesty)"
+  },
+  "10213": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-01",
+    "purpose": "verify-negative-settlement-liability-posted (RULING B, owner ruling)"
+  },
+  "10217": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-01",
+    "purpose": "verify-exp-posted-no-je-void-and-bulk (EXP-POSTED-NO-JE-01, owner ruling)"
+  },
+  "10218": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-01",
+    "purpose": "verify-load-mark-invoiced-ui (completed_docs_received→invoiced live path)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -7155,20 +7180,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1041,
-  "10209": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-09-01",
-    "purpose": "verify-three-dates-cleared-date (THREE-DATES-COVERAGE-GAP, owner ruling)"
-  },
-  "10213": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-09-01",
-    "purpose": "verify-negative-settlement-liability-posted (RULING B, owner ruling)"
-  },
-  "10217": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-09-01",
-    "purpose": "verify-exp-posted-no-je-void-and-bulk (EXP-POSTED-NO-JE-01, owner ruling)"
-  }
+  "total_claimed": 1041
 }

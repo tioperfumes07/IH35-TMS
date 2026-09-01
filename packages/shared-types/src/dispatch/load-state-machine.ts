@@ -149,3 +149,8 @@ export function loadCanMarkDeliveredPendingDocs(status: string | null | undefine
 export function loadCanMarkCompletedDocsReceived(status: string | null | undefined): boolean {
   return getOfficeTransitionButtons(String(status ?? "")).some((b) => b.target === "completed_docs_received");
 }
+
+/** mdata-only lifecycle — completed_docs_received→invoiced via PATCH /mdata/loads/:id/status. */
+export function loadCanMarkInvoiced(status: string | null | undefined): boolean {
+  return String(status ?? "").trim() === "completed_docs_received";
+}

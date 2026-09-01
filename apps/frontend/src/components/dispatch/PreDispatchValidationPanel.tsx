@@ -3,12 +3,17 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { ConfirmModal } from "../shared/ConfirmModal";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ValidationPanel, type ValidationResult } from "../shared/ValidationPanel";
 
 // INS-SCHEDULE: Owner ruling 2026-08-31 — confirming the insurance schedule warning MUST log to
 // the backend (who, when, driver, load, truck). The confirm cannot be bypassed.
-const INS_SCHEDULE_RULE_ID = "INS-SCHEDULE-NOT-ON-POLICY";
+const INS_SCHEDULE_RULE_IDS = new Set(["INS-SCHEDULE-NOT-ON-POLICY", "INS-SCHEDULE-UNIT-NOT-ON-POLICY"]);
+
+function isInsScheduleRule(ruleId: string): boolean {
+  return INS_SCHEDULE_RULE_IDS.has(ruleId);
+}
 
 type Props = {
   operatingCompanyId: string;
@@ -22,7 +27,12 @@ type Props = {
   trailerLabel?: string | null;
   customerLabel?: string | null;
   /** Reports readiness and advisory state; only blockers gate the Book button. */
-  onValidationChange?: (canDispatch: boolean, hasBlockers: boolean, hasWarnings: boolean) => void;
+  onValidationChange?: (
+    canDispatch: boolean,
+    hasBlockers: boolean,
+    hasWarnings: boolean,
+    hasUnackedInsScheduleConfirm: boolean
+  ) => void;
   /** Override reason collected by the parent (BookLoadModalV4). */
   overrideReason?: string;
   onOverrideReasonChange?: (reason: string) => void;
@@ -72,7 +82,23 @@ export function PreDispatchValidationPanel({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [acknowledgedRules, setAcknowledgedRules] = useState<Set<string>>(new Set());
+  const [pendingInsScheduleConfirm, setPendingInsScheduleConfirm] = useState<{ ruleId: string; message: string } | null>(null);
   const [retryGeneration, setRetryGeneration] = useState(0);
+
+  const reportValidationState = useCallback(
+    (data: ValidationResult, canDispatchOverride?: boolean) => {
+      const unackedInsSchedule = data.warnings.some(
+        (w) => isInsScheduleRule(w.rule_id) && !acknowledgedRules.has(w.rule_id)
+      );
+      onValidationChange?.(
+        canDispatchOverride ?? data.can_dispatch,
+        data.blockers.length > 0,
+        data.warnings.length > 0,
+        unackedInsSchedule
+      );
+    },
+    [acknowledgedRules, onValidationChange]
+  );
 
   // Re-run whenever any key input changes.
   const inputKey = useMemo(
@@ -87,7 +113,7 @@ export function PreDispatchValidationPanel({
     // Only run if there's something to validate.
     if (!driverUuid && !unitUuid && !customerId) {
       setResult(EMPTY_RESULT);
-      onValidationChange?.(true, false, false);
+      onValidationChange?.(true, false, false, false);
       return;
     }
 
@@ -104,7 +130,7 @@ export function PreDispatchValidationPanel({
       .then((data) => {
         if (cancelled) return;
         setResult(data);
-        onValidationChange?.(data.can_dispatch, data.blockers.length > 0, data.warnings.length > 0);
+        reportValidationState(data);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -114,7 +140,7 @@ export function PreDispatchValidationPanel({
         // but telling the parent `true` made Section D render "All checks pass · ready to book"
         // directly above this unavailable error. Preserve no fabricated blockers while making the
         // readiness signal honestly unavailable/not-passing.
-        onValidationChange?.(false, false, false);
+        onValidationChange?.(false, false, false, false);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -126,32 +152,57 @@ export function PreDispatchValidationPanel({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputKey, retryGeneration]);
 
+  useEffect(() => {
+    reportValidationState(result);
+  }, [acknowledgedRules, result, reportValidationState]);
+
+  const logInsScheduleConfirmation = useCallback(async (ruleId: string) => {
+    const isDriverRule = ruleId === "INS-SCHEDULE-NOT-ON-POLICY";
+    if (isDriverRule && !driverUuid) return false;
+    if (!isDriverRule && !unitUuid) return false;
+
+    await apiRequest("/api/v1/insurance/schedule-confirmations", {
+      method: "POST",
+      body: {
+        operating_company_id: operatingCompanyId,
+        driver_id: isDriverRule ? driverUuid : driverUuid ?? null,
+        unit_id: unitUuid ?? null,
+        confirmation_type: "warning",
+        rule_id: ruleId,
+      },
+    });
+    return true;
+  }, [operatingCompanyId, driverUuid, unitUuid]);
+
   const handleAck = useCallback(async (ruleId: string) => {
-    // INS-SCHEDULE: log the confirmation to the backend (append-only audit) before acknowledging.
-    if (ruleId === INS_SCHEDULE_RULE_ID && driverUuid) {
-      try {
-        await apiRequest("/api/v1/insurance/schedule-confirmations", {
-          method: "POST",
-          body: {
-            operating_company_id: operatingCompanyId,
-            driver_id: driverUuid,
-            unit_id: unitUuid ?? null,
-            confirmation_type: "warning",
-            rule_id: INS_SCHEDULE_RULE_ID,
-          },
-        });
-      } catch (err) {
-        // If the log fails, do NOT acknowledge — the confirm cannot be bypassed.
-        console.error("[INS-SCHEDULE] Failed to log confirmation:", err);
-        return;
-      }
+    if (isInsScheduleRule(ruleId)) {
+      const warning = result.warnings.find((w) => w.rule_id === ruleId);
+      setPendingInsScheduleConfirm({ ruleId, message: warning?.message ?? "Confirm insurance schedule warning before booking." });
+      return;
     }
     setAcknowledgedRules((prev) => {
       const next = new Set(prev);
       next.add(ruleId);
       return next;
     });
-  }, [operatingCompanyId, driverUuid, unitUuid]);
+  }, [result.warnings]);
+
+  const handleInsScheduleConfirm = useCallback(async () => {
+    if (!pendingInsScheduleConfirm) return;
+    const { ruleId } = pendingInsScheduleConfirm;
+    try {
+      const logged = await logInsScheduleConfirmation(ruleId);
+      if (!logged) return;
+      setAcknowledgedRules((prev) => {
+        const next = new Set(prev);
+        next.add(ruleId);
+        return next;
+      });
+    } catch (err) {
+      console.error("[INS-SCHEDULE] Failed to log confirmation:", err);
+      throw err;
+    }
+  }, [logInsScheduleConfirmation, pendingInsScheduleConfirm]);
 
   const hasBlockers = result.blockers.length > 0;
   const hasUnackedBlockers = result.blockers.some((b) => !acknowledgedRules.has(b.rule_id));
@@ -261,12 +312,23 @@ export function PreDispatchValidationPanel({
           <span>
             {result.blockers.length > 0
               ? `${result.blockers.length} blocker(s) — override required to dispatch`
+              : result.warnings.some((w) => isInsScheduleRule(w.rule_id) && !acknowledgedRules.has(w.rule_id))
+              ? "Insurance schedule confirmation required before booking"
               : result.warnings.length > 0
               ? `${result.warnings.length} warning(s) — acknowledge to note, booking still allowed`
               : "All checks pass"}
           </span>
         </div>
       )}
+
+      <ConfirmModal
+        open={pendingInsScheduleConfirm != null}
+        title="Insurance schedule warning"
+        message={pendingInsScheduleConfirm?.message ?? ""}
+        confirmLabel="I confirm — proceed"
+        onClose={() => setPendingInsScheduleConfirm(null)}
+        onConfirm={handleInsScheduleConfirm}
+      />
     </div>
   );
 }

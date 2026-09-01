@@ -48,7 +48,7 @@ import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 import { listDispatchFlagColors } from "../../api/catalogs";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
-import { getOfficeTransitionButtons, type OfficeTransitionButton } from "@ih35/shared-types";
+import { getOfficeTransitionButtons, loadCanMarkInvoiced, type OfficeTransitionButton } from "@ih35/shared-types";
 
 type Props = {
   loadId: string | null;
@@ -185,6 +185,24 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   const effectiveOperatingCompanyId = load?.operating_company_id ?? operatingCompanyId ?? null;
   const statusMutation = useUpdateLoadStatus(effectiveOperatingCompanyId);
   const remintDriverBillMutation = useRemintDriverBill(effectiveOperatingCompanyId);
+  const handleMarkInvoiced = useCallback(async () => {
+    if (!load) return;
+    if (!effectiveOperatingCompanyId) {
+      pushToast("Operating company is required before changing load status.", "error");
+      return;
+    }
+    try {
+      await statusMutation.mutateAsync({
+        id: load.id,
+        body: { new_status: "invoiced" },
+      });
+      pushToast(`Load ${load.load_number} — marked invoiced`, "success");
+      refetchLoad();
+      void queryClient.invalidateQueries({ queryKey: ["loads"] });
+    } catch (err) {
+      pushToast(userFacingApiError(err, "Could not mark load invoiced"), "error");
+    }
+  }, [effectiveOperatingCompanyId, load, pushToast, queryClient, refetchLoad, statusMutation]);
   const handleOfficeStatusTransition = useCallback(
     async (transition: OfficeTransitionButton) => {
       if (!load) return;
@@ -671,6 +689,18 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                           </Button>
                         ))
                       : null}
+                    {canEdit && loadCanMarkInvoiced(load.status) ? (
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        loading={statusMutation.isPending && statusMutation.variables?.body.new_status === "invoiced"}
+                        data-testid="load-mark-invoiced-button"
+                        onClick={() => void handleMarkInvoiced()}
+                      >
+                        Mark invoiced
+                      </Button>
+                    ) : null}
                     {canEdit && canRemintDriverBill ? (
                       <Button
                         type="button"

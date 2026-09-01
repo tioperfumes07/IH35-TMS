@@ -16,10 +16,11 @@ const validatorFile = join(repoRoot, "apps/backend/src/dispatch/validation/pre-d
 const routeFile = join(repoRoot, "apps/backend/src/insurance/schedule-confirmations.routes.ts");
 const indexFile = join(repoRoot, "apps/backend/src/index.ts");
 const frontendFile = join(repoRoot, "apps/frontend/src/components/dispatch/PreDispatchValidationPanel.tsx");
+const bookLoadFile = join(repoRoot, "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx");
 
 function collectErrors(files) {
   const errors = [];
-  const { migration, validator, route, index, frontend } = files;
+  const { migration, validator, route, index, frontend, bookLoad } = files;
 
   if (!migration) {
     errors.push("MISSING: db/migrations/202613311200_insurance_driver_schedule_and_confirmations.sql");
@@ -37,8 +38,11 @@ function collectErrors(files) {
     errors.push("MISSING: pre-dispatch-validator.service.ts");
   } else {
     if (!validator.includes("checkDriverInsuranceSchedule")) errors.push("Validator missing checkDriverInsuranceSchedule function");
+    if (!validator.includes("checkUnitInsuranceSchedule")) errors.push("Validator missing checkUnitInsuranceSchedule function");
     if (!validator.includes("INS-SCHEDULE-NOT-ON-POLICY")) errors.push("Validator missing INS-SCHEDULE-NOT-ON-POLICY rule_id");
+    if (!validator.includes("INS-SCHEDULE-UNIT-NOT-ON-POLICY")) errors.push("Validator missing INS-SCHEDULE-UNIT-NOT-ON-POLICY rule_id");
     if (!validator.includes("driver_insurance_schedule")) errors.push("Validator missing driver_insurance_schedule check registration");
+    if (!validator.includes("unit_insurance_schedule")) errors.push("Validator missing unit_insurance_schedule check registration");
     if (!validator.includes("INSURANCE_SCHEDULE_WARNING_ENABLED")) errors.push("Validator missing feature flag check");
   }
 
@@ -59,8 +63,18 @@ function collectErrors(files) {
     errors.push("MISSING: PreDispatchValidationPanel.tsx");
   } else {
     if (!frontend.includes("INS-SCHEDULE-NOT-ON-POLICY")) errors.push("Frontend missing INS-SCHEDULE-NOT-ON-POLICY rule_id");
+    if (!frontend.includes("INS-SCHEDULE-UNIT-NOT-ON-POLICY")) errors.push("Frontend missing INS-SCHEDULE-UNIT-NOT-ON-POLICY rule_id");
     if (!frontend.includes("schedule-confirmations")) errors.push("Frontend missing schedule-confirmations API call");
+    if (!frontend.includes("ConfirmModal")) errors.push("Frontend missing ConfirmModal for explicit insurance schedule confirm");
+    if (!frontend.includes("hasUnackedInsScheduleConfirm")) errors.push("Frontend missing hasUnackedInsScheduleConfirm parent signal");
     if (!frontend.includes("The confirm cannot be bypassed")) errors.push("Frontend missing confirm-cannot-be-bypassed comment");
+  }
+
+  if (!bookLoad) {
+    errors.push("MISSING: BookLoadModalV4.tsx");
+  } else {
+    if (!bookLoad.includes("hasUnackedInsScheduleConfirm")) errors.push("BookLoadModalV4 missing hasUnackedInsScheduleConfirm gate");
+    if (!bookLoad.includes("preDispatch.hasUnackedInsScheduleConfirm")) errors.push("BookLoadModalV4 must disable Book when insurance schedule unconfirmed");
   }
 
   return errors;
@@ -73,6 +87,7 @@ function readAll() {
     route: existsSync(routeFile) ? readFileSync(routeFile, "utf8") : null,
     index: existsSync(indexFile) ? readFileSync(indexFile, "utf8") : null,
     frontend: existsSync(frontendFile) ? readFileSync(frontendFile, "utf8") : null,
+    bookLoad: existsSync(bookLoadFile) ? readFileSync(bookLoadFile, "utf8") : null,
   };
 }
 
@@ -90,6 +105,9 @@ function selftest() {
     ["drop confirmations INSERT", (f) => ({ ...f, route: f.route.replace("INSERT INTO insurance.schedule_confirmations", "SELECT 1") })],
     ["drop index registration", (f) => ({ ...f, index: f.index.replaceAll("registerScheduleConfirmationRoutes", "registerNope") })],
     ["drop frontend confirm API", (f) => ({ ...f, frontend: f.frontend.replaceAll("schedule-confirmations", "schedule-nope") })],
+    ["drop ConfirmModal", (f) => ({ ...f, frontend: f.frontend.replaceAll("ConfirmModal", "ModalNope") })],
+    ["drop book gate", (f) => ({ ...f, bookLoad: f.bookLoad.replaceAll("hasUnackedInsScheduleConfirm", "nope") })],
+    ["drop unit schedule check", (f) => ({ ...f, validator: f.validator.replaceAll("checkUnitInsuranceSchedule", "checkUnitNope") })],
   ];
 
   for (const [name, mut] of mutations) {
