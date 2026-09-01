@@ -91,7 +91,6 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
   const togglePage = useCallback(
     (ids: string[]) => {
       setSelectedIds((prev) => {
-        const pageSet = new Set(ids);
         const allPageSelected = ids.length > 0 && ids.every((id) => prev.has(id));
         const next = new Set(prev);
         if (allPageSelected) {
