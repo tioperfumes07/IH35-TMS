@@ -66,6 +66,10 @@ jobs:
         run: node scripts/verify-upl04-create-evidence-uploads.mjs --selftest
       - name: verify:upl04-create-evidence-uploads
         run: node scripts/verify-upl04-create-evidence-uploads.mjs
+      - name: verify:upl06-dot-inspection-create-upload --selftest
+        run: node scripts/verify-upl06-dot-inspection-create-upload.mjs --selftest
+      - name: verify:upl06-dot-inspection-create-upload
+        run: node scripts/verify-upl06-dot-inspection-create-upload.mjs
       - name: verify:dispatch-notify-prefs-onerror --selftest
         run: node scripts/verify-dispatch-notify-prefs-onerror.mjs --selftest
       - name: verify:dispatch-notify-prefs-onerror
