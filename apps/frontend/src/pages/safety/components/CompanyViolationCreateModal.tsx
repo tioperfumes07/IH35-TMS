@@ -11,6 +11,7 @@ import { listCompanyViolationTypes } from "../../../api/catalogs-safety";
 import { companyToday } from "../../../lib/businessDate";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { uploadSourceDocumentFromFile } from "../../../api/docs";
 
 type Props = {
   open: boolean;
@@ -36,6 +37,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
   const [relatedUnitId, setRelatedUnitId] = useState<string | null>(null);
   // SAF-B29 wave-4: catalog capped at 200 — typed term must reach listCompanyViolationTypes.
   const [typeSearch, setTypeSearch] = useState("");
+  const [sourceDocument, setSourceDocument] = useState<File | null>(null);
   const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   const queryClient = useQueryClient();
   const companyGenerationRef = useRef(0);
@@ -50,6 +52,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
     setRelatedDriverId(null);
     setRelatedUnitId(null);
     setTypeSearch("");
+    setSourceDocument(null);
   }, []);
 
   const typesQuery = useQuery({
@@ -73,7 +76,14 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
       companyId: string;
       generation: number;
       payload: Parameters<typeof createCompanyViolation>[1];
-    }) => createCompanyViolation(input.companyId, input.payload),
+      file: File | null;
+    }) => uploadSourceDocumentFromFile(input.file, {
+      operating_company_id: input.companyId,
+      entity_links: [
+        ...(relatedDriverId ? [{ entity_type: "driver" as const, entity_id: relatedDriverId }] : []),
+        ...(relatedUnitId ? [{ entity_type: "unit" as const, entity_id: relatedUnitId }] : []),
+      ],
+    }).then((sourceDocId) => createCompanyViolation(input.companyId, { ...input.payload, source_doc_id: sourceDocId })),
     onSuccess: (_created, input) => {
       if (input.generation !== companyGenerationRef.current) return;
       onCreated();
@@ -103,7 +113,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
   const isDirty =
     violationType !== "DOT_inspection" || severity !== "minor" || reportedDate !== companyToday() ||
     description !== "" || correctivePlan !== "" || violationTypeUuid !== null ||
-    relatedDriverId !== null || relatedUnitId !== null;
+    relatedDriverId !== null || relatedUnitId !== null || sourceDocument !== null;
 
   return (
     <Modal variant="drawer" open={open} onClose={handleClose} title="Create Company Violation" confirmDiscardOnClose isDirty={isDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
@@ -129,6 +139,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
               related_drivers: relatedDriverId ? [relatedDriverId] : [],
               related_units: relatedUnitId ? [relatedUnitId] : [],
             },
+            file: sourceDocument,
           });
         }}
       >
@@ -241,6 +252,16 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
               onChange={(event) => setDescription(event.target.value)}
               className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               rows={3}
+            />
+          </div>
+          <div className="md:col-span-2 flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600" htmlFor="company-violation-source-document">Citation / audit evidence</label>
+            <input
+              id="company-violation-source-document"
+              type="file"
+              accept="application/pdf,image/jpeg,image/png"
+              className="text-xs"
+              onChange={(event) => setSourceDocument(event.target.files?.[0] ?? null)}
             />
           </div>
           <div className="md:col-span-2 flex flex-col gap-1">

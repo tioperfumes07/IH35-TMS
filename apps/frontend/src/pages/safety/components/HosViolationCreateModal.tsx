@@ -12,6 +12,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { LoadSuggestionReadError } from "../../../components/shared/LoadSuggestionReadError";
+import { uploadSourceDocumentFromFile } from "../../../api/docs";
 
 type Source = "samsara_auto" | "manual_office" | "dot_citation";
 
@@ -72,6 +73,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
   const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   /** Once the active-trip resolver fills the load, preserve an operator override. */
   const [suggestionPinned, setSuggestionPinned] = useState(false);
+  const [sourceDocument, setSourceDocument] = useState<File | null>(null);
 
   // DUAL_PATH_OLD_ACTIVE: HoursOfServicePage drawer still took free-text violation_type while
   // HOSViolationsTab already catalogs via ReferenceSelect. Same catalog + FK + CSA weight.
@@ -83,6 +85,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
     pristineOccurredAtRef.current = next.occurred_at;
     setForm(next);
     setSuggestionPinned(false);
+    setSourceDocument(null);
     setViolationTypeSearch("");
   }, []);
   const violationTypesQuery = useQuery({
@@ -138,8 +141,15 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
   }, [form.related_load_id, suggestionPinned, suggestionQuery.data]);
 
   const mutation = useMutation({
-    mutationFn: (input: HosViolationSubmission) =>
-      createHosViolation(input.companyId, {
+    mutationFn: async (input: HosViolationSubmission & { file: File | null }) => {
+      const sourceDocId = await uploadSourceDocumentFromFile(input.file, {
+        operating_company_id: input.companyId,
+        entity_links: [
+          { entity_type: "driver", entity_id: input.draft.driver_id },
+          ...(input.draft.related_load_id ? [{ entity_type: "load" as const, entity_id: input.draft.related_load_id }] : []),
+        ],
+      });
+      return createHosViolation(input.companyId, {
         driver_id: input.draft.driver_id.trim(),
         violation_type: input.draft.violation_type.trim(),
         occurred_at: input.draft.occurred_at.includes("T")
@@ -153,7 +163,9 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
         csa_points: input.violationType.severityWeight,
         dot_violation_type_id: input.violationType.id,
         related_load_id: input.draft.related_load_id.trim() || null,
-      }),
+        source_doc_id: sourceDocId,
+      });
+    },
     onSuccess: (_created, input) => {
       if (lifecycleGenerationRef.current !== input.generation) return;
       onCreated();
@@ -183,7 +195,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
   const isDirty =
     form.driver_id !== "" || form.violation_type !== "" || form.occurred_at !== pristineOccurredAtRef.current ||
     form.duration_minutes !== "" || form.source !== "manual_office" || form.notes !== "" ||
-    form.related_load_id !== "";
+    form.related_load_id !== "" || sourceDocument !== null;
 
   return (
     <Modal variant="drawer" open={open} onClose={handleClose} title="Create HOS Violation" confirmDiscardOnClose isDirty={isDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
@@ -198,6 +210,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
             companyId: operatingCompanyId,
             generation: lifecycleGenerationRef.current,
             draft: { ...form },
+            file: sourceDocument,
             violationType: {
               id: selectedViolationType.id,
               severityWeight: selectedViolationType.severity_weight ?? null,
@@ -320,6 +333,16 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
               className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               value={form.notes}
               onChange={(e) => setForm((v) => ({ ...v, notes: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-1 md:col-span-2">
+            <label className="text-xs font-semibold text-gray-600" htmlFor="hos-vio-source-document">Citation / log evidence</label>
+            <input
+              id="hos-vio-source-document"
+              type="file"
+              accept="application/pdf,image/jpeg,image/png"
+              className="text-xs"
+              onChange={(event) => setSourceDocument(event.target.files?.[0] ?? null)}
             />
           </div>
         </div>

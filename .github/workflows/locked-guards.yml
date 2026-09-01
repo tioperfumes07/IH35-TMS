@@ -62,6 +62,10 @@ jobs:
         run: node scripts/verify-planner-grid-canonical.mjs --selftest
       - name: verify:planner-grid-canonical
         run: node scripts/verify-planner-grid-canonical.mjs
+      - name: verify:upl04-create-evidence-uploads --selftest
+        run: node scripts/verify-upl04-create-evidence-uploads.mjs --selftest
+      - name: verify:upl04-create-evidence-uploads
+        run: node scripts/verify-upl04-create-evidence-uploads.mjs
       - name: verify:dispatch-notify-prefs-onerror --selftest
         run: node scripts/verify-dispatch-notify-prefs-onerror.mjs --selftest
       - name: verify:dispatch-notify-prefs-onerror

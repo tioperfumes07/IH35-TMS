@@ -31,6 +31,7 @@ const createHosViolationSchema = z.object({
   related_load_id: z.string().uuid().optional().nullable(),
   related_dot_inspection_id: z.string().uuid().optional().nullable(),
   csa_points: z.number().int().nonnegative().optional().nullable(),
+  source_doc_id: z.string().uuid().nullable().optional(),
 });
 
 const idParamsSchema = z.object({
@@ -227,10 +228,11 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
             related_dot_inspection_id,
             notes,
             csa_points,
+            source_doc_id,
             created_by
           )
           VALUES (
-            $1,$2,$3,$4,$5::timestamptz,$6,$7,$8,$9,$10,COALESCE($11, 0),$12
+            $1,$2,$3,$4,$5::timestamptz,$6,$7,$8,$9,$10,COALESCE($11, 0),$12,$13
           )
           RETURNING *
         `,
@@ -246,6 +248,7 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
           body.data.related_dot_inspection_id ?? null,
           body.data.notes ?? null,
           body.data.csa_points ?? null,
+          body.data.source_doc_id ?? null,
           user.uuid,
         ]
       );

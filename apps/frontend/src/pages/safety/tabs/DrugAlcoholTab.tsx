@@ -33,6 +33,7 @@ import { useStagedListFilters } from "../../../components/table";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { Combobox } from "../../../components/Combobox";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
+import { uploadSourceDocumentFromFile } from "../../../api/docs";
 
 const EMPTY_HISTORY_FILTERS = { type: "", result: "", from: "", to: "" };
 
@@ -108,6 +109,7 @@ export function DrugAlcoholTab() {
   const [testResult, setTestResult] = useState<(typeof TEST_RESULTS)[number]>("negative");
   const [testDate, setTestDate] = useState(() => companyToday());
   const [consortiumName, setConsortiumName] = useState("");
+  const [testDocument, setTestDocument] = useState<File | null>(null);
   // Drug-test history filters (client-side over the fetched list).
   // LV-SAFETY-DRUG-ALCOHOL-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
   // Driver picker stays immediate (create/status context + LST-F5183 URL reverse).
@@ -200,8 +202,13 @@ export function DrugAlcoholTab() {
   });
 
   const createTestMutation = useMutation({
-    mutationFn: (input: { companyId: string; driverId: string; generation: number; payload: Parameters<typeof createDrugProgramTest>[1] }) =>
-      createDrugProgramTest(input.companyId, input.payload),
+    mutationFn: async (input: { companyId: string; driverId: string; generation: number; file: File | null; payload: Parameters<typeof createDrugProgramTest>[1] }) => {
+      const sourceDocId = await uploadSourceDocumentFromFile(input.file, {
+        operating_company_id: input.companyId,
+        entity_links: [{ entity_type: "driver", entity_id: input.driverId }],
+      });
+      return createDrugProgramTest(input.companyId, { ...input.payload, source_doc_id: sourceDocId });
+    },
     onSuccess: async (_result, input) => {
       if (input.generation !== actionGenerationRef.current) return;
       await queryClient.invalidateQueries({ queryKey: ["safety", "drug-program", "tests", input.companyId] });
@@ -280,6 +287,7 @@ export function DrugAlcoholTab() {
     setTestResult("negative");
     setTestDate(companyToday());
     setConsortiumName("");
+    setTestDocument(null);
   }, [companyId, effectiveDriverId]);
 
   if (!companyId) {
@@ -403,6 +411,16 @@ export function DrugAlcoholTab() {
               <DatePicker id="drug-alcohol-test-date" className="mt-1 w-full" value={testDate} onChange={(next) => setTestDate(next)} max={companyToday()} />
             </div>
           </div>
+          <label className="block text-xs text-slate-600">
+            Lab result / chain-of-custody document
+            <input
+              type="file"
+              accept="application/pdf,image/jpeg,image/png"
+              className="mt-1 block w-full text-xs"
+              onChange={(event) => setTestDocument(event.target.files?.[0] ?? null)}
+              data-testid="drug-test-source-document"
+            />
+          </label>
           <button
             type="button"
             disabled={!effectiveDriverId || createTestMutation.isPending}
@@ -411,6 +429,7 @@ export function DrugAlcoholTab() {
               companyId,
               driverId: effectiveDriverId,
               generation: actionGenerationRef.current,
+              file: testDocument,
               payload: { driver_id: effectiveDriverId, test_type: testType, result: testResult, test_date: testDate },
             })}
           >
