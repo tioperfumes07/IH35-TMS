@@ -7130,10 +7130,15 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1037,
+  "total_claimed": 1038,
   "10201": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-01",
     "purpose": "verify-driver-bill-remint-screen (bills never auto-created remint screen, LAW-FIX-INSTANTLY item 8)"
+  },
+  "10205": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-01",
+    "purpose": "verify-settlement-detail-identity-guard (SETL-SELECTION-BINDING reopened, CASCADE root-caused)"
   }
 }
