@@ -6,11 +6,11 @@ import process from "node:process";
 const repoRoot = process.cwd();
 
 const WRAPPER_FILE = "apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx";
-// Grouped click-open redesign (3-Accounting-Dropdown.png): wrapper renders ACCOUNTING_SUB_NAV_ITEMS via
-// the shared HoverDropdownNav, keeping the + Create action, honest vendor navigation, and wrapper data-attr.
+// Grouped click-open redesign: wrapper renders ACCOUNTING_SUB_NAV_ITEMS via the canonical
+// NavyPageSubNav, keeping the + Create action, honest vendor navigation, and wrapper data-attr.
 // ACCT-F5697 (#13541) intentionally replaced the misleading "+ Vendor" label: this link navigates to
 // the vendor roster and does not open a creator, so the product-wide create-label law requires browse copy.
-const REQUIRED_WRAPPER_MARKERS = ["ACCOUNTING_SUB_NAV_ITEMS", "HoverDropdownNav", "+ Create", "Go to vendors", "data-accounting-subnav-wrapper"];
+const REQUIRED_WRAPPER_MARKERS = ["ACCOUNTING_SUB_NAV_ITEMS", "NavyPageSubNav", "+ Create", "Go to vendors", "data-accounting-subnav-wrapper"];
 
 const REQUIRED_PAGES = ["apps/frontend/src/pages/accounting/BillsPage.tsx"];
 

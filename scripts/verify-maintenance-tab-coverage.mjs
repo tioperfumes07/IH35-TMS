@@ -53,6 +53,8 @@ function main() {
   // LV-MAINT-RM-STATUS-BOARD-SHELL: dedicated board must be path-derived + Live-testidable.
   const homePath = path.join(ROOT, "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx");
   const homeSrc = readIfExists(homePath);
+  const navySubNavPath = path.join(ROOT, "apps/frontend/src/components/layout/NavyPageSubNav.tsx");
+  const navySubNavSrc = readIfExists(navySubNavPath);
   if (!homeSrc.includes('data-testid="rm-status-board"')) {
     failures.push("missing_testid:rm-status-board on MaintenanceHome");
   }
@@ -62,8 +64,11 @@ function main() {
   if (!homeSrc.includes("maintenanceTabFromPath(location.pathname) ?? initialTab")) {
     failures.push("tab must prefer path leaf then MaintenanceTabRoute initialTab (never invent active_wos)");
   }
-  if (!homeSrc.includes('aria-current={active ? "page" : undefined}')) {
-    failures.push("SUBNAV must set aria-current from tab id (alias URLs must still mark current)");
+  if (!navySubNavSrc.includes('aria-current={active ? "page" : undefined}')) {
+    failures.push("shared NavyPageSubNav must set aria-current from controlled tab id");
+  }
+  if (!navySubNavSrc.includes('aria-current={isActive(pathname, item.to) ? "page" : undefined}')) {
+    failures.push("shared NavyPageSubNav must set aria-current from route state");
   }
   if (homeSrc.includes("<NavLink") && homeSrc.includes("data-maintenance-subtab")) {
     failures.push("SUBNAV must use Link+tab-id aria-current, not NavLink path matching");

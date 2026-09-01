@@ -37,14 +37,14 @@ if (wrapper.includes("const ACCOUNTING_TABS")) fail("AccountingSubNavWrapper sti
 else pass("AccountingSubNavWrapper: no local ACCOUNTING_TABS duplicate");
 
 // REDESIGN (approved 3-Accounting-Dropdown.png + NAVIGATION-PATTERN-RULE): the wrapper renders the
-// grouped click-open HoverDropdownNav sourced from ACCOUNTING_SUB_NAV_ITEMS, superseding the flat
+// grouped canonical NavyPageSubNav sourced from ACCOUNTING_SUB_NAV_ITEMS, superseding the flat
 // ACCOUNTING_CLEAN_TABS render (undocumented #1552 drift). The CLEAN_TABS export is retained in the
 // manifest (asserted below) but is no longer rendered.
 if (!wrapper.includes("ACCOUNTING_SUB_NAV_ITEMS")) fail("AccountingSubNavWrapper must render grouped ACCOUNTING_SUB_NAV_ITEMS from manifest");
 else pass("AccountingSubNavWrapper renders grouped ACCOUNTING_SUB_NAV_ITEMS from manifest");
 
-if (!wrapper.includes("HoverDropdownNav")) fail("AccountingSubNavWrapper must render the shared HoverDropdownNav (top-bar grouped dropdowns)");
-else pass("AccountingSubNavWrapper renders the shared HoverDropdownNav");
+if (!wrapper.includes("NavyPageSubNav")) fail("AccountingSubNavWrapper must render the shared NavyPageSubNav");
+else pass("AccountingSubNavWrapper renders the shared NavyPageSubNav");
 
 // Factoring tab present in clean tabs
 if (!manifest.includes('"Factoring"') || !manifest.includes('"/accounting/factoring"')) fail("ACCOUNTING_CLEAN_TABS missing Factoring tab");

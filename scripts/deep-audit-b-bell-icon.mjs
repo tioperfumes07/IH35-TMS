@@ -50,7 +50,12 @@ assertIncludes(dropdown, "action_link", "Dropdown must deep-link via action_link
 assertIncludes(hook, 'fetchNotifications({ limit: 20 })', "Hook must fetch first page (limit 20)");
 assertIncludes(hook, "/api/v1/notifications/unread-count", "Hook must call unread-count endpoint");
 assertIncludes(hook, "/api/v1/notifications/mark-all-read", "Hook must call mark-all-read endpoint");
-assertIncludes(hook, 'new EventSource("/api/v1/notifications/stream"', "Hook must open SSE stream with credentials");
+assertIncludes(
+  hook,
+  'new EventSource(resolveApiUrl("/api/v1/notifications/stream")',
+  "Hook must resolve the SSE stream through the canonical API base",
+);
+assertIncludes(hook, "withCredentials: true", "Hook must open the SSE stream with credentials");
 assertIncludes(stream, "text/event-stream", "SSE route must set event-stream content type");
 assertIncludes(stream, "applySseCorsHeaders", "SSE route must apply CORS headers (AUDIT-FIX-9)");
 assertIncludes(stream, "setInterval", "SSE route must poll for new notifications");
