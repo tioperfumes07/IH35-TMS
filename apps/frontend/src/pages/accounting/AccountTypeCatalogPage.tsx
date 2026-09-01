@@ -103,7 +103,7 @@ export function AccountTypeCatalogPage() {
     <AccountingSubNavWrapper
       title="Account Type Catalog"
       subtitle="QBO-parity account type → detail-type taxonomy (read-only). Account types are universal; account instances are per-entity (see Chart of Accounts)."
-      actions={
+      createControl={
         <Link to="/lists/accounting/detail-types?create=1">
           <Button size="sm" disabled={!companyId} data-testid="account-type-catalog-create-detail-type">
             + Create

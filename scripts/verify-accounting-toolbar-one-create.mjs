@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * ACCT-CHROME-UNIFORM-01 — Accounting money lists expose exactly ONE create control via
- * AccountingSubNavWrapper.createControl (not a duplicate + Create in actions). Batch Void
- * buttons use shared Button danger sm.
+ * ACCT-CHROME-UNIFORM-01 / CTL-04 — Accounting money lists expose exactly ONE create control via
+ * AccountingSubNavWrapper.createControl (not a duplicate + Create in actions alongside module
+ * "+ Create ▾"). Batch Void buttons use shared Button danger sm.
  *
  * Self-test: node scripts/verify-accounting-toolbar-one-create.mjs --selftest
  */
@@ -54,7 +54,86 @@ const CHECKS = [
     file: "apps/frontend/src/pages/accounting/ManualJEListPage.tsx",
     pattern: /createControl=\{<Button[\s\S]*\+ Create/,
   },
+  // CTL-04 — surfaces that previously duplicated module "+ Create ▾" via actions=
+  {
+    name: "CreditMemosPage: createControl + Create (not actions)",
+    file: "apps/frontend/src/pages/accounting/CreditMemosPage.tsx",
+    pattern: /createControl=\{[\s\S]*\+ Create/,
+  },
+  {
+    name: "VendorCreditsPage: createControl + Create (not actions)",
+    file: "apps/frontend/src/pages/accounting/VendorCreditsPage.tsx",
+    pattern: /createControl=\{[\s\S]*\+ Create/,
+  },
+  {
+    name: "AccountingHubPage: createControl Manual JE (not actions)",
+    file: "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
+    pattern: /createControl=\{[\s\S]*\+ Create Manual JE/,
+  },
+  {
+    name: "PaymentMethodsCatalogPage: createControl + Create",
+    file: "apps/frontend/src/pages/accounting/PaymentMethodsCatalogPage.tsx",
+    pattern: /createControl=\{[\s\S]*\+ Create/,
+  },
+  {
+    name: "ExpenseCategoryMapPage: createControl Mapping",
+    file: "apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx",
+    pattern: /createControl=\{[\s\S]*\+ Create Mapping/,
+  },
+  {
+    name: "AccountTypeCatalogPage: createControl + Create",
+    file: "apps/frontend/src/pages/accounting/AccountTypeCatalogPage.tsx",
+    pattern: /createControl=\{[\s\S]*\+ Create/,
+  },
+  {
+    name: "PrepaidExpensesPage: createControl Prepaid",
+    file: "apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx",
+    pattern: /createControl=\{[\s\S]*\+ Create Prepaid/,
+  },
+  {
+    name: "BillPaymentsListPage: createControl Record Bill Payment",
+    file: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx",
+    pattern: /createControl=\{[\s\S]*\+ Record Bill Payment/,
+  },
 ];
+
+/** Walk accounting TSX: Create/Record CTA must not live in actions= without createControl= on same wrapper open. */
+function scanActionCreateDupes(root = ROOT) {
+  const fails = [];
+  const dir = path.join(root, "apps/frontend/src/pages/accounting");
+  if (!fs.existsSync(dir)) return fails;
+
+  function walk(d) {
+    for (const ent of fs.readdirSync(d, { withFileTypes: true })) {
+      const abs = path.join(d, ent.name);
+      if (ent.isDirectory()) {
+        if (ent.name === "__tests__" || ent.name === "tests") continue;
+        walk(abs);
+        continue;
+      }
+      if (!ent.name.endsWith(".tsx")) continue;
+      const src = fs.readFileSync(abs, "utf8");
+      if (!src.includes("AccountingSubNavWrapper")) continue;
+      const parts = src.split("<AccountingSubNavWrapper");
+      for (let i = 1; i < parts.length; i++) {
+        const part = parts[i];
+        const end = part.search(/\n\s*>/);
+        const block = end === -1 ? part.slice(0, 1200) : part.slice(0, end);
+        const hasCreateControl = /\bcreateControl=/.test(block);
+        const actionsMatch = block.match(/\bactions=\{([\s\S]*)/);
+        if (!actionsMatch) continue;
+        const actionsBlob = actionsMatch[1];
+        if (/\+\s*(Create|Record)\b/.test(actionsBlob) && !hasCreateControl) {
+          fails.push(
+            `${path.relative(root, abs)}: wrapper#${i} has + Create/+ Record in actions= without createControl= (CTL-04)`,
+          );
+        }
+      }
+    }
+  }
+  walk(dir);
+  return fails;
+}
 
 function runChecks(root = ROOT) {
   const fails = [];
@@ -68,6 +147,7 @@ function runChecks(root = ROOT) {
     const hit = c.pattern.test(src);
     if (!hit) fails.push(`${c.name}: pattern miss in ${c.file}`);
   }
+  fails.push(...scanActionCreateDupes(root));
   return fails;
 }
 
@@ -80,12 +160,23 @@ function selftest() {
       fs.mkdirSync(path.dirname(abs), { recursive: true });
       fs.writeFileSync(abs, "// poison — createControl stripped\nexport {};\n");
     }
+    // Plant CTL-04 dupe: actions Create without createControl
+    const plant = path.join(tmp, "apps/frontend/src/pages/accounting/PlantDupCreate.tsx");
+    fs.mkdirSync(path.dirname(plant), { recursive: true });
+    fs.writeFileSync(
+      plant,
+      `export function Plant() {\n  return (\n    <AccountingSubNavWrapper\n      title="X"\n      actions={<button>+ Create</button>}\n    >\n      <div />\n    </AccountingSubNavWrapper>\n  );\n}\n`,
+    );
     const planted = runChecks(tmp);
     if (planted.length < CHECKS.length) {
       console.error(`${LABEL} SELFTEST FAIL — planted misses not caught (${planted.length}/${CHECKS.length})`);
       process.exit(1);
     }
-    console.log(`${LABEL} SELFTEST PASS (poison trips ${planted.length}/${CHECKS.length})`);
+    if (!planted.some((f) => f.includes("PlantDupCreate") && f.includes("CTL-04"))) {
+      console.error(`${LABEL} SELFTEST FAIL — CTL-04 action-dupe scan did not trip planted file`);
+      process.exit(1);
+    }
+    console.log(`${LABEL} SELFTEST PASS (poison trips ${planted.length}; CTL-04 scan OK)`);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
@@ -103,4 +194,4 @@ if (fails.length) {
   console.error(`${LABEL} FAIL (${fails.length}):\n- ${fails.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — ${CHECKS.length} accounting toolbar one-create asserts`);
+console.log(`${LABEL} PASS — ${CHECKS.length} asserts + CTL-04 action-dupe scan`);

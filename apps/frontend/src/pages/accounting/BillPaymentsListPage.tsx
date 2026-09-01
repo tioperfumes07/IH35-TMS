@@ -379,7 +379,7 @@ export function BillPaymentsListPage() {
     <AccountingSubNavWrapper
       title="Bill Payments"
       subtitle="Vendor bill payment ledger"
-      actions={
+      createControl={
         <div className="flex gap-2">
           <Button
             variant="secondary"

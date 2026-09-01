@@ -143,7 +143,7 @@ export function PaymentMethodsCatalogPage() {
     <AccountingSubNavWrapper
       title="Payment Methods Catalog"
       subtitle="Owner-editable list of methods the company pays drivers/vendors by, each pinned to a GL cash/bank account"
-      actions={
+      createControl={
         canWrite ? (
           <Button
             onClick={() => {
