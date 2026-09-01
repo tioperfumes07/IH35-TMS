@@ -793,12 +793,34 @@ export function resolveBuildTimestamp(): string {
   return new Date(Date.now() - process.uptime() * 1000).toISOString();
 }
 
-/** Shared identity fields — full `/healthz` and `/healthz/shallow` must both expose SHA. */
+/** Branch or tag the process was built from (Render / GitHub Actions). */
+export function resolveBuildRef(): string {
+  const renderBranch = process.env.RENDER_GIT_BRANCH?.trim();
+  if (renderBranch) return renderBranch;
+  const githubRefName = process.env.GITHUB_REF_NAME?.trim();
+  if (githubRefName) return githubRefName;
+  const githubRef = process.env.GITHUB_REF?.trim();
+  if (githubRef) {
+    const m = githubRef.match(/^refs\/(?:heads|tags)\/(.+)$/);
+    if (m?.[1]) return m[1];
+    return githubRef;
+  }
+  return "unknown";
+}
+
+/**
+ * Shared identity fields — full `/healthz` and `/healthz/shallow` must both expose SHA.
+ * Codex re-entry + deploy verification require these on GET /api/v1/healthz (not only /shallow).
+ */
 export function healthzBuildIdentity() {
+  const git_sha = resolveBackendGitSha();
+  const short = resolveBackendVersion();
   return {
-    version: resolveBackendVersion(),
-    git_sha: resolveBackendGitSha(),
+    version: short,
+    commit: short,
+    git_sha,
     built_at: resolveBuildTimestamp(),
+    git_branch: resolveBuildRef(),
   };
 }
 
