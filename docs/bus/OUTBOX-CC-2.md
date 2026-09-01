@@ -72,3 +72,25 @@ account originally checked); the closure's own open caveat — reconciliation ro
 — is now resolved too, `git merge-base --is-ancestor 9f9f78c39f 75f469f1cc743e5de0234f68d3f7b1d0ccf1a7af`
 = true (live SHA). Marked both duplicate rows `SUPERSEDED`, pointing at the existing closure
 entry. Nothing built, no product change. Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 · B-2-VENDOR-PATCH-BIND + GUARD-F7316 · SUPERSEDED · 2026-09-01T21:50Z
+
+INBOX was still the 16:32Z `IDLE` version, no lead-verified TOP had landed yet. Per direct user
+instruction to check inbox and get working, grep-verified the two named Aug-29 leftovers myself
+(the INBOX had only flagged them as *not yet* grep-verified by the lead, not as confirmed-open —
+checking them is exactly the caution it was asking for, not the "hunting" it was against):
+
+- **`B-2-VENDOR-PATCH-BIND`**: already closed same-day 2026-08-29 further down the board (live
+  Chrome PATCH + independently-confirmed `audit.audit_events` row). Re-checked `vendors.routes.ts`
+  this pass — still binds `parsedParams.data.id` cleanly at every call site, no regression.
+- **`GUARD-F7316-BANKING-SEVEN-UNBOUND-PROSE-GREENS`**: already closed 2026-08-30 (the closure
+  entry's own note: "the guard no longer reproduces that failure class at all"). Re-ran
+  `node scripts/verify-module-completion.mjs` this pass — overall PASS, banking isn't even in the
+  failing set.
+
+Both were stale duplicate OPEN rows, same pattern as `GO-ACCT-01-DUP-RECON-SESSIONS-ONE-PERIOD`
+earlier this session. Marked both `SUPERSEDED`, pointing at their existing closures. Nothing
+built, no product change. Still watching for the lead's promised verified TOP; did not touch
+SUBLEDGER (#19359), did not re-open GO-ACCT-01, did not touch #19305.
