@@ -1,28 +1,26 @@
-# INBOX-CC-2 · GO-14 TOP 1 CLOSED · LEAD VERIFIED · DO NOT RE-GREP GO-08
+# INBOX-CC-2 · SUBLEDGER VERIFY CLOSED ON MAIN · DO NOT RE-RUN
 
 `git pull --ff-only origin main`
 
-## CLOSED — lead re-ran the grep (not your word)
+## CLOSED this turn (lead read `origin/main`, not chat)
 
-On `origin/main` tip including `6d94c46a` (#19355):
+Lead confirmed on `origin/main`:
+- SHA `33ad7abd` / PR **#19359** — `SUBLEDGER-GL-TIEOUT-STALE-NUMBERS-RETIRED-NEW-VARIANCES-FOUND`
+- `docs/bus/OUTBOX-CC-2.md` SUBLEDGER block (2026-09-01T21:20Z)
+- Board **appended** row (search `RE-VERIFIED LIVE (CC-2 2026-09-01`) — Unbilled 1150 $0/$0; bank 1000 subledger **-$13,036.62**; escrow 2100 **$500.01**; `cash_advance` + `insurance` missing from `SUBLEDGER_GL_CONTROL_ROLES`; DRIVERCASHAD **29** rows / **23** still active / combined GL **$0**
 
-`rg -n "ON CONFLICT"` on these 8 files → **zero hits**:
-`invoices.routes.ts` `bills.routes.ts` `expenses.routes.ts` `payments.routes.ts` `credit-memos.routes.ts` `vendor-credits.routes.ts` `book-load.service.ts` `mdata/loads.routes.ts`
+Lead did **not** re-query Neon this turn. Your file on main is the verify. **Do not re-measure SUBLEDGER. Do not build** (GUARD lane). Do not invent GO-08 leftover #4.
 
-Do **not** enumerate ON CONFLICT again. Do **not** ask Cursor what Conflicts 1/2/4 are.
-
-## STILL GATED (lead read CC-1 OUTBOX, not guessed)
-
-GO-11 UUID deletes: CC-1 #19340 still says 11 drivers + 2 vendors are **OPEN, asking Jorge**. Lead did **not** see an OUTBOX line “UUID deletes done.” Do not verify GO-11 leftover yet.
+GO-11 leftover still gated: CC-1 OUTBOX last GO-11 line is still **#19340** (11 drivers + 2 vendors OPEN). Lead still has **no** `UUID DELETES DONE`.
 
 ## NOW — one board row, grep-verify first (Rule 11)
 
-`docs/audit/GUARD-WORKORDERS.md` still has **OPEN · routed=CC-2 · FORCE**: `SUBLEDGER-GL-TIEOUT-EVERY-CONTROL` (extend tie-out past AR/AP; companion ACCT-F10217 Unbilled / BoA / CoA notes on the same board).
+`GO-ACCT-01-DUP-RECON-SESSIONS-ONE-PERIOD` — still listed **OPEN · routed=CC-2** on `GUARD-WORKORDERS.md` (duplicate copies ~267 and ~326). Source: `banking.reconciliation_sessions`.
 
 1. `git pull --ff-only origin main`
-2. Re-read that row. If Status is no longer OPEN → OUTBOX `SUPERSEDED` and take the next **CC-2 OPEN** row. Do not invent a product walk.
-3. If still OPEN: live Neon + current `healthz/shallow` `version` (**live this turn = `75f469f`**, ancestor of main, **lags main**). File evidence. Do not `trigger_deploy`. Do not book loads (NO-SEAT).
+2. Re-read those rows. If Status is no longer OPEN → OUTBOX `SUPERSEDED` and **idle** (do not invent the next card).
+3. If still OPEN: unique constraint + close extras; leave `force_complete`. Live Neon + current `healthz/shallow` `version` (this lead turn live = `75f469f`, **lags** main). File evidence. Do not `trigger_deploy`. No Book Load.
 
 Never #19305. Never glob-delete remotes.
 
-ACK `CC-2 | ACK | GO-08-DOC-CREATE=0 LEAD-VERIFIED | NOW=SUBLEDGER-GL-TIEOUT grep-verify | GO`
+ACK `CC-2 | ACK | SUBLEDGER VERIFY CLOSED #19359 | NOW=GO-ACCT-01-DUP-RECON grep-verify | GO`
