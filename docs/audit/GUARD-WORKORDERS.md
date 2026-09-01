@@ -7453,3 +7453,26 @@ exempt additions), `verify-section7-palette-maintenance.mjs` (clean after the fi
 unilaterally. Escalating to the owner in chat; will re-attempt the push the moment
 `verify-architectural-design.ts` or `ReportsSubNav.tsx`'s coupling is fixed by whoever owns that
 lane, or on explicit owner authorization to bypass this specific, disclosed, root-caused check.
+
+## GUARD-WORKORDERS — CC-3 2026-08-31 21:40 CT — SECOND unrelated repo-wide break, origin/main currently red on plain frontend tsc
+
+**Finding:** a fresh push attempt (branch `cc3-insurance-policy-bill-param-fix-2026-08-31`, a
+1-file backend fix, unrelated to frontend/driver-finance) failed the `frontend-tsc` pre-push
+step with a REAL, unrelated TypeScript error on origin/main's current tip:
+```
+src/pages/driver-finance/SettlementsPage.tsx(23,33): error TS2307: Cannot find module
+'../accounting/VoidReasonModal' or its corresponding type declarations.
+src/pages/driver-finance/SettlementsPage.tsx(428,26): error TS7006: Parameter 'reason'
+implicitly has an 'any' type.
+```
+This is a SECOND, independent, unrelated repo-wide break tonight (the first being
+`verify-architectural-design.ts`/`ReportsSubNav.tsx`, logged above at 21:05 CT) — origin/main's
+tip is currently failing a plain `cd apps/frontend && npx tsc -b`, which every seat's pre-push
+hook runs regardless of what that seat's own diff touches. This is not my file (driver-finance/
+settlements, a missing `VoidReasonModal` import — clearly another seat's in-flight commit that
+landed on main broken or mid-refactor) and not something I'm touching or fixing.
+
+**Not my lane, not fixing.** Flagging because it independently confirms the pattern: main is
+moving too fast tonight for individual seats' local-gate pushes to land cleanly, and this is a
+repo-wide blocking condition, not specific to CC-3's diff. Holding further push attempts until
+main stabilizes rather than retrying against a target that is itself currently broken.

@@ -170,3 +170,32 @@ Insurance was displaced; it is **P0 ahead of UI tokens build**. Live Chrome, you
     origin/main confirmed still not carrying a fix as of this fetch). Proceeding with the
     next-queued, orthogonal item (ad-hoc-button-size sweep across the 7 ratchet offenders) while
     waiting, per queue discipline (report, don't idle).
+
+---
+# INBOX — CC-3 · 2026-08-31 · UI CONTROL LAW tokens confirmed (build) + dispatch-board consumer + INSURANCE MODULE reassigned (goes AHEAD)
+
+12. **UI CONTROL LAW confirmed, build.** Tokens final (h-4 w-4 icons, icon/sm h-8) — already built
+    this session (2 commits on cc3-ui-control-law-build-2026-09-01, unpushed, blocked on an
+    unrelated repo gate). Posted the finished token table + primitives-to-use to
+    OUTBOX-CC-3.md for Cursor's dispatch-board columns/section-headers work.
+    **COLUMN LAW has a named consumer**: dispatch board, owner-daily-use screen — movable
+    columns + sortable asc/desc per section. REORDER + AUTO-FIT (the two owner says "not built
+    yet") are, in fact, already built in my local ParityTable.tsx work (cc3-sort-law-paritytable
+    branch) but have NEVER LANDED on origin/main — confirmed via direct diff against
+    origin/main's actual file content (0 matches for AUTO_FIT_MIN_WIDTH/colOrder/
+    enableColumnReorder). This is now on the critical path; needs to land, and the dispatch
+    board specifically needs the sort/reorder/auto-fit treatment (bespoke board, not
+    necessarily a ParityTable instance — needs its own applied pattern if not).
+13. **INSURANCE MODULE reassigned to CC-3, goes AHEAD of UI CONTROL LAW.** Owner: "It was yours,
+    I displaced it, and it has been unowned for hours." Live Chrome, my lane, no migrations.
+    Scope: (1) attach COI + ID card per covered unit (14 power units AL, 15 APD; T144 skip
+    -- carrier removing; T163 APD-only, no liability/updated COI, record as such, do not
+    invent). (2) create policies with real values: AL $206,372.39 Cimarron CIMD-2026-0720;
+    APD $43,590.18 Lloyd's TIV $1,077,940 @ 3.80%; MTC $21,317.84; Package $271,280.41,
+    FIF loan #500286059 financed $210,748.23 8.490% APR 9x$24,252.61 from 2026-09-19.
+    (3) trailer/tractor insured values from owner spreadsheet: THERMO-PLANA 20 trailers
+    $343,495, CAMIONES 14 tractors $697,045 -- footer total $1,424,120 ties to NEITHER,
+    flag only, do not reconcile myself. (4) post per unit: unit/doc type/record ID, evidence
+    not summary. FLAG not fix: mdata.assets 90 rows all tractor, 0 trailers,
+    insured_value_cents empty on all 90 -- CC-1's schema/data gap, not mine.
+    **DOING now.** UI CONTROL LAW correctly paused/QUEUED behind this per explicit reprioritization.

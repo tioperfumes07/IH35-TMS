@@ -305,3 +305,44 @@ applies on any future create.
 **CC-3 2026-08-31 21:05 CT — UI CONTROL LAW build complete and verified; push BLOCKED on an unrelated repo-wide gate, root-caused.**
 Code done: Button.tsx one scale, ParityTable checkbox hit-targets + Export/gear→Button, guard+baseline, all per the confirmed token table. tsc clean, guard selftests 10/10, ParityTable tests 44/44, no second-review-needed items unchanged. Also found+fixed one real §7 palette violation of my own (REORDER's blue-50 highlight → navy/slate tokens) and closed 2 guard-registry orphan flags on my own 3 guards via `.guard-exempt.json` (same pattern DEVIN-A used).
 **Cannot push**: `verify:pre-commit`'s `verify:arch-design` step hard-aborts on `verify-architectural-design.ts` — its parser hardcodes `NavItem[]` but `ReportsSubNav.tsx:85` now correctly reads `NavyPageSubNavItem[]` (another seat's NAVY-SUBNAV rename). This breaks the real push gate for every seat, not just me — confirmed unrelated to my diff. Full root cause + evidence in GUARD-WORKORDERS.md. Not bypassing with --no-verify. Standing by for that 2-line parser fix or explicit go-ahead.
+
+**CC-3 2026-08-31 21:15 CT — UI CONTROL LAW: finished token table, for Cursor's dispatch-board columns/section-headers work.**
+
+| Token | Value / import | Use for |
+|---|---|---|
+| Button height (md, all 4 variants) | `BUTTON_MD_SIZE_CLASS` = `"h-9 px-3 text-[13px] font-medium"` (`design/tokens.ts`) | Any real action button — Create, Void, Clear, Export, section-header actions |
+| Button height (icon / sm) | `BUTTON_ICON_SM_SIZE_CLASS` = `"h-8 text-[13px] font-medium"` | Compact/icon-only buttons |
+| Filter control height | `FILTER_CONTROL_SIZE_CLASS` = `"h-9 text-[13px]"` | Any filter box / combobox / range input in a toolbar row |
+| Toolbar icon size | `TOOLBAR_ICON_SIZE_CLASS` = `"h-4 w-4"` (16px — 14px was proposed and REJECTED by the owner, use 16px) | Any icon glyph inside a toolbar button (gear, sliders, export arrow, etc.) |
+| Checkbox hit target | `MIN_HIT_TARGET_CLASS` = `"flex min-h-6 min-w-6 items-center justify-center"` | Wrap ANY native checkbox/small glyph whose visual box is under 24×24 — the wrapper is the hit target, the child stays native size |
+
+**Primitives to consume, not reinvent:**
+- `apps/frontend/src/components/Button.tsx` — `<Button variant="primary"|"secondary"|"tertiary"|"danger" size="md"|"sm"|"icon">`. Do NOT hand-roll a `<button className="h-... text-[...px]">` anywhere — that is the exact "third button size" defect this law exists to close, and `scripts/verify-ui-control-law.mjs` now gates on it at ratchet 0/0 (any new ad-hoc button fails CI immediately).
+- `apps/frontend/src/components/parity/ParityTable.tsx` for any list/board with sortable+resizable+reorderable+auto-fit columns — see COLUMN LAW note below. If the dispatch board's new per-section columns are a ParityTable instance (or can be), get RESIZE/SORT/REORDER/AUTO-FIT for free; if it's a bespoke board (like the existing dispatch board), the sort/reorder/auto-fit behaviors need the same hand-applied pattern ParityTable uses (see source for the exact mechanics) rather than a new one.
+
+Full spec + owner ruling history: `docs/bus/UI-CONTROL-LAW-SPEC-2026-09-01.md`.
+
+**Status note (for the record, not a blocker for Cursor):** my own UI CONTROL LAW code (the primitives above + a full app-wide sweep, ratchet now 0/0) is built, tested, and committed locally on `cc3-ui-control-law-build-2026-09-01` — still unpushed, blocked on an unrelated repo-wide `verify-architectural-design.ts`/`ReportsSubNav.tsx` gate break (see GUARD-WORKORDERS.md). The TOKENS/PRIMITIVES above are stable and correct to build against now regardless of push status — the values won't change.
+
+**CC-3 2026-08-31 21:25 CT — 2 more of my own test fixtures found in production, self-reporting per the purge notice (not previously disclosed).**
+While verifying insurance.policy's real state before starting the reassigned INSURANCE MODULE task, found 2 `insurance.policy` rows I created during an earlier CREATE-TEST-THEN-VOID vendor-verification live walk:
+- `fddcdeac-21aa-4328-9cc4-de2e2db69333` — policy_number SAMPLE-REPROVE-5094-VENDOR-0809, insurer "CC3 Verify Vendor", $1,200.00, status active
+- `3b217c01-1350-4253-ab5a-b1dd8a0969c7` — policy_number SAMPLE-VENDOR-UX-0809, insurer "CC3 Verify Vendor", $900.00, status active
+Not a GL-posting financial record (no JE), but clearly seat-created test data left in a production table, matching the pattern you flagged. Not voiding/deleting these myself without your say-so (same open question as the CC3 Vend-cert-01 test vendor I flagged earlier — CREATE-TEST-THEN-VOID's "hold until launch" vs. tonight's "clean up same session" are in tension for pre-existing holds). Flagging for the purge scope or an explicit keep/void call.
+(3 other policy rows also present are NOT mine: SAMPLE-POL-5743-SIMPLE/Progressive, TEST-CODEX-BATTERY-20260824/Codex, POL-TESTMTDQ164H "TEST DATA insurer keep" — named for the record, not claimed as mine.)
+
+**CC-3 2026-08-31 21:25 CT — INSURANCE MODULE: starting, real state verified first.**
+Neon read-only check before touching anything: insurance.policy has 5 rows, ALL test/sample fixtures (none real) — confirms your "ZERO real policies" framing exactly (the module isn't literally empty, it's 100% test data). insurance.policy_unit has 4 rows (also tied to test policies). Separately: the generic document-upload system (docs.files/docs.file_links) already has real COI/ID-card PDFs attached to 11 units from earlier work this session — confirmed still present post-purge (spot-checked T177: both docs intact) — but these are NOT linked to any insurance.policy row (the unit's own "Insurance summary" correctly shows "No US or MX policy on file" because no real policy exists to link to yet). Proceeding: create the 4 real policies first, then work unit coverage links + any still-missing document attachments.
+
+**CC-3 2026-08-31 21:35 CT — INSURANCE MODULE: real backend bug found + fixed, blocking policy creation entirely; count discrepancy flagged; status before continuing.**
+
+**Fleet roster discrepancy (flag, not fix, per your own instruction pattern):** live Fleet page shows only **13 USMCA trucks** (T147,T148,T152,T163,T164,T168,T170,T171,T173,T174,T175,T176,T177) — not 14 on AL / 15 on APD as stated. T144 isn't in this entity's roster at all (matches your "carrier removing it" note). This means the real AL-eligible set (excluding T163 per your note, and T144 which isn't reachable under USMCA) is **12**, not 14. Not reconciling this myself — flagging exactly like the trailer/tractor total you asked me not to fix.
+
+**Real, repeatable backend bug found and fixed while trying to create the first policy (AL, Cimarron, CIMD-2026-0720):**
+Created the Cimarron vendor and started the policy wizard with the 12 eligible units, $206,372.39, 12-month term. The final "Create policy + schedule bills" step failed with `Covered unit not found: asset_not_found:<id>` for one of the 12 (a manifestation of the mdata.assets gap you already assigned to CC-1 — not touched). Binary-searched down to isolate it, then hit a SECOND, unrelated, 100%-reproducible error on every remaining attempt (1 unit, 7 units, two different premium values, same result): `inconsistent types deduced for parameter $2`. Root-caused it live: `accounting.bills.vendor_id`/`vendor_uuid` are `text` but `mdata_vendor_id` is `uuid`, and the seed-bill INSERT in `apps/backend/src/insurance/policy-create-atomic.service.ts` bound the same untyped `$2` to all three — Postgres can't unify one type across a text/text/uuid mismatch. This has apparently never worked through this exact path since it was written; the existing test mocks the DB client so it never caught it.
+
+Fixed with a one-line explicit `::uuid` cast on just the `mdata_vendor_id` occurrence (no schema change, no migration). Committed (`FINDING: ACCT-F10261`) on `cc3-insurance-policy-bill-param-fix-2026-08-31`, currently pushing. Confirmed no orphaned test data was left behind by my repeated failed attempts — the service is properly transactional (rolled back cleanly every time), verified live in Neon (0 rows for policy_number CIMD-2026-0720).
+
+**Cannot verify the fix live yet** — it needs to deploy before I can re-run the same UI flow to confirm. Also cannot create the full 12-unit AL policy until CC-1's asset_not_found gap is separately resolved (this fix only clears the second bug).
+
+**Status: DOING (blocked mid-task on deploy).** Once this fix and the asset_not_found gap are both live, I'll immediately redo AL, then APD/MTC/Package. Standing by; will report the moment either lands.
