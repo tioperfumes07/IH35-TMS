@@ -102,7 +102,6 @@
     "verify-matrix-metrics-tally.mjs",
     "verify-migration-no-number-collision.mjs",
     "verify-migration-void-posts-reversal.mjs",
-    "verify-module-completion-requires-tieout.mjs",
     "verify-module-completion.mjs",
     "verify-module-hub-navigation-connectivity.mjs",
     "verify-module-manifest-integrity.mjs",
