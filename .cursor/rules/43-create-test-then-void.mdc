@@ -5,10 +5,13 @@ alwaysApply: true
 
 # CREATE TEST THEN VOID (owner 2026-08-22)
 
-**Canonical:** `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`
+**Canonical:** `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` (seat prod money superseded by NO-SEAT law)
+
+
+**SUPERSEDED (seat prod money — 2026-09-01):** `docs/lockdown/NO-SEAT-PROD-FINANCIAL-FIXTURES-LAW-2026-09-01.md` — no seat-created financial fixtures in prod; owner-ordered walk manifest only; create→prove→void same session. CREATE-TEST keep-until-launch does **not** apply to seat money rows.
 
 - Empty TMS tables are **expected**. They are **not** a certify blocker and **not** a reason to end a Live Chrome pass.
-- **Create labeled TEST DATA** through the live wizard (save → canonical → reload). **All seats have permission.** **Keep TEST on the books** — do not void-all-TEST (empty-table regression). **Void only** to test void/reversal or when the document must be voided. **G1:** `is_sample_data` must be true (`docs/lockdown/TEST-LABEL-G1-AND-CUTOVER-FALSE-ALARM-LAW-2026-08-28.md`). $1,200 placeholders are sanctioned. $0 opening balances / negative TEST bank are **not** defects.
+- **Create labeled TEST DATA** through the live wizard (save → canonical → reload). **All seats have permission.** **Keep TEST on the books** applies to non-prod-money regression corpus only — **not** seat-created prod financial fixtures (NO-SEAT law). Do not void-all-TEST (empty-table regression). **Void only** to test void/reversal or when the document must be voided. **G1:** `is_sample_data` must be true (`docs/lockdown/TEST-LABEL-G1-AND-CUTOVER-FALSE-ALARM-LAW-2026-08-28.md`). $1,200 placeholders are sanctioned. $0 opening balances / negative TEST bank are **not** defects.
 - **Disabled +Create / Record Payment** → select the required row or **create the TEST document**. Do not report “disabled” as the finding unless the picker is empty **after** you tried create, or the API errors.
 - Forbidden every session: telling the owner “no transactions / cannot certify” without creating the test hop that same turn.
 - **Banking:** create TEST expenses, match, reconcile, test the ledger (`docs/lockdown/USMCA-LAUNCH-FIRST-STANDING-LAW-2026-08-22.md`).

@@ -20,7 +20,7 @@ CURRENT-LAW
 - USMCA only · no TRANSP/TRK · no TMS→QBO write-back
 - CERTIFIED COMPLETE = Fully-Wired 1–12 + Live Chrome on CURRENT healthz + ZERO unique OPEN leftovers
 - Leftover OPEN = NOT CERTIFIED COMPLETE · docs/lockdown/CERTIFIED-MEANS-ZERO-UNIQUE-LEFTOVER-LAW-2026-08-24.md
-- CREATE-TEST-THEN-VOID · all seats may create TEST · do not void until launch · do not remake proven TESTs / Close / Book Load
+- NO SEAT PROD FINANCIAL FIXTURES · owner-ordered walks only · create→prove→void same session · report record+reversing JE · docs/lockdown/NO-SEAT-PROD-FINANCIAL-FIXTURES-LAW-2026-09-01.md
 - FAST-MERGE ~4 min · never `gh pr checks --watch` · deploy 5–10 min AND 5–10 PRs · one in-flight · CC never trigger_deploy
 
 MY SEAT / NOW / OPEN LEFTOVER
