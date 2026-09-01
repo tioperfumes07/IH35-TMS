@@ -8,6 +8,7 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 import { companyToday } from "../../lib/businessDate";
+import { formatPlannerDayLabel } from "../dispatch/planners/plannerDayLabel";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 const EMPTY_FILTERS = {
@@ -363,7 +364,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
                       const pct = Math.min(100, ((day.on_duty_min ?? 0) / (14 * 60)) * 100);
                       return (
                         <div key={day.date} className="flex items-center gap-2">
-                          <span className="w-16 shrink-0 text-[10px] text-slate-500">{day.date.slice(5)}</span>
+                          <span className="w-16 shrink-0 text-[10px] text-slate-500">{formatPlannerDayLabel(day.date)}</span>
                           <div className="h-3 flex-1 rounded-sm bg-slate-100">
                             <div className="h-3 rounded-sm bg-[#1f2a44]" style={{ width: `${pct}%` }} />
                           </div>

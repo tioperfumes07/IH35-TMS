@@ -135,7 +135,7 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
             <h3 id="dqf-create-checklist-heading" className="text-xs font-semibold text-slate-900">
               Add DQF checklist item
             </h3>
-            <p id="dqf-create-checklist-help" className="text-[11px] text-slate-600">
+            <p id="dqf-create-checklist-help" className="text-xs text-slate-600">
               Pick a required document type from the 49 CFR catalog below. Dates are optional. The button stays disabled until a catalog row is selected — it is not a free-text item name.
             </p>
           </div>
@@ -189,7 +189,7 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
             </button>
           </form>
           {!documentTypeId && !documentTypesQ.isLoading && !documentTypesQ.isError ? (
-            <p className="mt-2 text-[11px] text-slate-500" data-testid="dqf-create-checklist-pick-hint">
+            <p className="mt-2 text-xs text-slate-500" data-testid="dqf-create-checklist-pick-hint">
               Select a catalog document type to enable Create.
             </p>
           ) : null}
