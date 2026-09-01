@@ -7975,3 +7975,107 @@ in-place (still exist, different content) vs genuinely gone, and update the line
 accordingly — do not leave a P0 "still live" claim standing if it's actually resolved | live Neon
 queries this session, both by exact ID and by memo substring, zero rows either way | **OPEN ·
 second board-vs-live discrepancy this session · routed to whoever owns line-5's P0 row** |
+## VERIFY-STATIC-RESEED — 77 new rot guards (CASCADE 2026-09-01)
+
+Source: remeasure at 5e94f941c7 (origin/main). These 77 guards are newly failing (not in prior baseline at 08693fa196). Bucketed by root class.
+
+### Bucket A — Stale selftest (guard's --selftest mutation no longer caught)
+
+| Guard | Seat | Status |
+|-------|------|--------|
+| verify-bills-bulk-void-reverses-gl.mjs | CC-1 | OPEN |
+| verify-claude-green-evidence-shape.mjs | CASCADE | OPEN |
+| verify-factoring-void-reverses-funding-je.mjs | CC-1 | OPEN |
+| verify-guard-selftests-are-real.mjs | CASCADE | OPEN |
+| verify-invoices-bulk-void-reverses-gl.mjs | CC-1 | OPEN |
+| verify-migration-void-posts-reversal.mjs | CC-2 | OPEN |
+| verify-settlement-dispute-adjustment-lines-and-aggregation.mjs | CC-1 | OPEN |
+| verify-settlement-manual-paid-reopen-confirmed.mjs | CC-1 | OPEN |
+| verify-test-provider-completeness.mjs | CURSOR | OPEN |
+| verify-tonu-cancellation-ar-linkage.mjs | CC-1 | OPEN |
+| verify-transaction-register-gl-je-link.mjs | CC-1 | OPEN |
+| verify-vend-s03-s04-dedup-and-types.mjs | CC-3 | OPEN |
+| verify-vend-verify-01.mjs | CC-3 | OPEN |
+| verify-vendor-category-picker-law.mjs | CC-3 | OPEN |
+| verify-vendor-master-detail-reverse-link.mjs | CC-3 | OPEN |
+| verify-vendor-parts-history-linkage.mjs | CC-3 | OPEN |
+| verify-vendors-list-master-detail.mjs | CC-3 | OPEN |
+| verify-vendors-qbo-chrome-leaves.mjs | CC-3 | OPEN |
+| verify-vendors-reverse-link-detail-ap.mjs | CC-3 | OPEN |
+| verify-weekly-close-role-gated.mjs | CC-1 | OPEN |
+| verify-wo-console-list-uses-paritytable.mjs | CURSOR | OPEN |
+
+### Bucket B — Genuine rot (real code/schema drift, guard correctly failing)
+
+| Guard | Seat | Status |
+|-------|------|--------|
+| verify-accounting-autoload-coverage.mjs | CC-1 | OPEN |
+| verify-accounting-subnav-grouped.mjs | CURSOR | OPEN |
+| verify-acct-period-close-01-ensureopenperiod-wired.mjs | CC-1 | OPEN |
+| verify-acct-surf-03-bill-payment.mjs | CC-1 | OPEN |
+| verify-acct-surface-dod-sweep.mjs | CASCADE | OPEN |
+| verify-bank-automatch-memo-threshold-calibrated.mjs | CC-1 | OPEN |
+| verify-bank-surface-dod-sweep.mjs | CASCADE | OPEN |
+| verify-bill-detail-panel-visible-label.mjs | CC-1 | OPEN |
+| verify-canonical-load-nav.mjs | CURSOR | OPEN |
+| verify-cash-advance-load-trailer-entity-picker.mjs | CURSOR | OPEN |
+| verify-compliance-notification-rule-visible-errors.mjs | CC-1 | OPEN |
+| verify-customers-list-master-detail.mjs | CC-3 | OPEN |
+| verify-customers-load-column-remainder.mjs | CC-3 | OPEN |
+| verify-customers-vendors-list-segment-tabs.mjs | CC-3 | OPEN |
+| verify-datepicker-label-clickthrough-reopen.mjs | CURSOR | OPEN |
+| verify-deactivated-counterparty-resolver-coverage.mjs | CC-1 | OPEN |
+| verify-disp-wire-08-settlement-ping.mjs | CODEX | OPEN |
+| verify-disp-wire-10-cancel-economics.mjs | CODEX | OPEN |
+| verify-dispatch-secondary-nav-depth.mjs | CURSOR | OPEN |
+| verify-display-id-lookups-entity-scoped.mjs | CC-1 | OPEN |
+| verify-drivers-active-path.mjs | CURSOR | OPEN |
+| verify-drivers-qbo-chrome-leaves.mjs | CURSOR | OPEN |
+| verify-drivers-teams-view-url-sync.mjs | CURSOR | OPEN |
+| verify-eld-tabs-canonical.mjs | CURSOR | OPEN |
+| verify-entity-label-rejects-uuid-shaped-name.mjs | CASCADE | OPEN |
+| verify-factoring-advances-write-role-gated.mjs | CC-1 | OPEN |
+| verify-finance-landing-hub.mjs | CURSOR | OPEN |
+| verify-finance-tabs-overflow-scrollable.mjs | CURSOR | OPEN |
+| verify-healthz-no-raw-error-leak.mjs | CODEX | OPEN |
+| verify-je-type-fk.mjs | CC-2 | OPEN |
+| verify-je-type-inbound-density.mjs | CC-2 | OPEN |
+| verify-join-entity-scoped.mjs | CC-1 | OPEN |
+| verify-linkage-required-edges.mjs | CASCADE | OPEN |
+| verify-list-segment-tabs-present.mjs | CURSOR | OPEN |
+| verify-live-load-number-not-self-referential.mjs | CASCADE | OPEN |
+| verify-load-cancellations-report.mjs | CODEX | OPEN |
+| verify-local-ci-parity.mjs | CASCADE | OPEN |
+| verify-lst-picker01-equipment-type-inline-create.mjs | CURSOR | OPEN |
+| verify-matrix-metrics-tally.mjs | CASCADE | OPEN |
+| verify-module-completion-requires-tieout.mjs | CASCADE | OPEN |
+| verify-module-hub-navigation-connectivity.mjs | CASCADE | OPEN |
+| verify-no-boot-throwing-env-checks.mjs | CODEX | OPEN |
+| verify-no-circular-dependencies.mjs | CODEX | OPEN |
+| verify-no-closed-loop-guards.mjs | CASCADE | OPEN |
+| verify-no-execsync-on-request-path.mjs | CODEX | OPEN |
+| verify-one-load-one-open-invoice.mjs | CC-1 | OPEN |
+| verify-operator-record-surface-connectivity.mjs | CASCADE | OPEN |
+| verify-orphan-fk-inventory.mjs | CC-2 | OPEN |
+| verify-payments-create-role-gated.mjs | CC-1 | OPEN |
+| verify-pre-settlements-reverse-drill.mjs | CC-1 | OPEN |
+| verify-primary-module-navigation-connectivity.mjs | CASCADE | OPEN |
+| verify-primary-record-selector-reverse-links.mjs | CASCADE | OPEN |
+| verify-program-audit-scoreboard-api-url.mjs | CASCADE | OPEN |
+| verify-program-scoreboard-13gate-prodread.mjs | CASCADE | OPEN |
+| verify-push-gate-classification.mjs | CASCADE | OPEN |
+| verify-reports-hub-connectivity.mjs | CASCADE | OPEN |
+| verify-required-surface-inventory-complete.mjs | CASCADE | OPEN |
+| verify-scenario-tracker-live-binding.mjs | CASCADE | OPEN |
+| verify-scheduler-tenant-context.mjs | CODEX | OPEN |
+| verify-settlements-qbo-chrome-surfaces.mjs | CC-1 | OPEN |
+| verify-sql-column-existence.mjs | CC-2 | OPEN |
+| verify-sweep-c6-money-insert-requires-je-poster.mjs | CC-1 | OPEN |
+| verify-void-predicate-map-current.mjs | CC-2 | OPEN |
+
+### Bucket C — Capability/env (needs dist/ build or env not available in static sweep)
+
+| Guard | Seat | Status |
+|-------|------|--------|
+| verify-google-oauth-lazy-env.mjs | CODEX | OPEN |
+| verify-guard-wired.mjs | CASCADE | OPEN |
