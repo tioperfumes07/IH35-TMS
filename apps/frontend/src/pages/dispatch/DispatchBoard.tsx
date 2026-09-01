@@ -974,46 +974,6 @@ export function DispatchBoard({
     );
   };
 
-  const renderLoadRows = (
-    rows: DispatchLoadRow[],
-    columns: Array<{ key: string; header: string; cell: (load: BoardLoad) => ReactNode }>,
-    options?: { showBulk?: boolean }
-  ) => {
-    const showBulk = options?.showBulk ?? true;
-    const colSpan = columns.length + (showBulk ? 1 : 0);
-
-    return rows.map((load) => {
-      const boardLoad = readBoardLoad(load);
-      return (
-        <Fragment key={load.id}>
-          <tr onClick={() => onRowClick(load.id)} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50">
-            {showBulk ? (
-              <td className="px-2 py-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
-                <input
-                  type="checkbox"
-                  aria-label={`Select load ${load.load_number}`}
-                  checked={selection.selectedIds.has(load.id)}
-                  onChange={() => {
-                    const next = new Set(selection.selectedIds);
-                    if (next.has(load.id)) next.delete(load.id);
-                    else next.add(load.id);
-                    selection.setSelectedIds(next);
-                  }}
-                />
-              </td>
-            ) : null}
-            {columns.map((column) => (
-              <td key={column.key} className="px-3 py-1 text-[11px] leading-tight">
-                {column.cell(boardLoad)}
-              </td>
-            ))}
-          </tr>
-          {renderPreSettlementPrompt(load, colSpan)}
-        </Fragment>
-      );
-    });
-  };
-
   // DISPATCH-REDESIGN Part B — ONE shared column model so List renders the SAME grid as Table.
   // Order: Unit · Trailer · Driver · [6 Samsara HOS clocks] · Load # · Customer · Commodity · Pickup ·
   // Delivery · WO # · Cargo temp · Linehaul · Status signal · Live GPS · Risk · Status. Lane is split

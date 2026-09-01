@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -104,11 +104,13 @@ describe("ProfitPerTruckPage", () => {
   });
 
   it("renders flag chips", async () => {
+    // LV-REPORTS-PROFIT-PER-TRUCK-RAW-FLAG-TOKENS (already shipped): chips paint the human label
+    // ("Most profitable"/"High maintenance"), never the raw API token -- assert the real rendered text.
     vi.spyOn(reportsApi, "getProfitPerTruck").mockResolvedValue(samplePayload);
     render(wrap(<ProfitPerTruckPage />));
     await waitFor(() => expect(screen.getByText("101")).toBeInTheDocument());
-    expect(screen.getByText(/most_profitable/i)).toBeInTheDocument();
-    expect(screen.getByText(/high_maintenance/i)).toBeInTheDocument();
+    expect(screen.getByText("Most profitable")).toBeInTheDocument();
+    expect(screen.getByText("High maintenance")).toBeInTheDocument();
   });
 
   it("sorts when Miles header clicked", async () => {
@@ -137,20 +139,27 @@ describe("ProfitPerTruckPage", () => {
   });
 
   it("navigates to asset financial tab on row click", async () => {
+    // LINK-F5118 (already shipped): the unit_number cell is its own EntityLink with
+    // onClick={stopPropagation} so it can forward-drill to the unit page without also firing the
+    // row's own onRowClick -- click a non-link cell (Type) instead, which still bubbles to the row.
     const user = userEvent.setup();
     vi.spyOn(reportsApi, "getProfitPerTruck").mockResolvedValue(samplePayload);
     render(wrap(<ProfitPerTruckPage />));
     await waitFor(() => expect(screen.getByText("101")).toBeInTheDocument());
-    await user.click(screen.getByText("101"));
+    await user.click(screen.getByText("Flatbed"));
     expect(mockNavigate).toHaveBeenCalledWith("/fleet/units/u1?tab=financial");
   });
 
   it("filters rows by search term", async () => {
-    const user = userEvent.setup();
+    // RPT-F3488 (already shipped): the page-local search input was removed as a duplicate of
+    // ParityTable's own toolbar search, which now owns free-text search (default "Search rows…"
+    // placeholder). fireEvent.change fires the native "change" event, which TableSearch flushes
+    // immediately -- matching ParityTable.test.tsx's own established convention for this control;
+    // user.type fires "input" events, which TableSearch debounces (EMIT_MS=300) before emitting.
     vi.spyOn(reportsApi, "getProfitPerTruck").mockResolvedValue(samplePayload);
     render(wrap(<ProfitPerTruckPage />));
     await waitFor(() => expect(screen.getByText("101")).toBeInTheDocument());
-    await user.type(screen.getByPlaceholderText("e.g. 102 or Pat"), "102");
+    fireEvent.change(screen.getByPlaceholderText("Search rows…"), { target: { value: "102" } });
     expect(screen.queryByText("101")).not.toBeInTheDocument();
     expect(screen.getByText("102")).toBeInTheDocument();
   });
