@@ -278,6 +278,21 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       if (q.status === "active") {
         extraWhere.push("i.voided_at IS NULL");
         extraWhere.push("i.status NOT IN ('void', 'voided')");
+      } else if (q.status === "posted") {
+        // FLT-02 — GL-posted invoices only (owner req 2.7); same EXISTS shape as bills.service posted filter.
+        extraWhere.push(`EXISTS (
+          SELECT 1
+          FROM accounting.journal_entry_postings jep
+          JOIN accounting.journal_entries je
+            ON je.id = jep.journal_entry_uuid
+           AND je.operating_company_id = jep.operating_company_id
+          WHERE jep.operating_company_id = i.operating_company_id
+            AND jep.source_transaction_type = 'invoice'
+            AND jep.source_transaction_id = i.id::text
+            AND je.status = 'posted'
+        )`);
+        extraWhere.push("i.voided_at IS NULL");
+        extraWhere.push("i.status NOT IN ('void', 'voided')");
       } else if (q.status && q.status !== "all") {
         values.push(q.status);
         extraWhere.push(`i.status = $${values.length}`);

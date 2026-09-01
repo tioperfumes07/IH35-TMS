@@ -863,7 +863,7 @@ export function listBills(
     // filter values alongside BillStatus/"unpaid" — BillsPage.tsx's own status filter uses
     // both (default "active" = hide voided, "all" = include voided). This type had drifted
     // narrower than what both the backend and the caller already do at runtime.
-    status?: BillStatus | "unpaid" | "active" | "all";
+    status?: BillStatus | "unpaid" | "active" | "all" | "posted";
     include_balance?: boolean;
     has_balance?: boolean;
     date_from?: string;
