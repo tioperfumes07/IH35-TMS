@@ -6,6 +6,7 @@ export type BulkUpdateFailure = {
   id: string;
   code: string;
   message: string;
+  label?: string;
 };
 
 export type BulkUpdateResponse = {
@@ -55,6 +56,7 @@ function normalizeResponse(raw: Record<string, unknown>): BulkUpdateResponse {
             id: String(row.id ?? ""),
             code: String(row.code ?? "E_UNKNOWN"),
             message: String(row.message ?? "Update failed"),
+            ...(typeof row.label === "string" ? { label: row.label } : {}),
           };
         })
       : [],

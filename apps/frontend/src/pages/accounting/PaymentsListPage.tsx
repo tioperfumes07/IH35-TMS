@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { listPayments, type Payment, type PaymentMethod } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { BulkProgressDialog } from "../../components/bulk";
+import { bulkRowLabelsFromRows, paymentBulkRowLabel } from "../../components/bulk/bulkRowLabels";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -62,6 +63,7 @@ export function PaymentsListPage() {
   const { pushToast } = useToast();
   const bulk = useEntityBulkAction();
   const [pendingVoidIds, setPendingVoidIds] = useState<string[]>([]);
+  const [pendingVoidLabels, setPendingVoidLabels] = useState<Record<string, string>>({});
   const [batchVoidOpen, setBatchVoidOpen] = useState(false);
   // BANK-SORT-ROLLOUT-ACCT: every visible column header sorts ASC/DESC; sort persists in the URL
   // (?sort=&dir=) so it survives reload / is shareable, same as Bills / Expenses.
@@ -291,7 +293,9 @@ export function PaymentsListPage() {
             variant="danger"
             type="button"
             onClick={() => {
-              setPendingVoidIds(selected.filter((row) => !row.voided_at).map((row) => row.id));
+              const voidable = selected.filter((row) => !row.voided_at);
+              setPendingVoidIds(voidable.map((row) => row.id));
+              setPendingVoidLabels(bulkRowLabelsFromRows(voidable, paymentBulkRowLabel));
               setBatchVoidOpen(true);
             }}
           >
@@ -319,8 +323,12 @@ export function PaymentsListPage() {
               reason,
               operatingCompanyId: selectedCompanyId,
               invalidateKeys: [["accounting", "payments", selectedCompanyId]],
+              rowLabels: pendingVoidLabels,
             },
-            () => setPendingVoidIds([])
+            () => {
+              setPendingVoidIds([]);
+              setPendingVoidLabels({});
+            }
           );
         }}
       />

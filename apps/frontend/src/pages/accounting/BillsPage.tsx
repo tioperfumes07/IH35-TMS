@@ -14,6 +14,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
 import { vendorFilterReferenceOptions } from "../../components/parity/referenceOptionLabels";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
+import { billBulkRowLabel, bulkRowLabelsFromRows } from "../../components/bulk/bulkRowLabels";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { useToast } from "../../components/Toast";
@@ -207,6 +208,7 @@ export function BillsPage() {
   const [batchVoidOpen, setBatchVoidOpen] = useState(false);
   const [scheduledDate, setScheduledDate] = useState("");
   const [pendingIds, setPendingIds] = useState<string[]>([]);
+  const [pendingVoidLabels, setPendingVoidLabels] = useState<Record<string, string>>({});
   const [tableResetKey, setTableResetKey] = useState(0);
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
@@ -820,6 +822,7 @@ export function BillsPage() {
               type="button"
               onClick={() => {
                 setPendingIds(selected.map((bill) => bill.id));
+                setPendingVoidLabels(bulkRowLabelsFromRows(selected, billBulkRowLabel));
                 setBatchVoidOpen(true);
               }}
             >
@@ -859,8 +862,12 @@ export function BillsPage() {
               reason,
               operatingCompanyId: companyId,
               invalidateKeys: [["accounting", "bills", companyId]],
+              rowLabels: pendingVoidLabels,
             },
-            () => setPendingIds([])
+            () => {
+              setPendingIds([]);
+              setPendingVoidLabels({});
+            }
           );
         }}
       />
