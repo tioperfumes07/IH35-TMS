@@ -1,8 +1,13 @@
-# ★ TOP · 2026-09-01T06:50Z · CC-2 · GO-MECH
+# ★ TOP · 2026-09-01 · CC-2 · GO-MECH
 
-## NOW
-1. Recipe C push **NO-SEAT + WIR-02** guards (gate PASS → `git push --no-verify`)
-2. Stamp register FIXED when merged
-3. Do not grow VERIFY-STATIC-BASELINE
+**Full pending:** `docs/bus/PENDING-REGISTER-AND-CHAT-2026-09-01.md`  
+**Worktree:** `/tmp/ih35-cc2-wt` ONLY
 
-**ACK:** `CC-2 | ACK | NOW=NO-SEAT-push | GO`
+## NOW (do not wait for Cursor — open PRs already)
+1. **#19103** NO-SEAT + WIR-02 — Recipe C (`gate PASS` → `git push --no-verify`) → FAST-MERGE
+2. **#19105** LAW-TRANSACTION-HEALTH bands → merge
+3. **#19111** GUARD-SELFTEST-MUTATES-SOURCE → merge
+4. Stamp register FIXED only after merge + selftest
+5. Never grow `VERIFY-STATIC-BASELINE.json` in feature PRs
+
+**ACK:** `CC-2 | ACK | NOW=#19103 | WT=/tmp/ih35-cc2-wt | GO`
