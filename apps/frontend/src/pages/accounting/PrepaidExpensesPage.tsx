@@ -460,7 +460,7 @@ export function PrepaidExpensesPage() {
     <AccountingSubNavWrapper
       title="Prepaid Expenses"
       subtitle="Prepaid assets and amortization schedules"
-      actions={
+      createControl={
         <button onClick={() => setShowCreate(true)}
           className="rounded-sm bg-slate-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-800">
           + Create Prepaid

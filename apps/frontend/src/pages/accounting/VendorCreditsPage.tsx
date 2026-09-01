@@ -277,7 +277,7 @@ export function VendorCreditsPage() {
     <AccountingSubNavWrapper
       title="Vendor credits"
       subtitle="Open vendor credits reduce A/P when applied to bills (data-only until GL flags advance)"
-      actions={
+      createControl={
         canWrite ? (
           <Button
             onClick={() => {

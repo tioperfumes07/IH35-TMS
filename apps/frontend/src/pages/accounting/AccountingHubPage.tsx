@@ -435,10 +435,11 @@ export function AccountingHubPage() {
       title="Accounting"
       subtitle="Bills, expenses, invoices, settlements & transaction review"
       kpiStrip={kpiStrip}
-      actions={
+      createControl={
         // Access follows the existing accounting role gate (canAccessAccounting: Owner /
         // Administrator / Accountant) — the same bar as every other create surface in this module.
         // No amount threshold: owner ruling 2026-07-22, "remove threshold".
+        // CTL-04: createControl replaces module "+ Create ▾" so hub has exactly one create control.
         <Button size="sm" onClick={() => setManualJeOpen(true)} disabled={!companyId}>
           + Create Manual JE
         </Button>

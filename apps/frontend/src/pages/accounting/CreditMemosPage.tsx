@@ -275,7 +275,7 @@ export function CreditMemosPage() {
     <AccountingSubNavWrapper
       title="Credit memos"
       subtitle="Issued credit memos reduce A/R when applied to invoices (data-only until GL flags advance)"
-      actions={
+      createControl={
         canWrite ? (
           <Button
             onClick={() => {

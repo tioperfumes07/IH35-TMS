@@ -173,7 +173,7 @@ export function ExpenseCategoryMapPage() {
     <AccountingSubNavWrapper
       title="Expense Category Map"
       subtitle="Map category kind + code to posting account + side"
-      actions={<Button onClick={() => setShowAddModal(true)} disabled={!companyId}>+ Create Mapping</Button>}
+      createControl={<Button onClick={() => setShowAddModal(true)} disabled={!companyId}>+ Create Mapping</Button>}
     >
 
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
