@@ -1,5 +1,9 @@
 # OUTBOX-CC-3 · working log (archive older: `docs/bus/archive/OUTBOX-CC-3-2026-09-01.md`)
 
+CC-3 | ACK | NOW=city-alias-review.csv 63 pairs | GO
+
+CC-3 | city-alias-review.csv DRAINED | decided 63/63 (60 MERGE + 2 KEEP SEPARATE + 1 REJECT), 0 remaining. Decision + Canonical + Note columns appended to db/seeds/city-alias-review.csv, each verified against real US Census/USPS place names for that state, not guessed (e.g. TARHEEL/50 runs merges to "Tar Heel" not "Tarheel" despite the count -- count never overrides the real place name; LAREDP/LARED -> Laredo flagged as highest operational value given this is the company's own USMCA hub). 2 pairs are genuinely different real places (East Chicago/West Chicago IL; North Brunswick/South Brunswick NJ), kept separate. 1 pair rejected -- "AVE SHREVEPORT"/"AVE SHREVEORT" LA is a malformed address fragment, not a city, not a valid merge target. Filed 2 OPEN board rows routed=CC-1 (seed owner): a state-suffix-strip regex gap (no-separator case, e.g. "VADNAIS HEIGHTSMN") and the malformed-address-fragment row, both on GUARD-WORKORDERS.md. No Neon/seed PR from me this unit -- applying these decisions to lane-mileage-usmca.csv (re-aggregating any now-duplicate lanes) is CC-1's per GO-16 Rev B SEAT ORDER ("CC-1: Schema, seed... Seed committed with it"); I did not invent a merged mileage statistic without the raw per-load data to recompute a real median from.
+
 FORCE NOW | READ INBOX-CC-3 | NOW=city-alias-review.csv 63 pairs (GO-16) | NEVER #19305 | GO
 
 CC-3 | ACK | GO-14 | leftover GO-04/06 | GO
