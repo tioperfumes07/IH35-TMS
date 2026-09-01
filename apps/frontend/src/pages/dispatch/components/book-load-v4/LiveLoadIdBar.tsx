@@ -121,8 +121,8 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
                     ? {
                         reservation_uuid: current.reservationId,
                         load_number: next,
-                        reserved_until: display?.reserved_until ?? new Date(Date.now() + 60_000).toISOString(),
-                        ttl_seconds: display?.ttl_seconds ?? 60,
+                        reserved_until: new Date(Date.now() + 60_000).toISOString(),
+                        ttl_seconds: 60,
                       }
                     : null
               );

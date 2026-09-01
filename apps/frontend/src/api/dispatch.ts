@@ -168,6 +168,10 @@ export type DispatchBookLoadPayload = {
   customer_chargeback_requested?: boolean;
   customer_chargeback_reason?: string;
   live_load_number?: string;
+  /** GO-10: machine-reserved or manual load number; omit blank to let API mint/422. */
+  load_number?: string;
+  /** GO-10: requested load number (reserved or manual), distinct from live_load_number legacy. */
+  requested_load_number?: string;
   addToOpenPresettlement?: boolean;
   reservation_uuid?: string;
   trip_type?: "NB" | "TR" | "SB";
