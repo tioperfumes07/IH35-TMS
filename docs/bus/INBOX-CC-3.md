@@ -1,3 +1,4 @@
+**ParityTable center LANDED #19019** — SWEEP call sites now (external sort + server ORDER BY + explicit limit). Do NOT re-edit ParityTable.
 **HOLD ParityTable until Cursor SORT PR merges** — then sweep call sites per docs/audit/SWEEP-SORTABLE-AND-VOID-VISIBILITY-2026-08-31.md (external sort + explicit limit). Do not edit ParityTable while Cursor ships w-full.
 # INBOX — CC-3 · 18:20 CT · ★ SORT LAW TOP (Cursor diagnosed)
 **READ** `docs/audit/SWEEP-SORTABLE-AND-VOID-VISIBILITY-2026-08-31.md` §A0–A3 · `docs/specs/GLOBAL-SORT-RULE.md`
