@@ -217,3 +217,72 @@ CLOSED: Revenue = pro forma/pre-invoice at pickup, auto-convert to invoice at
   stays a Cascade finding for CC-1 after POSTING-CONTRACTS + GO-11 — do not
   guess the register this hour.
 ================================================================================
+
+CASCADE FILE+LINE FINDINGS (2026-09-01) — both sides of Conflicts 1, 2, 4
+================================================================================
+
+CONFLICT 1 — Capitalize threshold ($7,000 vs $2,500 vs no-threshold)
+
+  CPA / owner side:
+    docs/lockdown/OWNER-DECISIONS-FINAL-2026-07-26.md:29 — "A4-D6 $7,000 capitalize-vs-expense threshold"
+    docs/trackers/CPA-DESKTOP-ANSWERS-FOUND-2026-07-26.md:27 — CPA answers locked
+
+  GO-12 / skill side ($2,500):
+    GO-12 Part 4 line 144 — "$2,500 or more capitalizes to Fixed Asset - Trucks"
+
+  Locked spec side (NO dollar threshold — always ask):
+    docs/specs/MNT-ECON-02-SEVERE-REPAIR-CAPITALIZE-VS-EXPENSE-DESIGN-2026-07-26.md:18 — "NO dollar threshold"
+    docs/specs/MNT-ECON-02-SEVERE-REPAIR-CAPITALIZE-VS-EXPENSE-DESIGN-2026-07-26.md:53 — "no default, no threshold auto-pick"
+    docs/specs/DEFINITION-OF-DONE.md:204 — "No dollar threshold, ever"
+    docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md:1943 — "no $ threshold"
+    .claude/skills/ih35-accounting-decisions/SKILL.md:159 — "no dollar threshold"
+
+  Code side (implements $7,000 auto-pick, contradicts skill):
+    apps/backend/src/accounting/capitalize-threshold.ts:13 — CAPITALIZE_REPAIR_THRESHOLD_CENTS = 700_000
+    apps/backend/src/accounting/capitalize-threshold.ts:30 — auto-pick: >= $7k capitalize, else expense
+    apps/backend/src/accounting/coa-roles/resolver.service.ts:115 — "expense path under $7,000"
+
+  Master blueprint (third number):
+    docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md:14621 — "$1000 (configurable per company policy)"
+
+  VERDICT: Three positions. Code auto-picks at $7k. GO-12 says $2,500. Skill says
+  always ask. Master blueprint says $1k. OPEN — owner adjudication.
+
+CONFLICT 2 — Depreciation register (build now vs defer)
+
+  CPA / owner side:
+    docs/lockdown/OWNER-DECISIONS-FINAL-2026-07-26.md:27 — "A4-D4 Build the FULL fixed-asset + auto-depreciation register NOW (never defer)"
+
+  Locked spec side (defer / JE-only):
+    docs/specs/MNT-ECON-02-SEVERE-REPAIR-CAPITALIZE-VS-EXPENSE-DESIGN-2026-07-26.md:88 — "yes (later block) / JE-only for MVP"
+    docs/lockdown/00_LOCKED_DECISIONS.md:188-191 — "NO Accumulated Depreciation and NO PP&E... ONLY WHEN a real asset purchase is recorded"
+    docs/lockdown/00_LOCKED_DECISIONS.md:193 — "Depreciation lives ONLY on TRK's books"
+
+  Code side (references a register that does not exist):
+    apps/backend/src/accounting/capitalize-threshold.ts:33-38 — returns null for capitalize, comment says "uses fixed-asset register"
+    No fixed_asset_register table, no depreciation_schedule table, no auto-depreciation service in apps/backend/src/
+
+  VERDICT: CPA says build now. Spec says defer. Code references a register that
+  doesn't exist. OPEN — owner adjudication.
+
+CONFLICT 3 — Revenue — CLOSED (owner 2026-09-01)
+    docs/lockdown/GO-13-24H-LIVE-STATUS-2026-09-01.md:14-15 — pickup = pro forma, delivery = invoice
+    No finding filed. Do not rebuild.
+
+CONFLICT 4 — Accessorials CoA parent (Line Haul vs Sales of Service)
+
+  CPA ANSWERS side:
+    docs/trackers/CPA-DESKTOP-ANSWERS-FOUND-2026-07-26.md:27 — "accessorials under Line Haul / Accessorial Income"
+
+  Locked skill side (Sales of Service parent, Line Haul as peer):
+    .claude/skills/ih35-accounting-decisions/resources/locked-decisions-reference.md:27 — "Children: Line Haul, Fuel Surcharge, Accessorial Revenue"
+    .claude/skills/ih35-accounting-decisions/SKILL.md:134-137 — "Sales of Service parent: Line Haul, Fuel Surcharge, Accessorial Revenue"
+
+  Code side (resolves via CoA roles, not parent hierarchy):
+    apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts:103 — "Line-Haul Income" (description string)
+    apps/backend/src/invoices/invoice-line-revenue-resolution.service.ts:32-33 — resolves via chart_of_accounts_roles, not parent
+
+  VERDICT: CPA says accessorials under Line Haul. Skill says under Sales of
+  Service as a peer. Code doesn't enforce either parent. OPEN — owner adjudication.
+
+================================================================================
