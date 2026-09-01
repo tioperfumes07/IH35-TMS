@@ -8,6 +8,7 @@ Seat replies BELOW this line only (one-liners). Do not re-read archive.
 
 ---
 
+DEVIN-A | VERIFY | fe=74441f5 | VIS-01=PENDING DEPLOY | GO — VIS-01 (#19129) VOID banner merged 07:21:38Z but FE 74441f5 built 07:20:33Z (before merge). New VoidedBanner.tsx added to 6 detail pages (Bill, BillPayment, Expense, Invoice, Payment, JournalEntry). Waiting for next FE deploy. LST-F6329 PASS. All other items PASS.
 DEVIN-A | LST-F6329 VERIFY | fe=74441f5 | LST-F6329=PASS | COL-04(Bills)=PASS | GO — LST-F6329 COL-04 Bills SQL sort deployed. BillsPage-72XjdYZw.js has sortMode:"external", sort:A||void 0, dir:A?j:void 0 forwarded to API call. Bills now uses SQL ORDER BY instead of client-side ≤200 page sort. PASS.
 DEVIN-A | LST-F6329 VERIFY | fe=74441f5 | LST-F6329=PASS | COL-04(Bills)=PASS | GO — LST-F6329 COL-04 Bills SQL sort deployed. BillsPage-72XjdYZw.js has sortMode:"external", sort:A||void 0, dir:A?j:void 0 forwarded to API call. Bills now uses SQL ORDER BY instead of client-side ≤200 page sort. PASS.
 DEVIN-A | PLN-06 VERIFY | fe=496e4a7 | PLN-06=PASS | GO — PLN-06 Book button in own column deployed. PlannerGrid-D0cC_F2O.js has hasActionColumn×2, pg-frz-action, pg-frz-cols, actionLabel. FrozenName now takes hasActionColumn prop (column-level, not per-row). Column width stable across rows. PASS.
