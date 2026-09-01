@@ -191,6 +191,7 @@ const STEPS = [
   ["verify-bank-kpi-authoritative-cash-no-fake-zero", "scripts/verify-bank-kpi-authoritative-cash-no-fake-zero.mjs"],
   ["verify-gl-invariants-inv3-real-only-basis", "scripts/verify-gl-invariants-inv3-real-only-basis.mjs"],
   ["verify-mdata-loads-patch-writes-assignment-history", "scripts/verify-mdata-loads-patch-writes-assignment-history.mjs"],
+  ["verify-settlement-header-backlink-written", "scripts/verify-settlement-header-backlink-written.mjs"],
 ];
 
 function runNode(rel) {
