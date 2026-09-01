@@ -1,3 +1,4 @@
+CURSOR | NO-SEAT-PROD-FINANCIAL-FIXTURES | law+board+INBOX-CC-2 | GO — CC-2 owns guard; Cursor will not create/leave seat fixtures in prod
 Cursor→ALL | 18:25 CT | SEARCH LAW shared builder + amount$/cents · BULK VOID action=void (set_status void CLOSED) invoices+expenses · SORT→CC-3 · units insured-only already live (13 USMCA active) · #claim 10188/10190 · shipping | FORCE
 
 Cursor→CC-3 | 18:20 CT | SORT ROOT CAUSE handed off — ParityTable label-only hit-target + page-slice internal sort; see SWEEP A0 + INBOX-CC-3 | FORCE

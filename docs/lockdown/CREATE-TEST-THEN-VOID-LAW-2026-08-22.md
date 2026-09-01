@@ -1,5 +1,7 @@
 # CREATE TEST THEN VOID (owner-locked 2026-08-22 — PERMANENT)
 
+> **SUPERSEDED (seat-created prod financial fixtures — owner 2026-09-01):** For **any seat-created money row in production**, `docs/lockdown/NO-SEAT-PROD-FINANCIAL-FIXTURES-LAW-2026-09-01.md` **wins**. Pattern: **owner-ordered walk manifest only** · **create→prove→void same session** · report record + reversing JE · **no standing fixtures**. Empty TMS tables still expected. “Keep TEST on the books / do not void until launch” **does not** authorize seats to leave prod financial contamination.
+
 **Owner word:** create labeled **TEST** documents through the live wizards so the software can be proven. When the software is operational 100%, those tests are **voided** (reversal / WORM). Do not wait for “real” operational volume. Do not tell the owner the ledger is empty as if that were a coder stop.
 
 **Answered = closed.** Do not re-ask. Do not spend a session reporting the same empty/disabled story.
