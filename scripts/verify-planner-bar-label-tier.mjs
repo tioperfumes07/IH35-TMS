@@ -66,7 +66,26 @@ function pln03DayLabelIssues(fileSources) {
   return issues;
 }
 
+function pln04HosStripIssues(fileSources) {
+  const issues = [];
+  const rel = PLN03_FILES[0];
+  const fileSrc = fileSources?.[rel] ?? readFileSync(path.join(root, rel), "utf8");
+  if (!fileSrc.includes("8-day day-strip selector")) {
+    issues.push(`${rel}: missing 8-day day-strip selector block (PLN-04)`);
+    return issues;
+  }
+  const stripWindow = fileSrc.split("8-day day-strip selector")[1]?.slice(0, 900) ?? "";
+  if (!/formatPlannerDayLabel\s*\(\s*d\.date\s*\)/.test(stripWindow)) {
+    issues.push(`${rel}: 8-day strip cells must call formatPlannerDayLabel(d.date) (PLN-04)`);
+  }
+  if (/\{d\.mon\}/.test(stripWindow) || /\{d\.day\}/.test(stripWindow)) {
+    issues.push(`${rel}: 8-day strip must not render split mon/day tokens — use formatPlannerDayLabel (PLN-04)`);
+  }
+  return issues;
+}
+
 failures.push(...pln03DayLabelIssues());
+failures.push(...pln04HosStripIssues());
 
 if (process.argv.includes("--selftest")) {
   const bad = src.replace("slice(-2).join", "slice(-1).join");
@@ -80,11 +99,23 @@ if (process.argv.includes("--selftest")) {
     { [PLN03_FILES[0]]: hosSrc.replace(/formatPlannerDayLabel\s*\([^)]*\)/g, "day.date.slice(5)") },
     { [PLN03_FILES[0]]: hosSrc.replace(/formatPlannerDayLabel\s*\([^)]*\)/g, '"—"') },
   ];
+  const pln04Mutants = [
+    {
+      [PLN03_FILES[0]]: hosSrc.replace(
+        /formatPlannerDayLabel\s*\(\s*d\.date\s*\)/,
+        "{d.mon} {d.day}"
+      ),
+    },
+  ];
   if (!pln03Mutants.every((sources) => pln03DayLabelIssues(sources).length > 0)) {
     console.error("selftest: PLN-03 mutation escaped");
     process.exit(1);
   }
-  console.log("verify-planner-bar-label-tier selftest: bar-label + PLN-03 defects caught");
+  if (!pln04Mutants.every((sources) => pln04HosStripIssues(sources).length > 0)) {
+    console.error("selftest: PLN-04 strip mutation escaped");
+    process.exit(1);
+  }
+  console.log("verify-planner-bar-label-tier selftest: bar-label + PLN-03 + PLN-04 defects caught");
   process.exit(0);
 }
 
@@ -94,5 +125,5 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("verify-planner-bar-label-tier: OK — plannerBarLabelTier + PLN-03 day labels protected");
+console.log("verify-planner-bar-label-tier: OK — plannerBarLabelTier + PLN-03 day labels + PLN-04 HOS strip protected");
 process.exit(0);

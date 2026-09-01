@@ -78,6 +78,14 @@ function assertMigrated(src) {
     errors.push(`${PANEL}: must not use ad-hoc px font sizes — normalize to text-xs / text-[10px] (LAY-06)`);
   }
 
+  // LAY-07 — subsection titles match Drivers profile nested sections (text-xs uppercase), not page-scale h2.
+  if (!/dqf-create-checklist-heading[\s\S]{0,220}text-xs font-semibold uppercase/.test(src)) {
+    errors.push(`${PANEL}: create subsection heading must use text-xs font-semibold uppercase (LAY-07)`);
+  }
+  if (/dqf-create-checklist-heading[\s\S]{0,120}text-sm font-semibold/.test(src)) {
+    errors.push(`${PANEL}: inner subsection must not use text-sm font-semibold — matches page h2 scale (LAY-07)`);
+  }
+
   return errors;
 }
 
@@ -109,6 +117,7 @@ function selftest() {
     data-testid="dqf-create-checklist-form"
     data-testid="dqf-create-checklist-item"
     data-testid="dqf-create-checklist-pick-hint"
+    id="dqf-create-checklist-heading" className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-800"
     listRequiredDocumentTypes(companyId, "driver")
     required_document_type_id: input.documentTypeId
     className="text-xs text-slate-600"

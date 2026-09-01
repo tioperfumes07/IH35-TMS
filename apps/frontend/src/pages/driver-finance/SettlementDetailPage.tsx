@@ -258,6 +258,14 @@ export function SettlementDetailPage() {
     // "Load" column had nothing but the line id to show.
     load_id: typeof line.load_id === "string" ? line.load_id : null,
     load_number: typeof line.load_number === "string" ? line.load_number : null,
+    source_driver_bill_id:
+      typeof line.source_driver_bill_id === "string" ? line.source_driver_bill_id : null,
+    source_label:
+      typeof line.source_driver_bill_number === "string" && line.source_driver_bill_number
+        ? line.source_driver_bill_number
+        : typeof line.source_table === "string" && line.source_table
+          ? line.source_table.replace(/^driver_finance\./, "")
+          : null,
     description: String(line.description ?? ""),
     miles: Number(line.miles ?? 0),
     rate: Number(line.rate ?? 0),

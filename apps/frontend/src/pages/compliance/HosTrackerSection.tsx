@@ -246,7 +246,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
               onClick={() => setSelectedDate(d.date)}
               className={`rounded-sm border px-2.5 py-1 text-center text-[11px] leading-tight ${selectedDate === d.date ? "border-slate-800 font-bold text-slate-900 shadow-[inset_0_-2px_0_#1f2a44]" : "border-slate-200 text-slate-500"}`}
             >
-              {d.mon} {d.day}
+              {formatPlannerDayLabel(d.date)}
               <span className="block text-[8.5px] text-slate-400">{d.weekday}</span>
             </button>
           ))}
