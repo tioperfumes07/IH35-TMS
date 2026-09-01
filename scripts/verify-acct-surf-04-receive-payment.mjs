@@ -73,6 +73,17 @@ function contractErrors(src) {
   if (!src.subnav.includes("/accounting/payments")) {
     errors.push("DOD-A / NEVER-DELETE: Receive Payment leaf missing from subnav-manifest");
   }
+  // NAV-RECEIVE-PAYMENT-01 — must be a TOP-ROW leaf on ACCOUNTING_SUB_NAV_ITEMS, not only
+  // buried under Invoices ▾ children (owner reported three times: path exists, top row does not).
+  const liveNavMatch = src.subnav.match(
+    /export const ACCOUNTING_SUB_NAV_ITEMS[\s\S]*?(?=\nexport |\n\/\*\*|$)/,
+  );
+  const liveNav = liveNavMatch?.[0] ?? "";
+  if (!/leafOf\(\s*["']\/accounting\/payments["']\s*\)/.test(liveNav)) {
+    errors.push(
+      "NAV-RECEIVE-PAYMENT-01: ACCOUNTING_SUB_NAV_ITEMS must include top-row leafOf(\"/accounting/payments\")",
+    );
+  }
 
   if (!src.modal.includes("ParityDrawer") || !src.modal.includes("<ParityDrawer")) {
     errors.push("VERIFY-1: RecordPaymentModal must use ParityDrawer");
