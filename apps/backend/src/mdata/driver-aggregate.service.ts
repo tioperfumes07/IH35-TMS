@@ -413,6 +413,8 @@ export async function buildDriverAggregate(
           weeks AS (
             SELECT
               id::text AS settlement_id,
+              display_id AS settlement_display_id,
+              period_start::text AS period_start,
               period_end::text AS week_ending,
               ROUND(gross_pay * 100)::bigint AS gross,
               ROUND(net_pay * 100)::bigint AS net
