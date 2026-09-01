@@ -1,4 +1,4 @@
-import { appendCrudAudit } from "../audit/crud-audit.js";
+import { resolveInvoiceDisplayId } from "./display-id.js";
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 
@@ -15,6 +15,7 @@ type BuildInvoiceInput = {
    * existing from-load API creating draft (operator-initiated).
    */
   asProforma?: boolean;
+  requestedDisplayId?: string | null;
 };
 
 type BuildInvoiceResult = {
@@ -177,7 +178,13 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
       code: "load_number_required_for_invoice_line",
     });
   }
-  const displayId = loadNumber;
+  const displayId = await resolveInvoiceDisplayId(
+    client,
+    input.operatingCompanyId,
+    new Date(),
+    input.requestedDisplayId,
+    loadNumber
+  );
   const issueDate = new Date();
   const paymentTermsDays = Number(load.payment_terms_days ?? 30);
   const dueDate = new Date(issueDate);

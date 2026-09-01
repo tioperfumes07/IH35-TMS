@@ -9,6 +9,7 @@ import { UploadZone } from "../../components/UploadZone";
 import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { QboDocumentNumberField } from "../../components/forms/QboDocumentNumberField";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { companyToday } from "../../lib/businessDate";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -124,6 +125,7 @@ export function RecordPaymentModal({
   const [paymentDate, setPaymentDate] = useState(companyToday());
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("ach");
   const [reference, setReference] = useState("");
+  const [displayId, setDisplayId] = useState("");
   const [amountDollars, setAmountDollars] = useState<number | null>(centsToDollars(prefillAmountCents ?? 0));
   const [depositedToAccountId, setDepositedToAccountId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
@@ -198,6 +200,7 @@ export function RecordPaymentModal({
     setPaymentDate(companyToday());
     setPaymentMethod("ach");
     setReference("");
+    setDisplayId("");
     setAmountDollars(centsToDollars(prefillAmountCents ?? 0));
     setDepositedToAccountId(null);
     setNotes("");
@@ -309,6 +312,7 @@ export function RecordPaymentModal({
               payment_method: paymentMethod,
               payment_date: paymentDate,
               reference: reference || undefined,
+              display_id: displayId.trim() || undefined,
               amount_cents: amountCents,
               deposited_to_account_id: depositedToAccountId,
               notes: notes || undefined,
@@ -324,6 +328,17 @@ export function RecordPaymentModal({
         }}
       >
         {errorMessage ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</div> : null}
+
+        <QboDocumentNumberField
+          label="Payment no."
+          value={displayId}
+          onChange={setDisplayId}
+          operatingCompanyId={operatingCompanyId}
+          nextNumberPath="/api/v1/accounting/payments/next-number"
+          checkPath="/api/v1/accounting/payments/next-number"
+          fieldName="payment"
+          data-testid="qbo-document-number-payment"
+        />
 
         <div className="grid gap-2 md:grid-cols-2">
           <div className="space-y-1">

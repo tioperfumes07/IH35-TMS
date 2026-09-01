@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
-import { nextBillDisplayId } from "./display-id.js";
+import { resolveBillDisplayId } from "./display-id.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
@@ -2242,7 +2242,12 @@ export async function createBill(input: CreateBillInput, userId: string) {
     }
 
     if (insertedId) {
-      const billDisplayId = await nextBillDisplayId(client, input.operatingCompanyId, new Date(input.billDate));
+      const billDisplayId = await resolveBillDisplayId(
+        client,
+        input.operatingCompanyId,
+        new Date(input.billDate),
+        billNumber
+      );
       const stamped = await client.query<BillRow>(
         `
           UPDATE accounting.bills

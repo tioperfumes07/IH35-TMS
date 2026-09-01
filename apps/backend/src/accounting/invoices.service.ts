@@ -1,5 +1,5 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { nextInvoiceDisplayId } from "./display-id.js";
+import { resolveInvoiceDisplayId } from "./display-id.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 
 type DbClient = {
@@ -18,6 +18,7 @@ type ExpandedInvoiceInput = {
   internalNotes?: string;
   customerNotes?: string;
   autoDeductSettlement?: boolean;
+  requestedDisplayId?: string | null;
 };
 
 export async function createExpandedInvoice(client: DbClient, input: ExpandedInvoiceInput) {
@@ -47,7 +48,12 @@ export async function createExpandedInvoice(client: DbClient, input: ExpandedInv
   const termsDays = Number(customer.days_until_due ?? 30);
   const dueDate =
     input.dueDate ?? new Date(new Date(`${issueDate}T00:00:00.000Z`).getTime() + termsDays * 86400000).toISOString().slice(0, 10);
-  const displayId = await nextInvoiceDisplayId(client, input.operatingCompanyId, new Date(`${issueDate}T00:00:00.000Z`));
+  const displayId = await resolveInvoiceDisplayId(
+    client,
+    input.operatingCompanyId,
+    new Date(`${issueDate}T00:00:00.000Z`),
+    input.requestedDisplayId
+  );
   const insertRes = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.invoices (

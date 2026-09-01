@@ -6,6 +6,7 @@ import { ensureDriverVendors, listVendors } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { classesCatalogClient } from "../../api/catalogs-accounting";
 import { DatePicker } from "../forms/DatePicker";
+import { QboDocumentNumberField } from "../forms/QboDocumentNumberField";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
 import { TotalsStack } from "../forms/shared/TotalsStack";
 import { BILL_TYPE_TABS, TypeTabBar, type BillTypeId } from "../forms/shared/TypeTabBar";
@@ -21,7 +22,6 @@ import {
   type VendorBillFormLinePayload,
 } from "./vendorBillLines";
 import { dueDateFromBillTerms } from "./vendorBillDueDate";
-import { getNextBillDocumentNumber } from "../../api/accounting";
 
 export type { VendorBillFormLinePayload };
 export { buildVendorBillLinePayloads };
@@ -147,17 +147,6 @@ export function VendorBillForm({
   const [dueDate, setDueDate] = useState(() => dueDateFromBillTerms(companyToday(), "net_30"));
   const [dueDateTouched, setDueDateTouched] = useState(false);
   const [billNumber, setBillNumber] = useState("");
-  const nextBillNumberQuery = useQuery({
-    queryKey: ["accounting", "bills", "next-number", operatingCompanyId],
-    queryFn: () => getNextBillDocumentNumber(operatingCompanyId),
-    enabled: Boolean(operatingCompanyId),
-    staleTime: 15_000,
-  });
-  useEffect(() => {
-    const preview = nextBillNumberQuery.data?.document_number?.trim();
-    if (!preview) return;
-    setBillNumber((prev) => (prev.trim() ? prev : preview));
-  }, [nextBillNumberQuery.data?.document_number]);
   /** Operator memo / Gate-B sample tag — persisted at the front of `memo` (LV-SAMPLE-BILL-UNTAGGED). */
   const [operatorMemo, setOperatorMemo] = useState("");
   const [isSampleData, setIsSampleData] = useState(false);
@@ -416,16 +405,16 @@ export function VendorBillForm({
           </Field>
         </div>
         <div className="ml-auto w-44 shrink-0 text-right">
-          <Field label="Bill no.">
-            <input
-              aria-label="Bill no."
-              data-testid="vendor-bill-number"
-              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-right text-xs"
-              value={billNumber}
-              onChange={(event) => setBillNumber(event.target.value)}
-              placeholder={nextBillNumberQuery.isLoading ? "…" : "Assigned on save"}
-            />
-          </Field>
+          <QboDocumentNumberField
+            label="Bill no."
+            value={billNumber}
+            onChange={setBillNumber}
+            operatingCompanyId={operatingCompanyId}
+            nextNumberPath="/api/v1/accounting/bills/next-number"
+            checkPath="/api/v1/accounting/bills/next-number"
+            fieldName="bill"
+            data-testid="vendor-bill-number"
+          />
         </div>
       </div>
 

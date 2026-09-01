@@ -232,6 +232,41 @@ export async function reserveNextLoadId(client: DbClient, input: ReserveInput): 
   throw new Error("load_id_reservation_sequence_contended");
 }
 
+export async function assertLoadNumberAvailable(
+  client: DbClient,
+  operatingCompanyId: string,
+  loadNumber: string,
+  exceptReservationId?: string
+): Promise<void> {
+  const trimmed = loadNumber.trim();
+  if (!trimmed) {
+    throw Object.assign(new Error("load_number_required"), { code: "load_number_required" });
+  }
+  const existingLoad = await client.query(
+    `SELECT 1 FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 LIMIT 1`,
+    [operatingCompanyId, trimmed]
+  );
+  if (existingLoad.rows[0]) {
+    throw Object.assign(new Error("duplicate_load_number"), { code: "duplicate_load_number", load_number: trimmed });
+  }
+  const reserved = await client.query(
+    `
+      SELECT 1
+        FROM dispatch.load_id_reservations
+       WHERE operating_company_id = $1::uuid
+         AND reserved_load_number = $2
+         AND status = 'reserved'
+         AND expires_at > now()
+         AND ($3::uuid IS NULL OR id <> $3::uuid)
+       LIMIT 1
+    `,
+    [operatingCompanyId, trimmed, exceptReservationId ?? null]
+  );
+  if (reserved.rows[0]) {
+    throw Object.assign(new Error("duplicate_load_number"), { code: "duplicate_load_number", load_number: trimmed });
+  }
+}
+
 export async function claimReservation(client: DbClient, input: ClaimInput) {
   await expireStaleLoadIdReservations(client, input.operatingCompanyId);
   const claimed = await client.query<{ id: string; reserved_load_number: string; reserved_by_user_id: string }>(

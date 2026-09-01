@@ -9,6 +9,7 @@ import { PlaidLink } from "../../components/banking/PlaidLink";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { QboDocumentNumberField } from "../../components/forms/QboDocumentNumberField";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { companyToday } from "../../lib/businessDate";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -136,10 +137,6 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
                 setError("Payment amount cannot exceed remaining bill balance.");
                 return;
               }
-              if (paymentMethod === "check" && !checkNumber.trim()) {
-                setError("Check number is required when payment method is check.");
-                return;
-              }
               if (needsBankAccount && !fromBankAccountId) {
                 setError("From bank account is required for this payment method.");
                 return;
@@ -151,7 +148,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
                   amount_cents: payAmountCents,
                   payment_method: paymentMethod,
                   from_bank_account_id: needsBankAccount ? fromBankAccountId : undefined,
-                  check_number: paymentMethod === "check" ? checkNumber : undefined,
+                  check_number: paymentMethod === "check" ? checkNumber.trim() || undefined : undefined,
                   reference_number: referenceNumber || undefined,
                   memo: memo || undefined,
                 });
@@ -249,23 +246,23 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
                 </label>
               ) : null}
               {paymentMethod === "check" ? (
-                <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-                  Check number
-                  <input
-                    value={checkNumber}
-                    onChange={(event) => setCheckNumber(event.target.value)}
-                    className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-                  />
-                </label>
-              ) : null}
-              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-                Reference number
-                <input
-                  value={referenceNumber}
-                  onChange={(event) => setReferenceNumber(event.target.value)}
-                  className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+                <QboDocumentNumberField
+                  label="Check number"
+                  value={checkNumber}
+                  onChange={setCheckNumber}
+                  operatingCompanyId={operatingCompanyId}
+                  fieldName="check"
+                  data-testid="qbo-document-number-check"
                 />
-              </label>
+              ) : null}
+              <QboDocumentNumberField
+                label="Reference number"
+                value={referenceNumber}
+                onChange={setReferenceNumber}
+                operatingCompanyId={operatingCompanyId}
+                fieldName="reference"
+                data-testid="qbo-document-number-bill-payment-ref"
+              />
               <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-6">
                 Memo
                 <textarea

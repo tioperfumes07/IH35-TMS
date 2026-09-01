@@ -13,6 +13,7 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 import { enqueueOverrideNotice } from "../outbox/enqueue-override-notice.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import {
+  assertLoadNumberAvailable,
   claimReservation,
   consumeLoadNumberReservation,
   reserveNextLoadId,
@@ -103,6 +104,9 @@ export type BookLoadInput = {
   customer_chargeback_requested?: boolean;
   customer_chargeback_reason?: string;
   live_load_number?: string;
+  /** QBO-style Load No. typed over the reserved suggestion; persisted as mdata.loads.load_number. */
+  requested_load_number?: string;
+  load_number?: string;
   addToOpenPresettlement?: boolean;
   reservation_uuid?: string;
   anticipated_chargeback_cents?: number;
@@ -1587,6 +1591,35 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       });
       reservationId = reservation.reservationId;
       loadNumber = reservation.loadNumber;
+    }
+    const requestedLoadNumber = input.load_number?.trim() || input.requested_load_number?.trim();
+    if (requestedLoadNumber && requestedLoadNumber !== loadNumber) {
+      try {
+        await assertLoadNumberAvailable(client, input.operating_company_id, requestedLoadNumber, reservationId || undefined);
+      } catch (err) {
+        if ((err as { code?: string }).code === "duplicate_load_number") {
+          return {
+            kind: "error",
+            status: 409,
+            payload: { error: "duplicate_load_number", load_number: requestedLoadNumber },
+          };
+        }
+        throw err;
+      }
+      if (reservationId) {
+        await client.query(
+          `
+            UPDATE dispatch.load_id_reservations
+               SET reserved_load_number = $2,
+                   updated_at = now()
+             WHERE id = $1::uuid
+               AND operating_company_id = $3::uuid
+               AND status = 'reserved'
+          `,
+          [reservationId, requestedLoadNumber, input.operating_company_id]
+        );
+      }
+      loadNumber = requestedLoadNumber;
     }
     // FAIL-D3 — a load with NO CREW must never be stored as 'assigned_not_dispatched'.
     //

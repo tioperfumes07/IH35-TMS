@@ -4,7 +4,8 @@ import { z } from "zod";
 import { buildListSearchClause } from "../lib/list-search/build-list-search.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
-import { nextPaymentDisplayId } from "./display-id.js";
+import { DuplicateDocumentNumberError, nextPaymentDisplayId, resolvePaymentDisplayId } from "./display-id.js";
+import { duplicateDocumentNumberBody, parseOperatorDocumentNumber, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { requireVoidCancelExecutorWired, canVoidCancel } from "../lib/authz/void-cancel-authz.js";
@@ -58,6 +59,7 @@ const createBodySchema = z.object({
   // column's false default (matches ACCT-F264's customer-payments precedent), so no existing caller
   // changes behaviour.
   is_sample_data: z.boolean().optional(),
+  display_id: z.string().trim().min(1).max(40).optional(),
   apply_to: z
     .array(
       z.object({
@@ -341,6 +343,38 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
     return payload;
   });
 
+  app.get("/api/v1/accounting/payments/next-number", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.extend({ check: z.string().trim().max(40).optional() }).safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    return withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const base = await suggestFromLastSaved(
+        client,
+        {
+          text: `
+            SELECT display_id AS last_number
+              FROM accounting.payments
+             WHERE operating_company_id = $1::uuid
+               AND COALESCE(display_id, '') <> ''
+             ORDER BY created_at DESC NULLS LAST
+             LIMIT 1
+          `,
+          values: [query.data.operating_company_id],
+        },
+        () => nextPaymentDisplayId(client, query.data.operating_company_id)
+      );
+      if (!query.data.check) return base;
+      const check = parseOperatorDocumentNumber(query.data.check);
+      if (!check) return { ...base, taken: false };
+      const taken = await client.query(
+        `SELECT 1 FROM accounting.payments WHERE operating_company_id = $1::uuid AND display_id = $2 AND voided_at IS NULL LIMIT 1`,
+        [query.data.operating_company_id, check]
+      );
+      return { ...base, taken: Boolean(taken.rows[0]) };
+    });
+  });
+
   app.get("/api/v1/accounting/payments/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -379,7 +413,9 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
       duplicateIds.add(row.invoice_id);
     }
 
-    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    let result;
+    try {
+    result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const customerRes = await client.query(
         `
           SELECT id
@@ -432,7 +468,12 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         if (!depositedToAccountId) return { code: 400 as const, error: "deposited_to_account_required" };
       }
 
-      const displayId = await nextPaymentDisplayId(client, query.data.operating_company_id, new Date(`${body.data.payment_date}T00:00:00.000Z`));
+      const displayId = await resolvePaymentDisplayId(
+        client,
+        query.data.operating_company_id,
+        new Date(`${body.data.payment_date}T00:00:00.000Z`),
+        body.data.display_id
+      );
 
       const paymentRes = await client.query(
         `
@@ -618,6 +659,12 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         },
       };
     });
+    } catch (error) {
+      if (error instanceof DuplicateDocumentNumberError) {
+        return reply.code(409).send(duplicateDocumentNumberBody(error));
+      }
+      throw error;
+    }
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
     return reply.code(result.code).send(result.data);

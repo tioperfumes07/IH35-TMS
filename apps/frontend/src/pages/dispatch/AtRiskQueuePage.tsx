@@ -124,7 +124,7 @@ export function AtRiskQueuePage() {
           rows={loads}
           rowKey={(load) => load.id}
           loading={loadsQ.isLoading}
-          emptyText="No at-risk or late loads right now."
+          emptyText="No at-risk or late loads in the selected range."
           storageKey="dispatch-at-risk-late-queue"
           exportFilename="at-risk-late-queue"
           suppressToolbarRange
@@ -137,6 +137,9 @@ export function AtRiskQueuePage() {
           }}
         />
       )}
+      <p className="text-[11px] text-gray-500" data-testid="kpi-drill-row-count">
+        {loads.length} loads — must match the At-risk / late tile.
+      </p>
     </div>
   );
 }

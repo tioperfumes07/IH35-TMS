@@ -4,7 +4,8 @@ import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
-import { nextInvoiceDisplayId } from "./display-id.js";
+import { DuplicateDocumentNumberError, nextInvoiceDisplayId, resolveInvoiceDisplayId } from "./display-id.js";
+import { duplicateDocumentNumberBody, parseOperatorDocumentNumber, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 import { buildInvoiceFromLoad, findConflictingInvoiceForLoad } from "./from-load.js";
 import { sendDraftInvoice } from "./invoice-send.service.js";
 import { createExpandedInvoice } from "./invoices.service.js";
@@ -89,10 +90,12 @@ const createBodySchema = z.object({
    * ONE call instead of two.
    */
   source_load_id: z.string().uuid().nullable().optional(),
+  display_id: z.string().trim().min(1).max(40).optional(),
 });
 
 const fromLoadBodySchema = z.object({
   load_id: z.string().uuid(),
+  display_id: z.string().trim().min(1).max(40).optional(),
 });
 
 const expandedInvoiceBodySchema = z.object({
@@ -110,6 +113,7 @@ const expandedInvoiceBodySchema = z.object({
   attachment_draft_id: z.string().uuid().optional().nullable(),
   // CUSTVEND-PAR-1: Manager+ override when customer is at/over credit limit.
   override_credit_limit: z.boolean().optional(),
+  display_id: z.string().trim().min(1).max(40).optional(),
 });
 
 const patchBodySchema = z
@@ -413,6 +417,39 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     };
   });
 
+  // Preview only — register before /:id so "next-number" is not parsed as a UUID.
+  app.get("/api/v1/accounting/invoices/next-number", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.extend({ check: z.string().trim().max(40).optional() }).safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    return withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const base = await suggestFromLastSaved(
+        client,
+        {
+          text: `
+            SELECT display_id AS last_number
+              FROM accounting.invoices
+             WHERE operating_company_id = $1::uuid
+               AND COALESCE(display_id, '') <> ''
+             ORDER BY created_at DESC NULLS LAST
+             LIMIT 1
+          `,
+          values: [query.data.operating_company_id],
+        },
+        () => nextInvoiceDisplayId(client, query.data.operating_company_id)
+      );
+      if (!query.data.check) return base;
+      const check = parseOperatorDocumentNumber(query.data.check);
+      if (!check) return { ...base, taken: false };
+      const taken = await client.query(
+        `SELECT 1 FROM accounting.invoices WHERE operating_company_id = $1::uuid AND display_id = $2 AND voided_at IS NULL LIMIT 1`,
+        [query.data.operating_company_id, check]
+      );
+      return { ...base, taken: Boolean(taken.rows[0]) };
+    });
+  });
+
   app.get("/api/v1/accounting/invoices/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -434,7 +471,9 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const body = createBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
-    const created = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    let created;
+    try {
+    created = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const customerRes = await client.query(
         `
           SELECT c.id, c.payment_terms_id, c.ar_email, c.ar_phone, c.credit_limit_cents, c.credit_limit_source,
@@ -526,9 +565,13 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       const issueDate = body.data.issue_date ?? companyBusinessDate();
       const termsDays = Number(customer.days_until_due ?? 30);
       const dueDate = body.data.due_date ?? new Date(new Date(`${issueDate}T00:00:00.000Z`).getTime() + termsDays * 86400000).toISOString().slice(0, 10);
-      const displayId =
-        linkedLoadNumber ??
-        (await nextInvoiceDisplayId(client, query.data.operating_company_id, new Date(`${issueDate}T00:00:00.000Z`)));
+      const displayId = await resolveInvoiceDisplayId(
+        client,
+        query.data.operating_company_id,
+        new Date(`${issueDate}T00:00:00.000Z`),
+        body.data.display_id,
+        body.data.display_id?.trim() ? null : linkedLoadNumber
+      );
       const insertRes = await client.query(
         `
           INSERT INTO accounting.invoices (
@@ -615,6 +658,12 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       });
       return { code: 201 as const, data: detail };
     });
+    } catch (error) {
+      if (error instanceof DuplicateDocumentNumberError) {
+        return reply.code(409).send(duplicateDocumentNumberBody(error));
+      }
+      throw error;
+    }
     if ("error" in created) return reply.code(created.code).send({ error: created.error });
     return reply.code(created.code).send(created.data);
   });
@@ -634,6 +683,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           userId: user.uuid,
           operatingCompanyId: query.data.operating_company_id,
           loadId: body.data.load_id,
+          requestedDisplayId: body.data.display_id,
         });
         const invoiceId = String((built.invoice as { id?: unknown }).id ?? "");
         if (invoiceId) {
@@ -648,6 +698,9 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       return reply.code(result.idempotent ? 200 : 201).send(result);
     } catch (error) {
       if ((error as { code?: string }).code === "load_not_found") return reply.code(404).send({ error: "load_not_found" });
+      if (error instanceof DuplicateDocumentNumberError) {
+        return reply.code(409).send(duplicateDocumentNumberBody(error));
+      }
       // ACCT-F289 — ACCT-F267 made buildInvoiceFromLoad throw `load_has_no_rate` rather than mint a
       // permanently $0 invoice, but no caller translated it, so the user's own "create invoice from
       // load" action answered with an opaque 500 and no way to know the fix is "set the rate first".
@@ -730,6 +783,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             internalNotes: body.data.internal_notes,
             customerNotes: body.data.customer_notes,
             autoDeductSettlement: body.data.auto_deduct_settlement,
+            requestedDisplayId: body.data.display_id,
           });
           // Option B: link create-time draft attachments to the real invoice id, atomically in this txn.
           await reassignDraftAttachments(client, {
@@ -751,6 +805,9 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         }
         return reply.code(201).send(result);
       } catch (error) {
+        if (error instanceof DuplicateDocumentNumberError) {
+          return reply.code(409).send(duplicateDocumentNumberBody(error));
+        }
         if (String((error as Error).message ?? "") === "customer_not_found")
           return reply.code(404).send({
             error: "customer_not_found",

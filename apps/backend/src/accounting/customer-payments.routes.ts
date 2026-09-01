@@ -2,7 +2,8 @@ import type { FastifyInstance, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { nextPaymentDisplayId } from "./display-id.js";
+import { DuplicateDocumentNumberError, nextPaymentDisplayId, resolvePaymentDisplayId } from "./display-id.js";
+import { duplicateDocumentNumberBody } from "../lib/qbo-custom-document-number.js";
 import { enqueueAccountingOutbox } from "./outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
@@ -43,6 +44,7 @@ const createCustomerPaymentBodySchema = z.object({
   // FAIL-F2 sweep / ACCT-F264 — without this the flag cannot be SUPPLIED, so the INSERT has nothing to
   // write. Optional; only an explicit true marks sample.
   is_sample_data: z.boolean().optional(),
+  display_id: z.string().trim().min(1).max(40).optional(),
   applications: z
     .array(
       z.object({
@@ -184,7 +186,9 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
       dup.add(row.invoice_id);
     }
 
-    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    let result;
+    try {
+    result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const customerRes = await client.query(
         `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
@@ -221,7 +225,12 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
         if (!depositedToAccountId) return { code: 400 as const, error: "deposited_to_account_required" };
       }
 
-      const displayId = await nextPaymentDisplayId(client, query.data.operating_company_id, new Date(`${body.data.received_at}T00:00:00.000Z`));
+      const displayId = await resolvePaymentDisplayId(
+        client,
+        query.data.operating_company_id,
+        new Date(`${body.data.received_at}T00:00:00.000Z`),
+        body.data.display_id
+      );
 
       const paymentRes = await client.query(
         `
@@ -423,6 +432,12 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
         },
       };
     });
+    } catch (error) {
+      if (error instanceof DuplicateDocumentNumberError) {
+        return reply.code(409).send(duplicateDocumentNumberBody(error));
+      }
+      throw error;
+    }
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
     return reply.code(result.code).send(result.data);

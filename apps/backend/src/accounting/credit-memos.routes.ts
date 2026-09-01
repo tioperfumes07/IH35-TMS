@@ -3,7 +3,8 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
-import { nextCreditMemoDisplayId } from "./display-id.js";
+import { DuplicateDocumentNumberError, nextCreditMemoDisplayId, resolveCreditMemoDisplayId } from "./display-id.js";
+import { duplicateDocumentNumberBody, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 
 // ACCT-F5606 — AR credit memo CRUD + apply-to-invoice + void, mirroring vendor-credits.routes.ts's
 // proven AP shape (CUSTVEND-PAR-1) column-for-column and check-for-check. Closes LV-CREDITMEMO-NOPATH's
@@ -43,6 +44,7 @@ const createBodySchema = z.object({
   amount_cents: z.coerce.number().int().positive(),
   reason: z.enum(CREDIT_MEMO_REASONS),
   notes: z.string().trim().max(2000).optional().nullable(),
+  display_id: z.string().trim().min(1).max(40).optional(),
 });
 
 const applyBodySchema = z.object({
@@ -121,6 +123,31 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
     return { credit_memos: rows };
   });
 
+  app.get("/api/v1/accounting/credit-memos/next-number", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const check = typeof (req.query as { check?: string }).check === "string" ? String((req.query as { check?: string }).check).trim() : "";
+    return withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      if (check) {
+        const taken = await client.query(
+          `SELECT 1 FROM accounting.credit_memos WHERE operating_company_id = $1::uuid AND display_id = $2 LIMIT 1`,
+          [query.data.operating_company_id, check]
+        );
+        return { taken: Boolean(taken.rows[0]), suggested: check, derived_from: null, document_number: check };
+      }
+      return suggestFromLastSaved(
+        client,
+        {
+          text: `SELECT display_id AS last_number FROM accounting.credit_memos WHERE operating_company_id = $1::uuid AND COALESCE(display_id,'') <> '' ORDER BY created_at DESC LIMIT 1`,
+          values: [query.data.operating_company_id],
+        },
+        () => nextCreditMemoDisplayId(client, query.data.operating_company_id)
+      );
+    });
+  });
+
   // Law §9 reverse drill-through: a credit memo must expose every invoice it reduced.
   // Read-only and company-scoped; this route does not calculate or post any GL.
   app.get("/api/v1/accounting/credit-memos/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
@@ -194,7 +221,9 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
     const body = createBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
 
-    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    let result;
+    try {
+      result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const customerRes = await client.query(
         `SELECT id FROM mdata.customers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
         [body.data.customer_id, query.data.operating_company_id]
@@ -204,10 +233,11 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
       const issueDate = body.data.issue_date ?? companyBusinessDate();
 
       // Canonical generator (same advisory-lock + MAX pattern nextVendorCreditDisplayId uses).
-      const displayId = await nextCreditMemoDisplayId(
+      const displayId = await resolveCreditMemoDisplayId(
         client,
         query.data.operating_company_id,
-        new Date(`${issueDate}T00:00:00Z`)
+        new Date(`${issueDate}T00:00:00Z`),
+        body.data.display_id
       );
 
       const insRes = await client.query(
@@ -240,6 +270,12 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
 
       return { code: 201 as const, data: credit };
     });
+    } catch (error) {
+      if (error instanceof DuplicateDocumentNumberError) {
+        return reply.code(409).send(duplicateDocumentNumberBody(error));
+      }
+      throw error;
+    }
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
     return reply.code(result.code).send(result.data);

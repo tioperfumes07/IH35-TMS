@@ -6,7 +6,6 @@ import { listVendorBills, type VendorBill } from "../../api/accounting";
 import {
   applyVendorCredit,
   createVendorCredit,
-  getNextVendorCreditDocumentNumber,
   getVendorCredit,
   listVendorCredits,
   voidVendorCredit,
@@ -17,6 +16,7 @@ import {
 import { Button } from "../../components/Button";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { QboDocumentNumberField } from "../../components/forms/QboDocumentNumberField";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { EntityPicker } from "../../components/parity/EntityPicker";
@@ -80,13 +80,7 @@ export function VendorCreditsPage() {
   const [createVendorId, setCreateVendorId] = useState<string | null>(vendorFilter || null);
   const [createAmountCents, setCreateAmountCents] = useState<number | null>(null);
   const [createNotes, setCreateNotes] = useState("");
-  const nextCreditNumberQuery = useQuery({
-    queryKey: ["accounting", "vendor-credits", "next-number", companyId],
-    queryFn: () => getNextVendorCreditDocumentNumber(companyId),
-    enabled: Boolean(companyId && createOpen),
-    staleTime: 15_000,
-  });
-  const nextCreditNumber = nextCreditNumberQuery.data?.document_number?.trim() ?? "";
+  const [createDisplayId, setCreateDisplayId] = useState("");
 
   const vendorsQuery = useQuery({
     queryKey: ["vendors", "picker", companyId],
@@ -133,12 +127,14 @@ export function VendorCreditsPage() {
         vendor_id: createVendorId as string,
         amount_cents: createAmountCents as number,
         notes: createNotes.trim() || undefined,
+        display_id: createDisplayId.trim() || undefined,
       }),
     onSuccess: async () => {
       pushToast("Vendor credit created", "success");
       setCreateOpen(false);
       setCreateAmountCents(null);
       setCreateNotes("");
+      setCreateDisplayId("");
       await queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-credits", companyId] });
       await queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-credits", "next-number", companyId] });
     },
@@ -356,16 +352,16 @@ export function VendorCreditsPage() {
                 />
               </div>
             </label>
-            <label className="ml-auto w-44 shrink-0 text-right text-xs font-semibold text-gray-700" htmlFor="vendor-credit-ref-no">
-              Ref no.
-              <input
-                id="vendor-credit-ref-no"
-                aria-label="Ref no."
+            <label className="ml-auto w-44 shrink-0 text-right">
+              <QboDocumentNumberField
+                label="Ref no."
+                value={createDisplayId}
+                onChange={setCreateDisplayId}
+                operatingCompanyId={companyId}
+                nextNumberPath="/api/v1/accounting/vendor-credits/next-number"
+                checkPath="/api/v1/accounting/vendor-credits/next-number"
+                fieldName="vendor credit"
                 data-testid="vendor-credit-number"
-                readOnly
-                className="mt-1 h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-right text-xs"
-                value={nextCreditNumber}
-                placeholder={nextCreditNumberQuery.isLoading ? "…" : "Assigned on save"}
               />
             </label>
           </div>

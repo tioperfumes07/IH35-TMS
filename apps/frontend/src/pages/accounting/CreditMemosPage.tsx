@@ -18,6 +18,7 @@ import {
 import { Button } from "../../components/Button";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { QboDocumentNumberField } from "../../components/forms/QboDocumentNumberField";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { EntityPicker } from "../../components/parity/EntityPicker";
@@ -83,6 +84,7 @@ export function CreditMemosPage() {
   const [createAmountCents, setCreateAmountCents] = useState<number | null>(null);
   const [createReason, setCreateReason] = useState<CreditMemoReason>("other");
   const [createNotes, setCreateNotes] = useState("");
+  const [createDisplayId, setCreateDisplayId] = useState("");
 
   const customersQuery = useQuery({
     queryKey: ["customers", "picker", companyId],
@@ -130,6 +132,7 @@ export function CreditMemosPage() {
         amount_cents: createAmountCents as number,
         reason: createReason,
         notes: createNotes.trim() || undefined,
+        display_id: createDisplayId.trim() || undefined,
       }),
     onSuccess: async () => {
       pushToast("Credit memo created", "success");
@@ -137,6 +140,7 @@ export function CreditMemosPage() {
       setCreateAmountCents(null);
       setCreateReason("other");
       setCreateNotes("");
+      setCreateDisplayId("");
       await queryClient.invalidateQueries({ queryKey: ["accounting", "credit-memos", companyId] });
     },
     onError: (err) => pushToast(err instanceof Error ? err.message : "Create failed", "error"),
@@ -332,6 +336,16 @@ export function CreditMemosPage() {
         }
       >
         <div className="space-y-3 text-sm">
+          <QboDocumentNumberField
+            label="Credit memo no."
+            value={createDisplayId}
+            onChange={setCreateDisplayId}
+            operatingCompanyId={companyId}
+            nextNumberPath="/api/v1/accounting/credit-memos/next-number"
+            checkPath="/api/v1/accounting/credit-memos/next-number"
+            fieldName="credit memo"
+            data-testid="qbo-document-number-credit-memo"
+          />
           <label className="block">
             <span className="text-xs font-medium text-gray-600">Customer *</span>
             <div className="mt-1">
