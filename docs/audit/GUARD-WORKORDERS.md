@@ -8079,3 +8079,156 @@ Source: remeasure at 5e94f941c7 (origin/main). These 77 guards are newly failing
 |-------|------|--------|
 | verify-google-oauth-lazy-env.mjs | CODEX | OPEN |
 | verify-guard-wired.mjs | CASCADE | OPEN |
+
+
+---
+
+## GO-MECH-0901 — Mechanical Fix Register board rows (CASCADE 2026-09-01)
+
+Source: `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`. Every STILL OPEN row appended below, grouped by root class. Seat assignments per CSV. VERIFIED FIXED rows excluded.
+
+### Root 3 — Layout law (CURSOR)
+
+| **OPEN:** `LAY-01` — no layout law exists; every screen re-decides its own sizing. Systemwide. | CURSOR | **OPEN** |
+| **OPEN:** `LAY-03` — second dispatch nav row does not wrap (`Dispatch.tsx:282`). | CURSOR | **OPEN** |
+| **OPEN:** `LAY-04` — KPI tiles all identical width (`KpiCard.tsx:26` flex-1). | CURSOR | **OPEN** |
+| **OPEN:** `LAY-05` — expiry alerts tile overflows box (`DriverProfilePage.tsx:530`). | CURSOR | **OPEN** |
+| **OPEN:** `LAY-06` — DQF box has six font sizes in one card (`DriverDqfPanel.tsx`). | CURSOR | **OPEN** |
+| **OPEN:** `LAY-07` — customer sidebar hardcoded fixed height (`CustomerListSidebar.tsx`). | CURSOR | **OPEN** |
+| **OPEN:** `LAY-10` — four different control heights in one header row (`Customers.tsx:848-930`). | CURSOR | **OPEN** |
+
+### Root UI control law (CURSOR / CC-3)
+
+| **OPEN:** `CTL-04` — duplicate Create buttons in accounting, consolidate to one. | CURSOR | **OPEN** |
+| **OPEN:** `CTL-05` — Receive Payments missing from accounting nav (reported 4x). | CURSOR | **OPEN** |
+| **OPEN (REPORTED DONE, NOT VERIFIED):** `CTL-01` — all buttons same size/text scale. CC-3 reported h-9 standard, not independently verified. | CC-3 | **OPEN-UNVERIFIED** |
+| **OPEN (REPORTED DONE, NOT VERIFIED):** `CTL-02` — checkboxes bigger (>=24x24). Not swept. | CC-3 | **OPEN-UNVERIFIED** |
+| **OPEN (REPORTED DONE, NOT VERIFIED):** `CTL-03` — gear icon h-4 w-4. Not swept. | CC-3 | **OPEN-UNVERIFIED** |
+
+### Root 2 — Columns (CC-3 / CURSOR / CC-1 / CASCADE)
+
+| **OPEN (PARTIAL):** `COL-01` — every column sortable. ParityTable has sort; alert boards hardcode ORDER BY, sort client-side over one page only. | CC-3 | **OPEN-PARTIAL** |
+| **OPEN:** `COL-02` — columns movable (drag reorder). Zero matches for onDragStart/columnOrder in ParityTable.tsx. | CC-3 | **OPEN** |
+| **OPEN:** `COL-03` — column auto-fit (double-click / fit-content). Zero matches for autoFit in ParityTable.tsx. | CC-3 | **OPEN** |
+| **OPEN:** `COL-04` — sort click target too small; limit-100 caps the sort. | CURSOR | **OPEN** |
+| **OPEN:** `COL-05` — three money columns (Total / Open / Variance) everywhere, red when non-zero. | CC-1 | **OPEN** |
+| **OPEN (PARTIAL):** `COL-06` — Settlement # / Period Begin / Period End on EVERY surface. Main grid + SettlementHeader + SettlementDisputesTab compliant. GAPS found below. | CASCADE+CC-1 | **OPEN-PARTIAL** |
+
+#### COL-06 sweep — surfaces missing Settlement # or Period Begin / Period End
+
+| Surface | File | Has Settlement #? | Has Period Begin? | Has Period End? | Gap |
+|---------|------|-------------------|-------------------|-----------------|-----|
+| PreSettlementsPanel | components/driver-finance/PreSettlementsPanel.tsx | NO | YES (combined) | YES (combined) | Missing Settlement # column |
+| EarningsTab (driver profile) | components/drivers/EarningsTab.tsx | NO | YES (combined) | YES (combined) | Missing Settlement # column |
+| DriverSettlementFinanceReverseSection | components/driver-profile/DriverSettlementFinanceReverseSection.tsx | YES | NO | NO | Missing Period Begin/End |
+| LoadDetailSettlementTab | components/dispatch/LoadDetailSettlementTab.tsx | NO | YES | YES | Missing Settlement # |
+| PreSettlementPanel | components/dispatch/PreSettlementPanel.tsx | NO | YES only | NO | Missing Settlement # and Period End |
+| PayRunClosePanel | pages/driver-finance/components/PayRunClosePanel.tsx | YES | NO | NO | Missing Period Begin/End |
+| DisputeQueuePage | pages/accounting/DisputeQueuePage.tsx | YES | NO | NO | Missing Period Begin/End |
+| PayrollAggregatedPage | pages/accounting/PayrollAggregatedPage.tsx | NO | YES (pay_period) | YES (pay_period) | Missing Settlement # |
+
+### Root 2 — Filters (CC-3 / CURSOR / CODEX)
+
+| **OPEN:** `FLT-01` — filters must be combo boxes in correct proportion. | CC-3 | **OPEN** |
+| **OPEN:** `FLT-02` — filter/gear must let you choose what to view, including posted only. | CURSOR | **OPEN** |
+| **OPEN:** `FLT-03` — hide voided by default, with toggle to show them. | CURSOR | **OPEN** |
+| **OPEN:** `FLT-04` — date range must actually re-query, not filter rows in memory. | CODEX | **OPEN** |
+
+### Root 2 — Search (CURSOR)
+
+| **OPEN:** `SRC-01` — search must cover amount, load #, PO, BOL, date and status. Invoice search is only display_id + customer name. | CURSOR | **OPEN** |
+| **OPEN:** `SRC-02` — search must render TRUE data. | CURSOR | **OPEN** |
+
+### Root Modal (CURSOR)
+
+| **OPEN:** `MOD-01` — Book Load wizard reopens forever (Dispatch.tsx:125). | CURSOR | **OPEN** |
+| **OPEN:** `MOD-02` — Escape inside date picker closes entire wizard and discards everything. | CURSOR | **OPEN** |
+| **OPEN:** `MOD-03` — date fields accept no typing (DateTimePicker.tsx renders button not input). | CURSOR | **OPEN** |
+| **OPEN:** `MOD-04` — could not load unit list shows in red on empty search box. | CURSOR | **OPEN** |
+| **OPEN:** `MOD-05` — picker offers add new unit for VIN that already exists. | CURSOR | **OPEN** |
+
+### Root Selection (CURSOR)
+
+| **OPEN:** `SEL-01` — select-all only selects current page (useBulkSelection.ts). | CURSOR | **OPEN** |
+| **OPEN:** `SEL-02` — bulk actions lock out permanently after one failure (bulk-rate-limit.ts). | CURSOR | **OPEN** |
+| **OPEN:** `SEL-03` — bulk must pre-validate and show what cannot be voided BEFORE running. | CURSOR | **OPEN** |
+| **OPEN:** `SEL-04` — multi-select void on EVERY accounting table (settlements, loads missing). | CURSOR | **OPEN** |
+
+### Root 4 — Void visibility (CC-1 / CURSOR)
+
+| **OPEN:** `VIS-01` — VOID banner at top of detail view. 0/8 surfaces have it. | CC-1 | **OPEN** |
+| **OPEN:** `VIS-02` — void as first-class status column + filter + gear option. | CURSOR | **OPEN** |
+| **OPEN:** `VIS-03` — void button inside the transaction, not only in the list. | CC-1 | **OPEN** |
+| **OPEN:** `VIS-04` — void reason must be dropdown catalog, memo optional. catalogs.void_reasons does not exist. | CURSOR | **OPEN** |
+
+### Root 5 — Dispatch board (CURSOR / CODEX)
+
+| **OPEN:** `DSP-01` — keep pickup city and delivery city columns. | CURSOR | **OPEN** |
+| **OPEN:** `DSP-02` — add pickup DATE/TIME, delivery DATE/TIME (data exists in load_stops). | CURSOR | **OPEN** |
+| **OPEN:** `DSP-03` — board shows LIVE loads only; completed/cancelled to History tab. 65 of 78 loads are finished. | CURSOR | **OPEN** |
+| **OPEN:** `DSP-04` — each section gets its OWN headers, sort and filters. | CURSOR | **OPEN** |
+| **OPEN:** `DSP-05` — dispatcher on-screen confirmation on assignment + owner override. | CC-1 | **OPEN** |
+| **OPEN:** `DSP-06` — detention board never clears closed loads (detention.service.ts:220). | CODEX | **OPEN** |
+| **OPEN:** `DSP-07` — at-risk board narrower than label (arch-tabs.service.ts:61 filters in_transit only). | CODEX | **OPEN** |
+| **OPEN:** `DSP-08` — KPI card double-counts (DispatchOverview.tsx:277 atRiskLateTotal = atRisk + late). | CODEX | **OPEN** |
+| **OPEN:** `DSP-09` — detention not in KPI row at all. | CODEX | **OPEN** |
+
+### Root 6 — Planner (CODEX / CURSOR)
+
+| **OPEN:** `PLN-01` — planner filter bar is dead code (DispatchPlannersLayout.tsx:19-44). | CODEX | **OPEN** |
+| **OPEN:** `PLN-02` — planners are forward-only, cannot look at last week. | CODEX | **OPEN** |
+| **OPEN (PARTIAL):** `PLN-03` — dates must read Aug-21 not 08-21. Still .slice(5) in HosTrackerSection.tsx:366 and DriverSchedulerGridPage.tsx:243. | CURSOR | **OPEN-PARTIAL** |
+| **OPEN:** `PLN-04` — columns need visible lines that line up with headers. | CURSOR | **OPEN** |
+| **OPEN:** `PLN-05` — show only ACTIVE drivers and units (driver-scheduler.service.ts:1020). | CODEX | **OPEN** |
+| **OPEN:** `PLN-06` — Book button in its own column (UnifiedTimelinePlanner.tsx:239). | CURSOR | **OPEN** |
+
+### Root 1 — Upload (CC-1 / CURSOR)
+
+| **OPEN:** `UPL-01` — upload missing in 15 places; two competing upload stacks, no shared UI component. | CC-1+CURSOR | **OPEN** |
+| **OPEN:** `UPL-02` — DOT medical card has nowhere to save a document (safety.medical_cards has no document column). | CC-1 | **OPEN** |
+| **OPEN:** `UPL-03` — background check has nowhere to save a document (safety.background_checks has no document column). | CC-1 | **OPEN** |
+| **OPEN:** `UPL-04` — no upload on: drug test, company violation, HOS violation, border credentials, office fuel transaction, banking categorize drawer, banking expense form. | CURSOR | **OPEN** |
+| **OPEN:** `UPL-05` — MVR check has no create surface at all. | CURSOR | **OPEN** |
+| **OPEN:** `UPL-06` — DOT inspection: row-action PDF only, create form has none. | CURSOR | **OPEN** |
+
+### Root 8 — Wired? (CURSOR)
+
+| **OPEN:** `WIR-01` — border crossing manifest PDF is never generated (WizardStep6.tsx:101). | CURSOR | **OPEN** |
+| **OPEN:** `WIR-02` — driver export PDF downloads index.html renamed as PDF (ActionBar.tsx:31). | CURSOR | **OPEN** |
+| **OPEN:** `WIR-03` — dispatch Factoring tab leaves the Dispatch module. | CURSOR | **OPEN** |
+| **OPEN:** `WIR-04` — complete e-signature pipeline exists, W-8BEN does not use it. | CURSOR | **OPEN** |
+
+### Root 7 — Customers (CC-3)
+
+| **OPEN:** `CUS-01` — two competing customer pages with different tab sets. | CC-3 | **OPEN** |
+| **OPEN:** `CUS-02` — three dead stub tabs (Projects, Opportunities, Conversations). | CC-3 | **OPEN** |
+| **OPEN:** `CUS-03` — cannot sort by balance in the view you actually use. | CC-3 | **OPEN** |
+| **OPEN:** `CUS-04` — brand-new customer renders 0.0/100 At Risk in red (no not enough data state). | CC-3 | **OPEN** |
+| **OPEN:** `CUS-05` — vendor W-9 tab does not check whether a W-9 exists. | CC-3 | **OPEN** |
+| **OPEN:** `CUS-06` — two hardcoded em-dashes where fields should be (Customers.tsx:1039,1041). | CC-3 | **OPEN** |
+| **OPEN:** `CUS-07` — eleven reverse sections in one unbroken column, all vanish with no operating company selected. | CC-3 | **OPEN** |
+
+### Root 2 — DQF (CC-1+CURSOR)
+
+| **OPEN:** `DQF-01` — create checklist item looks dead (disabled when text box empty, no wizard behind it). | CC-1+CURSOR | **OPEN** |
+
+---
+
+## Purge FK blockers — 10 held loads for CC-1 (CASCADE 2026-09-01)
+
+Source: `docs/reconcile/PURGE-COMPLETE-2026-09-01.md`. These 10 sample loads were skipped during purge phases 5-6 because real financial documents contaminate them. CC-1 must unwind each (void/reverse/deactivate — NO DELETE) before the loads can be cancelled. FK order: settlement_lines -> driver_bills -> settlements -> invoices -> loads.
+
+| Load | Blocker | FK dependency |
+|------|---------|---------------|
+| L-20260830-0006 | Real invoice ($2,500, is_sample_data=false) | invoice -> load FK |
+| L-20260809-0007 | Real settlement line | settlement_lines -> settlement -> load |
+| L-20260827-0850 | Real settlement line | settlement_lines -> settlement -> load |
+| L-20260831-0003 | Real settlement line | settlement_lines -> settlement -> load |
+| L-20260831-0004 | Real settlement line | settlement_lines -> settlement -> load |
+| L-20260831-0006 | Real settlement line | settlement_lines -> settlement -> load |
+| L-20260831-0010 | Real settlement line | settlement_lines -> settlement -> load |
+| L-20260808-0085 | Settlement lines block cancel gate | settlement_lines -> settlement -> load |
+| L-20260808-0090 | Settlement lines block cancel gate | settlement_lines -> settlement -> load |
+| L-20260831-0017 | Settlement lines block cancel gate | settlement_lines -> settlement -> load |
+
+**Law:** void/reverse/deactivate only — no DELETE. Unwind via cancel/null-FK after real doc handling. Trial balance before and after MUST be identical or it rolls back.
