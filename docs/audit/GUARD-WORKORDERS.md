@@ -7778,3 +7778,38 @@ worktree pattern (established after this finding, used for every branch this pas
 copies `.husky/_` into each new worktree before running any gate or push specifically to avoid
 this exact silent-skip failure mode -- confirmed applied correctly throughout, not a live risk
 in this session's own work.**
+
+| **FIXED live (CC-1 2026-09-01):** `REVERSAL-IS-SAMPLE-DATA-BACKFILL` — the "is_sample_data on
+reversals + backfill" item named in `docs/bus/OWNER-REWRITE-DISPATCH-AND-CASCADE-VOID-2026-09-01.md`
+CC-1 queue item 1. Live query (`accounting.journal_entries r JOIN ... o ON o.id = r.reverses_je_id
+WHERE r.is_sample_data IS DISTINCT FROM o.is_sample_data`) found 23 pre-`ACCT-F10229`-fix rows
+(created 2026-08-11/08-29, all "Void reversal of bill..."/"Reversal of..." JEs) whose
+`is_sample_data` never inherited from their `reverses_je_id` original — the exact class the earlier
+`ACCT-F10229` fix (this session) closed for NEW reversals but did not retroactively correct.
+Backfilled directly: `UPDATE accounting.journal_entries r SET is_sample_data = o.is_sample_data ...`
+— 23 rows updated, verified 0 remaining for that direct one-hop class, trial-balance net
+(`SUM(debit - credit)` over `journal_entry_postings`) confirmed **unchanged at 0 before and after**
+(the flag carries no dollar amount — TB cannot move). | accounting.journal_entries.is_sample_data |
+**CC-1** | direct backfill + before/after TB net query | Neon `tiny-field-89581227` bypass_rls,
+2026-09-01 | **FIXED (one-hop class) · see REMAINING row below** |
+
+| **OPEN (CC-1 2026-09-01, filed not fixed):** `REVERSAL-CHAIN-IS-SAMPLE-DATA-SECOND-HOP` — fixing
+the one-hop class above (previous row) surfaced a SECOND, deeper mismatch: 10 of the 23 corrected
+rows are themselves the `reverses_je_id` target of a LATER re-reversal created by
+`OWNER-USMCA-SEAT-JUNK-PURGE-2026-09-01` (memo "OWNER-USMCA-SEAT-JUNK-PURGE-2026-09-01: remove seat
+test/demo/sample contamination; keep Plaid bank feed"), and those purge-created re-reversals all
+carry `is_sample_data=true` regardless of what the row they reverse now correctly holds — i.e. a
+double-reversal chain (real expense → Aug-11 reversal → Sep-1 purge re-reversal) where the
+Sep-1 layer's own flag disagrees with the corrected middle layer. **Did NOT touch these 10** —
+this is the same purge process the owner already reviewed and confirmed
+(`docs/reconcile/PURGE-COMPLETE-2026-09-01.md`, REAL GL fingerprint held) as DONE; mutating its own
+output without a fresh owner/CC-2 read risks contradicting an already-closed control. TB net
+re-confirmed 0 after the one-hop fix above (this second class was NOT backfilled, so it changes
+nothing about that number either way). Named IDs (reversal_id → original_id, both now real
+`is_sample_data=false` "Expense ... posting" chains): `8cb46b41→bd914aae`, `2a578eb7→43da2e31`,
+`fd71f36a→47a42566`, `e57068df→5ee54e0c`, `ed1dae85→8a1beed6`, `eb8670ec→8d9ad8ca`,
+`74f011df→af888af6`, `d4013990→c3e587b7`, `0e7805da→c7d1e1cd`, `1cace7df→d2273470`. | accounting.
+journal_entries.is_sample_data (double-reversal chain) | **CC-2 grade first, then CC-1 execute** |
+none yet — needs CC-2 confirmation the purge's own re-reversal flag is wrong (not the corrected
+middle layer) before any further write | same Neon query as above, 2026-09-01 | **OPEN · routed=
+CC-2 grade → CC-1 execute** |
