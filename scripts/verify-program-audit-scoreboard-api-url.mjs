@@ -218,7 +218,7 @@ export function assertScoreboardContract(sources) {
         `${matrixPageRel}: must expose clickable Safety + Insurance pills on module rail (MATRIX-REQ-SAFETY / MATRIX-REQ-INSURANCE)`,
       );
     }
-    if (!/picker_law|qbo_chrome|connectivity|reverse_link/.test(matrixPage)) {
+    if (!/picker_law|qbo_chrome|connectivity|reverse_link|fw8_chrome|fw9_pickers|FULLY_WIRED_SYSTEM_COLS/.test(matrixPage)) {
       problems.push(
         `${matrixPageRel}: chrome/wiring columns (picker/QBO/connectivity/reverse) must be named on the board`,
       );

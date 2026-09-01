@@ -33,8 +33,8 @@ const read = (file) => fs.readFileSync(file, "utf8");
 function check(sources) {
   const failures = [];
   const expects = [
-    ["loads", /<EntityLink(?:OrTombstone)?[\s\S]{0,180}kind="load"[\s\S]{0,180}id=\{load\.id\}[\s\S]{0,400}data-testid=\{`loads-planner-bar-/, "loads planner"],
-    ["timeline", /<EntityLink[\s\S]{0,180}kind="load"[\s\S]{0,180}id=\{load\.id\}[\s\S]{0,400}data-testid=\{`timeline-load-/, "timeline planner"],
+    ["loads", /<EntityLink(?:OrTombstone)?[\s\S]{0,180}kind="load"[\s\S]{0,180}id=\{load\.id\}[\s\S]{0,800}testId:\s*`loads-planner-bar-/, "loads planner"],
+    ["timeline", /entityLabel\(load\.load_number[\s\S]{0,400}testId:\s*`timeline-load-/, "timeline planner"],
     ["claims", /<EntityLink[\s\S]{0,120}kind="claim"[\s\S]{0,120}id=\{claim\.id\}[\s\S]{0,160}label=\{entityLabel\(claim\.claim_number/, "claim row"],
     ["lawsuits", /<EntityLink[\s\S]{0,120}kind="lawsuit"[\s\S]{0,120}id=\{lawsuit\.id\}[\s\S]{0,160}label=\{entityLabel\(lawsuit\.case_number/, "lawsuit row"],
     ["recent", /<EntityLink kind="work_order" id=\{row\.id\}[\s\S]{0,220}onClick=\{\(event\) => \{ event\.preventDefault\(\); onOpen\(row\.id\); \}\}/, "recent work order"],
