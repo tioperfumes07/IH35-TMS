@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { listLateArrivalDispatchLoads, type DispatchAlertQuery } from "../../api/dispatch";
-import { useState } from "react";
+import { listLateArrivalDispatchLoads } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -10,6 +10,7 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DispatchAlertServerControls, type DispatchAlertRange } from "../../components/dispatch/DispatchAlertServerControls";
+import { serverDispatchAlertQueryFromSortState, sortDispatchAlertBoardRows } from "./dispatchAlertBoardSort";
 
 function etaLabel(prediction: Record<string, unknown> | null | undefined): string {
   if (!prediction) return "No ETA";
@@ -23,11 +24,13 @@ export function LateArrivalsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [range, setRange] = useState<DispatchAlertRange>({ from: "", to: "" });
-  const [sort, setSort] = useState<Required<Pick<DispatchAlertQuery, "sort" | "direction">>>({ sort: "event_at", direction: "asc" });
+  const [paritySortKey, setParitySortKey] = useState("next_stop_scheduled_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const serverSort = serverDispatchAlertQueryFromSortState(paritySortKey, sortDirection);
 
   const lateQ = useQuery({
-    queryKey: ["dispatch", "late-arrivals", companyId, range, sort],
-    queryFn: () => listLateArrivalDispatchLoads(companyId, { ...range, ...sort }),
+    queryKey: ["dispatch", "late-arrivals", companyId, range, serverSort],
+    queryFn: () => listLateArrivalDispatchLoads(companyId, { ...range, ...serverSort }),
     enabled: Boolean(companyId),
   });
 
@@ -35,7 +38,10 @@ export function LateArrivalsPage() {
     return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
   }
 
-  const loads = lateQ.data?.loads ?? [];
+  const loads = useMemo(
+    () => sortDispatchAlertBoardRows(lateQ.data?.loads ?? [], paritySortKey, sortDirection),
+    [lateQ.data?.loads, paritySortKey, sortDirection],
+  );
   const grace = lateQ.data?.grace_minutes ?? 30;
   type LateArrivalRow = (typeof loads)[number];
 
@@ -123,6 +129,7 @@ export function LateArrivalsPage() {
     {
       key: "eta_signal",
       label: "ETA signal",
+      sortable: true,
       render: (load) => (
         <>
           <StatusBadge status={String(load.latest_eta_prediction?.confidence_class ?? "late")} />
@@ -163,23 +170,13 @@ export function LateArrivalsPage() {
           storageKey="dispatch-late-arrivals"
           exportFilename="late-arrivals"
           suppressToolbarRange
-          sortKey={
-            (sort.sort ?? "event_at") === "event_at"
-              ? "next_stop_scheduled_at"
-              : sort.sort === "location"
-                ? "next_stop_city"
-                : sort.sort
-          }
-          sortDirection={sort.direction}
+          sortKey={paritySortKey}
+          sortDirection={sortDirection}
           sortMode="external"
-          onSortChange={(key, direction) =>
-            setSort({
-              sort: (key === "next_stop_scheduled_at" ? "event_at" : key === "next_stop_city" ? "location" : key) as NonNullable<
-                DispatchAlertQuery["sort"]
-              >,
-              direction,
-            })
-          }
+          onSortChange={(key, direction) => {
+            setParitySortKey(key);
+            setSortDirection(direction);
+          }}
         />
       ) : null}
     </div>
