@@ -479,3 +479,14 @@ reverted-away fix, chasing a phantom. Caught it via a direct file re-read once t
 passes but the real page doesn't" contradiction didn't add up, restored the stash, rebased onto the
 batch-2 merge tip to pick up the real fix, and the actual investigation (native-select API mismatch)
 resolved cleanly from there.
+
+CC-3 | 2026-09-01 05:20Z | CUS-01 retracted -- all 7 CUS items now closed | GO
+
+Investigated before acting: Customers.tsx (/customers, roster+drawer) and CustomerDetail.tsx
+(/customers/:id, standalone full record) are deliberately separate routes, cross-linked both ways
+(drawer's Edit button -> standalone page; standalone's Back to Customers -> drawer) -- the exact
+same pattern already established/required for Vendors this session (VEND-CERT-01: "the Customers
+pattern" IS the canonical model). Retracting CUS-01 as not a defect rather than consolidating or
+redesigning a working, precedent-matching, already-cross-linked pair of pages. Full evidence in
+GUARD-WORKORDERS.md. CUS-02..07 already fixed by another seat's CUST-01 series (confirmed earlier
+this session). CUS-01..07 series fully closed, nothing remaining.
