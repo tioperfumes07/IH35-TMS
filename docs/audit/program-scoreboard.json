@@ -1,10 +1,10 @@
 {
-  "healthzSha": "4db4c20",
+  "healthzSha": "5de7f40",
   "generated_at": "2026-08-31T15:22:35.000Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "4db4c20",
+    "deployedSha": "5de7f40",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 19262,
-      "title": "FINDING: DISPATCH-INS-SCHEDULE-WARN-CONFIRM",
+      "number": 19296,
+      "title": "FINDING: BOARD-INS-DEFECT6-CURSOR-DONE",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 07:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19262",
-      "sha": "853df179db",
-      "committedAtIso": "2026-09-01T07:39:25-05:00"
+      "mergedAtCt": "09/01/2026, 09:23 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19296",
+      "sha": "5de7f40bde",
+      "committedAtIso": "2026-09-01T09:23:31-05:00"
     },
     {
-      "number": 19261,
-      "title": "FINDING: N/A -- fix a fresh main-tip TS6133 (blocking Render deploys again) + repair 3 stale ProfitPerTruckPage tests found via a background full-suite run",
+      "number": 19295,
+      "title": "FINDING: SETL-45-PAYRATE-CREATE-WRONG-TABLE",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 07:36 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19261",
-      "sha": "ba4e80cebd",
-      "committedAtIso": "2026-09-01T07:36:34-05:00"
+      "mergedAtCt": "09/01/2026, 09:20 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19295",
+      "sha": "44226cb068",
+      "committedAtIso": "2026-09-01T09:20:08-05:00"
     },
     {
-      "number": 19260,
-      "title": "FINDING: ACCT-F68 settlement ping selftest missed duplicate team pay",
+      "number": 19294,
+      "title": "chore: CLAIM-RESERVE 10222 verify-driver-pay-rate-create-writes-billing-table",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 07:35 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19260",
-      "sha": "1651c5b8a2",
-      "committedAtIso": "2026-09-01T07:35:41-05:00"
+      "mergedAtCt": "09/01/2026, 09:19 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19294",
+      "sha": "3cef657b3e",
+      "committedAtIso": "2026-09-01T09:19:02-05:00"
     },
     {
-      "number": 19259,
-      "title": "FINDING: SWEEP-A-PARITYTABLE-HEADER-HIT-TARGET",
+      "number": 19293,
+      "title": "FINDING: GUARD-BOARD-STALE-SETL45-SWEEP-A",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 07:31 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19259",
-      "sha": "4334520880",
-      "committedAtIso": "2026-09-01T07:31:47-05:00"
+      "mergedAtCt": "09/01/2026, 09:16 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19293",
+      "sha": "ea439bb67c",
+      "committedAtIso": "2026-09-01T09:16:59-05:00"
     },
     {
-      "number": 19258,
-      "title": "FINDING: SWEEP-A-PARITYTABLE-HEADER-HIT-TARGET",
+      "number": 19292,
+      "title": "FINDING: SORT-GUARD-HFULL-REGEX",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 07:31 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19258",
-      "sha": "1114560657",
-      "committedAtIso": "2026-09-01T07:31:13-05:00"
+      "mergedAtCt": "09/01/2026, 09:09 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19292",
+      "sha": "b1f6f1417d",
+      "committedAtIso": "2026-09-01T09:09:42-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: ACCT-F10380 (SETL-HEADER-05) -- settlement header never got its own money back-link",
+      "number": 19291,
+      "title": "Cursor- docs(bus): SETL-DUAL-APPROVAL — CC-1 GO line, Cursor SKIP",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 07:29 AM CT",
-      "url": "",
-      "sha": "69035a9c07",
-      "committedAtIso": "2026-09-01T07:29:52-05:00"
+      "mergedAtCt": "09/01/2026, 09:04 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19291",
+      "sha": "49853b464e",
+      "committedAtIso": "2026-09-01T09:04:54-05:00"
     },
     {
-      "number": 19257,
-      "title": "chore: CLAIM-RESERVE verify-step 3020 bookload-alwaystrack-field-race",
+      "number": 19290,
+      "title": "DEVIN-A: LST-F3512 pending deploy, FE stuck at f0c3879",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 07:29 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19257",
-      "sha": "13609c339b",
-      "committedAtIso": "2026-09-01T07:29:46-05:00"
+      "mergedAtCt": "09/01/2026, 08:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19290",
+      "sha": "afb1ce06c1",
+      "committedAtIso": "2026-09-01T08:35:59-05:00"
     },
     {
-      "number": 19255,
-      "title": "DEVIN-A: MDP-PANEL-PROPORTION PASS, DSP-05 pending deploy at fe=0642d75",
+      "number": 19289,
+      "title": "FINDING: LOAD-DETAIL-MARK-IN-TRANSIT-DEAD-BUTTON",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 07:28 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19255",
-      "sha": "08f11a3cb6",
-      "committedAtIso": "2026-09-01T07:28:31-05:00"
+      "mergedAtCt": "09/01/2026, 08:30 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19289",
+      "sha": "376b77c7fc",
+      "committedAtIso": "2026-09-01T08:30:19-05:00"
     },
     {
-      "number": 19227,
-      "title": "CC-2-self-grade: void-reversal guard structurally near-blind for most real invoices",
+      "number": 19288,
+      "title": "FINDING: BOARD-STAMP-LISTS-U6-0901",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 07:26 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19227",
-      "sha": "6fce6fa716",
-      "committedAtIso": "2026-09-01T07:26:19-05:00"
+      "mergedAtCt": "09/01/2026, 08:25 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19288",
+      "sha": "f49882e55d",
+      "committedAtIso": "2026-09-01T08:25:25-05:00"
     },
     {
-      "number": 19250,
-      "title": "FINDING: N/A — OUTBOX/INBOX close: GUARD verify #19175-#19219 task complete",
+      "number": 19287,
+      "title": "FINDING: BOOKLOAD-ALWAYSTRACK-FIELD-RACE-OVERWRITE",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 07:25 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19250",
-      "sha": "4db4c20c8e",
-      "committedAtIso": "2026-09-01T07:25:48-05:00"
+      "mergedAtCt": "09/01/2026, 08:24 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19287",
+      "sha": "937f2236e3",
+      "committedAtIso": "2026-09-01T08:24:49-05:00"
     }
   ]
 }
