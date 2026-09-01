@@ -682,4 +682,32 @@ describe("ledger-integrity-detectors.service — extended B3/B4/B7/B8 subledger 
     expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
     expect(client.calls.some((c) => c.sql.includes("fn_account_balances_as_of"))).toBe(false);
   });
+
+  // SUBLEDGER-GL-TIEOUT-EVERY-CONTROL (board-routed CC-2, 2026-09-01) — escrow_liability_default
+  // and factoring_advance_liability were newly added to EXTENDED_TIE_OUT_ROLES; the explicit
+  // per-role dispatch this test proves replaces an implicit trailing `else` that would otherwise
+  // silently reuse sumFixedAssetNetBookValueSubledgerCents for an escrow role and manufacture a
+  // wrong tie-out. Only the escrow role is bound here (all others resolve unbound and are skipped,
+  // same as the test above), isolating exactly the new dispatch branch.
+  it("dispatches escrow_liability_default to sumEscrowSubledgerCents, not the fixed-asset default", async () => {
+    const client = simpleClient([
+      {
+        match: (sql, values) => sql.includes("FROM accounting.chart_of_accounts_roles") && !!values?.includes("escrow_liability_default"),
+        rows: [{ account_id: "escrow-control-acct" }],
+      },
+      { match: (sql) => sql.includes("FROM accounting.chart_of_accounts_roles"), rows: [] },
+      {
+        match: (sql) => sql.includes("fn_account_balances_as_of") && sql.includes("closing_balance_cents"),
+        rows: [{ closing_balance_cents: "5000", normal_balance: "credit" }],
+      },
+      { match: (sql) => sql.includes("FROM accounting.escrow_accounts"), rows: [{ total_cents: "5000" }] },
+    ]);
+
+    await checkExtendedSubledgerTieOutForCompany(client as never, COMPANY, "run-1");
+
+    // Asserts the escrow-specific query fired at all — the property this test exists to prove
+    // (correct role -> function dispatch). GL/subledger sign-normalization and tie-out arithmetic
+    // are already covered by loadControlBalanceCents' own tests elsewhere; not re-asserted here.
+    expect(client.calls.some((c) => c.sql.includes("FROM accounting.escrow_accounts"))).toBe(true);
+  });
 });
