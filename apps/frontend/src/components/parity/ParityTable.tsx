@@ -147,6 +147,8 @@ export type ParityTableProps<T> = {
    * row-level test/e2e selectors. Additive — omitting it renders no per-row testid.
    */
   rowTestId?: (row: T) => string;
+  /** Optional tfoot (KPI drill sums). Additive — omit for unchanged tables. */
+  footer?: ReactNode;
 
   /**
    * OPTIONAL controlled-sort mode (BANK-SORT-ROLLOUT-ACCT). Omitting these three props keeps the
@@ -403,6 +405,7 @@ export function ParityTable<T>({
   onPageSizeChange,
   hidePager = false,
   embedded = false,
+  footer,
 }: ParityTableProps<T>) {
   const persisted = useMemo(() => loadPersisted(storageKey), [storageKey]);
 
@@ -1316,6 +1319,11 @@ export function ParityTable<T>({
             pageRows.map((row) => renderDataRow(row))
           )}
         </tbody>
+        {footer ? (
+          <tfoot data-testid="parity-table-footer">
+            <tr className="border-t-2 border-slate-700 bg-slate-50 font-semibold">{footer}</tr>
+          </tfoot>
+        ) : null}
       </table>
       </div>
 

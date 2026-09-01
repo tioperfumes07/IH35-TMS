@@ -2,6 +2,7 @@ import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { DISPATCH_ALERT_ACTIVE_STATUSES_SQL } from "./dispatch-alert-statuses.js";
 import { dispatchAlertOrderBy, type DispatchAlertQuery } from "./dispatch-alert-query.js";
+import { KPI_LOAD_DRILL_JOINS, KPI_LOAD_DRILL_SELECT } from "./kpi-load-drill-sql.js";
 
 const DEFAULT_LATE_GRACE_MINUTES = 30;
 
@@ -60,7 +61,10 @@ export async function listLateArrivalLoads(userId: string, operatingCompanyId: s
           sp.scheduled_arrival_at AS next_stop_scheduled_at,
           sp.city AS next_stop_city,
           sp.state AS next_stop_state,
-          sp.stop_type AS next_stop_type
+          sp.stop_type AS next_stop_type,
+          sd.city AS delivery_city,
+          sd.state AS delivery_state,
+${KPI_LOAD_DRILL_SELECT}
         FROM views.dispatch_load_with_driver_status l
         LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                    AND c.operating_company_id = l.operating_company_id
@@ -88,6 +92,15 @@ export async function listLateArrivalLoads(userId: string, operatingCompanyId: s
           ORDER BY scheduled_arrival_at ASC
           LIMIT 1
         ) sp ON true
+        LEFT JOIN LATERAL (
+          SELECT scheduled_arrival_at, city, state
+          FROM mdata.load_stops
+          WHERE load_id = l.id AND stop_type = 'delivery'
+            AND soft_deleted_at IS NULL
+          ORDER BY sequence_number DESC
+          LIMIT 1
+        ) sd ON true
+${KPI_LOAD_DRILL_JOINS}
         WHERE l.operating_company_id = $1::uuid
           AND ($3::date IS NULL OR sp.scheduled_arrival_at >= $3::date)
           AND ($4::date IS NULL OR sp.scheduled_arrival_at < $4::date + interval '1 day')

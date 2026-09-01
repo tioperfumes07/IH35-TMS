@@ -22,6 +22,7 @@ describe("dispatch arch tabs routes (B21-D2)", () => {
     expect(src).toContain("dispatch.intransit_issues");
     expect(src).toContain("dispatch.load_assignment_history");
     expect(src).toContain("late_risk");
+    expect(src).toContain("KPI_LOAD_DRILL_SELECT");
   });
 
   it("is wired in backend index bootstrap", () => {

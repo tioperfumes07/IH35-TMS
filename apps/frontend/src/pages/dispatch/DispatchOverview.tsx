@@ -273,8 +273,6 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
     [unitsWithoutLoad]
   );
 
-  const atRiskCount = atRiskLateQ.data?.at_risk_count ?? 0;
-  const lateCount = atRiskLateQ.data?.late_count ?? 0;
   const atRiskLateTotal = atRiskLateQ.data?.count ?? 0;
 
   const oosLoads = useMemo(
@@ -314,7 +312,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
           value={
             atRiskLateQ.isLoading || atRiskLateQ.isError ? "—" : atRiskLateTotal
           }
-          hint={atRiskLateTotal > 0 ? `${atRiskCount} at-risk · ${lateCount} late` : "none flagged"}
+          hint="Union of at-risk and late — each load once. Detention is its own tile."
           to="/dispatch/at-risk"
         />
         <KpiCard

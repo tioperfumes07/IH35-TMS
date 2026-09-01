@@ -841,6 +841,18 @@ export type AtRiskLoadRow = {
   next_stop_scheduled_at: string | null;
   delivery_city: string | null;
   delivery_state: string | null;
+  customer_wo_number?: string | null;
+  origin_city?: string | null;
+  origin_state?: string | null;
+  pickup_at?: string | null;
+  delivery_at?: string | null;
+  loaded_miles?: number | string | null;
+  rate_total_cents?: number | string | null;
+  rpm?: number | string | null;
+  invoice_status?: string | null;
+  risk_reason?: string | null;
+  hours_over?: number | string | null;
+  promised_at?: string | null;
 };
 
 export type DispatchAlertQuery = {
