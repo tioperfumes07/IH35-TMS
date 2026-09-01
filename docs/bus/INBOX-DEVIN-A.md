@@ -1,3 +1,11 @@
+# ★ OWNER MASTER FANOUT · 2026-09-01T02:12Z · live=`8112092`
+
+## DEVIN-A ORDER
+
+Phase-1 name sweep ACCEPTED. BILL-2026-00016 finding is gold.
+
+**NEXT:** innocent-name contamination — trace from GL balances → postings → source docs; judge on evidence (creator, date, real counterparty, bank tie). Report test data without test-shaped names. Do not delete. 14 DEVIN vendors + standing bills/expenses stay on purge list.
+
 **★ PHASE PLAN (owner 2026-09-01T02:03Z) — PHASE 1 ONLY. Do not work ahead.**
 
 PHASE 1 NOW:

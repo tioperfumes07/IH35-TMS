@@ -1,3 +1,19 @@
+# ★ OWNER MASTER FANOUT · 2026-09-01T02:12Z · live=`8112092`
+
+## CASCADE ORDER — PURGE SCOPE ENUMERATION
+
+CC-1 executes your list. Must be complete:
+
+- Every `is_sample_data=true` row in every financial table
+- Dependents in FK order
+- JEs ORIGINAL + REVERSAL as matched pairs (deleting original without reversal moves TB — forbidden)
+- Blockers (live FK, bank match, settlement line)
+- GL accounts touched + amounts
+- Include 0d485d2c ($1,200 unmatched) + 8b944104 with purge scope
+- Do not claim Devin's 7 remaining manual_test bank txns as yours
+
+Report only until Phase 2 owner go.
+
 **★ PHASE PLAN (owner 2026-09-01T02:03Z) — PHASE 1 ONLY. Do not work ahead.**
 
 PHASE 1 NOW:
