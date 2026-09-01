@@ -443,8 +443,13 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
       const rowValues = [...values, query.data.limit, query.data.offset];
       const res = await client.query(
         `
-          SELECT f.*, r.reason_code, r.reason_name,
-                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
+          SELECT f.*,
+                 ('IF-' || upper(substr(f.id::text, 1, 8))) AS display_id,
+                 r.reason_code, r.reason_name,
+                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+                 l.load_number AS related_load_number,
+                 sded.settlement_deduction_id,
+                 sded.applied_to_settlement_id
           FROM safety.internal_fines f
           LEFT JOIN catalogs.internal_fine_reasons r ON r.id = f.reason_id
           LEFT JOIN mdata.drivers d
@@ -459,6 +464,17 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
                  AND label_dca.deactivated_at IS NULL
              )
            )
+          LEFT JOIN mdata.loads l ON l.id = f.related_load_id
+          LEFT JOIN LATERAL (
+            SELECT dsd.id AS settlement_deduction_id, dsd.applied_to_settlement_id
+              FROM driver_finance.driver_settlement_deductions dsd
+             WHERE dsd.operating_company_id = f.operating_company_id
+               AND dsd.driver_id = f.driver_id
+               AND dsd.deduction_type = 'fine'
+               AND dsd.reason = 'Internal fine recovery: ' || f.id::text
+             ORDER BY dsd.created_at DESC
+             LIMIT 1
+          ) sded ON true
           WHERE f.operating_company_id = $1::uuid
           ${driverFilter}
           ${loadFilter}
