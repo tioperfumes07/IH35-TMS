@@ -184,7 +184,7 @@ export async function listDetentionBoard(
   return withCompany(userId, operatingCompanyId, async (client) => {
     const orderBy = dispatchAlertOrderBy(filters, {
       event_at: "de.started_at", load_number: "l.load_number", customer_name: "customer_name",
-      driver_name: "driver_name", unit_number: "u.unit_number", status: "de.status",
+      driver_name: "driver_name", unit_number: "u.unit_number", status: "de.status", location: "ls.city",
     });
     const res = await client.query(
       `
