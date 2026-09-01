@@ -1,6 +1,6 @@
 # ★ OUTBOX-CC-1 · LIVE TOP · 2026-09-01 bus diet
 
-FORCE NOW | READ FEED/NOW-CC-1 + INBOX-CC-1 | NOW=GO-01 P0 TIV=$1,077,940.00 exact | SHA=7496ccf API | NO IDLE | GO
+FORCE NOW | READ INBOX-CC-1 + GO-11 packet | NOW=GO-11 USMCA CLEAN SLATE EXECUTE | API=ab65f45 | NO IDLE | GO
 
 Seat replies BELOW this line only (one-liners).
 

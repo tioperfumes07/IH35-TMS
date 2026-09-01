@@ -1,3 +1,5 @@
+**14:56 CT GO-11 — USMCA CLEAN SLATE:** `docs/lockdown/GO-11-USMCA-CLEAN-SLATE-2026-09-01.md` + paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-09-01-GO-11-USMCA-CLEAN-SLATE.md`. ACK `GO-11`. CC-1 execute. CC-2 verify after. Others HOLD money. Live `ab65f45`. NO-SEAT. Idle = defect.
+
 **12:50 CT GO-MECH-0901 — MECHANICAL WAVE (73 items, 70 open):** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-09-01-MECHANICAL-WAVE.md` · register `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.xlsx`. ACK `GO-MECH-0901`. FAST-MERGE ON · gate verified PASS · no STAND BY · idle = defect.
 
 **11:22 CT GO-0009 — SEAT FEED:** `docs/bus/FEED/NOW-<SEAT>.md` + `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0009-FEED.md`. ACK `GO-0009`. Live `069d531`. CC-3 Override dead click. CC-1 G1 then dual bill-pay GL. CC-2 BANK-F9515–9518. Idle = defect.

@@ -1,9 +1,13 @@
-# INBOX-CC-1 · GO NOW — do not wait for go-ahead
+# INBOX-CC-1 · GO-11 P0 NOW
+
+`git pull --ff-only origin main`. Packet: `docs/lockdown/GO-11-USMCA-CLEAN-SLATE-2026-09-01.md`
 
 ## TOP
-1. **GO-02 LIST API** — `GET /api/v1/insurance/coverage-gaps` still returns `missing_types[]`. Frozen paste: per-type `{coverage_type, status, policy_id, policy_number, expiry_date}[]`. Trailer AL = N/A/`not_required`. Catalog-driven, never hardcode three types. Cursor UI is already column-per-type on `missing_types` — COVERED chips cannot link a policy until this array exists.
-2. **GO-09 remaining creators** after L2 column — invoices, Manual JE, maint bill/expense, cash advances, fuel, payments, CM, VC, transfers. `display_id` ours persist; vendor never minted.
-3. **POSTING-CONTRACTS.json** invoice event-2 still DR ar_control / CR **revenue_default**. Live poster credits **unbilled_revenue**. One edit. Accounting risk.
-4. **T144 / $37,400** — STOP. Do not invent ACV. Do not attach T144. Owner call: packet $1,077,940.00 / 35 vs live 34 / $1,040,540.00. GO-03 stays blocked until Jorge answers.
+1. **GO-11 EXECUTE (P0)** — USMCA only `5c854333-6ea5-4faa-af31-67cb272fef80`. Manifest `docs/evidence/USMCA-FIXTURE-PURGE-MANIFEST-2026-09-01.csv` **before** any DELETE. Eyeball 34 unmatched bank UUIDs. Delete by id. **No** `ILIKE '%test%'`. Delete SAMPLE/TEST insurance policies listed in the packet (source of fake dispersal). Drivers/vendors/equipment only if zero real children. TRANSP/TRK byte-identical. Do not reset `trace_no`.
+2. **Migration collision:** Cursor owns `banking.bank_transactions.is_sample_data` (HH 12–23) after CLAIM **10224** / **202613331950**. If the column is not on `origin/main`, **wait** — do not write a second migration.
+3. **GO-02 LIST API** (after GO-11 PR is up, disjoint files OK): `GET /api/v1/insurance/coverage-gaps` still `missing_types[]` → per-type `{coverage_type, status, policy_id, policy_number, expiry_date}[]`. Trailer AL = N/A. Do not invent T144 ACV.
+4. **GO-09 remaining creators** after L2 — ours vs vendor boxes. Owner will type numbers; APIs must persist what he types.
+5. **POSTING-CONTRACTS.json** invoice event-2 vs live `unbilled_revenue` — **not** this hour (separate PR after GO-11).
+6. **Driver bill `B-`:** leave. Company settlement table: leave.
 
-GO-10 #19325 is on main. Do not rebuild allocator. Never `trigger_deploy`.
+NO-SEAT prod money. Never `trigger_deploy`. ACK OUTBOX: `CC-1 | ACK | GO-11 | GO`
