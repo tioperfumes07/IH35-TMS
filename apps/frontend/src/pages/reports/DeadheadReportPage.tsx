@@ -11,6 +11,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type DeadheadPeriod = "last_4_weeks" | "last_12_weeks" | "YTD";
 
@@ -134,7 +135,7 @@ export function DeadheadReportPage() {
       >
         <label className="text-xs text-gray-600">
           Period
-          <select
+          <SelectCombobox
             className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={staged.draft.period}
             onChange={(e) => staged.setDraft({ period: e.target.value as DeadheadPeriod })}
@@ -142,7 +143,7 @@ export function DeadheadReportPage() {
             <option value="last_4_weeks">Last 4 weeks</option>
             <option value="last_12_weeks">Last 12 weeks</option>
             <option value="YTD">Year to date</option>
-          </select>
+          </SelectCombobox>
         </label>
       </CollapsedListFilters>
 

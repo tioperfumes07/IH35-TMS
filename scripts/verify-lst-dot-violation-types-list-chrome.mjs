@@ -12,6 +12,15 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TARGET = "apps/frontend/src/pages/lists/safety/DotViolationTypesListPage.tsx";
+const SAFETY_CATALOG_STATUS_PAGES = [
+  "apps/frontend/src/pages/lists/safety/SafetyGenericCatalogListPage.tsx",
+  "apps/frontend/src/pages/lists/safety/InternalFineReasonsListPage.tsx",
+  "apps/frontend/src/pages/lists/safety/DotViolationTypesListPage.tsx",
+  "apps/frontend/src/pages/lists/safety/ComplaintTypesListPage.tsx",
+  "apps/frontend/src/pages/lists/safety/CompanyViolationTypesListPage.tsx",
+  "apps/frontend/src/pages/lists/safety/CivilFineTypesListPage.tsx",
+  "apps/frontend/src/pages/lists/safety/CargoClaimReasonsListPage.tsx",
+];
 const LABEL = "verify-lst-dot-violation-types-list-chrome";
 const FRAME_MARKER = 'data-testid="dot-violation-types-list-frame"';
 const NESTED_FILTER_RE = /className="[^"]*rounded-sm border border-gray-200 bg-white p-3[^"]*"/g;
@@ -57,6 +66,30 @@ export function collectProblems(section) {
     problems.push(
       `${TARGET}: filter toolbar nests ${nestedFilters.length} standalone bordered white card(s) — flatten to border-b row`,
     );
+  }
+  return problems;
+}
+
+/** Safety catalog list pages must use Combobox status filter, not native SelectCombobox. */
+export function collectCatalogStatusFilterProblems(root = ROOT) {
+  const problems = [];
+  for (const rel of SAFETY_CATALOG_STATUS_PAGES) {
+    const filePath = path.join(root, rel);
+    if (!fs.existsSync(filePath)) {
+      problems.push(`${rel}: missing safety catalog list page`);
+      continue;
+    }
+    const src = fs.readFileSync(filePath, "utf8");
+    if (!src.includes("CatalogStatusFilterCombobox")) {
+      problems.push(`${rel}: must use CatalogStatusFilterCombobox for status filter`);
+    }
+    if (/SelectCombobox[\s\S]{0,200}statusFilter|SelectCombobox[\s\S]{0,200}setStatus/.test(src)) {
+      problems.push(`${rel}: must not use SelectCombobox for catalog status filter`);
+    }
+  }
+  const shared = path.join(root, "apps/frontend/src/pages/lists/safety/CatalogStatusFilterCombobox.tsx");
+  if (!fs.existsSync(shared)) {
+    problems.push("CatalogStatusFilterCombobox.tsx: shared status filter component missing");
   }
   return problems;
 }
@@ -108,7 +141,7 @@ if (isMain) {
     process.exit(1);
   }
   const src = fs.readFileSync(filePath, "utf8");
-  const problems = collectProblems(listFrameSection(src));
+  const problems = collectProblems(listFrameSection(src)).concat(collectCatalogStatusFilterProblems(ROOT));
   if (problems.length) {
     console.error(`[${LABEL}] FAILED — ${problems.length} issue(s):`);
     for (const p of problems) console.error(`  ✗ ${p}`);

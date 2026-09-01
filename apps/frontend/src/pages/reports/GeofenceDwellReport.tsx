@@ -11,6 +11,7 @@ import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Combobox } from "../../components/Combobox";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 
 function minutesToClock(value: number | null) {
@@ -166,7 +167,7 @@ export function GeofenceDwellReport() {
           </div>
           <label className="text-xs text-slate-700">
             Kind
-            <select
+            <SelectCombobox
               className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
               value={staged.draft.locationKind}
               onChange={(event) => staged.setDraft((p) => ({ ...p, locationKind: event.target.value as GeofenceLocationKind | "" }))}
@@ -176,7 +177,7 @@ export function GeofenceDwellReport() {
               <option value="yard">Yard</option>
               <option value="vendor_site">Vendor site</option>
               <option value="custom">Custom</option>
-            </select>
+            </SelectCombobox>
           </label>
         </div>
       </CollapsedListFilters>

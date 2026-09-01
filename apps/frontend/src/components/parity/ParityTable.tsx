@@ -120,6 +120,18 @@ export type ParityTableProps<T> = {
    * written reason, per COLUMN LAW). */
   enableColumnReorder?: boolean;
   /**
+   * OPTIONAL controlled column order (COLUMN LAW 2026-09-01) — mirrors controlled sort / A5
+   * selection. Omitting keeps internal `colOrder` persisted under storageKey. Presence of
+   * `onColumnOrderChange` = controlled mode: page owns `columnOrder` (e.g. from useTablePref).
+   */
+  columnOrder?: string[];
+  onColumnOrderChange?: (order: string[]) => void;
+  /**
+   * AUTO-FIT (COLUMN LAW 2026-09-01): size columns to header + cell content when no manual width
+   * is persisted. Default true — set false only when a table has a real reason to stay fixed-width.
+   */
+  autoFitColumns?: boolean;
+  /**
    * Optional per-row expandable detail. When provided, a ▸/▾ toggle column is prepended; clicking it
    * reveals renderExpanded(row) in a full-width detail row beneath the parent row. Additive — existing
    * consumers that omit it are unchanged.
@@ -371,6 +383,9 @@ export function ParityTable<T>({
   stickyHeader = true,
   enableColumnResize = true,
   enableColumnReorder = true,
+  columnOrder: controlledColumnOrder,
+  onColumnOrderChange,
+  autoFitColumns = true,
   renderExpanded,
   tableTestId,
   rowTestId,
@@ -455,7 +470,9 @@ export function ParityTable<T>({
   // REORDER — drag-to-move columns. `colOrder` holds ONLY keys the user has explicitly reordered
   // into a non-default position; `dragKey`/`dragOverKey` are transient drag-in-progress state, not
   // persisted.
-  const [colOrder, setColOrder] = useState<string[]>(persisted.colOrder ?? []);
+  const isColumnOrderControlled = onColumnOrderChange != null;
+  const [internalColOrder, setInternalColOrder] = useState<string[]>(persisted.colOrder ?? []);
+  const colOrder = isColumnOrderControlled ? controlledColumnOrder ?? [] : internalColOrder;
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const gearRef = useRef<HTMLDivElement>(null);
@@ -535,7 +552,11 @@ export function ParityTable<T>({
     const next = [...currentOrder];
     next.splice(from, 1);
     next.splice(to, 0, sourceKey);
-    setColOrder(next);
+    if (isColumnOrderControlled) {
+      onColumnOrderChange?.(next);
+      return;
+    }
+    setInternalColOrder(next);
     savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths, colOrder: next });
   }
   const toolbarFilteredRows = useMemo(
@@ -585,6 +606,7 @@ export function ParityTable<T>({
   // when a later page's data is longer than what was on screen at mount, and the owner's actual law
   // is "must always show fully", not "measured once and then possibly wrong forever".
   const autoFitWidths = useMemo(() => {
+    if (!autoFitColumns) return {};
     const widths: Record<string, number> = {};
     const sample = pageRows.slice(0, AUTO_FIT_SAMPLE_ROWS);
     for (const column of visibleColumns) {
@@ -602,7 +624,7 @@ export function ParityTable<T>({
     return widths;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- colWidths only gates which columns are
     // (re)computed; including it would recompute every autofit width on every manual drag-resize.
-  }, [visibleColumns, pageRows, d.font]);
+  }, [autoFitColumns, visibleColumns, pageRows, d.font]);
 
   // Phase A2: group the CURRENT page's rows in their CURRENT order (stable — first appearance of
   // each key sets group order; rows are never re-sorted). Pagination math above is untouched.

@@ -22,6 +22,15 @@ export function check(filePath = path.join(ROOT, PAGE)) {
   assert(src.includes("No taxable assets rendered yet."), "PropertyTaxRenditionPage: keep lines empty copy");
   assert(!/<table\b/.test(src), "PropertyTaxRenditionPage: must not use raw HTML table");
   assert(src.includes("addRenditionLine"), "PropertyTaxRenditionPage: keep add-line mutation");
+  assert(src.includes("property-tax-rendition-asset-picker"), "PropertyTaxRenditionPage: multi-asset Combobox picker");
+  assert(src.includes("property-tax-rendition-selected-assets"), "PropertyTaxRenditionPage: selected-asset chips");
+  assert(src.includes('data-testid="property-tax-rendition-create-lines"'), "PropertyTaxRenditionPage: batch create-lines button");
+  assert(src.includes("MoneyInput"), "PropertyTaxRenditionPage: QBO money inputs for cost/rendered/assessed");
+  assert(src.includes("DatePicker"), "PropertyTaxRenditionPage: QBO date picker for acquisition date");
+  assert(
+    src.includes("<Combobox") && src.includes('dataTestId="property-tax-rendition-asset-picker"'),
+    "PropertyTaxRenditionPage: asset picker must be Combobox",
+  );
 }
 
 // GUARD-SELFTEST-MUTATES-SOURCE fix: never write the plant into the real tracked file. Copy it

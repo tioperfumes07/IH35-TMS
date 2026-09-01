@@ -7,6 +7,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { useToast } from "../../components/Toast";
@@ -235,7 +236,7 @@ export function FinanceScenariosPage() {
           <div className="flex flex-wrap gap-3">
             <label className="text-xs font-semibold text-slate-600">
               Status
-              <select
+              <SelectCombobox
                 className="mt-1 block w-full min-w-[10rem] rounded-sm border border-slate-300 px-2 py-1 text-xs"
                 value={staged.draft.status}
                 onChange={(e) =>
@@ -247,11 +248,11 @@ export function FinanceScenariosPage() {
                 <option value="draft">Draft</option>
                 <option value="active">Active</option>
                 <option value="superseded">Superseded</option>
-              </select>
+              </SelectCombobox>
             </label>
             <label className="text-xs font-semibold text-slate-600">
               Period basis
-              <select
+              <SelectCombobox
                 className="mt-1 block w-full min-w-[10rem] rounded-sm border border-slate-300 px-2 py-1 text-xs"
                 value={staged.draft.periodBasis}
                 onChange={(e) =>
@@ -265,7 +266,7 @@ export function FinanceScenariosPage() {
                 <option value="all">All bases</option>
                 <option value="monthly">Monthly</option>
                 <option value="quarterly">Quarterly</option>
-              </select>
+              </SelectCombobox>
             </label>
           </div>
         </CollapsedListFilters>

@@ -3,5 +3,7 @@ export default {
   run(ctx) {
     ctx.run("node", ["scripts/verify-paritytable-external-sort.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-paritytable-external-sort.mjs"]);
+    ctx.run("node", ["scripts/verify-paritytable-column-law.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-paritytable-column-law.mjs"]);
   },
 };
