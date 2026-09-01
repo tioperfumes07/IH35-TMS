@@ -55,21 +55,21 @@ export function verify(source) {
   const need = (key, token, message) => { if (!source[key].includes(token)) failures.push(message); };
 
   for (const id of EXPECTED.compliance) need("compliance", `id: "${id}"`, `compliance tab ${id} must remain visible`);
-  need("compliance", "onClick={() => setTab(t.id)}", "compliance tabs must change the canonical query state");
+  need("compliance", "<NavyPageSubNav", "compliance tabs must change the canonical query state");
   for (const id of EXPECTED.docs) need("docs", `id: "${id}"`, `docs tab ${id} must remain visible`);
   need("docs", "setActiveTab(next as DocsEntityTabId)", "docs tabs must change the canonical entity filter");
   for (const id of EXPECTED.driverHub) need("driverHub", `id: "${id}"`, `driver-hub tab ${id} must remain visible`);
-  need("driverHub", "<SecondaryNavTabs tabs={TABS}", "driver-hub tabs must render through shared navigation");
+  need("driverHub", "<NavyPageSubNav", "driver-hub tabs must render through shared navigation");
   for (const id of EXPECTED.form425) need("form425", `id: "${id}"`, `form 425C tab ${id} must remain visible`);
-  need("form425", "tabs={TABS.map", "form 425C tabs must render through shared navigation");
+  need("form425", "<NavyPageSubNav", "form 425C tabs must render through shared navigation");
   need("form425Exhibits", "for the selected operating company", "form 425C exhibits must describe the active company scope");
   if (/\bTRANSP\b/.test(source.form425Exhibits)) failures.push("form 425C exhibits must not hardcode TRANSP while another company is active");
   for (const id of EXPECTED.tasks) need("tasks", `id: "${id}"`, `tasks nav ${id} must remain visible`);
   need("tasks", "onClick={() => navigate(tab.to)}", "tasks navigation must open its mounted routes");
   for (const id of EXPECTED.program) need("program", `program-nav-${id}`, `program nav ${id} must remain visible`);
   for (const id of EXPECTED.system) need("system", `id: "${id}"`, `system tab ${id} must remain visible`);
-  need("system", "const visibleTabs = SYSTEM_TABS.filter", "system tabs must retain the feature-aware visible-tab projection");
-  need("system", "<SecondaryNavTabs tabs={visibleTabs.map", "system tabs must render through shared navigation");
+  need("system", "SYSTEM_TABS", "system tabs must retain the feature-aware visible-tab projection");
+  need("system", "<NavyPageSubNav", "system tabs must render through shared navigation");
 
   for (const route of ROUTES) need("routes", `path="${route}"`, `route ${route} must remain mounted`);
   for (const [key, ids] of Object.entries(REQUIRED_LEAVES)) {

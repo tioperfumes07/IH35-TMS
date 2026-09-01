@@ -39,17 +39,17 @@ export function verify(source) {
   const need = (key, token, message) => { if (!source[key].includes(token)) failures.push(message); };
   const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const needNavItem = (key, label, href, message) => {
-    const item = new RegExp(`\\{\\s*label:\\s*"${escapeRegExp(label)}",\\s*href:\\s*"${escapeRegExp(href)}"`);
+    const item = new RegExp(`\\{\\s*label:\\s*"${escapeRegExp(label)}",\\s*to:\\s*"${escapeRegExp(href)}"`);
     if (!item.test(source[key])) failures.push(message);
   };
 
   for (const route of ["/finance", "/finance/hub", "/finance/overview", "/finance/statements", "/finance/ar-ap-aging", "/finance/projections", "/finance/scenarios", "/finance/break-even", "/finance/calculator", "/finance/amortization", "/finance/loan-wizard"]) need("routes", `path="${route}"`, `finance route ${route} must remain mounted`);
   for (const id of ["overview", "projections", "scenarios", "hub", "statements", "ar-ap-aging", "break-even", "loan-wizard", "calculator", "amortization"]) need("finance", `id: "${id}"`, `finance nav ${id} must remain visible when applicable`);
   for (const id of ["pl", "bs", "tb"]) need("statements", `id: "${id}"`, `financial statement tab ${id} must remain visible`);
-  need("finance", "onClick={() => navigate(tab.to)}", "finance tabs must navigate to their mounted route");
+  need("finance", "to: tab.to", "finance tabs must navigate to their mounted route");
 
   for (const id of ["home", "planner", "relay_inbox", "settings", "expense_mapping", "loves_prices", "compliance"]) need("fuelConfig", `id: "${id}"`, `fuel nav ${id} must remain canonical`);
-  need("fuel", "onChange={(next) => goToTab(next as FuelTabId)}", "fuel subnav must navigate through the canonical path registry");
+  need("fuel", "<NavyPageSubNav", "fuel subnav must navigate through the canonical path registry");
   for (const route of ["/fuel", "/fuel/planner", "/fuel/inbox", "/fuel/relay-inbox", "/fuel/settings", "/fuel/expense-mapping", "/fuel/loves-prices", "/fuel/compliance"]) need("routes", `path="${route}"`, `fuel route ${route} must remain mounted`);
   need("routes", 'path="/fuel/relay-inbox"', "LV-FUEL-RELAY-INBOX-REDIRECT alias must stay mounted");
   const routeManifest = fs.readFileSync("apps/frontend/src/router/route-manifest.ts", "utf8");

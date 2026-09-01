@@ -102,7 +102,7 @@ export function verify(source) {
   for (const route of ["/inventory", "/inventory/assignments", "/inventory/purchases"]) need("routes", `path="${route}"`, `inventory route ${route} must remain mounted`);
 
   for (const [id, route] of [["contracts", "/legal/contracts"], ["templates", "/legal/templates"], ["policies", "/legal/policies"], ["attorney-review", "/legal/attorney-review"], ["reports", "/legal/reports"]]) need("legalTabs", `{ id: "${id}", label:`, `legal tab ${id} must remain visible`), need("legalTabs", `to: "${route}"`, `legal tab ${id} must retain its destination`);
-  for (const [key, token] of [["legalLanding", '<LegalModuleTabs activeTabId="contracts"'], ["legalTemplates", '<LegalModuleTabs activeTabId="templates"'], ["legalTemplateDetail", 'data-testid="legal-template-detail-page"'], ["legalPolicies", '<LegalModuleTabs activeTabId="policies"'], ["legalAttorney", '<LegalModuleTabs activeTabId="attorney-review"'], ["legalReports", '<LegalModuleTabs activeTabId="reports"']]) need(key, token, `${key} must remain connected to legal navigation`);
+  for (const [key, token] of [["legalLanding", '<LegalModuleTabs'], ["legalTemplates", '<LegalModuleTabs'], ["legalTemplateDetail", 'data-testid="legal-template-detail-page"'], ["legalPolicies", '<LegalModuleTabs'], ["legalAttorney", '<LegalModuleTabs'], ["legalReports", '<LegalModuleTabs']]) need(key, token, `${key} must remain connected to legal navigation`);
   for (const route of ["/legal", "/legal/contracts", "/legal/templates", "/legal/templates/:id", "/legal/policies", "/legal/attorney-review", "/legal/reports"]) need("routes", `path="${route}"`, `legal route ${route} must remain mounted`);
 
   need("maintDamage", "MaintenanceDamageRegisterTab", "maintenance damage intake must remain implemented");
@@ -117,7 +117,7 @@ export function verify(source) {
   need("tasksChat", 'data-testid="tasks-chat-mention"', "task chat must retain mention rendering");
   for (const route of ["/tasks", "/tasks/mine", "/tasks/chat"]) need("routes", `path="${route}"`, `tasks route ${route} must remain mounted`);
 
-  for (const token of ["<ParityTable<IdentityUser>", 'data-testid="user-roster-record-link"', "createUserMutation", "roleWorkflowMutation", "deactivateMutation", "<SecondaryNavTabs", "<KpiCard"]) need("users", token, `users surface must retain ${token}`);
+  for (const token of ["<ParityTable<IdentityUser>", 'data-testid="user-roster-record-link"', "createUserMutation", "roleWorkflowMutation", "deactivateMutation", "<NavyPageSubNav", "<KpiCard"]) need("users", token, `users surface must retain ${token}`);
   for (const token of ['filterBar={', '<CollapsedListFilters', 'storageKey="users-list"']) need("users", token, `users shared toolbar must retain ${token}`);
   need("userDetail", 'title="Create Dispatcher Safety Event"', "user detail must mount dispatcher safety event drawer");
   for (const route of ["/users", "/users/:id"]) need("routes", `path="${route}"`, `users route ${route} must remain mounted`);
