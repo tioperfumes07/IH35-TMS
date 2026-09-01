@@ -20,7 +20,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { BulkProgressDialog } from "../../components/bulk/BulkProgressDialog";
-import { VoidReasonModal } from "../accounting/VoidReasonModal";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { useToast } from "../../components/Toast";
 import { bulkRowLabelsFromRows } from "../../components/bulk/bulkRowLabels";
 
