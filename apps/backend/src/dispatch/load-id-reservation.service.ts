@@ -1,5 +1,4 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { companyBusinessDateCompact } from "../lib/company-business-date.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -26,41 +25,109 @@ export type ClaimInput = {
 
 export const LOAD_ID_RESERVATION_TTL_SECONDS = 60;
 
-// A same-day, same-company Load Number is UNIQUE in both mdata.loads and dispatch.load_id_reservations.
-// Two dispatchers reserving at the same instant compute the same sequence (neither insert is visible to
-// the other yet) and the second INSERT throws Postgres 23505 (unique_violation) — which, unhandled, 500s
-// the "reserve a Load Number" call. Recompute-and-retry instead: on a collision we roll back the failed
-// INSERT and recompute MAX+1 (the winning row is now committed and visible), so the loser gets the next
-// free number. Bounded so a pathological loop can never hang the request.
-const MAX_LOAD_ID_RESERVE_ATTEMPTS = 8;
-
 function isUniqueViolation(err: unknown): boolean {
   return typeof err === "object" && err !== null && (err as { code?: string }).code === "23505";
 }
 
-async function computeNextReservationSeq(client: DbClient, operatingCompanyId: string, prefix: string): Promise<number> {
-  const nextLoadSeq = await client.query<{ next_seq: number }>(
-    `
-      SELECT COALESCE(MAX(COALESCE(NULLIF(substring(load_number FROM '([0-9]{4})$'), ''), '0')::int), 0) + 1 AS next_seq
-      FROM mdata.loads
-      WHERE operating_company_id = $1::uuid
-        AND load_number LIKE $2
-    `,
-    [operatingCompanyId, prefix]
-  );
+/**
+ * GO-10 REV-B — thrown when a company has never had a single numeric Load Number minted (neither
+ * a real mdata.loads row nor a lib.trace_counters seed) and the allocator refuses to silently
+ * invent a starting point. The office must set the first Load Number explicitly (the existing
+ * manual-override path in book-load already supports a caller-supplied load_number); once ONE
+ * real number exists for the company, every later allocation seeds naturally from it and this
+ * error can never fire again for that company.
+ */
+export class FirstLoadNumberRequiredError extends Error {
+  code = "first_load_number_required" as const;
+  constructor() {
+    super("first_load_number_required");
+  }
+}
 
-  const nextReservedSeq = await client.query<{ next_seq: number }>(
-    `
-      SELECT COALESCE(MAX(COALESCE(NULLIF(substring(reserved_load_number FROM '([0-9]{4})$'), ''), '0')::int), 0) + 1 AS next_seq
-      FROM dispatch.load_id_reservations
-      WHERE operating_company_id = $1::uuid
-        AND reserved_load_number LIKE $2
-        AND (reserved_at AT TIME ZONE 'America/Chicago')::date = (now() AT TIME ZONE 'America/Chicago')::date
-    `,
-    [operatingCompanyId, prefix]
-  );
+/**
+ * GO-10 REV-B — thrown when the atomic allocator's own number still collides at INSERT (23505).
+ * With a real per-(company,day) counter this is no longer an expected transient race to retry
+ * past (that was only ever needed because the old design derived the next number by re-reading
+ * MAX(...) from rows that might not be visible yet) — a collision now means something bypassed
+ * the allocator (a direct insert, an import, a stale reservation), which is worth surfacing to
+ * the caller, not silently retrying past.
+ */
+export class LoadNumberConflictError extends Error {
+  code = "duplicate_load_number" as const;
+  loadNumber: string;
+  existingId: string | null;
+  constructor(loadNumber: string, existingId: string | null) {
+    super("duplicate_load_number");
+    this.loadNumber = loadNumber;
+    this.existingId = existingId;
+  }
+}
 
-  return Math.max(Number(nextLoadSeq.rows[0]?.next_seq ?? 1), Number(nextReservedSeq.rows[0]?.next_seq ?? 1));
+/**
+ * GO-10 REV-B (L3 lock) — THE single shared allocator for both dispatch's TTL reservation flow
+ * (reserveNextLoadId, below) and mdata/loads.routes.ts's direct-create path. Previously each file
+ * carried its own independent last-4-digits substring-regex parse of the trailing digit run, and
+ * the two produced DIFFERENT string shapes (this file: `L-YYYYMMDD-NNNN`;
+ * loads.routes.ts: `L<COMPANY-TOKEN>-YYYYMMDD-NNNN`) — the two paths' own MAX queries could never
+ * see each other's rows. L3 kills BOTH formats: the mint is now PLAIN DIGITS ONLY (e.g. "13509"),
+ * a flat company-wide ascending integer with no date component and no prefix, matching the
+ * owner's existing external numbering scheme (he types "13508", the system continues "13509").
+ *
+ * SEED (once per company, lazily on first use): MAX(load_number::bigint) WHERE load_number ~
+ * '^[0-9]+$' — a FULL-STRING numeric parse, never last-N-digits (a last-4-digits substring would
+ * silently truncate "13561" to "3561"). If that numeric set is empty (company has never had a
+ * single purely-numeric Load Number), refuse with FirstLoadNumberRequiredError rather than invent
+ * a starting constant — the office must type the first number once
+ * (assertLoadNumberAvailable + the caller-supplied load_number path already support this).
+ *
+ * ONGOING (every call after the seed exists): an atomic upsert-counter (lib.trace_counters,
+ * doc_type = 'LOAD', reusing the exact mechanism GO-08 202613330000 built for trace_no/trace_key)
+ * via lib.next_trace_no() — never a live re-read of MAX(...), which is the race that let two
+ * concurrent bookings compute the same "next" number before either INSERT was visible to the
+ * other.
+ */
+export async function allocateNextLoadNumber(client: DbClient, operatingCompanyId: string): Promise<string> {
+  // Fast path: already seeded, just increment atomically. Doing this check first means the
+  // one-time seed logic below only ever runs once per company, ever.
+  const already = await client.query<{ exists: boolean }>(
+    `SELECT EXISTS (SELECT 1 FROM lib.trace_counters WHERE operating_company_id = $1::uuid AND doc_type = 'LOAD') AS exists`,
+    [operatingCompanyId]
+  );
+  if (!already.rows[0]?.exists) {
+    const seedRes = await client.query<{ seed: string | null }>(
+      `
+        SELECT MAX(load_number::bigint)::text AS seed
+        FROM mdata.loads
+        WHERE operating_company_id = $1::uuid
+          AND load_number ~ '^[0-9]+$'
+      `,
+      [operatingCompanyId]
+    );
+    const seed = seedRes.rows[0]?.seed;
+    if (seed == null) {
+      throw new FirstLoadNumberRequiredError();
+    }
+    // ON CONFLICT DO NOTHING: a concurrent caller may have won the seed race between the EXISTS
+    // check above and here — that is fine, whichever seed value lands first is the correct one
+    // (both are derived from the same MAX at effectively the same instant).
+    await client.query(
+      `
+        INSERT INTO lib.trace_counters (operating_company_id, doc_type, last_trace_no, updated_at)
+        VALUES ($1::uuid, 'LOAD', $2::bigint, now())
+        ON CONFLICT (operating_company_id, doc_type) DO NOTHING
+      `,
+      [operatingCompanyId, seed]
+    );
+  }
+
+  const seqRes = await client.query<{ seq: string }>(`SELECT lib.next_trace_no($1::uuid, 'LOAD')::text AS seq`, [
+    operatingCompanyId,
+  ]);
+  const seq = seqRes.rows[0]?.seq;
+  if (!seq || !/^[0-9]+$/.test(seq)) {
+    throw new Error("load_number_allocator_failed");
+  }
+  return seq;
 }
 
 export type ReserveNextLoadIdResult = {
@@ -69,13 +136,6 @@ export type ReserveNextLoadIdResult = {
   reservedUntilIso: string;
   ttlSeconds: number;
 };
-
-function makeLoadNumber(seq: number, date = new Date()) {
-  // Business date in the company timezone — NOT UTC. A load booked at 7 PM Central must carry the
-  // Central calendar date, or the persisted Load Number reads as tomorrow. (see company-business-date)
-  const ymd = companyBusinessDateCompact(date);
-  return `L-${ymd}-${String(seq).padStart(4, "0")}`;
-}
 
 export async function expireStaleLoadIdReservations(client: DbClient, operatingCompanyId: string) {
   await client.query(
@@ -132,9 +192,6 @@ export async function reserveNextLoadId(client: DbClient, input: ReserveInput): 
   }
   await expireStaleLoadIdReservations(client, input.operatingCompanyId);
 
-  const now = new Date();
-  const prefix = `L-${companyBusinessDateCompact(now)}-%`;
-
   const existing = await client.query<{ id: string; reserved_load_number: string; expires_at: string }>(
     `
       SELECT id, reserved_load_number, expires_at::text AS expires_at
@@ -171,65 +228,63 @@ export async function reserveNextLoadId(client: DbClient, input: ReserveInput): 
     };
   }
 
-  for (let attempt = 0; attempt < MAX_LOAD_ID_RESERVE_ATTEMPTS; attempt += 1) {
-    const seq = await computeNextReservationSeq(client, input.operatingCompanyId, prefix);
-    const loadNumber = makeLoadNumber(seq, now);
+  const loadNumber = await allocateNextLoadNumber(client, input.operatingCompanyId);
 
-    // SAVEPOINT so a unique-collision rolls back only THIS INSERT, not the caller's whole transaction.
-    await client.query(`SAVEPOINT reserve_load_id`);
-    try {
-      const insert = await client.query<{ id: string; expires_at: string }>(
-        `
-          INSERT INTO dispatch.load_id_reservations (
-            operating_company_id, reserved_load_number, reserved_by_user_id, status, reserved_at, expires_at
-          )
-          VALUES ($1, $2, $3, 'reserved', now(), now() + ($4 * interval '1 second'))
-          RETURNING id, expires_at::text AS expires_at
-        `,
-        [input.operatingCompanyId, loadNumber, input.reservedByUserId, LOAD_ID_RESERVATION_TTL_SECONDS]
-      );
-      await client.query(`RELEASE SAVEPOINT reserve_load_id`);
+  // SAVEPOINT so a unique-collision rolls back only THIS INSERT, not the caller's whole transaction.
+  await client.query(`SAVEPOINT reserve_load_id`);
+  try {
+    const insert = await client.query<{ id: string; expires_at: string }>(
+      `
+        INSERT INTO dispatch.load_id_reservations (
+          operating_company_id, reserved_load_number, reserved_by_user_id, status, reserved_at, expires_at
+        )
+        VALUES ($1, $2, $3, 'reserved', now(), now() + ($4 * interval '1 second'))
+        RETURNING id, expires_at::text AS expires_at
+      `,
+      [input.operatingCompanyId, loadNumber, input.reservedByUserId, LOAD_ID_RESERVATION_TTL_SECONDS]
+    );
+    await client.query(`RELEASE SAVEPOINT reserve_load_id`);
 
-      const exp = insert.rows[0]?.expires_at;
-      const resId = insert.rows[0]?.id;
-      if (!exp || !resId) {
-        throw new Error("load_id_reservation_insert_failed");
-      }
-
-      await appendCrudAudit(
-        client,
-        input.reservedByUserId,
-        "dispatch.load.id_reservation_created",
-        {
-          operating_company_id: input.operatingCompanyId,
-          reservation_uuid: resId,
-          load_number: loadNumber,
-          reused_existing: false,
-          ttl_seconds: LOAD_ID_RESERVATION_TTL_SECONDS,
-          reserve_attempts: attempt + 1,
-        },
-        "info",
-        "P6-D2"
-      );
-
-      return {
-        reservationId: resId,
-        loadNumber,
-        reservedUntilIso: new Date(exp).toISOString(),
-        ttlSeconds: LOAD_ID_RESERVATION_TTL_SECONDS,
-      };
-    } catch (err) {
-      await client.query(`ROLLBACK TO SAVEPOINT reserve_load_id`).catch(() => undefined);
-      if (isUniqueViolation(err)) {
-        // Another dispatcher won this Load Number — recompute MAX+1 and try the next one.
-        continue;
-      }
-      throw err;
+    const exp = insert.rows[0]?.expires_at;
+    const resId = insert.rows[0]?.id;
+    if (!exp || !resId) {
+      throw new Error("load_id_reservation_insert_failed");
     }
-  }
 
-  // Every attempt lost the race (extreme concurrency) — surface a clean, retryable error, never a raw 500.
-  throw new Error("load_id_reservation_sequence_contended");
+    await appendCrudAudit(
+      client,
+      input.reservedByUserId,
+      "dispatch.load.id_reservation_created",
+      {
+        operating_company_id: input.operatingCompanyId,
+        reservation_uuid: resId,
+        load_number: loadNumber,
+        reused_existing: false,
+        ttl_seconds: LOAD_ID_RESERVATION_TTL_SECONDS,
+      },
+      "info",
+      "P6-D2"
+    );
+
+    return {
+      reservationId: resId,
+      loadNumber,
+      reservedUntilIso: new Date(exp).toISOString(),
+      ttlSeconds: LOAD_ID_RESERVATION_TTL_SECONDS,
+    };
+  } catch (err) {
+    await client.query(`ROLLBACK TO SAVEPOINT reserve_load_id`).catch(() => undefined);
+    if (isUniqueViolation(err)) {
+      // The allocator is atomic — a collision here means something else (a direct insert, an
+      // import, a stale row) already used this exact number. Surface it structured, not a retry.
+      const existingRow = await client.query<{ id: string }>(
+        `SELECT id::text FROM dispatch.load_id_reservations WHERE operating_company_id = $1::uuid AND reserved_load_number = $2 LIMIT 1`,
+        [input.operatingCompanyId, loadNumber]
+      );
+      throw new LoadNumberConflictError(loadNumber, existingRow.rows[0]?.id ?? null);
+    }
+    throw err;
+  }
 }
 
 export async function assertLoadNumberAvailable(

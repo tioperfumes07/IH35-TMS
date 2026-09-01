@@ -13,8 +13,13 @@ import { enrichLoadsLiveEta } from "../telematics/dispatch-live-eta.service.js";
 import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
-import { companyBusinessDateCompact } from "../lib/company-business-date.js";
 import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
+import {
+  allocateNextLoadNumber,
+  assertLoadNumberAvailable,
+  FirstLoadNumberRequiredError,
+  LoadNumberConflictError,
+} from "../dispatch/load-id-reservation.service.js";
 import { writeLoadCancellationRecord } from "../dispatch/cancellation.service.js";
 import {
   loadStatusRequiresDeliveryDepartureStamp,
@@ -154,6 +159,10 @@ const loadStopParamsSchema = z.object({
 const createLoadBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   customer_id: z.string().uuid(),
+  // GO-10 REV-B: empty/omitted = server mints the next plain-digit Load Number via the shared
+  // allocator (load-id-reservation.service.ts); typed = verbatim, subject to the same
+  // duplicate-number 409 as the Book Load wizard.
+  load_number: z.string().trim().max(60).optional(),
   status: loadStatusSchema.default("draft"),
   rate_total_cents: z.coerce.number().int().min(0).default(0),
   currency_code: z.enum(["USD", "MXN"]).default("USD"),
@@ -284,13 +293,6 @@ const remintBodySchema = z.object({
   reason: z.string().trim().min(1).max(2000),
 });
 
-function toCompanyLoadToken(input: string | null | undefined): string {
-  const cleaned = String(input ?? "")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "");
-  return cleaned || "COMP";
-}
-
 function statusToFlagCode(status: z.infer<typeof loadStatusSchema>): string {
   if (status === "cancelled") return "RED";
   if (status === "abandoned" || status === "driver_walkoff" || status === "driver_no_show") return "RED";
@@ -325,45 +327,6 @@ const allowedStatusTransitions: Record<z.infer<typeof loadStatusSchema>, z.infer
   driver_walkoff: [],
   driver_no_show: [],
 };
-
-async function nextLoadNumber(
-  client: {
-    query: <T extends Record<string, unknown> = Record<string, unknown>>(
-      sql: string,
-      values?: unknown[]
-    ) => Promise<{ rows: T[] }>;
-  },
-  operatingCompanyId: string
-): Promise<string> {
-  const companyRes = await client.query<{ code: string | null; short_name: string | null }>(
-    `
-      SELECT code, short_name
-      FROM org.companies
-      WHERE id = $1
-      LIMIT 1
-    `,
-    [operatingCompanyId]
-  );
-  const company = companyRes.rows[0];
-  if (!company) throw new Error("operating_company_not_found");
-  const token = toCompanyLoadToken(company.short_name ?? company.code);
-  // Company-timezone business date — NOT UTC — so the persisted Load Number date matches the
-  // booking day in Central (see lib/company-business-date).
-  const datePart = companyBusinessDateCompact();
-  const prefix = `L${token}-${datePart}-`;
-
-  const seqRes = await client.query<{ next_seq: number }>(
-    `
-      SELECT COALESCE(MAX(COALESCE(NULLIF(substring(load_number FROM '([0-9]{4})$'), ''), '0')::int), 0) + 1 AS next_seq
-      FROM mdata.loads
-      WHERE operating_company_id = $1::uuid
-        AND load_number LIKE $2
-    `,
-    [operatingCompanyId, `${prefix}%`]
-  );
-  const nextSeq = Number(seqRes.rows[0]?.next_seq ?? 1);
-  return `${prefix}${String(nextSeq).padStart(4, "0")}`;
-}
 
 export async function registerLoadRoutes(app: FastifyInstance) {
   app.post("/api/v1/mdata/loads", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
@@ -416,56 +379,66 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           b.load_trailer_equipment_id
         );
 
-        let loadNumber = "";
+        // GO-10 REV-B — the atomic shared allocator (see load-id-reservation.service.ts) replaces
+        // the old per-file MAX()+1-then-retry-3x pattern. One allocate, one insert, one SAVEPOINT
+        // so a genuine collision rolls back in isolation rather than aborting the whole
+        // transaction (that abort was the original G9-M 500 this file's own comment used to
+        // describe) — but no retry loop: with a real counter, a 23505 here means the number was
+        // used outside the allocator, which is a 409 to surface, not a race to spin past.
+        let loadNumber: string;
+        if (b.load_number) {
+          // Typed = verbatim. Fast pre-check only (F4) -- the real guarantee is the INSERT-level
+          // 23505 catch below, which a pre-check-then-insert race can never fully close on its own.
+          await assertLoadNumberAvailable(client, b.operating_company_id, b.load_number);
+          loadNumber = b.load_number;
+        } else {
+          loadNumber = await allocateNextLoadNumber(client, b.operating_company_id);
+        }
         let inserted: Record<string, unknown> | null = null;
-        for (let attempt = 0; attempt < 3; attempt += 1) {
-          loadNumber = await nextLoadNumber(client, b.operating_company_id);
-          // SAVEPOINT so a concurrent-booking unique collision (23505 on load_number) can be rolled back
-          // in isolation. Without it the failed INSERT aborts the whole transaction and the retry's own
-          // nextLoadNumber SELECT throws "current transaction is aborted" — i.e. the retry never worked
-          // and the caller still got a 500. (Load-number collision 500 — G9-M.)
-          await client.query(`SAVEPOINT create_load`);
-          try {
-            const res = await client.query(
-              `
-                INSERT INTO mdata.loads (
-                  operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-                  assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-                  dispatcher_user_id, notes, is_sample_data, load_trailer_equipment_id
-                ) VALUES (
-                  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
-                )
-                RETURNING
-                  id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-                  assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-                  dispatcher_user_id, notes, is_sample_data, load_trailer_equipment_id,
-                  created_at, updated_at, soft_deleted_at, deleted_by_user_id
-              `,
-              [
-                b.operating_company_id,
-                loadNumber,
-                b.customer_id,
-                b.status,
-                b.rate_total_cents,
-                b.currency_code,
-                b.assigned_unit_id ?? null,
-                b.assigned_primary_driver_id ?? null,
-                b.assigned_secondary_driver_id ?? null,
-                b.team_id ?? null,
-                authUser.uuid,
-                b.notes ?? null,
-                b.is_sample_data ?? false,
-                loadTrailerEquipmentId,
-              ]
-            );
-            await client.query(`RELEASE SAVEPOINT create_load`);
-            inserted = res.rows[0] ?? null;
-            break;
-          } catch (err) {
-            await client.query(`ROLLBACK TO SAVEPOINT create_load`).catch(() => undefined);
-            if ((err as { code?: string }).code !== "23505") throw err;
-            if (attempt === 2) throw err;
-          }
+        await client.query(`SAVEPOINT create_load`);
+        try {
+          const res = await client.query(
+            `
+              INSERT INTO mdata.loads (
+                operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
+                assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
+                dispatcher_user_id, notes, is_sample_data, load_trailer_equipment_id
+              ) VALUES (
+                $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+              )
+              RETURNING
+                id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
+                assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
+                dispatcher_user_id, notes, is_sample_data, load_trailer_equipment_id,
+                created_at, updated_at, soft_deleted_at, deleted_by_user_id
+            `,
+            [
+              b.operating_company_id,
+              loadNumber,
+              b.customer_id,
+              b.status,
+              b.rate_total_cents,
+              b.currency_code,
+              b.assigned_unit_id ?? null,
+              b.assigned_primary_driver_id ?? null,
+              b.assigned_secondary_driver_id ?? null,
+              b.team_id ?? null,
+              authUser.uuid,
+              b.notes ?? null,
+              b.is_sample_data ?? false,
+              loadTrailerEquipmentId,
+            ]
+          );
+          await client.query(`RELEASE SAVEPOINT create_load`);
+          inserted = res.rows[0] ?? null;
+        } catch (err) {
+          await client.query(`ROLLBACK TO SAVEPOINT create_load`).catch(() => undefined);
+          if ((err as { code?: string }).code !== "23505") throw err;
+          const existingRow = await client.query<{ id: string }>(
+            `SELECT id::text FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 LIMIT 1`,
+            [b.operating_company_id, loadNumber]
+          );
+          throw new LoadNumberConflictError(loadNumber, existingRow.rows[0]?.id ?? null);
         }
         if (!inserted) throw new Error("load_insert_failed");
 
@@ -597,6 +570,12 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             hazmat_endorsement_expires_at: err.block.hazmatEndorsementExpiresAt,
           },
         });
+      }
+      if (err instanceof FirstLoadNumberRequiredError) {
+        return reply.code(422).send({ error: err.code });
+      }
+      if (err instanceof LoadNumberConflictError) {
+        return reply.code(409).send({ error: err.code, load_number: err.loadNumber, existing_id: err.existingId });
       }
       const code = (err as { code?: string }).code;
       if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });

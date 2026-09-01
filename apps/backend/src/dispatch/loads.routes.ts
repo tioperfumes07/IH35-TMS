@@ -19,7 +19,12 @@ import {
 } from "./update-load.service.js";
 import { DriverNotQualifiedError } from "./driver-qualification.service.js";
 import { distributeLoadInstructions } from "./load-distribution.service.js";
-import { cancelLoadIdReservation, reserveNextLoadId } from "./load-id-reservation.service.js";
+import {
+  cancelLoadIdReservation,
+  reserveNextLoadId,
+  FirstLoadNumberRequiredError,
+  LoadNumberConflictError,
+} from "./load-id-reservation.service.js";
 import { parseOperatorDocumentNumber, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
@@ -483,19 +488,29 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const body = reserveLoadIdBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
 
-    const payload = await withCompanyScope(authUser.uuid, body.data.operating_company_id, async (client) => {
-      return reserveNextLoadId(client, {
-        operatingCompanyId: body.data.operating_company_id,
-        reservedByUserId: authUser.uuid,
-        reservationId: body.data.reservation_uuid,
+    try {
+      const payload = await withCompanyScope(authUser.uuid, body.data.operating_company_id, async (client) => {
+        return reserveNextLoadId(client, {
+          operatingCompanyId: body.data.operating_company_id,
+          reservedByUserId: authUser.uuid,
+          reservationId: body.data.reservation_uuid,
+        });
       });
-    });
-    return {
-      reservation_uuid: payload.reservationId,
-      load_number: payload.loadNumber,
-      reserved_until: payload.reservedUntilIso,
-      ttl_seconds: payload.ttlSeconds,
-    };
+      return {
+        reservation_uuid: payload.reservationId,
+        load_number: payload.loadNumber,
+        reserved_until: payload.reservedUntilIso,
+        ttl_seconds: payload.ttlSeconds,
+      };
+    } catch (err) {
+      if (err instanceof FirstLoadNumberRequiredError) {
+        return reply.code(422).send({ error: err.code });
+      }
+      if (err instanceof LoadNumberConflictError) {
+        return reply.code(409).send({ error: err.code, load_number: err.loadNumber, existing_id: err.existingId });
+      }
+      throw err;
+    }
   });
 
   app.get("/api/v1/dispatch/loads/next-number", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

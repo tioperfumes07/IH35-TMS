@@ -25,14 +25,15 @@ describe("load-id-reservation.service", () => {
         if (sql.includes("UPDATE dispatch.load_id_reservations") && sql.includes("expired")) {
           return { rows: [] };
         }
-        if (sql.includes("FROM mdata.loads") && sql.includes("next_seq")) {
-          return { rows: [{ next_seq: 3 }] as T[] };
-        }
         if (sql.includes("FROM dispatch.load_id_reservations") && sql.includes("ORDER BY reserved_at DESC")) {
           return { rows: [] };
         }
-        if (sql.includes("FROM dispatch.load_id_reservations") && sql.includes("reserved_at::date")) {
-          return { rows: [{ next_seq: 3 }] as T[] };
+        // GO-10 REV-B allocator: already-seeded fast path (SAME shape lib.next_trace_no returns).
+        if (sql.includes("FROM lib.trace_counters") && sql.includes("EXISTS")) {
+          return { rows: [{ exists: true }] as T[] };
+        }
+        if (sql.includes("lib.next_trace_no")) {
+          return { rows: [{ seq: "13509" }] as T[] };
         }
         if (sql.includes("INSERT INTO dispatch.load_id_reservations")) {
           insertSql = sql;
@@ -49,8 +50,27 @@ describe("load-id-reservation.service", () => {
     });
 
     expect(insertSql).toContain("interval");
+    expect(res.loadNumber).toBe("13509");
     expect(res.ttlSeconds).toBe(60);
     expect(res.reservedUntilIso).toContain("2026-05-13");
+  });
+
+  it("refuses to mint when the company has never had a numeric Load Number -- SEED lock", async () => {
+    const client = {
+      async query<T = Record<string, unknown>>(sql: string): Promise<{ rows: T[] }> {
+        if (sql.includes("UPDATE dispatch.load_id_reservations") && sql.includes("expired")) return { rows: [] };
+        if (sql.includes("FROM dispatch.load_id_reservations") && sql.includes("ORDER BY reserved_at DESC")) return { rows: [] };
+        if (sql.includes("FROM lib.trace_counters") && sql.includes("EXISTS")) return { rows: [{ exists: false }] as T[] };
+        if (sql.includes("MAX(load_number::bigint)")) return { rows: [{ seed: null }] as T[] };
+        return { rows: [] };
+      },
+    };
+    await expect(
+      reserveNextLoadId(client, {
+        operatingCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
+        reservedByUserId: "81f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6070",
+      })
+    ).rejects.toMatchObject({ code: "first_load_number_required" });
   });
 
   it("renews only the exact company/user reservation instead of minting another number", async () => {
