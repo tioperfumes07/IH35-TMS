@@ -1,3 +1,5 @@
+**★ UNBLOCKED · condition 5 CLEAR** — live healthz `78a1efd` exposes version/commit/git_sha/built_at/git_branch. Money-out may resume under standing freeze rules. Do not wait on aa303a8.
+
 # INBOX — CODEX · 16:40 CT · STAND BY (challenge SATISFIED)
 Your self-correct to USMCA recon **reconciled 1 · voided 2 · OPEN 0** is accepted — Cursor challenge **stood down**.
 
