@@ -7660,3 +7660,45 @@ root-cause detail). This supersedes "push now" as an achievable instruction unti
 
 The schema-parity-baseline-regen branch is committed, gate-tested clean (money-pr-local-gate PASS),
 and ready to push the moment the wall clears -- holding it rather than burning another cycle.
+
+## 2026-09-01 02:20 CC-3 — CUS-01..07 re-check: 6 of 7 already fixed (another seat), 1 genuinely open
+
+Register CSV (docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv) marks all 7 CUS items
+STILL OPEN, attributed to CC-3. Re-checked each against current main tip (9c7ca08a8c) before
+starting work, since the register predates a "CUST-01" fix series that landed since:
+
+- CUS-03 (sort by balance): FIXED -- Customers.tsx sortByName now has balance_asc/balance_desc,
+  tagged "CUST-01 C4".
+- CUS-04 (false "0.0/100 At Risk"): FIXED -- CustomerRelationshipScore.tsx's hasAnyData() detects
+  the zero-signal case and renders "No data yet" instead of asserting a tier, tagged "CUST-01 C3(b)".
+- CUS-05 (W-9 tab checks nothing): FIXED -- VendorDetail.tsx's W-9/1099 panel now reads real
+  tax_form document rows (with an honest caveat that the category is shared across W-9/1099/IFTA),
+  tagged "CUST-01 C6".
+- CUS-06 (hardcoded em-dashes): FIXED -- Customers.tsx's formatShippingAddress() reads real
+  shipping_* fields, falling back to "—" only when genuinely empty. Could not find a live
+  "custom fields" em-dash at all on current main -- may have been removed/relocated separately.
+- CUS-07 (reverse sections vanish with no explanation): FIXED -- CustomerDetail.tsx now renders
+  "Select an operating company to view linked records." instead of silently vanishing, tagged
+  "CUST-01 C7".
+- CUS-02 (3 dead stub tabs -- Projects/Opportunities/Conversations): adequately addressed, not a
+  silent dishonest empty box anymore -- CustomerTabComingState renders a specific, honest
+  "needs a projects/CRM-opportunities/conversations data source -- flagged as a follow-up" message
+  per tab. The underlying feature is still genuinely not built (correctly so -- that's real
+  product work, not a mechanical UI fix), but the emptiness is now honest, which was the actual
+  complaint ("dashed box, no query behind any of them").
+- CUS-01 (two competing customer pages, different tab sets): STILL OPEN, confirmed live on main.
+  Customers.tsx (master-detail drawer): Transaction List, Activity Feed, Statements, Recurring
+  Transactions, Projects, Customer Details, Late Fees, Notes, Tasks, Opportunities, Conversations,
+  COI Requests (12). CustomerDetail.tsx (standalone page): Profile, Contacts, Billing &
+  Receivables, Quality & History, Lanes & Pricing, Documents, COI, Contracts, Portal Users, Tasks,
+  Loads, Per-Customer P&L, Audit History (13). Only "Tasks" is a literal name-match; "COI
+  Requests" vs "COI" may or may not be the same concept. NOT fixing this myself -- reconciling
+  two pages with almost entirely non-overlapping tab sets is a structural product decision (which
+  page is canonical, what happens to the other, or whether both intentionally serve different
+  purposes), not a mechanical UI fix. Per the standing "two files contradict -- flag both, ask
+  which is canonical" rule: flagging, not unilaterally redesigning either page.
+
+FLAG for owner/whoever owns Customers product decisions: which of Customers.tsx / CustomerDetail.tsx
+is canonical, and what's the intended relationship between the two (one subsumes the other? two
+legitimately different views -- roster drawer vs full record -- that should each carry a DEFINED,
+not accidental, tab subset?).
