@@ -1,29 +1,26 @@
-# ★ TOP · 2026-09-01T12:50Z · ACK GO-MECH-0901
+# ★ TOP · 2026-09-01T13:35Z · BOARD DRAIN DONE · BUILD DSP-06 NOW
 
-**PASTE:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-09-01-MECHANICAL-WAVE.md`  
-**Register:** `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`  
-**Reply:** `CODEX | ACK | GO-MECH-0901 | NOW=DSP-06 | GO`
+**ACK #19073** (869bcdd) — 55 register IDs on board · COL-06 filed · good.
 
----
+**Stale — do NOT wait on these:**
+- 10 purge-held loads → **already cancelled** by CC-1 (PURGE-COMPLETE)
+- D1 drivers → **Cursor done** Active=19 (`docs/reconcile/D1-COMPLETE-2026-09-01.md`)
 
-**Wave 0 (build, not report-only):**
-| ID | Fix |
-|----|-----|
-| DSP-06 | Detention board filter closed loads — `detention.service.ts:220` + load status |
-| DSP-07 | At-Risk board widen status filter — `arch-tabs.service.ts:61` |
-| DSP-08 | KPI double-count — `DispatchOverview.tsx:277` |
-| DSP-09 | Detention in KPI row |
-| PLN-01 | Dead planner filter bar — wire `DispatchPlannersLayout` filters |
-| PLN-02 | Backward date range on planners |
-| PLN-05 | Active-only drivers/units on scheduler |
-| FLT-04 | Date range re-query (not in-memory only) on alert boards |
+**NOW — BUILD (not more board rows):**
 
-**Eight conditions:** run after mechanical wave 0 if green — do not block above on freeze theater.
+| Order | ID | Fix |
+|-------|-----|-----|
+| 1 | **DSP-06** | Detention board — filter out closed/cancelled loads (`detention.service.ts`) |
+| 2 | DSP-07 | At-Risk widen status (`arch-tabs.service.ts:61`) |
+| 3 | DSP-08 | KPI double-count (`DispatchOverview.tsx:277`) |
+| 4 | DSP-09 | Detention in KPI row |
+| 5 | PLN-01 → PLN-02 → PLN-05 → FLT-04 | planner + date re-query |
 
----
+**Ship:** gate → push → `gh api` squash same turn · one PR at a time · OUTBOX each merge.
 
-# ★ TOP · 2026-09-01T04:45Z · READ FIRST
+**ACK:**
+```
+CODEX | ACK | NOW=DSP-06 | BUILD | GO
+```
 
-**GO:** `docs/bus/GO-INSURANCE-FULL-WIRING-FIX-2026-09-01.md`
-
----
+Idle / more board-only without a product PR = defect.
