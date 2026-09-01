@@ -1,5 +1,7 @@
 import { DatePicker } from "../../components/forms/DatePicker";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { Button } from "../../components/Button";
 
 interface FilterBarProps {
   filters: {
@@ -54,24 +56,24 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
 
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-600">Equipment</label>
-            <select
+            <SelectCombobox
               value={draft.equipmentType || ""}
               onChange={(e) => staged.setDraft({ ...draft, equipmentType: e.target.value || undefined })}
-              className="w-[120px] min-h-11 text-sm border rounded-sm px-2"
+              className="w-[120px]"
             >
               {EQUIPMENT_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
                   {t.label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </div>
         </div>
       </CollapsedListFilters>
 
-      <button type="button" className="min-h-11 px-3 text-sm border rounded-sm hover:bg-gray-50 ml-auto">
+      <Button type="button" variant="secondary" className="ml-auto">
         Export
-      </button>
+      </Button>
     </div>
   );
 }
