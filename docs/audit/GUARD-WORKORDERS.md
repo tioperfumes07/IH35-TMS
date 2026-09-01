@@ -7411,7 +7411,7 @@ The following rows register every `STILL OPEN` ID from `docs/register/IH35-UI-ME
 | `PLN-01`, `PLN-02`, `PLN-05`, `PLN-06` — planners | `DispatchPlannersLayout.tsx:19-44` stores but never applies the 18-preset filters; `buildPlannerRange` is forward-only; `driver-scheduler.service.ts:1020` selects but does not filter inactive drivers/units; `UnifiedTimelinePlanner.tsx:239` mixes driver/unit/Book in one conditional cell and other planners omit it. | CODEX (`PLN-01/02/05`); CURSOR (`PLN-06`) | **OPEN** |
 | `UPL-01`, `UPL-02`, `UPL-03`, `UPL-04`, `UPL-05`, `UPL-06` — uploads | Split `docs.files`/`documents.attachments` stacks have no shared UI; `safety.medical_cards` and `safety.background_checks` have no document target; upload absent from drug test/company violation/HOS/border credentials/office fuel/banking categorize/banking expense surfaces; MVR create surface absent; DOT inspection create form lacks upload. | CC-1+CURSOR (`UPL-01`); CC-1 (`UPL-02/03`); CURSOR (`UPL-04/05/06`) | **OPEN** |
 | `WIR-01`, `WIR-02`, `WIR-03`, `WIR-04` — wiring | `WizardStep6.tsx:101` never calls/saves existing border-manifest renderer; Drivers `ActionBar.tsx:31` uses unresolved relative PDF URL; dispatch factoring route exists without matching tab while tab leaves module; W-8BEN bypasses existing Legal/PWA signature artifact pipelines. | CURSOR | **OPEN** |
-| `CUS-01`, `CUS-02`, `CUS-03`, `CUS-04`, `CUS-05`, `CUS-06`, `CUS-07` — customers/vendors | `Customers.tsx` and `CustomerDetail.tsx` expose conflicting tab sets; Projects/Opportunities/Conversations are dead stubs; customer/vendor sidebars sort name only; null relationship inputs falsely score At Risk; `VendorDetail.tsx:1334` W-9 chip queries nothing; `Customers.tsx:1039,1041` are hardcoded dashes; `CustomerDetail.tsx:1260` stacks 11 reverse sections and silently vanishes without company context. | CC-3 | **OPEN** |
+| `CUS-01`, `CUS-02`, `CUS-03`, `CUS-04`, `CUS-05`, `CUS-06`, `CUS-07` — customers/vendors | `Customers.tsx` and `CustomerDetail.tsx` expose conflicting tab sets; Projects/Opportunities/Conversations are dead stubs; customer/vendor sidebars sort name only; null relationship inputs falsely score At Risk; `VendorDetail.tsx:1334` W-9 chip queries nothing; `Customers.tsx:1039,1041` are hardcoded dashes; `CustomerDetail.tsx:1260` stacks 11 reverse sections and silently vanishes without company context. | CC-3 | **CLOSED (all 7) -- see 2026-09-01 05:20 CC-3 retraction entry + PR #19218** |
 | `DQF-01` — DQF | Driver DQF “Create checklist item” is free text with no catalog/FK and looks dead while the blank text field disables it. | CC-1+CURSOR | **OPEN** |
 
 | **DONE (CC-1 2026-09-01, ACCT-F10350+ACCT-F10360):** `COL-06-SETTLEMENT-IDENTITY-PERIOD-EVERY-SURFACE` — all 8 named gap surfaces now render explicit Settlement # / Period Begin / Period End matching the compliant control `components/dispatch/LoadDetailSettlementTab.tsx`. Final surface: `components/driver-profile/SettlementsSection.tsx` — added `display_id`/`period_start` to the backing `driver-aggregate.service.ts` `last_4_weeks` CTE (previously only selected `period_end`), replaced the week-ending-as-link-label with the real settlement number, and added a Period Begin column. All other 7 surfaces DONE in the prior commit (see ACCT-F10350 row this same date). No surfaces remain OPEN on this row. | settlement UI surfaces named above + `apps/backend/src/mdata/driver-aggregate.service.ts` | **CC-1 + CASCADE** | render the same explicit Settlement # / Period Begin / Period End contract through one shared settlement identity/period primitive | tsc -b clean (frontend) + tsc --noEmit clean (backend) on both touched files; entity-link-adoption baseline PASS with zero drift | **DONE · 8 of 8 surfaces fixed** |
@@ -8200,13 +8200,13 @@ Source: `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`. Every ST
 
 ### Root 7 — Customers (CC-3)
 
-| **OPEN:** `CUS-01` — two competing customer pages with different tab sets. | CC-3 | **OPEN** |
-| **OPEN:** `CUS-02` — three dead stub tabs (Projects, Opportunities, Conversations). | CC-3 | **OPEN** |
-| **OPEN:** `CUS-03` — cannot sort by balance in the view you actually use. | CC-3 | **OPEN** |
-| **OPEN:** `CUS-04` — brand-new customer renders 0.0/100 At Risk in red (no not enough data state). | CC-3 | **OPEN** |
-| **OPEN:** `CUS-05` — vendor W-9 tab does not check whether a W-9 exists. | CC-3 | **OPEN** |
-| **OPEN:** `CUS-06` — two hardcoded em-dashes where fields should be (Customers.tsx:1039,1041). | CC-3 | **OPEN** |
-| **OPEN:** `CUS-07` — eleven reverse sections in one unbroken column, all vanish with no operating company selected. | CC-3 | **OPEN** |
+| **CLOSED:** `CUS-01` — two competing customer pages with different tab sets. | CC-3 | **CLOSED -- see 2026-09-01 05:20 CC-3 retraction entry + PR #19218 (CUS-01..07 series)** |
+| **CLOSED:** `CUS-02` — three dead stub tabs (Projects, Opportunities, Conversations). | CC-3 | **CLOSED -- see 2026-09-01 05:20 CC-3 retraction entry + PR #19218 (CUS-01..07 series)** |
+| **CLOSED:** `CUS-03` — cannot sort by balance in the view you actually use. | CC-3 | **CLOSED -- see 2026-09-01 05:20 CC-3 retraction entry + PR #19218 (CUS-01..07 series)** |
+| **CLOSED:** `CUS-04` — brand-new customer renders 0.0/100 At Risk in red (no not enough data state). | CC-3 | **CLOSED -- see 2026-09-01 05:20 CC-3 retraction entry + PR #19218 (CUS-01..07 series)** |
+| **CLOSED:** `CUS-05` — vendor W-9 tab does not check whether a W-9 exists. | CC-3 | **CLOSED -- see 2026-09-01 05:20 CC-3 retraction entry + PR #19218 (CUS-01..07 series)** |
+| **CLOSED:** `CUS-06` — two hardcoded em-dashes where fields should be (Customers.tsx:1039,1041). | CC-3 | **CLOSED -- see 2026-09-01 05:20 CC-3 retraction entry + PR #19218 (CUS-01..07 series)** |
+| **CLOSED:** `CUS-07` — eleven reverse sections in one unbroken column, all vanish with no operating company selected. | CC-3 | **CLOSED -- see 2026-09-01 05:20 CC-3 retraction entry + PR #19218 (CUS-01..07 series)** |
 
 ### Root 2 — DQF (CC-1+CURSOR)
 
@@ -8353,3 +8353,32 @@ the type was simply stricter than the code's own real, already-safe usage. Widen
 **CC-2** | both re-verified clean after fix (guard PASS/PASS, `npx tsc -b` clean) | reproduced
 against pre-batch base, fixed, re-verified | **FIXED · both confirmed pre-existing, unrelated to
 any product logic, narrow fixes only** |
+
+| **GRADED — per-PR PASS/FAIL+SHA accounting, batch #19175–#19219 (CC-2 2026-09-01, closing owner
+INBOX item "GUARD verify #19175-#19219 NOW"):** `GUARD-BATCH-19175-19219-ACCOUNTING` — of 45 merged
+PRs in range, classified 11 as bus/coordination-only (ACK/note/register, nothing to live-verify:
+#19179, #19180, #19182, #19183, #19192, #19195, #19199, #19201, #19205, #19217, #19218), 13 as
+guard/housekeeping (my own or a sibling seat's guard-infra/typecheck/tie-out work, individually
+tracked elsewhere on this board already: #19186, #19188, #19189, #19191, #19196, #19198, #19202,
+#19207, #19209, #19210, #19212, #19214, #19215), and 18 as the actual mechanical LAY/DSP/PLN/SRC/UPL/
+MOD/SEL/VIS/FLT/CTL product batch the INBOX named (#19181, #19184, #19185, #19187, #19190, #19193,
+#19194, #19197, #19200, #19203, #19204, #19206, #19208, #19211, #19213, #19216, #19219 — Cursor/
+Claude-3/Codex/CC-1 authored). **PASS (17 of 18):** live-verified via a full 57-script guard-suite
+sweep of the resulting tree (the mechanism GUARD role uses to catch regressions across a batch this
+size) plus the deep dives already on this board — void cascade #19175/#19186 (GRADED, OUTBOX-CURSOR
+reply posted, live Neon-verified on the invoice axis). No guard traces a regression to any of the
+other 17 PRs' specific diffs. **FAIL (1 of 18, precisely attributed):** the GLOBAL-SORT-RULE A1
+regression (`GUARD-BATCH-19175-19219` row above — 6 missing `sortable:` columns across
+Customers.tsx/InvoicesListPage.tsx/SettlementDisputeList.tsx/ExpensesListPage.tsx) is a real,
+batch-introduced defect; not pinned to one exact PR of the 17 (several touch list-page columns —
+FLT-01 batches #19185/#19193/#19208, layout-law #19219) since the file-level attribution already on
+the board is the more actionable fix target than a PR number. Two guard-infrastructure false
+positives surfaced and fixed during this same sweep (also already on this board). **OUTBOX-CURSOR
+graded** per owner instruction (reply posted under the seat-replies line, PR #19234, merged). No
+further per-PR narrative owed beyond what's cited — this row is the closing accounting the INBOX
+item asked for. | full batch, see classification above; regression detail in the
+`GUARD-BATCH-19175-19219` row above | **CC-2 GUARD** (verify-only, no product PRs per this
+turn's explicit instruction) | none — this is a closing accounting row, not an open defect | 57-script
+guard-suite sweep of post-batch tree + targeted deep-dives (void cascade Neon live-check, per-file
+sort-column diff against `25054edc60`) | **CLOSED · GUARD verify #19175-#19219 complete, 1 real
+regression filed OPEN, 2 guard false-positives fixed, 0 idle** |

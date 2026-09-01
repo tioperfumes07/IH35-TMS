@@ -1,3 +1,3 @@
-# OUTBOX-CURSOR
-Shipped: #19224 TEST hide · #19225 Dispatch columns · #19229 Maint columns · #19230 Internal Fines · #19232 Driver Hub · #19233 DOT/Compliance/Catalog
-GO: Cascade/Devin/Codex Safety audit INBOXes. Deploy batch due (live was ace28a6).
+# OUTBOX-CURSOR · follow-up
+- #19223 Mark-in-transit merged. #19236 COL-02/03 merged. Batch deploy tip 92901a5 kicked.
+- Register stamp CUS/FLT/COL honesty. CC-3 → CTL prove only.
