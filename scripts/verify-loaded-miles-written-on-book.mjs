@@ -85,6 +85,24 @@ function assert(files) {
   if (!/E_MILES_SHORTEST_REQUIRED/.test(src)) {
     problems.push(`${SVC}: must refuse book with seated driver when miles_shortest missing (E_MILES_SHORTEST_REQUIRED).`);
   }
+  if (/uppercase/.test(strip) || /PC\*MILER/.test(strip) || /fuel and ETA/i.test(strip)) {
+    problems.push(`${STRIP}: operator strip still teaches ALL CAPS, PC*MILER, or fuel/ETA — GO-16 Rev B forbids that.`);
+  }
+  const note = modal.match(/<p className="blw-note">[\s\S]*?<\/p>/)?.[0] ?? "";
+  const visible = `${strip}\n${note}`
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "")
+    .replace(/className=\{?`[\s\S]*?`\}?/g, "")
+    .replace(/className="[^"]*"/g, "")
+    .replace(/htmlFor="[^"]*"/g, "")
+    .replace(/data-testid="[^"]*"/g, "")
+    .replace(/id="[^"]*"/g, "");
+  const underscored = [...visible.matchAll(/>([^<{][^<]*)</g)]
+    .map((m) => m[1])
+    .filter((t) => t.includes("_") && !t.includes("http"));
+  if (underscored.length) {
+    problems.push(`${STRIP}: user-visible underscore on Book Load miles chrome: ${underscored.join(" | ")}`);
+  }
   return problems;
 }
 
@@ -123,6 +141,11 @@ if (SELFTEST) {
     [SVC]: files[SVC].replace(/E_MILES_SHORTEST_REQUIRED/g, "E_MILES_GONE"),
   };
   checks.push(["server refuse removed", assert(noServerRefuse).some((p) => /E_MILES_SHORTEST_REQUIRED/.test(p))]);
+  const allCaps = {
+    ...files,
+    [STRIP]: `${files[STRIP]}\n<span className="uppercase">PC*MILER</span>`,
+  };
+  checks.push(["uppercase / PC*MILER planted", assert(allCaps).some((p) => /ALL CAPS|PC\*MILER/.test(p))]);
   const failed = checks.filter(([, c]) => !c).map(([n]) => n);
   if (failed.length) { console.error(`${LABEL} SELFTEST FAIL — not caught: ${failed.join(", ")}`); process.exit(1); }
   console.log(`${LABEL} SELFTEST PASS — ${checks.length}/${checks.length} planted regressions caught`);
