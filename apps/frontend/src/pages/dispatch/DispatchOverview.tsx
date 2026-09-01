@@ -17,6 +17,7 @@ import {
   type DispatchLoad,
   type UnitsWithoutLoad,
 } from "../../api/dispatch";
+import { listLoadsNeedingDriverBillRemint } from "../../api/loads";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { colors, spacing, typography } from "../../design/tokens";
@@ -206,6 +207,14 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
   const unitsWithoutLoadQ = useQuery({
     queryKey: ["dispatch", "overview", "units-without-load", operatingCompanyId],
     queryFn: () => listUnitsWithoutLoad(operatingCompanyId),
+    enabled,
+    refetchInterval: 60_000,
+  });
+
+  // ACCT-F10164 REMINT SCREEN — LAW-FIX-INSTANTLY item 8, bills never auto-created.
+  const needsDriverBillRemintQ = useQuery({
+    queryKey: ["dispatch", "overview", "needs-driver-bill-remint", operatingCompanyId],
+    queryFn: () => listLoadsNeedingDriverBillRemint(operatingCompanyId),
     enabled,
     refetchInterval: 60_000,
   });
@@ -405,6 +414,32 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
                 onClick={onLoadClick ? () => onLoadClick(load.id) : undefined}
               />
             ))
+          )}
+        </DataPanel>
+
+        <DataPanel
+          title="Missing driver bill"
+          viewAllHref="/dispatch/driver-bill-remint"
+          accentColor={colors.warn.strong}
+        >
+          {needsDriverBillRemintQ.isLoading ? (
+            <PanelLoading />
+          ) : needsDriverBillRemintQ.isError ? (
+            PanelError("Couldn't load the driver-bill remint queue.", () => void needsDriverBillRemintQ.refetch())
+          ) : (needsDriverBillRemintQ.data?.real_count ?? 0) === 0 ? (
+            PanelEmpty("Every delivered load has a driver bill.")
+          ) : (
+            (needsDriverBillRemintQ.data?.loads ?? [])
+              .filter((load) => !load.is_sample_data)
+              .slice(0, PANEL_ROW_LIMIT)
+              .map((load) => (
+                <PanelRow
+                  key={load.id}
+                  unit={<EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />}
+                  driver={load.driver_name ?? "— unassigned —"}
+                  loadCustomer={load.status.replace(/_/g, " ")}
+                />
+              ))
           )}
         </DataPanel>
 
