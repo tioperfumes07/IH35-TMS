@@ -561,6 +561,20 @@ export async function postSettlementBillPayment(
   const billDate = settlement.period_end;
   const label = `Settlement ${settlement.display_id ?? settlement.id}`;
 
+  // SETL-HEADER-05 (owner work order 2026-08-30) — the ONLY writer of driver_finance
+  // .driver_settlements.accounting_bill_id / accounting_bill_payment_id used to be
+  // payroll/driver-settlement.service.deprecated.ts, a RETIRE-lane writer against a DIFFERENT table
+  // (payroll.driver_settlements). This LIVE poster wrote those ids into
+  // driver_finance.driver_settlement_gl_bills (per-bill child rows) but never back to the settlement
+  // header itself, which is what let transaction-health.service.ts's linkage signal
+  // (s.accounting_bill_id IS NOT NULL) score every settlement as unlinked even though the money
+  // posted correctly. A settlement can span multiple driver_bills (multiple accounting.bills); the
+  // header back-link is a linkage SIGNAL, not a reconciliation source (that stays
+  // driver_finance.driver_settlement_gl_bills, one row per bill) — so it captures the FIRST bill
+  // processed this run, matching the deprecated writer's own single-id header shape.
+  let headerAccountingBillId: string | null = null;
+  let headerCashBillPaymentId: string | null = null;
+
   // Allocate the total deduction across the per-load bills (oldest first) so each Bill closes.
   const allocation = allocateDeductionsAcrossBills(bills.map((b) => b.gross_amount_cents), totalDeductions);
 
@@ -738,6 +752,12 @@ export async function postSettlementBillPayment(
         [opco, runId, settlementId, b.id, b.load_id, b.load_number, accountingBillId, billJeId, cashBpId, cashJeId, deductionBpId, b.gross_amount_cents, alloc.deductionCents, alloc.cashCents]
       );
     });
+
+    // SETL-HEADER-05 — capture the first bill's ids for the header back-link written below.
+    if (headerAccountingBillId === null && accountingBillId) {
+      headerAccountingBillId = accountingBillId;
+      headerCashBillPaymentId = cashBpId;
+    }
   }
 
   // ── Deduction JE (ONE balanced entry): Dr A/P (total) / Cr each driver-own-or-recovery target. ───
@@ -778,6 +798,19 @@ export async function postSettlementBillPayment(
         WHERE id = $1::uuid`,
       [runId, gross, totalDeductions, gross - totalDeductions]
     );
+    // SETL-HEADER-05 — the missing header back-link, in the SAME transaction as the run finalize so
+    // it can never disagree with what actually posted. COALESCE keeps a re-entrant/idempotent call
+    // (already-posted bills, headerAccountingBillId null) from clobbering a previously-written link.
+    if (headerAccountingBillId) {
+      await client.query(
+        `UPDATE driver_finance.driver_settlements
+            SET accounting_bill_id = COALESCE(accounting_bill_id, $2::uuid),
+                accounting_bill_payment_id = COALESCE(accounting_bill_payment_id, $3::uuid),
+                updated_at = now()
+          WHERE id = $1::uuid`,
+        [settlementId, headerAccountingBillId, headerCashBillPaymentId]
+      );
+    }
     await appendCrudAudit(
       client as never,
       actor.userId,
