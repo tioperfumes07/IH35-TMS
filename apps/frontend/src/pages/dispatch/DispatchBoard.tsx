@@ -64,6 +64,7 @@ import {
   TableSelectionHeader,
   useBulkSelection,
 } from "../../components/bulk";
+import { bulkRowLabelsFromRows, loadBulkRowLabel } from "../../components/bulk/bulkRowLabels";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { CancelLoadModal } from "../../components/dispatch/CancelLoadModal";
 import { Button } from "../../components/Button";
@@ -736,6 +737,8 @@ export function DispatchBoard({
       return;
     }
     const ids = Array.from(selection.selectedIds);
+    const selected = sortedLoads.filter((load) => selection.selectedIds.has(load.id));
+    const rowLabels = bulkRowLabelsFromRows(selected, loadBulkRowLabel);
     setCancelModalOpen(false);
     try {
       await bulk.runBulk(
@@ -755,6 +758,7 @@ export function DispatchBoard({
           reason: payload.cancellation_notes,
           operatingCompanyId: companyId,
           invalidateKeys: [["loads"]],
+          rowLabels,
         },
         () => {
           selection.clear();
