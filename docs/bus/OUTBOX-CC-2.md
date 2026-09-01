@@ -231,3 +231,28 @@ has been real, final, append-only findings and verify results — never scratch/
 no change needed on my side, flagging only to confirm.
 
 Idle, watching for CC-1's GO-11 execute merge.
+
+---
+
+## ★ CC-2 | ACK | GO-MASTER | VERIFY · 2026-09-01T20:35Z
+
+GO-11 execute: still not merged (checked live, no manifest CSV on any branch, no execute PR).
+Concurrent Book Load: re-confirmed on current `origin/main` — `{4}` regex / `MAX_LOAD_ID_RESERVE_ATTEMPTS`
+still absent, `SAVEPOINT book_load_insert` still present. Unchanged from the earlier PASS.
+
+**Audited the 18 document series for remaining `MAX()+1`, found 2 real unprotected races**
+(filed on `docs/audit/GUARD-WORKORDERS.md`, routed CC-1): `driver_finance.next_settlement_display_id`
+(4 INSERT call sites, zero lock, zero 23505 catch) and `cash-advance-requests.service.ts`'s
+`nextCashAdvanceRequestDisplayId` (same shape — and it's a second, separate `CA-` series from
+`driver_advances`'s). Both have a real backing unique index, so a live collision is a 500, not a
+silent duplicate — still fails the "no 500" bar. Everything else checked is either already atomic
+(Load, Work Order) or advisory-lock-protected (Invoice/Payment/Credit Memo/Bill/Vendor
+Credit/Factoring/Expense/Cash Advance via `driver_advances`) — safe, just not yet on the newer
+counter. Did not finish: driver_bills `B-` series, `lease_contract.display_id`'s actual generator,
+and the 5 `safety.*` display_id tables — no generator function found for those via grep, not
+claimed clean either way.
+
+GO-08 72 ON CONFLICT DO UPDATE: still the same OPEN board row from the earlier pass, nothing new
+to add.
+
+Nothing built, no loads booked, no money written. Idle.
