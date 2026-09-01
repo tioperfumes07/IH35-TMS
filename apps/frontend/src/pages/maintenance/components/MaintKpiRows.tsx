@@ -39,14 +39,53 @@ export function MaintKpiRows({ kpis, isError = false }: Props) {
   const dotOo = isError ? null : pick(dynamicKpis.dot_oos, kpis.out_of_service);
 
   return (
-    <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7" data-testid="maint-kpi-rows">
-      <DrillKpiCard label="Open WOs" value={isError ? null : pick(kpis.open_wos)} to="/maintenance/active-wos" />
-      <DrillKpiCard label="Past Due" value={pastDue} to="/maintenance/pm-schedule" />
-      <DrillKpiCard label="Avg Close" value={days(avgCloseDays)} to="/maintenance/work-orders" />
-      <DrillKpiCard label="Open $" value={usd(openDollars)} to="/maintenance/active-wos" />
-      <DrillKpiCard label="Tire Alerts" value={tireAlerts} to="/maintenance/tire-wear" />
-      <DrillKpiCard label="PM Due" value={pmDue} to="/maintenance/pm-schedule" />
-      <DrillKpiCard label="DOT O/O" value={dotOo} to="/maintenance/severe-repairs" />
-    </div>
+    <section className="space-y-1" data-testid="maint-kpi-work-orders">
+      <h2 className="text-[10px] font-semibold uppercase tracking-wide text-gray-600">Work orders — live open set</h2>
+      <p className="text-[11px] text-gray-500">These seven boxes count work orders and PM alerts, not fleet units. Click any card to open the list it counts.</p>
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7" data-testid="maint-kpi-rows">
+        <DrillKpiCard
+          label="Open WOs"
+          value={isError ? null : pick(kpis.open_wos)}
+          to="/maintenance/active-wos"
+          hint="Open / in progress / waiting parts. Not cancelled or complete."
+        />
+        <DrillKpiCard
+          label="Past Due"
+          value={pastDue}
+          to="/maintenance/pm-schedule"
+          hint="Open WO linked to a PM alert triggered before today."
+        />
+        <DrillKpiCard
+          label="Avg Close"
+          value={days(avgCloseDays)}
+          to="/maintenance/work-orders"
+          hint="Mean close time for WOs completed in the last 30 days."
+        />
+        <DrillKpiCard
+          label="Open $"
+          value={usd(openDollars)}
+          to="/maintenance/active-wos"
+          hint="Sum of actual/estimated cost on currently open WOs."
+        />
+        <DrillKpiCard
+          label="Tire Alerts"
+          value={tireAlerts}
+          to="/maintenance/tire-wear"
+          hint="Open work orders with wo_type = tire."
+        />
+        <DrillKpiCard
+          label="PM Due"
+          value={pmDue}
+          to="/maintenance/pm-schedule"
+          hint="PM alerts in state open or acknowledged (no mile window on this tile)."
+        />
+        <DrillKpiCard
+          label="DOT O/O"
+          value={dotOo}
+          to="/maintenance/severe-repairs"
+          hint="Units whose latest DVIR outcome is OOS."
+        />
+      </div>
+    </section>
   );
 }

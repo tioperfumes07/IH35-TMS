@@ -1,30 +1,21 @@
-# NOW — ONE SOURCE (2026-09-01 · seats paused · continuous)
+# NOW — ONE SOURCE (2026-09-01 · owner GO-01–05 APPROVED)
 
-U14 = **CLOSED** (14/14 CERTIFIED — never recertify). Register: `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`
+U14 = **CLOSED**. Owner approved Claude packets GO-01…GO-05. Copy ACV from signed Lloyd's table — **do not invent**.
 
-**Live census @ 2026-09-01 ~17:00Z:** API `healthz/shallow` **`b3599e0`** · origin/main **`ba0e110`** · FE `/version.json` **`ba0e110`** (unblocked — `ih35-tms-web` `dep-dabg83ugekts73amie2g` live). **Do not** treat GO-0014 (`069d531`) as NOW.
-
-## Residual ONLY
-
-| Id | Status | Owner |
-|----|--------|-------|
-| **CTL-01/02/03** | REPORTED DONE — **Live Chrome VERIFIED stamp pending** | CC-3 (+ Devin-A) |
-| **WIR-04** | **BLOCKED** — no attorney-approved W-8BEN template · counsel PR **#19276** | Cursor (honesty only; no e-sign until counsel) |
-
-All other register rows = FIXED or owner-gated elsewhere. **Do not reopen COL/LAY/SRC sweeps.**
+**Live:** API `healthz/shallow` **`7496ccf`** (#19308 maint recent WOs) · FE autoDeploy from main. Hard-refresh. Nobody else `trigger_deploy` until next 5–10 PR gate.
 
 ## Seat NOW
 
-| Seat | NOW |
-|------|-----|
-| **CC-1** | `SETL-DUAL-APPROVAL-STATE-CONTRADICTION` · `LINKAGE-INTEGRITY-LAW` · `INV-OPEN-VOID-01` · `GO-INSURANCE` assets/ACV (NO recreate policies; NO-SEAT) |
-| **CC-2** | `NO-SEAT-PROD-FINANCIAL-FIXTURES` verify named in GitHub workflow · grade tip `#19273`/`#19271`/`#19264`/`#19262` live after deploy |
-| **CC-3** | CTL-01/02/03 Live Chrome USMCA → stamp register **VERIFIED** · leftover unique FINDING only after |
-| **Cursor** | Feed seats (`FEED/NOW-*` + Desktop sync) · leftover unique FE · WIR-04 honesty. **Do not** `trigger_deploy` (API still `b3599e0`; FE matches main) |
-| **Devin-A** | Live Chrome **now** on FE `ba0e110` |
+| Seat | NOW | Tier |
+|------|-----|------|
+| **CC-1** | **GO-01 P0** then GO-02 API + GO-05 prefs table | A for GO-01 only |
+| **Cursor** | **GO-04** (shipping) then **GO-02 UI** after CC-1 payload | C |
+| **CC-3** | **GO-05 wave 1** (10 operator screens) | C |
+| **Codex** | **GO-05 wave 2** money screens — stop-rule on financial statements | C |
+| **CC-2** | Verify GO-01 TIV query = **exactly $1,077,940.00** after CC-1 merge. Never build. | A verify |
+| **Cascade** | Unique FINDING only | — |
+| **Devin-A** | Live Chrome maint + insurance after hard-refresh on current SHA | — |
 
-## Deploy law
+GO-03 **blocked on GO-01**. WIR-04 still counsel BLOCKED.
 
-- **API** (`srv-d7rpem7avr4c73fhp4n0`): autoDeploy **no** — `.github/workflows/render-trigger-deploy.yml` when main ahead of live (triggered this session).
-- **FE** (`srv-d7s46dbrjlhs7383i150` / `ih35-tms-web`): autoDeploy **yes/commit** — live **`ba0e110`** as of 16:59Z. Do not second-kick.
-- **Never** per-merge `trigger_deploy` (Rule 42).
+FAST-MERGE ~4 min. NO-SEAT prod money. USMCA only.

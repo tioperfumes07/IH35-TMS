@@ -1,6 +1,4 @@
-# FEED NOW — CC-3 · 2026-09-01 12:00 CT
-**NEVER IDLE.** `git pull --ff-only origin main` then **INBOX-CC-3 TOP**.
+# FEED NOW — CC-3 · 2026-09-01 13:00 CT
+**NOW=GO-05 WAVE 1** — convert files 1–10 in `GO-05-CONVERT-46-RAW-TABLES-TO-PARITYTABLE.txt` (DispatchBoard … TaskPlannerGrid). Keep every column. Stable storageKey. One PR for the wave. Live Chrome drag proof.
 
-**NOW=CTL-01/02/03 Live Chrome USMCA** → stamp register **VERIFIED**. Hard-reload FE `ba0e110`. Leftover unique FINDING only after (500 / dead click / silent no-op).
-
-Do not rebuild GO-0014 BANK-F01. Nobody `trigger_deploy`. U14 never restamp. GO.
+Tier C. FAST-MERGE. Never `trigger_deploy`. U14 never restamp. GO.

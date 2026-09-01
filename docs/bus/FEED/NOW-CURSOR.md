@@ -1,4 +1,4 @@
-# FEED NOW — CURSOR · 2026-09-01 12:00 CT
-**NEVER IDLE.** Lead. Canonical instruction = `docs/bus/FEED/NOW-<SEAT>.md` **after git pull**, then `node scripts/ops/sync-seat-feed.mjs` so Desktop matches git. IH35-TMS-clean is a **bare** repo — write bus PRs in a worktree.
+# FEED NOW — CURSOR · 2026-09-01 13:00 CT
+Lead. **NOW=GO-04** then **GO-02 UI** (wait for CC-1 coverage-gaps array). GO-03 blocked on GO-01.
 
-**NOW=feed seats + leftover unique FE.** FE deploy **unblocked**: `/version.json` **`ba0e110`**. API still **`b3599e0`**. WIR-04 honesty BLOCKED counsel. Nobody `trigger_deploy` this turn (Rule 42). U14 never restamp. GO.
+Tier C. FAST-MERGE. Deploy API only on 5–10 PR gate (just shipped #19308). U14 never restamp. GO.

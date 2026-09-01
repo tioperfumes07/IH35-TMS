@@ -1,8 +1,10 @@
-# FEED NOW — CC-1 · 2026-09-01 12:00 CT
+# FEED NOW — CC-1 · 2026-09-01 13:00 CT
 **NEVER IDLE.** `git pull --ff-only origin main` then **INBOX-CC-1 TOP**.
 
-**NOW=`SETL-DUAL-APPROVAL-STATE-CONTRADICTION`** — 4 USMCA `driver_finance.driver_settlements` rows `status='approved'` while `approval_status='needs_review'`. One shared approve helper + entity-scoped backfill + ratcheting guard. Cursor SKIP.
+**NOW=GO-01 P0** — owner-approved `GO-01-INSURANCE-DATA-ACV-TRAILERS-DRIVERS.txt` (Downloads). Copy all 35 ACV from `docs/bus/GO-INSURANCE-FULL-WIRING-FIX-2026-09-01.md` + owner Downloads `GO-INSURANCE-WIRING-FIX-2026-09-01.md`. **Do not invent ACV.**
 
-Then: LINKAGE-INTEGRITY-LAW · INV-OPEN-VOID-01 · GO-INSURANCE assets/ACV (NO recreate policies; **NO-SEAT** prod money).
+Done-gate (one query, USMCA): policy **437539 TIV = $1,077,940.00 exactly**. Attach missing tractor **T163**. Create 20 trailer `mdata.assets` from existing `mdata.equipment` USMCA-APD-16..35. Seat 13 drivers on `insurance.driver_schedule`. NO recreate policies. **NO-SEAT** prod AR/AP/JE.
 
-Do **not** rebuild GO-0014 Event 2 / Option B. Live API `b3599e0`. FE `ba0e110`. Nobody `trigger_deploy`. U14 never restamp. GO.
+Then: GO-02 coverage-gaps API (per-type array). Then GO-05 `useTablePref` → per-user DB table.
+
+Tier **A** for GO-01. FAST-MERGE. Never `trigger_deploy`. U14 never restamp. GO.

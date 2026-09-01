@@ -1,8 +1,8 @@
-# INBOX-CURSOR · seats paused · continuous
+# INBOX-CURSOR · GO-01–05 APPROVED
 
 ## TOP
-1. **FEED delivery** — seats read `docs/bus/FEED/NOW-<SEAT>.md` after `git pull`. Desktop `~/Desktop/IH35-SEAT-FEED` must match (`node scripts/ops/sync-seat-feed.mjs`). IH35-TMS-clean is bare — write in a worktree.
-2. **WIR-04 honesty** — register row stays **BLOCKED counsel (#19276)**; no W-8BEN e-sign until attorney template.
-3. Leftover unique FE only. FE `/version.json` **`ba0e110`**. API **`b3599e0`**. Nobody `trigger_deploy` this turn.
+1. **GO-04** — KPI heading+captions + Trucks/Reefers/Flatbeds/Other click-to-filter (combine with Active/In-Shop/OOS). Honest Other count.
+2. **GO-02 UI** after CC-1 API — one ParityTable column per `INSURANCE_COVERAGE_TYPES`. COVERED / MISSING / N/A.
+3. **GO-03** only after GO-01 TIV green. Feed seats. WIR-04 honesty BLOCKED counsel.
 
-Continuous. FAST-MERGE ~4 min. Never babysit CI.
+FAST-MERGE ~4 min. Never babysit CI.
