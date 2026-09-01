@@ -242,26 +242,52 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
 
     const payload = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await relationExists(client, "maintenance.work_orders"))) return { recent: [], completed: [], recent_total_count: 0, completed_total_count: 0 };
+      // Same unit/driver/vendor/load joins as GET /work-orders so home columns match Active WOs.
+      // Recent = live activity only: cancelled belongs in neither panel (WORM rows stay in the DB).
+      const woActivityJoins = `
+            w.*,
+            u.unit_number,
+            e.equipment_number,
+            NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+            COALESCE(w.external_vendor_id, w.vendor_id)::text AS resolved_vendor_id,
+            v.vendor_name AS resolved_vendor_name,
+            l.load_number AS linked_load_number,
+            COUNT(*) OVER()::int AS total_count
+           FROM maintenance.work_orders w
+           LEFT JOIN mdata.units u
+             ON u.id = w.unit_id
+            AND (u.owner_company_id = w.operating_company_id
+                 OR u.currently_leased_to_company_id = w.operating_company_id)
+           LEFT JOIN mdata.equipment e
+             ON e.id = w.equipment_id
+            AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = w.operating_company_id
+           LEFT JOIN mdata.drivers d ON d.id = w.driver_id
+                                      AND d.operating_company_id = w.operating_company_id
+           LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id)
+                                      AND v.operating_company_id = w.operating_company_id
+           LEFT JOIN mdata.loads l ON l.id = w.load_id AND l.operating_company_id = w.operating_company_id`;
       const recent = await client.query(
         `
-          SELECT *, COUNT(*) OVER()::int AS total_count FROM maintenance.work_orders
-          WHERE operating_company_id = $1::uuid
+          SELECT ${woActivityJoins}
+          WHERE w.operating_company_id = $1::uuid
             -- MAINT-VOID: voided work orders are not recent ACTIVITY, they are retracted records.
             -- Without this the voided demo rows DEMO-WO-001/002 sat in this panel on prod while the
             -- main work-order table correctly showed none.
-            AND voided_at IS NULL
-          ORDER BY opened_at DESC NULLS LAST, created_at DESC
+            AND w.voided_at IS NULL
+            AND w.status IS DISTINCT FROM 'cancelled'
+            AND w.status IS DISTINCT FROM 'complete'
+          ORDER BY w.opened_at DESC NULLS LAST, w.created_at DESC
           LIMIT $2 OFFSET $3
         `,
         [companyId, parsed.data.limit, parsed.data.recent_offset]
       );
       const completed = await client.query(
         `
-          SELECT *, COUNT(*) OVER()::int AS total_count FROM maintenance.work_orders
-          WHERE operating_company_id = $1::uuid
-            AND status = 'complete'
-            AND voided_at IS NULL
-          ORDER BY updated_at DESC NULLS LAST
+          SELECT ${woActivityJoins}
+          WHERE w.operating_company_id = $1::uuid
+            AND w.status = 'complete'
+            AND w.voided_at IS NULL
+          ORDER BY w.updated_at DESC NULLS LAST
           LIMIT $2 OFFSET $3
         `,
         [companyId, parsed.data.limit, parsed.data.completed_offset]
