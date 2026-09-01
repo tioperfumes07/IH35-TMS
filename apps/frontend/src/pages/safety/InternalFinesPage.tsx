@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatUsd } from "../../lib/money";
+import { internalFineDisplayId } from "../../lib/internal-fine-display";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -22,6 +24,7 @@ import { useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { useStagedListFilters } from "../../components/table";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { InternalFineDetailDrawer } from "./components/InternalFineDetailDrawer";
 
 type InternalFineRow = Record<string, unknown>;
 
@@ -37,6 +40,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const linkedFineId = searchParams.get("fine_id");
+  const [selectedFine, setSelectedFine] = useState<InternalFineRow | null>(null);
   const [page, setPage] = useState(0);
   const pageSize = 50;
   const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
@@ -185,10 +189,27 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
 
   useEffect(() => {
     actionGenerationRef.current += 1;
+    setSelectedFine(null);
     setLifecycleTarget(null);
     setCreateError(null);
     createMutation.reset();
   }, [operatingCompanyId]); // Mutation reset is stable; each company owns a fresh fine lifecycle.
+
+  const rows = query.data?.fines ?? [];
+
+  useEffect(() => {
+    if (!linkedFineId || query.isLoading || query.isError) return;
+    const match = rows.find((row) => String(row.id) === linkedFineId);
+    if (!match) return;
+    setSelectedFine(match);
+    const next = new URLSearchParams(searchParams);
+    next.delete("fine_id");
+    setSearchParams(next, { replace: true });
+  }, [linkedFineId, rows, query.isLoading, query.isError, searchParams, setSearchParams]);
+
+  const activeFine = selectedFine
+    ? rows.find((row) => String(row.id) === String(selectedFine.id)) ?? selectedFine
+    : null;
 
   const missing = useMemo(() => {
     const parts: string[] = [];
@@ -205,20 +226,64 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
 
   // Migrated to the shared QBO-parity grid — columns and order are preserved verbatim (§7 additive-only).
   const columns: Array<ParityColumn<InternalFineRow>> = [
+    {
+      key: "display_id",
+      label: "Fine #",
+      sortable: true,
+      render: (row) => (
+        <button
+          type="button"
+          className="text-[#1f2a44] underline"
+          data-testid={`internal-fine-open-${String(row.id ?? "")}`}
+          onClick={() => setSelectedFine(row)}
+        >
+          {internalFineDisplayId(row)}
+        </button>
+      ),
+    },
     { key: "imposed_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.imposed_date) },
     {
       key: "driver_id",
       label: "Driver",
       render: (row) => (
-        <EntityLink
-          kind="driver"
-          id={row.driver_id as string | undefined}
-          label={entityLabel((row.driver_name as string | undefined)?.trim(), String(row.driver_id ?? ""), "Driver")}
-        />
+        <button
+          type="button"
+          className="text-left text-[#1f2a44] underline"
+          data-testid={`internal-fine-driver-open-${String(row.id ?? "")}`}
+          onClick={() => setSelectedFine(row)}
+        >
+          {entityLabel((row.driver_name as string | undefined)?.trim(), String(row.driver_id ?? ""), "Driver")}
+        </button>
       ),
     },
     { key: "reason_code", label: "Reason", render: (row) => String(row.reason_code ?? row.reason_name ?? "—") },
-    { key: "amount", label: "Amount", render: (row) => `$${Number(row.amount ?? 0).toFixed(2)}` },
+    { key: "amount", label: "Amount", render: (row) => formatUsd(row.amount) },
+    {
+      key: "related_load_id",
+      label: "Load",
+      render: (row) =>
+        row.related_load_id ? (
+          <EntityLink
+            kind="load"
+            id={String(row.related_load_id)}
+            label={entityLabel(row.related_load_number, String(row.related_load_id), "Load")}
+          />
+        ) : (
+          "—"
+        ),
+    },
+    {
+      key: "applied_to_settlement_id",
+      label: "Settlement",
+      render: (row) =>
+        row.applied_to_settlement_id ? (
+          <EntityLink kind="settlement" id={String(row.applied_to_settlement_id)} label="Settlement" />
+        ) : row.settlement_deduction_id ? (
+          <EntityLink kind="settlement_deduction" id={String(row.settlement_deduction_id)} label="Deduction" />
+        ) : (
+          "—"
+        ),
+    },
     { key: "status", label: "Status", sortable: true, render: (row) => toStatusLabel(String(row.status ?? "pending")) },
     {
       key: "driver_liability_id",
@@ -273,7 +338,8 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-sm border border-gray-200 bg-white p-3">
+      <section className="space-y-2" data-testid="internal-fines-create">
+        <h3 className="text-sm font-semibold text-slate-900">+ Create Internal Fine</h3>
         <div className="grid gap-2 md:grid-cols-6">
           <DriverPickerWithCreate
             operatingCompanyId={operatingCompanyId}
@@ -319,9 +385,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
             hint="Type to search the full internal-fine-reason catalog."
             className="text-xs text-slate-600 md:col-span-6"
           />
-          {/* M-1 (GUARD inline FAIL): this is the inline-create fine AMOUNT (sent to createInternalFine as
-              dollars; display is $row.amount.toFixed(2)). dollars-mode MoneyInput; amount stays a DOLLAR
-              number, byte-for-byte (the backend does Math.round(amount*100) for the liability). */}
+          {/* M-1 (GUARD inline FAIL): inline-create fine AMOUNT (createInternalFine dollars; list uses formatUsd). */}
           <MoneyInput valueDollars={form.amount || null} onChangeDollars={(d) => setForm((v) => ({ ...v, amount: d ?? 0 }))} ariaLabel="Fine amount (USD)" placeholder="Amount (USD)" />
           <div>
             <label className="sr-only" htmlFor="internal-fine-imposed-date">Imposed date</label>
@@ -383,7 +447,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           ) : null}
           {/* SAF-F24 / LST-PICKER-01: reason create is ReferenceSelect first-row (CatalogQuickCreateDrawer). */}
         </div>
-      </div>
+      </section>
 
       {query.isError ? (
         <ListErrorBanner
@@ -393,7 +457,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
       ) : (
         <ParityTable<InternalFineRow>
           columns={columns}
-          rows={query.data?.fines ?? []}
+          rows={rows}
           rowKey={(row) => String(row.id)}
           loading={query.isLoading}
           emptyText="No internal fines found."
@@ -476,9 +540,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
         title={lifecycleTarget?.action === "void" ? "Void Internal Fine" : "Dispute Internal Fine"}
         entityRef={
           lifecycleTarget
-            ? `${String(lifecycleTarget.row.reason_code ?? lifecycleTarget.row.reason_name ?? "Internal fine")} · $${Number(
-                lifecycleTarget.row.amount ?? 0
-              ).toFixed(2)} · ${formatDateUS(lifecycleTarget.row.imposed_date)}`
+            ? `${internalFineDisplayId(lifecycleTarget.row)} · ${formatUsd(lifecycleTarget.row.amount)} · ${formatDateUS(lifecycleTarget.row.imposed_date)}`
             : undefined
         }
         minLength={3}
@@ -504,6 +566,8 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           setLifecycleTarget(null);
         }}
       />
+
+      <InternalFineDetailDrawer open={Boolean(activeFine)} fine={activeFine} onClose={() => setSelectedFine(null)} />
     </div>
   );
 }

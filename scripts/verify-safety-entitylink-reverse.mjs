@@ -47,6 +47,8 @@ const SAFETY_KINDS = [
     honoredBy: "apps/frontend/src/pages/safety/AccidentsPage.tsx", honorProof: /setDrawerOpen\(true\)/ },
   { kind: "safety_fine", route: "/safety/external-fines?fine_id=", param: "fine_id",
     honoredBy: "apps/frontend/src/pages/safety/FinesPage.tsx", honorProof: /setSelectedFine\(/ },
+  { kind: "internal_fine", route: "/safety/internal-fines?fine_id=", param: "fine_id",
+    honoredBy: "apps/frontend/src/pages/safety/InternalFinesPage.tsx", honorProof: /setSelectedFine\(/ },
   { kind: "complaint", route: "/safety/complaints?complaint_id=", param: "complaint_id",
     honoredBy: "apps/frontend/src/pages/safety/ComplaintsPage.tsx", honorProof: /rowClassName=/ },
   { kind: "dot_inspection", route: "/safety/dot-inspections?inspection_id=", param: "inspection_id",
