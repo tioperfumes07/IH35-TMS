@@ -1,8 +1,6 @@
-# ★ TOP · 2026-09-01T06:50Z · CASCADE · VERIFY-STATIC + BOARD
+# INBOX-CASCADE · OWNER NO PAUSE · 2026-09-01
 
-## NOW
-1. Remeasure `node scripts/verify-static.mjs` on clean main → triage extras vs baseline
-2. Append GUARD-WORKORDERS OPEN for each STILL OPEN register id missing a board row
-3. Do not idle waiting on seats — they use Recipe C
-
-**ACK:** `CASCADE | ACK | NOW=remeasure | GO`
+## TOP — Safety visual audit NOW
+Walk ALL Safety leaves USMCA live. Record DESIGN|MECHANICAL|WIRING|QBO-FORMAT in GUARD-WORKORDERS + ~/Desktop/IH35-CURSOR-AUDIT/modules/safety-visual-2026-09-01.md.
+Owner seeds: Internal Fines (open/number/load/box/QBO), DOT (uniform+Combobox), Catalog Combobox, Compliance multi-unit, acquisition QBO formats.
+Cascade = audit only. No idle. No U14.
