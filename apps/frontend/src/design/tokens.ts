@@ -90,7 +90,19 @@ export const spacing = {
   radiusButton: 4,
   sectionGap: 16,
   panelGap: 12,
+  /** FILTER LAW (COLUMN LAW 2026-09-01) — the one control height every list-toolbar filter shares:
+   * the search box (TableSearch), every combobox filter (components/Combobox.tsx's own trigger
+   * box), and the Range popover's button/date/number inputs (UniversalListToolbar). Before this,
+   * TableSearch was h-8 sitting next to a h-9 Combobox in the SAME row — a real, visible size
+   * mismatch across every list page, not a cosmetic nit. Change this ONE number, not per-file
+   * h-8/h-9 literals, if the app's control scale ever needs to move. */
+  filterControlHeight: 36,
 } as const;
+
+/** FILTER LAW — the literal Tailwind class pairing every filter-row control (search box, combobox
+ * trigger, range popover fields) must share. A plain string constant (not a computed style) so
+ * Tailwind's static class scanner still finds it; the underlying number is `spacing.filterControlHeight`. */
+export const FILTER_CONTROL_SIZE_CLASS = "h-9 text-[13px]";
 
 export const z = {
   dropdown: 30,

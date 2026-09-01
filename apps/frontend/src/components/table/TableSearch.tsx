@@ -1,5 +1,6 @@
 import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 
 // GLOBAL-TABLE-CONTROLS — shared free-text filter box. Narrows a list as you type.
 // DISPATCH-SEARCH-BOX-KEYSTROKE-LOSS: do not drive the visible value through a
@@ -96,7 +97,10 @@ export function TableSearch({
         placeholder={placeholder}
         aria-label={ariaLabel ?? placeholder}
         data-testid={testId ? `${testId}-input` : undefined}
-        className="h-8 w-full rounded-sm border border-gray-300 pl-7 pr-2 text-[13px]"
+        // FILTER LAW — this used to be a smaller fixed height hand-typed here while the Combobox
+        // filter sitting right next to it in the same toolbar row was taller: a real, visible size
+        // mismatch, not a nit. Now shares the one constant both controls render at.
+        className={`${FILTER_CONTROL_SIZE_CLASS} w-full rounded-sm border border-gray-300 pl-7 pr-2`}
       />
     </div>
   );

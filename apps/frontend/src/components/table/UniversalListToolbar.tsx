@@ -4,6 +4,7 @@ import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 import { TableSearch } from "./TableSearch";
+import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 
 /** QBO-style date range presets — same set as Account Register (This Month / Last Month / …). */
 export function applyUniversalDatePreset(preset: string): { from: string; to: string } | null {
@@ -193,7 +194,7 @@ export function UniversalListToolbar({
               Date or amount field
               <select
                 aria-label="Range field"
-                className="mt-1 h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-[12px]"
+                className={`mt-1 ${FILTER_CONTROL_SIZE_CLASS} w-full rounded-sm border border-gray-300 bg-white px-2`}
                 value={draft?.key ?? ""}
                 onChange={(event) => {
                   const next = rangeColumns.find((column) => column.key === event.target.value);
@@ -211,7 +212,7 @@ export function UniversalListToolbar({
                     Date range (QBO)
                     <select
                       aria-label="QBO date range preset"
-                      className="mt-1 h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-[12px]"
+                      className={`mt-1 ${FILTER_CONTROL_SIZE_CLASS} w-full rounded-sm border border-gray-300 bg-white px-2`}
                       defaultValue="custom"
                       onChange={(event) => {
                         const preset = event.target.value;
@@ -234,7 +235,7 @@ export function UniversalListToolbar({
                     ) : selected.kind === "amount" ? (
                       <MoneyInput valueDollars={draft?.from ? Number(draft.from) : null} onChangeDollars={(value) => setDraft((current) => current ? { ...current, from: value == null ? "" : String(value) } : current)} className="mt-1" ariaLabel="Range from amount" />
                     ) : (
-                      <input type="number" aria-label="Range from number" value={draft?.from ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, from: event.target.value } : current)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]" />
+                      <input type="number" aria-label="Range from number" value={draft?.from ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, from: event.target.value } : current)} className={`mt-1 ${FILTER_CONTROL_SIZE_CLASS} w-full rounded-sm border border-gray-300 px-2`} />
                     )}
                   </label>
                   <label className="text-[11px] font-semibold text-gray-600">To
@@ -243,7 +244,7 @@ export function UniversalListToolbar({
                     ) : selected.kind === "amount" ? (
                       <MoneyInput valueDollars={draft?.to ? Number(draft.to) : null} onChangeDollars={(value) => setDraft((current) => current ? { ...current, to: value == null ? "" : String(value) } : current)} className="mt-1" ariaLabel="Range to amount" />
                     ) : (
-                      <input type="number" aria-label="Range to number" value={draft?.to ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, to: event.target.value } : current)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]" />
+                      <input type="number" aria-label="Range to number" value={draft?.to ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, to: event.target.value } : current)} className={`mt-1 ${FILTER_CONTROL_SIZE_CLASS} w-full rounded-sm border border-gray-300 px-2`} />
                     )}
                   </label>
                 </div>

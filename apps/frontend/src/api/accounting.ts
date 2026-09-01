@@ -419,6 +419,10 @@ export function listInvoices(
     /** Explicit page size — always pass; do not rely on silent API default. */
     limit?: number;
     offset?: number;
+    // SORT-02 — pushes the ParityTable header's active sort into the query's real ORDER BY
+    // (see INVOICE_SORT_COLUMNS allowlist server-side) instead of only reordering the fetched page.
+    sort?: string;
+    dir?: "asc" | "desc";
   } = {}
 ) {
   const query = new URLSearchParams();
@@ -433,6 +437,8 @@ export function listInvoices(
   if (params.dir) query.set("dir", params.dir);
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
+  if (params.sort) query.set("sort", params.sort);
+  if (params.dir) query.set("dir", params.dir);
   const qs = query.toString();
   return apiRequest<{
     invoices: Invoice[];
