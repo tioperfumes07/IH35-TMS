@@ -162,7 +162,9 @@ function selftest() {
   const good = {
     map: "ACCT-SURF-04 `/accounting/payments`",
     manifest: 'path="/accounting/payments"\n<PaymentsListPage />\n',
-    subnav: "/accounting/payments",
+    // Must include ACCOUNTING_SUB_NAV_ITEMS + top-row leafOf (NAV-RECEIVE-PAYMENT-01).
+    subnav:
+      'export const ACCOUNTING_SUB_NAV_ITEMS = [\n  leafOf("/accounting"),\n  leafOf("/accounting/payments"),\n];\n/accounting/payments\n',
     list: 'RecordPaymentModal\nkind="customer"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\n',
     detail: 'kind="customer"\nkind="invoice"\nkind="account"\n',
     modal: [
