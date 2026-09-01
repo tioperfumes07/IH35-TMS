@@ -123,3 +123,16 @@ Insurance was displaced; it is **P0 ahead of UI tokens build**. Live Chrome, you
    reversing JE earlier this session, confirmed live — no outstanding fixture of mine in
    production. All other session work (insurance COI/ID-card document uploads to docs.files,
    ParityTable/filter-control frontend code) is not a financial record and is unaffected.
+
+---
+# INBOX — CC-3 · 2026-09-01 · TRANSACTION HEALTH REGISTER (LAW-TRANSACTION-HEALTH-REGISTER-2026-09-01.md, 927825a)
+
+9. **No band assigned to CC-3.** Register: 39 checks / 9 bands, baseline 2 PASSING / 13 FAILING /
+   24 NEVER RUN, CRITICAL TIER (red = healthz ok:false), per-entity, zero-is-the-only-pass on
+   variances. Owners: CC-2 (bands A/B/C/F), CC-1 (A/B/C fixes + LINKAGE INTEGRITY LAW + D/G),
+   CURSOR (wire into healthz + owed DEPLOY/HEALTH-NO-SHA-01), CASCADE (enumerate D + E),
+   CODEX (band E + parity vs QBO/NetSuite/McLeod). Explicit owner instruction to me: **"CC-3 —
+   no band; continue UI CONTROL LAW."** Logged for the record per queue discipline; does not
+   change my in-flight queue. Noted trap for the record (not mine to apply): void path writes a
+   separate reversing JE, does not populate reversal_of_line_id/reversed_by_line_id — asserting on
+   those columns is a false positive.

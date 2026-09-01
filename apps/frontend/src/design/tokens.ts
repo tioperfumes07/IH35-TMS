@@ -81,9 +81,15 @@ export const spacing = {
   tableRowHeight: 24,
   tableHeaderHeight: 26,
   tableCellPaddingX: 8,
-  buttonHeightPrimary: 32,
-  buttonHeightSecondary: 28,
-  buttonHeightSmall: 24,
+  // UI CONTROL LAW (owner ruling 2026-09-01) — one height for every "md" button regardless of
+  // variant, matching filterControlHeight/FILTER_CONTROL_SIZE_CLASS so a button and a filter in
+  // the same toolbar row read as one row. Was 32/28/24 (three different button heights — the
+  // direct, file-level cause of the owner's "three different box sizes" report on the accounting
+  // toolbar) — corrected here, not a fresh invention. buttonHeightSmall (icon/sm variant) also
+  // raised: 24px sat exactly ON the WCAG 2.2 SC 2.5.8 floor with zero margin.
+  buttonHeightPrimary: 36,
+  buttonHeightSecondary: 36,
+  buttonHeightSmall: 32,
   buttonPaddingX: 12,
   radiusCard: 4,
   radiusPill: 2,
@@ -103,6 +109,29 @@ export const spacing = {
  * trigger, range popover fields) must share. A plain string constant (not a computed style) so
  * Tailwind's static class scanner still finds it; the underlying number is `spacing.filterControlHeight`. */
 export const FILTER_CONTROL_SIZE_CLASS = "h-9 text-[13px]";
+
+/** UI CONTROL LAW (owner ruling 2026-09-01, docs/bus/UI-CONTROL-LAW-SPEC-2026-09-01.md) — the
+ * app's ONE button scale. "md" (the size used everywhere a page renders a real action button —
+ * Create, Void, Clear, Export, gear) matches FILTER_CONTROL_SIZE_CLASS's own height/font so a
+ * button and a filter in the same toolbar read as one row. "iconSm" (icon-only / compact buttons)
+ * is a second, smaller tier — raised from the pre-ruling h-6 (24px, exactly on the WCAG 2.2
+ * SC 2.5.8 floor with zero margin) to h-8 (32px). */
+export const BUTTON_MD_SIZE_CLASS = "h-9 px-3 text-[13px] font-medium";
+export const BUTTON_ICON_SM_SIZE_CLASS = "h-8 text-[13px] font-medium";
+
+/** UI CONTROL LAW — one size for every toolbar icon app-wide (Search, SlidersHorizontal, the
+ * gear, etc.). The gear was the owner's own cited example of a control smaller than its
+ * neighbours; this is the neighbours' actual size, standardized as the target rather than left
+ * ambiguous. NOT the same as a control's HIT TARGET (BUTTON_ICON_SM_SIZE_CLASS above, or a
+ * checkbox's wrapper) — a 16px glyph inside a 32px+ clickable button is the correct, intentional
+ * combination per the owner's own ruling ("two different measurements and both must hold"). */
+export const TOOLBAR_ICON_SIZE_CLASS = "h-4 w-4";
+
+/** UI CONTROL LAW — the minimum clickable wrapper for a control whose own visual box is smaller
+ * than the WCAG 2.2 SC 2.5.8 24x24 CSS px floor (a native checkbox, a small glyph). Wrap the
+ * small visual element in a `min-h-6 min-w-6` (24px) flex-centered container; the wrapper is the
+ * hit target, the child stays its native/small visual size. */
+export const MIN_HIT_TARGET_CLASS = "flex min-h-6 min-w-6 items-center justify-center";
 
 export const z = {
   dropdown: 30,

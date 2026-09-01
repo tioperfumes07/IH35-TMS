@@ -25,7 +25,9 @@ import {
   type ReactNode,
   type TouchEvent as ReactTouchEvent,
 } from "react";
-import { colors, typography } from "../../design/tokens";
+import { colors, typography, MIN_HIT_TARGET_CLASS, TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
+import { Button } from "../Button";
+import { Settings as GearIcon } from "lucide-react";
 import { UniversalListToolbar, applyUniversalListFilters, type UniversalRange } from "../table/UniversalListToolbar";
 
 export type ParityDensity = "regular" | "compact" | "ultra";
@@ -930,12 +932,16 @@ export function ParityTable<T>({
         ) : null}
         {selectable ? (
           <td className="px-2" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-            <input
-              type="checkbox"
-              aria-label="Select row"
-              checked={selected.has(id)}
-              onChange={() => toggleRow(id)}
-            />
+            {/* UI CONTROL LAW — the native checkbox stays its own small visual size; the wrapper
+             * is the >=24x24 WCAG 2.2 SC 2.5.8 clickable area (was a bare, unwrapped <input>). */}
+            <span className={MIN_HIT_TARGET_CLASS}>
+              <input
+                type="checkbox"
+                aria-label="Select row"
+                checked={selected.has(id)}
+                onChange={() => toggleRow(id)}
+              />
+            </span>
           </td>
         ) : null}
         {visibleColumns.map((column) => (
@@ -1024,24 +1030,26 @@ export function ParityTable<T>({
         <div className="flex items-center gap-2">
           {toolbar}
           {exportFilename ? (
-            <button
-              type="button"
-              aria-label="Export CSV"
-              className="min-h-11 rounded-sm border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50 sm:min-h-0"
-              onClick={exportCsv}
-            >
+            // UI CONTROL LAW — this used to be a hand-rolled <button> with its own ad-hoc,
+            // smaller fixed size, a THIRD button size alongside Button.tsx's own two. Now the
+            // real shared Button primitive, matching every other toolbar action's size.
+            <Button type="button" variant="tertiary" size="sm" aria-label="Export CSV" onClick={exportCsv}>
               ⤓ Export
-            </button>
+            </Button>
           ) : null}
           <div className="relative" ref={gearRef}>
-            <button
+            <Button
               type="button"
+              variant="tertiary"
+              size="icon"
               aria-label="Table settings"
-              className="min-h-11 rounded-sm border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50 sm:min-h-0"
               onClick={() => { if (gearOpen) cancelGear(); else openGear(); }}
             >
-              ⚙
-            </button>
+              {/* UI CONTROL LAW — was a bare ⚙ Unicode glyph inheriting the button's own
+               * ambient font-size; now a real icon at the app's one toolbar-icon size, so the
+               * gear stops being smaller than the icons next to it. */}
+              <GearIcon className={TOOLBAR_ICON_SIZE_CLASS} aria-hidden />
+            </Button>
             {gearOpen ? (
               <div className="absolute right-0 z-20 mt-1 w-60 rounded-md border border-gray-200 bg-white p-2 shadow-lg">
                 <div className="mb-2">
@@ -1128,12 +1136,15 @@ export function ParityTable<T>({
             {renderExpanded ? <th className={`w-8 px-2 ${stickyHeader ? "bg-gray-50" : ""}`} /> : null}
             {selectable ? (
               <th className={`w-8 px-2 ${stickyHeader ? "bg-gray-50" : ""}`}>
-                <input
-                  type="checkbox"
-                  aria-label="Select all on page"
-                  checked={pageAllSelected}
-                  onChange={togglePageAll}
-                />
+                {/* UI CONTROL LAW — same >=24x24 hit-target wrap as the row checkbox. */}
+                <span className={MIN_HIT_TARGET_CLASS}>
+                  <input
+                    type="checkbox"
+                    aria-label="Select all on page"
+                    checked={pageAllSelected}
+                    onChange={togglePageAll}
+                  />
+                </span>
               </th>
             ) : null}
             {visibleColumns.map((column) => {
