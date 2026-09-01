@@ -4,6 +4,12 @@
  *
  * The complement bug BALANCES (cash identical), so only a source guard catches it.
  * After the independent-pct fix, omitted factor_fee_pct / UI 92/8/0 still prices money.
+ *
+ * STEP 3 (owner work order 2026-08-30): advance_rate_pct must NOT be a caller-supplied input —
+ * under the executed agreement it is an OUTPUT (100 - reserve_pct - factor_fee_pct), not a third
+ * independent number that can drift out of sync with reserve/fee. Accepting it as input recreates
+ * the exact same bug class one level up: two numbers that must stay in lockstep, entered as if they
+ * were independent.
  */
 import { readFileSync } from "node:fs";
 
@@ -61,6 +67,26 @@ function analyze(src, modalSrc) {
     if (modalSrc.includes("return activeFactors[0] ?? null")) {
       failures.push(`${MODAL_FILE}: must not silent-fallback to activeFactors[0]`);
     }
+  }
+
+  // FACT-RESERVE-01 STEP 3 — advance_rate_pct must not be a caller-supplied createBodySchema field.
+  if (createIdx !== -1) {
+    const nextConst2 = src.indexOf("\nconst ", createIdx + 1);
+    const createBlock = src.slice(createIdx, nextConst2 === -1 ? undefined : nextConst2);
+    if (/advance_rate_pct:\s*z\.coerce\.number/.test(createBlock)) {
+      failures.push(`${ROUTES_FILE}: createBodySchema accepts advance_rate_pct as caller input again`);
+    }
+  }
+  // advanceAmount must be the complement of the two real inputs, computed AFTER reserve/fee, never
+  // re-derived from a rate multiplication (that is exactly how the original bug re-enters).
+  if (!/const advanceAmount = invoiceTotalCents - reserveAmount - feeAmount;/.test(src)) {
+    failures.push(`${ROUTES_FILE}: advanceAmount is not computed as invoiceTotalCents - reserveAmount - feeAmount`);
+  }
+  if (/Math\.round\(\(invoiceTotalCents \* Number\(body\.data\.advance_rate_pct\)\) \/ 100\)/.test(src)) {
+    failures.push(`${ROUTES_FILE}: advanceAmount has reverted to rate-multiplication from a caller-supplied advance_rate_pct`);
+  }
+  if (modalSrc && /const \[advanceRatePct, setAdvanceRatePct\] = useState/.test(modalSrc)) {
+    failures.push(`${MODAL_FILE}: advance rate is editable state again — it must be derived/read-only`);
   }
 
   return failures;
@@ -126,6 +152,36 @@ function selftest() {
       apply: (s, m) => [
         s,
         m.replace('useState("")', 'useState("92")').replace(/const \[reservePct, setReservePct\] = useState\(""\)/, 'const [reservePct, setReservePct] = useState("8")').replace(/const \[factorFeePct, setFactorFeePct\] = useState\(""\)/, 'const [factorFeePct, setFactorFeePct] = useState("0")'),
+      ],
+    },
+    {
+      name: "advance_rate_pct reintroduced as a caller input in createBodySchema",
+      apply: (s, m) => [
+        s.replace(
+          "  reserve_pct: z.coerce.number().min(0).max(100),\n  factor_fee_pct: z.coerce.number().min(0).max(100),\n  notes: z.string().trim().max(5000).optional(),\n});",
+          "  advance_rate_pct: z.coerce.number().min(0).max(100),\n  reserve_pct: z.coerce.number().min(0).max(100),\n  factor_fee_pct: z.coerce.number().min(0).max(100),\n  notes: z.string().trim().max(5000).optional(),\n});"
+        ),
+        m,
+      ],
+    },
+    {
+      name: "advanceAmount reverts to rate-multiplication from a caller-supplied advance_rate_pct",
+      apply: (s, m) => [
+        s.replace(
+          "const advanceAmount = invoiceTotalCents - reserveAmount - feeAmount;",
+          "const advanceAmount = Math.round((invoiceTotalCents * Number(body.data.advance_rate_pct)) / 100);"
+        ),
+        m,
+      ],
+    },
+    {
+      name: "advance rate becomes editable modal state again",
+      apply: (s, m) => [
+        s,
+        m.replace(
+          'const [reservePct, setReservePct] = useState("");',
+          'const [advanceRatePct, setAdvanceRatePct] = useState("");\n  const [reservePct, setReservePct] = useState("");'
+        ),
       ],
     },
   ];

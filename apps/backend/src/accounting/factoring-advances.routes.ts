@@ -42,7 +42,10 @@ const createBodySchema = z.object({
   factoring_company_vendor_id: z.string().uuid(),
   submission_batch_ref: z.string().trim().max(200).optional(),
   invoice_ids: z.array(z.string().uuid()).min(1).max(500),
-  advance_rate_pct: z.coerce.number().min(0).max(100),
+  // FACT-RESERVE-01 STEP 3 — advance_rate_pct is deliberately NOT accepted here. Under the executed
+  // Faro agreement it is an OUTPUT of (100 - reserve_pct - factor_fee_pct), never a caller-supplied
+  // third number that could drift out of sync with the two real inputs below. A body that still
+  // includes it (older FE build, direct API call) is harmless — zod's non-.strict() parse drops it.
   reserve_pct: z.coerce.number().min(0).max(100),
   factor_fee_pct: z.coerce.number().min(0).max(100),
   notes: z.string().trim().max(5000).optional(),
@@ -438,17 +441,26 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         (sum: number, row: Record<string, unknown>) => sum + Number(row.pledge_cents ?? 0),
         0
       );
-      const advanceAmount = Math.round((invoiceTotalCents * Number(body.data.advance_rate_pct)) / 100);
       // FACT-RESERVE-01 (GO-FARO-02 REV B) — reserve was computed as "whatever the advance didn't
       // cover" (invoiceTotal - advance), which folds the ENTIRE holdback into reserve_amount_cents and
       // leaves factor_fee_cents permanently 0 (it was never even in the INSERT column list below).
       // Balanced (invoice total still reconciles) but wrong: the factoring fee expense never posts,
       // and reserve_amount_cents is overstated by the fee. Both must be computed independently from
-      // their own caller-supplied percentages, per the packet's own prescribed formula — this does NOT
-      // change advance_amount_cents (still advance_rate_pct of the invoice total, the cash actually
-      // funded), only how the remaining holdback is classified between reserve and fee.
+      // their own caller-supplied percentages, per the packet's own prescribed formula.
       const reserveAmount = Math.round((invoiceTotalCents * Number(body.data.reserve_pct)) / 100);
       const feeAmount = Math.round((invoiceTotalCents * Number(body.data.factor_fee_pct)) / 100);
+      // FACT-RESERVE-01 STEP 3 (owner work order 2026-08-30) — under the executed Faro agreement
+      // there is NO independent "advance rate" input: "Purchase Price = Net - Fee - Reserve" and the
+      // 97% on Faro's statement header is an OUTPUT of (1 - 1.5% - 1.5%), not a third number a caller
+      // supplies alongside reserve_pct/factor_fee_pct. Accepting advance_rate_pct as its own input let
+      // it silently drift out of sync with reserve_pct + factor_fee_pct (the original class of bug
+      // this whole finding is about, just one level up). advanceAmount is now the complement of the
+      // two REAL inputs, by construction — it can never disagree with reserve+fee again.
+      const advanceAmount = invoiceTotalCents - reserveAmount - feeAmount;
+      // advance_rate_pct is stored purely for display/reporting (e.g. "97.00%" on the batch header) —
+      // derived from the actual cents, not re-multiplied, so it always reflects what really posted.
+      const advanceRatePctDerived =
+        invoiceTotalCents > 0 ? Number(((advanceAmount / invoiceTotalCents) * 100).toFixed(2)) : 0;
       const displayId = await nextFactoringDisplayId(client, query.data.operating_company_id, new Date());
 
       const insertRes = await client.query(
@@ -479,7 +491,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
           displayId,
           body.data.submission_batch_ref ?? null,
           invoiceTotalCents,
-          body.data.advance_rate_pct,
+          advanceRatePctDerived,
           advanceAmount,
           body.data.reserve_pct,
           reserveAmount,

@@ -35,7 +35,6 @@ type Props = {
 export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const [vendorId, setVendorId] = useState("");
   const [submissionRef, setSubmissionRef] = useState("");
-  const [advanceRatePct, setAdvanceRatePct] = useState("");
   const [reservePct, setReservePct] = useState("");
   const [factorFeePct, setFactorFeePct] = useState("");
   const [notes, setNotes] = useState("");
@@ -101,16 +100,28 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
     [selectedTotal, reservePct]
   );
 
+  // FACT-RESERVE-01 STEP 3 (owner work order 2026-08-30) — under the executed Faro agreement there is
+  // NO independent advance rate: "Purchase Price = Net - Fee - Reserve", so 97% is an OUTPUT of
+  // (1 - 1.5% - 1.5%), not a third number someone can type independently of reserve/fee. This used to
+  // be its own editable input+state (advanceRatePct/setAdvanceRatePct), which is exactly the shape of
+  // bug FACT-RESERVE-01 itself: two numbers that must stay in lockstep, entered as if they were
+  // independent. Now purely derived for display; the backend independently derives and stores the
+  // same complement, so this can never disagree with what actually posts.
+  const advanceRatePctDisplay = useMemo(() => {
+    const reserve = Number(reservePct || 0);
+    const fee = Number(factorFeePct || 0);
+    if (!Number.isFinite(reserve) || !Number.isFinite(fee)) return "";
+    return Math.max(0, 100 - reserve - fee).toFixed(2);
+  }, [reservePct, factorFeePct]);
+
   useEffect(() => {
     if (!open) return;
     if (!vendorId && factoringSummaryQuery.data?.active_factor_id) {
       setVendorId(factoringSummaryQuery.data.active_factor_id);
     }
     if (!activeFactor) return;
-    const advancePct = factorRateToPct(activeFactor.advance_rate);
     const reservePctValue = factorRateToPct(activeFactor.reserve_rate);
     const feePct = factorRateToPct(activeFactor.fee_rate);
-    if (advancePct) setAdvanceRatePct(advancePct);
     if (reservePctValue) setReservePct(reservePctValue);
     if (feePct) setFactorFeePct(feePct);
   }, [activeFactor, factoringSummaryQuery.data?.active_factor_id, open, vendorId]);
@@ -122,11 +133,10 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
     if (!activeFactor) {
       return setError("No factor resolved for this company. Assign Faro (or the active factor) before submitting — do not price at 92/8/0 defaults.");
     }
-    const advance = Number(advanceRatePct);
     const reserve = Number(reservePct);
     const fee = Number(factorFeePct);
-    if (![advance, reserve, fee].every((n) => Number.isFinite(n))) {
-      return setError("Advance, reserve, and factor fee % must come from the resolved factor row.");
+    if (![reserve, fee].every((n) => Number.isFinite(n))) {
+      return setError("Reserve and factor fee % must come from the resolved factor row.");
     }
 
     setIsSubmitting(true);
@@ -135,7 +145,6 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
         factoring_company_vendor_id: vendorId,
         submission_batch_ref: submissionRef || undefined,
         invoice_ids: selectedInvoiceIds,
-        advance_rate_pct: advance,
         reserve_pct: reserve,
         factor_fee_pct: fee,
         notes: notes || undefined,
@@ -217,8 +226,16 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
 
         <div className="grid gap-2 md:grid-cols-3">
           <label className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-gray-600">Advance rate %</span>
-            <input className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" type="number" min={0} max={100} step="0.01" value={advanceRatePct} onChange={(event) => setAdvanceRatePct(event.target.value)} />
+            <span className="text-xs font-semibold text-gray-600">Advance rate % (computed)</span>
+            {/* FACT-RESERVE-01 STEP 3: read-only — there is no independent advance rate under the
+                agreement, it is 100 - Reserve % - Factor fee %, always. */}
+            <input
+              className="h-9 rounded-sm border border-gray-200 bg-gray-50 px-2 text-[13px] text-gray-600"
+              type="text"
+              value={advanceRatePctDisplay ? `${advanceRatePctDisplay}%` : "—"}
+              readOnly
+              disabled
+            />
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-gray-600">Reserve %</span>
