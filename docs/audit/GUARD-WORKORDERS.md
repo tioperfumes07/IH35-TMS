@@ -8382,3 +8382,52 @@ turn's explicit instruction) | none — this is a closing accounting row, not an
 guard-suite sweep of post-batch tree + targeted deep-dives (void cascade Neon live-check, per-file
 sort-column diff against `25054edc60`) | **CLOSED · GUARD verify #19175-#19219 complete, 1 real
 regression filed OPEN, 2 guard false-positives fixed, 0 idle** |
+
+| **GRADED LIVE (CC-2 2026-09-01, owner-instructed "GUARD Safety Internal Fines + Dispatch
+column law after Cursor ships"):** `GUARD-SAF-FINES-DSP-COLUMN-LAW-GRADE` — **Safety Internal
+Fines (#19230 SAF-INTERNAL-FINES-DETAIL-CHROME): PASS, live-verified.** Navigated
+`app.ih35dispatch.com/safety/internal-fines` (backend healthz `4db4c20`, past this PR) — both
+Fine# and Driver name are separate clickable buttons that open the same drawer (code:
+`InternalFinesPage.tsx:238,253` both call `setSelectedFine(row)`, matching the claim's "driver
+click opens drawer" exactly), drawer shows IF#/date/driver/reason/QBO-format `$1,200.00`
+amount/status/conditional load+settlement+liability EntityLinks/notes/record id — flat
+key-value layout, no nested sections. **One attributable finding, not fixed here (product UI,
+GUARD lane is verify-only):** this PR's own 2 new columns (`Load`, `Settlement`) ship without
+`sortable:` — diffed `InternalFinesPage.tsx` at `0e04453c4b~1` vs current: pre-PR had 4
+unsortable-but-labeled columns (Driver/Reason/Amount/Liability, pre-existing, not this PR's
+fault); post-PR has 6 (same 4 plus the 2 new ones) — net +2 GLOBAL-SORT-RULE violations
+attributable to this PR specifically, on top of the already-tracked/still-open batch regression
+two rows above (global count currently 976 vs baseline 975 — down from 981 thanks to other
+seats' fixes on the older regression, this PR's +2 partially offset by others' -5 elsewhere,
+netting +1). — **Dispatch column law: MIXED, precisely attributed by deploy state.** `COL-02/
+COL-03` (#19236, systemwide ParityTable drag-reorder + auto-fit): confirmed live-deployed
+(`git merge-base --is-ancestor 6eeb428456 <frontend build>` true) and `verify-paritytable-
+column-law.mjs` PASS + `--selftest` PASS. `DSP-05-ASSIGNMENT-PARITY-LOCATION` (#19253, booked/
+assigned bands → ParityTable + Location column) and `SWEEP-A-PARITYTABLE-HEADER-HIT-TARGET`
+(#19258): **code is correct** — read `DispatchBoard.tsx` `bookedAssignmentColumns`/
+`assignedAssignmentColumns` directly, both declare a `location` column with `renderLocationCell`,
+both bands use `<ParityTable>` with per-band `storageKey`, external sort wired through
+`assignmentBandSorts`; `enableColumnReorder`/`autoFitColumns` default `true` in `ParityTable.tsx`
+so COL-02/03 behavior is inherited without extra wiring — `verify-dispatch-board-sections-and-
+columns.mjs` PASS + `--selftest` 29/29 PASS — **but NOT YET LIVE**: navigated `app.ih35dispatch.
+com/dispatch?board=assignment&view=list`, the rendered "Booked Loads"/"Assigned Units" table
+headers have zero `Location` column (confirmed via full `get_page_text`, not a rendering
+artifact). Root-caused via `/system` → Software/Build: page itself flags **"DEPLOY MISMATCH"**
+— deployed backend `4db4c20` (current), frontend build `0642d75`. `git merge-base --is-ancestor
+19fa6bbd78 0642d75489` and `...1114560657 0642d75489` both **false** (#19253/#19258 are NOT
+ancestors of the deployed frontend build); `...0e04453c4b 0642d75489` and `...6eeb428456
+0642d75489` both **true** (#19230/#19236 ARE ancestors — matches what's live). This is the
+same recurring FE-deploy-lag pattern DEVIN-A has flagged twice already this session (#19192,
+#19217) — a deploy-pipeline gap, not a code defect; not this PR's fault and not fixable by
+editing source. | `apps/frontend/src/pages/safety/InternalFinesPage.tsx`;
+`apps/frontend/src/pages/dispatch/DispatchBoard.tsx`; `scripts/verify-dispatch-board-sections-
+and-columns.mjs`; `scripts/verify-paritytable-column-law.mjs` | **CC-3 (FE chrome, for the
+Internal Fines sortable-column addendum) / whoever owns Render FE deploy retries (for the
+deploy-mismatch, not a code lane)** | Internal Fines: add `sortable: true` (or explicit,
+commented `sortable: false`) to the Load/Settlement columns, same systemic fix as the batch
+regression above. Dispatch column law: no code fix needed — re-verify live once the frontend
+deploy catches up past `19fa6bbd78`/`1114560657`. | live Chrome (`app.ih35dispatch.com`,
+authenticated session), `/system` Software/Build panel, `git merge-base --is-ancestor` ancestry
+checks, both guards' normal+selftest runs | **GRADED · Safety Internal Fines PASS (+1 addendum
+finding filed, not fixed) · Dispatch column law code-correct/guard-verified but pending FE
+deploy (not a defect)** |
