@@ -146,7 +146,53 @@ inline once resolved; never delete a row.
     voided_at is never set — schema that LOOKS wired and isn't, the most dangerous shape since a
     reviewer reading the schema concludes void is implemented. [NOT STARTED, queued behind 19]
 
-**STATED QUEUE ORDER (owner, most recent restatement):** 19A (settlement approval wire-up) →
-19B (negative settlements, DOING now) → 19C remainder (pay-later dates + recon UI) → item 21
-(void-path sweep: driver bills, settlement lines, the other 9 voidable types, the dead
-settlement void CHECK constraint).
+22. EXP-POSTED-NO-JE-01 (owner void run, expanded from 1 to 3 records, 2 of them bills):
+    accounting.expenses 8a1b3d84 $75 + accounting.bills BILL-2026-00018/00019 $750/$300, all
+    posted-ish with zero postings, void correctly refused. (a) both void paths fixed to handle
+    a never-posted document as status-change-only, no fabricated reversal. (b) bulk fail-stop
+    now pre-validates every row before running (closed the "0 of 11 succeeded" class). (c)
+    accounting.expenses gets a posted-requires-JE CHECK (NOT VALID); bills has no equivalent
+    columns to constrain. [DONE — PR #19038/ACCT-F10217, plus a required downstream null-check
+    fix in settlement-bill-payment-posting.service.ts that CI caught]
+23. Settlement /reverse endpoint location disputed then confirmed: POST /api/v1/driver-finance/
+    settlements/:id/reverse IS on origin/main, settlements.routes.ts:930 — the owner's grep
+    missed it (quote-style or stale checkout), not a lost PR. The 23 locked settlements need
+    Unlock-then-Reverse (two clicks by the owner's own earlier lock-bypass design), not
+    live-verified via Chrome this session. [DONE — confirmed, not yet live-click-verified]
+24. LINKAGE INTEGRITY LAW (owner-ordered permanent fix, supersedes patching BANK-ORPHAN-01 as a
+    one-off): one root cause behind 6 symptoms — a link exists between two records and one side
+    changes without the other.
+    Layer 1: banking.matches — a real bidirectional match record (both ids, state, matched_at/
+    by, released_at/reason), replacing the one-sided accounting.payments.source_bank_
+    transaction_id pointer. Migrate existing pointers in, run only one mechanism.
+    Layer 2: enforce in a DB TRIGGER, not a service — voiding ANY document (invoice/bill/
+    bill_payment/payment/expense/deposit/settlement/JE) releases its match and returns the bank
+    transaction to review; releasing from the banking side clears the document side too.
+    Bidirectional, no service can opt out.
+    Layer 3: ONE void column convention (voided_at + void_reason + voided_by_user_id) — Cascade
+    found 4 parallel names (voided_at/revoked_at/unapplied_at/reversed_at); migrate the others,
+    guard against a 5th ever being introduced.
+    [NOT STARTED — largest single item, starting now]
+25. AUTHORIZED NOW: BANK-ORPHAN-01 backfill apply for the 4 test rows (8b944104/2bdef3a9/
+    8521d332/5404b1cb), HOLD the 5th (f3e3ced5, real wire, owner decides).
+    [DONE — all 4 released to pending_categorization, audit event 737289e2-89dc-4798-be8b-
+    6e9244c508a4 written under the Owner's own identity (no live HTTP session this turn, ran
+    the identical primitive SQL directly via Neon). Caught a real bug in the process:
+    categorization_recover_from_driver is NOT NULL on prod, my reset was setting it to NULL —
+    fixed PR #19039/ACCT-F10221, would have broken the live route on any matching row. f3e3ced5
+    held, confirmed untouched.]
+26. TRANSACTION HEALTH REGISTER (docs/bus/LAW-TRANSACTION-HEALTH-REGISTER-2026-09-01.md, main
+    927825a): 39 checks / 9 bands, baseline 2 passing / 13 failing / 24 never run. CC-1 owns:
+    fix whatever bands A/B/C surface + LINKAGE INTEGRITY LAW as band C's root cause + bands D
+    and G (driver & settlement). CRITICAL TIER (a red check = healthz ok:false), per-entity (a
+    USMCA pass is not a pass), zero-is-the-only-pass on variances, named in a workflow, shadow
+    first where a violation already exists. Trap: the void path writes a SEPARATE reversing JE
+    and does NOT populate reversal_of_line_id/reversed_by_line_id — asserting on those columns
+    is a false positive (bit the owner on 17 invoices tonight); match on the reversal JE
+    instead. [NOT STARTED — read the full register doc before building]
+
+**STATED QUEUE ORDER (owner, most recent restatement):** 24 (LINKAGE INTEGRITY LAW, 3 layers)
+→ 26 (Transaction Health Register bands C-root-cause/D/G) → then the earlier-queued 19A
+(settlement approval wire-up), 19C remainder (pay-later dates + recon UI), item 21 (void-path
+sweep: driver bills, settlement lines, the other 9 voidable types, the dead settlement void
+CHECK constraint) — items 24/26 explicitly supersede/absorb much of 21's void-path work.
