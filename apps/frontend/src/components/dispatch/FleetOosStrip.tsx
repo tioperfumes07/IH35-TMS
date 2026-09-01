@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listUnits } from "../../api/mdata";
 import { listSevereRepairEstimates } from "../../api/maintenance";
@@ -7,6 +7,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { isOperatorVisibleUnit } from "../../lib/operator-fleet-visibility";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
+import { TableHeaderCell } from "../table";
 
 /**
  * The route's own maximum (units.routes.ts). Named rather than inlined so the cap and the truncation
@@ -55,6 +56,7 @@ type Props = {
 
 export function FleetOosStrip({ operatingCompanyId }: Props) {
   const enabled = Boolean(operatingCompanyId);
+  const [unitSortDir, setUnitSortDir] = useState<"asc" | "desc">("asc");
 
   const unitsQuery = useQuery({
     queryKey: ["dispatch", "fleet-oos-units", operatingCompanyId],
@@ -127,8 +129,11 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
       });
     }
 
-    return [...byUnitId.values()].sort((a, b) => a.unitNumber.localeCompare(b.unitNumber, undefined, { numeric: true }));
-  }, [severeQuery.data?.data, unitsQuery.data?.units]);
+    return [...byUnitId.values()].sort((a, b) => {
+      const cmp = a.unitNumber.localeCompare(b.unitNumber, undefined, { numeric: true, sensitivity: "base" });
+      return unitSortDir === "asc" ? cmp : -cmp;
+    });
+  }, [severeQuery.data?.data, unitsQuery.data?.units, unitSortDir]);
 
   if (!enabled) return null;
   const fleetReadFailed = unitsQuery.isError || severeQuery.isError;
@@ -173,31 +178,49 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
       ) : rows.length === 0 ? (
         <div className="px-3 py-2 text-xs text-slate-700">All units in service.</div>
       ) : (
-        <div className="flex gap-2 overflow-x-auto px-3 py-2">
-          {rows.map((row) => (
-            <div
-              key={row.unitId}
-              className="min-w-[200px] shrink-0 rounded-sm border border-slate-200 bg-white px-2.5 py-2 text-[11px]"
-              data-testid={`fleet-oos-unit-${row.unitNumber}`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <EntityLink
-                  kind="unit"
-                  id={row.unitId}
-                  label={entityLabel(row.unitNumber, row.unitId, "Unit")}
-                  className="font-semibold text-gray-900"
-                  data-testid="fleet-oos-unit-link"
+        <div className="overflow-x-auto px-3 py-2" data-testid="dispatch-fleet-oos-table-wrap">
+          <table className="min-w-full text-left text-[11px]" data-testid="dispatch-fleet-oos-table">
+            <thead className="bg-white text-[10px] uppercase tracking-wide text-gray-600">
+              <tr data-testid="dispatch-fleet-oos-headers">
+                <TableHeaderCell
+                  columnKey="unit"
+                  label="Unit"
+                  sortable
+                  sortKey="unit"
+                  sortDir={unitSortDir}
+                  onToggleSort={() => setUnitSortDir((dir) => (dir === "asc" ? "desc" : "asc"))}
+                  resizable={false}
                 />
-                <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
-                  {row.statusLabel}
-                </span>
-              </div>
-              {row.reason ? <div className="mt-1 text-gray-700">{row.reason}</div> : null}
-              <div className="mt-1 text-gray-500">
-                ETA back: <span className="font-medium text-gray-800">{row.etaBack}</span>
-              </div>
-            </div>
-          ))}
+                <th className="px-2 py-1 font-semibold">Status</th>
+                <th className="px-2 py-1 font-semibold">Reason</th>
+                <th className="px-2 py-1 font-semibold">ETA back</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.unitId} className="border-t border-slate-200" data-testid={`fleet-oos-unit-${row.unitNumber}`}>
+                  <td className="px-2 py-1.5">
+                    <EntityLink
+                      kind="unit"
+                      id={row.unitId}
+                      label={entityLabel(row.unitNumber, row.unitId, "Unit")}
+                      className="font-semibold text-gray-900"
+                      data-testid="fleet-oos-unit-link"
+                    />
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
+                      {row.statusLabel}
+                    </span>
+                  </td>
+                  <td className="px-2 py-1.5 text-gray-700">{row.reason || "—"}</td>
+                  <td className="px-2 py-1.5 text-gray-500">
+                    <span className="font-medium text-gray-800">{row.etaBack}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

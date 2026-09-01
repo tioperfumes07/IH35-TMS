@@ -117,6 +117,70 @@ function sectionControlIssues(content) {
   return issues;
 }
 
+/** DSP-05 — Assignment + Booked/Assigned partitions must expose header sort + column reorder/width. */
+function assignmentHeaderSortIssues(content) {
+  const issues = [];
+  if (!content.includes('data-testid="dispatch-board-assignment-view"')) {
+    issues.push("assignment view must remain mounted with dispatch-board-assignment-view testid (DSP-05)");
+  }
+  if (!content.includes('data-testid={`dispatch-assignment-headers-${band}`}')) {
+    issues.push("assignment partitions must render band-scoped sortable header rows (DSP-05)");
+  }
+  if (!/renderAssignmentView[\s\S]{0,12000}<TableHeaderCell/.test(content)) {
+    issues.push("assignment booked/assigned tables must use TableHeaderCell for ASC/DESC sort (DSP-05)");
+  }
+  if (!content.includes('useTablePref("dispatch-assignment-booked"')) {
+    issues.push("booked assignment band must persist column widths/order via useTablePref (DSP-05)");
+  }
+  if (!content.includes('useTablePref("dispatch-assignment-assigned"')) {
+    issues.push("assigned assignment band must persist column widths/order via useTablePref (DSP-05)");
+  }
+  if (!/useColumnReorder[\s\S]{0,4000}dispatch-assignment-booked|savedBookedAssignmentOrder/.test(content)) {
+    issues.push("booked assignment band must wire useColumnReorder for drag-reorder (DSP-05)");
+  }
+  if (!/useColumnReorder[\s\S]{0,4000}dispatch-assignment-assigned|savedAssignedAssignmentOrder/.test(content)) {
+    issues.push("assigned assignment band must wire useColumnReorder for drag-reorder (DSP-05)");
+  }
+  if (!content.includes("toggleAssignmentBandSort")) {
+    issues.push("assignment partitions must expose band-local header sort toggles (DSP-05)");
+  }
+  if (!content.includes('onToggleSort={(columnKey) => toggleAssignmentBandSort(band, columnKey)}')) {
+    issues.push("assignment TableHeaderCell must call toggleAssignmentBandSort (DSP-05)");
+  }
+  return issues;
+}
+
+function kanbanColumnSortIssues(kanbanSrc = readFileSync(join(root, "apps/frontend/src/components/dispatch/DispatchKanban.tsx"), "utf8")) {
+  const issues = [];
+  if (!kanbanSrc.includes("KanbanColumnSortControls")) {
+    issues.push("DispatchKanban must expose per-column Unit/Load sort controls (DSP-05)");
+  }
+  if (!kanbanSrc.includes("sortKanbanColumnLoads")) {
+    issues.push("DispatchKanban must sort cards within each lane by unit/load (DSP-05)");
+  }
+  if (!kanbanSrc.includes('data-testid={`kanban-column-sort-controls-${columnKey}`}')) {
+    issues.push("DispatchKanban sort controls must carry kanban-column-sort-controls testids (DSP-05)");
+  }
+  if (!kanbanSrc.includes('columnKey="oos_strip"')) {
+    issues.push("DispatchKanban OOS strip must expose unit/load sort controls (DSP-05)");
+  }
+  return issues;
+}
+
+function fleetOosSortIssues(oosSrc = readFileSync(join(root, "apps/frontend/src/components/dispatch/FleetOosStrip.tsx"), "utf8")) {
+  const issues = [];
+  if (!oosSrc.includes('data-testid="dispatch-fleet-oos-table"')) {
+    issues.push("FleetOosStrip must render a sortable table for OOS/In shop units (DSP-05)");
+  }
+  if (!oosSrc.includes('data-testid="dispatch-fleet-oos-headers"')) {
+    issues.push("FleetOosStrip table must expose a header row (DSP-05)");
+  }
+  if (!/TableHeaderCell[\s\S]{0,400}columnKey="unit"[\s\S]{0,200}onToggleSort/.test(oosSrc)) {
+    issues.push("FleetOosStrip Unit header must be click-sortable ASC/DESC (DSP-05)");
+  }
+  return issues;
+}
+
 // 1. One shared column model, List and Table both alias it.
 if (!src.includes("const boardColumns")) fail("missing shared `boardColumns` model");
 if (!/const listColumns = boardColumns/.test(src)) fail("listColumns must alias boardColumns (List == Table grid)");
@@ -203,6 +267,9 @@ for (const issue of preSettlementPanelReadIssues(panelSrc)) fail(issue);
 for (const issue of sectionControlIssues(src)) fail(issue);
 for (const issue of dsp01CityColumnIssues(src)) fail(issue);
 for (const issue of dsp02ScheduleColumnIssues(src)) fail(issue);
+for (const issue of assignmentHeaderSortIssues(src)) fail(issue);
+for (const issue of kanbanColumnSortIssues()) fail(issue);
+for (const issue of fleetOosSortIssues()) fail(issue);
 
 if (process.argv.includes("--selftest")) {
   const mutants = [
@@ -257,7 +324,36 @@ if (process.argv.includes("--selftest")) {
   if (!dsp02Mutants.every((mutant) => dsp02ScheduleColumnIssues(mutant).length > 0)) {
     fail("selftest mutation escaped DSP-02 four-column schedule guard");
   }
-  console.log("PASS verify-dispatch-board-sections-and-columns SELFTEST — 21/21 defects caught");
+  const assignmentMutants = [
+    src.replace('useTablePref("dispatch-assignment-booked"', 'useTablePref("dispatch-board"'),
+    src.replaceAll("toggleAssignmentBandSort", "toggleDispatchSort"),
+    src.replaceAll("<TableHeaderCell", "<th"),
+    src.replace('data-testid={`dispatch-assignment-headers-${band}`}', 'data-testid="dispatch-assignment-headers"'),
+  ];
+  if (!assignmentMutants.every((mutant) => assignmentHeaderSortIssues(mutant).length > 0)) {
+    fail("selftest mutation escaped DSP-05 assignment header sort guard");
+  }
+  const kanbanFile = join(root, "apps/frontend/src/components/dispatch/DispatchKanban.tsx");
+  const kanbanSrc = readFileSync(kanbanFile, "utf8");
+  const kanbanMutants = [
+    kanbanSrc.replaceAll("KanbanColumnSortControls", "__RemovedKanbanSort__"),
+    kanbanSrc.replaceAll("sortKanbanColumnLoads", "__RemovedSortLoads__"),
+    kanbanSrc.replace('columnKey="oos_strip"', 'columnKey="oos_strip_removed"'),
+  ];
+  if (!kanbanMutants.every((mutant) => kanbanColumnSortIssues(mutant).length > 0)) {
+    fail("selftest mutation escaped DSP-05 kanban column sort guard");
+  }
+  const oosFile = join(root, "apps/frontend/src/components/dispatch/FleetOosStrip.tsx");
+  const oosSrc = readFileSync(oosFile, "utf8");
+  const oosMutants = [
+    oosSrc.replace('data-testid="dispatch-fleet-oos-table"', 'data-testid="dispatch-fleet-oos-cards"'),
+    oosSrc.replaceAll("TableHeaderCell", "th"),
+    oosSrc.replace('data-testid="dispatch-fleet-oos-headers"', 'data-testid="dispatch-fleet-oos-header-row"'),
+  ];
+  if (!oosMutants.every((mutant) => fleetOosSortIssues(mutant).length > 0)) {
+    fail("selftest mutation escaped DSP-05 fleet OOS sort guard");
+  }
+  console.log("PASS verify-dispatch-board-sections-and-columns SELFTEST — 29/29 defects caught");
 }
 
 console.log("PASS verify-dispatch-board-sections-and-columns");

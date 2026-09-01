@@ -20,7 +20,28 @@ import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
 import { useToast } from "../Toast";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { canDragLoad, flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, toRouteSummary } from "./constants";
+
+type KanbanColumnSort = { key: "unit" | "load"; direction: "asc" | "desc" };
+
+function compareKanbanSortValue(load: DispatchLoadRow, key: "unit" | "load"): string {
+  if (key === "unit") {
+    return String(load.assigned_unit_number ?? (load.id.startsWith("unit:") ? load.load_number : "") ?? "");
+  }
+  return String(load.load_number ?? "");
+}
+
+function sortKanbanColumnLoads(loads: DispatchLoadRow[], sort?: KanbanColumnSort): DispatchLoadRow[] {
+  if (!sort) return loads;
+  return [...loads].sort((a, b) => {
+    const cmp = compareKanbanSortValue(a, sort.key).localeCompare(compareKanbanSortValue(b, sort.key), undefined, {
+      numeric: true,
+      sensitivity: "base",
+    });
+    return sort.direction === "asc" ? cmp : -cmp;
+  });
+}
 
 type Props = {
   loads: DispatchLoadRow[];
@@ -718,6 +739,39 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
   );
 }
 
+function KanbanColumnSortControls({
+  columnKey,
+  sort,
+  onToggleSort,
+}: {
+  columnKey: string;
+  sort?: KanbanColumnSort;
+  onToggleSort: (columnKey: string, sortKey: "unit" | "load") => void;
+}) {
+  const renderButton = (label: string, sortKey: "unit" | "load") => {
+    const active = sort?.key === sortKey;
+    return (
+      <button
+        type="button"
+        className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[10px] font-semibold normal-case tracking-normal ${
+          active ? "bg-slate-200 text-slate-900" : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+        }`}
+        data-testid={`kanban-column-sort-${columnKey}-${sortKey}`}
+        onClick={() => onToggleSort(columnKey, sortKey)}
+      >
+        {label}
+        {active ? (sort?.direction === "asc" ? <ChevronUp className="h-3 w-3" aria-hidden /> : <ChevronDown className="h-3 w-3" aria-hidden /> ) : null}
+      </button>
+    );
+  };
+  return (
+    <div className="mt-1 flex items-center gap-1" data-testid={`kanban-column-sort-controls-${columnKey}`}>
+      {renderButton("Unit", "unit")}
+      {renderButton("Load #", "load")}
+    </div>
+  );
+}
+
 function KanbanDispatchColumn({
   column,
   loads,
@@ -725,6 +779,8 @@ function KanbanDispatchColumn({
   activeGeofenceBreachVehicleIds,
   onLoadClick,
   onColumnHeaderClick,
+  columnSort,
+  onToggleColumnSort,
 }: {
   column: KanbanColumnDef;
   loads: DispatchLoadRow[];
@@ -732,6 +788,8 @@ function KanbanDispatchColumn({
   activeGeofenceBreachVehicleIds?: Set<string>;
   onLoadClick: (loadId: string) => void;
   onColumnHeaderClick?: (statuses: string[]) => void;
+  columnSort?: KanbanColumnSort;
+  onToggleColumnSort: (columnKey: string, sortKey: "unit" | "load") => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `column:${column.key}` });
 
@@ -759,6 +817,7 @@ function KanbanDispatchColumn({
           {headerLink}
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
         </header>
+        <KanbanColumnSortControls columnKey={column.key} sort={columnSort} onToggleSort={onToggleColumnSort} />
       </section>
     );
   }
@@ -770,9 +829,12 @@ function KanbanDispatchColumn({
       className={`${minWidth} flex-1 rounded-sm border border-gray-200 bg-white p-2`}
       data-testid={`kanban-column-${column.key}`}
     >
-      <header className="mb-2 flex items-center justify-between border-b border-gray-100 pb-2">
-        {headerLink}
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
+      <header className="mb-2 border-b border-gray-100 pb-2">
+        <div className="flex items-center justify-between">
+          {headerLink}
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
+        </div>
+        <KanbanColumnSortControls columnKey={column.key} sort={columnSort} onToggleSort={onToggleColumnSort} />
       </header>
       <div ref={setNodeRef} className={`max-h-[68vh] ${detailed ? "space-y-2" : "space-y-1"} overflow-y-auto rounded-sm p-1 ${isOver ? "bg-slate-100" : "bg-transparent"}`}>
         {loads.length === 0 ? <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">(empty)</div> : null}
@@ -808,7 +870,21 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
   // DISPATCH-UI-REFINE-2 ITEM 1 — default to STANDARD (2-line) density. Compact (1-line) + Detailed
   // (~5-line) remain available via the toggle (additive). Standard balances fleet density vs readability.
   const [density, setDensity] = useState<KanbanDensity>(KANBAN_DEFAULT_DENSITY);
+  const [columnSorts, setColumnSorts] = useState<Record<string, KanbanColumnSort>>({});
   const { pushToast } = useToast();
+
+  const toggleKanbanColumnSort = (columnKey: string, sortKey: "unit" | "load") => {
+    setColumnSorts((current) => {
+      const prior = current[columnKey] ?? { key: sortKey, direction: "asc" as const };
+      return {
+        ...current,
+        [columnKey]: {
+          key: sortKey,
+          direction: prior.key === sortKey && prior.direction === "asc" ? "desc" : "asc",
+        },
+      };
+    });
+  };
 
   useEffect(() => {
     setOptimisticLoads(loads);
@@ -821,6 +897,10 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
   // surface breakdown loads best-effort and flag that the full OOS feed is held — same gate
   // as HOS/geofence. Once Jorge wires the OOS source this strip lists every down unit.
   const outOfServiceLoads = useMemo(() => optimisticLoads.filter(isBreakdown), [optimisticLoads]);
+  const sortedOutOfServiceLoads = useMemo(
+    () => sortKanbanColumnLoads(outOfServiceLoads, columnSorts.oos_strip ?? { key: "unit", direction: "asc" }),
+    [outOfServiceLoads, columnSorts.oos_strip],
+  );
 
   // KANBAN-CLICK-DEAD (owner-live). Every card is a `useDraggable`, and dnd-kit's DEFAULT PointerSensor has
   // NO activation constraint: pointerdown starts a drag immediately and preventDefaults, so the browser never
@@ -948,21 +1028,27 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
         </div>
 
         <div className="flex gap-3 overflow-x-auto pb-2">
-          {KANBAN_STATUS_GROUPS.map((group) => (
-            <KanbanDispatchColumn
-              key={group.key}
-              column={group}
-              loads={group.key === "awaiting_assignment" ? awaitingTruckCards : grouped.get(group.key) ?? []}
-              density={density}
-              activeGeofenceBreachVehicleIds={activeGeofenceBreachVehicleIds}
-              onLoadClick={
-                group.key === "awaiting_assignment" && onBookForUnit
-                  ? (cardId) => onBookForUnit(cardId.replace(/^unit:/, ""))
-                  : onLoadClick
-              }
-              onColumnHeaderClick={onColumnHeaderClick}
-            />
-          ))}
+          {KANBAN_STATUS_GROUPS.map((group) => {
+            const rawLoads = group.key === "awaiting_assignment" ? awaitingTruckCards : grouped.get(group.key) ?? [];
+            const columnLoads = sortKanbanColumnLoads(rawLoads, columnSorts[group.key]);
+            return (
+              <KanbanDispatchColumn
+                key={group.key}
+                column={group}
+                loads={columnLoads}
+                density={density}
+                activeGeofenceBreachVehicleIds={activeGeofenceBreachVehicleIds}
+                onLoadClick={
+                  group.key === "awaiting_assignment" && onBookForUnit
+                    ? (cardId) => onBookForUnit(cardId.replace(/^unit:/, ""))
+                    : onLoadClick
+                }
+                onColumnHeaderClick={onColumnHeaderClick}
+                columnSort={columnSorts[group.key]}
+                onToggleColumnSort={toggleKanbanColumnSort}
+              />
+            );
+          })}
         </div>
 
         {/* Part D — Fleet out-of-service strip, pinned at the bottom of the board. */}
@@ -970,8 +1056,15 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
           className="sticky bottom-0 mt-2 rounded-sm border border-slate-200 bg-slate-100 p-2"
           data-testid="dispatch-kanban-oos-strip"
         >
-          <header className="flex items-center justify-between">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Fleet out of service</h3>
+          <header className="flex items-center justify-between gap-2">
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Fleet out of service</h3>
+              <KanbanColumnSortControls
+                columnKey="oos_strip"
+                sort={columnSorts.oos_strip ?? { key: "unit", direction: "asc" }}
+                onToggleSort={toggleKanbanColumnSort}
+              />
+            </div>
             <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-700">{outOfServiceLoads.length}</span>
           </header>
           {outOfServiceLoads.length === 0 ? (
@@ -980,7 +1073,7 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
             </p>
           ) : (
             <div className="mt-1 flex flex-wrap gap-2">
-              {outOfServiceLoads.map((load) => (
+              {sortedOutOfServiceLoads.map((load) => (
                 <div
                   key={load.id}
                   role="button"

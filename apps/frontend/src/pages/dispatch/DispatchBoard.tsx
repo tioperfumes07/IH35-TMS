@@ -301,6 +301,12 @@ const DISPATCH_SORTABLE_COLS = new Set([
   "wo", "linehaul", "status",
 ]);
 
+const ASSIGNMENT_BOOKED_SORTABLE = new Set(["load", "customer", "pickup", "delivery", "status"]);
+const ASSIGNMENT_ASSIGNED_SORTABLE = new Set(["unit", "trailer", "load", "customer", "driver", "pickup", "delivery", "status"]);
+
+const BOOKED_ASSIGNMENT_COLUMN_KEYS = ["load", "customer", "lane", "delivery", "doc", "cargo_temp", "status", "assign"] as const;
+const ASSIGNED_ASSIGNMENT_COLUMN_KEYS = ["unit", "trailer", "cargo_temp", "load", "customer", "driver", "lane", "delivery", "status"] as const;
+
 function compareDispatch(a: string | number | null | undefined, b: string | number | null | undefined): number {
   if (a == null && b == null) return 0;
   if (a == null) return 1;
@@ -469,6 +475,7 @@ export function DispatchBoard({
   const [quickAssignLoad, setQuickAssignLoad] = useState<BoardLoad | null>(null);
   const [sectionFilters, setSectionFilters] = useState<Record<string, string>>({});
   const [sectionSorts, setSectionSorts] = useState<Record<string, SectionSort>>({});
+  const [assignmentBandSorts, setAssignmentBandSorts] = useState<Record<"booked" | "assigned", SectionSort>>({});
   const bulk = useEntityBulkAction();
   const selection = useBulkSelection({
     cap: 200,
@@ -552,6 +559,18 @@ export function DispatchBoard({
   );
 
   const { widths: dispatchColWidths, setColumnWidth: setDispatchColWidth, columnOrder: savedColumnOrder, setColumnOrder: persistColumnOrder } = useTablePref("dispatch-board", { pageSize: 200 });
+  const {
+    widths: bookedAssignmentWidths,
+    setColumnWidth: setBookedAssignmentWidth,
+    columnOrder: savedBookedAssignmentOrder,
+    setColumnOrder: persistBookedAssignmentOrder,
+  } = useTablePref("dispatch-assignment-booked", { pageSize: 200 });
+  const {
+    widths: assignedAssignmentWidths,
+    setColumnWidth: setAssignedAssignmentWidth,
+    columnOrder: savedAssignedAssignmentOrder,
+    setColumnOrder: persistAssignedAssignmentOrder,
+  } = useTablePref("dispatch-assignment-assigned", { pageSize: 200 });
   // BANK-SORT-ROLLOUT-OPS — ?sort=/?dir= URL persistence so a dispatcher's chosen column sort
   // survives a refresh or a shared/bookmarked board link (same contract as ?board= board-mode above).
   // Uses the shared useUrlSort hook (BANK-SORT-ROLLOUT-ACCT); TableHeaderCell wants sortKey as
@@ -660,6 +679,29 @@ export function DispatchBoard({
           direction: prior.key === columnKey && prior.direction === "asc" ? "desc" : "asc",
         },
       };
+    });
+  };
+
+  const toggleAssignmentBandSort = (band: "booked" | "assigned", columnKey: string) => {
+    setAssignmentBandSorts((current) => {
+      const prior = current[band] ?? { key: band === "booked" ? "load" : "unit", direction: "asc" as const };
+      return {
+        ...current,
+        [band]: {
+          key: columnKey,
+          direction: prior.key === columnKey && prior.direction === "asc" ? "desc" : "asc",
+        },
+      };
+    });
+  };
+
+  const sortAssignmentBandRows = (rows: BoardLoad[], band: "booked" | "assigned") => {
+    const sort = assignmentBandSorts[band];
+    if (!sort?.key) return rows;
+    const valueKey = sort.key === "lane" ? "pickup" : sort.key;
+    return [...rows].sort((a, b) => {
+      const cmp = compareDispatch(dispatchSortValue(a, valueKey), dispatchSortValue(b, valueKey));
+      return sort.direction === "asc" ? cmp : -cmp;
     });
   };
 
@@ -1094,6 +1136,45 @@ export function DispatchBoard({
   const orderedListColumns = useMemo(() => orderColumns(listColumns), [listColumns, columnOrder]);
   const orderedTableColumns = useMemo(() => orderColumns(tableColumns), [tableColumns, columnOrder]);
 
+  const bookedAssignmentDefaultKeys = useMemo(() => [...BOOKED_ASSIGNMENT_COLUMN_KEYS], []);
+  const assignedAssignmentDefaultKeys = useMemo(() => [...ASSIGNED_ASSIGNMENT_COLUMN_KEYS], []);
+
+  const {
+    order: bookedAssignmentOrder,
+    setOrder: setBookedAssignmentOrder,
+    dragHandleProps: bookedAssignmentDrag,
+    dragOverId: bookedAssignmentDragOver,
+  } = useColumnReorder(savedBookedAssignmentOrder.length > 0 ? savedBookedAssignmentOrder : bookedAssignmentDefaultKeys);
+
+  const {
+    order: assignedAssignmentOrder,
+    setOrder: setAssignedAssignmentOrder,
+    dragHandleProps: assignedAssignmentDrag,
+    dragOverId: assignedAssignmentDragOver,
+  } = useColumnReorder(savedAssignedAssignmentOrder.length > 0 ? savedAssignedAssignmentOrder : assignedAssignmentDefaultKeys);
+
+  useEffect(() => {
+    if (savedBookedAssignmentOrder.length > 0) setBookedAssignmentOrder(savedBookedAssignmentOrder);
+  }, [savedBookedAssignmentOrder, setBookedAssignmentOrder]);
+
+  useEffect(() => {
+    if (savedAssignedAssignmentOrder.length > 0) setAssignedAssignmentOrder(savedAssignedAssignmentOrder);
+  }, [savedAssignedAssignmentOrder, setAssignedAssignmentOrder]);
+
+  useEffect(() => {
+    if (bookedAssignmentOrder.length > 0) persistBookedAssignmentOrder(bookedAssignmentOrder);
+  }, [bookedAssignmentOrder, persistBookedAssignmentOrder]);
+
+  useEffect(() => {
+    if (assignedAssignmentOrder.length > 0) persistAssignedAssignmentOrder(assignedAssignmentOrder);
+  }, [assignedAssignmentOrder, persistAssignedAssignmentOrder]);
+
+  const orderAssignmentColumns = <T extends { key: string }>(columns: T[], order: string[]) => {
+    const byKey = new Map(columns.map((column) => [column.key, column]));
+    const keys = order.length > 0 ? order : columns.map((column) => column.key);
+    return keys.map((key) => byKey.get(key)).filter((column): column is T => Boolean(column));
+  };
+
   const renderListOrTable = (columns: typeof listColumns) => {
     if (listError) {
       return (
@@ -1390,6 +1471,140 @@ export function DispatchBoard({
       );
     }
 
+    const bookedAssignmentColumns: Array<{ key: string; header: string; sortable: boolean; cell: (load: BoardLoad) => ReactNode }> = [
+      { key: "load", header: "Load", sortable: true, cell: (load) => renderLoadNumberCell(load) },
+      { key: "customer", header: "Customer", sortable: true, cell: renderCustomerCell },
+      { key: "lane", header: "Lane", sortable: true, cell: (load) => laneSummary(load) },
+      { key: "delivery", header: "Delivery", sortable: true, cell: (load) => load.first_delivery_city ?? "—" },
+      { key: "doc", header: "Doc-Compliance", sortable: false, cell: (load) => <DocComplianceCell load={load} /> },
+      {
+        key: "cargo_temp",
+        header: "Cargo Temp",
+        sortable: false,
+        cell: (load) => (
+          <CargoTempBadge
+            loadId={load.id}
+            operatingCompanyId={load.operating_company_id}
+            reefer={isReeferCommodity(load.commodity)}
+          />
+        ),
+      },
+      { key: "status", header: "Status", sortable: true, cell: (load) => renderStatusCell(load) },
+      {
+        key: "assign",
+        header: "Assign",
+        sortable: false,
+        cell: (load) => (
+          <button
+            type="button"
+            className="rounded-sm border border-slate-300 px-2 py-0.5 text-[10px] font-semibold text-slate-700 hover:bg-slate-50"
+            onClick={(event) => {
+              event.stopPropagation();
+              setQuickAssignLoad(load);
+            }}
+          >
+            + Quick Assign
+          </button>
+        ),
+      },
+    ];
+
+    const assignedAssignmentColumns: Array<{ key: string; header: string; sortable: boolean; cell: (load: BoardLoad) => ReactNode }> = [
+      { key: "unit", header: "Unit", sortable: true, cell: (load) => renderUnitCell(load) },
+      { key: "trailer", header: "Trailer", sortable: true, cell: (load) => renderTrailerCell(load) },
+      {
+        key: "cargo_temp",
+        header: "Cargo Temp",
+        sortable: false,
+        cell: (load) => (
+          <CargoTempBadge
+            loadId={load.id}
+            operatingCompanyId={load.operating_company_id}
+            reefer={isReeferCommodity(load.commodity)}
+          />
+        ),
+      },
+      { key: "load", header: "Load", sortable: true, cell: (load) => renderLoadNumberCell(load) },
+      { key: "customer", header: "Customer", sortable: true, cell: renderCustomerCell },
+      { key: "driver", header: "Driver", sortable: true, cell: (load) => renderDriverCell(load) },
+      { key: "lane", header: "Lane", sortable: true, cell: (load) => laneSummary(load) },
+      { key: "delivery", header: "Delivery", sortable: true, cell: (load) => load.first_delivery_city ?? "—" },
+      { key: "status", header: "Status", sortable: true, cell: (load) => renderStatusCell(load) },
+    ];
+
+    const orderedBookedColumns = orderAssignmentColumns(bookedAssignmentColumns, bookedAssignmentOrder);
+    const orderedAssignedColumns = orderAssignmentColumns(assignedAssignmentColumns, assignedAssignmentOrder);
+    const sortedBookedLoads = sortAssignmentBandRows(bookedLoads, "booked");
+    const sortedAssignedLoads = sortAssignmentBandRows(assignedLoads, "assigned");
+    const bookedSort = assignmentBandSorts.booked ?? { key: "load", direction: "asc" as const };
+    const assignedSort = assignmentBandSorts.assigned ?? { key: "unit", direction: "asc" as const };
+
+    const renderAssignmentBandTable = (
+      band: "booked" | "assigned",
+      columns: typeof bookedAssignmentColumns,
+      rows: BoardLoad[],
+      sort: SectionSort,
+      widths: Record<string, number>,
+      setWidth: (key: string, width: number) => void,
+      dragHandle: (key: string) => ReturnType<typeof bookedAssignmentDrag>,
+      dragOverId: string | null,
+      emptyMessage: string,
+      loadingMessage: string,
+    ) => (
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white" data-testid={`dispatch-assignment-table-${band}`}>
+        <table className="min-w-full text-left text-[11px]">
+          <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
+            <tr data-testid={`dispatch-assignment-headers-${band}`}>
+              {columns.map((column) => {
+                const sortable =
+                  band === "booked"
+                    ? ASSIGNMENT_BOOKED_SORTABLE.has(column.key === "lane" ? "pickup" : column.key)
+                    : ASSIGNMENT_ASSIGNED_SORTABLE.has(column.key === "lane" ? "pickup" : column.key);
+                return (
+                  <TableHeaderCell
+                    key={column.key}
+                    columnKey={column.key}
+                    label={column.header}
+                    sortable={sortable}
+                    sortKey={sort.key}
+                    sortDir={sort.direction}
+                    onToggleSort={(columnKey) => toggleAssignmentBandSort(band, columnKey)}
+                    width={widths[column.key]}
+                    onResize={setWidth}
+                    draggable
+                    dragHandleProps={dragHandle(column.key)}
+                    dragOver={dragOverId === column.key}
+                  />
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={columns.length} className="px-2 py-3 text-gray-400">
+                  {loadingMessage}
+                </td>
+              </tr>
+            ) : (
+              renderLoadRows(
+                rows,
+                columns.map(({ key, header, cell }) => ({ key, header, cell })),
+                { showBulk: false },
+              )
+            )}
+            {!loading && rows.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length} className="px-2 py-3 text-center text-gray-500">
+                  {emptyMessage}
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+    );
+
     return (
       <div className="space-y-4" data-testid="dispatch-board-assignment-view">
         <AssignmentBand title="Unassigned Units" count={unassignedUnits.length}>
@@ -1402,133 +1617,33 @@ export function DispatchBoard({
         </AssignmentBand>
 
         <AssignmentBand title="Booked Loads" count={bookedLoads.length}>
-          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-            <table className="min-w-full text-left text-[11px]">
-              <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
-                <tr>
-                  {["Load", "Customer", "Lane", "Delivery", "Doc-Compliance", "Cargo Temp", "Status", "Assign"].map((header) => (
-                    <th key={header} className="px-2 py-1">
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={8} className="px-2 py-3 text-gray-400">
-                      Loading booked loads...
-                    </td>
-                  </tr>
-                ) : (
-                  renderLoadRows(bookedLoads, [
-                    {
-                      key: "load",
-                      header: "Load",
-                      cell: (load) => renderLoadNumberCell(load),
-                    },
-                    { key: "customer", header: "Customer", cell: renderCustomerCell },
-                    { key: "lane", header: "Lane", cell: (load) => laneSummary(load) },
-                    { key: "delivery", header: "Delivery", cell: (load) => load.first_delivery_city ?? "—" },
-                    { key: "doc", header: "Doc-Compliance", cell: (load) => <DocComplianceCell load={load} /> },
-                    {
-                      key: "cargo_temp",
-                      header: "Cargo Temp",
-                      cell: (load) => (
-                        <CargoTempBadge
-                          loadId={load.id}
-                          operatingCompanyId={load.operating_company_id}
-                          reefer={isReeferCommodity(load.commodity)}
-                        />
-                      ),
-                    },
-                    { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
-                    {
-                      key: "assign",
-                      header: "Assign",
-                      cell: (load) => (
-                        <button
-                          type="button"
-                          className="rounded-sm border border-slate-300 px-2 py-0.5 text-[10px] font-semibold text-slate-700 hover:bg-slate-50"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setQuickAssignLoad(load);
-                          }}
-                        >
-                          + Quick Assign
-                        </button>
-                      ),
-                    },
-                  ], { showBulk: false })
-                )}
-                {!loading && bookedLoads.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-2 py-3 text-center text-gray-500">
-                      No reserved loads waiting for assignment.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
+          {renderAssignmentBandTable(
+            "booked",
+            orderedBookedColumns,
+            sortedBookedLoads,
+            bookedSort,
+            bookedAssignmentWidths,
+            setBookedAssignmentWidth,
+            bookedAssignmentDrag,
+            bookedAssignmentDragOver,
+            "No reserved loads waiting for assignment.",
+            "Loading booked loads...",
+          )}
         </AssignmentBand>
 
         <AssignmentBand title="Assigned Units" count={assignedLoads.length}>
-          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-            <table className="min-w-full text-left text-[11px]">
-              <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
-                <tr>
-                  {["Unit", "Trailer", "Cargo Temp", "Load", "Customer", "Driver", "Lane", "Delivery", "Status"].map((header) => (
-                    <th key={header} className="px-2 py-1">
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={9} className="px-2 py-3 text-gray-400">
-                      Loading assigned units...
-                    </td>
-                  </tr>
-                ) : (
-                  renderLoadRows(assignedLoads, [
-                    { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
-                    { key: "trailer", header: "Trailer", cell: (load) => renderTrailerCell(load) },
-                    {
-                      key: "cargo_temp",
-                      header: "Cargo Temp",
-                      cell: (load) => (
-                        <CargoTempBadge
-                          loadId={load.id}
-                          operatingCompanyId={load.operating_company_id}
-                          reefer={isReeferCommodity(load.commodity)}
-                        />
-                      ),
-                    },
-                    {
-                      key: "load",
-                      header: "Load",
-                      cell: (load) => renderLoadNumberCell(load),
-                    },
-                    { key: "customer", header: "Customer", cell: renderCustomerCell },
-                    { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
-                    { key: "lane", header: "Lane", cell: (load) => laneSummary(load) },
-                    { key: "delivery", header: "Delivery", cell: (load) => load.first_delivery_city ?? "—" },
-                    { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
-                  ], { showBulk: false })
-                )}
-                {!loading && assignedLoads.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="px-2 py-3 text-center text-gray-500">
-                      No assigned units on current page.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
+          {renderAssignmentBandTable(
+            "assigned",
+            orderedAssignedColumns,
+            sortedAssignedLoads,
+            assignedSort,
+            assignedAssignmentWidths,
+            setAssignedAssignmentWidth,
+            assignedAssignmentDrag,
+            assignedAssignmentDragOver,
+            "No assigned units on current page.",
+            "Loading assigned units...",
+          )}
         </AssignmentBand>
       </div>
     );
