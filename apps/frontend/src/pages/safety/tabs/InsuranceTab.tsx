@@ -6,6 +6,7 @@ import { LawsuitsTab } from "../../insurance/LawsuitsTab";
 import { PoliciesList } from "../../insurance/PoliciesList";
 import { PolicyDetail } from "../../insurance/PolicyDetail";
 import { TypeCatalogAdmin } from "../../insurance/TypeCatalogAdmin";
+import { FleetCoveredPage } from "../../insurance/FleetCoveredPage";
 
 export function InsuranceTab() {
   const navClassName = ({ isActive }: { isActive: boolean }) =>
@@ -19,6 +20,9 @@ export function InsuranceTab() {
         </NavLink>
         <NavLink to="/safety/insurance/policies" className={navClassName}>
           Policies
+        </NavLink>
+        <NavLink to="/safety/insurance/fleet-covered" className={navClassName}>
+          Fleet Covered
         </NavLink>
         <NavLink to="/safety/insurance/type-catalog" className={navClassName}>
           Type Catalog
@@ -38,6 +42,7 @@ export function InsuranceTab() {
         <Route index element={<InsuranceLanding />} />
         <Route path="policies" element={<PoliciesList />} />
         <Route path="policies/:policyId" element={<PolicyDetail />} />
+        <Route path="fleet-covered" element={<FleetCoveredPage />} />
         <Route path="type-catalog" element={<TypeCatalogAdmin />} />
         <Route path="coverage-gaps" element={<CoverageGapDashboard />} />
         <Route path="claims" element={<ClaimsTab />} />

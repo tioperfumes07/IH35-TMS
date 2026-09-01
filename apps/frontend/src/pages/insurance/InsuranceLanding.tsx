@@ -14,7 +14,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
  */
 type CardProps = {
   label: string;
-  value: number | null;
+  value: string | number | null;
   /** S-01: when true (and value > 0), render this KPI tile in the locked alert state. */
   alert?: boolean;
   actionLabel?: string;
@@ -26,7 +26,7 @@ function Card(props: CardProps) {
     return <DrillKpiCard size="md" label={label} value={value} unavailable={props.unavailable} />;
   }
   const to = props.to;
-  const isAlert = Boolean(alert) && (value ?? 0) > 0;
+  const isAlert = Boolean(alert) && typeof value === "number" && value > 0;
   if (!isAlert) {
     return <DrillKpiCard size="md" label={label} value={value} to={to} />;
   }
@@ -86,6 +86,7 @@ export function InsuranceLanding() {
       ) : null}
 
       {!summaryQuery.isError ? <section className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))] [&>*]:min-w-0">
+        <Card label="Fleet covered" value={m ? `${m.fleet_covered_units}/${m.fleet_total_units} units` : null} to="/safety/insurance/fleet-covered" />
         <Card label="Total active policies" value={n("total_active_policies")} to="/safety/insurance/policies" />
         <Card label="Policies expiring in 30 days" value={n("policies_expiring_30d")} to="/safety/insurance/policies" />
         <Card

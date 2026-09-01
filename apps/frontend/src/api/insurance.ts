@@ -616,6 +616,8 @@ export type InsuranceDashboardSummary = {
   total_active_policies: number;
   policies_expiring_30d: number;
   coverage_gap_count: number;
+  fleet_total_units: number;
+  fleet_covered_units: number;
   recent_coi_requests: number;
   open_claims: number;
   open_lawsuits: number;
@@ -625,6 +627,38 @@ export type InsuranceDashboardSummary = {
 export function getInsuranceSummary(operatingCompanyId: string) {
   return apiRequest<{ summary: InsuranceDashboardSummary }>(
     `/api/v1/insurance/summary?${toInsuranceQuery({ operating_company_id: operatingCompanyId })}`
+  );
+}
+
+export type InsuranceFleetCoverage = {
+  coverage_type: InsuranceCoverageType;
+  policy_id: string;
+  policy_number: string;
+  expiry_date: string;
+  allocation_method: AllocationMethod;
+};
+
+export type InsuranceFleetCoveredUnit = {
+  asset_id: string;
+  unit_id: string | null;
+  equipment_id: string | null;
+  unit_number: string;
+  vehicle_type: "tractor" | "trailer";
+  vehicle_class: string;
+  year: number | null;
+  make: string | null;
+  model: string | null;
+  vin: string | null;
+  status: string;
+  insured_value_cents: number | null;
+  premium_per_month_cents: number;
+  covered_since: string | null;
+  coverages: InsuranceFleetCoverage[];
+};
+
+export function getInsuranceFleetCovered(operatingCompanyId: string) {
+  return apiRequest<{ units: InsuranceFleetCoveredUnit[] }>(
+    `/api/v1/insurance/fleet-covered?${toInsuranceQuery({ operating_company_id: operatingCompanyId })}`
   );
 }
 

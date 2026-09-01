@@ -415,7 +415,7 @@ jobs:
         run: npm run verify:insurance-policy-unit-columns
 
       - name: verify:insurance-units-assets-bridge
-        run: npm run verify:insurance-units-assets-bridge -- --selftest && npm run verify:insurance-units-assets-bridge
+        run: npm run verify:insurance-units-assets-bridge -- --selftest && npm run verify:insurance-units-assets-bridge && npm run verify:insurance-dashboard-routes-registered -- --selftest && npm run verify:insurance-dashboard-routes-registered
 
       - name: verify:insurance-dashboard-routes-registered
         run: npm run verify:insurance-dashboard-routes-registered
