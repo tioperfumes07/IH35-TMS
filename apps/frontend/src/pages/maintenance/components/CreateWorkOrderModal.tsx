@@ -1057,15 +1057,20 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           <div className="flex items-center gap-2 border-t border-[#d6dae1] pt-2.5">
             <div className="flex-1" />
             <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-            <button
+            <Button
               type="button"
               data-testid="edit-wo-save-btn"
               disabled={savingEdit}
               onClick={() => void submitEdit()}
-              className="h-8 rounded-md border border-[#15803d] bg-[#16a34a] px-3.5 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              // !-prefixed overrides win over the primary variant's own border/bg regardless of
+              // Tailwind's source-order-based cascade -- a plain className append is NOT reliable
+              // for that (verified before shipping: Button's variant classes render AFTER a plain
+              // className append in DOM order, but Tailwind's generated CSS order depends on
+              // first-discovery order across the whole app, not JSX/DOM order).
+              className="!rounded-md !border-[#15803d] !bg-[#16a34a] hover:!bg-[#15803d]"
             >
               {savingEdit ? "Saving…" : "Save changes"}
-            </button>
+            </Button>
           </div>
         </div>
       </Modal>
@@ -1319,7 +1324,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           <div className="mr-auto min-w-0 text-[11px] text-[#475569]">Completing a PM recalculates next-due → PM Countdown</div>
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
           <Button type="button" variant="secondary" disabled={paymentTiming !== "in_house" || !preSaveChecksOk} onClick={() => void submit("wo_only")}>Save draft</Button>
-          <button
+          <Button
             type="button"
             data-testid="wo-create-btn"
             disabled={
@@ -1328,10 +1333,10 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               !reconcileOk
             }
             onClick={() => void submit("full")}
-            className="h-8 rounded-md border border-[#15803d] bg-[#16a34a] px-3.5 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="!rounded-md !border-[#15803d] !bg-[#16a34a] hover:!bg-[#15803d]"
           >
             {paymentTiming === "vendor_invoice" ? "Create work order & Bill" : paymentTiming === "paid_same_day" ? "Create work order & Expense" : "Create work order"}
-          </button>
+          </Button>
         </div>
       </div>
 
