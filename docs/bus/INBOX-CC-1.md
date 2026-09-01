@@ -37,7 +37,12 @@ inline once resolved; never delete a row.
    VOID-01 (7) RECON-NO-OPEN-SESSION (8) bills never auto-created, 39 loads/$14,789.50
    (9) SETL-DUAL-APPROVAL (10) SETL-NEGATIVE-NET-01.
    [1/2/3 DONE per above. 4-6 = the VOID LAW sweep, not started beyond settlements.
-   7-10 NOT STARTED.]
+   7 RECON-NO-OPEN-SESSION investigated: mechanical, not a code gap -- POST .../start already
+   works, needs a live-Chrome click for the current period (or an owner decision on
+   auto-rollover). 9 SETL-DUAL-APPROVAL and 10 SETL-NEGATIVE-NET-01 investigated and root-
+   caused, both need an owner decision before building (not silently picked) -- see
+   docs/audit/GUARD-WORKORDERS.md rows appended 2026-09-01. 8 (bills never auto-created) NOT
+   STARTED.]
 9. Permission model migration handoff from Devin-A (migration authority is CC-1's, HH00-11).
    [Superseded — Cursor applied 202613312000_permission_model.sql directly; confirm with
    Cursor what remains before any re-authoring. Not yet literally confirmed via message
