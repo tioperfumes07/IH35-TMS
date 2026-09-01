@@ -291,6 +291,7 @@ export function BillsPage() {
       dateFrom,
       dateTo,
       vendorId,
+      search,
       deepLinkInsuranceClaimId,
       deepLinkLegalMatterId,
       deepLinkUnitId,
@@ -304,6 +305,7 @@ export function BillsPage() {
         vendor_id: vendorId || undefined,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
+        search: search.trim() || undefined,
         insurance_claim_id: deepLinkInsuranceClaimId || undefined,
         legal_matter_id: deepLinkLegalMatterId || undefined,
         unit_id: deepLinkUnitId || undefined,
@@ -319,15 +321,7 @@ export function BillsPage() {
     let next = category
       ? all.filter((bill) => bill.id === deepLinkBillId || billMatchesCategory(bill, category))
       : [...all];
-    const trimmedSearch = search.trim().toLowerCase();
-    if (trimmedSearch) {
-      next = next.filter((bill) => {
-        if (bill.id === deepLinkBillId) return true;
-        return [bill.bill_number, bill.vendor_name, bill.memo]
-          .filter(Boolean)
-          .some((field) => String(field).toLowerCase().includes(trimmedSearch));
-      });
-    }
+    // BILL-SEARCH-01 — server search via buildListSearchClause.
     if (deepLinkBillId) {
       const idx = next.findIndex((bill) => bill.id === deepLinkBillId);
       if (idx > 0) {
@@ -336,7 +330,7 @@ export function BillsPage() {
       }
     }
     return next;
-  }, [billsQuery.data?.rows, category, deepLinkBillId, search]);
+  }, [billsQuery.data?.rows, category, deepLinkBillId]);
 
   const billKpis = useMemo(() => {
     const all = billsQuery.data?.rows ?? [];
@@ -458,23 +452,11 @@ export function BillsPage() {
     () => [
       { key: "vendor_name", label: "Vendor", sortable: true, render: (bill) => <EntityLink kind="vendor" id={billVendorDrillId(bill)} label={entityLabel(bill.vendor_name, bill.vendor_id, "Vendor")} /> },
       {
-        key: "bill_number",
+        key: "display_id",
         label: "Bill #",
         sortable: true,
-        // F-18 / LV-BILLS-NULL-BILL-NUMBER. entityLabel(name, id, noun) answers "can this record be
-        // NAMED?" and falls back to "<noun> — not visible", which is the right words for a row whose
-        // record the caller cannot see. It is the WRONG words here: the bill IS visible — the operator
-        // is looking straight at its row — it simply has no document number yet. Telling an A/P clerk a
-        // bill is "not visible" while showing it to them is a false statement about their own data.
-        // PROD-VERIFIED 2026-08-11 via psql as neondb_owner (same-statement control, accounting.bills =
-        // 16,294): USMCA holds 47 bills and exactly ONE carries bill_number IS NULL, so this is a real
-        // row, not a hypothetical. It is currently voided, which is why the list does not show it today.
-        // The shared helper is deliberately NOT changed — its wording is correct for the question it
-        // answers, and it is used across many surfaces and guarded by
-        // verify-entity-label-rejects-uuid-shaped-name. The distinction is made HERE, where the two
-        // cases are actually distinguishable.
         render: (bill) => {
-          const number = typeof bill.bill_number === "string" ? bill.bill_number.trim() : "";
+          const number = typeof bill.display_id === "string" ? bill.display_id.trim() : "";
           return (
             <EntityLink
               kind="bill"
@@ -482,6 +464,15 @@ export function BillsPage() {
               label={number !== "" ? number : "No bill #"}
             />
           );
+        },
+      },
+      {
+        key: "bill_number",
+        label: "Vendor Invoice #",
+        sortable: true,
+        render: (bill) => {
+          const number = typeof bill.bill_number === "string" ? bill.bill_number.trim() : "";
+          return <span className="text-slate-800">{number !== "" ? number : "—"}</span>;
         },
       },
       { key: "bill_date", label: "Date", sortable: true, render: (bill) => formatDateUS(bill.bill_date) },
@@ -616,7 +607,7 @@ export function BillsPage() {
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Bill # or vendor"
+            placeholder="Bill #, vendor invoice #, amount, vendor…"
             className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
             aria-label="Search bills"
             data-testid="bills-search-input"
@@ -843,7 +834,7 @@ export function BillsPage() {
               operatingCompanyId={companyId}
               targetType="bill"
               targetId={bill.id}
-              targetLabel={visibleDocumentLabel(bill.bill_number, bill.id, "Bill")}
+              targetLabel={visibleDocumentLabel(bill.display_id ?? bill.bill_number, bill.id, "Bill")}
             />
           </div>
         )}
@@ -908,7 +899,7 @@ export function BillsPage() {
         <BillAllocationPanel
           companyId={companyId}
           billId={allocationBill.id}
-          billLabel={`${entityLabel(allocationBill.vendor_name, allocationBill.vendor_id, "Vendor")} · ${visibleDocumentLabel(allocationBill.bill_number, allocationBill.id, "Bill")}`}
+          billLabel={`${entityLabel(allocationBill.vendor_name, allocationBill.vendor_id, "Vendor")} · ${visibleDocumentLabel(allocationBill.display_id ?? allocationBill.bill_number, allocationBill.id, "Bill")}`}
           billAmountCents={allocationBill.amount_cents}
         />
       ) : null}

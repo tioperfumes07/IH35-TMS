@@ -51,6 +51,15 @@ function assertRoutesUseBuilder() {
   assert.match(builder, /expense_lines el WHERE el\.expense_id = \$\{e\}\.id[\s\S]*?el\.description|el\.description FROM accounting\.expense_lines/);
   assert.match(builder, /catalogs\.expense_categories/);
   assert.match(builder, /expense_account_uuid/);
+
+  // BILL-SEARCH-01 — bills use shared builder (display_id · bill_number · amount$ · …).
+  const billsSvc = read("apps/backend/src/accounting/bills.service.ts");
+  assert.match(billsSvc, /buildListSearchClause/);
+  assert.match(billsSvc, /billListSearchFields/);
+  assert.match(builder, /billListSearchFields[\s\S]*?\$\{b\}\.display_id/);
+  const billsRoutes = read("apps/backend/src/accounting/bills.routes.ts");
+  assert.match(billsRoutes, /search: z\.string\(\)/);
+  assert.match(billsRoutes, /search: query\.data\.search/);
 }
 
 async function assertRuntimeAmountSemantics() {

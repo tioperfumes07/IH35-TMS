@@ -259,6 +259,9 @@ export type VendorBill = {
    */
   mdata_vendor_id: string | null;
   vendor_name?: string | null;
+  /** TMS Bill # (server-generated display_id). */
+  display_id?: string | null;
+  /** Vendor Invoice # (vendor document number). */
   bill_number: string | null;
   bill_date: string;
   due_date: string | null;
@@ -841,6 +844,7 @@ export function listBills(
     has_balance?: boolean;
     date_from?: string;
     date_to?: string;
+    search?: string;
     insurance_claim_id?: string;
     legal_matter_id?: string;
     unit_id?: string;
@@ -856,6 +860,7 @@ export function listBills(
   if (params.has_balance) query.set("has_balance", "true");
   if (params.date_from) query.set("date_from", params.date_from);
   if (params.date_to) query.set("date_to", params.date_to);
+  if (params.search?.trim()) query.set("search", params.search.trim());
   if (params.insurance_claim_id) query.set("insurance_claim_id", params.insurance_claim_id);
   if (params.legal_matter_id) query.set("legal_matter_id", params.legal_matter_id);
   if (params.unit_id) query.set("unit_id", params.unit_id);

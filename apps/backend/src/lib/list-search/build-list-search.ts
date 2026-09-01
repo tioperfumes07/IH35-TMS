@@ -248,6 +248,7 @@ export function billListSearchFields(aliases: {
 }): ListSearchField[] {
   const b = aliases.bill ?? "b";
   return [
+    { kind: "text", sql: `${b}.display_id` },
     { kind: "text", sql: `${b}.bill_number` },
     { kind: "text", sql: aliases.vendorNameExpr },
     { kind: "amount_cents", sql: `${b}.amount_cents` },

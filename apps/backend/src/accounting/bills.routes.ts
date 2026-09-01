@@ -41,6 +41,7 @@ const listBillsQuerySchema = companyQuerySchema.extend({
   status: z.enum(["open", "partial", "paid", "voided", "unpaid"]).optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  search: z.string().trim().max(200).optional(),
   // ACCT-F5035 — claim→bill reverse (create stamps insurance_claim_id; list never filtered).
   insurance_claim_id: z.string().uuid().optional(),
   // LINK-F5171 — legal matter→bill reverse (create stamps legal_matter_id; list never filtered).
@@ -177,6 +178,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       fromDate: query.data.date_from,
       toDate: query.data.date_to,
       hasBalance: query.data.has_balance,
+      search: query.data.search,
       insuranceClaimId: query.data.insurance_claim_id,
       legalMatterId: query.data.legal_matter_id,
       unitId: query.data.unit_id,

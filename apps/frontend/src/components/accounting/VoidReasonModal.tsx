@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "../Button";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { ApiError } from "../../api/client";
+import { listVoidCancelReasons, type VoidCancelReason } from "../../api/catalogs";
+import { useCompanyContext } from "../../contexts/CompanyContext";
 
-/** Human-readable message out of a void API failure (validation details / field message / text). */
 function extractVoidError(err: unknown): string {
   if (err instanceof ApiError) {
     const data = (err.data as Record<string, unknown>) ?? {};
@@ -21,34 +23,26 @@ function extractVoidError(err: unknown): string {
   return err instanceof Error ? err.message : "Void failed. Please try again.";
 }
 
+function composeVoidReason(selected: VoidCancelReason | null, memo: string): string {
+  const label = selected?.reason_label?.trim() || selected?.reason_code?.trim() || "";
+  const note = memo.trim();
+  if (label && note) return `${label}: ${note}`;
+  if (label) return label;
+  return note;
+}
+
 type Props = {
   open: boolean;
-  /** Modal title, e.g. "Void Journal Entry". */
   title: string;
-  /** One-line reference shown to the user: entity #, amount, and period. */
   entityRef?: string;
-  /** Minimum reason length (matches the backend contract; JE void requires min 3). */
   minLength?: number;
-  /** Show the audit note that voiding posts an equal-and-opposite reversing entry. Default true. */
   postsReversingEntry?: boolean;
   onClose: () => void;
-  /** Perform the void with the captured reason. Reject to surface an error and keep the form open. */
   onSubmit: (reason: string) => Promise<void>;
-  /** Footer submit label. Default Void; Revoke/Dismiss/Archive reuse the same reason shell. */
   submitLabel?: string;
 };
 
-/**
- * In-app VOID/reversal shell for a financial action — replaces native window.prompt()/confirm() on money
- * actions. QuickBooks/NetSuite parity: states what is being voided (ref + amount + period), REQUIRES a
- * reason (an audit-trail requirement), and states that a reversing entry will be posted. Submit is
- * disabled until the reason meets the minimum length; API errors are surfaced instead of hanging.
- *
- * CHROME-14: outer shell swapped from centered Modal to ParityDrawer (QBO side-panel chrome), with the
- * Cancel/Void buttons in the drawer's sticky footer (form id "void-reason-form" wires the submit button
- * across the footer/body boundary — CHROME-13 pattern). Presentational only; every caller (JE void,
- * payment-method void, bill-payment void, invoice void, etc.) keeps its existing onSubmit contract.
- */
+/** VOID-REASON-CATALOG-01 — catalogs.void_cancel_reasons dropdown + optional memo. */
 export function VoidReasonModal({
   open,
   title,
@@ -59,15 +53,41 @@ export function VoidReasonModal({
   onSubmit,
   submitLabel = "Void",
 }: Props) {
-  const [reason, setReason] = useState("");
+  const { selectedCompanyId } = useCompanyContext();
+  const [reasonId, setReasonId] = useState("");
+  const [memo, setMemo] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const trimmed = reason.trim();
-  const valid = trimmed.length >= minLength;
+  const reasonsQuery = useQuery({
+    queryKey: ["void-cancel-reasons", selectedCompanyId, "void-modal"],
+    queryFn: () => listVoidCancelReasons(selectedCompanyId!, false),
+    enabled: Boolean(open && selectedCompanyId),
+  });
+
+  const reasons = useMemo(
+    () => (reasonsQuery.data?.reasons ?? []).filter((r) => r.is_active).sort((a, b) => a.sort_order - b.sort_order),
+    [reasonsQuery.data?.reasons]
+  );
+
+  const selected = reasons.find((r) => r.id === reasonId) ?? null;
+  const catalogAvailable = reasons.length > 0;
+  const composed = composeVoidReason(selected, memo);
+  const needsMemo = Boolean(selected?.requires_note);
+  const valid = catalogAvailable
+    ? Boolean(selected) && (!needsMemo || memo.trim().length >= minLength) && composed.trim().length >= minLength
+    : composed.trim().length >= minLength;
+
+  useEffect(() => {
+    if (!open) return;
+    setReasonId("");
+    setMemo("");
+    setSubmitError(null);
+  }, [open]);
 
   const close = () => {
-    setReason("");
+    setReasonId("");
+    setMemo("");
     setSubmitError(null);
     onClose();
   };
@@ -97,8 +117,9 @@ export function VoidReasonModal({
           if (!valid) return;
           setSubmitting(true);
           try {
-            await onSubmit(trimmed);
-            setReason("");
+            await onSubmit(composed.trim());
+            setReasonId("");
+            setMemo("");
             close();
           } catch (err) {
             setSubmitError(extractVoidError(err));
@@ -113,25 +134,67 @@ export function VoidReasonModal({
             Voiding posts an equal-and-opposite <span className="font-semibold">reversing entry</span> and keeps the audit trail. This can&apos;t be undone.
           </p>
         ) : null}
+
+        {catalogAvailable ? (
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-gray-600" htmlFor="void-reason-code">
+              Reason <span className="text-red-600">*</span>
+            </label>
+            <select
+              id="void-reason-code"
+              value={reasonId}
+              onChange={(event) => setReasonId(event.target.value)}
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              autoFocus
+            >
+              <option value="">Select a reason…</option>
+              {reasons.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.reason_label}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600" htmlFor="void-reason">
-            Reason <span className="text-red-600">*</span>
+            {catalogAvailable ? (
+              <>
+                Memo {needsMemo ? <span className="text-red-600">*</span> : <span className="font-normal text-gray-500">(optional)</span>}
+              </>
+            ) : (
+              <>
+                Reason <span className="text-red-600">*</span>
+              </>
+            )}
           </label>
           <textarea
             id="void-reason"
             rows={3}
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
+            value={memo}
+            onChange={(event) => setMemo(event.target.value)}
             className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
-            placeholder={`Required reason (min ${minLength} chars)`}
-            autoFocus
+            placeholder={
+              catalogAvailable
+                ? needsMemo
+                  ? `Required note (min ${minLength} chars)`
+                  : "Optional note"
+                : `Required reason (min ${minLength} chars)`
+            }
+            autoFocus={!catalogAvailable}
           />
         </div>
+
         {!valid ? (
           <p className="text-[11px] text-gray-500">
-            {trimmed.length === 0
+            {!catalogAvailable && composed.trim().length === 0
               ? "A reason is required to void."
-              : `Add ${minLength - trimmed.length} more character(s) to enable Void.`}
+              : catalogAvailable && !selected
+                ? "Select a void reason."
+                : needsMemo && memo.trim().length < minLength
+                  ? `Add ${minLength - memo.trim().length} more character(s) to the note.`
+                  : `Add ${minLength - composed.trim().length} more character(s) to enable Void.`}
           </p>
         ) : null}
         {submitError ? (

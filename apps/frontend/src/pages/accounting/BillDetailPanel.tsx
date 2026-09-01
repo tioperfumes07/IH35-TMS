@@ -6,6 +6,7 @@ import { formatDateUS } from "../../lib/formatDate";
 type BillSummary = {
   /** LINK-F5188: real accounting.bills row id — the caller always has it (selectedBill.id). */
   id?: string | null;
+  display_id?: string | null;
   bill_number?: string | null;
   vendor_name?: string | null;
   vendor_id?: string | null;
@@ -41,20 +42,17 @@ export function BillDetailPanel({ bill }: Props) {
         fields={[
           {
             label: "Bill #",
-            // ACCT-F6301-class: bill_number is nullable and null on 550/16,301 real bills
-            // (live-confirmed). This panel renders the bill's OWN "Bill details" — already fully
-            // in view (vendor/amount/status right below) — so entityLabel(null, ...)'s
-            // "Bill — not visible" fallback would contradict the panel it's sitting in.
             value: bill.id ? (
               <EntityLink
                 kind="bill"
                 id={bill.id}
-                label={visibleDocumentLabel(bill.bill_number ?? bill.vendor_name, bill.id, "Bill")}
+                label={visibleDocumentLabel(bill.display_id ?? bill.vendor_name, bill.id, "Bill")}
               />
             ) : (
-              bill.bill_number ?? "—"
+              bill.display_id ?? "—"
             ),
           },
+          { label: "Vendor Invoice #", value: bill.bill_number ?? "—" },
           { label: "Vendor", value: entityLabel(bill.vendor_name, bill.vendor_id, "Vendor") },
           { label: "Status", value: bill.status ?? "—" },
           { label: "Amount", value: money.format(amount) },
