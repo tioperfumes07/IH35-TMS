@@ -6,6 +6,7 @@ CODEX | SHIPPED | DSP-04 | PR=#19089@a72aad74b2e97d8e19db611eb4fa29746d4a0180 | 
 CODEX | WORKING | WIR-03 | ROOT=Dispatch-Factoring-nav-escaped-to-Accounting-despite-real-Dispatch-queue | FIX=subnav+breadcrumb+active-route→/dispatch/factoring-queue | guard=workflow-named+selftest11 | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | WIR-03 | PR=#19091@321712177e8fd576da396e60c0bfff56f3451270 | origin-main=verified-nav+breadcrumb+active-route→/dispatch/factoring-queue | NEXT=INBOX | GO
 CODEX | WORKING | WIR-01 | ROOT=canonical-emanifest-pdf-url-computed-in-page-but-discarded-before-Step6 | FIX=pass-pdfUrl+explicit-generate-action | guard=workflow-named+selftest3/3+entitylinks | focused=tsc | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | WIR-01 | PR=#19106@fa5e5801f0ff46984414f60fa039781b1a14e4d9 | origin-main=verified-pdfUrl→Step6→Generate-action | push=Recipe-C-after-mandatory-gate-PASS+unrelated-static-deps-wall | NEXT=WIR-04 | GO
 
 **Paste:** docs/bus/PASTE-ALL-SEATS-NO-IDLE-2026-09-01.md
 
