@@ -1,3 +1,5 @@
+**★ FORCE NOW · LINKAGE INTEGRITY LAW (owner paste)** — `banking.matches` record (not pointer) · DB TRIGGER bidirectional release on void/unmatch · ONE void column (`voided_at`). Bank-orphan 4 TEST apply already DONE. No open money PR on main for this — START or OUTBOX BLOCKED reason same turn.
+
 # INBOX — CC-1 · running queue log (queue-discipline standing rule, effective 2026-09-01)
 
 Every instruction received gets appended here, in order, before acting on it, so the queue
