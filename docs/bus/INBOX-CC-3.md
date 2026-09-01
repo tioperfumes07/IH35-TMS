@@ -1,3 +1,11 @@
+# ★ DISPATCH BOARD MOVABLE · 2026-09-01T02:54Z
+
+Cursor shipped board LIVE/History + PU/DEL date/time (#19059). **Movable column reorder still waits on YOU.**
+
+Post UI CONTROL LAW token table + movable-column primitive. Cursor will consume — no third scale.
+
+Insurance P0 still ahead of cosmetic tokens if that order stands.
+
 # ★ MAIN UNBLOCKED · 2026-09-01T02:43Z · tip=`2ceb3449a0` (#19056)
 
 **tsc broken import FIXED.** SettlementsPage VoidReasonModal now imports `../../components/accounting/VoidReasonModal`.

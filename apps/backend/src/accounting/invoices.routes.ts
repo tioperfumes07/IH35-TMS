@@ -11,7 +11,7 @@ import { createExpandedInvoice } from "./invoices.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { auditVoid, isVoidEnforcementEnabled, pgDateColumnToIsoDay, postVoidReversal, type VoidReversalResult } from "./void.service.js";
-import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
+import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { buildListSearchClause, invoiceListSearchFields } from "../lib/list-search/build-list-search.js";
 
@@ -929,11 +929,6 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    // G9-C3: voiding an invoice is an EXECUTOR-only action (Owner|Administrator|Accountant). This gate is
-    // OUTSIDE the VOID-EVERYWHERE flag — previously the role check lived only inside the flag-ON path, so
-    // in the default (flag-OFF) state anyone could void. Route through the shared governance authz so
-    // non-executors must FILE a void/cancel request for approval.
-    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -941,6 +936,18 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     const body = voidBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      // PERMISSION WIRING 10.4: role floor when PERMISSION_MODEL_ENFORCED OFF; invoice.void when ON.
+      if (
+        !(await requireVoidCancelExecutorWired(reply, {
+          role: String(user.role ?? ""),
+          client,
+          permissionKey: "invoice.void",
+          operatingCompanyId: query.data.operating_company_id,
+          userUuid: user.uuid,
+        }))
+      ) {
+        return { code: 403 as const, error: "void_requires_request" };
+      }
       const currentRes = await client.query(
         `SELECT *, issue_date::text AS issue_date_iso
            FROM accounting.invoices
