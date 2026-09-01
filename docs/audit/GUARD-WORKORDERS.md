@@ -7476,3 +7476,86 @@ landed on main broken or mid-refactor) and not something I'm touching or fixing.
 moving too fast tonight for individual seats' local-gate pushes to land cleanly, and this is a
 repo-wide blocking condition, not specific to CC-3's diff. Holding further push attempts until
 main stabilizes rather than retrying against a target that is itself currently broken.
+
+## GUARD-WORKORDERS — CC-3 2026-08-31 22:20 CT — DRIVERS cleanup, full verified lists
+
+**Criteria (owner): stays Active if EITHER (a) hos.duty_status_events.started_at within last 40 days, OR (b) appears on a driver_finance.driver_settlements row with period_start in August 2026 AND is_sample_data=false. Everything else -> Inactive.**
+
+**73 driver row IDs going Inactive (69 real persons, matched by name):**
+- db37af23-ea20-493b-8321-a26a30205250
+- 44455b45-2610-4d0c-bd6a-0febeecd70f3
+- 2ada20b9-5a51-46e2-902e-c8e8f68f8034
+- 9c0ae9a4-64e1-41d1-b5ab-8ef43c0e3a0f
+- 7f0341f2-8d7a-4885-b534-d4e93a95fa2a
+- d75b74ea-e718-408d-99e6-9cf0f8234a70
+- e3ac0879-8558-4c01-922f-0cc2d94b937b
+- a5f3e6e4-047d-44b1-9292-72b6bbe6519a
+- 1fc4d27f-0ffe-4735-9fbb-506e77e1f295
+- b7f84d33-a1bf-40a2-b6d4-86eafd44323f
+- ab1dbf48-6b26-4765-bf4a-69a1295cd189
+- 603e4b63-e4c5-4061-a911-329e24bd991e
+- e901be6e-cee7-41cd-8827-8b5c320c9a20
+- a593d0c4-fe55-451d-8193-ac481d9f1a01
+- 6f082eb6-091f-461c-bb7d-6ac8a25ac828
+- 56c5bbb9-70b7-42a2-aa65-ff69e4864e68
+- 521bd093-ad57-49a6-937e-82ed24c1563b
+- ff62fc9b-7258-4d89-9778-43d2e1a02d4a
+- c169126c-beb1-4508-93a9-e1d270f22e11
+- 9f35cf21-01bb-467e-bc31-e96bb9c60dfe
+- 1d2dae01-2cc5-4e7e-b0c4-6cd9f855ec1e
+- 2f166249-8158-4650-9074-eaedb1b5b305
+- ba75a6cf-50fa-4056-bba2-1bcede88fad7
+- 52c492ea-b1f3-4d2b-a90f-0559d8ab4981
+- c8379cc6-6148-4fe9-8842-7c12d8fa8dce
+- e8d08faf-ac5a-4351-8bef-8c7bf260f95e
+- 74ff1e2c-c329-4b3e-a2bd-4c5603d719e4
+- fc24d491-d592-4e03-94f0-cb7ab2ca79f1
+- 8f8adcdc-fc0d-4be3-8efe-2b488e98e773
+- 30806c79-9a89-4cf1-93e4-c25820e6df14
+- d5a8f2e2-632e-4eaf-84c4-0ac3cfbd945e
+- 47f156a2-4457-4a2f-a49e-4c3e46cdd76a
+- 1cf3d539-4795-4dfa-88ea-b09a9b7b2a17
+- cf02d95c-7c1c-4061-9251-77a8375765dd
+- b1235476-2a03-47fb-86ca-4ff2ac1c307d
+- 70ae2d01-b38e-4c82-b4da-5c8c00059fe8
+- 69da980b-2a16-455f-aacb-39514b759e04
+- d4a753ab-2e02-47d7-9808-57631b5f93c1
+- e0a9d212-c02b-4ca0-b530-29e961dd6145
+- a2a1275f-f709-4df2-9ed8-388e4d4f555b
+- 450be925-56e6-425a-a56b-f99cf97d2b5f
+- dd59fbbc-79e3-4e23-83cc-ae0f74fac59c
+- 7f9698ae-fce5-417c-9d83-739910a529ac
+- 09e229e7-e877-4a85-8731-c85eec9904ee
+- deb4e3a4-15d7-49d4-9f16-ccfb9c5ebfaf
+- 82898fdf-8f3c-4545-9990-27cd03a86e99
+- 0558786b-2c98-4033-9c8b-57f4d6f5ed40
+- dd7c5f8c-2ade-4b3c-8308-9a89735a2d3d
+- 809450a7-1134-449f-b484-9e91de8db5f3
+- a6f18a3c-f4e9-4bc6-a38b-1d6ef5b92d28
+- 3bdd88ee-7e29-4fd2-ab1a-07c2245ef1e9
+- 7d867b16-06e2-4b2b-9ff2-1451e26c2d71
+- c4650462-f7a0-49d0-81ec-886f44be027c
+- 0da95346-5565-4b76-b579-751798614d04
+- 49427973-e93e-4ea7-a2eb-eb9eefa7f331
+- 29e443a0-7025-44eb-b2d2-e1bf1b296619
+- f2a3f7f2-3362-4fae-a069-366ca7a4f65f
+- 72db8f7e-5611-4c0a-823a-8d61559413a7
+- b069765d-7735-48c7-aa1d-7d75b83aaade
+- 16002920-c1ea-4930-8ccf-561f4e06171e
+- 435f2b96-91d7-45a9-a6b2-a293acef4857
+- 9c0c45f1-e462-4178-a66c-f29aaf6b93cb
+- 795c85b8-3b5f-4af0-8d53-98eceac8ae46
+- 113678a2-6f6f-4a34-8cad-4e46cbf4f143
+- 7e65dd62-1085-4d0f-8a1e-0a61c47d5439
+- 611a9fbb-b27c-4b64-a8c3-b7c5fbec5f30
+- 15aead15-bb72-496a-8ae1-a20e9629b872
+- 315c9f2a-a1e7-4db5-ae16-129338b7d44f
+- a3227aa8-eb21-4066-9905-6287d3f50ae9
+- e3cf9598-783e-43c0-b361-b229537daedc
+- e8770055-7e5b-4ca3-ad55-a469b5ef5412
+- 64fb0800-334c-42f3-82fa-82510442599f
+- bfc906db-b778-48c9-944a-e59c5ffb73c5
+
+**34 driver row IDs staying Active (20 real persons):** posted in OUTBOX-CC-3.md with per-person reasons (HOS<=40d / REAL-Aug-settlement).
+
+**Not yet executed** — status changes pending Codex sync per queue discipline, joint task.

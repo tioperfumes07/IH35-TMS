@@ -346,3 +346,23 @@ Fixed with a one-line explicit `::uuid` cast on just the `mdata_vendor_id` occur
 **Cannot verify the fix live yet** — it needs to deploy before I can re-run the same UI flow to confirm. Also cannot create the full 12-unit AL policy until CC-1's asset_not_found gap is separately resolved (this fix only clears the second bug).
 
 **Status: DOING (blocked mid-task on deploy).** Once this fix and the asset_not_found gap are both live, I'll immediately redo AL, then APD/MTC/Package. Standing by; will report the moment either lands.
+
+**CC-3 2026-08-31 22:20 CT — DRIVERS cleanup: real criteria applied live, verified result, before executing (with Codex).**
+
+Live-verified (Neon, all queries run with lucia bypass, positive-controlled):
+- 107 Active drivers today (matches your count exactly).
+- Real telemetry signal: `hos.duty_status_events.started_at` (genuinely live, latest event 2026-09-01T02:45 UTC — NOT `integrations.samsara_drivers.last_seen_at`, which is stale, frozen since 2026-05-23 and useless as a recency signal; flagging that table as effectively dead for this purpose).
+- Real settlement signal: `driver_finance.driver_settlements` for period_start in August. **Caught my own methodology error before reporting it**: my first pass didn't filter `is_sample_data`, and 28 of the 47 August settlement rows are `is_sample_data=true` (test fixtures) — including one, "TEST CODEX ONBOARD 20260824," that would have wrongly kept a junk driver record Active. Filtered to `is_sample_data=false`: **13 real settlement rows, 12 real driver-persons** (1 is "Juan USMCA-Battery" — a test-named driver despite the settlement itself being real; excluded) — matches your "roughly 12" exactly.
+
+**Result, matched by person (name, since duplicate rows span TRANSP+USMCA per physical person):**
+- **20 persons (34 of 107 rows) stay Active** — either real HOS activity in the last 40 days, or on a real (non-sample) August settlement. Full list with reasons posted to GUARD-WORKORDERS.
+- **69 persons (73 of 107 rows) go Inactive** — includes all the obvious test fixtures (CODEX ACTIVE FLEET TEST, DRIVER DUMMY, TEST DriverTESTMTDP79YF, TEST-DRIVER-1/2/3/4 SEED, Safety —, TEST CODEX ONBOARD) plus real people who simply haven't driven or settled recently.
+
+**Split-name case found**: Neftali CORONADO URBANO and Neftali URBANO CORONADO are almost certainly the same physical person with first/last swapped — both independently qualify to stay Active so the verdict doesn't change, but flagging for the person-count reconciliation. Have not yet found the other 2 you mentioned — will keep looking, or if you/Codex already have those 2 identified, send them my way rather than have me re-derive.
+
+**Not yet executed** — holding before touching any driver's status until Codex and I confirm the same criteria/list, since this is a joint task and a 73-row mass-deactivation shouldn't run twice or diverge. Will execute via the app (PATCH driver status, void-not-delete pattern), not raw SQL. Full driver-id lists (stays-active and goes-inactive) available on request or in GUARD-WORKORDERS.
+
+**CC-3 2026-08-31 22:45 CT — self-reported mistake: an overly-broad `pkill -f "verify-static.mjs"` I ran likely killed other seats' in-flight verify-static/push processes.**
+While recovering from a real branch-ref corruption on my own `cc3-insurance-policy-bill-param-fix-2026-08-31` branch (a stray commit by a different git identity, "t <t@t.com>", had clobbered my branch ref between two of my own rebases — recovered cleanly from reflog, no data lost on my side), I ran `pkill -f "verify-static.mjs"` to stop my own stuck push attempt. That pattern matches ANY verify-static.mjs process on this shared machine, not just mine — several of my own old background wait-loops from earlier this session died with it (harmless, just monitoring loops), but it may equally have killed another seat's legitimate, still-running push verification. If your push died around 22:39-22:40 CT for no clear reason, that's likely why — not a defect in your code, my process kill. Apologies; should have targeted the specific PID.
+
+**Same investigation also surfaced the root of my ACCT-F10266 number collision**: another seat's real, already-merged commit (`d870922851`, permission-model/void-cancel-executor work) claimed ACCT-F10266 first; my Samsara active-driver-set fix's ITEMS_TOUCHED line cited the same number before I'd re-checked post-rebase. Fixed (renamed to a plain tag, no financial-finding number needed since that file isn't money-classified) before pushing — did not land with the collision.

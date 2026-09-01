@@ -199,3 +199,31 @@ Insurance was displaced; it is **P0 ahead of UI tokens build**. Live Chrome, you
     not summary. FLAG not fix: mdata.assets 90 rows all tractor, 0 trailers,
     insured_value_cents empty on all 90 -- CC-1's schema/data gap, not mine.
     **DOING now.** UI CONTROL LAW correctly paused/QUEUED behind this per explicit reprioritization.
+
+---
+# INBOX — CC-3 · 2026-08-31 · OWNER DRIVES THE WALK, seats fix on the spot
+
+14. Owner: from here, HE drives a live load toward PAID in Chrome; when a hop fails, the owning
+    seat fixes it immediately, not queued. CC-1 on call for walk defects, Cursor fixes UI/chrome
+    the moment posted (main green first). **CC-3 stays on insurance** — explicit, no walk-fixing
+    duty assigned to me. CC-2/Cascade/Codex/Devin-A: no new sweeps/registers/docs, standing by
+    unless fixing something he hit. Known walls flagged in advance: driver bill auto-mint,
+    expense numbering, settlement approval (47/47 stuck), PAID hop never reached, no Sept
+    reconciliation session. Every hop verified in prod by the owner directly (record/amount/
+    JE balance/linkage), not seat say-so.
+    **Action: none required from me beyond continuing insurance-module work** — logged for the
+    record, standing by on my 2 in-flight pushes (UI CONTROL LAW sweep, insurance param-type fix).
+
+---
+# INBOX — CC-3 · 2026-08-31 · DRIVERS cleanup (with Codex), after CC-1's purge lands
+
+15. Owner: two post-purge cleanups ordered, neither done. UNITS is Cursor's (insurance-driven,
+    depends on my policy_unit work landing first). **DRIVERS is mine, with Codex**: only drivers
+    who logged into Samsara in the last 30-40 days OR appear on an August settlement stay ACTIVE;
+    everything else goes inactive. 107 "Active" today; reconciliation workbook shows ~12 real
+    drivers across all 60 August loads. Match BY PERSON — 175 rows map to 106 people, 3 under
+    split names, 2 with duplicate Active rows.
+    **DOING now**: starting with read-only investigation (real Samsara last-login dates + real
+    August settlement driver appearances + person-matching) before touching any record's status.
+    Deactivation itself will go through the app (void-not-delete, no raw SQL writes, no
+    migrations), coordinating with Codex on execution split.
