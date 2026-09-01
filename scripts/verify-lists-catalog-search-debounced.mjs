@@ -61,6 +61,16 @@ export function check() {
     const src = fs.readFileSync(file, "utf8");
     assert(!/setSearch\(event\.target\.value\)/.test(src), `${rel}: raw per-keystroke search forbidden`);
     assert(!/setSearch\(e\.target\.value\)/.test(src), `${rel}: raw per-keystroke search forbidden`);
+    // Nested pages/lists/<seg>/*.tsx must import via ../../../ — ../../../../ escapes src/ (TS2307 / FE build_failed).
+    const underSeg = path.relative(LISTS_GLOB, file).includes(path.sep);
+    if (underSeg) {
+      assert(
+        !/from ["']\.\.\/\.\.\/\.\.\/\.\.\/(components\/lists\/CatalogListSearchInput|hooks\/catalogListSearchQueryOptions)/.test(
+          src,
+        ),
+        `${rel}: nested catalog page must use ../../../ import depth (not ../../../../)`,
+      );
+    }
     if (/CatalogListSearchInput/.test(src)) continue;
     assert(
       /catalogListSearchQueryOptions/.test(src) || /useMaintenanceServicesCatalog|useMaintenancePartsCatalog/.test(src),
@@ -85,6 +95,25 @@ function selftest() {
   }
   fs.writeFileSync(anchor, good);
   assert(failed, "selftest: expected FAIL when CatalogListSearchInput removed");
+
+  // Depth regression: plant ../../../../ on a nested safety page.
+  const nested = path.join(ROOT, "apps/frontend/src/pages/lists/safety/SafetyGenericCatalogListPage.tsx");
+  const nestedGood = fs.readFileSync(nested, "utf8");
+  const nestedBad = nestedGood.replace(
+    'from "../../../components/lists/CatalogListSearchInput"',
+    'from "../../../../components/lists/CatalogListSearchInput"',
+  );
+  assert(nestedBad !== nestedGood, "selftest: depth plant must change file");
+  fs.writeFileSync(nested, nestedBad);
+  let depthFailed = false;
+  try {
+    check();
+  } catch {
+    depthFailed = true;
+  }
+  fs.writeFileSync(nested, nestedGood);
+  assert(depthFailed, "selftest: expected FAIL on ../../../../ import depth");
+
   console.log("verify-lists-catalog-search-debounced --selftest PASS");
 }
 
