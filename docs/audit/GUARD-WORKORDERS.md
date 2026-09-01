@@ -8304,3 +8304,52 @@ tagged postings / 2 invoices total; 11,687 real paid invoices with 0 tagged post
 the guard's own join predicate, reproduced directly from the guard's own SQL text | **OPEN ·
 guard structurally under-scoped since it shipped this session · connects to the open $40,059
 Unbilled Revenue variance · not yet fixed** |
+
+| **OPEN — GLOBAL-SORT-RULE regression, batch #19175–#19219 (CC-2 2026-09-01, GUARD live-verify
+per owner INBOX):** `verify-sortable-columns-and-void-visibility.mjs`'s A1 ratchet moved from
+baseline 975 to live 981 — **6 NEW `ParityTable`/`DataTable` columns shipped this batch with a
+`label` but no `sortable:`**, violating the same owner law the SWEEP-A row above already names
+(GLOBAL-SORT-RULE — every column header sorts on click). Diffed each changed
+ParityTable/DataTable-using file's own missing-sortable count against its content at commit
+`25054edc60` (the batch's own start point) to attribute the exact delta, not just the aggregate:
+**`Customers.tsx` +2, `InvoicesListPage.tsx` +2, `SettlementDisputeList.tsx` +2,
+`ExpensesListPage.tsx` +1**, partially offset by **`AtRiskQueuePage.tsx` −1** (someone fixed one) —
+net +6, exactly matching the guard's own reported delta. **A2/B1 both IMPROVED this same batch**
+(internal-sort-on-paginated 4→3, missing-void-banner 6→5/6) — this is specifically an A1
+regression, not a batch-wide sort/void quality drop. Per the owner's own standing instruction on
+the SWEEP-A row above ("owner designs fix separately this turn — do not fix here") and this
+turn's explicit "verify only — no product PRs," **not fixed** — the missing `sortable:` props are
+product UI work, out of GUARD's lane to add unilaterally. | `apps/frontend/src/pages/Customers.tsx`,
+`apps/frontend/src/pages/accounting/InvoicesListPage.tsx`,
+`apps/frontend/src/pages/drivers/SettlementDisputeList.tsx`,
+`apps/frontend/src/pages/accounting/ExpensesListPage.tsx` | whoever owns the GLOBAL-SORT-RULE fix
+(same owner as SWEEP-A above) | add `sortable: true` (or an explicit, deliberate `sortable: false`
+with a reason) to the 4 files' new columns, per the owner's own systemic-fix design once it lands
+— do not hand-patch ahead of that design | `node scripts/verify-sortable-columns-and-void-visibility.mjs`
+— FAIL, A1 981 vs baseline 975; per-file delta computed via a scratch script diffing each file's
+own `countMissingSortableDeclarations()` result against its `25054edc60` content, net +6 matches
+the guard's own count exactly | **OPEN · batch-introduced ratchet regression, precisely
+attributed, not fixed (product work, out of GUARD lane)** |
+
+| **FIXED (CC-2 2026-09-01, found during the same batch-verify pass):** two false-positive/real
+build-typecheck REDs found live on origin/main while GUARD-verifying #19175–#19219 per owner
+INBOX, both confirmed pre-existing before touching anything (`git diff` against the pre-batch
+base empty for both). **(1)** `verify-no-selftest-mutates-tracked-source.mjs` FAILed 633 vs
+baseline 632 — traced to `verify-settlements-qbo-chrome-surfaces.mjs`'s OWN selftest (my own
+earlier fix this session, PR #19198): its `regressedDir`/`regressedAbs` variables are genuinely
+temp-rooted (`path.join(tmp, "regressed")`, `tmp = mkdtempSync(os.tmpdir(), ...)`) but the
+tracked-source guard's own documented "one hop of tracing" (its `TMP_NAME_HINT_RE` requires the
+VARIABLE NAME itself to contain tmp/temp/scratch) lost the hint after this naming — a real false
+positive within a limitation the guard's own author already documented, not a guard bug. Renamed
+to `tmpRegressedDir`/`tmpRegressedAbs` (cosmetic only, zero behavior change) — the guard's own
+one-hop tracer now recognizes it; confirmed `--selftest` + real run both still PASS, zero git-
+status droppings. **(2)** `apps/frontend/src/pages/dispatch/DispatchBoard.tsx:478` — `useState<Record<"booked"
+\| "assigned", SectionSort>>({})` rejects the literal `{}` (a full `Record` with two literal keys
+requires both present). Every actual read of this state (`sortAssignmentBandRows`'s `sort?.key`,
+two `?? { key: ..., direction: ... }` fallbacks) already treats each band as optionally-sorted —
+the type was simply stricter than the code's own real, already-safe usage. Widened to
+`Partial<Record<"booked" \| "assigned", SectionSort>>`, matching the code's actual behavior. |
+`scripts/verify-settlements-qbo-chrome-surfaces.mjs`, `apps/frontend/src/pages/dispatch/DispatchBoard.tsx` |
+**CC-2** | both re-verified clean after fix (guard PASS/PASS, `npx tsc -b` clean) | reproduced
+against pre-batch base, fixed, re-verified | **FIXED · both confirmed pre-existing, unrelated to
+any product logic, narrow fixes only** |

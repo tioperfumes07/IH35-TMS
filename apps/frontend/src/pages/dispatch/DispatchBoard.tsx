@@ -475,7 +475,11 @@ export function DispatchBoard({
   const [quickAssignLoad, setQuickAssignLoad] = useState<BoardLoad | null>(null);
   const [sectionFilters, setSectionFilters] = useState<Record<string, string>>({});
   const [sectionSorts, setSectionSorts] = useState<Record<string, SectionSort>>({});
-  const [assignmentBandSorts, setAssignmentBandSorts] = useState<Record<"booked" | "assigned", SectionSort>>({});
+  // Partial, not Record<"booked"|"assigned", SectionSort> — every real read of this state
+  // (sortAssignmentBandRows's `sort?.key`, the `?? { key: ..., direction: ... }` fallbacks below)
+  // already treats each band as optionally-sorted; the stricter Record type just didn't match
+  // that and rejected the correct `{}` initial value (build-typecheck RED on origin/main).
+  const [assignmentBandSorts, setAssignmentBandSorts] = useState<Partial<Record<"booked" | "assigned", SectionSort>>>({});
   const bulk = useEntityBulkAction();
   const selection = useBulkSelection({
     cap: 200,
