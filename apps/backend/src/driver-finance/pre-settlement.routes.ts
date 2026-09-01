@@ -9,6 +9,7 @@ import { renderSettlementStatementPdf } from "./settlement-pdf-renderer.service.
 import { appendSettlementLineFromDriverBillIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
 import { aggregateSettlementTotals } from "./settlements-load-bookended.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { postNegativeSettlementLiabilityIfNeeded } from "./negative-settlement-liability.service.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 const driverIdParamsSchema = z.object({ driverId: z.string().uuid() });
@@ -358,7 +359,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
         return { invalidStatus: true as const, status };
       }
 
-      await aggregateSettlementTotals(client, params.data.id, body.operating_company_id);
+      const totals = await aggregateSettlementTotals(client, params.data.id, body.operating_company_id);
 
       await client.query(
         `
@@ -368,6 +369,34 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
         `,
         [params.data.id]
       );
+
+      // RULING B — "no settlement may close negative without creating the corresponding account
+      // entry." Uses the POST-aggregation net_pay (totals.net_pay), not the pre-aggregation row
+      // fetched above — aggregateSettlementTotals just recomputed it and this settle action is
+      // this settlement_model's own terminal close.
+      const liabilityResult = await postNegativeSettlementLiabilityIfNeeded(client, {
+        operatingCompanyId: body.operating_company_id,
+        settlementId: params.data.id,
+        driverId: String(row.driver_id),
+        displayId: typeof row.display_id === "string" ? row.display_id : null,
+        netPay: totals.net_pay,
+      });
+      if (liabilityResult.outcome === "created") {
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "driver_finance.negative_settlement_liability.posted",
+          {
+            resource_type: "driver_finance.driver_liabilities",
+            resource_id: liabilityResult.liability_id,
+            settlement_id: params.data.id,
+            driver_id: row.driver_id,
+            amount: liabilityResult.amount,
+          },
+          "warning",
+          "RULING-B-NEGATIVE-SETTLEMENT"
+        );
+      }
 
       const pdf = await renderSettlementStatementPdf(client, {
         operatingCompanyId: body.operating_company_id,

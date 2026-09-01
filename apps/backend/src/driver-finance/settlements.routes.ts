@@ -14,6 +14,7 @@ import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./deductions.service.js";
 import { reverseSettlementBillPaymentInClientTx } from "../accounting/settlement-posting/settlement-bill-payment-posting.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { canVoid, unmatchBankTransactionById } from "../accounting/void.service.js";
+import { postNegativeSettlementLiabilityIfNeeded } from "./negative-settlement-liability.service.js";
 
 const settlementStatusSchema = z.enum([
   "draft",
@@ -782,6 +783,37 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         "info",
         "BT-3-DRIVER-FINANCE-REBUILD"
       );
+
+      // RULING B — "no settlement may close negative without creating the corresponding account
+      // entry." This is the finalize path's terminal close (status -> 'locked'); post the
+      // receivable BEFORE returning, on the same transaction, so it is atomic with the close.
+      const finalized = updateRes.rows[0] as Record<string, unknown> | undefined;
+      if (finalized) {
+        const liabilityResult = await postNegativeSettlementLiabilityIfNeeded(client, {
+          operatingCompanyId: companyId,
+          settlementId: params.data.id,
+          driverId: String(finalized.driver_id),
+          displayId: typeof finalized.display_id === "string" ? finalized.display_id : null,
+          netPay: Number(finalized.net_pay ?? 0),
+        });
+        if (liabilityResult.outcome === "created") {
+          await appendCrudAudit(
+            client,
+            user.uuid,
+            "driver_finance.negative_settlement_liability.posted",
+            {
+              resource_type: "driver_finance.driver_liabilities",
+              resource_id: liabilityResult.liability_id,
+              settlement_id: params.data.id,
+              driver_id: finalized.driver_id,
+              amount: liabilityResult.amount,
+            },
+            "warning",
+            "RULING-B-NEGATIVE-SETTLEMENT"
+          );
+        }
+      }
+
       return { row: updateRes.rows[0] };
     });
 
