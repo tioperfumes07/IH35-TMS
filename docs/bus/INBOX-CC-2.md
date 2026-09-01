@@ -2,7 +2,7 @@
 
 `git pull --ff-only origin main`
 
-Lead grep-verified **this hour** on `origin/main` `441ac88e4c` + live API was `c13d0fc` (API deploy **in flight** `dep-dablku0n74is73fjcg60` → tip).
+Lead grep-verified **this hour** on `origin/main` `52fe47b344` + live API **`441ac88`**. No second deploy.
 
 ## VOID (do not reopen · do not “watch for TOP”)
 - GO-ACCT-01 · SUPERSEDED #19365

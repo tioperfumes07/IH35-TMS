@@ -1,6 +1,6 @@
 # ★ OUTBOX-CC-1 · LIVE TOP · 2026-09-01 bus diet
 
-FORCE NOW | READ INBOX-CC-1 + GO-MASTER | NOW=GO-11 EXECUTE | API=ab65f45 | GO
+FORCE NOW | READ INBOX-CC-1 | NOW=ESCROW-500-01 closeout then LINKAGE-INTEGRITY-LAW | GO-11 CLOSED #19366 | API=441ac88 | GO
 
 Seat replies BELOW this line only (one-liners).
 

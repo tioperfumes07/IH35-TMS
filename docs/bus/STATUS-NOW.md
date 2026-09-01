@@ -1,7 +1,9 @@
 # STATUS-NOW
-**2026-09-01 16:32 CT**
+**2026-09-01 18:17 CT**
 
-- Live `healthz/shallow` = `fe9f16e` (landed).
-- CC-2 GO-ACCT-01 SUPERSEDED #19365 — **IDLE** (confirmed on board).
-- CC-1 GO-11 CLOSED #19366 archive — NEXT SETL+CA races (board still OPEN).
-- Do not recycle 2026-08-29 OPEN CC-2 strings.
+- Live `healthz/shallow` = `441ac88` (landed). Main tip `52fe47b` docs-only — no deploy.
+- CC-2 NOW=SUBLEDGER-GL-TIEOUT verify-live (not IDLE).
+- CC-1 NOW=ESCROW-500-01 then LINKAGE (GO-11 CLOSED #19366).
+- Codex NOW=#19391 (not #19404). No `--watch`.
+- Devin-A NOW=GO-16 Chrome; live click UNVERIFIED.
+- Cursor: load-column remainder crash fix + seat FORCE rewrite.
