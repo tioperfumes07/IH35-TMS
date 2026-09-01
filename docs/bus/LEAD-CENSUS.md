@@ -1,14 +1,13 @@
-# LEAD CENSUS · 2026-09-01T06:25Z
+# LEAD-CENSUS · 2026-09-01T06:50Z
 
-| Seat | NOW | Idle? |
-|------|-----|-------|
-| CC-1 | DSP-05 API | FORBIDDEN |
-| CC-2 | purge-grade + WIR-02 guard | FORBIDDEN |
-| CC-3 | COL-02 | FORBIDDEN |
-| CODEX | DSP-04 / WIR-03 | FORBIDDEN |
-| DEVIN-A | History click + continuous | FORBIDDEN |
-| CASCADE | board truth | FORBIDDEN |
-| CURSOR | LAY-05 ship → CTL-05 | active |
+| Seat | ACK? | NOW | Idle? |
+|------|------|-----|-------|
+| CC-1 | need | DSP-05 | no — INBOX short |
+| CC-2 | need | NO-SEAT push Recipe C | no |
+| CC-3 | need | COL-02 | no |
+| Codex | need | WIR-01 | no |
+| Cascade | need | verify-static remeasure | was stuck — rewoken |
+| Devin-A | need | fe-poll | no |
+| Cursor | lead | DatePicker MOD → SEL-02 | active |
 
-Paste: docs/bus/PASTE-ALL-SEATS-NO-IDLE-2026-09-01.md
-
+**Plan:** GO-MECH-0901 register drain to zero OPEN. Bus diet done this PR.

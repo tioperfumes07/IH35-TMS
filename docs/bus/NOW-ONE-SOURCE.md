@@ -1,55 +1,22 @@
-- **2026-09-01 · INSURANCE FULL WIRING GO:** `docs/bus/GO-INSURANCE-FULL-WIRING-FIX-2026-09-01.md` — fan-out to all seats; owner creates loads **after** DoD in GO file
-- **2026-09-01 · SHIPPED #19063:** wizard `$2::uuid` + dispatch column drag-reorder — deploy then CC-1 wizard smoke
-- **2026-09-01 · OWNER LAW:** NO seat prod financial fixtures — owner-ordered walks only · create→prove→void same session · `docs/lockdown/NO-SEAT-PROD-FINANCIAL-FIXTURES-LAW-2026-09-01.md` · CC-2 guard OPEN
-- **2026-08-31 07:52 CT · LEAD-TICK-0229:** Live **159283c**. CC-2 closed GUC 14/15 FP but ducked pay-rate CREATE awaiting "human" — **FORCE**: CREATE-TEST-THEN-VOID + all-seats-permission = authorized. CREATE one USMCA rate UI→Neon today. Codex backup. SETL-45 blocked until proof.
-- **2026-08-31 07:32 CT · LEAD-TICK-0228:** Claude Neon-confirmed CC-3 3/3 creates (load_statuses 15 @12:17 · teams 2 @12:18 · accident_types 6 @12:20). Method = standard. **Routing:** U6 wins over Lists Miss-C for CC-3 → park Miss-C; NOW search-flaky OUTBOX + VEND-CERT-01 + SETL-45 rate-card Live assist. Filed `LISTS-CATALOG-SEARCH-FLAKY` + `G1-CATALOG-MASTERDATA-NO-IS-SAMPLE-DATA` (latent). TEST rows keep (law). Live **c6f04cd**.
-- **2026-08-31 07:26 CT · LEAD-TICK-0227:** Cascade **BACK IN SERVICE** (USMCA only). Claude verified: seats not rogue — **ACCT+VEND tie-outs lack USMCA pin** (Neon bills TRANSP 3196+TRK 13051+USMCA 80; banks 6+8+5). BANK script already USMCA-pinned. `next-urgent6.sh` hardcoded FILL stub while scripts are 134–247 lines. U6 = 6/9 scripts built, 0/6 tie PASS. Contract test file exists but **vitest collects 0** (shared-types not in any include). SETL-45 still top money. Deploy kicked tip~15. U14 stays CLOSED.
-- **2026-08-31 07:20 CT · LEAD-TICK-0226:** Owner/Claude reject L13512 (a)/(b). Filed **SETL-45-UNSETTLED-COMPLETED-DOCS** (Neon 45/$95,035.50/13 drivers/34 null rate). Seq: prove #18666 → fill rate cards → app-path settle all 45. SETL stays FAIL. Live **a3f66aa**.
-- **2026-08-31 07:18 CT · LEAD-TICK-0225:** ACK #243–#248; FORCE CC-2 CLS-RESOLVE-OPCO-WITHOUT-GUC triage; Devin tips still stamp old healthz=69a5a4e — re-spot live **a3f66aa**; tip~9 Rule 42 OK.
-- **2026-08-31 07:16 CT · LEAD-TICK-0224:** ACK Claude: freeze holding · loads progressing · **CLS-RESOLVE-OPCO-WITHOUT-GUC** (15 shape suspects — triage not blind fix); live **a3f66aa** (not 69a5a4e); contract test already on main; L13512+future-JE OWNER GATEs hold.
-- **2026-08-31 07:12 CT · LEAD-TICK-0223:** Deploy kicked (tip~16); ACK #235–#240; Faro 95/2.5 = historical batches (97/1.5 going-forward proven); bank 0 suspect false-empty; L13512 OWNER GATE holds; live **7d226b2**.
-- **2026-08-31 07:07 CT · LEAD-TICK-0222:** Deploy LIVE **7d226b2**; ACK #227–#234; note drivers/units 0 may be false-empty (Samsara 82 mapped) — CC-2 verify; L13512 OWNER GATE holds.
-- **2026-08-31 07:02 CT · LEAD-TICK-0221:** Deploy kicked (tip~20); ACK #220 fuel · #221 QBO ignore · #222 geo · #223–224 maint · #225 deductions · #226 accidents; CC-2 ACK; L13512 OWNER GATE holds; live **6de19ac**.
-- **2026-08-31 06:57 CT · LEAD-TICK-0220:** Deploy LIVE **6de19ac**; ACK #216 RBAC empty · #217 HOS 0 · #218 periods all open (flag OFF = law); CC-3 Lists ACK; L13512 OWNER GATE holds.
-- **2026-08-31 06:54 CT · LEAD-TICK-0219:** ACK Devin #214 dispatch assign 0 · #215 notif/alerts/sched; seats still WORKING; deploy catch-up in flight; L13512 OWNER GATE holds; live **69a5a4e** tip~29.
-- **2026-08-31 06:51 CT · LEAD-TICK-0218:** Seat status ACK — CC-1/2/3/Codex WORKING (idle cleared). Settlement reuse+close-fallback shipped; **L13512 settlement backfill = OWNER GATE** (no fake re-transition). 5772 stays FAIL until then. Orphan-cohort/016 unchanged. CC-3 L-0011+L-0010 fuel closed; L-0012 mismatch flagged. Codex Row 014 fail-closed. Live **69a5a4e** tip~23.
-- **2026-08-31 06:47 CT · LEAD-TICK-0217:** ACK post-deploy tips (JE list 0 · expenses shell · bills/payments unlink · factor batch shell · IFTA P4 · 2290 draft); G1 neg bank OK; CC idle ~180m; live **69a5a4e**.
-- **2026-08-31 06:42 CT · LEAD-TICK-0216:** Deploy LIVE **69a5a4e**; ACK invoice shell; CC idle ~175m.
-- **2026-08-31 06:37 CT · LEAD-TICK-0215:** Deploy kicked (was a3e3af0 ~145 behind); ACK settlements shell; CC idle ~170m.
-- **2026-08-31 06:32 CT · LEAD-TICK-0214:** ACK completed_docs w/ 0 docs + accidents; CC idle ~165m; live **a3e3af0**.
-- **2026-08-31 06:27 CT · LEAD-TICK-0213:** ACK vendor/customer master gaps; CC idle ~160m; live **a3e3af0**.
-- **2026-08-31 06:22 CT · LEAD-TICK-0212:** ACK ghost load L-0085 + DQ list gap; CC idle ~155m; live **a3e3af0**.
-- **2026-08-31 06:17 CT · LEAD-TICK-0211:** ACK JE 2027 dates + Faro/owner vendors; CC idle ~150m; live **a3e3af0**.
-- **2026-08-31 06:12 CT · LEAD-TICK-0210:** ACK safety report 404 + fuel recon 0%; CC idle ~145m; live **a3e3af0**.
-- **2026-08-31 06:07 CT · LEAD-TICK-0209:** ACK factoring batch unlink + TB zeros; CC idle ~140m; live **a3e3af0**.
-- **2026-08-31 06:02 CT · LEAD-TICK-0208:** ACK P&L≠PPT + AR control variance; CC idle ~135m; live **a3e3af0**.
-- **2026-08-31 05:57 CT · LEAD-TICK-0207:** ACK payment_terms=0 + pay-rates 404; CC idle ~130m; live **a3e3af0**.
-- **2026-08-31 05:52 CT · LEAD-TICK-0206:** ACK Samsara/HOS + WO list fields; CC idle ~125m; live **a3e3af0**.
-- **2026-08-31 05:47 CT · LEAD-TICK-0205:** ACK recon $261k status + home widgets; CC idle ~120m; live **a3e3af0**.
-- **2026-08-31 05:42 CT · LEAD-TICK-0204:** ACK unbilled $48k + AR/AP≠BS; CC idle ~115m; live **a3e3af0**.
-- **2026-08-31 05:37 CT · LEAD-TICK-0203:** ACK equipment≠units + vendors 609; CC idle ~110m; live **a3e3af0**.
-- **2026-08-31 05:32 CT · LEAD-TICK-0202:** ACK P&L defects + escrow GL; CC idle ~105m; live **a3e3af0**.
-- **2026-08-31 05:27 CT · LEAD-TICK-0201:** ACK dual TB endpoints + DOT OOS no WO; CC idle ~100m; live **a3e3af0**.
-- **2026-08-31 05:22 CT · LEAD-TICK-0200:** ACK settlements unpaid + insurance TEST status; CC idle ~95m; live **a3e3af0**.
-- **2026-08-31 05:17 CT · LEAD-TICK-0199:** ACK UF catch-all + compliance dash; §1 fixed-assets OK; CC idle ~90m; live **a3e3af0**.
-- **2026-08-31 05:12 CT · LEAD-TICK-0198:** ACK cash-flow/UF + factoring 2150; CC idle >85m; live **a3e3af0**.
-- **2026-08-31 05:07 CT · LEAD-TICK-0197:** ACK Relay/BoA balance; CC idle >80m; live **a3e3af0**.
-- **2026-08-31 05:02 CT · LEAD-TICK-0196:** ACK driver-status stub + load-availability; CC idle >75m; live **a3e3af0**.
-- **2026-08-31 04:57 CT · LEAD-TICK-0195:** ACK property-tax + cash-GL; CC idle >70m; live **a3e3af0**.
-- **2026-08-31 04:52 CT · LEAD-TICK-0194:** ACK cash≡accrual · old batches historical · shell load; CC idle; live **a3e3af0**.
-- **2026-08-31 04:47 CT · LEAD-TICK-0193:** Faro rates LIVE PROVEN (97%/1.5%); ACK reserve Rule 19; live **a3e3af0**.
-- **2026-08-31 04:42 CT · LEAD-TICK-0192:** ACK escrow/comparison; factoring-rates deploy wait; live **37efaa5**.
-- **2026-08-31 04:39 CT · LEAD-TICK-0191:** Cursor overflow factoring batch uses factor rates; live **37efaa5**.
-- **2026-08-31 04:32 CT · LEAD-TICK-0190:** live **37efaa5**; pay-rate CREATE PROVEN; FORCE CC-1 factoring rates.
-- **2026-08-31 04:28 CT · LEAD-TICK-0189:** ACK $0 invoices/expenses; deploy 37efaa58 in flight; live still **97f1982**.
-- **2026-08-31 04:22 CT · LEAD-TICK-0188:** Cursor overflow PAY-RATE-CREATE GUC fix; claim 10152; live **97f1982**.
-- **2026-08-31 04:17 CT · LEAD-TICK-0187:** ACK profitability/dates; CC idle ~30m+; pay-rate CREATE overflow next; live **97f1982**.
-- **2026-08-31 04:12 CT · LEAD-TICK-0186:** ACK pay-rate CREATE broken + Samsara 400; FORCE CC-1; live **97f1982**.
-- **2026-08-31 04:07 CT · LEAD-TICK-0185:** ACK pay_rate ROOT (+TB/IFTA/geo); idle CC-1/3; live **97f1982**.
-- **2026-08-31 04:02 CT · LEAD-TICK-0184:** ACK bills/customers/vendors/units/fuel/JE; idle CC-1/3/2/Codex; live **97f1982**.
-- **2026-08-31 03:57 CT · LEAD-TICK-0183:** ACK HOS/reserves/bank100; FORCE silent CC-1/3; live **97f1982**.
-- **2026-08-31 03:54 CT · LEAD-TICK-0182:** ACK status-filter + S0168; FORCE silent CC-1/3/2; live **97f1982**.
-- **2026-08-31 03:52 CT · LEAD-TICK-0181:** live **97f1982**; ACK expense#/drafts/WO; FORCE CC-1 factoring rates.
-**THIS IS NOW — 2026-08-31 03:46 CT**
+# NOW — ONE SOURCE (2026-09-01 bus diet)
 
-**CC-1:** factoring batch rates — pass factor advance/fee into createDraftBatch (Devin RC). **Deploy:** SAVEPOINT in flight. Live still `9d6abc0`. Cascade OOS.
+**Canonical wave:** `docs/bus/GO-MECHANICAL-REGISTER-2026-09-01.md`  
+**Register CSV:** `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`  
+**Paste:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-09-01-MECHANICAL-WAVE.md`  
+**Push wall:** `docs/bus/PASTE-ALL-SEATS-VERIFY-STATIC-WALL-2026-09-01.md` (Recipe C)
+
+U14 = CLOSED. Do not recertify. Leftover = unique FINDING only after register drain.
+
+## Seat NOW (from register OPEN)
+
+| Seat | NOW (top) | Next |
+|------|-----------|------|
+| **CC-3** | COL-02 drag-reorder → COL-03 auto-fit → CTL-01/02/03 Live FAIL fix | CUS-01–07 · FLT-01 |
+| **CC-1** | DSP-05 API + insurance attach · COL-05 · VIS-01/03 · UPL-02/03 | DQF-01 schema |
+| **CC-2** | Recipe C push NO-SEAT+WIR-02 guards · grade stamps | register FIXED ratchets |
+| **Codex** | WIR-01 border PDF · WIR-04 W-8BEN e-sign · PLN-06 | — |
+| **Cursor** | DatePicker MOD-02/03 port (insurance) · SEL-02 · COL-04 · SRC-01 | FLT-02/03 · VIS-02/04 · UPL-04–06 |
+| **Cascade** | VERIFY-STATIC remeasure P0 · board OPEN for STILL OPEN ids | COL-06 sweep |
+| **Devin-A** | Live Chrome on every new `version.json` fe= | CTL-01/02/03 stay FAIL until CC-3 |
+
+**ACK:** `SEAT | ACK | GO-MECH-0901 | NOW=<id> | GO`
