@@ -1,0 +1,30 @@
+{
+  "block_id": "go-mech-0901-no-seat-and-wir02",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "GO-MECH-0901",
+  "task": "GO-MECH-0901 tasks 2+4: WIR-02 (driver Export PDF relative-href regression guard — the underlying fix already shipped via UI-01-WIRE-01/#17862, this adds the missing CI guard) and the NO-SEAT-CREATED-FINANCIAL-RECORDS override-instruction guard (verify-no-seat-instruction-overrides-owner-void.mjs, previously built on a different branch stuck behind the same push-mechanics blocker — cherry-picked onto this fresh, minimal branch off current origin/main so it can land independently). Both guards are read-only against the GL/live data; the NO-SEAT guard's shadow-mode step against PROD_READONLY_DATABASE_URL already exists in prod-postdeploy-verify.yml with the same READ-ONLY-role rule documented on the proof-replay step above it.",
+  "branch": "cc2-no-seat-fixtures-guard-standalone",
+  "lane": "GO-MECH-0901",
+  "allowed_files": [
+    ".github/workflows/ci.yml",
+    ".github/workflows/prod-postdeploy-verify.yml",
+    "docs/audit/GUARD-WORKORDERS.md",
+    "package.json",
+    "scripts/verify-no-seat-instruction-overrides-owner-void.mjs",
+    "scripts/verify-driver-export-pdf-resolves-api-url.mjs",
+    ".block-ready/go-mech-0901-no-seat-and-wir02.json"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-no-seat-instruction-overrides-owner-void.mjs", "wired_into": "prod-postdeploy-verify.yml (shadow mode, PROD_READONLY_DATABASE_URL)" },
+    { "kind": "guard", "script": "scripts/verify-driver-export-pdf-resolves-api-url.mjs", "wired_into": "ci.yml" },
+    { "kind": "live", "assert": "both guards' own --selftest pass; verify-no-seat-instruction-overrides-owner-void.mjs found 4 real live violations on its first run against tiny-field-89581227 (already reported on GUARD-WORKORDERS.md); verify-driver-export-pdf-resolves-api-url.mjs confirms the live driver-profile/ActionBar.tsx is currently correct" },
+    { "kind": "route", "value": "docs/audit/GUARD-WORKORDERS.md", "note": "both findings already recorded on the shared board" }
+  ],
+  "linkage": "No new FK/table/migration. NO-SEAT guard writes nothing (read-only against prod via PROD_READONLY_DATABASE_URL in CI). WIR-02 guard is a pure static file-content assertion.",
+  "runtime_path": "both",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "GUARD lane (CC-2, verify-live-never-build). Neither guard writes to a live financial record."
+}
