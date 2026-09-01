@@ -36,6 +36,9 @@ const listQuerySchema = companyQuerySchema.extend({
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   search: z.string().trim().optional(),
+  // SORT LAW (COL-04) — allowlisted column → SQL ORDER BY.
+  sort: z.string().trim().max(64).optional(),
+  dir: z.enum(["asc", "desc"]).optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -89,6 +92,30 @@ const PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL = `
     )
   )
 `;
+
+/** Whitelist only — never interpolate raw client sort into SQL. Keys match PaymentsListPage. */
+const PAYMENT_LIST_SORT_SQL: Record<string, string> = {
+  display_id: "p.display_id",
+  customer_name:
+    "COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(p.customer_id, p.operating_company_id))",
+  payment_date: "p.payment_date",
+  payment_method: "p.payment_method",
+  reference: "p.reference",
+  amount_cents: "COALESCE(p.amount_cents, 0)",
+  amount_applied_cents: "COALESCE(p.amount_applied_cents, 0)",
+  amount_unapplied_cents: "COALESCE(p.amount_unapplied_cents, 0)",
+  matched_bank_transaction_id: `(${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL})`,
+  status: "CASE WHEN p.voided_at IS NULL THEN 0 ELSE 1 END",
+};
+
+function paymentListOrderBy(sort: string | undefined, dir: "asc" | "desc" | undefined): string {
+  const expr = sort ? PAYMENT_LIST_SORT_SQL[sort] : undefined;
+  const direction = dir === "asc" || dir === "desc" ? dir.toUpperCase() : "DESC";
+  if (!expr) {
+    return "p.payment_date DESC, p.created_at DESC";
+  }
+  return `${expr} ${direction} NULLS LAST, p.created_at DESC`;
+}
 
 async function fetchPaymentDetail(
   client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
@@ -296,7 +323,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
             ON bt.id = ${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL}::uuid
            AND bt.operating_company_id = p.operating_company_id
           WHERE ${where.join(" AND ")}
-          ORDER BY p.payment_date DESC, p.created_at DESC
+          ORDER BY ${paymentListOrderBy(q.sort, q.dir)}
           LIMIT $${limitIdx}
           OFFSET $${offsetIdx}
         `,
@@ -306,6 +333,8 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
       return {
         rows: rowsRes.rows,
         total: Number(countRes.rows[0]?.total ?? 0),
+        sort: q.sort && PAYMENT_LIST_SORT_SQL[q.sort] ? q.sort : null,
+        dir: q.dir ?? null,
       };
     });
 

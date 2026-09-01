@@ -89,7 +89,7 @@ export function PaymentsListPage() {
   }
 
   const query = useQuery({
-    queryKey: ["accounting", "payments", selectedCompanyId, status, method, search, dateFrom, dateTo],
+    queryKey: ["accounting", "payments", selectedCompanyId, status, method, search, dateFrom, dateTo, sortKey, sortDirection],
     queryFn: async () => {
       const filters: {
         status: "all" | "active" | "voided";
@@ -97,18 +97,40 @@ export function PaymentsListPage() {
         search?: string;
         date_from?: string;
         date_to?: string;
+        sort?: string;
+        dir?: "asc" | "desc";
+        limit?: number;
       } = {
         status,
         search: search || undefined,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
+        // SORT LAW — push URL sort into SQL ORDER BY; never reorder only the silent ≤100 page.
+        sort: sortKey || undefined,
+        dir: sortKey ? sortDirection : undefined,
+        limit: 100,
       };
       if (method === "factoring") {
         const [adv, reserve] = await Promise.all([
           listPayments(selectedCompanyId!, { ...filters, payment_method: "factoring_advance" }),
           listPayments(selectedCompanyId!, { ...filters, payment_method: "factoring_reserve" }),
         ]);
-        const rows = [...adv.rows, ...reserve.rows].sort((a, b) => String(b.payment_date).localeCompare(String(a.payment_date)));
+        // Two method slices each SQL-sorted; merge then re-order for the union view.
+        const rows = [...adv.rows, ...reserve.rows];
+        if (sortKey) {
+          const dirMul = sortDirection === "asc" ? 1 : -1;
+          rows.sort((a, b) => {
+            const av = (a as Record<string, unknown>)[sortKey];
+            const bv = (b as Record<string, unknown>)[sortKey];
+            if (av == null && bv == null) return 0;
+            if (av == null) return 1;
+            if (bv == null) return -1;
+            if (typeof av === "number" && typeof bv === "number") return (av - bv) * dirMul;
+            return String(av).localeCompare(String(bv)) * dirMul;
+          });
+        } else {
+          rows.sort((a, b) => String(b.payment_date).localeCompare(String(a.payment_date)));
+        }
         return { rows, total: rows.length };
       }
       if (method) filters.payment_method = method;
@@ -284,6 +306,7 @@ export function PaymentsListPage() {
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSortChange={onSortChange}
+        sortMode="external"
         selectable
         maxSelectable={200}
         onSelectionCapExceeded={() => pushToast("You can select up to 200 payments at once.", "error")}
