@@ -2,12 +2,11 @@
 /**
  * ACCT-TIEOUT-01 — TMS trial balance ties out two ways, tolerance 0:
  *
- *   1. debits_equal_credits — every live (non-voided) company's journal_entry_postings sum
- *      to zero net (SUM(debit) = SUM(credit)), the fundamental double-entry invariant. This
- *      is checked per operating_company_id, not just globally — a single company could be
- *      unbalanced while the grand total still nets to zero by coincidence.
+ *   1. debits_equal_credits — USMCA (launch scoreboard entity) journal_entry_postings sum
+ *      to zero net (SUM(debit) = SUM(credit)), the fundamental double-entry invariant.
+ *      Scoped to USMCA only — TRANSP/TRK frozen mirrors would contaminate the launch number.
  *
- *   2. qbo_comparative (read-only, no TMS->QBO write-back) — TRANSP is the ONLY operating
+ *   2. qbo_comparative (TRANSP-QBO comparative leg, read-only, no TMS->QBO write-back) —
  *      company with a real QBO mirror (docs/CLAUDE.md: "ALL TMS data is test; only the
  *      TRANSP QBO mirror is real"). For each TRANSP catalogs.accounts row that is active,
  *      not deactivated, and linked to a live/active mdata.qbo_accounts row, compare the TMS
@@ -44,7 +43,12 @@ const BS_ACCOUNT_TYPES = [
   "Equity",
 ];
 
-export const EXPECTED = { debits_equal_credits: true, qbo_comparative: "read_only", tolerance_cents: 0 };
+export const EXPECTED = {
+  operating_company_code: "USMCA",
+  debits_equal_credits: true,
+  qbo_comparative: "TRANSP-QBO comparative leg (read_only)",
+  tolerance_cents: 0,
+};
 
 if (process.argv.includes("--expected-only")) {
   console.log(JSON.stringify(EXPECTED));
@@ -71,7 +75,7 @@ async function main() {
       );
     }
 
-    // Leg 1: debits == credits, per live (non-voided) operating company.
+    // Leg 1: debits == credits, USMCA launch scoreboard only.
     const tbRes = await client.query(
       `SELECT je.operating_company_id, oc.code,
               SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE 0 END)::bigint AS total_debits,
@@ -79,8 +83,9 @@ async function main() {
        FROM accounting.journal_entry_postings p
        JOIN accounting.journal_entries je
          ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
-       LEFT JOIN org.companies oc ON oc.id = je.operating_company_id
+       JOIN org.companies oc ON oc.id = je.operating_company_id
        WHERE je.status <> 'voided'
+         AND oc.code = 'USMCA'
        GROUP BY 1, 2`
     );
     const tbDiffs = [];
@@ -94,7 +99,12 @@ async function main() {
       }
     }
 
-    // Leg 2: TRANSP-only, Balance-Sheet account types, read-only tie to the QBO mirror's
+    if (tbRes.rows.length === 0) {
+      await client.query("ROLLBACK");
+      fail("ACCT-TIEOUT-01 USMCA debits_equal_credits: no live USMCA journal postings (empty is never PASS)");
+    }
+
+    // Leg 2: TRANSP-QBO comparative leg — Balance-Sheet account types only.
     // own CurrentBalance. USMCA/TRK have no real QBO books; P&L types have no QBO balance.
     const qboRes = await client.query(
       `SELECT ca.account_number, ca.account_name, qa.name AS qbo_name, qa.account_type,
@@ -148,7 +158,7 @@ async function main() {
       fail(`ACCT-TIEOUT-01 FAIL:\n` + parts.join("\n"));
     }
 
-    console.log("TIEOUT PASS: TMS trial balance ties (debits=credits per company, TRANSP QBO comparative exact)");
+    console.log("TIEOUT PASS: USMCA trial balance ties (debits=credits) + TRANSP QBO comparative exact");
     process.exit(0);
   } catch (e) {
     try {
