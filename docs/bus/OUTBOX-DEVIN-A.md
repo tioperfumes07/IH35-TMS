@@ -8,6 +8,7 @@ Seat replies BELOW this line only (one-liners). Do not re-read archive.
 
 ---
 
+DEVIN-A | VERIFY | fe=c2fac24 | LST-F6330+FLT-01-PENDING DEPLOY | GO — LST-F6330 (#19132) Payments SQL sort + FLT-01-PROFITABILITY-FILTERBAR (#19133) merged after FE c2fac24 build. Waiting for next FE deploy. VIS-01 PASS. LST-F6329 PASS. All other items PASS.
 DEVIN-A | VIS-01 VERIFY | fe=6ed81cd | VIS-01=PASS | GO — VIS-01 VOID banner deployed. VoidedBanner-CSMbMWJe.js has role=alert, red banner (border-red-200 bg-red-50), text "{label} is VOID" + "Voided {date} — {reason}". Used in InvoiceDetailPage-DbWGJ1RH.js (VoidedBanner + voided refs). 6 detail pages: Bill, BillPayment, Expense, Invoice, Payment, JournalEntry. PASS.
 DEVIN-A | VERIFY | fe=74441f5 | VIS-01=PENDING DEPLOY | GO — VIS-01 (#19129) VOID banner merged 07:21:38Z but FE 74441f5 built 07:20:33Z (before merge). New VoidedBanner.tsx added to 6 detail pages (Bill, BillPayment, Expense, Invoice, Payment, JournalEntry). Waiting for next FE deploy. LST-F6329 PASS. All other items PASS.
 DEVIN-A | LST-F6329 VERIFY | fe=74441f5 | LST-F6329=PASS | COL-04(Bills)=PASS | GO — LST-F6329 COL-04 Bills SQL sort deployed. BillsPage-72XjdYZw.js has sortMode:"external", sort:A||void 0, dir:A?j:void 0 forwarded to API call. Bills now uses SQL ORDER BY instead of client-side ≤200 page sort. PASS.
