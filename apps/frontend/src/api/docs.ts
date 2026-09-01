@@ -154,6 +154,30 @@ export function confirmUpload(fileId: string) {
   });
 }
 
+/**
+ * Canonical create-form evidence upload. The file is persisted first and its id is
+ * passed into the record's real source_doc_id FK by the caller. Entity links here
+ * must name existing parents (driver/load/unit), never the not-yet-created record.
+ */
+export async function uploadSourceDocumentFromFile(
+  file: File | null,
+  input: {
+    operating_company_id: string;
+    entity_links?: Array<{ entity_type: FileEntityType; entity_id: string }>;
+  }
+): Promise<string | null> {
+  if (!file) return null;
+  const initialized = await requestUploadUrlFromFile(file, input);
+  const uploaded = await fetch(initialized.presigned_url, {
+    method: "PUT",
+    headers: { "Content-Type": file.type || "application/octet-stream" },
+    body: file,
+  });
+  if (!uploaded.ok) throw new Error(`document_upload_failed:${uploaded.status}`);
+  await confirmUpload(initialized.file_id);
+  return initialized.file_id;
+}
+
 export function listFiles(filters: { operating_company_id: string } & Partial<{
   entity_type: FileEntityType;
   entity_id: string;

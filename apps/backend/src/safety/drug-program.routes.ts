@@ -64,6 +64,7 @@ const createDrugTestSchema = z.object({
   lab_name: z.string().optional(),
   mro_name: z.string().optional(),
   notes: z.string().optional(),
+  source_doc_id: z.string().uuid().nullable().optional(),
 });
 
 const patchDrugTestSchema = z.object({
@@ -230,9 +231,10 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
             test_date,
             lab_name,
             mro_name,
-            notes
+            notes,
+            source_doc_id
           )
-          VALUES ($1, $2, $3, $4::safety.drug_test_result_enum, $5::date, $6, $7, $8)
+          VALUES ($1, $2, $3, $4::safety.drug_test_result_enum, $5::date, $6, $7, $8, $9)
           RETURNING *
         `,
         [
@@ -244,6 +246,7 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           body.data.lab_name ?? null,
           body.data.mro_name ?? null,
           body.data.notes ?? null,
+          body.data.source_doc_id ?? null,
         ]
       );
       const test = res.rows[0] as { id?: string } | undefined;

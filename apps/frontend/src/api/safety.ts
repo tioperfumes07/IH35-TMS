@@ -622,7 +622,7 @@ export function listDrugProgramTests(companyId: string, filters: { driver_id?: s
 
 export function createDrugProgramTest(
   companyId: string,
-  body: { driver_id: string; test_type: string; result: string; test_date: string; lab_name?: string; mro_name?: string; notes?: string }
+  body: { driver_id: string; test_type: string; result: string; test_date: string; lab_name?: string; mro_name?: string; notes?: string; source_doc_id?: string | null }
 ) {
   return apiRequest<DrugProgramTest>(`/api/v1/safety/drug-program/tests?${q(companyId)}`, {
     method: "POST",
