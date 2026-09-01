@@ -25,7 +25,36 @@ function hasReqCompanyExtraction(source) {
   );
 }
 
-function hasMembershipGuard(source, category) {
+// GUARD-TENANT-SCOPE-RELATIVE-IMPORT-BLINDSPOT (CC-2 2026-09-01): the banking/accounting branches
+// below originally recognized `withCompanyScope` only when imported from one specific hardcoded
+// path (`../accounting/shared.js`). A route file importing an equally-real, equally-enforced
+// `withCompanyScope` from any OTHER relative sibling module (e.g. a module-local `./shared.js`
+// that itself calls `assertCompanyMembership(`) tripped a false-positive FAIL — proven live on
+// apps/backend/src/banking/bank-orphan-backfill.routes.ts, which imports `withCompanyScope` from
+// `./shared.js` (apps/backend/src/banking/shared.ts), whose own body genuinely calls
+// `assertCompanyMembership(userId, operatingCompanyId)` before running any scoped query. That is
+// real enforcement, not a gap — the guard's pattern was just too narrow to see it. Fixed by
+// resolving ANY relative `withCompanyScope` import target and checking that its own source
+// (not just the route file) calls `assertCompanyMembership(` or `assertAccessibleCompanyScope(` —
+// this cannot be gamed by an unrelated same-named export, since it recurses into the real file.
+function resolvedImportEnforcesMembership(source, filePath) {
+  const importMatch = /import\s*\{[^}]*\bwithCompanyScope\b[^}]*\}\s*from\s*["'](\.[^"']+)["']/.exec(source);
+  if (!importMatch) return false;
+  const specifier = importMatch[1];
+  const dir = path.dirname(filePath);
+  const withoutExt = specifier.replace(/\.js$/, "");
+  for (const ext of [".ts", ".js", ".tsx"]) {
+    const candidate = path.resolve(dir, `${withoutExt}${ext}`);
+    if (!fs.existsSync(candidate)) continue;
+    const targetSource = fs.readFileSync(candidate, "utf8");
+    if (targetSource.includes("assertCompanyMembership(") || targetSource.includes("assertAccessibleCompanyScope(")) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function hasMembershipGuard(source, category, filePath) {
   if (source.includes("assertCompanyMembership(")) return true;
 
   // assertAccessibleCompanyScope() is the MULTI-company equivalent of assertCompanyMembership: it
@@ -54,6 +83,8 @@ function hasMembershipGuard(source, category) {
     if (localScopedHelper || importsBankingSharedScope || importsAccountingSharedScope) return true;
   }
 
+  if (/\bwithCompanyScope\b/.test(source) && resolvedImportEnforcesMembership(source, filePath)) return true;
+
   return false;
 }
 
@@ -63,7 +94,7 @@ for (const target of TARGETS) {
   for (const file of routeFiles(target.dir)) {
     const source = fs.readFileSync(file, "utf8");
     if (!hasReqCompanyExtraction(source)) continue;
-    if (!hasMembershipGuard(source, target.label)) {
+    if (!hasMembershipGuard(source, target.label, file)) {
       violations.push(`${file}: missing assertCompanyMembership/withCompanyScope membership enforcement`);
     }
   }

@@ -23,6 +23,7 @@
 // itself does not fire on prose describing the bug (the exact pattern used by the sweep above).
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 
 const ROOT = "apps/backend/src";
 const LABEL = "verify-no-uncast-operating-company-id";
@@ -90,71 +91,90 @@ function main() {
   console.log(`PASS ${LABEL} — 0 uncast operating_company_id comparisons across ${ROOT}.`);
 }
 
+// GUARD-SELFTEST-MUTATES-SOURCE fix: the fixture directory used to live under
+// apps/backend/src/__uncast_opco_selftest__ — an orphan there survives a kill as tracked-tree
+// clutter (never a corrupted EXISTING file's content, since findViolations only ever creates a
+// fresh probe file, but still a repo-tree write this class of guard must not make). Moved to a
+// real OS temp dir; cleaned up in a finally that also runs on SIGTERM/SIGINT (not just normal
+// return) — SIGKILL cannot be handled by any process, but a stray /tmp dir from that case is
+// harmless, unlike a write anywhere under apps/ or packages/.
 function selftest() {
-  const tmpDir = "apps/backend/src/__uncast_opco_selftest__";
-  fs.mkdirSync(tmpDir, { recursive: true });
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ih35-uncast-opco-selftest-"));
   const tmpFile = path.join(tmpDir, "probe.ts");
+  const cleanup = () => {
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    } catch {
+      // best-effort — a leftover /tmp dir is harmless.
+    }
+  };
+  const onSignal = (signal) => {
+    cleanup();
+    process.kill(process.pid, signal);
+  };
+  process.once("SIGTERM", onSignal);
+  process.once("SIGINT", onSignal);
 
-  // Clean case: cast, must not be flagged.
-  fs.writeFileSync(tmpFile, `const sql = \`SELECT 1 FROM x WHERE operating_company_id = $1::uuid\`;\n`);
-  let clean = findViolations(tmpDir);
-  if (clean.length !== 0) {
-    console.error(`SELFTEST FAIL: a cast comparison was flagged: ${JSON.stringify(clean)}`);
-    fs.rmSync(tmpDir, { recursive: true, force: true });
-    process.exit(1);
+  try {
+    // Clean case: cast, must not be flagged.
+    fs.writeFileSync(tmpFile, `const sql = \`SELECT 1 FROM x WHERE operating_company_id = $1::uuid\`;\n`);
+    const clean = findViolations(tmpDir);
+    if (clean.length !== 0) {
+      throw new Error(`SELFTEST FAIL: a cast comparison was flagged: ${JSON.stringify(clean)}`);
+    }
+    console.log("  ok: cast comparison not flagged");
+
+    // Regex-backtracking trap: a cast TWO-DIGIT placeholder must not be misread as a shorter uncast one.
+    fs.writeFileSync(tmpFile, `const sql = \`SELECT 1 FROM x WHERE operating_company_id = $12::uuid\`;\n`);
+    const twoDigitCast = findViolations(tmpDir);
+    if (twoDigitCast.length !== 0) {
+      throw new Error(`SELFTEST FAIL: a cast two-digit placeholder was flagged (backtracking false positive): ${JSON.stringify(twoDigitCast)}`);
+    }
+    console.log("  ok: cast two-digit placeholder ($12::uuid) not flagged");
+
+    // Regression case: bare $N, must be flagged.
+    fs.writeFileSync(tmpFile, `const sql = \`SELECT 1 FROM x WHERE operating_company_id = $1\`;\n`);
+    const caught = findViolations(tmpDir);
+    if (caught.length !== 1) {
+      throw new Error(`SELFTEST FAIL: a bare comparison was NOT flagged: ${JSON.stringify(caught)}`);
+    }
+    console.log("  caught: bare $N comparison flagged");
+
+    // Comment case: bare $N inside a comment, must NOT be flagged (matches the sweep's own exclusion).
+    fs.writeFileSync(tmpFile, `// operating_company_id = $1 is the shape that used to 500\n`);
+    const commentSkipped = findViolations(tmpDir);
+    if (commentSkipped.length !== 0) {
+      throw new Error(`SELFTEST FAIL: a comment-line match was incorrectly flagged: ${JSON.stringify(commentSkipped)}`);
+    }
+    console.log("  ok: comment-line prose not flagged");
+
+    // SQL-comment case: bare $N inside a `--` SQL line comment nested in a template literal (prose
+    // explaining a join a few lines below), must NOT be flagged — same class as the JS-comment case.
+    fs.writeFileSync(
+      tmpFile,
+      `const sql = \`\n  -- entity-pinned via dsd.operating_company_id = $2, so the UI can target it\n  SELECT 1\n\`;\n`
+    );
+    const sqlCommentSkipped = findViolations(tmpDir);
+    if (sqlCommentSkipped.length !== 0) {
+      throw new Error(`SELFTEST FAIL: a SQL "--" comment-line match was incorrectly flagged: ${JSON.stringify(sqlCommentSkipped)}`);
+    }
+    console.log("  ok: SQL '--' comment-line prose not flagged");
+
+    console.log(`PASS ${LABEL} --selftest (mutation probes proven non-inert: 2; false-positive traps proven closed: 2)`);
+  } finally {
+    cleanup();
+    process.removeListener("SIGTERM", onSignal);
+    process.removeListener("SIGINT", onSignal);
   }
-  console.log("  ok: cast comparison not flagged");
-
-  // Regex-backtracking trap: a cast TWO-DIGIT placeholder must not be misread as a shorter uncast one.
-  fs.writeFileSync(tmpFile, `const sql = \`SELECT 1 FROM x WHERE operating_company_id = $12::uuid\`;\n`);
-  let twoDigitCast = findViolations(tmpDir);
-  if (twoDigitCast.length !== 0) {
-    console.error(`SELFTEST FAIL: a cast two-digit placeholder was flagged (backtracking false positive): ${JSON.stringify(twoDigitCast)}`);
-    fs.rmSync(tmpDir, { recursive: true, force: true });
-    process.exit(1);
-  }
-  console.log("  ok: cast two-digit placeholder ($12::uuid) not flagged");
-
-  // Regression case: bare $N, must be flagged.
-  fs.writeFileSync(tmpFile, `const sql = \`SELECT 1 FROM x WHERE operating_company_id = $1\`;\n`);
-  let caught = findViolations(tmpDir);
-  if (caught.length !== 1) {
-    console.error(`SELFTEST FAIL: a bare comparison was NOT flagged: ${JSON.stringify(caught)}`);
-    fs.rmSync(tmpDir, { recursive: true, force: true });
-    process.exit(1);
-  }
-  console.log("  caught: bare $N comparison flagged");
-
-  // Comment case: bare $N inside a comment, must NOT be flagged (matches the sweep's own exclusion).
-  fs.writeFileSync(tmpFile, `// operating_company_id = $1 is the shape that used to 500\n`);
-  let commentSkipped = findViolations(tmpDir);
-  if (commentSkipped.length !== 0) {
-    console.error(`SELFTEST FAIL: a comment-line match was incorrectly flagged: ${JSON.stringify(commentSkipped)}`);
-    fs.rmSync(tmpDir, { recursive: true, force: true });
-    process.exit(1);
-  }
-  console.log("  ok: comment-line prose not flagged");
-
-  // SQL-comment case: bare $N inside a `--` SQL line comment nested in a template literal (prose
-  // explaining a join a few lines below), must NOT be flagged — same class as the JS-comment case.
-  fs.writeFileSync(
-    tmpFile,
-    `const sql = \`\n  -- entity-pinned via dsd.operating_company_id = $2, so the UI can target it\n  SELECT 1\n\`;\n`
-  );
-  let sqlCommentSkipped = findViolations(tmpDir);
-  if (sqlCommentSkipped.length !== 0) {
-    console.error(`SELFTEST FAIL: a SQL "--" comment-line match was incorrectly flagged: ${JSON.stringify(sqlCommentSkipped)}`);
-    fs.rmSync(tmpDir, { recursive: true, force: true });
-    process.exit(1);
-  }
-  console.log("  ok: SQL '--' comment-line prose not flagged");
-
-  fs.rmSync(tmpDir, { recursive: true, force: true });
-  console.log(`PASS ${LABEL} --selftest (mutation probes proven non-inert: 2; false-positive traps proven closed: 2)`);
 }
 
 if (process.argv.includes("--selftest")) {
-  selftest();
+  try {
+    selftest();
+  } catch (e) {
+    console.error(e.message);
+    process.exit(1);
+  }
 } else {
   main();
 }

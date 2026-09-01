@@ -22,10 +22,11 @@ import { readFileSync, writeFileSync, existsSync, unlinkSync } from "node:fs";
 
 const LABEL = "verify-root-claude-md-untracked";
 
-function isTracked(cwd) {
+function isTracked(cwd, env = process.env) {
   try {
     const out = execFileSync("git", ["ls-files", "--error-unmatch", "CLAUDE.md"], {
       cwd,
+      env,
       stdio: ["ignore", "pipe", "pipe"],
     });
     return out.toString().trim().length > 0;
@@ -39,8 +40,8 @@ function gitignoreExcludesRoot(cwd) {
   return text.split("\n").some((line) => line.trim() === "CLAUDE.md");
 }
 
-function run(cwd = process.cwd()) {
-  const tracked = isTracked(cwd);
+function run(cwd = process.cwd(), env = process.env) {
+  const tracked = isTracked(cwd, env);
   if (tracked) {
     return {
       ok: false,
@@ -62,15 +63,37 @@ function run(cwd = process.cwd()) {
   };
 }
 
+// GUARD-SELFTEST-MUTATES-SOURCE hardening (2026-09-01): this selftest already used a temp git
+// repo (`git init tmp`, `git -C tmp ...`), never touching THIS repo's own tracked files — but
+// live tonight, under heavy concurrent verify-sweep load, its "init" commit repeatedly landed in
+// the INVOKING repo's own history instead (author "t <t@t.com>", always the same one-line
+// .gitignore-truncating diff — hit at least 4 times across 3 different branches this session).
+// `-C tmp` changes the working directory git resolves paths against, but does not stop git from
+// honoring ambient GIT_DIR/GIT_WORK_TREE/GIT_INDEX_FILE env vars if anything in a concurrently-
+// running process tree ever sets them; `-C` alone is directory-scoped isolation, not env-scoped
+// isolation. Every git call below now pins GIT_DIR/GIT_WORK_TREE/GIT_INDEX_FILE explicitly to the
+// temp repo (env-scoped isolation, on top of the existing directory-scoped -C), which is the
+// stronger guarantee — a concurrently-set ambient git env var can no longer redirect these calls
+// to the real repo, however that ambient value got set.
+function gitEnv(tmp) {
+  return {
+    ...process.env,
+    GIT_DIR: `${tmp}/.git`,
+    GIT_WORK_TREE: tmp,
+    GIT_INDEX_FILE: `${tmp}/.git/index`,
+  };
+}
+
 function selftest() {
-  const tmp = `/tmp/verify-root-claude-md-untracked-selftest-${Date.now()}`;
-  execFileSync("git", ["init", "-q", tmp]);
+  const tmp = `/tmp/verify-root-claude-md-untracked-selftest-${Date.now()}-${process.pid}`;
+  execFileSync("git", ["init", "-q", tmp], { env: process.env });
+  const env = gitEnv(tmp);
   writeFileSync(`${tmp}/.gitignore`, "CLAUDE.md\n");
-  execFileSync("git", ["-C", tmp, "add", ".gitignore"]);
-  execFileSync("git", ["-C", tmp, "-c", "user.email=t@t.com", "-c", "user.name=t", "commit", "-q", "-m", "init"]);
+  execFileSync("git", ["-C", tmp, "add", ".gitignore"], { env });
+  execFileSync("git", ["-C", tmp, "-c", "user.email=t@t.com", "-c", "user.name=t", "commit", "-q", "-m", "init"], { env });
 
   // Baseline: untracked + ignored -> OK
-  const baseline = run(tmp);
+  const baseline = run(tmp, env);
   if (!baseline.ok) {
     console.error(`${LABEL} --selftest FAIL — baseline (untracked + ignored) should pass: ${baseline.message}`);
     process.exit(1);
@@ -78,18 +101,18 @@ function selftest() {
 
   // Offender 1: CLAUDE.md re-tracked
   writeFileSync(`${tmp}/CLAUDE.md`, "# leaked\n");
-  execFileSync("git", ["-C", tmp, "add", "-f", "CLAUDE.md"]);
-  const offender1 = run(tmp);
+  execFileSync("git", ["-C", tmp, "add", "-f", "CLAUDE.md"], { env });
+  const offender1 = run(tmp, env);
   if (offender1.ok) {
     console.error(`${LABEL} --selftest FAIL — re-tracked CLAUDE.md was not caught`);
     process.exit(1);
   }
-  execFileSync("git", ["-C", tmp, "rm", "-f", "--cached", "CLAUDE.md"]);
+  execFileSync("git", ["-C", tmp, "rm", "-f", "--cached", "CLAUDE.md"], { env });
   unlinkSync(`${tmp}/CLAUDE.md`);
 
   // Offender 2: .gitignore entry removed
   writeFileSync(`${tmp}/.gitignore`, "\n");
-  const offender2 = run(tmp);
+  const offender2 = run(tmp, env);
   if (offender2.ok) {
     console.error(`${LABEL} --selftest FAIL — missing .gitignore entry was not caught`);
     process.exit(1);
