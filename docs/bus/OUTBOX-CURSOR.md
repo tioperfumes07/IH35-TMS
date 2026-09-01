@@ -1,3 +1,5 @@
+CURSOR | WHERE-IS-DESIGN · CASCADE-VOID = docs/bus/CASCADE-VOID-DESIGN-FOR-OWNER-2026-09-01.md (PR #19053) · board rewrite = docs/bus/OWNER-REWRITE-DISPATCH-AND-CASCADE-VOID-2026-09-01.md · waiting Jorge APPROVED | GO
+
 CURSOR | OWNER-MASTER-FANOUT 2026-09-01T02:12Z | live=8112092 | PASTEs→all INBOXes · CASCADE-VOID design posted (NO CODE until Jorge APPROVES) · Phase1 Cancel/Reverse/Hide/Nav LIVE · unit deact+perm wiring+board queued · map=docs/bus/IH35-OWNER-REQUIREMENTS-MASTER-MAP.md | GO
 
 CURSOR | PHASE-1 HIDE-VOIDED shipping · other 3 items LIVE on 78a1efd (#19036/#19042) · after merge STAND BY Phase 2 | GO
