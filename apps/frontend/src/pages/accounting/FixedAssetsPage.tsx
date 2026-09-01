@@ -14,6 +14,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import {
   getFixedAssets, getFixedAssetDetail, registerTrkOwnedUnits,
   type FixedAssetListItem, type FixedAssetDetail, type RegisterTrkUnitsResult,
@@ -452,17 +453,16 @@ export function FixedAssetsPage() {
   const filterBar = (
     <div className="flex flex-wrap gap-2 items-center" data-fixed-assets-filter-toolbar="collapsed">
       <CollapsedListFilters activeFilterCount={statusFilter ? 1 : 0} testIdPrefix="fixed-assets" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
-        <select
+        <SelectCombobox
           value={staged.draft.statusFilter}
           onChange={(e) => staged.setDraft({ statusFilter: e.target.value })}
-          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
         >
           <option value="">All statuses</option>
           <option value="active">Active</option>
           <option value="fully_depreciated">Fully Depreciated</option>
           <option value="disposed">Disposed</option>
           <option value="voided">Voided</option>
-        </select>
+        </SelectCombobox>
       </CollapsedListFilters>
       <span className="text-xs text-gray-500">
         {total.toLocaleString()} asset{total !== 1 ? "s" : ""}

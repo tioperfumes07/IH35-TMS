@@ -11,6 +11,7 @@ import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { companyToday, addDaysIso } from "../../lib/businessDate";
 
 const ENTITY_TYPE_OPTIONS = [
@@ -192,27 +193,25 @@ export function DailyReconPage() {
               </div>
               <div className="flex flex-col gap-0.5">
                 <label className="text-[10px] font-semibold uppercase text-gray-500">Type</label>
-                <select
+                <SelectCombobox
                   value={staged.draft.entityType}
                   onChange={(e) => staged.setDraft({ ...staged.draft, entityType: e.target.value })}
-                  className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
                 >
                   {ENTITY_TYPE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
-                </select>
+                </SelectCombobox>
               </div>
               <div className="flex flex-col gap-0.5">
                 <label className="text-[10px] font-semibold uppercase text-gray-500">Status</label>
-                <select
+                <SelectCombobox
                   value={staged.draft.matchStatus}
                   onChange={(e) => staged.setDraft({ ...staged.draft, matchStatus: e.target.value as DailyReconMatchStatus | "all" })}
-                  className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
                 >
                   {MATCH_STATUS_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
-                </select>
+                </SelectCombobox>
               </div>
             </div>
           </CollapsedListFilters>

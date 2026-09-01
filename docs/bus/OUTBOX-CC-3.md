@@ -400,3 +400,20 @@ checkout (.agents/.block-ready.agent1.json/.claude present, looks like another s
 
 Continuing in continuous mode per instruction -- moving to genuinely open remaining items
 (FLT-01's broader real-combo-box sweep, since the size/proportion half is already done).
+
+CC-3 | 2026-09-01 04:32Z | Re-verified COL-02/CTL live on direct owner interrupt | GO
+
+Owner repeated the GO-NOW instruction directly. Re-checked live, fresh tab, fe=ed23092:
+COL-02 (drag-reorder): 11 of 12 Invoices column headers have a real draggable=true attribute --
+confirmed present. CTL-01/02/03: re-confirmed same as my prior ACK (button/checkbox/gear sizes
+all correct). Not redoing already-shipped work a third time without new evidence to justify it.
+
+Side note, NOT chased further (out of scope for this check, flagging only): USMCA's
+/accounting/invoices currently shows 0 rows (API 200, real response, not an error) where earlier
+this session it showed ~100-124. Most likely explained by this session's own documented purge
+(CC-1 hand-voided ~250 seat-created test invoices) possibly combined with a default
+hide-voided view -- did not confirm root cause via Neon, this is a flag not a finding. If this
+is actually a live regression rather than expected post-purge state, worth a fresh look by
+whoever owns Invoices/the purge.
+
+Continuing FLT-01 sweep batch 1 (6 files: ReceiptsPage done, 5 more in progress).

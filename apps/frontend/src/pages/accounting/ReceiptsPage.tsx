@@ -11,6 +11,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
@@ -204,17 +205,16 @@ export function ReceiptsPage() {
           />
         }
       >
-        <select
+        <SelectCombobox
           aria-label="Filter receipts by source"
           value={staged.draft.entityType}
           onChange={(e) => staged.setDraft({ entityType: e.target.value as "" | "expense" | "bill" | "payment" })}
-          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
         >
           <option value="">All sources</option>
           <option value="expense">Expenses</option>
           <option value="bill">Bills</option>
           <option value="payment">Customer payments</option>
-        </select>
+        </SelectCombobox>
       </CollapsedListFilters>
       <span className="ml-auto self-center text-xs text-gray-500">
         {total.toLocaleString()} receipt{total !== 1 ? "s" : ""}

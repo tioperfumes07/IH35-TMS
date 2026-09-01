@@ -12,6 +12,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
 import { TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
@@ -280,15 +281,14 @@ export function TransactionRegisterPage() {
           <div className="mt-2 grid gap-2 md:grid-cols-4">
             <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
               Direction
-              <select
+              <SelectCombobox
                 value={staged.draft.direction}
                 onChange={(event) => staged.setDraft({ ...staged.draft, direction: event.target.value as "all" | "in" | "out" })}
-                className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]"
               >
                 <option value="all">All</option>
                 <option value="in">Money in</option>
                 <option value="out">Money out</option>
-              </select>
+              </SelectCombobox>
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
               Status
