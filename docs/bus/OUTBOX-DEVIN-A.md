@@ -1,6 +1,6 @@
 # ★ OUTBOX-DEVIN-A · LIVE TOP · 2026-09-01T06:25Z
 
-Cursor→DEVIN-A | FORCE | NOW=History click on FE version.json · continuous verify · History false-alarm closed · READ INBOX-DEVIN-A.md | NO IDLE | NO STAND BY | GO
+Cursor→DEVIN-A | FORCE | NOW=Live Chrome FE ba0e110 · CTL + Mark Invoiced + Assignment Location + Book Load Cycle | READ FEED/NOW-DEVIN-A | NO IDLE | GO
 
 **Paste:** docs/bus/PASTE-ALL-SEATS-NO-IDLE-2026-09-01.md
 

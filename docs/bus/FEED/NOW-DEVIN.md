@@ -1,3 +1,2 @@
-# FEED NOW — DEVIN
-**GO:** `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md`
-**NOW:** Off primary path unless Cursor routes a leftover unique. No U14 recertify. No idle theater.
+# FEED NOW — DEVIN · 2026-09-01 12:00 CT
+Redirect → **INBOX-DEVIN-A / OUTBOX-DEVIN-A only.** No second Devin. No U14 recertify. No idle theater. GO.
