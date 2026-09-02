@@ -39,6 +39,17 @@ type TimelineResponse = {
     max_humidity_pct: number | null;
   };
   rows: TimelineRow[];
+  incidents: Array<{
+    id: string;
+    breach_kind: "temperature" | "humidity" | "door";
+    started_at: string;
+    ended_at: string | null;
+    duration_minutes: number | null;
+    reading_count: number;
+    worst_value: number | null;
+    severity: "warning" | "critical";
+    resolved_at: string | null;
+  }>;
 };
 
 function formatTick(iso: string) {
@@ -117,6 +128,30 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
 
   return (
     <section className="space-y-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="cargo-sensor-timeline">
+      <div className="space-y-2" data-testid="cargo-sensor-incidents">
+        <h3 className="text-sm font-semibold text-gray-900">Cargo incidents</h3>
+        {query.data.incidents.length === 0 ? (
+          <p className="text-xs text-gray-500">No cargo excursions recorded for this load.</p>
+        ) : (
+          query.data.incidents.map((incident) => (
+            <article
+              key={incident.id}
+              className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700"
+            >
+              <div className="flex flex-wrap justify-between gap-2">
+                <strong className="capitalize">{incident.breach_kind} · {incident.severity}</strong>
+                <span>{incident.ended_at ? "Ended" : "Active"}{incident.resolved_at ? " · Resolved" : ""}</span>
+              </div>
+              <div className="mt-1 text-gray-700">
+                {new Date(incident.started_at).toLocaleString()} · {incident.reading_count} reading{incident.reading_count === 1 ? "" : "s"}
+                {incident.duration_minutes != null ? ` · ${incident.duration_minutes} min` : ""}
+                {incident.worst_value != null ? ` · worst ${incident.worst_value}` : ""}
+              </div>
+            </article>
+          ))
+        )}
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-gray-900">Cargo sensor timeline</h3>
         {latest ? (

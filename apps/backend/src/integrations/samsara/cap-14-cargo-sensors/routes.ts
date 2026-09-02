@@ -8,6 +8,7 @@ import { withCurrentUser } from "../../../auth/db.js";
 import { requireAuth } from "../../../auth/session-middleware.js";
 import { listCargoSensorTimelineForLoad, listOutOfRangeCargoReadings, type DbClient } from "./ingester.service.js";
 import { assertCompanyMembership } from "../../../_helpers/company-membership-guard.js";
+import { fileCargoIncidentClaim, listCargoIncidents, resolveCargoIncident } from "./incident.service.js";
 
 const timelineParamsSchema = z.object({
   load_uuid: z.string().uuid(),
@@ -24,6 +25,25 @@ const outOfRangeQuerySchema = z.object({
   to: z.string().datetime().optional(),
   limit: z.coerce.number().int().min(1).max(1000).optional().default(200),
 });
+
+const incidentQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  load_id: z.string().uuid().optional(),
+});
+
+const incidentParamsSchema = z.object({ id: z.string().uuid() });
+const resolveIncidentBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  resolution_note: z.string().trim().min(3).max(2000),
+});
+const fileClaimBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  claim_reason_id: z.string().uuid(),
+});
+
+function mutationAllowed(role: string) {
+  return ["Owner", "Administrator", "Safety", "Accountant"].includes(role);
+}
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -43,6 +63,47 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: Db
 }
 
 export async function registerCap14CargoSensorRoutes(app: FastifyInstance): Promise<void> {
+  app.get("/api/v1/dispatch/cargo-incidents", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const query = incidentQuerySchema.safeParse(req.query);
+    if (!query.success) return validationError(reply, query.error);
+    const rows = await withCompany(user.uuid, query.data.operating_company_id, (client) =>
+      listCargoIncidents(client, query.data.operating_company_id, query.data.load_id)
+    );
+    return reply.send({ rows, count: rows.length, operating_company_id: query.data.operating_company_id });
+  });
+
+  app.post("/api/v1/dispatch/cargo-incidents/:id/resolve", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    if (!mutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = incidentParamsSchema.safeParse(req.params);
+    if (!params.success) return validationError(reply, params.error);
+    const body = resolveIncidentBodySchema.safeParse(req.body);
+    if (!body.success) return validationError(reply, body.error);
+    const row = await withCompany(user.uuid, body.data.operating_company_id, (client) =>
+      resolveCargoIncident(client, body.data.operating_company_id, params.data.id, user.uuid, body.data.resolution_note)
+    );
+    if (!row) return reply.code(404).send({ error: "cargo_incident_not_found_or_already_resolved" });
+    return reply.send({ incident: row });
+  });
+
+  app.post("/api/v1/dispatch/cargo-incidents/:id/file-claim", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    if (!mutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = incidentParamsSchema.safeParse(req.params);
+    if (!params.success) return validationError(reply, params.error);
+    const body = fileClaimBodySchema.safeParse(req.body);
+    if (!body.success) return validationError(reply, body.error);
+    const row = await withCompany(user.uuid, body.data.operating_company_id, (client) =>
+      fileCargoIncidentClaim(client, body.data.operating_company_id, params.data.id, user.uuid, body.data.claim_reason_id)
+    );
+    if (!row) return reply.code(409).send({ error: "cargo_incident_not_claimable_or_reason_invalid" });
+    return reply.code(201).send(row);
+  });
+
   app.get("/api/v1/dispatch/cargo-sensors/load/:load_uuid/timeline", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;

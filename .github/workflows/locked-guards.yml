@@ -1395,6 +1395,12 @@ jobs:
       - name: verify:inventory-reorder-threshold-ui
         run: node scripts/verify-inventory-reorder-threshold-ui.mjs
 
+      # GO-20 D — persistent cargo incident lifecycle from reading UUID through worker/API/UI/attention
+      - name: verify:go20-cargo-incidents --selftest
+        run: node scripts/verify-go20-cargo-incidents.mjs --selftest
+      - name: verify:go20-cargo-incidents
+        run: node scripts/verify-go20-cargo-incidents.mjs
+
   # Thin aggregator — required context `locked-guards / locked-guards` always reports.
   locked-guards:
     name: locked-guards

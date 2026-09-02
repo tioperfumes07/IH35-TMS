@@ -7,6 +7,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { runCargoSensorIngestionTick } from "../integrations/samsara/cap-14-cargo-sensors/ingester.service.js";
 import { processOutOfRangeAlerts } from "../integrations/samsara/cap-14-cargo-sensors/threshold.service.js";
+import { processCargoSensorIncidents } from "../integrations/samsara/cap-14-cargo-sensors/incident.service.js";
 
 const WORKER_NAME = "dispatch.cap14_cargo_sensor_worker";
 const CRON_EXPRESSION = "*/5 * * * *";
@@ -30,6 +31,7 @@ export async function runCap14CargoSensorWorkerTick(): Promise<{
       const operatingCompanyId = String(row.id ?? "");
       if (!operatingCompanyId) continue;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+      await processCargoSensorIncidents(client, operatingCompanyId);
       const alertResult = await processOutOfRangeAlerts(client, operatingCompanyId);
       alerts += alertResult.incidents;
     }

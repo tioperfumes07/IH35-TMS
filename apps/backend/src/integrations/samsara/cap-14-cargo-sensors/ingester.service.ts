@@ -12,6 +12,7 @@ import {
 
 export type { DbClient } from "./db-client.type.js";
 import type { DbClient } from "./db-client.type.js";
+import { listCargoIncidents, type CargoIncidentRow } from "./incident.service.js";
 
 export type DoorStatus = "open" | "closed" | "unknown";
 
@@ -56,6 +57,7 @@ export type CargoTimelinePayload = {
   load_uuid: string;
   threshold: CargoThresholdRange;
   rows: CargoTimelineRow[];
+  incidents: CargoIncidentRow[];
 };
 
 export type CargoSensorIngestionSummary = {
@@ -308,12 +310,14 @@ export async function listCargoSensorTimelineForLoad(
     ...row,
     threshold_status: deduceThresholdStatus(row, threshold),
   }));
+  const incidents = await listCargoIncidents(client, operatingCompanyId, loadUuid);
 
   return {
     operating_company_id: operatingCompanyId,
     load_uuid: loadUuid,
     threshold,
     rows,
+    incidents,
   };
 }
 
