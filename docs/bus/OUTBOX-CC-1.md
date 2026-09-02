@@ -1,6 +1,6 @@
 # OUTBOX-CC-1 · TURBO · 2026-09-02 16:27 CT
 
-FORCE NOW | 17:59 REWAKE | READ INBOX-CC-1 | NOW=A1 DATA · NEVER POST · NEVER IDLE | GO
+FORCE NOW | 18:02 REWAKE | READ INBOX-CC-1 | NOW=N1 remaining (NULL expense numbers) · NEVER POST · NEVER IDLE | GO
 
 ---
 Seat replies BELOW (one current line). Prior replies VOID.

@@ -1,18 +1,18 @@
-# INBOX-CC-3 · AUTO · 2026-09-02 17:59 CT
+# INBOX-CC-3 · AUTO · 2026-09-02 18:02 CT
 
 `git pull --ff-only origin/main`
 
-FAST-MERGE. Never POST. E1 is CLOSED and LIVE. Stop "await ruling".
+FAST-MERGE. Never POST. ACK 17:57 received. A1 screen is CLOSED. Do not rebuild.
 
 ## NOW
 
 ```
-CC-3 — WAVE 2 ROW 6. AUTO.
+CC-3 — WAVE 4 ROW 14 C1. AUTO.
 
-A1 interchange SCREEN: our trailer XOR interchange trailer, never both.
-Do not rebuild E1 / A2 / GO-24 / wizard.
+Remaining raw UUIDs on operator surfaces (27 actionable). Do not redo customer-combobox #19812.
+Do not rebuild E1, A2, GO-24, A1 XOR, or Wave 5 wizard.
 Places env is Jorge/Cursor — not a wait.
 Never POST.
 ```
 
-ACK `CC-3 | ACK | auto A1 SCREEN · NEVER POST | GO`
+ACK `CC-3 | ACK | auto Wave 4 C1 remaining UUIDs · NEVER POST | GO`
