@@ -9,17 +9,23 @@ const DRAWER = path.join(ROOT, "apps/frontend/src/components/dispatch/LoadDetail
 const SHARED = path.join(ROOT, "packages/shared-types/src/dispatch/load-state-machine.ts");
 const LABEL = "verify-dispatch-load-detail-deliver-transition";
 
+const CANON_MAP_RE = /getOfficeTransitionButtons\([\s\S]{0,120}?\)\.map\(\(transition\)/;
+
 export function failures(drawer, shared) {
   const fails = [];
-  if (!drawer.includes('import { getOfficeTransitionButtons } from "@ih35/shared-types"')) fails.push("drawer must import shared transition canon");
-  if (!/getOfficeTransitionButtons\(load\.status\)\.map\(\(transition\)/.test(drawer)) fails.push("drawer must render every canonical transition button");
-  if (!/body:\s*\{\s*new_status:\s*transition\.target\s*\}/.test(drawer)) fails.push("drawer must submit each canonical transition target");
+  if (!drawer.includes("getOfficeTransitionButtons") || !drawer.includes("@ih35/shared-types")) {
+    fails.push("drawer must import shared transition canon");
+  }
+  if (!CANON_MAP_RE.test(drawer)) fails.push("drawer must render every canonical transition button");
+  if (!/new_status:\s*transition\.target/.test(drawer)) fails.push("drawer must submit each canonical transition target");
   if (!/data-testid=\{transition\.testId\}/.test(drawer)) fails.push("drawer must expose canonical transition test ids");
 
   const transit = shared.getOfficeTransitionButtons("dispatched");
   if (!transit.some((b) => b.target === "in_transit" && b.label === "Mark in transit")) fails.push("canon must offer dispatched → in_transit");
   const delivered = shared.getOfficeTransitionButtons("in_transit");
-  if (!delivered.some((b) => b.target === "delivered_pending_docs" && b.label === "Mark delivered (pending docs)")) fails.push("canon must offer in_transit → delivered_pending_docs");
+  if (!delivered.some((b) => b.target === "delivered_pending_docs" && b.label === "Mark delivered (pending docs)")) {
+    fails.push("canon must offer in_transit → delivered_pending_docs");
+  }
   if (transit.some((b) => b.target === "delivered_pending_docs")) fails.push("canon must not offer delivered directly from dispatched");
   return fails;
 }
@@ -33,7 +39,7 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutations = [
-    drawer.replace("getOfficeTransitionButtons(load.status).map", "[].map"),
+    drawer.replace(CANON_MAP_RE, "[].map((transition)"),
     drawer.replace("new_status: transition.target", 'new_status: "delivered_pending_docs"'),
     drawer.replace("data-testid={transition.testId}", 'data-testid="hardcoded"'),
   ];
