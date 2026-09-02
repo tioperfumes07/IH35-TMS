@@ -1,3 +1,7 @@
+// C6-MONEY-JE-EXEMPT: this ingests a RAW, uncategorized bank_transactions row (status stays
+// unposted, no categorization_gl_account_id set here). The real GL post happens later, once, when
+// the row is categorized — maybePostBankCategorizationToGl (banking/categorization.routes.ts,
+// banking/bank-feed-gl-posting.service.ts) — verified 2026-09-02, GO-23 C6.
 export type BankTransactionSource = "plaid" | "qbo_import" | "manual" | "csv_import";
 
 export type SqlQueryable = {

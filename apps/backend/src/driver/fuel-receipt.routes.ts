@@ -1,3 +1,7 @@
+// C6-MONEY-JE-EXEMPT: the bank_transactions row inserted here carries status/plaid_category only —
+// no categorization_gl_account_id at insert. The real GL post happens later, once, when the row is
+// categorized via maybePostBankCategorizationToGl (banking/categorization.routes.ts) — verified
+// 2026-09-02, GO-23 C6.
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyReply } from "fastify";
