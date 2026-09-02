@@ -4,6 +4,7 @@
  * CLS-RAW-UUID-INPUT fleet slice · Cursor even claim: 2304.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -56,7 +57,7 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-fleet-edit-driver-"));
+  const stubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "fleet-edit-driver-"));
   try {
     const dir = path.join(stubRoot, "apps/frontend/src/components/fleet");
     fs.mkdirSync(dir, { recursive: true });
