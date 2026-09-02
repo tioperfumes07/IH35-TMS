@@ -31,18 +31,19 @@ function fail(msg) {
   process.exit(1);
 }
 
-function main() {
-  const migration = read(paths.migration);
-  const page = read(paths.page);
-  const pageTest = read(paths.pageTest);
-  const routes = read(paths.routes);
-  const service = read(paths.service);
-  const routeTest = read(paths.routeTest);
-  const index = read(paths.index);
-  const dispatchApi = read(paths.dispatchApi);
-  const manifest = read(paths.manifest);
-  const sidebar = read(paths.sidebar);
-  const archDesign = read(paths.archDesign);
+function audit(overrides = new Map()) {
+  const readForAudit = (filePath) => overrides.get(filePath) ?? read(filePath);
+  const migration = readForAudit(paths.migration);
+  const page = readForAudit(paths.page);
+  const pageTest = readForAudit(paths.pageTest);
+  const routes = readForAudit(paths.routes);
+  const service = readForAudit(paths.service);
+  const routeTest = readForAudit(paths.routeTest);
+  const index = readForAudit(paths.index);
+  const dispatchApi = readForAudit(paths.dispatchApi);
+  const manifest = readForAudit(paths.manifest);
+  const sidebar = readForAudit(paths.sidebar);
+  const archDesign = readForAudit(paths.archDesign);
   const failures = [];
 
   if (!migration.includes("dispatch.detention_events")) failures.push("migration 0353 must create detention_events");
@@ -89,11 +90,12 @@ function main() {
     failures.push("ARCHITECTURAL_DESIGN must reference verify:dispatch-detention-board");
   }
 
-  if (failures.length) {
-    for (const f of failures) console.error(` - ${f}`);
-    fail(failures.join("; "));
-  }
+  return failures;
+}
 
+function main() {
+  const failures = audit();
+  if (failures.length) fail(failures.join("; "));
   console.log("verify:dispatch-detention-board PASS");
 }
 
@@ -105,20 +107,13 @@ if (process.argv.includes("--selftest")) {
     ["exact claim predicate", original.replace("AND customer_notified_at IS NULL", "AND customer_notified_at IS NOT NULL")],
     ["claim identity", original.replace("RETURNING customer_notified_at::text", "RETURNING id::text")],
   ];
-  let rejected = 0;
-  for (const [, mutated] of mutations) {
-    fs.writeFileSync(paths.service, mutated);
-    try {
-      const result = await import(`node:child_process`).then(({ spawnSync }) =>
-        spawnSync(process.execPath, [process.argv[1]], { cwd: ROOT, encoding: "utf8" })
-      );
-      if (result.status !== 0) rejected += 1;
-    } finally {
-      fs.writeFileSync(paths.service, original);
-    }
+  const missed = [];
+  for (const [name, mutated] of mutations) {
+    const failures = audit(new Map([[paths.service, mutated]]));
+    if (failures.length === 0) missed.push(name);
   }
-  if (rejected !== mutations.length) fail(`selftest rejected ${rejected}/${mutations.length} planted defects`);
-  console.log(`verify:dispatch-detention-board selftest PASS (${rejected}/${mutations.length})`);
+  if (missed.length) fail(`selftest missed planted defects: ${missed.join(", ")}`);
+  console.log(`verify:dispatch-detention-board selftest PASS (${mutations.length}/${mutations.length})`);
 } else {
   main();
 }
