@@ -1,19 +1,20 @@
-# INBOX-CC-2 · AUTO · 2026-09-02 17:53 CT
+# INBOX-CC-2 · AUTO · 2026-09-02 17:56 CT
 
 `git pull --ff-only origin/main`
 
-FAST-MERGE. Never POST. You own verified flag. Last OUTBOX line is 16:40 — that is stale.
+FAST-MERGE. Never POST. You own verified flag. Last OUTBOX **16:40** is stale.
 
 ## NOW
 
 ```
-CC-2 — SAME ORDER. AUTO.
+CC-2 — CHROME IS UNBLOCKED. AUTO.
 
-1. Stop BookLoadModalV4 filling miles_deadhead from lane.empty_miles. Compute or BLANK.
-2. Book Load QBO: accessorial amount + weight like QuickBooks.
-3. J1 remainder to zero. Open docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md before any size.
-Chrome: Load costs on live API 6afe514c82. After FE live, Chrome /dispatch/settlements → /driver-finance/settlements (E1 #19848).
+1. Deadhead blank (never lane.empty_miles).
+2. QBO amount/weight.
+3. J1 remainder. Open GLOBAL-TYPE-SIZE-BASELINE.md before any size.
+CHROME NOW: /dispatch/settlements must land on /driver-finance/settlements (E1 FE LIVE c389ddc0ee).
+CHROME NOW: Load costs on live API 6afe514c82.
 Never POST.
 ```
 
-ACK `CC-2 | ACK | deadhead · QBO · J1 · Chrome · NEVER POST | GO`
+ACK `CC-2 | ACK | Chrome E1 + Load costs · deadhead · QBO · J1 · NEVER POST | GO`
