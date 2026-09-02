@@ -1,4 +1,9 @@
 {
+  "10232": {
+    "claimed_at": "2026-09-02",
+    "claimed_by": "cursor",
+    "purpose": "verify-no-hard-delete-document-number-tables (GO-18 Gap 5: MAX+1 generators in display-id.ts — never hard-delete those tables)"
+  },
   "10231": {
     "claimed_at": "2026-09-02",
     "claimed_by": "cc-2",
