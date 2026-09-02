@@ -53,13 +53,13 @@ describe("computeTodaysAttention", () => {
   it("returns top 5 when more than 5 items exist", async () => {
     // Seed all 10 sources with data
     const client = mockClient({
-      "legal.form_425c_filings": [{ id: "id-1", deadline: "2026-06-10" }],
+      "compliance.form_425c_reports": [{ id: "id-1", deadline: "2026-06-10" }],
       "fuel.fraud_alerts": [{ c: "3" }],
       "banking.reconciliation_drift_alerts": [{ c: "2" }],
       "maintenance.work_orders": [{ c: "4" }],
       "telematics.cargo_sensor_incidents": [{ c: "1" }],
       "safety.accident_liabilities": [{ c: "1" }],
-      "mdata.detention_requests": [{ c: "2" }],
+      "dispatch.detention_requests": [{ c: "2" }],
       "mdata.customer_health_scores": [{ c: "3" }],
       "maintenance.predictive_alerts": [{ c: "2" }],
     });
@@ -72,7 +72,7 @@ describe("computeTodaysAttention", () => {
     const client = mockClient({
       "fuel.fraud_alerts": [{ c: "1" }],       // score 95
       "maintenance.predictive_alerts": [{ c: "1" }], // score 65
-      "mdata.detention_requests": [{ c: "1" }], // score 75
+      "dispatch.detention_requests": [{ c: "1" }], // score 75
     });
 
     const items = await computeTodaysAttention(client, OCI, 5);
@@ -111,7 +111,7 @@ describe("computeTodaysAttention", () => {
   it("skips source when count is 0", async () => {
     const client = mockClient({
       "fuel.fraud_alerts": [{ c: "0" }],
-      "mdata.detention_requests": [{ c: "0" }],
+      "dispatch.detention_requests": [{ c: "0" }],
     });
 
     const items = await computeTodaysAttention(client, OCI, 5);
@@ -139,7 +139,7 @@ describe("computeTodaysAttention", () => {
 
   it("respects custom topN parameter", async () => {
     const client = mockClient({
-      "legal.form_425c_filings": [{ id: "id-1", deadline: "2026-06-10" }],
+      "compliance.form_425c_reports": [{ id: "id-1", deadline: "2026-06-10" }],
       "fuel.fraud_alerts": [{ c: "1" }],
       "banking.reconciliation_drift_alerts": [{ c: "1" }],
     });
