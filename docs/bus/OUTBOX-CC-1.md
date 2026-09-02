@@ -197,3 +197,47 @@ CC-1 | ACK | GO-23 | NOW=purge-33 · GO-24 API if missing · N1 bill+bill-paymen
 CC-1 | GO-23 | B5 recheck (item 4): backend confirmed still correct and unrevoked (#19578 -- driver_finance.driver_pay_rates authoritative, typed rate only used with a >=10-char logged reason). Frontend "still editable 0" is real -- BookLoadModalV4.tsx's driver_pay_rate_per_mile field (lines ~104/337/545/911) has no auto-resolve-from-profile display and no reason-capture UI, confirmed live-read on this branch. NOT building this myself: BookLoadModalV4.tsx is explicitly out of CC-1's lane (#19578's own NOT CHECKED line: "the frontend reason-capture field is CC-3's"; GO-21's lane boundary: "Do not touch BookLoadModalV4.tsx. Do not take J1"). Flagging for CC-3/whoever owns the wizard, not silently dropping it.
 
 CC-1 | GO-23 | purge item 1 progress: dispatch.load_templates 67138fcf (TEST DATA TESTMTDQIUGL) deleted, before=1 after=0, no FK dependents, no triggers, cascade-safe. The 2 sample drivers (9f35cf21 TEST DriverTESTMTDP79YF, db37af23 CODEX ACTIVE FLEET TEST) are PERMANENTLY UNDELETABLE by design, not by omission: exhaustively checked all ~140 FK-referencing tables live, found real dependent rows in exactly 6 (1 each) -- 4 of those 6 (safety.dvir_submissions, telematics.vehicle_driver_assignments, dispatch.stop_arrivals, safety.harsh_events) carry unconditional BEFORE DELETE-block triggers with no role exception (immutable safety/telematics event logs), so a hard delete of either driver is physically impossible regardless of role. Both rows are already fully voided (status='Inactive', deactivated_at=2026-09-01) -- that IS the correct, maximal state; nothing further to do here. Remaining: the 33-table name-junk sweep (test|sample|demo|qa|dummy|xxx match on tables with no is_sample_data column) -- in progress, will paste before/after counts per table once the full 33-table enumeration is done.
+
+CC-1 | GO-23 | purge 33-table sweep -- honest finding, tightened the predicate, then executed the
+confirmed-safe subset: the literal predicate as specified (loose substring match test|sample|demo|
+qa|dummy|xxx on any name/label/description/notes/memo column, tables with no is_sample_data) is
+UNSAFE to run blind -- ran it broadly first (163 candidate columns across non-catalog schemas,
+catalogs.* excluded as pure seeded reference data that was never going to carry junk), then spot-
+checked the highest-count hits and found the substring form matches ordinary English words
+("contest", "attestation", "demonstrate") inside REAL legal/insurance/financial notes as false
+positives. Tightened to a word-boundary regex (\y(test|sample|demo|dummy|xxx)\y, qa dropped --
+too many false hits inside real abbreviations) and re-ran: still returns real hits, but most of
+those are explicit owner/seat-preserved KEEP rows (INBOX's own stated exception: "TEST-CC3-GO0085
+KEEP", "TEST DATA keep") or active go-forward regression-proof fixtures other seats' scripts
+depend on (e.g. insurance.claim notes "LIVE-GATE-PROVE... going-forward only", "Cascade USMCA-WIRE
+CREATE sweep test claim -- verifying..."), NOT abandoned junk -- deleting those would break another
+seat's guard, not clean anything up.
+
+CONFIRMED SAFE, executed (no KEEP marker, no ongoing-use language, cascade-checked before delete):
+  finance.loans: before=4, after=0. Deleted (+156 finance.loan_amortization_rows children first):
+    TEST-CC2-AMORT-20260826, TEST DATA equipment note TESTMTDP79YF,
+    TEST DATA personal loan TESTMTDP79YF, TEST DATA refinance note TESTMTDQ164H.
+
+CONFIRMED test data, PERMANENTLY UNDELETABLE (same class as the 2 sample drivers): legal.matters
+row 34a494e6 ("SAMPLE_BREAKDOWN_RESCUE_JULY... TEST DATA - no GL posting") has one child row in
+legal.matter_events, and that table is unconditionally append-only (DELETE refused even under
+RESET ROLE/superuser) -- the RESTRICT FK from matter_events blocks the parent delete permanently.
+Left in place; the row's own text already self-documents "TEST DATA - no GL posting", the maximal
+honest state.
+
+STILL OPEN, not yet reviewed row-by-row (found by the tightened sweep, real hits, disposition
+unknown -- need the same per-row keep/active-use check before any delete): accounting.
+cash_flow_adjustments(4) civil_fine_postings(1) parts_purchase_postings(2) prepaid_assets(1)
+property_tax_accruals(1) qbo_accounts(1) recurring_bill_templates(1, matches the INBOX's own named
+example) revenue_contracts(1) revenue_obligations(1) sales_tax_agencies(2) warranty_reimburse_
+postings(1); banking.bank_transaction_splits(2) reconciliation_sessions(1) transfers(1); docs.
+files(4); driver_finance.driver_pay_rates(1); factoring.factor(1); finance.forecast_scenarios(4);
+fuel.fuel_card_overage_policies(1) fuel_transactions(1); geo.geofences(1); insurance.claim(5, 3
+already identified as KEEP/active-use, 2 undetermined) lawsuit(1); integrations.
+relay_company_cards(1); legal.matter_deadlines(6, all "... keep" suffixed -- confirmed KEEP, do
+not delete) matter_documents(1). Batches 3-5 of the candidate list (~85 more columns) not yet run.
+
+Recommendation: do not extend this sweep further without either (a) an owner ruling on whether
+"active go-forward regression proof, no KEEP suffix" rows are fair game, or (b) per-row review
+continuing at this same pace. Pasting real content, not counts, going forward -- a bare count on
+this predicate is not evidence of junk.
