@@ -60,16 +60,12 @@ function readAll() {
 }
 
 function selftest() {
-  const orig = fs.readFileSync(MODAL, "utf8");
-  const broken = orig.replace(/date_of_birth:\s*parsed\.date_of_birth \|\| undefined,\n/, "");
-  if (broken === orig) throw new Error("selftest: could not plant defect (date_of_birth submit missing)");
-  fs.writeFileSync(MODAL, broken);
-  try {
-    const errors = checkSources(readAll());
-    if (errors.length === 0) throw new Error("selftest: planted defect did not fail the guard");
-  } finally {
-    fs.writeFileSync(MODAL, orig);
-  }
+  const original = readAll();
+  const broken = original.modal.replace(/date_of_birth:\s*parsed\.date_of_birth \|\| undefined,\n/, "");
+  if (broken === original.modal) throw new Error("selftest: could not plant defect (date_of_birth submit missing)");
+  const errors = checkSources({ ...original, modal: broken });
+  if (errors.length === 0) throw new Error("selftest: planted defect did not fail the guard");
+  if (checkSources(original).length > 0) throw new Error("selftest: original sources must remain good");
   console.log("verify-driver-create-dob-mx-license-wired --selftest OK");
 }
 
