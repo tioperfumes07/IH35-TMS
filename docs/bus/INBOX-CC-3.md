@@ -1,4 +1,4 @@
-# INBOX-CC-3 · GO-23 WAVE 1 · A2 FIRST
+# INBOX-CC-3 · GO-23 · A2 SHIPPED · WAIT WAVE 2
 
 `git pull --ff-only origin main`
 
@@ -9,11 +9,12 @@
 No SQL. No migrations. Never POST Book Load. Do not invent sizes.
 
 ## VOID
-Bundle A2 with anything else · A1 FE now (Wave 2 step 6, after CC-1 N1 and Wave 1) · J1 tokens · Wave 5 wizard while A2 is open
+Remake A2 · A1 FE now (Wave 2 step 6 — after CC-1 **N1** and Wave 1 close) · J1 tokens · Wave 5 wizard · open a new register for the extra picker instance
 
 ## NOW
 
-1. **A2** `BookLoadCustomerSection.tsx` — whole customer set (~2,700). Caps 500/200 are the defect. **One file. Ships alone, first.**
-2. Stop. Next CC-3 row is Wave 2 **A1 screen** after A1 APIs (#19567) and Wave 1 close.
+1. **A2 done** `#19579` on main (`BookLoadCustomerSection.tsx`). Do not remake.
+2. Extra instance you found: OUTBOX path + count only. Same A2 class, not a new board. Do not start Wave 2.
+3. Next CC-3 row is Wave 2 **A1 screen** after N1 closes.
 
-ACK `CC-3 | ACK | GO-23 | NOW=A2 customer picker one file alone · NEVER POST | GO`
+ACK `CC-3 | ACK | GO-23 | NOW=WAIT Wave 2 A1 screen · A2 #19579 done · NEVER POST | GO`
