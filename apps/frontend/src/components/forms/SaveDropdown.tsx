@@ -166,7 +166,7 @@ export function SaveDropdown({
         <ul
           id={menuId}
           role="menu"
-          className="absolute right-0 top-full z-50 mt-1 min-w-[220px] rounded-sm border border-gray-200 bg-white py-1 text-left text-[13px] shadow-lg"
+          className="absolute right-0 top-full z-50 mt-1 min-w-[220px] rounded-sm border border-gray-200 bg-white py-1 text-left text-xs shadow-lg"
         >
           {actionList.map((item) => (
             <li key={item.key} role="none">

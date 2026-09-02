@@ -113,7 +113,7 @@ export const spacing = {
 /** FILTER LAW — the literal Tailwind class pairing every filter-row control (search box, combobox
  * trigger, range popover fields) must share. A plain string constant (not a computed style) so
  * Tailwind's static class scanner still finds it; the underlying number is `spacing.filterControlHeight`. */
-export const FILTER_CONTROL_SIZE_CLASS = "h-9 text-[13px]";
+export const FILTER_CONTROL_SIZE_CLASS = "h-9 text-xs";
 
 /** UI CONTROL LAW (owner ruling 2026-09-01, docs/bus/UI-CONTROL-LAW-SPEC-2026-09-01.md) — the
  * app's ONE button scale. "md" (the size used everywhere a page renders a real action button —
@@ -121,8 +121,8 @@ export const FILTER_CONTROL_SIZE_CLASS = "h-9 text-[13px]";
  * button and a filter in the same toolbar read as one row. "iconSm" (icon-only / compact buttons)
  * is a second, smaller tier — raised from the pre-ruling h-6 (24px, exactly on the WCAG 2.2
  * SC 2.5.8 floor with zero margin) to h-8 (32px). */
-export const BUTTON_MD_SIZE_CLASS = "h-9 px-3 text-[13px] font-medium";
-export const BUTTON_ICON_SM_SIZE_CLASS = "h-8 text-[13px] font-medium";
+export const BUTTON_MD_SIZE_CLASS = "h-9 px-3 text-xs font-medium";
+export const BUTTON_ICON_SM_SIZE_CLASS = "h-8 text-xs font-medium";
 
 /** UI CONTROL LAW — one size for every toolbar icon app-wide (Search, SlidersHorizontal, the
  * gear, etc.). The gear was the owner's own cited example of a control smaller than its

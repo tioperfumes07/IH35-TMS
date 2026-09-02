@@ -15,12 +15,12 @@ export function FormField({ label, name, dirty = false, error, hint, ownerOnly =
     <label className="block space-y-0.5" htmlFor={name}>
       <span className="flex items-center gap-1 text-[11px] font-medium text-gray-700">
         {label}
-        {ownerOnly ? <span className="text-[10px] text-amber-700">(Owner)</span> : null}
+        {ownerOnly ? <span className="text-xs text-amber-700">(Owner)</span> : null}
         {dirty ? <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-400" title="Modified" aria-hidden /> : null}
       </span>
       {children}
-      {hint ? <span className="text-[10px] text-gray-500">{hint}</span> : null}
-      {error ? <span className="text-[10px] text-red-600">{error}</span> : null}
+      {hint ? <span className="text-xs text-gray-500">{hint}</span> : null}
+      {error ? <span className="text-xs text-red-600">{error}</span> : null}
     </label>
   );
 }

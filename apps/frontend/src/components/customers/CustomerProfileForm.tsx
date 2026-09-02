@@ -410,7 +410,7 @@ function TextField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-required={required || undefined}
-        className="h-9 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+        className="h-9 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
       />
     </label>
   );
@@ -477,7 +477,7 @@ function SelectField({
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         aria-required={required || undefined}
-        className="h-9 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+        className="h-9 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -661,7 +661,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
             value={values.billing_address}
             onChange={(e) => onPatch({ billing_address: e.target.value })}
             rows={2}
-            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
           />
         </label>
         <TextField label="Billing city" value={values.billing_city} onChange={(billing_city) => onPatch({ billing_city })} />
@@ -772,7 +772,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               <input
                 value={values.shipping_address_line1}
                 onChange={(e) => onPatch({ shipping_address_line1: e.target.value })}
-                className="h-9 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="h-9 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               />
             </label>
             <TextField label="Shipping address line 2" value={values.shipping_address_line2} onChange={(shipping_address_line2) => onPatch({ shipping_address_line2 })} />
@@ -901,7 +901,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               value={values.factoring_notes}
               onChange={(e) => onPatch({ factoring_notes: e.target.value })}
               rows={2}
-              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
             />
           </label>
         </div>
@@ -914,7 +914,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
           value={values.notes}
           onChange={(e) => onPatch({ notes: e.target.value })}
           rows={3}
-          className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+          className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
         />
       </section>
 
