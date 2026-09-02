@@ -175,7 +175,8 @@ WHY IT IS HERE
   This is the screen the owner asked for: live loads with their costs underneath and an approximate settlement beside them. It is the place costs get created with every link already filled in, instead of being gathered afterward. It cannot be built before slices 05 and 06, because the links it displays do not exist in the tables yet.
 
 WHAT IS TRUE TODAY
-  Designed and delivered. The load drawer has twelve tabs and no Costs tab. Nothing is built.
+  The load drawer has thirteen tabs including Costs. It reads existing load-scoped expenses,
+  vendor bills, and driver bills without creating a parallel ledger. Live Chrome remains unverified.
 
 THE VERTICAL SLICE
   DATA       No new table. Reads mdata.loads, accounting.expenses, accounting.bills and the driver pay tables.
@@ -430,4 +431,3 @@ STANDING RULES THAT APPLY TO EVERY SLICE
   Only CC-2 writes the verified flag.
   A block with no linkage declaration is not done.
   Plain English on every operator-visible surface.
-

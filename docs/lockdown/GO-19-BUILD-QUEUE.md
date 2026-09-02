@@ -151,7 +151,7 @@ The order is not a preference. Slices 01 and 03 are first because every number i
 
 **Why it is here.** This is the screen the owner asked for: live loads with their costs underneath and an approximate settlement beside them. It is the place costs get created with every link already filled in, instead of being gathered afterward. It cannot be built before slices 05 and 06, because the links it displays do not exist in the tables yet.
 
-**What is true today.** Designed and delivered. The load drawer has twelve tabs and no Costs tab. Nothing is built.
+**What is true today.** The load drawer has thirteen tabs including Costs. Costs reads existing load-scoped expenses, vendor bills, and driver bills; it does not create a parallel ledger. Live Chrome remains unverified until the frontend deploy contains the implementation.
 
 **The vertical slice**
 

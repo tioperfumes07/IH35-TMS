@@ -142,6 +142,12 @@ jobs:
       - name: verify:guard-wired
         run: npm run verify:guard-wired
 
+      - name: verify:load-detail-costs-tab --selftest
+        run: node scripts/verify-load-detail-costs-tab.mjs --selftest
+
+      - name: verify:load-detail-costs-tab
+        run: node scripts/verify-load-detail-costs-tab.mjs
+
       - name: verify:deep-audit-b-bell-icon
         run: npm run verify:deep-audit-b-bell-icon
 
