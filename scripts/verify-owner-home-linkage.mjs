@@ -105,10 +105,10 @@ const DRILL_THROUGH_PANELS = [
 
 const DRILL_RE = /\bto=["{]|navigate\(|<EntityLink\b/;
 
-function scan() {
+function scan(readSource = read) {
   const failures = [];
   for (const rule of RULES) {
-    const src = read(rule.file);
+    const src = readSource(rule.file);
     if (!src) {
       failures.push(`${rule.file}: MISSING (rule "${rule.label}")`);
       continue;
@@ -126,7 +126,7 @@ function scan() {
     }
   }
   for (const file of DRILL_THROUGH_PANELS) {
-    const src = read(file);
+    const src = readSource(file);
     if (!src) {
       failures.push(`${file}: MISSING (home drill-through panel)`);
       continue;
@@ -196,6 +196,20 @@ function selftest() {
         ),
     ],
   ];
+
+  const panel = RULES[1].file;
+  const plantedFailures = scan((rel) => {
+    const source = read(rel);
+    if (rel !== panel) return source;
+    return source.replaceAll(
+      /<EntityLink[^>]*kind=["']load["'][^>]*id=\{row\.id\}[^>]*\/>/g,
+      "<span>{row.load_number}</span>",
+    );
+  });
+  checks.push([
+    "real scan rejects a planted missing canonical load drill",
+    plantedFailures.some((failure) => failure.includes(panel) && failure.includes("kind")),
+  ]);
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
     console.error("verify:owner-home-linkage SELFTEST FAILED");
