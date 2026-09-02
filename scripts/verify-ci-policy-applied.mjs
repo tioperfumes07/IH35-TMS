@@ -32,6 +32,10 @@ export const REQUIRED_GATE_CONTEXTS = [
   // verify:pre-commit did not stop #19609 (A1 InterchangeTrailerPicker) from landing
   // six new raw sizes and a trapping EntityPicker while build-typecheck was already red.
   "ui-design-system-ratchet / ui-design-system-ratchet",
+  // Owner 2026-09-02: GO-26 consolidation ratchet is its own required check (verify-step 10231).
+  // #19757 added the context to branch-protection-config.json without this list, so
+  // required-checks-gate failed every PR with unexpected: go26-consolidation-ratchet.
+  "go26-consolidation-ratchet / go26-consolidation-ratchet",
 ];
 export const MANDATORY_CHECKS = REQUIRED_GATE_CONTEXTS;
 export const BASELINE_ONLY_MESSAGE =

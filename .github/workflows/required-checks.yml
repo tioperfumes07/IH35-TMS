@@ -65,6 +65,7 @@ jobs:
               'premerge-gates / typescript-strict-null',
               'premerge-gates / migration-role-validation',
               'ui-design-system-ratchet / ui-design-system-ratchet',
+              'go26-consolidation-ratchet / go26-consolidation-ratchet',
             ];
             const missing = mandatory.filter(c => !contexts.has(c));
             const unexpected = [...contexts].filter(c => !mandatory.includes(c));
