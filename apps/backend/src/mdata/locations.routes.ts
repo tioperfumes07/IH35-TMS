@@ -218,8 +218,17 @@ export async function registerLocationRoutes(app: FastifyInstance) {
       if (search) {
         values.push(`%${search}%`);
         const idx = values.length;
+        // GO-24 (owner direct instruction 2026-09-02): "search ILIKE is name/code/address/city --
+        // not customer." A location scoped to a customer terminal/warehouse (linked_customer_id) is
+        // findable today only by typing the LOCATION's own text, never the customer's name -- the
+        // operator's actual mental model when booking a load (correlated EXISTS against
+        // mdata.customers, not a second /api/v1/mdata/locations route, per GO-23 row 4b).
         filters.push(
-          `(location_name ILIKE $${idx} OR location_code ILIKE $${idx} OR address_line1 ILIKE $${idx} OR city ILIKE $${idx})`
+          `(location_name ILIKE $${idx} OR location_code ILIKE $${idx} OR address_line1 ILIKE $${idx} OR city ILIKE $${idx}
+            OR EXISTS (
+              SELECT 1 FROM mdata.customers c
+              WHERE c.id = linked_customer_id AND c.customer_name ILIKE $${idx}
+            ))`
         );
       }
       // ALWAYS bind the resolved operating company — never optional (cross-entity leak guard).
