@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ConfirmDiscardDialog } from "../dialogs/ConfirmDiscardDialog";
 import { PARITY_DRAWER_WIDTH, PARITY_DRAWER_WIDTH_WIDE } from "./sizing";
+import { colors, typography } from "../../design/tokens";
 import "../../styles/proportion-chrome.css";
 
 export type ParityDrawerProps = {
@@ -164,7 +165,22 @@ export function ParityDrawer({
               </button>
             ) : null}
             <div className="min-w-0">
-              <h2 className="truncate text-[15px] font-semibold text-gray-900">{title}</h2>
+              {/* GLOBAL-TYPE-SIZE-BASELINE.md line 7 (locked): "Column/section headers: 11px /
+                  weight 700 / UPPERCASE / color #4B5563." This drawer title is that section
+                  header, not a generic H2 -- cited, not invented; transcribed via the same
+                  design/tokens.ts panelHeader/columnHeader pair DataPanel.tsx already uses for
+                  the identical locked treatment. */}
+              <h2
+                className="truncate uppercase"
+                style={{
+                  fontSize: typography.panelHeader,
+                  color: colors.columnHeader,
+                  letterSpacing: typography.tightUpper,
+                  fontWeight: 700,
+                }}
+              >
+                {title}
+              </h2>
               {subtitle ? <p className="truncate text-[12px] text-gray-500">{subtitle}</p> : null}
             </div>
           </div>
