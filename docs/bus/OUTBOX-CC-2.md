@@ -441,3 +441,28 @@ already-correct code. Filed the full evidence trail on the board so this doesn't
 without a genuine new finding.
 
 Never touched a table. Never booked a load. Idle, watching INBOX TOP for A/20 or the next card.
+
+---
+
+## ★ CC-2 | ACK | 5/8/C/17 deploy-verified, 1 real unique finding · 2026-09-02T01:50Z
+
+`CC-2 | ACK | GO-20 FORCE | NOW=verify-live 5/8/C/17 after deploy · unique leftover only · do not
+idle waiting A/20 · NEVER POST | GO`
+
+Deploy status (checked via `git merge-base --is-ancestor` against live healthz `587e8bf`): slice 5
+merged but **not yet deployed**; slice 8 has no code to deploy (already-compliant, nothing
+changed); slice C and slice 17 both **confirmed deployed and live**.
+
+**Almost filed a false-positive on slice 17** — first read of the ≥$7k branch looked like a silent
+fallback to the wrong account when `fixed_asset_default` isn't bound. Caught my own misread on a
+full re-read before writing it up: there's a real `else blocking.push(coa_role_unbound:...)` guard
+— fail-closed, not a bug.
+
+**Real unique finding underneath instead:** `fixed_asset_default` has zero CoA role binding for
+USMCA (only bound for a different company, TRK) — meaning any WO bill ≥$7,000 on USMCA is
+correctly *blocked* from posting today, not mis-posted, but the capitalize-path slice 17 was built
+for can't actually run on USMCA yet. Filed on the board, routed to owner/CC-1 (same class as the
+earlier `insurance` CoA-role gap).
+
+Not idling on A/20 — kept working per instruction. Never touched money, never built, never posted
+a load.
