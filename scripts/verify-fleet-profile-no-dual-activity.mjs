@@ -55,16 +55,21 @@ function importsArchivedComponent(pageSrc, componentName) {
 
 const CURRENT_LOAD_SECTION = "apps/frontend/src/components/vehicle-profile/CurrentLoadSection.tsx";
 
-export function run() {
+export function run(overrides = new Map()) {
   const failures = [];
+  const exists = (relativePath) =>
+    overrides.has(relativePath) || fs.existsSync(path.join(repoRoot, relativePath));
+  const read = (relativePath) =>
+    overrides.has(relativePath)
+      ? overrides.get(relativePath)
+      : fs.readFileSync(path.join(repoRoot, relativePath), "utf8");
 
   // FE Render build unblock: unresolved-safe EntityLinkOrTombstone lives under
   // components/shared, not the retired components/parity path.
-  const currentLoadPath = path.join(repoRoot, CURRENT_LOAD_SECTION);
-  if (!fs.existsSync(currentLoadPath)) {
+  if (!exists(CURRENT_LOAD_SECTION)) {
     failures.push(`${CURRENT_LOAD_SECTION} — MISSING`);
   } else {
-    const src = fs.readFileSync(currentLoadPath, "utf8");
+    const src = read(CURRENT_LOAD_SECTION);
     if (/from\s+["']\.\.\/parity\/EntityLink(?:OrTombstone)?["']/.test(src)) {
       failures.push(
         `${CURRENT_LOAD_SECTION}: must import EntityLinkOrTombstone from ../shared/EntityLinkOrTombstone (parity/ path is gone — tsc exit 2 on Render)`
@@ -76,20 +81,17 @@ export function run() {
   }
 
   for (const pair of PAIRS) {
-    const pageFull = path.join(repoRoot, pair.pagePath);
-    const archivedFull = path.join(repoRoot, pair.archivedPath);
-
-    if (!fs.existsSync(pageFull)) {
+    if (!exists(pair.pagePath)) {
       failures.push(`${pair.pagePath} — MISSING`);
       continue;
     }
-    if (!fs.existsSync(archivedFull)) {
+    if (!exists(pair.archivedPath)) {
       failures.push(`${pair.archivedPath} — MISSING (do not delete; mark @archived instead — Rule 07)`);
       continue;
     }
 
-    const pageSrc = fs.readFileSync(pageFull, "utf8");
-    const archivedSrc = fs.readFileSync(archivedFull, "utf8");
+    const pageSrc = read(pair.pagePath);
+    const archivedSrc = read(pair.archivedPath);
 
     if (importsArchivedComponent(pageSrc, pair.archivedComponentName)) {
       failures.push(
@@ -139,21 +141,18 @@ function selftest() {
   }
 
   // Plant parity EntityLinkOrTombstone import on CurrentLoadSection — must FAIL.
-  const currentLoadFull = path.join(repoRoot, CURRENT_LOAD_SECTION);
-  const currentLoadBackup = fs.readFileSync(currentLoadFull, "utf8");
-  try {
-    fs.writeFileSync(
-      currentLoadFull,
-      currentLoadBackup.replace("../shared/EntityLinkOrTombstone", "../parity/EntityLinkOrTombstone"),
-      "utf8"
-    );
-    const planted = run();
-    if (planted.ok || !planted.failures.some((f) => f.includes("parity/"))) {
-      console.error("[verify-fleet-profile-no-dual-activity] SELFTEST FAIL — parity EntityLink plant not detected");
-      process.exit(1);
-    }
-  } finally {
-    fs.writeFileSync(currentLoadFull, currentLoadBackup, "utf8");
+  const currentLoad = fs.readFileSync(path.join(repoRoot, CURRENT_LOAD_SECTION), "utf8");
+  const planted = run(
+    new Map([
+      [
+        CURRENT_LOAD_SECTION,
+        currentLoad.replace("../shared/EntityLinkOrTombstone", "../parity/EntityLinkOrTombstone"),
+      ],
+    ]),
+  );
+  if (planted.ok || !planted.failures.some((f) => f.includes("parity/"))) {
+    console.error("[verify-fleet-profile-no-dual-activity] SELFTEST FAIL — parity EntityLink plant not detected");
+    process.exit(1);
   }
 
   console.log(
