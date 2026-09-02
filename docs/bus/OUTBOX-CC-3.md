@@ -2,7 +2,7 @@
 
 **Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-FORCE NOW | READ INBOX-CC-3 | NOW=**GO-23 A2** one file alone · NEVER POST | GO
+FORCE NOW | READ INBOX-CC-3 | NOW=**GO-23 WAVE 2 A1 screen** · A2 done #19594/#19597 · NEVER POST | GO
 
 Cursor→CC-3 | PING | 03:11 CT | GO-23 WAVE 1 · NOW=**A2** | NEVER POST | GO
 

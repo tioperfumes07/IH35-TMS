@@ -11,8 +11,8 @@ Implement product rows · POST Book Load · GUARD-WORKORDERS dispatch · SWEEP-A
 
 ## NOW
 
-1. FAST-MERGE green seat PRs. Deploy every 5–10 merges (API autoDeploy is off — Cursor kicks).
-2. Wave 1: CC-3 **A2** · CC-1 **N1** (A1 #19567 already) · Codex **A3/B12** · CC-2 verify-step **#19577** done, verify-live.
-3. Heartbeat 20 minutes. Do not idle. Never ping with `echo` into Claude TUI — submit Enter only.
+1. FAST-MERGE green seat PRs. Deploy API every 5–10 merges when backend moved (autoDeploy is off). N1 #19601 is frontend-only — SPA autodeploy; do not kick API for that SHA.
+2. Wave 1 leftover: Codex **A3/B12** owner re-drive vs **#19571**. CC-2 **N1 Chrome** on `ebf2ad56d8`. Wave 2 in parallel: CC-1 **C6** · CC-3 **A1 screen**.
+3. Heartbeat 20 minutes. Do not idle. Never ping with `echo` into Claude TUI — `tmux send-keys -l` then Enter only.
 
-ACK `CURSOR | ACK | GO-23 LEAD | NOW=Wave 1 A2/N1/A3 · NEVER POST | GO`
+ACK `CURSOR | ACK | GO-23 LEAD | NOW=FAST-MERGE · A3/B12 + N1 Chrome · Wave 2 C6/A1 · NEVER POST | GO`

@@ -1,4 +1,4 @@
-# INBOX-CC-3 · GO-23 · A2 CODE SHIPPED · WAIT CHROME
+# INBOX-CC-3 · GO-23 WAVE 2 · A1 SCREEN
 
 `git pull --ff-only origin main`
 
@@ -6,15 +6,14 @@
 
 **Queue:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`
 
-No SQL. No migrations. Never POST Book Load. Do not invent sizes.
+No SQL. No migrations. Never POST Book Load. Do not invent sizes. Do not put a non-owned trailer in `mdata.units`.
 
 ## VOID
-Remake A2 · A1 FE now (Wave 2 — after N1 **and** CC-2 Chrome FIXED on A2) · J1 tokens · new register
+Remake A2 (**#19594** + Chrome **#19597**) · remake A1 SQL (**#19567** already) · J1 tokens · new register
 
 ## NOW
 
-1. **A2 code on main:** `#19594` `BookLoadModalV4.tsx` searchCustomersAutocomplete. Do not remake.
-2. Merged PR ≠ Chrome. CC-2 verify-live. Hold until FIXED or they bounce NOT FIXED.
-3. Next CC-3 row is Wave 2 **A1 screen** after N1 closes.
+1. Wave 1 A2 **done live**. N1 **on main #19601**. Start Wave 2 **A1 screen**: our trailer or an interchange trailer, never both. Data/backend already `dispatch.non_owned_trailers` / `dispatch.trailer_interchanges`.
+2. CC-2 is on N1 Chrome (no expense POST). Do not wait on that for A1 FE — Wave 2 seats run in parallel.
 
-ACK `CC-3 | ACK | GO-23 | NOW=WAIT Chrome A2 #19594 · NEVER POST | GO`
+ACK `CC-3 | ACK | GO-23 | NOW=A1 interchange screen · NEVER POST | GO`

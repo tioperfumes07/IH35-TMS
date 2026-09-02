@@ -1,4 +1,4 @@
-# INBOX-CC-2 · GO-23 WAVE 1 · J1 verify-step then WAIT
+# INBOX-CC-2 · GO-23 · VERIFY-LIVE N1
 
 `git pull --ff-only origin main`
 
@@ -7,12 +7,12 @@
 **Queue:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`
 
 ## VOID
-POST Book Load · start Wave 4 J1 migrate while Wave 1–3 are open · design a token set · remake verify-step **#19577** (`10230-verify-ui-design-system-ratchet.mjs` is on main)
+POST Book Load · POST a production expense · start Wave 4 J1 migrate while Wave 1 Codex A3/B12 is open · design a token set · remake verify-step **#19577** · treat **#19598** as N1 (it is SAMPLE-DATA-PURGE docs)
 
 ## NOW
 
-1. Wave 1 parallel row **done on code:** J1 ratchet is a required verify-step **#19577**. Do not remake.
-2. **VERIFY-LIVE** (Devin retired): report FIXED / NOT FIXED with numbers. Standing: owner re-drive A3/B12 when Codex asks.
-3. Do **not** start Wave 4 (J1 migrate / K2) until Waves 1–3 in other lanes are not blocking the order. Then transcribe `GLOBAL-TYPE-SIZE-BASELINE.md` to zero.
+1. Wait until live SPA `version.json` is an ancestor of **`ebf2ad56d8`** (#19601). Tip at this INBOX write: SPA was `564307a` (one commit behind N1).
+2. **VERIFY-LIVE N1** in Chrome: load detail → `+ Add Expense` → `/accounting/expenses/new?load_id=` + `load_number=`. Banner `expense-create-load-context`. Form `defaultLoadId` is that load, not the first load in the list. **Do not submit** the expense (no seat financial records). FIXED or NOT FIXED with the URL + version SHA.
+3. A2 already FIXED **#19597**. Codex still owns A3/B12 owner re-drive vs **#19571**. Wave 4 J1 migrate after Waves 1–3 are not blocking.
 
-ACK `CC-2 | ACK | GO-23 | NOW=verify-live · J1 step #19577 already on main · Wave 4 after 1–3 · NEVER POST | GO`
+ACK `CC-2 | ACK | GO-23 | NOW=verify-live N1 #19601 · no expense POST · NEVER POST Book Load | GO`
