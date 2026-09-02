@@ -3,6 +3,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { assertBillPsePostingEnforced, PseEnforcementError } from "../accounting/pse-enforce.middleware.js";
 import { enforcePsePostingSelection } from "../accounting/pse-enforce.middleware.js";
 import { processMaintenanceWorkOrderClose } from "../accounting/maintenance-posting/poster.service.js";
+import { CoaRoleResolutionError } from "../accounting/coa-roles/resolver.service.js";
 import {
   amountToCents,
   resolveRmPseLane,
@@ -446,6 +447,15 @@ export function mapMaintWoApHttpError(error: unknown) {
   }
   if (error instanceof PseEnforcementError) {
     return { statusCode: 409 as const, body: { error: error.code, message: error.message } };
+  }
+  // ND-FA-01 / A4-D6 capitalize-vs-expense wiring: fixed_asset_default (capitalize path) is not yet
+  // owner-bound for every entity. Fail closed with a clear "designate this role" 409, not a raw 500 —
+  // matches the existing PseEnforcementError/wo_ap_posting_not_ready "needs owner action" shape.
+  if (error instanceof CoaRoleResolutionError) {
+    return {
+      statusCode: 409 as const,
+      body: { error: error.code, message: error.message, role: error.role },
+    };
   }
   return null;
 }
