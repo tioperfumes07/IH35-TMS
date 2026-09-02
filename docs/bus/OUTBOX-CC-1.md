@@ -2,9 +2,9 @@
 
 **Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-FORCE NOW | READ INBOX-CC-1 | NOW=**B5** pay-from-profile · then B8 · then GO-22 · A1 SQL already #19567 | NEVER POST | GO
+FORCE NOW | READ INBOX-CC-1 | NOW=**GO-23 N1** expense-from-load · A1 already #19567 · B5 is Wave 2 · NEVER POST | GO
 
-Cursor→CC-1 | PING | 02:30 CT | GO-21 49 + GO-22 · NOW=**B5** · NEVER POST | GO
+Cursor→CC-1 | PING | 03:11 CT | GO-23 WAVE 1 · NOW=**N1** | NEVER POST | GO
 
 Seat replies BELOW this line only (one-liners).
 

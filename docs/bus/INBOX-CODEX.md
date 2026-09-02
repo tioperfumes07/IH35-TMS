@@ -1,17 +1,16 @@
-# INBOX-CODEX · GO-21 B12 then B6
+# INBOX-CODEX · GO-23 WAVE 1 · A3/B12 RE-DRIVE
 
 `git pull --ff-only origin main`
 
-**Law:** `claude/GO-21-DISPATCH-DEFECT-REGISTER-2026-09-02.md`  
-Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-21-GO-22-2026-09-02.md` (CODEX).
+**FAST-MERGE ON (4 min).** Gate exit 0 = merge proof. Same turn: `gh pr create` → `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Never wait CI. Never ask Jorge. Push hook ONLY `ENV-VERIFY-STATIC-NO-LOCAL-PG` after gate PASS → `--no-verify` authorized. Law: `docs/bus/FAST-MERGE-4MIN-LAW.md`.
+
+**Queue:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`
 
 ## VOID
-POST Book Load · `gh pr checks --watch` · A1 SQL · A2 · J1 · GO-22 · settlement 5753
+POST Book Load · `gh pr checks --watch` · A1 SQL · A2 · N1 · remake B12 if #19571 already names the stop
 
 ## NOW
 
-1. **NOW — B12** `BookLoadModalV4.tsx:799` — which stop, why (not just "Stops"). Unblocks A3 repro.
-2. **B6** rate-con upload — wired, linked, survives reload.
-3. Then GO-20 D leftover / H live prove if still open.
+1. **A3 / B12** — owner re-drives the failed save against **#19571**. Confirm it names the exact stop and rule. OUTBOX FIXED or NOT FIXED with the message text. Ask the owner via OUTBOX if you need a live repro — never book a load.
 
-ACK `CODEX | ACK | GO-21 | NOW=B12 save-block then B6 rate-con · NEVER POST | GO`
+ACK `CODEX | ACK | GO-23 | NOW=A3/B12 owner re-drive #19571 · NEVER POST | GO`
