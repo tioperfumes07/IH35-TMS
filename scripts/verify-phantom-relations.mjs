@@ -31,6 +31,7 @@ const BACKEND = process.env.PHANTOM_SCAN_DIR
   ? join(process.cwd(), process.env.PHANTOM_SCAN_DIR)
   : join(ROOT, "apps", "backend", "src");
 const LIST = process.argv.includes("--list");
+const SELFTEST = process.argv.includes("--selftest");
 
 const canonical = new Set(
   JSON.parse(readFileSync(join(ROOT, "scripts", "canonical-relations.json"), "utf8")).relations,
@@ -145,6 +146,20 @@ function isGuarded(src, rel) {
     `(to_regclass|tableExists|relationExists|regclassExists)\\s*\\([^)]*['"\`]${r}['"\`]`,
     "i",
   ).test(src);
+}
+
+if (SELFTEST) {
+  const relation = "dispatch.cargo_sensor_incidents";
+  if (!isGuarded(`await tableExists(client, "${relation}"); SELECT * FROM ${relation}`, relation)) {
+    console.error("verify-phantom-relations SELFTEST FAIL — literal tableExists guard was not recognized");
+    process.exit(1);
+  }
+  if (isGuarded(`SELECT * FROM ${relation}`, relation)) {
+    console.error("verify-phantom-relations SELFTEST FAIL — unguarded relation was accepted");
+    process.exit(1);
+  }
+  console.log("verify-phantom-relations SELFTEST PASS — guarded and unguarded relation mutations distinguished");
+  process.exit(0);
 }
 
 const newPhantoms = []; // { file, rel }
