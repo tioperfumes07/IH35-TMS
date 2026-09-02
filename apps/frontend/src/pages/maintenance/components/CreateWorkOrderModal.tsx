@@ -49,15 +49,15 @@ import { CreateWOSectionReconcile } from "./CreateWOSectionReconcile";
 import { EntityLink } from "../../../components/shared/EntityLink";
 
 // ---- render-v5 presentational helpers (match docs/approved-screens/maintenance-create-wo-render-v5.html) ----
-const FLD = "h-[30px] w-full rounded-[5px] border border-[#d6dae1] bg-white px-2 text-[12.5px] text-sidebar-bg outline-hidden focus:border-[#1f2a44]";
+const FLD = "h-[30px] w-full rounded-[5px] border border-[#d6dae1] bg-white px-2 text-xs text-sidebar-bg outline-hidden focus:border-[#1f2a44]";
 
 function SectionCard({ badge, title, right, testid, children }: { badge: string; title: string; right?: string; testid?: string; children: ReactNode }) {
   return (
     <section data-testid={testid} className="rounded-[7px] border border-[#d6dae1] bg-white">
       <div className="flex items-center gap-2 rounded-t-[7px] border-b border-[#e6e9ee] bg-[#fafbfc] px-2.5 py-1.5">
-        <span className="grid h-[18px] w-[18px] place-items-center rounded-sm bg-[#1d2b45] text-[10px] font-bold text-white">{badge}</span>
-        <span className="text-[10.5px] font-bold uppercase tracking-wide text-sidebar-active">{title}</span>
-        {right ? <span className="ml-auto text-[10.5px] text-inactive">{right}</span> : null}
+        <span className="grid h-[18px] w-[18px] place-items-center rounded-sm bg-[#1d2b45] text-xs font-bold text-white">{badge}</span>
+        <span className="text-[11px] font-bold uppercase tracking-wide text-sidebar-active">{title}</span>
+        {right ? <span className="ml-auto text-xs text-inactive">{right}</span> : null}
       </div>
       <div className="p-2.5">{children}</div>
     </section>
@@ -67,7 +67,7 @@ function SectionCard({ badge, title, right, testid, children }: { badge: string;
 function FieldV5({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex min-w-0 flex-col gap-1">
-      <span className="text-[10.5px] font-semibold uppercase tracking-wide text-inactive">{label}</span>
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-inactive">{label}</span>
       {children}
     </label>
   );
@@ -86,8 +86,8 @@ function CccRow({ tone, label, register, placeholder }: { tone: "cmp" | "cau" | 
   const bg = tone === "cmp" ? "bg-[#0891b2]" : tone === "cau" ? "bg-[#b45309]" : "bg-[#15803d]";
   return (
     <div className="mb-2 overflow-hidden rounded-md border border-[#e6e9ee] last:mb-0">
-      <div className={`px-2 py-1 text-[9.5px] font-extrabold uppercase tracking-wide text-white ${bg}`}>{label}</div>
-      <textarea {...register} placeholder={placeholder} className="h-10 w-full resize-y border-0 px-2 py-1.5 text-[12.5px] outline-hidden" />
+      <div className={`px-2 py-1 text-[11px] font-extrabold uppercase tracking-wide text-white ${bg}`}>{label}</div>
+      <textarea {...register} placeholder={placeholder} className="h-10 w-full resize-y border-0 px-2 py-1.5 text-xs outline-hidden" />
     </div>
   );
 }
@@ -105,9 +105,9 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
   return (
     <div data-testid="wo-asset-location" className="mt-2 overflow-hidden rounded-lg border border-[#d6dae1] bg-white">
       <div className="flex items-center gap-2 bg-[#0f1a30] px-2.5 py-1.5 text-white">
-        <span className="text-[10px] font-extrabold uppercase tracking-wide">Asset location &amp; serial</span>
-        <span className="ml-auto text-[10px] text-[#aab6cd]">tires · batteries · lamps · mirrors — where it sits + serial</span>
-        <button type="button" data-testid="wo-add-serialized-part" onClick={onAdd} className="rounded-sm bg-[#1f2a44] px-2 py-0.5 text-[10px] font-semibold text-white">+ Create part</button>
+        <span className="text-[11px] font-extrabold uppercase tracking-wide">Asset location &amp; serial</span>
+        <span className="ml-auto text-xs text-[#aab6cd]">tires · batteries · lamps · mirrors — where it sits + serial</span>
+        <button type="button" data-testid="wo-add-serialized-part" onClick={onAdd} className="rounded-sm bg-[#1f2a44] px-2 py-0.5 text-xs font-semibold text-white">+ Create part</button>
       </div>
       {parts.length === 0 ? (
         <div className="px-3 py-3 text-[11px] text-[#94a3b8]">No serialized items placed. Add a tire/battery/lamp/mirror to capture its position + serial (chain-of-custody).</div>
@@ -135,7 +135,7 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
                   <div className="flex flex-wrap gap-1">
                     {cat.positions.map((pos) => (
                       <button type="button" key={pos} onClick={() => onChange(i, { position_code: pos })}
-                        className={`rounded-sm border px-2 py-0.5 text-[10px] font-bold ${sp.position_code === pos ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-[#94a3b8] bg-white text-[#475569]"}`}>{pos}</button>
+                        className={`rounded-sm border px-2 py-0.5 text-xs font-bold ${sp.position_code === pos ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-[#94a3b8] bg-white text-[#475569]"}`}>{pos}</button>
                     ))}
                   </div>
                 </div>
@@ -847,8 +847,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   if (isEdit && editWorkOrder) {
     return (
       <Modal open={open} onClose={onClose} title="Edit Work Order" sizePreset="lg" wide>
-        <div data-testid="edit-wo-modal" className="space-y-2.5 text-[12.5px] text-sidebar-bg">
-          <div className="flex flex-wrap items-center gap-2 rounded-sm bg-[#243352] px-3 py-1.5 text-[10.5px] text-[#cdd6e6]">
+        <div data-testid="edit-wo-modal" className="space-y-2.5 text-xs text-sidebar-bg">
+          <div className="flex flex-wrap items-center gap-2 rounded-sm bg-[#243352] px-3 py-1.5 text-xs text-[#cdd6e6]">
             <span>WO #</span>
             <EntityLink
               kind="work_order"
@@ -931,13 +931,13 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           <SectionCard badge="B" title="Repair detail (VMRS)" right="complaint · cause · correction" testid="edit-wo-ccc">
             <div className="space-y-2">
               <FieldV5 label="Complaint">
-                <textarea value={editHeader.repair_complaint ?? ""} onChange={(e) => patchEditHeader({ repair_complaint: e.target.value })} className="h-10 w-full resize-y rounded-[5px] border border-[#d6dae1] px-2 py-1.5 text-[12.5px] outline-hidden" />
+                <textarea value={editHeader.repair_complaint ?? ""} onChange={(e) => patchEditHeader({ repair_complaint: e.target.value })} className="h-10 w-full resize-y rounded-[5px] border border-[#d6dae1] px-2 py-1.5 text-xs outline-hidden" />
               </FieldV5>
               <FieldV5 label="Cause">
-                <textarea value={editHeader.repair_cause ?? ""} onChange={(e) => patchEditHeader({ repair_cause: e.target.value })} className="h-10 w-full resize-y rounded-[5px] border border-[#d6dae1] px-2 py-1.5 text-[12.5px] outline-hidden" />
+                <textarea value={editHeader.repair_cause ?? ""} onChange={(e) => patchEditHeader({ repair_cause: e.target.value })} className="h-10 w-full resize-y rounded-[5px] border border-[#d6dae1] px-2 py-1.5 text-xs outline-hidden" />
               </FieldV5>
               <FieldV5 label="Correction">
-                <textarea value={editHeader.repair_correction ?? ""} onChange={(e) => patchEditHeader({ repair_correction: e.target.value })} className="h-10 w-full resize-y rounded-[5px] border border-[#d6dae1] px-2 py-1.5 text-[12.5px] outline-hidden" />
+                <textarea value={editHeader.repair_correction ?? ""} onChange={(e) => patchEditHeader({ repair_correction: e.target.value })} className="h-10 w-full resize-y rounded-[5px] border border-[#d6dae1] px-2 py-1.5 text-xs outline-hidden" />
               </FieldV5>
             </div>
           </SectionCard>
@@ -1080,7 +1080,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   if (createdWO) {
     return (
       <Modal open={open} onClose={handleModalClose} title="Work order created" sizePreset="md">
-        <div className="space-y-3 text-[12.5px] text-sidebar-bg">
+        <div className="space-y-3 text-xs text-sidebar-bg">
           <p className="text-sm text-gray-700">
             Work order <EntityLink kind="work_order" id={createdWO.uuid} label={entityLabel(createdWO.display_id, createdWO.uuid, "Work order")} className="font-semibold text-slate-700 hover:underline" /> created.
             {createdExpense ? (
@@ -1108,9 +1108,9 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
 
   return (
     <Modal open={open} onClose={handleModalClose} title="Create Work Order" sizePreset="lg" wide>
-      <div data-testid="create-wo-render-v5" className="min-w-0 space-y-2.5 overflow-x-hidden text-[12.5px] text-sidebar-bg">
+      <div data-testid="create-wo-render-v5" className="min-w-0 space-y-2.5 overflow-x-hidden text-xs text-sidebar-bg">
         {/* Subbar — WO # · status · opened timestamp (render: .subbar) */}
-        <div className="flex flex-wrap items-center gap-2 rounded-sm bg-[#243352] px-3 py-1.5 text-[10.5px] text-[#cdd6e6]">
+        <div className="flex flex-wrap items-center gap-2 rounded-sm bg-[#243352] px-3 py-1.5 text-xs text-[#cdd6e6]">
           <span>WO #</span>
           <span className="rounded-sm border border-[#34466a] bg-[#0f1a30] px-2 py-0.5 font-semibold text-white">new — auto on save</span>
           <span>·</span>
@@ -1166,7 +1166,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           {/* Conditional Outside-vendor block (render: #vendorBlock, revealed when Repaired by = Outside vendor) */}
           {outsideVendor ? (
             <div data-testid="wo-outside-vendor-block" className="mt-2 rounded-md border border-[#fed7aa] bg-[#fffdf8] p-2">
-              <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-[#b45309]">Outside vendor</div>
+              <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-[#b45309]">Outside vendor</div>
               <input type="hidden" {...form.register("vendor_id")} />
               <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                 <FieldV5 label="Vendor (QuickBooks list)">
@@ -1259,7 +1259,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               )}
             </div>
             <div>
-              <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-inactive">How was it paid?</div>
+              <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-inactive">How was it paid?</div>
               {/* Segmented Expense / Bill / In-house (render: #paySeg) */}
               <div data-testid="wo-pay-seg" className="mb-2 flex gap-1.5">
                 {([
@@ -1272,7 +1272,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                     <button type="button" key={p.v} onClick={() => form.setValue("payment_timing", p.v)}
                       className={`flex-1 rounded-md border p-1.5 text-center ${on ? "border-[#1d2b45] bg-[#1d2b45] text-white" : "border-[#d6dae1] bg-white text-sidebar-active"}`}>
                       <div className="text-[12px] font-extrabold">{p.h}</div>
-                      <div className="text-[9.5px] opacity-75">{p.s}</div>
+                      <div className="text-xs opacity-75">{p.s}</div>
                     </button>
                   );
                 })}
@@ -1280,7 +1280,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               {paymentTiming === "paid_same_day" ? (
                 <>
                   <CreateWOSectionPaymentTiming register={form.register} watch={form.watch} setValue={form.setValue} />
-                  <div className="mt-1.5 rounded-md border border-[#cbd5e1] bg-[#f1f5f9] px-2 py-1.5 text-[10.5px] text-[#1f2a44]">Registers as an <b>Expense</b> in QuickBooks (money out now) against the payment account.</div>
+                  <div className="mt-1.5 rounded-md border border-[#cbd5e1] bg-[#f1f5f9] px-2 py-1.5 text-xs text-[#1f2a44]">Registers as an <b>Expense</b> in QuickBooks (money out now) against the payment account.</div>
                 </>
               ) : null}
               {paymentTiming === "vendor_invoice" ? (
@@ -1297,11 +1297,11 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                     </FieldV5>
                     <FieldV5 label="Due date (from terms)"><input {...form.register("due_date")} placeholder="auto from terms" className={FLD} /></FieldV5>
                   </div>
-                  <div className="mt-1.5 rounded-md border border-[#fed7aa] bg-[#fff7ed] px-2 py-1.5 text-[10.5px] text-[#92400e]">Registers as a <b>Bill</b> (A/P) — payable later, 1099-tracked.</div>
+                  <div className="mt-1.5 rounded-md border border-[#fed7aa] bg-[#fff7ed] px-2 py-1.5 text-xs text-[#92400e]">Registers as a <b>Bill</b> (A/P) — payable later, 1099-tracked.</div>
                 </>
               ) : null}
               {paymentTiming === "in_house" ? (
-                <div className="rounded-md border border-[#d6dae1] bg-[#f1f5f9] px-2 py-1.5 text-[10.5px] text-[#475569]">In-house — no vendor invoice. Parts drawn from inventory; labor costed internally.</div>
+                <div className="rounded-md border border-[#d6dae1] bg-[#f1f5f9] px-2 py-1.5 text-xs text-[#475569]">In-house — no vendor invoice. Parts drawn from inventory; labor costed internally.</div>
               ) : null}
             </div>
           </div>

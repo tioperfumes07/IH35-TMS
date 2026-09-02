@@ -218,10 +218,10 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
     <section data-testid="compliance-section-hos-tracker">
       {/* Section band */}
       <div className="flex items-center bg-[#F1EFE8] px-3" style={{ height: 26 }}>
-        <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
           Driver duty-status timeline · {selectedDate === today ? "today" : selectedDate}
         </span>
-        <span className="ml-auto text-[10px] text-slate-400">
+        <span className="ml-auto text-xs text-slate-400">
           {c.active} active · {c.unavailable} unavailable{asOf ? ` · as of ${asOf} CT` : ""}
         </span>
       </div>
@@ -231,8 +231,8 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         <div className="flex flex-wrap gap-2">
           {kpis.map((k) => (
             <div key={k.label} className="flex h-[30px] min-w-[120px] flex-1 items-center justify-between rounded-sm border border-slate-200 bg-white px-2.5">
-              <span className="text-[9px] uppercase tracking-wider text-slate-500">{k.label}</span>
-              <span className={`text-[16px] font-semibold tabular-nums ${k.cls}`}>{k.value}</span>
+              <span className="text-[11px] uppercase tracking-wider text-slate-500">{k.label}</span>
+              <span className={`text-xs font-semibold tabular-nums ${k.cls}`}>{k.value}</span>
             </div>
           ))}
         </div>
@@ -247,7 +247,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
               className={`rounded-sm border px-2.5 py-1 text-center text-[11px] leading-tight ${selectedDate === d.date ? "border-slate-800 font-bold text-slate-900 shadow-[inset_0_-2px_0_#1f2a44]" : "border-slate-200 text-slate-500"}`}
             >
               {formatPlannerDayLabel(d.date)}
-              <span className="block text-[8.5px] text-slate-400">{d.weekday}</span>
+              <span className="block text-xs text-slate-400">{d.weekday}</span>
             </button>
           ))}
         </div>
@@ -342,7 +342,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
             ) : (
               <div className="space-y-4 px-4 py-4">
                 <div>
-                  <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Remaining (Samsara certified)</div>
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Remaining (Samsara certified)</div>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { label: "Drive", v: selectedDriver.clocks.drive_remaining_min },
@@ -351,30 +351,30 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
                       { label: "Cycle (70h)", v: selectedDriver.clocks.cycle_remaining_min },
                     ].map((c) => (
                       <div key={c.label} className="rounded-sm border border-slate-200 px-2.5 py-1.5">
-                        <div className="text-[9px] uppercase tracking-wide text-slate-500">{c.label}</div>
-                        <div className="text-[15px] font-semibold tabular-nums text-slate-900">{hmm(c.v)}</div>
+                        <div className="text-[11px] uppercase tracking-wide text-slate-500">{c.label}</div>
+                        <div className="text-xs font-semibold tabular-nums text-slate-900">{hmm(c.v)}</div>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">8-day on-duty (home-terminal days)</div>
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">8-day on-duty (home-terminal days)</div>
                   <div className="space-y-1">
                     {(selectedDriver.eight_day_breakdown ?? []).map((day) => {
                       const pct = Math.min(100, ((day.on_duty_min ?? 0) / (14 * 60)) * 100);
                       return (
                         <div key={day.date} className="flex items-center gap-2">
-                          <span className="w-16 shrink-0 text-[10px] text-slate-500">{formatPlannerDayLabel(day.date)}</span>
+                          <span className="w-16 shrink-0 text-xs text-slate-500">{formatPlannerDayLabel(day.date)}</span>
                           <div className="h-3 flex-1 rounded-sm bg-slate-100">
                             <div className="h-3 rounded-sm bg-[#1f2a44]" style={{ width: `${pct}%` }} />
                           </div>
-                          <span className="w-12 shrink-0 text-right text-[10px] tabular-nums text-slate-600">{hmm(day.on_duty_min)}</span>
+                          <span className="w-12 shrink-0 text-right text-xs tabular-nums text-slate-600">{hmm(day.on_duty_min)}</span>
                         </div>
                       );
                     })}
                   </div>
                 </div>
-                <p className="text-[10px] text-slate-400">Verbatim Samsara certified ELD — not recomputed.</p>
+                <p className="text-xs text-slate-400">Verbatim Samsara certified ELD — not recomputed.</p>
               </div>
             )}
           </div>
