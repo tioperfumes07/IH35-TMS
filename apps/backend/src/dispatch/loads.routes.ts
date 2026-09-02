@@ -248,7 +248,16 @@ const createDispatchLoadBodySchema = z.object({
   miles_practical: z.number().min(0).multipleOf(0.1).optional(),
   miles_shortest: z.number().min(0).multipleOf(0.1).optional(),
   miles_deadhead: z.number().min(0).multipleOf(0.1).optional(),
-  mileage_source: z.enum(["History", "Manual", "Routing engine", "Operator entered"]).optional(),
+  mileage_source: z
+    .enum([
+      "History",
+      "History — verify",
+      "History — ZIP mismatch, verify",
+      "Manual",
+      "Routing engine",
+      "Operator entered",
+    ])
+    .optional(),
   stop_count: z.string().trim().max(40).optional(),
   pickup_number: z.string().trim().max(120).optional(),
   border_routing: z.string().trim().max(120).optional(),
