@@ -5,6 +5,7 @@ import { getWoCostContext, suggestExpenseLoad } from "../../api/maintenance";
 import { ensureDriverVendors, listVendors } from "../../api/mdata";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
+import { classesCatalogClient } from "../../api/catalogs-accounting";
 // ACCT-F92: one definition of which accounts may appear in which picker — see account-picker-scope.ts
 // for the live evidence (Accumulated Depreciation / Trucks / Prepaid / A/R are all account_type Asset).
 import { isExpenseAccount, isPaymentAccount } from "../../lib/account-picker-scope";
@@ -168,6 +169,24 @@ export function RecordExpenseForm({
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
+
+  // GO-19-09 — QBO Class dimension, same query shape as VendorBillForm's classesQuery.
+  const classesQuery = useQuery({
+    queryKey: ["record-expense", "classes", operatingCompanyId],
+    queryFn: () =>
+      classesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
+  const classOptions = useMemo(
+    () =>
+      (classesQuery.data?.rows ?? []).map((row) => ({
+        value: row.id,
+        label: row.display_name || row.code,
+        type: row.code,
+      })),
+    [classesQuery.data?.rows]
+  );
 
   // Vendor options from the CANONICAL mdata.vendors roster (same table the inline "+ Add new vendor"
   // QuickCreate writes to) so a created vendor selects + survives reload (QB-STD-5).
@@ -452,6 +471,32 @@ export function RecordExpenseForm({
           </div>
         </label>
       </div>
+
+      {/* GO-19-09 — QBO Class dimension, same ReferenceSelect + inline-create the bill form uses. */}
+      <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("class")}>
+        Class (optional)
+        <div className="mt-1">
+          <ReferenceSelect
+            value={values.classId || null}
+            onChange={(next) => {
+              const match = classOptions.find((o) => o.value === next);
+              setValues((prev) => ({
+                ...prev,
+                classId: next ?? "",
+                classLabel: match?.label ?? "",
+              }));
+            }}
+            options={classOptions}
+            createKind="class"
+            operatingCompanyId={operatingCompanyId}
+            placeholder="Select class…"
+            disabled={!operatingCompanyId}
+            onOptionCreated={(opt) =>
+              setValues((prev) => ({ ...prev, classId: opt.value, classLabel: opt.label }))
+            }
+          />
+        </div>
+      </label>
 
       <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("load")}>
         Trip / Load {isOverTheRoadCategory ? "*" : "(optional)"}

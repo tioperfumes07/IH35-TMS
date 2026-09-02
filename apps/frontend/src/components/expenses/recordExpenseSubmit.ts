@@ -40,6 +40,9 @@ export type RecordExpenseFormValues = {
   expenseNumber: string;
   /** Vendor's document. Blank allowed. Never auto-filled. */
   vendorDocumentNumber: string;
+  /** GO-19-09 — QBO Class reporting dimension (catalogs.classes), mirrors the bill form's Class field. */
+  classId: string;
+  classLabel: string;
 };
 
 export function dollarsToCents(value: number | null) {
@@ -134,6 +137,7 @@ export async function submitRecordExpense(
     is_sample_data: values.isSampleData === true,
     ...(values.expenseNumber.trim() ? { expense_number: values.expenseNumber.trim() } : {}),
     ...(values.vendorDocumentNumber.trim() ? { vendor_document_number: values.vendorDocumentNumber.trim() } : {}),
+    ...(values.classId && UUID_RE.test(values.classId) ? { class_id: values.classId } : {}),
   });
 }
 
@@ -171,5 +175,7 @@ export function initialRecordExpenseFormValues(): RecordExpenseFormValues {
     paymentMethod: "",
     expenseNumber: "",
     vendorDocumentNumber: "",
+    classId: "",
+    classLabel: "",
   };
 }
