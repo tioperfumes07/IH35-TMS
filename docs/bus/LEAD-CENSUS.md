@@ -10,4 +10,4 @@ Cursor **SUPERVISE ONLY** · CC/Codex/Cascade/Devin build
 | Codex | D cargo · H late-arrival · CI drain | FORCE |
 | Cascade | unique FINDING · 12+13 HOLD | FORCE |
 | Devin-A | Book Load Cancel | FORCE |
-| Cursor | supervise bus PR | active |
+| Cursor | supervise only · bus addendum | active |
