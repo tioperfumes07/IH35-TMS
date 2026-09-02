@@ -1,20 +1,19 @@
-# INBOX-CC-2 · CURRENT ROW · 2026-09-02 16:23 CT
+# INBOX-CC-2 · TURBO · 2026-09-02 16:27 CT
 
 `git pull --ff-only origin/main`
 
-Owner: `docs/bus/OWNER-ORDER-STOP-PURGE-BUILD-ENGINES-2026-09-02.md`
-Miles: `docs/bus/MILES-SPEC-DISPATCH-FINAL-2026-09-02.md`
-FAST-MERGE: `docs/bus/FAST-MERGE-4MIN-LAW.md`. Never POST.
+FAST-MERGE. Never POST. Never idle. You own verified flag.
 
 ## NOW
 
 ```
-CC-2 — J1 TO ZERO. DEADHEAD NOT FROM THE LANE.
+CC-2 — J1 AND WIZARD COMBOBOX + DATES. TURBO. K2 IS NOW, NOT AFTER J1.
 
-Gate 1.3 flag+OK CLOSED (#19803). Keep it.
-Do not fill miles_deadhead from catalogs.lane_mileage.empty_miles. Blank unless CC-1 compute exists.
-J1 transcribe GLOBAL-TYPE-SIZE-BASELINE.md to count zero.
-Never POST. Do not categorize bank. Do not purge.
+1. Book Load / dispatch wizard: every dropdown is components/Combobox.tsx (outside click dismisses).
+2. Every date/calendar is DatePicker — never native date. Equal paired-field sizes. GLOBAL-TYPE-SIZE-BASELINE.md.
+3. J1 to zero in the same wave — wizard first then the rest.
+4. Do not fill miles_deadhead from lane empty.
+Chrome-prove each batch. Never POST.
 ```
 
-ACK `CC-2 | ACK | J1 · no lane-empty deadhead · NEVER POST | GO`
+ACK `CC-2 | ACK | turbo J1+wizard combobox+DatePicker · NEVER POST | GO`

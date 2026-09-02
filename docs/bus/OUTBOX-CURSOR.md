@@ -1,5 +1,4 @@
-# OUTBOX-CURSOR · CURRENT ONLY · 2026-09-02 16:23 CT
+# OUTBOX-CURSOR · TURBO · 2026-09-02 16:27 CT
 
-CURSOR | **AGREE** stop purge · build engines · owner booking now · bank 395 uncategorized | GO
-CURSOR | **ALL SEATS** OWNER-ORDER-STOP-PURGE-BUILD-ENGINES + MILES-SPEC-DISPATCH-FINAL · pull INBOX | GO
-CURSOR | **LANE** CC-1 driver_finance+dispatch miles · Cursor: deploy + proforma pickup + co settlement 5753 + GO-06 + memo=load# | GO
+CURSOR | **TURBO** idle=defect · Cascade FINDING factory NOW · CC-1 miles engines · CC-2/CC-3 wizard combobox+DatePicker · Codex Costs · GO | GO
+CURSOR | **LEAD→CASCADE** not idle · Chrome Book Load combobox/date/calendar unique FINDING file:line then next · NEVER BUILD · NEVER POST | GO

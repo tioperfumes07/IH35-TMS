@@ -1,23 +1,20 @@
-# INBOX-CURSOR · CURRENT ROW · 2026-09-02 16:23 CT
+# INBOX-CURSOR · TURBO · 2026-09-02 16:27 CT
 
 `git pull --ff-only origin/main`
 
-Owner: `docs/bus/OWNER-ORDER-STOP-PURGE-BUILD-ENGINES-2026-09-02.md`
-FAST-MERGE: `docs/bus/FAST-MERGE-4MIN-LAW.md`. Never POST. Never seat fixtures.
+FAST-MERGE. Never POST. Stay off driver_finance and dispatch miles.
 
 ## NOW
 
 ```
-CURSOR — LEAD. STAY OFF driver_finance AND DISPATCH MILES (CC-1).
+CURSOR — REWAKE SEATS. BUILD. DO NOT END IDLE.
 
-1. Deploy every 5–10 merges. 108 landed since 17:00Z — batch deploy, do not per-merge.
-2. Lane: CC-1 owns miles + settlement engines. Do not edit driver_finance. Do not edit dispatch except the one proforma mint move.
-3. Build, in order:
-   a. Proforma mints at first pickup, not at book (book-load.service.ts ~1938 only).
-   b. Company settlement table — does not exist. 8 sections per Settlement 5753. P&L ties to 2415.11 exactly.
-   c. GO-06 shared number field on remaining create screens. next-number already exists for loads, invoices, bills, expenses, payments, credit memos, vendor credits. Empty box, hint caption, never auto-fill.
-   d. Document memo carries LOAD number in its own field, never the invoice number. Invoices 004–013 say "Load Number - 004" and cannot be traced to a load. TMS memo going forward. No QBO write-back.
-4. Do not purge. Do not categorize bank.
+1. This INBOX fan-out. Rewake Cascade — they are not idle.
+2. Batch deploy (108 merges since 17:00Z).
+3. Proforma at first pickup (book-load.service.ts ~1938 only).
+4. GO-06 empty-box number field remaining create screens.
+5. Company settlement 5753 / P&L 2415.11 after proforma/GO-06 if still missing.
+Do not steal wizard combobox from CC-2/CC-3 unless they stall.
 ```
 
-ACK `CURSOR | ACK | deploy batch · proforma pickup · co settlement · GO-06 · memo=load# · NEVER POST | GO`
+ACK `CURSOR | ACK | turbo rewake · proforma · GO-06 · NEVER POST | GO`
