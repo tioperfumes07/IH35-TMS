@@ -50,12 +50,17 @@ export type CostContextOption = {
   category_map_code?: string;
 };
 
+export type WoCostCatalogStatus = "available" | "fallback" | "unavailable";
+
 type Props = {
   sectionA: { lines: CategoryLine[] };
   sectionB: { lines: ItemLine[] };
   expenseCategoryOptions?: CostContextOption[];
   itemOptions?: CostContextOption[];
   partOptions?: CostContextOption[];
+  laborRateOptions?: CostContextOption[];
+  partsCatalogStatus?: WoCostCatalogStatus;
+  laborRatesCatalogStatus?: WoCostCatalogStatus;
   locationOptions?: CostContextOption[];
   onQuickCreateCategory?: (lineId: string) => void;
   onQuickCreateItem?: (lineId: string) => void;
@@ -106,6 +111,9 @@ export function CostBreakdownBox({
   expenseCategoryOptions = [],
   itemOptions = [],
   partOptions = [],
+  laborRateOptions = [],
+  partsCatalogStatus,
+  laborRatesCatalogStatus,
   locationOptions = [],
   onQuickCreateCategory,
   onQuickCreateItem,
@@ -460,6 +468,14 @@ export function CostBreakdownBox({
                           <div className="px-2 py-1 text-[11px] uppercase text-slate-600">{row.line_type}</div>
                         {row.line_type === "parts" ? (
                           <div className="space-y-1">
+                            {partsCatalogStatus === "unavailable" ? (
+                              <p
+                                className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-700"
+                                data-testid="wo-parts-catalog-not-provisioned"
+                              >
+                                Parts catalog not provisioned — maintenance.parts_inventory is missing for this entity.
+                              </p>
+                            ) : (
                             <div className="flex items-center gap-1">
                               {/* LST-PICKER-01 (guard 1878): was createKind="item" with "+ Add new part"
                                   label — wrote catalogs.items instead of maintenance.parts_inventory.
@@ -549,6 +565,7 @@ export function CostBreakdownBox({
                                 </SelectCombobox>
                               )}
                             </div>
+                            )}
                             <input
                               disabled={readOnly}
                               value={row.description}
@@ -571,26 +588,71 @@ export function CostBreakdownBox({
                             />
                           </div>
                         ) : (
-                          <input
-                            disabled={readOnly}
-                            value={row.description}
-                            onChange={(event) =>
-                              onSectionBChange(
-                                sectionB.lines.map((entry) =>
-                                  entry.id !== line.id
-                                    ? entry
-                                    : {
-                                        ...entry,
-                                        sub_rows: (entry.sub_rows ?? []).map((current) =>
-                                          current.id === row.id ? { ...current, description: event.target.value } : current
-                                        ),
-                                      }
+                          <div className="space-y-1">
+                            {laborRatesCatalogStatus === "unavailable" ? (
+                              <p
+                                className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-700"
+                                data-testid="wo-labor-rates-catalog-not-provisioned"
+                              >
+                                Labor rates catalog not provisioned — catalogs.labor_rates is missing for this entity.
+                              </p>
+                            ) : laborRateOptions.length > 0 ? (
+                              <SelectCombobox
+                                disabled={readOnly}
+                                value={row.labor_rate_uuid ?? ""}
+                                onChange={(event) =>
+                                  onSectionBChange(
+                                    sectionB.lines.map((entry) =>
+                                      entry.id !== line.id
+                                        ? entry
+                                        : {
+                                            ...entry,
+                                            sub_rows: (entry.sub_rows ?? []).map((current) =>
+                                              current.id === row.id
+                                                ? {
+                                                    ...current,
+                                                    labor_rate_uuid: event.target.value || undefined,
+                                                    description:
+                                                      laborRateOptions.find((rate) => rate.id === event.target.value)?.label ??
+                                                      current.description,
+                                                  }
+                                                : current
+                                            ),
+                                          }
+                                    )
+                                  )
+                                }
+                                className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                              >
+                                <option value="">Select labor rate…</option>
+                                {laborRateOptions.map((option) => (
+                                  <option key={option.id} value={option.id}>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </SelectCombobox>
+                            ) : null}
+                            <input
+                              disabled={readOnly}
+                              value={row.description}
+                              onChange={(event) =>
+                                onSectionBChange(
+                                  sectionB.lines.map((entry) =>
+                                    entry.id !== line.id
+                                      ? entry
+                                      : {
+                                          ...entry,
+                                          sub_rows: (entry.sub_rows ?? []).map((current) =>
+                                            current.id === row.id ? { ...current, description: event.target.value } : current
+                                          ),
+                                        }
+                                  )
                                 )
-                              )
-                            }
-                            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                            placeholder="Labor description"
-                          />
+                              }
+                              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                              placeholder="Labor description"
+                            />
+                          </div>
                         )}
                         {row.line_type === "parts" ? (
                           <button

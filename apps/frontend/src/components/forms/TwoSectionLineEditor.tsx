@@ -6,7 +6,7 @@ import { isExpenseAccount } from "../../lib/account-picker-scope";
 import { entityLabel } from "../../lib/entity-label";
 import { tirePositionsCatalogClient } from "../../api/catalogs-fleet";
 import { getCoaAccounts } from "../../api/banking";
-import { getWoCostContext } from "../../api/maintenance";
+import { getWoCostContext, type WoCostSourceStatus } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAccountingCategoriesQuery } from "../../hooks/useAccountingCategoriesQuery";
 import { useAccountingItemsQuery } from "../../hooks/useAccountingItemsQuery";
@@ -200,13 +200,30 @@ export function TwoSectionLineEditor({
       label: String(entry.name ?? ""),
     }));
   }, [accountingItemsQuery.data, costContextQuery.data?.items]);
+  const partsCatalogStatus: WoCostSourceStatus | undefined =
+    costContextQuery.data?.sources?.inventory_parts?.status;
+  const laborRatesCatalogStatus: WoCostSourceStatus | undefined =
+    costContextQuery.data?.sources?.labor_rates?.status;
+
   const partOptions = useMemo<CostContextOption[]>(
     () =>
-      (costContextQuery.data?.parts ?? []).map((entry) => ({
-        id: String(entry.id ?? ""),
-        label: String(entry.part_description ?? entry.name ?? ""),
-      })),
-    [costContextQuery.data?.parts]
+      partsCatalogStatus === "unavailable"
+        ? []
+        : (costContextQuery.data?.parts ?? []).map((entry) => ({
+            id: String(entry.id ?? ""),
+            label: String(entry.part_description ?? entry.name ?? ""),
+          })),
+    [costContextQuery.data?.parts, partsCatalogStatus]
+  );
+  const laborRateOptions = useMemo<CostContextOption[]>(
+    () =>
+      laborRatesCatalogStatus === "unavailable"
+        ? []
+        : (costContextQuery.data?.labor_rates ?? []).map((entry) => ({
+            id: String(entry.id ?? ""),
+            label: String(entry.rate_name ?? entry.rate_code ?? entry.name ?? ""),
+          })),
+    [costContextQuery.data?.labor_rates, laborRatesCatalogStatus]
   );
   const locationOptions = useMemo<CostContextOption[]>(
     () =>
@@ -283,6 +300,9 @@ export function TwoSectionLineEditor({
         expenseCategoryOptions={expenseCategoryOptions}
         itemOptions={itemOptions}
         partOptions={partOptions}
+        laborRateOptions={laborRateOptions}
+        partsCatalogStatus={partsCatalogStatus}
+        laborRatesCatalogStatus={laborRatesCatalogStatus}
         locationOptions={locationOptions}
         operatingCompanyId={operatingCompanyId || undefined}
         categoryCreateKind={mode === "bill" ? "expense_category" : "category"}
