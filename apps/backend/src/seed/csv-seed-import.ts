@@ -1,3 +1,7 @@
+// C6-MONEY-JE-EXEMPT: an offline/admin CSV bulk-import utility (SeedType includes bank_transactions)
+// for onboarding HISTORICAL records — same "imported history is not a defect" shape as the QBO
+// pullers (qbo-sync/*.ts, also C6-exempt): these rows predate/bypass the live TMS money path and
+// are not a new TMS-native money event requiring its own JE. Not a production write endpoint.
 import pg from "pg";
 import { normalizeBankTransactionDescription } from "../banking/transaction-ingestion.js";
 

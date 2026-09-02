@@ -26,7 +26,7 @@
 //                       the existing pmt_app_recompute_* triggers (0060) — this puller never writes them
 //                       directly.
 //
-// NO GL/journal posting is performed here — this only populates the A/R subledger; GL stays QuickBooks'
+// C6-MONEY-JE-EXEMPT: NO GL/journal posting is performed here — this only populates the A/R subledger; GL stays QuickBooks'
 // job. The posting engine additionally REFUSES to post a qbo-sourced customer payment
 // (QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED) so the parallel-books invariant (never invent GL for
 // source_system=qbo) can't be violated downstream.

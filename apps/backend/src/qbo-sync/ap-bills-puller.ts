@@ -1,3 +1,7 @@
+// C6-MONEY-JE-EXEMPT: this file's own header (below) already states it — "NO GL/journal posting is
+// performed here... GL stays QBO's job." QBO is the system-of-record for these rows; the TMS side
+// is a read-only mirror/subledger projection, never a live TMS money event needing its own JE.
+//
 // QBO-AP-PULL — INBOUND QuickBooks A/P (Bill) sync (QBO is system-of-record).
 //
 // Two flag-gated, idempotent stages so the owner can roll out the QBO->TMS A/P clone safely:
