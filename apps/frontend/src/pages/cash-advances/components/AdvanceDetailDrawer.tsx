@@ -5,6 +5,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { DocumentsTab } from "../../../components/documents/DocumentsTab";
 
 type Props = {
   open: boolean;
@@ -121,6 +122,18 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           ) : (
             <div className="text-gray-500">No bank transaction linked yet.</div>
           )}
+        </div>
+
+        <div className="mt-2 rounded-sm border border-gray-200 p-2">
+          {/* GO-21 B8 (owner 2026-09-02) — "receipt/confirmation upload into docs.files, linked
+              both ways." Reuses the SAME DocumentsTab every other entity already uses; no new
+              upload UI, no restyling — this is CC-1 money-lane scope, not J1's. */}
+          <DocumentsTab
+            entityType="cash_advance"
+            entityId={String(advance.id)}
+            entityName={String(advance.display_id ?? advance.id ?? "Cash advance")}
+            operatingCompanyId={operatingCompanyId}
+          />
         </div>
 
         <div className="mt-2 rounded-sm border border-gray-200 p-2">

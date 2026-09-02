@@ -18,7 +18,9 @@ export type FileEntityType =
   | "dot_inspection"
   | "fuel_transaction"
   | "expense"
-  | "bill";
+  | "bill"
+  // GO-21 B8 (owner 2026-09-02): receipt/confirmation upload for a cash/fuel advance.
+  | "cash_advance";
 
 export type FileCategory = {
   id: string;
