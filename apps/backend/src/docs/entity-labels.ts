@@ -56,6 +56,9 @@ const ENTITY_LABEL_SQL: Record<string, { table: string; labelSelect: string; sco
   // capability. Voided rows excluded, matching invoice/dot_inspection above.
   expense: { table: "accounting.expenses", labelSelect: "NULLIF(TRIM(COALESCE(d.expense_number, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid AND d.voided_at IS NULL" },
   bill: { table: "accounting.bills", labelSelect: "NULLIF(TRIM(d.display_id), '')", scopePredicate: "d.operating_company_id = $1::uuid AND d.voided_at IS NULL" },
+  // GO-21 B8 (owner 2026-09-02): driver_finance.driver_advances has no voided_at; 'reversed' is
+  // its equivalent terminal exclusion (matches ensureLinkEntityExists' cash_advance branch above).
+  cash_advance: { table: "driver_finance.driver_advances", labelSelect: "NULLIF(TRIM(d.display_id), '')", scopePredicate: "d.operating_company_id = $1::uuid AND d.disbursement_status <> 'reversed'" },
 };
 
 /** Hydrate document links from canonical records in the same operating company. */

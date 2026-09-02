@@ -24,7 +24,9 @@ import { EntityDocumentUpload } from "./EntityDocumentUpload";
 import { VersionHistoryModal } from "./VersionHistoryModal";
 
 type DocumentsTabProps = {
-  entityType: "driver" | "customer" | "vendor" | "unit" | "equipment" | "load";
+  // GO-21 B8 (owner 2026-09-02): cash_advance added — receipt/confirmation upload for a
+  // cash/fuel advance (migration 202613470001 widened docs.file_links.entity_type to match).
+  entityType: "driver" | "customer" | "vendor" | "unit" | "equipment" | "load" | "cash_advance";
   entityId: string;
   entityName: string;
   // FIX-2 (docs-upload-viewed-entity): the VIEWED operating company (from CompanyContext at the

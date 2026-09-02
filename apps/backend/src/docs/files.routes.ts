@@ -34,6 +34,10 @@ const DEFAULT_DOWNLOAD_EXPIRES_SECONDS = 300;
 // DECISION-2026-08-29.md). LESSON FROM DOC-F10063: ensureLinkEntityExists() below MUST gain a
 // branch for every type added here, in the SAME commit -- a type declared here with no reachable
 // branch there silently rejects every real link attempt despite passing every other check.
+// GO-21 B8 (owner 2026-09-02): "receipt/confirmation upload into docs.files, linked both ways" --
+// `cash_advance` added (migration 202613470001, docs.file_links CHECK widened in the same
+// migration). Per DOC-01 D2's own lesson, ensureLinkEntityExists() below gains a matching branch
+// in this SAME commit.
 const SUPPORTED_LINK_ENTITY_TYPES = [
   "driver",
   "customer",
@@ -53,6 +57,7 @@ const SUPPORTED_LINK_ENTITY_TYPES = [
   "fuel_transaction",
   "expense",
   "bill",
+  "cash_advance",
 ] as const;
 
 const idParamSchema = z.object({ file_id: z.string().uuid() });
@@ -76,6 +81,7 @@ const entityTypeSchema = z.enum([
   "fuel_transaction",
   "expense",
   "bill",
+  "cash_advance",
 ]);
 
 function optionalQueryString() {
@@ -305,6 +311,15 @@ async function ensureLinkEntityExists(
   if (entityType === "bill") {
     const res = await client.query(
       "SELECT id FROM accounting.bills WHERE id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL LIMIT 1",
+      [entityId, operatingCompanyId]
+    );
+    return res.rows.length > 0;
+  }
+  if (entityType === "cash_advance") {
+    // GO-21 B8 — driver_finance.driver_advances has no voided_at; 'reversed' is its equivalent
+    // terminal exclusion (matches AdvanceDetailDrawer.tsx's own reverseCashAdvance action).
+    const res = await client.query(
+      "SELECT id FROM driver_finance.driver_advances WHERE id = $1 AND operating_company_id = $2::uuid AND disbursement_status <> 'reversed' LIMIT 1",
       [entityId, operatingCompanyId]
     );
     return res.rows.length > 0;
