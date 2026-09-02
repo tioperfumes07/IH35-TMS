@@ -92,6 +92,9 @@ const STEPS = [
   // first version of this list missed verify-referenceselect-coverage-ratchet (invoked via `npm run`,
   // not `node`) and #4484 burned a cycle on it. Wired into CI as verify-step 2632.
   ["verify-local-gate-covers-fe-ratchets", "scripts/verify-local-gate-covers-fe-ratchets.mjs"],
+  // Owner 2026-09-02: J1/K2 shrink-only ratchet. FAST-MERGE of #19609 landed a new
+  // trapping EntityPicker + raw text-[Npx] because this gate never ran the script.
+  ["verify-ui-design-system-ratchet", "scripts/verify-ui-design-system-ratchet.mjs"],
   ["verify-no-raw-date-input", "scripts/verify-no-raw-date-input.mjs"],
   ["verify-no-native-datetime-input", "scripts/verify-no-native-datetime-input.mjs"],
   ["verify-combobox-outside-dismiss", "scripts/verify-combobox-outside-dismiss.mjs"],

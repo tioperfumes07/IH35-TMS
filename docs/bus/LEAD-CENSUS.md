@@ -1,16 +1,15 @@
-# LEAD CENSUS — GO-23 · 2026-09-02 06:41 CT
+# LEAD CENSUS — GO-23 · 2026-09-02 07:20 CT
 
-**Queue:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`.
+**Queue:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`. Seats **never POST Book Load.**
 
-Seats **never POST Book Load.** Tip `10e2def073` (**#19634**, C6 `--strict` **1**, TONU HOLD). API `dep-dac0mgfavr4c73b2g680` kicked — do not stack.
+Owner live USMCA Book Load. CC-2 HOLD lifted (was N1 grep/delegation). Codex was idle with no tmux.
 
 | Seat | NOW | Must not |
 |------|-----|----------|
-| **CC-3** | **WAIT** (A1 #19609/#19612) | Wave 3 GO-22; Wave 4 C1 |
-| **CC-1** | **B8 remainder** · TONU HOLD | remake #19634; author TONU; B5 before B8 |
-| **Codex** | **A3/B12** vs #19571 | POST a load |
-| **CC-2** | N1 Chrome **#19607** blocked | expense POST; J1 migrate |
-| **Cascade** | step 26 FINDING | 12+13; new register |
-| **Cursor** | FAST-MERGE · census | implement rows; merge #19485 |
+| **CC-2** | Live K2 click + boards | grep-as-proof; POST |
+| **Codex** | A3/B12 live vs #19571 | wait idle; POST |
+| **CC-3** | A2 remainder (first 100) | WAIT; remake A1 |
+| **CC-1** | B8 then B5 | TONU; B5 before B8 |
+| **Cursor** | FAST-MERGE · wake seats | merge #19485 |
 
-**VOID:** SWEEP-A · GUARD-WORKORDERS as queue · new registers · guess step 10.
+**VOID:** SWEEP-A · new registers · guess step 10.

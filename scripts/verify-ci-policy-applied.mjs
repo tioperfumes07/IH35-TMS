@@ -28,6 +28,10 @@ export const REQUIRED_GATE_CONTEXTS = [
   "premerge-gates / rls-migration-scan",
   "premerge-gates / typescript-strict-null",
   "premerge-gates / migration-role-validation",
+  // Owner 2026-09-02: J1 ratchet must be its own required check. Step 10230 inside
+  // verify:pre-commit did not stop #19609 (A1 InterchangeTrailerPicker) from landing
+  // six new raw sizes and a trapping EntityPicker while build-typecheck was already red.
+  "ui-design-system-ratchet / ui-design-system-ratchet",
 ];
 export const MANDATORY_CHECKS = REQUIRED_GATE_CONTEXTS;
 export const BASELINE_ONLY_MESSAGE =

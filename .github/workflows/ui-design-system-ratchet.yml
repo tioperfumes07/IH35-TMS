@@ -1,0 +1,28 @@
+name: ui-design-system-ratchet
+
+# Dedicated required check for GO-21 J1 / K2. Step 10230 already lives inside
+# verify:pre-commit, but that job is not a live required GitHub check (main has no
+# branch protection) and FAST-MERGE squash-merged #19609 while ci / build-typecheck
+# was already red. This workflow is fast (no npm ci) and is listed in
+# branch-protection-config.json so it cannot be a silent script.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  ui-design-system-ratchet:
+    name: ui-design-system-ratchet
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: verify-ui-design-system-ratchet --selftest
+        run: node scripts/verify-ui-design-system-ratchet.mjs --selftest
+      - name: verify-ui-design-system-ratchet
+        run: node scripts/verify-ui-design-system-ratchet.mjs

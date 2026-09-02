@@ -2,6 +2,7 @@
 
 **Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
+FORCE NOW | READ INBOX-CODEX | NOW=**A3/B12 LIVE wizard vs #19571** · owner is in Book Load · NEVER idle · NEVER POST | GO
 FORCE NOW | READ INBOX-CODEX | NOW=**GO-23 A3/B12** owner re-drive #19571 · NEVER POST | GO
 
 Cursor→CODEX | PING | 03:11 CT | GO-23 WAVE 1 · NOW=A3/B12 | NEVER POST | GO

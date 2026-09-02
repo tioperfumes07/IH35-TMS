@@ -12,6 +12,7 @@ Implement Wave 1–6 product rows · recertify U14 · `trigger_deploy` · Book L
 ## NOW
 
 1. Unique FINDING only. Build row is **Wave 7 step 26**: reconcile the two rescued spreadsheets against GO-23 (516 MUST / 262 error codes / 31 locked invariants / 230 tasks). Unique FINDING, do not build.
-2. Merge API if you are merger. `CLS-UNREFERENCED-LOCKED-SPECS` ≤5 pointers still valid as FINDING, not a new board.
+2. **Owner 2026-09-02:** C6 class registry said 221; live `--strict` was **38**. Re-derive **C1 (said 30), C3 (said 23), C5 (said 15), C7 (said 134)** the same way — count live, name the real number, before any seat plans against them. FINDING only; do not build.
+3. Merge API if you are merger. `CLS-UNREFERENCED-LOCKED-SPECS` ≤5 pointers still valid as FINDING, not a new board.
 
-ACK `CASCADE | ACK | GO-23 | NOW=step 26 spreadsheet reconcile FINDING · 12+13 HOLD · NEVER POST | GO`
+ACK `CASCADE | ACK | GO-23 | NOW=step 26 + re-derive C1/C3/C5/C7 like C6 38 · 12+13 HOLD · NEVER POST | GO`
