@@ -4,6 +4,16 @@
 
 **FAST-MERGE ON.** Never POST Book Load. USMCA only.
 
+## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY (2026-09-02)
+
+**Cursor correction acknowledged:** MilesStrip "short includes empty" copy was **wrong**. Indy→Laredo inverted (2,142/3,237 lanes short>practical). **STOP-BEFORE-PAY** on any driver-pay-per-mile using `short_miles`.
+
+**Owner cost model (LOCKED):** Customer RPM = rate/practical · Company CPM = cost/(practical+empty) · empty avg 251.9 on 2,398 lanes.
+
+CC-1 owns ingest investigation (no mass-swap). Gate 0 unaffected. Optional Gate 1 FE after bus lands: wizard flag when short>practical — **no pay math change**.
+
+Canonical: `docs/bus/MILES-INVERT-01-STOP-BEFORE-PAY-2026-09-02.md`
+
 ## NOW
 
 ```
@@ -25,9 +35,8 @@ Jorge UNLOCKED full capacity. WAIT is over. Reconciliation with Claude is CLOSED
    Gate 4.2 — Company settlement table (blocked on 2.1).
    GO-07 KPI drill-through: DispatchOverview.tsx:277 double-counts atRisk+late.
 
-4. MILES HONESTY (quick FE only if not conflicting with purge):
-   MilesStrip already labels practical=revenue, short=driver pay, empty=deadhead to pickup.
-   Optional: tighten operator copy if Jorge wants practical+empty called out for company cost.
+4. MILES-INVERT-01 (STOP-BEFORE-PAY): short_miles is NOT driver pay. CC-1 owns ingest
+   investigation. Optional Gate 1 FE: flag when short>practical — no pay math change.
 
 5. FINDING queued for CC-1 after Gate 0: cancel-load cascade — default pre-checked,
    list each record by number with checkbox, typed reason if unchecked.

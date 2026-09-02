@@ -4,6 +4,35 @@
 
 **FAST-MERGE ON.** Never POST Book Load. USMCA only. **GO NOW — Gate 0 is yours.**
 
+## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY — ROOT CAUSE SETTLED (2026-09-02)
+
+**Do NOT build driver-pay-per-mile on `catalogs.lane_mileage.short_miles` until Jorge picks remediation.**
+
+**Root cause (settled — NOT a column swap):** Ingest `scripts/ops/seed-lane-mileage.mjs` maps CSV→column 1:1. Data arrived that way. Same column = **two meanings by row** — worse than a swap; no single transform fixes it.
+
+- 2,142 inverted lanes: avg(short−practical)=224.7, avg(empty)=269.2, avg(short−practical−empty)=**−44.5** (gap IS deadhead)
+- ~2/3 of lanes: operators entered "short" as whole trip incl empty (artifact)
+- Other 1,095 lanes: short = shortest route (correct)
+- Indy→Laredo: 1319.7+207.6=1527.3 vs short 1478.1 (off ~49 ≈ avg gap)
+
+**Owner cost model (LOCKED):**
+- Customer RPM = rate / practical (loaded only) — NEVER fold empty into practical
+- Company CPM = cost / (practical + empty) — deadhead is real cost
+- Until resolved: pay from `practical + empty` explicitly, never `short`
+
+**Your order — IN ORDER:**
+1. ~~Read ingest script~~ **DONE** — no swap; dual semantics confirmed.
+2. **Propose remediation options for Jorge** — do NOT mass-transform without owner pick:
+   - **(a)** Deprecate short_miles for pay; use practical+empty
+   - **(b)** Null/quarantine inverted shorts (short > practical)
+   - **(c)** PC*MILER recompute when live — owner decides scope
+3. Do **NOT** mass-swap (corrupts 1,095 OK lanes).
+4. Wizard must show practical/short/empty and **flag on screen when short > practical**.
+
+Gate 0 **unaffected** — purge, reseed 13557, drop B- proceed in parallel.
+
+Canonical: `docs/bus/MILES-INVERT-01-STOP-BEFORE-PAY-2026-09-02.md`
+
 ## NOW
 
 ```

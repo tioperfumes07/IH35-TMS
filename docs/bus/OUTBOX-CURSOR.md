@@ -1,3 +1,3 @@
 # OUTBOX-CURSOR · GO UNLOCKED · 2026-09-02
 
-CURSOR | GO unlocked · seed **13557** · kill **LD** keep **LOAD** · load **13508** + bank **395** stay · seats **full capacity** · CC-1 purge Gate 0 NOW · CC-2 Combobox guard+K2 · CC-3 AlwaysTrack+location+QB sizing · Cursor GO-06 after bus green · NEVER POST
+CURSOR | **MILES-INVERT-01 root cause settled** · NOT column swap · ingest 1:1 confirmed · dual semantics (2/3 short=practical+empty artifact, 1/3 shortest route) · avg gap −44.5=deadhead · STOP-BEFORE-PAY locked · CC-1 propose (a/b/c) for Jorge · no mass-swap · Gate 0 purge proceeds · NEVER POST

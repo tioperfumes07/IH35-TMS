@@ -66,6 +66,17 @@ Only `components/Combobox.tsx` dismisses on outside click, and the wizard import
 Miles fill for all 3,338 lanes since #19689 — but 13508's `updated_at` still equals `created_at`, so nobody has re-opened it. And `load_stops.location_id` is **0 of 2**: the picker was built, 9 USMCA locations exist, nobody has proved it on a real load.
 **Seat: CC-2. One Chrome pass answers both.**
 
+### ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY (2026-09-02)
+**Do NOT build driver-pay-per-mile on `catalogs.lane_mileage.short_miles` until resolved.**
+
+Indy→Laredo (load 13508): practical 1319.7 + empty 207.6 = 1527.3 ≠ short 1478.1. **2,142/3,237 lanes (66.2%)** have `short_miles > practical_miles` — all `source=History`. Laredo→Indy normal; Indy→Laredo inverted. Cursor acknowledged MilesStrip "short includes empty" copy was **wrong**.
+
+**Owner cost model (LOCKED):** Customer RPM = rate/practical · Company CPM = cost/(practical+empty) · empty on 2,398 lanes avg 251.9.
+
+**CC-1 owns:** read ingest script (no guess) → no mass-swap → until resolved pay = practical+empty explicitly → wizard flag when short>practical. **Gate 0 unaffected.**
+
+Canonical: `docs/bus/MILES-INVERT-01-STOP-BEFORE-PAY-2026-09-02.md`
+
 ### 1.4 · B5 — driver pay rate resolves from the profile
 A typed rate is how a settlement goes wrong silently. `#19699` merged; confirm the profile value wins over the typed field. **Seat: CC-1.**
 
