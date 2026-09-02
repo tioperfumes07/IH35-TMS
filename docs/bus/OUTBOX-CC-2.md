@@ -1,6 +1,6 @@
 # OUTBOX-CC-2 · working log (archive older: `docs/bus/archive/OUTBOX-CC-2-2026-09-01.md`)
 
-FORCE NOW | READ INBOX-CC-2 | NOW=verify-live escrow after CC-1 OR SUBLEDGER-GL-TIEOUT · NOT watch | NEVER invent 24 | NEVER #19305 | GO
+FORCE NOW | READ INBOX-CC-2 | GO-19 PASTE | NOW=verify-live escrow after CC-1 · mint already digits · grep #19428 · NEVER remint | GO
 
 ---
 

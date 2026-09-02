@@ -1,17 +1,17 @@
-# INBOX-CC-2 · LEAD TOP 2026-09-01 21:40 CT · GO-18 VERIFY
+# INBOX-CC-2 · LEAD TOP 2026-09-01 22:40 CT · GO-19 VERIFY
 
 `git pull --ff-only origin main`
 
-**Paste:** `docs/bus/PASTE-ALL-SEATS-GO-18-LOAD-COSTS-2026-09-01.md`
+**Paste:** `docs/bus/PASTE-ALL-SEATS-GO-19-2026-09-01.md`
 
 ## VOID
-- Re-diagnosing verify-static dead-port **without grepping #19428**. Unset DATABASE_URL + dead-port selftest already in `scripts/verify-static.mjs` on that merge.
-- Inventing 24 guards. Crash class = **2**.
+- Re-diagnosing verify-static **without grepping #19428**.
+- Reminting loads / rebuilding `L-YYYYMMDD` (already killed GO-10 REV-B).
 - Repair/zero escrow. `--watch`. `trigger_deploy`. Seat fixtures.
 
 ## NOW
 1. After CC-1 escrow report: **verify-live only**.
-2. Grep `#19428` / `verify-static.mjs` UNSET DATABASE_URL **before** any new static card.
-3. Then GO-18: verify F+R load↔expense↔bill↔JE↔bank match after CC-1 schema. Empty TMS expected.
+2. Grep `#19428` before any new static card.
+3. After CC-1 05/06: verify F+R load↔expense↔bill↔JE↔bank match. Empty TMS expected.
 
-ACK `CC-2 | ACK | NOW=verify-live escrow AFTER CC-1 · grep #19428 BEFORE re-diagnose dead-port · THEN GO-18 F+R · NEVER repair/zero · NEVER --watch | GO`
+ACK `CC-2 | ACK | NOW=verify-live escrow AFTER CC-1 · grep #19428 BEFORE re-diagnose verify-static · GO-19-01 mint already PLAIN DIGITS on main (DISAGREE Cascade L-77) · then verify F+R after CC-1 05/06 · NEVER remint L- · NEVER zero escrow · NEVER --watch | GO`

@@ -1,2 +1,2 @@
-# FEED NOW — CC-1 · 2026-09-01 21:40 CT
-FORCE NOW | READ INBOX-CC-1 | escrow $500.01 forensic · no zero · no Ask Jorge · THEN GO-18 bill driver/trailer | GO
+# FEED NOW — CC-1 · 2026-09-01 22:40 CT
+GO-19: escrow then 02/03/05/06. No zero. No invent GL. GO.

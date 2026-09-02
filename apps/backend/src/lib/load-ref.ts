@@ -4,12 +4,13 @@ import { z } from "zod";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Server-minted load_number shapes seen on prod:
- * - Canonical Book Load: `L-YYYYMMDD-NNNN` (e.g. L-20260811-0032)
- * - Legacy mdata create path: `LUSMCAFREIGHT-YYYYMMDD-NNNN`
- * Keep mutations UUID-only; GET detail accepts these human refs for deeplinks.
+ * Human load_number for GET detail / deeplink (mutations stay UUID-only).
+ *
+ * Canonical (GO-10 REV-B + GO-19): plain digits, e.g. "13561".
+ * Legacy still on prod: `L-YYYYMMDD-NNNN` (cancelled USMCA L-20260901-0001)
+ * and old mdata `L<TOKEN>-YYYYMMDD-NNNN`.
  */
-const LOAD_NUMBER_RE = /^L[\w-]{1,60}$/i;
+export const LOAD_NUMBER_RE = /^(?:[0-9]{1,20}|L[\w-]{1,60})$/i;
 
 /**
  * LV-DOCS-LOAD-DISPLAY-ID-DEEPLINK / LV-LOAD-REF-GET
@@ -32,7 +33,7 @@ export const loadRefParamSchema = z.object({
  * CRITICAL: Postgres does NOT short-circuit AND — `cond AND $n::uuid` still casts
  * a load_number and raises 22P02 (`invalid input syntax for type uuid: "L-…"`).
  * Live FAIL Devin healthz 59e4d6b after #8631. Use CASE so the ::uuid cast never runs
- * for non-UUID refs.
+ * for non-UUID refs. Plain-digit load numbers must also skip the uuid cast.
  */
 export function loadRefMatchSql(alias: string, paramIndex: number): string {
   return `(
@@ -44,4 +45,3 @@ export function loadRefMatchSql(alias: string, paramIndex: number): string {
     OR ${alias}.load_number = $${paramIndex}
   )`;
 }
-

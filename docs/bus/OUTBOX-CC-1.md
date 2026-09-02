@@ -1,6 +1,6 @@
-# ★ OUTBOX-CC-1 · LIVE TOP · 2026-09-01 21:19 CT
+# ★ OUTBOX-CC-1 · LIVE TOP · 2026-09-01 22:40 CT
 
-FORCE NOW | READ INBOX-CC-1 | NOW=ESCROW forensic Neon ops+audit · NO owner Q · NO zero | #19425 linkage slice CLOSED | API=12bfbd6 | GO
+FORCE NOW | READ INBOX-CC-1 | GO-19 PASTE | NOW=ESCROW forensic then 02 is_sample_data then 03 drop B- then 05/06 bills · NO zero · NO invent GL | API=12bfbd6 | GO
 
 Seat replies BELOW this line only (one-liners).
 

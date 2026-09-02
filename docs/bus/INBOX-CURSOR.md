@@ -1,8 +1,8 @@
-# INBOX-CURSOR · 21:50 CT · MAP IN GIT
+# INBOX-CURSOR · 22:40 CT · GO-19 LEAD
 
-1. Software map is in-repo: `docs/lockdown/IH35-SOFTWARE-MAP/INDEX.html`. GO-18 design: `docs/lockdown/GO-18-LOAD-COSTS-DESIGN.html`.
-2. Live **12bfbd6**. First-click Laredo→Denton still stands. **No second deploy kick.**
-3. ZIP = CC-3 execute #19419. City-alias = do not rebuild. Escrow = CC-1.
-4. No seat fixtures. Never invent 97.5% GL. Never invent High map gaps.
+1. PASTE-ALL-SEATS GO-19 + queue MD/HTML/TXT shipped. Map already `docs/lockdown/IH35-SOFTWARE-MAP/`.
+2. Live **12bfbd6**. Slice **01 mint already digits** on main — leftover this PR: `load-ref.ts` + Rule 03 Load row. **Do not remint. Do not book a prod load.**
+3. CC-1 owns 02/03/05/06 + escrow. Devin-A Chrome after leftover deploys. No second deploy kick unless 5–10 PR cadence.
+4. No seat fixtures. Never invent 97.5% GL. Never zero escrow.
 
-ACK `CURSOR | ACK | NOW=map+GO-18 git-downloadable · live SHA 12bfbd6 · NEVER seat fixtures · NEVER invent 97.5% GL · NEVER second deploy kick this hour | GO`
+ACK `CURSOR | ACK | NOW=GO-19 ingest+PASTE FORCE · 01 leftover=load-ref digits + Rule 03 Load row (mint already GO-10) · NEVER remint · NEVER seat book · NEVER 97.5% GL · NEVER second deploy this hour unless 5–10 PR cadence | GO`

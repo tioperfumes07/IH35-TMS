@@ -127,8 +127,8 @@ If a deeper feature appears mid-block, add to deferred-features tracker, do not 
 
 | Entity | Format | Example |
 |--------|--------|---------|
-| Load | L-{n} | L-12047 |
-| Driver Bill | B-{load_number} | B-L-12047 |
+| Load | `{n}` digits only (GO-10 REV-B + GO-19; no `L-` prefix) | 13561 |
+| Driver Bill | B-{load_number} until GO-19 slice 03 | B-12225 |
 | Settlement | S-YYYY-NNNN | S-2026-0185 |
 | Cash Advance | CA-YYYY-NNNN | CA-2026-0033 |
 | Factoring Advance | FA-YYYY-NNNN | FA-2026-1842 |
