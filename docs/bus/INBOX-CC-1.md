@@ -88,3 +88,16 @@ CC-3's side (worker/routes/frontend/guard, both tsc's clean) and already applied
 zero new DB risk. Also sent directly via SendMessage to ih35-tms-clean-8b. Full SQL content is in
 that message / this seat's OUTBOX. Ask: add it as a fresh-numbered db/migrations/*.sql file on your
 own banded branch, commit/push/merge, do not re-apply to Neon.
+
+---
+
+## CC-3 HANDOFF — DRIVER-F7334 migration ledger-only (small, same pattern as GO-19-09/GO-20-B above)
+
+catalogs.driver_tags + mdata.driver_tag_memberships (DRIVER-F7334-ROSTER-TAG-HAS-NO-CANONICAL-MODEL)
+is fully built on CC-3's side and already applied live on prod (tiny-field-89581227, validated
+twice on a disposable branch first) — pure ledger-file catch-up, zero new DB risk. Also sent
+directly via SendMessage to ih35-tms-clean-8b. Full SQL content is in that message / this seat's
+OUTBOX. Also flagged: the same PUBLIC-default-ACL drift found on `maintenance` also exists on
+`mdata` — only revoked on these 2 new tables, schema-wide fix left for separate review. Ask: add
+the migration as a fresh-numbered db/migrations/*.sql file on your own banded branch,
+commit/push/merge, do not re-apply to Neon.
