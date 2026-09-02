@@ -57,7 +57,7 @@ describe("computeTodaysAttention", () => {
       "fuel.fraud_alerts": [{ c: "3" }],
       "banking.reconciliation_drift_alerts": [{ c: "2" }],
       "maintenance.work_orders": [{ c: "4" }],
-      "telematics.cargo_sensor_incidents": [{ c: "1" }],
+      "dispatch.cargo_sensor_incidents": [{ c: "1" }],
       "safety.accident_liabilities": [{ c: "1" }],
       "dispatch.detention_requests": [{ c: "2" }],
       "mdata.customer_health_scores": [{ c: "3" }],

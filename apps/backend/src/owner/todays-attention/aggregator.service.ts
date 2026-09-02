@@ -268,7 +268,7 @@ async function sourceCargoSensorIncidents(
   log?: AttentionLog
 ): Promise<AttentionItem[]> {
   const source = "cargo_sensor";
-  const table = "telematics.cargo_sensor_incidents";
+  const table = "dispatch.cargo_sensor_incidents";
   try {
     if (!(await tableExists(client, table))) {
       warnSkipped(log, source, "table_missing", table);
@@ -277,7 +277,7 @@ async function sourceCargoSensorIncidents(
     const res = await client.query(
       `
         SELECT COUNT(*)::text AS c
-        FROM telematics.cargo_sensor_incidents
+        FROM dispatch.cargo_sensor_incidents
         WHERE operating_company_id = $1::uuid
           AND resolved_at IS NULL
           AND severity = 'critical'
