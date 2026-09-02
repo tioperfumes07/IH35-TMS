@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { createVendorBill } from "../../api/accounting";
 import { generateIdempotencyKey } from "../../api/client";
 import { VendorBillForm } from "../../components/accounting/VendorBillForm";
@@ -23,6 +23,12 @@ export function VendorBillCreatePage() {
   const companyId = selectedCompanyId ?? "";
   const [submitting, setSubmitting] = useState(false);
   const [lastBillId, setLastBillId] = useState<string | null>(null);
+  // GO-18 (owner correction 2026-09-02, N1 gap) — mirrors ExpenseCreatePage's load_id/load_number
+  // contract exactly, so BillsReverseSection's "+ Add Bill" entry point has somewhere real to send
+  // the load context (real bill_lines.load_id FK, not memo-only).
+  const [searchParams] = useSearchParams();
+  const loadId = searchParams.get("load_id") ?? undefined;
+  const loadNumber = searchParams.get("load_number") ?? undefined;
   // Sync lock — React state alone loses the double-click race before re-render.
   const submitInFlight = useRef(false);
   // One key for this drawer session so GAP-IDEMP-KEYS middleware returns the cached bill.
@@ -46,6 +52,11 @@ export function VendorBillCreatePage() {
       >
         {companyId ? (
           <div className="space-y-4">
+            {loadId ? (
+              <p className="text-xs text-slate-600" data-testid="vendor-bill-create-load-context">
+                Load-scoped: <EntityLink kind="load" id={loadId} label={loadNumber ?? "this load"} className="font-semibold text-slate-700 underline" />
+              </p>
+            ) : null}
             {/* ACCT-MONEY-F6508-DIRECT-CREATORS-RETAIN-CROSS-COMPANY-DRAFT — VendorBillForm
                 initializes substantial vendor/account/line state once and never resets it on an
                 operatingCompanyId change; a keyed remount (same fix already shipped for the
@@ -55,6 +66,8 @@ export function VendorBillCreatePage() {
               key={`accounting-vendor-bill-${companyId}`}
               operatingCompanyId={companyId}
               submitting={submitting}
+              linkedLoadId={loadId}
+              linkedLoadDisplayId={loadNumber}
               onSubmit={async (payload) => {
                 if (!companyId) {
                   pushToast("Select operating company first", "error");

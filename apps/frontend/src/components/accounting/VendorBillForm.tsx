@@ -73,6 +73,11 @@ type Props = {
   linkedLegalMatterId?: string;
   /** Human-readable WO id for memo + banner (maintenance linkage). */
   linkedWoDisplayId?: string;
+  /** GO-18 (owner correction 2026-09-02, N1 gap) — real FK to mdata.loads, stamped onto every
+   *  bill_lines row (accounting.bill_lines.load_id already accepts it — see vendorBillLines.ts). */
+  linkedLoadId?: string;
+  /** Human-readable load number for the banner + memo — never a raw UUID on screen. */
+  linkedLoadDisplayId?: string;
   /** Pre-select bill type tab (maintenance | repair | fuel | driver | vendor). */
   initialBillType?: BillTypeId;
   submitLabel?: string;
@@ -132,6 +137,8 @@ export function VendorBillForm({
   linkedClaimId,
   linkedLegalMatterId,
   linkedWoDisplayId,
+  linkedLoadId,
+  linkedLoadDisplayId,
   initialBillType,
   submitLabel = "Create bill",
   submitTestId,
@@ -154,7 +161,7 @@ export function VendorBillForm({
   const [isSampleData, setIsSampleData] = useState(false);
   const [terms, setTerms] = useState("net_30");
   const [vendorId, setVendorId] = useState("");
-  const [loadNumber, setLoadNumber] = useState("");
+  const [loadNumber, setLoadNumber] = useState(linkedLoadDisplayId ?? "");
   const [driverId, setDriverId] = useState("");
   const [unitId, setUnitId] = useState(linkedUnitId ?? "");
   const [legalMatterId, setLegalMatterId] = useState(linkedLegalMatterId ?? "");
@@ -264,7 +271,10 @@ export function VendorBillForm({
 
   const subtotal = lineSubtotal(lines);
   const taxAmount = (subtotal * taxRate) / 100;
-  const linePayloads = useMemo(() => buildVendorBillLinePayloads(lines), [lines]);
+  const linePayloads = useMemo(
+    () => buildVendorBillLinePayloads(lines, linkedLoadId),
+    [lines, linkedLoadId]
+  );
   const lineSumCents = linePayloads.reduce((sum, line) => sum + line.amount_cents, 0);
   // Bill amount = SUM(line amounts). Tax is display-only until a tax expense line with a real
   // account_id is supported — never invent a tax GL account (owner law).
@@ -369,6 +379,15 @@ export function VendorBillForm({
             id={linkedLegalMatterId}
             label={entityLabel(null, linkedLegalMatterId, "Matter")}
           />
+        </div>
+      ) : null}
+      {linkedLoadId ? (
+        <div
+          className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700"
+          data-testid="vendor-bill-linked-load"
+        >
+          Linked load —{" "}
+          <EntityLink kind="load" id={linkedLoadId} label={entityLabel(linkedLoadDisplayId ?? null, linkedLoadId, "Load")} />
         </div>
       ) : null}
       <TypeTabBar

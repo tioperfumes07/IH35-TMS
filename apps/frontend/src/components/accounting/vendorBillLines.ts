@@ -10,6 +10,10 @@ export type VendorBillFormLinePayload = {
   category_kind?: string;
   category_code?: string;
   service_item_uuid?: string;
+  // GO-18 (owner correction 2026-09-02, N1 gap) — real FK to mdata.loads via accounting.bill_lines.
+  // Backend (bills.routes.ts createBillLineSchema, bills.service.ts createVendorBill INSERT) has
+  // accepted this since #19459; the frontend simply never sent it. Not memo-only (LAW-E2E #3167).
+  load_id?: string;
 };
 
 export type ExpenseCategoryMapMeta = {
@@ -61,7 +65,13 @@ export function mapExpenseCatalogCodeToBillCategory(
  * id into expense_category_uuid (same-entity FK).
  * Section B: item + optional part/labor sub-rows; account left unset.
  */
-export function buildVendorBillLinePayloads(lines: TwoSectionLine[]): VendorBillFormLinePayload[] {
+export function buildVendorBillLinePayloads(
+  lines: TwoSectionLine[],
+  // GO-18 (owner correction 2026-09-02) — when this bill was opened from a load's own "+ Add Bill"
+  // entry point, stamp the real FK onto every line. Optional and additive: omitting it reproduces
+  // the exact prior behavior (no load_id) for every other bill-create caller (WO/claim/unit/etc).
+  defaultLoadId?: string
+): VendorBillFormLinePayload[] {
   const out: VendorBillFormLinePayload[] = [];
   for (const line of lines) {
     if (line.section === "A") {
@@ -78,6 +88,7 @@ export function buildVendorBillLinePayloads(lines: TwoSectionLine[]): VendorBill
         description: line.description?.trim() || undefined,
         ...(categoryId ? { expense_category_uuid: categoryId } : {}),
         ...(mapped ?? {}),
+        ...(defaultLoadId ? { load_id: defaultLoadId } : {}),
       });
       continue;
     }
@@ -93,6 +104,7 @@ export function buildVendorBillLinePayloads(lines: TwoSectionLine[]): VendorBill
           amount_cents: cents,
           description: row.description?.trim() || line.description?.trim() || undefined,
           ...(line.service_item_uuid ? { service_item_uuid: line.service_item_uuid } : {}),
+          ...(defaultLoadId ? { load_id: defaultLoadId } : {}),
         });
       }
     } else {
@@ -103,6 +115,7 @@ export function buildVendorBillLinePayloads(lines: TwoSectionLine[]): VendorBill
         amount_cents: cents,
         description: line.description?.trim() || undefined,
         ...(line.service_item_uuid ? { service_item_uuid: line.service_item_uuid } : {}),
+        ...(defaultLoadId ? { load_id: defaultLoadId } : {}),
       });
     }
   }
