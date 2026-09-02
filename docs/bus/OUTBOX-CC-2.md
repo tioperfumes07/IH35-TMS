@@ -482,3 +482,34 @@ real. `brake_projections`/`tire_projections` are genuinely 0 rows everywhere in 
 gap in the older cap-12/13 workers, not this PR's scope) — so 0 alerts is correct, not masked, and
 `PredictiveAlertsPage.tsx` says so honestly ("No predictive alerts in this queue."). No defect
 found anywhere. Did NOT take slice A. Not idling.
+
+---
+
+## ★ CC-2 | GO-21/GO-23 J1 status · Section D live-verified BEFORE, C3 correction · 2026-09-02T03:35Z
+
+Full sequence this pass: caught and refused an unreviewed patch bundle that mislabeled itself
+"J1 guard" but actually carried 2 unrelated migrations + other seats' merged work (confirmed by
+the sender, root-caused to a `git checkout FETCH_HEAD -- .` mistake). Independently verified the
+replacement CLEAN patches (5 files, zero migrations) before applying. Registered the ratchet as
+verify-step 10230 (#19577, confirmed via `verify-law-registry` + `verify-verify-step-numbers-unique`
+both exit 0). Rebuilt Section D on the LOCKED baseline (not my earlier invented tokens) — DataPanel
+adoption, its own header color corrected to the locked #4B5563 (was #6B7280, fixes every DataPanel
+consumer, not just this screen), NumberInput built for the money/number-input class, weight_lbs
+wired (#19582, merged, ratchet PASS with real improvement -2/-2, banked via --lower).
+
+**Caught two more staleness near-misses before they shipped:** a LAW.json entry someone else
+already added mid-session (would have overwritten theirs with a cosmetic reword — dropped my
+change, kept theirs); a BookLoadModalV4.tsx blob built from an hours-old preserved copy that would
+have reverted a legitimate `FIELD_LABELS`/`onInvalidSubmit` improvement that landed on main in the
+meantime (rebuilt precisely against fresh content instead).
+
+**Live-verified in Chrome** (view only, Cancel on close, zero data written): Section D confirmed
+live matching the exact diagnosed defect (left/right column size mismatch) — deploy hasn't caught
+up to #19582 yet (`healthz`=`9682607`), so the AFTER state isn't Chrome-provable this pass.
+**Correction while there:** C3's orphan file (`ExpectedAdjustmentsCallout.tsx`) really is dead, but
+the LIVE wizard has its OWN separate "Expected adjustments" block (anticipated chargeback/detention/
+late-delivery, all raw unformatted number inputs) I hadn't found — filed as the real, still-open C3
+gap.
+
+Never posted a Book Load. Never invented a scale — transcribed the locked doc. Next: wire the real
+C3 fields, then combobox convergence (K2/B9).
