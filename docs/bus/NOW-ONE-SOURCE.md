@@ -5,7 +5,7 @@
 | Seat | NOW |
 |------|-----|
 | **CC-3** | **WAIT** — A1 live **#19609** / Chrome **#19612**. Wave 3 is CC-1 GO-22. Not Wave 4 C1. |
-| **CC-1** | Wave 2 **C6 shrink 17 remaining** (#19608 38→22, #19613 22→17). Do not skip for B8 remainder. |
+| **CC-1** | Wave 2 **C6 shrink 17** — next key **mark-disbursed poster** (#19616 named, not closed) |
 | **Codex** | Wave 1 leftover **A3/B12** owner re-drive **#19571** |
 | **CC-2** | N1 Chrome **UNVERIFIED #19607** — no expense POST; HOLD J1 |
 | **Cascade** | Unique FINDING · Wave 7 step 26 · 12+13 HOLD |
