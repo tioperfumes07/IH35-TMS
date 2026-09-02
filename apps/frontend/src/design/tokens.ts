@@ -22,6 +22,11 @@ export const colors = {
   bodyText: "#1F2937",
   mutedText: "#6B7280",
   tinyLabel: "#9CA3AF",
+  // GLOBAL-TYPE-SIZE-BASELINE.md (owner-locked 2026-06-07): column/section headers are
+  // 11px/700/UPPERCASE/#4B5563 specifically — a distinct role from the generic mutedText
+  // (#6B7280) above, which several existing header treatments (e.g. DataPanel) were using
+  // instead. Transcribed verbatim from the locked doc, not invented.
+  columnHeader: "#4B5563",
   safety: { strong: "#DC2626", soft: "#FEE2E2" },
   maintenance: { strong: "#6B7280", soft: "#F3F4F6" },
   dispatch: { strong: "#2563EB", soft: "#DBEAFE" },

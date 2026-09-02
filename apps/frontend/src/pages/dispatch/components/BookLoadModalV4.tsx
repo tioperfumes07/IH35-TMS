@@ -77,6 +77,7 @@ import {
 } from "../../../components/dispatch/accessorial-editor-lib";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { NumberInput } from "../../../components/forms/NumberInput";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { describeBookLoadValidationErrors } from "./book-load-v4/invalidSubmitDetails";
 
@@ -1613,7 +1614,16 @@ export function BookLoadModalV4({
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Weight (lbs)
-                      <input type="number" {...form.register("weight_lbs", { valueAsNumber: true })} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+                      {/* GO-21-J1 / C2: was a raw <input type="number"> — no thousands separator past
+                          999 lbs, native spinner. NumberInput is MoneyInput's plain-number sibling,
+                          same QuickBooks display convention minus the $. */}
+                      <NumberInput
+                        value={form.watch("weight_lbs")}
+                        onChange={(v) => form.setValue("weight_lbs", v ?? 0, { shouldDirty: true })}
+                        unit="lbs"
+                        ariaLabel="Weight"
+                        className="mt-0.5 w-full"
+                      />
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Pieces
