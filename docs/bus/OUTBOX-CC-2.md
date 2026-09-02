@@ -1155,3 +1155,60 @@ the DB from this test.
   a real pre-settlement, both real-record actions outside verifier scope.
 
 Nothing booked. No SQL write. Idle, watching INBOX TOP; continuing J1 batch 2.
+
+---
+
+## ★ CC-2 | ACK GO-26/27 GATE 1 · STEP 1 guard shipped · Gate 1.3 flag NOT FIXED · 2026-09-02T~19:55Z
+
+`CC-2 | ACK | GO-26 guard · K2 wizard · 13508 Chrome · NEVER POST | GO`
+
+Also read the miles-pay-law correction that landed mid-pass (short miles = driver pay, always;
+practical = customer RPM; company cost = practical+empty; #19740's practical+empty-for-pay
+recommendation is struck). Noting it, not touching it — driver-pay math is CC-1's build, not
+mine to write.
+
+### STEP 1 — GO-26 consolidation guard: SHIPPED, `ceb4f2d068` (#19757)
+
+New `scripts/verify-go26-consolidation-ratchet.mjs`, same PASS-only-when-count-does-not-
+increase pattern as the J1 ratchet, freezing 8 counts at today's measure: `import_
+select_combobox=154`, `import_entity_picker=106`, `import_shared_combobox=8`, `import_
+data_table=20`, `import_resizable_table=2`, `import_mobile_optimized_table=3`, `raw_table_
+outside_infra=39` (6 infra files exempted — `DataTable.tsx`, `FleetTable.tsx`, `lists/ListView/
+ListView.tsx`, `parity/ParityTable.tsx`, `shared/MobileOptimizedTable.tsx`, `shared/
+ResizableTable.tsx`), `raw_text_off_locked_scale=996`.
+
+**Note the 268 vs 277 discrepancy on the record:** my picker count (154+106+8=268) matches the
+*already-committed* `ui-design-system-baseline.json` exactly — cross-checked, not assumed.
+INBOX's cited "277 — UP from 268" doesn't match anything I can measure live right now. Not
+correcting the INBOX; flagging so nobody chases 9 files that aren't there.
+
+Registered as verify-step 10231 (claimed on main first via #19751, per Rule 37). Dedicated CI
+workflow `go26-consolidation-ratchet.yml`, same fast no-`npm ci` pattern as the J1 ratchet's own
+workflow — confirmed it actually rejects a regression, not just green-by-construction (built a
+throwaway probe file importing `SelectCombobox`, guard FAILed with the exact count delta,
+deleted the probe, guard PASSed clean again).
+
+**Not done, and I stopped on purpose:** added `go26-consolidation-ratchet` to `branch-
+protection-config.json`'s `contexts` list so the check exists and is documented, but did **not**
+run `scripts/ci-apply-branch-protection.mjs` — that script's own header says "OWNER HANDOFF
+ONLY," it hard-refuses without `JORGE_AUTHORIZED_BRANCH_PROTECTION_APPLY=YES` and a
+`GH_ADMIN_TOKEN`, and CI is blocked from calling it at all. **Owner: run that script (or tell
+someone with the admin token to) to make this bypass=never like `ui-design-system-ratchet`
+already is** — until then it's a real check that reports status but doesn't block a merge.
+
+### Gate 1.3 — Chrome-prove 13508: miles fill part already done (see two entries above);
+### the short>practical FLAG does not exist yet — NOT FIXED
+
+Grepped `MilesStrip.tsx` (157 lines, the whole file) and the wider frontend for any short-vs-
+practical comparison: nothing. No flag, no popup, no acknowledgement UI anywhere in the wizard.
+13508 itself is one of the 2,142 inverted lanes (practical 1319.7, short 1478.1, short >
+practical by 158.4) and today it renders with **zero visual indication** of that — same amber
+box as any other Check-ZIP lane, nothing about the inversion. This is a real gap against the
+just-landed pay law's own UX ruling ("flag on screen when the lane is untrustworthy... popup ->
+operator presses OK -> continue... do not block booking"). Not building it myself — it's a
+frontend feature on the wizard's miles block, unassigned as far as I can tell from this INBOX
+(CC-1 owns the catalog fix, not necessarily this UI). Flagging for whoever picks it up: trigger
+is `short_miles > practical_miles` OR `abs(reverse_lane.short - this_lane.short) > 100`, per the
+new law; 13508 trips the first condition today.
+
+Continuing STEP 2 (K2 pickers, Book Load wizard batch first) next.
