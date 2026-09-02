@@ -616,6 +616,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-02",
       "purpose": "go22_presettlement_link_suggestions (GO-22 pre-settlement, CC-1 money lane: driver_finance.driver_settlements.tour_id + driver_finance.presettlement_link_suggestions -- suggest-then-confirm queue for book-load.service.ts's TODO P6-FOLLOWUP-PRESETTLEMENT-LINK, mirrors driver_finance.trip_link_queue's shape, never auto-commits a load onto a settlement)"
+    },
+    "202613460001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-02",
+      "purpose": "go21_b5_driver_pay_rate_override_reason (GO-21 B5, CC-1 money lane: mdata.loads.driver_pay_rate_override_reason -- a hand-typed per-load driver pay rate becomes an explicit, logged, reason-carrying override instead of silently outranking the driver's real pay-rate card in resolveDriverBasePayCents)"
     }
   }
 }
