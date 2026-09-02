@@ -1213,13 +1213,13 @@ export function BookLoadModalV4({
       >
         <header className="flex shrink-0 items-center justify-between border-b px-4 py-2.5 text-white" style={{ background: "#1f2a44" }}>
           <div>
-            <div className="text-[10px]" style={{ color: "#9aa6ba" }}>
+            <div className="text-xs" style={{ color: "#9aa6ba" }}>
               {isEditMode ? "Dispatch › Edit load" : "Dispatch › Book load"}
             </div>
             {/* Two literal headings (not a ternary string) so the locked-ui-surface guard still sees the
                 ">Book load<" text node for the create wizard while Edit shows the load number. */}
             {isEditMode ? (
-              <div className="flex items-center gap-1.5 text-base font-bold">
+              <div className="flex items-center gap-1.5 text-[22px] font-bold">
                 <span>Edit load</span>
                 {editLoad?.id ? (
                   <EntityLink
@@ -1232,7 +1232,7 @@ export function BookLoadModalV4({
                 ) : null}
               </div>
             ) : (
-              <div className="text-base font-bold">Book load</div>
+              <div className="text-[22px] font-bold">Book load</div>
             )}
           </div>
           <div className="flex items-center gap-3 text-[11px]" style={{ color: "#9aa6ba" }}>
@@ -1240,7 +1240,7 @@ export function BookLoadModalV4({
             <ModalCloseButton
               title={isEditMode ? "Edit load" : "Book load"}
               onClose={attemptBookLoadClose}
-              className="h-6 w-6 rounded-sm text-sm text-gray-200 hover:bg-[#2e3c5a]"
+              className="h-6 w-6 rounded-sm text-xs text-gray-200 hover:bg-[#2e3c5a]"
             />
           </div>
         </header>
@@ -1330,8 +1330,8 @@ export function BookLoadModalV4({
                     className="flex h-[46px] flex-1 flex-col justify-center rounded-sm border px-2.5 text-left transition-colors"
                     style={active ? { backgroundColor: color, borderColor: color, color: "white" } : { borderColor: "#cbd5e1", color: "#1f2733" }}
                   >
-                    <span className="text-[13.5px] font-bold leading-tight">{icon} {code} · {label}</span>
-                    <span className={`text-[10px] leading-tight ${active ? "text-white/80" : "text-gray-500"}`}>{desc}</span>
+                    <span className="text-xs font-bold leading-tight">{icon} {code} · {label}</span>
+                    <span className={`text-xs leading-tight ${active ? "text-white/80" : "text-gray-500"}`}>{desc}</span>
                   </button>
                 );
               })}
@@ -1341,7 +1341,7 @@ export function BookLoadModalV4({
             ) : watchedTripType === "TR" || watchedTripType === "SB" ? (
               <p className="mt-1 text-[11px] text-gray-600">Part of this unit's tour — follows its most recent Northbound leg (joined automatically).</p>
             ) : null}
-            <p className="mt-1 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-[10.5px] text-slate-700">
+            <p className="mt-1 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
               Every load must be classified NB, TR, or SB. NB starts a tour; TR/SB join it; the settlement closes when the SB leg returns to Laredo.
             </p>
           </div>
@@ -1508,7 +1508,7 @@ export function BookLoadModalV4({
                       block in §E (Documents). The duplicate button-panel affordance was removed here. */}
 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Customer
                       <input type="hidden" {...form.register("customer_id", { required: "Select a customer from the list" })} />
                       <div className="mt-0.5">
@@ -1549,11 +1549,11 @@ export function BookLoadModalV4({
                       </div>
                       {form.formState.errors.customer_id?.message ? <span className="mt-0.5 block normal-case tracking-normal text-red-600">{form.formState.errors.customer_id.message}</span> : null}
                     </label>
-                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Customer WO #
                       <input {...form.register("customer_wo_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
-                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       AlwaysTrack load # (legacy)
                       <input
                         {...form.register("live_load_number", {
@@ -1568,11 +1568,11 @@ export function BookLoadModalV4({
                         data-testid="book-load-live-load-number"
                       />
                     </label>
-                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Pickup #
                       <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
-                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Historical inactive driver UUID
                       <input
                         {...form.register("historical_import_driver_id")}
@@ -1581,7 +1581,7 @@ export function BookLoadModalV4({
                         className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
                       />
                     </label>
-                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500 md:col-span-2">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500 md:col-span-2">
                       Historical import reason
                       <input
                         {...form.register("historical_import_reason")}
@@ -1599,7 +1599,7 @@ export function BookLoadModalV4({
                         demo fixture — and nothing downstream could tell them apart. Owner ruling §9.8 keeps
                         this column BANNED as a delete-selector; this marks data at birth, it selects
                         nothing for destruction. */}
-                    <label className="flex items-end gap-1.5 text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="flex items-end gap-1.5 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       <input
                         type="checkbox"
                         data-testid="book-load-is-sample-data"
@@ -1611,7 +1611,7 @@ export function BookLoadModalV4({
                   </div>
 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
-                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Equipment / load type
                       <div className="mt-0.5">
                         <ReferenceSelect
@@ -1628,7 +1628,7 @@ export function BookLoadModalV4({
                         {loadTypesQuery.isError ? <ListErrorBanner message="Could not load load types." onRetry={() => void loadTypesQuery.refetch()} /> : null}
                       </div>
                     </label>
-                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Type
                       <div className="mt-0.5 inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
                         <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
@@ -1641,11 +1641,11 @@ export function BookLoadModalV4({
                         </label>
                       </div>
                     </label>
-                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Commodity
                       <input {...form.register("commodity")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
-                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Weight (lbs)
                       {/* GO-21-J1 / C2: was a raw <input type="number"> — no thousands separator past
                           999 lbs, native spinner. NumberInput is MoneyInput's plain-number sibling,
@@ -1658,7 +1658,7 @@ export function BookLoadModalV4({
                         className="mt-0.5 w-full"
                       />
                     </label>
-                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Pieces
                       <input {...form.register("pieces")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
@@ -1730,10 +1730,10 @@ export function BookLoadModalV4({
                       editor instance is stop-scoped (stopIndex → stops.N.extra_rates) so the per-stop model
                       + verify-multi-stop-extra-rates guard hold. */}
                   <div data-testid="section-a-extra-rates" className="space-y-1">
-                    <p className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">Per-stop extra rates</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Per-stop extra rates</p>
                     {((form.watch("stops") as Array<{ stop_type?: string }> | undefined) ?? []).map((stopRow, i) => (
                       <div key={i} className="rounded-sm border border-gray-200 p-1">
-                        <div className="text-[10px] font-semibold text-gray-600">
+                        <div className="text-xs font-semibold text-gray-600">
                           Stop {i + 1} · {stopRow?.stop_type === "delivery" ? "Delivery" : "Pickup"}
                         </div>
                         <MultiStopExtraRateEditor control={form.control as never} register={form.register as never} stopIndex={i} />
@@ -1750,14 +1750,14 @@ export function BookLoadModalV4({
                     if (withLumper.length === 0) return null;
                     return (
                       <div data-testid="section-a-lumper-responsibility" className="space-y-1">
-                        <p className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">Lumper responsibility</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Lumper responsibility</p>
                         {lumperProvidersQuery.isError ? <ListErrorBanner message="Could not load lumper providers." onRetry={() => void lumperProvidersQuery.refetch()} /> : null}
                         {withLumper.map(({ s, i }) => (
                           <div key={i} className="grid grid-cols-1 items-end gap-2 rounded-sm border border-gray-200 p-1 md:grid-cols-4">
-                            <div className="text-[10px] font-semibold text-gray-600">
+                            <div className="text-xs font-semibold text-gray-600">
                               Stop {i + 1} · {s?.stop_type === "delivery" ? "Delivery" : "Pickup"}
                             </div>
-                            <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                            <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                               Lumper paid by
                               <SelectCombobox {...form.register(`stops.${i}.lumper_paid_by`)} className="mt-0.5 h-7 w-full text-xs">
                                 <option value="carrier">Carrier</option>
@@ -1767,7 +1767,7 @@ export function BookLoadModalV4({
                                 <option value="unknown">Unknown</option>
                               </SelectCombobox>
                             </label>
-                            <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                            <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                               Lumper provider
                               <ReferenceSelect
                                 value={form.watch(`stops.${i}.lumper_provider_id`) || null}
@@ -1791,15 +1791,15 @@ export function BookLoadModalV4({
                   })()}
 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Cash advance
                       <MoneyInput valueCents={form.watch("cash_advance_cents")} onChangeCents={(c) => form.setValue("cash_advance_cents", c ?? 0, { shouldDirty: true })} className="mt-0.5 w-full" ariaLabel="Cash advance" />
                     </label>
-                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Fuel advance
                       <MoneyInput valueCents={form.watch("fuel_advance_cents")} onChangeCents={(c) => form.setValue("fuel_advance_cents", c ?? 0, { shouldDirty: true })} className="mt-0.5 w-full" ariaLabel="Fuel advance" />
                     </label>
-                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Factoring company
                       {/*
                         LST-PICKER-01 / CLS-SILENT-CAP: EntityPicker server-search + allowCreate →
@@ -1832,7 +1832,7 @@ export function BookLoadModalV4({
                     <button type="button" className="blw-collapse-bar w-full text-left" onClick={() => setShowSpecialNotes((openState) => !openState)}>
                       <span className="blw-collapse-plus">{showSpecialNotes ? "−" : "+"}</span>
                       <span className="text-[11px] font-bold text-[#1f2733]">Special notes</span>
-                      <span className="ml-auto text-[9.5px] text-[#8a93a1]">optional — click to add</span>
+                      <span className="ml-auto text-xs text-[#8a93a1]">optional — click to add</span>
                     </button>
                     {showSpecialNotes ? (
                       <div className="border-t border-gray-200 p-3">
@@ -2045,7 +2045,7 @@ export function BookLoadModalV4({
                 ) : (
                   <p className="text-[11px] text-gray-500">Rate-con extraction fills a new load — open Book Load to read a rate con into a fresh draft.</p>
                 )}
-                <p className="text-[10px] text-gray-500" data-testid="book-load-documents-honesty">
+                <p className="text-xs text-gray-500" data-testid="book-load-documents-honesty">
                   BOL, POD, and lumper receipts are captured on Load Detail → Documents / POD Review after booking — not on this Book Load form.
                 </p>
               </div>
@@ -2072,9 +2072,9 @@ export function BookLoadModalV4({
                   Per-load preview unavailable — active driver rate card checked on submit
                 </span>
               ) : (
-                <span className="font-mono text-sm font-bold text-gray-900">{money.format(driverBillPreview / 100)}</span>
+                <span className="font-mono text-xs font-bold text-gray-900">{money.format(driverBillPreview / 100)}</span>
               )}
-              <div className="text-[9.5px] text-gray-500">
+              <div className="text-xs text-gray-500">
                 {driverBillPreview === null
                   ? `Missing ${driverBillMissing.join(" and ")} for this preview. The load still books; the backend uses an active driver rate card when available, otherwise it records a skipped-no-rate event.`
                   : `${Number(milesShortest || 0).toLocaleString()} short miles × $${Number(driverPayRatePerMile || 0).toFixed(2)} per mile. Recalculates when fields change.`}
@@ -2101,10 +2101,10 @@ export function BookLoadModalV4({
               </Button>
             </div>
           </div>
-          <div className="border-t border-gray-100 px-3 py-1 text-right text-[9px] text-gray-500">
-            <kbd className="rounded-sm border border-gray-200 bg-gray-50 px-1 font-mono text-[9px]">Esc</kbd> close &nbsp;
-            <kbd className="rounded-sm border border-gray-200 bg-gray-50 px-1 font-mono text-[9px]">⌘S</kbd> save draft &nbsp;
-            <kbd className="rounded-sm border border-gray-200 bg-gray-50 px-1 font-mono text-[9px]">⌘↵</kbd> book + dispatch
+          <div className="border-t border-gray-100 px-3 py-1 text-right text-xs text-gray-500">
+            <kbd className="rounded-sm border border-gray-200 bg-gray-50 px-1 font-mono text-xs">Esc</kbd> close &nbsp;
+            <kbd className="rounded-sm border border-gray-200 bg-gray-50 px-1 font-mono text-xs">⌘S</kbd> save draft &nbsp;
+            <kbd className="rounded-sm border border-gray-200 bg-gray-50 px-1 font-mono text-xs">⌘↵</kbd> book + dispatch
           </div>
         </form>
       </div>
