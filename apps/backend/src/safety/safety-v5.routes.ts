@@ -1,3 +1,14 @@
+// C6-MONEY-JE-EXEMPT: the driver_finance.driver_liabilities row here (type='internal_fine',
+// status='pending_recovery') is NOT the "company-paid civil fine" case named in the C6 block
+// description (SAF-B18/#3551 — that is safety/fines.routes.ts's postCompanyPaidCivilFine path,
+// already wired and POSTER_RE-matched) — this is a DIFFERENT, internal disciplinary fine recovered
+// directly from the driver's own settlement, no third-party payment leg at all. Immediately after
+// this INSERT, the SAME transaction calls createSettlementDeduction (driver-finance/
+// deductions.service.ts, sourceType: "fine") — a driver_finance.driver_settlement_deductions
+// staging row, the SAME table/pattern already verified across this session's settlement cluster
+// (#19608/#19627): the real JE posts once, later, at settlement close via
+// settlement-payrun-close.service.ts's closeSettlementPayRun (createJournalEntry). Traced, not
+// assumed. Verified 2026-09-02, GO-23 C6.
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
