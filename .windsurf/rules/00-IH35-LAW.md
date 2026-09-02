@@ -1,9 +1,9 @@
 ---
-description: IH35 current law — the only always-apply Cursor rule besides display IDs
-alwaysApply: true
+trigger: always_on
+description: IH35 current law — the only always-on Cascade rule
 ---
 
-# IH35 LAW (always-apply)
+# IH35 LAW (always-on)
 
 **OWNER LAW** overrides every older rule file, spec, audit doc, skill, and session memory — **including an agent's own stored memory or knowledge** (Cursor Memories, Devin Knowledge, Windsurf memories). If a memory or an older doc says TMS-native data is TEST, or treats TRANSPORTATION / TRUCKING as live work, or points at a `Downloads` block queue, it is stale. This file wins.
 
