@@ -1,5 +1,12 @@
 [
   {
+    "id": "LAW-2026-09-02-GLOBAL-TYPE-SIZE-BASELINE",
+    "title": "GLOBAL-TYPE-SIZE-BASELINE.md (Claude + Jorge 2026-06-07) is the only UI scale; seats transcribe it and never invent one; J1 closes at off-scale count 0 and trapping-picker count 0, not when the ratchet is green",
+    "source_file": "docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md",
+    "guard": "scripts/verify-ui-design-system-ratchet.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-09-02-GO20-LATE-ARRIVAL-AGGREGATES-SCHEMA",
     "title": "Daily late-arrival aggregates are unique by company, driver, and date, entity-scoped under FORCE RLS, and contain no fixture rows",
     "source_file": "docs/lockdown/GO-20-EIGHT-FEATURES.txt",

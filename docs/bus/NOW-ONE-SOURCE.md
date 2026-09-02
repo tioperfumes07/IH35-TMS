@@ -6,7 +6,7 @@ Paste packets: `docs/lockdown/PASTE-ALL-SEATS-GO-21-GO-22-2026-09-02.md`. **LEAD
 | Seat | FORCE NOW |
 |------|-----------|
 | **CC-3** | **A2** customer picker |
-| **CC-2** | **K2 / J1** one combobox + verify-live (Devin RETIRED) |
+| **CC-2** | **J1 CORRECTED** claim ≡3 ratchet then transcribe to **zero this week** |
 | **CC-1** | **B5** (A1 SQL already **#19567**) |
 | **Codex** | **B12** then B6 |
 | **Cascade** | Unique FINDING |

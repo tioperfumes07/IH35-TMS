@@ -7,6 +7,7 @@
 > - **Queue:** `docs/bus/INBOX-<SEAT>.md` TOP + `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · bus index: `READ-AGENT-BUS.md`
 > - **Cursor lead:** `docs/bus/INBOX-CURSOR.md` — coordinates seats; **does not** sweep `GUARD-WORKORDERS` / `Downloads/abb`
 > - **Ship:** `node scripts/cursor-ship-preflight.mjs --body-file …` before push · PR title **`Cursor-`** prefix
+> - **UI standard, LOCKED:** [docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md](docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md) (Claude + Jorge approved 2026-06-07) — body 12px - headers 11px/700/UPPERCASE/`#4B5563` - H1 22px/600 - page `#F7F8FA` - surface `#FFFFFF` - border 1px `#E5E7EB` - radius 4px - rail `#1B2333` - green `#16A34A` - **equal paired-field sizes** - **centered, sortable column headers**. Applies to ALL screens. No component may deviate without the owner's approval. **Open it before writing any size, colour, header or field width — never propose a new scale.** Guard: `scripts/verify-ui-design-system-ratchet.mjs`. **J1 closes at count zero this week (CC-2), not when the ratchet is green.**
 > - **Model tiers:** mechanical=C, feature=B, money=A — [docs/specs/MODEL-TIER-POLICY.md](docs/specs/MODEL-TIER-POLICY.md)
 
 > Merge on green + proof. No `JORGE-APPROVED`. **USMCA only.** Every USMCA row is REAL unless `is_sample_data=true`. Never POST Book Load. No seat financial fixtures. U14 closed — never recertify.

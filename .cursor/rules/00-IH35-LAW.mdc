@@ -32,11 +32,19 @@ Reply shape: **what I did · proof it is real · what's next.**
 
 ## Work shape
 
-Every fix is a **vertical slice**: table change, backend rule, endpoint, screen, guard, proof. Done when somebody clicks it in a browser and sees the right thing happen. No layer work, no partial slices.
+Every money/data fix is a **vertical slice**: table change, backend rule, endpoint, screen, guard, proof. Done when somebody clicks it in a browser and sees the right thing happen. No layer work, no partial slices. **J1 is the one legitimate exception:** it has no data layer — it is `docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md` applied everywhere. The ratchet proves it landed on all off-scale files, not one screen. J1 still has an end state: both counts at zero this week.
 
 ## Seats
 
-CC-1 money · CC-2 verify-live (the only seat that writes the verified flag) · CC-3 mechanical · Cascade merge API · Codex reverse/CI · Devin-A Chrome cancel-only. Cursor is lead. Migration lanes: CC-1 hours 00–11 UTC, Cursor hours 12–23 UTC, one author per migration.
+CC-1 money · CC-2 design-system transcription + verify-live (the only seat that writes the verified flag) · CC-3 mechanical · Cascade merge API · Codex reverse/CI · Devin-A RETIRED. Cursor is lead. Migration lanes: CC-1 hours 00–11 UTC, Cursor hours 12–23 UTC, one author per migration.
+
+## Locked UI standard — read it, never invent one
+
+`docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md` (Claude + Jorge approved 2026-06-07) is LOCKED and applies to **ALL** screens — lists, catalogs, bills, invoices, registers, drawers, forms, modals, reports. **No component may deviate without the owner's explicit approval.**
+
+Body 12px - column/section headers 11px / weight 700 / UPPERCASE / `#4B5563` - H1 22px / 600 - text `#0F1219` / `#1F2A44` / `#6B7280` - cell padding ~7px - surface `#FFFFFF` - page `#F7F8FA` - border 1px `#E5E7EB` - radius 4px - rail navy `#1B2333` - green `#16A34A`. **Equal paired-field sizes** (label and input the same width). **Centered column headers, every one sortable.**
+
+Measured 2026-09-02 on this tree: 1,083 sizes off this scale across 342 files, and 268 files importing a picker that does not dismiss on outside click. Guard: `scripts/verify-ui-design-system-ratchet.mjs` — it fails when a count goes **up** (backslide lock). **J1 is not done when the guard is green.** J1 closes at `off_locked_scale_sizes = 0` and `trapping_picker_total = 0`, this week, CC-2, one job. Tokens are a **transcription** of this file — never propose a new scale. **Before you write any size, colour, header or field width, open that doc.**
 
 ## Standing facts
 

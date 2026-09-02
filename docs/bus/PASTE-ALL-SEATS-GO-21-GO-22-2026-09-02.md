@@ -41,26 +41,50 @@ ACK: CC-1 | ACK | GO-21+22 | NOW=B5 pay-from-profile | NEVER POST | GO
 ## CC-2 — paste this entire box
 
 ```
-CC-2 · GO-21 J1 + VERIFY-LIVE (Devin-A RETIRED)
-git pull --ff-only origin main
-Law: claude/GO-21-DISPATCH-DEFECT-REGISTER-2026-09-02.md  J1 + K2 + C/D/E2/E3/F2/F4/H3/I1 + B10/B11
+CC-2 — J1 CORRECTED. You do not design anything, and this finishes this week.
 
-VOID: POST Book Load · migrations · money tables · A2 customer picker · A1 FE ·
-      Codex B6/B12 · page-by-page size patches instead of tokens
+TWO CORRECTIONS TO THE EARLIER BOX. Both were wrong.
 
-NOW:
-1. K2 / J1 first hop — ONE combobox. Four copies exist; only components/Combobox.tsx
-   dismisses on outside click. EntityPicker + SelectCombobox (what Book Load uses)
-   do not. Fix the shared component(s) so click-away closes. Do not leave three broken.
-2. Then J1 tokens: type scale, QBO money input, column header, grouping. Rebuild
-   BookLoadValidationSection (same size L/R, smaller boxes). CI guard on raw sizes.
-   Children that close WITH tokens (do not ask CC-3 to one-off): C1–C3, D1–D5,
-   E2, E3, F2, F4, H3, I1, B10, B11.
-3. VERIFY-LIVE (was Devin): after a seat PR deploys, walk the screen on
-   app.ih35dispatch.com at healthz SHA. OUTBOX PASS/FAIL + URL. Merge ≠ fixed.
-4. Standing: /maintenance/predictive-alerts (#19541). Hand CC-3 the adoption list.
+1. DO NOT DESIGN A TOKEN SET. The scale is ALREADY LOCKED and owner-approved:
+   docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md, "Claude + Jorge approved 2026-06-07."
+   Body 12px · column/section headers 11px weight 700 UPPERCASE #4B5563 · H1 22px/600 ·
+   text #0F1219 / #1F2A44 / #6B7280 · cell padding ~7px · surface #FFFFFF ·
+   page #F7F8FA · border 1px #E5E7EB · radius 4px · rail navy #1B2333 · green #16A34A ·
+   EQUAL PAIRED-FIELD SIZES (label and input the same width) ·
+   CENTERED COLUMN HEADERS, EVERY ONE SORTABLE.
+   Applies to ALL screens. No component may deviate without the owner's approval.
+   Your values are a TRANSCRIPTION of that file. Proposing a scale violates a locked
+   owner decision. Open the doc before you write a single value.
+   This also closes GO-21 D1/D2/D3 (equal paired-field sizes) and F2/F4/I1
+   (centered sortable headers) — when Chrome matches, not when a diff landed.
 
-ACK: CC-2 | ACK | GO-21 | NOW=J1 K2 one combobox · verify-live · NEVER POST | GO
+2. THIS IS NOT A GRADUAL PROGRAM. Live tree 2026-09-02: 1,083 off-scale across 342
+   files; 203 of those files have only one or two. Top 50 carry ~45%. One focused
+   job this week. Worklist: claude/GO-21-J1-WORKLIST-2026-09-02.txt
+   (or node scripts/verify-ui-design-system-ratchet.mjs --worklist). No hunt.
+   Tier 1 = top 50. Tier 2 = tail.
+   Worst: BookLoadModalV4 32 · ProgramBoardPage 31 · BankingTransactionsDesignView 31 ·
+   CreateWorkOrderModal 25 · CustomerDetail 19 · EquipmentTypesPage 18 · DispatchKanban 18.
+
+THE ONE JUDGMENT PER LINE: header or body? Header → 11px/700/uppercase/#4B5563.
+Body → 12px. Nothing else is allowed.
+
+ALSO YOURS, same job: ONE picker. 268 files import a combobox that does not dismiss
+on outside mousedown — EntityPicker 106, SelectCombobox 154, shared/Combobox 8. Only
+components/Combobox.tsx has the handler. Converge, migrate all 268. That is K2.
+
+GUARD: scripts/verify-ui-design-system-ratchet.mjs
+Register it as a required verify-step FIRST (your band ≡3, claim-merge-then-author),
+before you migrate a single file. --lower after each PR to bank the drop.
+Guard-green does NOT close J1. J1 closes at off_locked_scale_sizes = 0 and
+trapping_picker_total = 0. "Guard green, migrating gradually" is banned.
+
+VERTICAL: J1 is the one legitimate exception (no data layer). The guard proves it
+landed on all 342 files, not one screen.
+
+DONE = both counts at zero, guard required, owner Chrome on Section D / boards / planners.
+
+ACK: CC-2 | ACK | GO-21 J1 CORRECTED | NOW=claim ≡3 ratchet step THEN count to zero this week · NEVER POST | GO
 ```
 
 ---
