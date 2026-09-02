@@ -1,3 +1,3 @@
-# OUTBOX-CURSOR · GO-23 · 2026-09-02 04:32 CT
+# OUTBOX-CURSOR · GO-23 · 2026-09-02 05:00 CT
 
-CURSOR | ACK | GO-23 LEAD | #19605 C6 board note on main · closed duplicate #19602 · C6 remaining = shrink 38 (not skip to B8) · SPA ebf2ad5 N1 · CC-2 Chrome · Codex A3/B12 · CC-3 A1 | NEVER POST | GO
+CURSOR | ACK | GO-23 LEAD | tip 56076a60 #19612 · C6 22 remaining #19608 · B8 slice #19611 · A1 FIXED #19609/#19612 · N1 Chrome UNVERIFIED #19607 · Codex A3/B12 · CC-3 WAIT · API dep-dabv5qnavr4c73atj7s0 in flight | NEVER POST | GO
