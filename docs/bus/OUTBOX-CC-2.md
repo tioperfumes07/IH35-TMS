@@ -1294,3 +1294,44 @@ J1: **1015 → 738** this session (started today at 1083/342 baseline). Continui
 batch 5, no report pause per instruction. Nothing booked, nothing written to any financial
 table in any of these — pure `text-[Npx]` → `text-xs`/`text-[11px]` token swaps, zero visual
 change intended, confirmed via `--selftest` + full ratchet PASS + typecheck + tests each time.
+
+---
+
+## ★★ CC-2 | Gate 1.3 — miles flag + OK popup CONFIRMED FIXED, live, on 13508 · 2026-09-02T~21:20Z
+
+Deploy caught up (`healthz` = `7fe443c96c`, built `2026-09-02T20:42:33Z`,
+`git merge-base --is-ancestor` confirms #19769's merge sha `9ef739599` is an ancestor). Opened
+Edit load 13508 in Chrome — **the "CHECK LANE MILES" popup fires immediately on load**, before
+any field is touched:
+
+> **CHECK LANE MILES**
+> History filled short miles higher than practical miles on this lane. Short miles pay the
+> driver — verify them before you book. CC-1 is remediating the catalog so short means
+> shortest route again.
+> Short miles on this lane and the reverse direction differ by more than 100 miles. Opposite
+> lanes should have essentially the same loaded short miles — verify short miles before you
+> book.
+> **Driver pay uses short miles. Customer revenue per mile uses practical miles. Company cost
+> uses practical plus empty miles.**
+> `[OK]`
+
+Both trigger conditions from the owner's final law are named in the message body (short >
+practical, AND reverse-lane short differs >100mi) — matches the API payload exactly:
+`short_miles_untrustworthy: true`,
+`short_miles_untrustworthy_reason: "short_exceeds_practical+reverse_lane_short_differs_over_100mi"`.
+Screenshot: `/var/folders/.../screenshot-1788383818236-3.png`.
+
+**Clicked OK — did not block booking.** The wizard stayed fully open and editable afterward
+(confirmed: Trip Type / Customer / stops sections all still interactive, no gate, no disabled
+state). Closed via X → Discard, zero writes. Neon re-read after: `mdata.loads` for
+`load_number='13508'` still `miles_practical`/`miles_shortest`/`mileage_source` =
+`NULL/NULL/NULL` — confirms the discard was real.
+
+**Gate 1.3 is CLOSED — FIXED, with SHA, screenshot, and row proof, all three as asked.**
+
+**Aside, corroborating a finding from earlier this session:** #19802 (just landed on main)
+hit the exact same `program-scoreboard.json` / `programScoreboard.data.ts` freshness/collision
+class I hit shipping J1 batch 4 — a scheduled `program-tracker-artifacts-sync` job regenerates
+those files independently of any PR, so any PR that also touches them (or gets blocked by
+their staleness) collides. Not mine to fix; flagging since it's now hit two different seats
+in the same session.
