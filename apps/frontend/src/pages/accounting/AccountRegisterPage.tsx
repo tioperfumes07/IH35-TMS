@@ -128,14 +128,14 @@ function applyPreset(preset: string): { from: string; to: string } | null {
 function kpiCard(label: string, value: string, sublabel: string) {
   return (
     <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 border-l-4 border-l-slate-300">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
       <p className="text-lg font-semibold text-gray-900">{value}</p>
       <p className="text-xs text-gray-500">{sublabel}</p>
     </div>
   );
 }
 
-const inputCls = "h-9 rounded-sm border border-gray-300 px-2 text-[13px]";
+const inputCls = "h-9 rounded-sm border border-gray-300 px-2 text-xs";
 
 export function AccountRegisterPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -506,7 +506,7 @@ export function AccountRegisterPage() {
           <DatePicker value={toDate} onChange={(next) => { setToDate(next); setPreset("custom"); }} className={inputCls} />
         </label>
         <div className="relative">
-          {/* UI CONTROL LAW — was a hand-rolled h-9/text-[13px] button; already matched the token
+          {/* UI CONTROL LAW — was a hand-rolled h-9, 13px-text button; already matched the token
               values but bypassed the shared primitive. Now the real Button. */}
           <Button type="button" variant="secondary" size="md" onClick={() => setFilterOpen((o) => !o)}>
             Filter{activeChips.length ? ` (${activeChips.length})` : ""}
@@ -559,7 +559,7 @@ export function AccountRegisterPage() {
       ) : null}
 
       {/* Register / Audit tabs */}
-      <div className="mb-2 flex gap-1 border-b border-gray-200 text-[13px]">
+      <div className="mb-2 flex gap-1 border-b border-gray-200 text-xs">
         {(["register", "audit"] as const).map((v) => (
           <button
             key={v}

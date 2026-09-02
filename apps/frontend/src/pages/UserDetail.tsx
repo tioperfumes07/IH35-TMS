@@ -598,11 +598,11 @@ export function UserDetailPage() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Summary</label>
-            <input value={summary} onChange={(event) => setSummary(event.target.value)} maxLength={500} className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]" />
+            <input value={summary} onChange={(event) => setSummary(event.target.value)} maxLength={500} className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs" />
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Details</label>
-            <textarea value={details} onChange={(event) => setDetails(event.target.value)} rows={4} maxLength={5000} className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" />
+            <textarea value={details} onChange={(event) => setDetails(event.target.value)} rows={4} maxLength={5000} className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs" />
           </div>
           <div className="rounded-sm border border-gray-200 p-2">
             <label className="inline-flex items-center gap-2 text-xs">
@@ -723,7 +723,7 @@ export function UserDetailPage() {
             onChange={(event) => setVoidReason(event.target.value)}
             rows={4}
             placeholder="Void reason (min 10 chars)"
-            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
           />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setVoidEventId(null)}>
@@ -754,7 +754,7 @@ export function UserDetailPage() {
             value={editDetails}
             onChange={(event) => setEditDetails(event.target.value)}
             rows={4}
-            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
             placeholder="Details"
           />
           <Combobox

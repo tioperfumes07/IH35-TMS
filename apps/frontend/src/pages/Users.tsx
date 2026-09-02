@@ -741,7 +741,7 @@ export function UsersPage() {
               onChange={(event) => setInviteName(event.target.value)}
               required
               type="text"
-              className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
             />
           </div>
           <div>
@@ -751,7 +751,7 @@ export function UsersPage() {
               onChange={(event) => setInviteEmail(event.target.value)}
               required
               type="email"
-              className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
             />
           </div>
           <div>
@@ -794,7 +794,7 @@ export function UsersPage() {
                 onChange={(event) => setInviteInitialPassword(event.target.value)}
                 type="password"
                 autoComplete="new-password"
-                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
               />
               <PasswordChecklist password={inviteInitialPassword} />
               {!invitePasswordReady ? (
@@ -918,7 +918,7 @@ export function UsersPage() {
               value={roleReason}
               onChange={(event) => setRoleReason(event.target.value)}
               rows={3}
-              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
             />
           </div>
           <div className="flex justify-end gap-2">

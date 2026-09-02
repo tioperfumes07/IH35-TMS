@@ -201,23 +201,23 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
 
       <div className="grid gap-2 md:grid-cols-3" data-testid="safety-hos-kpi-tiles">
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-[10px] uppercase text-slate-700">Drivers on duty</div>
+          <div className="text-[11px] uppercase text-slate-700">Drivers on duty</div>
           <div className="text-xl font-semibold text-emerald-900" data-testid="safety-hos-kpi-on-duty">
             {fleetQuery.isError || fleetIncomplete ? "—" : metrics.onDuty}
           </div>
         </div>
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-[10px] uppercase text-slate-700">Drivers off duty</div>
+          <div className="text-[11px] uppercase text-slate-700">Drivers off duty</div>
           <div className="text-xl font-semibold text-slate-900" data-testid="safety-hos-kpi-off-duty">
             {fleetQuery.isError || fleetIncomplete ? "—" : metrics.offDuty}
           </div>
         </div>
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-[10px] uppercase text-slate-700">Approaching 11h drive cap</div>
+          <div className="text-[11px] uppercase text-slate-700">Approaching 11h drive cap</div>
           <div className="text-xl font-semibold text-slate-700" data-testid="safety-hos-kpi-approaching-cap">
             {fleetQuery.isError || fleetIncomplete ? "—" : metrics.approachingCap}
           </div>
-          <div className="text-[10px] text-slate-700">Within {NEAR_CAP_MINUTES} min of {ELEVEN_HOUR_CAP_MIN / 60}h limit</div>
+          <div className="text-xs text-slate-700">Within {NEAR_CAP_MINUTES} min of {ELEVEN_HOUR_CAP_MIN / 60}h limit</div>
         </div>
       </div>
 

@@ -93,7 +93,7 @@ const VENDOR_COLUMNS: Array<ParityColumn<ApAgingVendor>> = [
       v.vendor_id ? (
         <span className="inline-flex flex-col gap-0.5">
           <EntityLink kind="vendor" id={v.vendor_id} label={entityLabel(v.vendor_name, v.vendor_id, "Vendor")} className="font-medium text-slate-700" />
-          <Link to={apAgingBillsListHref(v.vendor_id)} className="text-[10px] font-medium text-slate-500 hover:underline">
+          <Link to={apAgingBillsListHref(v.vendor_id)} className="text-xs font-medium text-slate-500 hover:underline">
             Open bills
           </Link>
         </span>
@@ -107,7 +107,7 @@ const VENDOR_COLUMNS: Array<ParityColumn<ApAgingVendor>> = [
     sortable: true,
     sortValue: (v) => v.display_group,
     render: (v) => (
-      <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${GROUP_CHIP[v.display_group]}`}>{v.display_group}</span>
+      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${GROUP_CHIP[v.display_group]}`}>{v.display_group}</span>
     ),
   },
   {
@@ -406,7 +406,7 @@ export function AccountsPayableAgingPage() {
             <span className="mr-auto">TOTAL</span>
             {MONEY_KEYS.map((k) => (
               <span key={k} className="whitespace-nowrap">
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{MONEY_LABELS[k]}</span>{" "}
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{MONEY_LABELS[k]}</span>{" "}
                 <span className={`tabular-nums ${RED_KEYS.has(k) ? "text-red-600" : ""}`}>{money(amount(vendorTotals, k))}</span>
               </span>
             ))}
@@ -437,7 +437,7 @@ export function AccountsPayableAgingPage() {
             <span className="mr-auto">TOTAL</span>
             {MONEY_KEYS.map((k) => (
               <span key={k} className="whitespace-nowrap">
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{MONEY_LABELS[k]}</span>{" "}
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{MONEY_LABELS[k]}</span>{" "}
                 <span className={`tabular-nums ${RED_KEYS.has(k) ? "text-red-600" : ""}`}>{money(amount(vendorTotals, k))}</span>
               </span>
             ))}

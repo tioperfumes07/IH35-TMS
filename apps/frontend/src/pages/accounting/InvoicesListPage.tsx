@@ -394,7 +394,7 @@ export function InvoicesListPage() {
         sortValue: (row) => (row.source_load_chargeback_requested ? 1 : 0),
         render: (row) =>
           row.source_load_chargeback_requested ? (
-            <span className="rounded-sm border border-slate-300 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
+            <span className="rounded-sm border border-slate-300 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
               flagged
             </span>
           ) : (
@@ -490,7 +490,7 @@ export function InvoicesListPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="INV-2026-00001 or customer"
-            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
+            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-xs"
             aria-label="Search invoices"
           />
         }
@@ -510,7 +510,7 @@ export function InvoicesListPage() {
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Status
-            <SelectCombobox value={staged.draft.status} onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as InvoiceListFilter })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+            <SelectCombobox value={staged.draft.status} onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as InvoiceListFilter })} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
               {STATUS_OPTIONS.map((option) => (
                 <option key={option.label} value={option.value}>
                   {option.label}
@@ -571,7 +571,7 @@ export function InvoicesListPage() {
           <SelectCombobox
             value={createType}
             onChange={(event) => setCreateType(event.target.value as typeof createType)}
-            className="h-8 text-[13px]"
+            className="h-8 text-xs"
           >
             <option value="from_load">From load</option>
             <option value="driver_damage">Driver damage</option>

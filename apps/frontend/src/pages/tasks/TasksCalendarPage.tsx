@@ -98,7 +98,7 @@ export function TasksCalendarPage() {
           </div>
         </div>
         <div className="p-2" data-testid="tasks-calendar-grid">
-          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-slate-500">
+          <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
             {WEEKDAYS.map((d) => (
               <div key={d} className="py-1">{d}</div>
             ))}
@@ -113,16 +113,16 @@ export function TasksCalendarPage() {
                   key={day}
                   className={`min-h-[84px] rounded-sm border p-1 ${isToday ? "border-[#1f2a44] bg-slate-50" : "border-slate-100"}`}
                 >
-                  <div className={`text-[10px] ${isToday ? "font-bold text-[#1f2a44]" : "text-slate-500"}`}>{Number(day.slice(8, 10))}</div>
+                  <div className={`text-xs ${isToday ? "font-bold text-[#1f2a44]" : "text-slate-500"}`}>{Number(day.slice(8, 10))}</div>
                   <div className="mt-0.5 space-y-0.5">
                     {dayTasks.slice(0, 3).map((t) => (
-                      <div key={t.task_id} className="flex items-center gap-1 truncate text-[9px] text-slate-700" title={t.title}>
+                      <div key={t.task_id} className="flex items-center gap-1 truncate text-xs text-slate-700" title={t.title}>
                         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${PRIORITY_DOT[Math.min(2, Math.max(0, t.priority))]}`} />
                         <span className={`truncate ${t.status === "completed" ? "text-slate-400 line-through" : ""}`}>{t.title}</span>
                         {t.subject_id ? <TaskSubjectLink subjectType={t.subject_type} subjectId={t.subject_id} subjectLabel={t.subject_label} /> : null}
                       </div>
                     ))}
-                    {dayTasks.length > 3 ? <div className="text-[9px] text-slate-400">+{dayTasks.length - 3} more</div> : null}
+                    {dayTasks.length > 3 ? <div className="text-xs text-slate-400">+{dayTasks.length - 3} more</div> : null}
                   </div>
                 </div>
               );
