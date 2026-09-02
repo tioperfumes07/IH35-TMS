@@ -473,7 +473,7 @@ export function CostBreakdownBox({
                                 className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-700"
                                 data-testid="wo-parts-catalog-not-provisioned"
                               >
-                                Parts catalog not provisioned — maintenance.parts_inventory is missing for this entity.
+                                Parts catalog is not provisioned for this operating company.
                               </p>
                             ) : (
                             <div className="flex items-center gap-1">
@@ -594,7 +594,7 @@ export function CostBreakdownBox({
                                 className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-700"
                                 data-testid="wo-labor-rates-catalog-not-provisioned"
                               >
-                                Labor rates catalog not provisioned — catalogs.labor_rates is missing for this entity.
+                                Labor rates catalog is not provisioned for this operating company.
                               </p>
                             ) : laborRateOptions.length > 0 ? (
                               <SelectCombobox
