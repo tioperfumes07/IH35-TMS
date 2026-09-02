@@ -50,6 +50,15 @@ type Props = {
   defaultUnitId?: string;
   /** Human-readable WO id for memo + banner (maintenance linkage). */
   linkedWoDisplayId?: string;
+  /**
+   * N1 (GO-23 wave 1) — optional load prefill for the "expense from a load" entry point
+   * (LoadDetailDrawer's ExpensesReverseSection → /accounting/expenses/new?load_id=…). Mirrors the
+   * defaultUnitId/linkedWoDisplayId maintenance-context pattern above rather than inventing a new
+   * shape. Does not override an operator's own load-picker choice once set.
+   */
+  defaultLoadId?: string;
+  /** Human-readable load number for the memo (buildRecordExpenseMemo — never a raw UUID). */
+  linkedLoadDisplayId?: string;
 };
 
 export function RecordExpenseForm({
@@ -62,16 +71,26 @@ export function RecordExpenseForm({
   workOrderId,
   defaultUnitId,
   linkedWoDisplayId,
+  defaultLoadId,
+  linkedLoadDisplayId,
 }: Props) {
   const [values, setValues] = useState<RecordExpenseFormValues>(() => {
     const initial = initialRecordExpenseFormValues();
-    return defaultUnitId ? { ...initial, unitId: defaultUnitId } : initial;
+    const withUnit = defaultUnitId ? { ...initial, unitId: defaultUnitId } : initial;
+    return defaultLoadId
+      ? {
+          ...withUnit,
+          loadId: defaultLoadId,
+          loadLabel: entityLabel(linkedLoadDisplayId ?? null, defaultLoadId, "Load"),
+        }
+      : withUnit;
   });
+  /** A defaultLoadId prefill counts as an already-resolved suggestion — never let the
+   *  driver/unit/trailer auto-suggest effect below clobber an explicit load-from-load entry. */
+  const [suggestionPinned, setSuggestionPinned] = useState(Boolean(defaultLoadId));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
-  /** Once auto-filled from suggest-load, do not clobber an operator override until driver/unit/date change. */
-  const [suggestionPinned, setSuggestionPinned] = useState(false);
   // LV-G18-INERT-ON-EXPENSE-LINES: drives both the Load field's required asterisk and the no-load
   // reason field's visibility. See recordExpenseSubmit.ts's OVER_THE_ROAD_CATEGORY_RE for why this
   // exact taxonomy/regex, kept as the single source of truth so the two can never drift apart.

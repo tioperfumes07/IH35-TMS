@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { RecordExpenseForm } from "../../components/expenses/RecordExpenseForm";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
@@ -20,6 +20,13 @@ export function ExpenseCreatePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [lastExpenseId, setLastExpenseId] = useState<string | null>(null);
+  // N1 (GO-23 wave 1, ACCT-F19470-adjacent) — the load-scoped "Add Expense" entry point
+  // (LoadDetailDrawer's ExpensesReverseSection) had nowhere to send an operator; ExpenseCreatePage
+  // was reachable only from /accounting/expenses with no way to carry load context through. These
+  // two query params are the whole contract.
+  const [searchParams] = useSearchParams();
+  const loadId = searchParams.get("load_id") ?? undefined;
+  const loadNumber = searchParams.get("load_number") ?? undefined;
 
   return (
     <AccountingSubNavWrapper title="Expenses" subtitle="Record a vendor expense or bill payment">
@@ -43,6 +50,11 @@ export function ExpenseCreatePage() {
       >
         {companyId ? (
           <div className="space-y-4">
+            {loadId ? (
+              <p className="text-xs text-slate-600" data-testid="expense-create-load-context">
+                Load-scoped: <EntityLink kind="load" id={loadId} label={loadNumber ?? "this load"} className="font-semibold text-slate-700 underline" />
+              </p>
+            ) : null}
             {/* ACCT-MONEY-F6508-DIRECT-CREATORS-RETAIN-CROSS-COMPANY-DRAFT — RecordExpenseForm
                 initializes substantial vendor/account/driver/unit/load/line state once and never
                 resets it on an operatingCompanyId change; a keyed remount (same fix already
@@ -52,6 +64,8 @@ export function ExpenseCreatePage() {
               key={`accounting-record-expense-${companyId}`}
               operatingCompanyId={companyId}
               idPrefix="record-expense-page"
+              defaultLoadId={loadId}
+              linkedLoadDisplayId={loadNumber}
               onSubmitted={(created) => {
                 pushToast("Expense recorded", "success");
                 setLastExpenseId(created?.targetId ?? null);
