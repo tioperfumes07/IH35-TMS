@@ -6,7 +6,7 @@
  *   <Route path="/reports/trip-profitability" element={<TripProfitability />} />
  *
  * Data: GET /api/v1/reports/trip-profitability
- * Aggregates NB + SB per driver_settlement (load_bookended model).
+ * One row per settlement period with every linked load (5753 model).
  * Read-only. No new financial code.
  */
 import { useState } from "react";
@@ -20,6 +20,7 @@ import { CollapsedListFilters } from "../../components/table";
 import { ReportsSubNav } from "../reports/ReportsSubNav";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { formatUsdCents } from "../../lib/money";
+import { formatDateUS } from "../../lib/formatDate";
 
 function money(cents: number) {
   return formatUsdCents(cents);
@@ -63,7 +64,7 @@ export function TripProfitability() {
   const columns: Array<ParityColumn<TripProfitabilityRow>> = [
     {
       key: "settlement_display_id",
-      label: "Trip #",
+      label: "Settlement #",
       sortable: true,
       render: (row) => (
         <span className="font-mono text-xs">
@@ -72,30 +73,38 @@ export function TripProfitability() {
       ),
     },
     {
+      key: "period_start",
+      label: "Period",
+      sortable: true,
+      sortValue: (row) => row.period_start,
+      render: (row) => <>{formatDateUS(row.period_start)} → {formatDateUS(row.period_end)}</>,
+    },
+    {
       key: "driver_name",
       label: "Driver",
       sortable: true,
       render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" />,
     },
     {
-      key: "nb_load_number",
-      label: "NB Load",
+      key: "load_links",
+      label: "Loads",
       sortable: true,
+      sortValue: (row) => row.load_links.length,
       render: (row) => (
-        <span className="font-mono text-xs">
-          <EntityLinkOrTombstone kind="load" id={row.nb_load_id} name={row.nb_load_number} noun="Load" />
+        <span className="flex flex-wrap gap-1 font-mono text-xs">
+          {row.load_links.length === 0 ? <span className="text-slate-500">No linked loads</span> : row.load_links.map((load) => (
+            <EntityLinkOrTombstone key={load.id} kind="load" id={load.id} name={load.label} noun="Load" />
+          ))}
         </span>
       ),
     },
     {
-      key: "sb_load_number",
-      label: "SB Load",
+      key: "quick_pay_cents",
+      label: "Quick Pay",
       sortable: true,
-      render: (row) => (
-        <span className="font-mono text-xs">
-          <EntityLinkOrTombstone kind="load" id={row.sb_load_id} name={row.sb_load_number} noun="Load" />
-        </span>
-      ),
+      className: "text-right",
+      cellClass: "text-right",
+      render: (row) => money(row.quick_pay_cents),
     },
     {
       key: "revenue_cents",
@@ -114,6 +123,14 @@ export function TripProfitability() {
       render: (row) => money(row.driver_pay_cents),
     },
     {
+      key: "additional_driver_pay_cents",
+      label: "Additional Driver Pay",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right",
+      render: (row) => money(row.additional_driver_pay_cents),
+    },
+    {
       key: "fuel_cents",
       label: "Fuel",
       sortable: true,
@@ -122,12 +139,26 @@ export function TripProfitability() {
       render: (row) => money(row.fuel_cents),
     },
     {
+      key: "company_expenses_cents",
+      label: "Company Expenses",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right",
+      render: (row) => money(row.company_expenses_cents),
+    },
+    {
       key: "net_profit_cents",
-      label: "Net Profit",
+      label: "Net Revenue",
       sortable: true,
       className: "text-right",
       cellClass: "text-right",
       render: (row) => <span className={marginClass(row.margin_pct)}>{money(row.net_profit_cents)}</span>,
+    },
+    {
+      key: "status",
+      label: "Status",
+      sortable: true,
+      render: (row) => row.status,
     },
     {
       key: "margin_pct",
@@ -185,7 +216,7 @@ export function TripProfitability() {
   return (
     <div className="space-y-3">
       <ReportsSubNav />
-      <PageHeader title="Trip Profitability" subtitle="Company Settlement Report — NB + SB roll-up per trip" />
+      <PageHeader title="Company Settlements" subtitle="One settlement period, every linked load, P&L tied to the cent" />
 
       {/* State messages */}
       {query.isError && (
@@ -201,10 +232,10 @@ export function TripProfitability() {
       {t && (
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-5">
           {[
-            { label: "Trips", value: String(t.trip_count) },
+            { label: "Settlements", value: String(t.settlement_count) },
             { label: "Revenue", value: money(t.revenue_cents) },
-            { label: "Driver pay", value: money(t.driver_pay_cents) },
-            { label: "Fuel", value: money(t.fuel_cents) },
+            { label: "Quick pay", value: money(t.quick_pay_cents) },
+            { label: "Driver pay", value: money(t.driver_pay_cents + t.additional_driver_pay_cents) },
             {
               label: "Net profit",
               value: money(t.net_profit_cents),
@@ -224,9 +255,9 @@ export function TripProfitability() {
         rows={rows}
         rowKey={(row) => row.settlement_id}
         loading={query.isLoading}
-        emptyText="No trips closed in this period."
-        storageKey="dispatch-trip-profitability"
-        exportFilename="trip-profitability"
+        emptyText="No company settlements in this period."
+        storageKey="company-settlements-period-grid"
+        exportFilename="company-settlements"
         filterBar={filterBar}
       />
     </div>

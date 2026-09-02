@@ -29,17 +29,16 @@ export type TripProfitabilityRow = {
   settlement_display_id: string | null;
   driver_id: string | null;
   driver_name: string | null;
-  nb_load_id: string | null;
-  nb_load_number: string | null;
-  sb_load_id: string | null;
-  sb_load_number: string | null;
+  period_start: string;
+  period_end: string;
+  status: string;
+  load_links: Array<{ id: string; label: string | null }>;
   revenue_cents: number;
+  quick_pay_cents: number;
   driver_pay_cents: number;
+  additional_driver_pay_cents: number;
   fuel_cents: number;
-  maintenance_cents: number;
-  insurance_alloc_cents: number;
-  factoring_fee_cents: number;
-  accessorial_deductions_cents: number;
+  company_expenses_cents: number;
   net_profit_cents: number;
   margin_pct: number;
   trip_closed_at: string | null;
@@ -49,11 +48,13 @@ export type TripProfitabilityResponse = {
   period: { start: string; end: string };
   totals: {
     revenue_cents: number;
+    quick_pay_cents: number;
     driver_pay_cents: number;
+    additional_driver_pay_cents: number;
     fuel_cents: number;
-    maintenance_cents: number;
+    company_expenses_cents: number;
     net_profit_cents: number;
-    trip_count: number;
+    settlement_count: number;
   };
   rows: TripProfitabilityRow[];
 };
@@ -66,6 +67,22 @@ function num(v: unknown): number {
 function marginPct(net: number, revenue: number): number {
   if (revenue <= 0) return 0;
   return Math.round((net / revenue) * 10000) / 100;
+}
+
+export function computeCompanySettlementNetCents(input: {
+  revenue_cents: number;
+  quick_pay_cents: number;
+  driver_pay_cents: number;
+  additional_driver_pay_cents: number;
+  fuel_cents: number;
+  company_expenses_cents: number;
+}): number {
+  return input.revenue_cents
+    - input.quick_pay_cents
+    - input.driver_pay_cents
+    - input.additional_driver_pay_cents
+    - input.fuel_cents
+    - input.company_expenses_cents;
 }
 
 /**
@@ -262,8 +279,14 @@ export async function computeLoadProfitability(
 }
 
 /**
- * Trip-level profitability — aggregates NB + SB loads per driver_settlements row.
- * Query: driver_settlements (load_bookended) in date window; sum costs across both legs.
+ * Company settlement profitability — one row per settlement PERIOD, with every linked load.
+ *
+ * The 5753 reference covers two loads in one period. first_load_id/last_load_id are only bookend
+ * conveniences; they are not the settlement grain and cannot be used as the complete load set.
+ * Canonical load membership is the union of settlement-line load_id, its source driver bill's
+ * load_id, and the two legacy bookends as a historical fallback. UNION makes each load count once.
+ *
+ * Read-only: no posting math or financial records are created here.
  */
 export async function computeTripProfitabilityReport(
   client: PoolClient,
@@ -273,143 +296,167 @@ export async function computeTripProfitabilityReport(
 ): Promise<TripProfitabilityResponse> {
   const res = await client.query<Record<string, unknown>>(
     `
-    WITH trips AS (
+    WITH settlements_in_period AS (
       SELECT
-        s.id::text AS settlement_id,
-        s.display_id::text AS settlement_display_id,
-        s.driver_id::text AS driver_id,
-        NULLIF(trim(CONCAT_WS(' ', d.first_name, d.last_name)), '')  AS driver_name,
-        s.first_load_id::text AS nb_load_id,
-        s.first_load_number::text AS nb_load_number,
-        s.last_load_id::text AS sb_load_id,
-        s.last_load_number::text AS sb_load_number,
+        s.id,
+        s.display_id,
+        s.driver_id,
+        s.period_start,
+        s.period_end,
+        s.status,
+        s.first_load_id,
+        s.last_load_id,
         s.trip_closed_at
       FROM driver_finance.driver_settlements s
-      LEFT JOIN mdata.drivers d ON d.id = s.driver_id
-                             AND d.operating_company_id = s.operating_company_id
       WHERE s.operating_company_id = $1::uuid
-        AND s.settlement_model = 'load_bookended'
-        AND (
-          s.trip_closed_at::date BETWEEN $2::date AND $3::date
-          OR (s.trip_closed_at IS NULL AND s.created_at::date BETWEEN $2::date AND $3::date)
-        )
+        AND s.period_end BETWEEN $2::date AND $3::date
+        AND s.status <> 'cancelled'
+        AND s.is_sample_data = false
     ),
-    load_ids AS (
-      SELECT nb_load_id AS load_id FROM trips WHERE nb_load_id IS NOT NULL
+    settlement_loads AS (
+      SELECT sip.id AS settlement_id, COALESCE(db.load_id, sl.load_id) AS load_id
+      FROM settlements_in_period sip
+      JOIN driver_finance.settlement_lines sl ON sl.settlement_id = sip.id
+      LEFT JOIN driver_finance.driver_bills db
+        ON db.id = sl.source_driver_bill_id
+       AND db.operating_company_id = $1::uuid
+      WHERE COALESCE(db.load_id, sl.load_id) IS NOT NULL
+        AND sl.is_sample_data = false
       UNION
-      SELECT sb_load_id AS load_id FROM trips WHERE sb_load_id IS NOT NULL
+      SELECT id, first_load_id FROM settlements_in_period WHERE first_load_id IS NOT NULL
+      UNION
+      SELECT id, last_load_id FROM settlements_in_period WHERE last_load_id IS NOT NULL
     ),
-    revenue AS (
-      SELECT l.id::text AS load_id, COALESCE(l.rate_total_cents, 0)::bigint AS rev
-      FROM mdata.loads l
-      WHERE l.id = ANY(ARRAY(SELECT load_id::uuid FROM load_ids))
-        AND l.operating_company_id = $1::uuid
+    settlement_lines AS (
+      SELECT
+        sl.settlement_id,
+        COALESCE(SUM(ROUND(sl.amount * 100)) FILTER (
+          WHERE sl.line_type IN ('earnings', 'team_split_primary', 'team_split_secondary')
+        ), 0)::bigint AS driver_pay_cents,
+        COALESCE(SUM(ROUND(sl.amount * 100)) FILTER (WHERE sl.line_type = 'extra_pay'), 0)::bigint
+          AS additional_driver_pay_cents
+      FROM driver_finance.settlement_lines sl
+      JOIN settlements_in_period sip ON sip.id = sl.settlement_id
+      WHERE sl.is_sample_data = false
+      GROUP BY sl.settlement_id
     ),
-    pay AS (
-      SELECT db.load_id::text, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS pay
-      FROM driver_finance.driver_bills db
-      WHERE db.load_id = ANY(ARRAY(SELECT load_id::uuid FROM load_ids))
-        AND db.operating_company_id = $1::uuid
-      GROUP BY db.load_id
+    load_rollup AS (
+      SELECT
+        sl.settlement_id,
+        COALESCE(
+          jsonb_agg(jsonb_build_object('id', l.id::text, 'label', l.load_number::text)
+                    ORDER BY l.load_number),
+          '[]'::jsonb
+        ) AS load_links,
+        COALESCE(SUM(l.rate_total_cents), 0)::bigint AS revenue_cents,
+        COALESCE(SUM(l.miles_practical), 0)::numeric AS miles
+      FROM settlement_loads sl
+      JOIN mdata.loads l
+        ON l.id = sl.load_id
+       AND l.operating_company_id = $1::uuid
+       AND l.soft_deleted_at IS NULL
+       AND l.is_sample_data = false
+      GROUP BY sl.settlement_id
     ),
-    fuel AS (
-      SELECT ft.load_id::text, COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::bigint AS fuel
-      FROM fuel.fuel_transactions ft
-      WHERE ft.load_id = ANY(ARRAY(SELECT load_id::uuid FROM load_ids))
-        AND ft.operating_company_id = $1::uuid
-      GROUP BY ft.load_id
+    quick_pay AS (
+      SELECT sl.settlement_id, COALESCE(SUM(fa.factor_fee_cents), 0)::bigint AS quick_pay_cents
+      FROM settlement_loads sl
+      JOIN accounting.invoices inv
+        ON inv.source_load_id = sl.load_id
+       AND inv.operating_company_id = $1::uuid
+       AND inv.status <> 'void'
+       AND inv.is_sample_data = false
+      JOIN accounting.factoring_advances fa
+        ON fa.id = inv.factoring_advance_id
+       AND fa.operating_company_id = inv.operating_company_id
+      GROUP BY sl.settlement_id
     ),
-    maint AS (
-      SELECT wo.load_id::text, COALESCE(SUM(ROUND(COALESCE(wo.total_actual_cost,0)::numeric*100))::bigint, 0) AS maint
-      FROM maintenance.work_orders wo
-      WHERE wo.load_id = ANY(ARRAY(SELECT load_id::uuid FROM load_ids))
-        AND wo.operating_company_id = $1::uuid
-      GROUP BY wo.load_id
+    fuel_cost AS (
+      SELECT sl.settlement_id,
+             COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::bigint AS fuel_cents
+      FROM settlement_loads sl
+      JOIN fuel.fuel_transactions ft
+        ON ft.load_id = sl.load_id
+       AND ft.operating_company_id = $1::uuid
+      GROUP BY sl.settlement_id
     ),
-    fact AS (
-      SELECT inv.source_load_id::text AS load_id, COALESCE(SUM(fa.factor_fee_cents), 0)::bigint AS fee
-      FROM accounting.invoices inv
-      -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): same class as the single-load query above.
-      JOIN accounting.factoring_advances fa ON fa.id = inv.factoring_advance_id
-                                            AND fa.operating_company_id = inv.operating_company_id
-      WHERE inv.source_load_id = ANY(ARRAY(SELECT load_id::uuid FROM load_ids))
-        AND inv.operating_company_id = $1::uuid
-      GROUP BY inv.source_load_id
+    company_expenses AS (
+      SELECT sl.settlement_id,
+             COALESCE(SUM(e.total_amount_cents), 0)::bigint AS company_expenses_cents
+      FROM settlement_loads sl
+      JOIN accounting.expenses e
+        ON e.load_id = sl.load_id
+       AND e.operating_company_id = $1::uuid
+       AND e.status = 'posted'
+       AND e.is_active = true
+       AND e.deleted_at IS NULL
+       AND e.is_sample_data = false
+      GROUP BY sl.settlement_id
     )
     SELECT
-      t.settlement_id,
-      t.settlement_display_id,
-      t.driver_id,
-      t.driver_name,
-      t.nb_load_id,
-      t.nb_load_number,
-      t.sb_load_id,
-      t.sb_load_number,
-      t.trip_closed_at::text,
-      -- DISPATCH-F-TRIP-PROFITABILITY-SINGLE-LOAD-DOUBLE-COUNT: a "trip" that bookends only ONE
-      -- real load (no true NB+SB round trip -- s.first_load_id and s.last_load_id both point at
-      -- the same load) still joined revenue/pay/fuel/maint/factoring TWICE, once via the _nb alias
-      -- and once via the _sb alias, and summed both -- silently doubling every dollar figure for
-      -- every single-load trip. Live-reproduced and Neon-confirmed on 3 real trips before fixing:
-      -- L-20260802-0258 (rate $1.00, shown as Revenue $2.00), L-20260806-0008 (rate $1,875.50,
-      -- shown as $3,751.00), L-20260824-0007 (rate $1,200.00, shown as $2,400.00) -- all exactly
-      -- 2x. Driver pay was doubled the identical way (Neon: driver_bills summed to $1,105.00 for
-      -- L-20260802-0258, report showed $2,210.00). Only add the _sb side when it is a genuinely
-      -- DIFFERENT load from _nb.
-      CASE WHEN t.sb_load_id IS NOT NULL AND t.sb_load_id != t.nb_load_id
-           THEN COALESCE(r_nb.rev, 0) + COALESCE(r_sb.rev, 0)
-           ELSE COALESCE(r_nb.rev, 0) END AS revenue_cents,
-      CASE WHEN t.sb_load_id IS NOT NULL AND t.sb_load_id != t.nb_load_id
-           THEN COALESCE(p_nb.pay, 0) + COALESCE(p_sb.pay, 0)
-           ELSE COALESCE(p_nb.pay, 0) END AS driver_pay_cents,
-      CASE WHEN t.sb_load_id IS NOT NULL AND t.sb_load_id != t.nb_load_id
-           THEN COALESCE(f_nb.fuel, 0) + COALESCE(f_sb.fuel, 0)
-           ELSE COALESCE(f_nb.fuel, 0) END AS fuel_cents,
-      CASE WHEN t.sb_load_id IS NOT NULL AND t.sb_load_id != t.nb_load_id
-           THEN COALESCE(m_nb.maint, 0) + COALESCE(m_sb.maint, 0)
-           ELSE COALESCE(m_nb.maint, 0) END AS maintenance_cents,
-      CASE WHEN t.sb_load_id IS NOT NULL AND t.sb_load_id != t.nb_load_id
-           THEN COALESCE(fa_nb.fee, 0) + COALESCE(fa_sb.fee, 0)
-           ELSE COALESCE(fa_nb.fee, 0) END AS factoring_fee_cents
-    FROM trips t
-    LEFT JOIN revenue r_nb ON r_nb.load_id = t.nb_load_id
-    LEFT JOIN revenue r_sb ON r_sb.load_id = t.sb_load_id
-    LEFT JOIN pay p_nb ON p_nb.load_id = t.nb_load_id
-    LEFT JOIN pay p_sb ON p_sb.load_id = t.sb_load_id
-    LEFT JOIN fuel f_nb ON f_nb.load_id = t.nb_load_id
-    LEFT JOIN fuel f_sb ON f_sb.load_id = t.sb_load_id
-    LEFT JOIN maint m_nb ON m_nb.load_id = t.nb_load_id
-    LEFT JOIN maint m_sb ON m_sb.load_id = t.sb_load_id
-    LEFT JOIN fact fa_nb ON fa_nb.load_id = t.nb_load_id
-    LEFT JOIN fact fa_sb ON fa_sb.load_id = t.sb_load_id
-    ORDER BY t.trip_closed_at DESC NULLS LAST
+      sip.id::text AS settlement_id,
+      sip.display_id::text AS settlement_display_id,
+      sip.driver_id::text AS driver_id,
+      NULLIF(trim(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name,
+      sip.period_start::text,
+      sip.period_end::text,
+      sip.status,
+      COALESCE(lr.load_links, '[]'::jsonb) AS load_links,
+      COALESCE(lr.revenue_cents, 0)::bigint AS revenue_cents,
+      COALESCE(qp.quick_pay_cents, 0)::bigint AS quick_pay_cents,
+      COALESCE(sln.driver_pay_cents, 0)::bigint AS driver_pay_cents,
+      COALESCE(sln.additional_driver_pay_cents, 0)::bigint AS additional_driver_pay_cents,
+      COALESCE(fc.fuel_cents, 0)::bigint AS fuel_cents,
+      COALESCE(ce.company_expenses_cents, 0)::bigint AS company_expenses_cents,
+      sip.trip_closed_at::text
+    FROM settlements_in_period sip
+    LEFT JOIN mdata.drivers d
+      ON d.id = sip.driver_id
+     AND d.operating_company_id = $1::uuid
+    LEFT JOIN load_rollup lr ON lr.settlement_id = sip.id
+    LEFT JOIN settlement_lines sln ON sln.settlement_id = sip.id
+    LEFT JOIN quick_pay qp ON qp.settlement_id = sip.id
+    LEFT JOIN fuel_cost fc ON fc.settlement_id = sip.id
+    LEFT JOIN company_expenses ce ON ce.settlement_id = sip.id
+    ORDER BY sip.period_end DESC, sip.display_id DESC
     `,
     [operatingCompanyId, from, to]
   );
 
   const rows: TripProfitabilityRow[] = (res.rows as Array<Record<string, unknown>>).map((r) => {
     const rev = num(r.revenue_cents);
+    const quickPay = num(r.quick_pay_cents);
     const dp = num(r.driver_pay_cents);
+    const additionalPay = num(r.additional_driver_pay_cents);
     const fuel = num(r.fuel_cents);
-    const maint = num(r.maintenance_cents);
-    const ff = num(r.factoring_fee_cents);
-    const net = rev - dp - fuel - maint - ff;
+    const companyExpenses = num(r.company_expenses_cents);
+    const net = computeCompanySettlementNetCents({
+      revenue_cents: rev,
+      quick_pay_cents: quickPay,
+      driver_pay_cents: dp,
+      additional_driver_pay_cents: additionalPay,
+      fuel_cents: fuel,
+      company_expenses_cents: companyExpenses,
+    });
+    const rawLoadLinks = Array.isArray(r.load_links) ? r.load_links : [];
     return {
       settlement_id: String(r.settlement_id),
       settlement_display_id: r.settlement_display_id ? String(r.settlement_display_id) : null,
       driver_id: r.driver_id ? String(r.driver_id) : null,
       driver_name: r.driver_name ? String(r.driver_name) : null,
-      nb_load_id: r.nb_load_id ? String(r.nb_load_id) : null,
-      nb_load_number: r.nb_load_number ? String(r.nb_load_number) : null,
-      sb_load_id: r.sb_load_id ? String(r.sb_load_id) : null,
-      sb_load_number: r.sb_load_number ? String(r.sb_load_number) : null,
+      period_start: String(r.period_start),
+      period_end: String(r.period_end),
+      status: String(r.status),
+      load_links: rawLoadLinks.map((link) => {
+        const value = link as Record<string, unknown>;
+        return { id: String(value.id), label: value.label == null ? null : String(value.label) };
+      }),
       revenue_cents: rev,
+      quick_pay_cents: quickPay,
       driver_pay_cents: dp,
+      additional_driver_pay_cents: additionalPay,
       fuel_cents: fuel,
-      maintenance_cents: maint,
-      insurance_alloc_cents: 0,
-      factoring_fee_cents: ff,
-      accessorial_deductions_cents: 0,
+      company_expenses_cents: companyExpenses,
       net_profit_cents: net,
       margin_pct: marginPct(net, rev),
       trip_closed_at: r.trip_closed_at ? String(r.trip_closed_at) : null,
@@ -419,14 +466,25 @@ export async function computeTripProfitabilityReport(
   const totals = rows.reduce(
     (acc, r) => {
       acc.revenue_cents += r.revenue_cents;
+      acc.quick_pay_cents += r.quick_pay_cents;
       acc.driver_pay_cents += r.driver_pay_cents;
+      acc.additional_driver_pay_cents += r.additional_driver_pay_cents;
       acc.fuel_cents += r.fuel_cents;
-      acc.maintenance_cents += r.maintenance_cents;
+      acc.company_expenses_cents += r.company_expenses_cents;
       acc.net_profit_cents += r.net_profit_cents;
-      acc.trip_count += 1;
+      acc.settlement_count += 1;
       return acc;
     },
-    { revenue_cents: 0, driver_pay_cents: 0, fuel_cents: 0, maintenance_cents: 0, net_profit_cents: 0, trip_count: 0 }
+    {
+      revenue_cents: 0,
+      quick_pay_cents: 0,
+      driver_pay_cents: 0,
+      additional_driver_pay_cents: 0,
+      fuel_cents: 0,
+      company_expenses_cents: 0,
+      net_profit_cents: 0,
+      settlement_count: 0,
+    }
   );
 
   return { period: { start: from, end: to }, totals, rows };

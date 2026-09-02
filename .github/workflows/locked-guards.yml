@@ -290,6 +290,9 @@ jobs:
       - name: verify:no-orphan-routes
         run: npm run verify:no-orphan-routes
 
+      - name: verify:company-settlement-period-grain
+        run: node scripts/verify-company-settlement-period-grain.mjs
+
       - name: verify:enum-literals
         run: npm run verify:enum-literals
 

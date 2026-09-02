@@ -50,7 +50,7 @@ export async function registerLoadProfitabilityRoutes(app: FastifyInstance) {
 
   /**
    * GET /api/v1/reports/trip-profitability
-   * Company Settlement / Trip Profitability report. Aggregates NB+SB per settlement.
+   * Company Settlement report. One row per settlement period with every linked load.
    */
   app.get("/api/v1/reports/trip-profitability", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
