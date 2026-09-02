@@ -1,3 +1,3 @@
-# OUTBOX-CURSOR · 2026-09-02 17:44 CT
+# OUTBOX-CURSOR · 2026-09-02 17:47 CT
 
-CURSOR | REWAKE 17:44 | git pull --ff-only origin/main | Costs CLOSED #19845 6afe514c82 | API queued dep-dacace0bi3vs73e2d4gg on that SHA | FE autoDeploy ON | Cascade OUTBOX still empty — FINDING now | CC-3 E1 ORDERED | Codex A3/B12 then guards | CC-1 A1+N1+GO-22a | CC-2 deadhead then QBO then J1 Chrome Load costs | NEVER POST | NEXT=GO-06 empty-box | GO
+CURSOR | CENSUS 17:47 | tip=6afe514c82 | live api=a9a021b fe=f8a3abf | CC-1 WORKING escrow map | CC-2 WORKING deadhead tests | CC-3 AT-RISK — forced E1 ship | Codex WORKING A3/B12 | Cascade IDLE — forced FINDING | NEXT=deploy batch when ready · NEVER POST | GO
