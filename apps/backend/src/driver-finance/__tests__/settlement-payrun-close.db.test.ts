@@ -94,6 +94,9 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
   const below: Scenario = { driverId: randomUUID(), escrowSub: randomUUID(), settlementId: randomUUID(), displayId: `PR-BELOW-${suffix}` };
   const atcap: Scenario = { driverId: randomUUID(), escrowSub: randomUUID(), settlementId: randomUUID(), displayId: `PR-ATCAP-${suffix}` };
   const off: Scenario = { driverId: randomUUID(), escrowSub: randomUUID(), settlementId: randomUUID(), displayId: `PR-OFF-${suffix}` };
+  // GO-22 B7 — same shape as `below` (gross 3000, advance 200 outstanding), dedicated so the
+  // blocking-decision tests never share close-once-per-settlement state with (1)/(1b).
+  const gate: Scenario = { driverId: randomUUID(), escrowSub: randomUUID(), settlementId: randomUUID(), displayId: `PR-GATE-${suffix}` };
   const mkUser1 = randomUUID();
   const mkUser2 = randomUUID();
   // Dedicated flag actor for THIS file only. The SETTLEMENT_GL_POSTING_ENABLED override is contended on
@@ -108,7 +111,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
   // a user_uuid-non-NULL / company-NULL row, and they read with a DIFFERENT actor (TEST_OWNER) so they
   // never fetch ours — the flag state is immune in BOTH directions (no cross-suite contamination).
   const flagActor = randomUUID();
-  const allDrivers = [below.driverId, atcap.driverId, off.driverId];
+  const allDrivers = [below.driverId, atcap.driverId, off.driverId, gate.driverId];
 
   async function bypass(fn: () => Promise<void>) {
     await db.query("BEGIN");
@@ -284,6 +287,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       await seedDriverAndSettlement(below, 50_000); // below cap -> contributes 25000
       await seedDriverAndSettlement(atcap, CAP);    // at cap    -> contributes 0
       await seedDriverAndSettlement(off, 50_000);   // flag-off preview
+      await seedDriverAndSettlement(gate, 50_000);  // GO-22 B7 blocking-decision gate
       // ACCT-F5613 — an active reimbursement line (50.00) plus an INACTIVE one (999.00, must be
       // excluded by loadReimbursementsCents' is_active filter, same as the existing chargeback filter).
       await db.query(
@@ -298,7 +302,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
   afterAll(async () => {
     if (!db) return;
     let restoreError: unknown;
-    const sids = [below.settlementId, atcap.settlementId, off.settlementId];
+    const sids = [below.settlementId, atcap.settlementId, off.settlementId, gate.settlementId];
     // Fixture cleanup in its own txn — a failed DELETE must not abort GLOBAL restore.
     try {
       await bypass(async () => {
@@ -349,7 +353,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     try {
       await bypass(async () => {
         await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [
-          [below.escrowSub, atcap.escrowSub, off.escrowSub, escrowParent, escrowGrandparent, acct.driverPay, acct.insuranceRecovery, acct.advanceClearing, acct.chargebackRecovery, acct.reimbursementExpense, acct.cash],
+          [below.escrowSub, atcap.escrowSub, off.escrowSub, gate.escrowSub, escrowParent, escrowGrandparent, acct.driverPay, acct.insuranceRecovery, acct.advanceClearing, acct.chargebackRecovery, acct.reimbursementExpense, acct.cash],
         ]);
       });
     } catch (postRestoreCleanupErr) {
@@ -635,5 +639,67 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       [interlockSettlementId]
     );
     expect(Number(runs[0]!.c)).toBe(0);
+  });
+
+  // GO-22 B7 (owner direct instruction, 2026-09-02): "If the driver has ANY outstanding loan or
+  // debt... a window MUST appear and ask. IT CANNOT BE DEFERRED... the decision MUST BE
+  // REGISTERED." requireLoanDecision:true is what the real payrun-close ROUTE always sets — these
+  // two cases are that route's contract, proven against real Postgres, not a mock.
+
+  it("(6) B7 blocking gate: requireLoanDecision + an outstanding advance + no decision -> refused, nothing written", async () => {
+    await setFlag(true);
+    await expect(
+      closeSettlementPayRun(
+        { operatingCompanyId: companyId, settlementId: gate.settlementId, paymentMethodId, requireLoanDecision: true },
+        { userId: flagActor }
+      )
+    ).rejects.toMatchObject({
+      code: "OUTSTANDING_LOAN_DECISION_REQUIRED",
+      details: expect.objectContaining({ total_recoverable_cents: 20000 }),
+    });
+    // Refused before any write — same "nothing hits the ledger" proof as (5).
+    const runs = await read<{ c: string }>(`SELECT count(*)::text AS c FROM driver_finance.payrun_gl_runs WHERE settlement_id=$1::uuid`, [gate.settlementId]);
+    expect(Number(runs[0]!.c)).toBe(0);
+    const adv = await read<{ status: string }>(`SELECT status FROM driver_finance.driver_advances WHERE id=$1::uuid`, [gate.advanceId]);
+    expect(adv[0]!.status).not.toBe("recovered");
+  });
+
+  it("(6b) B7 blocking gate: mode:'full' decision proceeds identically to (1)'s pre-existing default — same numbers, decision registered in the audit trail", async () => {
+    await setFlag(true);
+    const res = await closeSettlementPayRun(
+      {
+        operatingCompanyId: companyId,
+        settlementId: gate.settlementId,
+        paymentMethodId,
+        requireLoanDecision: true,
+        loanRecoveryDecision: { mode: "full", decided_by_user_id: flagActor, reason: "standing policy — full recovery" },
+      },
+      { userId: flagActor }
+    );
+    expect(res.result).toBe("posted");
+    // Identical numbers to (1)'s below-cap scenario — same fixture shape, proves the decision
+    // path and the pre-existing default path produce the SAME result for mode:'full'.
+    expect(res.breakdown.advance_recoveries_cents).toBe(20000);
+    expect(res.breakdown.net_cents).toBe(205000);
+    expect(res.recovered_advance_ids).toEqual([gate.advanceId]);
+
+    const adv = await read<{ recovered: string | null; status: string; outstanding_balance: string }>(
+      `SELECT recovered_in_settlement_id::text AS recovered, status, outstanding_balance::text FROM driver_finance.driver_advances WHERE id=$1::uuid`,
+      [gate.advanceId]
+    );
+    expect(adv[0]!.recovered).toBe(gate.settlementId);
+    expect(adv[0]!.status).toBe("recovered");
+    expect(Number(adv[0]!.outstanding_balance)).toBe(0);
+
+    // The decision itself is registered — who, when (created_at), what was chosen.
+    const auditRows = await read<{ payload: Record<string, unknown> }>(
+      `SELECT payload FROM audit.audit_events
+        WHERE event_class = 'driver_finance.settlement.loan_recovery_decision'
+          AND payload->>'settlement_id' = $1
+        ORDER BY created_at DESC LIMIT 1`,
+      [gate.settlementId]
+    );
+    expect(auditRows.length).toBe(1);
+    expect(auditRows[0]!.payload).toMatchObject({ mode: "full", decided_by_user_id: flagActor, applied_this_close_cents: 20000, rolled_forward_cents: 0 });
   });
 });
