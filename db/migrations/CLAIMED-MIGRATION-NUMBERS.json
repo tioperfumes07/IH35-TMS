@@ -561,6 +561,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-01",
       "purpose": "go19_02_bank_transactions_is_sample_data (GO-19-BUILD-QUEUE.md slice 02, CC-1 seat item: add banking.bank_transactions.is_sample_data boolean default false, backfill true on the 34 already-voided USMCA GO-11 fixture rows by exact voided_reason, so KPI/register reads can filter sample data out by default without ever deleting a row)"
+    },
+    "202613370002": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-02",
+      "purpose": "go19_bill_driver_recovery_parity (complete GO-19-05 after applied 202613360001: add accounting.bills.recover_from_driver and recover_deduction_type with existing accounting.expenses semantics and canonical createBill service wiring; no deduction auto-created)"
     }
   }
 }
