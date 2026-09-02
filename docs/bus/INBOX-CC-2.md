@@ -4,6 +4,18 @@
 
 **FAST-MERGE ON.** Never POST Book Load. You own the verified flag.
 
+## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY (2026-09-02)
+
+**Do NOT build driver-pay-per-mile on `short_miles`. Do NOT verify "short includes empty" copy — it is wrong.**
+
+Indy→Laredo: practical 1319.7 + empty 207.6 = 1527.3 ≠ short 1478.1. **2,142/3,237 lanes (66.2%)** have short>practical. CC-1 owns root-cause (ingest script, no mass-swap).
+
+**Owner cost model (LOCKED):** Customer RPM = rate/practical · Company CPM = cost/(practical+empty).
+
+Chrome-prove 13508 (Gate 1.3): show practical/short/empty; **flag when short > practical**. CC-1 resolves pay math; you prove the flag on screen.
+
+Canonical: `docs/bus/MILES-INVERT-01-STOP-BEFORE-PAY-2026-09-02.md`
+
 ## NOW
 
 ```

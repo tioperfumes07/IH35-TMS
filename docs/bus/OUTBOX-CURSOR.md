@@ -1,3 +1,3 @@
 # OUTBOX-CURSOR · GO UNLOCKED · 2026-09-02
 
-CURSOR | GO unlocked · seed **13557** · kill **LD** keep **LOAD** · load **13508** + bank **395** stay · seats **full capacity** · CC-1 purge Gate 0 NOW · CC-2 Combobox guard+K2 · CC-3 AlwaysTrack+location+QB sizing · Cursor GO-06 after bus green · NEVER POST
+CURSOR | **MILES-INVERT-01 STOP-BEFORE-PAY** · ack MilesStrip error · 2142/3237 short>practical · cost model locked (RPM=rate/practical · CPM=cost/(practical+empty)) · CC-1 owns ingest no mass-swap · Gate 0 purge proceeds · bus PR shipping · NEVER POST

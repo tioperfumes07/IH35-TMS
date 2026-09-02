@@ -4,6 +4,27 @@
 
 **FAST-MERGE ON.** Never POST Book Load. USMCA only. **GO NOW — Gate 0 is yours.**
 
+## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY — YOU OWN THIS (2026-09-02)
+
+**Do NOT build driver-pay-per-mile on `catalogs.lane_mileage.short_miles` until resolved.**
+
+Cursor acknowledged error: "short includes empty" copy is **wrong** for Indy→Laredo (practical 1319.7 + empty 207.6 = 1527.3 ≠ short 1478.1). Live catalog: **2,142/3,237 lanes (66.2%)** have `short_miles > practical_miles` — impossible for "shortest". All `source=History`. Laredo→Indy normal; Indy→Laredo inverted.
+
+**Owner cost model (LOCKED):**
+- Customer RPM = rate / practical (loaded only) — NEVER fold empty into practical
+- Company CPM = cost / (practical + empty) — deadhead is real cost
+- Empty already on 2,398 lanes avg 251.9 — wire into cost view
+
+**Your order — IN ORDER:**
+1. Read ingest script — swapped columns vs inconsistent historical entry? **Do not guess.**
+2. Do **NOT** mass-swap where short>practical (corrupts 1,095 OK lanes if wrong).
+3. Until resolved: driver pay = `practical_miles + empty_miles` **explicitly**, never `short_miles`.
+4. Wizard must show practical/short/empty and **flag on screen when short > practical**.
+
+Gate 0 **unaffected** — purge, reseed 13557, drop B- proceed in parallel.
+
+Canonical: `docs/bus/MILES-INVERT-01-STOP-BEFORE-PAY-2026-09-02.md`
+
 ## NOW
 
 ```
