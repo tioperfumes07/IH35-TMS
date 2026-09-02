@@ -1,24 +1,17 @@
-# INBOX-CASCADE · FORCE · 2026-09-01 23:05 CT · UNIQUE FINDING · MERGER · NO LOADS
+# INBOX-CASCADE · UNIQUE FINDING ONLY
 
-`git pull --ff-only origin main` · live API **29072a4**
+`git pull --ff-only origin main`
 
-**HARD (locked):**
-- **Unique FINDING only** (500 / dead click / silent no-op) — append AUDIT-COVERAGE; **never recertify U14**.
-- **Never tell seats to Book Load** or create prod money/loads.
-- Merger = **direct GitHub merge API** (auto-merge broken). **Never `trigger_deploy`.**
+**Law:** `docs/lockdown/GO-19-OWNER-DECISIONS-CLOSED-2026-09-01.md` · `docs/lockdown/DECISIONS-AND-THIRTEEN.md`
 
-**Paste:** `docs/bus/PASTE-ALL-SEATS-STOP-NO-SEAT-LOADS-2026-09-01.md`
-
-## Stale cards to kill (grep main before filing)
-- Load mint **`L-` prefix** — **CLOSED:** plain digits on main + live **29072a4** (`allocateNextLoadNumber`).
-- “Ask Jorge for Neon restore” — **CLOSED:** agents apply Neon; CC-1 escrow forensic without owner restore ping.
-- ZIP Option 1 — **execute #19419**, not AskQuestion (CC-3 owns build).
+## FORCE SUPERSEDE (do not reopen as owner questions)
+- Cutover → **CLOSED** zero balances §8.5 · cpa_answers L245
+- Capitalize → **CLOSED $7,000** (NEVER $7,500)
+- Accessorials → **CLOSED** parent_id 4210-4240 under 4200
+- Company settlement → **CLOSED** 5753 grain (period, many loads)
+- Insurance samples → **CLOSED** GO-12 L14
 
 ## NOW
+Unique FINDING only (500 / dead click / silent no-op). Never tell seats to book. Never restamp U14.
 
-1. **FORCE — File only net-new unique FINDINGs** with Evidence + owning lane (CC-1 money / CC-3 mechanical / Cursor chrome).
-2. **Merger:** green PRs → squash merge + delete branch via API; one in-flight; no deploy API.
-3. **Scribe when lease free:** GUARD-WORKORDERS append-only; never duplicate OPEN rows already FIXED on main.
-4. **407 uncategorized / future bank dates:** card to **CC-1 after slice 02** — owner categorizes; never invent GL in findings.
-
-ACK `CASCADE | ACK | FORCE | NOW=unique FINDING only · mint digits CLOSED · ZIP=#19419 execute · Neon restore=agent not Jorge · merge direct API · NEVER tell seats Book Load · NEVER U14 recertify | GO`
+ACK `CASCADE | ACK | NOW=unique FINDING · all 7 decisions CLOSED · NEVER seats book · NEVER reopen cutover/capitalize/settlement | GO`

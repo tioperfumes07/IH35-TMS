@@ -1,32 +1,16 @@
-# INBOX-CC-1 · FORCE · 2026-09-01 23:05 CT · GO-19 MONEY SERIAL · NO LOADS
+# INBOX-CC-1 · OWNER DECISIONS CLOSED · SERIAL MONEY
 
-`git pull --ff-only origin main` · live API **29072a4**
+`git pull --ff-only origin main`
 
-**HARD (locked — do not re-ask):**
-- Jorge books loads and all real testing. Seats **NEVER POST Book Load** · **NEVER create loads** · **NEVER sample/demo fixtures** · **NEVER seat prod money rows** (`docs/lockdown/NO-SEAT-PROD-FINANCIAL-FIXTURES-LAW-2026-09-01.md`).
-- Bank categorize Jul 2025–Jul 2026 = **Jorge only**. Seats **never invent GL**.
-- Escrow from-0 = **your forensic/WORM plan** — **never Ask Jorge if Neon restored**.
-- Capitalize $7500 · insurance samples **CLOSED**. USMCA only. U14 **CERTIFIED — never recertify**.
-- One open money PR at a time (Rule 27). **Never `trigger_deploy`**.
+**Law:** `docs/lockdown/GO-19-OWNER-DECISIONS-CLOSED-2026-09-01.md` · `docs/lockdown/DECISIONS-AND-THIRTEEN.md`
 
-**Paste:** `docs/bus/PASTE-ALL-SEATS-STOP-NO-SEAT-LOADS-2026-09-01.md` · `docs/lockdown/GO-19-BUILD-QUEUE.md` · GO-18 `docs/lockdown/GO-18-LOAD-COSTS-DESIGN.md`
+## VOID
+- Ask Jorge restore / cutover / capitalize / settlement grain. Invent JE without WORM plan. Invent bank GL. POST Book Load. Change capitalize to $7,500. Seat fixtures.
 
-## VOID this shift
-- Creating loads, TEST/SAMPLE rows, throwaway books, new `is_sample_data=true` bank writes.
-- Asking Jorge Neon restore. Inventing bank GL / categorize rules. Zero escrow. Live Book Load POST.
+## NOW (serial — one money PR at a time)
+1. **GO-19-02** — escrow zero by VOID not DELETE (register keeps 6 rows) + mark/hide 34 bank fixtures + sample quarantine. Never DELETE.
+2. **Accessorial parent_id** — ONE migration: set `parent_id` on 4210/4220/4230/4240 → 4200. NO new account. Mirror 4900→4910 pattern.
+3. **Capitalize wiring** — keep **$7,000** (`700_000`). Wire `capitalize-threshold.ts` into `wo-ap-posting.service.ts` (not category default). Never change to 7500.
+4. Then GO-18 bills driver+trailer + `bill_lines.load_required`.
 
-## NOW (serial — finish one PR before opening the next)
-
-1. **FORCE — Escrow closeout vs owner from-0.** Forensic tie-out on existing rows only. WORM void/reversal discipline. **No zero.** **No Ask Jorge restore** — agents apply Neon themselves.
-2. **GO-19-02 FORCE — `banking.bank_transactions.is_sample_data`.** Migration + mark the **existing ~34** USMCA fixture rows. Filter reads default `false`. **NEVER DELETE.** **Never invent new bank rows.**
-3. **GO-19-03 FORCE — drop `B-` on driver bills.** Grep `driver-bill-number.ts` + `expense-number.ts` on `origin/main` first (seq1 bare load # may already be merged). Ship code + guard if still `B-`.
-4. **GO-18/GO-19 slices 05+06 FORCE — bills FK + bill_lines.load_required.** One migration author: `accounting.bills` driver/trailer/recover columns + `accounting.bill_lines.load_required` / exemption mirror expense_lines. Code + guard. **No live book to prove.**
-
-## NEXT (after 05/06 merge — do not parallel)
-- GO-19-04 proforma-at-pickup = **Cursor** lane (not you).
-- GO-19-08 future bank dates + Cascade 407 uncategorized = **after 02**; still **never invent GL**.
-
-## Evidence (every PR)
-Claude-green FINDING block · one PR · local gate PASS · merge on green · Neon apply yourself · OUTBOX one line.
-
-ACK `CC-1 | ACK | FORCE | NOW=escrow forensic no Ask Jorge THEN GO-19-02 mark/hide ~34 bank fixtures NEVER DELETE THEN 03 drop B- THEN 05/06 bills FK+bill_lines.load_required · serial one PR · NEVER POST Book Load · NEVER seat fixtures · NEVER invent GL | GO`
+ACK `CC-1 | ACK | NOW=02 escrow VOID · THEN 4210-4240 parent_id · THEN capitalize-threshold wired · $7000 LOCKED · NEVER POST Book Load | GO`
