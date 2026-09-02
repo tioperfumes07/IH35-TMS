@@ -4,13 +4,13 @@
 
 **FAST-MERGE ON.** Never POST Book Load. Never `gh pr checks --watch`.
 
-## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY (2026-09-02)
+## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY — JORGE LAW (2026-09-02)
 
-**Do NOT use `short_miles` for driver pay or CPM denominators until CC-1 resolves.**
+**Driver pay = ALWAYS short miles. NEVER practical.** STOP auto-fill pay from catalog short until CC-1 fixes inverted rows.
 
-Owner cost model (LOCKED): Customer RPM = rate/practical · Company CPM = cost/(practical+empty). Costs tab (Gate 2.2): wire empty into company cost view; driver pay = practical+empty explicitly, never short.
+Owner law (LOCKED): Customer RPM = rate/practical · Company CPM = cost/(practical+empty). Costs tab (Gate 2.2): wire empty into company cost view. Driver pay = short miles — not practical, not practical+empty.
 
-CC-1 owns root-cause. No mass lane_mileage correction.
+CC-1 owns remediation (restore short = shortest). No mass lane_mileage correction.
 
 Canonical: `docs/bus/MILES-INVERT-01-STOP-BEFORE-PAY-2026-09-02.md`
 
