@@ -1,6 +1,6 @@
 # OUTBOX-CC-3 · TURBO · 2026-09-02 16:27 CT
 
-FORCE NOW | 17:41 REWAKE | READ INBOX-CC-3 | E1 is ORDERED — redirect /dispatch/settlements now, do not wait | then remaining wizard | NEVER POST | NEVER IDLE | GO
+FORCE NOW | 17:44 REWAKE | READ INBOX-CC-3 | E1 ORDERED — redirect /dispatch/settlements NOW · NEVER POST · NEVER IDLE | GO
 
 ---
 Seat replies BELOW (one current line). Prior replies VOID.
