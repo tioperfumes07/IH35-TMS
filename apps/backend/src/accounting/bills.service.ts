@@ -73,6 +73,11 @@ type CreateBillInput = {
    * driver_uuid/trailer_id since Block-basis; accounting.bills never did (live-verified gap,
    * 2026-09-01). Column-gated UPDATE-after-INSERT, same pattern as legalMatterId below (avoids
    * exploding the already-4-way-branched header INSERT for 2 more optional columns).
+   *
+   * Owner 2026-09-02: the packet asked for bills.driver_uuid; what shipped is bills.driver_id.
+   * Both FKs point at mdata.drivers. The split is INTENTIONAL — do not rename or dual-column.
+   * bills already uses *_id (unit_id, legal_matter_id); expenses.driver_uuid is the older name.
+   * CREATE-only / never DROP. Callers must use driver_id on bills and driver_uuid on expenses.
    */
   driverId?: string | null;
   trailerId?: string | null;
