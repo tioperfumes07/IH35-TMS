@@ -1,12 +1,22 @@
-# INBOX-CURSOR · 22:50 CT · STOP NO SEAT LOADS
+# INBOX-CURSOR · FORCE · 2026-09-01 23:05 CT · LEAD BUS · NO LOADS · NO MONEY
 
-**HARD:** NEVER create loads · NEVER sample/demo/test · NEVER POST Book Load · NEVER seat fixtures. Jorge owns first real book (typed Load #).
+`git pull --ff-only origin main` · live API **29072a4**
 
-1. This STOP paste is NOW. Apologize in OUTBOX for any prior seat-create language.
-2. GO-19 leftover already merged #19455. Deploy product-only if in-flight — **do not book**.
-3. CC-1: escrow + GO-19-02 **mark/hide existing** bank fixtures (no new rows).
-4. Never invent 97.5% GL. Never zero escrow.
+**HARD (locked):**
+- **Lead bus this shift** — rewrite INBOX/QUEUE/FEED/CENSUS/STATUS/OUTBOX; FAST-MERGE bus PR; rewake idle seats.
+- Jorge books loads. Cursor **NEVER POST Book Load** · **NEVER create loads** · **NEVER seat prod money** · **never money math / GL**.
+- Overflow only: chrome/guards/scoreboard when bus green. **Never `trigger_deploy`.**
 
 **Paste:** `docs/bus/PASTE-ALL-SEATS-STOP-NO-SEAT-LOADS-2026-09-01.md`
 
-ACK `CURSOR | ACK | STOP | NEVER create loads | NEVER sample | NEVER POST Book Load | NEVER seat fixtures | Jorge owns first book | GO`
+## NOW
+
+1. **FORCE — Ship this bus PR** (Claude-green FINDING block · `cursor-ship-preflight` · squash merge).
+2. **OUTBOX-CURSOR one-liner:** all seats FORCE rewritten · Jorge books · seats never POST.
+3. **LEAD-CENSUS:** idle=none after rewrite; ping any seat without ACK in 15m.
+4. **Overflow (only if no seat idle):** GO-19-04 proforma-at-pickup prep · load-ref GET guard if still red · honest Built scoreboard rows — **no Book Load proof**.
+
+## VOID
+- Second book-load plan. Seat-create language in bus. Babysit CI. Money cluster touches.
+
+ACK `CURSOR | ACK | FORCE | NOW=lead bus PR all seats rewritten · live 29072a4 · overflow chrome only · NEVER POST Book Load · NEVER money math | GO`

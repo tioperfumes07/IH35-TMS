@@ -1,16 +1,16 @@
-<!-- SUPERSEDED 2026-09-01: do not pop this file. NOW = docs/bus/INBOX-<SEAT>.md TOP + NOW-ONE-SOURCE.md. Archive recovery only. -->
+# QUEUE — CC-1 · MONEY SERIAL (matches INBOX TOP)
 
-# QUEUE — CC-1 · MONEY + WIRING
+**NOW = INBOX-CC-1.md FORCE.** One open money PR at a time.
 
-OPEN:
-0. FE/BE status vocabulary — remint path for completed_docs (BLOCKED remint row; L-0002 has ZERO driver_bills rows, no re-entry path — see GUARD-WORKORDERS.md OPEN P1 `L-20260831-0002-NO-DRIVER-BILL-NO-REMINT-PATH`). Needs either a real "Mark Invoiced/Closed" UI action for `completed_docs_received` loads, or explicit owner authorization for a one-time named backfill — NOT a coder call.
-1. Factoring Live Click pledge today invoice / profile if still wrong in batch UI
-2. ACCT-F10161 CI verify:pre-commit silent cutoff (infra) — after money path
-3. Equipment Qual TEST-data control FE
+OPEN (in order):
+1. Escrow closeout forensic vs owner from-0 — no Ask Jorge restore · no zero
+2. GO-19-02 — `banking.bank_transactions.is_sample_data` mark/hide ~34 existing fixtures · NEVER DELETE
+3. GO-19-03 — drop `B-` driver bill prefix (grep main first)
+4. GO-18/GO-19 slices 05+06 — bills driver/trailer FK + `bill_lines.load_required`
 
-DONE:
-- [x] DEFECT A+B #18830 (incomplete vs Close-trip — new OPEN 0)
-- [x] predicates named · rates · G1
-- [x] Close-trip append settlement_lines (DEFECT-B-FIX-DOES-NOT-COVER-CLOSE-TRIP) — #18871 MERGED, route+UI reachability fixed, deployed healthz 34a1b71
-- [x] Live Click remint/settle L-0004 after #18859+#18871 deploy — PROVEN: gross/net $0.00/$0.00 -> $240.00/$240.00, settlement_lines 0->1 (PR #18903). L-0002 correctly stays $0.00/$0.00 (no bill to attach) -- see new OPEN 0.
-- [x] DRIVER-BILL-RATE-MINT-MISMATCH root-cause — RESOLVED NOT A DEFECT by CC-2 (GUARD-WORKORDERS.md ~L7301): blended effective rate incl. extra-stop bonus, arithmetic reconciles exactly. INBOX's "NOW" line naming this as open is stale.
+BLOCKED until above:
+- GO-19-08 future bank dates / 407 uncategorized (owner categorizes GL — never invent)
+
+DONE (do not rebuild):
+- GO-01 load plain digits mint (#19325 / live 29072a4)
+- Expense seq1 bare load number (#19335) — verify on main before touching

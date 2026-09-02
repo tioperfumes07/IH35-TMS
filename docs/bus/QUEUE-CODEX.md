@@ -1,10 +1,13 @@
-<!-- SUPERSEDED 2026-09-01: do not pop this file. NOW = docs/bus/INBOX-<SEAT>.md TOP + NOW-ONE-SOURCE.md. Archive recovery only. -->
+# QUEUE — CODEX · DRAIN CI → COSTS FE (matches INBOX TOP)
 
-# QUEUE — CODEX · BANK / Chrome-check
+**NOW = INBOX-CODEX.md FORCE.**
 
 OPEN:
-0. **LIVE CLICK** factor today sent GO-E2E invoice OR bank-match today S-20260831-* (non-zero). LAW=GO-LIVE-CLICK-CYCLE-ONLY.
-1. Capability: if no Chrome hop in 30m → Lane B mechanical
+1. Drain open Codex CI reds — no `gh pr checks --watch`
+2. Mechanical connectivity / reverse linkage + entity floors until CC-1 05/06 on main
+3. **BLOCKED:** GO-18/GO-19-07 Load Costs 13th tab + board — after bills schema merges
+
+VOID: Book Load for Costs screenshot · money migrations · `--watch`
 
 DONE:
-- [x] Phase 7 bank↔settle on older S-20260802 (does NOT count as today cycle)
+- (none this shift until CI drain starts)

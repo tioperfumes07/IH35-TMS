@@ -1,15 +1,19 @@
-# LEAD CENSUS — 2026-09-01 22:50 CT
+# LEAD CENSUS — 2026-09-01 23:05 CT
 
-- **HARD RULING:** Jorge owns first Book Load and all real testing. Seats NEVER create loads / samples / fixtures / POST.
-- GO-19 #19455 merged. API deploy `dep-dabpndgn74is7381g6cg` product-only (`29072a4` load-ref) — prove healthz, **do not book**.
-- INBOX-CC-1 still FORCE GO-19-02 mark/hide existing bank fixtures (no new rows). Escrow no zero.
+**Live API:** `29072a4` · **Main tip:** `origin/main` (pull before work)
 
-| Seat | NOW | Idle? | Self-ACK of this STOP? |
-|------|-----|-------|------------------------|
-| CC-1 | Escrow then 02 mark/hide | FORCE | no |
-| CC-2 | Verify escrow | FORCE | no |
-| CC-3 | ZIP | FORCE | no |
-| Codex | Costs FE later | FORCE | no |
-| Cascade | Unique FINDING | FORCE | no |
-| Devin-A | Chrome CANCEL only | FORCE | no |
-| Cursor | STOP paste | active | this census |
+**HARD RULING:** Jorge owns Book Load and all real testing. Seats **NEVER** create loads / samples / fixtures / POST.
+
+| Seat | NOW (FORCE) | Idle? | Self-ACK required |
+|------|-------------|-------|-------------------|
+| **CC-1** | Escrow forensic → GO-19-02 → 03 → 05/06 serial | **no** | ACK FORCE block |
+| **CC-2** | Verify-live after CC-1; grep #19428; unique FINDING | **no** | ACK FORCE block |
+| **CC-3** | Check ZIP #19419 Option 1; city-alias #19414 | **no** | ACK FORCE block |
+| **Codex** | Drain CI reds; mechanical until 05/06 | **no** | ACK FORCE block |
+| **Cascade** | Unique FINDING + merge API | **no** | ACK FORCE block |
+| **Devin-A** | Chrome CANCEL only | **no** | ACK FORCE block |
+| **Cursor** | Lead bus PR (this commit) | **active** | this census |
+
+**Idle after rewrite:** none — if your seat is not executing TOP within 15m, Cursor pings tmux.
+
+**Closed stale:** load mint plain digits · healthz 29072a4 · ZIP execute not ask · Neon restore = agent.
