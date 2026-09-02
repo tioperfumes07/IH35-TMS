@@ -1,26 +1,16 @@
-# INBOX-CC-2 · GO-21 J1 CORRECTED · THIS WEEK
+# INBOX-CC-2 · GO-23 WAVE 1 · J1 verify-step then WAIT
 
 `git pull --ff-only origin main`
 
-**Law:** `docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md` (Claude + Jorge approved 2026-06-07)  
-Register: `claude/GO-21-DISPATCH-DEFECT-REGISTER-2026-09-02.md`  
-Worklist: `claude/GO-21-J1-WORKLIST-2026-09-02.txt` (or `node scripts/verify-ui-design-system-ratchet.mjs --worklist`)  
-Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-21-GO-22-2026-09-02.md` (CC-2).
-
-**Devin-A RETIRED.** You own Chrome proof. Merge ≠ fixed.
+**Queue:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`
 
 ## VOID
-POST Book Load · money tables · migrations · A2 · A1 FE · B6/B12 · **designing a token set** · **proposing a scale** · **"guard green, migrating gradually"** · page-by-page sizes that are not the locked values
+POST Book Load · start Wave 4 J1 migrate while Wave 1–3 are open · design a token set · remake verify-step **#19577** (`10230-verify-ui-design-system-ratchet.mjs` is on main)
 
-## NOW (serial)
+## NOW
 
-1. **FIRST — register the guard as a required verify-step** (`scripts/verify-ui-design-system-ratchet.mjs`). Your band is ≡3 (mod 4). Claim on `chore/claim-reserve*` → merge to main → **then** author the step. Do not migrate a file until the step is on main. `--lower` after each later PR. Guard-green does **not** close J1.
-2. **Transcribe** `GLOBAL-TYPE-SIZE-BASELINE.md`. One judgment per line: header = 11px / 700 / uppercase / `#4B5563`. Body = 12px. Nothing else.
-3. Worklist this week — not a program. Live tree 2026-09-02: **1,083** off-scale in **342** files (**203** files have 1–2). Tier 1 = top 50. Tier 2 = tail. Worst: BookLoadModalV4 32 · ProgramBoardPage 31 · BankingTransactionsDesignView 31 · CreateWorkOrderModal 25 · CustomerDetail 19 · EquipmentTypesPage 18 · DispatchKanban 18.
-4. **K2 same job:** converge on `components/Combobox.tsx` (only one with outside-click dismiss). Migrate EntityPicker / SelectCombobox / shared/Combobox importers. 268 trapping imports.
-5. **VERIFY-LIVE** after deploy: Section D, boards, planners. OUTBOX URL + SHA. D1–D3 close with equal paired-field sizes; F2/F4/I1 with centered sortable headers — only when Chrome matches, not when CSS changed.
-6. Standing: `/maintenance/predictive-alerts` (#19541).
+1. Wave 1 parallel row **done on code:** J1 ratchet is a required verify-step **#19577**. Do not remake.
+2. **VERIFY-LIVE** (Devin retired): report FIXED / NOT FIXED with numbers. Standing: owner re-drive A3/B12 when Codex asks.
+3. Do **not** start Wave 4 (J1 migrate / K2) until Waves 1–3 in other lanes are not blocking the order. Then transcribe `GLOBAL-TYPE-SIZE-BASELINE.md` to zero.
 
-**DONE** = `off_locked_scale_sizes = 0` AND `trapping_picker_total = 0` AND verify-step required AND owner Chrome on Section D / boards / planners sees one scale.
-
-ACK `CC-2 | ACK | GO-21 J1 CORRECTED | NOW=claim ≡3 verify-ui-design-system-ratchet THEN transcribe locked scale to zero this week · NEVER POST · never design a scale | GO`
+ACK `CC-2 | ACK | GO-23 | NOW=verify-live · J1 step #19577 already on main · Wave 4 after 1–3 · NEVER POST | GO`

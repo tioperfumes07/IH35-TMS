@@ -4,7 +4,7 @@
 > - `.cursor/rules/00-IH35-LAW.mdc` + `.cursor/rules/03-display-ids.mdc` — the **only** always-apply project rules
 > - `claude/00-IH35-CURRENT-STATE-AND-LAW-READ-FIRST.md` — live state, traps, scope
 > - `docs/lockdown/PROJECT-INSTRUCTIONS-2026-09-02.md` — owner law copy
-> - **Queue:** `docs/bus/INBOX-<SEAT>.md` TOP + `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · bus index: `READ-AGENT-BUS.md`
+> - **Queue:** [claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md](claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md) — **STRICT ORDER.** Waves in order; seats in a wave in parallel. Do not start a later wave while a row in your lane is open in an earlier one. A defect not on that board does not exist — never open a new register. `INBOX-<SEAT>.md` is the current row only; GO-23 decides the row. · bus index: `READ-AGENT-BUS.md`
 > - **Cursor lead:** `docs/bus/INBOX-CURSOR.md` — coordinates seats; **does not** sweep `GUARD-WORKORDERS` / `Downloads/abb`
 > - **Ship:** `node scripts/cursor-ship-preflight.mjs --body-file …` before push · PR title **`Cursor-`** prefix
 > - **UI standard, LOCKED:** [docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md](docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md) (Claude + Jorge approved 2026-06-07) — body 12px - headers 11px/700/UPPERCASE/`#4B5563` - H1 22px/600 - page `#F7F8FA` - surface `#FFFFFF` - border 1px `#E5E7EB` - radius 4px - rail `#1B2333` - green `#16A34A` - **equal paired-field sizes** - **centered, sortable column headers**. Applies to ALL screens. No component may deviate without the owner's approval. **Open it before writing any size, colour, header or field width — never propose a new scale.** Guard: `scripts/verify-ui-design-system-ratchet.mjs`. **J1 closes at count zero this week (CC-2), not when the ratchet is green.**

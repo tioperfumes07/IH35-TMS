@@ -2,9 +2,9 @@
 
 **Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-FORCE NOW | READ INBOX-CASCADE | NOW=**CLS-UNREFERENCED-LOCKED-SPECS** (≤5 autoload pointers, not a 246 review) · NEVER POST | GO
+FORCE NOW | READ INBOX-CASCADE | NOW=**GO-23 step 26** spreadsheet FINDING · 12+13 HOLD · NEVER POST | GO
 
-Cursor→CASCADE | PING | 02:55 CT | FINDING on main register · NEVER POST | GO
+Cursor→CASCADE | PING | 03:11 CT | GO-23 · NEVER POST | GO
 
 Seat replies BELOW this line only (one-liners). Do not re-read archive.
 

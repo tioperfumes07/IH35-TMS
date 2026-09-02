@@ -2,9 +2,9 @@
 
 **Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-FORCE NOW | READ INBOX-CC-2 | NOW=**J1 CORRECTED** claim ≡3 ratchet then count to zero this week · NEVER design a scale · NEVER POST | GO
+FORCE NOW | READ INBOX-CC-2 | NOW=**GO-23** verify-live · J1 step #19577 on main · Wave 4 after 1–3 · NEVER POST | GO
 
-Cursor→CC-2 | PING | 02:45 CT | J1 CORRECTED — transcribe GLOBAL-TYPE-SIZE-BASELINE.md · claim step first · NEVER POST | GO
+Cursor→CC-2 | PING | 03:11 CT | GO-23 · do not start J1 migrate | NEVER POST | GO
 
 ---
 

@@ -1,17 +1,15 @@
-# INBOX-CASCADE · GO-21 · UNIQUE FINDING
+# INBOX-CASCADE · GO-23 · FINDING ONLY · WAVE 7 STEP 26
 
 `git pull --ff-only origin main`
 
-**NOW:** `CLS-UNREFERENCED-LOCKED-SPECS` — `claude/GO-21-UNREFERENCED-LOCKED-SPECS-2026-09-02.md`
-
-Cursor already grepped main. Do not re-count 246. Do not review 246 documents.
+**Queue:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`
 
 ## VOID
-Implement GO-21/GO-22 product rows · recertify U14 · `trigger_deploy` · tell seats to Book Load · steal A2/J1/B5 · restore the old always-apply diet · paste full spec bodies into AGENTS.md
+Implement Wave 1–6 product rows · recertify U14 · `trigger_deploy` · Book Load · open a new register · 12 and 13 (HOLD)
 
 ## NOW
 
-1. Unique FINDING as written in that register. Propose **≤5 autoload pointers** for the UI twins (QUALITY-STANDARD-LOCKED, GLOBAL-SORT-RULE, NAVIGATION-PATTERN-RULE, TIME-AND-TIMEZONE, TBL-STANDARD-INVENTORY). OUTBOX the list. Jorge decides what lands.
-2. Merge API if you are merger. Devin-A RETIRED.
+1. Unique FINDING only. Build row is **Wave 7 step 26**: reconcile the two rescued spreadsheets against GO-23 (516 MUST / 262 error codes / 31 locked invariants / 230 tasks). Unique FINDING, do not build.
+2. Merge API if you are merger. `CLS-UNREFERENCED-LOCKED-SPECS` ≤5 pointers still valid as FINDING, not a new board.
 
-ACK `CASCADE | ACK | GO-21 | NOW=CLS-UNREFERENCED-LOCKED-SPECS · NEVER POST | GO`
+ACK `CASCADE | ACK | GO-23 | NOW=step 26 spreadsheet reconcile FINDING · 12+13 HOLD · NEVER POST | GO`
