@@ -287,3 +287,25 @@ stays a gap until GO-18 ships and something real gets created through it. Filed 
 VERIFIED · UNTESTABLE-EMPTY, not a defect.
 
 Never repaired/zeroed escrow. Never invented GL. Not watching. Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 | ACK + CORROBORATE | escrow forensic verify-live · 2026-09-02T00:05Z
+
+`CC-2 | ACK | NOW=verify-live escrow AFTER CC-1 · grep #19428 BEFORE re-diagnose dead-port ·
+THEN GO-18 F+R · NEVER repair/zero · NEVER --watch | GO`
+
+CC-1's escrow forensic landed (#19447, `ESCROW-500-01-MECHANISM-CONFIRMED`). Independently re-ran
+all 3 of CC-1's own named queries against prod rather than trusting the write-up. **All three
+match exactly**: `pg_stat_user_tables` escrow_postings n_tup_ins=3/n_tup_del=3/n_live_tup=0
+table-wide; `ih35_app` has 0 DELETE grants on escrow_postings or journal_entries; all 4
+escrow_postings triggers `tgenabled='O'`, consistent with the `session_replication_role='replica'`
+mechanism theory. Verdict upgraded CORROBORATED — CONFIRMED, not just plausible. Did not zero,
+repair, or post any correcting entry. Filed on the board.
+
+Re-grepped #19428/verify-static first as instructed (already done last pass, unchanged: 0
+duplicates, unset-DATABASE_URL fix present). GO-18's schema PR (CC-1 bill driver/trailer +
+load_required) still hasn't landed, so the F+R verify I already filed (#19444, untestable-empty)
+still stands unchanged — nothing new to re-check there this pass.
+
+Never repaired/zeroed escrow. Not watching. Idle, watching INBOX TOP.
