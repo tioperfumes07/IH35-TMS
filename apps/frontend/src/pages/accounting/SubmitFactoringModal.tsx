@@ -220,7 +220,7 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-gray-600">Submission batch ref</span>
-            <input className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" value={submissionRef} onChange={(event) => setSubmissionRef(event.target.value)} />
+            <input className="h-9 rounded-sm border border-gray-300 px-2 text-xs" value={submissionRef} onChange={(event) => setSubmissionRef(event.target.value)} />
           </label>
         </div>
 
@@ -230,7 +230,7 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
             {/* FACT-RESERVE-01 STEP 3: read-only — there is no independent advance rate under the
                 agreement, it is 100 - Reserve % - Factor fee %, always. */}
             <input
-              className="h-9 rounded-sm border border-gray-200 bg-gray-50 px-2 text-[13px] text-gray-600"
+              className="h-9 rounded-sm border border-gray-200 bg-gray-50 px-2 text-xs text-gray-600"
               type="text"
               value={advanceRatePctDisplay ? `${advanceRatePctDisplay}%` : "—"}
               readOnly
@@ -239,17 +239,17 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-gray-600">Reserve %</span>
-            <input className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" type="number" min={0} max={100} step="0.01" value={reservePct} onChange={(event) => setReservePct(event.target.value)} />
+            <input className="h-9 rounded-sm border border-gray-300 px-2 text-xs" type="number" min={0} max={100} step="0.01" value={reservePct} onChange={(event) => setReservePct(event.target.value)} />
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-gray-600">Factor fee %</span>
-            <input className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" type="number" min={0} max={100} step="0.01" value={factorFeePct} onChange={(event) => setFactorFeePct(event.target.value)} />
+            <input className="h-9 rounded-sm border border-gray-300 px-2 text-xs" type="number" min={0} max={100} step="0.01" value={factorFeePct} onChange={(event) => setFactorFeePct(event.target.value)} />
           </label>
         </div>
 
         <label className="flex flex-col gap-1">
           <span className="text-xs font-semibold text-gray-600">Notes</span>
-          <textarea className="min-h-[70px] rounded-sm border border-gray-300 p-2 text-[13px]" value={notes} onChange={(event) => setNotes(event.target.value)} />
+          <textarea className="min-h-[70px] rounded-sm border border-gray-300 p-2 text-xs" value={notes} onChange={(event) => setNotes(event.target.value)} />
         </label>
 
         <div>

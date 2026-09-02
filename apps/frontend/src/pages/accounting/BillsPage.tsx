@@ -105,10 +105,10 @@ function billDueStatus(bill: VendorBill): "overdue" | "due_soon" | null {
 function BillDueBadge({ bill }: { bill: VendorBill }) {
   const s = billDueStatus(bill);
   if (s === "overdue") {
-    return <span className="ml-1 inline-flex rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-800">Overdue</span>;
+    return <span className="ml-1 inline-flex rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-800">Overdue</span>;
   }
   if (s === "due_soon") {
-    return <span className="ml-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">Due soon</span>;
+    return <span className="ml-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Due soon</span>;
   }
   return null;
 }
@@ -130,7 +130,7 @@ function billKpiCard(label: string, value: string, sublabel: string, tone: "neut
     tone === "danger" ? "border-l-4 border-l-red-500" : tone === "warn" ? "border-l-4 border-l-slate-400" : "border-l-4 border-l-slate-300";
   return (
     <div className={`rounded-sm border border-gray-200 bg-white px-3 py-2 ${toneClass}`}>
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
       <p className="text-lg font-semibold text-gray-900">{value}</p>
       <p className="text-xs text-gray-500">{sublabel}</p>
     </div>
@@ -159,7 +159,7 @@ const BILL_PAYMENT_COLUMNS: ParityColumn<BillPayment>[] = [
     key: "from_bank_account_id",
     label: "Bank account",
     sortable: true,
-    cellClass: "font-mono text-[10px]",
+    cellClass: "font-mono text-xs",
     render: (p) => (
       <EntityLink
         kind="bank_account"
@@ -650,7 +650,7 @@ export function BillsPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Bill #, vendor invoice #, amount, vendor…"
-            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
+            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-xs"
             aria-label="Search bills"
             data-testid="bills-search-input"
           />

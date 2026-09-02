@@ -172,14 +172,14 @@ export function VoidCancelReasonsListPage() {
       <div className="grid gap-2 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-[1fr_180px]">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Search
-          <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search code or label" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+          <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search code or label" className="h-9 rounded-sm border border-gray-300 px-2 text-xs" />
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Show
           <SelectCombobox
             value={status}
             onChange={(event) => setStatus(event.target.value as StatusFilter)}
-            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
           >
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
@@ -331,7 +331,7 @@ function VoidCancelReasonModal({
               onChange={(event) =>
                 setForm((current) => ({ ...current, reason_code: event.target.value.toLowerCase() }))
               }
-              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               placeholder="example_code"
             />
             {fieldErrors.reason_code ? <span className="text-xs text-red-600">{fieldErrors.reason_code}</span> : null}
@@ -343,7 +343,7 @@ function VoidCancelReasonModal({
             <input
               value={form.reason_label}
               onChange={(event) => setForm((current) => ({ ...current, reason_label: event.target.value }))}
-              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               placeholder="Display label"
             />
             {fieldErrors.reason_label ? <span className="text-xs text-red-600">{fieldErrors.reason_label}</span> : null}
@@ -365,7 +365,7 @@ function VoidCancelReasonModal({
               type="number"
               value={form.sort_order}
               onChange={(event) => setForm((current) => ({ ...current, sort_order: event.target.value }))}
-              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
             />
             {fieldErrors.sort_order ? <span className="text-xs text-red-600">{fieldErrors.sort_order}</span> : null}
           </label>

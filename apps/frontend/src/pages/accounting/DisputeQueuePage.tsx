@@ -37,7 +37,7 @@ function money(cents: number | null | undefined) {
 }
 
 function statusPill(status: string) {
-  const base = "rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
+  const base = "rounded-sm px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide";
   // §7 financial UI: slate status pills only (red reserved for delete/Accident).
   if (status === "denied") return `${base} border border-slate-200 bg-slate-100 text-slate-700`;
   if (status === "submitted" || status === "under_review" || status === "approved") {
@@ -127,7 +127,7 @@ function DecideModal({
           <SelectCombobox
             value={decision}
             onChange={(e) => setDecision(e.target.value as "approved" | "denied")}
-            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
           >
             <option value="approved">Approve</option>
             <option value="denied">Deny</option>
@@ -140,7 +140,7 @@ function DecideModal({
               valueCents={adjustmentCents}
               onChangeCents={setAdjustmentCents}
               ariaLabel="Adjustment amount (USD)"
-              className="h-9 w-full rounded-sm border border-gray-300 text-[13px]"
+              className="h-9 w-full rounded-sm border border-gray-300 text-xs"
             />
           </label>
         ) : null}
@@ -150,7 +150,7 @@ function DecideModal({
             value={resolutionText}
             onChange={(e) => setResolutionText(e.target.value)}
             rows={4}
-            className="rounded-sm border border-gray-300 px-2 py-1 text-[13px]"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
         </label>
         {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
@@ -333,7 +333,7 @@ export function DisputeQueuePage() {
             <SelectCombobox
               value={staged.draft.status}
               onChange={(e) => staged.setDraft({ status: e.target.value })}
-              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               aria-label="Dispute status filter"
             >
               {STATUS_OPTIONS.map((opt) => (

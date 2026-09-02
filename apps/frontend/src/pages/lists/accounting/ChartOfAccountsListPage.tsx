@@ -87,8 +87,8 @@ async function fetchAllCatalogRows(operatingCompanyId: string, includeInactive: 
 
 function statusPillClass(isActive: boolean) {
   return isActive
-    ? "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
-    : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
+    ? "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
+    : "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600";
 }
 
 function syncBadgeClasses(badge: CoaListRow["syncBadge"]) {
@@ -124,7 +124,7 @@ function buildColumns(
           {row.hasChildren ? (
             <button
               type="button"
-              className="shrink-0 text-[10px] text-gray-500 hover:text-gray-800"
+              className="shrink-0 text-xs text-gray-500 hover:text-gray-800"
               aria-label={collapsedParentIds.has(row.id) ? "Expand subaccounts" : "Collapse subaccounts"}
               onClick={(event) => {
                 event.stopPropagation();
@@ -440,10 +440,10 @@ export function ChartOfAccountsListPage() {
             density="cozy"
             badgeSlot={(row) => (
               <>
-                <span className="ml-1 rounded-sm bg-slate-100 px-1 py-0.5 text-[9px] font-semibold text-slate-700">
+                <span className="ml-1 rounded-sm bg-slate-100 px-1 py-0.5 text-xs font-semibold text-slate-700">
                   {statementTag(row.statement as "BS" | "P&L")}
                 </span>
-                <span className={`ml-1 rounded-sm px-1 py-0.5 text-[9px] font-semibold ${syncBadgeClasses(row.syncBadge)}`}>
+                <span className={`ml-1 rounded-sm px-1 py-0.5 text-xs font-semibold ${syncBadgeClasses(row.syncBadge)}`}>
                   {row.syncBadge}
                 </span>
               </>

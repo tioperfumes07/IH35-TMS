@@ -176,7 +176,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
             <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
               <div className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-1">
                 <span>Vendor</span>
-                <div className="flex h-9 items-center rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px] font-normal text-slate-800">
+                <div className="flex h-9 items-center rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs font-normal text-slate-800">
                   <EntityLink
                     kind="vendor"
                     id={billVendorDrillId(bill)}
@@ -186,7 +186,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
               </div>
               <div className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-1">
                 <span>Bill #</span>
-                <div className="flex h-9 items-center rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px] font-normal text-slate-800">
+                <div className="flex h-9 items-center rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs font-normal text-slate-800">
                   {/* ACCT-F6301-class: bill_number is nullable and null on 550/16,301 real bills
                       (live-confirmed) — this bill is already fully in view, so entityLabel's
                       "Bill — not visible" fallback would contradict the drawer it's sitting in. */}
@@ -207,7 +207,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
                   aria-label="Payment method"
                   value={paymentMethod}
                   onChange={(event) => setPaymentMethod(event.target.value as BillPaymentMethod)}
-                  className="h-9 rounded-sm border border-gray-300 bg-white px-2 text-[13px]"
+                  className="h-9 rounded-sm border border-gray-300 bg-white px-2 text-xs"
                 >
                   {METHOD_OPTIONS.map((method) => (
                     <option key={method.value} value={method.value}>
@@ -225,7 +225,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
                 <input
                   value={money(remainingCents)}
                   readOnly
-                  className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]"
+                  className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs"
                 />
               </label>
               {needsBankAccount ? (
@@ -269,7 +269,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
                   rows={3}
                   value={memo}
                   onChange={(event) => setMemo(event.target.value)}
-                  className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+                  className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
                 />
               </label>
             </div>

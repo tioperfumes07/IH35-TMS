@@ -59,11 +59,11 @@ const RECON_COLUMNS: Array<ParityColumn<DailyReconRow>> = [
     label: "ID",
     render: (row) =>
       row.tms_detail_path ? (
-        <Link to={row.tms_detail_path} className="font-mono text-[10px] text-slate-600 hover:underline">
+        <Link to={row.tms_detail_path} className="font-mono text-xs text-slate-600 hover:underline">
           {formatEntityLabel(null, row.entity_id, "Entity")}
         </Link>
       ) : (
-        <span className="font-mono text-[10px] text-gray-500">{formatEntityLabel(null, row.entity_id, "Entity")}</span>
+        <span className="font-mono text-xs text-gray-500">{formatEntityLabel(null, row.entity_id, "Entity")}</span>
       ),
   },
   { key: "tms_amount_cents", label: "TMS Amount", render: (row) => <span className="text-gray-700">{formatCents(row.tms_amount_cents)}</span> },
@@ -74,13 +74,13 @@ const RECON_COLUMNS: Array<ParityColumn<DailyReconRow>> = [
     render: (row) => {
       const badge = STATUS_BADGES[row.match_status];
       return (
-        <span className={`inline-flex items-center whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${badge.cls}`}>
+        <span className={`inline-flex items-center whitespace-nowrap rounded-sm px-1.5 py-0.5 text-xs font-semibold ${badge.cls}`}>
           {badge.label}
         </span>
       );
     },
   },
-  { key: "qbo_id", label: "QBO ID", render: (row) => <span className="font-mono text-[10px] text-gray-500">{row.qbo_id ?? "—"}</span> },
+  { key: "qbo_id", label: "QBO ID", render: (row) => <span className="font-mono text-xs text-gray-500">{row.qbo_id ?? "—"}</span> },
   {
     key: "qbo_amount_cents",
     label: "QBO Amount",
@@ -90,7 +90,7 @@ const RECON_COLUMNS: Array<ParityColumn<DailyReconRow>> = [
       return <span className={amountMismatch ? "font-semibold text-red-700" : "text-gray-700"}>{formatCents(row.qbo_amount_cents)}</span>;
     },
   },
-  { key: "qbo_error", label: "Error", cellClass: "truncate max-w-[160px]", render: (row) => <span className="text-[10px] text-red-600">{row.qbo_error ?? ""}</span> },
+  { key: "qbo_error", label: "Error", cellClass: "truncate max-w-[160px]", render: (row) => <span className="text-xs text-red-600">{row.qbo_error ?? ""}</span> },
 ];
 
 export function DailyReconPage() {
@@ -138,7 +138,7 @@ export function DailyReconPage() {
             }`}
           >
             <p className="font-semibold text-gray-900">{count}</p>
-            <p className={`mt-0.5 inline-flex rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${b.cls}`}>{b.label}</p>
+            <p className={`mt-0.5 inline-flex rounded-sm px-1.5 py-0.5 text-xs font-semibold ${b.cls}`}>{b.label}</p>
           </button>
         );
       })}
@@ -176,7 +176,7 @@ export function DailyReconPage() {
           >
             <div className="flex flex-wrap gap-2 items-end">
               <div className="flex flex-col gap-0.5">
-                <label className="text-[10px] font-semibold uppercase text-gray-500">From</label>
+                <label className="text-[11px] font-semibold uppercase text-gray-500">From</label>
                 <DatePicker
                   value={staged.draft.fromDate}
                   onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })}
@@ -184,7 +184,7 @@ export function DailyReconPage() {
                 />
               </div>
               <div className="flex flex-col gap-0.5">
-                <label className="text-[10px] font-semibold uppercase text-gray-500">To</label>
+                <label className="text-[11px] font-semibold uppercase text-gray-500">To</label>
                 <DatePicker
                   value={staged.draft.toDate}
                   onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })}
@@ -192,7 +192,7 @@ export function DailyReconPage() {
                 />
               </div>
               <div className="flex flex-col gap-0.5">
-                <label className="text-[10px] font-semibold uppercase text-gray-500">Type</label>
+                <label className="text-[11px] font-semibold uppercase text-gray-500">Type</label>
                 <SelectCombobox
                   value={staged.draft.entityType}
                   onChange={(e) => staged.setDraft({ ...staged.draft, entityType: e.target.value })}
@@ -203,7 +203,7 @@ export function DailyReconPage() {
                 </SelectCombobox>
               </div>
               <div className="flex flex-col gap-0.5">
-                <label className="text-[10px] font-semibold uppercase text-gray-500">Status</label>
+                <label className="text-[11px] font-semibold uppercase text-gray-500">Status</label>
                 <SelectCombobox
                   value={staged.draft.matchStatus}
                   onChange={(e) => staged.setDraft({ ...staged.draft, matchStatus: e.target.value as DailyReconMatchStatus | "all" })}
@@ -256,7 +256,7 @@ export function DailyReconPage() {
             </div>
           )}
 
-          <p className="text-[10px] text-gray-400">
+          <p className="text-xs text-gray-400">
             {data.total} total row(s) · {data.from_date} → {data.to_date} · Read-only — this screen detects drift, never repairs it.
           </p>
         </>
