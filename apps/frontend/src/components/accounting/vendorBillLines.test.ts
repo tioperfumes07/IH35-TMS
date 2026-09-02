@@ -100,4 +100,45 @@ describe("buildVendorBillLinePayloads", () => {
     ];
     expect(buildVendorBillLinePayloads(lines)).toEqual([]);
   });
+
+  it("GO-18 (owner correction 2026-09-02, N1 gap): stamps load_id onto every Section A/B line when opened from a load's Add Bill entry point", () => {
+    const lines: TwoSectionLine[] = [
+      {
+        id: "1",
+        section: "A",
+        description: "Diesel",
+        quantity: 1,
+        unit_cost: 100,
+        amount: 100,
+        expense_category_uuid: "11111111-1111-4111-8111-111111111111",
+      },
+      {
+        id: "2",
+        section: "B",
+        description: "Service",
+        quantity: 1,
+        unit_cost: 50,
+        amount: 50,
+      },
+    ];
+    const payload = buildVendorBillLinePayloads(lines, "44444444-4444-4444-8444-444444444444");
+    expect(payload).toHaveLength(2);
+    expect(payload[0]).toMatchObject({ section: "A", load_id: "44444444-4444-4444-8444-444444444444" });
+    expect(payload[1]).toMatchObject({ section: "B", load_id: "44444444-4444-4444-8444-444444444444" });
+  });
+
+  it("omits load_id entirely when no defaultLoadId is given — every other bill-create caller (WO/claim/unit) unchanged", () => {
+    const lines: TwoSectionLine[] = [
+      {
+        id: "1",
+        section: "A",
+        description: "Diesel",
+        quantity: 1,
+        unit_cost: 100,
+        amount: 100,
+        expense_category_uuid: "11111111-1111-4111-8111-111111111111",
+      },
+    ];
+    expect(buildVendorBillLinePayloads(lines)[0]).not.toHaveProperty("load_id");
+  });
 });

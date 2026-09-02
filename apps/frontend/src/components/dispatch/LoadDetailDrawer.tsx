@@ -930,6 +930,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                     operatingCompanyId={load.operating_company_id}
                     filter={{ load_id: load.id }}
                     contextLabel="this load"
+                    createLoadNumber={load.load_number}
                     data-testid="load-detail-bills-reverse"
                   />
                 ) : null}

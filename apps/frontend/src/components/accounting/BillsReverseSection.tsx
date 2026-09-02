@@ -26,6 +26,10 @@ type Props = {
   operatingCompanyId: string;
   filter: Filter;
   contextLabel: string;
+  /** GO-18 (owner correction 2026-09-02, N1 gap) — load's own display number, carried into the
+   *  Add Bill URL's ?load_number= so the create-page banner and memo never show a raw UUID.
+   *  Mirrors ExpensesReverseSection.createLoadNumber exactly. load_id filter only. */
+  createLoadNumber?: string;
   "data-testid"?: string;
 };
 
@@ -33,6 +37,7 @@ export function BillsReverseSection({
   operatingCompanyId,
   filter,
   contextLabel,
+  createLoadNumber,
   "data-testid": testId = "bills-reverse",
 }: Props) {
   const filterKey = Object.keys(filter)[0] as keyof Filter;
@@ -51,12 +56,26 @@ export function BillsReverseSection({
           Bills
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
-        <Link
-          className="text-xs font-semibold text-slate-700 underline"
-          to={`/accounting/bills?${filterKey}=${encodeURIComponent(filterValue)}`}
-        >
-          Open Bills
-        </Link>
+        <span className="flex items-center gap-3">
+          {/* GO-18 (owner correction 2026-09-02, N1 gap) — no bill-creation entry point existed on
+              a load surface (BillsReverseSection was read-only). Only the load filter carries a
+              create path — mirrors ExpensesReverseSection's own load_id-only restriction. */}
+          {filterKey === "load_id" ? (
+            <Link
+              className="text-xs font-semibold text-slate-700 underline"
+              to={`/accounting/bills/vendor?load_id=${encodeURIComponent(filterValue)}${createLoadNumber ? `&load_number=${encodeURIComponent(createLoadNumber)}` : ""}`}
+              data-testid="bills-reverse-add-bill"
+            >
+              + Add Bill
+            </Link>
+          ) : null}
+          <Link
+            className="text-xs font-semibold text-slate-700 underline"
+            to={`/accounting/bills?${filterKey}=${encodeURIComponent(filterValue)}`}
+          >
+            Open Bills
+          </Link>
+        </span>
       </div>
       {billsQ.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
       {billsQ.isError ? <p className="text-sm text-red-600">Could not load bills for {contextLabel}.</p> : null}
