@@ -73,3 +73,21 @@ law docs are (`CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`,
 
 `docs/lockdown/NO-SEAT-PROD-FINANCIAL-FIXTURES-LAW-2026-09-01.md` (still governs everything except
 the narrow purge case above) · `docs/audit/GUARD-WORKORDERS.md` (board row `SAMPLE-DATA-PURGE-2026-09-02`).
+
+## Hole found live 2026-09-02 (Book Load wizard) — purge is not finished
+
+Owner word (same day, live Chrome as USMCA Freight Solutions): the `is_sample_data = true`
+predicate is **blind** on every named entity-scoped table that **lacks that column**. First hit:
+`dispatch.load_templates` USMCA has exactly one row, **TEST DATA TESTMTDQIUGL**, offered as the
+only operator template. That table was not among the 22 with the column.
+
+**Owner order to CC-1 (do not invent a new register):**
+1. Delete that TEST DATA load template (USMCA's only template is junk).
+2. Sweep the **33** named tables with no `is_sample_data` for name/label/title/template_name
+   matching `test|sample|demo|qa|dummy|xxx`, USMCA-scoped. **Per-table counts BEFORE any delete.**
+   Owner decides ambiguous names. This name sweep is an owner exception to “never by description”
+   for tables the flag cannot see.
+3. Add `is_sample_data` additive CREATE-only default false on tables that can carry seat fixtures.
+4. The 2 remaining sample `mdata.drivers` stay outstanding (WORM children — do not force).
+
+**PROOF:** per-table counts for all 33, before and after, pasted. Seats never POST Book Load.

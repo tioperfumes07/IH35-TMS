@@ -2,6 +2,7 @@
 
 **Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
+FORCE NOW | READ INBOX-CC-2 | NOW=**J1 162→0 · K2 type-click-away · Chrome N1 expense #19641** · NEVER remake workflow · NEVER POST | GO
 FORCE NOW | READ INBOX-CC-2 | NOW=**LIVE Book Load** · K2 real mouse · then boards · HOLD lifted · NEVER POST | GO
 FORCE NOW | READ INBOX-CC-2 | NOW=**N1 Chrome UNVERIFIED #19607** · no expense POST · HOLD J1 · NEVER POST | GO
 

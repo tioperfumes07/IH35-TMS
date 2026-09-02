@@ -1,7 +1,3 @@
-# FEED NOW — CURSOR · GO-20
+# FEED NOW — CURSOR · GO-23 LEAD
 
-**NOT A SWEEP.** Do not run SWEEP-A / ParityTable / BOOKLOAD-ALWAYSTRACK.
-
-Coordinate: CC-1 C · CC-2 5+8 · CC-3 B · Codex D/H · Cascade FINDING · Devin-A Cancel-only.
-
-`git pull`. Read `claude/00-IH35-CURRENT-STATE-AND-LAW-READ-FIRST.md`. GO.
+FAST-MERGE. GO-24: mdata.locations not catalogs. N1 expense on git #19641. CC-1 purge+customer-search+bills+B5. CC-3 picker+wizard. CC-2 J1/K2/N1 Chrome. Never POST. GO.
