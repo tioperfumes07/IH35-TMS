@@ -1,7 +1,10 @@
 ---
 description: ALWAYS READ FIRST — Rule #0 quality + Law of the Land + specs before any code
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 **HONEST BUILT + LAUNCH (2026-08-14):** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — launch without Live Chrome = Fully-Wired 1–11 with leaf-specific Built only; seat lanes Cursor/CC-1/Codex; no `leafRe:.*` / `|.*` / word-blanket Built; no new scoreboard columns.
 
 

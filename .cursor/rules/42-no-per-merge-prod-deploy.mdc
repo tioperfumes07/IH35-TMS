@@ -1,7 +1,10 @@
 ---
 description: PERMANENT — never deploy production after each FAST-MERGE; timer or on-demand only
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # NO PER-MERGE PRODUCTION DEPLOY (owner 2026-08-21)
 

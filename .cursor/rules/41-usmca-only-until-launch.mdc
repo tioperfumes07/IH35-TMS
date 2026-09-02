@@ -1,7 +1,10 @@
 ---
 description: PERMANENT — USMCA only until launch; no TRK/TRANSP work; QBO sync parked; 100% = Fully-Wired 1–12
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # USMCA ONLY UNTIL LAUNCH (owner 2026-08-19)
 

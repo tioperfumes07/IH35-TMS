@@ -1,7 +1,10 @@
 ---
 description: U14 is 14/14 CLOSED — never recertify, never say OPEN U14
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # U14 CLOSED (owner 2026-08-23 22:45 CT)
 

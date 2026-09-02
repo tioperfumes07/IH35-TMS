@@ -1,7 +1,10 @@
 ---
 description: Spec source-of-truth hierarchy for all IH35-TMS work
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 01 — DUAL-SOURCE SPEC LAW
 

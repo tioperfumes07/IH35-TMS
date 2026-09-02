@@ -1,7 +1,10 @@
 ---
 description: Load linkage is going-forward only — historical QBO-import fuel/expenses are legitimately load-null; NEVER invent load FKs (owner 2026-08-04)
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 32 — LOAD LINKAGE PRE-OPERATIONAL (owner 2026-08-04)
 

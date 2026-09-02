@@ -1,7 +1,10 @@
 ---
 description: Fail-closed pipeline truth, conflict control, and merge-throughput law
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 18 — PIPELINE TRUTH + THROUGHPUT
 

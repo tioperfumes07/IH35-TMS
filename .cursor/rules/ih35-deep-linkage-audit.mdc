@@ -1,7 +1,10 @@
 ---
 description: IH35-TMS full system audit — DoD A-E + VERIFY 1-8, exercised live
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # IH35-TMS — FULL SYSTEM AUDIT: MASTER INSTRUCTIONS FOR CASCADE
 ### (auto-loads every session · runs until fully PROD-VERIFIED · the anti-bullshit spec)

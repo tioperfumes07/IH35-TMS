@@ -1,7 +1,10 @@
 ---
 description: The consolidated per-PR checklist — everything audited and fixed in every PR (auto-load)
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 23 — THE PER-PR CHECKLIST IS AUTO-LOADED LAW
 

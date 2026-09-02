@@ -1,7 +1,10 @@
 ---
 description: CLAUDE SERIAL SHIP — Cursor must match Claude's merge method (serial, tip-main, one push) so PRs stop failing/rebasing for hours (owner 2026-08-05)
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 36 — CLAUDE SERIAL SHIP SEQUENCE (owner law — permanent)
 

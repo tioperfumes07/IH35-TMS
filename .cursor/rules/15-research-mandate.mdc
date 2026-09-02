@@ -1,7 +1,10 @@
 ---
 description: Investigate before recommending — match/surpass QBO/NetSuite/McLeod/Alvys; cite the standard
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 # Research mandate (owner law)
 Do not recommend from memory when the answer needs current verification. For every accounting/dispatch/finance/report/operational decision, research and match or surpass the target systems, and cite the standard:
 - Accounting → QuickBooks trust + NetSuite controls; US GAAP/ASC (470-60 Ch.11, 606 revenue, 842 leases).

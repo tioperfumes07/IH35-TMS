@@ -1,7 +1,10 @@
 ---
 description: NEW SESSION announce + tiered-model reminder (autoload every conversation)
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 22 — SESSION BOOT ANNOUNCE + TIERED MODEL (owner 2026-07-22)
 

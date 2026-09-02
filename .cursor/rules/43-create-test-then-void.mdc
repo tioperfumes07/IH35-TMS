@@ -1,7 +1,10 @@
 ---
 description: PERMANENT — create labeled TMS TEST docs to prove Live; void later; empty/disabled is not a stop
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # CREATE TEST THEN VOID (owner 2026-08-22)
 

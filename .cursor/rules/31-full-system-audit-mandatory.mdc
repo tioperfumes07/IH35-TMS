@@ -1,7 +1,10 @@
 ---
 description: IH35 full-system audit law — DoD A–E + VERIFY 1–8 until PROD-VERIFIED (owner 2026-08-03 v3)
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 31 — FULL SYSTEM AUDIT (MANDATORY · owner 2026-08-03 v3)
 

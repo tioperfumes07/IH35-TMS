@@ -1,7 +1,10 @@
 ---
 description: ALWAYS LOAD — USMCA session boot (READY/Miss C, FAST-MERGE, triple-lock, seats). Stops new-session amnesia.
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # Session boot mandate (HARD — first action every conversation)
 

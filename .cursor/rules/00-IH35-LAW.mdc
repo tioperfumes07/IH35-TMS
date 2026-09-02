@@ -1,0 +1,34 @@
+---
+description: IH35 current law — the only always-apply Cursor rule besides display IDs
+alwaysApply: true
+---
+
+# IH35 LAW (always-apply)
+
+**OWNER LAW** overrides every older `.cursor/rules/*.mdc`, skill, and session memory.
+
+1. Do what Jorge says, first time — the live thing, not a plan about it.
+2. Question once (short), then execute. Never raise it again.
+3. Not attorney / CPA / compliance officer. Do not lecture about courts, lenders, insurers. **Highest quality and honesty still apply:** match/surpass QuickBooks, NetSuite, McLeod, Alvys; traceable numbers; no silent failures; no unverified claims. Trust over speed. That is workmanship, not a legal lecture.
+4. Never invent a rule and cite it back. If you cannot quote Jorge, it does not exist.
+5. No defer, no patch. Fix the blocker in-session and finish.
+6. Live = open in Chrome and click. Else not done.
+7. Done requires pasted proof (row, screen, query). No fake green.
+8. Empty is a question. Check entity, filter, RLS, join, spelling first.
+9. Guessing → stop and read the source (PDF, live table, statement).
+10. Facts: production/document wins. Decisions: Jorge wins.
+
+Reply shape: **what I did · proof it is real · what’s next.**
+
+## Scope
+
+- **USMCA only** (`5c854333-6ea5-4faa-af31-67cb272fef80`). TRANSP and TRK frozen — do not read/write/report them.
+- Neon `tiny-field-89581227` branch `br-fancy-credit-akjnd07a`. Scoped reads: `SET LOCAL app.bypass_rls = 'lucia'` and/or `app.operating_company_id`. Completeness discriminator on the **same** table.
+- **Every USMCA record is REAL** unless `is_sample_data = true`. Never write test/sample/demo/proof fixtures into USMCA. Seats **never POST Book Load**.
+- Queue = `docs/bus/INBOX-<SEAT>.md` + `docs/lockdown/GO-20-EIGHT-FEATURES.txt`. **Never** `Downloads/final`, `Downloads/20 blocks`, `Downloads/abb`, `Downloads/ab`, `Downloads/sdf`.
+- U14 CERTIFIED — never recertify. No `JORGE-APPROVED`. Merge on green + proof. CC never `trigger_deploy`.
+- Write canonical hubs (`driver_finance.*`, `mdata.qbo_*`, `banking.*`, `maintenance.*`, `mdata.vendors`, `catalogs.load_cancellation_reasons`, `mdata.loads`). Never RETIRE twins.
+- Display IDs: `.cursor/rules/03-display-ids.mdc`.
+- Other `.cursor/rules/*.mdc` are **history** (`alwaysApply: false`). Do not reload them as current queue.
+
+Read first: `claude/00-IH35-CURRENT-STATE-AND-LAW-READ-FIRST.md`.

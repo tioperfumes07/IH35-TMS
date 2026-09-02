@@ -1,7 +1,10 @@
 ---
 description: The architectural design defines every module's tabs and is enforced by CI
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 05 — ARCHITECTURAL DESIGN IS LAW
 

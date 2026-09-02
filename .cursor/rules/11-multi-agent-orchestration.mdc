@@ -1,7 +1,10 @@
 ---
 description: Orchestrated agents — planner, builder, independent code-review + financial agents, GUARD verifier
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 # No single-pass builds on anything non-trivial or financial
 
 Run this project as an orchestrated team; verify adversarially before committing.

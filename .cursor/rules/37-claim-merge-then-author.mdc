@@ -1,7 +1,10 @@
 ---
 description: CLAIM → MERGE → AUTHOR — never open verify-step feature PRs before the number is on origin/main; never claim+author same PR (owner 2026-08-05 Rule 37)
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 37 — CLAIM → MERGE → AUTHOR (owner law — permanent hardline)
 

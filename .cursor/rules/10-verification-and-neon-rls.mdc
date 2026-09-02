@@ -1,7 +1,10 @@
 ---
 description: Verification discipline — prod wins, RLS 0-count re-run, no fake green, ledgered≠effective
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 # Verification is the control (never a claim without proof)
 
 - Schema/columns/enums/tables → verify on the Neon PROD branch `br-fancy-credit-akjnd07a` (`information_schema`/`pg_catalog`), NOT memory, migration files, or docs. Prod has diverged from migrations repeatedly — **prod wins**.

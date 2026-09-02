@@ -1,7 +1,10 @@
 ---
 description: PERMANENT model tiers A/B/C by task — Cursor mechanical=C, feature/scoreboard=B; money always A. Escalate stuck; never down-tier money.
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 # RULE 12 — MODEL TIER POLICY (owner-locked 2026-08-03)
 
 **Canonical prose:** `docs/specs/MODEL-TIER-POLICY.md` (same text). This rule is alwaysApply so every Cursor session autoloads it.

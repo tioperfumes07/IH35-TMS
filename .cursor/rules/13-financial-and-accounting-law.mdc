@@ -1,8 +1,12 @@
 ---
 description: Financial cluster = build + merge on green (OWNER LAW 2026-08-03, no holds); reuse the poster; ASC/GAAP; parallel books; QBO never written
 globs: ["**/accounting/**","**/driver-finance/**","**/banking/**","db/migrations/**","**/*posting*","**/settlements/**","**/factoring/**"]
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+<!-- CORRECTION 2026-09-02: “ALL TMS-native data is TEST” below is FALSE for USMCA. Every USMCA record is REAL unless is_sample_data=true. -->
+
 # Financial law (proof-gated, CPA-grade — NOT owner-approval-gated)
 
 **OWNER LAW (2026-08-03, FINAL): NO HOLDS. NO `JORGE-APPROVED` LABEL.** Claude and all coders (Cursor /
