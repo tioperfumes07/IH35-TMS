@@ -402,3 +402,13 @@ being referenced, not a second broken copy of it.
 
 Filed the full finding + fix sketch on the board, routed to Cursor/Codex. Did not implement it
 myself. Never built money. Never booked a load. Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 | STATUS | item 2 (17/C/A/20) still unshipped by CC-1 · 2026-09-02T01:15Z
+
+Re-checked via `git log` — CC-1's slice 17 (capitalize), C (liability), A (drift alert), 20
+(settlement) still have no shipped code, only a claim-reservation for 20
+(`202613... company-settlement-5753-pl`/verify-step `10224`). Nothing to verify-live yet. Items 1
+(slice 18) and 3 (defer 5+8) were already fully verified and filed in #19497 — not repeating that
+work. Idle, watching INBOX TOP for CC-1's merge or the next card.
