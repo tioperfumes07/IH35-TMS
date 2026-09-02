@@ -40,6 +40,13 @@ export type CreateBillLineInput = {
   categoryKind?: string | null;
   categoryCode?: string | null;
   loadId?: string | null;
+  /**
+   * GO-18 — the operator's escape hatch when line_category (derived below from
+   * expenseCategoryUuid) requires a load but this line genuinely has none. Mirrors
+   * expenses.routes.ts's identical field 1:1; enforced >=20 chars by the SAME DB trigger
+   * (accounting.enforce_load_fk_invariant, now covers bill_lines too).
+   */
+  loadExemptionReason?: string | null;
 };
 
 type CreateBillInput = {
@@ -61,6 +68,14 @@ type CreateBillInput = {
   // constraints are added by migration 202607050810.
   workOrderId?: string | null;
   unitId?: string | null;
+  /**
+   * GO-18 (design docs/lockdown/GO-18-LOAD-COSTS-DESIGN.md §3.5) — accounting.expenses has carried
+   * driver_uuid/trailer_id since Block-basis; accounting.bills never did (live-verified gap,
+   * 2026-09-01). Column-gated UPDATE-after-INSERT, same pattern as legalMatterId below (avoids
+   * exploding the already-4-way-branched header INSERT for 2 more optional columns).
+   */
+  driverId?: string | null;
+  trailerId?: string | null;
   // Claim→Bill hop (held migration 202607740000). Only persisted when the column exists on the
   // connected DB (colExists) — Neon may not have owner-applied the held DDL yet.
   insuranceClaimId?: string | null;
@@ -1879,6 +1894,29 @@ export class DuplicateBillNumberError extends Error {
   }
 }
 
+/**
+ * GO-18 — mirrors expenses.routes.ts's identical derivation 1:1: the operator's own already-chosen
+ * expenseCategoryUuid, lowercase-code-matched against the canonical accounting.line_category_load_required
+ * set. A category with no exact match (the majority) returns null — never invented. Extracted as its own
+ * function (rather than inlined in createBill's lines loop) so the derivation itself is unit-testable
+ * without mocking createBill's much larger surface (dup-check, vendor resolution, 4-way header INSERT,
+ * display_id stamp).
+ */
+export async function resolveLineCategoryForLoadRequirement(
+  client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
+  expenseCategoryUuid: string | null | undefined
+): Promise<string | null> {
+  if (!expenseCategoryUuid) return null;
+  const categoryRow = await client.query<{ line_category?: string }>(
+    `SELECT r.line_category
+       FROM catalogs.expense_categories ec
+       JOIN accounting.line_category_load_required r ON r.line_category = lower(ec.code)
+      WHERE ec.id = $1::uuid`,
+    [expenseCategoryUuid]
+  );
+  return categoryRow.rows[0]?.line_category ?? null;
+}
+
 export async function createBill(input: CreateBillInput, userId: string) {
   if (input.amountCents <= 0) throw new Error("bill_amount_must_be_positive");
 
@@ -2222,6 +2260,33 @@ export async function createBill(input: CreateBillInput, userId: string) {
       );
     }
 
+    // GO-18 — stamp driver_id/trailer_id when present (UPDATE-after-INSERT; avoid exploding the
+    // already-4-way header INSERT). Column-gated the same way legal_matter_id is below, so a DB that
+    // predates migration 202613360001 still creates the bill successfully (columns just stay unset).
+    if (insertedId && (input.driverId || input.trailerId)) {
+      const colsRes = await client.query<{ column_name: string }>(
+        `SELECT column_name FROM information_schema.columns
+          WHERE table_schema='accounting' AND table_name='bills' AND column_name IN ('driver_id','trailer_id')`
+      );
+      const presentCols = new Set(colsRes.rows.map((r) => r.column_name));
+      const setClauses: string[] = [];
+      const values: unknown[] = [insertedId, input.operatingCompanyId];
+      if (input.driverId && presentCols.has("driver_id")) {
+        values.push(input.driverId);
+        setClauses.push(`driver_id = $${values.length}::uuid`);
+      }
+      if (input.trailerId && presentCols.has("trailer_id")) {
+        values.push(input.trailerId);
+        setClauses.push(`trailer_id = $${values.length}::uuid`);
+      }
+      if (setClauses.length > 0) {
+        await client.query(
+          `UPDATE accounting.bills SET ${setClauses.join(", ")} WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+          values
+        );
+      }
+    }
+
     // ACCT-F5042 — stamp legal_matter_id when present (UPDATE-after-INSERT; avoid 4-way INSERT explosion).
     if (insertedId && input.legalMatterId) {
       const legalCol = await client.query(
@@ -2286,6 +2351,12 @@ export async function createBill(input: CreateBillInput, userId: string) {
         }
         const amountDollars = line.amountCents / 100;
         const section = line.section === "A" || line.section === "B" ? line.section : "A";
+
+        // GO-18 — paired with load_id + load_exemption_reason in the SAME insert, same reason
+        // expenses.routes.ts pairs them: writing line_category alone would turn a
+        // silently-succeeding no-load bill line into a raw trigger exception with no escape hatch.
+        const lineCategory = await resolveLineCategoryForLoadRequirement(client, line.expenseCategoryUuid);
+
         await client.query(
           `
             INSERT INTO accounting.bill_lines (
@@ -2299,11 +2370,13 @@ export async function createBill(input: CreateBillInput, userId: string) {
               category_kind,
               category_code,
               account_id,
-              load_id
+              load_id,
+              line_category,
+              load_exemption_reason
             )
             VALUES (
               $1::uuid, $2, $3, $4, $5,
-              $6::uuid, $7::uuid, $8, $9, $10::uuid, $11::uuid
+              $6::uuid, $7::uuid, $8, $9, $10::uuid, $11::uuid, $12, $13
             )
           `,
           [
@@ -2329,6 +2402,8 @@ export async function createBill(input: CreateBillInput, userId: string) {
             line.categoryCode ?? null,
             accountId,
             line.loadId ?? null,
+            lineCategory,
+            line.loadExemptionReason ?? null,
           ]
         );
       }
