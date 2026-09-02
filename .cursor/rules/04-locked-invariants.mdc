@@ -1,7 +1,10 @@
 ---
 description: Locked architectural invariants every block must enforce
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 04 — LOCKED INVARIANTS
 

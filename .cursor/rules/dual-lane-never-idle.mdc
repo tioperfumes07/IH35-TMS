@@ -1,7 +1,10 @@
 ---
 description: IH35 dual-lane — mandatory dispatch on every turn; never idle or stale
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # Dual-Lane — Never Idle, Never Stale (HARD)
 

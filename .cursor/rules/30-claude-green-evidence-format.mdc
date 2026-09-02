@@ -1,7 +1,10 @@
 ---
 description: Cursor PRs/commits must use Claude's green evidence format — FINDING-first body, LIVE PROOF artifacts, one commit on main, never soft-reset
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 30 — CLAUDE-GREEN EVIDENCE FORMAT (owner 2026-08-02)
 

@@ -1,7 +1,10 @@
 ---
 description: HARD — module DONE = N of M checklist items PASS (or owner HOLD), never PR volume; manifests + CI 1431
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 24 — MODULE COMPLETION = N of M (2026-07-24) — PERMANENT
 

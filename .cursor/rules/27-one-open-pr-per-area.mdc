@@ -1,7 +1,10 @@
 ---
 description: ONE open PR per area at a time — kill rebase treadmill (owner 2026-07-31)
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 27 — ONE OPEN PR PER AREA (2026-07-31)
 

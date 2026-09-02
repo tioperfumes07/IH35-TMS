@@ -1,7 +1,10 @@
 ---
 description: HARD — AUDIT-COVERAGE-LIVE.md is the single source for FAIL+OPEN findings; column ownership by role; never delete rows
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 28 — AUDIT COVERAGE SINGLE SOURCE (2026-08-02)
 

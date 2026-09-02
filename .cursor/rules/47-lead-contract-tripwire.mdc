@@ -1,7 +1,10 @@
 ---
 description: ALWAYS LOAD — Lead is a census job. Next T1–T6 failure activates Claude lead. No new laws.
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # Lead contract + Claude tripwire (owner 2026-08-25)
 

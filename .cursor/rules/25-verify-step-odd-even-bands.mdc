@@ -1,7 +1,10 @@
 ---
 description: Verify-step bands — Cursor EVEN; CC-1 ≡1 (mod 4); CC-2 ≡3 (mod 4); claim-before-write (owner 2026-08-04)
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 25 — VERIFY-STEP BANDS + CLAIM-BEFORE-WRITE (owner 2026-08-04)
 

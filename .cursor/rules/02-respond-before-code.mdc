@@ -1,7 +1,10 @@
 ---
 description: Cursor must respond with spec-review acknowledgment BEFORE writing any code
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 02 — RESPOND BEFORE CODING
 

@@ -1,7 +1,10 @@
 ---
 description: Cursor must ship like Claude — full labelled commit + local gate before push; never --no-verify
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 29 — CURSOR = CLAUDE SHIP PARITY (owner 2026-08-02; extended 2026-08-03)
 

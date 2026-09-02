@@ -1,7 +1,10 @@
 ---
 description: CONTINUOUS MODE — never pause/idle; always keep building; tiered model in force (owner 2026-08-04)
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 32 — CONTINUOUS MODE · NO PAUSE · NO IDLE (owner 2026-08-03; reinforced 2026-08-04)
 

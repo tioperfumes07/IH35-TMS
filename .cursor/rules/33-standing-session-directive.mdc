@@ -1,7 +1,10 @@
 ---
 description: ALWAYS LOAD — Standing Session Directive (§0–§7) + Delivery Method (Cursor screens/janitor lane)
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # Standing Session Directive (autoload)
 

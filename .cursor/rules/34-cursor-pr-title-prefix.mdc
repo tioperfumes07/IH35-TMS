@@ -1,7 +1,10 @@
 ---
 description: ALWAYS — Every Cursor PR title MUST begin with "Cursor-"
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # Cursor PR title prefix (permanent — owner 2026-08-04)
 

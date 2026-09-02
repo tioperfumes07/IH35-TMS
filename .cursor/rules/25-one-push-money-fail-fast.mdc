@@ -1,7 +1,10 @@
 ---
 description: ONE PUSH · fail-fast money gates · no CI cancel thrash (permanent)
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 25 — ONE PUSH · FAIL-FAST · NO CI THRASH (owner 2026-07-28)
 

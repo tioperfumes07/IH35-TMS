@@ -1,7 +1,10 @@
 ---
 description: Fix root cause — never patch, never defer, evidence before done (owner law)
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 16 — FIX, DON'T PATCH · NEVER DEFER · EVIDENCE BEFORE DONE
 

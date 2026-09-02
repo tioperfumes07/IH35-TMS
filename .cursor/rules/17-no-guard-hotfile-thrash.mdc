@@ -1,7 +1,10 @@
 ---
 description: Never register new CI guards via package.json / locked-guards / ci.yml — verify-steps only
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 17 — NO GUARD HOT-FILE THRASH (2026-07-17)
 

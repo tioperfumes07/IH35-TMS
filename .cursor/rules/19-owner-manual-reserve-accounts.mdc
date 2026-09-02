@@ -1,7 +1,10 @@
 ---
 description: Reserve / holdback accounts are OWNER-created manually in-app only — no agent/migration/seed may create/import/reclassify them.
-alwaysApply: true
+alwaysApply: false
 ---
+
+<!-- SUPERSEDED-ALWAYS-APPLY: see 00-IH35-LAW.mdc. File kept (never-delete). -->
+
 
 # RULE 19 — RESERVE ACCOUNTS ARE OWNER-MANUAL ONLY
 
