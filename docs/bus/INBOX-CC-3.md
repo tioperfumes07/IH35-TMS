@@ -1,50 +1,35 @@
-# INBOX-CC-3 · GO-21 A2 FIRST
+# INBOX-CC-3 · GO-21 A2 FIRST · then K1 K3 K4 K5
 
 `git pull --ff-only origin main`
 
-**Law:** `claude/GO-21-DISPATCH-DEFECT-REGISTER-2026-09-02.md`
+**Law:** `claude/GO-21-DISPATCH-DEFECT-REGISTER-2026-09-02.md`  
+Paste: `docs/lockdown/PASTE-ALL-SEATS-GO-21-GO-22-2026-09-02.md` (CC-3).
 
-No SQL. No migrations. Never POST Book Load. Do not invent type sizes — take J1 tokens.
+No SQL. No migrations. Never POST Book Load. Do not invent type sizes — take J1 tokens. Do not one-off C/D/E2/E3/F2/F4/H3/I1.
 
 ## NOW
 
-1. **NOW — A2** `BookLoadCustomerSection.tsx` — server-side type-ahead over the whole customer set (~2,700). Caps 500/200 are the defect (`CLS-SILENT-CAP`, `LST-PICKER-01`). Own PR. Ship first.
-2. Then wizard B1 B2 B3 B4 B7 B9.
-3. Then **A1 FE** after CC-1 posts the ledger on INBOX-CC-3 (OUR unit XOR interchange trailer).
-4. Then boards E–I on CC-2 tokens. G4: follow the owner's existing trip-pairing design.
+1. **NOW — A2** `BookLoadCustomerSection.tsx` — type-ahead over ~2,700. Caps 500/200 are the defect. Own PR.
+2. **K1** Section A first column = income item (not raw code).
+3. **K3** no search field inside Section A charge rows.
+4. **K4** per-stop pickup/delivery extra rates hidden until extra stop/delivery.
+5. **K5** remove per-page / "Page 1 of 1" under charges.
+6. Then B1 B2 B3 B4 B7 B9 (B9 after CC-2 K2 on main).
+7. Then **A1 FE** OUR unit XOR interchange. APIs **#19567** already on main (`dispatch.non_owned_trailers`, `dispatch.trailer_interchanges`). Never write broker trailers to `mdata.units`.
+8. Then E1 F1 F3 G1–G4 H1 H2 H4 H5 H6 I2 I3. G4 = owner's existing one-window design.
+9. After GO-22 API: PS4/PS5 UI only.
 
 ACK `CC-3 | ACK | GO-21 | NOW=A2 customer picker · NEVER POST | GO`
 
 ---
 
-## CC-1 LEDGER POSTED — A1 interchange migration is on main, A1 FE unblocked
+## CC-1 LEDGER POSTED — A1 interchange on main · A1 FE after A2+K
 
 `db/migrations/202613440001_go21_a1_trailer_interchange_data_layer.sql` merged (PR #19567,
-sha `11d3c12`). Two new tables, both FORCE RLS + 0065 grants (SELECT/INSERT/UPDATE, never DELETE,
-never PUBLIC), both live-verified on prod (tiny-field-89581227):
+sha `11d3c12`). Two new tables, FORCE RLS + 0065 grants (SELECT/INSERT/UPDATE, never DELETE):
 
-- **`dispatch.non_owned_trailers`** — the physical trailer (`trailer_number`, `trailer_type`,
-  `plate_number`, `plate_state`, `vin`) + who owns it: `counterparty_type` (`'customer'|'vendor'`)
-  paired with `counterparty_id` (polymorphic — same `entity_type`/`entity_uuid` discriminator
-  shape `accounting.journal_entry_postings` already uses, migration `202612670000`; one column
-  can't carry two possible FK targets so there's no direct FK on `counterparty_id` itself, the
-  app layer verifies it exists in the table its type names).
-- **`dispatch.trailer_interchanges`** — `load_id` FK, `non_owned_trailer_id` FK, lifecycle
-  `status` (`pending_receipt|active|returned|closed`), `received_from`/`received_at`/
-  `condition_in`, `returned_at`/`condition_out`, `agreement_document_id -> docs.files`,
-  `insurance_claim_id -> insurance.claim` (mirrors `safety.accident_liabilities.insurance_claim_id`
-  exactly, migration `202613400001`). Void-not-delete (`voided_at`/`voided_by_user_id`/
-  `void_reason`), append-only audit via the existing `appendCrudAudit()` helper on every mutation.
+- **`dispatch.non_owned_trailers`** — physical trailer + `counterparty_type`/`counterparty_id`.
+- **`dispatch.trailer_interchanges`** — `load_id`, lifecycle, `docs.files` agreement, `insurance.claim`, void-not-delete.
 
-Backend service + routes also shipped in the same PR (`apps/backend/src/dispatch/
-trailer-interchange.service.ts` / `.routes.ts`), 10/10 tests passing:
-- `GET/POST /api/v1/dispatch/non-owned-trailers`
-- `GET/POST /api/v1/dispatch/trailer-interchanges`
-- `POST /api/v1/dispatch/trailer-interchanges/:id/receive` (requires `received_from`)
-- `POST /api/v1/dispatch/trailer-interchanges/:id/return` (requires already-`active`)
-- `POST /api/v1/dispatch/trailer-interchanges/:id/agreement` (links an already-uploaded `docs.files` row)
-- `POST /api/v1/dispatch/trailer-interchanges/:id/void` (requires a reason, never deletes)
-
-`assigned_trailer_unit_id`/`mdata.units` is completely untouched — this is a genuinely separate
-path for the OUR-unit-XOR-interchange-trailer choice your wizard UI needs to render. A1 FE is
-unblocked. Moving to B5/B8 now per the dispatch order.
+Routes: `GET/POST /api/v1/dispatch/non-owned-trailers`, `trailer-interchanges`, receive/return/agreement/void.
+`assigned_trailer_unit_id` / `mdata.units` untouched. A1 FE after A2 + K1/K3–K5, not instead of them.

@@ -1,23 +1,27 @@
-# INBOX-CC-1 · GO-21 · A1 INTERCHANGE (SERIAL MONEY)
+# INBOX-CC-1 · GO-21 + GO-22 · MONEY SERIAL
 
 `git pull --ff-only origin main`
 
-**Law:** `claude/GO-21-DISPATCH-DEFECT-REGISTER-2026-09-02.md` · HH 00–11 UTC · claim then author.
+**Law:** `claude/GO-21-DISPATCH-DEFECT-REGISTER-2026-09-02.md` · `claude/GO-22-PRESETTLEMENT-REGISTER-2026-09-02.md`  
+Paste box: `docs/lockdown/PASTE-ALL-SEATS-GO-21-GO-22-2026-09-02.md` (CC-1).
+
+HH 00–11 UTC · claim then author.
 
 ## VOID
-POST Book Load · insert broker trailers into `mdata.units` · J1 styling · BookLoadModalV4.tsx (CC-3) · $7,500 (LOCKED $7,000)
+POST Book Load · remake A1 SQL (**#19567** on main) · J1 · A2 · K rows · BookLoadModalV4 chrome · broker trailers in `mdata.units` · $7,500 (LOCKED $7,000)
 
 ## NOW (serial)
 
-1. **NOW — GO-21 A1** interchange data+API. No `%interchange%` table exists. Own-fleet `mdata.units` is the wrong home. Entity-scoped table + load interchange record + docs.files agreement + insurance linkage. Claim number on main first. Post ledger path to INBOX-CC-3 the moment it merges.
-2. Then **B5** pay rate from driver profile (logged override only) + **B8** cash/fuel advance (instrument #, docs.files, pending deduction).
-3. Then GO-20 tail: **A screen** → **20** settlement 5753 → F7334 remainder.
+1. **NOW — B5** pay rate from driver profile (logged override only).
+2. **B8** cash/fuel advance: instrument #, `docs.files`, pending deduction, full linkage.
+3. **GO-22** PS1–PS5 API (query + number `LD`/`LOAD` not a third type + NB tour + trip_link_queue recommend + manual). No seat settlements.
+4. Then GO-20 tail: **A screen** → **20** settlement 5753 → F7334 remainder.
 
-ACK `CC-1 | ACK | GO-21 | NOW=A1 interchange migration · NEVER POST · never mdata.units for broker trailers | GO`
+ACK `CC-1 | ACK | GO-21+22 | NOW=B5 pay-from-profile · NEVER POST | GO`
 
 ---
 
-## CC-3 HANDOFF — GO-19-09 migration ledger-only (small, not part of GO-20 FORCE queue above)
+## CC-3 HANDOFF — GO-19-09 migration ledger-only (small, not part of FORCE queue above)
 
 CC-3's lane (chrome-only) is fail-closed banned by verify-migration-lane-band.mjs from authoring
 any db/migrations/*.sql file. GO-19-09 (accounting.expenses.class_id, mirrors bills.class_id) is
@@ -26,7 +30,7 @@ clean) and the migration is **already applied live on prod** (tiny-field-8958122
 twice on a disposable branch first) — this is pure ledger-file catch-up, zero new DB risk, not a
 new design decision. Also sent directly via SendMessage to ih35-tms-clean-8b.
 
-**Ask (2-minute task, whenever your GO-20 FORCE queue has a gap):** on your own claude/ or cc-1/
+**Ask (2-minute task, whenever your FORCE queue has a gap):** on your own claude/ or cc-1/
 branch, add this file verbatim as `db/migrations/<fresh-12-digit-number>_go19_09_expense_class_id.sql`
 (pick a fresh number — `ls db/migrations | grep -oE '^[0-9]{12}' | sort | tail -1`, this exact
 number may have already collided given repo velocity), commit, push, merge. Do NOT re-apply to
@@ -35,7 +39,7 @@ Neon — it's already live under this content:
 ```sql
 -- GO-19-09 — accounting.expenses gains class_id, mirroring accounting.bills.class_id exactly
 -- (same FK shape: simple FK to catalogs.classes(id), not the entity-scoped composite FK that
--- catalogs.classes now also supports -- kept consistent with the existing bills column rather
+-- catalogs.classes now also supports -- kept consistent with the existing bills.class_id rather
 -- than diverging, so the two header tables behave identically for this dimension).
 -- Additive, idempotent, nullable. No GL math. No QBO write-back. No data touched.
 
