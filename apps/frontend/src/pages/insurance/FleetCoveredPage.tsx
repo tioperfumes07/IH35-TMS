@@ -13,10 +13,10 @@ const label = (value: string) => value.replaceAll("_", " ").replace(/\b\w/g, (c)
 const dataValue = (value: string | number | null | undefined) => value == null || value === "" ? <span className="font-semibold text-red-700">DATA GAP</span> : value;
 
 function policyCell(row: InsuranceFleetCoveredUnit, type: InsuranceCoverageType) {
-  if (row.vehicle_type === "trailer" && type === "auto_liability") return <span className="inline-flex rounded-sm border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">N/A</span>;
+  if (row.vehicle_type === "trailer" && type === "auto_liability") return <span className="inline-flex rounded-sm border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs font-semibold text-slate-600">N/A</span>;
   const coverage = row.coverages.find((item) => item.coverage_type === type);
-  if (!coverage) return <span className="inline-flex rounded-sm border border-red-300 bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-800">MISSING</span>;
-  return <Link className="inline-flex rounded-sm border border-gray-400 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-800 underline" to={`/safety/insurance/policies/${coverage.policy_id}`}>{coverage.policy_number} · {coverage.expiry_date}</Link>;
+  if (!coverage) return <span className="inline-flex rounded-sm border border-red-300 bg-red-50 px-1.5 py-0.5 text-xs font-semibold text-red-800">MISSING</span>;
+  return <Link className="inline-flex rounded-sm border border-gray-400 bg-white px-1.5 py-0.5 text-xs font-semibold text-gray-800 underline" to={`/safety/insurance/policies/${coverage.policy_id}`}>{coverage.policy_number} · {coverage.expiry_date}</Link>;
 }
 
 export function FleetCoveredPage() {
@@ -47,7 +47,7 @@ export function FleetCoveredPage() {
     { key: "physical_damage", label: "Physical Damage", sortable: true, sortValue: (row) => row.coverages.find((c) => c.coverage_type === "physical_damage")?.policy_number ?? "", render: (row) => policyCell(row, "physical_damage") },
     { key: "cargo", label: "Cargo", sortable: true, sortValue: (row) => row.coverages.find((c) => c.coverage_type === "cargo")?.policy_number ?? "", render: (row) => policyCell(row, "cargo") },
     { key: "insured_value_cents", label: "Insured Value", sortable: true, render: (row) => row.coverages.length > 0 && row.insured_value_cents == null ? <span className="font-semibold text-red-700">DATA GAP</span> : formatMoney(row.insured_value_cents), exportValue: (row) => formatMoney(row.insured_value_cents) },
-    { key: "premium_per_month_cents", label: "Premium/mo", sortable: true, render: (row) => <>{formatMoney(row.premium_per_month_cents)}<span className="block text-[10px] text-slate-500">{[...new Set(row.coverages.map((c) => c.allocation_method))].map(label).join(", ") || "—"}</span></>, exportValue: (row) => formatMoney(row.premium_per_month_cents) },
+    { key: "premium_per_month_cents", label: "Premium/mo", sortable: true, render: (row) => <>{formatMoney(row.premium_per_month_cents)}<span className="block text-xs text-slate-500">{[...new Set(row.coverages.map((c) => c.allocation_method))].map(label).join(", ") || "—"}</span></>, exportValue: (row) => formatMoney(row.premium_per_month_cents) },
     { key: "cost_per_thousand", label: "Cost/mo per $1,000", sortable: true, sortValue: (row) => row.insured_value_cents ? row.premium_per_month_cents / row.insured_value_cents : null, render: (row) => row.insured_value_cents ? formatMoney(Math.round(row.premium_per_month_cents * 100000 / row.insured_value_cents)) : "—" },
     { key: "deductible", label: "Deductible", render: () => "NOT STORED" },
     { key: "covered_since", label: "Covered Since", sortable: true, render: (row) => row.covered_since ?? "—" },
