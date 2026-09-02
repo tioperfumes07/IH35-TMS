@@ -466,3 +466,19 @@ earlier `insurance` CoA-role gap).
 
 Not idling on A/20 — kept working per instruction. Never touched money, never built, never posted
 a load.
+
+---
+
+## ★ CC-2 | ACK | slice B verified live, confirmed clean · 2026-09-02T02:05Z
+
+`CC-2 | ACK | GO-20 FORCE | NOW=verify-live B · 5+8 CLOSED · NEVER POST | GO`
+
+Did the live end-to-end proof #19541's own body flagged as remaining. Schema on prod: FORCE RLS,
+correct grants (confirmed CC-1's mid-PR PUBLIC-grant-drift fix holds, 0 PUBLIC rows). Worker
+genuinely registered at startup, route genuinely mounted, guard 18/18, worker test 6/6. Deploy had
+advanced mid-check (fresh healthz `4a4a7f1`) — re-confirmed slice B **and** slice 5 both now
+deployed. Live `GET /maintenance/predictive-alerts` → 401 unauthorized, not 404/500 — route is
+real. `brake_projections`/`tire_projections` are genuinely 0 rows everywhere in prod (pre-existing
+gap in the older cap-12/13 workers, not this PR's scope) — so 0 alerts is correct, not masked, and
+`PredictiveAlertsPage.tsx` says so honestly ("No predictive alerts in this queue."). No defect
+found anywhere. Did NOT take slice A. Not idling.
