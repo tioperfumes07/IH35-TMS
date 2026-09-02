@@ -7,7 +7,7 @@
 ## NOW
 
 ```
-CASCADE — LIVE CHROME FINDING FACTORY. NO PAUSE.
+CASCADE — REWAKE 17:03 CT. YOUR OUTBOX IS EMPTY. LIVE CHROME FINDING FACTORY. NO PAUSE.
 
 Open Book Load and dispatch calendars/planners in Chrome (view only).
 For EACH defect, OUTBOX one unique FINDING with file:line, then the next:

@@ -1,4 +1,5 @@
 import { processDotDwellForGeofenceEvent } from "./dot-dwell-detector.service.js";
+import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
 import { normalizeVertices, pointInPolygon } from "./geofence.js";
 export { pointInPolygon } from "./geofence.js";
 
@@ -146,7 +147,11 @@ export async function processGeofenceDetectionsForGpsPoint(
     // Never overwrite driver/manual evidence and never backfill: only a newly inserted live event
     // can win the compare-and-set below. The label is minted by bindLoadToGeofences.
     const source = input.source === "manual" ? "manual" : "eld_geofence";
-    await client.query(
+    const stopStamp = await client.query<{
+      load_id: string;
+      stop_id: string;
+      booked_by_user_id: string | null;
+    }>(
       transition === "entered"
         ? `
             UPDATE mdata.load_stops ls
@@ -163,6 +168,8 @@ export async function processGeofenceDetectionsForGpsPoint(
                AND l.soft_deleted_at IS NULL
                AND ls.soft_deleted_at IS NULL
                AND ls.actual_arrival_at IS NULL
+         RETURNING ls.load_id::text AS load_id, ls.id::text AS stop_id,
+                   COALESCE(l.booked_by_user_id, l.dispatcher_user_id, l.updated_by_user_id)::text AS booked_by_user_id
           `
         : `
             UPDATE mdata.load_stops ls
@@ -179,9 +186,20 @@ export async function processGeofenceDetectionsForGpsPoint(
                AND l.soft_deleted_at IS NULL
                AND ls.soft_deleted_at IS NULL
                AND ls.actual_departure_at IS NULL
+         RETURNING ls.load_id::text AS load_id, ls.id::text AS stop_id,
+                   COALESCE(l.booked_by_user_id, l.dispatcher_user_id, l.updated_by_user_id)::text AS booked_by_user_id
           `,
       [row.geofence_id, input.operating_company_id, input.unit_id, input.occurred_at, source]
     );
+    const stamped = stopStamp.rows[0];
+    if (stamped?.load_id && stamped.stop_id && stamped.booked_by_user_id) {
+      await mintProformaInvoiceOnFirstPickup(client, {
+        operatingCompanyId: input.operating_company_id,
+        loadId: stamped.load_id,
+        actorUserId: stamped.booked_by_user_id,
+        stopId: stamped.stop_id,
+      });
+    }
     await processDotDwellForGeofenceEvent(client, {
       operating_company_id: input.operating_company_id,
       geofence_id: row.geofence_id,

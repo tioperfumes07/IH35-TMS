@@ -10,6 +10,7 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { latchOnDeliveryEvidence } from "../delivery-evidence-latch.js";
+import { mintProformaInvoiceOnFirstPickup } from "../../accounting/proforma-mint-on-first-pickup.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireDriverSession } from "../../driver/auth.js";
@@ -403,7 +404,18 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
         stop_id: params.data.stop_uuid,
       });
 
-      return { ok: true, geofence_status: "entered" as const };
+      const pickupMint = await mintProformaInvoiceOnFirstPickup(client, {
+        operatingCompanyId: stop.operating_company_id,
+        loadId: params.data.uuid,
+        actorUserId: req.user!.uuid,
+        stopId: params.data.stop_uuid,
+      });
+      const proformaInvoice =
+        pickupMint.outcome === "minted" || pickupMint.outcome === "idempotent"
+          ? pickupMint.invoice
+          : null;
+
+      return { ok: true, geofence_status: "entered" as const, proforma_invoice: proformaInvoice };
     });
 
     if ("error" in updated) {
@@ -533,7 +545,18 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
         stop_id: params.data.stop_uuid,
       });
 
-      return { ok: true, geofence_status: "exited" as const };
+      const pickupMint = await mintProformaInvoiceOnFirstPickup(client, {
+        operatingCompanyId: stop.operating_company_id,
+        loadId: params.data.uuid,
+        actorUserId: req.user!.uuid,
+        stopId: params.data.stop_uuid,
+      });
+      const proformaInvoice =
+        pickupMint.outcome === "minted" || pickupMint.outcome === "idempotent"
+          ? pickupMint.invoice
+          : null;
+
+      return { ok: true, geofence_status: "exited" as const, proforma_invoice: proformaInvoice };
     });
 
     if ("error" in updated) {
