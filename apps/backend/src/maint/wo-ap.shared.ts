@@ -14,6 +14,8 @@ export type MaintWoApPsePreview = {
   ps_item_qbo_id: string | null;
   resolved_coa_account_id: string | null;
   coa_account_id: string | null;
+  repair_coa_role: string | null;
+  books_treatment: "capitalize" | "expense" | null;
 };
 
 export type MaintWoApPostingPreview = {

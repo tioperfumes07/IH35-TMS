@@ -17,6 +17,8 @@ const SRC = "apps/backend/src/accounting/capitalize-threshold.ts";
 // never reaches capitalize-threshold.ts." This guard's second half pins the WIRING, not just the
 // threshold contract, so that defect cannot silently regress once fixed.
 const POSTER_SRC = "apps/backend/src/accounting/maintenance-posting/poster.service.ts";
+const WO_AP = "apps/backend/src/maint/wo-ap-posting.service.ts";
+const WO_AP_TEST = "apps/backend/src/maint/__tests__/wo-ap-posting.service.test.ts";
 
 function read() {
   return fs.readFileSync(path.join(ROOT, SRC), "utf8");
@@ -68,9 +70,20 @@ function contractErrors(src) {
   if (!/HEAVY_REPAIR_EXPENSE_COA_ROLE\s*=\s*"heavy_repair_expense"/.test(src)) {
     errors.push('must export HEAVY_REPAIR_EXPENSE_COA_ROLE = "heavy_repair_expense" (A4-D2)');
   }
-  if (!/A4-D2/.test(src)) {
-    errors.push("must cite owner lock A4-D2 Heavy Repair Expense");
-  }
+  if (!/A4-D2/.test(src)) errors.push("must cite owner lock A4-D2 Heavy Repair Expense");
+  if (!/FIXED_ASSET_REPAIR_COA_ROLE/.test(src)) errors.push("must export FIXED_ASSET_REPAIR_COA_ROLE");
+  if (!/repairBooksCoaRole/.test(src)) errors.push("must export repairBooksCoaRole");
+  return errors;
+}
+
+function woApWiringErrors(woApSrc, testSrc) {
+  const errors = [];
+  if (!/decideRepairBooksTreatment/.test(woApSrc)) errors.push("wo-ap-posting must call decideRepairBooksTreatment");
+  if (!/repairBooksCoaRole|resolveWoApRepairCoaRole/.test(woApSrc)) errors.push("wo-ap-posting must route via repairBooksCoaRole");
+  if (!/resolveRoleAccountOptional/.test(woApSrc)) errors.push("wo-ap-posting must resolve via resolveRoleAccountOptional");
+  if (!/699_900/.test(testSrc)) errors.push("test must assert $6,999 expense path");
+  if (!/700_100/.test(testSrc)) errors.push("test must assert $7,001 capitalize path");
+  if (!/fixed_asset_default|FIXED_ASSET_REPAIR_COA_ROLE/.test(woApSrc + testSrc)) errors.push("must reference fixed_asset_default capitalize path");
   return errors;
 }
 
@@ -78,9 +91,11 @@ function selftest() {
   const good = [
     "export const CAPITALIZE_REPAIR_THRESHOLD_CENTS = 700_000;",
     'export const HEAVY_REPAIR_EXPENSE_COA_ROLE = "heavy_repair_expense" as const;',
+    'export const FIXED_ASSET_REPAIR_COA_ROLE = "fixed_asset_default" as const;',
     'export function decideRepairBooksTreatment(amountCents: number) {',
     "  return amountCents >= CAPITALIZE_REPAIR_THRESHOLD_CENTS ? \"capitalize\" : \"expense\";",
     "}",
+    "export function repairBooksCoaRole(amountCents: number) { return \"heavy_repair_expense\"; }",
     "// A4-D6 — $7,000",
     "// A4-D2 — Heavy Repair Expense",
   ].join("\n");
@@ -144,10 +159,15 @@ if (!fs.existsSync(path.join(ROOT, POSTER_SRC))) {
 }
 const errors = contractErrors(read());
 const wiring = wiringErrors(readPoster());
+const woApPath = path.join(ROOT, WO_AP);
+const woApTestPath = path.join(ROOT, WO_AP_TEST);
+if (fs.existsSync(woApPath)) {
+  wiring.push(...woApWiringErrors(fs.readFileSync(woApPath, "utf8"), fs.existsSync(woApTestPath) ? fs.readFileSync(woApTestPath, "utf8") : ""));
+}
 if (errors.length || wiring.length) {
   console.error(`${LABEL}: FAIL`);
   for (const e of [...errors, ...wiring]) console.error(`  - ${e}`);
   process.exit(1);
 }
-console.log(`${LABEL}: PASS — capitalize threshold locked at $7,000 (700_000¢), wired into WO-close posting`);
+console.log(`${LABEL}: PASS — capitalize threshold locked at $7,000 (700_000¢), wired into WO-close posting + wo-ap`);
 process.exit(0);
