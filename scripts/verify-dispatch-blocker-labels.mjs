@@ -11,14 +11,24 @@
  *
  * Asserts the service selects the labels and the panel prefers them.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const SVC = "apps/backend/src/dispatch/driver-availability.service.ts";
 const UI = "apps/frontend/src/pages/dispatch/LoadCreateModal.tsx";
+const ROUTE = "apps/backend/src/dispatch/load-assign.routes.ts";
+const BOARD = "apps/frontend/src/pages/dispatch/DispatchBoard.tsx";
+const ROOT = process.env.VERIFY_DISPATCH_BLOCKER_ROOT ?? process.cwd();
 const fail = [];
 
-const svc = readFileSync(SVC, "utf8");
+function read(rel) {
+  return readFileSync(join(ROOT, rel), "utf8");
+}
+
+const svc = read(SVC);
 if (!/wo\.display_id/.test(svc)) fail.push(`${SVC}: query does not select wo.display_id`);
 if (!/JOIN\s+mdata\.units/i.test(svc)) fail.push(`${SVC}: query does not join mdata.units for unit_number`);
 if (!/work_order_display_id:/.test(svc)) fail.push(`${SVC}: response omits work_order_display_id`);
@@ -38,7 +48,7 @@ if (!/FROM\s+mdata\.drivers\s+d[\s\S]*LEFT JOIN\s+views\.drivers_with_hos_status
 if (!/if\s*\(!hos\)[\s\S]{0,180}code:\s*"E_DRIVER_NOT_FOUND"/.test(svc)) {
   fail.push(`${SVC}: missing/cross-company driver must fail closed as E_DRIVER_NOT_FOUND`);
 }
-const route = readFileSync("apps/backend/src/dispatch/load-assign.routes.ts", "utf8");
+const route = read(ROUTE);
 if (!/E_DRIVER_HOS_VIOLATION/.test(route)) {
   fail.push("apps/backend/src/dispatch/load-assign.routes.ts: quick-assign must surface E_DRIVER_HOS_VIOLATION with message");
 }
@@ -46,7 +56,7 @@ if (!/E_DRIVER_NOT_FOUND[\s\S]{0,180}reply\.code\(404\)/.test(route)) {
   fail.push("apps/backend/src/dispatch/load-assign.routes.ts: quick-assign must map missing driver to 404");
 }
 
-const ui = readFileSync(UI, "utf8");
+const ui = read(UI);
 if (!/kind="work_order"[\s\S]*?name=\{availabilityQuery\.data\?\.work_order_display_id\}[\s\S]*?noun="Work order"/.test(ui)) {
   fail.push(`${UI}: work order must use a label-aware tombstone`);
 }
@@ -63,7 +73,7 @@ if (!/onRetry=\{\(\) => void availabilityQuery\.refetch\(\)\}/.test(ui)) {
   fail.push(`${UI}: availability query failure must be retryable`);
 }
 
-const board = readFileSync("apps/frontend/src/pages/dispatch/DispatchBoard.tsx", "utf8");
+const board = read(BOARD);
 // C-08: quick-assign toast must prefer human message/blocker over bare E_* code.
 if (!/userFacingApiError\(error, "Quick assign failed"\)/.test(board)) {
   fail.push("apps/frontend/src/pages/dispatch/DispatchBoard.tsx: quick-assign toast must use operator-safe API error formatting");
@@ -87,12 +97,27 @@ if (process.argv.includes("--selftest")) {
       .replace("LEFT JOIN views.drivers_with_hos_status hos ON hos.id = d.id", "JOIN mdata.drivers d ON d.id = hos.id"),
     svc.replace('code: "E_DRIVER_NOT_FOUND"', 'code: "E_DRIVER_REPAIR_BLOCK"'),
   ];
+  const fixtureRoot = mkdtempSync(join(tmpdir(), "dispatch-blocker-labels-selftest-"));
+  const writeFixture = (rel, source) => {
+    const target = join(fixtureRoot, rel);
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, source, "utf8");
+  };
   let rejected = 0;
-  for (const mutated of mutations) {
-    writeFileSync(SVC, mutated);
-    const result = spawnSync(process.execPath, [process.argv[1]], { encoding: "utf8" });
-    writeFileSync(SVC, svc);
-    if (result.status !== 0) rejected += 1;
+  try {
+    writeFixture(UI, ui);
+    writeFixture(ROUTE, route);
+    writeFixture(BOARD, board);
+    for (const mutated of mutations) {
+      writeFixture(SVC, mutated);
+      const result = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+        env: { ...process.env, VERIFY_DISPATCH_BLOCKER_ROOT: fixtureRoot },
+        encoding: "utf8",
+      });
+      if (result.status !== 0) rejected += 1;
+    }
+  } finally {
+    rmSync(fixtureRoot, { recursive: true, force: true });
   }
   if (rejected !== mutations.length) {
     console.error(`FAIL verify-dispatch-blocker-labels selftest: ${rejected}/${mutations.length} defects rejected`);
