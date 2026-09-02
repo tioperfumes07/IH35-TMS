@@ -42,6 +42,7 @@ function parseSourceStats(extra: unknown): {
   sourcesRan: number;
   sourcesSkipped: number;
   totalSources: number;
+  skippedSources: string[];
 } | null {
   if (!extra || typeof extra !== "object" || Array.isArray(extra)) return null;
   const o = extra as Record<string, unknown>;
@@ -51,7 +52,10 @@ function parseSourceStats(extra: unknown): {
   if (!Number.isFinite(sourcesRan) || !Number.isFinite(sourcesSkipped) || !Number.isFinite(totalSources)) {
     return null;
   }
-  return { sourcesRan, sourcesSkipped, totalSources };
+  const skippedSources = Array.isArray(o.skippedSources)
+    ? o.skippedSources.filter((s): s is string => typeof s === "string")
+    : [];
+  return { sourcesRan, sourcesSkipped, totalSources, skippedSources };
 }
 
 export async function registerOwnerTodaysAttentionRoutes(app: FastifyInstance) {
@@ -81,6 +85,7 @@ export async function registerOwnerTodaysAttentionRoutes(app: FastifyInstance) {
             sourcesRan: live.sourcesRan,
             sourcesSkipped: live.sourcesSkipped,
             totalSources: live.totalSources,
+            skippedSources: live.skippedSources,
           };
         }
 
@@ -126,6 +131,7 @@ export async function registerOwnerTodaysAttentionRoutes(app: FastifyInstance) {
         let sourcesRan = ATTENTION_SOURCE_COUNT;
         let sourcesSkipped = 0;
         let totalSources = ATTENTION_SOURCE_COUNT;
+        let skippedSources: string[] = [];
         let computed_at = items[0]?.computed_at ?? null;
 
         const statsFromMeta = parseSourceStats(statsRow.rows[0]?.extra);
@@ -133,6 +139,7 @@ export async function registerOwnerTodaysAttentionRoutes(app: FastifyInstance) {
           sourcesRan = statsFromMeta.sourcesRan;
           sourcesSkipped = statsFromMeta.sourcesSkipped;
           totalSources = statsFromMeta.totalSources;
+          skippedSources = statsFromMeta.skippedSources;
           computed_at =
             typeof statsRow.rows[0]?.computed_at === "string" ? statsRow.rows[0].computed_at : computed_at;
         } else if (items.length === 0) {
@@ -140,9 +147,10 @@ export async function registerOwnerTodaysAttentionRoutes(app: FastifyInstance) {
           sourcesRan = live.sourcesRan;
           sourcesSkipped = live.sourcesSkipped;
           totalSources = live.totalSources;
+          skippedSources = live.skippedSources;
         }
 
-        return { items, computed_at, source: "snapshot", sourcesRan, sourcesSkipped, totalSources };
+        return { items, computed_at, source: "snapshot", sourcesRan, sourcesSkipped, totalSources, skippedSources };
       } catch (err) {
         app.log.warn({ err }, "[owner-attention] GET failed — returning empty");
         return {
@@ -152,6 +160,7 @@ export async function registerOwnerTodaysAttentionRoutes(app: FastifyInstance) {
           sourcesRan: 0,
           sourcesSkipped: ATTENTION_SOURCE_COUNT,
           totalSources: ATTENTION_SOURCE_COUNT,
+          skippedSources: [],
         };
       }
     });

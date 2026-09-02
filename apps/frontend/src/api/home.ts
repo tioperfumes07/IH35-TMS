@@ -902,6 +902,7 @@ export type OwnerTodaysAttentionResult = {
   sourcesRan: number;
   sourcesSkipped: number;
   totalSources: number;
+  skippedSources: string[];
 };
 
 function normalizeAttentionSeverity(raw: unknown): OwnerAttentionItemSeverity {
@@ -941,6 +942,9 @@ export async function fetchOwnerTodaysAttention(companyId: string): Promise<Owne
   const sourcesRan = Number(payload.sourcesRan);
   const sourcesSkipped = Number(payload.sourcesSkipped);
   const totalSources = Number(payload.totalSources);
+  const skippedSources = Array.isArray(payload.skippedSources)
+    ? payload.skippedSources.filter((s): s is string => typeof s === "string")
+    : [];
   return {
     items,
     computed_at: typeof payload.computed_at === "string" ? payload.computed_at : null,
@@ -954,6 +958,7 @@ export async function fetchOwnerTodaysAttention(companyId: string): Promise<Owne
     sourcesRan: Number.isFinite(sourcesRan) ? sourcesRan : 0,
     sourcesSkipped: Number.isFinite(sourcesSkipped) ? sourcesSkipped : 0,
     totalSources: Number.isFinite(totalSources) ? totalSources : 10,
+    skippedSources,
   };
 }
 
