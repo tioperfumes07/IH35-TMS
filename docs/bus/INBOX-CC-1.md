@@ -20,10 +20,11 @@
 
 0. **DONE:** slice **17** capitalize in `wo-ap-posting` — **#19510**. Threshold **700_000** cents (not 750_000). `decideRepairBooksTreatment` / `repairBooksCoaRole` wired.
 1. **DONE:** slice **C** accident liabilities — **#19523** + confirm **#19543**. Table `202613400001`. Filing creates liability · **POSTS NOTHING**. `insurance.claim.liability_id` has its other end.
-2. **NOW — slice A screen** — migration `202613420001`, `drift-alerts.service.ts` / `.routes.ts` / `bank-drift-alerts.cron.ts` are **on main**. Honest gap: **no frontend drift-alerts route**. Never posts JE. Then **20** settlement 5753 P&L **2415.11**.
-3. Leftover: drop phantom `inventory.parts` / `maintenance.labor_rates` **reads** in `wo-cost-context.routes.ts` (canonical tables only).
+2. **NOW — slice A screen** — BE+cron+`202613420001` on main. **No frontend drift-alerts route** (`QBOSyncDriftDashboard` is QBO sync, not this). Never posts JE. Rule 6: A is not done until the screen exists.
+3. Then **20** settlement 5753 P&L **2415.11** — **this is the money item that matters.** Do not put F7334 ahead of 20 (ledger **#19553** already on main).
+4. Leftover: drop phantom `inventory.parts` / `maintenance.labor_rates` **reads** in `wo-cost-context.routes.ts`.
 
-ACK `CC-1 | ACK | GO-20 FORCE | NOW=A screen (BE+cron already on main) · then 20 · C DONE #19523/#19543 · 17 DONE #19510 · NEVER POST | GO`
+ACK `CC-1 | ACK | GO-20 FORCE | NOW=A screen then 20 · F7334 ledger DONE #19553 · NEVER POST | GO`
 
 ---
 

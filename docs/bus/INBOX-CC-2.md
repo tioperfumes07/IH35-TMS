@@ -14,8 +14,8 @@
 **Cursor cloud workers DOWN (unpaid invoice).** You build in **your** session.
 
 0. **DONE:** slice **18** N-of-10 — **#19503**.
-1. **DONE:** slice **5** cooling customers UNAVAILABLE — **#19540**.
-2. **NOW — slice 8** recommended fuel stops UNAVAILABLE (fuel planner null-not-zero). **No tables.**
-3. **Verify-live AFTER CC-1** — A screen + **20** when they merge. C already **#19523/#19543**.
+1. **DONE:** slice **5** cooling — **#19540**.
+2. **DONE:** slice **8** already compliant — **#19552** (no product code). Do not rebuild.
+3. **NOW — verify-live B** at `/maintenance/predictive-alerts` (shipped **#19541**, clickable, never live-verified). Do **not** take A's screen. Do not idle.
 
-ACK `CC-2 | ACK | GO-20 FORCE | NOW=8 fuel UNAVAILABLE · 5 DONE #19540 · 18 DONE #19503 · NEVER POST | GO`
+ACK `CC-2 | ACK | GO-20 FORCE | NOW=verify-live B · 5+8 CLOSED · NEVER POST | GO`
