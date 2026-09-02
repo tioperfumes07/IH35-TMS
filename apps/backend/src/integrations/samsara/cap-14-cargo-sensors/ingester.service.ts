@@ -11,7 +11,6 @@ import {
 } from "./threshold.service.js";
 
 export type { DbClient } from "./db-client.type.js";
-import { processCargoSensorReadingForIncidents } from "../../../dispatch/cargo-sensor-incidents.service.js";
 import type { DbClient } from "./db-client.type.js";
 import { listCargoIncidents, type CargoIncidentRow } from "./incident.service.js";
 
@@ -247,28 +246,14 @@ export async function runCargoSensorIngestionForCompany(
       threshold
     );
 
-    const upserted = await upsertCargoSensorReading(client, {
+    await upsertCargoSensorReading(client, {
       ...reading,
       load_uuid: reading.load_uuid ?? matched.load_uuid,
       trailer_uuid: reading.trailer_uuid ?? matched.trailer_uuid,
       out_of_range: evaluation.out_of_range,
     });
     readingsIngested += 1;
-    if (evaluation.out_of_range) {
-      outOfRangeCount += 1;
-      await processCargoSensorReadingForIncidents(client, {
-        uuid: upserted.uuid,
-        operating_company_id: upserted.operating_company_id,
-        load_uuid: upserted.load_uuid,
-        trailer_uuid: upserted.trailer_uuid,
-        sensor_id: upserted.sensor_id,
-        temp_celsius: upserted.temp_celsius,
-        humidity_pct: upserted.humidity_pct,
-        door_status: upserted.door_status,
-        reading_at: upserted.reading_at,
-        out_of_range: upserted.out_of_range,
-      });
-    }
+    if (evaluation.out_of_range) outOfRangeCount += 1;
   }
 
   return {

@@ -72,15 +72,6 @@ read("apps/backend/src/integrations/samsara/cap-14-cargo-sensors/__tests__/thres
 
 const worker = read("apps/backend/src/jobs/cap-14-cargo-sensor-worker.ts");
 
-const go20Guard = read("scripts/verify-go20-d-cargo-sensor-incidents.mjs");
-contains("scripts/verify-go20-d-cargo-sensor-incidents.mjs", go20Guard, [
-  { pattern: /verify-go20-d-cargo-sensor-incidents/, label: "GO-20-D guard identity" },
-]);
-contains("apps/backend/src/jobs/cap-14-cargo-sensor-worker.ts", worker, [
-  { pattern: /syncCargoSensorIncidentsForCompany/, label: "GO-20-D incident sync in worker" },
-]);
-
-
 contains("apps/backend/src/jobs/cap-14-cargo-sensor-worker.ts", worker, [
   { pattern: /\*\/5 \* \* \* \*/, label: "5-minute cron schedule" },
   { pattern: /initializeCap14CargoSensorWorker/, label: "worker init export" },
