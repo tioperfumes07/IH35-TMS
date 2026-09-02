@@ -701,7 +701,7 @@ export function DriverDetailPage() {
             <span className="capitalize">{formatReasonLabel(item.change_reason)}</span>
             {item.was_corrected ? (
               <span
-                className="rounded-sm bg-gray-300 px-2 py-0.5 text-[10px] font-semibold uppercase text-gray-700"
+                className="rounded-sm bg-gray-300 px-2 py-0.5 text-[11px] font-semibold uppercase text-gray-700"
                 title="This rate was corrected on the same day before settlement could occur"
               >
                 Corrected
@@ -872,7 +872,7 @@ export function DriverDetailPage() {
             {certBadges.map((badge) => (
               <CertExpiryBadge key={badge.label} label={badge.label} expiresAt={badge.expiresAt} />
             ))}
-            <span data-testid="retention-risk-badge" className="rounded-sm bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700">
+            <span data-testid="retention-risk-badge" className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
               Retention risk
             </span>
             <StatusBadge status={driver.status} />
@@ -1508,10 +1508,10 @@ export function DriverDetailPage() {
                   {qualification.current_rates.map((line) => (
                     <div key={line.line_item_template_id} className="rounded-sm border border-gray-100 bg-gray-50 p-1.5">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-[13px] font-medium text-gray-800">
+                        <div className="text-xs font-medium text-gray-800">
                           {line.line_item_name} ({line.line_item_code})
                         </div>
-                        <div className="text-[13px] font-semibold text-gray-700">
+                        <div className="text-xs font-semibold text-gray-700">
                           {line.amount ? `$${Number(line.amount).toFixed(2)}` : "No rate set"}
                         </div>
                       </div>
@@ -1590,7 +1590,7 @@ export function DriverDetailPage() {
                 ) : null}
               </div>
             ))}
-            {!qualificationsQuery.isError && qualificationsListState.isEmpty ? <div className="text-[13px] text-gray-500">No qualifications found for this driver.</div> : null}
+            {!qualificationsQuery.isError && qualificationsListState.isEmpty ? <div className="text-xs text-gray-500">No qualifications found for this driver.</div> : null}
           </div>
           {driver?.operating_company_id ? (
             <DriverEquipmentTransfersReverseSection

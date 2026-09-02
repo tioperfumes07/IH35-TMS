@@ -27,7 +27,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
   const totalCount = query.data?.total_count ?? rows.length;
   const range = totalCount === 0 ? "0 of 0" : `${page * pageSize + 1}–${Math.min((page + 1) * pageSize, totalCount)} of ${totalCount}`;
   const pager = (testId: string) => totalCount > pageSize ? (
-    <div className="flex items-center justify-between gap-2 border-t border-gray-100 px-2 py-1 text-[10px] text-slate-500" data-testid={testId}>
+    <div className="flex items-center justify-between gap-2 border-t border-gray-100 px-2 py-1 text-xs text-slate-500" data-testid={testId}>
       <span>{range}</span>
       <div className="flex gap-1">
         <button type="button" disabled={page === 0 || query.isFetching} onClick={() => setPage((value) => Math.max(0, value - 1))}>Previous</button>
@@ -51,8 +51,8 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
     return (
       <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
         <div className="flex items-center justify-between bg-gray-50 px-2 py-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">DTC Auto Work Orders</span>
-          <span className="rounded-sm bg-white px-1.5 text-[10px] font-bold text-gray-600">{totalCount}</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">DTC Auto Work Orders</span>
+          <span className="rounded-sm bg-white px-1.5 text-xs font-bold text-gray-600">{totalCount}</span>
         </div>
         {rows.length === 0 ? (
           <div className="px-2 py-1.5 text-[11px] text-gray-400">No auto-created DTC work orders</div>
@@ -61,10 +61,10 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
           <ul className="flex flex-col">
             {rows.map((row) => {
               return (
-                <li key={row.id} className="border-t border-gray-100 px-2 py-1 first:border-t-0 text-[10px]">
+                <li key={row.id} className="border-t border-gray-100 px-2 py-1 first:border-t-0 text-xs">
                   <div className="flex items-center justify-between gap-1">
                     <span className="font-semibold" style={{ color: "#1F2A44" }}><EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit") ?? "N/A"} /></span>
-                    <span className="text-[9px]" style={{ color: "#854F0B" }}>{row.status}</span>
+                    <span className="text-xs" style={{ color: "#854F0B" }}>{row.status}</span>
                   </div>
                   <div className="truncate text-gray-500">{row.description ?? "DTC fault"}</div>
                   {onOpen ? (

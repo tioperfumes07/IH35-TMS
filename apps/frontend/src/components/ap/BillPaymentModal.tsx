@@ -281,7 +281,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Vendor
-            <input readOnly value={vendorName} className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]" />
+            <input readOnly value={vendorName} className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Payment date
@@ -289,7 +289,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Method
-            <SelectCombobox value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+            <SelectCombobox value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
               {METHOD_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
@@ -323,12 +323,12 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
           {paymentMethod === "check" ? (
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Check #
-              <input value={checkNumber} onChange={(e) => setCheckNumber(e.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+              <input value={checkNumber} onChange={(e) => setCheckNumber(e.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-xs" />
             </label>
           ) : null}
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-3">
             Reference
-            <input value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <input value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-xs" />
           </label>
         </div>
 
@@ -406,7 +406,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
 
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Memo
-          <textarea rows={2} value={memo} onChange={(e) => setMemo(e.target.value)} className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" />
+          <textarea rows={2} value={memo} onChange={(e) => setMemo(e.target.value)} className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs" />
         </label>
 
       </form>
