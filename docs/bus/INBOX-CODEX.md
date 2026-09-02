@@ -1,4 +1,4 @@
-# INBOX-CODEX · AUTO · 2026-09-02 18:06 CT
+# INBOX-CODEX · AUTO · 2026-09-02 18:08 CT
 
 `git pull --ff-only origin/main`
 
@@ -7,7 +7,7 @@ FAST-MERGE. Never POST.
 ## NOW
 
 ```
-CODEX — DROP COSTS. #19845 MERGED.
+CODEX — DROP COSTS.
 
 NOW: A3/B12 Chrome proof #19571.
 Then native-date + trapping-picker guards.

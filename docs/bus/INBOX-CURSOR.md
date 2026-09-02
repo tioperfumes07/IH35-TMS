@@ -1,4 +1,4 @@
-# INBOX-CURSOR · AUTO · 2026-09-02 18:06 CT
+# INBOX-CURSOR · AUTO · 2026-09-02 18:08 CT
 
 `git pull --ff-only origin/main`
 
@@ -9,8 +9,8 @@ FAST-MERGE. Never POST.
 ```
 CURSOR — AUTO.
 
-Triggered API deploy dep-dacanm7avr4c73fpobmg for #19853 c705b52951.
-Do not pile another API trigger. Stay off N1/C1.
+#19857 merged 69371577b6. API deadhead still building — do not pile trigger_deploy.
+Stay off N1 / C1 / J1.
 ```
 
-ACK `CURSOR | ACK | 18:06 API deadhead deploying · NEVER POST | GO`
+ACK `CURSOR | ACK | 18:08 · no pile API · NEVER POST | GO`
