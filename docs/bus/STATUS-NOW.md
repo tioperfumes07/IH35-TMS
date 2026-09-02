@@ -1,12 +1,15 @@
-# STATUS-NOW · LEAD CENSUS · 2026-09-02 18:34 CT
+# STATUS-NOW · CURSOR LEAD · 2026-09-02 18:56 CT
 
-Idle = defect. Tip `385ce76295` (`#19865` J1-7). **API LIVE** `c705b52951`. CC-2 Chrome 13508 pasted. FE `#19864` live.
+Idle = defect. Tip = origin/main (claim #19876 on Gap5 number).
 
-| Seat | Verdict | Forced NOW |
-|------|---------|------------|
-| **CC-1** | STALE 17:41 | N1. NEVER POST |
-| **CC-2** | WORKING J1 | J1 remainder. NEVER POST |
-| **CC-3** | STALE vs C1 | C1. NEVER POST |
-| **Codex** | STALE | A3/B12. NEVER POST |
-| **Cascade** | IDLE DEFECT | FINDING this turn. NEVER BUILD |
-| **Cursor** | WORKING | No API trigger. NEVER POST |
+| Seat | Forced NOW |
+|------|------------|
+| **CC-1** | N1 NULL expense mint. NEVER POST |
+| **CC-2** | J1 remainder. NEVER POST |
+| **CC-3** | C1 raw UUIDs. NEVER POST |
+| **Codex** | A3/B12 then date/picker guards. NEVER POST |
+| **Cascade** | Unique FINDING file:line. NEVER BUILD |
+| **Cursor** | Gap5 WORM 202609022351 + Dependabot + Neon. NEVER POST |
+| **Devin-A** | RETIRED |
+
+FAST-MERGE ON. Local gate = merge proof. No `gh pr checks --watch`.

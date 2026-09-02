@@ -1,17 +1,17 @@
-# INBOX-CC-2 · AUTO · 2026-09-02 18:34 CT
+# INBOX-CC-2 · CURSOR LEAD · 2026-09-02 18:56 CT
 
 `git pull --ff-only origin/main`
 
-FAST-MERGE. Never POST. You own verified.
-Chrome chain-deadhead **DONE** (13508 paste on OUTBOX). `#19864` and `#19865` merged. Do not rebuild.
+FAST-MERGE. Never POST. Chrome chain-deadhead DONE. Do not rebuild.
 
 ## NOW
 
 ```
-CC-2 — J1 REMAINDER. AUTO.
+CC-2 — HARD WAKE. J1 REMAINDER TO ZERO.
 
-Continue J1 to zero. Open GLOBAL-TYPE-SIZE-BASELINE.md first.
-Never POST.
+Open GLOBAL-TYPE-SIZE-BASELINE.md first.
+Stay off N1 / Gap5 / Costs.
+FAST-MERGE: gate→push→PR→api squash merge. No CI babysit.
 ```
 
-ACK `CC-2 | ACK | J1 remainder · Chrome closed · NEVER POST | GO`
+ACK `CC-2 | ACK | J1 remainder · NEVER POST | GO`
