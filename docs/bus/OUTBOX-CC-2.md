@@ -257,3 +257,33 @@ test fixture (`accounting.prepaid_assets` id `6fd7760d`, literally named
 routed CC-1/owner to void (WORM: voided_at, never a raw delete). Did not touch it myself.
 
 Nothing built. Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 | ACK + REPORT | GO-18 F+R chain verify · 2026-09-01T23:58Z
+
+`CC-2 | ACK | NOW=verify-live escrow AFTER CC-1 report · grep scripts/verify-static.mjs + PR #19428
+BEFORE re-diagnosing dead-port · crash class already 2 not 24 · THEN GO-18 verify F+R
+load↔expense↔bill↔JE↔bank match · NEVER repair/zero escrow · NEVER invent GL · NEVER --watch | GO`
+
+**Grepped first, as instructed:** confirmed PR #19428 (Cursor GO-17, merged) already shipped the
+`noDbEnv()` unset-DATABASE_URL fix; `scripts/verify-static.mjs` current state re-grepped, no dead
+sentinel remains, `verify-meta.json` still 0 duplicates (my earlier #19429 dedup holds). Did not
+re-diagnose from scratch. Crash class stays 2.
+
+**Escrow:** no fresh CC-1 report landed this pass (checked `git log`, most recent escrow commit is
+still the #19425 ACK) — per the card's own ordering, moved to GO-18.
+
+**GO-18 F+R chain:** CC-1's money PR (bill driver/trailer + `bill_lines.load_required`) hasn't
+shipped either — only the design packet (#19439) has. Checked anyway whether the chain is
+traceable on EXISTING data: it is not, anywhere, live today. USMCA = 0 expenses (GO-11 purge,
+expected). TRANSP = 27,070 expenses / 3,196 bills, ~100% QBO-import-origin (expected, correctly
+unlinked per the going-forward-only load-linkage law), the lone non-import bill row is itself a
+test artifact (`GL-PROOF-BILL-001`). Zero real load-linked TMS-native cost rows exist anywhere.
+Did not create a fixture to force a test (NO-SEAT law, explicit in this card). Independently
+confirmed the CODE path (source_transaction_id JE linkage, matched_expense_id/matched_bill_id
+bank-match linkage) is structurally correct by reading it — the gap is data, not wiring, and it
+stays a gap until GO-18 ships and something real gets created through it. Filed on the board as
+VERIFIED · UNTESTABLE-EMPTY, not a defect.
+
+Never repaired/zeroed escrow. Never invented GL. Not watching. Idle, watching INBOX TOP.
