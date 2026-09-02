@@ -583,7 +583,7 @@
       "purpose": "go20_d_cargo_sensor_incidents_schema (schema-only handoff for Codex watcher/routes/FE: dispatch.cargo_sensor_incidents exactly per GO-20, first/last reading FKs target dispatch.cargo_sensor_readings(uuid), FORCE RLS, 0065 grants/indexes, no fixture)"
     },
     "202613390003": {
-      "claimed_by": "cc-1",
+      "claimed_by": "claude",
       "claimed_at": "2026-09-02",
       "purpose": "go20_h_late_arrival_aggregates_schema (schema-only handoff for Codex rollup/feature honesty/UI: dispatch.late_arrival_aggregates exactly per GO-20, company/driver/day unique aggregate, FORCE RLS, 0065 grants/indexes, no fixture)"
     }
