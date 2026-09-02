@@ -182,6 +182,13 @@
     "empty": "Sin cargas hoy",
     "pull_to_refresh": "Deslizar para actualizar"
   },
+  "tour_close": {
+    "deadhead_prompt": "No hay más cargas — dirígete al patio para cerrar tu recorrido.",
+    "close_button": "Cerrar recorrido",
+    "closing": "Cerrando…",
+    "closed_success": "Recorrido cerrado",
+    "close_failed": "No se pudo cerrar el recorrido"
+  },
   "load": {
     "tab_overview": "Resumen",
     "tab_stops": "Paradas",
