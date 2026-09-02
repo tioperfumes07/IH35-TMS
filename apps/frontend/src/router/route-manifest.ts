@@ -140,6 +140,7 @@ export const MAINTENANCE_TAB_PATH: Record<string, string> = {
   brake_wear: "/maintenance/brake-wear",
   tire_wear: "/maintenance/tire-wear",
   pre_flight_dvir: "/maintenance/pre-flight-dvir",
+  predictive_alerts: "/maintenance/predictive-alerts",
   settings: "/maintenance/settings",
 };
 
