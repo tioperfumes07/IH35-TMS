@@ -646,6 +646,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-02",
       "purpose": "kill_abandonment_double_fire (00_LOCKED_DECISIONS 9.3, owner direct instruction 2026-09-02: 'kills the current double-charge where the app chargeback AND the escrow trigger both fire'. Disables migration 0094's dispatch.trg_auto_propose_escrow_on_abandon trigger -- superseded by the newer, complete driver_finance.abandonment_chargebacks flow (recordLoadAbandonmentChargeback/applyApprovedAbandonmentChargebacksToSettlement), which the trigger duplicated independently on the same load-status transition. No data touched -- both dispatch.load_abandonments and driver_finance.escrow_deductions_pending are empty on prod (verified live), so this is a pure structural fix, not a data migration"
+    },
+    "202613540001": {
+      "claimed_by": "cursor",
+      "claimed_at": "2026-09-02",
+      "purpose": "go18_gap5_worm_expenses_factoring_advances \u2014 attach trg_worm_refuse_delete -> accounting.refuse_financial_row_delete() on accounting.expenses + accounting.factoring_advances (2 of 7 display-id MAX+1 tables missing live WORM); COMMENT ON COLUMN bills.driver_id + expenses.driver_uuid twin docs (no rename this pass)"
     }
   }
 }

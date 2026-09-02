@@ -2,7 +2,7 @@
   "10232": {
     "claimed_at": "2026-09-02",
     "claimed_by": "cursor",
-    "purpose": "verify-no-hard-delete-document-number-tables (GO-18 Gap 5: MAX+1 generators in display-id.ts — never hard-delete those tables)"
+    "purpose": "verify-no-hard-delete-document-number-tables (GO-18 Gap 5: MAX+1 generators in display-id.ts \u2014 never hard-delete those tables)"
   },
   "10231": {
     "claimed_at": "2026-09-02",
@@ -7228,5 +7228,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-02",
     "purpose": "verify-ui-design-system-ratchet (GO-21 J1: registers the guard shipped in PR #19572 as an actually-executed CI step, not just a script that exists)"
+  },
+  "10234": {
+    "claimed_at": "2026-09-02",
+    "claimed_by": "cursor",
+    "purpose": "verify-worm-delete-trigger-coverage (GO-18 Gap 5 corrected: every display-id.ts MAX+1 table must carry trg_worm_refuse_delete)"
   }
 }
