@@ -23,6 +23,7 @@ import { toMdataStatus, type DispatchStatus } from "./load-state-machine.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.js";
 import { buildLoadSaveProof } from "./load-save-proof.js";
+import { suggestPresettlementLink } from "./presettlement-link.service.js";
 
 type BookLoadStop = {
   stop_type: "pickup" | "delivery";
@@ -2261,23 +2262,35 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     }
 
     if (input.addToOpenPresettlement) {
-      // TODO P6-FOLLOWUP-PRESETTLEMENT-LINK: when presettlement query
-      //   service exists, look up driver's open presettlement here
-      //   and set presettlement_link_id = openPresettlement.uuid.
-      //   Until then, leave null. Frontend checkbox renders disabled
-      //   with explanatory tooltip.
-      await appendCrudAudit(
-        client,
-        input.requestingUserUuid,
-        "dispatch.load.presettlement_link_deferred",
-        {
-          load_uuid: load.id,
-          requested: true,
-          reason: "presettlement_query_not_yet_implemented",
-        },
-        "info",
-        "P6-D2"
-      );
+      // GO-22 — the presettlement query service now exists (dispatch/presettlement-link.service.ts).
+      // This SUGGESTS only — "a load never joins a settlement silently" — it never sets
+      // presettlement_link_id directly. A human confirms via POST .../presettlement-suggestions/:id/confirm,
+      // which is the only place that writes the link. The deferred-log line this replaced was honest
+      // while nothing existed; leaving it after this shipped would be a lie.
+      if (input.assigned_primary_driver_id && input.trip_type) {
+        await suggestPresettlementLink(client, {
+          operating_company_id: input.operating_company_id,
+          load_id: String(load.id),
+          driver_id: input.assigned_primary_driver_id,
+          unit_id: input.assigned_unit_id ?? null,
+          trip_type: input.trip_type,
+          tour_id: input.tour_id ?? null,
+          actor_user_id: input.requestingUserUuid,
+        });
+      } else {
+        await appendCrudAudit(
+          client,
+          input.requestingUserUuid,
+          "dispatch.load.presettlement_link_deferred",
+          {
+            load_uuid: load.id,
+            requested: true,
+            reason: "no assigned_primary_driver_id or trip_type captured — cannot suggest a pre-settlement match",
+          },
+          "info",
+          "P6-D2"
+        );
+      }
     }
 
     if (wf044Warnings.length > 0) {
