@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { listBills, listExpenses, type ExpenseListRow, type VendorBill } from "../../api/accounting";
 import { apiRequest } from "../../api/client";
 import type { LoadDetail } from "../../api/loads";
-import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
+import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
