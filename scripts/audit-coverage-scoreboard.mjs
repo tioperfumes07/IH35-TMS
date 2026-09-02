@@ -34,6 +34,17 @@ export const GATE_LABELS_13 = ["A", "B", "C", "D", "E", "V1", "V2", "V3", "V4", 
 export const PROGRAM_BOARD_ENTITIES = ["TRANSP", "USMCA"];
 const SCOREBOARD_START = "## Scoreboard";
 
+/**
+ * Stored-artifact freshness is the time this artifact was regenerated, not the
+ * last time its source ledger changed. Keep the ledger as-of time separately in
+ * meta.generatedAt so consumers can distinguish those two clocks.
+ */
+export function regenerationTimestamp(nowMs = Date.now()) {
+  const at = new Date(nowMs);
+  if (Number.isNaN(at.getTime())) throw new Error("invalid regeneration timestamp");
+  return at.toISOString();
+}
+
 /** Worst-wins fold when collapsing entity cells (FAIL beats everything). */
 const GATE_RANK = { FAIL: 0, UNV: 1, FIX: 2, AUDIT: 3, PASS: 4, NA: 5 };
 export function worstGate(a, b) {
@@ -883,10 +894,7 @@ export function emitProgramJson(rows, metrics, sidebarIds, opts = {}) {
     recentActivity: ledgerRecentActivity(10),
   };
   out.healthzSha = String(out.meta.deployedSha || "").slice(0, 40);
-  {
-    const ga = Date.parse(out.meta.generatedAt);
-    out.generated_at = Number.isFinite(ga) ? new Date(ga).toISOString() : new Date().toISOString();
-  }
+  out.generated_at = regenerationTimestamp();
 
 
   // Guard contract: text (markdown emphasis), never HTML tags / html key.
@@ -904,8 +912,8 @@ export function emitProgramJson(rows, metrics, sidebarIds, opts = {}) {
     return { ...rest, text };
   });
 
-  // Write-stable: skip rewrite when payload is byte-identical.
-  // generatedAt/sourceSha are ledger-commit-derived (deterministic) so re-emit does not drift.
+  // A requested re-emit refreshes generated_at even when the ledger is unchanged.
+  // meta.generatedAt/sourceSha remain ledger-derived so the source as-of is still explicit.
   if (JSON.stringify(prev) === JSON.stringify(out)) {
     if (write) console.log(`${LABEL}: program-scoreboard.json unchanged (skip write)`);
     return prev;
@@ -954,6 +962,13 @@ export function buildProgramScoreboardLive() {
 const IS_MAIN = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (IS_MAIN && process.argv.includes("--selftest")) {
+  const fixedNow = Date.parse("2026-09-02T12:34:56.000Z");
+  if (regenerationTimestamp(fixedNow) !== "2026-09-02T12:34:56.000Z") {
+    throw new Error("selftest: generated_at must describe regeneration time");
+  }
+  let badTimestampThrew = false;
+  try { regenerationTimestamp(Number.NaN); } catch { badTimestampThrew = true; }
+  if (!badTimestampThrew) throw new Error("selftest: invalid regeneration time must fail closed");
   const ids = loadSidebarIds();
   if (ids.length !== 30) throw new Error("selftest: ids");
   const sample = `| # | Module | Layer | Entity | Verdict | Evidence | Status | Block/PR | Owner-gate? | Date | Auditor |

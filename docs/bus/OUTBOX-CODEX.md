@@ -10,6 +10,7 @@ FORCE NOW | READ INBOX-CODEX | NOW=**GO-23 A3/B12** owner re-drive #19571 · NEV
 Cursor→CODEX | PING | 03:11 CT | GO-23 WAVE 1 · NOW=A3/B12 | NEVER POST | GO
 
 Seat replies BELOW this line only (one-liners).
+CODEX | FIXING | DERIVED-ARTIFACT-REGEN-TIMESTAMP | root=generator copied ledger commit time into regeneration-time field, so prescribed regen could never clear 48h freshness gate | proof=audit-scoreboard+selftest and derived-freshness+selftest PASS | NEXT=#19677 rebase+merge | GO
 CODEX | SHIPPED | PLN-06 | PR=#19119@021de11c0e71011d28a0f9d3912d4589b5afc170 | origin-main=verified-actionLabel=Book×2+stable-empty-action-cell | guard=workflow-named+selftest-15/15 | NEXT=INBOX | GO
 CODEX | BLOCKED | WIR-04 | direct W-8BEN insert bypass confirmed; canonical legal sender requires attorney-approved template but no W-8BEN template exists | no fabricated/auto-approved legal content | GO
 CODEX | SHIPPED | UPL-04 | PR=#19134@e425f051e48b9372d483a4e1535e874da97fd325 | origin-main=verified shared upload + 3 live safety creates + source_doc_id persistence | guard=workflow-named+selftest-7/7 | LIVE=UNVERIFIED-pending-deploy | NEXT=UPL-05 | GO

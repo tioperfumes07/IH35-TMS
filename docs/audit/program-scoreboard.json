@@ -1,6 +1,6 @@
 {
   "healthzSha": "10e2def",
-  "generated_at": "2026-08-31T15:22:35.000Z",
+  "generated_at": "2026-09-02T16:43:21.200Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 19683,
+      "title": "FINDING: defect-class counts re-derived + specs-vs-live schema sweep",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 11:39 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19683",
+      "sha": "90bdd224d4",
+      "committedAtIso": "2026-09-02T11:39:42-05:00"
+    },
+    {
       "number": 19682,
       "title": "FINDING: 3 unique silent no-ops — portal download, earnings refresh, CBP widget stuck loading",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19672",
       "sha": "4d39fe4ed1",
       "committedAtIso": "2026-09-02T09:57:16-05:00"
-    },
-    {
-      "number": 19671,
-      "title": "FINDING: N/A (lead bus)",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 09:56 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19671",
-      "sha": "20c02db4f6",
-      "committedAtIso": "2026-09-02T09:56:10-05:00"
     }
   ]
 }
