@@ -508,6 +508,7 @@ async function closeLoadBookendedSettlementForDriver(
     settlementId,
     driverId: opts.driverId,
     operatingCompanyId: opts.operatingCompanyId,
+    actorUserId: opts.actorUserId,
   });
 
   // ── Hire-contract terms computation (OFF-flag-gated) ───────────────────────────────────────────

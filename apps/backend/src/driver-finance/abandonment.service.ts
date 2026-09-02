@@ -3,6 +3,9 @@
 // event via applyApprovedAbandonmentChargebacksToSettlement's settlement_lines insert below, which
 // is itself a settlement-scoped LINE item — the settlement HEADER posts the one aggregate balanced
 // JE at finalize via settlement-payrun-close.service.ts's closeSettlementPayRun (createJournalEntry) -- CORRECTED 2026-09-02: postSettlementToGl was RETIRED (SET-01, 2026-07-26), never live in prod (verified 2026-09-02, C6).
+import { appendCrudAudit } from "../audit/crud-audit.js";
+import { resolveSettlementMinNet } from "./settlement-deduction-cap.service.js";
+
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
@@ -311,12 +314,63 @@ export async function recordLoadAbandonmentChargeback(
   return { chargeback, computed };
 }
 
+export type ApplyAbandonmentChargebacksResult = {
+  appliedCount: number;
+  appliedCents: number;
+  deferredCount: number;
+  deferredCents: number;
+};
+
+/**
+ * 00_LOCKED_DECISIONS 9.3 (owner direct instruction, 2026-09-02): "Walkoff/abandonment/damage
+ * recoveries deduct from the driver's settlement pay first... fire a single charge per event."
+ * Before this, the FULL total_chargeback_cents was applied to settlement pay with NO floor
+ * protection at all — a genuine pre-existing gap (this settlement could go arbitrarily far below
+ * the owner-locked net-pay floor). Now caps at the SAME floor-derived room
+ * settlement-deduction-cap.service.ts computes (gross = earnings-type lines only; floor via
+ * resolveSettlementMinNet) — matching that file's own locked "available = gross - floor only"
+ * convention (decision C-2-A) rather than coordinating the two pools, which is that file's explicit,
+ * deliberate design.
+ *
+ * The migration 0094 auto-escrow-proposal trigger (dispatch.trg_auto_propose_escrow_on_abandon) is
+ * DROPPED in the companion migration (202613530001) — this function is now the ONE path an
+ * abandonment/walkoff/no-show cost reaches a driver through, closing the double-charge the owner
+ * flagged (this app-level chargeback AND the DB trigger's independent escrow proposal both firing
+ * on the same event).
+ *
+ * The escrow-shortfall DRAW (posting a 'forfeiture' against the excess this function now defers) is
+ * deliberately NOT wired here — driver_finance.escrow_balances/escrow_ledger and
+ * accounting.escrow_accounts/escrow_postings are two live, populated-elsewhere escrow-balance
+ * mechanisms in this codebase and both read empty on prod today, so there is no live evidence which
+ * is authoritative for a settlement-close-time forfeiture. Deferring (rolling to the next
+ * settlement, same shape settlement-deduction-cap.service.ts already uses for over-cap deductions)
+ * is the honest, non-guessing choice until that is resolved — every deferral is audited, never
+ * silently dropped.
+ */
 export async function applyApprovedAbandonmentChargebacksToSettlement(
   client: DbClient,
-  input: { settlementId: string; driverId: string; operatingCompanyId: string }
-): Promise<number> {
+  input: { settlementId: string; driverId: string; operatingCompanyId: string; actorUserId: string }
+): Promise<ApplyAbandonmentChargebacksResult> {
+  const empty: ApplyAbandonmentChargebacksResult = { appliedCount: 0, appliedCents: 0, deferredCount: 0, deferredCents: 0 };
   const reg = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.settlement_lines') IS NOT NULL AS ok`);
-  if (!reg.rows[0]?.ok) return 0;
+  if (!reg.rows[0]?.ok) return empty;
+
+  // Same gross/floor shape as settlement-deduction-cap.service.ts's
+  // applyPendingDeductionsToSettlementWithNetFloor — gross from earnings-type lines only.
+  const grossRes = await client.query<{ gross_cents: string | number | null }>(
+    `
+      SELECT COALESCE(ROUND(SUM(amount) * 100), 0)::bigint AS gross_cents
+      FROM driver_finance.settlement_lines
+      WHERE settlement_id = $1
+        AND line_type IN ('earnings', 'extra_pay', 'team_split_primary', 'team_split_secondary')
+        AND is_active = true
+    `,
+    [input.settlementId]
+  );
+  const grossCents = Math.max(0, Math.round(Number(grossRes.rows[0]?.gross_cents ?? 0)));
+  const minNet = await resolveSettlementMinNet(client, input.driverId, input.operatingCompanyId);
+  const floorCents = Math.max(Math.round((grossCents * minNet.pct) / 100), minNet.cents);
+  let availableCents = Math.max(0, grossCents - floorCents);
 
   const pending = await client.query<{ id: string; total_chargeback_cents: string | number; load_id: string }>(
     `
@@ -332,9 +386,39 @@ export async function applyApprovedAbandonmentChargebacksToSettlement(
     [input.operatingCompanyId, input.driverId]
   );
 
-  let applied = 0;
+  const result: ApplyAbandonmentChargebacksResult = { ...empty };
   for (const row of pending.rows) {
     const cents = Math.max(0, Math.round(Number(row.total_chargeback_cents ?? 0)));
+    if (cents <= 0) continue;
+
+    if (cents > availableCents) {
+      // Over the floor-protected room — defer (roll to next settlement), never breach the floor,
+      // never silently drop it.
+      result.deferredCount += 1;
+      result.deferredCents += cents;
+      await appendCrudAudit(
+        client,
+        input.actorUserId,
+        "driver_finance.abandonment_chargeback.deferred_over_floor",
+        {
+          resource_type: "driver_finance.abandonment_chargebacks",
+          resource_id: row.id,
+          operating_company_id: input.operatingCompanyId,
+          driver_id: input.driverId,
+          settlement_id: input.settlementId,
+          amount_cents: cents,
+          gross_cents: grossCents,
+          floor_cents: floorCents,
+          available_cents: availableCents,
+          min_net_pct: minNet.pct,
+          min_net_cents: minNet.cents,
+        },
+        "warning",
+        "ACCT-9.3-PAY-FIRST"
+      );
+      continue;
+    }
+
     const dollars = cents / 100;
 
     const loadLabelRes = await client.query<{ load_number: string | null }>(
@@ -367,8 +451,10 @@ export async function applyApprovedAbandonmentChargebacksToSettlement(
       [row.id, lineId, input.settlementId]
     );
 
-    applied += 1;
+    availableCents -= cents;
+    result.appliedCount += 1;
+    result.appliedCents += cents;
   }
 
-  return applied;
+  return result;
 }
