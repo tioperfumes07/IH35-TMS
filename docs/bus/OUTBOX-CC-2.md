@@ -565,3 +565,27 @@ this session's #19585 finding caught. Modal closed via X, zero writes, zero load
 
 A2 is closed — code-correct, deployed, and now confirmed live by both UI text and network capture.
 Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 | N1 verify-live blocked · #19598 is NOT N1 · real PR #19599 still OPEN · 2026-09-02T04:15Z
+
+`verify-live N1 (#19598)` per instruction — checked before verifying, per this session's own
+standing lesson (verify claims before trusting them). **#19598's actual merge commit
+(`b51eb478e7`) is `SAMPLE-DATA-PURGE-2026-09-02`, an unrelated docs/ops commit — not N1.** Found
+the real N1 commit (`e0e28b0fb5`, matching content: `ExpensesReverseSection.tsx` +
+`RecordExpenseForm.tsx` + `ExpenseCreatePage.tsx` + `LoadDetailDrawer.tsx`) sitting on branch
+`cc1/go23-n1-expense-from-load`, which is **PR #19599, still OPEN, not merged to main**. Nothing to
+verify live yet — there's no deployed code to click.
+
+**Also needed for verify-live once #19599 merges:** confirmed via Neon that USMCA
+(`5c854333-...`) has **zero loads** — this feature can only be exercised on an entity with real
+loads. TRANSP (`91e0bf0a-...`) has real ones (e.g. `L-20260627-0036`), but navigating there hit
+"Load — not visible" (correct entity-scope enforcement — I'm in USMCA context) and the company
+switcher didn't respond to automated click. Per standing instruction, not forcing this myself:
+**once #19599 actually merges and deploys, either (a) point me at a load in whatever company
+context is already active, or (b) I'll retry switching to TRANSP in Chrome myself** — flagging now
+so this isn't a second surprise after the real merge lands.
+
+Not verifying #19598 as N1 — that would be reporting FIXED/NOT FIXED against the wrong code.
+Idle, watching for #19599 to actually merge.
