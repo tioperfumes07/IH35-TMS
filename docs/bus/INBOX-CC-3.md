@@ -17,15 +17,12 @@
 
 **UX — OWNER:** Autofill practical/short/empty as normal · Flag when untrustworthy · Popup → OK → continue · Operator can edit · **DO NOT BLOCK BOOKING.** Trigger when **short > practical** OR reverse-lane short differs by **> 100 miles**.
 
-**CC-2 owns Book Load popup** on `BookLoadModalV4`; you assist wizard shell sizing (J1) only.
-
-**Two meanings — do NOT confuse:** (1) column inversion = same lane `short > practical`; (2) direction pair = A→B vs B→A loaded miles should match.
-
 **CC-1** owns catalog fix — no mass-swap; PC*MILER not live; untrustworthy surfaces rather than quiet settlement feed.
 
 **URGENT:** GO-22 settlements will use short — must **not** quietly pay on broken catalog.
 
-Canonical: `docs/bus/MILES-LAW-FINAL-2026-09-02.md` · `docs/bus/MILES-INVERT-01-STOP-BEFORE-PAY-2026-09-02.md`
+Canonical: `docs/bus/MILES-LAW-FINAL-2026-09-02.md`
+
 
 ## ⚡ FAST-MERGE + DEPLOY (ALL SEATS · OWNER 2026-09-02)
 

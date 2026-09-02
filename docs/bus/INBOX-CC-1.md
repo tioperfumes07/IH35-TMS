@@ -2,52 +2,40 @@
 
 `git pull --ff-only origin/main`
 
-**FAST-MERGE ON.** Never POST Book Load. USMCA only. **GO NOW — Gate 0 is yours.**
+## ★ MILES LAW FINAL — ALL SEATS — 2026-09-02
 
-## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY — JORGE LAW (2026-09-02)
+**SUPERSEDES #19740.** That bus said pay from practical + empty and forbade short miles. Owner overruled — **STRUCK**. Any INBOX still carrying it is stale.
 
-**Two meanings — do NOT confuse:**
-1. **Column inversion:** same lane Origin→Dest where `short_miles > practical_miles` (66% History). NOT wrong direction.
-2. **Direction pair:** Laredo→Chicago vs Chicago→Laredo should have essentially the same loaded miles. Wild divergence = catalog quality defect — show in finding; **you may compare pairs later**.
+**PAY LAW — NOT NEGOTIABLE:**
+- Driver pay = **SHORT MILES, ALWAYS.** Never practical.
+- Customer rate/RPM = **PRACTICAL only** (loaded lane).
+- Company cost = **PRACTICAL + EMPTY** (deadhead is real cost).
+- Extra miles beyond short = **driver's problem**.
+- **NEVER** fold empty into practical.
 
-**Exact law text (owner ruling — supersedes interim "pay practical+empty" advice):**
+**MILES-INVERT-01** — catalog short untrustworthy (live: **2,142/3,237** inverted; directional test 352 pairs practical avg gap **29.4** vs short **174.8**). Root cause **NOT swap** — `seed-lane-mileage.mjs` 1:1, `source=History`. **No mass-swap.**
 
-```
-Driver pay = ALWAYS short miles. NEVER practical.
-Practical = customer rate / RPM only.
-If the driver drives more than short, that is the driver's problem.
-Empty/deadhead stays company cost: Company CPM = cost/(practical+empty). Customer RPM = rate/practical.
+**UX — OWNER:** Autofill practical/short/empty as normal · Flag when untrustworthy · Popup → OK → continue · Operator can edit · **DO NOT BLOCK BOOKING.** Trigger when **short > practical** OR reverse-lane short differs by **> 100 miles**.
 
-short_miles is untrustworthy on 66% of History lanes (often practical+deadhead artifact).
-STOP auto-paying from catalog short until inverted shorts are corrected or replaced —
-but the definition of pay basis remains short miles, not practical+empty.
-Do NOT change product law to pay on practical. Fix the data so short means shortest route again.
-Remediation must restore short = shortest (PC*MILER, re-key, or quarantine inverted rows) — Jorge picks. No mass-swap.
-Book Load wizard: still autofill practical/short/empty; flag inversion; OK-only popup (CC-2 owns chrome).
-```
+**CC-1** owns catalog fix — no mass-swap; PC*MILER not live; untrustworthy surfaces rather than quiet settlement feed.
 
-**Root cause (settled — NOT a column swap):** Ingest `scripts/ops/seed-lane-mileage.mjs` maps CSV→column 1:1. Data arrived that way. Same column = **two meanings by row** — worse than a swap; no single transform fixes it.
+**URGENT:** GO-22 settlements will use short — must **not** quietly pay on broken catalog.
 
-- 2,142 inverted lanes: avg(short−practical)=224.7, avg(empty)=269.2, avg(short−practical−empty)=**−44.5** (gap IS deadhead)
-- ~2/3 of lanes: operators entered "short" as whole trip incl empty (artifact)
-- Other 1,095 lanes: short = shortest route (correct)
-- Indy→Laredo: 1319.7+207.6=1527.3 vs short 1478.1 (off ~49 ≈ avg gap)
+Canonical: `docs/bus/MILES-LAW-FINAL-2026-09-02.md`
 
-**Your order — IN ORDER:**
-1. ~~Read ingest script~~ **DONE** — no swap; dual semantics confirmed.
-2. **Propose remediation options for Jorge** — restore short = shortest; do NOT mass-transform without owner pick:
-   - **(a)** PC*MILER recompute shortest route when live — owner decides scope
-   - **(b)** Re-key inverted rows (correct short re-entry)
-   - **(c)** Null/quarantine inverted shorts (short > practical; operator types short at book)
-3. Do **NOT** mass-swap (corrupts 1,095 OK lanes).
-4. **STOP** auto-fill pay from catalog short until data fixed.
-5. Book Load wizard UX (CC-2 owns): still autofill practical/short/empty; flag when short > practical; OK-only popup before continue.
-6. May compare direction pairs later for catalog quality findings.
 
-Gate 0 **unaffected** — purge, reseed 13557, drop B- proceed in parallel.
+## ⚡ FAST-MERGE + DEPLOY (ALL SEATS · OWNER 2026-09-02)
 
-Canonical: `docs/bus/MILES-INVERT-01-STOP-BEFORE-PAY-2026-09-02.md`
+**Loop (~4–5 min):** `node scripts/money-pr-local-gate.mjs` (Cursor: `node scripts/cursor-ship-preflight.mjs --body-file …`) → **exit 0 FIRST** (that is merge proof) → `git push` → `gh pr create` → **immediately** `gh pr merge N --squash --delete-branch --admin`. **NEVER** `gh pr checks --watch`. **NEVER** ask Jorge to merge. **NEVER** idle after merge. `git push --no-verify` **only AFTER gate PASS** and **only** for ENV-VERIFY-STATIC class — **never** for your own red guard.
 
+**Deploy:** batch every **5–10** merges; never per-merge prod deploy; CC seats **never** `trigger_deploy`; Cursor lead batches.
+
+**Law:** USMCA only · Never POST Book Load · Never seat financial fixtures · Cursor PR titles **`Cursor-`** prefix.
+
+Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md` · `docs/bus/FAST-MERGE-REMINDER-2026-09-02.md`
+
+
+**GO NOW — Gate 0 is yours.**
 ## NOW
 
 ```
