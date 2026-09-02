@@ -67,7 +67,7 @@ export function BillsReverseSection({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-slate-900">
           Bills
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
@@ -92,15 +92,15 @@ export function BillsReverseSection({
           </Link>
         </span>
       </div>
-      {billsQ.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {billsQ.isError ? <p className="text-sm text-red-600">Could not load bills for {contextLabel}.</p> : null}
+      {billsQ.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
+      {billsQ.isError ? <p className="text-xs text-red-600">Could not load bills for {contextLabel}.</p> : null}
       {!billsQ.isLoading && !billsQ.isError && rows.length === 0 ? (
-        <p className="text-sm text-gray-500">No bills linked to {contextLabel}.</p>
+        <p className="text-xs text-gray-500">No bills linked to {contextLabel}.</p>
       ) : null}
       {rows.length > 0 ? (
         <ul className="space-y-2">
           {rows.map((row) => (
-            <li key={row.id} className="text-sm text-slate-700" data-testid={`bill-reverse-${row.id}`}>
+            <li key={row.id} className="text-xs text-slate-700" data-testid={`bill-reverse-${row.id}`}>
               {/* ACCT-F6299-class: 550/16,301 real accounting.bills rows carry bill_number=NULL
                   (live-confirmed, Neon prod) — entityLabel's "Bill — not visible" fallback wrongly
                   claimed a genuinely-visible, correctly-linked bill was unresolved. Same fix as
