@@ -21,9 +21,10 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const modal = fs.readFileSync(MODAL, "utf8");
-  const drawer = fs.readFileSync(DRAWER, "utf8");
+function check(overrides = new Map()) {
+  const read = (file) => overrides.get(file) ?? fs.readFileSync(file, "utf8");
+  const modal = read(MODAL);
+  const drawer = read(DRAWER);
   assert(/EntityLink/.test(modal), "must import/use EntityLink");
   assert(
     /data-testid=["']abandonment-report-modal-entitylinks["']/.test(modal),
@@ -44,14 +45,11 @@ function selftest() {
     'entityLabel(null, driverId, "Driver")'
   );
   assert(broken !== original, "--selftest plant must restore UUID-only driver labeling");
-  fs.writeFileSync(MODAL, broken);
   let failed = false;
   try {
-    check();
+    check(new Map([[MODAL, broken]]));
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(MODAL, original);
   }
   assert(failed, "--selftest expected FAIL when entitylinks testid removed");
   check();
