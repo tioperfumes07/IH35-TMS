@@ -185,6 +185,71 @@ describe("driver bills schema separation (P6-T11172)", () => {
     expect(vi.mocked(appendCrudAudit).mock.calls.some((call) => call[2] === "driver_finance.driver_pay_rate.overridden")).toBe(true);
   });
 
+  it("GO-27 Gate 1.4: profile pay rate is the base case and wins by default — a typed override only wins when it explicitly, accountably beats it, never silently", async () => {
+    const statements: string[] = [];
+    const client = {
+      async query<T = Record<string, unknown>>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> {
+        statements.push(sql);
+        if (sql.includes("to_regclass")) return { rows: [{ exists: true }] as T[] };
+        // A REAL, active driver_pay_rates card exists: 48c/mi x 250 short miles = 12,000c.
+        if (sql.includes("driver_finance.driver_pay_rates")) {
+          return {
+            rows: [
+              {
+                basis_type: "per_mile_pay",
+                rate_per_mile_cents: "48",
+                flat_per_load_cents: null,
+                miles_basis: "short_miles",
+              },
+            ] as T[],
+          };
+        }
+        if (sql.includes("INSERT INTO driver_finance.driver_bills")) {
+          // The typed $1.00/mi override (100c * 250mi = 25,000c) wins over the 12,000c card because
+          // it carries an explicit, logged reason — GO-21 B5's own "explicit override, never silent"
+          // rule, which is exactly what Gate 1.4 asks this test to confirm rather than assume.
+          expect(values?.[6]).toBe(25000);
+          return { rows: [{ id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" }] as T[] };
+        }
+        return { rows: [] };
+      },
+    };
+
+    await createDriverBillArtifacts(
+      client,
+      {
+        requestingUserUuid: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        requestingUserRole: "Owner",
+        operating_company_id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        customer_id: "dddddddd-dddd-dddd-dddd-dddddddddddd",
+        status: "dispatched",
+        charges: [{ code: "LH", amount_cents: 30000 }],
+        stops: [],
+        save_mode: "book_dispatch",
+        assigned_primary_driver_id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+      },
+      {
+        id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        load_number: "L-20260513-0995",
+        miles_shortest: 250,
+        miles_practical: null,
+        driver_pay_rate_per_mile: 1.0,
+        driver_pay_rate_override_reason: "Customer requested a dedicated rate for this expedited lane.",
+      },
+      "L-20260513-0995",
+      []
+    );
+
+    expect(statements.some((s) => s.includes("INSERT INTO driver_finance.driver_bills"))).toBe(true);
+    // The audit record captures BOTH numbers — what the profile card would have paid and what the
+    // override actually paid — so the accountability trail is complete, not just "an override
+    // happened."
+    const overrideCall = vi.mocked(appendCrudAudit).mock.calls.find((call) => call[2] === "driver_finance.driver_pay_rate.overridden");
+    expect(overrideCall).toBeTruthy();
+    expect((overrideCall?.[3] as Record<string, unknown> | undefined)?.driver_profile_rate_cents).toBe(12000);
+    expect((overrideCall?.[3] as Record<string, unknown> | undefined)?.override_cents).toBe(25000);
+  });
+
   it("ACCT-F63: refuses to mint a driver bill when no pay rate resolves, and records the skip", async () => {
     const statements: string[] = [];
     const client = {
