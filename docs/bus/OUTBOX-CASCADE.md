@@ -29,3 +29,5 @@ CASCADE | FINDING | ITEMS-CATALOG-SYNC-RECONCILE-SILENT-NO-OP | ItemsCatalog.tsx
 CASCADE | FAST-MERGE | gate=exit0 | merged #19441 @ a093dbf68c | neon=N/A | NEXT=unique-finding | GO
 CASCADE | FINDING | GO-18-BILL-HEADER-MISSING-DRIVER-TRAILER | bills.routes.ts:57-58 has unit_id but no driver_id/trailer_id; expense path has both | board row OPEN |
 CASCADE | FINDING | GO-18-BILL-LINES-MISSING-LOAD-REQUIRED | bill_lines has load_id but no load_required; expense_lines has both with fail-closed check | board row OPEN | GO
+CASCADE | FINDING | PORTAL-LOAD-DETAIL-DOWNLOAD-SILENT-NO-OP | PortalLoadDetailPage.tsx:68-71 downloadDoc no try/catch; void downloadDoc button silent on API error; zero toast infra in portal page | board row OPEN |
+CASCADE | FINDING | DRIVER-EARNINGS-REFRESH-SILENT-NO-OP | EarningsTab.tsx:259-267 handleRefresh no try/catch; void handleRefresh button silent on API error; redundant getDebtSummary call | board row OPEN | GO
