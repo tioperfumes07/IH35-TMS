@@ -755,6 +755,21 @@ export function previewSettlementPayRun(
   );
 }
 
+/** 409 OUTSTANDING_LOAN_DECISION_REQUIRED `details` — 00_LOCKED_DECISIONS 9.2/9.3 loan pop-up. */
+export type RecoverableAdvanceRow = { id: string; display_id: string | null; amount_cents: number };
+export type OutstandingLoanDecisionDetails = {
+  recoverable_advances: RecoverableAdvanceRow[];
+  total_recoverable_cents: number;
+};
+
+/** 409 NET_PAY_FLOOR_BREACH `details` — the 5%-default, owner-editable net-pay floor (9.2). */
+export type NetPayFloorBreachDetails = {
+  net_cents: number;
+  floor_cents: number;
+  floor_pct: number;
+  floor_min_cents: number;
+};
+
 export function closeSettlementPayRun(
   settlementId: string,
   payload: {
@@ -763,6 +778,19 @@ export function closeSettlementPayRun(
     standard_escrow_contribution_cents?: number;
     payment_reference?: string | null;
     bank_txn_id?: string | null;
+    /**
+     * SET-05 — required (with a non-empty reason) to close when post-withholding net breaches the
+     * resolved floor. 00_LOCKED_DECISIONS 9.2: 5% default, owner-editable per settlement; on
+     * termination the operator may override up to the FULL final check.
+     */
+    override_floor?: { pct?: number | null; cents?: number | null; reason?: string | null } | null;
+    /**
+     * GO-22 B7 / 00_LOCKED_DECISIONS 9.2 — blocking, non-deferrable decision whenever the driver
+     * carries ANY outstanding advance/loan. 'full' accepts the computed recovery as-is; 'partial'
+     * is the Accept/Edit-amount control's edited amount. Omitting this when the driver carries an
+     * outstanding advance/loan is refused (409 OUTSTANDING_LOAN_DECISION_REQUIRED), never defaulted.
+     */
+    loan_recovery_decision?: { mode: "full" | "partial"; partial_cents?: number | null; reason?: string | null } | null;
   }
 ) {
   return apiRequest<SettlementPayRunResult>(
