@@ -53,7 +53,7 @@ function BlockRow({ b }: { b: ReconBlock }) {
         <StatusPill status={b.status} />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[13px] font-medium text-slate-800" title={b.name || b.id}>
+        <div className="truncate text-xs font-medium text-slate-800" title={b.name || b.id}>
           {b.name || b.id}
         </div>
         <div className="truncate text-[11px] text-slate-500">
@@ -86,10 +86,10 @@ function ProgressBar({ done, total }: { done: number; total: number }) {
   return (
     <div className="space-y-1">
       <div className="flex items-baseline justify-between">
-        <span className="text-[13px] font-semibold text-slate-700">
+        <span className="text-xs font-semibold text-slate-700">
           {done} of {total} shipped
         </span>
-        <span className="text-[13px] font-semibold text-slate-700">{pct}%</span>
+        <span className="text-xs font-semibold text-slate-700">{pct}%</span>
       </div>
       <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
         <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: "#1F2A44" }} />

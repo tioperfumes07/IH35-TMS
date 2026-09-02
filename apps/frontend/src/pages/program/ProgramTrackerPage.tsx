@@ -54,7 +54,7 @@ function TrackerStatusCell({ status, kind }: { status: string; kind: "open" | "c
     >
       {status}
       {kind === "completed" ? " · live" : ""}
-      {gated ? <span className="ml-1 text-[10px] uppercase tracking-wide text-slate-500">(actionable)</span> : null}
+      {gated ? <span className="ml-1 text-[11px] uppercase tracking-wide text-slate-500">(actionable)</span> : null}
     </td>
   );
 }
@@ -92,7 +92,7 @@ function LayerChips({ r }: { r: TrackerBlockRow }) {
     <span className="inline-flex flex-wrap gap-0.5">
       {LAYER_DEFS.map((l) => (
         <span key={l.abbr} title={l.title}
-          className={`rounded-sm px-1 text-[10px] ${r.layers[l.key] ? "bg-slate-200 text-slate-700" : "bg-slate-50 text-slate-300"}`}>{l.abbr}</span>
+          className={`rounded-sm px-1 text-xs ${r.layers[l.key] ? "bg-slate-200 text-slate-700" : "bg-slate-50 text-slate-300"}`}>{l.abbr}</span>
       ))}
     </span>
   );
@@ -104,7 +104,7 @@ function BlockTable({ rows, kind, moved, extended = false }: { rows: TrackerBloc
   if (rows.length === 0) return <p className="px-3 py-4 text-sm text-slate-500">None.</p>;
   return (
     <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-      <table className="w-full border-collapse text-[13px]">
+      <table className="w-full border-collapse text-xs">
         <thead>
           <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-slate-500">
             <th className="px-3 py-2 text-left">Block</th>
@@ -124,9 +124,9 @@ function BlockTable({ rows, kind, moved, extended = false }: { rows: TrackerBloc
             <tr key={r.id} className={`border-b border-gray-100 last:border-b-0 align-top ${moved.has(r.id) ? "bg-[#d1fae5]" : ""}`}>
               <td className="px-3 py-2 text-slate-800">
                 {r.name}
-                {r.financial ? <span className="ml-1 rounded-sm bg-slate-100 px-1 text-[10px] text-slate-500">FIN</span> : null}
-                {r.feature_incomplete ? <span className="ml-1 rounded-sm border border-[#dc2626] px-1 text-[10px] text-[#dc2626]">FEATURE INCOMPLETE</span> : null}
-                {r.cross_module.length ? <div className="mt-0.5 text-[10px] text-slate-400">links: {r.cross_module.join(", ")}</div> : null}
+                {r.financial ? <span className="ml-1 rounded-sm bg-slate-100 px-1 text-xs text-slate-500">FIN</span> : null}
+                {r.feature_incomplete ? <span className="ml-1 rounded-sm border border-[#dc2626] px-1 text-xs text-[#dc2626]">FEATURE INCOMPLETE</span> : null}
+                {r.cross_module.length ? <div className="mt-0.5 text-xs text-slate-400">links: {r.cross_module.join(", ")}</div> : null}
               </td>
               <td className="px-3 py-2 text-slate-500">{r.kind}</td>
               <td className="px-3 py-2"><LayerChips r={r} /></td>
@@ -222,7 +222,7 @@ function ByModuleView({ data, moved }: { data: ProgramTracker; moved: Set<string
       </div>
       <p className="text-[11px] text-slate-400">Each block counted once, by module (from its file paths); reconciles to the registered total. Computed live from the registry.</p>
       <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="w-full border-collapse text-[13px]">
+        <table className="w-full border-collapse text-xs">
           <thead>
             <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-slate-500">
               <th className="px-3 py-2 text-left">Module</th>

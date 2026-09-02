@@ -10,7 +10,7 @@ export function U14ExclusiveStatusBanner({ testId }: { testId: string }) {
   const all = U14_EXCLUSIVE_CERTIFIED_COUNT === U14_EXCLUSIVE_TOTAL;
   return (
     <p
-      className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-[13px] text-slate-700"
+      className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
       data-testid={testId}
     >
       <b>Urgent exclusive hops:</b> {U14_EXCLUSIVE_CERTIFIED_COUNT} of {U14_EXCLUSIVE_TOTAL}{" "}

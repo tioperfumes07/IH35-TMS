@@ -106,7 +106,7 @@ function U14HopBadge({ row }: { row: U14ExclusiveRow | undefined }) {
   if (row.status === "CERTIFIED") {
     return (
       <span
-        className="inline-block rounded-sm px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white"
+        className="inline-block rounded-sm px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white"
         style={{ backgroundColor: NAVY }}
         title="Urgent exclusive seat hops + live SHA — not Rule 24 Certified"
       >
@@ -128,7 +128,7 @@ function ProofBadge({ proof }: { proof: ModuleRow["proof"] }) {
   if (proof === "certified") {
     return (
       <span
-        className="inline-block rounded-sm px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white"
+        className="inline-block rounded-sm px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white"
         style={{ backgroundColor: NAVY }}
         title="Every acceptance item is prod_verified after a live GUARD click"
       >
@@ -139,7 +139,7 @@ function ProofBadge({ proof }: { proof: ModuleRow["proof"] }) {
   if (proof === "code_verified") {
     return (
       <span
-        className="inline-block rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+        className="inline-block rounded-sm border px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide"
         style={{ borderColor: AMBER, color: AMBER, backgroundColor: "#fffbeb" }}
         title="Checklist PASS by code/CI — not yet live-proven on prod (prod_verified still false)"
       >
@@ -188,7 +188,7 @@ function ProgressBar({
           {done} of {total}
         </span>
       </div>
-      <span className="tabular-nums text-[10px] text-[#64748b]">
+      <span className="tabular-nums text-xs text-[#64748b]">
         live-proven {prodVerifiedCount} of {total}
       </span>
     </div>
@@ -329,7 +329,7 @@ export function ModuleCompletionPage() {
       <Breadcrumb items={[{ label: "Program", href: "/program" }, { label: "Module Completion" }]} />
       <PageHeader title="Module Completion" />
       <p
-        className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-[13px] text-slate-700"
+        className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
         data-testid="module-completion-honest-purpose"
       >
         This is Rule 24&apos;s <b>N of M</b> checklist from <code>docs/module-completion/*.json</code> — CI
@@ -350,7 +350,7 @@ export function ModuleCompletionPage() {
         />
       ) : null}
       {live.isPending && !live.isError ? (
-        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-[13px] text-slate-700" data-testid="module-completion-loading">
+        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700" data-testid="module-completion-loading">
           Loading module completion from the API…
         </p>
       ) : null}
@@ -397,7 +397,7 @@ export function ModuleCompletionPage() {
         {defined.length === 1 ? "" : "s"} with a defined scope.
         {" "}
         <span className="font-semibold text-[#1f2a44]">{totals.prod} of {totals.total}</span>{" "}
-        live-proven (<code className="text-[10px]">prod_verified</code>).
+        live-proven (<code className="text-xs">prod_verified</code>).
         {" "}
         <span className="font-semibold" style={{ color: NAVY }}>
           {certifiedCount} certified
@@ -481,21 +481,21 @@ export function ModuleCompletionPage() {
                 {item.status === "PASS" || item.status === "HOLD" ? (
                   item.prod_verified ? (
                     <span
-                      className="w-28 shrink-0 text-[10px] font-bold uppercase"
+                      className="w-28 shrink-0 text-[11px] font-bold uppercase"
                       style={{ color: NAVY }}
                     >
                       prod-verified
                     </span>
                   ) : (
                     <span
-                      className="w-28 shrink-0 text-[10px] font-bold uppercase"
+                      className="w-28 shrink-0 text-[11px] font-bold uppercase"
                       style={{ color: AMBER }}
                     >
                       code only
                     </span>
                   )
                 ) : (
-                  <span className="w-28 shrink-0 text-[10px] text-[#64748b]">—</span>
+                  <span className="w-28 shrink-0 text-xs text-[#64748b]">—</span>
                 )}
                 <span>{item.title}</span>
               </li>
