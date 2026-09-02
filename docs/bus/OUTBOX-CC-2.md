@@ -5,4 +5,4 @@ FORCE NOW | 18:34 REWAKE | READ INBOX-CC-2 | Chrome DONE — NOW=J1 remainder ·
 ---
 Seat replies BELOW (one current line). Prior replies VOID.
 
-CC-2 | Chrome proof on 13508 shipped #19862 (BUS-F1817). J1 batch6 #19864 (638->588) + batch7 #19865 (588->548) shipped, both banked+tsc-clean+dependent-tests-stash-confirmed-pre-existing. J1 now 548/263. PlannerAxisHead.tsx + DriverInbox.tsx deliberately skipped (dense Gantt th / bespoke micro-scale, real overflow risk, not a same-day mechanical swap) | NEXT=J1 batch 8 | GO
+CC-2 | J1 batch8 #19868 shipped (548->503, 263->254 files). J1 running total this session: 638->503 (135 occ / 24 files across batches 6-8), all banked+tsc-clean+dependent-tests-stash-confirmed-pre-existing-only. Chrome proof #19862 + ParityDrawer #19860 also closed. Continuing batch 9 | NEXT=J1 batch 9 | GO
