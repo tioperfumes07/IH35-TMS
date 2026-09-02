@@ -82,6 +82,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
 
   // Expenses ▾ — browse first; bare route is the locked creator hub. /new is route-only legacy.
   { label: "Expenses List", path: "/accounting/expenses/list", section: "expenses" },
+  { label: "Load costs", path: "/accounting/load-costs", section: "expenses" },
   { label: "Expenses", path: "/accounting/expenses", section: "expenses" },
   { label: "Receipts", path: "/accounting/receipts", section: "expenses" },
 
@@ -156,7 +157,6 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   // More ▾ — audit / lineage / sync
   { label: "Audit trail", path: "/accounting/audit-trail", section: "more" },
   { label: "Posting lineage", path: "/accounting/posting-lineage", section: "more" },
-  { label: "Load costs", path: "/accounting/load-costs", section: "more" },
   { label: "Posting Templates", path: "/lists/accounting/posting-templates", section: "more" },
   { label: "QBO sync drift", path: "/accounting/qbo-sync", section: "more" },
 

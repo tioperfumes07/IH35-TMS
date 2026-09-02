@@ -1,6 +1,6 @@
 # OUTBOX-CC-2 · 2026-09-02 16:40 CT
 
-FORCE NOW | READ INBOX-CC-2 | NOW=deadhead blank · QBO amount/weight · J1 remainder · NEVER POST | GO
+FORCE NOW | 17:41 REWAKE | READ INBOX-CC-2 | NOW=deadhead blank · QBO amount/weight · J1 remainder · NEVER POST · NEVER IDLE | GO
 
 ---
 Seat replies BELOW (one current line). Prior replies VOID.

@@ -1,6 +1,6 @@
 # OUTBOX-CASCADE · TURBO · 2026-09-02 16:27 CT
 
-FORCE NOW | READ INBOX-CASCADE | NOW=FINDING factory · Gap 5 CLOSED #19839 · NEVER BUILD · NEVER POST | GO
+FORCE NOW | 17:41 REWAKE | READ INBOX-CASCADE | OUTBOX IS EMPTY — open Book Load, file one unique FINDING with file:line, then the next | NEVER IDLE | NEVER BUILD | GO
 
 ---
 Seat replies BELOW (one current line). Prior replies VOID.

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
+import { countUncategorizedTransactions } from "../banking/pending-categorization.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 
 export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
@@ -36,18 +37,29 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
               AND b.status NOT IN ('void','voided')
               AND b.revoked_at IS NULL
             GROUP BY bl.load_id
+         ), driver_pay AS (
+           SELECT db.load_id,
+                  COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS driver_pay_cents
+             FROM driver_finance.driver_bills db
+            WHERE db.operating_company_id = $1::uuid
+              AND db.load_id IS NOT NULL
+              AND db.status <> 'void'
+            GROUP BY db.load_id
          )
-         SELECT COALESCE(ec.load_id, bc.load_id)::text AS load_id,
+         SELECT COALESCE(ec.load_id, bc.load_id, dp.load_id)::text AS load_id,
                 COALESCE(ec.expense_cents, 0)::text AS expense_cents,
                 COALESCE(bc.bill_cents, 0)::text AS bill_cents,
+                COALESCE(dp.driver_pay_cents, 0)::text AS driver_pay_cents,
                 COALESCE(ec.expense_count, 0)::int AS expense_count,
                 COALESCE(bc.bill_count, 0)::int AS bill_count,
                 COALESCE(bc.unpaid_bill_count, 0)::int AS unpaid_bill_count
            FROM expense_costs ec
-           FULL OUTER JOIN bill_costs bc ON bc.load_id = ec.load_id`,
+           FULL OUTER JOIN bill_costs bc ON bc.load_id = ec.load_id
+           FULL OUTER JOIN driver_pay dp ON dp.load_id = COALESCE(ec.load_id, bc.load_id)`,
         [parsed.data.operating_company_id]
       );
-      return { rows: result.rows };
+      const unmatchedBank = await countUncategorizedTransactions(client, parsed.data.operating_company_id);
+      return { rows: result.rows, unmatched_bank_count: unmatchedBank };
     });
   });
 }
