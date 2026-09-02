@@ -1,9 +1,11 @@
 import { withLuciaBypass } from "../../auth/db.js";
 import { enqueueTmsBillPushRequested } from "../../qbo/tms-bill-push-chain.service.js";
-import { ExpenseCategoryMapResolutionError, resolveAccountForCategory } from "../expense-category-map/resolver.service.js";
+import { ExpenseCategoryMapResolutionError } from "../expense-category-map/resolver.service.js";
 import { PostingEngineError, postSourceTransaction } from "../posting-engine.service.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../bills.service.js";
+import { CAPITALIZE_REPAIR_THRESHOLD_CENTS, decideRepairBooksTreatment } from "../capitalize-threshold.js";
+import { resolveRoleAccount, CoaRoleResolutionError, type CoaRole } from "../coa-roles/resolver.service.js";
 
 // GL-posting kill switch for the maintenance / WO-close bill. The bill (A/P row + lines) is always
 // created below, but auto-posting it to the GL is gated PER-ENTITY via lib.feature_flags (isEnabled) —
@@ -15,8 +17,6 @@ const BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
 };
-
-type MaintenanceCategoryCode = "tires" | "brakes" | "engine" | "dot" | "pm_preventive" | "body" | "electrical" | "ac" | "misc";
 
 type WorkOrderLineRow = {
   wo_line_uuid: string;
@@ -51,30 +51,6 @@ function asAmount(value: string | number | null | undefined) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function mapMaintenanceCategoryCode(workOrder: { wo_type?: string | null; wo_service_class?: string | null; description?: string | null }, line: WorkOrderLineRow): MaintenanceCategoryCode {
-  const lineText = `${String(line.description ?? "")} ${String(line.line_type ?? "")}`.toLowerCase().replace(/\s+/g, " ");
-  if (/\btire|wheel\b/.test(lineText)) return "tires";
-  if (/\bbrake\b/.test(lineText)) return "brakes";
-  if (/\bengine|coolant|transmission|turbo\b/.test(lineText)) return "engine";
-  if (/\bdot\b|\binspection\b/.test(lineText)) return "dot";
-  if (/\bbody\b|collision|paint/.test(lineText)) return "body";
-  if (/\belectrical\b|battery|alternator|wiring/.test(lineText)) return "electrical";
-  if (/\bac\b|\ba\/c\b|air conditioning|hvac/.test(lineText)) return "ac";
-  if (/\bpm\b|preventive|maintenance service/.test(lineText)) return "pm_preventive";
-
-  const woText = `${String(workOrder.description ?? "")} ${String(workOrder.wo_type ?? "")} ${String(workOrder.wo_service_class ?? "")}`
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-  if (/\btire|wheel\b/.test(woText)) return "tires";
-  if (/\bbrake\b/.test(woText)) return "brakes";
-  if (/\bengine|coolant|transmission|turbo\b/.test(woText)) return "engine";
-  if (/\bdot\b|\binspection\b/.test(woText)) return "dot";
-  if (/\bbody\b|collision|paint/.test(woText)) return "body";
-  if (/\belectrical\b|battery|alternator|wiring/.test(woText)) return "electrical";
-  if (/\bac\b|\ba\/c\b|air conditioning|hvac/.test(woText)) return "ac";
-  if (/\bpm\b|preventive|maintenance service/.test(woText)) return "pm_preventive";
-  return "misc";
-}
 
 async function detectBillLineAccountColumn(client: DbClient): Promise<"account_id" | "coa_account_id" | null> {
   const cols = await client.query<{ column_name: string }>(
@@ -239,9 +215,14 @@ async function insertBillLinesFromWorkOrder(
   input: ClosePostingInput,
   billId: string
 ): Promise<{ inserted_count: number }> {
-  const woContext = await client.query<{ wo_type: string | null; wo_service_class: string | null; description: string | null }>(
+  const woContext = await client.query<{
+    wo_type: string | null;
+    wo_service_class: string | null;
+    description: string | null;
+    total_actual_cost: string | number | null;
+  }>(
     `
-      SELECT wo_type::text, wo_service_class::text, description
+      SELECT wo_type::text, wo_service_class::text, description, total_actual_cost
       FROM maintenance.work_orders
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
@@ -289,6 +270,26 @@ async function insertBillLinesFromWorkOrder(
   const billLineColumns = await listBillLineColumns(client);
   const accountColumn = await detectBillLineAccountColumn(client);
 
+  // ND-FA-01 / A4-D6 (owner ruling docs/lockdown/GO-19-OWNER-DECISIONS-CLOSED-2026-09-01.md §4,
+  // CLOSED at $7,000, NEVER $7,500) — the whole-repair capitalize-vs-expense decision, resolved ONCE
+  // per WO-close bill, not per line and not via the maintenance category default. Real defect this
+  // fixes: capitalize-threshold.ts's decideRepairBooksTreatment() was never called from this posting
+  // path — every WO-close bill line previously posted via the per-category maintenance map regardless
+  // of repair size. accountColumn (bill_lines.account_id/coa_account_id) is Tier 1 in
+  // resolveBillLineDebitAccount (../bill-account-resolver.ts) — an explicit line account_id always
+  // wins over category mapping at GL-posting time, so setting it here is sufficient; no change needed
+  // in posting-engine.service.ts. A4-D1: capitalize -> "Fixed Asset – Trucks" (fixed_asset_default
+  // role). A4-D2: expense -> "Heavy Repair Expense" (heavy_repair_expense role, live-bound for USMCA
+  // at account 6150). Fails closed (CoaRoleResolutionError) if the role is unbound for this entity —
+  // never invents/guesses an account.
+  let capitalizeAccountId: string | null = null;
+  if (accountColumn) {
+    const woTotalCents = Math.round(asAmount(wo.total_actual_cost) * 100);
+    const treatment = decideRepairBooksTreatment(woTotalCents);
+    const role: CoaRole = treatment === "capitalize" ? "fixed_asset_default" : "heavy_repair_expense";
+    capitalizeAccountId = await resolveRoleAccount(client, input.operating_company_id, role);
+  }
+
   const seqRes = await client.query<{ max_line_sequence: number }>(
     `SELECT COALESCE(MAX(line_sequence), 0)::int AS max_line_sequence FROM accounting.bill_lines WHERE bill_id = $1::uuid`,
     [billId]
@@ -298,8 +299,6 @@ async function insertBillLinesFromWorkOrder(
 
   for (const line of lines.rows) {
     if (existingLineIds.has(line.wo_line_uuid)) continue;
-    const categoryCode = mapMaintenanceCategoryCode(wo, line);
-    const account = await resolveAccountForCategory(input.operating_company_id, "maintenance", categoryCode);
     seq += 1;
 
     const columns: string[] = ["bill_id", "line_sequence", "amount", "description", "linked_wo_line_uuid"];
@@ -328,9 +327,9 @@ async function insertBillLinesFromWorkOrder(
       columns.push("part_location_codes");
       values.push(line.part_location_codes ?? null);
     }
-    if (accountColumn) {
+    if (accountColumn && capitalizeAccountId) {
       columns.push(accountColumn);
-      values.push(account.account_id);
+      values.push(capitalizeAccountId);
     }
     const placeholders = values.map((_, idx) => `$${idx + 1}`).join(", ");
     await client.query(`INSERT INTO accounting.bill_lines (${columns.join(", ")}) VALUES (${placeholders})`, values);
