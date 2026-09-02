@@ -1407,6 +1407,12 @@ jobs:
       - name: verify:book-load-stop-validation-honesty
         run: node scripts/verify-book-load-stop-validation-honesty.mjs
 
+      # GO-21 B6 — both rate-con upload controls retain docs.files identity and atomically link it to the load
+      - name: verify:ratecon-upload-load-link --selftest
+        run: node scripts/verify-ratecon-upload-load-link.mjs --selftest
+      - name: verify:ratecon-upload-load-link
+        run: node scripts/verify-ratecon-upload-load-link.mjs
+
       # GO-20 D — persistent cargo incident lifecycle from reading UUID through worker/API/UI/attention
       - name: verify:go20-cargo-incidents --selftest
         run: node scripts/verify-go20-cargo-incidents.mjs --selftest

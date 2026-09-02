@@ -241,6 +241,7 @@ const createDispatchLoadBodySchema = z.object({
   late_delivery_est_deduction_cents: z.number().int().min(0).optional(),
   late_delivery_reason: z.string().trim().max(1000).optional(),
   ocr_source_pdf_r2_key: z.string().trim().max(512).optional(),
+  rate_confirmation_file_id: z.string().uuid().optional(),
   // LOADS-MILEAGE-INTEGER-TRUNCATION (migration 202613310000 widened the columns to numeric(10,1)):
   // AlwaysTrack carries tenths of a mile; multipleOf(0.1) matches the DB precision exactly instead
   // of forcing the caller to round to a whole mile.

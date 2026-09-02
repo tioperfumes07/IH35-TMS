@@ -11,6 +11,11 @@ import { userFacingApiError } from "../../../../lib/api-error-message";
 
 export type RateConPhase = "idle" | "uploading" | "extracting" | "done" | "error";
 
+export type RateConUploadedFile = {
+  fileId: string;
+  r2Key: string;
+};
+
 /** Run one upload/extract step and, on failure, rethrow with the step name prefixed onto the message
  *  (e.g. "confirm-upload: API request failed with status 404") so the surfaced error pinpoints which of
  *  the four calls broke — instead of a bare status that could be any of them. */
@@ -72,7 +77,7 @@ export function useRateConExtraction({
 }: {
   operatingCompanyId: string;
   /** Called when extraction succeeds — parent applies prefill.json to the wizard (editable draft). */
-  onPrefill: (prefill: RateConPrefill, response: RateConExtractResponse) => void;
+  onPrefill: (prefill: RateConPrefill, response: RateConExtractResponse, uploadedFile: RateConUploadedFile) => void;
 }): UseRateConExtraction {
   const [phase, setPhase] = useState<RateConPhase>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -125,7 +130,13 @@ export function useRateConExtraction({
         if (!isCurrent()) return;
         setResult(res);
         setPhase("done");
-        onPrefill(rateConExtractionToPrefill(res.extraction), res);
+        // B6 — preserve the docs.files identity through the shared intake boundary. Previously both
+        // Section A and Section E successfully uploaded/extracted, then discarded file_id/r2_key, so
+        // Book Load had no document identity to link to the newly-created load.
+        onPrefill(rateConExtractionToPrefill(res.extraction), res, {
+          fileId: up.file_id,
+          r2Key: up.r2_key,
+        });
       } catch (e) {
         if (!isCurrent()) return;
         setError(rateConErrorMessage(e));
