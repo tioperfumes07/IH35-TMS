@@ -1,9 +1,29 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   type AdvanceSplit,
+  disburseCashAdvanceSplit,
   lumperLifecycleEnabled,
   validateAdvanceSplit,
 } from "../lumper-cash-advance-split";
+
+// C6 (GO-23) — the bill_payment leg's own INSERT had no JE poster call at all. Mocked separately
+// from the generic query stub below so the flag-on path gets real coverage, matching this
+// session's own established convention for the same fix shape (mark-disbursed #19618,
+// bills-bulk #19625, insurance policy-create-atomic #19629).
+const mockIsBillPaymentGlPostingEnabled = vi.fn().mockResolvedValue(false);
+const mockPostSourceTransactionInClientTx = vi.fn().mockResolvedValue({ journal_entry_id: "je-1" });
+vi.mock("../../accounting/bill-payment-gl.service.js", () => ({
+  isBillPaymentGlPostingEnabled: (...args: unknown[]) => mockIsBillPaymentGlPostingEnabled(...args),
+}));
+vi.mock("../../accounting/posting-engine.service.js", () => ({
+  postSourceTransactionInClientTx: (...args: unknown[]) => mockPostSourceTransactionInClientTx(...args),
+}));
+
+const mockQuery = vi.fn();
+vi.mock("../../auth/db.js", () => ({
+  withCurrentUser: async (_userId: string, fn: (client: { query: typeof mockQuery }) => Promise<unknown>) =>
+    fn({ query: mockQuery }),
+}));
 
 describe("lumper-cash-advance-split — STEP 3b validation (the $400 split contract)", () => {
   const split400: AdvanceSplit[] = [
@@ -55,5 +75,79 @@ describe("lumper-cash-advance-split — STEP 3b validation (the $400 split contr
     expect(lumperLifecycleEnabled()).toBe(true);
     if (prev === undefined) delete process.env.LUMPER_LIFECYCLE_ENABLED;
     else process.env.LUMPER_LIFECYCLE_ENABLED = prev;
+  });
+});
+
+describe("disburseCashAdvanceSplit — C6 bill_payment leg GL poster", () => {
+  const ACTOR = "22222222-2222-4222-8222-222222222222";
+  const OPCO = "11111111-1111-4111-8111-111111111111";
+  const ADVANCE_ID = "ad000000-0000-4000-8000-000000000001";
+  const BILL_ID = "bi000000-0000-4000-8000-000000000001";
+  const BILL_PAYMENT_ID = "bp000000-0000-4000-8000-000000000001";
+  const LOAD_ID = "ld000000-0000-4000-8000-000000000001";
+
+  const splits: AdvanceSplit[] = [
+    { kind: "bill_payment", amount_cents: 25000, bill_id: BILL_ID },
+    { kind: "lumper_expense", amount_cents: 15000, load_id: LOAD_ID },
+  ];
+
+  let prevFlag: string | undefined;
+
+  beforeEach(() => {
+    prevFlag = process.env.LUMPER_LIFECYCLE_ENABLED;
+    process.env.LUMPER_LIFECYCLE_ENABLED = "true";
+    mockIsBillPaymentGlPostingEnabled.mockClear().mockResolvedValue(false);
+    mockPostSourceTransactionInClientTx.mockClear().mockResolvedValue({ journal_entry_id: "je-1" });
+    mockQuery.mockReset();
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SELECT set_config")) return { rows: [] };
+      if (sql === "BEGIN" || sql === "COMMIT" || sql === "ROLLBACK") return { rows: [] };
+      if (sql.includes("FROM driver_finance.driver_advances")) return { rows: [{ amount: "400.00" }] };
+      if (sql.includes("SELECT is_sample_data FROM accounting.bills")) return { rows: [{ is_sample_data: false }] };
+      if (sql.includes("INSERT INTO accounting.bill_payments")) return { rows: [{ id: BILL_PAYMENT_ID }] };
+      if (sql.includes("FROM catalogs.accounts")) return { rows: [{ id: "acct-117" }] };
+      if (sql.includes("SELECT is_sample_data FROM mdata.loads")) return { rows: [{ is_sample_data: false }] };
+      if (sql.includes("INSERT INTO accounting.expenses")) return { rows: [{ id: "exp-1" }] };
+      if (sql.includes("INSERT INTO accounting.expense_lines")) return { rows: [] };
+      if (sql.includes("events.log_event")) return { rows: [] };
+      return { rows: [] };
+    });
+  });
+
+  afterEach(() => {
+    if (prevFlag === undefined) delete process.env.LUMPER_LIFECYCLE_ENABLED;
+    else process.env.LUMPER_LIFECYCLE_ENABLED = prevFlag;
+  });
+
+  it("never calls the poster when BILL_PAYMENT_GL_POSTING_ENABLED is off (default)", async () => {
+    const result = await disburseCashAdvanceSplit(ACTOR, OPCO, { advance_id: ADVANCE_ID, splits });
+    expect(result.ok).toBe(true);
+    expect(mockIsBillPaymentGlPostingEnabled).toHaveBeenCalledWith(OPCO, ACTOR);
+    expect(mockPostSourceTransactionInClientTx).not.toHaveBeenCalled();
+  });
+
+  it("posts the bill_payment leg via postSourceTransactionInClientTx when the flag is on", async () => {
+    mockIsBillPaymentGlPostingEnabled.mockResolvedValue(true);
+    const result = await disburseCashAdvanceSplit(ACTOR, OPCO, { advance_id: ADVANCE_ID, splits });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.billPaymentIds).toEqual([BILL_PAYMENT_ID]);
+    expect(mockPostSourceTransactionInClientTx).toHaveBeenCalledTimes(1);
+    expect(mockPostSourceTransactionInClientTx).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        operating_company_id: OPCO,
+        source_transaction_type: "bill_payment",
+        source_transaction_id: BILL_PAYMENT_ID,
+      },
+      { userId: ACTOR }
+    );
+  });
+
+  it("a poster failure does not abort the split disburse (best-effort)", async () => {
+    mockIsBillPaymentGlPostingEnabled.mockResolvedValue(true);
+    mockPostSourceTransactionInClientTx.mockRejectedValueOnce(new Error("boom"));
+    const result = await disburseCashAdvanceSplit(ACTOR, OPCO, { advance_id: ADVANCE_ID, splits });
+    expect(result.ok).toBe(true);
+    expect(mockPostSourceTransactionInClientTx).toHaveBeenCalledTimes(1);
   });
 });
