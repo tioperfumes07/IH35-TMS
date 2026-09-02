@@ -1,3 +1,10 @@
+// C6-MONEY-JE-EXEMPT: this books the driver_liabilities + driver_advances rows (disbursement_status
+// starts 'approved', never 'disbursed') — the real JE posts later, once, when the advance is
+// actually disbursed, via one of two now-BOTH-correct paths: cash-advance-disburse.ts's
+// disburseDriverAdvanceCore (postSourceTransactionInClientTx, source_transaction_type=
+// "driver_advance") for a plain cash-out, or cash-advances.routes.ts's mark-disbursed (fixed in
+// #19618 — postBillPaymentGlIfEnabled) for the linked_bill_id branch. Both were verified before
+// this exemption; neither was assumed — GO-23 C6, 2026-09-02.
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { nextCashAdvanceDisplayId } from "./display-id.js";
 
