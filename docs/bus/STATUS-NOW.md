@@ -1,14 +1,12 @@
-# STATUS-NOW · LEAD CENSUS · 2026-09-02 17:56 CT
+# STATUS-NOW · LEAD CENSUS · 2026-09-02 17:59 CT
 
-Idle = defect. Tip `efa4e6a663` (#19849). E1 FE **LIVE** `c389ddc0ee` dep-dacahqeq1p3s73eg4otg. API Costs **LIVE** `6afe514c82`; GO-06 `102a380c69` **update_in_progress** dep-dacaf8q — do not pile.
+Idle = defect. Tip `d0bc1e346a` (#19850). **API LIVE** GO-06 `102a380c69` dep-dacaf8q86cos73enm4bg. **E1 FE LIVE** `c389ddc0ee`. Census FE `d0bc1e` auto-building — do not `trigger_deploy` API.
 
 | Seat | Live check | Verdict | Forced NOW |
 |------|------------|---------|------------|
-| **CC-1** | last OUTBOX 17:41 (5/5 owner items) then escrow | **STALE vs GO-23** | Wave 1 **A1 DATA + N1** (N1 FE reachability already on main — do not rebuild the link). NEVER POST |
-| **CC-2** | last OUTBOX **16:40** | **STALE** | deadhead blank → QBO → J1. Chrome Load costs + **Chrome E1 now** (FE live). NEVER POST |
-| **CC-3** | last OUTBOX still "await E1 ruling" | **STALE** | E1 CLOSED #19848. Wave 2 **A1 interchange SCREEN**. NEVER POST |
-| **Codex** | OUTBOX still pending Costs PR | **WRONG ROW** | Drop Costs (#19845). **A3/B12** then guards. NEVER POST |
-| **Cascade** | OUTBOX empty | **IDLE DEFECT** | Unique FINDING file:line THIS TURN. NEVER BUILD |
+| **CC-1** | last ship 17:41 | **STALE vs GO-23** | **A1 DATA**. N1 FE link exists. NEVER POST |
+| **CC-2** | last OUTBOX **16:40** | **STALE** | **Chrome E1 + Load costs + GO-06 bills/multiple** (all live). Then deadhead → QBO → J1. NEVER POST |
+| **CC-3** | still "await E1 ruling" | **STALE** | E1 closed. **Wave 2 A1 SCREEN**. NEVER POST |
+| **Codex** | still pending Costs PR | **WRONG ROW** | Drop Costs. **A3/B12**. NEVER POST |
+| **Cascade** | OUTBOX empty | **IDLE DEFECT** | FINDING file:line THIS TURN. NEVER BUILD |
 | **Cursor** | this census | **WORKING** | Stay off A1/N1 and A1 screen. NEVER POST |
-
-Open non-bot PR after this ship: none expected except this census.
