@@ -228,6 +228,56 @@ describe("BookLoadModalV4", () => {
     });
   });
 
+  it("shows OK-only popup and inline flag when catalog short exceeds practical", async () => {
+    const user = userEvent.setup();
+    vi.mocked(getLaneMileage).mockResolvedValue({
+      practical_miles: 1319.7,
+      short_miles: 1478.1,
+      empty_miles: 207.6,
+      runs: 8,
+      short_runs: 8,
+      practical_spread: null,
+      confidence: "High",
+      autofill_allowed: true,
+      fills: true,
+      fill_confidence: "high",
+      match: "City match",
+      provenance: "8 runs on this lane. Miles filled from history.",
+      matched_lane_id: "lane-indy-laredo",
+      source: "history",
+    });
+
+    render(
+      wrap(
+        <ToastProvider>
+          <BookLoadModalV4
+            open
+            operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
+            onClose={vi.fn()}
+            onCreated={vi.fn()}
+          />
+        </ToastProvider>
+      )
+    );
+
+    const pickupCity = document.querySelector<HTMLInputElement>('input[name="stops.0.city"]');
+    const deliveryCity = document.querySelector<HTMLInputElement>('input[name="stops.1.city"]');
+    await user.type(pickupCity!, "Indianapolis IN");
+    await user.type(deliveryCity!, "Laredo TX");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("miles-invert-ack-dialog")).toBeTruthy();
+      expect(screen.getByTestId("book-load-miles-invert-flag")).toBeTruthy();
+    });
+
+    await user.click(screen.getByTestId("miles-invert-ack-ok"));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("miles-invert-ack-dialog")).toBeNull();
+      expect(screen.getByTestId("book-load-miles-invert-flag")).toBeTruthy();
+    });
+  });
+
   it("keeps miles empty and names the blocker when Chicago has no state", async () => {
     const user = userEvent.setup();
     vi.mocked(getLaneMileage).mockClear();

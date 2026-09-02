@@ -66,14 +66,13 @@ Only `components/Combobox.tsx` dismisses on outside click, and the wizard import
 Miles fill for all 3,338 lanes since #19689 — but 13508's `updated_at` still equals `created_at`, so nobody has re-opened it. And `load_stops.location_id` is **0 of 2**: the picker was built, 9 USMCA locations exist, nobody has proved it on a real load.
 **Seat: CC-2. One Chrome pass answers both.**
 
-### ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY — JORGE LAW (2026-09-02)
-**Driver pay = ALWAYS short miles. NEVER practical.** STOP auto-fill pay from catalog `short_miles` until inverted rows fixed.
+### ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY (2026-09-02)
 
-Indy→Laredo (load 13508): practical 1319.7 + empty 207.6 = 1527.3 ≠ short 1478.1. **2,142/3,237 lanes (66.2%)** have `short_miles > practical_miles` — all `source=History`. Laredo→Indy normal; Indy→Laredo inverted. Cursor acknowledged MilesStrip "short includes empty" copy was **wrong**.
+Indy→Laredo (load 13508): practical 1319.7 + empty 207.6 = 1527.3 ≠ short 1478.1. **2,142/3,237 lanes (66.2%)** have `short_miles > practical_miles` — all `source=History`. Cursor acknowledged MilesStrip "short includes empty" copy was **wrong**.
 
-**Owner law (LOCKED):** Customer RPM = rate/practical · Company CPM = cost/(practical+empty) · driver pay = short miles · overage = driver's problem · empty on 2,398 lanes avg 251.9.
+**Owner law (LOCKED):** Driver pay = **short miles always**. NEVER practical. Customer RPM = rate/practical · Company CPM = cost/(practical+empty) · empty on 2,398 lanes avg 251.9.
 
-**CC-1 owns:** remediation restores short = shortest (PC*MILER / re-key / quarantine) → no mass-swap → wizard flag when short>practical + operator confirm/override typed short. **Gate 0 unaffected.**
+**STOP-BEFORE-PAY:** Do not autofill/trust corrupted catalog short without OK popup. CC-1 remediates catalog so short = shortest. Book Load: autofill + flag + OK-only popup. **Gate 0 unaffected.**
 
 Canonical: `docs/bus/MILES-INVERT-01-STOP-BEFORE-PAY-2026-09-02.md`
 

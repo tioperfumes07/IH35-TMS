@@ -1,6 +1,5 @@
 # ★ OUTBOX-CODEX · LIVE TOP · GO-20 · 2026-09-02
 
-CODEX | WORKING | GO-26-B3-DISPATCH-BLOCKER-SELFTEST-MUTATES-SOURCE | root=selftest overwrote/restored driver-availability.service.ts twice | fix=isolated os.tmpdir app fixture + root-injected real guard child | proof=target normal PASS; planted 2/2; mutation ratchet 580→578 | PR=pending | GO
 CODEX | WORKING | GO-26-B3-DISPATCH-OOS-SELFTEST-WRITES-REPO-TEMP | root=selftest created scripts/.oos-selftest-* inside the repository | fix=os.tmpdir isolated fixture + explicit repo-boundary assertion | proof=target normal+selftest PASS; global mutation ratchet 580/580 PASS | PR=pending | GO
 CODEX | WORKING | B3-FLEET-UNIT-QUERY-SELFTEST-MUTATES-SOURCE | root=selftest rewrote/restored VehicleProfilePage and spawned itself to plant missing AbortSignal propagation | fix=sourceProblems(planted) in-memory | proof=target normal+selftest PASS; orphan census 0; mutation ratchet 582→580 | PR=pending | GO
 CODEX | WORKING | B3-FUEL-FRAUD-WORKER-SELFTEST-MUTATES-SOURCE | root=selftest overwrote/restored backend index to plant missing worker registration | fix=run(overrides) in-memory index source | proof=target normal+selftest PASS; mutation ratchet 609→607 | PR=pending | GO

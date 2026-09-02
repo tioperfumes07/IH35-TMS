@@ -45,6 +45,8 @@ import { BookLoadValidationSection } from "./BookLoadValidationSection";
 import type { LiveReservation } from "./book-load-v4/LiveLoadIdBar";
 import { LiveLoadIdBar } from "./book-load-v4/LiveLoadIdBar";
 import { MilesStrip } from "./book-load-v4/MilesStrip";
+import { MilesInvertAckDialog } from "./book-load-v4/MilesInvertAckDialog";
+import { isMilesColumnInverted } from "./book-load-v4/miles-invert";
 import { LoadSaveProofPanel } from "./book-load-v4/LoadSaveProofPanel";
 import type { LoadSaveProof } from "./book-load-v4/load-save-proof-types";
 import { OcrDropZone } from "./book-load-v4/OcrDropZone";
@@ -313,6 +315,8 @@ export function BookLoadModalV4({
   const [showSpecialNotes, setShowSpecialNotes] = useState(false);
   const [saveProof, setSaveProof] = useState<LoadSaveProof | null>(null);
   const [saveProofCreated, setSaveProofCreated] = useState<{ id: string; label?: string } | null>(null);
+  const [showMilesInvertAck, setShowMilesInvertAck] = useState(false);
+  const milesInvertAckedLaneRef = useRef<string | null>(null);
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -596,6 +600,11 @@ export function BookLoadModalV4({
     staleTime: 30_000,
   });
 
+  const milesColumnInverted = isMilesColumnInverted(Number(milesPractical || 0), Number(milesShortest || 0));
+  const directionPairFlag =
+    laneMileageQuery.data?.fill_confidence === "reverse" ||
+    laneMileageQuery.data?.match === "From the reverse lane";
+
   const milesLookupNote = !originPlace.city || !destPlace.city
     ? ""
     : !originPlace.state || !destPlace.state
@@ -636,7 +645,15 @@ export function BookLoadModalV4({
             : "History";
       form.setValue("mileage_source", source, { shouldDirty: true });
     }
-  }, [form, laneMileageQuery.data]);
+    const laneKey = lane.matched_lane_id ?? `${originPlace.city}|${originPlace.state}|${destPlace.city}|${destPlace.state}`;
+    const practical = Number(lane.practical_miles ?? 0);
+    const shortest = Number(lane.short_miles ?? 0);
+    const columnInverted = isMilesColumnInverted(practical, shortest);
+    const directionPairFlag = lane.fill_confidence === "reverse" || lane.match === "From the reverse lane";
+    if ((columnInverted || directionPairFlag) && milesInvertAckedLaneRef.current !== laneKey) {
+      setShowMilesInvertAck(true);
+    }
+  }, [destPlace.city, destPlace.state, form, laneMileageQuery.data, originPlace.city, originPlace.state]);
 
   // GO-21/GO-23 A2 (real fix — BookLoadCustomerSection.tsx is an orphan, never rendered by the
   // live Book Load flow; this inline picker is the one CC-2 verified live). Identical
@@ -1970,6 +1987,8 @@ export function BookLoadModalV4({
                   }
                   shortestRequired={Boolean(assignedPrimaryDriverId)}
                   practicalRequired
+                  milesColumnInverted={milesColumnInverted}
+                  directionPairFlag={directionPairFlag}
                   onPracticalChange={(n) => {
                     milesOperatorTouched.current = true;
                     form.setValue("mileage_source", "Operator entered", { shouldDirty: true });
@@ -2188,6 +2207,18 @@ export function BookLoadModalV4({
       open={showDiscardConfirm}
       onCancel={() => setShowDiscardConfirm(false)}
       onDiscard={finalizeBookLoadClose}
+    />
+    <MilesInvertAckDialog
+      open={showMilesInvertAck}
+      columnInverted={milesColumnInverted}
+      directionPairFlag={directionPairFlag}
+      onAcknowledge={() => {
+        const lane = laneMileageQuery.data;
+        milesInvertAckedLaneRef.current =
+          lane?.matched_lane_id ??
+          `${originPlace.city}|${originPlace.state}|${destPlace.city}|${destPlace.state}`;
+        setShowMilesInvertAck(false);
+      }}
     />
     </>,
     document.body
