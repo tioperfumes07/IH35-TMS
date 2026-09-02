@@ -3,7 +3,6 @@
   "debt": [
     "verify-dispute-queue-entitylink-reverse.mjs",
     "verify-faro-import-linkage.mjs",
-    "verify-owner-home-linkage.mjs",
     "verify-reference-dropdown-inline-create.mjs"
   ]
 }
