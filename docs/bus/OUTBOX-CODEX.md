@@ -1,5 +1,6 @@
 # ★ OUTBOX-CODEX · LIVE TOP · GO-20 · 2026-09-02
 
+CODEX | WORKING | B3-FUEL-DATEPICKER-SELFTEST-MUTATES-SOURCE | root=selftest wrote/restored CreateFuelTransactionModal and spawned itself | fix=errors(planted) in-memory + throwing run boundary | proof=target normal+selftest PASS; mutation ratchet 611→609 | PR=pending | GO
 CODEX | WORKING | B3-FLEET-OOS-SELFTEST-MUTATES-SOURCE | root=selftest wrote/restored FleetTablePage and spawned itself to detect failure | fix=assertSource(planted) in-memory + throwing fail path | proof=target normal+selftest PASS; mutation ratchet 613→611 | PR=pending | GO
 CODEX | WORKING | B3-DRIVER-CATALOG-SEARCH-SELFTEST-MUTATES-SOURCE | root=selftest wrote/restored DriverCatalogListPage to remove suppressToolbarSearch | fix=check(source) in-memory | proof=target normal+selftest PASS; mutation ratchet 615→613 | PR=pending | GO
 CODEX | WORKING | B3-ASSIGNMENT-HISTORY-DRIVER-PICKER-SELFTEST-MUTATES-SOURCE | root=selftest wrote/restored AssignmentHistoryPage to plant allowCreate=false | fix=check(source) in-memory | proof=target normal+selftest PASS; mutation ratchet 617→615 | PR=pending | GO

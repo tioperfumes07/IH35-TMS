@@ -3,7 +3,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE = path.join(ROOT, "apps/frontend/src/pages/fuel/components/CreateFuelTransactionModal.tsx");
 function errors(source) {
@@ -14,22 +13,23 @@ function errors(source) {
   if (!/transaction_at: transactionDate/.test(source)) result.push("canonical transaction_at payload lost selected date");
   return result;
 }
-function run() {
-  const found = errors(fs.readFileSync(FILE, "utf8"));
-  if (found.length) { console.error("verify-fuel-create-datepicker-label-wrapper FAIL:"); found.forEach((e) => console.error(" -", e)); process.exit(1); }
+function run(source = fs.readFileSync(FILE, "utf8")) {
+  const found = errors(source);
+  if (found.length) throw new Error(`verify-fuel-create-datepicker-label-wrapper FAIL:\n${found.map((e) => ` - ${e}`).join("\n")}`);
   console.log("verify-fuel-create-datepicker-label-wrapper OK — purchase DatePicker is outside labels, associated, and reaches payload");
 }
 function selftest() {
   const original = fs.readFileSync(FILE, "utf8");
-  try {
-    const planted = original.replace('<div className="block font-semibold text-gray-700">\n          <label htmlFor="fuel-purchase-date">Purchase date *</label>', '<label className="block font-semibold text-gray-700">\n          Purchase date *').replace('          </div>\n\n        <div className="grid gap-3 md:grid-cols-2">', '          </label>\n\n        <div className="grid gap-3 md:grid-cols-2">');
-    if (planted === original) throw new Error("could not plant wrapper defect");
-    fs.writeFileSync(FILE, planted);
-    const red = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], { cwd: ROOT, encoding: "utf8" });
-    if (red.status === 0) throw new Error("planted wrapper did not redden guard");
-  } finally { fs.writeFileSync(FILE, original); }
+  const planted = original.replace('<div className="block font-semibold text-gray-700">\n          <label htmlFor="fuel-purchase-date">Purchase date *</label>', '<label className="block font-semibold text-gray-700">\n          Purchase date *').replace('          </div>\n\n        <div className="grid gap-3 md:grid-cols-2">', '          </label>\n\n        <div className="grid gap-3 md:grid-cols-2">');
+  if (planted === original) throw new Error("could not plant wrapper defect");
+  if (errors(planted).length === 0) throw new Error("planted wrapper did not redden guard");
   const orphaned = original.replace('id="fuel-purchase-date" className=', 'className=');
   if (errors(orphaned).length === 0) throw new Error("planted orphan association did not redden guard");
   console.log("verify-fuel-create-datepicker-label-wrapper --selftest PASS — wrapper and orphan defects reddened guard");
 }
-if (process.argv.includes("--selftest")) selftest(); else run();
+try {
+  if (process.argv.includes("--selftest")) selftest(); else run();
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+}
