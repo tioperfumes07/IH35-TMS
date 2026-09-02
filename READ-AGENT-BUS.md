@@ -1,7 +1,7 @@
 # IH35 Agent Bus — SINGLE CHANNEL
 
 **NOW:** `docs/bus/INBOX-<SEAT>.md` TOP + `docs/bus/NOW-ONE-SOURCE.md`  
-**Packets:** GO-18 Load Costs `docs/bus/PASTE-ALL-SEATS-GO-18-LOAD-COSTS-2026-09-01.md` · `docs/lockdown/GO-18-LOAD-COSTS-DESIGN.md` · `docs/lockdown/GO-12-CLEANUP-ADJUDICATION-AND-CPA-ANSWER-CONFLICTS.md`
+**Packet:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md` · `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/lockdown/GO-19-BUILD-QUEUE.txt` (serial queue)
 
 | File | Purpose |
 |------|---------|

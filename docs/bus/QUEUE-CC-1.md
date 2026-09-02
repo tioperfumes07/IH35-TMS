@@ -8,4 +8,4 @@ OPEN (serial):
 3. Slice **A** bank drift on variance_cents
 4. Slice **20** company settlement 5753 (after C)
 
-VOID: inventory.parts · maintenance.labor_rates table · POST Book Load · $7500
+VOID: inventory.parts · maintenance.labor_rates table · POST Book Load · **$7500** (LOCKED **$7000**)

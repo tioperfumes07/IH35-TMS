@@ -1,3 +1,5 @@
+# ARCHIVED — superseded by GO-20 · do not paste · canonical: docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md
+
 # PASTE ALL SEATS — GO-19 BUILD QUEUE · 2026-09-01 22:40 CT
 
 **SUPERSEDED AS BOOK-LOAD PROOF:** seats NEVER POST Book Load. Jorge owns first typed Load #. See `docs/bus/PASTE-ALL-SEATS-STOP-NO-SEAT-LOADS-2026-09-01.md`.

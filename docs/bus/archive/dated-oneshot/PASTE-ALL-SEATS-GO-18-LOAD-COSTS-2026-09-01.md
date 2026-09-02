@@ -1,3 +1,5 @@
+# ARCHIVED — superseded by GO-20 · do not paste · canonical: docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md
+
 # PASTE ALL SEATS — GO-18 LOAD COSTS · 2026-09-01 21:40 CT
 
 **Live:** API `healthz/shallow` **12bfbd6** (GO-16 miles + GO-17 Save proof). USMCA only. NO-SEAT prod money.

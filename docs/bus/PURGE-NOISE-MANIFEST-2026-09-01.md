@@ -5,6 +5,7 @@ Codex model: **moved, not deleted.** Repo files `git mv` to `docs/bus/archive/` 
 ## Repo
 - Fat OUTBOX-CC-2 / OUTBOX-CC-3 → `docs/bus/archive/OUTBOX-*-2026-09-01.md`
 - Dated PASTE / SEAT-ORDERS / PICK-10 / VOID-10 / GO-MECH / insurance oneshots → `docs/bus/archive/dated-oneshot/`
+- **2026-09-02:** GO-19/GO-18 bus pastes superseded by GO-20 → `docs/bus/archive/dated-oneshot/PASTE-ALL-SEATS-GO-{19,18}*.md` · canonical paste `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 - QUEUE-* kept at path with SUPERSEDED banner (orchestration law still names the path)
 - GO-12 packet added to `docs/lockdown/` (was Desktop-only; Cascade could not search it)
 

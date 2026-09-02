@@ -1,13 +1,13 @@
-# LEAD CENSUS — GO-20 · 2026-09-02
+# LEAD CENSUS — GO-20 · 2026-09-02 23:40 CT
 
-Cursor **SUPERVISE ONLY** · CC/Codex/Cascade/Devin build
+Owner: idle not allowed. Zero GO-20 ACK → **workers launched** (not ping-only).
 
-| Seat | NOW | Idle? |
-|------|-----|-------|
-| CC-1 | 17→C→A→20 | FORCE |
-| CC-2 | 18 N-of-10 · verify-live | FORCE |
-| CC-3 | 19→F/G screen→B predictive | FORCE |
-| Codex | D cargo · H late-arrival · CI drain | FORCE |
-| Cascade | unique FINDING · 12+13 HOLD | FORCE |
-| Devin-A | Book Load Cancel | FORCE |
-| Cursor | supervise only · bus addendum | active |
+| Seat | NOW | Worker |
+|------|-----|--------|
+| CC-1 | 17 capitalize $7000 | running |
+| CC-2 | 18 N-of-10 | running |
+| CC-3 | 19 parent 4200 | running |
+| Codex | D cargo uuid | running |
+| Cascade | PARALLEL-BOOKS stub | running |
+| Devin-A | Cancel-only + FINDING | running |
+| Cursor | coordinate | active |
