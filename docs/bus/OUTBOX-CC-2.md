@@ -167,3 +167,26 @@ dead-sentinel env, all 3 now PASS clean, confirming the count has already drifte
 when it was captured. Not fixing the policy file or either guard myself, per instruction.
 
 Nothing built, nothing rebuilt. Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 | ACK | NOW=#push-gate-fix push-gate SKIP-vs-FAIL fix · 2026-09-01T23:05Z
+
+Took the push-gate fix (explicitly offered: "add the two crashing scripts to `dbGated` **or**
+treat sentinel as unset"). Chose the config-registration path — 2-line addition to
+`scripts/verify-meta.json`'s `db_gated_verify_scripts` array, alphabetically placed, matching the
+existing 28-entry pattern. No new CI-equivalent entry needed; `"database"` already maps to
+`ci / build-typecheck` and every `dbGated` script shares it.
+
+**Live-verified, not assumed:** imported `classify` from `verify-static.mjs` directly and ran it
+against both guards — both now return `SKIP-capability`/`database` (was `FAIL-test` with the
+uncaught `ECONNREFUSED` crash from the corroboration row above). `node scripts/verify-static.mjs
+--selftest` — 10/10 PASS, unchanged.
+
+**Flagging, not fixing:** `verify-push-gate-classification.mjs` (a separate guard reading the same
+JSON, already tracked elsewhere on this board) crashes with `spawnSync git ENOBUFS` on its own
+`git ls-files` call — confirmed pre-existing and unrelated, fails before reaching any content this
+touches. Out of scope for this fix.
+
+Did not re-audit the full VERIFY-STATIC-37 list — only the 2 corroborated guards were authorized.
+Escrow $500.01 untouched, still verify-only per standing instruction. Idle, watching INBOX TOP.
