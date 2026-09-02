@@ -6,15 +6,15 @@ type Props = {
   onAcknowledge: () => void;
   /** Column inversion: short > practical on the same lane direction. */
   columnInverted: boolean;
-  /** Reverse-lane fill or direction-pair quality flag from catalog lookup. */
-  directionPairFlag: boolean;
+  /** Reverse-lane short miles differ by >100mi (MILES-INVERT-01 catalog trigger). */
+  reverseLaneShortDiff: boolean;
 };
 
 /**
  * MILES-INVERT-01 — OK-only acknowledgment. Operator must press OK; no Esc, backdrop, or X dismiss.
  * Owner UX locked 2026-09-02 · Jorge.
  */
-export function MilesInvertAckDialog({ open, onAcknowledge, columnInverted, directionPairFlag }: Props) {
+export function MilesInvertAckDialog({ open, onAcknowledge, columnInverted, reverseLaneShortDiff }: Props) {
   const okRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -62,10 +62,10 @@ export function MilesInvertAckDialog({ open, onAcknowledge, columnInverted, dire
               them before you book. CC-1 is remediating the catalog so short means shortest route again.
             </p>
           ) : null}
-          {directionPairFlag ? (
+          {reverseLaneShortDiff ? (
             <p>
-              Miles came from the reverse direction on this road. Opposite lanes should have essentially the same loaded
-              miles — check practical miles match what you expect.
+              Short miles on this lane and the reverse direction differ by more than 100 miles. Opposite lanes should
+              have essentially the same loaded short miles — verify short miles before you book.
             </p>
           ) : null}
           <p className="font-medium text-slate-800">

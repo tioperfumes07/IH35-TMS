@@ -17,8 +17,8 @@ type Props = {
   practicalRequired?: boolean;
   /** MILES-INVERT-01 — inline flag when catalog short > practical. */
   milesColumnInverted?: boolean;
-  /** Reverse-lane fill or direction-pair quality hint from catalog lookup. */
-  directionPairFlag?: boolean;
+  /** Reverse-lane short miles differ by >100mi (catalog trigger). */
+  reverseLaneShortDiff?: boolean;
 };
 
 function numFromInput(raw: string): number {
@@ -68,7 +68,7 @@ export function MilesStrip({
   shortestRequired = false,
   practicalRequired = false,
   milesColumnInverted = false,
-  directionPairFlag = false,
+  reverseLaneShortDiff = false,
 }: Props) {
   // fillConfidence drives chrome; provenance is the operator sentence.
   const cell = "flex flex-1 flex-col items-center justify-center border-r border-slate-200 px-2 py-2 text-center last:border-r-0";
@@ -151,16 +151,16 @@ export function MilesStrip({
         Customer pays the typed rate. Practical miles compute revenue per mile. Short miles pay the driver. Empty miles
         are deadhead company cost.
       </p>
-      {milesColumnInverted || directionPairFlag ? (
+      {milesColumnInverted || reverseLaneShortDiff ? (
         <p
           className="border-t border-slate-400 bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-900"
           data-testid="book-load-miles-invert-flag"
         >
-          {milesColumnInverted && directionPairFlag
-            ? "Short miles exceed practical miles and this fill used the reverse lane — verify all three fields before you book."
+          {milesColumnInverted && reverseLaneShortDiff
+            ? "Short miles exceed practical miles and the reverse lane's short miles differ by more than 100 — verify all three fields before you book."
             : milesColumnInverted
               ? "Short miles exceed practical miles on this lane — verify short miles before you book."
-              : "Miles filled from the reverse lane — verify practical miles match the opposite direction."}
+              : "Reverse-lane short miles differ by more than 100 on this road — verify short miles before you book."}
         </p>
       ) : null}
       {provenance ? (

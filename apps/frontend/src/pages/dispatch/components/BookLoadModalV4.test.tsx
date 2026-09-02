@@ -72,6 +72,8 @@ vi.mock("../../../api/dispatch", async (importOriginal) => {
       provenance: "New lane. Enter the miles.",
       matched_lane_id: null,
       source: null,
+      short_miles_untrustworthy: false,
+      short_miles_untrustworthy_reason: null,
     }),
   };
 });
@@ -190,6 +192,8 @@ describe("BookLoadModalV4", () => {
       provenance: "12 runs on this lane. Miles filled from history.",
       matched_lane_id: "lane-laredo-denton",
       source: "history",
+      short_miles_untrustworthy: false,
+      short_miles_untrustworthy_reason: null,
     });
 
     render(
@@ -245,6 +249,8 @@ describe("BookLoadModalV4", () => {
       provenance: "8 runs on this lane. Miles filled from history.",
       matched_lane_id: "lane-indy-laredo",
       source: "history",
+      short_miles_untrustworthy: true,
+      short_miles_untrustworthy_reason: "short_exceeds_practical",
     });
 
     render(
@@ -275,6 +281,51 @@ describe("BookLoadModalV4", () => {
     await waitFor(() => {
       expect(screen.queryByTestId("miles-invert-ack-dialog")).toBeNull();
       expect(screen.getByTestId("book-load-miles-invert-flag")).toBeTruthy();
+    });
+  });
+
+  it("shows OK-only popup when reverse-lane short differs by more than 100mi", async () => {
+    const user = userEvent.setup();
+    vi.mocked(getLaneMileage).mockResolvedValue({
+      practical_miles: 456.7,
+      short_miles: 620.0,
+      empty_miles: 0,
+      runs: 12,
+      short_runs: 12,
+      practical_spread: 4.5,
+      confidence: "High",
+      autofill_allowed: true,
+      fills: true,
+      fill_confidence: "reverse",
+      match: "From the reverse lane",
+      provenance: "From the reverse lane, 12 prior runs.",
+      matched_lane_id: "lane-reverse-flagged",
+      source: "history",
+      short_miles_untrustworthy: true,
+      short_miles_untrustworthy_reason: "reverse_lane_short_differs_over_100mi",
+    });
+
+    render(
+      wrap(
+        <ToastProvider>
+          <BookLoadModalV4
+            open
+            operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
+            onClose={vi.fn()}
+            onCreated={vi.fn()}
+          />
+        </ToastProvider>
+      )
+    );
+
+    const pickupCity = document.querySelector<HTMLInputElement>('input[name="stops.0.city"]');
+    const deliveryCity = document.querySelector<HTMLInputElement>('input[name="stops.1.city"]');
+    await user.type(pickupCity!, "Laredo TX");
+    await user.type(deliveryCity!, "Denton TX");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("miles-invert-ack-dialog")).toBeTruthy();
+      expect(screen.getByText(/differ by more than 100 miles/i)).toBeTruthy();
     });
   });
 

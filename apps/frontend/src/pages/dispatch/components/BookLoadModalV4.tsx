@@ -46,7 +46,7 @@ import type { LiveReservation } from "./book-load-v4/LiveLoadIdBar";
 import { LiveLoadIdBar } from "./book-load-v4/LiveLoadIdBar";
 import { MilesStrip } from "./book-load-v4/MilesStrip";
 import { MilesInvertAckDialog } from "./book-load-v4/MilesInvertAckDialog";
-import { isMilesColumnInverted } from "./book-load-v4/miles-invert";
+import { milesUntrustworthyFlags } from "./book-load-v4/miles-invert";
 import { LoadSaveProofPanel } from "./book-load-v4/LoadSaveProofPanel";
 import type { LoadSaveProof } from "./book-load-v4/load-save-proof-types";
 import { OcrDropZone } from "./book-load-v4/OcrDropZone";
@@ -600,10 +600,14 @@ export function BookLoadModalV4({
     staleTime: 30_000,
   });
 
-  const milesColumnInverted = isMilesColumnInverted(Number(milesPractical || 0), Number(milesShortest || 0));
-  const directionPairFlag =
-    laneMileageQuery.data?.fill_confidence === "reverse" ||
-    laneMileageQuery.data?.match === "From the reverse lane";
+  const milesUntrustworthy = milesUntrustworthyFlags({
+    practical: Number(milesPractical || 0),
+    shortest: Number(milesShortest || 0),
+    shortMilesUntrustworthy: laneMileageQuery.data?.short_miles_untrustworthy,
+    shortMilesUntrustworthyReason: laneMileageQuery.data?.short_miles_untrustworthy_reason,
+  });
+  const milesColumnInverted = milesUntrustworthy.columnInverted;
+  const reverseLaneShortDiff = milesUntrustworthy.reverseLaneShortDiff;
 
   const milesLookupNote = !originPlace.city || !destPlace.city
     ? ""
@@ -648,9 +652,13 @@ export function BookLoadModalV4({
     const laneKey = lane.matched_lane_id ?? `${originPlace.city}|${originPlace.state}|${destPlace.city}|${destPlace.state}`;
     const practical = Number(lane.practical_miles ?? 0);
     const shortest = Number(lane.short_miles ?? 0);
-    const columnInverted = isMilesColumnInverted(practical, shortest);
-    const directionPairFlag = lane.fill_confidence === "reverse" || lane.match === "From the reverse lane";
-    if ((columnInverted || directionPairFlag) && milesInvertAckedLaneRef.current !== laneKey) {
+    const untrustworthy = milesUntrustworthyFlags({
+      practical,
+      shortest,
+      shortMilesUntrustworthy: lane.short_miles_untrustworthy,
+      shortMilesUntrustworthyReason: lane.short_miles_untrustworthy_reason,
+    });
+    if (untrustworthy.any && milesInvertAckedLaneRef.current !== laneKey) {
       setShowMilesInvertAck(true);
     }
   }, [destPlace.city, destPlace.state, form, laneMileageQuery.data, originPlace.city, originPlace.state]);
@@ -1988,7 +1996,7 @@ export function BookLoadModalV4({
                   shortestRequired={Boolean(assignedPrimaryDriverId)}
                   practicalRequired
                   milesColumnInverted={milesColumnInverted}
-                  directionPairFlag={directionPairFlag}
+                  reverseLaneShortDiff={reverseLaneShortDiff}
                   onPracticalChange={(n) => {
                     milesOperatorTouched.current = true;
                     form.setValue("mileage_source", "Operator entered", { shouldDirty: true });
@@ -2211,7 +2219,7 @@ export function BookLoadModalV4({
     <MilesInvertAckDialog
       open={showMilesInvertAck}
       columnInverted={milesColumnInverted}
-      directionPairFlag={directionPairFlag}
+      reverseLaneShortDiff={reverseLaneShortDiff}
       onAcknowledge={() => {
         const lane = laneMileageQuery.data;
         milesInvertAckedLaneRef.current =

@@ -24,6 +24,8 @@ export type LaneMileageRow = {
   confidence: string;
   autofill_allowed: boolean;
   source: string;
+  short_miles_untrustworthy: boolean;
+  short_miles_untrustworthy_reason: string | null;
 };
 
 export type LaneMileageLookup = {
@@ -55,6 +57,9 @@ export type LaneMileageResult = {
   provenance: string;
   matched_lane_id: string | null;
   source: string | null;
+  /** MILES-INVERT-01 — catalog trust flag (short>practical and/or reverse short diff >100mi). */
+  short_miles_untrustworthy: boolean;
+  short_miles_untrustworthy_reason: string | null;
 };
 
 type Queryable = {
@@ -150,6 +155,8 @@ function toResult(row: LaneMileageRow | null, match: LaneMileageResult["match"])
       provenance: "New lane. Enter the miles.",
       matched_lane_id: null,
       source: null,
+      short_miles_untrustworthy: false,
+      short_miles_untrustworthy_reason: null,
     };
   }
   const practical = numOrNull(row.practical_miles);
@@ -171,13 +178,16 @@ function toResult(row: LaneMileageRow | null, match: LaneMileageResult["match"])
     provenance: provenanceFromRow(row, match, fillConfidence),
     matched_lane_id: row.id,
     source: row.source,
+    short_miles_untrustworthy: Boolean(row.short_miles_untrustworthy),
+    short_miles_untrustworthy_reason: row.short_miles_untrustworthy_reason ?? null,
   };
 }
 
 const SELECT_COLS = `
   id, origin_city, origin_state, origin_postal_code, dest_city, dest_state, dest_postal_code,
   practical_miles, short_miles, empty_miles, n_practical, n_short, practical_spread,
-  confidence, autofill_allowed, source
+  confidence, autofill_allowed, source,
+  short_miles_untrustworthy, short_miles_untrustworthy_reason
 `;
 
 export async function resolveLaneMileage(
