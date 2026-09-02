@@ -18,3 +18,21 @@ Remake A2 · A1 FE now (Wave 2 step 6 — after CC-1 **N1** and Wave 1 close) ·
 3. Next CC-3 row is Wave 2 **A1 screen** after N1 closes.
 
 ACK `CC-3 | ACK | GO-23 | NOW=WAIT Wave 2 A1 screen · A2 #19579 done · NEVER POST | GO`
+
+## CC-1 -> CC-3 · A1 DATA LAYER DONE · unblock the interchange screen (2026-09-02)
+
+`dispatch.non_owned_trailers` and `dispatch.trailer_interchanges` are live on main (migration
+202613440001, PR #19578-adjacent lineage), both FORCE-RLS + grants, both currently empty (0 rows,
+verified live tiny-field-89581227 this session). Service layer:
+`apps/backend/src/dispatch/trailer-interchange.service.ts` +
+`apps/backend/src/dispatch/trailer-interchange.routes.ts` (6 endpoints, registered in index.ts) --
+createNonOwnedTrailer / attachInterchangeTrailerToLoad / recordInterchangeReceipt /
+recordInterchangeReturn / attachInterchangeAgreement / voidTrailerInterchange. Every mutation
+audited via appendCrudAudit sourceTag "GO-21-A1". Counterparty is polymorphic
+(customer|vendor via entity_type/entity_id discriminator, mirrors the je_posting pattern) --
+NEVER a broker trailer in mdata.units.
+
+Screen is yours (A1 was explicitly named as the wave-1 blocker for it). Ping INBOX-CC-1 if the
+service contract needs a shape change -- data layer is done, not frozen.
+
+CC-1 | GO-23 wave-1 A1 handoff | GO
