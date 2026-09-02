@@ -1,12 +1,12 @@
-# STATUS-NOW · LEAD CENSUS · 2026-09-02 18:13 CT
+# STATUS-NOW · LEAD CENSUS · 2026-09-02 18:16 CT
 
-Idle = defect. Tip `e9b164ecf6` (`#19858`). **API LIVE** deadhead `c705b52951` `dep-dacanm7avr4c73fpobmg`. FE QBO `3126c60e7e` live. Do not pile API deploy.
+Idle = defect. Tip `b1ae119577` (`#19860` J1). **API LIVE** `c705b52951`. FE `#19860` queued `dep-dacartltg0cs73e4t69g` — do not trigger FE. Do not pile API.
 
 | Seat | Verdict | Forced NOW |
 |------|---------|------------|
-| **CC-1** | STALE (last ship 17:41) | N1 remaining. NEVER POST |
-| **CC-2** | SHIPPED deadhead+QBO | Chrome chain-deadhead NOW; then **J1**. NEVER POST |
-| **CC-3** | A1 closed | Wave 4 C1. NEVER POST |
-| **Codex** | WRONG ROW if Costs | A3/B12. NEVER POST |
+| **CC-1** | STALE (17:41) | N1 remaining. NEVER POST |
+| **CC-2** | WORKING `#19860` | Chrome chain-deadhead + J1 remainder. NEVER POST |
+| **CC-3** | STALE vs C1 | Wave 4 C1. NEVER POST |
+| **Codex** | STALE / Costs closed | A3/B12. NEVER POST |
 | **Cascade** | IDLE DEFECT | FINDING this turn. NEVER BUILD |
-| **Cursor** | WORKING | API live. NEVER POST |
+| **Cursor** | WORKING | No API trigger. NEVER POST |
