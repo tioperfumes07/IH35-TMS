@@ -6,6 +6,10 @@
 
 ## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY — JORGE LAW (2026-09-02)
 
+**Two meanings — do NOT confuse:**
+1. **Column inversion:** same lane Origin→Dest where `short_miles > practical_miles` (66% History). NOT wrong direction.
+2. **Direction pair:** Laredo→Chicago vs Chicago→Laredo should have essentially the same loaded miles. Wild divergence = catalog quality defect — show in finding; **you may compare pairs later**.
+
 **Exact law text (owner ruling — supersedes interim "pay practical+empty" advice):**
 
 ```
@@ -18,8 +22,8 @@ short_miles is untrustworthy on 66% of History lanes (often practical+deadhead a
 STOP auto-paying from catalog short until inverted shorts are corrected or replaced —
 but the definition of pay basis remains short miles, not practical+empty.
 Do NOT change product law to pay on practical. Fix the data so short means shortest route again.
-Remediation must restore short = shortest (PC*MILER, re-key, or quarantine inverted rows so operator types short) — Jorge picks. No mass-swap.
-Wizard must flag short>practical and require operator confirm/override typed short.
+Remediation must restore short = shortest (PC*MILER, re-key, or quarantine inverted rows) — Jorge picks. No mass-swap.
+Book Load wizard: still autofill practical/short/empty; flag inversion; OK-only popup (CC-2 owns chrome).
 ```
 
 **Root cause (settled — NOT a column swap):** Ingest `scripts/ops/seed-lane-mileage.mjs` maps CSV→column 1:1. Data arrived that way. Same column = **two meanings by row** — worse than a swap; no single transform fixes it.
@@ -37,7 +41,8 @@ Wizard must flag short>practical and require operator confirm/override typed sho
    - **(c)** Null/quarantine inverted shorts (short > practical; operator types short at book)
 3. Do **NOT** mass-swap (corrupts 1,095 OK lanes).
 4. **STOP** auto-fill pay from catalog short until data fixed.
-5. Wizard must show practical/short/empty, **flag when short > practical**, require operator confirm/override typed short.
+5. Book Load wizard UX (CC-2 owns): still autofill practical/short/empty; flag when short > practical; OK-only popup before continue.
+6. May compare direction pairs later for catalog quality findings.
 
 Gate 0 **unaffected** — purge, reseed 13557, drop B- proceed in parallel.
 

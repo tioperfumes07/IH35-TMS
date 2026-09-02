@@ -4,7 +4,11 @@
 
 **FAST-MERGE ON.** Never POST Book Load. You own the verified flag.
 
-## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY — JORGE LAW (2026-09-02)
+## ⚠ MILES-INVERT-01 — Book Load UX (LOCKED · CC-2 owns chrome)
+
+**Two meanings — do NOT confuse:**
+1. **Column inversion:** same lane where `short > practical` (66% History). NOT wrong direction.
+2. **Direction pair:** opposite lanes (A→B vs B→A) should have same loaded miles; wild divergence = catalog defect — flag in finding.
 
 **Driver pay = ALWAYS short miles. NEVER practical.** Do NOT verify "short includes empty" copy — it is wrong.
 
@@ -12,7 +16,13 @@ Indy→Laredo: practical 1319.7 + empty 207.6 = 1527.3 ≠ short 1478.1. **2,142
 
 **Owner law (LOCKED):** Customer RPM = rate/practical · Company CPM = cost/(practical+empty) · driver pay = short miles · overage = driver's problem.
 
-Chrome-prove 13508 (Gate 1.3): show practical/short/empty; **flag when short > practical**; require operator confirm/override typed short.
+**Book Load wizard UX — exact bullets (you own popup on `BookLoadModalV4`):**
+1. **Still autofill** all three fields: practical / short / empty.
+2. **Flag** inversion inline when `short > practical` (and pair mismatch if detected).
+3. **Popup** explains the issue; operator must press **OK** — cannot dismiss without OK (no outside click, no Esc, no X-only close).
+4. After **OK**, booking continues with those values — operator may still edit any field.
+
+Chrome-prove 13508 (Gate 1.3): show autofill + flag + popup flow on Indianapolis→Laredo.
 
 Canonical: `docs/bus/MILES-INVERT-01-STOP-BEFORE-PAY-2026-09-02.md`
 
