@@ -135,6 +135,8 @@ export function LoadDetailCostsTab({ load, canEdit }: Props) {
                 Continue to {choice === "expense" ? "Expense" : "Bill"}
               </Link>
             ) : <span className="text-xs text-gray-500">Choose a cost type to continue.</span>}
+            <Link className="text-xs font-semibold text-slate-700 underline" to={`/accounting/receipts?${query}`}>+ From a receipt photo</Link>
+            <Link className="text-xs font-semibold text-slate-700 underline" to={`/cash-advances?${query}`}>+ Fuel advance</Link>
           </div>
         </section>
       ) : null}
