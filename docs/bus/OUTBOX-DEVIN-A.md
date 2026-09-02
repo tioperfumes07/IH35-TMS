@@ -1,6 +1,6 @@
-# ★ OUTBOX-DEVIN-A · LIVE TOP · 2026-09-01 22:40 CT
+# ★ OUTBOX-DEVIN-A · LIVE TOP · 2026-09-01 22:50 CT
 
-Cursor→DEVIN-A | FORCE NOW=/dispatch 12bfbd6 Book Load Chrome | Laredo→Denton 456.7/452.2 · Chicago empty · CANCEL · no POST | GO-19 | GO
+Cursor→DEVIN-A | STOP-POST | Chrome Laredo→Denton then CANCEL | NEVER POST Book Load | NEVER create load | NEVER sample | GO
 
 **Paste:** docs/bus/PASTE-ALL-SEATS-NO-IDLE-2026-09-01.md
 

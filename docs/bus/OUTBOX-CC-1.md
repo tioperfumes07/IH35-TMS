@@ -1,6 +1,6 @@
-# ★ OUTBOX-CC-1 · LIVE TOP · 2026-09-01 22:40 CT
+# ★ OUTBOX-CC-1 · LIVE TOP · 2026-09-01 22:50 CT
 
-FORCE NOW | READ INBOX-CC-1 | GO-19 PASTE | NOW=ESCROW forensic then 02 is_sample_data then 03 drop B- then 05/06 bills · NO zero · NO invent GL | API=12bfbd6 | GO
+FORCE NOW | STOP-LOADS | READ INBOX-CC-1 | NOW=escrow no zero THEN GO-19-02 mark/hide existing 34 NEVER invent new rows | NEVER POST Book Load | GO
 
 Seat replies BELOW this line only (one-liners).
 

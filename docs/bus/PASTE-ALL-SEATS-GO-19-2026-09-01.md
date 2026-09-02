@@ -1,6 +1,8 @@
 # PASTE ALL SEATS — GO-19 BUILD QUEUE · 2026-09-01 22:40 CT
 
-**Live:** API `healthz/shallow` **12bfbd6**. **origin/main** at ingest: `8901af7`. USMCA only. NO-SEAT prod money. NEVER invent bank GL. NEVER zero escrow.
+**SUPERSEDED AS BOOK-LOAD PROOF:** seats NEVER POST Book Load. Jorge owns first typed Load #. See `docs/bus/PASTE-ALL-SEATS-STOP-NO-SEAT-LOADS-2026-09-01.md`.
+
+**Live:** API `healthz/shallow` **12bfbd6**. USMCA only. NO-SEAT prod money/loads. NEVER invent bank GL. NEVER zero escrow.
 
 **Download (in git):** `docs/lockdown/GO-19-BUILD-QUEUE.md` · `.html` · `.txt`  
 **Map already in git:** `docs/lockdown/IH35-SOFTWARE-MAP/` (#19446) — do not re-copy the zip.
@@ -106,7 +108,7 @@ CASCADE | ACK | NOW=unique FINDING only · CORRECT: slice 01 mint already digits
 ## PASTE → Devin-A
 
 ```
-DEVIN-A | ACK | NOW=/dispatch 12bfbd6 Book Load Chrome · Laredo TX → Denton TX Practical 456.7 / Short 452.2 · Chicago IL EMPTY · CANCEL · no POST · no seat money · first real book waits owner typed seed number after 01 leftover (GET digits) deploys · NEVER invent GL | GO
+DEVIN-A | ACK | STOP-POST | NOW=/dispatch Chrome Laredo TX → Denton TX 456.7/452.2 · Chicago IL EMPTY · CANCEL · NEVER POST Book Load · NEVER create load · NEVER sample · idle unique FINDING if browser dead | GO
 ```
 
 ---

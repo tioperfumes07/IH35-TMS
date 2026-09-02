@@ -1,13 +1,15 @@
-# NOW-ONE-SOURCE · 2026-09-01 22:40 CT
+# NOW-ONE-SOURCE · 2026-09-01 22:50 CT
 
-**GO-19** build queue in git (`docs/lockdown/GO-19-BUILD-QUEUE.md` + html/txt). Paste: `docs/bus/PASTE-ALL-SEATS-GO-19-2026-09-01.md`. Live **12bfbd6**. **Jorge does not answer Neon.** No seat fixtures. Never invent bank GL. Never zero escrow.
+**STOP:** Jorge creates loads and all real testing. Seats NEVER POST Book Load · NEVER sample · NEVER fixtures. Paste: `docs/bus/PASTE-ALL-SEATS-STOP-NO-SEAT-LOADS-2026-09-01.md`
+
+GO-19 queue still in git. Live **12bfbd6** until product deploy lands (`29072a4` load-ref). Do not book to prove it.
 
 | Seat | NOW |
 |------|-----|
-| CC-1 | Escrow forensic (no zero). Then GO-19-02 `is_sample_data` on bank txns. Then 03 drop `B-`. Then 05/06 bills driver/trailer + `bill_lines.load_required`. Then suggest-only categorize (owner decides). |
-| CC-2 | Verify-live escrow after CC-1. Grep #19428. Do not remint loads (already digits). |
-| CC-3 | Check ZIP Option 1 #19419. Then GO-19-09 expense class when money lane free. |
-| Codex | STOP `--watch`. GO-19-07 Costs FE after CC-1 05/06. |
-| Cascade | Unique FINDING. Slice 01 mint claim is STALE (GO-10 digits). |
-| Devin-A | Chrome `/dispatch` 12bfbd6 · Laredo→Denton · Chicago empty · Cancel. No POST. |
-| Cursor | GO-19 ingest. 01 leftover = load-ref digits + Rule 03 (this PR). |
+| CC-1 | Escrow forensic (no zero). GO-19-02 mark/hide **existing** 34 bank fixtures. Then 03/05/06 code. |
+| CC-2 | Verify-live escrow. Never book. |
+| CC-3 | ZIP Option 1. Never book. |
+| Codex | Costs FE after 05/06. Never book. |
+| Cascade | Unique FINDING. Never tell seats to book. |
+| Devin-A | Chrome miles then **CANCEL**. NEVER POST. |
+| Cursor | This STOP. No second book plan. |
