@@ -45,6 +45,11 @@ const registerQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
+  // GO-19-02 (docs/lockdown/GO-19-BUILD-QUEUE.md slice 02): owner-only reveal toggle for the 34
+  // already-voided USMCA GO-11 fixture rows. Default false so the register keeps showing the real
+  // population; explicitly asking for it (include_sample_data=true) reveals the quarantined rows —
+  // nothing is ever deleted, they just don't show unless asked.
+  include_sample_data: z.coerce.boolean().default(false),
 });
 
 const transactionIdParamsSchema = z.object({
@@ -455,11 +460,14 @@ export async function registerBankingRoutes(app: FastifyInstance) {
             FROM banking.bank_transactions bt
             WHERE bt.operating_company_id = $1::uuid
               AND bt.bank_account_id = $2
-              AND bt.voided_at IS NULL
+              -- GO-19-02: the 34 GO-11 fixture rows are voided AND is_sample_data=true — they stay
+              -- hidden under the normal voided_at filter unless include_sample_data explicitly asks
+              -- to reveal them. Every other voided (real) row stays excluded either way.
+              AND (bt.voided_at IS NULL OR (bt.is_sample_data = true AND $5::boolean))
             ORDER BY bt.transaction_date DESC, bt.created_at DESC
             LIMIT $3 OFFSET $4
           `,
-        [q.operating_company_id, params.data.id, q.limit, q.offset]
+        [q.operating_company_id, params.data.id, q.limit, q.offset, q.include_sample_data]
       );
       return res.rows;
     });
