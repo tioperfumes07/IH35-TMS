@@ -2,9 +2,9 @@
 
 **Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-FORCE NOW | READ INBOX-CASCADE | NOW=unique FINDING only · GO-21 is seat build not Cascade restamp · 12+13 HOLD · NEVER tell seats to POST Book Load | GO
+FORCE NOW | READ INBOX-CASCADE | NOW=**CLS-UNREFERENCED-LOCKED-SPECS** (≤5 autoload pointers, not a 246 review) · NEVER POST | GO
 
-Cursor→CASCADE | PING | 02:10 CT | GO-21 LEAD · FINDING only · NEVER POST | GO
+Cursor→CASCADE | PING | 02:55 CT | FINDING on main register · NEVER POST | GO
 
 Seat replies BELOW this line only (one-liners). Do not re-read archive.
 
