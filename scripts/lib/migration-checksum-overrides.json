@@ -364,5 +364,21 @@
     "reason": "SECURITY-AUDIT-FRESH-REPLAY-2026-09-01: the applied production-only GO-01 seed inserted 13 hardcoded driver_schedule rows with a hardcoded policy UUID directly from VALUES. Production had the referenced CIMD-2026-0720 policy and all driver rows, so apply succeeded; a fresh replay has no production policy row and failed driver_schedule_policy_id_fkey. The corrected seed derives from the same immutable VALUES but inner-joins org.companies, insurance.policy (same tenant), and mdata.drivers (same operating company) before INSERT. This is state-identical on production (all 13 prerequisites exist, confirmed policy completeness_count=1) and honestly writes zero rows when production seed prerequisites are absent. No DDL or production data changes; override prevents db:migrate from rejecting the already-applied corrected file.",
     "added_at": "2026-09-01",
     "added_in_pr": "SECURITY-AUDIT-DRIVER-SCHEDULE-FK-REPLAY"
+  },
+  {
+    "filename": "202613420001_go20_slice_a_bank_reconciliation_drift_alerts.sql",
+    "ledger_checksum": "ca843ad4622582bdb8176ff237c3c8ca3e58ca0792c8ac378da46df8689b2282",
+    "disk_checksum": "51598dc23656a9e71a070441abbf86a83fe59e98243013a39f51fed486e59162",
+    "reason": "Comment-only CANONICAL-CHECK after #19811 baselined this table instead of answering the duplicate-ledger question. Names banking.reconciliation_matches and banking.reconciliation_sessions: a drift ALERT is a watch queue, not a reconciliation LEDGER. No DDL change. Never edit applied DDL again.",
+    "added_at": "2026-09-02",
+    "added_in_pr": "CONVERT-19811-CANONICAL-CHECK"
+  },
+  {
+    "filename": "202613450001_go22_presettlement_link_suggestions.sql",
+    "ledger_checksum": "edb14f26e25fef438c674ac50d499159d874e65942e442cb6b7b9b6e0106a0bd",
+    "disk_checksum": "ada00e7fa46181c86011daf049312838326c1cd0d40a29b9ac0f268d8ff8b3c5",
+    "reason": "Comment-only CANONICAL-CHECK after #19811 baselined this table instead of answering the duplicate-ledger question. Names driver_finance.trip_link_queue: load-to-settlement suggest/confirm is distinct from expense-to-load; driver_settlements remains the money document. No DDL change. Never edit applied DDL again.",
+    "added_at": "2026-09-02",
+    "added_in_pr": "CONVERT-19811-CANONICAL-CHECK"
   }
 ]

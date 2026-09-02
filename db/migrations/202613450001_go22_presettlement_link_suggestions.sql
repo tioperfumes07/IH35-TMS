@@ -16,6 +16,13 @@
 -- Additive only, idempotent. No money posting -- this table only records a recommendation and its
 -- resolution; the actual driver_settlements row / mdata.loads.presettlement_link_id write happens
 -- in the confirm step, in the application layer, only after a human confirms.
+--
+-- CANONICAL-CHECK: driver_finance.trip_link_queue is the canonical SUGGEST/CONFIRM queue for
+-- expense-to-load (which cost belongs on which load). driver_finance.presettlement_link_suggestions
+-- mirrors that shape for a distinct concept: load-to-settlement (which load belongs on which open
+-- pre-settlement / tour). Same UX pattern, opposite join direction. It is not a second settlement
+-- ledger — driver_finance.driver_settlements remains the money document; this table only stores a
+-- pending recommendation until a human confirms. Does not SUPERSEDE trip_link_queue.
 
 BEGIN;
 
