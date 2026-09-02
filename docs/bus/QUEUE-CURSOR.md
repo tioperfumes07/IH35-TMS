@@ -1,13 +1,17 @@
-<!-- SUPERSEDED 2026-09-01: do not pop this file. NOW = docs/bus/INBOX-<SEAT>.md TOP + NOW-ONE-SOURCE.md. Archive recovery only. -->
+# QUEUE — CURSOR · LEAD BUS (matches INBOX TOP)
 
-# QUEUE — CURSOR · LEAD×4
+**NOW = INBOX-CURSOR.md FORCE.**
 
 OPEN:
-1. Refill QUEUE-* if <3 OPEN
-2. FAST-MERGE
-3. Deploy cadence Rule 42 (live=8b5514b; tip may be ahead after this PR)
-4. Overflow: ACCT-F10158 Edit Load customer hydrate (this PR)
+1. Ship bus FORCE rewrite PR (this branch)
+2. LEAD-CENSUS + STATUS-NOW + OUTBOX one-liner
+3. Rewake idle seats (15m ping)
+
+OVERFLOW (only if all seats moving):
+- GO-19-04 proforma-at-pickup prep (non-money wiring read)
+- Honest Built / scoreboard mechanical rows
+
+VOID: Book Load · money math · trigger_deploy · babysit CI
 
 DONE:
-- [x] BUS-DIET #18791 · WAKE #18797 · orch GO
-- [x] Flag 57 future USMCA unflagged JEs → is_sample_data=true (Neon UPDATE reverse-not-delete). Proof: future_unflagged=0 / future_sample=62; AUG_REAL=236 UNCHANGED. 12:32–12:35 CT.
+- healthz 29072a4 confirmed live this shift
