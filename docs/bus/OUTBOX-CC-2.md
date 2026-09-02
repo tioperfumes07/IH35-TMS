@@ -513,3 +513,20 @@ gap.
 
 Never posted a Book Load. Never invented a scale — transcribed the locked doc. Next: wire the real
 C3 fields, then combobox convergence (K2/B9).
+
+---
+
+## ★ CC-2 | verify-live A2 · NOT FIXED · 2026-09-02T03:40Z
+
+`verify-live A2` per instruction. PR #19579's fix is code-correct but landed on
+`BookLoadCustomerSection.tsx`, which is a confirmed orphan (only referenced in its own test, zero
+live JSX usages anywhere in the repo). The real live customer picker is inline in
+`BookLoadModalV4.tsx` and still calls the old capped `listCustomers` — confirmed by source read
+and by opening the live Book Load modal in Chrome (old alphabetical dropdown, not the new ranked
+search). Filed on the board with the exact file/line for CC-3 to port the same fix into the real
+component. Never posted a load, never wrote data — Cancel/X only.
+
+Same failure class as this session's own C3 correction and the standing K2 combobox finding: fix
+lands on the wrong copy of a duplicated implementation. Worth a standing check for CC-3/Cursor
+going forward on any "fix the picker/field/panel" PR — confirm the touched file is actually
+mounted before calling it done.
