@@ -766,6 +766,120 @@ export function patchAssignTrailer(
   );
 }
 
+// GO-23 A1 — trailer interchange (non-owned trailer). Data + backend already live (migration
+// 202613440001, PR #19567): dispatch.non_owned_trailers + dispatch.trailer_interchanges. A load's
+// trailer is EITHER our own (assigned_trailer_unit_id → mdata.equipment) OR an interchange trailer
+// from this API — never both, and a non-owned trailer must never be written into mdata.units.
+export type NonOwnedTrailer = {
+  id: string;
+  trailer_number: string;
+  trailer_type: string | null;
+  plate_number: string | null;
+  plate_state: string | null;
+  vin: string | null;
+  counterparty_type: "customer" | "vendor";
+  counterparty_id: string;
+  counterparty_name: string | null;
+  notes: string | null;
+  is_active: boolean;
+};
+
+export function listNonOwnedTrailers(operatingCompanyId: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ rows: NonOwnedTrailer[] }>(`/api/v1/dispatch/non-owned-trailers?${q.toString()}`);
+}
+
+export function createNonOwnedTrailer(
+  operatingCompanyId: string,
+  body: {
+    trailer_number: string;
+    trailer_type?: string;
+    plate_number?: string;
+    plate_state?: string;
+    vin?: string;
+    counterparty_type: "customer" | "vendor";
+    counterparty_id: string;
+    notes?: string;
+  }
+) {
+  return apiRequest<{ id: string }>(`/api/v1/dispatch/non-owned-trailers`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, ...body },
+  });
+}
+
+export type TrailerInterchange = {
+  id: string;
+  load_id: string;
+  load_number: string | null;
+  non_owned_trailer_id: string;
+  trailer_number: string | null;
+  trailer_type: string | null;
+  counterparty_type: "customer" | "vendor" | null;
+  counterparty_id: string | null;
+  received_from: string | null;
+  received_at: string | null;
+  condition_in: string | null;
+  returned_at: string | null;
+  condition_out: string | null;
+  agreement_document_id: string | null;
+  status: "pending_receipt" | "active" | "returned" | "closed";
+};
+
+export function listTrailerInterchanges(
+  operatingCompanyId: string,
+  params: { load_id?: string; limit?: number; offset?: number } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.load_id) q.set("load_id", params.load_id);
+  if (params.limit != null) q.set("limit", String(params.limit));
+  if (params.offset != null) q.set("offset", String(params.offset));
+  return apiRequest<{ rows: TrailerInterchange[] }>(`/api/v1/dispatch/trailer-interchanges?${q.toString()}`);
+}
+
+export function createTrailerInterchange(operatingCompanyId: string, loadId: string, nonOwnedTrailerId: string) {
+  return apiRequest<{ id: string; status: "pending_receipt" }>(`/api/v1/dispatch/trailer-interchanges`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, load_id: loadId, non_owned_trailer_id: nonOwnedTrailerId },
+  });
+}
+
+export function receiveTrailerInterchange(
+  id: string,
+  operatingCompanyId: string,
+  body: { received_from: string; received_at?: string; condition_in?: string }
+) {
+  return apiRequest<{ id: string; status: "active" }>(`/api/v1/dispatch/trailer-interchanges/${encodeURIComponent(id)}/receive`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, ...body },
+  });
+}
+
+export function returnTrailerInterchange(
+  id: string,
+  operatingCompanyId: string,
+  body: { returned_at?: string; condition_out?: string }
+) {
+  return apiRequest<{ id: string; status: "returned" }>(`/api/v1/dispatch/trailer-interchanges/${encodeURIComponent(id)}/return`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, ...body },
+  });
+}
+
+export function setTrailerInterchangeAgreement(id: string, operatingCompanyId: string, agreementDocumentId: string) {
+  return apiRequest<{ id: string }>(`/api/v1/dispatch/trailer-interchanges/${encodeURIComponent(id)}/agreement`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, agreement_document_id: agreementDocumentId },
+  });
+}
+
+export function voidTrailerInterchange(id: string, operatingCompanyId: string, reason: string) {
+  return apiRequest<{ id: string; voided: true }>(`/api/v1/dispatch/trailer-interchanges/${encodeURIComponent(id)}/void`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, reason },
+  });
+}
+
 export function patchAssignDriver(
   loadId: string,
   body: { operating_company_id: string; driver_uuid: string }
