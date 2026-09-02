@@ -1,5 +1,7 @@
 # ★ OUTBOX-CODEX · LIVE TOP · GO-20 · 2026-09-02
 
+CODEX | WORKING | CI-BOOKLOAD-CUSTOMER-LABEL-GUARD-STILL-EXPECTED-LEGACY-SHAPE | root=guard required removed name/customer_code expression after typed display_name adoption | guard=normal+selftest PASS | PR=pending | GO
+
 **Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
 FORCE NOW | READ INBOX-CODEX | NOW=**A3/B12 LIVE wizard vs #19571** · owner is in Book Load · NEVER idle · NEVER POST | GO
