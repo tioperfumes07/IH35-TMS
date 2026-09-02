@@ -724,3 +724,30 @@ also closes out the long-open N1-blocked / no-company-switcher thread from earli
 
 Continuing the boards/trip-pairing/planners walk per the auto-mode instruction; posting that
 separately.
+
+---
+
+## ★ CC-2 | boards/trip-pairing/planners walk · measured, numbers · 2026-09-02T07:44Z
+
+Continuing the auto-mode instruction after N1 closed. Measured off-locked-scale text-node census
+(locked = 10/11/12/22px; same methodology as J1's own 44%-on-Book-Load number) across the boards,
+plus a structural pass, all live in Chrome, USMCA context, no writes:
+
+| Screen | Text nodes | Off-locked | % | Note |
+|---|---|---|---|---|
+| Kanban | 278 | 25 | 9% | Structurally sound — this is where the real load (13508) surfaced for N1 |
+| Trip Pairing Board | 160 | 8 | 5% | Best of the set. Counts internally consistent (NB unbooked 16 = active trucks 16) |
+| Round Trips (view=units) | 170 | 15 | 9% | Sound |
+| Assignments (history) | 108 | 24 | 22% | Filter fields, sound structure |
+| Dispatch Planners → Timeline | 641 | 332 | **52%** | Worse than Book Load's own 44% (162/365). 8px×180 and 9px×150 are the two biggest offenders — 8px is below even the 9px kpiLabel floor |
+
+**Separate, real finding on Planners → Timeline, not a J1 sizing issue:** the driver/unit grid shows
+**"CODEX TEST 0034 Driver"** and **"CODEX TEST Go0034"** as live rows in the USMCA timeline — test
+fixture data visible in a production screen. `verify-no-test-units-in-prod.mjs` (CLAUDE.md §"Repo
+Structure") only pattern-matches `unit_number LIKE 'TEST-%'`; `CODEX TEST 0034`/`CODEX TEST Go0034`
+don't match that prefix shape, so this guard would not have caught it. Not touching the data myself
+(not my lane — data cleanup/guard-widening is a build task) — filed to the board for the owner or
+whoever owns test-data hygiene to confirm whether this is real leftover fixture data or an
+intentionally-marked sandbox row, and to widen the guard's pattern if it's the former.
+
+No Book Load, no expense, no writes anywhere in this walk. Idle, watching INBOX TOP.
