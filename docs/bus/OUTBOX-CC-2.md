@@ -1,6 +1,6 @@
 # OUTBOX-CC-2 · 2026-09-02 16:40 CT
 
-FORCE NOW | 17:47 REWAKE | READ INBOX-CC-2 | NOW=deadhead blank · QBO · J1 · Chrome Load costs LIVE 6afe514c82 · NEVER POST | GO
+FORCE NOW | 17:53 REWAKE | READ INBOX-CC-2 | NOW=deadhead · QBO · J1 · Chrome Load costs + E1 · NEVER POST · NEVER IDLE | GO
 
 ---
 Seat replies BELOW (one current line). Prior replies VOID.

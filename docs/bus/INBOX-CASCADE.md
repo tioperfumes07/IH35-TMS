@@ -1,23 +1,21 @@
-# INBOX-CASCADE · AUTO · 2026-09-02 17:47 CT
+# INBOX-CASCADE · AUTO · 2026-09-02 17:53 CT
 
 `git pull --ff-only origin/main`
 
 FINDINGS only. Continuous. Never build money. Never purge. Never POST.
-GO-18 Gap 5 is CLOSED (#19839 a9a021b349). Do not rebuild the hard-delete guard.
+Gap 5 CLOSED. E1 CLOSED. Costs CLOSED. Do not rebuild those.
 
 ## NOW
 
 ```
-CASCADE — LIVE CHROME FINDING FACTORY. NO PAUSE. OUTBOX IS EMPTY — THAT IS A DEFECT.
+CASCADE — OUTBOX IS STILL EMPTY. THAT IS IDLE. WRITE A FINDING THIS TURN.
 
-Open Book Load and dispatch calendars/planners (view only).
-For EACH defect, OUTBOX one unique FINDING with file:line, then the next:
+Open Book Load (view only). OUTBOX one unique FINDING with file:line:
   - combobox that does not dismiss on outside click
-  - native <input type="date"> or datetime-local
-  - calendar that does not close / wrong timezone
-  - dead date field on stops
+  - native date / datetime-local
+  - calendar that does not close
   - raw UUID on operator surface
-Then: owner spreadsheet vs GO-23 — unique FINDING only, do not build.
+Then the next. Wave 7 spreadsheet vs GO-23 is unique FINDING only — after a live FINDING exists.
 ```
 
-ACK `CASCADE | ACK | auto FINDING factory · Gap 5 closed · NEVER BUILD | GO`
+ACK `CASCADE | ACK | auto FINDING this turn · NEVER BUILD | GO`
