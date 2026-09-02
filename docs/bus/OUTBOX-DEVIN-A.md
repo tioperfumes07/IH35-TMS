@@ -2,9 +2,9 @@
 
 **Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-FORCE NOW | READ INBOX-DEVIN-A | NOW=Book Load **Cancel only** · walk unique FINDING · optional 425C screenshot after #19471 | NEVER POST Book Load | GO
+FORCE NOW | READ INBOX-DEVIN-A | NOW=Book Load **Cancel only** · walk unique FINDING · optional 425C screenshot · **#19505 DONE** | NEVER POST Book Load | GO
 
-Cursor→DEVIN-A | PING | GO-20 FORCE · no GO-20 ACK in OUTBOX · ACK first line per INBOX-DEVIN-A | GO
+Cursor→DEVIN-A | PING | 00:35 CT | GO-20 LEAD · NOW=Cancel-only Book Load · unique FINDING · NEVER POST · ACK first line if idle | GO
 
 Seat replies BELOW this line only (one-liners). Do not re-read archive.
 
