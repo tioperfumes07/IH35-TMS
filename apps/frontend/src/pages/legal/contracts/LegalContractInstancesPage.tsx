@@ -264,14 +264,30 @@ export function LegalContractInstancesPage() {
               variant="secondary"
               disabled={selected.length === 0}
               onClick={async () => {
+                let downloaded = 0;
+                let failed = 0;
                 for (const row of selected) {
-                  const detail = await legalContractsApi.get(row.id, operatingCompanyId);
-                  // Signed instances open the executed PDF; unsigned drafts open the on-demand,
-                  // watermarked DRAFT PDF (the signed PDF does not exist until e-signing).
-                  const url = detail.signed_pdf_storage_url
-                    ? detail.signed_pdf_storage_url
-                    : legalContractsApi.draftPdfUrl(row.id, operatingCompanyId);
-                  window.open(url, "_blank", "noopener,noreferrer");
+                  try {
+                    const detail = await legalContractsApi.get(row.id, operatingCompanyId);
+                    // Signed instances open the executed PDF; unsigned drafts open the on-demand,
+                    // watermarked DRAFT PDF (the signed PDF does not exist until e-signing).
+                    const url = detail.signed_pdf_storage_url
+                      ? detail.signed_pdf_storage_url
+                      : legalContractsApi.draftPdfUrl(row.id, operatingCompanyId);
+                    window.open(url, "_blank", "noopener,noreferrer");
+                    downloaded += 1;
+                  } catch (error) {
+                    failed += 1;
+                    pushToast(
+                      userFacingApiError(error, `Failed to download contract ${row.template_code ?? row.id.slice(0, 8)}`),
+                      "error",
+                    );
+                  }
+                }
+                if (downloaded > 0 && failed === 0) {
+                  pushToast(`Downloaded ${downloaded} contract${downloaded === 1 ? "" : "s"}.`, "success");
+                } else if (downloaded > 0 && failed > 0) {
+                  pushToast(`Downloaded ${downloaded}; ${failed} failed.`, "info");
                 }
               }}
             >
