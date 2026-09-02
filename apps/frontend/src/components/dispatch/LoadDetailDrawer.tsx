@@ -518,7 +518,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                           <span className="inline-flex flex-wrap items-center gap-1.5">
                             {STATUS_LABEL[load.status]}
                             {autoStatusSwitchQuery.isError ? (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-700">
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700">
                                 Auto-status audit unavailable
                                 <button
                                   type="button"
@@ -579,7 +579,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                       { label: "Deadhead miles", value: load.miles_deadhead != null ? load.miles_deadhead.toLocaleString() : "—" },
                     ]}
                   />
-                  <p className="mt-1 text-[10px] text-gray-400">Single customer total. Linehaul / fuel / accessorial breakdown arrives with the charge line-items block.</p>
+                  <p className="mt-1 text-xs text-gray-400">Single customer total. Linehaul / fuel / accessorial breakdown arrives with the charge line-items block.</p>
                   <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600" data-testid="load-money-reverse-links">
                     <span>
                       Linked expenses:{" "}
@@ -647,7 +647,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                       { label: "Driver pay rate / mi", value: "—" },
                     ]}
                   />
-                  <p className="mt-1 text-[10px] text-gray-400">Trailer type/unit come from the latest persisted trailer assignment. Driver pay rate is the load-specific rate, not stored on the load yet.</p>
+                  <p className="mt-1 text-xs text-gray-400">Trailer type/unit come from the latest persisted trailer assignment. Driver pay rate is the load-specific rate, not stored on the load yet.</p>
                 </OverviewWizardSection>
 
                 <OverviewWizardSection title="Miles" canEdit={canEdit} onEdit={() => setEditWizardOpen(true)}>
@@ -679,7 +679,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                   <div className="space-y-2">
                     {(load.stops ?? []).map((stop) => (
                       <div key={stop.id} className="rounded-sm border border-gray-100 p-2">
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">{stop.stop_type}</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">{stop.stop_type}</div>
                         <FlatFieldGrid
                           columns={2}
                           fields={[

@@ -62,7 +62,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
           <div className="absolute right-0 top-8 z-30 w-64 bg-white border border-gray-200 rounded-lg shadow-xl p-4 space-y-4">
             {/* Columns show/hide */}
             <section>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Columns</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Columns</p>
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {columns.map((col) => (
                   <label key={col.id} className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
@@ -89,7 +89,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
 
             {/* Page size: exactly 50/75/100/200/300 */}
             <section>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Page Size</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Page Size</p>
               <div className="flex flex-wrap gap-1">
                 {PAGE_SIZE_OPTIONS.map((s) => (
                   <button
@@ -108,7 +108,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
 
             {/* Density: Cozy / Compact */}
             <section>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Density</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Density</p>
               <div className="flex rounded-sm overflow-hidden border border-gray-300 text-xs">
                 {DENSITY_OPTIONS.map(({ value, label }) => (
                   <button
@@ -127,7 +127,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
 
             {/* Other: Include inactive + All/Active/Inactive segment + Show badges */}
             <section>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Other</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Other</p>
               <label className="flex items-center gap-2 text-xs text-gray-700 mb-2 cursor-pointer">
                 <input
                   type="checkbox"

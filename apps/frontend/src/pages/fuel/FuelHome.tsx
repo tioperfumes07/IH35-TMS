@@ -37,7 +37,7 @@ export function FuelFraudAlertsKpiCard() {
       to="/fuel/fraud-alerts"
       className={`block rounded-sm border px-3 py-2 text-[11px] transition hover:shadow-xs ${tone}`}
     >
-      <div className="flex items-center gap-1.5 text-[10px] uppercase text-gray-500">
+      <div className="flex items-center gap-1.5 text-[11px] uppercase text-gray-500">
         Open Fraud Alerts
         <FuelFraudBadge hasOpenCritical={openCritical > 0} />
       </div>
@@ -46,7 +46,7 @@ export function FuelFraudAlertsKpiCard() {
             the sibling FuelCardOverageKpiCard's own isError ? "—" : value contract. */}
         {summaryQuery.isError ? "—" : summaryLoaded ? openCritical : "…"}
       </div>
-      <div className="text-[10px] text-gray-600">
+      <div className="text-xs text-gray-600">
         {summaryQuery.isError
           ? "Unable to load"
           : summaryLoaded
@@ -95,11 +95,11 @@ export function FuelCardOverageKpiCard() {
       className={`block rounded-sm border px-3 py-2 text-[11px] transition hover:shadow-xs ${tone}`}
       data-testid="fuel-card-overage-kpi"
     >
-      <div className="text-[10px] uppercase text-gray-500">Card overage queue</div>
+      <div className="text-[11px] uppercase text-gray-500">Card overage queue</div>
       <div className={`text-lg font-semibold ${pending > 0 ? "text-slate-800" : "text-gray-900"}`}>
         {pendingQuery.isError ? "—" : pendingLoaded ? pending : "…"}
       </div>
-      <div className="text-[10px] text-gray-600">
+      <div className="text-xs text-gray-600">
         {pendingQuery.isError ? "Unable to load" : pendingLoaded ? "Pending review" : "Loading…"} · BANK-F10 approve-then-recover
       </div>
     </Link>

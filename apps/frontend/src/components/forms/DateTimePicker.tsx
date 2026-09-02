@@ -306,7 +306,7 @@ export function DateTimePicker({
               ›
             </button>
           </div>
-          <div className="grid grid-cols-7 gap-0.5 text-center text-[10px] text-gray-400">
+          <div className="grid grid-cols-7 gap-0.5 text-center text-xs text-gray-400">
             {DOW.map((d, i) => (
               <div key={i}>{d}</div>
             ))}
@@ -345,7 +345,7 @@ export function DateTimePicker({
             )}
           </div>
           <div className="mt-2 flex items-center gap-2 border-t border-gray-200 pt-2">
-            <label className="text-[10px] font-semibold uppercase text-gray-500" htmlFor={id ? `${id}-time` : undefined}>
+            <label className="text-[11px] font-semibold uppercase text-gray-500" htmlFor={id ? `${id}-time` : undefined}>
               Time
             </label>
             <input
@@ -357,12 +357,12 @@ export function DateTimePicker({
             />
           </div>
           {value && isOutOfRange(value) ? (
-            <p className="mt-1 text-[10px] text-gray-500">Outside the allowed range.</p>
+            <p className="mt-1 text-xs text-gray-500">Outside the allowed range.</p>
           ) : null}
           {value ? (
             <button
               type="button"
-              className="mt-1 w-full rounded-sm py-1 text-[10px] text-gray-500 hover:bg-gray-100"
+              className="mt-1 w-full rounded-sm py-1 text-xs text-gray-500 hover:bg-gray-100"
               onClick={() => {
                 onChange("");
                 setDateDraft("");
