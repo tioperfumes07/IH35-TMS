@@ -1326,6 +1326,45 @@ export function listCustomers(params: CompanyScopedListParams = {}) {
   });
 }
 
+export type CustomerAutocompleteRow = {
+  id: string;
+  qbo_id: string;
+  display_name: string;
+  primary_email: string | null;
+  primary_phone: string | null;
+  mc_number: string | null;
+  active: boolean;
+};
+
+/**
+ * GO-21 A2 — the real fix for a type-ahead customer picker: hits the server's dedicated
+ * ?autocomplete=true mode (searchCustomersForAutocomplete, apps/backend/src/mdata/
+ * customer-autocomplete.shared.ts), which ranks exact match / prefix match / full-text relevance
+ * across the WHOLE company customer set (~2.7k rows in prod) — not a plain paginated list capped
+ * to a page-sized slice. This endpoint already existed and was already used by EntityPicker
+ * kind="customer" elsewhere; BookLoadCustomerSection was the one caller still on the old
+ * listCustomers(limit) shape, which is why a customer past the cap could go missing.
+ * `limit` is server-clamped to 100 regardless of what's requested — always request 100 so
+ * CappedListNotice's own shown>=limit heuristic can honestly report "showing the first 100" when
+ * a search is broad enough to still exceed that.
+ */
+export function searchCustomersAutocomplete(
+  operatingCompanyId: string,
+  term: string,
+  opts: { activeOnly?: boolean; limit?: number } = {}
+) {
+  const query = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    autocomplete: "true",
+    limit: String(opts.limit ?? 100),
+  });
+  if (term.trim()) query.set("search", term.trim());
+  if (opts.activeOnly === false) query.set("active_only", "false");
+  return apiRequest<{ results: CustomerAutocompleteRow[] }>(`/api/v1/mdata/customers?${query.toString()}`).then(
+    (payload) => payload.results ?? []
+  );
+}
+
 /**
  * Exhaust a stable, scoped customer population for surfaces that present a complete roster.
  * Search-as-you-type pickers should keep using listCustomers; complete lists and unsearched
