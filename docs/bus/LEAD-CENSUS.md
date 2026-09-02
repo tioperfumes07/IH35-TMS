@@ -12,7 +12,7 @@ Seats **never POST Book Load.** Owner books. USMCA loads = 1 cancelled (`L-20260
 | **CC-1** | **B5** pay-from-profile | B8 → GO-22 PS1–PS5 API → GO-20 A screen → **20** → F7334 |
 | **CC-2** | Claim ≡3 J1 ratchet **then** transcribe locked scale to **zero this week** | K2 one picker · Chrome Section D/boards/planners · **not** guard-green |
 | **Codex** | **B12** save-block | B6 rate-con |
-| **Cascade** | Unique FINDING only | — |
+| **Cascade** | **CLS-UNREFERENCED-LOCKED-SPECS** ≤5 autoload pointers | not a 246-doc review |
 | **Devin-A** | **RETIRED** | — |
 | **Cursor** | Lead · FAST-MERGE · deploy · **no product code** | — |
 
