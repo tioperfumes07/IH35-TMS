@@ -1,13 +1,16 @@
 ---
 name: ih35-tms-standards
-description: The durable operating standards for the IH35-TMS repository — permissions and merge gates, migration/schema invariants, per-change workflow, schema landmines, product and design locks, communication norms, the LINKAGE LAW + canonical wiring map (§10), the COMPLETE governing index of all 43 rule files (§11), and the 18-key money-PR git gate (§12). Load this at the start of ANY work in this repo. Version-controlled companion to the (git-excluded) root CLAUDE.md. When this skill and a handoff doc disagree, this skill wins; on any rule conflict the source .cursor/rule wins and the MORE PROTECTIVE reading wins.
+description: The durable operating standards for the IH35-TMS repository — permissions and merge gates, migration/schema invariants, per-change workflow, schema landmines, product and design locks, communication norms, the LINKAGE LAW + canonical wiring map (§10), the COMPLETE governing index of all 43 rule files (§11), and the 18-key money-PR git gate (§12). Load this at the start of ANY work in this repo. There is no root CLAUDE.md in this repo (it is gitignored and absent); AGENTS.md plus .cursor/rules/00-IH35-LAW.mdc carry the always-loaded law and this skill is their detailed companion. When this skill and a handoff doc disagree, this skill wins; on any rule conflict the source .cursor/rule wins and the MORE PROTECTIVE reading wins.
 ---
 **HONEST BUILT + LAUNCH (2026-08-14):** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — launch without Live Chrome = Fully-Wired 1–11 with leaf-specific Built only; seat lanes Cursor/CC-1/Codex; no `leafRe:.*` / `|.*` / word-blanket Built; no new scoreboard columns.
 
 
 # IH35-TMS — Operating Standards
 
-**★★ SESSION BOOT (every agent):** load `docs/specs/STANDING-SESSION-DIRECTIVE.md` (§0–§10 · §6 SEARCH BEFORE YOU ASK · §7 TEST WITH PLACEHOLDER NUMBERS · CREATE-TEST-THEN-VOID `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` · §10 FULLY WIRED · **URGENT 14 exclusive** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md` · **session announce** `docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md`),
+**★★ SESSION BOOT (every agent) — SUPERSEDED 2026-09-02.** Current law is `.cursor/rules/00-IH35-LAW.mdc` (Cursor), `AGENTS.md` (Codex/Devin), `.windsurf/rules/00-IH35-LAW.md` (Cascade) — one identical body — plus `claude/00-IH35-CURRENT-STATE-AND-LAW-READ-FIRST.md` for live state and traps, and the queue at `docs/bus/INBOX-<SEAT>.md` + GO-19/GO-20. The audit phase and the block-dispatch phase are OVER. Everything from the old boot line down to the end of this paragraph is HISTORY, kept per never-delete, and must not be loaded as a session queue:
+
+<!-- HISTORY -->
+load `docs/specs/STANDING-SESSION-DIRECTIVE.md` (§0–§10 · §6 SEARCH BEFORE YOU ASK · §7 TEST WITH PLACEHOLDER NUMBERS · CREATE-TEST-THEN-VOID `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` · §10 FULLY WIRED · **URGENT 14 exclusive** `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md` · **session announce** `docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md`),
 `docs/specs/OWNER-QUALITY-COMPACT.md` (ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED · Claude.docx permanized),
 `docs/specs/DELIVERY-METHOD-LOCKED.md`, and `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` before other work.
 Cursor = screens/janitor; Claude Coder = money/Neon;
@@ -190,7 +193,9 @@ never create/import/reclassify/merge/deactivate (Rule 19).**
 
 ---
 
-## §11. THE 43 `.cursor/rules` FILES — COMPLETE GOVERNING INDEX (all always-apply; source rule wins on conflict)
+## §11. THE 43 `.cursor/rules` FILES — HISTORICAL INDEX (NOT always-apply)
+
+**SUPERSEDED 2026-09-02 by PR #19524.** Only `.cursor/rules/00-IH35-LAW.mdc` and `.cursor/rules/03-display-ids.mdc` are always-apply. Every other file below is `alwaysApply: false` history — kept per never-delete, never a session queue. Where one of them contradicts `00-IH35-LAW.mdc`, the LAW file wins. The index is retained so a rule can still be found by name.
 - **00 always-read-first** · **01 spec-sources** (MASTER_BLUEPRINT_v3 + UNIFIED_ADDITIONS + ARCHITECTURAL_DESIGN) · **02 respond-before-code** (post spec-review acknowledgment BEFORE code) · **03 display-ids** (server-generated) · **04 locked-invariants** (RLS/security_invoker/lockstep/append-only-audit/void-not-delete/idempotent/WF-012·017·038·044·050·053·064/425C-exclusion/+Create) · **05 architectural-design-is-law** (tab count = design; `verify:arch-design`) · **06 quality-hardline** (trust>speed; false-empty) · **07 never-delete-only-add** (= §F.24) · **10 verification-and-neon-rls** (prod wins; lucia re-run; ledgered≠effective) · **11 multi-agent-orchestration** (planner→builder→independent code-review→financial-agent VETO→GUARD; builder never self-reviews) · **12 model-tiering** (highest model for money/schema/RLS/migration/review; escalate when in doubt) · **13 financial-and-accounting-law** (financial cluster = merge on green, no owner gate — OWNER LAW 2026-08-03; reuse poster; parallel books; QBO never written; flags OFF until owner chat-decision to flip) · **14 linkage-law-enforcement** (§10) · **15 research-mandate** (cite the standard) · **16 fix-not-patch-evidence-law** (ROOT CAUSE/FIX/GUARD/LIVE PROOF/REMAINING) · **17 no-guard-hotfile-thrash** (verify-steps only) · **18 pipeline-truth-and-throughput** (fail-closed runner; single-domain PRs; law = governance-only PR) · **19 owner-manual-reserve-accounts** · **21 full-system-no-partial-amnesia** (M grows; wave-slice ≠ module) · **22 session-boot-announce** (`NEW SESSION · rules autoloaded · tiered model in force`) · **23 no-money-theater-prs** (18-key gate; CI 1430; every coder builds AND merges on green — OWNER LAW 2026-08-03) · **24 module-completion-n-of-m** (manifest N of M; CI 1431) · **25 one-push-money-fail-fast** (`money-pr-local-gate` first in pre-push; amend hole closed; CI 1702; no CI cancel thrash) · **29 cursor-claude-parity-ship** (expanded local gate: migration HH band + EVEN steps + no CLAIMED edit + EntityLink; never `--no-verify`; CI 1998) · **30 claude-green-evidence-format** (FINDING-first body/commit; `LIVE PROOF: … exit 0`; never stack/soft-reset; `cursor-pr-body-gate` before `gh pr create`; CI 2088) · **dual-lane-never-idle** (Lane A Lists/Safety/Drivers, Lane B Dispatch/Maintenance).
 · **26 serialize-scoreboard-hotfiles** (at most ONE ready PR may edit `docs/module-completion/*.json`, the ACCT surface matrix, or `CLAIMED-NUMBERS.json`; `gh pr list` BEFORE opening) · **27 one-open-pr-per-area** (ONE open PR per area — accounting/money, banking, settlements, dispatch, safety, lists, migrations; NEVER open the next same-area PR until the current is squash-merged and the branch deleted; cross-area parallel only when scopes are disjoint) · **28 audit-coverage-single-source** (`docs/audit/AUDIT-COVERAGE-LIVE.md` is THE source; build only Verdict=FAIL + Status=OPEN rows in your lane; column ownership — CASCADE owns Module/Layer/Entity/Verdict/Evidence and APPENDS rows, CODER owns Status + Block/PR only, GUARD owns VERIFIED/REOPENED; never delete a row, supersede instead; `git pull --ff-only` before editing).
 
@@ -226,8 +231,10 @@ Full text: `docs/specs/DEFINITION-OF-DONE.md` + `docs/specs/EVERY-PR-AUDIT-CHECK
 
 ## ★ PERMANENT LAW (owner-locked 2026-08-05, session-boot) — read at every session start
 
-1. **FINDINGS FLOW AGENT→BOARD→AGENT, NEVER THROUGH THE OWNER.** Find a defect in another lane → WRITE an
-   OPEN row into `docs/audit/GUARD-WORKORDERS.md` yourself + commit. Target coder pulls it next loop. Owner
+1. **FINDINGS FLOW AGENT→AGENT, NEVER THROUGH THE OWNER.** Find a defect in another lane → write it to
+   that seat's `docs/bus/INBOX-<SEAT>.md` yourself + commit. **CORRECTED 2026-09-02:**
+   `docs/audit/GUARD-WORKORDERS.md` is a retired sweep board — do not write to it and never dispatch
+   from it. Target coder pulls it next loop. Owner
    is NOT a message bus, ever, any session. Row shape: `| id | OWNER lane (CC-1 money/CC-3 mechanical) | fix
    + standard | live evidence | OPEN |`.
 2. **LAW = ENFORCED GUARD OR IT'S NOT LAW (phased).** Every NEW rule ships a guard registered in
