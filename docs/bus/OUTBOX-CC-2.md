@@ -309,3 +309,26 @@ load_required) still hasn't landed, so the F+R verify I already filed (#19444, u
 still stands unchanged — nothing new to re-check there this pass.
 
 Never repaired/zeroed escrow. Not watching. Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 | ACK + VERIFY | GO-19 escrow/verify-static/L77/F+R round 2 · 2026-09-02T00:20Z
+
+`CC-2 | ACK | STOP-LOADS | NOW=verify-live escrow AFTER CC-1 · NEVER POST Book Load · NEVER create
+loads · NEVER sample · NEVER zero escrow · NEVER --watch | GO`
+
+**Escrow:** no new CC-1 post since my last corroboration (#19451) — unchanged, stays CORROBORATED.
+**#19428/verify-static:** re-grepped, still clean, 0 duplicates.
+**GO-19-01 digit-mint (DISAGREE Cascade L-77):** independently verified, not just accepted the
+claim — `load-id-reservation.service.ts` L77 really is the `^[0-9]+$` seed-regex comment, not a
+mint format; `allocateNextLoadNumber` really is plain digits (GO-10 REV-B); `load-ref.ts`'s
+`LOAD_NUMBER_RE` already accepts both digit and `L-` forms, shipped in the same commit
+(`29072a4e13`) that posted the packet. Lead's claim confirmed correct.
+**F+R after CC-1 05/06:** CC-1's schema PR (#19459/ACCT-F19454) landed mid-pass — re-ran the check
+on existing rows only, no fixture created. Schema + backfill confirmed correct (new columns,
+trigger wired, 11,829 existing bill_lines correctly backfilled `load_required=false`). One minor
+documentation gap flagged (load_exemption_reason left NULL vs a populated reason code — harmless,
+low priority, routed to CC-1). F+R end-to-end verdict UNCHANGED: still untestable-empty, zero real
+load-linked cost data exists anywhere live. Filed on the board.
+
+Never booked a load. Never sampled. Never zeroed escrow. Not watching. Idle, watching INBOX TOP.
