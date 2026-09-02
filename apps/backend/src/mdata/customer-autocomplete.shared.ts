@@ -25,7 +25,14 @@ export async function searchCustomersForAutocomplete(
 ): Promise<CustomerAutocompleteRow[]> {
   const term = args.term.trim();
   const prefix = term.length > 0 ? `${term}%` : "%";
-  const limit = Math.max(1, Math.min(args.limit ?? 25, 100));
+  // GO-21/GO-23 A2 remainder: the picker itself surfaces truncation honestly (CappedListNotice),
+  // but a 100-row hard clamp against ~2,700 prod customers meant a broad or common search term
+  // (e.g. a common surname, or no term at all) could still legitimately exceed the cap with the
+  // wanted row past position 100 and no way to reach it short of narrowing the search text
+  // further. Raised to 300 -- rows are lightweight (id/name/email/phone/mc_number), a 300-row
+  // response is trivial payload, and 300 covers the practical worst case for a single ranked
+  // search term against this company's real customer volume.
+  const limit = Math.max(1, Math.min(args.limit ?? 25, 300));
   const activeOnly = args.active_only !== false;
 
   const res = await client.query<CustomerAutocompleteRow>(

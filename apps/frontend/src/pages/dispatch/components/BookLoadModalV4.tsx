@@ -625,8 +625,11 @@ export function BookLoadModalV4({
   // CLS-SILENT-CAP defect: was a plain paginated listCustomers(limit: 200/500) against ~2,700 prod
   // customers — a slice, not a search. Now hits the server's ranked ?autocomplete=true mode
   // (exact match, then prefix match, then full-text relevance, across the WHOLE company customer
-  // set), server-clamped to 100 rows per request regardless of what's asked.
-  const CUSTOMER_AUTOCOMPLETE_LIMIT = 100;
+  // set), server-clamped (customer-autocomplete.shared.ts) to 300 rows per request regardless of
+  // what's asked — raised from the original 100 (GO-21/GO-23 A2 remainder) so a broad/common
+  // search term or no term at all can't still put the wanted row past the cap with no way to
+  // reach it.
+  const CUSTOMER_AUTOCOMPLETE_LIMIT = 300;
   const customersQuery = useQuery({
     queryKey: ["book-load-v4-customers-autocomplete", operatingCompanyId, customerSearch],
     queryFn: () => searchCustomersAutocomplete(operatingCompanyId, customerSearch, { limit: CUSTOMER_AUTOCOMPLETE_LIMIT }),
