@@ -530,3 +530,23 @@ Same failure class as this session's own C3 correction and the standing K2 combo
 lands on the wrong copy of a duplicated implementation. Worth a standing check for CC-3/Cursor
 going forward on any "fix the picker/field/panel" PR — confirm the touched file is actually
 mounted before calling it done.
+
+---
+
+## ★ CC-2 | ACK | GO-23 wave 1 · row done · 2026-09-02T03:50Z
+
+`CC-2 | ACK | GO-23 | NOW=verify-live · J1 step #19577 already on main · Wave 4 after 1–3 |
+NEVER POST | GO`
+
+A2 (#19585) confirmed NOT FIXED, acknowledged — row closed. Not starting Wave 4 J1 migrate; not
+remaking #19577/verify-step 10230 (already on main, correctly).
+
+**B6 (#19588, rate-con upload → load link) needs a live check I can't run myself:** its own PR body
+says "Live=BLOCKED pending deploy and owner walkthrough" — the fix only manifests after a real load
+is actually booked (upload a rate-con, book, reload, confirm the doc link persisted). Per standing
+law, writing what's needed rather than booking it myself: **once deployed, upload a real rate
+confirmation on a genuine new load, book it, then reload the load detail and confirm the rate-con
+document is still linked** (that's the exact regression #19588 fixes — the link was silently
+dropped before). I'll verify-live from the resulting data once that's driven, not before.
+
+Idle, watching INBOX TOP.
