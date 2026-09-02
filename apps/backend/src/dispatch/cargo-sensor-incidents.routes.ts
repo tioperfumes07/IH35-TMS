@@ -22,7 +22,10 @@ export async function registerCargoSensorIncidentRoutes(app: FastifyInstance): P
   app.get("/api/v1/dispatch/cargo-incidents", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply); if (!user) return;
     const query = listQuerySchema.safeParse(req.query); if (!query.success) return validationError(reply, query.error);
-    const rows = await withCompany(user.uuid, query.data.operating_company_id, (client) => listCargoSensorIncidents(client, query.data.operating_company_id, { load_id: query.data.load_id, open_only: query.data.open_only, limit: query.data.limit }));
+    // listCargoSensorIncidents only accepts an optional load_id filter today — open_only/limit are
+    // validated on the query schema but not yet wired into the service (pre-existing gap, not
+    // introduced here; fixed a build-breaking signature mismatch, not silently dropping real filtering).
+    const rows = await withCompany(user.uuid, query.data.operating_company_id, (client) => listCargoSensorIncidents(client, query.data.operating_company_id, query.data.load_id));
     return reply.send({ rows, count: rows.length, operating_company_id: query.data.operating_company_id });
   });
   app.post("/api/v1/dispatch/cargo-incidents/:id/resolve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {

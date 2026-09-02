@@ -288,6 +288,8 @@ export async function closeSettledIncidents(client: DbClient, operatingCompanyId
 export async function processCargoSensorReadingForIncidents(client: DbClient, reading: CargoSensorReadingForIncidents): Promise<{ opened: number; extended: number }> {
   const thresholds = await resolveThresholdsForLoad(client, reading.operating_company_id, reading.load_uuid);
   if (classifyReadingBreaches(reading, thresholds).length === 0) return { opened: 0, extended: 0 };
-  await syncCargoSensorIncidentsForCompany(client, reading.operating_company_id, { sinceMinutes: 240 });
+  // syncCargoSensorIncidentsForCompany takes no time-window option today (pre-existing gap, not
+  // introduced here) — fixed a build-breaking extra-argument mismatch, no runtime behavior change.
+  await syncCargoSensorIncidentsForCompany(client, reading.operating_company_id);
   return { opened: 1, extended: 0 };
 }

@@ -1,10 +1,10 @@
 {
-  "healthzSha": "c13d0fc",
+  "healthzSha": "ca0325c",
   "generated_at": "2026-08-31T15:22:35.000Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "c13d0fc",
+    "deployedSha": "ca0325c",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 19396,
-      "title": "FINDING: GO-06-EMPTY-NO-BOX",
+      "number": 19529,
+      "title": "FINDING: GO-20-LEAD-CENSUS-PINGS",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 05:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19396",
-      "sha": "970c2fda37",
-      "committedAtIso": "2026-09-01T17:39:45-05:00"
+      "mergedAtCt": "09/02/2026, 12:39 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19529",
+      "sha": "f324f02cdb",
+      "committedAtIso": "2026-09-02T00:39:07-05:00"
     },
     {
-      "number": 19395,
-      "title": "FINDING: N/A -- B-2-VENDOR-PATCH-BIND + GUARD-F7316 SUPERSEDED, 2 stale duplicate rows corrected",
+      "number": 19528,
+      "title": "FINDING: SORT-03-FLEET-OOS-STRIP-PARITYTABLE-GUARD",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 05:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19395",
-      "sha": "e96f6dc18a",
-      "committedAtIso": "2026-09-01T17:39:06-05:00"
+      "mergedAtCt": "09/02/2026, 12:34 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19528",
+      "sha": "801b737428",
+      "committedAtIso": "2026-09-02T00:34:10-05:00"
     },
     {
-      "number": 19394,
-      "title": "FINDING: DEVIN-A-TYPE-LOAD-ACK — API ancestor of 218c9fb, browser unavailable",
+      "number": 19527,
+      "title": "FINDING: INBOX-CURSOR-STOP-SWEEP",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 05:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19394",
-      "sha": "8485dc5a3b",
-      "committedAtIso": "2026-09-01T17:35:03-05:00"
+      "mergedAtCt": "09/02/2026, 12:34 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19527",
+      "sha": "8de1e9aafb",
+      "committedAtIso": "2026-09-02T00:34:05-05:00"
     },
     {
-      "number": 19393,
-      "title": "FINDING: GO-16-REV-B-FE-TSC",
+      "number": 19526,
+      "title": "FINDING: GO-20-D-CI-RED — remove duplicate cargo route implementation",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 05:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19393",
-      "sha": "b53bfbf204",
-      "committedAtIso": "2026-09-01T17:33:40-05:00"
+      "mergedAtCt": "09/02/2026, 12:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19526",
+      "sha": "ca0325cc25",
+      "committedAtIso": "2026-09-02T00:27:52-05:00"
     },
     {
-      "number": 19388,
-      "title": "FINDING: CPA-1-2-4 file+line both sides, Conflict 3 CLOSED",
-      "state": "merged",
-      "mergedAtCt": "09/01/2026, 05:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19388",
-      "sha": "b06c237fb2",
-      "committedAtIso": "2026-09-01T17:31:06-05:00"
-    },
-    {
-      "number": 19389,
-      "title": "FINDING: GO-16-REV-B",
-      "state": "merged",
-      "mergedAtCt": "09/01/2026, 05:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19389",
-      "sha": "c13d0fc184",
-      "committedAtIso": "2026-09-01T17:14:12-05:00"
-    },
-    {
-      "number": 19386,
-      "title": "FINDING: BANK-CATEGORIZATION-DENSITY-RULE-GAP-RANKED -- 97.5% unmatched, ranked by volume",
-      "state": "merged",
-      "mergedAtCt": "09/01/2026, 05:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19386",
-      "sha": "f1762df1c2",
-      "committedAtIso": "2026-09-01T17:02:31-05:00"
-    },
-    {
-      "number": 19384,
+      "number": 19525,
       "title": "FINDING: N/A",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 04:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19384",
-      "sha": "5bf4e06f69",
-      "committedAtIso": "2026-09-01T16:59:28-05:00"
+      "mergedAtCt": "09/02/2026, 12:19 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19525",
+      "sha": "1d85eb4909",
+      "committedAtIso": "2026-09-02T00:19:52-05:00"
     },
     {
-      "number": 19383,
-      "title": "FINDING: N/A -- CC-1 ACK + status",
+      "number": 19524,
+      "title": "FINDING: CURSOR-ALWAYS-APPLY-DIET",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 04:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19383",
-      "sha": "29a3dd26ea",
-      "committedAtIso": "2026-09-01T16:59:14-05:00"
+      "mergedAtCt": "09/02/2026, 12:19 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19524",
+      "sha": "4d634a9f7a",
+      "committedAtIso": "2026-09-02T00:19:22-05:00"
     },
     {
-      "number": 19382,
-      "title": "docs(bus/audit): CC-3 GO-14 IDLE -- no unique 2026-09-01 leftover; corroborate VERIFY-STATIC-37-UNBASELINED",
+      "number": 19523,
+      "title": "FINDING: ACCT-F19470",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 04:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19382",
-      "sha": "54a0c7f9b1",
-      "committedAtIso": "2026-09-01T16:58:47-05:00"
+      "mergedAtCt": "09/02/2026, 12:19 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19523",
+      "sha": "3ada789b5b",
+      "committedAtIso": "2026-09-02T00:19:02-05:00"
+    },
+    {
+      "number": 19522,
+      "title": "FINDING: N/A -- CC-3 ACK: GO-20 slice B predictive alerts",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 12:16 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19522",
+      "sha": "eadacc76f6",
+      "committedAtIso": "2026-09-02T00:16:18-05:00"
+    },
+    {
+      "number": 19521,
+      "title": "FINDING: N/A -- CC-3 status log: GO-19-09 done (#19520)",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 12:15 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19521",
+      "sha": "851c3e4d38",
+      "committedAtIso": "2026-09-02T00:15:20-05:00"
+    },
+    {
+      "number": 19520,
+      "title": "FINDING: ACCT-F19500 -- GO-19-09 accounting.expenses had no class_id column, so an expense could never carry",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 12:14 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19520",
+      "sha": "94c8d3a9e5",
+      "committedAtIso": "2026-09-02T00:14:25-05:00"
     }
   ]
 }
