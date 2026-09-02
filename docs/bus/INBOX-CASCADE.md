@@ -1,12 +1,30 @@
-# INBOX-CASCADE · FINDINGS · OWNER 2026-09-02
+# INBOX-CASCADE · GO-26 VERIFY · OWNER UNLOCK 2026-09-02
 
 `git pull --ff-only origin/main`
 
 **FINDINGS only. Never build. Never POST Book Load.**
 
 ## NOW
-1. Re-derive **C1** live count (raw UUIDs on operator surfaces) for CC-3.
-2. Confirm on Neon (USMCA / lucia): load 13508 miles still NULL until GO-16 lands; settlements still 0; N1 bill/BP code paths exist on main (#19676) even if USMCA row counts are still 0.
-3. Specs-vs-live continues — one FINDING per mismatch.
 
-ACK `CASCADE | ACK | C1 recount for CC-3 · NEVER BUILD · NEVER POST | GO`
+```
+CASCADE — GO-26 VERIFY THE PURGE. LIVE QUERY ONLY.
+
+Jorge UNLOCKED full capacity. CC-1 purge is GO NOW.
+
+Reconciliation is CLOSED. Do not open a new register or re-derive counts.
+
+YOUR ONE JOB: after each CC-1 purge PR merges, run the GO-26 done-gate query
+against live production under SET LOCAL app.bypass_rls = 'lucia' and publish
+the delta. Which tables reached zero, which did not, what remains.
+
+Also verify after dispatch purge PR:
+  - lib.trace_counters: doc_type = 'LOAD' only (no 'LD'), last_trace_no = 13556
+  - Load 13508 still present
+  - banking.bank_transactions still 395
+
+LIVE QUERY ONLY. Migration grep is a hypothesis. The database is the finding.
+
+State the count you swept and the count that exists, every time.
+```
+
+ACK `CASCADE | ACK | GO-26 done-gate · seed 13557 verify · live query only · NEVER BUILD | GO`
