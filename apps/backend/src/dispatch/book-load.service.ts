@@ -431,13 +431,29 @@ async function collectAssignedDriverIdsForDrugGate(
 /** Set by resolveDriverBasePayCents so the created bill can label a §7 placeholder rate. */
 let lastResolvedRateWasTestData = false;
 
+/**
+ * MILES SPEC FOR DISPATCH, FINAL (owner direct instruction, 2026-09-02): "DRIVER PAY =
+ * (miles_shortest x rate_loaded) + (miles_deadhead x rate_empty). Two lines on the settlement,
+ * always." The breakdown a caller needs to write BOTH driver_bills' loaded_pay_cents/
+ * deadhead_pay_cents columns and, downstream, two separate settlement_lines rows.
+ */
+type DriverPayResolution = {
+  totalCents: number;
+  loadedCents: number;
+  deadheadCents: number;
+  /** The miles_deadhead actually paid on — null when deadhead pay is 0 (nothing to snapshot). */
+  milesDeadheadUsed: number | null;
+  /** The resolved empty-mile rate actually used — null when deadhead pay is 0. */
+  rateEmptyPerMileCentsUsed: number | null;
+};
+
 async function resolveDriverBasePayCents(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   operatingCompanyId: string,
   driverId: string | null | undefined,
   load: Record<string, unknown>,
   actorUserId?: string
-): Promise<number | null> {
+): Promise<DriverPayResolution | null> {
   if (!driverId) return null;
 
   const rateRes = await client.query<{
@@ -446,10 +462,11 @@ async function resolveDriverBasePayCents(
     flat_per_load_cents: string | null;
     miles_basis: string;
     is_test_data: boolean;
+    rate_empty_per_mile_cents: string | null;
   }>(
     `
       SELECT basis_type, rate_per_mile_cents::text, flat_per_load_cents::text, miles_basis,
-             is_test_data
+             is_test_data, rate_empty_per_mile_cents::text
         FROM driver_finance.driver_pay_rates
        WHERE operating_company_id = $1::uuid
          AND driver_id = $2::uuid
@@ -478,6 +495,28 @@ async function resolveDriverBasePayCents(
           : Number(load.miles_shortest ?? Number.NaN);
       const perMile = Number(rate.rate_per_mile_cents ?? 0);
       cardCents = Number.isFinite(miles) && miles > 0 && Number.isFinite(perMile) && perMile > 0 ? Math.round(perMile * miles) : null;
+    }
+  }
+
+  // MILES SPEC (owner 2026-09-02) — the empty-mile leg, computed once here regardless of which
+  // branch resolves the LOADED portion below. rate_empty_per_mile_cents is its OWN config value;
+  // when not yet set for this driver it falls back to the loaded rate_per_mile_cents LIVE (never a
+  // stored duplicate — "it equals rate_loaded today, do not hardcode the equality"). Deadhead pay
+  // needs a per-mile rate even when the driver's loaded basis is flat per_load_pay — deadhead is
+  // inherently mileage-based ("a property of where the truck was, not of the lane").
+  let deadheadCents = 0;
+  let milesDeadheadUsed: number | null = null;
+  let rateEmptyPerMileCentsUsed: number | null = null;
+  const milesDeadhead = Number(load.miles_deadhead ?? Number.NaN);
+  if (rate && Number.isFinite(milesDeadhead) && milesDeadhead > 0) {
+    const resolvedEmptyRate =
+      rate.rate_empty_per_mile_cents != null && Number(rate.rate_empty_per_mile_cents) > 0
+        ? Number(rate.rate_empty_per_mile_cents)
+        : Number(rate.rate_per_mile_cents ?? 0);
+    if (Number.isFinite(resolvedEmptyRate) && resolvedEmptyRate > 0) {
+      deadheadCents = Math.round(resolvedEmptyRate * milesDeadhead);
+      milesDeadheadUsed = milesDeadhead;
+      rateEmptyPerMileCentsUsed = resolvedEmptyRate;
     }
   }
 
@@ -514,12 +553,27 @@ async function resolveDriverBasePayCents(
       );
     }
     lastResolvedRateWasTestData = false;
-    return overrideCents;
+    return {
+      totalCents: overrideCents + deadheadCents,
+      loadedCents: overrideCents,
+      deadheadCents,
+      milesDeadheadUsed,
+      rateEmptyPerMileCentsUsed,
+    };
   }
 
-  if (!rate) return null;
+  // Unchanged from before this migration: no card, or a card with no resolvable loaded price
+  // (missing miles for a per-mile basis, etc.) refuses to mint rather than paying deadhead alone —
+  // a bill needs a valid loaded basis before deadhead is added on top of it.
+  if (!rate || cardCents === null) return null;
   lastResolvedRateWasTestData = cardIsTestData;
-  return cardCents;
+  return {
+    totalCents: cardCents + deadheadCents,
+    loadedCents: cardCents,
+    deadheadCents,
+    milesDeadheadUsed,
+    rateEmptyPerMileCentsUsed,
+  };
 }
 
 /**
@@ -659,7 +713,12 @@ export async function createDriverBillArtifacts(
       missing: missingPayInputs(load),
     };
   }
-  const totalBillCents = basePayCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
+  const totalBillCents = basePayCents.totalCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
+  // MILES SPEC — the loaded/deadhead breakdown driver_bills now snapshots, so it can render as two
+  // settlement lines. Stop bonuses/tarp/lumper stay folded into the loaded side (they are not a
+  // property of empty miles).
+  const loadedPayCentsForBill = basePayCents.loadedCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
+  const deadheadPayCentsForBill = basePayCents.deadheadCents;
 
   const resolvedLoadNumber = String(load.load_number ?? loadNumber);
   const billNumber = driverBillNumberFromLoadNumber(resolvedLoadNumber);
@@ -708,20 +767,26 @@ export async function createDriverBillArtifacts(
 
     const pcts = effectiveTeamPercentsFromRow(teamRow);
     const split = splitTotalCents(totalBillCents, pcts.primaryPct, pcts.secondaryPct);
+    // MILES SPEC — deadhead is proportioned the SAME way the total is (the split doesn't say which
+    // co-driver was at the wheel for the empty leg, so it follows the existing pay-split percentages
+    // rather than guessing). A $0.01 rounding gap against split.*Cents is possible and acceptable —
+    // gross_amount_cents (row.cents below) stays the authoritative total either way.
+    const deadheadSplit = splitTotalCents(deadheadPayCentsForBill, pcts.primaryPct, pcts.secondaryPct);
 
     const primaryDriverId = String(teamRow.primary_driver_id);
     const secondaryDriverId = String(teamRow.secondary_driver_id);
 
     let firstBillId: string | null = null;
 
-    const inserts: Array<{ driverId: string; partnerId: string; cents: number; suffix: string }> = [
-      { driverId: primaryDriverId, partnerId: secondaryDriverId, cents: split.primaryCents, suffix: "-P" },
-      { driverId: secondaryDriverId, partnerId: primaryDriverId, cents: split.secondaryCents, suffix: "-S" },
+    const inserts: Array<{ driverId: string; partnerId: string; cents: number; deadheadCents: number; suffix: string }> = [
+      { driverId: primaryDriverId, partnerId: secondaryDriverId, cents: split.primaryCents, deadheadCents: deadheadSplit.primaryCents, suffix: "-P" },
+      { driverId: secondaryDriverId, partnerId: primaryDriverId, cents: split.secondaryCents, deadheadCents: deadheadSplit.secondaryCents, suffix: "-S" },
     ];
 
     for (const row of inserts) {
       if (row.cents <= 0) continue;
       const ratePerMileCents = milesBasis && milesBasis > 0 ? Math.round(row.cents / milesBasis) : null;
+      const rowLoadedCents = row.cents - row.deadheadCents;
       const billRes = await client.query<{ id: string }>(
         `
           INSERT INTO driver_finance.driver_bills (
@@ -737,9 +802,13 @@ export async function createDriverBillArtifacts(
             rate_per_mile_cents,
             status,
             notes,
-            created_by_user_id
+            created_by_user_id,
+            miles_deadhead,
+            rate_empty_per_mile_cents,
+            loaded_pay_cents,
+            deadhead_pay_cents
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'open',$11,$12)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'open',$11,$12,$13,$14,$15,$16)
           RETURNING id
         `,
         [
@@ -755,6 +824,10 @@ export async function createDriverBillArtifacts(
           ratePerMileCents,
           `Auto-created from load ${resolvedLoadNumber} (team split ${row.suffix})`,
           input.requestingUserUuid,
+          row.deadheadCents > 0 ? basePayCents.milesDeadheadUsed : null,
+          row.deadheadCents > 0 ? basePayCents.rateEmptyPerMileCentsUsed : null,
+          rowLoadedCents,
+          row.deadheadCents,
         ]
       );
       const billId = billRes.rows[0]?.id ? String(billRes.rows[0].id) : "";
@@ -806,9 +879,13 @@ export async function createDriverBillArtifacts(
         rate_per_mile_cents,
         status,
         notes,
-        created_by_user_id
+        created_by_user_id,
+        miles_deadhead,
+        rate_empty_per_mile_cents,
+        loaded_pay_cents,
+        deadhead_pay_cents
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'open',$11,$12)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'open',$11,$12,$13,$14,$15,$16)
       RETURNING id
     `,
     [
@@ -824,6 +901,10 @@ export async function createDriverBillArtifacts(
       ratePerMileCents,
       `Auto-created from load ${resolvedLoadNumber}${lastResolvedRateWasTestData ? " — priced from a TEST pay rate (§7 placeholder), not an owner-entered rate" : ""}`,
       input.requestingUserUuid,
+      deadheadPayCentsForBill > 0 ? basePayCents.milesDeadheadUsed : null,
+      deadheadPayCentsForBill > 0 ? basePayCents.rateEmptyPerMileCentsUsed : null,
+      loadedPayCentsForBill,
+      deadheadPayCentsForBill,
     ]
   );
   const billId = billRes.rows[0]?.id;

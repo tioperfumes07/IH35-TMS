@@ -119,9 +119,15 @@ export async function appendSettlementLineFromDriverBillIfMissing(
   const settlement = settlementRes.rows[0];
   if (!settlement) return;
 
-  const billRes = await client.query<{ id: string; gross_amount_cents: number | string | null; load_number: string | null }>(
+  const billRes = await client.query<{
+    id: string;
+    gross_amount_cents: number | string | null;
+    load_number: string | null;
+    loaded_pay_cents: number | string | null;
+    deadhead_pay_cents: number | string | null;
+  }>(
     `
-      SELECT id, gross_amount_cents, load_number
+      SELECT id, gross_amount_cents, load_number, loaded_pay_cents, deadhead_pay_cents
       FROM driver_finance.driver_bills
       WHERE load_id = $1
         AND driver_id = $2
@@ -170,10 +176,38 @@ export async function appendSettlementLineFromDriverBillIfMissing(
     return;
   }
 
-  const cents = Math.round(Number(bill.gross_amount_cents ?? 0));
-  const dollars = cents / 100;
   const loadLabel = String(bill.load_number ?? input.loadId);
-  const description = `Load ${loadLabel}`;
+
+  // MILES SPEC (owner 2026-09-02) — "Two lines on the settlement, always": loaded miles and empty
+  // (deadhead) miles are never folded into one earnings number. loaded_pay_cents/deadhead_pay_cents
+  // are the breakdown driver_bills now snapshots at mint time (book-load.service.ts); a bill minted
+  // before this spec (or the fallback resolver path) leaves them NULL, in which case the loaded line
+  // carries the bill's whole gross_amount_cents and there is no deadhead line — same behavior as before.
+  const grossCents = Math.round(Number(bill.gross_amount_cents ?? 0));
+  const loadedCents =
+    bill.loaded_pay_cents !== null && bill.loaded_pay_cents !== undefined
+      ? Math.round(Number(bill.loaded_pay_cents))
+      : grossCents;
+  const deadheadCents =
+    bill.deadhead_pay_cents !== null && bill.deadhead_pay_cents !== undefined
+      ? Math.round(Number(bill.deadhead_pay_cents))
+      : 0;
+  const hasDeadheadLine = bill.loaded_pay_cents !== null && bill.loaded_pay_cents !== undefined;
+
+  const lineEntries: Array<{ lineType: string; description: string; dollars: number }> = [
+    {
+      lineType: input.lineType ?? "earnings",
+      description: hasDeadheadLine ? `Load ${loadLabel} — Loaded Miles` : `Load ${loadLabel}`,
+      dollars: loadedCents / 100,
+    },
+  ];
+  if (hasDeadheadLine) {
+    lineEntries.push({
+      lineType: "deadhead_pay",
+      description: `Load ${loadLabel} — Empty Miles`,
+      dollars: deadheadCents / 100,
+    });
+  }
 
   const hasSourceCol = await client.query<{ ok: boolean }>(
     `
@@ -213,13 +247,34 @@ export async function appendSettlementLineFromDriverBillIfMissing(
     `
   );
 
-  const lineType = input.lineType ?? "earnings";
   const loadCols = hasLoadCol.rows[0]?.ok ? [", load_id"] : [];
   const loadColPlaceholder = (n: number) => (hasLoadCol.rows[0]?.ok ? [`,$${n}::uuid`] : []);
   const loadParam = hasLoadCol.rows[0]?.ok ? [input.loadId] : [];
 
-  if (hasSourceCol.rows[0]?.ok) {
-    if (hasTeamCol.rows[0]?.ok) {
+  for (const entry of lineEntries) {
+    if (hasSourceCol.rows[0]?.ok) {
+      if (hasTeamCol.rows[0]?.ok) {
+        await client.query(
+          `
+            INSERT INTO driver_finance.settlement_lines (
+              settlement_id,
+              line_type,
+              description,
+              amount,
+              team_id,
+              source_driver_bill_id${loadCols.join("")}, is_sample_data
+            )
+            VALUES ($1,$2,$3,$4,$5::uuid,$6::uuid${loadColPlaceholder(7).join("")},$${hasLoadCol.rows[0]?.ok ? 8 : 7}::boolean)
+            -- MILES SPEC (202613510001) widened this to (source_driver_bill_id, line_type) so a bill
+            -- can carry BOTH an 'earnings'/team-split line and a 'deadhead_pay' line without the second
+            -- silently dropping.
+            ON CONFLICT (source_driver_bill_id, line_type) WHERE source_driver_bill_id IS NOT NULL DO NOTHING
+          `,
+          [input.settlementId, entry.lineType, entry.description, entry.dollars, input.teamId ?? null, bill.id, ...loadParam, settlement.is_sample_data]
+        );
+        continue;
+      }
+
       await client.query(
         `
           INSERT INTO driver_finance.settlement_lines (
@@ -227,39 +282,38 @@ export async function appendSettlementLineFromDriverBillIfMissing(
             line_type,
             description,
             amount,
-            team_id,
             source_driver_bill_id${loadCols.join("")}, is_sample_data
           )
-          VALUES ($1,$2,$3,$4,$5::uuid,$6::uuid${loadColPlaceholder(7).join("")},$${hasLoadCol.rows[0]?.ok ? 8 : 7}::boolean)
-          ON CONFLICT (source_driver_bill_id) WHERE source_driver_bill_id IS NOT NULL DO NOTHING
+          VALUES ($1,$2,$3,$4,$5::uuid${loadColPlaceholder(6).join("")},$${hasLoadCol.rows[0]?.ok ? 7 : 6}::boolean)
+          ON CONFLICT (source_driver_bill_id, line_type) WHERE source_driver_bill_id IS NOT NULL DO NOTHING
         `,
-        [input.settlementId, lineType, description, dollars, input.teamId ?? null, bill.id, ...loadParam, settlement.is_sample_data]
+        [input.settlementId, entry.lineType, entry.description, entry.dollars, bill.id, ...loadParam, settlement.is_sample_data]
       );
-      return;
+      continue;
+    }
+
+    if (hasTeamCol.rows[0]?.ok) {
+      await client.query(
+        `
+          INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, team_id${loadCols.join("")}, is_sample_data)
+          SELECT $1,$2,$3,$4,$5::uuid${loadColPlaceholder(6).join("")},$${hasLoadCol.rows[0]?.ok ? 7 : 6}::boolean
+          WHERE NOT EXISTS (
+            SELECT 1
+            FROM driver_finance.settlement_lines sl
+            WHERE sl.settlement_id = $1::uuid
+              AND sl.description = $3
+              AND sl.line_type = $2
+          )
+        `,
+        [input.settlementId, entry.lineType, entry.description, entry.dollars, input.teamId ?? null, ...loadParam, settlement.is_sample_data]
+      );
+      continue;
     }
 
     await client.query(
       `
-        INSERT INTO driver_finance.settlement_lines (
-          settlement_id,
-          line_type,
-          description,
-          amount,
-          source_driver_bill_id${loadCols.join("")}, is_sample_data
-        )
-        VALUES ($1,$2,$3,$4,$5::uuid${loadColPlaceholder(6).join("")},$${hasLoadCol.rows[0]?.ok ? 7 : 6}::boolean)
-        ON CONFLICT (source_driver_bill_id) WHERE source_driver_bill_id IS NOT NULL DO NOTHING
-      `,
-      [input.settlementId, lineType, description, dollars, bill.id, ...loadParam, settlement.is_sample_data]
-    );
-    return;
-  }
-
-  if (hasTeamCol.rows[0]?.ok) {
-    await client.query(
-      `
-        INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, team_id${loadCols.join("")}, is_sample_data)
-        SELECT $1,$2,$3,$4,$5::uuid${loadColPlaceholder(6).join("")},$${hasLoadCol.rows[0]?.ok ? 7 : 6}::boolean
+        INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount${loadCols.join("")}, is_sample_data)
+        SELECT $1,$2,$3,$4${loadColPlaceholder(5).join("")},$${hasLoadCol.rows[0]?.ok ? 6 : 5}::boolean
         WHERE NOT EXISTS (
           SELECT 1
           FROM driver_finance.settlement_lines sl
@@ -268,23 +322,7 @@ export async function appendSettlementLineFromDriverBillIfMissing(
             AND sl.line_type = $2
         )
       `,
-      [input.settlementId, lineType, description, dollars, input.teamId ?? null, ...loadParam, settlement.is_sample_data]
+      [input.settlementId, entry.lineType, entry.description, entry.dollars, ...loadParam, settlement.is_sample_data]
     );
-    return;
   }
-
-  await client.query(
-    `
-      INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount${loadCols.join("")}, is_sample_data)
-      SELECT $1,$2,$3,$4${loadColPlaceholder(5).join("")},$${hasLoadCol.rows[0]?.ok ? 6 : 5}::boolean
-      WHERE NOT EXISTS (
-        SELECT 1
-        FROM driver_finance.settlement_lines sl
-        WHERE sl.settlement_id = $1::uuid
-          AND sl.description = $3
-          AND sl.line_type = $2
-      )
-    `,
-    [input.settlementId, lineType, description, dollars, ...loadParam, settlement.is_sample_data]
-  );
 }
