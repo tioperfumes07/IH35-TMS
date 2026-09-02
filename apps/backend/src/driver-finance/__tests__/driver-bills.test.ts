@@ -99,13 +99,54 @@ describe("driver bills schema separation (P6-T11172)", () => {
     expect(statements.some((s) => s.includes("INSERT INTO accounting.bill_lines"))).toBe(false);
   });
 
-  it("uses the per-load driver_pay_rate_per_mile override when no driver-level rate card exists", async () => {
+  it("GO-21 B5: a typed per-load rate with NO override reason is never used — never a bare editable box that looks like data entry", async () => {
+    const statements: string[] = [];
+    const client = {
+      async query<T = Record<string, unknown>>(sql: string): Promise<{ rows: T[] }> {
+        statements.push(sql);
+        if (sql.includes("to_regclass")) return { rows: [{ exists: true }] as T[] };
+        // No driver_finance.driver_pay_rates row either — nothing to resolve pay from.
+        if (sql.includes("driver_finance.driver_pay_rates")) return { rows: [] as T[] };
+        return { rows: [] };
+      },
+    };
+
+    const outcome = await createDriverBillArtifacts(
+      client,
+      {
+        requestingUserUuid: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        requestingUserRole: "Owner",
+        operating_company_id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        customer_id: "dddddddd-dddd-dddd-dddd-dddddddddddd",
+        status: "dispatched",
+        charges: [{ code: "LH", amount_cents: 30000 }],
+        stops: [],
+        save_mode: "book_dispatch",
+        assigned_primary_driver_id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+      },
+      {
+        id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        load_number: "L-20260513-0997",
+        miles_shortest: 250,
+        miles_practical: null,
+        driver_pay_rate_per_mile: 1.0,
+        // deliberately no driver_pay_rate_override_reason
+      },
+      "L-20260513-0997",
+      []
+    );
+
+    expect(statements.some((s) => s.includes("INSERT INTO driver_finance.driver_bills"))).toBe(false);
+    expect(outcome.outcome).toBe("skipped_no_pay_rate");
+  });
+
+  it("GO-21 B5: a typed per-load rate WITH a real override reason is used, and the override is logged", async () => {
     const statements: string[] = [];
     const client = {
       async query<T = Record<string, unknown>>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> {
         statements.push(sql);
         if (sql.includes("to_regclass")) return { rows: [{ exists: true }] as T[] };
-        // No driver_finance.driver_pay_rates row, but the load carries an explicit per-load rate.
+        // No driver_finance.driver_pay_rates row — the override is the only source.
         if (sql.includes("driver_finance.driver_pay_rates")) return { rows: [] as T[] };
         if (sql.includes("INSERT INTO driver_finance.driver_bills")) {
           expect(values?.[6]).toBe(25000); // 1.00 $/mi * 100c * 250 short miles
@@ -130,16 +171,18 @@ describe("driver bills schema separation (P6-T11172)", () => {
       },
       {
         id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
-        load_number: "L-20260513-0997",
+        load_number: "L-20260513-0996",
         miles_shortest: 250,
         miles_practical: null,
         driver_pay_rate_per_mile: 1.0,
+        driver_pay_rate_override_reason: "Customer requested a dedicated rate for this expedited lane.",
       },
-      "L-20260513-0997",
+      "L-20260513-0996",
       []
     );
 
     expect(statements.some((s) => s.includes("INSERT INTO driver_finance.driver_bills"))).toBe(true);
+    expect(vi.mocked(appendCrudAudit).mock.calls.some((call) => call[2] === "driver_finance.driver_pay_rate.overridden")).toBe(true);
   });
 
   it("ACCT-F63: refuses to mint a driver bill when no pay rate resolves, and records the skip", async () => {

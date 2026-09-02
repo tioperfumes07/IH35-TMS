@@ -404,21 +404,22 @@ async function collectAssignedDriverIdsForDrugGate(
 }
 
 /**
- * WIRE-02 / ACCT-F63 — resolve the driver's base pay for a load.
+ * WIRE-02 / ACCT-F63, refined by GO-21 B5 (owner direct instruction 2026-09-02) — resolve the
+ * driver's base pay for a load.
  *
  * Returns cents when a driver pay rate is configured, or `null` when none exists.
  *
- * Today it always returns `null`, and that is the honest answer rather than a stub: verified on the
- * prod branch, the schema has NOWHERE to store a driver money rate. `mdata.drivers.pay_basis` is the
- * `miles_basis` enum (short_miles / practical_miles) — it says how to MEASURE miles, not what a mile
- * is worth — and `driver_finance.driver_pay_rates` / `driver_pay_basis` do not exist (to_regclass
- * NULL for both). The previous implementation filled that hole with the customer rate, which is the
- * defect this replaces.
- *
- * When the owner decides the pay structure (rate-per-mile and/or flat-per-load, per driver or per
- * contract), this is the single seam that resolves it — the callers, the extras, the team split and
- * the INSERTs all stay exactly as they are. Deliberately NOT given a default: a default here is an
- * invented wage.
+ * GO-21 B5: "It must resolve automatically from the driver profile. A hand-typed pay rate is how a
+ * settlement goes silently wrong: nothing downstream can tell a typo from an override. If an
+ * override is genuinely needed it is an explicit, logged, reason-carrying override — never a bare
+ * editable box that looks like data entry." The PRIOR version of this function read
+ * load.driver_pay_rate_per_mile FIRST, treating any typed number as automatic truth. That is
+ * exactly the defect: driver_finance.driver_pay_rates (the driver's real profile rate) is now
+ * checked FIRST and is authoritative. A typed per-load rate is used ONLY when
+ * load.driver_pay_rate_override_reason is a real, non-empty reason — and that use is logged via
+ * appendCrudAudit so it is traceable, never silent. A typed rate with NO reason is treated as if it
+ * were absent (never silently substituted, matching "never a bare editable box that looks like data
+ * entry") — it falls through to the driver-card rate, or to null if neither exists.
  */
 /** Set by resolveDriverBasePayCents so the created bill can label a §7 placeholder rate. */
 let lastResolvedRateWasTestData = false;
@@ -427,19 +428,10 @@ async function resolveDriverBasePayCents(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   operatingCompanyId: string,
   driverId: string | null | undefined,
-  load: Record<string, unknown>
+  load: Record<string, unknown>,
+  actorUserId?: string
 ): Promise<number | null> {
   if (!driverId) return null;
-
-  // MILES-ON-BOOK / WIRE-02 — a per-load rate entered in the Book Load wizard is an explicit operator
-  // agreement for THIS load. Use it when present so the preview the dispatcher saw becomes the bill.
-  // The driver-level rate card (below) remains the default for loads that do not carry an override.
-  const perLoadRateDollars = Number(load.driver_pay_rate_per_mile ?? Number.NaN);
-  const perLoadMiles = Number(load.miles_shortest ?? Number.NaN);
-  if (Number.isFinite(perLoadRateDollars) && perLoadRateDollars > 0 && Number.isFinite(perLoadMiles) && perLoadMiles > 0) {
-    lastResolvedRateWasTestData = false;
-    return Math.round(perLoadRateDollars * 100 * perLoadMiles);
-  }
 
   const rateRes = await client.query<{
     basis_type: string;
@@ -462,34 +454,65 @@ async function resolveDriverBasePayCents(
     [operatingCompanyId, driverId]
   );
   const rate = rateRes.rows[0];
-  if (!rate) return null;
-  if (rate.is_test_data) {
-    // §7 placeholder rates exist so the skeleton can be exercised before real per-driver rates are
-    // entered. Pricing from one is allowed, but it must never pass silently as operational truth —
-    // the bill says so in its own notes below.
-    lastResolvedRateWasTestData = true;
-  } else {
+
+  let cardCents: number | null = null;
+  let cardIsTestData = false;
+  if (rate) {
+    cardIsTestData = Boolean(rate.is_test_data);
+    if (rate.basis_type === "per_load_pay") {
+      const flat = Number(rate.flat_per_load_cents ?? 0);
+      cardCents = Number.isFinite(flat) && flat > 0 ? Math.round(flat) : null;
+    } else {
+      // per_mile_pay — SHORTEST miles by default, because the approved Load Wizard prototype states
+      // shortest miles are what a driver is paid on; practical miles drive fuel and ETA, not pay.
+      const miles =
+        rate.miles_basis === "practical_miles"
+          ? Number(load.miles_practical ?? Number.NaN)
+          : Number(load.miles_shortest ?? Number.NaN);
+      const perMile = Number(rate.rate_per_mile_cents ?? 0);
+      cardCents = Number.isFinite(miles) && miles > 0 && Number.isFinite(perMile) && perMile > 0 ? Math.round(perMile * miles) : null;
+    }
+  }
+
+  // GO-21 B5 — an explicit, reason-carrying override. A typed rate with no reason is never used
+  // (treated as absent, falling through to the card above) — this is the "never a bare editable box"
+  // rule enforced in code, not just in the wizard.
+  const overrideReason = typeof load.driver_pay_rate_override_reason === "string" ? load.driver_pay_rate_override_reason.trim() : "";
+  const perLoadRateDollars = Number(load.driver_pay_rate_per_mile ?? Number.NaN);
+  const perLoadMiles = Number(load.miles_shortest ?? Number.NaN);
+  if (
+    overrideReason.length >= 10 &&
+    Number.isFinite(perLoadRateDollars) &&
+    perLoadRateDollars > 0 &&
+    Number.isFinite(perLoadMiles) &&
+    perLoadMiles > 0
+  ) {
+    const overrideCents = Math.round(perLoadRateDollars * 100 * perLoadMiles);
+    if (actorUserId) {
+      await appendCrudAudit(
+        client as Parameters<typeof appendCrudAudit>[0],
+        actorUserId,
+        "driver_finance.driver_pay_rate.overridden",
+        {
+          load_id: load.id ?? null,
+          driver_id: driverId,
+          operating_company_id: operatingCompanyId,
+          driver_profile_rate_cents: cardCents,
+          override_rate_per_mile_dollars: perLoadRateDollars,
+          override_cents: overrideCents,
+          override_reason: overrideReason,
+        },
+        "warning",
+        "GO-21-B5"
+      );
+    }
     lastResolvedRateWasTestData = false;
+    return overrideCents;
   }
 
-  if (rate.basis_type === "per_load_pay") {
-    const flat = Number(rate.flat_per_load_cents ?? 0);
-    return Number.isFinite(flat) && flat > 0 ? Math.round(flat) : null;
-  }
-
-  // per_mile_pay — SHORTEST miles by default, because the approved Load Wizard prototype states
-  // shortest miles are what a driver is paid on; practical miles drive fuel and ETA, not pay.
-  const miles =
-    rate.miles_basis === "practical_miles"
-      ? Number(load.miles_practical ?? Number.NaN)
-      : Number(load.miles_shortest ?? Number.NaN);
-  // Fail closed rather than assume zero: a load whose mileage has not been captured yet cannot be
-  // priced, and a 0-mile bill would look like a settled $0 rather than an unpriced load.
-  if (!Number.isFinite(miles) || miles <= 0) return null;
-
-  const perMile = Number(rate.rate_per_mile_cents ?? 0);
-  if (!Number.isFinite(perMile) || perMile <= 0) return null;
-  return Math.round(perMile * miles);
+  if (!rate) return null;
+  lastResolvedRateWasTestData = cardIsTestData;
+  return cardCents;
 }
 
 /**
@@ -581,7 +604,8 @@ export async function createDriverBillArtifacts(
     client,
     input.operating_company_id,
     primaryDriverForPay,
-    load
+    load,
+    input.requestingUserUuid
   );
   if (basePayCents === null) {
     // Repeated delivery/status events may retry after an unpriced booking. Keep one durable skip
