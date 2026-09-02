@@ -1,0 +1,279 @@
+<title>Seven Decisions Closed</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+--ink:#17181a;--ink2:#42444a;--muted:#6e7178;--paper:#f0efe9;--card:#fdfdfb;--sunk:#f6f5f0;
+--rule:#dad8d0;--rule2:#e9e7e0;--accent:#24354d;--accent-soft:#e2e6ec;
+--ok:#1d6b4f;--ok-soft:#dfeee8;--amber:#8a6410;--amber-soft:#f4ecd8;--red:#99301d;--red-soft:#f6e2dd;
+--shadow:rgba(23,24,26,.07);
+--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+--body:"Figtree",-apple-system,"Segoe UI",sans-serif;
+--disp:"Fraunces",Georgia,serif;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--ink:#e9e7e1;--ink2:#b4b2ab;--muted:#87857e;--paper:#131416;--card:#1c1d20;--sunk:#17181b;
+--rule:#2b2d31;--rule2:#222427;--accent:#9db3cc;--accent-soft:#1a2029;
+--ok:#6cbb9d;--ok-soft:#132420;--amber:#d4b055;--amber-soft:#251f12;--red:#e08a76;--red-soft:#2a1a17;
+--shadow:rgba(0,0,0,.45);}}
+:root[data-theme="dark"]{
+--ink:#e9e7e1;--ink2:#b4b2ab;--muted:#87857e;--paper:#131416;--card:#1c1d20;--sunk:#17181b;
+--rule:#2b2d31;--rule2:#222427;--accent:#9db3cc;--accent-soft:#1a2029;
+--ok:#6cbb9d;--ok-soft:#132420;--amber:#d4b055;--amber-soft:#251f12;--red:#e08a76;--red-soft:#2a1a17;
+--shadow:rgba(0,0,0,.45);}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
+.wrap{max-width:1000px;margin:0 auto;padding:38px 20px 90px;display:flex;flex-direction:column;gap:46px}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(28px,4.4vw,45px);margin:0;line-height:1.06;letter-spacing:-.018em;text-wrap:balance}
+h2{font-family:var(--disp);font-weight:700;font-size:clamp(21px,2.7vw,29px);margin:0;letter-spacing:-.01em;text-wrap:balance}
+h3{font-family:var(--disp);font-weight:600;font-size:18.5px;margin:0;line-height:1.28;text-wrap:balance}
+p{margin:0}
+.m{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--accent);font-weight:500}
+header.top{border-bottom:3px solid var(--ink);padding-bottom:20px;display:flex;flex-direction:column;gap:12px}
+.lede{font-size:17.5px;color:var(--ink2);max-width:66ch}
+.built{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.sec{border-top:1px solid var(--rule);padding-top:16px;display:flex;flex-direction:column;gap:5px}
+section{display:flex;flex-direction:column;gap:18px}
+.lead{color:var(--ink2);max-width:76ch}
+.big{font-family:var(--disp);font-weight:700;font-size:clamp(19px,2.4vw,25px);line-height:1.28;letter-spacing:-.008em;max-width:40ch;text-wrap:balance}
+
+.ans{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.a{background:var(--card);padding:15px 17px;display:flex;flex-direction:column;gap:8px}
+.ahead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.tag{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;padding:3px 9px;white-space:nowrap;font-weight:500}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.tag.amber{background:var(--amber-soft);color:var(--amber)}
+.tag.red{background:var(--red-soft);color:var(--red)}
+.tag.plain{background:var(--sunk);color:var(--muted)}
+.said{font-size:16px;font-weight:600;color:var(--ink);max-width:74ch}
+.found,.act{font-size:14.8px;color:var(--ink2);max-width:80ch;padding-left:12px;border-left:2px solid var(--rule)}
+.act{border-left-color:var(--accent)}
+.flabel{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:2px}
+
+.tblwrap{overflow-x:auto;border:1px solid var(--rule);background:var(--card);box-shadow:0 1px 2px var(--shadow)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+thead th{background:var(--sunk);text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:500;padding:9px 12px;border-bottom:1px solid var(--rule);white-space:nowrap}
+tbody td{padding:9px 12px;border-bottom:1px solid var(--rule2);vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.k{font-weight:600;white-space:nowrap}
+tr.tot td{background:var(--ok-soft);font-weight:700;border-top:2px solid var(--ok)}
+tr.rev td{background:var(--sunk);font-weight:600}
+td.d{color:var(--ink2);font-size:13.6px}
+
+.feat{display:flex;flex-direction:column;gap:12px}
+.f{border:1px solid var(--rule);background:var(--card);box-shadow:0 1px 2px var(--shadow)}
+.fh{padding:12px 16px;border-bottom:1px solid var(--rule2);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.fh .tbl{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.fb{padding:13px 16px;display:grid;grid-template-columns:1fr;gap:11px}
+.fr{display:grid;grid-template-columns:132px 1fr;gap:12px;align-items:baseline}
+.fk{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--accent)}
+.fv{font-size:14.6px;color:var(--ink2);line-height:1.55}
+
+.callout{border:1px solid var(--rule);border-left:4px solid var(--amber);background:var(--card);padding:16px 18px;display:flex;flex-direction:column;gap:9px}
+.callout.red{border-left-color:var(--red)}
+.callout.ok{border-left-color:var(--ok)}
+ul.pl{margin:0;padding-left:19px;display:flex;flex-direction:column;gap:5px;font-size:15px;color:var(--ink2);max-width:80ch}
+ul.pl li::marker{color:var(--muted)}
+code{font-family:var(--mono);font-size:.87em;background:var(--rule2);padding:1px 5px}
+footer{border-top:1px solid var(--rule);padding-top:18px;font-size:13.6px;color:var(--muted);max-width:80ch;line-height:1.6}
+@media (max-width:620px){.fr{grid-template-columns:1fr;gap:2px}}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">IH35 &middot; owner decisions and the half-built features</div>
+  <h1>Seven Decisions Closed, And What The Thirteen Features Really Are</h1>
+  <p class="lede">All seven answers close cleanly. Capitalize locked at $7,000 — never $7,500. The thirteen half-built features turned out to have a single common cause that nobody had connected, and it sits on your own home page.</p>
+  <p class="built m">Checked September 2, 2026 against the live USMCA books, commit fcc5d40d6, and your Downloads folder</p>
+</header>
+
+<section>
+  <div class="sec"><div class="eyebrow">Your answers</div><h2>Recorded, with what I verified for each</h2></div>
+  <div class="ans"><div class="a">
+ <div class="ahead"><h3>Escrow</h3><span class="tag ok">Settled</span></div>
+ <p class="said">Everything is wiped. We begin from zero.</p>
+ <p class="found"><span class="flabel">What I found</span>Live now: driver_finance.escrow_ledger holds 3 rows for USMCA and escrow_balances holds 3. Wiping means zeroing them under the standing rule that nothing is ever permanently deleted — each row is voided with a reason and a date, and the void register keeps them. This unblocks the item that the September 1 register called the most serious thing on the list.</p>
+ <p class="act"><span class="flabel">What happens now</span>Becomes part of slice 02. CC-1 zeroes the escrow ledger and balances by void, not delete, and the register lists all six rows.</p>
+</div><div class="a">
+ <div class="ahead"><h3>Cutover date and opening entry</h3><span class="tag ok">Settled</span></div>
+ <p class="said">Already answered, and the repo agrees. Opening balances are zero.</p>
+ <p class="found"><span class="flabel">What I found</span>Your own answer file says it at cpa_answers line 245: “usmca go live — usmca should have all accounting functions and software functions live and working now. The balances are 0.” The locked decisions file section 8.5 says USMCA has no QuickBooks and is TMS-authoritative from day one, never part of the clone. The company-wide cutover of April 1, 2026 explicitly excludes USMCA. Your ruling of August 16 records that USMCA began operating August 7.</p>
+ <p class="act"><span class="flabel">What happens now</span>There is no opening entry to make. Zero opening balances plus categorizing the bank history from December 2025 forward means the books build themselves from the first real transaction. I am closing this decision as answered and will not raise it again.</p>
+</div><div class="a">
+ <div class="ahead"><h3>How far back you categorize</h3><span class="tag ok">Settled</span></div>
+ <p class="said">December 2025 through July 2026, by you.</p>
+ <p class="found"><span class="flabel">What I found</span>That covers the whole Plaid history: 381 real transactions running December 8, 2025 to September 1, 2026. Only 8 are categorized today. Your scope leaves August and September 2026 forward as live operating months rather than history.</p>
+ <p class="act"><span class="flabel">What happens now</span>The categorization queue gets a date filter defaulting to your range, groups by merchant so the same vendor is never asked twice, and records who decided and when on every row.</p>
+</div><div class="a">
+ <div class="ahead"><h3>Samples and demo data</h3><span class="tag ok">Settled</span></div>
+ <p class="said">All deleted. Insurance samples too.</p>
+ <p class="found"><span class="flabel">What I found</span>Live now: 34 fake bank rows still in the USMCA feed, and banking.bank_transactions has no is_sample_data column to even mark them. 8 insurance policies exist for USMCA and the sample ones are among them.</p>
+ <p class="act"><span class="flabel">What happens now</span>Slice 02 grows to cover insurance. Marked and quarantined rather than destroyed, because your standing rule is that nothing is ever permanently deleted and every removal keeps a register.</p>
+</div><div class="a">
+ <div class="ahead"><h3>Accessorial charges account</h3><span class="tag ok">Already built</span></div>
+ <p class="said">You asked me to check QuickBooks and McLeod and create the same account. It already exists and you already ratified it.</p>
+ <p class="found"><span class="flabel">What I found</span>USMCA account 4200 Accessorial / Detention Income is live, with 4210 Detention, 4220 Layover, 4230 Lumper and 4240 TONU beside it. The revenue map migration of November 10 records the accessorial mapping as RATIFIED by owner. There is one thing wrong with it, described below.</p>
+ <p class="act"><span class="flabel">What happens now</span>No new account. One fix: parent the four sub-accounts to 4200 so the profit and loss rolls up the way QuickBooks does.</p>
+</div><div class="a">
+ <div class="ahead"><h3>Company settlement design</h3><span class="tag ok">Found</span></div>
+ <p class="said">You were right. It exists, and it is your own document.</p>
+ <p class="found"><span class="flabel">What I found</span>Company_Settlement_5753.pdf and Company_Settlement_5787.pdf are both in your Downloads. I read 5753. It is the complete design, and it also settles the question the coders were stuck on. Detailed below.</p>
+ <p class="act"><span class="flabel">What happens now</span>The table can be designed from this without another decision from you.</p>
+</div><div class="a">
+ <div class="ahead"><h3>Capitalize threshold</h3><span class="tag ok">Settled</span></div>
+ <p class="said">Capitalize use the number that was already there. $7,000. Done — it was already right. Never $7,500.</p>
+ <p class="found"><span class="flabel">What I found</span>$7,000 in cpa_answers line 300, locked decisions, capitalize-threshold.ts (700_000), and verify-capitalize-threshold-7000.mjs. $7,500 appears nowhere.</p>
+ <p class="act"><span class="flabel">What happens now</span>CLOSED at $7,000. Real defect: wo-ap-posting.service.ts never calls capitalize-threshold.ts. CC-1 wires after accessorial parent_id.</p>
+</div></div>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">Capitalize</div><h2>Closed at seven thousand. Never seven thousand five hundred.</h2></div>
+  <div class="callout ok">
+   <p class="big">Owner closed at $7,000. Do not change to $7,500. Do not overwrite written record. Do not re-ask.</p>
+   <p class="lead">Six written sources agree: <code>cpa_answers.txt</code> line 300, locked decisions, <code>capitalize-threshold.ts</code> (<code>700_000</code>), and <code>verify-capitalize-threshold-7000.mjs</code>. $7,500 appears nowhere.</p>
+  </div>
+  <div class="callout red">
+   <p class="big">The $7,000 rule is never called today.</p>
+   <p class="lead">Work order bills resolve through generic category mapping in <code>wo-ap-posting.service.ts</code> and never reach <code>capitalize-threshold.ts</code>. CC-1 wires that after accessorial parent_id migration. One money PR at a time.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">Company settlement</div><h2>The design is your own document, and it answers the question the coders were stuck on</h2></div>
+  <p class="lead">The seats had a real problem: three documents in the repository described the company settlement at three different grains — per load, per settlement period, and per company — and nobody could design a table without knowing which. Settlement 5753 settles it. It covers <b>two loads, 13471 and 13480</b>, under one settlement number with a start and end date. The grain is the settlement period, containing many loads. It is the mirror of the driver settlement, not a per-load report.</p>
+  <div class="tblwrap"><table>
+   <thead><tr><th>Section</th><th>What it holds</th></tr></thead>
+   <tbody><tr><td class="k">Header</td><td class="d">Company Settlement No. 5753 · Start Date 2026-07-24 · End Date 2026-07-24 · IH35 Transportation, LLC</td></tr><tr><td class="k">Loads</td><td class="d">Every load in the period, each with its full stop chain. Load 13471: Empty Edison NJ, Pickup Camden NJ, Deliver Houston TX, Empty Laredo TX. Every stop line carries the date, the city, state and zip, and Truck / Trailer / Driver.</td></tr><tr><td class="k">Customer charges</td><td class="d">Per load, under the customer name. Columns: Item, Description, Miles, Rate, QP, Amount. Footed with Total Line Haul, total miles and the blended rate. On 5753: 3,571.4 miles, 2.268 blended, 8,100.00.</td></tr><tr><td class="k">Driver payment</td><td class="d">Per load, under the driver name. Loaded Miles at rate, Empty Miles at rate, Picks and Drops with their after-count. Footed with Totals. On 5753: 1,897.95.</td></tr><tr><td class="k">Fuel purchases</td><td class="d">Per fuel stop, grouped by load and driver. Columns: Date, Vendor, Location, Invoice, Gallons, CPG, Receipt, Fees, Disc., Disc.PG, Actual. Footed. On 5753: 645.337 gallons at 5.411, 3,491.92.</td></tr><tr><td class="k">Expenses</td><td class="d">Per line. Columns: Date, Vendor, Location, Invoice, Description, Reimb., Comp. Exp., Amount. The Comp. Exp. column carries Y when it is a company expense. On 5753: 121.52.</td></tr><tr><td class="k">Revenue</td><td class="d">Invoiced. One number. On 5753: 8,100.00.</td></tr><tr><td class="k">Profit and loss summary</td><td class="d">Every line carries three figures: percent of revenue, dollars per mile, and amount. Quick Pay, Driver Salary, Additional Driver Pay, Fuel, Company Expenses, then Net Revenue. Closed with Miles and M.P.G.</td></tr></tbody></table></div>
+  <p class="lead">And the profit and loss on 5753 ties out to the cent, which means this is a real closed document and not a draft:</p>
+  <div class="tblwrap"><table>
+   <thead><tr><th>Line</th><th class="n">Percent of revenue</th><th class="n">Per mile</th><th class="n">Amount</th></tr></thead>
+   <tbody><tr class="rev"><td class="k">Revenue — Invoiced</td><td class="n"></td><td class="n"></td><td class="n">8,100.00</td></tr><tr class=""><td class="k">Quick Pay</td><td class="n">0.91%</td><td class="n">0.019</td><td class="n">-73.50</td></tr><tr class=""><td class="k">Driver Salary</td><td class="n">23.43%</td><td class="n">0.484</td><td class="n">-1,897.95</td></tr><tr class=""><td class="k">Additional Driver Pay</td><td class="n">1.23%</td><td class="n">0.026</td><td class="n">-100.00</td></tr><tr class=""><td class="k">Fuel</td><td class="n">43.11%</td><td class="n">0.891</td><td class="n">-3,491.92</td></tr><tr class=""><td class="k">Company Expenses</td><td class="n">1.50%</td><td class="n">0.031</td><td class="n">-121.52</td></tr><tr class="tot"><td class="k">Net Revenue</td><td class="n">29.82%</td><td class="n">0.616</td><td class="n">2,415.11</td></tr></tbody></table></div>
+  <p class="lead">8,100.00 less 73.50 less 1,897.95 less 100.00 less 3,491.92 less 121.52 equals 2,415.11 exactly. 3,917.5 miles, 6.070 miles per gallon. This is the shape the table has to produce, and the coders can now build it without another decision from you.</p>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">Accessorials</div><h2>The account exists. One thing about it is wrong.</h2></div>
+  <p class="lead">You asked me to check QuickBooks and McLeod and create the same account. It is already there and you already ratified the mapping. USMCA holds account 4200 Accessorial / Detention Income, with 4210 Detention, 4220 Layover, 4230 Lumper and 4240 TONU. That is the right shape and it is what QuickBooks does.</p>
+  <div class="callout">
+   <p class="big">The four sub-accounts have no parent.</p>
+   <p class="lead">4210, 4220, 4230 and 4240 all sit at the top level beside 4200 instead of underneath it. In QuickBooks a sub-account under a parent is what makes the profit and loss collapse into one Accessorial Income line that you can expand. As it stands your income statement will show five flat lines with no roll-up, and the four detail accounts will not sum into the parent anywhere.</p>
+   <p class="lead">Your own chart already does this correctly one row down: 4900 Customer Deductions and Short-Pays has 4910 through 4980 properly parented beneath it. The accessorial family was simply never parented. It is one migration setting four parent references, and no new account.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">The thirteen</div><h2>Seven of the ten things your home page was built to show you are dead</h2></div>
+  <p class="lead">This is what I did not expect. Six of the thirteen missing tables sit behind a single endpoint, and that endpoint is the Today&rsquo;s Attention panel on your own Owner Home. It was designed with ten sources, ranked by how much each one should matter to you. Three of them can fire. The other seven cannot, and the panel says nothing.</p>
+  <div class="tblwrap"><table>
+   <thead><tr><th class="n">Score</th><th>Source</th><th>State</th><th>Why</th></tr></thead>
+   <tbody><tr><td class="n">100</td><td class="k">425C filing deadline within 7 days</td><td><span class="tag red">Dead</span></td><td class="d">legal.form_425c_filings does not exist. The real table is compliance.form_425c_reports, which does exist. This is a wrong table name, not a missing feature — and it is the highest scored alert on your home page.</td></tr><tr><td class="n">95</td><td class="k">Open critical fuel fraud alerts</td><td><span class="tag ok">Working</span></td><td class="d">fuel.fraud_alerts exists.</td></tr><tr><td class="n">90</td><td class="k">Bank account drift detection</td><td><span class="tag red">Dead</span></td><td class="d">banking.reconciliation_drift_alerts does not exist.</td></tr><tr><td class="n">90</td><td class="k">Open severe engine fault work orders</td><td><span class="tag ok">Working</span></td><td class="d">maintenance.work_orders exists.</td></tr><tr><td class="n">85</td><td class="k">Out-of-range cargo sensor incidents</td><td><span class="tag red">Dead</span></td><td class="d">telematics.cargo_sensor_incidents does not exist.</td></tr><tr><td class="n">80</td><td class="k">Period close pending entries with warnings</td><td><span class="tag red">Dead</span></td><td class="d">Hard stubbed. The function is two lines and returns an empty list. It does not even check for a table.</td></tr><tr><td class="n">80</td><td class="k">Open driver damage liabilities</td><td><span class="tag red">Dead</span></td><td class="d">safety.accident_liabilities does not exist. The tracker records that safety.routes.ts line 553 hard-returns a null liability id, so no accident to liability to escrow path exists at all.</td></tr><tr><td class="n">75</td><td class="k">Pending owner approval for detention</td><td><span class="tag ok">Working</span></td><td class="d">dispatch.detention_requests exists.</td></tr><tr><td class="n">70</td><td class="k">Cooling customers, top tier</td><td><span class="tag red">Dead</span></td><td class="d">mdata.customer_health_scores does not exist.</td></tr><tr><td class="n">65</td><td class="k">At-risk units, brake or tire within 7 days</td><td><span class="tag red">Dead</span></td><td class="d">maintenance.predictive_alerts does not exist.</td></tr></tbody></table></div>
+  <div class="callout red">
+   <p class="big">The highest scored alert of the ten is a wrong table name, not a missing feature.</p>
+   <p class="lead">The 425C filing deadline check, scored 100, queries <code>legal.form_425c_filings</code>. That table does not exist. <code>compliance.form_425c_reports</code> does exist, in production, right now. This is a one-line correction that restores the single most important item on your home page, and it has been silently returning nothing this whole time.</p>
+   <p class="lead">There is a second thing worth knowing. The file&rsquo;s own header says each source degrades gracefully and &ldquo;a warning is logged&rdquo; when a table has not shipped. There is no warning. The code is a bare return with an empty list. Nobody was ever going to find this from the logs, because there are none.</p>
+  </div>
+  <div class="sec" style="margin-top:6px"><div class="eyebrow">One by one</div><h2>All thirteen, what each was for, and what you see instead</h2></div>
+  <div class="feat"><article class="f">
+ <div class="fh"><h3>Bank reconciliation drift alerts</h3><span class="tag red">High</span><span class="tbl">banking.reconciliation_drift_alerts</span></div>
+ <div class="fb">
+  <div class="fr"><div class="fk">Meant to do</div><div class="fv">Counts unresolved drift alerts from the last 24 hours and puts a card on your home page reading, the bank balance does not match the book balance within tolerance, review and reconcile.</div></div>
+  <div class="fr"><div class="fk">Where you would see it</div><div class="fv">Owner Home, Today&#x27;s Attention panel</div></div>
+  <div class="fr"><div class="fk">What happens today</div><div class="fv">No card. Nothing says the check did not run.</div></div>
+ </div>
+</article><article class="f">
+ <div class="fh"><h3>Predictive maintenance alerts</h3><span class="tag red">High</span><span class="tbl">maintenance.predictive_alerts</span></div>
+ <div class="fb">
+  <div class="fr"><div class="fk">Meant to do</div><div class="fv">Counts unresolved brake wear and tire tread alerts predicting failure within 7 days, and puts a card on your home page.</div></div>
+  <div class="fr"><div class="fk">Where you would see it</div><div class="fv">Owner Home, Today&#x27;s Attention panel</div></div>
+  <div class="fr"><div class="fk">What happens today</div><div class="fv">No card.</div></div>
+ </div>
+</article><article class="f">
+ <div class="fh"><h3>Driver damage liabilities</h3><span class="tag red">High</span><span class="tbl">safety.accident_liabilities</span></div>
+ <div class="fb">
+  <div class="fr"><div class="fk">Meant to do</div><div class="fv">Counts accident liabilities from the last 30 days with no owner decision recorded, so you can decide driver chargeback or company absorption.</div></div>
+  <div class="fr"><div class="fk">Where you would see it</div><div class="fv">Owner Home, Today&#x27;s Attention panel</div></div>
+  <div class="fr"><div class="fk">What happens today</div><div class="fv">No card. Separately, safety.routes.ts line 553 hard-returns a null liability id, so filing an accident never spawns a liability at all.</div></div>
+ </div>
+</article><article class="f">
+ <div class="fh"><h3>Cargo sensor incidents</h3><span class="tag red">High</span><span class="tbl">telematics.cargo_sensor_incidents</span></div>
+ <div class="fb">
+  <div class="fr"><div class="fk">Meant to do</div><div class="fv">Counts unresolved critical temperature or humidity incidents. Its own text reads, customer claims risk.</div></div>
+  <div class="fr"><div class="fk">Where you would see it</div><div class="fv">Owner Home, Today&#x27;s Attention panel</div></div>
+  <div class="fr"><div class="fk">What happens today</div><div class="fv">No card.</div></div>
+ </div>
+</article><article class="f">
+ <div class="fh"><h3>Cooling customers</h3><span class="tag amber">Medium</span><span class="tbl">mdata.customer_health_scores</span></div>
+ <div class="fb">
+  <div class="fr"><div class="fk">Meant to do</div><div class="fv">Counts top-tier customers marked cold in the last 7 days and recommends proactive outreach.</div></div>
+  <div class="fr"><div class="fk">Where you would see it</div><div class="fv">Owner Home, Today&#x27;s Attention panel</div></div>
+  <div class="fr"><div class="fk">What happens today</div><div class="fv">No card.</div></div>
+ </div>
+</article><article class="f">
+ <div class="fh"><h3>Workers compensation claims</h3><span class="tag red">High</span><span class="tbl">safety.workers_comp_claims</span></div>
+ <div class="fb">
+  <div class="fr"><div class="fk">Meant to do</div><div class="fv">Two things. It counts open claims for the Safety Home indicator, and when a driver files an injury incident from the phone it is supposed to open a workers compensation claim automatically.</div></div>
+  <div class="fr"><div class="fk">Where you would see it</div><div class="fv">Safety Home at /safety/home, and the driver app incident report</div></div>
+  <div class="fr"><div class="fk">What happens today</div><div class="fv">The count returns 0, which is indistinguishable from no open claims. The driver files an injury, gets a success message, and no claim is created. Worse, nothing on the screen renders the count even when it works — the safety indicator bar shows only inspection defects, hours violations and expiring certificates.</div></div>
+ </div>
+</article><article class="f">
+ <div class="fh"><h3>Fuel route recommendations</h3><span class="tag amber">Medium</span><span class="tbl">fuel.route_recommendations</span></div>
+ <div class="fb">
+  <div class="fr"><div class="fk">Meant to do</div><div class="fv">The computed fuel route per load — driver, load, current fuel, tank capacity, current miles per gallon. It is the source behind the active routes view and the tank capacity the fuel fraud rules use.</div></div>
+  <div class="fr"><div class="fk">Where you would see it</div><div class="fv">Fuel Planner at /fuel/planner</div></div>
+  <div class="fr"><div class="fk">What happens today</div><div class="fv">This one is honest. The dashboard returns null, not zero, and the screen says the planner values are unavailable and are not zero. The detail endpoint returns a 503. The fraud detector falls back to a fleet default tank size and labels it as such. This is how all thirteen should behave.</div></div>
+ </div>
+</article><article class="f">
+ <div class="fh"><h3>Recommended fuel stops</h3><span class="tag amber">Medium</span><span class="tbl">fuel.recommended_stops</span></div>
+ <div class="fb">
+  <div class="fr"><div class="fk">Meant to do</div><div class="fv">The stop list for a fuel route recommendation, ordered by mile marker.</div></div>
+  <div class="fr"><div class="fk">Where you would see it</div><div class="fv">Fuel Planner at /fuel/planner</div></div>
+  <div class="fr"><div class="fk">What happens today</div><div class="fv">An empty stop table reading, no recommended stops yet. Nothing distinguishes an empty result from a missing table.</div></div>
+ </div>
+</article><article class="f">
+ <div class="fh"><h3>Parts catalog for work order costing</h3><span class="tag amber">Medium</span><span class="tbl">inventory.parts</span></div>
+ <div class="fb">
+  <div class="fr"><div class="fk">Meant to do</div><div class="fv">The parts list the work order cost line picker reads from.</div></div>
+  <div class="fr"><div class="fk">Where you would see it</div><div class="fv">Work order detail at /maintenance/work-orders/:id</div></div>
+  <div class="fr"><div class="fk">What happens today</div><div class="fv">It falls back to maintenance.parts_inventory and marks the response as a fallback — correctly. But the screen never reads that flag, so the operator sees a parts picker with no notice. A migration for this table exists under the Prisma folder but not under the canonical migrations folder, which is why it was never applied.</div></div>
+ </div>
+</article><article class="f">
+ <div class="fh"><h3>Labor rates for work order costing</h3><span class="tag plain">Low</span><span class="tbl">maintenance.labor_rates</span></div>
+ <div class="fb">
+  <div class="fr"><div class="fk">Meant to do</div><div class="fv">The per-company labor rate list for work order labor lines.</div></div>
+  <div class="fr"><div class="fk">Where you would see it</div><div class="fv">Work order detail at /maintenance/work-orders/:id</div></div>
+  <div class="fr"><div class="fk">What happens today</div><div class="fv">Falls back to catalogs.labor_rates, which is real and mounted, and marks it as a fallback. The screen never reads the flag. This one works in practice.</div></div>
+ </div>
+</article><article class="f">
+ <div class="fh"><h3>Late arrival rate in driver retention scoring</h3><span class="tag red">High</span><span class="tbl">dispatch.late_arrival_aggregates</span></div>
+ <div class="fb">
+  <div class="fr"><div class="fk">Meant to do</div><div class="fv">Feeds the 30 day late arrival rate into the driver retention risk score, where it carries real weight.</div></div>
+  <div class="fr"><div class="fk">Where you would see it</div><div class="fv">Driver retention dashboard at /drivers/retention</div></div>
+  <div class="fr"><div class="fk">What happens today</div><div class="fv">The factor is dropped from the score silently. The risk number shown is computed without it and nothing on the card says a dimension is missing. A retention score that is quietly missing a weighted input is worse than no score.</div></div>
+ </div>
+</article><article class="f">
+ <div class="fh"><h3>QuickBooks connection health check</h3><span class="tag plain">Low</span><span class="tbl">qbo.connections</span></div>
+ <div class="fb">
+  <div class="fr"><div class="fk">Meant to do</div><div class="fv">Reads the newest connected QuickBooks connection and reports the sync as healthy, degraded past one hour, or down.</div></div>
+  <div class="fr"><div class="fk">Where you would see it</div><div class="fv">No screen. An external uptime monitor points at it.</div></div>
+  <div class="fr"><div class="fk">What happens today</div><div class="fv">The endpoint is archived and its registrar now throws, so it cannot be reached. The real table is integrations.qbo_connections. A second health check elsewhere queries the correct table and does work.</div></div>
+ </div>
+</article><article class="f">
+ <div class="fh"><h3>Bank feed health check</h3><span class="tag plain">Low</span><span class="tbl">banking.plaid_items</span></div>
+ <div class="fb">
+  <div class="fr"><div class="fk">Meant to do</div><div class="fv">Reads the newest connected bank feed item and reports the feed as healthy, degraded past 24 hours, or down.</div></div>
+  <div class="fr"><div class="fk">Where you would see it</div><div class="fv">No screen. Same archived endpoint.</div></div>
+  <div class="fr"><div class="fk">What happens today</div><div class="fv">Unreachable. The file&#x27;s own comment says the real state lives on banking.bank_accounts.sync_status.</div></div>
+ </div>
+</article></div>
+  <div class="callout ok">
+   <p class="big">One of the thirteen shows how all of them should behave.</p>
+   <p class="lead">The Fuel Planner returns null rather than zero, prints on the screen that the values are unavailable and are not zero, returns a 503 on the detail rather than an empty page, and labels its fallback tank size as a fallback. Nobody looking at that screen could mistake missing for empty. That is the standard the other twelve should be held to, and it is already written in this codebase, so nobody has to invent it.</p>
+  </div>
+</section>
+
+<footer>
+  Every count and every file reference on this page was read this morning: the USMCA chart of accounts and the four unparented accessorial accounts from the live database, the ten Today&rsquo;s Attention sources and their guards from the aggregator source file, the nine table existence checks from production, the capitalize threshold from five documents and one build guard, and the company settlement from Company_Settlement_5753.pdf in your Downloads. Where your recollection and the written record disagree, this page shows both and changes neither.
+</footer>
+</div>

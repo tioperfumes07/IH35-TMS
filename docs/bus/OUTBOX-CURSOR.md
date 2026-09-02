@@ -1,3 +1,3 @@
 # OUTBOX-CURSOR · 2026-09-01 23:05 CT
 
-CURSOR | bus PR all seats FORCE rewritten · live **29072a4** · Jorge books loads · seats never POST/sample/fixtures · GO-19 CC-1 serial escrow→02→03→05/06 · CC-3 ZIP #19419 · Codex drain CI until 05/06 | GO
+CURSOR | Owner 7 decisions CLOSED · DECISIONS-AND-THIRTEEN in lockdown · capitalize $7000 NEVER 7500 · CC-1 serial 02→parent_id→capitalize wire · CC-3 425C one-liner · Codex 5753 grain · seats NEVER POST | GO
