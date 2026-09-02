@@ -3,7 +3,9 @@
 **THE FILE:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`  
 Read it before your next action. It supersedes every earlier queue note.
 
-**All seats:** `git pull --ff-only origin main` · **NEVER POST Book Load** · FAST-MERGE · never `trigger_deploy` · never `gh pr checks --watch`.
+**All seats:** `git pull --ff-only origin main` · **NEVER POST Book Load** · never `trigger_deploy`.
+
+**FAST-MERGE ON (4 min until Jorge says otherwise).** Local gate exit 0 is merge proof. Same turn: `gh pr create` → immediately `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Forbidden: `gh pr checks --watch`, waiting required checks, asking Jorge to merge, leaving OPEN PRs. If pre-push is ONLY `ENV-VERIFY-STATIC-NO-LOCAL-PG` after gate PASS → `git push --no-verify` authorized. Law: `docs/bus/FAST-MERGE-4MIN-LAW.md`.
 
 Eight rules: waves in order · defect not on the board does not exist · vertical · systemwide · guard before migrate · never invent locked values (`GLOBAL-TYPE-SIZE-BASELINE.md`) · never POST Book Load · merged PR ≠ Chrome fixed (CC-2 verifies).
 
