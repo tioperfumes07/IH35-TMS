@@ -284,6 +284,8 @@ export type VendorBill = {
   journal_entry_date?: string | null;
   journal_entry_memo?: string | null;
   unit_id?: string | null;
+  /** GO-18 — accounting.bills.driver_id. Not driver_uuid. */
+  driver_id?: string | null;
   unit_display_id?: string | null;
   linked_work_order_uuid?: string | null;
   linked_work_order_display_id?: string | null;
@@ -1010,6 +1012,8 @@ export function createVendorBill(
     legal_matter_id?: string;
     /** QBO Class on bill header — persisted as accounting.bills.class_id when column present. */
     class_id?: string;
+    /** GO-18 / Gate 2.1 — stamps accounting.bills.driver_id (FK mdata.drivers). Not driver_uuid. */
+    driver_id?: string;
     attachment_draft_id?: string;
     /** VEND-F-TEST-DATA-NOT-FLAGGED-SAMPLE — marks accounting.bills.is_sample_data at creation. */
     is_sample_data?: boolean;

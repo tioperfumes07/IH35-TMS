@@ -50,7 +50,7 @@ Jorge UNLOCKED full capacity. WAIT is over. Reconciliation with Claude is CLOSED
 
 3. GO-27 CURSOR LANES (after Gate 0 settles; do not block purge):
    Gate 1.5 — GO-06 manual numbers UI (shared number field on remaining create screens).
-   Gate 2.1 — accounting.bills.driver_uuid (data + backend + bill creator). BLOCKS Costs tab.
+   Gate 2.1 — CLOSED as `accounting.bills.driver_id` (#19459 + bill POST). Never `driver_uuid` on bills.
    Gate 2.3 — Proforma mint at first pickup, not at book (book-load.service.ts:1938).
    Gate 4.2 — Company settlement table (blocked on 2.1).
    GO-07 KPI drill-through: DispatchOverview.tsx:277 double-counts atRisk+late.

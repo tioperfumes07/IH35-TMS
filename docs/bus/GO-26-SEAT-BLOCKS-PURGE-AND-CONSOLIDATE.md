@@ -285,10 +285,8 @@ Disputes settled, corrections applied both ways. Nobody reopens it.
 3. STILL YOURS, after the purge settles:
    - Slice 04: proforma mints at book (book-load.service.ts:1938). It must mint
      at first pickup completion instead. No pickup trigger exists yet.
-   - Slice 05: accounting.bills.driver_uuid DOES NOT EXIST. trailer_id and
-     recover_from_driver landed; the driver column did not. Jorge's road-repair
-     scenario cannot work without it. This blocks the Load Costs board and the
-     company settlement.
+   - Slice 05: accounting.bills.driver_id EXISTS (#19459, FK mdata.drivers). There is no
+     bills.driver_uuid — do not add one. Costs tab uses driver_id on bills.
    - Slice 20: NO company settlement table exists. TripProfitability.tsx is a
      read view. The P&L tying to 2,415.11 cannot be proven against a table that
      is not there.

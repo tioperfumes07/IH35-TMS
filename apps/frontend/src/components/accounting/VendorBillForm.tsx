@@ -47,6 +47,8 @@ export type VendorBillFormSubmitPayload = {
   legal_matter_id?: string;
   /** QBO Class reporting dimension on bill header. */
   class_id?: string;
+  /** GO-18 / Gate 2.1 — accounting.bills.driver_id (not driver_uuid). Expenses keep driver_uuid. */
+  driver_id?: string;
   /** Real bill lines — required for vendor create; createBill persists these in the same txn. */
   lines: VendorBillFormLinePayload[];
   /** VEND-F-TEST-DATA-NOT-FLAGGED-SAMPLE — marks this bill as demo/test data at CREATION (mirrors
@@ -348,6 +350,7 @@ export function VendorBillForm({
       ...(linkedClaimId ? { insurance_claim_id: linkedClaimId } : {}),
       ...(resolvedLegalMatterId ? { legal_matter_id: resolvedLegalMatterId } : {}),
       ...(classId ? { class_id: classId } : {}),
+      ...(driverId ? { driver_id: driverId } : {}),
       is_sample_data: isSampleData,
     });
   }
