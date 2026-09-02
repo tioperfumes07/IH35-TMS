@@ -104,8 +104,12 @@ async function main() {
     process.exit(1);
   }
   const rows = parseCsv(readFileSync(CSV, "utf8"));
-  if (rows.length !== 3375) {
-    console.error(`expected 3375 seed rows, got ${rows.length}`);
+  // GO-16 city-alias-review.csv MERGE pass (#19414 decisions applied): 37 rows were real duplicate
+  // lanes once their spelling variant was corrected (e.g. "Forth Worth" -> "Fort Worth" collided
+  // with an existing "Fort Worth" row) and were combined -- 3375 -> 3338. Never regress this count
+  // back up without re-running the same collision-merge, or a spelling-variant duplicate is back.
+  if (rows.length !== 3338) {
+    console.error(`expected 3338 seed rows, got ${rows.length}`);
     process.exit(1);
   }
   const client = new pg.Client({
@@ -150,8 +154,9 @@ async function main() {
          short_min, short_max, confidence, autofill_allowed, source, first_seen, last_seen
        ) VALUES (
          $1::uuid, $2, $3, $4, $5, $6, $7,
-         $8, $9, COALESCE($10, 0),
-         $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21::date, $22::date
+         $8::numeric, $9::numeric, COALESCE($10::numeric, 0),
+         $11::int, $12::int, $13::numeric, $14::numeric, $15::numeric, $16::numeric, $17::numeric,
+         $18, $19, $20, $21::date, $22::date
        )
        ${conflict}
        ${setSql}`,
