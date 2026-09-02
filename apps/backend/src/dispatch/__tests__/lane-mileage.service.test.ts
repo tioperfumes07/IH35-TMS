@@ -25,6 +25,8 @@ function row(partial: Partial<LaneMileageRow>): LaneMileageRow {
     confidence: "High",
     autofill_allowed: true,
     source: "History",
+    short_miles_untrustworthy: false,
+    short_miles_untrustworthy_reason: null,
     ...partial,
   };
 }
@@ -135,6 +137,23 @@ describe("resolveLaneMileage — GO-16 Rev C (fill all bands)", () => {
     expect(result.fill_confidence).toBe("reverse");
     expect(result.provenance).toMatch(/reverse lane/i);
     expect(mileageSourceFromFill(result.fill_confidence)).toBe("History — verify");
+    expect(result.short_miles_untrustworthy).toBe(false);
+    expect(result.short_miles_untrustworthy_reason).toBeNull();
+  });
+
+  it("passes MILES-INVERT-01 untrustworthy flags from the catalog row", async () => {
+    const flagged = row({
+      short_miles_untrustworthy: true,
+      short_miles_untrustworthy_reason: "short_exceeds_practical+reverse_lane_short_differs_over_100mi",
+    });
+    const result = await resolveLaneMileage(clientFrom({ city: flagged }), "5c854333-6ea5-4faa-af31-67cb272fef80", {
+      origin_city: "Laredo",
+      origin_state: "TX",
+      dest_city: "Denton",
+      dest_state: "TX",
+    });
+    expect(result.short_miles_untrustworthy).toBe(true);
+    expect(result.short_miles_untrustworthy_reason).toContain("reverse_lane_short_differs_over_100mi");
   });
 
   it("no miles on row: does not fill", async () => {

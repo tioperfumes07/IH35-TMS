@@ -1503,6 +1503,9 @@ export type LaneMileageLookupResult = {
   provenance: string;
   matched_lane_id: string | null;
   source: string | null;
+  /** MILES-INVERT-01 — catalog trust flag from lane_mileage trigger. */
+  short_miles_untrustworthy: boolean;
+  short_miles_untrustworthy_reason: string | null;
 };
 
 export function getLaneMileage(params: {

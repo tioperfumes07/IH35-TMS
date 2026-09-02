@@ -36,6 +36,9 @@ Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md` · `docs/bus/FAST-MERGE-REMINDER-20
 
 
 **GO NOW — Gate 0 is yours.**
+
+**CURSOR LEAD 2026-09-02 — NO PURGE ACK SEEN.** Accounting schema PR **NOW**. void→delete both steps. Reseed trace_counters **13557** (LOAD only, drop LD). Drop B- same wave. Paste done-gate **before first DELETE** and **after each schema merge**. Cursor stays off purge schemas — CC-1 money lane only.
+
 ## NOW
 
 ```
