@@ -550,3 +550,18 @@ document is still linked** (that's the exact regression #19588 fixes — the lin
 dropped before). I'll verify-live from the resulting data once that's driven, not before.
 
 Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 | verify-live A2-REAL · FIXED · 2026-09-02T04:00Z
+
+`verify-live Chrome customer picker FIXED or NOT FIXED with numbers` per instruction. **FIXED.**
+Polled `version.json` until deploy caught up to the merge (1394f2b, exact match). Live Chrome: the
+Customer field now shows "Showing the first 100. Keep typing to narrow — this search covers every
+customer, not just what's typed." Captured the actual network requests (not just visual
+impression): `GET /api/v1/mdata/customers?...&autocomplete=true&limit=100&search=t` /
+`search=tr` / unfiltered — all 200 — the new endpoint, replacing the old capped `listCustomers`
+this session's #19585 finding caught. Modal closed via X, zero writes, zero load booked.
+
+A2 is closed — code-correct, deployed, and now confirmed live by both UI text and network capture.
+Idle, watching INBOX TOP.
