@@ -1,8 +1,22 @@
 #!/usr/bin/env node
 /**
  * GAP-91 mobile responsive auditor.
- * Static pass at 375×667 constraints: scans office TMS + driver PWA source for
- * known mobile failure patterns (undersized controls, horizontal overflow hints).
+ * Static pass at 375×667 constraints: scans driver PWA + the office frontend's
+ * explicit driver-facing portal for known mobile failure patterns (undersized
+ * controls, horizontal overflow hints).
+ *
+ * SCOPE (owner ruling, RULING 1, 2026-09-02): the dense desktop Office UI
+ * (apps/frontend/src/pages, apps/frontend/src/components) is out of scope.
+ * button-under-44px (rule below) applies WCAG 2.1 AAA / Apple's touch-target
+ * guideline to those files -- a mobile-only bar, not the WCAG 2.2 AA 24x24px
+ * standard (2.5.8) that GLOBAL-TYPE-SIZE-BASELINE.md's locked h-7/12px office
+ * density already clears. QuickBooks Online and NetSuite both ship a compact
+ * desktop grid with a SEPARATE mobile surface, same as this app's own
+ * driver-pwa + portal split. Scanning the office pages/components tree for a
+ * touch-target rule was a scope bug in this guard, not a real regression --
+ * confirmed by the owner after CC-3 refused to either bump 10 files out of
+ * visual sync with hundreds of already-baselined siblings, or grow the
+ * baseline to hide the class (both wrong; scope was the actual defect).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -11,8 +25,7 @@ const ROOT = path.resolve(process.cwd());
 const VIEWPORT = { width: 375, height: 667 };
 
 const SCAN_ROOTS = [
-  "apps/frontend/src/pages",
-  "apps/frontend/src/components",
+  "apps/frontend/src/portal",
   "apps/driver-pwa/src/pages",
   "apps/driver-pwa/src/components",
 ];
