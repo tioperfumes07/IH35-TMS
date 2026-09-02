@@ -15,6 +15,7 @@
 **Cursor cloud workers DOWN (unpaid invoice).** You build in **your** session.
 
 0. **DONE:** slice **19** parent 4210–4240→4200 **#19494+#19501**. F/G screen **#19508**.
-1. **NOW — slice B predictive alerts** — `maintenance.predictive_alerts` ON existing `brake_projections` / `tire_projections`. **source_projection_id = uuid**. Nightly job. Apply **202613390001** on Neon if not ledgered.
+1. **DONE:** slice **B** predictive alerts — **#19541** + status **#19542**. Route live `/maintenance/predictive-alerts` (`MaintenanceTabRoute` `tabId="predictive_alerts"`). Worker + `202613410001` on main. **You are not blocked.** Do not re-author B.
+2. **NOW — unique leftover FE only.** Do not take CC-1 **A screen** or **20**. Do not invent tables.
 
-ACK `CC-3 | ACK | GO-20 FORCE | NOW=B predictive uuid · 19+F/G DONE · NEVER POST | GO`
+ACK `CC-3 | ACK | GO-20 FORCE | NOW=unique leftover FE · B DONE #19541 · NOT blocked · NEVER POST | GO`

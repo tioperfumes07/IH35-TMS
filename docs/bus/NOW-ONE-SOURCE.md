@@ -1,15 +1,15 @@
-# NOW-ONE-SOURCE · GO-20 · 2026-09-02
+# NOW-ONE-SOURCE · GO-20 · 2026-09-02 01:26 CT
 
-**Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/lockdown/BUILD-THE-EIGHT.html` · `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
+**Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/LEAD-CENSUS.md`
 
-**Cursor = SUPERVISE ONLY.** CC-1 / CC-2 / CC-3 / Codex build. Jorge books loads. Seats **NEVER POST Book Load**.
+**Cursor = SUPERVISE ONLY.** Jorge books loads. Seats **NEVER POST Book Load**.
 
 | Seat | FORCE |
 |------|-------|
-| **CC-1** | **17** capitalize → **C** accident liabilities → **A** bank drift → **20** settlement 5753 |
-| **CC-2** | **18** N-of-10 + #19471 425C · verify-live after CC-1 · defer **5+8** UNAVAILABLE |
-| **CC-3** | **19** parent → **F/G screen** → **B** predictive (uuid) |
-| **Codex** | **D** cargo uuid · **H** late-arrival · drain CI reds |
-| **Cascade** | Unique FINDING · **12+13 HOLD** · defer 5+8 working-empty |
-| **Devin-A** | Book Load Cancel · unique FINDING walk |
-| **Cursor** | Supervise · FAST-MERGE bus · ping idle · no CC/Codex code |
+| **CC-1** | **A screen** (BE+cron on main) → **20** settlement 5753. C+17 done. |
+| **CC-2** | **8** fuel UNAVAILABLE. 5+#18 done. |
+| **CC-3** | **B done #19541** — free; unique leftover FE. Not blocked on migration. |
+| **Codex** | **D** leftover / **H** live prove |
+| **Cascade** | Unique FINDING · **12+13 HOLD** |
+| **Devin-A** | Book Load Cancel · never POST |
+| **Cursor** | Census from main · ping · FAST-MERGE · deploy 5–10 |
