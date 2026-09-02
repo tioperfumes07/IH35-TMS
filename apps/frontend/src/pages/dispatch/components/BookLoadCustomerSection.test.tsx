@@ -7,10 +7,10 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { BookLoadCustomerSection, type BookLoadFormValues } from "./BookLoadCustomerSection";
 
-const listCustomersMock = vi.fn();
+const searchCustomersAutocompleteMock = vi.fn();
 
 vi.mock("../../../api/mdata", () => ({
-  listCustomers: (...args: unknown[]) => listCustomersMock(...args),
+  searchCustomersAutocomplete: (...args: unknown[]) => searchCustomersAutocompleteMock(...args),
 }));
 
 let getValues: (() => BookLoadFormValues) | null = null;
@@ -58,17 +58,17 @@ function wrap(ui: ReactElement) {
 describe("BookLoadCustomerSection", () => {
   it("picking a customer saves customer_id and customer_name to form state", async () => {
     const user = userEvent.setup();
-    listCustomersMock.mockResolvedValue({
-      customers: [
-        {
-          id: "61111111-1111-4111-8111-111111111111",
-          name: "LIVE TEST CUSTOMER LLC",
-          email: "ar@example.com",
-          phone: "555-0100",
-        },
-      ],
-      total: 1,
-    });
+    searchCustomersAutocompleteMock.mockResolvedValue([
+      {
+        id: "61111111-1111-4111-8111-111111111111",
+        qbo_id: "",
+        display_name: "LIVE TEST CUSTOMER LLC",
+        primary_email: "ar@example.com",
+        primary_phone: "555-0100",
+        mc_number: null,
+        active: true,
+      },
+    ]);
 
     wrap(<TestHarness />);
     expect(getValues).not.toBeNull();
@@ -77,7 +77,7 @@ describe("BookLoadCustomerSection", () => {
     const primary = inputs[0];
     await user.click(primary);
 
-    await waitFor(() => expect(listCustomersMock).toHaveBeenCalled(), { timeout: 4000 });
+    await waitFor(() => expect(searchCustomersAutocompleteMock).toHaveBeenCalled(), { timeout: 4000 });
 
     const option = await screen.findByRole("option", { name: /LIVE TEST CUSTOMER LLC/i });
     await user.click(option);
@@ -91,17 +91,17 @@ describe("BookLoadCustomerSection", () => {
 
   it("the customer reference lookup appends to Special notes without changing customer_id", async () => {
     const user = userEvent.setup();
-    listCustomersMock.mockResolvedValue({
-      customers: [
-        {
-          id: "61111111-1111-4111-8111-111111111111",
-          name: "LIVE TEST CUSTOMER LLC",
-          email: "ar@example.com",
-          phone: "555-0100",
-        },
-      ],
-      total: 1,
-    });
+    searchCustomersAutocompleteMock.mockResolvedValue([
+      {
+        id: "61111111-1111-4111-8111-111111111111",
+        qbo_id: "",
+        display_name: "LIVE TEST CUSTOMER LLC",
+        primary_email: "ar@example.com",
+        primary_phone: "555-0100",
+        mc_number: null,
+        active: true,
+      },
+    ]);
 
     wrap(<TestHarness />);
     expect(getValues).not.toBeNull();
@@ -109,7 +109,7 @@ describe("BookLoadCustomerSection", () => {
     const referenceInput = screen.getByPlaceholderText(/Search customers to add a reference/i);
     await user.click(referenceInput);
 
-    await waitFor(() => expect(listCustomersMock).toHaveBeenCalled(), { timeout: 4000 });
+    await waitFor(() => expect(searchCustomersAutocompleteMock).toHaveBeenCalled(), { timeout: 4000 });
 
     const option = await screen.findByRole("option", { name: /LIVE TEST CUSTOMER LLC/i });
     await user.click(option);

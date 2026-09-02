@@ -1,7 +1,7 @@
 import { useMemo, useState, type JSX } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
-import { listCustomers } from "../../../api/mdata";
+import { searchCustomersAutocomplete } from "../../../api/mdata";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { entityLabel } from "../../../lib/entity-label";
@@ -46,8 +46,12 @@ export function BookLoadCustomerSection({
   showOptionalFields = true,
 }: Props) {
   const queryClient = useQueryClient();
-  // SAF-B29 / LST-PICKER-01: prod ~2.7k customers — silent limit:5000 without search still truncates
-  // and freezes the drawer; type-ahead re-queries so customers past page 1 stay selectable.
+  // GO-21 A2: was a plain paginated listCustomers(limit: 200/500) — against ~2.7k prod customers
+  // that is a slice, not a search, and the customer the owner wants is frequently simply absent.
+  // Now hits the server's dedicated ranked autocomplete mode (exact match, then prefix match, then
+  // full-text relevance, across the WHOLE company customer set — see api/mdata.ts
+  // searchCustomersAutocomplete). Server-clamped to 100 rows per request regardless of what's asked.
+  const AUTOCOMPLETE_LIMIT = 100;
   const [customerSearch, setCustomerSearch] = useState("");
   const dollarsToCents = (value: unknown) => {
     if (value === null || value === undefined || value === "") return 0;
@@ -57,35 +61,26 @@ export function BookLoadCustomerSection({
   };
 
   const customersQuery = useQuery({
-    queryKey: ["book-load-customer-section", "customers", operatingCompanyId, customerSearch],
-    queryFn: () =>
-      listCustomers({
-        operating_company_id: String(operatingCompanyId),
-        limit: customerSearch ? 200 : 500,
-        search: customerSearch || undefined,
-      }),
+    queryKey: ["book-load-customer-section", "customers-autocomplete", operatingCompanyId, customerSearch],
+    queryFn: () => searchCustomersAutocomplete(String(operatingCompanyId), customerSearch, { limit: AUTOCOMPLETE_LIMIT }),
     enabled: Boolean(operatingCompanyId),
-    staleTime: 60_000,
+    staleTime: 30_000,
   });
   const watchedCustomerId = watch("customer_id");
   const watchedCustomerName = watch("customer_name");
   // ACCT-F10158 companion: seed the committed customer when the capped/search page omits it
   // (same FE-COMBOBOX-STALE-LABEL class as BookLoadModalV4 Edit hydrate).
   const customerOptions = useMemo(() => {
-    const fromApi = (customersQuery.data?.customers ?? [])
-      .map((c) => ({
-        value: c.id,
-        label: String(c.name || c.customer_code || "").trim() || c.id,
-      }))
-      .filter((o) => o.label)
-      .sort((a, b) => a.label.localeCompare(b.label));
+    const fromApi = (customersQuery.data ?? [])
+      .map((c) => ({ value: c.id, label: c.display_name.trim() || c.id }))
+      .filter((o) => o.label);
     const id = String(watchedCustomerId || "").trim();
     const name = String(watchedCustomerName || "").trim();
     if (id && !fromApi.some((o) => o.value === id)) {
       return [{ value: id, label: name || id }, ...fromApi];
     }
     return fromApi;
-  }, [customersQuery.data?.customers, watchedCustomerId, watchedCustomerName]);
+  }, [customersQuery.data, watchedCustomerId, watchedCustomerName]);
 
   return (
     <section className="rounded-sm border border-slate-200 bg-slate-100 p-3">
@@ -121,12 +116,21 @@ export function BookLoadCustomerSection({
           {customersQuery.isError ? (
             <ListErrorBanner message="Could not load customers." onRetry={() => void customersQuery.refetch()} />
           ) : null}
-          {/* CLS-SILENT-CAP: book-load customer picker caps at 500 (no search) / 200 (search). Surface truncation so a customer past the cap is not silently missing. */}
+          {/* GO-21 A2: an empty or short result must say why — never a silent short list. Distinct
+              from the loading/error states above and the truncation notice below. */}
+          {!customersQuery.isError && !customersQuery.isLoading && customerSearch.trim() && (customersQuery.data ?? []).length === 0 ? (
+            <p className="text-[11px] text-slate-600" data-testid="book-load-customer-no-matches">
+              No customers match “{customerSearch.trim()}”. Check the spelling, or{" "}
+              <span className="font-semibold">+ Add new</span> if this is a new customer.
+            </p>
+          ) : null}
+          {/* CLS-SILENT-CAP: the ranked autocomplete search is server-clamped to 100 rows per
+              request. Surface truncation so a customer past that cap is not silently missing —
+              typing narrows the match set below the cap for any reasonably distinct name. */}
           <CappedListNotice
-            shown={customerOptions.length}
-            limit={customerSearch ? 200 : 500}
-            total={customersQuery.data?.total ?? null}
-            hint="Type to search for a customer that is not listed."
+            shown={customersQuery.data?.length ?? 0}
+            limit={AUTOCOMPLETE_LIMIT}
+            hint="Keep typing to narrow — this search covers every customer, not just what's shown."
             className="text-[11px] text-slate-600"
           />
           {customerIdError ? <p className="text-[11px] text-red-600">{customerIdError}</p> : null}
