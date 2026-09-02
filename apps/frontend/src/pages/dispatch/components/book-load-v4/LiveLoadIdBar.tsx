@@ -133,7 +133,7 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
 
   return (
     <div
-      className="flex items-end gap-4 px-4 py-2 text-[10px] font-semibold tracking-wide text-white"
+      className="flex items-end gap-4 px-4 py-2 text-[11px] font-semibold tracking-wide text-white"
       style={{ background: "#0F1320" }}
     >
       <div className="min-w-[14rem] rounded-sm bg-white px-2 py-1 text-left normal-case tracking-normal text-slate-900">

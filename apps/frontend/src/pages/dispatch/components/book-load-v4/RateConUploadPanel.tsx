@@ -20,7 +20,7 @@ export function RateConUploadPanel({
   const { phase, error, result, busy, handleFile } = useRateConExtraction({ operatingCompanyId, onPrefill });
 
   return (
-    <div className="rounded border border-slate-200 p-3 text-sm">
+    <div className="rounded border border-slate-200 p-3 text-xs">
       <div className="flex items-center gap-2">
         <label className="inline-flex cursor-pointer items-center rounded bg-slate-100 px-2 py-1 font-semibold text-slate-700 hover:bg-slate-200">
           {busy ? (phase === "uploading" ? "Uploading…" : "Reading rate con…") : "Upload Rate Con"}

@@ -170,21 +170,21 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" className="text-[10.5px] font-semibold text-[#1f2a44] hover:underline" onClick={handleCreateCharge}>
+        <button type="button" className="text-xs font-semibold text-[#1f2a44] hover:underline" onClick={handleCreateCharge}>
           + Create charge
         </button>
-        <span className="text-[10px] text-gray-400">·</span>
+        <span className="text-xs text-gray-400">·</span>
         {(["detention", "layover", "lumper"] as const).map((preset) => (
           <button
             key={preset}
             type="button"
-            className="text-[10.5px] font-semibold capitalize text-[#1f2a44] hover:underline"
+            className="text-xs font-semibold capitalize text-[#1f2a44] hover:underline"
             onClick={() => handleSeed(preset)}
           >
             {preset}
           </button>
         ))}
-        <span className="ml-auto text-[10px] font-semibold text-gray-600">
+        <span className="ml-auto text-xs font-semibold text-gray-600">
           Accessorial subtotal{" "}
           <span className="font-mono text-gray-900">
             {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(accessorialSubtotal / 100)}
@@ -211,7 +211,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
         initialPageSize={50}
         pageSizeOptions={[25, 50, 100]}
         rowActions={(row) => (
-          <button type="button" className="text-[10px] text-red-700 hover:underline" onClick={() => handleRemove(row.id)}>
+          <button type="button" className="text-xs text-red-700 hover:underline" onClick={() => handleRemove(row.id)}>
             Remove
           </button>
         )}
