@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { detentionReasonsCatalogClient, listAllDispatchCatalogRows } from "../../../../api/catalogs-dispatch";
 import { ReferenceSelect } from "../../../../components/parity/ReferenceSelect";
+import { MoneyInput } from "../../../../components/forms/MoneyInput";
+import { NumberInput } from "../../../../components/forms/NumberInput";
 
 type Props = {
   register: UseFormRegister<Record<string, unknown>>;
@@ -43,13 +45,14 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         <div className="space-y-1 p-2">
           <div className="text-xs font-semibold text-slate-700">Anticipated chargeback</div>
-          <input
-            type="number"
-            min={0}
-            step={1}
-            placeholder="cents"
-            {...register("anticipated_chargeback_cents", { valueAsNumber: true })}
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+          {/* GO-23 QuickBooks-format fix: was a raw <input type="number"> exposing cents to the
+              operator with no $, no thousands separator, and a native spinner -- the same defect
+              class MoneyInput/NumberInput already closed everywhere else in this wizard. */}
+          <MoneyInput
+            valueCents={Number(watch("anticipated_chargeback_cents") ?? 0) || null}
+            onChangeCents={(c) => setValue("anticipated_chargeback_cents", c ?? 0, { shouldDirty: true })}
+            ariaLabel="Anticipated chargeback"
+            className="w-full"
           />
           <input
             {...register("anticipated_chargeback_reason")}
@@ -99,27 +102,27 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
               ) : null}
             </div>
           ) : null}
-          <input
-            type="number"
-            min={0}
-            step={0.25}
-            placeholder="Hours"
-            {...register("detention_expected_hours", { valueAsNumber: true })}
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+          <NumberInput
+            value={watch("detention_expected_hours") == null ? null : Number(watch("detention_expected_hours"))}
+            onChange={(v) => setValue("detention_expected_hours", v ?? 0, { shouldDirty: true })}
+            decimals={2}
+            unit="hrs"
+            ariaLabel="Detention hours expected"
+            className="w-full"
           />
-          <input
-            type="number"
-            min={0}
-            placeholder="Bill customer ¢/hr"
-            {...register("detention_bill_customer_per_hour_cents", { valueAsNumber: true })}
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+          <MoneyInput
+            valueCents={Number(watch("detention_bill_customer_per_hour_cents") ?? 0) || null}
+            onChangeCents={(c) => setValue("detention_bill_customer_per_hour_cents", c ?? 0, { shouldDirty: true })}
+            placeholder="Bill customer / hr"
+            ariaLabel="Detention bill customer per hour"
+            className="w-full"
           />
-          <input
-            type="number"
-            min={0}
-            placeholder="Driver pay ¢/hr"
-            {...register("detention_driver_pay_per_hour_cents", { valueAsNumber: true })}
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+          <MoneyInput
+            valueCents={Number(watch("detention_driver_pay_per_hour_cents") ?? 0) || null}
+            onChangeCents={(c) => setValue("detention_driver_pay_per_hour_cents", c ?? 0, { shouldDirty: true })}
+            placeholder="Driver pay / hr"
+            ariaLabel="Detention driver pay per hour"
+            className="w-full"
           />
         </div>
         <div className="space-y-1 p-2">
@@ -128,12 +131,12 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
             <input type="checkbox" {...register("late_delivery_risk_y_n")} />
             Yes
           </label>
-          <input
-            type="number"
-            min={0}
-            placeholder="Est deduction (¢)"
-            {...register("late_delivery_est_deduction_cents", { valueAsNumber: true })}
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+          <MoneyInput
+            valueCents={Number(watch("late_delivery_est_deduction_cents") ?? 0) || null}
+            onChangeCents={(c) => setValue("late_delivery_est_deduction_cents", c ?? 0, { shouldDirty: true })}
+            placeholder="Est deduction"
+            ariaLabel="Late delivery estimated deduction"
+            className="w-full"
           />
           <input {...register("late_delivery_reason")} placeholder="Reason" className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />
         </div>
