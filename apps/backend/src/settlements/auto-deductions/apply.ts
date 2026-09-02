@@ -1,3 +1,7 @@
+// C6-MONEY-JE-EXEMPT: driver_settlement_deductions rows here are an open tranche awaiting
+// application (applied_to_settlement_id IS NULL below), not an independent cash movement. The
+// settlement HEADER posts one aggregate balanced JE at finalize via settlement-posting.service.ts's
+// postSettlementToGl (verified 2026-09-02, GO-23 C6 shrink).
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
 };

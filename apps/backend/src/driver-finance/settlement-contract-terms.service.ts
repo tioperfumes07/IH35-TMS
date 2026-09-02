@@ -1,3 +1,10 @@
+// C6-MONEY-JE-EXEMPT: driver_finance.settlement_lines rows here are settlement-scoped LINE items
+// (settlement_id FK), not independent cash movements — the settlement HEADER posts one aggregate
+// balanced JE at finalize via accounting/settlement-posting/settlement-posting.service.ts's
+// postSettlementToGl (INSERT INTO accounting.journal_entries + journal_entry_postings, verified
+// live 2026-09-02, GO-23 C6 shrink pass). Same pattern this file's own header already documents:
+// "flag OFF" / build-and-hold — no GL effect exists to post until the settlement is finalized.
+//
 // Settlement CONTRACT-TERMS computation engine — TIER-1 FINANCIAL, BUILD-AND-HOLD, flag OFF.
 //
 // Makes the canonical settlement engine (driver_finance.driver_settlements +
