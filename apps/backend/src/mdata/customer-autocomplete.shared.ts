@@ -29,10 +29,11 @@ export async function searchCustomersForAutocomplete(
   // but a 100-row hard clamp against ~2,700 prod customers meant a broad or common search term
   // (e.g. a common surname, or no term at all) could still legitimately exceed the cap with the
   // wanted row past position 100 and no way to reach it short of narrowing the search text
-  // further. Raised to 300 -- rows are lightweight (id/name/email/phone/mc_number), a 300-row
-  // response is trivial payload, and 300 covers the practical worst case for a single ranked
-  // search term against this company's real customer volume.
-  const limit = Math.max(1, Math.min(args.limit ?? 25, 300));
+  // further. Raised 100 -> 300, then 300 -> 2000 (A2 TURBO 2026-09-02): 300 still fell short of
+  // the WHOLE customer set for an empty search or a broad common prefix -- live largest entity
+  // (TRK) carries 1,447 active customers. Rows are lightweight (id/name/email/phone/mc_number);
+  // a 2000-row response stays trivial payload and now covers every live entity's full roster.
+  const limit = Math.max(1, Math.min(args.limit ?? 25, 2000));
   const activeOnly = args.active_only !== false;
 
   const res = await client.query<CustomerAutocompleteRow>(

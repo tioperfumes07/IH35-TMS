@@ -50,12 +50,12 @@ export function BookLoadCustomerSection({
   // that is a slice, not a search, and the customer the owner wants is frequently simply absent.
   // Now hits the server's dedicated ranked autocomplete mode (exact match, then prefix match, then
   // full-text relevance, across the WHOLE company customer set — see api/mdata.ts
-  // searchCustomersAutocomplete). Server-clamped (customer-autocomplete.shared.ts) to 300 rows per
-  // request regardless of what's asked (raised from 100 — GO-21/GO-23 A2 remainder). NOTE: this
+  // searchCustomersAutocomplete). Server-clamped (customer-autocomplete.shared.ts) to 2000 rows per
+  // request regardless of what's asked (raised 100 -> 300 -> 2000, A2 TURBO 2026-09-02). NOTE: this
   // component is currently an orphan, never rendered by the live Book Load flow (see
   // BookLoadModalV4.tsx, which has the real fix) — kept in sync anyway so it doesn't silently
   // regress if it's ever wired back in.
-  const AUTOCOMPLETE_LIMIT = 300;
+  const AUTOCOMPLETE_LIMIT = 2000;
   const [customerSearch, setCustomerSearch] = useState("");
   const dollarsToCents = (value: unknown) => {
     if (value === null || value === undefined || value === "") return 0;
