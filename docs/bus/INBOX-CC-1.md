@@ -1,30 +1,19 @@
-# INBOX-CC-1 · GO-20 FORCE · SERIAL MONEY
+# INBOX-CC-1 · GO-21 · A1 INTERCHANGE (SERIAL MONEY)
 
 `git pull --ff-only origin main`
 
-**Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/lockdown/GO-20-BUILD-THE-EIGHT-POINTER.md` · `docs/lockdown/GO-19-BUILD-QUEUE.txt` · `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
-
-**Migration lane:** HH 00–11 UTC · one money PR serial · CC-1 builds — Cursor supervises only.
-
-## SCHEMA REMINDER (read before SQL)
-- Most tables PK **`id`**. These three PK **`uuid`**: `dispatch.cargo_sensor_readings`, `maintenance.brake_projections`, `maintenance.tire_projections` — FK must say uuid or migration fails apply.
-- `mdata.units` has no company column — scope via the row that carries `operating_company_id`.
+**Law:** `claude/GO-21-DISPATCH-DEFECT-REGISTER-2026-09-02.md` · HH 00–11 UTC · claim then author.
 
 ## VOID
-- **`inventory.parts`** · **`maintenance.labor_rates` table** — FORBIDDEN (GO-20 F/G = CC-3 screen).
-- POST Book Load · seat prod money · **$7,500** (LOCKED **$7,000**).
+POST Book Load · insert broker trailers into `mdata.units` · J1 styling · BookLoadModalV4.tsx (CC-3) · $7,500 (LOCKED $7,000)
 
-## NOW (serial — one money PR at a time)
+## NOW (serial)
 
-**Cursor cloud workers are DOWN (unpaid invoice).** You build in **your** Claude session. Do not wait.
+1. **NOW — GO-21 A1** interchange data+API. No `%interchange%` table exists. Own-fleet `mdata.units` is the wrong home. Entity-scoped table + load interchange record + docs.files agreement + insurance linkage. Claim number on main first. Post ledger path to INBOX-CC-3 the moment it merges.
+2. Then **B5** pay rate from driver profile (logged override only) + **B8** cash/fuel advance (instrument #, docs.files, pending deduction).
+3. Then GO-20 tail: **A screen** → **20** settlement 5753 → F7334 remainder.
 
-0. **DONE:** slice **17** capitalize in `wo-ap-posting` — **#19510**. Threshold **700_000** cents (not 750_000). `decideRepairBooksTreatment` / `repairBooksCoaRole` wired.
-1. **DONE:** slice **C** accident liabilities — **#19523** + confirm **#19543**. Table `202613400001`. Filing creates liability · **POSTS NOTHING**. `insurance.claim.liability_id` has its other end.
-2. **NOW — slice A screen** — BE+cron+`202613420001` on main. **No frontend drift-alerts route** (`QBOSyncDriftDashboard` is QBO sync, not this). Never posts JE. Rule 6: A is not done until the screen exists.
-3. Then **20** settlement 5753 P&L **2415.11** — **this is the money item that matters.** Do not put F7334 ahead of 20 (ledger **#19553** already on main).
-4. Leftover: drop phantom `inventory.parts` / `maintenance.labor_rates` **reads** in `wo-cost-context.routes.ts`.
-
-ACK `CC-1 | ACK | GO-20 FORCE | NOW=A screen then 20 · F7334 ledger DONE #19553 · NEVER POST | GO`
+ACK `CC-1 | ACK | GO-21 | NOW=A1 interchange migration · NEVER POST · never mdata.units for broker trailers | GO`
 
 ---
 

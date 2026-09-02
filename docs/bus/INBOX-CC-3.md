@@ -1,22 +1,16 @@
-# INBOX-CC-3 · GO-20 FORCE · 19 + F/G SCREEN + PREDICTIVE
+# INBOX-CC-3 · GO-21 A2 FIRST
 
 `git pull --ff-only origin main`
 
-**Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/lockdown/GO-19-BUILD-QUEUE.txt` · `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
+**Law:** `claude/GO-21-DISPATCH-DEFECT-REGISTER-2026-09-02.md`
 
-**Migration lane:** mod-4 verify-step ≡3 · one migration author when CC-1 clear.
+No SQL. No migrations. Never POST Book Load. Do not invent type sizes — take J1 tokens.
 
-## VOID
-- **`inventory.parts`** · **`maintenance.labor_rates` table** — FORBIDDEN. Canonical: `maintenance.parts_inventory` · `catalogs.labor_rates`.
-- POST Book Load · re-ask accessorial parent (CLOSED under 4200).
+## NOW
 
-## NOW (serial)
+1. **NOW — A2** `BookLoadCustomerSection.tsx` — server-side type-ahead over the whole customer set (~2,700). Caps 500/200 are the defect (`CLS-SILENT-CAP`, `LST-PICKER-01`). Own PR. Ship first.
+2. Then wizard B1 B2 B3 B4 B7 B9.
+3. Then **A1 FE** after CC-1 posts the ledger on INBOX-CC-3 (OUR unit XOR interchange trailer).
+4. Then boards E–I on CC-2 tokens. G4: follow the owner's existing trip-pairing design.
 
-**Cursor cloud workers DOWN (unpaid invoice).** You build in **your** session.
-
-0. **DONE:** slice **19** parent 4210–4240→4200 **#19494+#19501**. F/G screen **#19508**.
-1. **DONE:** slice **B** — **#19541/#19542**. Do not re-author B.
-2. **DONE:** DRIVER-F7334 FE — **#19555** (ledger **#19553**). You are **not** blocked on CC-1 for that slice.
-3. **NOW — unique leftover FE only.** Do not take **A screen** or **20**.
-
-ACK `CC-3 | ACK | GO-20 FORCE | NOW=unique leftover FE · B+#19555 DONE · NOT blocked · NEVER POST | GO`
+ACK `CC-3 | ACK | GO-21 | NOW=A2 customer picker · NEVER POST | GO`

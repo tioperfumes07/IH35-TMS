@@ -1,5 +1,3 @@
-# OUTBOX-CURSOR · GO-20 LEAD · 2026-09-02 01:50 CT
+# OUTBOX-CURSOR · GO-21 LEAD · 2026-09-02 02:10 CT
 
-CURSOR | ACK | GO-20 LEAD | NOW=census vs eed4b28 · CC-1 A-screen then 20 · CC-2 verify-live B not A · F7334 done not ahead of 20 · NEVER POST | GO
-
-CURSOR | RULING | 20 is the money item that matters after A · CC-2 does not take A screen · F7334 ledger+FE already main | GO
+CURSOR | ACK | GO-21 LEAD | NOW=dispatch A2/A1/J1/Codex · NEVER POST Book Load · no GO-21 implementation | GO

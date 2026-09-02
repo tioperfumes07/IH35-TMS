@@ -1,21 +1,18 @@
-# INBOX-CC-2 · GO-20 FORCE · SLICE 18 · VERIFY-LIVE
+# INBOX-CC-2 · GO-21 J1 DESIGN SYSTEM
 
 `git pull --ff-only origin main`
 
-**Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
+**Law:** `claude/GO-21-DISPATCH-DEFECT-REGISTER-2026-09-02.md` section J1.
 
-**Role:** Verify-live + honest reporting. **Never build money tables** · never migrations · never GL math. CC-2 writes VERIFIED only.
+**YOU ARE NOT IDLE.** Slice 5 **#19540**, slice 8 **#19552**. This is NOW.
 
 ## VOID
-- POST Book Load · seat fixtures · **`gh pr checks --watch`** · invent tables for deferred 5/8.
+POST Book Load · money tables · migrations · page-by-page size patches (that is the banned class)
 
 ## NOW
 
-**Cursor cloud workers DOWN (unpaid invoice).** You build in **your** session.
+1. **J1** — one token set + shared components + QBO money input + rebuild BookLoadValidationSection (same size L/R, smaller boxes) + CI guard on raw sizes.
+2. Standing: verify-live `/maintenance/predictive-alerts` (#19541).
+3. Hand CC-3 the adoption list. Do **not** take A2 or A1.
 
-0. **DONE:** slice **18** N-of-10 — **#19503**.
-1. **DONE:** slice **5** cooling — **#19540**.
-2. **DONE:** slice **8** already compliant — **#19552** (no product code). Do not rebuild.
-3. **NOW — verify-live B** at `/maintenance/predictive-alerts` (shipped **#19541**, clickable, never live-verified). Do **not** take A's screen. Do not idle.
-
-ACK `CC-2 | ACK | GO-20 FORCE | NOW=verify-live B · 5+8 CLOSED · NEVER POST | GO`
+ACK `CC-2 | ACK | GO-21 | NOW=J1 design system · NEVER POST | GO`

@@ -1,22 +1,19 @@
-# INBOX-CURSOR · GO-20 LEAD · NOT A SWEEP
+# INBOX-CURSOR · GO-21 LEAD
 
 `git pull --ff-only origin main`
 
-**Law:** `.cursor/rules/00-IH35-LAW.mdc` · `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/LEAD-CENSUS.md`
+**Law:** `claude/GO-21-DISPATCH-DEFECT-REGISTER-2026-09-02.md` · `.cursor/rules/00-IH35-LAW.mdc`
 
-Truth = `git ls-tree origin/main` + `git log`, not a dirty working tree.
+GO-21 **supersedes** GO-20 tail until Book Load Chrome is clickable per register. Then GO-20: CC-1 A screen → 20 → F7334.
 
 ## VOID
 
-SWEEP-A · BOOKLOAD-ALWAYSTRACK · AUDIT-COVERAGE queue · GUARD-WORKORDERS **dispatch** (close stale = OK) · POST Book Load · Dual-Lane Downloads
+Implementing A2/A1/J1 yourself · POST Book Load · GUARD-WORKORDERS dispatch · SWEEP-A · Downloads Dual-Lane
 
 ## NOW
 
-1. Census from **current tip**.
-2. Ping:
-   - CC-1 **A screen** → **20** (F7334 not in front)
-   - CC-2 **verify-live B** — not idle, not A
-   - CC-3 unique leftover FE — F7334 FE done, not blocked
-3. FAST-MERGE green seat PRs. Deploy 5–10.
+1. Read the register. Census from `git log` / `ls-tree`.
+2. Ping: CC-3 **A2** · CC-1 **A1** · CC-2 **J1** · Codex save-block + rate-con · Devin Cancel-only · Cascade FINDING only.
+3. FAST-MERGE their green PRs. Deploy 5–10. One in-flight.
 
-ACK `CURSOR | ACK | GO-20 LEAD | NOW=A-screen CC-1 · verify-B CC-2 · leftover FE CC-3 · NEVER POST | GO`
+ACK `CURSOR | ACK | GO-21 LEAD | NOW=A2 CC-3 · A1 CC-1 · J1 CC-2 · Codex save-block/rate-con · NEVER POST | GO`

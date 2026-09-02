@@ -1,13 +1,15 @@
-# NOW-ONE-SOURCE · GO-20 · 2026-09-02 01:50 CT
+# NOW-ONE-SOURCE · GO-21 · 2026-09-02 02:10 CT
 
-**Tip:** `eed4b28a9c` (#19557). **Cursor = supervise only.** Never POST Book Load.
+**Supersedes GO-20 FORCE NOW rows.** Register: `claude/GO-21-DISPATCH-DEFECT-REGISTER-2026-09-02.md`.
 
 | Seat | FORCE |
 |------|-------|
-| **CC-1** | **A screen** → **20**. F7334 ledger done. |
-| **CC-2** | **Verify-live B** (not A). 5+8 closed. |
-| **CC-3** | Unique leftover FE. F7334 FE **#19555** done. Not blocked. |
-| **Codex** | D leftover / H prove |
-| **Cascade** | Unique FINDING · 12+13 HOLD |
-| **Devin-A** | Cancel-only |
-| **Cursor** | Census from git · ping · FAST-MERGE · deploy 5–10 |
+| **CC-3** | **A2** customer picker first |
+| **CC-1** | **A1** interchange migration |
+| **CC-2** | **J1** design system |
+| **Codex** | Save-block + rate-con |
+| **Cascade** | Unique FINDING |
+| **Devin-A** | Cancel-only · never POST |
+| **Cursor** | Lead · FAST-MERGE · deploy |
+
+Then GO-20 tail: CC-1 A screen → 20 → F7334. CC-3 A1 FE after A1 on main.
