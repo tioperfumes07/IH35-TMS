@@ -52,6 +52,7 @@ import { RoadServiceList } from "./RoadServiceList";
 import { SevereRepairOosTab } from "./components/SevereRepairOosTab";
 import { TriageModal } from "./components/TriageModal";
 import { BrakeWearDashboard } from "./brakes/BrakeWearDashboard";
+import { PredictiveAlertsPage } from "./PredictiveAlertsPage";
 import { PreFlightDvirQueue } from "./pre-flight/PreFlightDvirQueue";
 import { TireWearDashboard } from "./tires/TireWearDashboard";
 import { WorkOrderDetailModal } from "../../components/maintenance/WorkOrderDetailModal";
@@ -83,6 +84,7 @@ const SUBNAV = [
   { id: "road_service", label: "Road Service" },
   { id: "parts_inventory", label: "Parts Inventory" },
   { id: "brake_wear", label: "Brake Wear" },
+  { id: "predictive_alerts", label: "At Risk" },
   { id: "tire_wear", label: "Tire Wear" },
   { id: "pre_flight_dvir", label: "Pre-Flight DVIR" },
   { id: "settings", label: "Settings" },
@@ -560,6 +562,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       {tab === "tire_wear" ? (
         <div data-testid="maintenance-tire-wear-tab" data-maintenance-tab="tire_wear">
           <TireWearDashboard />
+        </div>
+      ) : null}
+
+      {tab === "predictive_alerts" ? (
+        <div data-testid="maintenance-predictive-alerts-tab" data-maintenance-tab="predictive_alerts">
+          <PredictiveAlertsPage />
         </div>
       ) : null}
 

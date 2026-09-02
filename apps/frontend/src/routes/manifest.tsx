@@ -2188,6 +2188,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/maintenance/predictive-alerts"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="predictive_alerts" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/cash-advances"
           element={
             <ProtectedRoute>

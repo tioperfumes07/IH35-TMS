@@ -2106,6 +2106,57 @@ export function triageMaintenanceDvirDefect(
   }>(`/api/v1/maintenance/dvir-defects/${encodeURIComponent(id)}/triage`, { method: "POST", body });
 }
 
+// GO-20 slice B — Predictive Maintenance Alerts (docs/lockdown/GO-20-EIGHT-FEATURES.txt).
+export type PredictiveAlertType = "brake_wear" | "tire_tread";
+export type PredictiveAlertSeverity = "warning" | "critical";
+
+export type PredictiveAlertRow = {
+  id: string;
+  unit_id: string;
+  unit_number: string | null;
+  alert_type: PredictiveAlertType;
+  position_code: string;
+  current_measure: number;
+  threshold_measure: number;
+  measure_unit: string;
+  projected_failure_date: string;
+  days_remaining: number;
+  severity: PredictiveAlertSeverity;
+  work_order_id: string | null;
+  work_order_display_id: string | null;
+  resolved_at: string | null;
+  resolution_note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export function listMaintenancePredictiveAlerts(
+  operatingCompanyId: string,
+  params: { state?: "open" | "resolved"; limit?: number; offset?: number } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.state) q.set("state", params.state);
+  if (params.limit != null) q.set("limit", String(params.limit));
+  if (params.offset != null) q.set("offset", String(params.offset));
+  return apiRequest<{ alerts: PredictiveAlertRow[]; total_count: number }>(
+    `/api/v1/maintenance/predictive-alerts?${q.toString()}`
+  );
+}
+
+export function createWorkOrderFromPredictiveAlert(id: string, operatingCompanyId: string) {
+  return apiRequest<{ ok: true; work_order_id: string; display_id: string | null; alreadyConverted?: boolean }>(
+    `/api/v1/maintenance/predictive-alerts/${encodeURIComponent(id)}/create-work-order`,
+    { method: "POST", body: { operating_company_id: operatingCompanyId } }
+  );
+}
+
+export function resolveMaintenancePredictiveAlert(id: string, operatingCompanyId: string, resolutionNote: string) {
+  return apiRequest<{ ok: true }>(`/api/v1/maintenance/predictive-alerts/${encodeURIComponent(id)}/resolve`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, resolution_note: resolutionNote },
+  });
+}
+
 export type PmAutoEngineRunRow = {
   id: string;
   started_at: string | null;
