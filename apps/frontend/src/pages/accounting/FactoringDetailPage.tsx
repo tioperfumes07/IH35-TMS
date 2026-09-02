@@ -35,7 +35,7 @@ function money(cents: number) {
 }
 
 function statusPill(status: FactoringAdvanceDetail["status"]) {
-  const base = "rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
+  const base = "rounded-sm px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide";
   if (status === "advanced") return `${base} bg-slate-100 text-slate-700 border border-slate-300`;
   if (status === "reserve_held" || status === "collected") return `${base} bg-slate-50 text-slate-600 border border-slate-200`;
   if (status === "released") return `${base} bg-slate-100 text-slate-700 border border-slate-200`;
@@ -417,20 +417,20 @@ export function FactoringDetailPage() {
           {action === "recourse" ? (
             <label className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-gray-600">Recourse reason</span>
-              <textarea className="min-h-[80px] rounded-sm border border-gray-300 p-2 text-[13px]" value={recourseReason} onChange={(event) => setRecourseReason(event.target.value)} />
+              <textarea className="min-h-[80px] rounded-sm border border-gray-300 p-2 text-xs" value={recourseReason} onChange={(event) => setRecourseReason(event.target.value)} />
             </label>
           ) : null}
           {action === "void" ? (
             <label className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-gray-600">Void reason</span>
-              <textarea className="min-h-[80px] rounded-sm border border-gray-300 p-2 text-[13px]" value={voidReason} onChange={(event) => setVoidReason(event.target.value)} />
+              <textarea className="min-h-[80px] rounded-sm border border-gray-300 p-2 text-xs" value={voidReason} onChange={(event) => setVoidReason(event.target.value)} />
             </label>
           ) : null}
 
           {action && action !== "recourse" && action !== "void" ? (
             <label className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-gray-600">Notes</span>
-              <textarea className="min-h-[80px] rounded-sm border border-gray-300 p-2 text-[13px]" value={notes} onChange={(event) => setNotes(event.target.value)} />
+              <textarea className="min-h-[80px] rounded-sm border border-gray-300 p-2 text-xs" value={notes} onChange={(event) => setNotes(event.target.value)} />
             </label>
           ) : null}
         </div>

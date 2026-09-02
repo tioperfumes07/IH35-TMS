@@ -169,7 +169,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
               <input
                 value={entityLabel(bill.vendor_name, bill.vendor_id, "Vendor")}
                 readOnly
-                className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]"
+                className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs"
               />
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -177,7 +177,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
               {/* LINK-F5188: bill.id is real (used at submission time below) but this field only
                   ever rendered it as disabled plain text -- same pattern PayBillModal.tsx already
                   uses for the same kind of bill via ACH/check/wire. */}
-              <div className="flex h-9 items-center rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]">
+              <div className="flex h-9 items-center rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs">
                 <EntityLink kind="bill" id={bill.id} label={visibleDocumentLabel(bill.bill_number, bill.id, "Bill")} />
               </div>
             </label>
@@ -194,7 +194,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
               <input
                 value={money(remainingCents)}
                 readOnly
-                className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]"
+                className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs"
               />
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
@@ -216,7 +216,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
                 rows={3}
                 value={memo}
                 onChange={(event) => setMemo(event.target.value)}
-                className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               />
             </label>
           </div>

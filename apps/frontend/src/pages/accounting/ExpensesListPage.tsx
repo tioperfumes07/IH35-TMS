@@ -68,15 +68,15 @@ function StatusPill({ status }: { status: Exclude<ExpenseListStatus, "active"> |
       : status === "posted"
         ? "bg-slate-100 text-slate-700"
         : "bg-gray-100 text-gray-600";
-  return <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${cls}`}>{status}</span>;
+  return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${cls}`}>{status}</span>;
 }
 
 function MatchPill({ matched }: { matched: boolean }) {
   // §7-clean: slate for matched, gray for unmatched. No emoji/checkmark, no green.
   return matched ? (
-    <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">Matched</span>
+    <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Matched</span>
   ) : (
-    <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-500">Unmatched</span>
+    <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500">Unmatched</span>
   );
 }
 
@@ -458,7 +458,7 @@ export function ExpensesListPage() {
             <SelectCombobox
               value={staged.draft.status}
               onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value as "" | ExpenseListStatus })}
-              className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]"
+              className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
             >
               {STATUS_OPTIONS.map((o) => (
                 <option key={o.label} value={o.value}>
