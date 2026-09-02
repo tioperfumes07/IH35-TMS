@@ -1,6 +1,8 @@
 # GO-18 — Load Costs and lineage map (2026-09-01)
 
-**Status:** design law. Software map is **incomplete** until Costs writes the same posters as Accounting and both-way drills exist. This file is the map, not a second product.
+**Status:** design law. **Incomplete in product:** Costs tab is **not** the 13th load-detail tab yet; Costs Board is **not** mounted; F+R expense/bill/JE/bank drills from a load are **not** live. This file is the map, not a second product.
+
+**Complete software inventory (git download):** [`docs/lockdown/IH35-SOFTWARE-MAP/INDEX.html`](./IH35-SOFTWARE-MAP/INDEX.html) · interactive [`IH35-SOFTWARE-MAP-COMPLETE.html`](./IH35-SOFTWARE-MAP/map/IH35-SOFTWARE-MAP-COMPLETE.html) · findings [`MAP-FINDINGS.md`](./IH35-SOFTWARE-MAP/MAP-FINDINGS.md). Cascade rebuilt 584 screens / 150 modals / 2136 endpoints. **Do not treat missing tables as High crashes** — those were reclassified as guarded empty (`MAP-FINDINGS.md`).
 
 USMCA only. NO-SEAT prod financial fixtures.
 
@@ -33,13 +35,15 @@ Cash Flow / reports
 
 ## Not a second load page
 
-| Surface | Job |
-|---------|-----|
-| **Load detail → Costs** | Per-load: add/list costs, F+R to expense/bill/JE/bank, approx margin. |
-| **Costs Board** (`/dispatch/costs` or dispatch sub-nav) | Home of incomplete / unlinked / unpaid load costs. Clicking a row opens **the same load detail Costs tab**. |
-| Accounting Expenses / Bills lists | Canonical money chrome. Costs must deep-link here, never clone the wizard. |
-| Banking | Match/payoff of those same documents. |
-| Settlements | Driver-facing remainder of the same costs. |
+| Surface | Job | In map / in product |
+|---------|-----|---------------------|
+| **Load detail → Costs** | 13th tab. Per-load: add/list costs, F+R to expense/bill/JE/bank, approx margin. | Mock: `IH35-SOFTWARE-MAP/designs/Load Costs Tab.html`. **Not mounted** on live load detail (still 12 tabs). |
+| **Costs Board** (`/dispatch/costs` or dispatch sub-nav) | Home of incomplete / unlinked / unpaid load costs. Clicking a row opens **the same load detail Costs tab**. | Mock: `IH35-SOFTWARE-MAP/designs/Load Costs Board Home Page.html`. **No live `/dispatch/costs` leaf** until Codex FE hop. |
+| Accounting Expenses / Bills lists | Canonical money chrome. Costs must deep-link here, never clone the wizard. | In the complete map under Accounting screens + `POST /api/v1/expenses` / bills. **Wired.** |
+| Banking | Match/payoff of those same documents. | Map: banking endpoints. **97.5% unmatched = owner categorizes — do not invent GL.** |
+| Settlements | Driver-facing remainder of the same costs. | Map: settlements screens. Load-cost remainder **incomplete** until Costs writes load FKs. |
+
+Search the interactive map for `expenses`, `bills`, `bank_transactions`, then `loads` — that is the money chain Costs must reuse. Do not add a parallel costs ledger table.
 
 If a coder builds a standalone “Load Costs module” with its own tables, that is a defect.
 
@@ -87,3 +91,4 @@ On the Costs tab: **linehaul (typed rate) − sum(linked expenses + bills + esti
 | Unique 500/dead/silent | Cascade / Devin-A |
 | Capitalize threshold / accessorial parent | **Jorge only** |
 | 97.5% bank unmatched GL | **Jorge categorizes** |
+| Software map “High” missing tables | **CLOSED.** Cascade re-read: guarded empty / unmounted / extractor noise. Do not rebuild as High. |

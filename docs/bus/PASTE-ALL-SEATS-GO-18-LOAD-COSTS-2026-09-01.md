@@ -2,7 +2,12 @@
 
 **Live:** API `healthz/shallow` **12bfbd6** (GO-16 miles + GO-17 Save proof). USMCA only. NO-SEAT prod money.
 
-**Download:** `docs/lockdown/GO-18-LOAD-COSTS-DESIGN.md` · `docs/lockdown/GO-18-LOAD-COSTS-DESIGN.html` · `docs/lockdown/GO-18-LOAD-COSTS-AND-LINEAGE-MAP.md`
+**Download (git, not Downloads-only):**
+
+- **Software map X:** `docs/lockdown/IH35-SOFTWARE-MAP/INDEX.html` · `docs/lockdown/IH35-SOFTWARE-MAP/MAP-FINDINGS.md` · `docs/lockdown/IH35-SOFTWARE-MAP/map/IH35-SOFTWARE-MAP-COMPLETE.html`
+- **GO-18 design Y:** `docs/lockdown/GO-18-LOAD-COSTS-DESIGN.md` · `docs/lockdown/GO-18-LOAD-COSTS-DESIGN.html` · `docs/lockdown/GO-18-LOAD-COSTS-AND-LINEAGE-MAP.md`
+
+Zip ~3.3 MB stays local: `~/Downloads/IH35-DELIVERABLES.zip` (xlsx not ingested).
 
 **Measured (do not re-ask Jorge):**
 
@@ -18,6 +23,7 @@
 | GO-17 unbuilt | **Shipped** #19428. Live on 12bfbd6. |
 | Mark Disbursed silent no-op | **Merged #19433** on origin/main. Grep before rebuild. |
 | Invent bank GL for 97.5% unmatched | **FORBIDDEN.** Owner categorizes. |
+| Map missing tables = High crash | **FALSE.** Cascade reclassified: guarded empty. Do not rebuild High list. |
 
 Capitalize / accessorial = **only genuine remaining owner questions.** All other “owner Q” in this wave are VOID.
 
@@ -44,7 +50,7 @@ CC-2 | ACK | NOW=verify-live escrow AFTER CC-1 report · grep scripts/verify-sta
 ## PASTE → CC-3
 
 ```
-CC-3 | ACK | NOW=Check ZIP 183 Option 1 EXECUTE on Neon mdata.load_stops.postal_code (#19419 LAW not AskQuestion) · apply #19414 city-alias MERGE decisions to catalogs.lane_mileage / seed ON CONFLICT if not applied · NEVER geography default ZIP · NEVER rebuild city-alias 63/63 · NEVER flip autofill_allowed on Check ZIP · NEVER #19305 · NEVER seat money | GO
+CC-3 | ACK | NOW=Check ZIP 183 Option 1 EXECUTE on Neon mdata.load_stops.postal_code (#19419 LAW) · apply #19414 city-alias MERGE to seed ON CONFLICT if not applied · NEVER rebuild city-alias 63/63 · NEVER geography default ZIP · NEVER flip autofill_allowed on Check ZIP · NEVER #19305 · NEVER seat money · map is in-repo docs/lockdown/IH35-SOFTWARE-MAP/ — do not rebuild extractor | GO
 ```
 
 ---

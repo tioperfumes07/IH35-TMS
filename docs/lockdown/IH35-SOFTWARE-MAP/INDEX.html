@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IH35 software map — git download</title>
+<style>
+:root{--ink:#0f1620;--ink2:#3b4655;--muted:#6b7787;--paper:#eef1f5;--card:#fff;--rule:#d2d9e3;--accent:#24467d}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:16px;line-height:1.55}
+.wrap{max-width:880px;margin:0 auto;padding:40px 22px 90px}
+h1{font-size:clamp(28px,4vw,42px);margin:0 0 12px}h2{font-size:22px;margin:24px 0 8px}
+.lead{color:var(--ink2);max-width:70ch}
+.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600}
+header{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:28px}
+ul{list-style:none;margin:0;padding:0;border:1px solid var(--rule)}
+li{background:var(--card);border-bottom:1px solid var(--rule)}li:last-child{border-bottom:0}
+a{display:block;padding:12px 14px;color:var(--ink);text-decoration:none}a:hover{color:var(--accent);background:#f7f8fa}
+footer{margin-top:28px;color:var(--muted);font-size:13px;max-width:70ch}
+code{font-size:.9em}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div class="eyebrow">IH35 TMS · in-repo</div>
+<h1>Complete software map</h1>
+<p class="lead">Git-downloadable copy of Cascade’s 2026-09-01 rebuild. Open the HTML files in a browser. Counts: 584 screens · 150 modals · 2136 endpoints. Nothing here writes to production.</p>
+</header>
+
+<h2>The map</h2>
+<ul>
+<li><a href="map/IH35-SOFTWARE-MAP-COMPLETE.html">Interactive map (IH35-SOFTWARE-MAP-COMPLETE.html)</a></li>
+<li><a href="MAP-FINDINGS.md">MAP-FINDINGS.md — counts and honest gaps (no High crashes)</a></li>
+<li><a href="README.md">README.md — what is in git vs Downloads zip</a></li>
+</ul>
+
+<h2>GO-18 Load Costs (design law + mocks)</h2>
+<ul>
+<li><a href="../GO-18-LOAD-COSTS-DESIGN.html">GO-18 design HTML (law twin)</a></li>
+<li><a href="../GO-18-LOAD-COSTS-DESIGN.md">GO-18 design MD</a></li>
+<li><a href="../GO-18-LOAD-COSTS-AND-LINEAGE-MAP.md">GO-18 lineage map (Costs tab · Costs Board · expense/bill/bank chain)</a></li>
+<li><a href="designs/Load%20Costs%20Tab.html">Mock: Load Costs tab (13th on load detail)</a></li>
+<li><a href="designs/Load%20Costs%20Board%20Home%20Page.html">Mock: Costs Board home</a></li>
+</ul>
+
+<footer>
+Ingested from <code>~/Downloads/IH35-DELIVERABLES/</code>. Full zip (~3.3 MB, includes xlsx) is <strong>not</strong> in git: <code>~/Downloads/IH35-DELIVERABLES.zip</code>. Extractor SHA <code>5ee312cf0</code>. Incomplete: Costs tab and Costs Board are <em>not mounted</em> in the live app until a later PR.
+</footer>
+</div>
+</body>
+</html>
