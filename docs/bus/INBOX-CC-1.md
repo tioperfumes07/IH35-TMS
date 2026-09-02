@@ -13,8 +13,14 @@ Miles / GO-16 (Cursor alone) · remake N1 (expense #19641 + bill/BP #19676 are D
    - Settlement display number via `lib.trace_counters` — match existing `LD` **or** `LOAD` (whichever the load allocator uses). Never invent a third. Never `MAX()+1`.
    - Manual attach / detach / close-early in the **same** slice.
    - Every settlement: balanced JE, load/unit/driver links, three dates, void = reversal with a register.
-2. **ONE OPEN OWNER DECISION — ask before coding the close rule:**
-   NB + two TRs, no SB yet, driver needs paying — does pre-settlement **close early**, or stay open until Laredo?
+2. **CLOSE RULE — LOCKED (Jorge 17:20Z). Build against this; do not re-derive.**
+   - Boundary = **tour** (leave home → return home), not one load, not a date range.
+   - Home base = **23918 Mines Rd, Laredo TX 78045** (geofence that address).
+   - Load mint → enters a **pre-settlement**. Settlement stays OPEN while the driver still physically has a load.
+   - Truck inside Laredo geofence with **no load** = closeable. Southbound leg does **not** close it. Deadhead back to yard must **prompt**, not assume.
+   - At close: accountant/admin/owner decides pay timing. Outstanding loan/debt → **blocking** pop-up (cannot skip/defer). Wire recovery policy as **config** (5% net-pay floor vs full deduct first) — **Jorge still decides which**; do not hardcode.
+   - B1 = hired drivers. **FUEL is truck operating cost** (fuel card / Corpay) — **never** a settlement deduction.
+   - Three dates: incurred / due / paid — never collapse.
 3. Kill the **2 remaining USMCA sample drivers**. Counts before/after.
 
 ACK `CC-1 | ACK | GO-22 ONLY · sample drivers · N1 already shipped · NEVER POST | GO`
