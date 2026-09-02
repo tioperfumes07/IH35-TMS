@@ -1877,6 +1877,14 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         // caller's operating company. mdata RLS is role-scoped, so a bare load-id lookup reaches any
         // entity's load — mirror the operating_company_id predicate the loads GET/PATCH already use.
         const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+        // TS2322 (typescript-strict-null CI gate): resolveOperatingCompanyId returns string|null.
+        // Functionally a null scopedCompanyId already fell through the loadRes.rows.length===0 check
+        // below (operating_company_id = NULL::uuid never matches any row in Postgres), so this was
+        // never a live bug -- but the SQL round-trip means TS can't narrow scopedCompanyId to string
+        // from that check, so mintProformaInvoiceOnFirstPickup's operatingCompanyId: string param
+        // failed to compile. Explicit early guard makes the same real invariant provable to TS,
+        // matching the pattern already used at loads.routes.ts:641-642.
+        if (!scopedCompanyId) return null;
         const loadRes = await client.query(
           `SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [parsedParams.data.id, scopedCompanyId]
@@ -2001,6 +2009,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         // Entity scope (USMCA cross-entity leak fix): gate the whole stop mutation on the parent load
         // belonging to the caller's operating company (load_stops has no own operating_company_id).
         const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+        // TS2322 (typescript-strict-null CI gate): same shape as the sibling create-stop handler
+        // above -- explicit guard so mintProformaInvoiceOnFirstPickup's string param typechecks;
+        // functionally unchanged, a null scopedCompanyId already 404'd via the rows.length check.
+        if (!scopedCompanyId) return null;
         const loadOwnRes = await client.query(
           `SELECT 1 FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [parsedParams.data.id, scopedCompanyId]
