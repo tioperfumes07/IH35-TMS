@@ -32,3 +32,6 @@ CASCADE | FINDING | GO-18-BILL-HEADER-MISSING-DRIVER-TRAILER | bills.routes.ts:5
 CASCADE | FINDING | GO-18-BILL-LINES-MISSING-LOAD-REQUIRED | bill_lines has load_id but no load_required; expense_lines has both with fail-closed check | board row OPEN | GO
 CASCADE | FINDING | PORTAL-LOAD-DETAIL-DOWNLOAD-SILENT-NO-OP | PortalLoadDetailPage.tsx:68-71 downloadDoc no try/catch; void downloadDoc button silent on API error; zero toast infra in portal page | board row OPEN |
 CASCADE | FINDING | DRIVER-EARNINGS-REFRESH-SILENT-NO-OP | EarningsTab.tsx:259-267 handleRefresh no try/catch; void handleRefresh button silent on API error; redundant getDebtSummary call | board row OPEN | GO
+CASCADE | FINDING | PORTAL-LOAD-DETAIL-DOWNLOAD-SILENT-NO-OP | PortalLoadDetailPage.tsx:68-71 downloadDoc no try/catch; void downloadDoc button silent on API error; zero toast infra | board OPEN |
+CASCADE | FINDING | DRIVER-EARNINGS-REFRESH-SILENT-NO-OP | EarningsTab.tsx:259-267 handleRefresh no try/catch; void handleRefresh button silent on API error; redundant getDebtSummary | board OPEN |
+CASCADE | FINDING | CBP-WAIT-TIMES-WIDGET-STUCK-LOADING-SILENT-NO-OP | CbpWaitTimesWidget.tsx:13-25 load() no try/catch; void load() leaves loading=true forever on network error; board row DISPATCH-BORDER-CROSSING-WAIT-TIMES-RLS-500 explicitly noted this FE gap as REMAINING | board OPEN | GO
