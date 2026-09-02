@@ -1,6 +1,4 @@
-# INBOX-DEVIN-A · RETIRED · 2026-09-02
-
-**STALE PURGE (OWNER):** GO-21 Cancel walks, GO-20 ACK, and every OUTBOX VERIFY line are **VOID**.
+# INBOX-DEVIN-A · RETIRED · 2026-09-02 17:33 CT
 
 Owner removed Devin (usage). **Do not walk. Do not ACK. Do not POST.**
 

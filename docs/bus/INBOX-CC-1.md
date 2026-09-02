@@ -1,27 +1,19 @@
-# INBOX-CC-1 · TURBO · 2026-09-02 16:27 CT
+# INBOX-CC-1 · AUTO · 2026-09-02 17:33 CT
 
 `git pull --ff-only origin/main`
 
 Miles: `docs/bus/MILES-SPEC-DISPATCH-FINAL-2026-09-02.md`
-Owner: `docs/bus/OWNER-ORDER-STOP-PURGE-BUILD-ENGINES-2026-09-02.md`
-FAST-MERGE. Never POST. Never idle.
+FAST-MERGE. Never POST. Never idle. Never rebuild GO-18 Gap 5.
 
 ## NOW
 
 ```
-CC-1 — BUILD MILES + SETTLEMENT ENGINES NOW. TURBO.
+CC-1 — WAVE 1 MONEY PATHS + ENGINES. AUTO.
 
-Three stored numbers. Two pay lines. rate_empty per driver. Deadhead COMPUTE all entities. Blank if unknown.
-Parallel: A1 interchange data + N1 load→expense.
-Then GO-22a. Purge = background only. Bank 395 uncategorized.
+A1 interchange data (never put a non-owned trailer in mdata.units) + N1 load→expense.
+Miles + settlement engines: three stored numbers, two pay lines, rate_empty, deadhead COMPUTE, blank if unknown.
+Then GO-22a settlement number — match LOAD counter, never MAX+1.
+Load begin/end dates spec AFTER that (docs/specs/LOAD-BEGIN-END-DATES-SPEC-2026-09-02.md).
 ```
 
-ACK `CC-1 | ACK | turbo miles+settlement · NEVER POST | GO`
-
-## ROUTED FROM CC-3 (RULING 4, owner 2026-09-02) — not urgent, pick up after miles/settlement
-
-Load begin/end dates spec, migration lane only (not built, not touched by CC-3):
-`docs/specs/LOAD-BEGIN-END-DATES-SPEC-2026-09-02.md` — additive `mdata.loads.planned_start_at` /
-`planned_end_at` (timestamptz, nullable), rollup of `load_stops` pickup/delivery
-`scheduled_arrival_at`, idempotent backfill SQL included. Deliberately does NOT touch `tour_id` /
-build a `tours` table — that's your GO-22 territory, not duplicated here.
+ACK `CC-1 | ACK | auto A1+N1 · miles/settlement · GO-22a · NEVER POST | GO`
