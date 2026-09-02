@@ -109,8 +109,8 @@ export function BookLoadStopsSection({
           return (
             <div key={field.id} data-testid={`stop-card-${index}`} className="overflow-hidden rounded-sm border border-gray-200 bg-white">
               {/* render-v6 .stop header bar + tag. §7 recolors v6 blue/green → navy/slate. */}
-              <div className={`flex items-center gap-2 px-2 py-1 text-[10.5px] font-bold tracking-[0.03em] ${isPickup ? "bg-[#1F2A44] text-white" : "bg-slate-200 text-slate-800"}`}>
-                <span className={`rounded-sm px-1.5 py-0.5 text-[9px] font-semibold uppercase ${isPickup ? "bg-white/20 text-white" : "bg-slate-600 text-white"}`}>
+              <div className={`flex items-center gap-2 px-2 py-1 text-[11px] font-bold tracking-[0.03em] ${isPickup ? "bg-[#1F2A44] text-white" : "bg-slate-200 text-slate-800"}`}>
+                <span className={`rounded-sm px-1.5 py-0.5 text-[11px] font-semibold uppercase ${isPickup ? "bg-white/20 text-white" : "bg-slate-600 text-white"}`}>
                   {isPickup ? "PICKUP" : "DELIVERY"}
                 </span>
                 <span>Stop {index + 1}</span>
@@ -118,7 +118,7 @@ export function BookLoadStopsSection({
                   {`${currentStops[index]?.address_full || currentStops[index]?.address_line1 || (isPickup ? "first stop is always a pickup" : "auto-added because a pickup exists")}`}
                 </span>
                 {index >= 2 ? (
-                  <button type="button" className={`text-[10px] font-semibold ${isPickup ? "text-white" : "text-[#dc2626]"}`} onClick={() => remove(index)}>
+                  <button type="button" className={`text-xs font-semibold ${isPickup ? "text-white" : "text-[#dc2626]"}`} onClick={() => remove(index)}>
                     Remove
                   </button>
                 ) : null}
