@@ -15,6 +15,7 @@ const SKIP = new Set([
   "docs/lockdown/TEST-LABEL-G1-AND-CUTOVER-FALSE-ALARM-LAW-2026-08-28.md",
   "docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md",
   "docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md",
+  "docs/lockdown/SAMPLE-DATA-PURGE-LAW-2026-09-02.md",
 ]);
 
 const BULK = [
