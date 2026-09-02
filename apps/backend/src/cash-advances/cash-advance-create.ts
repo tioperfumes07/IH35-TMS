@@ -149,6 +149,88 @@ export async function createDriverCashAdvanceCore(
   companyId: string,
   body: CreateDriverCashAdvanceCoreInput
 ): Promise<CreateDriverCashAdvanceCoreResult> {
+  // B5 OVERFLOW SPLIT (owner direct instruction, 2026-09-02): "load pays the driver $500, he
+  // needs $1,000 -> $500 clears the bill payment, $500 becomes a LOAN TO THE DRIVER, an ASSET to
+  // us." When this advance is linked to a driver_finance.driver_bills row, the amount that
+  // actually attaches to that bill is capped at the bill's REMAINING balance
+  // (gross_amount_cents minus every prior non-voided advance already linked to it, so a partial
+  // draw-down over several advances is honored, not just the first one). Anything requested
+  // beyond that recurses through this exact function once more as a genuinely separate,
+  // unlinked LOAN liability — never a bigger single row silently overstating what one load
+  // actually owes the driver. The recursive call never carries linked_driver_bill_id, so this
+  // cannot loop past one level.
+  if (body.linked_driver_bill_id) {
+    const billRes = await client.query(
+      `
+        SELECT gross_amount_cents
+        FROM driver_finance.driver_bills
+        WHERE id = $1
+          AND operating_company_id = $2
+        LIMIT 1
+      `,
+      [body.linked_driver_bill_id, companyId]
+    );
+    const bill = billRes.rows[0];
+    if (!bill) return { ok: false, code: 404, error: "linked_driver_bill_not_found" };
+
+    const priorRes = await client.query(
+      `
+        SELECT COALESCE(SUM(amount), 0) AS covered
+        FROM driver_finance.driver_advances
+        WHERE operating_company_id = $1
+          AND linked_driver_bill_id = $2
+          AND voided_at IS NULL
+      `,
+      [companyId, body.linked_driver_bill_id]
+    );
+    const grossCents = Math.round(Number(bill.gross_amount_cents ?? 0));
+    const coveredCents = Math.round(Number(priorRes.rows[0]?.covered ?? 0) * 100);
+    const remainingCents = Math.max(0, grossCents - coveredCents);
+    const requestedCents = Math.round(body.amount * 100);
+
+    if (requestedCents > remainingCents) {
+      const overflowCents = requestedCents - remainingCents;
+      const overflowNote = `Overflow beyond driver_bill ${body.linked_driver_bill_id} remaining balance $${(remainingCents / 100).toFixed(2)} — booked as a separate loan per owner's advance/bill-payment/loan-overflow rule.`;
+
+      let primary: CreateDriverCashAdvanceCoreResult | null = null;
+      if (remainingCents > 0) {
+        primary = await createDriverCashAdvanceCore(client, actorUserUuid, companyId, {
+          ...body,
+          amount: remainingCents / 100,
+        });
+        if (!primary.ok) return primary;
+      }
+
+      const overflow = await createDriverCashAdvanceCore(client, actorUserUuid, companyId, {
+        ...body,
+        amount: overflowCents / 100,
+        linked_driver_bill_id: null,
+        liability_type: "loan",
+        recipient_info: {
+          ...body.recipient_info,
+          notes: [body.recipient_info.notes ?? null, overflowNote].filter(Boolean).join("; "),
+        },
+      });
+      if (!overflow.ok) return overflow;
+
+      const primaryResult = primary ?? overflow;
+      return {
+        ...primaryResult,
+        data: {
+          ...primaryResult.data,
+          overflow_loan: primary
+            ? {
+                advance_id: overflow.advanceId,
+                liability_id: overflow.liabilityId,
+                display_id: overflow.displayId,
+                amount_cents: overflowCents,
+              }
+            : null,
+        },
+      };
+    }
+  }
+
   const economicRouting = resolveEconomicRouting(body.purpose, body.economic_routing);
   const isLoadExpense = economicRouting === "load_expense";
 
