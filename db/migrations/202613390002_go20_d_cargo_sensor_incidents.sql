@@ -35,6 +35,19 @@ CREATE TABLE IF NOT EXISTS dispatch.cargo_sensor_incidents (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'cargo_sensor_incidents_breach_kind_check'
+      AND conrelid = 'dispatch.cargo_sensor_incidents'::regclass
+  ) THEN
+    ALTER TABLE dispatch.cargo_sensor_incidents
+      ADD CONSTRAINT cargo_sensor_incidents_breach_kind_check
+      CHECK (breach_kind IN ('temperature', 'humidity', 'door'));
+  END IF;
+END $$;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_cargo_incident_open_per_sensor_kind
   ON dispatch.cargo_sensor_incidents (operating_company_id, sensor_id, breach_kind)
   WHERE ended_at IS NULL AND voided_at IS NULL;
@@ -43,6 +56,11 @@ CREATE INDEX IF NOT EXISTS ix_cargo_incident_open_critical
   ON dispatch.cargo_sensor_incidents (operating_company_id, started_at DESC)
   WHERE resolved_at IS NULL AND voided_at IS NULL;
 
+
+
+CREATE INDEX IF NOT EXISTS ix_cargo_incident_load
+  ON dispatch.cargo_sensor_incidents (operating_company_id, load_id, started_at DESC)
+  WHERE voided_at IS NULL;
 ALTER TABLE dispatch.cargo_sensor_incidents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dispatch.cargo_sensor_incidents FORCE ROW LEVEL SECURITY;
 

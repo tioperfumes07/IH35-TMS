@@ -210,6 +210,7 @@ import { registerCap12TireTreadRoutes } from "./integrations/samsara/cap-12-tire
 import { initializeCap12TireTreadWorker } from "./jobs/cap-12-tire-tread-worker.js";
 import { registerCap13BrakeWearRoutes } from "./integrations/samsara/cap-13-brake-wear/routes.js";
 import { initializeCap13BrakeWearWorker } from "./jobs/cap-13-brake-wear-worker.js";
+import { initializePredictiveAlertsWorker } from "./jobs/predictive-alerts-worker.js";
 import { registerReportCategoryCatalogRoutes } from "./reports/categories/routes.js";
 import { registerPhotoComparisonRoutes } from "./safety/photo-comparison/routes.js";
 import { registerSafetyDriverProfileRoutes } from "./safety/driver-profile.routes.js";
@@ -283,6 +284,7 @@ import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.rout
 import { registerMaintenanceSettingsRoutes } from "./maintenance/settings.routes.js";
 import { registerMaintenanceDashboardKpisRoutes } from "./maintenance/dashboard-kpis.routes.js";
 import { registerMaintenancePmAlertsRoutes } from "./maintenance/pm-alerts.routes.js";
+import { registerMaintenancePredictiveAlertsRoutes } from "./maintenance/predictive-alerts.routes.js";
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
 import { registerMaintenanceArrivingSoonRoutes } from "./maintenance/arriving-soon.routes.js";
 import { registerRoadServiceTicketRoutes } from "./maintenance/road-service/tickets.routes.js";
@@ -549,6 +551,7 @@ import {
 import { initializeDriverScoringAggregatorWorker } from "./jobs/driver-scoring-aggregator-worker.js";
 import { registerPreDispatchValidationRoutes } from "./dispatch/validation/pre-dispatch.routes.js";
 import { registerCap14CargoSensorRoutes } from "./integrations/samsara/cap-14-cargo-sensors/routes.js";
+import { registerCargoSensorIncidentRoutes } from "./dispatch/cargo-sensor-incidents.routes.js";
 import { initializeCap14CargoSensorWorker, stopCap14CargoSensorWorker } from "./jobs/cap-14-cargo-sensor-worker.js";
 import { registerDispatchAuthGateRoutes } from "./dispatch/auth-gates/routes.js";
 import { registerAnomalyDetectionRoutes } from "./safety/anomaly/routes.js";
@@ -922,6 +925,7 @@ async function main() {
   await registerLateArrivalAnalyticsRoutes(app);
   await registerPreDispatchValidationRoutes(app);
   await registerCap14CargoSensorRoutes(app);
+  await registerCargoSensorIncidentRoutes(app);
   await registerDispatchAuthGateRoutes(app);
   await registerAnomalyDetectionRoutes(app);
   await registerDispatchDetentionApprovalRoutes(app);
@@ -1100,6 +1104,7 @@ async function main() {
   await registerMaintenanceDashboardRoutes(app);
   await registerMaintenanceSettingsRoutes(app);
   await registerMaintenancePmAlertsRoutes(app);
+  await registerMaintenancePredictiveAlertsRoutes(app);
   await registerMaintenanceTriageRoutes(app);
   await registerMaintenanceArrivingSoonRoutes(app);
   await registerRoadServiceTicketRoutes(app);
@@ -1544,6 +1549,13 @@ async function main() {
       app.log.info("[STARTUP] cap-13-brake-wear-worker initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] cap-13-brake-wear-worker failed");
+    }
+
+    try {
+      initializePredictiveAlertsWorker(app);
+      app.log.info("[STARTUP] predictive-alerts-worker initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] predictive-alerts-worker failed");
     }
 
     try {
