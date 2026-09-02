@@ -50,13 +50,13 @@ export function CargoTempBadge({ operatingCompanyId, loadId, reefer }: Props) {
 
   if (!reefer) return <span className="text-[11px] text-gray-300">—</span>;
   if (timeline.isLoading) {
-    return <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-500">Temp …</span>;
+    return <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500">Temp …</span>;
   }
   if (timeline.isError) {
     return (
       <button
         type="button"
-        className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
+        className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-700"
         data-cargo-temp-retry={loadId}
         onClick={(event) => {
           event.stopPropagation();
@@ -68,12 +68,12 @@ export function CargoTempBadge({ operatingCompanyId, loadId, reefer }: Props) {
     );
   }
   if (!timeline.data) {
-    return <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600">No sensor</span>;
+    return <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">No sensor</span>;
   }
 
   const latest = timeline.data.rows[0];
   if (!latest) {
-    return <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600">No sensor</span>;
+    return <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">No sensor</span>;
   }
 
   const status = latest.threshold_status ?? (latest.out_of_range ? "red" : "green");
@@ -81,7 +81,7 @@ export function CargoTempBadge({ operatingCompanyId, loadId, reefer }: Props) {
 
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClass(status)}`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${statusClass(status)}`}
       data-testid={`cargo-temp-badge-${loadId}`}
     >
       {statusLabel(status)} {tempLabel}

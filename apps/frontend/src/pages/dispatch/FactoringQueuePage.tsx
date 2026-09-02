@@ -251,14 +251,14 @@ export function FactoringQueuePage() {
         render: (row) => (
           <>
             <span
-              className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${
+              className={`rounded border px-1.5 py-0.5 text-xs font-semibold ${
                 STAGE_PILL[row.packet_stage]
               }`}
             >
               {STAGE_LABELS[row.packet_stage]}
             </span>
             {row.packet_approved_at && row.packet_stage === "PACKET_READY" ? (
-              <div className="mt-0.5 text-[10px] text-slate-700">✓ Approved</div>
+              <div className="mt-0.5 text-xs text-slate-700">✓ Approved</div>
             ) : null}
           </>
         ),
@@ -268,9 +268,9 @@ export function FactoringQueuePage() {
         label: "Missing Docs",
         render: (row) =>
           row.missing_doc_types.length === 0 ? (
-            <span className="text-[10px] text-slate-700">✓ Complete</span>
+            <span className="text-xs text-slate-700">✓ Complete</span>
           ) : (
-            <span className="text-[10px] text-slate-700">
+            <span className="text-xs text-slate-700">
               Missing: {row.missing_doc_types.join(", ")}
             </span>
           ),
@@ -431,7 +431,7 @@ export function FactoringQueuePage() {
             >
               {stage === "ALL" ? "All" : STAGE_LABELS[stage as FactoringQueueRow["packet_stage"]]}
               {count > 0 ? (
-                <span className="ml-1 rounded-full bg-white/20 px-1 text-[10px]">{count}</span>
+                <span className="ml-1 rounded-full bg-white/20 px-1 text-xs">{count}</span>
               ) : null}
             </button>
           );

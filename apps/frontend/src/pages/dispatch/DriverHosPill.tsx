@@ -36,14 +36,14 @@ export function DriverHosPill({ driverId, operatingCompanyId }: Props) {
     retry: false,
   });
 
-  if (!enabled) return <span className="text-[10px] text-gray-300">—</span>;
-  if (hosQuery.isLoading) return <span className="text-[10px] text-gray-400">HOS ...</span>;
+  if (!enabled) return <span className="text-xs text-gray-300">—</span>;
+  if (hosQuery.isLoading) return <span className="text-xs text-gray-400">HOS ...</span>;
   if (hosQuery.isError) {
     return (
       <button
         type="button"
         data-hos-pill-retry
-        className="rounded-sm border border-slate-200 bg-slate-100 px-1 text-[10px] font-medium text-slate-700"
+        className="rounded-sm border border-slate-200 bg-slate-100 px-1 text-xs font-medium text-slate-700"
         title="Driver HOS unavailable — retry"
         onClick={(event) => {
           event.stopPropagation();
@@ -54,12 +54,12 @@ export function DriverHosPill({ driverId, operatingCompanyId }: Props) {
       </button>
     );
   }
-  if (!hosQuery.data) return <span className="text-[10px] text-gray-300">—</span>;
+  if (!hosQuery.data) return <span className="text-xs text-gray-300">—</span>;
 
   const row = hosQuery.data;
   const tooltip = `Drive ${toClock(row.drive_remaining_min)} | Window ${toClock(row.window_remaining_min)} | Break ${toClock(row.break_remaining_min)}`;
   return (
-    <span title={tooltip} className={`rounded-full px-2 py-1 text-[10px] font-semibold ${pillClass(row.status)}`}>
+    <span title={tooltip} className={`rounded-full px-2 py-1 text-xs font-semibold ${pillClass(row.status)}`}>
       {label(row.status)}
     </span>
   );
