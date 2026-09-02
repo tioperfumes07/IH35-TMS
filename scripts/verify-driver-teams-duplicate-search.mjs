@@ -14,8 +14,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-export function check() {
-  const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+export function check(src = fs.readFileSync(path.join(ROOT, PAGE), "utf8")) {
   assert(src.includes("ParityTable"), "DriverTeamsPage: must use ParityTable");
   assert(!/\[search,\s*setSearch\]/.test(src), "DriverTeamsPage: must not keep page-local search state");
   assert(!/Search by team or driver name/.test(src), "DriverTeamsPage: must not mount page-local search input");
@@ -24,19 +23,16 @@ export function check() {
 
 function selftest() {
   check();
-  const filePath = path.join(ROOT, PAGE);
-  const good = fs.readFileSync(filePath, "utf8");
+  const good = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   const bad =
     good.replace(/const \[status/, `const [search, setSearch] = useState("");\n  const [status`) +
     `\n<input placeholder="Search by team or driver name" value={search} />\n`;
-  fs.writeFileSync(filePath, bad);
   let failed = false;
   try {
-    check();
+    check(bad);
   } catch {
     failed = true;
   }
-  fs.writeFileSync(filePath, good);
   assert(failed, "selftest: expected FAIL with page-local search restored");
   console.log("verify-driver-teams-duplicate-search --selftest PASS");
 }
