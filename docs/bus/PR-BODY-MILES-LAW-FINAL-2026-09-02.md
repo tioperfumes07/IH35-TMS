@@ -7,7 +7,7 @@ NOT CHECKED:     Live Chrome Book Load popup (CC-2 lane); catalog remediation (C
 
 ROOT CAUSE: #19740 bus said pay from practical+empty and forbade short miles. Owner overruled — STRUCK. Stale INBOX text lacked FINAL pay law, >100mi reverse-lane trigger, GO-22 urgency.
 
-FIX: New canonical docs/bus/MILES-LAW-FINAL-2026-09-02.md + fan-out all seat INBOXes + FEED/NOW-CURSOR. MILES-INVERT-01 redirect stub.
+FIX: New canonical docs/bus/MILES-LAW-FINAL-2026-09-02.md + identical MILES LAW FINAL + FAST-MERGE blocks on all seat INBOXes + FEED/NOW-CURSOR + OUTBOX-CURSOR. MILES-INVERT-01 superseded redirect stub. FAST-MERGE-REMINDER-2026-09-02.md. Docs-only — no FE this PR (#19752/#19756 FE deferred).
 
 DOD-A: N/A
 DOD-B: N/A

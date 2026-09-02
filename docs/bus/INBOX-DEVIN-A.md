@@ -1,10 +1,6 @@
 # INBOX-DEVIN-A · RETIRED 2026-09-02
 
-Owner removed Devin (usage). **Do not walk. Do not ACK GO-21. Do not POST.**
-
-Live-verify of GO-21 rows is **CC-2**. Unique FINDING overlay is **Cascade**.
-
-If this session is still open: stop. No Book Load. No Cancel walk required.
+`git pull --ff-only origin/main`
 
 ## ★ MILES LAW FINAL — ALL SEATS — 2026-09-02
 
@@ -38,3 +34,10 @@ Canonical: `docs/bus/MILES-LAW-FINAL-2026-09-02.md`
 
 Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md` · `docs/bus/FAST-MERGE-REMINDER-2026-09-02.md`
 
+---
+
+Owner removed Devin (usage). **Do not walk. Do not ACK GO-21. Do not POST.**
+
+Live-verify of GO-21 rows is **CC-2**. Unique FINDING overlay is **Cascade**.
+
+If this session is still open: stop. No Book Load. No Cancel walk required.

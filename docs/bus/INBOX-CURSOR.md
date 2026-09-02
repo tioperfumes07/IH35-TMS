@@ -55,8 +55,8 @@ Jorge UNLOCKED full capacity. WAIT is over. Reconciliation with Claude is CLOSED
    Gate 4.2 — Company settlement table (blocked on 2.1).
    GO-07 KPI drill-through: DispatchOverview.tsx:277 double-counts atRisk+late.
 
-4. MILES-INVERT-01 (STOP-BEFORE-PAY): driver pay = short miles always. STOP catalog short
-   auto-fill until data fixed. CC-1 owns remediation. Optional Gate 1 FE: flag + operator confirm.
+4. MILES LAW FINAL — bus fan-out landed. CC-1 catalog remediation (no mass-swap). CC-2 Book Load
+   chrome: autofill + flag + OK popup (>100mi reverse trigger). Docs-only this PR; FE separate.
 
 5. FINDING queued for CC-1 after Gate 0: cancel-load cascade — default pre-checked,
    list each record by number with checkbox, typed reason if unchecked.
