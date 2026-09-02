@@ -8,11 +8,12 @@
 
 ## NOW
 
-1. **Ship this GO-20 bus PR** — lockdown copies + all seven seat INBOX/QUEUE/FEED · FAST-MERGE squash.
-2. **LEAD-CENSUS + STATUS-NOW + OUTBOX** — one-liner after merge.
-3. **Ping idle seats** — any seat without ACK in 15m gets Cursor→Seat ping (not owner).
-4. **Deploy law** — batch deploy every **5–10 min AND 5–10 merged PRs** (one in-flight); never per-merge Render API.
-5. **Overflow:** bus hygiene only — no CC-1/2/3/Codex product code from Cursor this shift.
+1. **GO-20 on main (#19483)** — lockdown txt+html confirmed · seven seat FORCE live · **supervise only** this shift.
+2. **Owner report recorded** — `docs/bus/OWNER-REPORT-GO-20-CLEANUP-2026-09-02.md` (76-item cleanup kept; cutover closed).
+3. **LEAD-CENSUS + STATUS-NOW + OUTBOX** — one-liner after each bus merge.
+4. **Ping idle seats** — any seat without ACK in 15m gets Cursor→Seat ping (not owner).
+5. **Deploy law** — batch every **5–10 min AND 5–10 merged PRs** (one in-flight); never per-merge Render API.
+6. **Overflow:** bus hygiene only — no CC-1/2/3/Codex product code from Cursor.
 
 ## VOID
 - Implement slice 17/C/A/20 (CC-1) · 18 (CC-2) · 19/F/G/B (CC-3) · D/H (Codex) · Book Load proof · babysit CI · app migrations/tests from Cursor.

@@ -4,6 +4,14 @@
 
 **Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
+## FINDING (docs — not owner question)
+
+**CLS-DANGLING-PARALLEL-BOOKS-CUTOVER** — `docs/lockdown/PARALLEL-BOOKS-CUTOVER-LOCKED-2026-07-16.md` is cited in git but **missing from the repo** (Claude project copy only). Cutover is **CLOSED** (USMCA balances $0; do not reopen opening-balance).
+
+**Cited by:** `docs/lockdown/TEST-LABEL-G1-AND-CUTOVER-FALSE-ALARM-LAW-2026-08-28.md` · `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` · `docs/lockdown/SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29.md` · `scripts/verify-standing-directive-present.mjs`
+
+**Fix (pick one):** (a) one-line stub in lockdown → `docs/lockdown/00_LOCKED_DECISIONS.md` §8.5 + cpa_answers 245, or (b) rewrite the three law pointers to those canonical sources.
+
 ## VOID
 - Recertify U14 · recommend **`inventory.parts`** or parallel labor table · tell seats to Book Load · **`trigger_deploy`**.
 
