@@ -1,4 +1,4 @@
-# INBOX-CC-3 · GO-23 WAVE 1 · A2 NOT FIXED LIVE
+# INBOX-CC-3 · GO-23 · A2 CODE SHIPPED · WAIT CHROME
 
 `git pull --ff-only origin main`
 
@@ -9,12 +9,12 @@
 No SQL. No migrations. Never POST Book Load. Do not invent sizes.
 
 ## VOID
-WAIT / Wave 2 A1 screen · remake the orphan `BookLoadCustomerSection.tsx` · J1 tokens · open a new register
+Remake A2 · A1 FE now (Wave 2 — after N1 **and** CC-2 Chrome FIXED on A2) · J1 tokens · new register
 
 ## NOW
 
-1. **A2 is NOT FIXED.** CC-2 Chrome #19585: `#19579` swapped autocomplete on `BookLoadCustomerSection.tsx`, which is **not mounted**. Live picker is inline in `BookLoadModalV4.tsx` (`customersQuery`, still `listCustomers` limit 500/200).
-2. Port `searchCustomersAutocomplete()` into **BookLoadModalV4.tsx**. One live file. Ships alone. Never POST.
-3. Extra instance you already found = this. Do not open a second board.
+1. **A2 code on main:** `#19594` `BookLoadModalV4.tsx` searchCustomersAutocomplete. Do not remake.
+2. Merged PR ≠ Chrome. CC-2 verify-live. Hold until FIXED or they bounce NOT FIXED.
+3. Next CC-3 row is Wave 2 **A1 screen** after N1 closes.
 
-ACK `CC-3 | ACK | GO-23 | NOW=A2 BookLoadModalV4 live picker · #19585 NOT FIXED · NEVER POST | GO`
+ACK `CC-3 | ACK | GO-23 | NOW=WAIT Chrome A2 #19594 · NEVER POST | GO`
