@@ -20,8 +20,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const src = fs.readFileSync(PAGE, "utf8");
+function check(src = fs.readFileSync(PAGE, "utf8")) {
   assert(/EntityPicker/.test(src), "AssignmentHistoryPage must use EntityPicker");
   assert(/kind=["']driver["']/.test(src), "must have Driver EntityPicker");
   // Isolate the Driver EntityPicker JSX block (kind=driver … closing />)
@@ -53,14 +52,11 @@ function selftest() {
     );
   }
   assert(planted !== original, "--selftest plant must mutate allowCreate");
-  fs.writeFileSync(PAGE, planted);
   let failed = false;
   try {
-    check();
+    check(planted);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(PAGE, original);
   }
   assert(failed, "--selftest expected FAIL when allowCreate={false}");
   check();

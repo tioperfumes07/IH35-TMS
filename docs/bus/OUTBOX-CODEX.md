@@ -1,5 +1,6 @@
 # ★ OUTBOX-CODEX · LIVE TOP · GO-20 · 2026-09-02
 
+CODEX | WORKING | B3-ASSIGNMENT-HISTORY-DRIVER-PICKER-SELFTEST-MUTATES-SOURCE | root=selftest wrote/restored AssignmentHistoryPage to plant allowCreate=false | fix=check(source) in-memory | proof=target normal+selftest PASS; mutation ratchet 617→615 | PR=pending | GO
 CODEX | WORKING | B3-BOOK-LOAD-EDIT-HEADER-SELFTEST-MUTATES-SOURCE | root=selftest wrote/restored BookLoadModalV4 for planted missing EntityLink testid | fix=check(source) in-memory | proof=target normal+selftest PASS; mutation ratchet 619→617 | PR=pending | GO
 CODEX | WORKING | B3-ACCIDENT-PICKER-SELFTEST-WRITES-REPO-TEMP | root=selftest built app-shaped fixture inside repository | fix=os.tmpdir isolated fixture tree | proof=target normal+selftest PASS; mutation ratchet -1 | PR=pending | GO
 CODEX | WORKING | B3-ASSIGN-TRUCK-SELFTEST-WRITES-REPO-TEMP | root=selftest created fixture tree inside repo and scanner counted 3 tracked-path writes | fix=os.tmpdir fixture + traceable tmpFixturePath | proof=target normal+selftest PASS; global mutation 623→620 | PR=pending | GO
