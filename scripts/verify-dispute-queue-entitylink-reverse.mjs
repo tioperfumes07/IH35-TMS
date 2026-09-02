@@ -14,10 +14,11 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
-function assertDisputeQueueEntityLink() {
+function assertDisputeQueueEntityLink({
+  page = read(PAGE),
+  manifest = read("apps/frontend/src/routes/manifest.tsx"),
+} = {}) {
   const errors = [];
-  const page = read(PAGE);
-  const manifest = read("apps/frontend/src/routes/manifest.tsx");
 
   if (!/from "\.\.\/\.\.\/components\/shared\/EntityLink"/.test(page)) {
     errors.push(`${PAGE}: must import EntityLink`);
@@ -38,9 +39,19 @@ function assertDisputeQueueEntityLink() {
 }
 
 function selftest() {
-  const good = `<EntityLink kind="driver" id={row.driver_id} data-testid="dispute-queue-driver-link" />`;
-  const bad = `render: (row) => row.driver_name ?? row.driver_id.slice(0, 8)`;
-  if (!/kind="driver"/.test(good) || /kind="driver"/.test(bad)) {
+  const goodPage = `
+    import EntityLink from "../../components/shared/EntityLink";
+    <EntityLink kind="settlement" id={row.settlement_id} />
+    <EntityLink kind="driver" id={row.driver_id} data-testid="dispute-queue-driver-link" />
+  `;
+  const manifest = `<Route path="/accounting/dispute-queue" />`;
+  const plantedPage = goodPage.replace(
+    '<EntityLink kind="driver" id={row.driver_id} data-testid="dispute-queue-driver-link" />',
+    `<span>{row.driver_name ?? row.driver_id.slice(0, 8)}</span>`,
+  );
+  const goodErrors = assertDisputeQueueEntityLink({ page: goodPage, manifest });
+  const plantedErrors = assertDisputeQueueEntityLink({ page: plantedPage, manifest });
+  if (goodErrors.length !== 0 || !plantedErrors.some((error) => error.includes("driver column"))) {
     console.error(`${LABEL} --selftest FAIL`);
     process.exit(1);
   }
