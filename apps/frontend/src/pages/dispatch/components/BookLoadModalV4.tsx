@@ -24,7 +24,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { getLoad, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
 import { buildEditPrefill, buildEditPatchBody } from "./book-load-v4/editLoadMapping";
 import { bookLoadToastMessage, bookLoadToastTone, serverStatusOf } from "./book-load-toast";
-import { listCustomers } from "../../../api/mdata";
+import { searchCustomersAutocomplete } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { ConfirmDiscardDialog } from "../../../components/dialogs/ConfirmDiscardDialog";
@@ -78,6 +78,7 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { NumberInput } from "../../../components/forms/NumberInput";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 import { describeBookLoadValidationErrors } from "./book-load-v4/invalidSubmitDetails";
 
 type FormValues = BookLoadFormValues & {
@@ -614,37 +615,34 @@ export function BookLoadModalV4({
     }
   }, [form, laneMileageQuery.data]);
 
+  // GO-21/GO-23 A2 (real fix — BookLoadCustomerSection.tsx is an orphan, never rendered by the
+  // live Book Load flow; this inline picker is the one CC-2 verified live). Identical
+  // CLS-SILENT-CAP defect: was a plain paginated listCustomers(limit: 200/500) against ~2,700 prod
+  // customers — a slice, not a search. Now hits the server's ranked ?autocomplete=true mode
+  // (exact match, then prefix match, then full-text relevance, across the WHOLE company customer
+  // set), server-clamped to 100 rows per request regardless of what's asked.
+  const CUSTOMER_AUTOCOMPLETE_LIMIT = 100;
   const customersQuery = useQuery({
-    queryKey: ["book-load-v4-customers", operatingCompanyId, customerSearch],
-    queryFn: () =>
-      listCustomers({
-        operating_company_id: operatingCompanyId,
-        limit: customerSearch ? 200 : 500,
-        search: customerSearch || undefined,
-      }),
+    queryKey: ["book-load-v4-customers-autocomplete", operatingCompanyId, customerSearch],
+    queryFn: () => searchCustomersAutocomplete(operatingCompanyId, customerSearch, { limit: CUSTOMER_AUTOCOMPLETE_LIMIT }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 15_000,
   });
-  // ACCT-F10158 / FE-COMBOBOX-STALE-LABEL: Edit Load prefills customer_id via form.reset, but the
-  // listCustomers page (limit 500, alpha-sorted) often omits late-alphabet / SAMPLE customers.
-  // Combobox then shows the empty placeholder even though the FK is set — and clearCommittedOnEdit
-  // + typing one keystroke clears the FK, so Save looks like a dead click (validation fails with
-  // no visible field when Edit hides create-only sections). Always seed the committed customer.
+  // ACCT-F10158 / FE-COMBOBOX-STALE-LABEL: Edit Load prefills customer_id via form.reset, but a
+  // capped/searched result page can omit the already-committed customer. Combobox then shows the
+  // empty placeholder even though the FK is set — and clearCommittedOnEdit + typing one keystroke
+  // clears the FK, so Save looks like a dead click. Always seed the committed customer.
   const customerOptions = useMemo(() => {
-    const fromApi = (customersQuery.data?.customers ?? [])
-      .map((c) => ({
-        value: c.id,
-        label: String(c.name || c.customer_code || "").trim() || c.id,
-      }))
-      .filter((o) => o.label)
-      .sort((a, b) => a.label.localeCompare(b.label));
+    const fromApi = (customersQuery.data ?? [])
+      .map((c) => ({ value: c.id, label: c.display_name.trim() || c.id }))
+      .filter((o) => o.label);
     const id = String(watchedCustomerId || "").trim();
     const name = String(watchedCustomerName || "").trim();
     if (id && !fromApi.some((o) => o.value === id)) {
       return [{ value: id, label: name || id }, ...fromApi];
     }
     return fromApi;
-  }, [customersQuery.data?.customers, watchedCustomerId, watchedCustomerName]);
+  }, [customersQuery.data, watchedCustomerId, watchedCustomerName]);
   const pickupTimeTypesQuery = useQuery({
     queryKey: ["book-load-pickup-time-types", operatingCompanyId],
     queryFn: () => listAllDispatchCatalogRows(pickupTimeTypesCatalogClient, { operating_company_id: operatingCompanyId, is_active: "true" }),
@@ -1511,12 +1509,25 @@ export function BookLoadModalV4({
                           loading={customersQuery.isLoading}
                           disabled={customersQuery.isLoading || customersQuery.isError}
                           onOptionCreated={(opt) => {
-                            void queryClient.invalidateQueries({ queryKey: ["book-load-v4-customers"] });
+                            void queryClient.invalidateQueries({ queryKey: ["book-load-v4-customers-autocomplete"] });
                             form.setValue("customer_id", opt.value, { shouldDirty: true, shouldValidate: true });
                             form.setValue("customer_name", opt.label, { shouldDirty: true, shouldValidate: false });
                           }}
                         />
                         {customersQuery.isError ? <ListErrorBanner message="Could not load customers." onRetry={() => void customersQuery.refetch()} /> : null}
+                        {/* GO-21/GO-23 A2: empty/short result must say why — never a silent short list. */}
+                        {!customersQuery.isError && !customersQuery.isLoading && customerSearch.trim() && (customersQuery.data ?? []).length === 0 ? (
+                          <p className="mt-0.5 normal-case tracking-normal text-slate-600" data-testid="book-load-v4-customer-no-matches">
+                            No customers match “{customerSearch.trim()}”. Check the spelling, or{" "}
+                            <span className="font-semibold">+ Add new</span> if this is a new customer.
+                          </p>
+                        ) : null}
+                        <CappedListNotice
+                          shown={customersQuery.data?.length ?? 0}
+                          limit={CUSTOMER_AUTOCOMPLETE_LIMIT}
+                          hint="Keep typing to narrow — this search covers every customer, not just what's shown."
+                          className="mt-0.5 block normal-case tracking-normal text-slate-600"
+                        />
                       </div>
                       {form.formState.errors.customer_id?.message ? <span className="mt-0.5 block normal-case tracking-normal text-red-600">{form.formState.errors.customer_id.message}</span> : null}
                     </label>
