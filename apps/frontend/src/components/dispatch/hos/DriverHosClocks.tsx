@@ -33,7 +33,7 @@ function HosRetryButton({ onRetry, compact = false }: { onRetry: () => void; com
     <button
       type="button"
       data-hos-retry
-      className="rounded-sm border border-slate-200 bg-slate-100 px-1 text-[10px] font-medium text-slate-700"
+      className="rounded-sm border border-slate-200 bg-slate-100 px-1 text-xs font-medium text-slate-700"
       aria-label="Retry driver HOS"
       title="Driver HOS unavailable — retry"
       onClick={(event) => {
@@ -88,15 +88,15 @@ export function DriverHosClocksBlock({
 
   return (
     <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5" data-hos-block="book-load">
-      <div className="mb-1 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
+      <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-600">
         <span className={`inline-block h-2 w-2 rounded-full ${dot.cls}`} title={dot.label} />
         {heading}
         {eldRaw ? (
-          <span className="ml-1 rounded-sm bg-emerald-100 px-1 text-[8px] font-semibold uppercase tracking-[0.3px] text-emerald-700">
+          <span className="ml-1 rounded-sm bg-emerald-100 px-1 text-[11px] font-semibold uppercase tracking-[0.3px] text-emerald-700">
             Certified ELD
           </span>
         ) : driverId && q.data ? (
-          <span className="ml-1 rounded-sm bg-slate-100 px-1 text-[8px] font-semibold uppercase tracking-[0.3px] text-slate-700">
+          <span className="ml-1 rounded-sm bg-slate-100 px-1 text-[11px] font-semibold uppercase tracking-[0.3px] text-slate-700">
             In-app fallback
           </span>
         ) : null}
@@ -107,7 +107,7 @@ export function DriverHosClocksBlock({
         <div className="grid grid-cols-3 gap-x-3 gap-y-0.5 text-[11px] sm:grid-cols-6">
           {HOS_COLUMNS.map((col) => (
             <div key={col.key} title={col.derived ? HOS_PROJECTED_TOOLTIP : HOS_SOURCE_TOOLTIP}>
-              <div className="text-[9px] uppercase tracking-[0.3px] text-gray-500">
+              <div className="text-[11px] uppercase tracking-[0.3px] text-gray-500">
                 {col.label}
                 {col.derived ? <span className="ml-0.5 text-gray-400">*</span> : null}
               </div>
@@ -116,7 +116,7 @@ export function DriverHosClocksBlock({
           ))}
         </div>
       )}
-      <div className="hosnote mt-0.5 text-[9px] text-gray-400">
+      <div className="hosnote mt-0.5 text-xs text-gray-400">
         {eldRaw
           ? mergedInAppFields
             ? "Certified ELD values shown where Samsara returned them; missing clocks use the in-app HOS store on this response. Stop by / Resume at are projected."

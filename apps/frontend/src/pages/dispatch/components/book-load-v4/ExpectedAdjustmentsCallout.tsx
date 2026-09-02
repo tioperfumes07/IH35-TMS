@@ -42,30 +42,30 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
       <div className="mb-2 font-semibold uppercase tracking-wide">Expected adjustments</div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         <div className="space-y-1 p-2">
-          <div className="text-[10px] font-semibold text-slate-700">Anticipated chargeback</div>
+          <div className="text-xs font-semibold text-slate-700">Anticipated chargeback</div>
           <input
             type="number"
             min={0}
             step={1}
             placeholder="cents"
             {...register("anticipated_chargeback_cents", { valueAsNumber: true })}
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
           <input
             {...register("anticipated_chargeback_reason")}
             placeholder="Reason"
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
         </div>
         <div className="space-y-1 p-2">
-          <div className="text-[10px] font-semibold text-slate-700">Detention expected</div>
+          <div className="text-xs font-semibold text-slate-700">Detention expected</div>
           <label className="flex items-center gap-2">
             <input type="checkbox" {...register("detention_expected_y_n")} />
             Yes
           </label>
           {detentionExpected ? (
             <div className="space-y-1">
-              <div className="text-[10px] font-semibold text-slate-700">Detention reason</div>
+              <div className="text-xs font-semibold text-slate-700">Detention reason</div>
               {/*
                 LST-PICKER-01: Book Load detention reason — ReferenceSelect first-row create → POST
                 catalogs.detention_reasons (same table Lists → Detention Reasons reads). Options keyed by UUID.
@@ -105,25 +105,25 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
             step={0.25}
             placeholder="Hours"
             {...register("detention_expected_hours", { valueAsNumber: true })}
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
           <input
             type="number"
             min={0}
             placeholder="Bill customer ¢/hr"
             {...register("detention_bill_customer_per_hour_cents", { valueAsNumber: true })}
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
           <input
             type="number"
             min={0}
             placeholder="Driver pay ¢/hr"
             {...register("detention_driver_pay_per_hour_cents", { valueAsNumber: true })}
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
         </div>
         <div className="space-y-1 p-2">
-          <div className="text-[10px] font-semibold text-slate-700">Late delivery risk</div>
+          <div className="text-xs font-semibold text-slate-700">Late delivery risk</div>
           <label className="flex items-center gap-2">
             <input type="checkbox" {...register("late_delivery_risk_y_n")} />
             Yes
@@ -133,9 +133,9 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
             min={0}
             placeholder="Est deduction (¢)"
             {...register("late_delivery_est_deduction_cents", { valueAsNumber: true })}
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
-          <input {...register("late_delivery_reason")} placeholder="Reason" className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+          <input {...register("late_delivery_reason")} placeholder="Reason" className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />
         </div>
       </div>
     </div>
