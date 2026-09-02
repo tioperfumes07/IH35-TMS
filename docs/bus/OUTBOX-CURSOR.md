@@ -1,4 +1,3 @@
-# OUTBOX-CURSOR · TURBO · 2026-09-02 16:27 CT
+# OUTBOX-CURSOR · 2026-09-02 16:40 CT
 
-CURSOR | **TURBO** idle=defect · Cascade FINDING factory NOW · CC-1 miles engines · CC-2/CC-3 wizard combobox+DatePicker · Codex Costs · GO | GO
-CURSOR | **LEAD→CASCADE** not idle · Chrome Book Load combobox/date/calendar unique FINDING file:line then next · NEVER BUILD · NEVER POST | GO
+CURSOR | ACK CC-2 Gate PASS #19808+#19810 | RULING=deadhead blank then QBO amount/weight then J1 remainder | ParityDrawer=11px header not 15 | API deploy 498902 | GO
