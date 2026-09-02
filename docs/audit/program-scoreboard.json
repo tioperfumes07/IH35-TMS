@@ -1,6 +1,6 @@
 {
   "healthzSha": "7fe443c",
-  "generated_at": "2026-09-02T21:01:33.077Z",
+  "generated_at": "2026-09-02T21:13:45.696Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
@@ -2123,6 +2123,42 @@
   },
   "recentActivity": [
     {
+      "number": 19799,
+      "title": "FINDING: N/A -- CC-2 J1 status batches 2-4, 997 -> 738, continuing to batch 5",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 04:12 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19799",
+      "sha": "7119780e2e",
+      "committedAtIso": "2026-09-02T16:12:37-05:00"
+    },
+    {
+      "number": 19798,
+      "title": "FINDING: GO-23 seats idle or skipped waves after CC-1/CC-3 merge reports",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 04:11 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19798",
+      "sha": "f6379dc823",
+      "committedAtIso": "2026-09-02T16:11:58-05:00"
+    },
+    {
+      "number": 19797,
+      "title": "VERIFY: GO-26 done-gate HOLDS on current Neon",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 04:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19797",
+      "sha": "0bceb3672c",
+      "committedAtIso": "2026-09-02T16:10:46-05:00"
+    },
+    {
+      "number": 19796,
+      "title": "FINDING: GO-23-J1-BATCH-4-MIXED-NONMONEY",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 04:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19796",
+      "sha": "b2765cb2d6",
+      "committedAtIso": "2026-09-02T16:10:32-05:00"
+    },
+    {
       "number": 19795,
       "title": "FINDING: N/A -- CC-3 status: C7/B3 already done, K1/K3/K4 shipped, B9/E1 flagged",
       "state": "merged",
@@ -2175,42 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19791",
       "sha": "4b10983a8d",
       "committedAtIso": "2026-09-02T15:38:54-05:00"
-    },
-    {
-      "number": 19789,
-      "title": "FINDING: K4-PER-STOP-EXTRA-RATES-RENDERS-FOR-BASE-2-STOP-LOAD",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 03:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19789",
-      "sha": "a4f3f26506",
-      "committedAtIso": "2026-09-02T15:36:43-05:00"
-    },
-    {
-      "number": 19787,
-      "title": "VERIFY: GO-26 done-gate post-dispatch-purge",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 03:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19787",
-      "sha": "a74f1fb9f3",
-      "committedAtIso": "2026-09-02T15:35:27-05:00"
-    },
-    {
-      "number": 19788,
-      "title": "Claude-1- docs: re-ack GO-26 (lead crossed with completed work) + trace_counters LOAD reseed to 13556 done",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 03:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19788",
-      "sha": "5cb43c0244",
-      "committedAtIso": "2026-09-02T15:35:10-05:00"
-    },
-    {
-      "number": 19786,
-      "title": "Claude-1- docs: GO-26 purge complete, 6 of 6 schemas, full done-gate held",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 03:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19786",
-      "sha": "cce1e1eb0f",
-      "committedAtIso": "2026-09-02T15:33:25-05:00"
     }
   ]
 }
