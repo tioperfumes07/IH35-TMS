@@ -6,6 +6,8 @@
  * contributes a scored AttentionItem. The final list is deduplicated and the
  * top N by score are returned.
  *
+ * Endpoint: GET /api/v1/owner/todays-attention
+ *
  * Sources and base scores (per spec):
  *   425C filing deadline within 7 days               100
  *   Open critical fuel fraud alerts (GAP-61)          95
@@ -40,6 +42,10 @@ type DbClient = {
   query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
 };
 
+export type AttentionLog = {
+  warn: (payload: Record<string, unknown>, message: string) => void;
+};
+
 function num(v: unknown, fallback = 0): number {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
@@ -47,6 +53,15 @@ function num(v: unknown, fallback = 0): number {
 
 function str(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback;
+}
+
+function warnSkipped(
+  log: AttentionLog | undefined,
+  source: string,
+  reason: string,
+  table?: string
+): void {
+  log?.warn({ source, reason, table }, "[owner-attention] source skipped");
 }
 
 async function tableExists(client: DbClient, qualifiedName: string): Promise<boolean> {
@@ -60,41 +75,67 @@ async function tableExists(client: DbClient, qualifiedName: string): Promise<boo
 
 // ─── Source: 425C filing deadline ────────────────────────────────────────────
 
-async function source425CDeadline(client: DbClient, ociId: string): Promise<AttentionItem[]> {
+async function source425CDeadline(
+  client: DbClient,
+  ociId: string,
+  log?: AttentionLog
+): Promise<AttentionItem[]> {
+  const source = "form_425c_deadline";
+  const table = "compliance.form_425c_reports";
   try {
-    if (!(await tableExists(client, "legal.form_425c_filings"))) return [];
+    if (!(await tableExists(client, table))) {
+      warnSkipped(log, source, "table_missing", table);
+      return [];
+    }
     const res = await client.query(
       `
-        SELECT id::text, deadline_date::text AS deadline
-        FROM legal.form_425c_filings
+        SELECT
+          id::text,
+          (
+            (date_trunc('month', reporting_month::date) + interval '1 month' + interval '20 days')::date
+          )::text AS deadline
+        FROM compliance.form_425c_reports
         WHERE operating_company_id = $1::uuid
-          AND status != 'filed'
-          AND deadline_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + 7)
+          AND status IN ('draft', 'ready_to_file')
+          AND (
+            (date_trunc('month', reporting_month::date) + interval '1 month' + interval '20 days')::date
+          ) BETWEEN CURRENT_DATE AND (CURRENT_DATE + 7)
         LIMIT 5
       `,
       [ociId]
     );
     return res.rows.map((r) => ({
       item_id: `form_425c:${str(r.id)}`,
-      source: "form_425c_deadline",
+      source,
       score: 100,
       title: `425C filing due ${str(r.deadline)}`,
       body: "Transportation Ch.11 filing deadline within 7 days. File or request extension.",
-      action_url: "/legal/form-425c",
+      action_url: "/425c",
       action_label: "Open filings",
       severity: "critical" as AttentionSeverity,
       extra: { deadline: r.deadline },
     }));
-  } catch {
+  } catch (err) {
+    warnSkipped(log, source, "query_failed", table);
+    log?.warn({ source, table, err }, "[owner-attention] source query failed");
     return [];
   }
 }
 
 // ─── Source: Critical fuel fraud alerts ──────────────────────────────────────
 
-async function sourceFuelFraudAlerts(client: DbClient, ociId: string): Promise<AttentionItem[]> {
+async function sourceFuelFraudAlerts(
+  client: DbClient,
+  ociId: string,
+  log?: AttentionLog
+): Promise<AttentionItem[]> {
+  const source = "fuel_fraud";
+  const table = "fuel.fraud_alerts";
   try {
-    if (!(await tableExists(client, "fuel.fraud_alerts"))) return [];
+    if (!(await tableExists(client, table))) {
+      warnSkipped(log, source, "table_missing", table);
+      return [];
+    }
     const res = await client.query(
       `
         SELECT COUNT(*)::text AS c
@@ -110,7 +151,7 @@ async function sourceFuelFraudAlerts(client: DbClient, ociId: string): Promise<A
     return [
       {
         item_id: `fuel_fraud_critical:${ociId}`,
-        source: "fuel_fraud",
+        source,
         score: 95,
         title: `${count} critical fuel fraud alert${count === 1 ? "" : "s"}`,
         body: "Unresolved critical fuel card fraud alerts require immediate review.",
@@ -120,16 +161,27 @@ async function sourceFuelFraudAlerts(client: DbClient, ociId: string): Promise<A
         extra: { count },
       },
     ];
-  } catch {
+  } catch (err) {
+    warnSkipped(log, source, "query_failed", table);
+    log?.warn({ source, table, err }, "[owner-attention] source query failed");
     return [];
   }
 }
 
 // ─── Source: Bank account drift ───────────────────────────────────────────────
 
-async function sourceBankDrift(client: DbClient, ociId: string): Promise<AttentionItem[]> {
+async function sourceBankDrift(
+  client: DbClient,
+  ociId: string,
+  log?: AttentionLog
+): Promise<AttentionItem[]> {
+  const source = "bank_drift";
+  const table = "banking.reconciliation_drift_alerts";
   try {
-    if (!(await tableExists(client, "banking.reconciliation_drift_alerts"))) return [];
+    if (!(await tableExists(client, table))) {
+      warnSkipped(log, source, "table_missing", table);
+      return [];
+    }
     const res = await client.query(
       `
         SELECT COUNT(*)::text AS c
@@ -145,7 +197,7 @@ async function sourceBankDrift(client: DbClient, ociId: string): Promise<Attenti
     return [
       {
         item_id: `bank_drift:${ociId}`,
-        source: "bank_drift",
+        source,
         score: 90,
         title: `${count} bank reconciliation drift${count === 1 ? "" : "s"} detected`,
         body: "Bank balance does not match book balance within tolerance. Review and reconcile.",
@@ -155,16 +207,27 @@ async function sourceBankDrift(client: DbClient, ociId: string): Promise<Attenti
         extra: { count },
       },
     ];
-  } catch {
+  } catch (err) {
+    warnSkipped(log, source, "query_failed", table);
+    log?.warn({ source, table, err }, "[owner-attention] source query failed");
     return [];
   }
 }
 
 // ─── Source: Severe engine fault WOs ─────────────────────────────────────────
 
-async function sourceEngFaultWOs(client: DbClient, ociId: string): Promise<AttentionItem[]> {
+async function sourceEngFaultWOs(
+  client: DbClient,
+  ociId: string,
+  log?: AttentionLog
+): Promise<AttentionItem[]> {
+  const source = "engine_fault_wo";
+  const table = "maintenance.work_orders";
   try {
-    if (!(await tableExists(client, "maintenance.work_orders"))) return [];
+    if (!(await tableExists(client, table))) {
+      warnSkipped(log, source, "table_missing", table);
+      return [];
+    }
     const res = await client.query(
       `
         SELECT COUNT(*)::text AS c
@@ -180,7 +243,7 @@ async function sourceEngFaultWOs(client: DbClient, ociId: string): Promise<Atten
     return [
       {
         item_id: `engine_fault_wo:${ociId}`,
-        source: "engine_fault_wo",
+        source,
         score: 90,
         title: `${count} severe engine fault work order${count === 1 ? "" : "s"} open`,
         body: "Severe/critical engine faults require owner decision on repair authorization.",
@@ -190,16 +253,27 @@ async function sourceEngFaultWOs(client: DbClient, ociId: string): Promise<Atten
         extra: { count },
       },
     ];
-  } catch {
+  } catch (err) {
+    warnSkipped(log, source, "query_failed", table);
+    log?.warn({ source, table, err }, "[owner-attention] source query failed");
     return [];
   }
 }
 
 // ─── Source: Cargo sensor out-of-range incidents ──────────────────────────────
 
-async function sourceCargoSensorIncidents(client: DbClient, ociId: string): Promise<AttentionItem[]> {
+async function sourceCargoSensorIncidents(
+  client: DbClient,
+  ociId: string,
+  log?: AttentionLog
+): Promise<AttentionItem[]> {
+  const source = "cargo_sensor";
+  const table = "telematics.cargo_sensor_incidents";
   try {
-    if (!(await tableExists(client, "telematics.cargo_sensor_incidents"))) return [];
+    if (!(await tableExists(client, table))) {
+      warnSkipped(log, source, "table_missing", table);
+      return [];
+    }
     const res = await client.query(
       `
         SELECT COUNT(*)::text AS c
@@ -215,7 +289,7 @@ async function sourceCargoSensorIncidents(client: DbClient, ociId: string): Prom
     return [
       {
         item_id: `cargo_sensor:${ociId}`,
-        source: "cargo_sensor",
+        source,
         score: 85,
         title: `${count} cargo sensor out-of-range incident${count === 1 ? "" : "s"}`,
         body: "Temperature or humidity outside safe range. Customer claims risk.",
@@ -225,7 +299,9 @@ async function sourceCargoSensorIncidents(client: DbClient, ociId: string): Prom
         extra: { count },
       },
     ];
-  } catch {
+  } catch (err) {
+    warnSkipped(log, source, "query_failed", table);
+    log?.warn({ source, table, err }, "[owner-attention] source query failed");
     return [];
   }
 }
@@ -235,15 +311,29 @@ async function sourceCargoSensorIncidents(client: DbClient, ociId: string): Prom
 // source or debt-transfer it. Period-close attention stays empty until a
 // canonical migrated control record is owned in (separate migration lane).
 
-async function sourcePeriodCloseAttention(_client: DbClient, _ociId: string): Promise<AttentionItem[]> {
+async function sourcePeriodCloseAttention(
+  _client: DbClient,
+  _ociId: string,
+  log?: AttentionLog
+): Promise<AttentionItem[]> {
+  warnSkipped(log, "period_close_warnings", "hard_stub_no_migrated_table");
   return [];
 }
 
 // ─── Source: Driver damage liabilities awaiting Owner decision ────────────────
 
-async function sourceDamageLiabilities(client: DbClient, ociId: string): Promise<AttentionItem[]> {
+async function sourceDamageLiabilities(
+  client: DbClient,
+  ociId: string,
+  log?: AttentionLog
+): Promise<AttentionItem[]> {
+  const source = "damage_liability";
+  const table = "safety.accident_liabilities";
   try {
-    if (!(await tableExists(client, "safety.accident_liabilities"))) return [];
+    if (!(await tableExists(client, table))) {
+      warnSkipped(log, source, "table_missing", table);
+      return [];
+    }
     const res = await client.query(
       `
         SELECT COUNT(*)::text AS c
@@ -259,7 +349,7 @@ async function sourceDamageLiabilities(client: DbClient, ociId: string): Promise
     return [
       {
         item_id: `damage_liabilities:${ociId}`,
-        source: "damage_liability",
+        source,
         score: 80,
         title: `${count} driver damage liabilit${count === 1 ? "y" : "ies"} awaiting decision`,
         body: "Accident liabilities require Owner decision on driver chargeback or company absorption.",
@@ -269,18 +359,29 @@ async function sourceDamageLiabilities(client: DbClient, ociId: string): Promise
         extra: { count },
       },
     ];
-  } catch {
+  } catch (err) {
+    warnSkipped(log, source, "query_failed", table);
+    log?.warn({ source, table, err }, "[owner-attention] source query failed");
     return [];
   }
 }
 
 // ─── Source: Pending Owner detention approvals ────────────────────────────────
 
-async function sourceDetentionApprovals(client: DbClient, ociId: string): Promise<AttentionItem[]> {
+async function sourceDetentionApprovals(
+  client: DbClient,
+  ociId: string,
+  log?: AttentionLog
+): Promise<AttentionItem[]> {
+  const source = "detention_approval";
+  const table = "dispatch.detention_requests";
   try {
     // Canonical detention table is dispatch.detention_requests (mdata.detention_requests does not
     // exist). "Pending Owner approval" = status = 'pending_review' (per detention-approval.service.ts).
-    if (!(await tableExists(client, "dispatch.detention_requests"))) return [];
+    if (!(await tableExists(client, table))) {
+      warnSkipped(log, source, "table_missing", table);
+      return [];
+    }
     const res = await client.query(
       `
         SELECT COUNT(*)::text AS c
@@ -295,7 +396,7 @@ async function sourceDetentionApprovals(client: DbClient, ociId: string): Promis
     return [
       {
         item_id: `detention_approvals:${ociId}`,
-        source: "detention_approval",
+        source,
         score: 75,
         title: `${count} detention request${count === 1 ? "" : "s"} pending Owner approval`,
         body: "Drivers are waiting on Owner approval to charge detention fees to customers.",
@@ -305,16 +406,27 @@ async function sourceDetentionApprovals(client: DbClient, ociId: string): Promis
         extra: { count },
       },
     ];
-  } catch {
+  } catch (err) {
+    warnSkipped(log, source, "query_failed", table);
+    log?.warn({ source, table, err }, "[owner-attention] source query failed");
     return [];
   }
 }
 
 // ─── Source: Cooling customers (top-tier cold) ────────────────────────────────
 
-async function sourceCoolingCustomers(client: DbClient, ociId: string): Promise<AttentionItem[]> {
+async function sourceCoolingCustomers(
+  client: DbClient,
+  ociId: string,
+  log?: AttentionLog
+): Promise<AttentionItem[]> {
+  const source = "cooling_customers";
+  const table = "mdata.customer_health_scores";
   try {
-    if (!(await tableExists(client, "mdata.customer_health_scores"))) return [];
+    if (!(await tableExists(client, table))) {
+      warnSkipped(log, source, "table_missing", table);
+      return [];
+    }
     const res = await client.query(
       `
         SELECT COUNT(*)::text AS c
@@ -330,7 +442,7 @@ async function sourceCoolingCustomers(client: DbClient, ociId: string): Promise<
     return [
       {
         item_id: `cooling_customers:${ociId}`,
-        source: "cooling_customers",
+        source,
         score: 70,
         title: `${count} cooling customer${count === 1 ? "" : "s"} at risk`,
         body: "Top-tier customers flagged as cold. Proactive outreach recommended.",
@@ -340,16 +452,27 @@ async function sourceCoolingCustomers(client: DbClient, ociId: string): Promise<
         extra: { count },
       },
     ];
-  } catch {
+  } catch (err) {
+    warnSkipped(log, source, "query_failed", table);
+    log?.warn({ source, table, err }, "[owner-attention] source query failed");
     return [];
   }
 }
 
 // ─── Source: At-risk units (brake/tire) within 7 days ────────────────────────
 
-async function sourceAtRiskUnits(client: DbClient, ociId: string): Promise<AttentionItem[]> {
+async function sourceAtRiskUnits(
+  client: DbClient,
+  ociId: string,
+  log?: AttentionLog
+): Promise<AttentionItem[]> {
+  const source = "at_risk_units";
+  const table = "maintenance.predictive_alerts";
   try {
-    if (!(await tableExists(client, "maintenance.predictive_alerts"))) return [];
+    if (!(await tableExists(client, table))) {
+      warnSkipped(log, source, "table_missing", table);
+      return [];
+    }
     const res = await client.query(
       `
         SELECT COUNT(*)::text AS c
@@ -366,7 +489,7 @@ async function sourceAtRiskUnits(client: DbClient, ociId: string): Promise<Atten
     return [
       {
         item_id: `at_risk_units:${ociId}`,
-        source: "at_risk_units",
+        source,
         score: 65,
         title: `${count} unit${count === 1 ? "" : "s"} at brake/tire risk within 7 days`,
         body: "Predictive alerts indicate brake or tire failure risk within the next 7 days.",
@@ -376,7 +499,9 @@ async function sourceAtRiskUnits(client: DbClient, ociId: string): Promise<Atten
         extra: { count },
       },
     ];
-  } catch {
+  } catch (err) {
+    warnSkipped(log, source, "query_failed", table);
+    log?.warn({ source, table, err }, "[owner-attention] source query failed");
     return [];
   }
 }
@@ -386,7 +511,8 @@ async function sourceAtRiskUnits(client: DbClient, ociId: string): Promise<Atten
 export async function computeTodaysAttention(
   client: DbClient,
   operatingCompanyId: string,
-  topN = 5
+  topN = 5,
+  log?: AttentionLog
 ): Promise<AttentionItem[]> {
   const sourceFns = [
     source425CDeadline,
@@ -401,7 +527,9 @@ export async function computeTodaysAttention(
     sourceAtRiskUnits,
   ];
 
-  const results = await Promise.allSettled(sourceFns.map((fn) => fn(client, operatingCompanyId)));
+  const results = await Promise.allSettled(
+    sourceFns.map((fn) => fn(client, operatingCompanyId, log))
+  );
 
   const all: AttentionItem[] = [];
   const seen = new Set<string>();

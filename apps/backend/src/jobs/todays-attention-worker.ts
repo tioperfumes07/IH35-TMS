@@ -39,7 +39,7 @@ async function tick(app: FastifyInstance) {
         assertTenantContext(ociId, WORKER_NAME);
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [ociId]);
 
-        const items = await computeTodaysAttention(client, ociId);
+        const items = await computeTodaysAttention(client, ociId, 5, app.log);
 
         for (const item of items) {
           await client.query(

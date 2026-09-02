@@ -89,6 +89,26 @@ check(
 );
 
 check(
+  "425C source queries compliance.form_425c_reports (not legal.form_425c_filings)",
+  () => {
+    const src = readFileSync(
+      resolve(ROOT, "apps/backend/src/owner/todays-attention/aggregator.service.ts"),
+      "utf8"
+    );
+    if (src.includes("legal.form_425c_filings")) {
+      throw new Error("Must not query legal.form_425c_filings");
+    }
+    if (!src.includes("compliance.form_425c_reports")) {
+      throw new Error("Must query compliance.form_425c_reports");
+    }
+    if (!src.includes("warnSkipped(")) {
+      throw new Error("Must warn when a source is skipped");
+    }
+    return true;
+  }
+);
+
+check(
   "routes.ts exports registerOwnerTodaysAttentionRoutes",
   () => fileContains(
     "apps/backend/src/owner/todays-attention/routes.ts",
