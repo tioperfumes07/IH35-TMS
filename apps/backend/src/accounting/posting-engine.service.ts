@@ -103,6 +103,13 @@ type PostingLineDraft = {
   description: string | null;
   source_transaction_line_id: string | null;
   relationship_role?: string | null;
+  /**
+   * GO-19-09 — QBO Class reporting dimension (catalogs.classes), copied from the source bill/expense
+   * HEADER onto each of its own debit (cost) lines only — never the AP/cash balancing credit line,
+   * which would net the class to $0 in ACCT-R-15's SUM(debit-credit) class-variance report. Optional
+   * so every other existing caller/source type is unaffected (defaults to NULL on insert).
+   */
+  class_id?: string | null;
 };
 
 type PostingDraft = {
@@ -834,10 +841,11 @@ async function insertPostingLines(input: {
           source_transaction_line_id,
           posting_batch_id,
           idempotency_key,
+          class_id,
           created_at,
           updated_at
         )
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, $9, $10, $11::uuid, $12, now(), now())
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, $9, $10, $11::uuid, $12, $13::uuid, now(), now())
         RETURNING id::text
       `,
       [
@@ -853,6 +861,7 @@ async function insertPostingLines(input: {
         line.source_transaction_line_id,
         input.postingBatchId,
         input.idempotencyKey,
+        line.class_id ?? null,
       ]
     );
     const postingId = ins.rows[0]?.id;
@@ -1153,6 +1162,7 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
     bill_number: string | null;
     revoked_at: string | null;
     source_system: string | null;
+    class_id: string | null;
   }>(
     `
       SELECT
@@ -1165,7 +1175,8 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
         memo,
         bill_number,
         revoked_at::text,
-        source_system::text
+        source_system::text,
+        class_id::text
       FROM accounting.bills
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -1282,6 +1293,8 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
       description: row.description ?? `Bill line ${row.line_sequence ?? ""}`.trim(),
       source_transaction_line_id: row.id ?? null,
       relationship_role: null,
+      // GO-19-09 — header-level Class, applied to every cost line; never the AP credit line below.
+      class_id: bill.class_id,
     });
   }
 
@@ -1326,11 +1339,12 @@ async function buildExpenseLines(client: DbClient, operatingCompanyId: string, s
     memo: string | null;
     expense_number: string | null;
     qbo_purchase_id: string | null;
+    class_id: string | null;
   }>(
     `
       SELECT id::text, status::text, posting_status::text, transaction_date::text,
              total_amount_cents::bigint, payment_account_uuid::text, vendor_uuid::text, memo, expense_number,
-             qbo_purchase_id::text
+             qbo_purchase_id::text, class_id::text
       FROM accounting.expenses
       WHERE operating_company_id = $1::uuid AND id::text = $2
       LIMIT 1
@@ -1388,6 +1402,8 @@ async function buildExpenseLines(client: DbClient, operatingCompanyId: string, s
       description: exp.memo ?? "Uncategorized expense",
       source_transaction_line_id: null,
       relationship_role: "expense_uncategorized_synthesized",
+      // GO-19-09 — header-level Class, applied to every cost line; never the credit line below.
+      class_id: exp.class_id,
     });
     accountResolutionTrace.push({ expense_line_id: null, method: "synthesized_uncategorized", account_id: uncategorizedAccount });
   } else {
@@ -1424,6 +1440,8 @@ async function buildExpenseLines(client: DbClient, operatingCompanyId: string, s
         description: row.description ?? `Expense line ${row.line_sequence ?? ""}`.trim(),
         source_transaction_line_id: row.id ?? null,
         relationship_role: method === "uncategorized_role" ? "expense_uncategorized" : null,
+        // GO-19-09 — header-level Class, applied to every cost line; never the credit line below.
+        class_id: exp.class_id,
       });
     }
   }

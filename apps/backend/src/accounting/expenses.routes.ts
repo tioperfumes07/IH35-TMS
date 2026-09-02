@@ -132,6 +132,10 @@ const createExpenseBodySchema = z.object({
   // silently summed bills only. Same optional/columnExists-guarded treatment as insurance_claim_id
   // above; no posting change (the existing expense poster is unchanged, this is a pointer).
   legal_matter_id: z.string().uuid().optional().nullable(),
+  // GO-19-09 — QBO Class reporting dimension (catalogs.classes), mirrors accounting.bills.class_id.
+  // Same optional/columnExists-guarded treatment as legal_matter_id above; header-only, never on
+  // accounting.expense_lines (bills only put it on the header too).
+  class_id: z.string().uuid().optional().nullable(),
   // QBO Ref no. — optional override. Empty → server assigns EXP-YYYY-##### (or load-scoped L-seq).
   expense_number: z.string().trim().max(80).optional().nullable(),
   // GO-09 L2 — the VENDOR's own receipt/invoice number, separate from expense_number (OURS,
@@ -820,6 +824,14 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         if (hasLegalMatterId) {
           columns.push(`legal_matter_id`);
           values.push(body.legal_matter_id ?? null);
+        }
+
+        // GO-19-09 — same column-gated treatment as legal_matter_id above; see migration
+        // 202613370001. Mirrors accounting.bills.class_id (header-only QBO Class dimension).
+        const hasClassId = await columnExists(client, "accounting", "expenses", "class_id");
+        if (hasClassId) {
+          columns.push(`class_id`);
+          values.push(body.class_id ?? null);
         }
 
         // GO-09 L2 — vendor_document_number is NEVER minted (blank stays blank); duplicate

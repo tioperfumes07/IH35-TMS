@@ -1127,6 +1127,9 @@ export function createExpense(
     /** ACCT-F5629 — optional legal-matter FK (accounting.expenses.legal_matter_id, migration
      * 202612821300), so an expense counts toward listLegalMatterLinkedCosts the same way a bill does. */
     legal_matter_id?: string;
+    /** GO-19-09 — optional QBO Class FK (accounting.expenses.class_id, migration 202613370001),
+     * mirrors accounting.bills.class_id. */
+    class_id?: string;
     /**
      * FAIL-F2 class-B — accounting.expenses.is_sample_data. The backend has accepted this since
      * expenses.routes.ts:114 and NOTHING in the FE supplied it, so every expense created through the app
@@ -1136,6 +1139,7 @@ export function createExpense(
     driver_id?: string;
     attachment_draft_id?: string;
     expense_number?: string;
+    vendor_document_number?: string;
   }
 ) {
   return apiRequest<{ expense_id: string; posting_status: "posted" | "unposted"; journal_entry_id: string | null }>(
