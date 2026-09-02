@@ -101,13 +101,26 @@ export function auditDispatchAlertBoardSort(src) {
 
 export function auditFleetOosStripSort(src) {
   const failures = [];
+  // FLEET-OOS-STRIP-PARITYTABLE: strip mounts ParityTable with sortable:true columns.
+  // Older shape was TableHeaderCell columnKey=… — accept either; reject plain <th>.
+  const usesParity = src.includes("<ParityTable");
   for (const col of ["unit", "status", "reason", "eta_back"]) {
-    const re = new RegExp(
+    const parityCol = new RegExp(
+      `key:\\s*"${col}"[\\s\\S]{0,280}?sortable:\\s*true`,
+    );
+    const headerCell = new RegExp(
       `columnKey="${col}"[\\s\\S]{0,400}?sortable[\\s\\S]{0,120}?onToggleSort`,
     );
-    if (!re.test(src)) failures.push(`column "${col}" missing sortable TableHeaderCell`);
+    if (!parityCol.test(src) && !headerCell.test(src)) {
+      failures.push(`column "${col}" missing sortable ParityTable/TableHeaderCell header`);
+    }
   }
-  if (/<th\s/.test(src)) failures.push("plain <th> header remains — use TableHeaderCell for every column");
+  if (!usesParity && /<th\s/.test(src)) {
+    failures.push("plain <th> header remains — use ParityTable or TableHeaderCell for every column");
+  }
+  if (usesParity && !/sortable:\s*true/.test(src)) {
+    failures.push("ParityTable mount has no sortable: true columns");
+  }
   return failures;
 }
 
@@ -191,6 +204,17 @@ if (SELFTEST) {
     {
       name: "SORT-03: FleetOosStrip plain th fails",
       fn: () => auditFleetOosStripSort('<th className="px-2 py-1 font-semibold">Status</th>').length > 0,
+    },
+    {
+      name: "SORT-03: FleetOosStrip ParityTable sortable columns pass",
+      fn: () =>
+        auditFleetOosStripSort(
+          '<ParityTable columns={oosColumns} />\n' +
+            '{ key: "unit", label: "Unit", sortable: true },\n' +
+            '{ key: "status", label: "Status", sortable: true },\n' +
+            '{ key: "reason", label: "Reason", sortable: true },\n' +
+            '{ key: "eta_back", label: "ETA back", sortable: true },',
+        ).length === 0,
     },
   ];
   let failed = false;
