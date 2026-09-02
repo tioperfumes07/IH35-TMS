@@ -332,6 +332,29 @@ function enclosingObject(source, index) {
   return null;
 }
 
+/**
+ * Resolve the local renderer named by a column (`render: helper` or
+ * `render: (row) => helper(row)`). This keeps channel D structural: a column
+ * is judged by the JSX it actually delegates to, not by whether EntityLink is
+ * spelled inside the column object itself.
+ */
+function delegatedRenderBody(source, column) {
+  const direct = /\brender:\s*([A-Za-z_$][\w$]*)\s*[,}]/.exec(column);
+  const called = /\brender:\s*\([^)]*\)\s*=>\s*([A-Za-z_$][\w$]*)\s*\(/.exec(column);
+  const name = direct?.[1] ?? called?.[1];
+  return name ? functionBody(source, name) : null;
+}
+
+function containsCanonicalLoadDrill(source, file) {
+  return (
+    /kind=\{?["'`]load["'`]/.test(source) ||
+    /kind=\{?["'`]portal_load["'`]/.test(source) ||
+    /entityKind:\s*["'`]load["'`]/.test(source) ||
+    source.includes(CANONICAL_PATH) ||
+    (file.startsWith(`${SRC}/portal/`) && source.includes(PORTAL_CANONICAL_PATH))
+  );
+}
+
 export function scanLoadColumns(files) {
   const found = [];
   for (const [file, raw] of Object.entries(files)) {
@@ -347,14 +370,10 @@ export function scanLoadColumns(files) {
       if (!obj) continue;
       // `{ value: "load", label: "Load" }` is a <select> option, not a table column.
       if (/(?:^|[{,\s])value:\s*["'`]/.test(obj.text)) continue;
+      const delegated = delegatedRenderBody(src, obj.text);
       const drills =
-        /kind=\{?["'`]load["'`]/.test(obj.text) ||
-        /kind=\{?["'`]portal_load["'`]/.test(obj.text) ||
-        /entityKind:\s*["'`]load["'`]/.test(obj.text) ||
-        obj.text.includes(CANONICAL_PATH) ||
-        // Only a portal file may satisfy the contract with the portal route. An office surface
-        // linking a customer-portal URL is a cross-surface leak, not a drill-through.
-        (file.startsWith(`${SRC}/portal/`) && obj.text.includes(PORTAL_CANONICAL_PATH));
+        containsCanonicalLoadDrill(obj.text, file) ||
+        (delegated !== null && containsCanonicalLoadDrill(delegated, file));
       const honestBlank = HONEST_DASH_RENDER.test(obj.text);
       found.push({ file, line: lineOf(src, m.index), drills, honestBlank, text: obj.text });
     }
@@ -494,6 +513,13 @@ function goodFixture() {
       [`${SRC}/pages/dispatch/DetentionBoardPage.tsx`]: `
         const columns = [
           { key: "load_number", label: "Load", render: (e) => <EntityLink kind="load" id={e.load_id} label={e.load_number} /> },
+        ];`,
+      [`${SRC}/pages/dispatch/HelperRenderedLoadColumn.tsx`]: `
+        function renderLoad(row) {
+          return <EntityLink kind="load" id={row.load_id} label={row.load_number} />;
+        }
+        const columns = [
+          { key: "load_number", label: "Load", render: (row) => renderLoad(row) },
         ];`,
       [`${SRC}/pages/dispatch/DispatchBoard.tsx`]: `
         <BulkProgressDialog resolveRowHref={(id) => \`/dispatch/loads/\${encodeURIComponent(id)}\`} />`,
@@ -681,6 +707,15 @@ function selftestMutations() {
   M.push([
     "Load column with no render at all",
     withFile(`${SRC}/pages/X.tsx`, '{ key: "id", label: "Load" },'),
+    /a "Load" column that does not drill/,
+  ]);
+  M.push([
+    "delegated Load renderer prints text instead of drilling",
+    withFile(
+      `${SRC}/pages/X.tsx`,
+      `function renderLoad(row) { return <span>{row.load_number}</span>; }
+       const cols = [{ key: "load_number", label: "Load", render: (row) => renderLoad(row) }];`,
+    ),
     /a "Load" column that does not drill/,
   ]);
   M.push([
