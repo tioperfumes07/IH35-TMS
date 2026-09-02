@@ -124,6 +124,8 @@ jobs:
 
       - name: Verify backend SQL references no phantom (non-existent) relation
         run: node scripts/verify-phantom-relations.mjs
+      - name: Mutation proof — phantom relation guard
+        run: node scripts/verify-phantom-relations.mjs --selftest
 
   no-iso-date-display:
     runs-on: ubuntu-latest

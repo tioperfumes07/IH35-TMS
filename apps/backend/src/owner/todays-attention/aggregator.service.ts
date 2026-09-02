@@ -94,7 +94,7 @@ async function source425CDeadline(
   const source = "form_425c_deadline";
   const table = "compliance.form_425c_reports";
   try {
-    if (!(await tableExists(client, table))) {
+    if (!(await tableExists(client, "compliance.form_425c_reports"))) {
       warnSkipped(log, source, "table_missing", table);
       return [];
     }
@@ -143,7 +143,7 @@ async function sourceFuelFraudAlerts(
   const source = "fuel_fraud";
   const table = "fuel.fraud_alerts";
   try {
-    if (!(await tableExists(client, table))) {
+    if (!(await tableExists(client, "fuel.fraud_alerts"))) {
       warnSkipped(log, source, "table_missing", table);
       return [];
     }
@@ -189,7 +189,7 @@ async function sourceBankDrift(
   const source = "bank_drift";
   const table = "banking.reconciliation_drift_alerts";
   try {
-    if (!(await tableExists(client, table))) {
+    if (!(await tableExists(client, "banking.reconciliation_drift_alerts"))) {
       warnSkipped(log, source, "table_missing", table);
       return [];
     }
@@ -235,7 +235,7 @@ async function sourceEngFaultWOs(
   const source = "engine_fault_wo";
   const table = "maintenance.work_orders";
   try {
-    if (!(await tableExists(client, table))) {
+    if (!(await tableExists(client, "maintenance.work_orders"))) {
       warnSkipped(log, source, "table_missing", table);
       return [];
     }
@@ -281,7 +281,7 @@ async function sourceCargoSensorIncidents(
   const source = "cargo_sensor";
   const table = "dispatch.cargo_sensor_incidents";
   try {
-    if (!(await tableExists(client, table))) {
+    if (!(await tableExists(client, "dispatch.cargo_sensor_incidents"))) {
       warnSkipped(log, source, "table_missing", table);
       return [];
     }
@@ -341,7 +341,7 @@ async function sourceDamageLiabilities(
   const source = "damage_liability";
   const table = "safety.accident_liabilities";
   try {
-    if (!(await tableExists(client, table))) {
+    if (!(await tableExists(client, "safety.accident_liabilities"))) {
       warnSkipped(log, source, "table_missing", table);
       return [];
     }
@@ -389,7 +389,7 @@ async function sourceDetentionApprovals(
   try {
     // Canonical detention table is dispatch.detention_requests (mdata.detention_requests does not
     // exist). "Pending Owner approval" = status = 'pending_review' (per detention-approval.service.ts).
-    if (!(await tableExists(client, table))) {
+    if (!(await tableExists(client, "dispatch.detention_requests"))) {
       warnSkipped(log, source, "table_missing", table);
       return [];
     }
@@ -434,7 +434,7 @@ async function sourceCoolingCustomers(
   const source = "cooling_customers";
   const table = "mdata.customer_health_scores";
   try {
-    if (!(await tableExists(client, table))) {
+    if (!(await tableExists(client, "mdata.customer_health_scores"))) {
       warnSkipped(log, source, "table_missing", table);
       return [];
     }
@@ -480,7 +480,7 @@ async function sourceAtRiskUnits(
   const source = "at_risk_units";
   const table = "maintenance.predictive_alerts";
   try {
-    if (!(await tableExists(client, table))) {
+    if (!(await tableExists(client, "maintenance.predictive_alerts"))) {
       warnSkipped(log, source, "table_missing", table);
       return [];
     }
