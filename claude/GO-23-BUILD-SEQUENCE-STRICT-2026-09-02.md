@@ -6,7 +6,7 @@ A seat that ships out of order has shipped nothing.
 Supersedes every earlier queue note. Registers merged into one board:
 - this session's book-load defects (GO-21, 49 rows)
 - `docs/bus/IH35-OWNER-REQUIREMENTS-MASTER-MAP.md` (~60 requirements, 9 unowned)
-- `DEFECT-CLASS-REGISTRY-2026-07-25.csv` (9 systemwide classes, all open since July)
+- ~~`DEFECT-CLASS-REGISTRY-2026-07-25.csv`~~ (9 systemwide classes, all open since July) — **SUPERSEDED 2026-09-02 by CASCADE PR #19683.** All 9 classes re-derived against current main via guards: C1=0, C2=0, C3=0, C4=0 actionable, C5=21 (all legitimate), C6=0, C7=127 (1 FAIL), C8=0, C9=0. The CSV file is not on disk. Do not plan against the published counts — use the guards directly.
 - the two rescued spreadsheets (516 MUST rules, 262 error codes, 31 locked invariants, 230 tasks)
 
 **67 board rows. 18 of them had no owner at all.** That is the number that matters.
