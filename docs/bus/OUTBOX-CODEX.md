@@ -1,5 +1,6 @@
 # ★ OUTBOX-CODEX · LIVE TOP · GO-20 · 2026-09-02
 
+CODEX | WORKING | GO-26-RETIRED-IMPORT-REINTRODUCTION | root=count-only consolidation ratchet allowed a retired importer to move into a new file with unchanged total | fix=per-component importer path baseline; new paths fail closed while removals remain allowed | RED=historical a4229e0c73 rejected 7 non-baselined SelectCombobox files | GREEN=current normal+selftest PASS | PR=pending | GO
 CODEX | WORKING | GO-26-B3-ASSIGNMENT-HISTORY-TOMBSTONE-SELFTEST-MUTATES-SOURCE | root=selftest overwrote/restored AssignmentHistoryPage | fix=sourceProblems planted mutations in memory | proof=target normal+selftest PASS; two named failures caught; mutation ratchet 580→578 | PR=pending | GO
 CODEX | WORKING | GO-26-B3-DISPATCH-OOS-SELFTEST-WRITES-REPO-TEMP | root=selftest created scripts/.oos-selftest-* inside the repository | fix=os.tmpdir isolated fixture + explicit repo-boundary assertion | proof=target normal+selftest PASS; global mutation ratchet 580/580 PASS | PR=pending | GO
 CODEX | WORKING | B3-FLEET-UNIT-QUERY-SELFTEST-MUTATES-SOURCE | root=selftest rewrote/restored VehicleProfilePage and spawned itself to plant missing AbortSignal propagation | fix=sourceProblems(planted) in-memory | proof=target normal+selftest PASS; orphan census 0; mutation ratchet 582→580 | PR=pending | GO

@@ -7,7 +7,8 @@
  * lands behind the conversion while it's in flight — exactly how 2,213 hardcoded sizes and
  * 277 trapping pickers accumulated the first time (no guard shipped before the work started).
  *
- * Ratchet = backslide lock, not the plan. It only fails when a count goes UP.
+ * Ratchet = backslide lock, not the plan. Counts may only go down, and every existing
+ * retired-component importer is path-baselined so a count-neutral remove/add swap fails.
  *
  * Eight metrics, each frozen at today's measured count:
  *   1. imports of components/shared/SelectCombobox   (trapping picker — RETIRE target)
@@ -25,7 +26,8 @@
  *      verify-ui-design-system-ratchet.mjs, folded in here per the owner's consolidation
  *      ruling so one guard covers the whole sprawl class, not two overlapping ones.
  *
- * Baseline: scripts/go26-consolidation-baseline.json  (committed, only ever goes down)
+ * Baseline: scripts/go26-consolidation-baseline.json  (committed; counts and importer
+ * path sets only ever shrink)
  *
  *   node scripts/verify-go26-consolidation-ratchet.mjs              check
  *   node scripts/verify-go26-consolidation-ratchet.mjs --selftest   self-check, no repo scan
@@ -143,6 +145,32 @@ function flatten(o) {
   };
 }
 
+function importPathBaseline(measured) {
+  return Object.fromEntries(
+    IMPORT_TARGETS.map((target) => [
+      target,
+      measured._importFiles[target]
+        .map((file) => path.relative(ROOT, file).split(path.sep).join("/"))
+        .sort(),
+    ])
+  );
+}
+
+function findNewImportPaths(current, baseline) {
+  const regressions = [];
+  for (const target of IMPORT_TARGETS) {
+    if (!Array.isArray(baseline?.[target])) {
+      regressions.push(`${target}: baseline entry missing (fail closed)`);
+      continue;
+    }
+    const allowed = new Set(baseline[target]);
+    for (const file of current[target] ?? []) {
+      if (!allowed.has(file)) regressions.push(`${target}: ${file}`);
+    }
+  }
+  return regressions;
+}
+
 function selftest() {
   const probe = {
     import_select_combobox: 1, import_entity_picker: 2, import_shared_combobox: 3,
@@ -152,6 +180,28 @@ function selftest() {
   const f = flatten(probe);
   const ok = f.import_select_combobox === 1 && f.raw_text_off_locked_scale === 8;
   if (!ok) { console.error(`${LABEL}: SELFTEST FAIL — flatten() wrong`); process.exit(1); }
+  const baselinePaths = Object.fromEntries(
+    IMPORT_TARGETS.map((target) => [target, [`apps/frontend/src/legacy/${target.split("/").at(-1)}Host.tsx`]])
+  );
+  const countNeutralSwap = structuredClone(baselinePaths);
+  countNeutralSwap[IMPORT_TARGETS[0]] = ["apps/frontend/src/new/NewPickerHost.tsx"];
+  const planted = findNewImportPaths(countNeutralSwap, baselinePaths);
+  if (planted.length !== 1 || !planted[0].includes("NewPickerHost.tsx")) {
+    console.error(`${LABEL}: SELFTEST FAIL — count-neutral new-file import was not rejected`);
+    process.exit(1);
+  }
+  const shrinking = structuredClone(baselinePaths);
+  shrinking[IMPORT_TARGETS[0]] = [];
+  if (findNewImportPaths(shrinking, baselinePaths).length !== 0) {
+    console.error(`${LABEL}: SELFTEST FAIL — removing a retired import must remain allowed`);
+    process.exit(1);
+  }
+  const missingTarget = structuredClone(baselinePaths);
+  delete missingTarget[IMPORT_TARGETS[0]];
+  if (!findNewImportPaths(baselinePaths, missingTarget).some((row) => row.includes("fail closed"))) {
+    console.error(`${LABEL}: SELFTEST FAIL — missing path baseline did not fail closed`);
+    process.exit(1);
+  }
   if (!fs.existsSync(SRC)) { console.error(`${LABEL}: SELFTEST FAIL — ${SRC} missing`); process.exit(1); }
   console.log(`${LABEL}: SELFTEST PASS`);
   process.exit(0);
@@ -190,11 +240,17 @@ if (argv.includes("--worklist")) {
   process.exit(0);
 }
 
-const measured = flatten(measure());
+const fullMeasurement = measure();
+const measured = flatten(fullMeasurement);
+const measuredImportPaths = importPathBaseline(fullMeasurement);
 
 if (argv.includes("--lower")) {
   const prior = fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, "utf8")) : null;
-  saveBaseline(measured);
+  if (prior && findNewImportPaths(measuredImportPaths, prior.import_files).length) {
+    console.error(`${LABEL}: REFUSE --lower — current tree contains a retired import path outside the baseline.`);
+    process.exit(1);
+  }
+  saveBaseline({ ...measured, import_files: measuredImportPaths });
   if (!prior) {
     console.log(`${LABEL}: baseline created.`);
     for (const [k, v] of Object.entries(measured)) console.log(`  ${k}: ${v}`);
@@ -217,6 +273,10 @@ for (const k of Object.keys(measured)) {
   const after = measured[k];
   if (after > before) regressions.push(`  REGRESSION  ${k}: ${before} -> ${after}  (+${after - before})`);
   else if (after < before) improvements.push(`  improved    ${k}: ${before} -> ${after}  (${after - before})`);
+}
+
+for (const row of findNewImportPaths(measuredImportPaths, baseline.import_files)) {
+  regressions.push(`  NEW FILE    ${row}`);
 }
 
 if (regressions.length) {
