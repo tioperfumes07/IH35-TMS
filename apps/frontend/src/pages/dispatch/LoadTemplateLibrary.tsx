@@ -208,7 +208,7 @@ export function LoadTemplatePicker({ operatingCompanyId, onSelectTemplate }: Pic
   const templates: LoadTemplateRow[] = q.data?.templates ?? [];
 
   return (
-    <label className="flex flex-col text-[10px] font-semibold text-gray-700">
+    <label className="flex flex-col text-xs font-semibold text-gray-700">
       Load from template
       <SelectCombobox
         className="mt-0.5 font-normal"
@@ -229,7 +229,7 @@ export function LoadTemplatePicker({ operatingCompanyId, onSelectTemplate }: Pic
         ))}
       </SelectCombobox>
       {q.isError ? (
-        <button type="button" className="mt-1 text-left text-[10px] font-semibold text-red-700 underline" onClick={() => void q.refetch()}>
+        <button type="button" className="mt-1 text-left text-xs font-semibold text-red-700 underline" onClick={() => void q.refetch()}>
           Retry template list
         </button>
       ) : null}
@@ -290,7 +290,7 @@ export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: Libra
 
   return (
     <Modal open={open} onClose={onClose} title="Load templates">
-      <div className="max-h-[360px] space-y-2 overflow-y-auto text-sm">
+      <div className="max-h-[360px] space-y-2 overflow-y-auto text-xs">
         <div className="relative space-y-2" data-testid="load-template-library-filters">
           <label className="block text-[11px] text-slate-600">
             Customer
@@ -470,7 +470,7 @@ export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initi
         </label>
         <label className="text-xs font-semibold text-gray-600">
           Template name
-          <input value={name} onChange={(ev) => setName(ev.target.value)} disabled={pending} className="mt-0.5 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:opacity-60" />
+          <input value={name} onChange={(ev) => setName(ev.target.value)} disabled={pending} className="mt-0.5 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:opacity-60" />
         </label>
         {err ? <div className="text-xs text-red-600">{err}</div> : null}
         <div className="flex justify-end gap-2 pt-1">

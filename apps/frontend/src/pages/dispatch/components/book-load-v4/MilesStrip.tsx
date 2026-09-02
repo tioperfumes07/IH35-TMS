@@ -46,7 +46,7 @@ export function MilesStrip({
   const editable = Boolean(onPracticalChange && onShortestChange);
   return (
     <div className="rounded-sm border border-slate-200 bg-white" data-testid="book-load-miles-strip">
-      <div className="flex text-[10px] font-semibold tracking-wide text-slate-700">
+      <div className="flex text-xs font-semibold tracking-wide text-slate-700">
         <div className={cell}>
           <label className="text-slate-600" htmlFor="book-miles-practical">
             Practical miles{practicalRequired ? " *" : ""}
@@ -59,16 +59,16 @@ export function MilesStrip({
               min={0}
               step={0.1}
               required={practicalRequired}
-              className={`mt-1 w-full max-w-[7rem] rounded-sm border px-1.5 py-1 font-mono text-sm ${
+              className={`mt-1 w-full max-w-[7rem] rounded-sm border px-1.5 py-1 font-mono text-xs ${
                 practicalRequired ? "border-slate-400 text-slate-900" : "border-slate-300 text-slate-900"
               }`}
               value={inputValue(practical)}
               onChange={(e) => onPracticalChange?.(numFromInput(e.target.value))}
             />
           ) : (
-            <div className="font-mono text-sm text-slate-900">{formatMiles(practical)}</div>
+            <div className="font-mono text-xs text-slate-900">{formatMiles(practical)}</div>
           )}
-          <div className="text-[9px] font-normal text-slate-500">revenue per mile</div>
+          <div className="text-xs font-normal text-slate-500">revenue per mile</div>
         </div>
         <div className={`${cell} bg-slate-100`}>
           <label className="text-slate-700" htmlFor="book-miles-shortest">
@@ -82,16 +82,16 @@ export function MilesStrip({
               min={0}
               step={0.1}
               required={shortestRequired}
-              className={`mt-1 w-full max-w-[7rem] rounded-sm border px-1.5 py-1 font-mono text-sm ${
+              className={`mt-1 w-full max-w-[7rem] rounded-sm border px-1.5 py-1 font-mono text-xs ${
                 shortestRequired ? "border-slate-400 text-slate-900" : "border-slate-300 text-slate-900"
               }`}
               value={inputValue(shortest)}
               onChange={(e) => onShortestChange?.(numFromInput(e.target.value))}
             />
           ) : (
-            <div className="font-mono text-sm text-slate-700">{formatMiles(shortest)}</div>
+            <div className="font-mono text-xs text-slate-700">{formatMiles(shortest)}</div>
           )}
-          <div className="text-[9px] font-normal text-slate-700">driver pay</div>
+          <div className="text-xs font-normal text-slate-700">driver pay</div>
         </div>
         <div className={cell}>
           <label className="text-slate-600" htmlFor="book-miles-deadhead">
@@ -104,21 +104,21 @@ export function MilesStrip({
               type="number"
               min={0}
               step={0.1}
-              className="mt-1 w-full max-w-[7rem] rounded-sm border border-slate-300 px-1.5 py-1 font-mono text-sm text-slate-900"
+              className="mt-1 w-full max-w-[7rem] rounded-sm border border-slate-300 px-1.5 py-1 font-mono text-xs text-slate-900"
               value={inputValue(deadhead)}
               onChange={(e) => onDeadheadChange?.(numFromInput(e.target.value))}
             />
           ) : (
-            <div className="font-mono text-sm text-slate-900">{formatMiles(deadhead)}</div>
+            <div className="font-mono text-xs text-slate-900">{formatMiles(deadhead)}</div>
           )}
-          <div className="text-[9px] font-normal text-slate-500">deadhead to pickup</div>
+          <div className="text-xs font-normal text-slate-500">deadhead to pickup</div>
         </div>
         <div className={cell}>
           <div className="text-slate-600">Revenue per mile</div>
-          <div className="font-mono text-sm text-slate-900">{ratePerMile > 0 ? `$${ratePerMile.toFixed(3)}` : ""}</div>
+          <div className="font-mono text-xs text-slate-900">{ratePerMile > 0 ? `$${ratePerMile.toFixed(3)}` : ""}</div>
         </div>
       </div>
-      <p className="border-t border-slate-200 px-2 py-1 text-[9px] text-slate-600">
+      <p className="border-t border-slate-200 px-2 py-1 text-xs text-slate-600">
         Customer pays the typed rate. Practical miles compute revenue per mile. Short miles pay the driver and already include empty miles.
         {provenance ? ` ${provenance}` : ""}
       </p>
