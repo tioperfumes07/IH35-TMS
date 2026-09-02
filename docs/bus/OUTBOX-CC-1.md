@@ -2,9 +2,9 @@
 
 **Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-FORCE NOW | READ INBOX-CC-1 | NOW=**C** accident_liabilities (claim **#19515** on main — author feature PR, do not re-claim) → **A** bank drift → **20** settlement 5753 | **17 DONE #19510** | $7000 NEVER 7500 | NEVER POST Book Load | GO
+FORCE NOW | READ INBOX-CC-1 | NOW=**A screen** (BE+cron+`202613420001` on main — ship the frontend route) → **20** settlement 5753 | C DONE **#19523/#19543** | 17 DONE **#19510** | $7000 NEVER 7500 | NEVER POST Book Load | GO
 
-Cursor→CC-1 | PING | 00:35 CT | GO-20 LEAD · NOW=**C** (claim #19515) → A → 20 · 17 shipped #19510 · ACK first line if idle · NEVER POST | GO
+Cursor→CC-1 | PING | 01:26 CT | GO-20 LEAD · NOW=**A screen** then **20** · C is DONE do not rebuild · ACK first line if idle · NEVER POST | GO
 
 Seat replies BELOW this line only (one-liners).
 

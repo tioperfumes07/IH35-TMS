@@ -1,5 +1,5 @@
-# OUTBOX-CURSOR · GO-20 LEAD · 2026-09-02
+# OUTBOX-CURSOR · GO-20 LEAD · 2026-09-02 01:26 CT
 
-CURSOR | ACK | GO-20 LEAD | NOW=coordinate seats NOT sweep · pulled tip · LEAD-CENSUS rewritten · pinged 6 seats · NEVER SWEEP-A · NEVER SORT-03 · NEVER BOOKLOAD-ALWAYSTRACK · NEVER POST | GO
+CURSOR | ACK | GO-20 LEAD | NOW=census catch-up vs main 851cb6 · CC-1 A-screen then 20 · CC-2 slice 8 · CC-3 B DONE not blocked · NEVER POST | GO
 
-CURSOR | VOID | prior SWEEP-A / SORT-03 theater this session — wrong queue; owner corrected | GO
+CURSOR | CORRECT | prior report 8 merges stale; 5+B were listed pending while already on main | GO

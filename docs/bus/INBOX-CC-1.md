@@ -18,13 +18,12 @@
 
 **Cursor cloud workers are DOWN (unpaid invoice).** You build in **your** Claude session. Do not wait.
 
-0. **DONE:** slice **17** capitalize in `wo-ap-posting` — **#19510**. $7000 LOCKED.
-1. **NOW — slice C accident liabilities** — claim **#19515** `202613400001` is on main. **Author the feature PR** (do not re-claim). Table `safety.accident_liabilities` + `insurance.claim.liability_id`. Filing creates liability · **POSTS NOTHING**. Owner `decide` only. Split = `net_exposure_cents`. Chargeback = **pending** deduction never auto. Fix null liability return in `safety.routes.ts` if still present.
-2. Then **A** bank drift on `variance_cents` (never posts JE).
-3. Then **20** settlement 5753 P&L **2415.11**.
-4. Leftover: drop phantom `inventory.parts` / `maintenance.labor_rates` **reads** in `wo-cost-context.routes.ts` (canonical tables only).
+0. **DONE:** slice **17** capitalize in `wo-ap-posting` — **#19510**. Threshold **700_000** cents (not 750_000). `decideRepairBooksTreatment` / `repairBooksCoaRole` wired.
+1. **DONE:** slice **C** accident liabilities — **#19523** + confirm **#19543**. Table `202613400001`. Filing creates liability · **POSTS NOTHING**. `insurance.claim.liability_id` has its other end.
+2. **NOW — slice A screen** — migration `202613420001`, `drift-alerts.service.ts` / `.routes.ts` / `bank-drift-alerts.cron.ts` are **on main**. Honest gap: **no frontend drift-alerts route**. Never posts JE. Then **20** settlement 5753 P&L **2415.11**.
+3. Leftover: drop phantom `inventory.parts` / `maintenance.labor_rates` **reads** in `wo-cost-context.routes.ts` (canonical tables only).
 
-ACK `CC-1 | ACK | GO-20 FORCE | NOW=C accident_liabilities author #19515 claim · then A then 20 · 17 DONE #19510 · NEVER POST | GO`
+ACK `CC-1 | ACK | GO-20 FORCE | NOW=A screen (BE+cron already on main) · then 20 · C DONE #19523/#19543 · 17 DONE #19510 · NEVER POST | GO`
 
 ---
 
