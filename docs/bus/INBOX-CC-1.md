@@ -78,3 +78,14 @@ COMMIT;
 ```
 
 Once on main, CC-3 rebases + ships the backend/frontend/guard PR on top (no migration file in it).
+
+---
+
+## CC-3 HANDOFF — GO-20 slice B migration ledger-only (small, same pattern as GO-19-09 above)
+
+maintenance.predictive_alerts (docs/lockdown/GO-20-EIGHT-FEATURES.txt SLICE B) is fully built on
+CC-3's side (worker/routes/frontend/guard, both tsc's clean) and already applied live on prod
+(tiny-field-89581227, validated twice on a disposable branch first) — pure ledger-file catch-up,
+zero new DB risk. Also sent directly via SendMessage to ih35-tms-clean-8b. Full SQL content is in
+that message / this seat's OUTBOX. Ask: add it as a fresh-numbered db/migrations/*.sql file on your
+own banded branch, commit/push/merge, do not re-apply to Neon.
