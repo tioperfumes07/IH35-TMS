@@ -24,11 +24,11 @@ describe("driver bills schema separation (P6-T11172)", () => {
     vi.mocked(appendCrudAudit).mockClear();
   });
 
-  it("derives canonical bill numbers from load numbers (Invariant #7)", () => {
-    expect(driverBillNumberFromLoadNumber("L-20260513-0003")).toBe("B-20260513-0003");
-    expect(driverBillNumberFromLoadNumber("l-13518")).toBe("B-13518");
-    expect(settlementLoadRowsCoveringInvariant("L-13518", "B-13518")).toBe(true);
-    expect(settlementLoadRowsCoveringInvariant("L-13518", "B-L-13518")).toBe(false);
+  it("driver bill number EQUALS the load number, unchanged (GO-27 Gate 0.3 / GO-19 display-id law)", () => {
+    expect(driverBillNumberFromLoadNumber("L-20260513-0003")).toBe("L-20260513-0003");
+    expect(driverBillNumberFromLoadNumber("13518")).toBe("13518");
+    expect(settlementLoadRowsCoveringInvariant("L-13518", "L-13518")).toBe(true);
+    expect(settlementLoadRowsCoveringInvariant("L-13518", "B-13518")).toBe(false);
   });
 
   it("keeps migration 0141 backfill idempotent (NOT EXISTS on legacy bill id)", () => {
@@ -61,7 +61,7 @@ describe("driver bills schema separation (P6-T11172)", () => {
           };
         }
         if (sql.includes("INSERT INTO driver_finance.driver_bills")) {
-          expect(values?.[3]).toBe("B-20260513-0999");
+          expect(values?.[3]).toBe("L-20260513-0999");
           // 48c/mi x miles_shortest 500 = 24,000c. NOT the 12,500c customer charge on this load —
           // that equality was the ACCT-F63 defect this test used to enshrine.
           expect(values?.[6]).toBe(24000);
