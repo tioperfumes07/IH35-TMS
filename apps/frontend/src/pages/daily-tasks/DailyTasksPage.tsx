@@ -251,11 +251,11 @@ export function DailyTasksPage() {
               </button>
               {task.description ? <p className="mt-0.5 text-slate-600">{task.description}</p> : null}
               <div className="mt-1 flex flex-wrap items-center gap-1">
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${priorityBadge(task.priority)}`}>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${priorityBadge(task.priority)}`}>
                   {task.priority.toUpperCase()}
                 </span>
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">{STATUS_STEPS[task.status]}</span>
-                {task.is_overdue ? <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-semibold text-white">Overdue</span> : null}
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{STATUS_STEPS[task.status]}</span>
+                {task.is_overdue ? <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">Overdue</span> : null}
               </div>
             </div>
           </div>
@@ -266,7 +266,7 @@ export function DailyTasksPage() {
         label: "Status",
         sortable: true,
         render: (task) => (
-          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadge(task.status)}`}>{task.status.toUpperCase()}</span>
+          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadge(task.status)}`}>{task.status.toUpperCase()}</span>
         ),
       },
       {
@@ -379,10 +379,10 @@ export function DailyTasksPage() {
               }`}
             >
               {VIEW_LABEL[id]}
-              <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${view === id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-700"}`}>
+              <span className={`rounded-full px-1.5 py-0.5 text-xs ${view === id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-700"}`}>
                 {tabCounts[id]}
               </span>
-              {id === "team" && overdueCount > 0 ? <span className="rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] text-white">{overdueCount}</span> : null}
+              {id === "team" && overdueCount > 0 ? <span className="rounded-full bg-red-600 px-1.5 py-0.5 text-xs text-white">{overdueCount}</span> : null}
             </button>
           ))}
         </div>
@@ -608,15 +608,15 @@ function TaskDetailDrawer({
                 {!eventsError && !eventsLoading ? events.map((event) => (
                   <div key={event.id} className="rounded-sm border border-slate-200 bg-white p-3">
                     <div className="mb-1 flex items-center justify-between gap-2">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         {event.event_type}
                       </span>
-                      <span className="text-[10px] text-slate-500">{formatDateTime(event.created_at)}</span>
+                      <span className="text-xs text-slate-500">{formatDateTime(event.created_at)}</span>
                     </div>
                     <div className="text-[11px] text-slate-700">Actor: <EntityLink kind="user" id={event.actor_user_id} label={entityLabel(event.actor_name, event.actor_user_id, "User")} /></div>
                     {Object.keys(event.payload ?? {}).length > 0 ? (
-                      <pre className="mt-2 overflow-x-auto rounded-sm bg-slate-50 p-2 text-[10px] text-slate-600">
+                      <pre className="mt-2 overflow-x-auto rounded-sm bg-slate-50 p-2 text-xs text-slate-600">
                         {JSON.stringify(event.payload, null, 2)}
                       </pre>
                     ) : null}
