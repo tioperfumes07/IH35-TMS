@@ -1010,3 +1010,114 @@ the tip commit's LIVE PROOF line names a checkable artifact per Rule 30 — `GET
 /api/v1/dispatch/lane-mileage` returned HTTP 200 (exit 0) with `practical_miles=1319.7`,
 `spread=27.1`; Neon `SELECT` on `mdata.loads` for `load_number=13508` returned 1 row both before
 and after, `miles_practical`/`miles_shortest`/`mileage_source` NULL/NULL/NULL each time.
+
+---
+
+## ★ CC-2 | ACK + B1/B2/B3/B5 re-verified on fresh deploy `b9bb175` · 2026-09-02T~17:45Z
+
+`CC-2 | ACK | IH35-INSTRUCTIONS-CC2-2026-09-02.md | B1 first, then B2/B3 live, then B4 batches,
+then B5 | GO`
+
+Deploy caught up mid-session (`healthz` now `b9bb175`, built `2026-09-02T17:29:40Z`,
+`git merge-base --is-ancestor 9945b6fc57 b9bb1757ac` = true). Everything in the prior entry above
+was tested against the **stale** pre-redeploy backend; re-testing now on the live current SHA
+reverses one verdict and completes the other four.
+
+### B1 — Miles fix: CONFIRMED FIXED, screen proof, all 5 confidence paths
+
+**Reversing my own prior finding.** Edit load 13508, same two stops (Indianapolis IN / Laredo TX),
+no ZIP entered on either — the wizard now **fills on load**:
+
+```
+Practical miles: 1319.7   Short miles: 1478.1   Empty miles: 207.6
+```
+
+Amber box, visible, exactly as specced: *"Filled from a lane whose ZIP does not match. Check
+these miles before you book. ZIP mismatch, spread 27 miles — VERIFY (7 prior runs)."*
+Screenshot: `/var/folders/.../screenshot-1788370326257-0.png` (zoomed on the miles block).
+
+`fill_confidence` fetched directly from the live endpoint (same call the wizard makes, city/state
+only, no ZIP): `"confidence":"Check ZIP","autofill_allowed":false,"fills":true,
+"fill_confidence":"check_zip","provenance":"ZIP mismatch, spread 27 miles — VERIFY (7 prior
+runs)."` — `fills:true` even though `autofill_allowed:false`, matching Rev-C's own stated design
+(`lane-mileage.service.ts` header comment: *"EVERY lane with stored practical miles fills the
+wizard"*).
+
+**All 5 `fill_confidence` paths checked against the live endpoint, all match
+`lane-mileage.service.ts` exactly:**
+
+| path | test lane | provenance rendered |
+|---|---|---|
+| `high` | Laredo,TX→Cocoa,FL | `From history, 8 runs.` |
+| `verify` (Thin) | Laredo,TX→Gastonia,NC | `From 1 run — verify.` |
+| `check_zip` | Indianapolis,IN→Laredo,TX (13508's real lane) | `ZIP mismatch, spread 27 miles — VERIFY (7 prior runs).` — **Chrome-confirmed, amber, screenshot above** |
+| `reverse` | Cocoa,FL→Laredo,TX (only stored forward) | `From the reverse lane, 8 prior runs.` |
+| `none` | Zzyzx,CA→Nowhereville,WY (no data) | `New lane. Enter the miles.` |
+
+Test lanes came from `catalogs.lane_mileage` under `bypass_rls=lucia`
+(`SELECT confidence, count(*) FROM catalogs.lane_mileage WHERE operating_company_id=
+'5c854333-...' GROUP BY confidence` → Thin 2687, High 469, Check ZIP 182). Did not type into
+Practical miles this pass, did not save, did not book. **13508's own DB row is still
+NULL/NULL/NULL** (unchanged, confirmed again) — the fix makes the value fillable and visible in
+the wizard; nothing has saved it yet because nobody has clicked Book.
+
+### B2 — C1: still NOT 0, re-confirmed on the fresh deploy, with the DB half of the proof
+
+Same repro, same current deploy: **Edit load 13508 → CUSTOMER field renders
+`ed3543fc-e6ab-4975-b8d4-0993c5faab08`**, not "NCC Logistics." Screenshot:
+`/var/folders/.../screenshot-1788370400950-1.png`.
+
+DB side, `bypass_rls=lucia`:
+```sql
+SELECT id, customer_name FROM mdata.customers WHERE id='ed3543fc-e6ab-4975-b8d4-0993c5faab08';
+-- id: ed3543fc-e6ab-4975-b8d4-0993c5faab08 | customer_name: NCC Logistics
+```
+The row and the name resolution both exist in the database — this rules out "missing data" as the
+cause. The defect is purely that the **edit-mode Customer prefill never calls whatever resolves
+the name** (the same load's own read-only Overview tab, one screen over, shows "NCC Logistics"
+correctly). Not zero. Routed to CC-3, exact file still unidentified by me (edit-mode prefill path
+inside `BookLoadModalV4`/its data-loading hook — CC-3's lane to find precisely).
+
+### B3 — N1: re-confirmed on the rendered surface, current deploy
+
+Clicked "Add expense" from load 13508's Overview → lands on
+`/accounting/expenses/new?load_id=926f4142...&load_number=13508`, page title "Record expense,"
+banner **"Load-scoped: 13508,"** `Trip / Load` field pre-filled `13508`. This is the rendered
+screen, not a grep — the earlier "Record expense" button click from the drawer banner didn't
+visibly navigate on the first try (same route, timing), so I used "Add expense" instead and
+captured the real page. Closed via X (routed to the read-only Expenses list, 0 rows) — nothing
+submitted.
+
+### B5 — G2 answered: real screen, real defect, and the search control itself works
+
+Found it — I hadn't found the right page. `apps/frontend/src/pages/dispatch/
+TripPairingBoardPage.tsx:171-219`, route `/dispatch/trip-pairing`
+(`apps/frontend/src/routes/trip-pairing-board.routes.ts:11`). Never surfaced in my earlier sweep
+of Load board / Kanban / Round Trips / Planners because it lives at its own route, not nested
+under any of those.
+
+**The search control itself: FIXED, confirmed live.** Typed `T147` into "Search unit or driver…"
+— the Unbooked/Available grid filtered from 16 cards to exactly 1 (`T147`) instantly. Client-side
+substring match (`TripPairingBoardPage.tsx:190-191`), no network round-trip needed, no bug here.
+
+**But there is a real, reproducible defect one layer up, and it's the "NO network request /
+wrong empty state" case from your three options — with a twist.** Two fresh cold navigations to
+`/dispatch/trip-pairing` (not a reload — full navigate away and back) both rendered
+**"Select an operating company to load the trip pairing board"** for 1-3 seconds on first paint,
+even though the company context is already set (USMCA Freight Solutions, same as every other
+screen this whole session) — then it self-corrected to the real board with no further action.
+Root cause, `TripPairingBoardPage.tsx:172-183,210-219`: the early-return gate at line 210 reads
+`selectedCompanyId` from `useCompanyContext()` directly, while the `useQuery` at line 180 gates on
+the same value via `enabled: Boolean(companyId)`. Network capture during the broken paint shows
+`GET .../trip-pairing-board?operating_company_id=5c854333-...` **did** fire and returned 200 with
+real data (16 active trucks) — so the query's own `enabled` check passed, but the page's
+early-return render was still showing the empty-company gate at that same moment. Two reads of
+company-selection state that don't hydrate on the same tick. Not "no request at all" and not
+"empty result" — a third thing: **a transient false negative on the gate condition that briefly
+hides a board whose data already arrived.** A dispatcher landing here first (bookmark, direct
+link, not via another screen) would see this for real. Routed to CC-3 with the exact two line
+numbers.
+
+Nothing booked, no load created, no expense/bill submitted, no customer/GL record touched. Two
+Neon reads only (both `bypass_rls=lucia`, both SELECT). Idle, watching INBOX TOP; moving to B4
+(J1 batches) next.
