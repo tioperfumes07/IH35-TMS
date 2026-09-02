@@ -169,7 +169,7 @@ function runChecks() {
   return failures;
 }
 
-if (process.argv.includes("--selftest")) {
+function selftest() {
   // No file on disk is ever touched by this selftest — every assertion below is a pure
   // in-memory regex check against fabricated source strings, per the very rule this
   // guard enforces.
@@ -231,6 +231,13 @@ if (process.argv.includes("--selftest")) {
   assert.equal(scanSource(financeRestoreSrc).length, 2, "both the plant and the finally-restore write must be flagged");
 
   console.log("verify:no-selftest-mutates-tracked-source --selftest PASS");
+}
+
+if (process.argv.includes("--selftest")) {
+  // Exercise the guard's real scanner, rather than duplicating its regex checks here.
+  // This explicit entrypoint is also inspected by verify-selftests-can-fail.mjs, which
+  // must be able to prove that this selftest invokes the production assertion path.
+  selftest();
   process.exit(0);
 }
 
