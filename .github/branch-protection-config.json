@@ -19,7 +19,8 @@
         "premerge-gates / rls-migration-scan",
         "premerge-gates / typescript-strict-null",
         "premerge-gates / migration-role-validation",
-        "ui-design-system-ratchet / ui-design-system-ratchet"
+        "ui-design-system-ratchet / ui-design-system-ratchet",
+        "go26-consolidation-ratchet / go26-consolidation-ratchet"
       ]
     },
     "enforce_admins": true,
@@ -46,7 +47,8 @@
     "migration-role-validation": "premerge-gates / migration-role-validation (GAP-81: unknown GRANT roles)",
     "non-universal-checks": "Performance (perf-audit), PASS-8, and PR-preview workflows remain advisory or conditional and are intentionally not branch-protection requirements. Security (security-audit) IS required — kept by owner decision 2026-07-18.",
     "prod-postdeploy-verify": "prod-postdeploy-verify / Production Post-Deploy Verify (Layer 2: runs on push to main, NOT a required merge check — alerting gate only)",
-    "_canary-smoke-REMOVED": "canary-smoke.yml deleted FIX-CANARY-SMOKE-DURABLE — was permanently red: wrong trigger (push not PR), wrong health path (/health vs /api/v1/health), bogus promote-to-prod step"
+    "_canary-smoke-REMOVED": "canary-smoke.yml deleted FIX-CANARY-SMOKE-DURABLE — was permanently red: wrong trigger (push not PR), wrong health path (/health vs /api/v1/health), bogus promote-to-prod step",
+    "go26-consolidation-ratchet": "go26-consolidation-ratchet / go26-consolidation-ratchet (GO-26 owner ruling 2026-09-02: freezes trapping-picker + legacy-table imports, raw <table> outside 6 infra files, and off-scale text, before the 277-file K2/J1 conversion — verify-step 10231)"
   },
   "apply_script": "node scripts/ci-apply-branch-protection.mjs",
   "verify_script": "node scripts/verify-ci-policy-applied.mjs"
