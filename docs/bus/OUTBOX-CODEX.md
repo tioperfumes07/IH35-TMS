@@ -1,5 +1,6 @@
 # ★ OUTBOX-CODEX · LIVE TOP · GO-20 · 2026-09-02
 
+CODEX | WORKING | B3-SELFTEST-SCANNER-OBJECT-PATH-BLIND-SPOT | root=tracked source held in object properties escaped scanner; WO UX guard wrote/restored FILES.parityDrawer | fix=qualified property tracing + injected in-memory reader | proof=both selftests planted; global 625/625 PASS | PR=pending | GO
 CODEX | WORKING | B3-DISPATCH-DETENTION-SELFTEST-MUTATES-SOURCE | root=4 mutations wrote/restored tracked service 8 times | fix=audit(overrides) in-memory | proof=4/4 planted + normal PASS | scanner-gap=paths.service not traced, next B3 | PR=pending | GO
 CODEX | WORKING | B3-DISPATCH-STATUS-SELFTEST-MUTATES-SOURCE | root=guard wrote/restored API+mdata+dispatch route sources + greedy signature assertion let optional opco escape | fix=in-memory run reader + bounded exact function assertion | proof=13 named planted failures; normal PASS; mutation count 631→625 baseline tightened | PR=pending | GO
 CODEX | WORKING | B3-425-SELFTEST-MUTATES-TRACKED-SOURCE | root=selftest wrote/restored manifest+home in shared tree | fix=in-memory injected reader | proof=425 normal+selftest PASS; source-mutation count 636→631 and baseline tightened | PR=pending | GO

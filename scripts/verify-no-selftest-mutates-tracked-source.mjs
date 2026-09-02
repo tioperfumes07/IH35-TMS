@@ -100,6 +100,29 @@ function collectPathConstantNames(src) {
   return names;
 }
 
+function collectPathPropertyNames(src, pathConstantNames) {
+  const names = new Set();
+  const objectRe = /\b(?:const|let|var)\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=\s*\{([\s\S]*?)\n\s*\};/g;
+  let objectMatch;
+  while ((objectMatch = objectRe.exec(src)) !== null) {
+    const [, objectName, body] = objectMatch;
+    const propertyRe = /(?:^|\n)\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*:\s*([^\n]+?)(?:,\s*)?(?=\n|$)/g;
+    let propertyMatch;
+    while ((propertyMatch = propertyRe.exec(body)) !== null) {
+      const [, propertyName, rhs] = propertyMatch;
+      const identifiers = rhs.match(/[A-Za-z_$][A-Za-z0-9_$]*/g) ?? [];
+      if (
+        TARGETS_TRACKED_SOURCE_RE.test(rhs) ||
+        TARGETS_PACKAGES_RE.test(rhs) ||
+        identifiers.some((id) => pathConstantNames.has(id))
+      ) {
+        names.add(`${objectName}.${propertyName}`);
+      }
+    }
+  }
+  return names;
+}
+
 function identifierTracesToPathConstant(src, varName, pathConstantNames) {
   if (!varName || !/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(varName)) return false;
   if (pathConstantNames.has(varName)) return true;
@@ -112,6 +135,7 @@ function identifierTracesToPathConstant(src, varName, pathConstantNames) {
 
 function scanSource(src) {
   const pathConstantNames = collectPathConstantNames(src);
+  const pathPropertyNames = collectPathPropertyNames(src, pathConstantNames);
   const violations = [];
   let match;
   WRITE_CALL_RE.lastIndex = 0;
@@ -119,10 +143,11 @@ function scanSource(src) {
     const [, fn, rawArg] = match;
     const arg = rawArg.trim();
     const identifiers = arg.match(/[A-Za-z_$][A-Za-z0-9_$]*/g) ?? [];
+    const properties = arg.match(/[A-Za-z_$][A-Za-z0-9_$]*\.[A-Za-z_$][A-Za-z0-9_$]*/g) ?? [];
     const targetsTrackedSourceDirectly = TARGETS_TRACKED_SOURCE_RE.test(arg) || TARGETS_PACKAGES_RE.test(arg);
     const targetsTrackedSourceViaConstant = identifiers.some((id) =>
       identifierTracesToPathConstant(src, id, pathConstantNames)
-    );
+    ) || properties.some((property) => pathPropertyNames.has(property));
     if (!targetsTrackedSourceDirectly && !targetsTrackedSourceViaConstant) continue;
 
     // Allow-list: the call itself is built from a temp primitive inline
@@ -212,6 +237,22 @@ function selftest() {
   );
   const twoHopViolations = scanSource(twoHopSrc);
   assert.equal(twoHopViolations.length, 1, "the two-hop DISPATCH -> p -> writeFileSync chain must be flagged");
+
+  const propertyPathSrc = `
+    const paths = {
+      service: path.join(ROOT, "apps/backend/src/dispatch/detention.service.ts"),
+      fixture: path.join(ROOT, "docs/fixtures/detention.json"),
+    };
+    function selftest() {
+      fs.writeFileSync(paths.service, planted, "utf8");
+    }
+  `;
+  const propertyConstants = collectPathConstantNames(propertyPathSrc);
+  assert.ok(
+    collectPathPropertyNames(propertyPathSrc, propertyConstants).has("paths.service"),
+    "paths.service must be recognized as a tracked-source path property"
+  );
+  assert.equal(scanSource(propertyPathSrc).length, 1, "an object-property tracked path must be flagged");
 
   // And the paired restore-in-finally form (the dominant 401-of-611 real pattern) must
   // also be flagged for BOTH the plant and the restore call — restoring afterward does
