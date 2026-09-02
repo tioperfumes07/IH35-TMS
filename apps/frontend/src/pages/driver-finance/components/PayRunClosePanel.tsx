@@ -5,6 +5,7 @@ import {
   closeSettlementPayRun,
   PAYRUN_COA_ERROR_CODES,
   previewSettlementPayRun,
+  type OutstandingLoanDecisionDetails,
   type SettlementPayRunResult,
 } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
@@ -14,6 +15,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { useToast } from "../../../components/Toast";
+import { LoanRecoveryDecisionModal } from "./LoanRecoveryDecisionModal";
 
 const COA_ROLES_HREF = "/accounting/settings/coa-roles";
 
@@ -79,6 +81,10 @@ export function PayRunClosePanel({
   const [busy, setBusy] = useState<"preview" | "close" | null>(null);
   const [result, setResult] = useState<SettlementPayRunResult | null>(null);
   const [errorBanner, setErrorBanner] = useState<{ code: string; message: string } | null>(null);
+  // 00_LOCKED_DECISIONS 9.2/9.3 — LOAN POP-UP AT CLOSE. closeSettlementPayRun refuses (409
+  // OUTSTANDING_LOAN_DECISION_REQUIRED) with no decision attached; this holds the modal's details
+  // between that refusal and the operator's Accept/Edit-amount choice, then retries the close once.
+  const [loanDecisionDetails, setLoanDecisionDetails] = useState<OutstandingLoanDecisionDetails | null>(null);
 
   const canAct = AUTHORITY_ROLES.has(String(userRole ?? ""));
   const postable = ["locked", "final", "closed", "paid", "approved", "ready"].includes(settlementStatus);
@@ -150,7 +156,9 @@ export function PayRunClosePanel({
     }
   }
 
-  async function runClose() {
+  async function runClose(
+    loanDecision?: { mode: "full" | "partial"; partial_cents: number | null; reason: string | null } | null
+  ) {
     if (!companyId) return;
     setBusy("close");
     setErrorBanner(null);
@@ -159,7 +167,9 @@ export function PayRunClosePanel({
         operating_company_id: companyId,
         payment_method_id: paymentMethodId || null,
         payment_reference: paymentReference.trim() || null,
+        loan_recovery_decision: loanDecision ?? null,
       });
+      setLoanDecisionDetails(null);
       setResult(data);
       if (data.result === "posted" && data.journal_entry_id) {
         pushToast("Pay-run closed — journal entry posted", "success");
@@ -175,6 +185,17 @@ export function PayRunClosePanel({
       }
     } catch (error) {
       const parsed = extractPayRunError(error);
+      // 00_LOCKED_DECISIONS 9.2 — "a window MUST appear and ask. IT CANNOT BE DEFERRED." This is
+      // that window: the refusal carries the exact recoverable-advance numbers the modal needs, so
+      // it opens the Accept/Edit-amount control instead of dropping the operator into a raw error
+      // banner with no path forward.
+      if (parsed.code === "OUTSTANDING_LOAN_DECISION_REQUIRED" && error instanceof ApiError && error.data && typeof error.data === "object") {
+        const details = (error.data as { details?: OutstandingLoanDecisionDetails }).details;
+        if (details && Array.isArray(details.recoverable_advances)) {
+          setLoanDecisionDetails(details);
+          return;
+        }
+      }
       setErrorBanner(parsed);
       pushToast(`${parsed.code}: ${parsed.message}`, "error");
     } finally {
@@ -263,7 +284,7 @@ export function PayRunClosePanel({
         <Button
           size="sm"
           disabled={busy !== null || !companyId || !postable}
-          onClick={() => void runClose()}
+          onClick={() => void runClose(null)}
           data-testid="payrun-close-button"
         >
           {busy === "close" ? "Closing…" : "Close pay-run"}
@@ -367,6 +388,13 @@ export function PayRunClosePanel({
           />
         </div>
       ) : null}
+
+      <LoanRecoveryDecisionModal
+        open={loanDecisionDetails !== null}
+        details={loanDecisionDetails}
+        onClose={() => setLoanDecisionDetails(null)}
+        onDecide={(decision) => void runClose(decision)}
+      />
     </div>
   );
 }
