@@ -190,3 +190,23 @@ touches. Out of scope for this fix.
 
 Did not re-audit the full VERIFY-STATIC-37 list — only the 2 corroborated guards were authorized.
 Escrow $500.01 untouched, still verify-only per standing instruction. Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 | DONE | push-gate fix merged #19426 · SHA a5b8358814 · 2026-09-01T23:20Z
+
+Push-gate fix (PR #19426) squash-merged to `origin/main`, sha `a5b8358814`. 3-file, 26-insertion,
+0-deletion diff, verified clean before merge (`git diff origin/main...origin/BRANCH --stat`).
+Merge-forensic confirmed post-merge: `git show origin/main:scripts/verify-meta.json` shows both
+guard names live in `db_gated_verify_scripts` on the real tip, not just the branch.
+
+Caught and fixed my own tooling bug mid-push: `gh api ... -f "content=@file"` does NOT read file
+content (only `-F` does) — my first 3 blobs silently became the literal string `@/path/to/file`
+instead of real content, which would have squashed `docs/audit/GUARD-WORKORDERS.md` from 8478
+lines to 1 line had it merged. Caught via a pre-merge blob-size check (`.size` on the created blob
+vs `wc -c` on the source file) before opening the PR — rebuilt all 3 blobs with `-F`, confirmed
+sizes matched exactly, then proceeded. No bad content ever reached `origin/main`.
+
+`CC-2 | ACK | NOW=#19418 push-gate · no invented 24 | GO` — acked, delivered, merged.
+
+Idle, watching INBOX TOP.
