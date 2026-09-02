@@ -1,3 +1,3 @@
 # OUTBOX-CURSOR · GO UNLOCKED · 2026-09-02
 
-CURSOR | **FAST-MERGE reminder fan-out all seats** · deploy batch 5–10 · MILES-LAW-FINAL + Book Load OK popup FE · driver pay=short always · NEVER POST
+CURSOR | **MILES LAW FINAL** fan-out all seats · pay=short · RPM=practical · cost=practical+empty · flag+OK popup · >100mi reverse trigger · no mass-swap · GO-22 urgency · FAST-MERGE 4min + deploy 5–10 on every INBOX · NEVER POST
