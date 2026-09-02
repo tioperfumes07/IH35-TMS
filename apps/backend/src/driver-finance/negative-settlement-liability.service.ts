@@ -1,3 +1,13 @@
+// C6-MONEY-JE-EXEMPT: this books the driver_liabilities row (type='negative_settlement') at
+// settlement /finalize (status -> 'locked', locked_at stamped) — a REQUIRED precondition for the
+// real GL post, which runs later at /payrun-close via settlement-payrun-close.service.ts's
+// closeSettlementPayRun (createJournalEntry): traced its own guard
+// "settlement.locked_at == null && !POSTABLE_STATUSES.has(status) -> SETTLEMENT_NOT_POSTABLE"
+// before exempting — confirms /finalize is a REQUIRED step-1 precursor to /payrun-close's step-2
+// JE, not a competing/independent close path. Same eventually-consistent, flag-gated
+// (SETTLEMENT_GL_POSTING_ENABLED, default OFF) pattern as every other settlement-staging
+// exemption this session. Verified 2026-09-02, GO-23 C6.
+//
 // RULING B — NEGATIVE SETTLEMENTS (owner ruling 2026-09-01). A negative net_pay means the driver
 // owes the company. It posts AUTOMATICALLY to the driver's account on the RECEIVABLE side, per the
 // locked decision (Driver Cash Advance = ASSET, Driver Escrow = LIABILITY) -- the debt ledger this

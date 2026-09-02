@@ -1,6 +1,6 @@
 // C6-MONEY-JE-EXEMPT: driver_finance.settlement_lines rows here are settlement-scoped LINE items,
 // not independent cash movements — the settlement HEADER posts one aggregate balanced JE at
-// finalize via settlement-posting.service.ts's postSettlementToGl (verified 2026-09-02, GO-23 C6).
+// finalize via settlement-payrun-close.service.ts's closeSettlementPayRun (createJournalEntry) -- CORRECTED 2026-09-02: postSettlementToGl was RETIRED (SET-01, 2026-07-26), never live in prod (verified 2026-09-02, GO-23 C6).
 /**
  * P2b/P2f team-split convergence (owner ruling DECISION 2, Option A — 2026-07-21).
  *

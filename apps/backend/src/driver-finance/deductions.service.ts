@@ -1,7 +1,7 @@
 // C6-MONEY-JE-EXEMPT: driver_settlement_deductions rows here carry applied_to_settlement_id (NULL
 // until a settlement actually applies them) — a pending deduction, not an independent cash
 // movement. The settlement HEADER posts one aggregate balanced JE at finalize via
-// settlement-posting.service.ts's postSettlementToGl (verified 2026-09-02, GO-23 C6 shrink).
+// settlement-payrun-close.service.ts's closeSettlementPayRun (createJournalEntry) -- CORRECTED 2026-09-02: postSettlementToGl was RETIRED (SET-01, 2026-07-26), never live in prod (verified 2026-09-02, GO-23 C6 shrink).
 import { appendCrudAudit } from "../audit/crud-audit.js";
 
 /**
