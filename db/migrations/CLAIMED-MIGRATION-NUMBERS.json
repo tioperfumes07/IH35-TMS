@@ -586,6 +586,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-02",
       "purpose": "go20_h_late_arrival_aggregates_schema (schema-only handoff for Codex rollup/feature honesty/UI: dispatch.late_arrival_aggregates exactly per GO-20, company/driver/day unique aggregate, FORCE RLS, 0065 grants/indexes, no fixture)"
+    },
+    "202613400001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-02",
+      "purpose": "go20_slice_c_accident_liabilities (GO-20-EIGHT-FEATURES.txt slice C, CC-1 money lane: create safety.accident_liabilities exactly per spec + wire insurance.claim.liability_id FK; also backfills a missing CREATE TABLE for safety.accidents itself -- live-verified it exists on prod with 1 real row but no migration anywhere creates it, so a fresh-CI-DB replay of a new FK referencing it would fail without this)"
     }
   }
 }
