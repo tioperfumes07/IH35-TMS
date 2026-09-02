@@ -239,15 +239,15 @@ function rateConAccessorialRows(json: Record<string, unknown>): AccessorialRow[]
 const BOOK_LOAD_CORRECT_DESIGN_CSS = `
 .blw-sec{background:#fff;border:1px solid #e3e6eb;border-radius:7px;overflow:hidden}
 .blw-sec-hd{display:flex;align-items:center;gap:9px;padding:7px 11px;background:#eef1f4;border-bottom:1px solid #e3e6eb}
-.blw-sec-chip{width:18px;height:18px;border-radius:4px;background:#1f2a44;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
-.blw-sec-name{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5b6472}
-.blw-sec-meta{margin-left:auto;font-size:10px;font-weight:600;color:#5b6472}
+.blw-sec-chip{width:18px;height:18px;border-radius:4px;background:#1f2a44;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.blw-sec-name{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5b6472}
+.blw-sec-meta{margin-left:auto;font-size:12px;font-weight:600;color:#5b6472}
 .blw-sec-meta b{color:#1f2733}
 .blw-collapse{border:1px solid #e3e6eb;border-radius:5px;overflow:hidden}
 .blw-collapse-bar{display:flex;align-items:center;gap:8px;padding:8px 11px;cursor:pointer;background:#f7f8fa}
 .blw-collapse-bar:hover{background:#f0f2f5}
 .blw-collapse-plus{width:16px;height:16px;border-radius:3px;background:#1f2a44;color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none}
-.blw-note{font-size:9.5px;color:#8a93a1}
+.blw-note{font-size:12px;color:#8a93a1}
 /* Load Wizard V5 — compact density (visual only; gated by LOAD_WIZARD_V5). */
 [data-wizard-v5="on"] .blw-sec-hd{padding:4px 9px}
 [data-wizard-v5="on"] .blw-collapse-bar{padding:5px 9px}
