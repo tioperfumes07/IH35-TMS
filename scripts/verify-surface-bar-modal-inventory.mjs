@@ -21,6 +21,9 @@ const FE = path.join(ROOT, "apps/frontend/src");
 
 /** Shared Confirm / nested picker / wizard-step shells — not top-level matrix leaves. */
 const ALLOWED_NESTED = new Set([
+  // Shared bulk-action preflight mounted by multiple owning pages. It is not a
+  // standalone create surface and therefore cannot own a required.json leaf.
+  "components/bulk/BulkPreValidationDialog.tsx",
   "components/shared/ConfirmModal.tsx",
   "components/parity/drawers/NewAccountDrawerForm.tsx",
   "components/parity/drawers/NewClassDrawerForm.tsx",
@@ -144,10 +147,14 @@ function auditFileOwned(rel, ownerId, inv) {
   return null;
 }
 
-export function audit(hosts = collectModalHosts(), inv = loadInventory()) {
+export function audit(
+  hosts = collectModalHosts(),
+  inv = loadInventory(),
+  allowedNested = ALLOWED_NESTED,
+) {
   const failures = [];
   for (const rel of hosts) {
-    if (ALLOWED_NESTED.has(rel)) continue;
+    if (allowedNested.has(rel)) continue;
     const owner = FILE_OWNED_BY_LEAF[rel];
     if (owner) {
       const ownedFail = auditFileOwned(rel, owner, inv);
@@ -204,6 +211,19 @@ if (process.argv.includes("--selftest")) {
   }
   if (audit(["components/shared/ConfirmModal.tsx"], inv).length) {
     console.error(`${LABEL} SELFTEST FAIL — ALLOWED_NESTED rejected`);
+    process.exit(1);
+  }
+  const bulkPreValidationHost = "components/bulk/BulkPreValidationDialog.tsx";
+  if (audit([bulkPreValidationHost], inv).length) {
+    console.error(`${LABEL} SELFTEST FAIL — shared bulk pre-validation host rejected`);
+    process.exit(1);
+  }
+  const withoutBulkPreValidation = new Set(ALLOWED_NESTED);
+  withoutBulkPreValidation.delete(bulkPreValidationHost);
+  if (!audit([bulkPreValidationHost], inv, withoutBulkPreValidation).length) {
+    console.error(
+      `${LABEL} SELFTEST FAIL — planted removal of the real bulk pre-validation mapping escaped`,
+    );
     process.exit(1);
   }
   console.log(`${LABEL} --selftest OK`);
