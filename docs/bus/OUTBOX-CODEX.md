@@ -1,5 +1,6 @@
 # ★ OUTBOX-CODEX · LIVE TOP · GO-20 · 2026-09-02
 
+CODEX | WORKING | B3-ACCIDENT-PICKER-SELFTEST-WRITES-REPO-TEMP | root=selftest built app-shaped fixture inside repository | fix=os.tmpdir isolated fixture tree | proof=target normal+selftest PASS; mutation ratchet -1 | PR=pending | GO
 CODEX | WORKING | B3-ASSIGN-TRUCK-SELFTEST-WRITES-REPO-TEMP | root=selftest created fixture tree inside repo and scanner counted 3 tracked-path writes | fix=os.tmpdir fixture + traceable tmpFixturePath | proof=target normal+selftest PASS; global mutation 623→620 | PR=pending | GO
 CODEX | WORKING | B3-ABANDONMENT-ENTITYLINK-SELFTEST-MUTATES-SOURCE | root=selftest wrote/restored live modal for planted driver-label regression | fix=check(overrides) in-memory | proof=target normal+selftest PASS; global mutation 625→623 | PR=pending | GO
 CODEX | WORKING | B3-SELFTEST-SCANNER-OBJECT-PATH-BLIND-SPOT | root=tracked source held in object properties escaped scanner; WO UX guard wrote/restored FILES.parityDrawer | fix=qualified property tracing + injected in-memory reader | proof=both selftests planted; global 625/625 PASS | PR=pending | GO

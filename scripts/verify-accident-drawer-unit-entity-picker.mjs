@@ -5,6 +5,7 @@
  * Cursor even claim: 2142.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -82,12 +83,12 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-accident-unit-"));
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "accident-unit-guard-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/components/safety");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpDir = path.join(tmpRoot, "apps/frontend/src/components/safety");
+    fs.mkdirSync(tmpDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "AccidentReportDrawer.tsx"),
+      path.join(tmpDir, "AccidentReportDrawer.tsx"),
       `const initialDriverId = "driver-1";
 const initialDriverName = "Historical Driver";
 listUnits({ limit: 200 })
@@ -96,13 +97,13 @@ listDispatchLoads({ limit: 200 })
 <EntityPicker kind="load" allowCreate={false} dataTestId="accident-load" />
 `
     );
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpRoot);
     if (!planted.length) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {
