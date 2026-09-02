@@ -375,6 +375,9 @@
       "route_hint": "surface://pages/driver-finance/components/PayRunClosePanel.tsx",
       "surface_kind": "panel",
       "surface_path": "pages/driver-finance/components/PayRunClosePanel.tsx",
+      "owned_surface_paths": [
+        "pages/driver-finance/components/LoanRecoveryDecisionModal.tsx"
+      ],
       "required": [
         "connectivity",
         "reverse_link",
