@@ -48,7 +48,33 @@ const EXEMPT_ANNOTATION = "intentionally-no-bulk-select";
 
 function hasBulkWiring(source) {
   if (source.includes(EXEMPT_ANNOTATION)) return true;
-  return BULK_MARKERS.some((marker) => source.includes(marker));
+  if (BULK_MARKERS.some((marker) => source.includes(marker))) return true;
+
+  // Some pre-ParityTable surfaces implement the same complete interaction locally. Guard the
+  // behavior, not a preferred helper name: state, row toggle, checkbox control, and a selected-row
+  // action must all remain present. Omitting any leg fails closed.
+  return ["selectedIds", "selectedRows", "toggleRow", 'type="checkbox"'].every((marker) =>
+    source.includes(marker),
+  );
+}
+
+if (process.argv.includes("--selftest")) {
+  const complete = 'const [selectedIds] = useState(); const selectedRows = []; function toggleRow() {} <input type="checkbox" />';
+  const cases = [
+    ["complete local selection passes", complete, true],
+    ["missing toggle fails", complete.replace("toggleRow", "changeRow"), false],
+    ["missing selected rows fails", complete.replace("selectedRows", "visibleRows"), false],
+    ["bare checkbox fails", '<input type="checkbox" />', false],
+    ["canonical shared helper passes", "useBulkSelection()", true],
+  ];
+  for (const [name, source, expected] of cases) {
+    if (hasBulkWiring(source) !== expected) {
+      console.error(`[verify-all-list-pages-have-bulk-select] SELFTEST FAIL: ${name}`);
+      process.exit(1);
+    }
+  }
+  console.log(`[verify-all-list-pages-have-bulk-select] SELFTEST PASS (${cases.length}/${cases.length})`);
+  process.exit(0);
 }
 
 const failures = [];

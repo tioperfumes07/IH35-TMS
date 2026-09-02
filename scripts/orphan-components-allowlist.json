@@ -1,6 +1,10 @@
 {
   "_comment": "Intentional standalone .tsx entrypoints that are legitimately NOT reachable from the main import graph (e.g. a component mounted only by an external harness). Only add a path here when the file is deliberately standalone \u2014 the default fix for an orphan is to WIRE it into a route/parent, not allowlist it. Paths are repo-relative POSIX.",
   "allow": [
+    "_comment_subtabrow: retained compatibility primitive with a dedicated no-clipping CI contract (verify-no-clipped-subtabs-at-1024); current live surfaces use NavyPageSubNav",
+    "apps/frontend/src/components/layout/SubTabRow.tsx",
+    "_comment_secondarynavtabs: retained compatibility primitive with a mutation-proven overflow CI contract (verify-step 4178); current live surfaces use NavyPageSubNav",
+    "apps/frontend/src/components/shared/SecondaryNavTabs.tsx",
     "_comment_bulkselect: shared bulk-select table SUPERSEDED by ParityTable. Its route-reachable consumers (factoring ChargebacksTable + RecoursePipelineTable) migrated to ParityTable in this PR, so the guard now sees it as orphaned. Still imported by not-yet-migrated DriversTable + FuelTransactionsTable, so ARCHIVE-not-delete (\u00a77). Retained pending those two migrations, after which it can be removed and this entry deleted.",
     "apps/frontend/src/components/shared/BulkSelectableTable.tsx",
     "_comment_1: required by verify-notification-center-bell-in-nav.mjs \u2014 CI guard reads this file directly",

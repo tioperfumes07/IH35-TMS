@@ -37,7 +37,8 @@ const MIGRATIONS_DIR = "db/migrations";
 const NUM_RE = /^(\d{4,14})[_-]/;
 
 /**
- * FROZEN BASELINE — 28 numbers (57 files) that ALREADY collided when this guard was written.
+ * FROZEN BASELINE — 31 numbers (63 files) that were already applied before their collisions
+ * were detected.
  *
  * They are historical and inert: `db-migrate.mjs` keys its skip decision on FILENAME, not number, so a
  * duplicated number never caused a wrong skip. They are frozen rather than fixed because renaming an
@@ -163,8 +164,8 @@ const KNOWN_COLLISIONS = new Map(Object.entries({
     "202607950000_posting_batches_template_link.sql"
   ],
   // ── ACCEPTED 2026-08-08 by lead ruling ("collision CLOSED — document accept"). ──────────────────
-  // The ONLY entry added after this guard was written, and it is added because the collision is
-  // UNFIXABLE, not to turn a build green.
+  // The first entry added after this guard was written. It was added because the collision is
+  // UNFIXABLE, not merely to turn a build green; later entries must meet the same live-ledger bar.
   //
   // BOTH FILES ARE ALREADY APPLIED ON PROD — `_system._schema_migrations` records
   // ..._driver_settlements_is_sample_data at 07:08:47Z and ..._money_tables_audit_triggers at
@@ -185,6 +186,20 @@ const KNOWN_COLLISIONS = new Map(Object.entries({
   "202612350000": [
     "202612350000_driver_settlements_is_sample_data.sql",
     "202612350000_money_tables_audit_triggers.sql"
+  ],
+  // PROD-VERIFIED 2026-09-01 on br-fancy-credit-akjnd07a: both files carry their exact
+  // committed sha256 in _system._schema_migrations (applied 13:55Z and 16:07Z on 2026-08-27).
+  // Applied migrations are immutable, so freeze this exact pair instead of renumber-and-reapply.
+  "202613210000": [
+    "202613210000_audit_events_event_class_trgm_index.sql",
+    "202613210000_wo_line_void_not_delete.sql"
+  ],
+  // PROD-VERIFIED 2026-09-01 on br-fancy-credit-akjnd07a: both files carry their exact
+  // committed sha256 in _system._schema_migrations (applied 2026-08-31 22:19Z and
+  // 2026-09-01 12:51Z). Applied migrations are immutable; the exact-pair match remains fail-closed.
+  "202613311300": [
+    "202613311300_insurance_driver_schedule_revoke_delete_grants.sql",
+    "202613311300_insurance_schedule_confirmations_unit_only.sql"
   ]
 }));
 
@@ -328,45 +343,25 @@ function selftest() {
     console.log(`SELFTEST: real tree clean against the frozen baseline (${KNOWN_COLLISIONS.size} historical collisions) — OK`);
   }
 
-  // The ratchet itself must be provable: a NEW file on a KNOWN-colliding number must still fail.
-  const known0 = [...KNOWN_COLLISIONS.entries()][0];
-  if (known0) {
-    const [num, files] = known0;
-    if (!findRepoCollisions([...files, `${num}_a_brand_new_third_file.sql`]).length) {
-      console.error("SELFTEST FAIL: a NEW file added to a frozen collision was NOT caught — the baseline is a hole, not a ratchet");
+  // Prove EVERY frozen entry is exact-pair/triple keyed. Testing only the first entry lets a typo or
+  // over-broad later entry silently weaken the ratchet for the very collision being accepted.
+  for (const [num, files] of KNOWN_COLLISIONS) {
+    if (findRepoCollisions(files).length) {
+      console.error(`SELFTEST FAIL: frozen collision ${num} does not exempt its exact recorded filenames`);
       ok = false;
-    } else {
-      console.log("SELFTEST: a new file on a frozen number is still caught (baseline is a ratchet, not an allowlist)");
+    }
+    if (!findRepoCollisions([...files, `${num}_a_brand_new_extra_file.sql`]).length) {
+      console.error(`SELFTEST FAIL: a NEW file added to frozen collision ${num} was NOT caught — the baseline is a hole, not a ratchet`);
+      ok = false;
     }
   }
+  if (ok) console.log(`SELFTEST: all ${KNOWN_COLLISIONS.size} frozen collisions accept only their exact filenames and reject an extra file`);
 
   const cases = [
     ["duplicate number", ["202609160000_a.sql", "202609160000_b.sql"], true],
     ["distinct numbers", ["202609160000_a.sql", "202609170000_b.sql"], false],
     ["three-way collision", ["0001_a.sql", "0001_b.sql", "0001_c.sql"], true],
     ["non-numeric ignored", ["README.sql", "notes.sql"], false],
-    // RATCHET PROOF for the 2026-08-08 accepted pair. The frozen entry must exempt EXACTLY those two
-    // filenames and nothing more, so:
-    //   - the accepted pair alone -> NOT flagged (otherwise main stays red and the accept did nothing)
-    //   - the same number with a THIRD file -> STILL FLAGGED (otherwise the accept quietly turned
-    //     202612350000 into a free-for-all, which is exactly the edit this guard exists to prevent)
-    [
-      "accepted 2026-08-08 pair is exempt",
-      [
-        "202612350000_driver_settlements_is_sample_data.sql",
-        "202612350000_money_tables_audit_triggers.sql",
-      ],
-      false,
-    ],
-    [
-      "a THIRD file on the accepted number is still a NEW collision",
-      [
-        "202612350000_driver_settlements_is_sample_data.sql",
-        "202612350000_money_tables_audit_triggers.sql",
-        "202612350000_somebody_elses_new_migration.sql",
-      ],
-      true,
-    ],
   ];
   for (const [name, files, shouldFlag] of cases) {
     const flagged = findRepoCollisions(files).length > 0;

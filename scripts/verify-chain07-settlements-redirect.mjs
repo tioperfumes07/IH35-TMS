@@ -88,7 +88,7 @@ export function computeChain07Failures(files) {
   // 3. The retired legacy GET /api/v1/settlements handler must be a 308 redirect to the canonical
   //    driver-finance endpoint, and must NOT run a live settlement.*/payroll.* query on that path.
   const handlerMatch = legacyRoute.match(
-    /app\.get\(\s*["']\/api\/v1\/settlements["']\s*,\s*async\s*\(req,\s*reply\)\s*=>\s*\{([\s\S]*?)\n {2}\}\);/
+    /app\.get\(\s*["']\/api\/v1\/settlements["']\s*,(?:\s*\{[\s\S]*?\}\s*,)?\s*async\s*\(req,\s*reply\)\s*=>\s*\{([\s\S]*?)\n {2}\}\);/
   );
   if (!handlerMatch) {
     errors.push('pre-settlements.routes.ts: could not locate the GET /api/v1/settlements handler');
@@ -114,7 +114,7 @@ export function computeChain07Failures(files) {
   // 4. (P2.4b) The retired legacy GET /api/v1/settlements/:id DETAIL handler must likewise be a 308
   //    redirect to the canonical driver-finance detail, and must NOT query settlement.*/payroll.*.
   const detailMatch = legacyRoute.match(
-    /app\.get\(\s*["']\/api\/v1\/settlements\/:id["']\s*,\s*async\s*\(req,\s*reply\)\s*=>\s*\{([\s\S]*?)\n {2}\}\);/
+    /app\.get\(\s*["']\/api\/v1\/settlements\/:id["']\s*,(?:\s*\{[\s\S]*?\}\s*,)?\s*async\s*\(req,\s*reply\)\s*=>\s*\{([\s\S]*?)\n {2}\}\);/
   );
   if (!detailMatch) {
     errors.push('pre-settlements.routes.ts: could not locate the GET /api/v1/settlements/:id handler');
@@ -148,14 +148,14 @@ function selftest() {
   const goodDrivers = 'subnavTab === "pre_settlements" ? (<PreSettlementsPanel />) : null';
   const badDrivers = 'subnavTab === "settlements" || subnavTab === "pre_settlements" ? (<PreSettlementsPanel />) : null';
   const goodDetail = [
-    'app.get("/api/v1/settlements/:id", async (req, reply) => {',
+    'app.get("/api/v1/settlements/:id", { config: { rateLimit: { max: 60 } } }, async (req, reply) => {',
     '    const canonical = `/api/v1/driver-finance/settlements/${params.data.id}${qs}`;',
     '    reply.header("location", canonical);',
     '    return reply.code(308).send({ error: "gone", canonical_endpoint: canonical });',
     '  });',
   ].join("\n");
   const goodLegacy = [
-    'app.get("/api/v1/settlements", async (req, reply) => {',
+    'app.get("/api/v1/settlements", { config: { rateLimit: { max: 60 } } }, async (req, reply) => {',
     '    const canonical = `/api/v1/driver-finance/settlements${qs}`;',
     '    reply.header("location", canonical);',
     '    return reply.code(308).send({ error: "gone", canonical_endpoint: canonical });',

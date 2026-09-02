@@ -17,6 +17,13 @@ let failed = false;
 function fail(msg) { console.error(`[verify-ob1] FAIL: ${msg}`); failed = true; }
 function pass(msg) { console.log(`[verify-ob1] PASS: ${msg}`); }
 
+function sharedGroupedNavFailures(source) {
+  const failures = [];
+  if (!source.includes("HoverDropdownNav")) failures.push("AccountingSubNavWrapper must render the shared HoverDropdownNav");
+  if (!source.includes('openOn="click"')) failures.push('AccountingSubNavWrapper must open grouped navigation with openOn="click"');
+  return failures;
+}
+
 const manifest = read("apps/frontend/src/pages/accounting/subnav-manifest.ts");
 const wrapper = read("apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx");
 
@@ -43,8 +50,9 @@ else pass("AccountingSubNavWrapper: no local ACCOUNTING_TABS duplicate");
 if (!wrapper.includes("ACCOUNTING_SUB_NAV_ITEMS")) fail("AccountingSubNavWrapper must render grouped ACCOUNTING_SUB_NAV_ITEMS from manifest");
 else pass("AccountingSubNavWrapper renders grouped ACCOUNTING_SUB_NAV_ITEMS from manifest");
 
-if (!wrapper.includes("NavyPageSubNav")) fail("AccountingSubNavWrapper must render the shared NavyPageSubNav");
-else pass("AccountingSubNavWrapper renders the shared NavyPageSubNav");
+const sharedNavFailures = sharedGroupedNavFailures(wrapper);
+if (sharedNavFailures.length) sharedNavFailures.forEach(fail);
+else pass("AccountingSubNavWrapper renders the shared click-open HoverDropdownNav");
 
 // Factoring tab present in clean tabs
 if (!manifest.includes('"Factoring"') || !manifest.includes('"/accounting/factoring"')) fail("ACCOUNTING_CLEAN_TABS missing Factoring tab");
@@ -62,3 +70,16 @@ else pass(`ACCOUNTING_CLEAN_TABS has ${tabCount} tab entries`);
 
 if (failed) { console.error("\n[verify-ob1] FAILED"); process.exit(1); }
 console.log("\n[verify-ob1] ALL CHECKS PASSED");
+
+if (process.argv.includes("--selftest")) {
+  const wrongPrimitive = wrapper.replaceAll("HoverDropdownNav", "NavyPageSubNav");
+  const wrongTrigger = wrapper.replace('openOn="click"', 'openOn="hover"');
+  if (!sharedGroupedNavFailures(wrongPrimitive).some((message) => message.includes("HoverDropdownNav"))) {
+    fail("selftest wrong shared primitive mutation escaped");
+  }
+  if (!sharedGroupedNavFailures(wrongTrigger).some((message) => message.includes('openOn="click"'))) {
+    fail("selftest hover-trigger mutation escaped");
+  }
+  if (failed) process.exit(1);
+  console.log("[verify-ob1] SELFTEST PASS (2/2 planted defects rejected)");
+}
