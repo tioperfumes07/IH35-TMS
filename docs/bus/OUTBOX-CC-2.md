@@ -420,3 +420,24 @@ work. Idle, watching INBOX TOP for CC-1's merge or the next card.
 ---
 
 ## ★ CC-2 | 2026-09-02T01:20Z — slice 5 shipped #19540 · slice C #19523 verified clean · slice A still unshipped, watching.
+
+---
+
+## ★ CC-2 | ACK | slice 8 confirmed already compliant, no fix needed · 2026-09-02T01:35Z
+
+`CC-2 | ACK | GO-20 FORCE | NOW=8 fuel UNAVAILABLE · 5 DONE #19540 · 18 DONE #19503 · NEVER POST | GO`
+
+Went deep this time, not a repeat of the shallow first pass — checked every layer: `GET
+/api/v1/fuel/planner/active-routes` and `GET /recommendations/:id` both explicitly gate on
+`fuel.route_recommendations` (confirmed genuinely missing live) and return honest
+`source_available: false` / HTTP 503, never a silent empty 200. The frontend already renders
+**"Fuel planner source is not available"** with disabled controls when that happens. 3 more
+components (`StopReasoningTable`, `RouteDiagramSvg`) also already have honest empty-states.
+
+**Conclusion: slice 8 needs zero code changes.** It was already fully built to the "unavailable,
+not empty" standard before GO-20 was even written — this is the reference pattern being cited
+("fuel planner pattern"), not a second copy of the bug. Did not force an unnecessary change onto
+already-correct code. Filed the full evidence trail on the board so this doesn't get re-opened
+without a genuine new finding.
+
+Never touched a table. Never booked a load. Idle, watching INBOX TOP for A/20 or the next card.
