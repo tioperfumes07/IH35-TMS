@@ -75,17 +75,18 @@ Ship in batches BY DIRECTORY, one PR each. Book Load wizard is highest priority.
 Report after every batch: "K2: 277 -> N".
 Delete a retired component only when its import count reaches ZERO.
 
-This also closes B9 (pickup/delivery State is a plain input, not a filter-combo).
+This also closes B9 (pickup/delivery State is a plain input, not a filter-combo). Lead 2026-09-02: if StateSelect is already filter-combo, B9 is CLOSED for that field.
 
 STEP 3 — GO-27 Gate 1.3: CHROME-PROVE load 13508.
   Re-open load 13508 in Chrome. Prove miles fill (Indianapolis→Laredo:
   practical 1319.7, short 1478.1, empty 207.6) and location picker on stops.
-  Paste screenshot + row proof. Set verified flag.
+  Paste screenshot + row proof. Set verified flag. NEVER POST.
 
-STEP 4 — J1 to zero. 1,015 off-scale across 331 files. Wizard first (162 files).
-docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md is LOCKED — transcribe it, never propose a scale.
+STEP 4 — **J1 TO ZERO THIS WEEK (GO-23 Wave 4 #12).** Transcribe GLOBAL-TYPE-SIZE-BASELINE.md only. Ratchet green is not done. Done = off_locked_scale_sizes = 0 AND trapping_picker_total = 0.
+
+STEP 2 K2 batches run **after J1 counts are driving to zero**, not instead of J1. Do not idle.
 
 STEP 5 (Gate 3) — Proof trail click-to-ledger. Queued after Gate 1 ships.
 ```
 
-ACK `CC-2 | ACK | GO-26 guard · K2 wizard · 13508 Chrome · NEVER POST | GO`
+ACK `CC-2 | ACK | J1 to zero this week · K2 after J1 · 13508 Chrome · NEVER POST | GO`

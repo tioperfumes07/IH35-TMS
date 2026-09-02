@@ -34,12 +34,31 @@ Canonical: `docs/bus/MILES-LAW-FINAL-2026-09-02.md`
 
 Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md` · `docs/bus/FAST-MERGE-REMINDER-2026-09-02.md`
 
+## ★ LEAD SEQUENCE 2026-09-02 — GO-23 WAVES. STOP SKIPPING AHEAD.
+
+Merged #19749/#19764/#19773/#19789/#19795 (C1 confirm, K1, K3, K4, C7/B3 status). **Good — do not wait on Jorge for B9/E1.**
+
+**LEAD RULINGS (not guesses):**
+- **B9 CLOSED.** If StateSelect is already a filter-combobox, K2/B9 is done for that field. Do not hunt a second “CC-2 shared picker.” Wave 4 K2 still retires trapping pickers app-wide **after J1**.
+- **E1 PARK until Wave 5 #17.** Duplicate Dispatch Settlements / Pre-settlements tabs are two GO-22 states. Do not collapse them. Product-shape later.
+- **VERIFY-STATIC unbaselined:** not your row. Codex owns a baseline-update pass. `--no-verify` only after local gate PASS and only for ENV-VERIFY-STATIC class.
+
+**Your lane NOW (Wave 1 still open):**
+1. **A2** — customer picker must return the whole set (~2700). Cap 500/200 is the defect. `BookLoadCustomerSection.tsx`. Ships alone, first.
+2. **GO-24** — wire existing `mdata.locations` into Book Load stops. **No `catalogs.locations`.** Mark `docs/specs/0251-stop-location-catalog-design.md` SUPERSEDED. Gate dead geocode UI.
+3. **Wave 2 #6 A1 screen** — only after CC-1 posts the interchange ledger path.
+4. ParityTable conversion — wait CC-2 ratchet if still required; daily screens first.
+5. **Do not start more Wave 5 wizard K-rows** until A2 + GO-24 are on main.
+
+NEVER POST. FAST-MERGE.
+
 ## NOW
 
 ```
-CC-3 — GO-26 TABLES + GO-27 GATE 1 B1 + GATE 3 BANK QUEUE
+CC-3 — GO-23 WAVE 1: A2 THEN GO-24. NOT MORE K-ROWS.
 
-Jorge UNLOCKED full capacity. WAIT is over.
+NEXT PR: BookLoadCustomerSection uncapped customer set. Then mdata.locations on stops.
+B9 CLOSED. E1 PARK Wave 5 #17. Do not idle for owner rulings already given.
 
 PART A — GO-26 TABLES: ONE COMPONENT, RETIRE THE OTHER THREE
 
@@ -84,4 +103,4 @@ Delete a retired component only when its import count reaches ZERO.
 Column headers: 11px, weight 700, UPPERCASE, #4B5563, CENTERED, SORTABLE.
 ```
 
-ACK `CC-3 | ACK | GO-26 ParityTable · B1 AlwaysTrack · wait CC-2 guard · NEVER POST | GO`
+ACK `CC-3 | ACK | GO-23 W1 A2 then GO-24 · B9 closed · E1 park · NEVER POST | GO`

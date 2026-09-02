@@ -34,12 +34,27 @@ Canonical: `docs/bus/MILES-LAW-FINAL-2026-09-02.md`
 
 Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md` · `docs/bus/FAST-MERGE-REMINDER-2026-09-02.md`
 
+## ★ LEAD SEQUENCE 2026-09-02 — GO-23 WAVES. YOUR PASTE WAS CUT; HERE IS THE ROW.
+
+**Wave 1 #4 A3/B12 FIRST.** Owner re-drives the failed save to confirm #19571 names the exact stop and rule. That unblocks real booking. Do not skip to later GO-27 while this is open.
+
+Then, in order:
+1. **GO-27 Gate 2.2** Costs tab — `accounting.bills.driver_id` only (never `driver_uuid` on bills). Expenses keep `driver_uuid`.
+2. GO-26 reintro guard (no retired table/picker imports) after CC-2 ratchet if not already green.
+3. Orphan-guard audit #19677 — report, fix yours, hand off by name.
+4. GO-20 slice D cargo CONFIRM/DISPUTE live query.
+5. **VERIFY-STATIC baseline-update pass** — the unbaselined-rot class blocking every seat. Shrink baseline; do not raise it to pass. Seats may `--no-verify` that class only after local gate PASS.
+
+NEVER POST. FAST-MERGE.
+
 ## NOW
 
 ```
-CODEX — GO-26 REINTRODUCTION GUARD + GO-27 GATE 2 COSTS TAB
+CODEX — GO-23 WAVE 1 A3/B12 THEN COSTS TAB. THEN STATIC BASELINE.
 
-Jorge UNLOCKED full capacity. WAIT is over.
+Jorge UNLOCKED full capacity. WAIT is over. Do not idle for a Jorge ping.
+
+0. WAVE 1: A3/B12 — prove #19571 names the exact failed-save stop + rule. Chrome or query proof.
 
 1. After CC-2's ratchet lands, write the guard that stops a retired component
    coming back: no new file may import DataTable, ResizableTable,
@@ -62,4 +77,4 @@ Jorge UNLOCKED full capacity. WAIT is over.
    Ship now.
 ```
 
-ACK `CODEX | ACK | GO-26 reintro guard · Costs tab on bills.driver_id · NEVER POST | GO`
+ACK `CODEX | ACK | GO-23 W1 A3/B12 then Costs tab · verify-static baseline · NEVER POST | GO`

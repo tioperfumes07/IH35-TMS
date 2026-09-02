@@ -35,11 +35,40 @@ Canonical: `docs/bus/MILES-LAW-FINAL-2026-09-02.md`
 Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md` · `docs/bus/FAST-MERGE-REMINDER-2026-09-02.md`
 
 
-**GO NOW — Gate 0 is yours.**
+## ★ LEAD SEQUENCE 2026-09-02 — STOP WAITING. GO-23 WAVES.
 
-**CURSOR LEAD 2026-09-02 — NO PURGE ACK SEEN.** Accounting schema PR **NOW**. void→delete both steps. Reseed trace_counters **13557** (LOAD only, drop LD). Drop B- same wave. Paste done-gate **before first DELETE** and **after each schema merge**. Cursor stays off purge schemas — CC-1 money lane only.
+You reported Gate 1.4 + GO-26 6 schemas on main. **Do not hold for Jorge to start the whole GO-22 spine.**
+
+GO-23 Wave 3 step 10 (pre-settlement close when NB+TR and no SB) is the **only** owner question. **GO-22a (settlement number = LOAD counter, never LD, never MAX+1) is not blocked.**
+
+**Your lane, in order (wave 1 still open until these are done):**
+1. **Wave 1 #2 A1 data** — interchange ledger, never put broker trailer in `mdata.units`. Post ledger path to INBOX-CC-3 on merge.
+2. **Wave 1 #3 N1** — create expense from a load (wire dispatch/load → `/accounting/expenses/new`).
+3. **Wave 2 #7 B8** — cash/fuel advances fully wired.
+4. **Wave 2 #5 C6** — already 0 on live guards. Confirm `verify-all-posting-paths-gated` still green. Do not rebuild a 221-hit hunt.
+5. **Wave 3 #9 GO-22a NOW** — settlement display id generator. Match `LOAD`. Drop any `LD` leftover in settlement mint.
+6. **Wave 3 #10 GO-22b** — build recommend/manual attach. **Do not guess** early-close vs wait-Laredo. One OUTBOX line asking Jorge that question. Do not idle the generator while waiting.
+7. Miles catalog: no mass-swap; flag untrustworthy short. Parallel, not instead of A1/N1.
+
+NEVER POST Book Load. FAST-MERGE.
 
 ## NOW
+
+```
+CC-1 — GO-23 WAVE 1 THEN GO-22a. DO NOT IDLE.
+
+GO-26 purge claimed complete. Cascade re-runs done-gate. You BUILD money sequence.
+
+NEXT PR: A1 interchange data layer OR N1 load→expense create. Then B8. Then GO-22a.
+Do not wait on a Jorge ping to start GO-22a after Wave 1+2 in your lane are closed.
+```
+
+ACK `CC-1 | ACK | GO-23 W1 A1+N1 then B8 then GO-22a · no idle · NEVER POST | GO`
+
+<!-- archived GO-26 purge packet below this line is HISTORY. Do not execute as current queue. -->
+
+<details>
+<summary>GO-26 purge packet (executed — expand only if re-verify)</summary>
 
 ```
 CC-1 — GO-26 PURGE USMCA TO ZERO + GO-27 GATE 0 — OWNER ORDER 2026-09-02
@@ -160,4 +189,4 @@ NEXT after Gate 0:
   Per-user column prefs (GO-26 part 4.4).
 ```
 
-ACK `CC-1 | ACK | GO-26 purge · seed 13557 · kill LD keep LOAD · void-then-delete · NEVER POST | GO`
+</details>

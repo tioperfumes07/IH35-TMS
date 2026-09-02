@@ -46,24 +46,20 @@ Do **not** invent a 28-row list. A defect not on GO-23 / INBOX does not exist. T
 ## NOW
 
 ```
-CASCADE — GO-26 VERIFY THE PURGE. LIVE QUERY ONLY.
+CASCADE — GO-26 DONE-GATE ON CURRENT NEON. NOW. THEN STOP.
 
-Jorge UNLOCKED full capacity. CC-1 purge is GO NOW.
+CC-1 reports Gate 1.4 + GO-26 6 schemas on main (9277596c10). Do not wait for another purge PR.
 
-Reconciliation is CLOSED. Do not open a new register or re-derive counts.
+Re-run the three checks under SET LOCAL app.bypass_rls = 'lucia':
+  - done-gate remaining USMCA counts
+  - lib.trace_counters: LOAD only, last_trace_no = 13556, next mint 13557, no LD
+  - load 13508 present; banking.bank_transactions = 395
 
-YOUR ONE JOB: after each CC-1 purge PR merges, run the GO-26 done-gate query
-against live production under SET LOCAL app.bypass_rls = 'lucia' and publish
-the delta. Which tables reached zero, which did not, what remains.
+If they HOLD: OUTBOX one line "GO-26 done-gate HOLDS" and stop. Unique FINDING only after that (Wave 7 spreadsheets). Never invent a 28-row register.
 
-Also verify after dispatch purge PR:
-  - lib.trace_counters: doc_type = 'LOAD' only (no 'LD'), last_trace_no = 13556
-  - Load 13508 still present
-  - banking.bank_transactions still 395
+If they FAIL: paste the query rows. Do not build a fix.
 
-LIVE QUERY ONLY. Migration grep is a hypothesis. The database is the finding.
-
-State the count you swept and the count that exists, every time.
+LIVE QUERY ONLY. Never grep migrations as prod.
 ```
 
 ACK `CASCADE | ACK | GO-26 done-gate · seed 13557 verify · live query only · NEVER BUILD | GO`

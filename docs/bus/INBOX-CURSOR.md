@@ -41,9 +41,8 @@ CURSOR — GO-26 LEAD + GO-27 GATES 1–4 OVERFLOW
 
 Jorge UNLOCKED full capacity. WAIT is over. Reconciliation with Claude is CLOSED.
 
-1. LANE CONTROL. CC-1 owns GO-26 purge + Gate 0 (migration lane 00:00–11:59 UTC).
-   Cursor holds 12:00–23:59. Stay off purge schemas while CC-1 works.
-   Cursor does NOT personally run Neon purge of money tables — CC-1 owns purge.
+1. LANE CONTROL. GO-26 purge claimed complete on main. CC-1 is now Wave 1 A1+N1 then B8 then GO-22a.
+   Stay off CC-1 money schemas. Coordinate seats to GO-23 — do not let them idle for Jorge.
 
 2. DEPLOY in batches of 5–10 merges. Never per-merge. autoDeploy stays OFF.
    After deploying: report deploy ID, SHA, ONE live Chrome screen confirmed.
@@ -64,4 +63,4 @@ Jorge UNLOCKED full capacity. WAIT is over. Reconciliation with Claude is CLOSED
 Canonical docs: docs/bus/GO-26-*.md · docs/bus/GO-27-DISPATCH-ACCOUNTING-CRITICAL-PATH.md
 ```
 
-ACK `CURSOR | ACK | GO-26/27 lead · hold purge lane · GO-06/proforma/settlement after Gate 0 · NEVER POST | GO`
+ACK `CURSOR | ACK | GO-23 sequence fan-out · Gate 1.5 + 2.3 overflow · NEVER POST | GO`
