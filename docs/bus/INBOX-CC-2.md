@@ -11,12 +11,10 @@
 
 ## NOW
 
-1. **GO-19 slice 18 — TODAY leftover (N of 10)** — Today's Attention must show **"N of 10 sources reporting"** not a silent 3/10 panel:
-   - Verify **#19471** merged: 425C queries `compliance.form_425c_reports` (not dead table).
-   - Every bare empty return → **logged skip** (`warnSkipped`) naming missing relation.
-   - Endpoint returns `{ sourcesRan, sourcesSkipped }` alongside items.
-   - Live proof: panel screenshot with honest N/10 count.
-2. **Verify-live AFTER CC-1 merges** — slice **17** capitalize · **C** liability zero-postings-until-decide · **A** drift alert · **20** settlement if shipped.
-3. **GO-20 deferred 5+8 — UNAVAILABLE not empty** — cooling customers + recommended fuel stops must say **unavailable** (fuel planner pattern). **No tables.** FINDING if any screen looks working-empty.
+**Cursor cloud workers DOWN (unpaid invoice).** You build in **your** session.
 
-ACK `CC-2 | ACK | GO-20 FORCE | NOW=18 N-of-10+#19471 425C warnSkipped · verify-live after CC-1 · defer 5+8 UNAVAILABLE · NEVER build money · NEVER POST Book Load | GO`
+0. **DONE:** slice **18** N-of-10 — **#19503** (deploy then Chrome-verify Owner Home).
+1. **NOW — deferred 5+8 UNAVAILABLE** — cooling customers + recommended fuel stops: honest unavailable (fuel planner null-not-zero). **No tables.**
+2. **Verify-live AFTER CC-1** — #19510 capitalize · then C/A/20 when they merge.
+
+ACK `CC-2 | ACK | GO-20 FORCE | NOW=5+8 UNAVAILABLE · 18 DONE #19503 · NEVER POST | GO`

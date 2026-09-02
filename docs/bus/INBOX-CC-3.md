@@ -12,8 +12,9 @@
 
 ## NOW (serial)
 
-1. **GO-19 slice 19 — Accessorial parent** — ONE migration: `parent_account_id` on **4210 · 4220 · 4230 · 4240** → **4200 Accessorial and Detention Income**. **No new account.** P&L roll-up guard.
-2. **GO-20 slices F+G — SCREEN ONLY** — delete stray `apps/backend/prisma/migrations/0250_create_inventory_parts_table` · `TwoSectionLineEditor` / WO picker reads **`sources.*.status`** from wo-cost-context (unavailable ≠ empty list). Backend already points at canonical tables — **no new schema for parts/labor**.
-3. **GO-20 slice B — Predictive alerts** — `maintenance.predictive_alerts` on existing `brake_projections` / `tire_projections` (**source_projection_id = uuid**, not id). Nightly job · WO stamps alert_id.
+**Cursor cloud workers DOWN (unpaid invoice).** You build in **your** session.
 
-ACK `CC-3 | ACK | GO-20 FORCE | NOW=19 parent→F/G screen+delete Prisma→B predictive uuid keys · NEVER POST Book Load | GO`
+0. **DONE:** slice **19** parent 4210–4240→4200 **#19494+#19501**. F/G screen **#19508**.
+1. **NOW — slice B predictive alerts** — `maintenance.predictive_alerts` ON existing `brake_projections` / `tire_projections`. **source_projection_id = uuid**. Nightly job. Apply **202613390001** on Neon if not ledgered.
+
+ACK `CC-3 | ACK | GO-20 FORCE | NOW=B predictive uuid · 19+F/G DONE · NEVER POST | GO`

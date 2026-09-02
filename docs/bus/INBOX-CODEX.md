@@ -11,8 +11,10 @@
 
 ## NOW
 
-1. **GO-20 slice D — Cargo sensor incidents** — build cards/layer ON existing `dispatch.cargo_sensor_readings.out_of_range`. PK **`uuid`** not id. Put incidents in **dispatch** beside readings (repoint aggregator). One incident per excursion · thresholds from load/customer.
-2. **GO-20 slice H — Late-arrival factor (item 11)** — ON existing `dispatch.stop_arrivals` + `mdata.load_stops` appointment windows. Retention score must list **features_present / features_missing** — never silently drop weighted input · never present 9/10 as 10/10.
-3. **Drain Codex CI reds** — fix root cause · one push · no babysit loop.
+**Cursor cloud workers DOWN (unpaid invoice).** You build in **your** Codex session. Check main for cargo migration **#19493** before duplicating.
 
-ACK `CODEX | ACK | GO-20 FORCE | NOW=D cargo uuid out_of_range · H late-arrival honest score · drain CI · NEVER POST Book Load | GO`
+1. **NOW — slice D** — incidents ON `dispatch.cargo_sensor_readings.out_of_range` PK **uuid**. Finish cards/aggregator if #19493 was claim/schema only.
+2. Then **H** late-arrival honest `features_present/missing`.
+3. Drain CI reds. No `--watch`.
+
+ACK `CODEX | ACK | GO-20 FORCE | NOW=D cargo finish · then H · NEVER POST | GO`
