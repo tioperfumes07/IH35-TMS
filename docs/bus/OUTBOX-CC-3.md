@@ -50,3 +50,5 @@ CC-3 | GO-21 A2 REAL FIX done | #19579 fixed an orphan (BookLoadCustomerSection.
 CC-3 | ACK | GO-23 | NOW=A1 interchange screen · NEVER POST | GO
 
 CC-3 | GO-23 A1 picker done | Book Load trailer field is now a two-way toggle (Our trailer / Interchange trailer) against the already-live dispatch.non_owned_trailers + dispatch.trailer_interchanges backend (#19567) -- switching source clears the other FK so exactly one can ever be set; new InterchangeTrailerPicker.tsx (search + inline create via existing customer/vendor EntityPicker kinds, not a new picker kind); trailer_interchanges record created post-load-save (real FK on load_id). #19609 merged (sha 484735ca). REMAINING (honest, named in commit not silently dropped): receipt/return capture + signed agreement docs.files upload -- both POST-booking actions, belong on Load Detail as a follow-up slice, not this wizard-submit PR. Live=UNVERIFIED pending deploy + Chrome.
+
+CC-3 | ACK | GO-23 | NOW=WAIT A1 #19609/#19612 done · Wave 3 is CC-1 · NEVER Wave 4 yet · NEVER POST | GO
