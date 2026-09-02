@@ -5,22 +5,21 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const TARGET = path.join(ROOT, "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx");
-const SELF = path.join(ROOT, "scripts/verify-dispatch-assignment-history-tombstone.mjs");
 
 function fail(msg) {
   console.error(`FAIL: ${msg}`);
   process.exit(1);
 }
 
-function assertSource(src) {
+function sourceProblems(src) {
+  const problems = [];
   if (!src.includes("isUnresolvedEntityTombstone")) {
-    fail("AssignmentHistoryPage must use isUnresolvedEntityTombstone");
+    problems.push("AssignmentHistoryPage must use isUnresolvedEntityTombstone");
   }
   for (const id of [
     "assignment-history-load-tombstone",
@@ -29,24 +28,29 @@ function assertSource(src) {
     "assignment-history-prev-unit-tombstone",
     "assignment-history-new-unit-tombstone",
   ]) {
-    if (!src.includes(id)) fail(`missing data-testid=${id}`);
+    if (!src.includes(id)) problems.push(`missing data-testid=${id}`);
   }
-  if (!src.includes("EntityLink")) fail("resolved path must still use EntityLink");
+  if (!src.includes("EntityLink")) problems.push("resolved path must still use EntityLink");
+  return problems;
+}
+
+function assertSource(src) {
+  const problems = sourceProblems(src);
+  if (problems.length) fail(problems.join("; "));
 }
 
 function selftest() {
   const good = fs.readFileSync(TARGET, "utf8");
   assertSource(good);
-  const backup = good;
   const bad = good
     .replaceAll("isUnresolvedEntityTombstone", "NEVER_TOMBSTONE")
     .replaceAll("assignment-history-load-tombstone", "gone");
-  fs.writeFileSync(TARGET, bad);
-  try {
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
-    if (r.status === 0) fail("--selftest: mutated source still passed");
-  } finally {
-    fs.writeFileSync(TARGET, backup);
+  const planted = sourceProblems(bad);
+  if (!planted.some((problem) => problem.includes("isUnresolvedEntityTombstone"))) {
+    fail("--selftest: missing tombstone helper mutation was not rejected");
+  }
+  if (!planted.some((problem) => problem.includes("assignment-history-load-tombstone"))) {
+    fail("--selftest: missing load tombstone test id mutation was not rejected");
   }
   console.log("PASS: verify-dispatch-assignment-history-tombstone --selftest");
 }
