@@ -32,6 +32,20 @@ const closeBodySchema = companyQuerySchema.extend({
     })
     .nullable()
     .optional(),
+  /**
+   * GO-22 B7 — blocking, non-deferrable decision for ANY outstanding driver loan/advance.
+   * Omitting this when the driver carries one is not "default to full": this interactive route
+   * always sets requireLoanDecision:true on the service call, so a missing decision here is a
+   * 409 OUTSTANDING_LOAN_DECISION_REQUIRED, not a silent default.
+   */
+  loan_recovery_decision: z
+    .object({
+      mode: z.enum(["full", "partial"]),
+      partial_cents: z.number().int().min(0).nullable().optional(),
+      reason: z.string().trim().max(500).nullable().optional(),
+    })
+    .nullable()
+    .optional(),
 });
 const closeTripBodySchema = companyQuerySchema;
 
@@ -106,6 +120,17 @@ export function registerSettlementPayRunCloseRoutes(app: FastifyInstance) {
           paymentReference: b.data.payment_reference ?? null,
           bankTxnId: b.data.bank_txn_id ?? null,
           overrideFloor: b.data.override_floor ?? null,
+          // GO-22 B7 — this is THE interactive close: a human is at a keyboard, the modal can
+          // fire, and the decision must be registered here or the close is refused.
+          requireLoanDecision: true,
+          loanRecoveryDecision: b.data.loan_recovery_decision
+            ? {
+                mode: b.data.loan_recovery_decision.mode,
+                partial_cents: b.data.loan_recovery_decision.partial_cents ?? null,
+                decided_by_user_id: user.uuid,
+                reason: b.data.loan_recovery_decision.reason ?? null,
+              }
+            : null,
         },
         { userId: user.uuid }
       );

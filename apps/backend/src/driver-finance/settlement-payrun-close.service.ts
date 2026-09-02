@@ -86,7 +86,8 @@ export type PayRunCloseErrorCode =
   | "NET_PAY_NEGATIVE"
   | "NET_PAY_FLOOR_BREACH"
   | "UNBALANCED_ENTRY"
-  | "SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER";
+  | "SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER"
+  | "OUTSTANDING_LOAN_DECISION_REQUIRED";
 
 export class SettlementPayRunError extends Error {
   code: PayRunCloseErrorCode;
@@ -381,6 +382,32 @@ export async function closeSettlementPayRun(
      * to close when post-withholding net would breach the resolved floor. Never silently caps.
      */
     overrideFloor?: { pct?: number | null; cents?: number | null; reason?: string | null } | null;
+    /**
+     * GO-22 B7 (owner direct instruction, 2026-09-02): "If the driver has ANY outstanding loan
+     * or debt... a window MUST appear and ask. IT CANNOT BE DEFERRED and the decision MUST BE
+     * REGISTERED AT THAT MOMENT with who decided and when." That is a requirement on the
+     * INTERACTIVE close (the payrun-close route, where a human is at a keyboard and a modal can
+     * fire) — set requireLoanDecision:true there. It is deliberately NOT the default here: this
+     * service function is also the idempotent-retry / system / test-fixture code path (proven by
+     * settlement-payrun-close.db.test.ts's own existing acceptance cases, which close settlements
+     * carrying an outstanding advance with no decision at all and must keep working unchanged), so
+     * forcing the gate unconditionally would break every non-interactive caller for a UI-only
+     * requirement. When requireLoanDecision is unset, behavior is 100% unchanged from before this
+     * PR: full recovery, no gate, exactly today's contract.
+     */
+    requireLoanDecision?: boolean;
+    /**
+     * Default POLICY is full ('mode: "full"'), never a silent client-side default — the caller
+     * must state it whenever requireLoanDecision applies. 'partial' caps this settlement's
+     * recovery at partial_cents; the remainder stays on the advance's outstanding_balance and
+     * rolls to the next settlement, where the route asks again.
+     */
+    loanRecoveryDecision?: {
+      mode: "full" | "partial";
+      partial_cents?: number | null;
+      decided_by_user_id: string;
+      reason?: string | null;
+    } | null;
   },
   actor: Actor
 ): Promise<SettlementPayRunResult> {
@@ -457,6 +484,32 @@ export async function closeSettlementPayRun(
     const recoverable = await loadRecoverableAdvances(client, opco, settlement.driver_id);
     const advanceRecoveriesCents = recoverable.reduce((s, a) => s + a.amount_cents, 0);
 
+    // GO-22 B7 — blocking, non-deferrable decision, but ONLY when the caller opts in via
+    // requireLoanDecision (the interactive payrun-close route sets this; idempotent/system/test
+    // callers do not, and see zero behavior change). A real close (not preview) with ANY
+    // outstanding advance/loan and no decision attached is refused outright; the FE reads
+    // details.recoverable_advances / total_recoverable_cents to render the modal with real
+    // numbers, then re-calls with loanRecoveryDecision set. Preview never blocks — it needs to
+    // succeed so the modal has numbers to show in the first place, and it always previews at the
+    // full-recovery default (the standing policy) since no decision exists yet at preview time.
+    if (input.requireLoanDecision && recoverable.length > 0 && input.previewOnly !== true && !input.loanRecoveryDecision) {
+      throw new SettlementPayRunError(
+        "OUTSTANDING_LOAN_DECISION_REQUIRED",
+        `Settlement ${settlement.display_id ?? settlement.id} driver carries ${recoverable.length} outstanding advance/loan row(s) totaling ${advanceRecoveriesCents}c — pass loanRecoveryDecision to proceed. This decision cannot be deferred, skipped, or defaulted silently.`,
+        {
+          recoverable_advances: recoverable.map((a) => ({ id: a.id, display_id: a.display_id, amount_cents: a.amount_cents })),
+          total_recoverable_cents: advanceRecoveriesCents,
+        }
+      );
+    }
+    const loanDecision = input.loanRecoveryDecision ?? null;
+    // Applied-this-close amount: full total unless an explicit partial cap was chosen. Preview
+    // (no decision yet) also reads as full — showing the standing default, not a guess.
+    const appliedAdvanceRecoveryCents =
+      loanDecision?.mode === "partial" && loanDecision.partial_cents != null
+        ? Math.max(0, Math.min(advanceRecoveriesCents, Math.round(loanDecision.partial_cents)))
+        : advanceRecoveriesCents;
+
     const escrowBalanceBeforeCents = await readDriverEscrowBalanceCents(client, opco, settlement.driver_id);
     const standardEscrow =
       input.standardEscrowContributionCents != null && input.standardEscrowContributionCents > 0
@@ -473,7 +526,7 @@ export async function closeSettlementPayRun(
       detentionPayCents -
       deductionsCents -
       escrowContributionCents -
-      advanceRecoveriesCents -
+      appliedAdvanceRecoveryCents -
       chargebacksCents;
 
     const breakdown: PayRunNetBreakdown = {
@@ -482,7 +535,7 @@ export async function closeSettlementPayRun(
       detention_pay_cents: detentionPayCents,
       deductions_cents: deductionsCents,
       chargebacks_cents: chargebacksCents,
-      advance_recoveries_cents: advanceRecoveriesCents,
+      advance_recoveries_cents: appliedAdvanceRecoveryCents,
       escrow_contribution_cents: escrowContributionCents,
       escrow_balance_before_cents: escrowBalanceBeforeCents,
       net_cents: netCents,
@@ -623,8 +676,11 @@ export async function closeSettlementPayRun(
       legs.push({ account_id: cbAcct, debit_or_credit: "credit", amount_cents: chargebacksCents, description: `${label} — abandonment chargeback recovery` });
     }
 
-    if (advanceRecoveriesCents > 0) {
+    if (appliedAdvanceRecoveryCents > 0) {
       // Cr cash-advance CLEARING (the advance_recovery role account) — reduces the driver-advance receivable.
+      // appliedAdvanceRecoveryCents, not the full advanceRecoveriesCents total — a B7 partial
+      // loan-recovery decision caps what THIS settlement actually clears; the remainder stays a
+      // receivable on the advance's own outstanding_balance and posts again at the next close.
       const advAcct = await resolvePayRunRoleAccount(client, opco, "advance_recovery");
       if (!advAcct) {
         throw new SettlementPayRunError(
@@ -632,7 +688,7 @@ export async function closeSettlementPayRun(
           "No active 'advance_recovery' (cash-advance clearing) CoA role designation for advance recoveries"
         );
       }
-      legs.push({ account_id: advAcct, debit_or_credit: "credit", amount_cents: advanceRecoveriesCents, description: `${label} — cash-advance recovery` });
+      legs.push({ account_id: advAcct, debit_or_credit: "credit", amount_cents: appliedAdvanceRecoveryCents, description: `${label} — cash-advance recovery` });
     }
 
     if (escrowContributionCents > 0) {
@@ -737,18 +793,64 @@ export async function closeSettlementPayRun(
     }
     const payrunRunId = claim.rows[0]!.id;
 
+    // GO-22 B7 — recover oldest-first, capped at appliedAdvanceRecoveryCents (the loan decision's
+    // choice, or the full total by default). A row fully covered by the remaining cap is closed
+    // out exactly as before (recovered_in_settlement_id set, IDEMPOTENT: never double-recover). A
+    // row only PARTIALLY covered keeps recovered_in_settlement_id NULL and instead has its
+    // outstanding_balance reduced by what this close actually took — the remainder is still owed
+    // and loadRecoverableAdvances will surface it again at the next settlement close, where B7's
+    // gate asks again. Full-mode (the common/default case) recovers every row completely, so this
+    // loop's behavior for that path is byte-identical to before this change.
     const recoveredIds: string[] = [];
+    let remainingRecoveryCapCents = appliedAdvanceRecoveryCents;
     for (const adv of recoverable) {
-      const upd = await client.query(
-        `
-          UPDATE driver_finance.driver_advances
-             SET recovered_in_settlement_id = $2::uuid, status = 'recovered', outstanding_balance = 0, updated_at = now()
-           WHERE id = $1::uuid AND operating_company_id = $3::uuid
-             AND recovered_in_settlement_id IS NULL      -- IDEMPOTENT: never double-recover
-        `,
-        [adv.id, settlementId, opco]
+      if (remainingRecoveryCapCents <= 0) break;
+      const takeCents = Math.min(remainingRecoveryCapCents, adv.amount_cents);
+      if (takeCents >= adv.amount_cents) {
+        const upd = await client.query(
+          `
+            UPDATE driver_finance.driver_advances
+               SET recovered_in_settlement_id = $2::uuid, status = 'recovered', outstanding_balance = 0, updated_at = now()
+             WHERE id = $1::uuid AND operating_company_id = $3::uuid
+               AND recovered_in_settlement_id IS NULL      -- IDEMPOTENT: never double-recover
+          `,
+          [adv.id, settlementId, opco]
+        );
+        if ((upd.rowCount ?? 0) > 0) recoveredIds.push(adv.id);
+      } else {
+        const remainingBalanceCents = adv.amount_cents - takeCents;
+        const upd = await client.query(
+          `
+            UPDATE driver_finance.driver_advances
+               SET outstanding_balance = $2::numeric, updated_at = now()
+             WHERE id = $1::uuid AND operating_company_id = $3::uuid
+               AND recovered_in_settlement_id IS NULL      -- IDEMPOTENT: never re-take an already-closed row
+          `,
+          [adv.id, (remainingBalanceCents / 100).toFixed(2), opco]
+        );
+        if ((upd.rowCount ?? 0) > 0) recoveredIds.push(adv.id);
+      }
+      remainingRecoveryCapCents -= takeCents;
+    }
+
+    if (recoverable.length > 0) {
+      await appendCrudAudit(
+        client,
+        actor.userId,
+        "driver_finance.settlement.loan_recovery_decision",
+        {
+          settlement_id: settlementId,
+          driver_id: settlement.driver_id,
+          decided_by_user_id: loanDecision?.decided_by_user_id ?? actor.userId,
+          mode: loanDecision?.mode ?? "full",
+          reason: loanDecision?.reason ?? null,
+          total_outstanding_cents: advanceRecoveriesCents,
+          applied_this_close_cents: appliedAdvanceRecoveryCents,
+          rolled_forward_cents: advanceRecoveriesCents - appliedAdvanceRecoveryCents,
+        },
+        "info",
+        "GO-22-B7"
       );
-      if ((upd.rowCount ?? 0) > 0) recoveredIds.push(adv.id);
     }
 
     // Escrow contribution → escrow ledger 'hold' + refreshed running balance (never a release). Best-effort
