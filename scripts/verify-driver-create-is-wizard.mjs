@@ -54,13 +54,9 @@ function selftest() {
     "true /* SELFTEST: blank phone escapes identity gate */"
   );
   if (broken === orig) throw new Error("selftest: could not plant defect");
-  fs.writeFileSync(MODAL, broken);
-  try {
-    const errors = check(fs.readFileSync(MODAL, "utf8"));
-    if (errors.length === 0) throw new Error("selftest: planted defect did not fail");
-  } finally {
-    fs.writeFileSync(MODAL, orig);
-  }
+  const errors = check(broken);
+  if (errors.length === 0) throw new Error("selftest: planted defect did not fail");
+  if (check(orig).length > 0) throw new Error("selftest: original source must remain good");
   console.log("verify-driver-create-is-wizard --selftest OK");
 }
 
