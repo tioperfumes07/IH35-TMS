@@ -182,6 +182,13 @@
     "empty": "No loads today",
     "pull_to_refresh": "Pull to refresh"
   },
+  "tour_close": {
+    "deadhead_prompt": "No more loads — head to the yard to close out your tour.",
+    "close_button": "Close Tour",
+    "closing": "Closing…",
+    "closed_success": "Tour closed",
+    "close_failed": "Could not close tour"
+  },
   "load": {
     "tab_overview": "Overview",
     "tab_stops": "Stops",

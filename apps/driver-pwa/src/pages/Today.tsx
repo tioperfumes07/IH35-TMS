@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { getMyLoadsToday } from "../api/loads";
 import { LifecyclePill } from "../components/LifecyclePill";
 import { PwaCard } from "../components/PwaCard";
+import { TourCloseBanner } from "../components/TourCloseBanner";
 
 function relativeTime(iso: string) {
   const deltaMs = new Date(iso).getTime() - Date.now();
@@ -25,6 +26,7 @@ export function TodayPage() {
     <div className="min-h-screen bg-pwa-bg px-4 py-3 text-pwa-text-primary">
       <div className="mx-auto flex w-full max-w-md flex-col gap-3 pb-24">
         <PwaCard title={t("today.title")} subtitle={t("today.pull_to_refresh")}>
+          <TourCloseBanner />
           <div className="mb-3 flex justify-end">
             <button
               type="button"
