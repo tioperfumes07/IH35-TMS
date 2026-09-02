@@ -1,5 +1,6 @@
 import { pool } from "../../auth/db.js";
 import { getCurrentClocks } from "../../telematics/hos-clocks.service.js";
+import { isEnabled } from "../../lib/feature-flags/service.js";
 
 // GAP-14: Pre-Dispatch Validation — read-only, no financial writes.
 
@@ -366,15 +367,10 @@ async function checkDriverInsuranceSchedule(
   driverUuid: string,
   operatingCompanyId: string
 ): Promise<ValidationItem[]> {
-  const flagRes = await client.query<{ enabled: boolean }>(
-    `SELECT COALESCE(
-       (SELECT ffo.enabled FROM lib.feature_flag_overrides ffo
-        WHERE ffo.flag_key = 'INSURANCE_SCHEDULE_WARNING_ENABLED' AND ffo.operating_company_id = $1::uuid LIMIT 1),
-       (SELECT default_enabled FROM lib.feature_flags WHERE flag_key = 'INSURANCE_SCHEDULE_WARNING_ENABLED' LIMIT 1),
-       false) AS enabled`,
-    [operatingCompanyId]
-  );
-  if (flagRes.rows[0]?.enabled !== true) return [];
+  const warningEnabled = await isEnabled(client, "INSURANCE_SCHEDULE_WARNING_ENABLED", {
+    operating_company_id: operatingCompanyId,
+  });
+  if (!warningEnabled) return [];
 
   const res = await client.query<{
     on_schedule: boolean; submitted_at: string | null; confirmed_by_insurer_at: string | null;
@@ -419,15 +415,10 @@ async function checkUnitInsuranceSchedule(
   unitUuid: string,
   operatingCompanyId: string
 ): Promise<ValidationItem[]> {
-  const flagRes = await client.query<{ enabled: boolean }>(
-    `SELECT COALESCE(
-       (SELECT ffo.enabled FROM lib.feature_flag_overrides ffo
-        WHERE ffo.flag_key = 'INSURANCE_SCHEDULE_WARNING_ENABLED' AND ffo.operating_company_id = $1::uuid LIMIT 1),
-       (SELECT default_enabled FROM lib.feature_flags WHERE flag_key = 'INSURANCE_SCHEDULE_WARNING_ENABLED' LIMIT 1),
-       false) AS enabled`,
-    [operatingCompanyId]
-  );
-  if (flagRes.rows[0]?.enabled !== true) return [];
+  const warningEnabled = await isEnabled(client, "INSURANCE_SCHEDULE_WARNING_ENABLED", {
+    operating_company_id: operatingCompanyId,
+  });
+  if (!warningEnabled) return [];
 
   const res = await client.query<{ on_schedule: boolean; unit_number: string | null }>(
     `SELECT EXISTS (

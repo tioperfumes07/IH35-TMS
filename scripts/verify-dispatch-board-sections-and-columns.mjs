@@ -85,8 +85,8 @@ function dsp02ScheduleColumnIssues(content) {
   if (!/function renderPickupDateCell[\s\S]{0,180}pickup_scheduled_at[\s\S]{0,80}pickup_appointment_start_at/.test(content)) {
     issues.push("pickup date must derive from persisted pickup stop schedule/appointment fields (DSP-02)");
   }
-  if (!/function renderDeliveryTimeCell[\s\S]{0,220}delivery_time_window_type[\s\S]{0,120}delivery_scheduled_at[\s\S]{0,100}delivery_appointment_start_at/.test(content)) {
-    issues.push("delivery time must derive from persisted delivery stop window/schedule fields (DSP-02)");
+  if (!/function renderDeliveryTimeCell[\s\S]{0,220}delivery_time_window_type[\s\S]{0,120}effective_delivery_date[\s\S]{0,100}delivery_appointment_start_at/.test(content)) {
+    issues.push("delivery time must derive from canonical effective delivery date with appointment fallback (DSP-02)");
   }
   if (!/function formatStopDate\s*\(/.test(content) || !/function formatStopTime\s*\(/.test(content)) {
     issues.push("formatStopDate + formatStopTime helpers required for stop date/time cells (DSP-02)");
@@ -331,6 +331,7 @@ if (process.argv.includes("--selftest")) {
     src.replace('{ key: "delivery_date", header: "Del date", cell: (load) => renderDeliveryDateCell(load) }', '{ key: "delivery", header: "Delivery", cell: (load) => renderDeliveryDateCell(load) }'),
     src.replace('{ key: "delivery_time", header: "Del time", cell: (load) => renderDeliveryTimeCell(load) }', '{ key: "delivery", header: "Delivery", cell: (load) => renderDeliveryTimeCell(load) }'),
     src.replace("function formatStopDate(", "function formatStopDateRemoved("),
+    src.replaceAll("load.effective_delivery_date", "load.delivery_scheduled_at"),
   ];
   if (!dsp02Mutants.every((mutant) => dsp02ScheduleColumnIssues(mutant).length > 0)) {
     fail("selftest mutation escaped DSP-02 four-column schedule guard");
@@ -367,7 +368,7 @@ if (process.argv.includes("--selftest")) {
   if (!oosMutants.every((mutant) => fleetOosSortIssues(mutant).length > 0)) {
     fail("selftest mutation escaped DSP-05 fleet OOS sort guard");
   }
-  console.log("PASS verify-dispatch-board-sections-and-columns SELFTEST — 29/29 defects caught");
+  console.log("PASS verify-dispatch-board-sections-and-columns SELFTEST — 30/30 defects caught");
 }
 
 console.log("PASS verify-dispatch-board-sections-and-columns");

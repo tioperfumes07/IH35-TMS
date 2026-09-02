@@ -16,7 +16,7 @@ const REQUIRED = [
   },
   {
     file: "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
-    markers: ["SubTabRow", "data-maintenance-subtab", "parts_inventory"],
+    markers: ["NavyPageSubNav", "SUBNAV", "parts_inventory"],
   },
   {
     file: "apps/frontend/src/components/Topbar.tsx",
@@ -46,4 +46,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log("[verify-no-clipped-subtabs-at-1024] OK — SubTabRow scroll + status bar compact <=1366px");
+console.log("[verify-no-clipped-subtabs-at-1024] OK — canonical subnav scroll + status bar compact <=1366px");

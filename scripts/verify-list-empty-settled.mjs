@@ -61,6 +61,10 @@ if (!insuranceListErrorContract.test(insuranceClaimsSrc) || !insuranceListErrorC
   fail("Insurance Claims and Lawsuits must render detailed exact-query retry instead of their empty tables");
 }
 
+function hasExplicitLoadingThenEmptyGate(source) {
+  return /\b(?:loading|isLoading|isPending)\s*\?\s*\([\s\S]{0,500}?\)\s*:\s*[A-Za-z_$][\w$]*\.length === 0\s*\?/.test(source);
+}
+
 // 2) Migrated list surfaces: each MUST import the primitive and gate every
 //    empty literal on the resolved settled state (listState.isEmpty / === "empty").
 const MIGRATED = [
@@ -284,7 +288,8 @@ const MIGRATED = [
   },
   {
     file: "apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx",
-    empties: ["No uncovered units.", "No mismatched coverage requirements."],
+    // The two former tables were intentionally consolidated into one coverage-by-type ParityTable.
+    empties: ["No coverage-gap units."],
   },
   // DISP surface batch — settled ParityTable empties (war noon).
   {
@@ -297,7 +302,7 @@ const MIGRATED = [
   },
   {
     file: "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
-    empties: ["No at-risk or late loads right now."],
+    empties: ["No loads at risk in the selected range."],
   },
   {
     file: "apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx",
@@ -369,7 +374,12 @@ if (process.argv.includes("--selftest")) {
     const mutant = candidate.replace("onRetry={() => void query.refetch()}", "onRetry={() => undefined}");
     if (insuranceListErrorContract.test(mutant)) fail(`selftest did not reject the planted Insurance ${name} retry no-op`);
   }
-  console.log(`${TAG} SELFTEST OK — stale lawsuit copy and all three Insurance retry no-ops rejected`);
+  const workOrders = read("apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx");
+  const workOrdersMutant = workOrders.replace("loading ? (", "false ? (");
+  if (!hasExplicitLoadingThenEmptyGate(workOrders) || hasExplicitLoadingThenEmptyGate(workOrdersMutant)) {
+    fail("selftest did not reject the planted Work Orders false-empty race");
+  }
+  console.log(`${TAG} SELFTEST OK — stale lawsuit copy, Insurance retry no-ops, and Work Orders false-empty race rejected`);
   process.exit(0);
 }
 
@@ -390,7 +400,8 @@ for (const { file, empties } of MIGRATED) {
   //      bare `.length === 0 ?` empties are still rejected below, per-literal.
   const usesPrimitive = src.includes("components/list-state") && /useListState|resolveListState/.test(src);
   const usesParity = src.includes("<ParityTable") && /\bloading=/.test(src);
-  if (!usesPrimitive && !usesParity) {
+  const usesExplicitLoadingGate = hasExplicitLoadingThenEmptyGate(scanSrc);
+  if (!usesPrimitive && !usesParity && !usesExplicitLoadingGate) {
     fail(`${file} routes its list empty through neither the shared list-state primitive nor a loading-gated ParityTable`);
   }
   for (const literal of empties) {
@@ -406,7 +417,7 @@ for (const { file, empties } of MIGRATED) {
       // Some dual-view pages own an explicit loading → empty → rows state machine for their
       // non-table view. That is the same settled-only invariant and must not be rejected merely
       // because it does not instantiate the shared table for the alternate view.
-      const explicitLoadingGate = /\b(?:isLoading|isPending)\s*\?\s*\([\s\S]{0,400}?\.length === 0\s*\?/.test(window);
+      const explicitLoadingGate = /\b(?:loading|isLoading|isPending)\s*\?\s*\([\s\S]{0,400}?\)\s*:\s*[A-Za-z_$][\w$]*\.length === 0\s*\?/.test(window);
       const gated = listStateGated || parityEmptyText || explicitLoadingGate;
       const bareLength = /\.length === 0 \?/.test(window) && !gated;
       if (!gated || bareLength) {
