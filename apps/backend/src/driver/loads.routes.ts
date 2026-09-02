@@ -1,4 +1,5 @@
 import { latchOnDeliveryEvidence } from "../dispatch/delivery-evidence-latch.js";
+import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -570,7 +571,18 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       );
       if (!loadUpdate.rows[0]?.id) return { error: "load_transition_conflict" as const };
 
-      return { lifecycle_stage: lifecycleFromLoadStatus(nextLoadStatus) };
+      const pickupMint = await mintProformaInvoiceOnFirstPickup(client, {
+        operatingCompanyId: stop.operating_company_id,
+        loadId: params.data.id,
+        actorUserId: req.user!.uuid,
+        stopId: params.data.stopId,
+      });
+      const proformaInvoice =
+        pickupMint.outcome === "minted" || pickupMint.outcome === "idempotent"
+          ? pickupMint.invoice
+          : null;
+
+      return { lifecycle_stage: lifecycleFromLoadStatus(nextLoadStatus), proforma_invoice: proformaInvoice };
     });
 
     if ("error" in updated) {
@@ -718,7 +730,19 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       } catch (err) {
         console.warn({ err, load_id: params.data.id }, "driver_load_settlement_ping_failed");
       }
-      return { lifecycle_stage: lifecycleFromLoadStatus(nextLoadStatus) };
+
+      const pickupMint = await mintProformaInvoiceOnFirstPickup(client, {
+        operatingCompanyId: stop.operating_company_id,
+        loadId: params.data.id,
+        actorUserId: req.user!.uuid,
+        stopId: params.data.stopId,
+      });
+      const proformaInvoice =
+        pickupMint.outcome === "minted" || pickupMint.outcome === "idempotent"
+          ? pickupMint.invoice
+          : null;
+
+      return { lifecycle_stage: lifecycleFromLoadStatus(nextLoadStatus), proforma_invoice: proformaInvoice };
     });
 
     if ("error" in updated) {

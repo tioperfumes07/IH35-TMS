@@ -8,8 +8,6 @@ import { effectiveTeamPercentsFromRow, splitTotalCents } from "../driver-finance
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { bookLoadRateTotalCents } from "./book-load-accessorial.js";
 import { assertDriverQualifiedForLoad } from "./driver-qualification.service.js";
-import { buildInvoiceFromLoad } from "../accounting/from-load.js";
-import { isEnabled } from "../lib/feature-flags/service.js";
 import { enqueueOverrideNotice } from "../outbox/enqueue-override-notice.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import {
@@ -2016,97 +2014,8 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       );
     }
 
-    // ND-INV-01 — auto-create NON-POSTING proforma invoice at book when pipeline flag is on.
-    // Reuses buildInvoiceFromLoad (no new GL math). Failures are loud so booking never silently
-    // skips the projection document the owner expects.
-    {
-      const pipelineOn = await isEnabled(client, "INVOICE_PROFORMA_PIPELINE_ENABLED", {
-        operating_company_id: input.operating_company_id,
-        user_uuid: input.requestingUserUuid,
-      });
-      if (pipelineOn) {
-        // Column may not exist until owner Neon-applies 202609100090 — probe once.
-        const col = await client.query<{ ok: boolean }>(
-          `
-            SELECT EXISTS (
-              SELECT 1 FROM information_schema.columns
-              WHERE table_schema = 'accounting'
-                AND table_name = 'invoices'
-                AND column_name = 'broker_advance_applied_cents'
-            ) AS ok
-          `
-        );
-        if (Boolean(col.rows[0]?.ok)) {
-          // ACCT-F289 — buildInvoiceFromLoad (ACCT-F267) throws `load_has_no_rate` on purpose for a
-          // load booked before its rate is typed in, refusing to mint a permanently-$0 invoice. That
-          // refusal must never roll back the booking itself: dispatch books the real load regardless
-          // of whether the accounting projection can be produced yet. Narrow catch — only
-          // load_has_no_rate is swallowed (and made COUNTABLE via the same audit pattern WIRE-01 uses
-          // for the missing-column skip above); anything else re-throws, because "failures are loud"
-          // must still hold for a real accounting-layer bug, not just for this one expected refusal.
-          try {
-            await buildInvoiceFromLoad(client, {
-              userId: input.requestingUserUuid,
-              operatingCompanyId: input.operating_company_id,
-              loadId: String(load.id),
-              asProforma: true,
-            });
-          } catch (error) {
-            if ((error as { code?: string }).code !== "load_has_no_rate") throw error;
-            await appendCrudAudit(
-              client,
-              input.requestingUserUuid,
-              "accounting.invoice.proforma_skipped_zero_rate",
-              {
-                load_id: String(load.id),
-                operating_company_id: input.operating_company_id,
-                flag: "INVOICE_PROFORMA_PIPELINE_ENABLED",
-                reason: "load_has_no_rate",
-              },
-              "warning",
-              "ACCT-F289"
-            );
-            console.error(
-              { load_id: String(load.id), operating_company_id: input.operating_company_id },
-              "acct_f289_proforma_skipped_zero_rate"
-            );
-          }
-        } else {
-          // WIRE-01 — this branch used to be an empty `if`, so when the column was absent the
-          // proforma was skipped with NO log, NO error and NO record, directly contradicting the
-          // comment above it ("Failures are loud so booking never silently skips the projection
-          // document the owner expects"). The flag being ON is an explicit instruction to produce
-          // that document; producing nothing and saying nothing is the silent-failure class.
-          //
-          // It does NOT throw: an accounting projection must never block dispatch from booking a
-          // real load. Instead the skip becomes COUNTABLE — a durable append-only audit row written
-          // on the same client as the booking, so it commits with the load or not at all and can be
-          // queried later. Same treatment as the ACCT-F61 evidence gate.
-          await appendCrudAudit(
-            client,
-            input.requestingUserUuid,
-            "accounting.invoice.proforma_skipped_missing_column",
-            {
-              load_id: String(load.id),
-              operating_company_id: input.operating_company_id,
-              flag: "INVOICE_PROFORMA_PIPELINE_ENABLED",
-              missing_column: "accounting.invoices.broker_advance_applied_cents",
-              migration: "202609100090",
-            },
-            "warning",
-            "WIRE-01"
-          );
-          console.error(
-            {
-              load_id: String(load.id),
-              operating_company_id: input.operating_company_id,
-              missing_column: "accounting.invoices.broker_advance_applied_cents",
-            },
-            "wire_01_proforma_skipped_missing_column"
-          );
-        }
-      }
-    }
+    // GO-19 slice 04 — proforma is minted at first pickup (mintProformaInvoiceOnFirstPickup), never
+    // at book. Delivery convertProformaToOfficial is unchanged.
 
     // C9 (migration 202609170000, HOLD-FOR-JORGE): resolve the load-level factoring override, then
     // persist all 8 new fields via the 42703-safe helper above. See writeC9HoldFieldsIfPresent's

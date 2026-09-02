@@ -34,6 +34,7 @@ import {
   DriverNotQualifiedError,
 } from "../dispatch/driver-qualification.service.js";
 import { resyncProformaInvoiceFromLoadRate } from "../accounting/resync-proforma-from-load-rate.js";
+import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
 import type { PoolClient } from "pg";
 
 const loadStatusSchema = z.enum([
@@ -1930,7 +1931,17 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           "info",
           "BT-3-LOADS-SCHEMA"
         );
-        return row;
+        const pickupMint = await mintProformaInvoiceOnFirstPickup(client, {
+          operatingCompanyId: scopedCompanyId,
+          loadId: String(row.load_id),
+          actorUserId: authUser.uuid,
+          stopId: String(row.id),
+        });
+        const proformaInvoice =
+          pickupMint.outcome === "minted" || pickupMint.outcome === "idempotent"
+            ? pickupMint.invoice
+            : null;
+        return { ...row, proforma_invoice: proformaInvoice };
       });
 
       if (!created) return reply.code(404).send({ error: "mdata_load_not_found" });
@@ -2064,7 +2075,18 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           );
         }
 
-        return row;
+        const pickupMint = await mintProformaInvoiceOnFirstPickup(client, {
+          operatingCompanyId: scopedCompanyId,
+          loadId: String(row.load_id),
+          actorUserId: authUser.uuid,
+          stopId: String(row.id),
+        });
+        const proformaInvoice =
+          pickupMint.outcome === "minted" || pickupMint.outcome === "idempotent"
+            ? pickupMint.invoice
+            : null;
+
+        return { ...row, proforma_invoice: proformaInvoice };
       });
 
       if (!updated) return reply.code(404).send({ error: "mdata_load_stop_not_found" });
