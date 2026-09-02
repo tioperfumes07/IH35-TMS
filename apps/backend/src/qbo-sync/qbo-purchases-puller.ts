@@ -13,7 +13,7 @@
 //                       upsert on the partial-unique key uq_expenses_company_qbo_purchase_id.
 //            Stage 2b — projects each Purchase line into accounting.expense_lines, upsert on the existing
 //                       UNIQUE (expense_id, line_sequence) so it is delete-free (void-not-delete) and
-//                       idempotent. posting_status stays 'unposted' — NO GL/journal posting is performed
+// C6-MONEY-JE-EXEMPT: idempotent. posting_status stays 'unposted' — NO GL/journal posting is performed
 //                       here; GL stays QuickBooks' job. The posting engine additionally REFUSES to post
 //                       any qbo-sourced expense (EXPENSE_POST_GL_REFUSED) so the parallel-books invariant
 //                       (never invent GL for source_system=qbo) can't be violated downstream.
