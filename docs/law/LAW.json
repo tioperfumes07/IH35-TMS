@@ -1,5 +1,12 @@
 [
   {
+    "id": "LAW-2026-09-02-GO20-CARGO-SENSOR-INCIDENTS-SCHEMA",
+    "title": "Cargo sensor incidents live beside their readings in dispatch, link first and last readings by uuid, are entity-scoped under FORCE RLS, and are void-not-delete",
+    "source_file": "docs/lockdown/GO-20-EIGHT-FEATURES.txt",
+    "guard": "scripts/verify-go20-cargo-sensor-incidents-schema.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-09-02-GO19-BILL-DRIVER-RECOVERY-PARITY",
     "title": "A recoverable vendor bill persists explicit driver and deduction-bucket intent while never auto-creating a deduction",
     "source_file": "docs/lockdown/GO-19-BUILD-QUEUE.txt",

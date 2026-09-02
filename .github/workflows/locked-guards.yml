@@ -251,6 +251,12 @@ jobs:
       - name: verify:migration-filenames
         run: npm run verify:migration-filenames
 
+      - name: verify:go20-cargo-sensor-incidents-schema --selftest
+        run: node scripts/verify-go20-cargo-sensor-incidents-schema.mjs --selftest
+
+      - name: verify:go20-cargo-sensor-incidents-schema
+        run: node scripts/verify-go20-cargo-sensor-incidents-schema.mjs
+
       - name: verify:go19-bill-driver-recovery-parity --selftest
         run: node scripts/verify-go19-bill-driver-recovery-parity.mjs --selftest
 
