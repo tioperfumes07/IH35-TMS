@@ -651,6 +651,11 @@
       "claimed_by": "cursor",
       "claimed_at": "2026-09-02",
       "purpose": "go18_gap5_worm_expenses_factoring_advances \u2014 attach trg_worm_refuse_delete -> accounting.refuse_financial_row_delete() on accounting.expenses + accounting.factoring_advances (2 of 7 display-id MAX+1 tables missing live WORM); COMMENT ON COLUMN bills.driver_id + expenses.driver_uuid twin docs (no rename this pass)"
+    },
+    "202609022351": {
+      "claimed_by": "cursor",
+      "claimed_at": "2026-09-02",
+      "purpose": "go18_gap5_worm_expenses_factoring_advances \u2014 trg_worm_refuse_delete on accounting.expenses + accounting.factoring_advances (display-id MAX+1); COMMENT ON COLUMN driver twin; Cursor HH=23 band"
     }
   }
 }
