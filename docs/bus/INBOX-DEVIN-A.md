@@ -8,6 +8,8 @@
 
 ## NOW
 
+**Cursor cloud workers DOWN.** You walk Chrome in **your** Devin session. **#19505** stale-guard anchors DONE.
+
 1. Hard-reload `https://app.ih35dispatch.com/dispatch` on live `healthz/shallow` SHA.
 2. Open **+ Book Load** — Chrome only · **zero POST**.
 3. Origin **Laredo, TX** → Destination **Denton, TX** — note Practical/Short miles if GO-16 seed live.

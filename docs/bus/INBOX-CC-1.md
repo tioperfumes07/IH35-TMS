@@ -16,12 +16,15 @@
 
 ## NOW (serial — one money PR at a time)
 
-1. **GO-19 slice 17 — Capitalize threshold** — wire `capitalize-threshold.ts` into `wo-ap-posting.service.ts` (not category default). Guard/tests: **$6,999 → expense account · $7,001 → capitalize account**. **$700_000 LOCKED.**
-2. **GO-20 slice C — Accident liabilities** — `safety.accident_liabilities` + wire `insurance.claim.liability_id`. Filing creates liability from cost lines · **POSTS NOTHING**. Owner-only `decide`: chargeback = **pending** deduction (never auto/silent) · split must sum to **net_exposure_cents** · company_absorbs / insurance_only per spec.
-3. **GO-20 slice A — Bank drift alerts** — `banking.reconciliation_drift_alerts` on existing `banking.reconciliation_sessions.variance_cents` (+ live balance/stale feed). Detector **never posts JE**.
-4. **GO-19 slice 20 — Company settlement 5753** — after liability chain: period grain · many loads · eight sections · guard P&L tie **2415.11** exactly (`8100 − 73.50 − 1897.95 − 100 − 3491.92 − 121.52`).
+**Cursor cloud workers are DOWN (unpaid invoice).** You build in **your** Claude session. Do not wait.
 
-ACK `CC-1 | ACK | GO-20 FORCE | NOW=17 capitalize→C accident liabilities→A bank drift→20 settlement 5753 · $7000 NEVER 7500 · NEVER POST Book Load | GO`
+0. **DONE:** slice **17** capitalize in `wo-ap-posting` — **#19510**. $7000 LOCKED.
+1. **NOW — slice C accident liabilities** — claim **#19515** `202613400001` is on main. **Author the feature PR** (do not re-claim). Table `safety.accident_liabilities` + `insurance.claim.liability_id`. Filing creates liability · **POSTS NOTHING**. Owner `decide` only. Split = `net_exposure_cents`. Chargeback = **pending** deduction never auto. Fix null liability return in `safety.routes.ts` if still present.
+2. Then **A** bank drift on `variance_cents` (never posts JE).
+3. Then **20** settlement 5753 P&L **2415.11**.
+4. Leftover: drop phantom `inventory.parts` / `maintenance.labor_rates` **reads** in `wo-cost-context.routes.ts` (canonical tables only).
+
+ACK `CC-1 | ACK | GO-20 FORCE | NOW=C accident_liabilities author #19515 claim · then A then 20 · 17 DONE #19510 · NEVER POST | GO`
 
 ---
 
