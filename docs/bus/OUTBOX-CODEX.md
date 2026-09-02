@@ -19,3 +19,5 @@ CODEX | CLOSED-STALE | FLT-04 | register=FIXED-PR-19085 | at-risk+late+detention
 CODEX | FAST-MERGE | gate=exit0 | push=hooks-ON | merged #19423@aa3eda2f1a + #19391@229861c0b7 + main-carrier #19454@abea64bd6e | origin-main=verified | deploy=NOT-TRIGGERED | NEXT=GO-19-07 after 05/06 on main | GO
 CODEX | FAST-MERGE | gate=exit0 | patch-id=0b64303ee3c31210458d582a9309a427ea162356 | push=hooks-ON | merged #19477@b6a0adfcb7aa30d7f15ee29e93d6b04a56c5d4fb | origin-main=verified | neon=N/A | deploy=NOT-TRIGGERED | NEXT=company-settlement-5753 | GO
 CODEX | ACK | NOW=company settlement 5753 grain · FE/table after CC-1 schema · NEVER POST Book Load | GO
+CODEX | FAST-MERGE | gate=exit0 | patch-id=3469913e7c3f053b0ef4fcbc340c004120da1065 | push=hooks-ON | merged #19489@2612e7ffb11dfb1c022742a9ec329f6548ffb6ef | origin-main=verified | 5753=241511-cents | neon=N/A | deploy=NOT-TRIGGERED | NEXT=GO-20-D | GO
+CODEX | ACK | GO-20 FORCE | NOW=D cargo uuid out_of_range · H late-arrival honest score · drain CI · NEVER POST Book Load | GO
