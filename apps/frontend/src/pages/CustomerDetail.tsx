@@ -1551,7 +1551,7 @@ export function CustomerDetailPage() {
                     value={hydratedForm.layover_notes}
                     onChange={(event) => setForm((current) => ({ ...current, layover_notes: event.target.value }))}
                     rows={3}
-                    className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+                    className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
                   />
                 </div>
               </>
@@ -1559,21 +1559,21 @@ export function CustomerDetailPage() {
               <>
                 <DataPanelRow>
                   <span className="text-xs font-semibold text-gray-600">Layover Charge per Day</span>
-                  <span className="text-[13px] text-gray-900">
+                  <span className="text-xs text-gray-900">
                     {customer.layover_charge_per_day ? `${customer.layover_currency ?? "USD"} ${Number(customer.layover_charge_per_day).toFixed(2)}` : "Not set"}
                   </span>
                 </DataPanelRow>
                 <DataPanelRow>
                   <span className="text-xs font-semibold text-gray-600">First Night Included</span>
-                  <span className="text-[13px] text-gray-900">{customer.layover_first_night_free ? "Yes" : "No"}</span>
+                  <span className="text-xs text-gray-900">{customer.layover_first_night_free ? "Yes" : "No"}</span>
                 </DataPanelRow>
                 <DataPanelRow>
                   <span className="text-xs font-semibold text-gray-600">Max Billable Days</span>
-                  <span className="text-[13px] text-gray-900">{customer.layover_max_days ?? "No cap"}</span>
+                  <span className="text-xs text-gray-900">{customer.layover_max_days ?? "No cap"}</span>
                 </DataPanelRow>
                 <DataPanelRow>
                   <span className="text-xs font-semibold text-gray-600">Layover Notes</span>
-                  <span className="text-[13px] text-gray-900">{customer.layover_notes || "-"}</span>
+                  <span className="text-xs text-gray-900">{customer.layover_notes || "-"}</span>
                 </DataPanelRow>
               </>
             )}
@@ -1643,7 +1643,7 @@ export function CustomerDetailPage() {
                 onChange={(event) => setForm((current) => ({ ...current, factoring_notes: event.target.value }))}
                 disabled={!editMode}
                 rows={3}
-                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs disabled:bg-gray-100"
               />
             </div>
           </DataPanel>
@@ -1656,7 +1656,7 @@ export function CustomerDetailPage() {
                 onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
                 disabled={!editMode}
                 rows={4}
-                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs disabled:bg-gray-100"
               />
             </div>
           </DataPanel>
@@ -1692,7 +1692,7 @@ export function CustomerDetailPage() {
                   <DataPanelRow key={contact.id}>
                     <div className="flex items-center gap-2 py-1">
                       {contact.is_primary ? <span className="text-xs">⭐</span> : null}
-                      <span className="text-[13px] font-semibold text-gray-900">{contact.name}</span>
+                      <span className="text-xs font-semibold text-gray-900">{contact.name}</span>
                       {contact.title ? <span className="text-[11px] text-gray-500">{contact.title}</span> : null}
                       <StatusBadge variant={departmentVariant(contact.department)}>{contact.department}</StatusBadge>
                       {contact.deactivated_at ? <StatusBadge variant="neutral">inactive</StatusBadge> : null}
@@ -1756,7 +1756,7 @@ export function CustomerDetailPage() {
                   {(hydratedForm.quality_overall_flag || customer.quality_overall_flag).toUpperCase()}
                 </StatusBadge>
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${qualityRatingFromScores(customer).className}`}
+                  className={`rounded-full px-2 py-0.5 text-xs font-semibold ${qualityRatingFromScores(customer).className}`}
                 >
                   {qualityRatingFromScores(customer).label}
                 </span>
@@ -1797,7 +1797,7 @@ export function CustomerDetailPage() {
                 onChange={(event) => setForm((current) => ({ ...current, quality_notes: event.target.value }))}
                 disabled={!editMode || !canEditQualityNotes}
                 rows={3}
-                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs disabled:bg-gray-100"
               />
             </div>
           </DataPanel>
@@ -2075,7 +2075,7 @@ export function CustomerDetailPage() {
                 {(customerPnlRow.flags ?? []).length > 0 ? (
                   <div className="mt-3 flex flex-wrap gap-1">
                     {(customerPnlRow.flags ?? []).map((f) => (
-                      <span key={f} className="rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-[#1f2a44]">
+                      <span key={f} className="rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-[#1f2a44]">
                         {f}
                       </span>
                     ))}
@@ -2777,7 +2777,7 @@ export function CustomerDetailPage() {
                 value={laneForm.notes}
                 onChange={(event) => setLaneForm((current) => ({ ...current, notes: event.target.value }))}
                 rows={3}
-                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               />
             </div>
           </div>
@@ -2861,7 +2861,7 @@ export function CustomerDetailPage() {
                 value={contactForm.notes}
                 onChange={(event) => setContactForm((current) => ({ ...current, notes: event.target.value }))}
                 rows={3}
-                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               />
             </div>
           </div>
@@ -3018,7 +3018,7 @@ export function CustomerDetailPage() {
                 value={qualityForm.details}
                 onChange={(event) => setQualityForm((current) => ({ ...current, details: event.target.value }))}
                 rows={3}
-                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               />
             </div>
           </div>
@@ -3042,7 +3042,7 @@ export function CustomerDetailPage() {
               value={voidReason}
               onChange={(event) => setVoidReason(event.target.value)}
               rows={3}
-              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
             />
           </div>
           <div className="flex justify-end gap-2">
@@ -3073,7 +3073,7 @@ export function CustomerDetailPage() {
             value={editDetailsDraft}
             onChange={(event) => setEditDetailsDraft(event.target.value)}
             rows={3}
-            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
             autoFocus
           />
           <div className="flex justify-end gap-2">
@@ -3096,12 +3096,12 @@ export function CustomerDetailPage() {
 
       <Modal open={statusConfirmOpen} onClose={() => setStatusConfirmOpen(false)} title="Confirm Status Change">
         <div className="space-y-3">
-          <p className="text-[13px] text-gray-700">
+          <p className="text-xs text-gray-700">
             Changing this customer to <strong>{statusLabel((hydratedForm.status as Customer["status"]) ?? customer.status)}</strong> can block dispatch unless overridden.
           </p>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Reason</label>
-            <textarea value={statusReason} onChange={(event) => setStatusReason(event.target.value)} rows={3} className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" />
+            <textarea value={statusReason} onChange={(event) => setStatusReason(event.target.value)} rows={3} className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs" />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setStatusConfirmOpen(false)}>
@@ -3229,7 +3229,7 @@ function Field({
           value={value ?? ""}
           onChange={(event) => onChange(event.target.value)}
           disabled={disabled}
-          className="h-9 rounded-sm border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
+          className="h-9 rounded-sm border border-gray-300 px-2 py-1.5 text-xs disabled:bg-gray-100"
         />
       )}
     </div>

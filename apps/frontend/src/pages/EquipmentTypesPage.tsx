@@ -263,7 +263,7 @@ export function EquipmentTypesPage() {
       />
 
       {equipmentTypesQuery.isLoading ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-[13px] text-gray-500">Loading equipment types...</div>
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-500">Loading equipment types...</div>
       ) : equipmentTypesQuery.isError ? (
         <ListErrorBanner message="Failed to load equipment types." onRetry={() => void equipmentTypesQuery.refetch()} />
       ) : (
@@ -284,7 +284,7 @@ export function EquipmentTypesPage() {
                   <div className="flex min-w-0 flex-col">
                     <div className="flex items-center gap-2">
                       <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{typeRow.code}</span>
-                      <span className="text-[13px] font-semibold text-gray-900">{typeRow.name}</span>
+                      <span className="text-xs font-semibold text-gray-900">{typeRow.name}</span>
                       <span
                         className={`rounded px-2 py-0.5 text-xs font-semibold ${
                           typeRow.is_active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"
@@ -349,7 +349,7 @@ export function EquipmentTypesPage() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{item.code}</span>
-                              <span className="text-[13px] text-gray-900">{item.name}</span>
+                              <span className="text-xs text-gray-900">{item.name}</span>
                               {item.is_required ? (
                                 <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Required</span>
                               ) : null}
@@ -400,7 +400,7 @@ export function EquipmentTypesPage() {
               </div>
             );
           })}
-          {listState.isEmpty ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-[13px] text-gray-500">No equipment types found.</div> : null}
+          {listState.isEmpty ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-500">No equipment types found.</div> : null}
         </div>
       )}
 
@@ -439,7 +439,7 @@ export function EquipmentTypesPage() {
                 onChange={(event) =>
                   setAddEquipmentForm((current) => ({ ...current, code: event.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "") }))
                 }
-                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
                 placeholder="DRY_VAN_SPECIAL"
               />
             </div>
@@ -448,7 +448,7 @@ export function EquipmentTypesPage() {
               <input
                 value={addEquipmentForm.name}
                 onChange={(event) => setAddEquipmentForm((current) => ({ ...current, name: event.target.value }))}
-                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
               />
             </div>
             <div className="md:col-span-2">
@@ -457,7 +457,7 @@ export function EquipmentTypesPage() {
                 value={addEquipmentForm.description}
                 onChange={(event) => setAddEquipmentForm((current) => ({ ...current, description: event.target.value }))}
                 rows={2}
-                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               />
             </div>
             <div>
@@ -468,7 +468,7 @@ export function EquipmentTypesPage() {
                 onChange={(event) =>
                   setAddEquipmentForm((current) => ({ ...current, sort_order: Number(event.target.value || "0") }))
                 }
-                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
               />
             </div>
           </div>
@@ -625,7 +625,7 @@ export function EquipmentTypesPage() {
             <input
               value={editingEquipmentForm.name}
               onChange={(event) => setEditingEquipmentForm((current) => ({ ...current, name: event.target.value }))}
-              className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
             />
           </div>
           <div>
@@ -634,7 +634,7 @@ export function EquipmentTypesPage() {
               value={editingEquipmentForm.description}
               onChange={(event) => setEditingEquipmentForm((current) => ({ ...current, description: event.target.value }))}
               rows={2}
-              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
             />
           </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -646,7 +646,7 @@ export function EquipmentTypesPage() {
                 onChange={(event) =>
                   setEditingEquipmentForm((current) => ({ ...current, sort_order: Number(event.target.value || "0") }))
                 }
-                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
               />
             </div>
             <label className="mt-6 flex items-center gap-2 text-sm text-gray-700">
@@ -709,7 +709,7 @@ export function EquipmentTypesPage() {
                     code: event.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ""),
                   }))
                 }
-                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
               />
             </div>
             <div>
@@ -717,7 +717,7 @@ export function EquipmentTypesPage() {
               <input
                 value={addLineItemForm.name}
                 onChange={(event) => setAddLineItemForm((current) => ({ ...current, name: event.target.value }))}
-                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
               />
             </div>
             <div>
@@ -735,7 +735,7 @@ export function EquipmentTypesPage() {
                 type="number"
                 value={addLineItemForm.sort_order}
                 onChange={(event) => setAddLineItemForm((current) => ({ ...current, sort_order: Number(event.target.value || "0") }))}
-                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
               />
             </div>
             <div className="md:col-span-2">
@@ -744,7 +744,7 @@ export function EquipmentTypesPage() {
                 value={addLineItemForm.description}
                 onChange={(event) => setAddLineItemForm((current) => ({ ...current, description: event.target.value }))}
                 rows={2}
-                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               />
             </div>
             <label className="md:col-span-2 flex items-center gap-2 text-sm text-gray-700">
@@ -798,7 +798,7 @@ export function EquipmentTypesPage() {
               <input
                 value={editingLineItemForm.name}
                 onChange={(event) => setEditingLineItemForm((current) => ({ ...current, name: event.target.value }))}
-                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
               />
             </div>
             <div>
@@ -818,7 +818,7 @@ export function EquipmentTypesPage() {
                 onChange={(event) =>
                   setEditingLineItemForm((current) => ({ ...current, sort_order: Number(event.target.value || "0") }))
                 }
-                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
               />
             </div>
             <label className="mt-6 flex items-center gap-2 text-sm text-gray-700">
@@ -835,7 +835,7 @@ export function EquipmentTypesPage() {
                 value={editingLineItemForm.description}
                 onChange={(event) => setEditingLineItemForm((current) => ({ ...current, description: event.target.value }))}
                 rows={2}
-                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               />
             </div>
             <label className="md:col-span-2 flex items-center gap-2 text-sm text-gray-700">

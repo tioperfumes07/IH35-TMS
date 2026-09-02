@@ -1,6 +1,6 @@
 {
   "healthzSha": "7fe443c",
-  "generated_at": "2026-09-02T20:50:19.448Z",
+  "generated_at": "2026-09-02T21:01:33.077Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 19795,
+      "title": "FINDING: N/A -- CC-3 status: C7/B3 already done, K1/K3/K4 shipped, B9/E1 flagged",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 03:53 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19795",
+      "sha": "d6caff5d2c",
+      "committedAtIso": "2026-09-02T15:53:01-05:00"
+    },
+    {
+      "number": 19794,
+      "title": "FINDING: no 28-accounting-defects register exists on disk",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 03:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19794",
+      "sha": "f709862f75",
+      "committedAtIso": "2026-09-02T15:52:11-05:00"
+    },
+    {
       "number": 19793,
       "title": "VERIFY: TXH A6 + B10 completed",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19786",
       "sha": "cce1e1eb0f",
       "committedAtIso": "2026-09-02T15:33:25-05:00"
-    },
-    {
-      "number": 19785,
-      "title": "FINDING: FUEL-F19784 — GO-26: last of six schemas. fuel schema carried 5 fixture rows; full cross-schema done-gate confirms the entire GO-26 purge is complete except explicitly-held/append-only rows",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 03:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19785",
-      "sha": "a060fa9203",
-      "committedAtIso": "2026-09-02T15:32:00-05:00"
-    },
-    {
-      "number": 19784,
-      "title": "FINDING: ACCT-F19459 | Gate 2.1 bills.driver_id already landed; Codex was blocked on a non-existent bills.driver_uuid.",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 03:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19784",
-      "sha": "a5f9f04c17",
-      "committedAtIso": "2026-09-02T15:31:55-05:00"
     }
   ]
 }

@@ -321,7 +321,7 @@ function DeliveredProfitBadge({ load }: { load: KanbanLoad }) {
     return (
       <button
         type="button"
-        className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
+        className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
         title="Load profitability unavailable — retry"
         aria-label="Retry load profitability"
         onClick={(event) => {
@@ -337,7 +337,7 @@ function DeliveredProfitBadge({ load }: { load: KanbanLoad }) {
   if (netCents == null) {
     if (profitabilityQuery.isLoading) {
       return (
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${profitBadgeClassName("loading")}`}>Profit…</span>
+        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${profitBadgeClassName("loading")}`}>Profit…</span>
       );
     }
     return null;
@@ -345,7 +345,7 @@ function DeliveredProfitBadge({ load }: { load: KanbanLoad }) {
 
   const variant = classifyProfit(netCents, marginPct ?? 0);
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${profitBadgeClassName(variant)}`} title={`Net profit (${marginPct ?? 0}% margin)`}>
+    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${profitBadgeClassName(variant)}`} title={`Net profit (${marginPct ?? 0}% margin)`}>
       {formatProfitCents(netCents)}
     </span>
   );
@@ -409,7 +409,7 @@ function KanbanDispatchCard({
         )}
         {hasVisibleFlag(load.flag_code) ? (
           <span
-            className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white"
+            className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
             style={{ backgroundColor: flagDotColor(load.flag_code) }}
             title={flagDotLabel(load.flag_code)}
           >
@@ -446,7 +446,7 @@ function KanbanDispatchCard({
       </div>
 
       {dwell ? (
-        <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
+        <div className="mt-1 flex flex-wrap gap-1 text-xs">
           <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-slate-700">Dwell {formatMinutes(dwell.dwell)}</span>
           <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-slate-700">Free {formatMinutes(dwell.free)}</span>
           <span className={`rounded-sm px-1.5 py-0.5 ${dwell.det != null && dwell.det > 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-600"}`}>
@@ -456,22 +456,22 @@ function KanbanDispatchCard({
       ) : null}
 
       <div className="mt-2 flex flex-wrap items-center gap-1">
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${onTimeChipClass(load)}`}>{onTimeChipLabel(load)}</span>
+        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${onTimeChipClass(load)}`}>{onTimeChipLabel(load)}</span>
         {isBreakdown(load) ? (
-          <span className="rounded-sm bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800">Breakdown</span>
+          <span className="rounded-sm bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-800">Breakdown</span>
         ) : null}
         {isEtaHeld(load) ? (
-          <span className="rounded-sm bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-800">ETA held</span>
+          <span className="rounded-sm bg-orange-100 px-1.5 py-0.5 text-xs font-semibold text-orange-800">ETA held</span>
         ) : null}
         {hasActiveGeofenceBreach ? (
-          <span className="rounded-sm bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">Geofence</span>
+          <span className="rounded-sm bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-700">Geofence</span>
         ) : null}
       </div>
 
       {isDeliveredColumn ? (
         <div className="mt-2 flex flex-wrap items-center gap-1">
           {factoring ? (
-            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold capitalize text-slate-700">{factoring}</span>
+            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold capitalize text-slate-700">{factoring}</span>
           ) : null}
           <DeliveredProfitBadge load={load} />
         </div>
@@ -555,7 +555,7 @@ function KanbanCompactCard({
         id={load.id}
         name={load.load_number}
         noun="Load"
-        className="shrink-0 font-mono text-[10px]"
+        className="shrink-0 font-mono text-xs"
         data-testid="kanban-compact-load-link"
         onClick={(event) => event.stopPropagation()}
       />
@@ -619,7 +619,7 @@ function KanbanStandardCard({
         {isBreakdown(load) ? <span className="shrink-0 text-red-600" title="Breakdown">▲</span> : null}
         {hasVisibleFlag(load.flag_code) ? (
           <span
-            className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white"
+            className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
             style={{ backgroundColor: flagDotColor(load.flag_code) }}
             title={flagDotLabel(load.flag_code)}
           >
@@ -628,7 +628,7 @@ function KanbanStandardCard({
         ) : null}
       </div>
       {/* line 2 — secondary: load # · driver · lane */}
-      <div className="flex items-center gap-1.5 truncate text-[10px] text-gray-500">
+      <div className="flex items-center gap-1.5 truncate text-xs text-gray-500">
         {secondaryLoad ? (
           <EntityLink
             kind="load"
@@ -716,7 +716,7 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
             e.stopPropagation();
             onBook(load.id);
           }}
-          className="shrink-0 rounded-sm bg-[#1F2A44] px-2 py-1 text-[10px] font-semibold text-white hover:bg-[#2a3656]"
+          className="shrink-0 rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white hover:bg-[#2a3656]"
         >
           + Book load
         </button>
@@ -753,7 +753,7 @@ function KanbanColumnSortControls({
     return (
       <button
         type="button"
-        className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[10px] font-semibold normal-case tracking-normal ${
+        className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-xs font-semibold normal-case tracking-normal ${
           active ? "bg-slate-200 text-slate-900" : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
         }`}
         data-testid={`kanban-column-sort-${columnKey}-${sortKey}`}
@@ -1065,7 +1065,7 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
                 onToggleSort={toggleKanbanColumnSort}
               />
             </div>
-            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-700">{outOfServiceLoads.length}</span>
+            <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-slate-700">{outOfServiceLoads.length}</span>
           </header>
           {outOfServiceLoads.length === 0 ? (
             <p className="mt-1 text-[11px] italic text-slate-700">
@@ -1123,11 +1123,11 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
                     id={load.id}
                     name={load.load_number}
                     noun="Load"
-                    className="font-mono text-[10px] text-gray-500"
+                    className="font-mono text-xs text-gray-500"
                     data-testid="kanban-oos-load-link"
                     onClick={(e) => e.stopPropagation()}
                   />
-                  <span className="rounded-sm bg-red-100 px-1.5 text-[10px] font-semibold text-red-800">Breakdown</span>
+                  <span className="rounded-sm bg-red-100 px-1.5 text-xs font-semibold text-red-800">Breakdown</span>
                 </div>
               ))}
             </div>

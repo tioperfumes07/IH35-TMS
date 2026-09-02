@@ -796,7 +796,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                     clearDriverFieldError(key);
                     setForm((current) => ({ ...current, [key]: value }));
                   }}
-                  className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                  className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-xs")}
                 />
               ) : (
                 <input
@@ -810,7 +810,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                     clearDriverFieldError(key);
                     setForm((current) => ({ ...current, [key]: event.target.value }));
                   }}
-                  className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                  className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-xs")}
                 />
               )}
               <FieldError id={key} message={driverFieldErrors[key]} />
@@ -859,7 +859,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 clearDriverFieldError("country_code");
                 setForm((current) => ({ ...current, country_code: event.target.value }));
               }}
-              className={fieldErrorClassname(Boolean(driverFieldErrors.country_code), "rounded-sm border h-9 px-2 text-[13px]")}
+              className={fieldErrorClassname(Boolean(driverFieldErrors.country_code), "rounded-sm border h-9 px-2 text-xs")}
             >
               <option value="+1">US (+1)</option>
               <option value="+52">Mexico (+52)</option>
@@ -878,7 +878,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 clearDriverFieldError("phone_input");
                 setForm((current) => ({ ...current, phone_input: event.target.value }));
               }}
-              className={fieldErrorClassname(Boolean(driverFieldErrors.phone_input), "rounded-sm border h-9 px-2 text-[13px]")}
+              className={fieldErrorClassname(Boolean(driverFieldErrors.phone_input), "rounded-sm border h-9 px-2 text-xs")}
               placeholder="(956) 555-0001"
             />
             <FieldError id="phone_input" message={driverFieldErrors.phone_input} />
@@ -958,7 +958,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
               id="referral_source"
               value={form.referral_source}
               onChange={(event) => setForm((current) => ({ ...current, referral_source: event.target.value }))}
-              className="rounded-sm border h-9 px-2 text-[13px]"
+              className="rounded-sm border h-9 px-2 text-xs"
               placeholder="Driver referral, recruiting event, website…"
             />
           </div>
@@ -983,7 +983,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                     clearDriverFieldError(key);
                     setForm((current) => ({ ...current, [key]: value }));
                   }}
-                  className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                  className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-xs")}
                 />
               ) : (
                 <input
@@ -996,7 +996,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                     clearDriverFieldError(key);
                     setForm((current) => ({ ...current, [key]: event.target.value }));
                   }}
-                  className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                  className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-xs")}
                 />
               )}
               <FieldError id={key} message={driverFieldErrors[key]} />
@@ -1033,7 +1033,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                           clearDriverFieldError(key);
                           setForm((current) => ({ ...current, [key]: value }));
                         }}
-                        className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                        className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-xs")}
                       />
                     ) : (
                       <input
@@ -1046,7 +1046,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                           clearDriverFieldError(key);
                           setForm((current) => ({ ...current, [key]: event.target.value }));
                         }}
-                        className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                        className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-xs")}
                       />
                     )}
                     <FieldError id={key} message={driverFieldErrors[key]} />
@@ -1126,7 +1126,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                           clearDriverFieldError(key);
                           setForm((current) => ({ ...current, [key]: value }));
                         }}
-                        className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                        className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-xs")}
                       />
                     ) : (
                       <input
@@ -1144,7 +1144,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                               : event.target.value;
                           setForm((current) => ({ ...current, [key]: next }));
                         }}
-                        className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                        className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-xs")}
                       />
                     )}
                     <FieldError id={key} message={driverFieldErrors[key]} />
@@ -1161,7 +1161,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                       clearDriverFieldError("emergency_contact_address");
                       setForm((current) => ({ ...current, emergency_contact_address: event.target.value }));
                     }}
-                    className={fieldErrorClassname(Boolean(driverFieldErrors.emergency_contact_address), "rounded-sm border px-2 py-1.5 text-[13px]")}
+                    className={fieldErrorClassname(Boolean(driverFieldErrors.emergency_contact_address), "rounded-sm border px-2 py-1.5 text-xs")}
                     rows={2}
                   />
                   <FieldError id="emergency_contact_address" message={driverFieldErrors.emergency_contact_address} />
@@ -1177,7 +1177,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                       clearDriverFieldError("emergency_contact_notes");
                       setForm((current) => ({ ...current, emergency_contact_notes: event.target.value }));
                     }}
-                    className={fieldErrorClassname(Boolean(driverFieldErrors.emergency_contact_notes), "rounded-sm border px-2 py-1.5 text-[13px]")}
+                    className={fieldErrorClassname(Boolean(driverFieldErrors.emergency_contact_notes), "rounded-sm border px-2 py-1.5 text-xs")}
                     rows={2}
                   />
                   <FieldError id="emergency_contact_notes" message={driverFieldErrors.emergency_contact_notes} />
@@ -1254,7 +1254,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                       return next;
                     });
                   }}
-                  className="rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-[13px]"
+                  className="rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-xs"
                 />
                 {pendingDocs[key] ? (
                   <span className="text-[11px] text-slate-600">{pendingDocs[key]?.name}</span>
@@ -1509,7 +1509,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           id="new_license_class_code"
           value={newLicenseClassCode}
           onChange={(event) => setNewLicenseClassCode(event.target.value)}
-          className="rounded-sm border h-9 px-2 text-[13px]"
+          className="rounded-sm border h-9 px-2 text-xs"
           placeholder="e.g. AM"
         />
       </div>
@@ -1519,7 +1519,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           id="new_license_class_label"
           value={newLicenseClassLabel}
           onChange={(event) => setNewLicenseClassLabel(event.target.value)}
-          className="rounded-sm border h-9 px-2 text-[13px]"
+          className="rounded-sm border h-9 px-2 text-xs"
           placeholder="e.g. Class AM — Motorcycle"
         />
       </div>

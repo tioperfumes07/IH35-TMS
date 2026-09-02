@@ -84,7 +84,7 @@ const PILL_CLS: Record<PillTone, string> = {
 };
 
 function Pill({ tone, children }: { tone: PillTone; children: ReactNode }) {
-  return <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold ${PILL_CLS[tone]}`}>{children}</span>;
+  return <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${PILL_CLS[tone]}`}>{children}</span>;
 }
 
 function Card({ title, pill, sub, children, footer, full }: {
@@ -97,11 +97,11 @@ function Card({ title, pill, sub, children, footer, full }: {
 }) {
   return (
     <div className={`rounded-xl border border-gray-200 bg-white px-[18px] py-4 ${full ? "sm:col-span-2" : ""}`}>
-      <h3 className="flex items-center gap-2 text-[13px] font-bold tracking-wide text-[#1f2a44]">
+      <h3 className="flex items-center gap-2 text-xs font-bold tracking-wide text-[#1f2a44]">
         {title}
         {pill}
       </h3>
-      {sub ? <div className="mb-3 mt-0.5 text-[11.5px] text-slate-500">{sub}</div> : null}
+      {sub ? <div className="mb-3 mt-0.5 text-xs text-slate-500">{sub}</div> : null}
       {children}
       {footer ? <div className="mt-3">{footer}</div> : null}
     </div>
@@ -121,7 +121,7 @@ function Kpi({ n, u }: { n: ReactNode; u: string }) {
   return (
     <div className="my-0.5 flex items-baseline gap-2">
       <span className="text-[22px] font-bold text-[#1f2a44] tabular-nums">{n}</span>
-      <span className="text-[11.5px] text-slate-500">{u}</span>
+      <span className="text-xs text-slate-500">{u}</span>
     </div>
   );
 }
@@ -297,10 +297,10 @@ function OverviewTab({ data, onOpen, qboAvailable }: { data: SystemData; onOpen:
         footer={<GhostButton onClick={() => onOpen("software")}>Open Health &amp; Deploys</GhostButton>}
       >
         <Row label="Deployed backend">
-          <span className="font-mono text-[11.5px]">{health.data?.version ?? "—"}</span>
+          <span className="font-mono text-xs">{health.data?.version ?? "—"}</span>
         </Row>
         <Row label="Frontend build">
-          <span className="font-mono text-[11.5px]">{__APP_VERSION__}</span>
+          <span className="font-mono text-xs">{__APP_VERSION__}</span>
         </Row>
         <Row label="Deploy parity">
           {(() => {
@@ -883,7 +883,7 @@ function ProgramTab({ data }: { data: SystemData }) {
         <Row label="Built &amp; live-verified">{t ? <span className="tabular-nums">{t.view_counts.completed}</span> : "—"}</Row>
         <Row label="In progress (open PR)">{t ? <span className="tabular-nums">{t.view_counts.in_progress}</span> : "—"}</Row>
         <Row label="Pending">{t ? <span className="tabular-nums">{t.view_counts.pending}</span> : "—"}</Row>
-        <Row label="Deployed">{t ? <span className="font-mono text-[11.5px]">{t.deployed_sha}</span> : "—"}</Row>
+        <Row label="Deployed">{t ? <span className="font-mono text-xs">{t.deployed_sha}</span> : "—"}</Row>
       </Card>
 
       <Card title="Phases" sub="Rollup by phase (from last reconcile sync).">
@@ -975,7 +975,7 @@ function SoftwareTab({ data, qboAvailable }: { data: SystemData; qboAvailable: b
         sub="Deployed version, migrations, and service health (live from /api/v1/healthz)."
       >
         <Row label="Deployed backend">
-          <span className="font-mono text-[11.5px]">{h?.version ?? "—"}</span>
+          <span className="font-mono text-xs">{h?.version ?? "—"}</span>
         </Row>
         <Row label="Matches main">
           {/* No client-side source for main's HEAD sha — verify drift via CI / deploy pipeline. */}
@@ -1055,7 +1055,7 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
             Launch Claude Code on my machine
           </button>
           <GhostButton onClick={() => copy("copy")}>Copy launch command</GhostButton>
-          <span className="self-center font-mono text-[11.5px] text-slate-500">{LAUNCH_COMMAND}</span>
+          <span className="self-center font-mono text-xs text-slate-500">{LAUNCH_COMMAND}</span>
           {copied ? <span className="self-center text-[11px] text-[#065f46]">Copied — paste it in your terminal (nothing runs here).</span> : null}
         </div>
 
@@ -1107,7 +1107,7 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
           below remains live.
         </p>
 
-        <div className="mt-3.5 overflow-auto rounded-[10px] bg-[#0f1729] px-4 py-3.5 font-mono text-[11.5px] leading-[1.7] text-[#cbd5e1]">
+        <div className="mt-3.5 overflow-auto rounded-[10px] bg-[#0f1729] px-4 py-3.5 font-mono text-xs leading-[1.7] text-[#cbd5e1]">
           <div><span className="text-slate-500"># read-only mirror of the coder lane — no execution happens in this app</span></div>
           <div>
             <span className="text-[#7dd3fc]">deploy</span> backend <span className="text-[#86efac]">{health.data?.version ?? "—"}</span>{" "}
@@ -1183,7 +1183,7 @@ export function SystemModulePage() {
         {tab === "claude-coder" ? <ClaudeCoderTab data={data} qboAvailable={qboAvailable} /> : null}
       </div>
 
-      <div className="rounded-[10px] border border-gray-200 bg-[#eef2f7] px-3.5 py-3 text-[11.5px] text-slate-600">
+      <div className="rounded-[10px] border border-gray-200 bg-[#eef2f7] px-3.5 py-3 text-xs text-slate-600">
         SYSTEM is Owner-only and is the single home for {qboAvailable ? "QuickBooks Reconciliation, QuickBooks Sync, Program Tracker, and Software/Build" : "Program Tracker and Software/Build"}. {qboAvailable ? "QuickBooks Reconciliation (TMS ↔ QBO tie-out) is deliberately separate from bank reconciliation, which stays in Banking — the two are never combined in one table. " : ""}The Claude Coder area is a launcher plus a read-only activity panel — no command execution occurs inside the production app (auditor/DOT-safe).
       </div>
     </div>

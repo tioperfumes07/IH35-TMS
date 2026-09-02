@@ -132,7 +132,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
       {/* Picker + date controls */}
       <div className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white px-3 py-3">
         <div className="min-w-[260px] flex-1" data-testid="hos-viewer-driver-picker">
-          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">Driver</label>
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500">Driver</label>
           {/* Picker law: EntityPicker kind=driver — not Combobox over listDrivers page. */}
           <EntityPicker
             kind="driver"
@@ -146,7 +146,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
           />
         </div>
         <div>
-          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">Date</label>
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500">Date</label>
           <DatePicker
             value={selectedDate}
             max={today}
@@ -161,10 +161,10 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
               key={d.date}
               type="button"
               onClick={() => setSelectedDate(d.date)}
-              className={`rounded-sm border px-2 py-1 text-center text-[10px] leading-tight ${selectedDate === d.date ? "border-slate-800 font-bold text-slate-900 shadow-[inset_0_-2px_0_#1f2a44]" : "border-slate-200 text-slate-500"}`}
+              className={`rounded-sm border px-2 py-1 text-center text-xs leading-tight ${selectedDate === d.date ? "border-slate-800 font-bold text-slate-900 shadow-[inset_0_-2px_0_#1f2a44]" : "border-slate-200 text-slate-500"}`}
             >
               {d.mon} {d.day}
-              <span className="block text-[8px] text-slate-400">{d.weekday}</span>
+              <span className="block text-xs text-slate-400">{d.weekday}</span>
             </button>
           ))}
         </div>
@@ -209,13 +209,13 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
                 { label: "Cycle (70h) left", v: daily.clocks?.cycle_remaining_min },
               ].map((k) => (
                 <div key={k.label} className="flex h-[34px] min-w-[130px] flex-1 items-center justify-between rounded-sm border border-slate-200 bg-white px-2.5">
-                  <span className="text-[9px] uppercase tracking-wider text-slate-500">{k.label}</span>
-                  <span className="text-[15px] font-semibold tabular-nums text-slate-900">{hmm(k.v)}</span>
+                  <span className="text-[11px] uppercase tracking-wider text-slate-500">{k.label}</span>
+                  <span className="text-xs font-semibold tabular-nums text-slate-900">{hmm(k.v)}</span>
                 </div>
               ))}
               {verdict ? (
                 <div className="flex h-[34px] min-w-[110px] items-center justify-center rounded-sm border border-slate-200 bg-white px-3">
-                  <span className={`text-[13px] font-bold ${verdict.cls}`}>{verdict.label}</span>
+                  <span className={`text-xs font-bold ${verdict.cls}`}>{verdict.label}</span>
                 </div>
               ) : null}
             </div>
@@ -236,16 +236,16 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
             <div className="flex flex-wrap gap-2">
               {TOTAL_ORDER.map((st) => (
                 <div key={st} className="flex h-[28px] min-w-[120px] flex-1 items-center justify-between rounded-sm border border-slate-200 bg-white px-2.5">
-                  <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider text-slate-500">
+                  <span className="inline-flex items-center gap-1 text-[11px] uppercase tracking-wider text-slate-500">
                     <span className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: DUTY_COLOR[st] }} />
                     {DUTY_LABEL[st]}
                   </span>
-                  <span className="text-[13px] font-semibold tabular-nums text-slate-900">{hmm(daily.per_status_minutes?.[st] ?? 0)}</span>
+                  <span className="text-xs font-semibold tabular-nums text-slate-900">{hmm(daily.per_status_minutes?.[st] ?? 0)}</span>
                 </div>
               ))}
             </div>
 
-            <p className="text-[10px] text-slate-400">
+            <p className="text-xs text-slate-400">
               Timeline + totals are reconstructed from the ELD duty-status events (recompute). The remaining clocks above are the
               FMCSA-rule numbers and flip to Samsara's certified computed clocks once the verbatim reader (PR&nbsp;C2) ships. The full
               15-column FMCSA daily-log grid is HOS Tracker Block&nbsp;05.
