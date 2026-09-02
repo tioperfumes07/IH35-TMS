@@ -698,3 +698,29 @@ should re-verify before either building the 268-file fix on the original premise
 row. Closed the modal via Escape (footer showed "Esc close"), zero writes, zero load booked.
 
 Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 | verify-live N1 · FIXED (real load, blocker cleared) · 2026-09-02T07:40Z
+
+The USMCA-has-zero-loads blocker is gone: while walking boards per the auto-mode instruction,
+Kanban showed a real card — **"13508 · Unassigned · Indianapolis -> ..."** in the "Booked
+unassigned" column. Confirmed on Neon (lucia bypass): `mdata.loads` row
+`926f4142-3fe4-4aa5-b896-daa0ca6474c4`, `load_number=13508`, `operating_company_id` = USMCA,
+`status='draft'`, `created_at` ~1min before I looked — the owner (or whoever's driving the USMCA
+context) booked a real load while I was mid-walk.
+
+**Opened Load 13508's detail drawer (no click into Add expense, no submission):** the header shows
+both **"Add expense"** (a link) and **"Record expense"** (a button) next to Close, exactly as N1's
+DoD claimed. Read the link's real `href` via DOM inspection rather than clicking through:
+`/accounting/expenses/new` with `load_id=` matching this load's real UUID
+(`926f4142-3fe4-4aa5-b896-daa0ca6474c4`) and `load_number=13508` both present and correct
+(87-char href, path + both params independently confirmed). Closed via the drawer's "Close"
+button — did NOT click "Cancel Load", did not touch "Add expense" or "Record expense".
+
+**N1 (#19601) is now FIXED, confirmed live with a real load, not just deploy+code proof.** This
+also closes out the long-open N1-blocked / no-company-switcher thread from earlier today (#19607,
+#19642) — turned out the fix was a real USMCA load appearing, not a switcher.
+
+Continuing the boards/trip-pairing/planners walk per the auto-mode instruction; posting that
+separately.
