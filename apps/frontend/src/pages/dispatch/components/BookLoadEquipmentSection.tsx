@@ -467,12 +467,12 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
         </summary>
         <div className="space-y-2 border-t border-gray-200 p-2">
           <div>
-            <div className="mb-1 text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">Equipment</div>
+            <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-600">Equipment</div>
             <div className="flex flex-wrap gap-1.5">
               {toggles.map((toggle) => (
                 <label key={toggle.field} className="cursor-pointer">
                   <input type="checkbox" {...register(toggle.field)} className="peer sr-only" />
-                  <span className="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.3px] text-gray-600 ring-1 ring-gray-300 peer-checked:bg-[#1f2a44] peer-checked:text-white peer-checked:ring-[#1f2a44]">
+                  <span className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold tracking-[0.3px] text-gray-600 ring-1 ring-gray-300 peer-checked:bg-[#1f2a44] peer-checked:text-white peer-checked:ring-[#1f2a44]">
                     {toggle.label}
                   </span>
                 </label>
