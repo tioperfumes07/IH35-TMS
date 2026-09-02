@@ -1,15 +1,13 @@
-# LEAD CENSUS — 2026-09-01 23:05 CT
+# LEAD CENSUS — GO-20 · 2026-09-02
 
-- **Owner decisions: ALL SEVEN CLOSED.** Artifacts: `docs/lockdown/DECISIONS-AND-THIRTEEN.md` + `.html`
-- **Capitalize: $7,000 LOCKED. NEVER $7,500.**
-- Jorge begins testing: YES. Seats NEVER POST Book Load.
+Cursor **SUPERVISE ONLY** · CC/Codex/Cascade/Devin build
 
-| Seat | NOW | Idle? | Self-ACK? |
-|------|-----|-------|-----------|
-| CC-1 | 02 escrow VOID → 4210-4240 parent_id → capitalize wire | FORCE | no |
-| CC-2 | Verify escrow + money after CC-1 | FORCE | no |
-| CC-3 | 425C table fix + log-on-skip | FORCE | no |
-| Codex | Company settlement 5753 grain | FORCE | no |
-| Cascade | Unique FINDING only | FORCE | no |
-| Devin-A | Chrome CANCEL | FORCE | no |
-| Cursor | Owner decisions packet shipped | active | this census |
+| Seat | NOW | Idle? |
+|------|-----|-------|
+| CC-1 | 17→C→A→20 | FORCE |
+| CC-2 | 18 N-of-10 · verify-live | FORCE |
+| CC-3 | 19→F/G screen→B predictive | FORCE |
+| Codex | D cargo · H late-arrival · CI drain | FORCE |
+| Cascade | unique FINDING · 12+13 HOLD | FORCE |
+| Devin-A | Book Load Cancel | FORCE |
+| Cursor | supervise bus PR | active |

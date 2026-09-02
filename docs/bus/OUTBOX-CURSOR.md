@@ -1,3 +1,3 @@
-# OUTBOX-CURSOR · 2026-09-01 23:05 CT
+# OUTBOX-CURSOR · GO-20 · 2026-09-02
 
-CURSOR | Owner 7 decisions CLOSED · DECISIONS-AND-THIRTEEN in lockdown · capitalize $7000 NEVER 7500 · CC-1 serial 02→parent_id→capitalize wire · CC-3 425C one-liner · Codex 5753 grain · seats NEVER POST | GO
+CURSOR | GO-20 seven-seat FORCE shipped · Cursor SUPERVISE ONLY · 20→CC-1 · F/G screen→CC-3 · GO-20 txt+html in lockdown · CC/Codex build · NEVER POST Book Load | GO

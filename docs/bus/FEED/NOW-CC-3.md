@@ -1,3 +1,3 @@
-# FEED NOW — CC-3 · 2026-09-01 23:05 CT
+# FEED NOW — CC-3 · GO-20
 
-Check ZIP Option 1 #19419 from load_stops.postal_code. City-alias #19414 if missing. GO-16 autofill High only — Check ZIP empty. Never #19305. NEVER POST Book Load. GO.
+CC-3: **19** parent → **F/G screen** (source-status) → **B** predictive uuid. No duplicate tables. GO.

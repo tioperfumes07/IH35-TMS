@@ -1,3 +1,3 @@
-# FEED NOW — DEVIN-A · 2026-09-01 23:05 CT
+# FEED NOW — DEVIN-A · GO-20
 
-Chrome Laredo→Denton miles · Chicago Check ZIP empty · CANCEL. NEVER POST. Idle → unique FINDING to GUARD-WORKORDERS. GO.
+Devin-A: Book Load Cancel only · unique FINDING walk · optional 425C screenshot. NEVER POST. GO.

@@ -1,0 +1,837 @@
+GO-20 — BUILD THE EIGHT HALF-BUILT FEATURES, FULLY
+Owner: Jorge Pablo Munoz · September 2, 2026 · USMCA only
+Checked against commit fcc5d40d6 and the live production database before writing.
+
+OWNER RULING, September 2, 2026:
+  BUILD FULLY  — 1 bank drift, 2 predictive maintenance, 3 accident liabilities,
+                 4 cargo sensor incidents, 6 workers compensation claims,
+                 9 work order parts, 10 work order labor rates,
+                 11 driver late arrival rate.
+  BLOCKED      — 12 QuickBooks health check, 13 bank feed health check.
+                 Do not build. Remove the archived endpoint. Both are already
+                 served correctly elsewhere.
+  DEFERRED     — 5 cooling customers, 8 recommended fuel stops. Revisit at launch.
+                 Do not start. Do not leave a dead branch behind; each must either
+                 report itself unavailable or be removed from its screen.
+
+
+===============================================================================
+READ THIS BEFORE YOU WRITE ANY SQL
+===============================================================================
+
+TWO OF THE EIGHT MUST NOT GET A NEW TABLE.
+
+Slices 9 and 10 look like missing tables and are not. The data already exists in
+canonical tables and the code already falls back to them correctly. Creating
+inventory.parts would add a schema to hold one table that duplicates
+maintenance.parts_inventory, and creating maintenance.labor_rates would duplicate
+catalogs.labor_rates, which is live and already mounted as a generic catalog.
+
+That is exactly the schema fragmentation the linkage law forbids. The rule is
+repoint the reader, never create a parallel home. Slices 9 and 10 are deletions
+and a screen fix, not migrations.
+
+THE OTHER SIX ALL HAVE REAL SOURCE DATA ALREADY IN PRODUCTION.
+Nothing below is invented. Every source table named was read this morning.
+
+  Bank drift          <- banking.reconciliation_sessions has variance_cents,
+                         statement_balance_cents, book_balance_cents,
+                         adjusted_bank_balance_cents, adjusted_book_balance_cents
+  Predictive alerts   <- maintenance.brake_projections and
+                         maintenance.tire_projections already carry
+                         projected_replacement_date and wear rate per day
+  Accident liability  <- safety.accidents and safety.accident_cost_lines exist,
+                         and insurance.claim ALREADY HAS A liability_id COLUMN
+                         pointing at the table nobody ever created
+  Cargo incidents     <- dispatch.cargo_sensor_readings already carries
+                         out_of_range, temp_celsius, humidity_pct, door_status
+  Workers comp        <- safety.incidents already carries incident_type and
+                         auto_created_claim_id, and insurance.claim exists
+  Late arrivals       <- dispatch.stop_arrivals and mdata.load_stops already
+                         carry appointment_start_at, appointment_end_at and
+                         actual_arrival_at
+
+FOREIGN KEY TARGETS VERIFIED. Every table referenced below was read from the live
+production database on September 2, 2026 and every one carries id as its primary
+key: org.companies, identity.users, mdata.drivers, mdata.units, mdata.loads,
+mdata.customers, mdata.vendors, mdata.equipment, catalogs.accounts, docs.files,
+accounting.journal_entries, maintenance.work_orders, banking.bank_accounts,
+banking.reconciliation_sessions, driver_finance.driver_settlement_deductions,
+safety.accidents, safety.incidents, insurance.claim, insurance.policy,
+legal.matters. None of this DDL is written from memory.
+
+PRIMARY KEY COLUMN NAMES ARE NOT UNIFORM. Most tables key on id. These three key on
+uuid, and a foreign key to them must say so: dispatch.cargo_sensor_readings(uuid),
+maintenance.brake_projections(uuid), maintenance.tire_projections(uuid). Getting
+this wrong is a migration that fails on apply, which costs a lane slot.
+
+NOTE ON mdata.units. It has no operating_company_id column. Scope unit queries
+through the row that carries the company, never by assuming the unit does.
+
+LINKAGE LAW. Every new table below declares its links in both directions and
+carries operating_company_id with FORCED row level security. A block with no
+linkage declaration is not done.
+
+CANONICAL WRITE TARGETS. Write driver_finance.* not payroll.* or settlement.*.
+Write banking.* not bank.*. Write maintenance.* not maint.*. Write mdata.vendors
+not mdata.qbo_vendors.
+
+MIGRATION LANES. CC-1 hours 00 to 11 UTC. Cursor hours 12 to 23 UTC. One author
+per migration. Idempotent CREATE only. Never DROP.
+
+NOBODY CREATES MONEY RECORDS IN USMCA PRODUCTION, INCLUDING FOR PROOF.
+
+
+===============================================================================
+SLICE A — BANK RECONCILIATION DRIFT ALERTS                       SEAT: CC-3
+===============================================================================
+Feature 1. Blocks the highest-value card on the owner home page after 425C.
+
+WHY IT MATTERS
+  Drift means the bank says one number and the books say another. Today nothing
+  watches for it and nothing tells the owner. A carrier that finds a drift three
+  months later cannot tell which of ninety days of transactions caused it.
+
+WHAT EXISTS
+  banking.reconciliation_sessions already computes and stores the variance:
+    statement_balance_cents, book_balance_cents, variance_cents,
+    adjusted_bank_balance_cents, adjusted_book_balance_cents, status,
+    period_start, period_end, bank_account_id, finalized_at, voided_at
+  banking.bank_accounts carries current_balance_cents, sync_status, last_synced_at.
+  So the drift is already being measured. Nothing records it as an alert, and
+  nothing watches balances between reconciliations.
+
+DATA
+  -- migration: create banking.reconciliation_drift_alerts
+  CREATE TABLE IF NOT EXISTS banking.reconciliation_drift_alerts (
+    id                        uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    operating_company_id      uuid NOT NULL REFERENCES org.companies(id),
+    bank_account_id           uuid NOT NULL REFERENCES banking.bank_accounts(id),
+    reconciliation_session_id uuid NULL REFERENCES banking.reconciliation_sessions(id),
+    detected_at               timestamptz NOT NULL DEFAULT now(),
+    as_of_date                date NOT NULL,
+    drift_kind                text NOT NULL,      -- 'session_variance' | 'live_balance' | 'stale_feed'
+    bank_balance_cents        bigint NOT NULL,
+    book_balance_cents        bigint NOT NULL,
+    drift_cents               bigint NOT NULL,
+    tolerance_cents           bigint NOT NULL,
+    severity                  text NOT NULL,      -- 'warning' | 'critical'
+    resolved_at               timestamptz NULL,
+    resolved_by_user_id       uuid NULL REFERENCES identity.users(id),
+    resolution_note           text NULL,
+    resolving_journal_entry_id uuid NULL REFERENCES accounting.journal_entries(id),
+    voided_at                 timestamptz NULL,
+    voided_by_user_id         uuid NULL REFERENCES identity.users(id),
+    void_reason               text NULL,
+    is_sample_data            boolean NOT NULL DEFAULT false,
+    created_at                timestamptz NOT NULL DEFAULT now(),
+    updated_at                timestamptz NOT NULL DEFAULT now()
+  );
+  -- one open alert per account per kind
+  CREATE UNIQUE INDEX IF NOT EXISTS uq_drift_open_per_account_kind
+    ON banking.reconciliation_drift_alerts (operating_company_id, bank_account_id, drift_kind)
+    WHERE resolved_at IS NULL AND voided_at IS NULL;
+  CREATE INDEX IF NOT EXISTS ix_drift_company_open
+    ON banking.reconciliation_drift_alerts (operating_company_id, detected_at DESC)
+    WHERE resolved_at IS NULL AND voided_at IS NULL;
+  -- FORCED RLS + grants: apply the 0065 pattern verbatim.
+
+  Tolerance lives in a setting, not a constant. Default 100 cents. Owner editable
+  per bank account. Do not hard code it.
+
+LINKAGE DECLARATION
+  Links out to  : org.companies, banking.bank_accounts,
+                  banking.reconciliation_sessions, identity.users,
+                  accounting.journal_entries
+  Linked in from: the owner attention panel, the banking board, the audit trail
+  Hub coverage  : org.companies (company), identity.users (who resolved),
+                  accounting.journal_entries (the correcting entry, when one is made)
+  Financial     : a drift is not a posting. Resolving one MAY create a journal
+                  entry; the alert records which one. It never posts by itself.
+
+BACKEND
+  A detector that runs after every reconciliation finalize and once nightly:
+    session_variance — any finalized session where abs(variance_cents) > tolerance
+    live_balance     — bank_accounts.current_balance_cents vs the ledger balance
+                       for its ledger_account_id, computed from
+                       accounting.journal_entry_postings, outside tolerance
+    stale_feed       — last_synced_at older than 24 hours on an active account
+  It opens an alert if none is open for that account and kind, and closes an
+  alert automatically when the condition clears, recording who or what closed it.
+  It NEVER posts a journal entry.
+
+INTERFACE
+  GET  /api/v1/banking/drift-alerts          list, filterable by resolved
+  POST /api/v1/banking/drift-alerts/:id/resolve   requires a note
+
+SCREEN
+  Banking gains a Drift panel at the top: account, as of date, bank balance,
+  book balance, the difference, and how long it has been open. Resolving requires
+  a written reason. The owner attention card links here.
+
+GUARD
+  A test that finalizes a session with a variance above tolerance and asserts one
+  alert opens; brings it back inside tolerance and asserts it closes with a reason.
+  A test asserting the detector never writes to accounting.journal_entries.
+
+PROOF
+  One drift opened and closed in a browser, screenshotted, with the resolution note.
+
+DONE MEANS
+  The owner home page shows a real drift card, and every drift ever opened has a
+  written resolution.
+
+
+===============================================================================
+SLICE B — PREDICTIVE MAINTENANCE ALERTS                          SEAT: CC-3
+===============================================================================
+Feature 2.
+
+WHY IT MATTERS
+  Brake and tire projections are already being computed and stored. Nobody is
+  ever told. A brake projected to hit its threshold in five days is a truck that
+  goes out of service on the road instead of in the shop.
+
+WHAT EXISTS
+  maintenance.brake_projections: unit_uuid, brake_position, threshold_mm,
+    current_thickness_mm, projected_replacement_date, wear_rate_mm_per_day, computed_at
+  maintenance.tire_projections: unit_uuid, tire_position, threshold_32nds,
+    current_depth_32nds, projected_replacement_date, wear_rate_32nds_per_day, computed_at
+  Both live. The projection math is done. Only the alert layer is missing.
+
+DATA
+  CREATE TABLE IF NOT EXISTS maintenance.predictive_alerts (
+    id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    operating_company_id  uuid NOT NULL REFERENCES org.companies(id),
+    unit_id               uuid NOT NULL REFERENCES mdata.units(id),
+    equipment_id          uuid NULL REFERENCES mdata.equipment(id),
+    alert_type            text NOT NULL,                 -- 'brake_wear' | 'tire_tread'
+    position_code         text NOT NULL,                 -- brake_position or tire_position
+    source_projection_id  uuid NOT NULL,                 -- brake_projections.uuid or tire_projections.uuid
+                                                       -- NOT a foreign key: it points at one of two
+                                                       -- tables depending on alert_type. Enforce with
+                                                       -- a check that the row exists in the matching
+                                                       -- table, in the job, not in the schema.
+    current_measure       numeric NOT NULL,
+    threshold_measure     numeric NOT NULL,
+    measure_unit          text NOT NULL,                 -- 'mm' | '32nds'
+    projected_failure_date date NOT NULL,
+    days_remaining        integer NOT NULL,
+    severity              text NOT NULL,                 -- 'warning' | 'critical'
+    work_order_id         uuid NULL REFERENCES maintenance.work_orders(id),
+    resolved_at           timestamptz NULL,
+    resolved_by_user_id   uuid NULL REFERENCES identity.users(id),
+    resolution_note       text NULL,
+    voided_at             timestamptz NULL,
+    voided_by_user_id     uuid NULL REFERENCES identity.users(id),
+    void_reason           text NULL,
+    is_sample_data        boolean NOT NULL DEFAULT false,
+    created_at            timestamptz NOT NULL DEFAULT now(),
+    updated_at            timestamptz NOT NULL DEFAULT now()
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS uq_predictive_open_per_position
+    ON maintenance.predictive_alerts (operating_company_id, unit_id, alert_type, position_code)
+    WHERE resolved_at IS NULL AND voided_at IS NULL;
+  CREATE INDEX IF NOT EXISTS ix_predictive_company_due
+    ON maintenance.predictive_alerts (operating_company_id, projected_failure_date)
+    WHERE resolved_at IS NULL AND voided_at IS NULL;
+  -- FORCED RLS + grants: 0065 pattern.
+
+LINKAGE DECLARATION
+  Links out to  : org.companies, mdata.units, mdata.equipment,
+                  maintenance.work_orders, identity.users,
+                  and the source projection row
+  Linked in from: the owner attention panel, the maintenance board, the unit profile
+  Hub coverage  : org.companies, mdata.units, mdata.equipment,
+                  maintenance.work_orders, identity.users
+  Operational   : an alert that becomes a repair carries the work order id, so the
+                  unit history shows prediction then repair as one chain.
+  Financial     : none directly. The work order carries the money.
+
+BACKEND
+  A nightly job reads both projection tables, opens an alert where
+  projected_replacement_date is within the alert horizon, and closes an alert when
+  a newer projection clears it or a work order closes against that position.
+  Horizon is a setting. Default: warning at 14 days, critical at 7.
+  Opening a work order from an alert stamps work_order_id on the alert.
+
+INTERFACE
+  GET  /api/v1/maintenance/predictive-alerts
+  POST /api/v1/maintenance/predictive-alerts/:id/create-work-order
+  POST /api/v1/maintenance/predictive-alerts/:id/resolve
+
+SCREEN
+  Maintenance gains an At Risk panel: unit, position, current measure against
+  threshold, projected date, days remaining, and a Create work order button.
+  The unit profile shows its open alerts.
+
+GUARD
+  A test seeding a brake projection inside the horizon and asserting exactly one
+  alert; clearing the measurement and asserting the alert closes.
+  A test asserting alert_type is only brake_wear or tire_tread until a new type
+  is added deliberately.
+
+PROOF
+  One alert raised from a real projection, a work order created from it, and the
+  alert closing when the work order closes. Screenshotted.
+
+DONE MEANS
+  No brake or tire reaches its threshold without somebody having been told first.
+
+
+===============================================================================
+SLICE C — ACCIDENT LIABILITIES                                   SEAT: CURSOR
+===============================================================================
+Feature 3. The highest-stakes of the eight. This one touches money, insurance and
+a driver's pay, so it gets the strictest rules.
+
+WHY IT MATTERS
+  Today an accident is filed and nothing is ever created to decide who pays for it.
+  safety.routes.ts line 553 hard returns a null liability id. There is no accident
+  to liability to chargeback path at all. That means damage costs land nowhere,
+  the driver is never charged or cleared, and the insurance recovery has no record
+  to attach to.
+
+WHAT EXISTS — AND THE PROOF THIS WAS ALWAYS THE DESIGN
+  safety.accidents: driver_id, unit_id, accident_type, event_datetime,
+    dot_reportable, injury_count, fatality_count, police_report_number, narrative
+  safety.accident_cost_lines: accident_id, section, description, amount_cents
+  insurance.claim ALREADY CARRIES A liability_id COLUMN, plus driver_responsible,
+    deductible_cents, recovery_rail, repair_books_treatment, deduction_id.
+  That FK column is pointing at a table that was never created. The chain was
+  designed and only this link is missing.
+
+DATA
+  CREATE TABLE IF NOT EXISTS safety.accident_liabilities (
+    id                      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    operating_company_id    uuid NOT NULL REFERENCES org.companies(id),
+    accident_id             uuid NOT NULL REFERENCES safety.accidents(id),
+    incident_id             uuid NULL REFERENCES safety.incidents(id),
+    driver_id               uuid NULL REFERENCES mdata.drivers(id),
+    unit_id                 uuid NULL REFERENCES mdata.units(id),
+    trailer_id              uuid NULL REFERENCES mdata.equipment(id),
+    load_id                 uuid NULL REFERENCES mdata.loads(id),
+    customer_id             uuid NULL REFERENCES mdata.customers(id),
+    vendor_id               uuid NULL REFERENCES mdata.vendors(id),
+    insurance_claim_id      uuid NULL REFERENCES insurance.claim(id),
+    work_order_id           uuid NULL REFERENCES maintenance.work_orders(id),
+    legal_matter_id         uuid NULL REFERENCES legal.matters(id),
+    assessed_amount_cents   bigint NOT NULL,
+    insurance_recovery_cents bigint NOT NULL DEFAULT 0,
+    deductible_cents        bigint NOT NULL DEFAULT 0,
+    net_exposure_cents      bigint NOT NULL,
+    owner_decision          text NULL,   -- 'driver_chargeback' | 'company_absorbs' | 'insurance_only' | 'split'
+    owner_decision_at       timestamptz NULL,
+    owner_decision_by_user_id uuid NULL REFERENCES identity.users(id),
+    owner_decision_note     text NULL,
+    driver_charge_cents     bigint NOT NULL DEFAULT 0,
+    company_absorb_cents    bigint NOT NULL DEFAULT 0,
+    deduction_id            uuid NULL REFERENCES driver_finance.driver_settlement_deductions(id),
+    journal_entry_id        uuid NULL REFERENCES accounting.journal_entries(id),
+    expense_account_id      uuid NULL REFERENCES catalogs.accounts(id),
+    status                  text NOT NULL DEFAULT 'open',  -- open|decided|posted|closed
+    voided_at               timestamptz NULL,
+    voided_by_user_id       uuid NULL REFERENCES identity.users(id),
+    void_reason             text NULL,
+    is_sample_data          boolean NOT NULL DEFAULT false,
+    created_at              timestamptz NOT NULL DEFAULT now(),
+    created_by_user_id      uuid NULL REFERENCES identity.users(id),
+    updated_at              timestamptz NOT NULL DEFAULT now()
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS uq_liability_per_accident
+    ON safety.accident_liabilities (operating_company_id, accident_id)
+    WHERE voided_at IS NULL;
+  CREATE INDEX IF NOT EXISTS ix_liability_awaiting_owner
+    ON safety.accident_liabilities (operating_company_id, created_at DESC)
+    WHERE owner_decision IS NULL AND voided_at IS NULL;
+  -- FORCED RLS + grants: 0065 pattern.
+  -- Then, and only then, wire insurance.claim.liability_id to this table.
+
+LINKAGE DECLARATION
+  Links out to  : org.companies, safety.accidents, safety.incidents, mdata.drivers,
+                  mdata.units, mdata.loads, mdata.customers, mdata.vendors,
+                  maintenance.work_orders, insurance.claim, legal.matters,
+                  driver_finance.driver_settlement_deductions,
+                  accounting.journal_entries, catalogs.accounts, identity.users
+  Linked in from: insurance.claim.liability_id, the owner attention panel,
+                  the driver settlement, the safety board, the unit history
+  Hub coverage  : every hub table except docs.files and mdata.equipment, which
+                  attach through safety.accidents evidence
+  Operational   : safety, insurance, legal, maintenance, dispatch, driver, unit,
+                  trailer and load all reachable in one hop.
+  Financial     : the liability is the record that decides who pays. It carries
+                  the deduction it created and the journal entry it posted.
+
+BACKEND — READ THIS PART TWICE
+  Filing an accident creates a liability in status open with a null owner_decision,
+  assessed from safety.accident_cost_lines. It posts NOTHING.
+  The owner decides. Only the owner. The decision is what moves money:
+    driver_chargeback -> creates a PENDING deduction in
+                         driver_finance.driver_settlement_deductions, load_id
+                         carried through, status held until approved. It is never
+                         automatic and never silent.
+    company_absorbs   -> posts the expense to the account named on the liability
+    insurance_only    -> no driver charge, deductible posts as company expense
+    split             -> both, and driver_charge_cents plus company_absorb_cents
+                         must equal net_exposure_cents exactly
+  net_exposure_cents = assessed_amount_cents - insurance_recovery_cents.
+  A liability with no owner_decision NEVER posts and NEVER creates a deduction.
+
+INTERFACE
+  GET  /api/v1/safety/accident-liabilities
+  POST /api/v1/safety/accident-liabilities/:id/decide   owner role only
+
+SCREEN
+  Safety gains an Awaiting your decision panel. Each row: accident, driver, unit,
+  load, assessed amount, insurance recovery, net exposure, and the four choices
+  with a required note. The driver settlement shows the resulting deduction as
+  pending until approved. The owner attention card links here.
+
+GUARD
+  A test that files an accident and asserts a liability with a null decision and
+  zero postings.
+  A test that a decision of split refuses unless the two amounts equal the net.
+  A test that a non owner role cannot call decide.
+  A test that a driver deduction from a liability is created pending, never applied.
+  A test that voiding a liability voids its deduction and reverses its entry,
+  and that neither is ever hard deleted.
+
+PROOF
+  One accident filed, the liability appearing with no decision, the owner deciding
+  driver chargeback, and the pending deduction appearing on that driver's
+  settlement. Every step screenshotted.
+
+DONE MEANS
+  No accident cost lands nowhere, and no driver is ever charged without the owner
+  deciding it in writing.
+
+
+===============================================================================
+SLICE D — CARGO SENSOR INCIDENTS                                 SEAT: CC-2
+===============================================================================
+Feature 4.
+
+RECOMMENDATION ON WHERE IT LIVES — one word from the owner if you disagree.
+  The aggregator queries telematics.cargo_sensor_incidents. The readings it must
+  group live in dispatch.cargo_sensor_readings. Put the incidents beside their own
+  readings, in dispatch, and repoint the aggregator. Splitting a reading from its
+  incident across two schemas is the fragmentation the linkage law exists to stop.
+  If the owner prefers telematics, it is a one word change to the DDL and one line
+  in the aggregator.
+
+WHAT EXISTS
+  dispatch.cargo_sensor_readings: load_uuid, trailer_uuid, sensor_id, temp_celsius,
+    humidity_pct, door_status, reading_at, out_of_range
+  The out_of_range flag is already being written. Nothing groups the readings into
+  an incident and nothing tells anybody.
+
+DATA
+  CREATE TABLE IF NOT EXISTS dispatch.cargo_sensor_incidents (
+    id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    operating_company_id  uuid NOT NULL REFERENCES org.companies(id),
+    load_id               uuid NULL REFERENCES mdata.loads(id),
+    trailer_id            uuid NULL REFERENCES mdata.equipment(id),
+    unit_id               uuid NULL REFERENCES mdata.units(id),
+    driver_id             uuid NULL REFERENCES mdata.drivers(id),
+    customer_id           uuid NULL REFERENCES mdata.customers(id),
+    sensor_id             text NOT NULL,
+    breach_kind           text NOT NULL,   -- 'temperature' | 'humidity' | 'door'
+    started_at            timestamptz NOT NULL,
+    ended_at              timestamptz NULL,
+    duration_minutes      integer NULL,
+    reading_count         integer NOT NULL DEFAULT 1,
+    worst_value           numeric NULL,
+    threshold_low         numeric NULL,
+    threshold_high        numeric NULL,
+    severity              text NOT NULL,   -- 'warning' | 'critical'
+    first_reading_uuid    uuid NULL REFERENCES dispatch.cargo_sensor_readings(uuid),
+    last_reading_uuid     uuid NULL REFERENCES dispatch.cargo_sensor_readings(uuid),
+    customer_notified_at  timestamptz NULL,
+    claim_incident_id     uuid NULL REFERENCES safety.incidents(id),
+    resolved_at           timestamptz NULL,
+    resolved_by_user_id   uuid NULL REFERENCES identity.users(id),
+    resolution_note       text NULL,
+    voided_at             timestamptz NULL,
+    voided_by_user_id     uuid NULL REFERENCES identity.users(id),
+    void_reason           text NULL,
+    is_sample_data        boolean NOT NULL DEFAULT false,
+    created_at            timestamptz NOT NULL DEFAULT now(),
+    updated_at            timestamptz NOT NULL DEFAULT now()
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS uq_cargo_incident_open_per_sensor_kind
+    ON dispatch.cargo_sensor_incidents (operating_company_id, sensor_id, breach_kind)
+    WHERE ended_at IS NULL AND voided_at IS NULL;
+  CREATE INDEX IF NOT EXISTS ix_cargo_incident_open_critical
+    ON dispatch.cargo_sensor_incidents (operating_company_id, started_at DESC)
+    WHERE resolved_at IS NULL AND voided_at IS NULL;
+  -- FORCED RLS + grants: 0065 pattern.
+
+LINKAGE DECLARATION
+  Links out to  : org.companies, mdata.loads, mdata.customers, identity.users,
+                  safety.incidents, and the first and last reading rows
+  Linked in from: the owner attention panel, the load drawer cargo sensors tab,
+                  the customer record, a cargo claim if one is filed
+  Hub coverage  : org.companies, mdata.loads, mdata.customers, identity.users,
+                  mdata.units and mdata.drivers through the load
+  Operational   : dispatch, driver, unit, trailer, load, customer, and safety when
+                  it becomes a claim
+  Financial     : none directly. If it becomes a claim, safety.incidents carries
+                  the money through its existing recovery rail.
+
+BACKEND
+  A watcher that opens an incident on the first out_of_range reading for a sensor
+  and kind, extends it while readings stay out of range, and closes it when
+  readings return in range for a settling window. Thresholds come from the load or
+  the customer, never a constant. Severity from duration and how far out of range.
+
+INTERFACE
+  GET  /api/v1/dispatch/cargo-incidents
+  POST /api/v1/dispatch/cargo-incidents/:id/resolve
+  POST /api/v1/dispatch/cargo-incidents/:id/file-claim
+
+SCREEN
+  The load drawer Cargo Sensors tab shows incidents above the raw readings, with
+  the breach drawn on the timeline. Dispatch gets a live panel. The owner
+  attention card links here.
+
+GUARD
+  A test feeding a run of out of range readings and asserting one incident, not one
+  per reading.
+  A test asserting the incident closes only after the settling window.
+  A test asserting thresholds are read from the load or customer, never hard coded.
+
+PROOF
+  A run of readings producing exactly one incident on the load timeline, screenshotted.
+
+DONE MEANS
+  A temperature excursion is one incident on the load with a start, an end and a
+  worst value, ready to hand a customer.
+
+
+===============================================================================
+SLICE E — WORKERS COMPENSATION CLAIMS                            SEAT: CURSOR
+===============================================================================
+Feature 6. A driver files an injury today, gets a success message, and nothing is
+created. That is the worst failure of the thirteen.
+
+WHAT EXISTS
+  safety.incidents: incident_type, driver_id, unit_id, trailer_id, load_id,
+    incident_at, reported_at, description, photo_keys, evidence_uuids,
+    auto_created_claim_id, insurance_claim_id, work_order_id
+  insurance.claim: policy_id, driver_id, claim_number, status, amount_claimed_cents,
+    amount_paid_cents, adjuster_name, adjuster_email, deductible_cents
+  insurance.policy exists. The injury path was designed and the claim table
+  was never created.
+
+DATA
+  CREATE TABLE IF NOT EXISTS safety.workers_comp_claims (
+    id                      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    operating_company_id    uuid NOT NULL REFERENCES org.companies(id),
+    claim_number            text NULL,
+    display_id              text NULL,
+    incident_id             uuid NULL REFERENCES safety.incidents(id),
+    driver_id               uuid NOT NULL REFERENCES mdata.drivers(id),
+    unit_id                 uuid NULL REFERENCES mdata.units(id),
+    load_id                 uuid NULL REFERENCES mdata.loads(id),
+    policy_id               uuid NULL REFERENCES insurance.policy(id),
+    insurance_claim_id      uuid NULL REFERENCES insurance.claim(id),
+    legal_matter_id         uuid NULL REFERENCES legal.matters(id),
+    injury_date             date NOT NULL,
+    reported_date           date NOT NULL,
+    body_part               text NULL,
+    injury_description      text NULL,
+    treatment_facility      text NULL,
+    lost_time               boolean NOT NULL DEFAULT false,
+    return_to_work_date     date NULL,
+    days_away_count         integer NULL,
+    osha_recordable         boolean NOT NULL DEFAULT false,
+    osha_form_301_filed_at  timestamptz NULL,
+    status                  text NOT NULL DEFAULT 'open',  -- open|reported|accepted|denied|closed|resolved
+    amount_claimed_cents    bigint NOT NULL DEFAULT 0,
+    amount_paid_cents       bigint NOT NULL DEFAULT 0,
+    reserve_cents           bigint NOT NULL DEFAULT 0,
+    adjuster_name           text NULL,
+    adjuster_email          text NULL,
+    carrier_reported_at     timestamptz NULL,
+    closed_at               timestamptz NULL,
+    closed_by_user_id       uuid NULL REFERENCES identity.users(id),
+    voided_at               timestamptz NULL,
+    voided_by_user_id       uuid NULL REFERENCES identity.users(id),
+    void_reason             text NULL,
+    is_sample_data          boolean NOT NULL DEFAULT false,
+    created_at              timestamptz NOT NULL DEFAULT now(),
+    created_by_user_id      uuid NULL REFERENCES identity.users(id),
+    updated_at              timestamptz NOT NULL DEFAULT now()
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS uq_wc_claim_per_incident
+    ON safety.workers_comp_claims (operating_company_id, incident_id)
+    WHERE incident_id IS NOT NULL AND voided_at IS NULL;
+  CREATE UNIQUE INDEX IF NOT EXISTS uq_wc_claim_number
+    ON safety.workers_comp_claims (operating_company_id, claim_number)
+    WHERE claim_number IS NOT NULL AND voided_at IS NULL;
+  CREATE INDEX IF NOT EXISTS ix_wc_open
+    ON safety.workers_comp_claims (operating_company_id, injury_date DESC)
+    WHERE status NOT IN ('closed','denied','resolved') AND voided_at IS NULL;
+  -- FORCED RLS + grants: 0065 pattern.
+
+LINKAGE DECLARATION
+  Links out to  : org.companies, safety.incidents, mdata.drivers, mdata.units,
+                  mdata.loads, insurance.policy, insurance.claim, legal.matters,
+                  identity.users, docs.files through the incident evidence
+  Linked in from: safety.incidents.auto_created_claim_id, the safety home
+                  indicator, the driver profile, the insurance board
+  Hub coverage  : org.companies, identity.users, mdata.drivers, mdata.units,
+                  mdata.loads, docs.files
+  Operational   : safety, insurance, legal, driver, unit, load
+  Financial     : reserve and paid amounts are reported, not posted. Any actual
+                  payment posts through the existing insurance claim path.
+
+BACKEND
+  The injury branch in auto-workflow-trigger.ts stops skipping. When an incident
+  of type injury is filed, a claim is created and its id is returned in the
+  response. If the claim cannot be created, the incident submission FAILS LOUDLY.
+  A driver must never be told an injury was filed when nothing was recorded.
+  countOpenWorkersCompClaims stops returning zero when the table is missing; a
+  missing table returns unavailable, not zero.
+
+INTERFACE
+  GET  /api/v1/safety/workers-comp-claims
+  POST /api/v1/safety/workers-comp-claims
+  PATCH /api/v1/safety/workers-comp-claims/:id
+  The existing POST /api/v1/safety/incidents/full-report returns a real claim id.
+
+SCREEN
+  Safety Home indicator bar gains Open workers compensation claims beside the
+  existing inspection defects, hours violations and expiring certificates. It is
+  currently parsed by the frontend and rendered by nothing; render it.
+  Safety gains a Workers Compensation board. The driver profile shows the driver's
+  claims. The driver app confirmation shows the claim number it created.
+
+GUARD
+  A test filing an injury from the driver app path and asserting a claim exists
+  with a number, and that the response carries its id.
+  A test asserting an injury submission FAILS if the claim cannot be created.
+  A test asserting the open count returns unavailable, never zero, if the table
+  is absent.
+
+PROOF
+  An injury filed from the driver app, the claim appearing on the safety board and
+  in the indicator bar, with the claim number shown back to the driver.
+
+DONE MEANS
+  A driver who reports an injury is never told it was filed unless it was.
+
+
+===============================================================================
+SLICE F — WORK ORDER PARTS: DELETE THE PHANTOM, USE THE REAL TABLE   SEAT: CC-1
+===============================================================================
+Feature 9. THIS IS NOT A MIGRATION. Do not create inventory.parts.
+
+WHY NOT
+  maintenance.parts_inventory is live and already holds part_number,
+  part_description, category, on_hand_qty, location, reorder_threshold, vendor_id,
+  last_purchase_invoice_number, last_purchase_amount, last_purchase_date.
+  The code already falls back to it and already marks the response as a fallback.
+  Creating an inventory schema to hold one duplicate table is the fragmentation the
+  linkage law forbids. There is a stray migration for it under the Prisma folder
+  and not under db/migrations, which is why it was never applied. Leave it unapplied
+  and delete it so nobody applies it later by accident.
+
+DATA
+  None. Delete apps/backend/prisma/migrations/0250_create_inventory_parts_table.
+
+BACKEND
+  wo-cost-context.routes.ts: remove the inventory.parts branch entirely. Read
+  maintenance.parts_inventory directly. Keep the sources status latch, because it
+  is correct, and set status to available rather than fallback.
+
+INTERFACE
+  Unchanged. GET /api/v1/maintenance/wo-cost-context keeps returning sources.
+
+SCREEN — THIS IS THE ACTUAL FIX
+  TwoSectionLineEditor never reads sources.*.status. It must. When a source is
+  unavailable the picker says which catalog is missing instead of showing an empty
+  list that looks like zero parts. This is the same defect in slice G.
+
+GUARD
+  A guard that fails the build if any backend file references inventory.parts.
+  A test asserting the parts picker renders the unavailable notice when a source
+  reports unavailable.
+
+PROOF
+  The work order parts picker showing real parts from maintenance.parts_inventory,
+  and the same picker showing a named notice when a source is unavailable.
+
+DONE MEANS
+  The parts picker reads the canonical table and never shows empty when it means
+  missing.
+
+
+===============================================================================
+SLICE G — WORK ORDER LABOR RATES: SAME FIX                       SEAT: CC-1
+===============================================================================
+Feature 10. THIS IS NOT A MIGRATION. Do not create maintenance.labor_rates.
+
+WHY NOT
+  catalogs.labor_rates is live with rate_code, rate_name, rate_per_hour,
+  is_internal, is_active, and it is already mounted as a generic catalog at
+  generic-catalog.routes.ts line 715. The code already falls back to it correctly.
+  A second labor rate table would immediately disagree with the first.
+
+DATA
+  None.
+
+BACKEND
+  wo-cost-context.routes.ts: remove the maintenance.labor_rates branch. Read
+  catalogs.labor_rates directly. Keep the status latch, set it to available.
+
+SCREEN
+  Same fix as slice F. The labor rate picker reads the source status and says so.
+
+GUARD
+  A guard that fails the build if any backend file references maintenance.labor_rates
+  as a relation. Note the generic catalog registry uses that string as a CATALOG
+  NAME, not a table name; the guard must not trip on that line.
+
+PROOF
+  Labor rates on a work order line coming from catalogs.labor_rates.
+
+DONE MEANS
+  One labor rate table in the system, and the screen tells the truth about it.
+
+
+===============================================================================
+SLICE H — DRIVER LATE ARRIVAL RATE                               SEAT: CC-3
+===============================================================================
+Feature 11. The retention score is currently wrong and says nothing about it.
+
+WHY IT MATTERS
+  The retention risk score carries a weighted late arrival input. The table it
+  reads does not exist, the feature comes back null, the scorer skips nulls, and
+  the dashboard filters the factor out of the contributing factors list. So the
+  score shown is computed on fewer inputs than it claims and nothing says so.
+  A risk number quietly missing a weighted input is worse than no number.
+
+WHAT EXISTS
+  dispatch.stop_arrivals: stop_id, unit_id, driver_id, triggered_at, confirmed_at
+  mdata.load_stops: appointment_start_at, appointment_end_at, scheduled_arrival_at,
+    actual_arrival_at, time_window_type, stop_type, load_id
+  Everything needed to define late is already recorded.
+
+THE DEFINITION OF LATE — agree this before writing code
+  If the stop has an appointment window, late means actual_arrival_at is after
+  appointment_end_at.
+  If it has no window, late means actual_arrival_at is after scheduled_arrival_at.
+  If actual_arrival_at is null the stop is not counted at all, in either direction.
+  A stop with no schedule and no appointment is not counted.
+  Do not invent a grace period. If the owner wants one it is a setting.
+
+DATA
+  CREATE TABLE IF NOT EXISTS dispatch.late_arrival_aggregates (
+    id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    operating_company_id  uuid NOT NULL REFERENCES org.companies(id),
+    driver_id             uuid NOT NULL REFERENCES mdata.drivers(id),
+    bucket_date           date NOT NULL,
+    stops_measured        integer NOT NULL,
+    stops_late            integer NOT NULL,
+    late_pct              numeric NOT NULL,
+    avg_minutes_late      numeric NULL,
+    worst_minutes_late    integer NULL,
+    basis                 text NOT NULL,   -- 'appointment_window' | 'scheduled_arrival' | 'mixed'
+    computed_at           timestamptz NOT NULL DEFAULT now()
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS uq_late_arrival_driver_day
+    ON dispatch.late_arrival_aggregates (operating_company_id, driver_id, bucket_date);
+  CREATE INDEX IF NOT EXISTS ix_late_arrival_recent
+    ON dispatch.late_arrival_aggregates (operating_company_id, bucket_date DESC);
+  -- FORCED RLS + grants: 0065 pattern.
+
+LINKAGE DECLARATION
+  Links out to  : org.companies, mdata.drivers, and through the stop to
+                  mdata.load_stops, mdata.loads, mdata.units
+  Linked in from: the driver retention score, the driver profile, dispatch reporting
+  Hub coverage  : org.companies, mdata.drivers, mdata.loads, mdata.units
+  Operational   : dispatch, driver, unit, load
+  Financial     : none. This is an operating measure and must never touch pay.
+
+BACKEND
+  A nightly rollup writing one row per driver per day from stop_arrivals and
+  load_stops using the definition above. Idempotent: rerunning a day replaces it.
+  feature-extractor.ts stops returning null and reads the aggregate.
+  AND THE PART THAT MATTERS MOST: when any weighted feature is unavailable, the
+  score must say so. The scorer records which features were present, the API
+  returns them, and the dashboard shows the score with a note naming what is
+  missing. A score computed on nine of ten inputs must never be presented as ten.
+
+INTERFACE
+  The existing retention endpoints gain a features_present and features_missing list.
+
+SCREEN
+  The retention dashboard shows the late arrival factor. Any card whose score is
+  missing an input shows which input, in plain English, beside the number.
+
+GUARD
+  A test asserting a driver with two late stops out of ten gets 20 percent.
+  A test asserting a stop with a null arrival is excluded, not counted on time.
+  A test asserting a score missing any weighted feature reports it as missing.
+
+PROOF
+  One driver's retention card showing the late arrival factor with a real number,
+  and a second card showing a named missing input rather than hiding it.
+
+DONE MEANS
+  The retention score contains every input it claims, or says which one it does not.
+
+
+===============================================================================
+BLOCKED — DO NOT BUILD
+===============================================================================
+12 QuickBooks connection health check (qbo.connections)
+13 Bank feed health check (banking.plaid_items)
+
+  Both live in apps/backend/src/observability/health-deep.routes.ts, whose
+  registrar already throws, so neither is reachable. Both are already served
+  correctly elsewhere: health.routes.ts checks integrations.qbo_connections and
+  works, and the bank feed state lives on banking.bank_accounts.sync_status.
+
+  ACTION: delete health-deep.routes.ts and repoint the external uptime monitor in
+  scripts/uptime-monitor-config.mjs from /api/v1/health/deep to the live endpoint.
+  Do not leave a dead file. Do not build these.
+  SEAT: CASCADE. This pairs with build queue slice 13.
+
+===============================================================================
+DEFERRED UNTIL LAUNCH — DO NOT START
+===============================================================================
+5 Cooling customers (mdata.customer_health_scores)
+8 Recommended fuel stops (fuel.recommended_stops)
+
+  Neither may be left as a silent empty. Until they are built, each must report
+  itself unavailable the way the fuel planner already does, or be taken off its
+  screen. A deferred feature that looks like a working empty one is the defect
+  this whole exercise exists to remove.
+  SEAT: CC-2 does the unavailable reporting only. No tables. No features.
+
+===============================================================================
+THE RULE ALL EIGHT ARE MEASURED AGAINST
+===============================================================================
+The fuel planner already does this correctly and is the reference: it returns null
+rather than zero, prints on the screen that the values are unavailable and are not
+zero, returns a 503 on detail rather than an empty page, and labels its fallback as
+a fallback. Nobody looking at it can mistake missing for empty.
+
+Every one of the eight is held to that. No silent empty. No zero that means unknown.
+No screen that shows nothing without saying why.
+
+===============================================================================
+STANDING RULES
+===============================================================================
+  USMCA only. TRANSPORTATION and TRUCKING are frozen.
+  No seat creates money records in USMCA production, including for proof.
+  No write back to QuickBooks, ever.
+  Nobody closes the August period. Owner only.
+  Every void and cancellation is kept. Nothing is ever permanently deleted.
+  Migration lanes: CC-1 hours 00 to 11 UTC, Cursor hours 12 to 23 UTC. One author.
+  Only CC-2 writes the verified flag.
+  Every new table carries operating_company_id with FORCED row level security and
+  the 0065 grants pattern. A block with no linkage declaration is not done.
+  Plain English on every operator-visible surface.
