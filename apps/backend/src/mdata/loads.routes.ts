@@ -1877,6 +1877,13 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         // caller's operating company. mdata RLS is role-scoped, so a bare load-id lookup reaches any
         // entity's load — mirror the operating_company_id predicate the loads GET/PATCH already use.
         const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+        // TS2322 fix (2026-09-02 deploy-blocking build failure): a null scopedCompanyId made the
+        // WHERE operating_company_id = $2::uuid predicate below match nothing, so loadRes.rows.length
+        // === 0 was already the effective null guard at runtime — but that DB round-trip doesn't
+        // narrow scopedCompanyId's TYPE, so mintProformaInvoiceOnFirstPickup's non-null
+        // operatingCompanyId param failed to typecheck. Guard explicitly instead of relying on an
+        // implicit DB-round-trip correlation: fails fast (no doomed query) and narrows for real.
+        if (!scopedCompanyId) return null;
         const loadRes = await client.query(
           `SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [parsedParams.data.id, scopedCompanyId]
@@ -2001,6 +2008,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         // Entity scope (USMCA cross-entity leak fix): gate the whole stop mutation on the parent load
         // belonging to the caller's operating company (load_stops has no own operating_company_id).
         const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+        // TS2322 fix (2026-09-02 deploy-blocking build failure) — same shape as the POST stop-create
+        // handler above: explicit guard, not an implicit DB-round-trip correlation.
+        if (!scopedCompanyId) return null;
         const loadOwnRes = await client.query(
           `SELECT 1 FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [parsedParams.data.id, scopedCompanyId]
