@@ -1,2 +1,2 @@
-# FEED NOW — CODEX · 2026-09-01 18:17 CT
-FORCE NOW | STOP --watch | #19398 VOID · #19404 CLOSED | NOW=#19391 TS4104 AccountingSubNavWrapper NavItem[] | GO
+# FEED NOW — CODEX · 2026-09-01 21:19 CT
+FORCE NOW | STOP --watch | NOW=#19423 locked-guards-heavy then #19391 / DispatchBoard ETA | GO

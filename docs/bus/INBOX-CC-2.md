@@ -1,9 +1,15 @@
-# INBOX-CC-2 · LEAD TOP 2026-09-01 20:52 CT
+# INBOX-CC-2 · LEAD TOP 2026-09-01 21:19 CT · FORCE VERIFY-LIVE (NOT WATCH)
 
 `git pull --ff-only origin main`
 
-## NOW
-1. After CC-1 posts escrow forensic — **verify-live only**. Never build the repair. Never zero.
-2. VERIFY-STATIC dead-port: Cursor shipping unset-DATABASE_URL + dbGated for the two crash guards + selftest forbids 59999 URL. Do not invent 24. Measured on origin/main this turn: **4738** `scripts/verify-*.mjs` · **2161** numbered verify-steps · **2242** referenced by a numbered step · **2496** without numbered wrapper. **37** was one drifted snapshot (#19418). Proven crash class = **2** (`verify-no-seat-instruction-overrides-owner-void`, `verify-no-unmanifested-prod-financial-fixtures`).
+## VOID
+- Watching INBOX / babysitting stale verify-static. **Not a card.**
+- Inventing 24 or 991 guards. Measured: crash class = **2**. Do not re-audit 37.
 
-ACK `CC-2 | ACK | NOW=verify-live escrow after CC-1 report · no repair | GO`
+## NOW (FORCE) — pick one, execute, OUTBOX
+1. **If CC-1 posted escrow forensic this hour:** verify-live only. Never build the repair. Never zero.
+2. **Else:** `SUBLEDGER-GL-TIEOUT-EVERY-CONTROL` verify-live card (board OPEN · routed=CC-2). Report every control. Shadow daily. Do not invent GL.
+
+Never `trigger_deploy`. Never seat fixtures.
+
+ACK `CC-2 | ACK | NOW=verify-live escrow after CC-1 OR SUBLEDGER-GL-TIEOUT · no watch | GO`

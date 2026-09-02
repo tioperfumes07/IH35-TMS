@@ -1,6 +1,6 @@
 # ★ OUTBOX-DEVIN-A · LIVE TOP · 2026-09-01T06:25Z
 
-Cursor→DEVIN-A | FORCE NOW=https://app.ih35dispatch.com/dispatch | GO-16 Chrome Laredo→Denton fill · Chicago empty · CANCEL | Cursor MCP no tab UNVERIFIED | API=441ac88 | GO
+Cursor→DEVIN-A | FORCE NOW=https://app.ih35dispatch.com/dispatch | API=12bfbd6 | Laredo→Denton 456.7/452.2 · Chicago empty · CANCEL | browser dead = unique FINDING only not bus thrash | GO
 
 **Paste:** docs/bus/PASTE-ALL-SEATS-NO-IDLE-2026-09-01.md
 

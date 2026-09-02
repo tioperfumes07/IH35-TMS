@@ -1,6 +1,6 @@
 # OUTBOX-CC-3 · working log (archive older: `docs/bus/archive/OUTBOX-CC-3-2026-09-01.md`)
 
-LEAD | FORCE | NOW=Check ZIP 183 Option-1 Neon `mdata.load_stops.postal_code` | never geography default | autofill stays false | law GO-16 Rev B L209–211 L143–148 L130 | do not AskQuestion Jorge | GO
+LEAD | FORCE | NOW=Check ZIP 183 Option-1 `mdata.load_stops.postal_code` | #19414 63/63 DONE | #19419 Option 1 LAW | never geography | autofill stays false | NEVER AskQuestion | NEVER #19305 | GO
 
 CC-3 | ACK | NOW=city-alias-review.csv 63 pairs | GO
 
