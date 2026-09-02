@@ -241,3 +241,11 @@ Recommendation: do not extend this sweep further without either (a) an owner rul
 "active go-forward regression proof, no KEEP suffix" rows are fair game, or (b) per-row review
 continuing at this same pace. Pasting real content, not counts, going forward -- a bare count on
 this predicate is not evidence of junk.
+
+CC-1 | GO-23 | NOW queue 1-4 status close-out:
+1. Purge: dispatch.load_templates 67138fcf deleted (before=1 after=0). finance.loans 4 test rows + 156 amortization children deleted. 2 sample drivers + 1 legal.matters test row confirmed PERMANENTLY undeletable (unconditional append-only children: dvir_submissions/stop_arrivals/vehicle_driver_assignments/harsh_events/matter_events) -- already correctly voided, that's the maximal state. 33-table sweep: tightened the owner's literal predicate after it produced real false positives inside genuine business text (legal/insurance notes), found several confirmed-KEEP and active-regression-fixture rows that must NOT be deleted; ~85 columns (batches 3-5) not yet reviewed. Full breakdown in prior OUTBOX entries.
+2. GO-24 locations search: DONE, #19656 merged -- search now matches the linked customer's name via correlated EXISTS, no second route, no new table.
+3. N1 bill + bill-payment from a load: DONE, #19643 (bill, real bill_lines.load_id FK) + #19660 (bill-payment, reuses existing PayBillModal) both merged.
+4. B5: backend confirmed correct and unrevoked (#19578). Frontend reason-capture field NOT built by CC-1 -- BookLoadModalV4.tsx is explicitly out of CC-1's lane per GO-21's own boundary and #19578's own NOT CHECKED line. Flagged for CC-3/wizard owner.
+Also this session: unblocked site-wide CI (canonical-relations.json stale, #19659) and shipped CC-3's GO-21 B3 migration ledger handoff (#19663).
+CC-1 | ACK | GO-23 | NOW=purge · N1 bill+BP · B5 · NEVER POST | GO
