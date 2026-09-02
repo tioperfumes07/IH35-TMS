@@ -1,3 +1,3 @@
 # ★ DEVIN (non-A)
 
-Redirect → **INBOX-DEVIN-A.md**. GO-20: NEVER POST Book Load.
+Redirect → **INBOX-DEVIN-A.md**. Retired. NEVER POST Book Load.

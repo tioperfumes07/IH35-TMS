@@ -1,106 +1,22 @@
-# INBOX-CC-3 · GO-26/27 · OWNER UNLOCK 2026-09-02
+# INBOX-CC-3 · CURRENT ROW · 2026-09-02 16:23 CT
 
 `git pull --ff-only origin/main`
 
-## ★ MILES LAW FINAL — ALL SEATS — 2026-09-02
-
-**SUPERSEDES #19740.** That bus said pay from practical + empty and forbade short miles. Owner overruled — **STRUCK**. Any INBOX still carrying it is stale.
-
-**PAY LAW — NOT NEGOTIABLE:**
-- Driver pay = **SHORT MILES, ALWAYS.** Never practical.
-- Customer rate/RPM = **PRACTICAL only** (loaded lane).
-- Company cost = **PRACTICAL + EMPTY** (deadhead is real cost).
-- Extra miles beyond short = **driver's problem**.
-- **NEVER** fold empty into practical.
-
-**MILES-INVERT-01** — catalog short untrustworthy (live: **2,142/3,237** inverted; directional test 352 pairs practical avg gap **29.4** vs short **174.8**). Root cause **NOT swap** — `seed-lane-mileage.mjs` 1:1, `source=History`. **No mass-swap.**
-
-**UX — OWNER:** Autofill practical/short/empty as normal · Flag when untrustworthy · Popup → OK → continue · Operator can edit · **DO NOT BLOCK BOOKING.** Trigger when **short > practical** OR reverse-lane short differs by **> 100 miles**.
-
-**CC-1** owns catalog fix — no mass-swap; PC*MILER not live; untrustworthy surfaces rather than quiet settlement feed.
-
-**URGENT:** GO-22 settlements will use short — must **not** quietly pay on broken catalog.
-
-Canonical: `docs/bus/MILES-LAW-FINAL-2026-09-02.md`
-
-
-## ⚡ FAST-MERGE + DEPLOY (ALL SEATS · OWNER 2026-09-02)
-
-**Loop (~4–5 min):** `node scripts/money-pr-local-gate.mjs` (Cursor: `node scripts/cursor-ship-preflight.mjs --body-file …`) → **exit 0 FIRST** (that is merge proof) → `git push` → `gh pr create` → **immediately** `gh pr merge N --squash --delete-branch --admin`. **NEVER** `gh pr checks --watch`. **NEVER** ask Jorge to merge. **NEVER** idle after merge. `git push --no-verify` **only AFTER gate PASS** and **only** for ENV-VERIFY-STATIC class — **never** for your own red guard.
-
-**Deploy:** batch every **5–10** merges; never per-merge prod deploy; CC seats **never** `trigger_deploy`; Cursor lead batches.
-
-**Law:** USMCA only · Never POST Book Load · Never seat financial fixtures · Cursor PR titles **`Cursor-`** prefix.
-
-Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md` · `docs/bus/FAST-MERGE-REMINDER-2026-09-02.md`
-
-## ★ LEAD SEQUENCE 2026-09-02 — GO-23 WAVES. STOP SKIPPING AHEAD.
-
-Merged #19749/#19764/#19773/#19789/#19795 (C1 confirm, K1, K3, K4, C7/B3 status). **Good — do not wait on Jorge for B9/E1.**
-
-**LEAD RULINGS (not guesses):**
-- **B9 CLOSED.** If StateSelect is already a filter-combobox, K2/B9 is done for that field. Do not hunt a second “CC-2 shared picker.” Wave 4 K2 still retires trapping pickers app-wide **after J1**.
-- **E1 PARK until Wave 5 #17.** Duplicate Dispatch Settlements / Pre-settlements tabs are two GO-22 states. Do not collapse them. Product-shape later.
-- **VERIFY-STATIC unbaselined:** not your row. Codex owns a baseline-update pass. `--no-verify` only after local gate PASS and only for ENV-VERIFY-STATIC class.
-
-**Your lane NOW (Wave 1 still open):**
-1. **A2** — customer picker must return the whole set (~2700). Cap 500/200 is the defect. `BookLoadCustomerSection.tsx`. Ships alone, first.
-2. **GO-24** — wire existing `mdata.locations` into Book Load stops. **No `catalogs.locations`.** Mark `docs/specs/0251-stop-location-catalog-design.md` SUPERSEDED. Gate dead geocode UI.
-3. **Wave 2 #6 A1 screen** — only after CC-1 posts the interchange ledger path.
-4. ParityTable conversion — wait CC-2 ratchet if still required; daily screens first.
-5. **Do not start more Wave 5 wizard K-rows** until A2 + GO-24 are on main.
-
-NEVER POST. FAST-MERGE.
+Owner: `docs/bus/OWNER-ORDER-STOP-PURGE-BUILD-ENGINES-2026-09-02.md`
+Miles: `docs/bus/MILES-SPEC-DISPATCH-FINAL-2026-09-02.md`
+FAST-MERGE: `docs/bus/FAST-MERGE-4MIN-LAW.md`. Never POST.
 
 ## NOW
 
 ```
-CC-3 — GO-23 WAVE 1: A2 THEN GO-24. NOT MORE K-ROWS.
+CC-3 — WAVE 1 A2 THEN GO-24. OWNER IS BOOKING NOW.
 
-NEXT PR: BookLoadCustomerSection uncapped customer set. Then mdata.locations on stops.
-B9 CLOSED. E1 PARK Wave 5 #17. Do not idle for owner rulings already given.
-
-PART A — GO-26 TABLES: ONE COMPONENT, RETIRE THE OTHER THREE
-
-  KEEP    components/parity/ParityTable.tsx     373 files
-          drag-resize, drag-reorder, auto-fit, persists per table
-  RETIRE  components/DataTable.tsx
-  RETIRE  components/shared/ResizableTable.tsx
-  RETIRE  components/shared/MobileOptimizedTable.tsx
-  CONVERT 43 files still rendering a raw <table>
-
-WAIT for CC-2's guard to land before you start converting. The guard stops new
-raw tables being written behind you.
-
-WAVE ORDER — Jorge's daily screens first:
-  1 DispatchBoard · TripPairingBoardPage · PlannerCalendarPage · BookLoadModalV4
-    WorkOrdersTable · WorkOrdersConsoleListPage · FleetTable · FleetOosStrip
-    DriverSchedulerGridPage · TaskPlannerGrid
-  2 money screens   3 reports   4 home and program
-
-PART B — GO-27 Gate 1.2: B1 AlwaysTrack legacy label
-  BookLoadModalV4.tsx:1589 — remove "AlwaysTrack load # (legacy)" machine name.
-
-PART B2 — GO-27 Gate 1: location + state comboboxes on Book Load stops
-  Pickup/delivery State must be filter-combobox (K2/CC-2 Combobox), not plain input.
-  Location picker on stops — prove on 13508 (0 of 2 location_id today).
-
-PART B3 — GO-27 Gate 1: Book Load QB format + box sizing (Jorge reiteration)
-  Apply GLOBAL-TYPE-SIZE-BASELINE.md to BookLoadModalV4: equal paired-field sizes,
-  body 12px, headers 11px/700/UPPERCASE/#4B5563, cell padding ~7px. QuickBooks-style
-  density on Section A charge rows and miles strip. One PR on wizard shell only.
-
-PART C — GO-27 Gate 3.1 (queued): Bank categorization queue build.
-  CC-3 builds; Jorge categorizes. Blocked on Gate 0 purge.
-
-CONVERSION RULES:
-  1. Keep every existing column, same order, same formatting.
-  2. Give each table a STABLE storageKey.
-  3. STOP RULE — financial statements: if ParityTable cannot express subtotals, STOP.
-  4. One PR per wave. Live Chrome screenshot per wave.
-
-Delete a retired component only when its import count reaches ZERO.
-Column headers: 11px, weight 700, UPPERCASE, #4B5563, CENTERED, SORTABLE.
+A2: whole customer set on the mounted Book Load wizard (not an orphan file).
+GO-24: mdata.locations. No catalogs.locations.
+Do not autofill empty from the lane catalog.
+C1: edit-load Customer still shows raw UUID on 13508 — fix the mounted prefill.
+B9 CLOSED. E1 PARK Wave 5 #17.
+Do not purge. Do not categorize bank.
 ```
 
-ACK `CC-3 | ACK | GO-23 W1 A2 then GO-24 · B9 closed · E1 park · NEVER POST | GO`
+ACK `CC-3 | ACK | A2 then GO-24 · engines not purge · NEVER POST | GO`
