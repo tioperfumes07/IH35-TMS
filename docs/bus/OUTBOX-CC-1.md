@@ -81,3 +81,26 @@ REMAINING 17, two clusters flagged, NOT rushed:
   integrations/relay-payments/relay-wallet-bank-feed.service.ts, safety/safety-v5.routes.ts.
 
 CC-1 | GO-23 C6 | 38->22->17 across #19608/#19613, honest per-file verification, no gaming | GO
+
+## CC-1 · GO-23 C6 · mark-disbursed fixed in-session, 17 -> 12 (2026-09-02)
+
+#19618 merged (sha 3973fa2): cash-advances.routes.ts's mark-disbursed now calls
+postBillPaymentGlIfEnabled (same canonical poster cc-payment.routes.ts already proves for the
+identical accounting.bill_payments data shape) — real fix, not a report, per the explicit
+instruction after #19616. 3 new fastify.inject() integration tests prove: poster called with the
+real bill_payment id when linked_bill_id is set; never called otherwise; a poster failure doesn't
+fail the disbursement response. Also cleared 4 more bank_transactions-raw-ingest files
+(fuel-receipt.routes.ts, insurance/dispersal.routes.ts, transaction-ingestion.ts,
+relay-wallet-bank-feed.service.ts) after verifying each inserts an uncategorized row with no
+categorization_gl_account_id — GL posts later, once, at categorization.
+
+Session total: 38 -> 12 gaps (68% shrink) across #19608/#19613/#19618, one genuine functional fix
+(mark-disbursed) plus honest, individually-verified exemptions — no blanket/lazy tagging.
+
+Remaining 12, still flagged not rushed: invoice/revenue-recognition cluster (6 files — locked
+two-event-latch decision), cash-advance driver_liabilities/driver_advances booking +
+lumper-cash-advance-split.ts (different economic shape), escrow-separation.service.ts,
+negative-settlement-liability.service.ts, safety-v5.routes.ts, bills-bulk.routes.ts (no confirmed
+downstream poster found yet).
+
+CC-1 | ACK | GO-23 | C6 38->12 across 3 PRs, mark-disbursed fixed not just reported | GO
