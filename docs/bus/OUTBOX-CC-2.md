@@ -832,3 +832,62 @@ trap.** Same result as this session's earlier K2 correction (#19642): the Custom
 Zero writes, zero submissions, zero Book Load posted, anywhere in this pass.
 
 Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 | J1 4th pass shipped · GO-24 location picker FIXED · N1 bill-payment code-verified · 2026-09-02T09:16Z
+
+Continuing the auto-mode/continue instruction after the third status report (#19658).
+
+**J1 — two more PRs, real progress, still not zero:**
+- **#19673** — traced the "Code/Description/Amount ($)/Taxable" 9px table headers (open since
+  #19658) to their real source: `ParityTable.tsx`'s own column header renders from
+  `typography.kpiLabel` (9px, meant for KPI-card micro-labels) instead of `typography.panelHeader`
+  (11px, the actual locked column-header role) — via an inline `style={{fontSize: ...}}` prop,
+  invisible to the ratchet guard's regex just like the raw-CSS block from pass 2. Fixed BOTH the
+  render call and the auto-fit column-width measurement call (they must match, or column widths
+  miscalculate against the new larger text). **This is a systemwide fix** — every table in the app
+  using `ParityTable` gets the correct 11px header, not just Book Load's `AccessorialEditor`.
+- **#19679** — modal-scoped re-census after #19673 deployed: 78→24 off-scale (of 281 nodes, NB trip
+  type selected to expose stops/miles/validation). 3 of those 24 are the footer's Cancel/Save
+  draft/Book+dispatch buttons at 13px — **correctly following the separate owner-locked
+  `BUTTON_MD_SIZE_CLASS` control scale, not a J1 violation** — left untouched so they aren't
+  miscounted. Fixed the real remaining ~21: `MilesStrip.tsx` (Practical/Short/Empty miles labels +
+  hints), `BookLoadStopsSection.tsx` (PICKUP/DELIVERY stop-card header bar), `LoadTemplateLibrary.tsx`
+  ("Load from template" dropdown + modal).
+
+**Honest status: could not get a final confirmed post-#19679 census number.** The Chrome extension
+stopped responding (two consecutive `tabs_context_mcp` timeouts) right after deploy caught up to
+`36c52a4`. Not fabricating a number — the last confirmed measurement is 24/281 (pre-this-pass), and
+this pass's fix targets all of that except the 3 correctly-locked buttons and an untraced "All
+checks pass" text + a lone checkmark glyph (2 more nodes, source not yet found). Expect roughly
+0-3 remaining once re-confirmed; will re-census next time Chrome responds rather than guess now.
+
+**GO-24 (#19661, mdata.locations stop picker) — FIXED, confirmed live.** Opened Book Load, selected
+NB, typed "Laredo" into the Stop 1 Location field: real catalog results (Laredo Colombia Bridge,
+Laredo World Trade Bridge, TA Laredo) plus "+ Add new location" inline-create. Selected "Laredo
+Colombia Bridge" — Address/City/St auto-filled to "15 Pacific Hwy" / "Laredo" / "TX" correctly.
+Lat/lng stayed empty, which matches the known "Geocode OFF" state from the INBOX itself, not a bug.
+Discarded on close, zero writes.
+
+**N1 bill-payment (#19660, Pay button + PayBillModal) — code-verified, not live-click-tested.** Read
+`BillsReverseSection.tsx`: the Pay button is correctly gated on `filterKey === "load_id"`, disabled
+when `billRemainingCents(row) <= 0` or status is paid/voided, opens `PayBillModal` with the specific
+row. Could not click-test live — load 13508 (the only real load in this environment) has zero bills
+linked, so the button never renders. Not fabricating a live click I couldn't perform. While reading
+this file (and its sibling `ExpensesReverseSection.tsx`) also found and fixed 10 more `text-sm`
+J1 instances in both (#19676) — same drift, different screen (Load Detail Drawer, not Book Load).
+
+**D1 (equal paired widths) — verified, not a bug.** Measured Customer/Customer WO#/AlwaysTrack
+outer box widths via `getBoundingClientRect`: 191px/191px/191px, identical. The Customer field's
+inner `<input>` measures narrower only because Combobox wraps it in its own padded/bordered div —
+the visible bordered box a user sees is the same size for all three. Recorded as verified-fine, not
+silently dropped.
+
+**K2 — already re-confirmed twice this session** (most recently: typed "log", 5 real results,
+clicked away, dropdown closed and cleared). Not re-testing a fourth time.
+
+Six PRs shipped this pass: #19652, #19654, #19658, #19673, #19676, #19679. Zero writes, zero Book
+Load posted, zero expense/bill submitted, anywhere.
+
+Idle, watching INBOX TOP. Will retry Chrome for the final J1 re-census next wake.
