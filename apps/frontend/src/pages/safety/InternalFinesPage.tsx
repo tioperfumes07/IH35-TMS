@@ -261,6 +261,8 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
     {
       key: "related_load_id",
       label: "Load",
+      sortable: true,
+      sortValue: (row) => (row.related_load_number as string | null) ?? (row.related_load_id as string | null) ?? "",
       render: (row) =>
         row.related_load_id ? (
           <EntityLink
@@ -275,6 +277,12 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
     {
       key: "applied_to_settlement_id",
       label: "Settlement",
+      sortable: true,
+      // No human-readable settlement number surfaces on this row today, only ids — sort groups
+      // by whichever linkage is present (settlement vs deduction) then by id, same as every other
+      // ID-only sortable column in this codebase that lacks a display label to sort by.
+      sortValue: (row) =>
+        (row.applied_to_settlement_id as string | null) ?? (row.settlement_deduction_id as string | null) ?? "",
       render: (row) =>
         row.applied_to_settlement_id ? (
           <EntityLink kind="settlement" id={String(row.applied_to_settlement_id)} label="Settlement" />
