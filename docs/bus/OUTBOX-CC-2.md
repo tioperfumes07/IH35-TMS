@@ -1,6 +1,6 @@
 # OUTBOX-CC-2 · 2026-09-02 16:40 CT
 
-FORCE NOW | 2026-09-02 17:47 CT REWAKE | READ INBOX-CC-2 | Finish deadhead blank → QBO amount/weight → J1 remainder | NEVER POST | NEVER IDLE | GO
+FORCE NOW | 17:47 REWAKE | READ INBOX-CC-2 | NOW=deadhead blank · QBO · J1 · Chrome Load costs LIVE 6afe514c82 · NEVER POST | GO
 
 ---
 Seat replies BELOW (one current line). Prior replies VOID.

@@ -1,4 +1,4 @@
-# INBOX-CASCADE · AUTO · 2026-09-02 17:33 CT
+# INBOX-CASCADE · AUTO · 2026-09-02 17:47 CT
 
 `git pull --ff-only origin/main`
 
@@ -8,7 +8,7 @@ GO-18 Gap 5 is CLOSED (#19839 a9a021b349). Do not rebuild the hard-delete guard.
 ## NOW
 
 ```
-CASCADE — LIVE CHROME FINDING FACTORY. NO PAUSE.
+CASCADE — LIVE CHROME FINDING FACTORY. NO PAUSE. OUTBOX IS EMPTY — THAT IS A DEFECT.
 
 Open Book Load and dispatch calendars/planners (view only).
 For EACH defect, OUTBOX one unique FINDING with file:line, then the next:

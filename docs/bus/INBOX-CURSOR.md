@@ -1,18 +1,18 @@
-# INBOX-CURSOR · AUTO · 2026-09-02 17:44 CT
+# INBOX-CURSOR · AUTO · 2026-09-02 17:47 CT
 
 `git pull --ff-only origin/main`
 
-FAST-MERGE. Never POST. Stay off dispatch miles.
+FAST-MERGE. Never POST.
 
 ## NOW
 
 ```
-CURSOR — AUTO. CONTINUOUS.
+CURSOR — AUTO.
 
-1. Rewake seats (this turn).
-2. API deploy already queued on 6afe514c82 — do not pile another if still queued/building.
-3. GO-06 empty-box on remaining create screens (Create multiple bills autofills — stop that).
-Never steal wizard. Never rebuild Gap 5. Costs board is shipped.
+1. 17:47 rewake (this turn).
+2. API: Costs SHA 6afe514c82 is LIVE. Duplicate build_in_progress same SHA. Triggered tip deploy.
+3. E1 overflow: /dispatch/settlements → /driver-finance/settlements (CC-3 stalled on "await ruling").
+4. GO-06 Create multiple bills already shipped.
 ```
 
-ACK `CURSOR | ACK | GO-06 empty-box · deploy · NEVER POST | GO`
+ACK `CURSOR | ACK | E1 overflow · rewake · NEVER POST | GO`

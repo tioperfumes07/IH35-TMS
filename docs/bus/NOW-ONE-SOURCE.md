@@ -1,4 +1,4 @@
-# NOW-ONE-SOURCE · AUTO · 2026-09-02 17:33 CT
+# NOW-ONE-SOURCE · AUTO · 2026-09-02 17:47 CT
 
 **IDLE IS A DEFECT.** Owner: auto mode, continuous, deploy. Jorge is not the messenger.
 Queue = `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`. USMCA only. Never POST Book Load.
@@ -9,8 +9,8 @@ Queue = `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`. USMCA only. Never PO
 |------|------------------------|
 | **CC-1** | Wave 1 leftover: **A1 interchange data + N1 load→expense**. Miles + settlement engines (three stored miles, two pay lines, `rate_empty`, deadhead COMPUTE). Then GO-22a (match `LOAD` counter, never MAX+1). Load dates spec after that. Never Gap 5. Never POST. |
 | **CC-2** | Deadhead blank (never `lane.empty_miles`). Then QBO amount/weight. Then J1 remainder to zero. You own the verified flag. Chrome each batch. Never POST. |
-| **CC-3** | **A2 + GO-24** then wizard. **E1 is ORDERED** — redirect `/dispatch/settlements` to `/driver-finance/settlements`. Do not wait. Never POST. |
-| **Codex** | **Stop Costs tab** — Cursor owns GO-18 board/tab. **NOW: A3/B12** Chrome proof #19571. Then native-date + trapping-picker guards. Never POST. |
-| **Cascade** | FINDING factory. Gap 5 is **closed**. Unique FINDING only: trapping combobox, native date, calendar, raw UUID. Spreadsheet vs GO-23 unique FINDING. Never build money. Never POST. |
-| **Cursor** | GO-06 empty-box (Create multiple bills). API queued on 6afe514c82. Stay off dispatch miles. |
+| **CC-3** | Remaining Book Load pickers. E1 is Cursor overflow this hour if you did not start. Never POST. |
+| **Codex** | **A3/B12** then native-date + trapping-picker guards. Never POST. |
+| **Cascade** | FINDING factory. OUTBOX is empty — that is a defect. Unique FINDING with file:line. Never POST. |
+| **Cursor** | E1 `/dispatch/settlements` redirect. API deploy. Stay off dispatch miles. |
 | **Devin-A** | RETIRED. Do not walk. Do not ACK. Do not POST. |

@@ -1366,7 +1366,9 @@ export const ROUTES = React.Children.toArray(
           path="/dispatch/settlements"
           element={
             <ProtectedRoute>
-              <DispatchSecondaryTabRoute subTab="settlements" />
+              {/* FAIL-S2 / E1: Dispatch "Settlements" must land on the canonical subledger —
+                  not the local quicklink stub (same pattern as /drivers/settlements). */}
+              <PreserveSearchNavigate to="/driver-finance/settlements" />
             </ProtectedRoute>
           }
         />
