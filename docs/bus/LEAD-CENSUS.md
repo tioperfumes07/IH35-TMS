@@ -1,24 +1,21 @@
-# LEAD CENSUS — 2026-09-01 18:23 CT
+# LEAD CENSUS — 2026-09-01 18:46 CT
 
 Verified this turn:
-- `origin/main` = **`dd41fe28d4`** (#19411)
+- `origin/main` = **`54774d5941`** (#19417 claim migration)
 - Live API = **`441ac88`**. **Do not kick deploy.**
-- GO-16 Chrome **UNVERIFIED**: Cursor `cursor-ide-browser` issues viewId then tab vanishes (`No browser tab available`). Devin-A FORCE NOW=`https://app.ih35dispatch.com/dispatch`.
-- GO-16 Rev B + FE tsc + GO-06 on main: #19389 / #19393 / #19396
-- Codex **#19404 CLOSED** (unmerged, design-parity). Next open Codex PR = **#19391** (build-typecheck TS4104).
-- CC-1 OUTBOX FORCE still said GO-11 — **stale self-ACK**; INBOX is escrow+linkage.
-- Devin-A FORCE NOW=`https://app.ih35dispatch.com/dispatch` — Cursor MCP no tab this retry.
-- CC-3 OUTBOX last line IDLE after city-alias assignment — **rewake FORCE city-alias 63**.
-- Cursor product: crashing `verify-load-column-all-module-remainder` (CC-3 corroboration) — string leaf in `lists.required.json`.
+- **#19414** city-alias 63/63 drained (CC-3 OUTBOX). Next GO-16 CC-3 hop = 183 Check ZIP ZIPs.
+- ZIP source **ANSWERED** in GO-16 Rev B L209–211 / L143–148 / L130 — Option 1 Neon `mdata.load_stops.postal_code`. Geography default **forbidden**. Jorge AskQuestion **void**.
+- GO-16 Chrome still **UNVERIFIED** (Cursor browser MCP tab evaporates). Devin-A FORCE dispatch URL.
+- Cursor Book Load miles P0: local stash `wip-go16-miles-create-block` (parse "Laredo TX", AuthGate primitive queryKey, 503 on lookup swallow). **Not on main.**
 
 | Seat | OUTBOX signal | INBOX NOW (this turn) | Idle? |
 |------|---------------|------------------------|-------|
-| CC-1 | FORCE was GO-11 (stale) | ESCROW-500-01 then LINKAGE-INTEGRITY-LAW | **NO · FORCE rewritten** |
-| CC-2 | SUBLEDGER FORCE | SUBLEDGER-GL-TIEOUT-EVERY-CONTROL verify-live | **NO** |
-| CC-3 | IDLE after search | city-alias-review.csv 63 pairs | **NO · FORCE** |
-| Codex | FORCE #19404 (dead) | STOP watch · **#19391 TS4104** | **NO · FORCE** |
-| Cascade | CPA filed #19388 | unique FINDING only | search |
-| Devin-A | FORCE NOW=dispatch URL | GO-16 Chrome click (MCP blocked) | **NO · FORCE** |
-| Cursor | lead | Chrome UNVERIFIED · no deploy | active |
+| CC-1 | linkage claim | ESCROW / LINKAGE | no |
+| CC-2 | SUBLEDGER | SUBLEDGER-GL-TIEOUT-EVERY-CONTROL | no |
+| CC-3 | city-alias DRAINED + AskQuestion ZIP | **Check ZIP 183 Option-1** | **NO · FORCE** |
+| Codex | #19391 | #19391 TS4104 | no |
+| Cascade | CPA | unique FINDING | search |
+| Devin-A | Chrome | `/dispatch` Laredo→Denton / Chicago | no |
+| Cursor | lead | ZIP ruling + miles P0 resume after merge | active |
 
 Jorge is not the bus. Cursor→Seat ping ≠ ACK.
