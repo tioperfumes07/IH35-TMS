@@ -52,3 +52,29 @@ CC-1 | GO-19 slice 20 (settlement 5753 P&L 2415.11) ALREADY DONE -- correcting t
 CC-1 | ACK | GO-20 FORCE | NOW=A screen DONE (#19560) then 20 settlement 5753 -- ALREADY DONE (#19489, live-Chrome-verified this session, see board row) · F7334 ledger DONE #19553 · NEVER POST | GO
 CC-1 | ACK | GO-21+22 | NOW=B5 pay-from-profile · NEVER POST | GO
 CC-1 | GO-21 A1 + GO-22 PS2/PS3 both SHIPPED | A1: dispatch.non_owned_trailers + dispatch.trailer_interchanges (PR #19567), never mdata.units, backend service + 6 endpoints (attach/receive/return/agreement/void), 10/10 tests, ledger posted to INBOX-CC-3 unblocking A1 FE | GO-22: driver_finance.presettlement_link_suggestions (PR #19573) -- the query service book-load.service.ts's own TODO named, NB always suggests create-new, TR/SB matches an open settlement by driver+tour_id, NEVER auto-commits (suggest-then-confirm, mirrors trip_link_queue's shape), confirmPresettlementLink is the only writer and is human-initiated. CAUGHT MYSELF before shipping: first draft minted doc_type='SETTLEMENT' -- a THIRD counter type -- caught against GO-22-PRESETTLEMENT-REGISTER.md PS2's explicit "do not invent a third" instruction before push, fixed to reuse the existing 'LOAD' counter via allocateNextLoadNumber directly, no new trace_counters row at all | 8/8 new tests + 7 pre-existing book-load tests still green | REMAINING flagged honestly: manual attach/detach/create/close-early CRUD (GO-22 part e) not attempted this pass, the early-close-before-SB owner question not guessed at | moving to B5 (driver pay rate from profile, logged override only) | GO
+
+## CC-1 · GO-23 C6 status · 38 -> 17 (2026-09-02)
+
+Three PRs shipped this pass, all shrink-only, all individually-verified (no blanket exemptions):
+- #19608: 38 -> 22 (POSTER_RE gained 2 real posters already in the codebase; 12 settlement_lines/
+  driver_settlement_deductions/escrow_accounts staging files exempted after tracing each to its
+  real downstream poster, postSettlementToGl or createCorrectiveJournalEntry).
+- #19613: 22 -> 17 (5 QBO inbound pullers + 1 offline CSV seed importer — each self-documents
+  "NO GL, GL stays QBO's job" already; quoted, not asserted).
+- #19611 (B8, same session): cash-advance orphan-refusal + required instrument reference — not a
+  C6 gap-count fix, but hardens one of the 17 remaining files (cash-advances/cash-advance-create.ts)
+  for a different, real defect the C6 sweep didn't cover.
+
+REMAINING 17, two clusters flagged, NOT rushed:
+  invoice/revenue-recognition (accounting/invoices.service.ts, invoice-lines.routes.ts,
+  from-load.ts, dispatch/cancellation-tonu-invoice.ts) — touches the locked two-event-latch
+  revenue-recognition decision, needs its own dedicated verification pass, not a quick exemption.
+  cash-advance driver_liabilities/driver_advances (cash-advance-create.ts, cash-advances.routes.ts,
+  lumper-cash-advance-split.ts) — real new-liability-with-balance bookings, different shape from
+  the staging-row pattern already resolved; also needs dedicated review.
+  Remaining 11: bills-bulk.routes.ts, banking/transaction-ingestion.ts, driver-finance/
+  escrow-separation.service.ts, negative-settlement-liability.service.ts, driver/fuel-receipt.routes.ts,
+  factoring/packet-assemble.service.ts, insurance/dispersal.routes.ts + policy-create-atomic.service.ts,
+  integrations/relay-payments/relay-wallet-bank-feed.service.ts, safety/safety-v5.routes.ts.
+
+CC-1 | GO-23 C6 | 38->22->17 across #19608/#19613, honest per-file verification, no gaming | GO
