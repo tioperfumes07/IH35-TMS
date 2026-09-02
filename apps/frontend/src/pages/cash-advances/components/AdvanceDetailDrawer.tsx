@@ -21,6 +21,10 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
   const schedule = (advance.deduction_schedule as Array<Record<string, unknown>> | undefined) ?? [];
   const settlements = (advance.settlement_history as Array<Record<string, unknown>> | undefined) ?? [];
   const status = String(advance.disbursement_status ?? "pending_approval");
+  const markDisbursedBlocked = status === "disbursed" || status === "reversed";
+  const markDisbursedBlockedReason = markDisbursedBlocked
+    ? `Already ${status} — Mark Disbursed is not available`
+    : undefined;
 
   return (
     <>
@@ -158,8 +162,13 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           <Button
             size="sm"
             variant="secondary"
+            disabled={markDisbursedBlocked}
+            title={markDisbursedBlockedReason}
             onClick={() => {
-              if (status === "disbursed" || status === "reversed") return;
+              if (markDisbursedBlocked) {
+                pushToast(markDisbursedBlockedReason ?? "Cannot mark disbursed", "info");
+                return;
+              }
               onMarkDisbursed();
             }}
           >

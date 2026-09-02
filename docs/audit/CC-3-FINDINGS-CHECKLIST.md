@@ -2,7 +2,7 @@
 
 > Every row follows [FINDINGS-TRIPLE-LOCK-LAW.md](FINDINGS-TRIPLE-LOCK-LAW.md): board + register + Desktop routing + OUTBOX in one turn; a checked row requires the five FIXED proofs.
 
-| ☐ | `CA-MARK-DISBURSED-SILENT-NOOP` | **C** | Silent no-op (Mark Disbursed click returns with no toast when disbursed/reversed) | **Cursor** | — | 2026-09-01 | AdvanceDetailDrawer Mark Disbursed always enabled; early return silent. Disable + reason. No money math. | origin/main AdvanceDetailDrawer.tsx:158-167 @ b140987 | board OPEN — GUARD-WORKORDERS top |
+| ☑ | `CA-MARK-DISBURSED-SILENT-NOOP` | **C** | Silent no-op (Mark Disbursed click returns with no toast when disbursed/reversed) | **Cursor** | this PR | 2026-09-01 | AdvanceDetailDrawer Mark Disbursed disabled + toast when disbursed/reversed. | verify-ca-mark-disbursed-silent-noop --selftest + normal | FIXED THIS PR |
 
 | ☑ | `CLS-F6691-REMAINING-FIRE-AND-FORGET-CONFIRM-CALLERS` | **B** | Shared confirm class (product-wide) | **Cursor** | this PR | 2026-08-26 | Fire-and-forget ConfirmModal callers + ungated sibling shells after Codex busy-lock. Fixed once via closeUnlessPending + await mutateAsync census guard. | local guards + selftest | FIXED THIS PR |
 
