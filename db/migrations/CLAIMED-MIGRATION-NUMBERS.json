@@ -636,6 +636,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-02",
       "purpose": "miles_spec_deadhead_driver_pay (MILES SPEC FOR DISPATCH, FINAL -- owner direct instruction 2026-09-02: driver_finance.driver_pay_rates.rate_empty_per_mile_cents + driver_finance.driver_bills.miles_deadhead/rate_empty_per_mile_cents/loaded_pay_cents/deadhead_pay_cents -- DRIVER PAY = (miles_shortest x rate_loaded) + (miles_deadhead x rate_empty), two settlement lines always; widens settlement_lines line_type CHECK + uniqueness to (source_driver_bill_id, line_type) so a bill can carry both an earnings/team-split line and a deadhead_pay line"
+    },
+    "202613520001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-02",
+      "purpose": "tour_close_yard_geofence (TOUR CLOSE + GEOFENCE, owner direct instruction 2026-09-02: seed geo.geofences location_kind='yard' for USMCA at 23918 Mines Rd Laredo TX 78045 -- geocoded via OSM Nominatim, square vertices via the existing squareVerticesFromCenter/TMS_AUTO_GEOFENCE_SIDE_METERS pattern auto-geofence.service.ts already uses. Backend gate: dispatch/driver-pwa/tour-close.service.ts -- closeable only inside the yard geofence with no active load (DISPATCH_ACTIVE_LOAD_STATUSES), never trip_type-gated (SB leg closes nothing means no leg type auto-closes), read-only eligibility check drives the deadhead-to-yard prompt"
     }
   }
 }
