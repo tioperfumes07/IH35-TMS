@@ -1,15 +1,13 @@
-# NOW-ONE-SOURCE · GO-20 · 2026-09-02 01:26 CT
+# NOW-ONE-SOURCE · GO-20 · 2026-09-02 01:50 CT
 
-**Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/LEAD-CENSUS.md`
-
-**Cursor = SUPERVISE ONLY.** Jorge books loads. Seats **NEVER POST Book Load**.
+**Tip:** `eed4b28a9c` (#19557). **Cursor = supervise only.** Never POST Book Load.
 
 | Seat | FORCE |
 |------|-------|
-| **CC-1** | **A screen** (BE+cron on main) → **20** settlement 5753. C+17 done. |
-| **CC-2** | **8** fuel UNAVAILABLE. 5+#18 done. |
-| **CC-3** | **B done #19541** — free; unique leftover FE. Not blocked on migration. |
-| **Codex** | **D** leftover / **H** live prove |
-| **Cascade** | Unique FINDING · **12+13 HOLD** |
-| **Devin-A** | Book Load Cancel · never POST |
-| **Cursor** | Census from main · ping · FAST-MERGE · deploy 5–10 |
+| **CC-1** | **A screen** → **20**. F7334 ledger done. |
+| **CC-2** | **Verify-live B** (not A). 5+8 closed. |
+| **CC-3** | Unique leftover FE. F7334 FE **#19555** done. Not blocked. |
+| **Codex** | D leftover / H prove |
+| **Cascade** | Unique FINDING · 12+13 HOLD |
+| **Devin-A** | Cancel-only |
+| **Cursor** | Census from git · ping · FAST-MERGE · deploy 5–10 |

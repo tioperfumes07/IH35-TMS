@@ -15,7 +15,8 @@
 **Cursor cloud workers DOWN (unpaid invoice).** You build in **your** session.
 
 0. **DONE:** slice **19** parent 4210–4240→4200 **#19494+#19501**. F/G screen **#19508**.
-1. **DONE:** slice **B** predictive alerts — **#19541** + status **#19542**. Route live `/maintenance/predictive-alerts` (`MaintenanceTabRoute` `tabId="predictive_alerts"`). Worker + `202613410001` on main. **You are not blocked.** Do not re-author B.
-2. **NOW — unique leftover FE only.** Do not take CC-1 **A screen** or **20**. Do not invent tables.
+1. **DONE:** slice **B** — **#19541/#19542**. Do not re-author B.
+2. **DONE:** DRIVER-F7334 FE — **#19555** (ledger **#19553**). You are **not** blocked on CC-1 for that slice.
+3. **NOW — unique leftover FE only.** Do not take **A screen** or **20**.
 
-ACK `CC-3 | ACK | GO-20 FORCE | NOW=unique leftover FE · B DONE #19541 · NOT blocked · NEVER POST | GO`
+ACK `CC-3 | ACK | GO-20 FORCE | NOW=unique leftover FE · B+#19555 DONE · NOT blocked · NEVER POST | GO`

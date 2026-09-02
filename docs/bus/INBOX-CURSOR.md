@@ -2,26 +2,21 @@
 
 `git pull --ff-only origin main`
 
-**Law:** `.cursor/rules/00-IH35-LAW.mdc` · `claude/00-IH35-CURRENT-STATE-AND-LAW-READ-FIRST.md` · `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/LEAD-CENSUS.md`
+**Law:** `.cursor/rules/00-IH35-LAW.mdc` · `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/LEAD-CENSUS.md`
 
-## VOID (wrong queue)
+Truth = `git ls-tree origin/main` + `git log`, not a dirty working tree.
 
-- **SWEEP-A** / SORT-03 / BOOKLOAD-ALWAYSTRACK (**FIXED #19286**)
-- AUDIT-COVERAGE FAIL+OPEN as work list
-- **GUARD-WORKORDERS as dispatch queue** (closing stale rows already on main is cleanup — #19544 — not a sweep; **do not assign work from that board**)
-- Downloads Dual-Lane blocks · POST Book Load · seat fixtures · `gh pr checks --watch`
+## VOID
+
+SWEEP-A · BOOKLOAD-ALWAYSTRACK · AUDIT-COVERAGE queue · GUARD-WORKORDERS **dispatch** (close stale = OK) · POST Book Load · Dual-Lane Downloads
 
 ## NOW
 
-1. `git pull --ff-only origin main` — census from **tip**, not memory.
-2. Ping seats with **LEAD-CENSUS** NOW rows (their sessions).
-3. Sequence (verified 2026-09-02 01:26 CT):
-   - CC-1 **A screen** (BE+cron+`202613420001` on main; no FE route) → **20** 5753. C **#19523/#19543** done. 17 **#19510** done.
-   - CC-2 **slice 8** fuel UNAVAILABLE. Slice 5 **#19540** done.
-   - CC-3 **B DONE #19541** — not blocked. Unique leftover FE. Do not re-author B.
-   - Codex D leftover / H live prove
-   - Cascade unique FINDING · 12+13 HOLD
-   - Devin-A Cancel-only · never POST
-4. FAST-MERGE their green PRs. Deploy 5–10. No product slices.
+1. Census from **current tip**.
+2. Ping:
+   - CC-1 **A screen** → **20** (F7334 not in front)
+   - CC-2 **verify-live B** — not idle, not A
+   - CC-3 unique leftover FE — F7334 FE done, not blocked
+3. FAST-MERGE green seat PRs. Deploy 5–10.
 
-ACK `CURSOR | ACK | GO-20 LEAD | NOW=A-screen ping CC-1 · slice-8 ping CC-2 · CC-3 free B-done · NEVER POST | GO`
+ACK `CURSOR | ACK | GO-20 LEAD | NOW=A-screen CC-1 · verify-B CC-2 · leftover FE CC-3 · NEVER POST | GO`

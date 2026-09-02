@@ -2,9 +2,9 @@
 
 **Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-FORCE NOW | READ INBOX-CC-2 | NOW=**slice 8** fuel UNAVAILABLE (no tables) · **5 DONE #19540** · **18 DONE #19503** | NEVER build money · NEVER POST Book Load | GO
+FORCE NOW | READ INBOX-CC-2 | NOW=**verify-live B** `/maintenance/predictive-alerts` · 5+8 CLOSED · do **not** take A screen · NEVER POST | GO
 
-Cursor→CC-2 | PING | 01:26 CT | GO-20 LEAD · NOW=**8** · 5 already shipped · ACK first line if idle · NEVER POST | GO
+Cursor→CC-2 | PING | 01:50 CT | NOW=verify-live B · 8 already compliant #19552 · NEVER POST | GO
 
 ---
 
