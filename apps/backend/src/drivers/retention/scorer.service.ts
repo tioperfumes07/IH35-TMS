@@ -1,5 +1,5 @@
 import type { PoolClient } from "pg";
-import { extractRetentionFeatures, type RetentionFeatures } from "./feature-extractor.js";
+import { extractRetentionFeatures, RETENTION_FEATURE_KEYS, type RetentionFeatures } from "./feature-extractor.js";
 
 type DbClient = Pick<PoolClient, "query">;
 
@@ -12,6 +12,8 @@ export type RetentionScoreResult = {
   retention_risk_score: number;
   retention_tier: RetentionTier;
   contributing_factors: RetentionFeatures;
+  features_present: string[];
+  features_missing: string[];
 };
 
 const WEIGHTS = {
@@ -61,6 +63,8 @@ export async function computeRetentionScore(
 ): Promise<RetentionScoreResult> {
   const features = await extractRetentionFeatures(client, operatingCompanyId, driverUuid);
   const retention_risk_score = scoreFeatures(features);
+  const features_present = RETENTION_FEATURE_KEYS.filter((key) => features[key] != null);
+  const features_missing = RETENTION_FEATURE_KEYS.filter((key) => features[key] == null);
   return {
     operating_company_id: operatingCompanyId,
     driver_uuid: driverUuid,
@@ -68,6 +72,8 @@ export async function computeRetentionScore(
     retention_risk_score,
     retention_tier: tierFromRiskScore(retention_risk_score),
     contributing_factors: features,
+    features_present,
+    features_missing,
   };
 }
 
@@ -125,5 +131,8 @@ export async function listRetentionScores(
   }
   sql += ` ORDER BY r.driver_uuid, r.computed_at DESC`;
   const res = await client.query(sql, values);
-  return res.rows;
+  return res.rows.map((row) => ({ ...row,
+    features_present: RETENTION_FEATURE_KEYS.filter((key) => row.contributing_factors?.[key] != null),
+    features_missing: RETENTION_FEATURE_KEYS.filter((key) => row.contributing_factors?.[key] == null),
+  }));
 }

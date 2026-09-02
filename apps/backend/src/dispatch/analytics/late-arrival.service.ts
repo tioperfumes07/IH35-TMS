@@ -397,6 +397,33 @@ export async function runLateArrivalAggregatorTick(client: PoolClient): Promise<
     const ociId = String(row.id ?? "");
     if (!ociId) continue;
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [ociId]);
+    await client.query(
+      `WITH measured AS (
+         SELECT sa.driver_id, ls.actual_arrival_at::date AS bucket_date,
+                CASE WHEN ls.appointment_end_at IS NOT NULL THEN 'appointment_window' ELSE 'scheduled_arrival' END AS basis,
+                EXTRACT(EPOCH FROM (ls.actual_arrival_at - COALESCE(ls.appointment_end_at, ls.scheduled_arrival_at))) / 60 AS minutes_late
+           FROM dispatch.stop_arrivals sa
+           JOIN mdata.load_stops ls ON ls.id = sa.stop_id
+           JOIN mdata.loads l ON l.id = ls.load_id AND l.operating_company_id = sa.operating_company_id
+          WHERE sa.operating_company_id = $1::uuid AND sa.driver_id IS NOT NULL
+            AND ls.actual_arrival_at IS NOT NULL
+            AND COALESCE(ls.appointment_end_at, ls.scheduled_arrival_at) IS NOT NULL
+            AND ls.actual_arrival_at >= CURRENT_DATE - interval '31 days'
+       ), rolled AS (
+         SELECT driver_id, bucket_date, count(*)::int stops_measured,
+                count(*) FILTER (WHERE minutes_late > 0)::int stops_late,
+                count(*) FILTER (WHERE minutes_late > 0)::numeric / count(*)::numeric late_pct,
+                avg(minutes_late) FILTER (WHERE minutes_late > 0) avg_minutes_late,
+                max(ceil(minutes_late)) FILTER (WHERE minutes_late > 0)::int worst_minutes_late,
+                CASE WHEN count(DISTINCT basis) > 1 THEN 'mixed' ELSE min(basis) END basis
+           FROM measured GROUP BY driver_id, bucket_date
+       ) INSERT INTO dispatch.late_arrival_aggregates
+           (operating_company_id, driver_id, bucket_date, stops_measured, stops_late, late_pct, avg_minutes_late, worst_minutes_late, basis, computed_at)
+         SELECT $1::uuid, driver_id, bucket_date, stops_measured, stops_late, late_pct, avg_minutes_late, worst_minutes_late, basis, now() FROM rolled
+         ON CONFLICT (operating_company_id, driver_id, bucket_date) DO UPDATE SET
+           stops_measured=EXCLUDED.stops_measured, stops_late=EXCLUDED.stops_late, late_pct=EXCLUDED.late_pct,
+           avg_minutes_late=EXCLUDED.avg_minutes_late, worst_minutes_late=EXCLUDED.worst_minutes_late,
+           basis=EXCLUDED.basis, computed_at=now()`, [ociId]);
     for (const groupBy of ["driver", "customer", "lane"] as LateArrivalGroupBy[]) {
       await queryAggregates(client, ociId, from, to, groupBy);
     }

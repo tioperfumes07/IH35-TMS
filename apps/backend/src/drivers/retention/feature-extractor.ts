@@ -12,6 +12,7 @@ export type RetentionFeatures = {
   complaints_logged_count: number | null;
   pm_no_show_count: number | null;
 };
+export const RETENTION_FEATURE_KEYS = ["miles_trend_30d_vs_90d_pct","late_arrival_rate_30d","unanswered_outbound_comms_count","safety_score_trend","pay_per_mile_actual_vs_promised","home_time_days_per_month","complaints_logged_count","pm_no_show_count"] as const;
 
 async function tableExists(client: DbClient, qualified: string): Promise<boolean> {
   const res = await client.query(`SELECT to_regclass($1) IS NOT NULL AS ok`, [qualified]);
@@ -64,14 +65,14 @@ export async function extractRetentionFeatures(
   if (await tableExists(client, "dispatch.late_arrival_aggregates")) {
     const late = await client.query<{ rate: string }>(
       `
-        SELECT COALESCE(AVG(late_pct), 0)::text AS rate
+        SELECT (SUM(stops_late)::numeric / NULLIF(SUM(stops_measured), 0))::text AS rate
         FROM dispatch.late_arrival_aggregates
-        WHERE operating_company_id = $1::uuid AND driver_uuid = $2::uuid
+        WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid
           AND bucket_date >= (CURRENT_DATE - 30)
       `,
       [operatingCompanyId, driverUuid]
     );
-    features.late_arrival_rate_30d = Number(late.rows[0]?.rate ?? 0);
+    features.late_arrival_rate_30d = late.rows[0]?.rate == null ? null : Number(late.rows[0].rate);
   }
 
   return features;
