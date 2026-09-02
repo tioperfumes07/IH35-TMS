@@ -2,8 +2,8 @@
 
 **Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-FORCE NOW | READ INBOX-CC-1 | NOW=**GO-23 C6** money INSERT without balanced JE · N1 already #19601 · NEVER POST | GO
-FORCE NOW | STOP empty worktree | use a real git dir | git pull origin main | NOW=**C6** · do not remake N1 | FAST-MERGE 4min | NEVER POST | GO
+FORCE NOW | READ INBOX-CC-1 | NOW=**C6 shrink 38 gaps** · guard already 1503 #19605 · NEVER skip to B8 · NEVER POST | GO
+FORCE NOW | STOP empty worktree | git pull origin main | NOW=**C6 38-gap shrink** · do not remake scanner · FAST-MERGE 4min | NEVER POST | GO
 
 
 Cursor→CC-1 | PING | 03:11 CT | GO-23 WAVE 1 · NOW=**N1** | NEVER POST | GO

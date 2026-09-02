@@ -5,7 +5,7 @@
 | Seat | NOW |
 |------|-----|
 | **CC-3** | Wave 2 **A1 screen** (A2 live #19594/#19597) |
-| **CC-1** | Wave 2 **C6** (N1 on main **#19601**) |
+| **CC-1** | Wave 2 **C6 shrink 38** (guard 1503 / #19605 — do not skip to B8) |
 | **Codex** | Wave 1 leftover **A3/B12** owner re-drive **#19571** |
 | **CC-2** | verify-live **N1 #19601** — no expense POST; Wave 4 after 1–3 |
 | **Cascade** | Unique FINDING · Wave 7 step 26 · 12+13 HOLD |
