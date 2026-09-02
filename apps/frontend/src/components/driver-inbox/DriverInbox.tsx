@@ -280,6 +280,11 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                 Confirm deny
               </button>
             </div>
+            {denyMut.isError ? (
+              <p className="mt-2 text-xs text-red-600" role="alert">
+                Deny request failed — try again.
+              </p>
+            ) : null}
           </div>
         </div>
       ) : null}

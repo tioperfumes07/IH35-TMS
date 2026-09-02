@@ -71,6 +71,9 @@ function assertWiring(readSourceFn = readSource) {
     const recovery = new RegExp(`${queryName}\\.isError[\\s\\S]{0,220}ListErrorBanner[\\s\\S]{0,220}${queryName}\\.refetch\\(\\)`);
     if (!recovery.test(inbox)) problems.push(`${FILES.inbox} missing exact retry for ${queryName}`);
   }
+  if (!/denyMut\.isError[\s\S]{0,180}role="alert"[\s\S]{0,180}Deny request failed/.test(inbox)) {
+    problems.push(`${FILES.inbox} must surface an accessible deny failure instead of silently reopening the action`);
+  }
 
   return problems;
 }
@@ -101,6 +104,7 @@ function selftest() {
     [FILES.inbox, "previewQuery.refetch()", "cascade-preview exact retry"],
     [FILES.inbox, "timelineQuery.refetch()", "request-timeline exact retry"],
     [FILES.inbox, "accountsQuery.refetch()", "pay-from catalog exact retry"],
+    [FILES.inbox, "denyMut.isError", "deny-request failure state"],
     [FILES.scheduler, "No drivers are available for this operating company.", "scheduler honest empty"],
     [FILES.leaveRequests, '<EntityLinkOrTombstone kind="driver" id={String(r.driver_id ?? "")} name={r.driver_name} noun="Driver"', "leave-request driver reverse link"],
   ];
