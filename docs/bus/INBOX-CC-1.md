@@ -1,4 +1,4 @@
-# INBOX-CC-1 · GO-23 WAVE 2 · C6 = 2 GAPS REMAINING
+# INBOX-CC-1 · GO-23 WAVE 2 · B8 REMAINDER (TONU HOLD)
 
 `git pull --ff-only origin main`
 
@@ -7,11 +7,11 @@
 **Queue:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md` — STRICT ORDER. You do not pick the next row.
 
 ## VOID
-POST Book Load · remake **N1** · remake mark-disbursed **#19618** · remake invoice cluster **#19622** · remake cash-advance-create exemption (**#19623** 8→7) · remake bills-bulk poster **#19625** · remake citation/exemption **#19627** · remake policy-create bills **#19629** · remake safety-v5 exemption **#19631** · remake the C6 scanner · skip remaining C6 to **B8** · author **B5** now · empty `~/IH35-TMS-clean` · new registers · Wave 3 while C6 2 is open · status-only PR that does not shrink lumper
+POST Book Load · remake **N1** · remake mark-disbursed **#19618** · remake invoice cluster **#19622** · remake cash-advance-create exemption (**#19623** 8→7) · remake bills-bulk poster **#19625** · remake citation/exemption **#19627** · remake policy-create bills **#19629** · remake safety-v5 exemption **#19631** · remake lumper bill_payment **#19634** · remake the C6 scanner · author **TONU** · author **B5** now · empty `~/IH35-TMS-clean` · new registers · Wave 3 while B8 remainder is open
 
 ## NOW
 
-1. **C6 remaining work is the 2 `--strict` gaps:** `lumper-cash-advance-split.ts` first (real bill_payment+expense — design the poster, do not fake-exempt, do not rush). `cancellation-tonu-invoice.ts` is flag-OFF **HOLD**. Never POST Book Load. Never seat financial fixtures.
-2. Rest of **B8** is **after** lumper (TONU stays HOLD). Then **B5**.
+1. **Lumper is DONE on main #19634** (`lumper-cash-advance-split.ts` bill_payment leg posts JE). C6 `--strict` remaining **1** is `cancellation-tonu-invoice.ts` — flag-OFF **HOLD**. Do not design TONU this row.
+2. **NOW = B8 remainder:** cash and fuel advances fully wired — Comchek/Comdata/EFT/wire reference, linkage to load + driver + settlement deduction, receipt into `docs.files`, pending until approved. Then **B5**. Never POST Book Load. Never seat financial fixtures.
 
-ACK `CC-1 | ACK | GO-23 | NOW=C6 remaining 2 · lumper first · TONU HOLD · NEVER skip to B8 · NEVER POST | GO`
+ACK `CC-1 | ACK | GO-23 | NOW=B8 remainder · TONU HOLD · NEVER B5 yet · NEVER POST | GO`
