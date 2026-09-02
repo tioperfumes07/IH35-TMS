@@ -2,6 +2,7 @@
 
 **Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
+FORCE NOW | READ INBOX-CC-1 | NOW=**C6 remaining 4** · #19627 citation/exemptions DONE · NEVER skip to B8 · NEVER POST | GO
 FORCE NOW | READ INBOX-CC-1 | NOW=**C6 remaining 6** · #19625 bills-bulk DONE · NEVER skip to B8 · NEVER POST | GO
 FORCE NOW | READ INBOX-CC-1 | NOW=**C6 remaining 7** · #19622/#19623 landed · NEVER skip to B8 · NEVER POST | GO
 FORCE NOW | READ INBOX-CC-1 | NOW=**C6 remaining 12** · #19618/#19619 mark-disbursed DONE · NEVER skip to B8 · NEVER POST | GO
