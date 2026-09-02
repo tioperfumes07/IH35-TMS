@@ -1,4 +1,4 @@
-# INBOX-CC-1 · GO-23 WAVE 2 · C6 = 3 GAPS REMAINING
+# INBOX-CC-1 · GO-23 WAVE 2 · C6 = 2 GAPS REMAINING
 
 `git pull --ff-only origin main`
 
@@ -7,11 +7,11 @@
 **Queue:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md` — STRICT ORDER. You do not pick the next row.
 
 ## VOID
-POST Book Load · remake **N1** · remake mark-disbursed **#19618** · remake invoice cluster **#19622** · remake cash-advance-create exemption (**#19623** 8→7) · remake bills-bulk poster **#19625** · remake citation/exemption **#19627** · remake policy-create bills **#19629** · remake the C6 scanner · skip remaining C6 to **B8** · author **B5** now · empty `~/IH35-TMS-clean` · new registers · Wave 3 while C6 3 is open
+POST Book Load · remake **N1** · remake mark-disbursed **#19618** · remake invoice cluster **#19622** · remake cash-advance-create exemption (**#19623** 8→7) · remake bills-bulk poster **#19625** · remake citation/exemption **#19627** · remake policy-create bills **#19629** · remake safety-v5 exemption **#19631** · remake the C6 scanner · skip remaining C6 to **B8** · author **B5** now · empty `~/IH35-TMS-clean` · new registers · Wave 3 while C6 2 is open · status-only PR that does not shrink lumper
 
 ## NOW
 
-1. **C6 remaining work is the 3 `--strict` gaps:** `safety-v5.routes.ts` first (real C6 seed SAF-B18 — do not fake-exempt), then `lumper-cash-advance-split.ts`, then `cancellation-tonu-invoice.ts` (flag-OFF HOLD). Shrink with real posters. Never POST Book Load. Never seat financial fixtures.
-2. Rest of **B8** is **after** the 3. Then **B5**.
+1. **C6 remaining work is the 2 `--strict` gaps:** `lumper-cash-advance-split.ts` first (real bill_payment+expense — design the poster, do not fake-exempt, do not rush). `cancellation-tonu-invoice.ts` is flag-OFF **HOLD**. Never POST Book Load. Never seat financial fixtures.
+2. Rest of **B8** is **after** lumper (TONU stays HOLD). Then **B5**.
 
-ACK `CC-1 | ACK | GO-23 | NOW=C6 remaining 3 · safety-v5 first · NEVER skip to B8 · NEVER POST | GO`
+ACK `CC-1 | ACK | GO-23 | NOW=C6 remaining 2 · lumper first · TONU HOLD · NEVER skip to B8 · NEVER POST | GO`
