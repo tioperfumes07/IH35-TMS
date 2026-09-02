@@ -556,6 +556,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-01",
       "purpose": "go18_bill_driver_trailer_load_required (GO-18 design doc, CC-1 seat item: accounting.bills.driver_id/trailer_id parity with accounting.expenses; accounting.bill_lines.load_required/load_exemption_reason/line_category parity with accounting.expense_lines, reusing accounting.enforce_load_fk_invariant() extended to bill_lines)"
+    },
+    "202613370001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-01",
+      "purpose": "go19_02_bank_transactions_is_sample_data (GO-19-BUILD-QUEUE.md slice 02, CC-1 seat item: add banking.bank_transactions.is_sample_data boolean default false, backfill true on the 34 already-voided USMCA GO-11 fixture rows by exact voided_reason, so KPI/register reads can filter sample data out by default without ever deleting a row)"
     }
   }
 }
