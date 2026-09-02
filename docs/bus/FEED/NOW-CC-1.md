@@ -1,3 +1,3 @@
 # FEED NOW — CC-1 · GO-23
 
-NOW = purge TEST DATA template + 33 tables · then GO-24 locations SEARCH/CREATE only if missing · then N1 bill+bill-payment from load · then B5. NEVER create catalogs.locations. NEVER POST. GO.
+NOW = finish purge batches 3–5 (counts first) · then Wave 2 C6 money INSERT without JE · then B8 advances · then B5 profile rate. NEVER remake #19660. NEVER POST. GO.
