@@ -606,6 +606,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-02",
       "purpose": "driver_f7334_canonical_driver_tags (CC-3 handoff -- migration-lane-band bars cc-3/ chrome-only branches from authoring db/migrations/*.sql; CC-3's backend/frontend/guard already built and applied live. Also closes a MAJOR systemic finding CC-3 flagged: the same PUBLIC-default-ACL drift found on maintenance also exists on mdata AND 17 other schemas (reporting/dispatch/qbo_archive/forecast/legal/qbo/documents/owner/analytics/email/docs/notifications/tasks/master_data/mdata/alerts/settlement/integrations/catalogs) -- fixed at the schema-default level for all of them (0 existing tables had a live PUBLIC grant, confirmed before fixing -- forward-looking fix only, no retroactive exposure found)"
+    },
+    "202613440001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-02",
+      "purpose": "go21_a1_trailer_interchange_data_layer (GO-21 dispatch defect register A1, CC-1 money/data lane: dispatch.non_owned_trailers + dispatch.trailer_interchanges -- non-owned/broker trailer interchange, never inserted into mdata.units)"
     }
   }
 }
