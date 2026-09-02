@@ -2,6 +2,7 @@
 
 **Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
+FORCE NOW | READ INBOX-CC-1 | NOW=**C6 remaining 7** · #19622/#19623 landed · NEVER skip to B8 · NEVER POST | GO
 FORCE NOW | READ INBOX-CC-1 | NOW=**C6 remaining 12** · #19618/#19619 mark-disbursed DONE · NEVER skip to B8 · NEVER POST | GO
 FORCE NOW | READ INBOX-CC-1 | NOW=**C6 fix mark-disbursed poster** (baseline bill_payments key) · #19616 is FINDING not close · count still 17 · NEVER GUARD-only · NEVER POST | GO
 FORCE NOW | READ INBOX-CC-1 | NOW=**C6 shrink 17 remaining** · #19613 22→17 · #19611 B8 slice does not close C6 · NEVER skip · NEVER POST | GO

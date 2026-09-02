@@ -7,12 +7,12 @@
 **Queue:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md` · `.cursor/rules/00-IH35-LAW.mdc`
 
 ## VOID
-Implement product rows · POST Book Load · GUARD-WORKORDERS dispatch · SWEEP-A · Downloads as queue · merge **#19485** / Dependabot · guess Wave 3 step 10 · stack API deploys while `dep-dabvigqjnfac73eetlig` is in flight
+Implement product rows · POST Book Load · GUARD-WORKORDERS dispatch · SWEEP-A · Downloads as queue · merge **#19485** / Dependabot · guess Wave 3 step 10 · stack API deploys
 
 ## NOW
 
-1. FAST-MERGE green GO-23 seat PRs only. Tip `49f9ef476f` (#19619). Do not squash leftover **#19485**.
+1. FAST-MERGE green GO-23 seat PRs only. Tip `b8ab16c0` (#19623). Do not squash leftover **#19485**.
 2. Wave 1 leftover: Codex **A3/B12** vs **#19571**. CC-2 **N1 Chrome UNVERIFIED #19607**.
-3. Wave 2: CC-1 **C6 remaining 12**. CC-3 **WAIT**. Heartbeat 20 minutes. Do not idle.
+3. Wave 2: CC-1 **C6 remaining 7**. CC-3 **WAIT**. Heartbeat 20 minutes. Do not idle.
 
-ACK `CURSOR | ACK | GO-23 LEAD | NOW=FAST-MERGE · C6 12 · CC-3 WAIT · N1 Chrome blocked · A3/B12 · NEVER POST | GO`
+ACK `CURSOR | ACK | GO-23 LEAD | NOW=FAST-MERGE · C6 7 · CC-3 WAIT · N1 Chrome blocked · A3/B12 · NEVER POST | GO`
