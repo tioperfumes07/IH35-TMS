@@ -12,5 +12,5 @@ Queue = `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`. USMCA only. Never PO
 | **CC-3** | **A2 + GO-24** then wizard. **E1 is ORDERED** — redirect `/dispatch/settlements` to `/driver-finance/settlements`. Do not wait. Never POST. |
 | **Codex** | **Stop Costs tab** — Cursor owns GO-18 board/tab. **NOW: A3/B12** Chrome proof #19571. Then native-date + trapping-picker guards. Never POST. |
 | **Cascade** | FINDING factory. Gap 5 is **closed**. Unique FINDING only: trapping combobox, native date, calendar, raw UUID. Spreadsheet vs GO-23 unique FINDING. Never build money. Never POST. |
-| **Cursor** | Costs board ship this hour. GO-06 empty-box. API deploy (autoDeploy off). Stay off dispatch miles. |
+| **Cursor** | GO-06 empty-box (Create multiple bills). API queued on 6afe514c82. Stay off dispatch miles. |
 | **Devin-A** | RETIRED. Do not walk. Do not ACK. Do not POST. |

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { entityLabel } from "../../lib/entity-label";
 import { useLocation } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -52,10 +52,6 @@ export function allocateBillDocumentNumbers(base: string, count: number): string
   const start = Number(match[2]);
   const width = match[2].length;
   return Array.from({ length: count }, (_, index) => `${match[1]}${String(start + index).padStart(width, "0")}`);
-}
-
-function bumpBillDocumentNumber(last: string): string {
-  return allocateBillDocumentNumbers(last, 2)[1] ?? last;
 }
 
 function centsToDollars(cents: number): number | null {
@@ -294,24 +290,7 @@ export function CreateMultipleBillsPage() {
     );
   };
 
-  useEffect(() => {
-    const preview = nextBillNumberQuery.data?.document_number?.trim();
-    if (!preview) return;
-    setRows((current) => {
-      if (current.every((row) => row.bill_number.trim())) return current;
-      const used = new Set(current.map((row) => row.bill_number.trim()).filter(Boolean));
-      const pool = allocateBillDocumentNumbers(preview, current.length + used.size + 8);
-      let cursor = 0;
-      return current.map((row) => {
-        if (row.bill_number.trim()) return row;
-        while (used.has(pool[cursor] ?? "")) cursor += 1;
-        const nextNumber = pool[cursor] ?? preview;
-        cursor += 1;
-        used.add(nextNumber);
-        return { ...row, bill_number: nextNumber };
-      });
-    });
-  }, [nextBillNumberQuery.data?.document_number]);
+  const nextBillHint = nextBillNumberQuery.data?.document_number?.trim() ?? "";
 
   return (
     <div className="space-y-3" data-testid="create-multiple-bills-page">
@@ -334,17 +313,18 @@ export function CreateMultipleBillsPage() {
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
         <span className="font-medium text-gray-800">Rows: {rows.length}</span>
         <span className="text-gray-700">Total draft amount: ${totalUsd.toFixed(2)}</span>
+        <span className="w-full text-xs font-normal text-gray-500" data-testid="multi-bills-number-hint">
+          {nextBillHint
+            ? `Leave blank to mint. Next unused is ${nextBillHint} — that is a caption, not the box.`
+            : "Leave blank to mint. Type any number you want."}
+        </span>
         <div className="flex gap-2">
           <Button
             size="sm"
             variant="secondary"
             onClick={() =>
               setRows((current) => {
-                const next = emptyRow();
-                const lastFilled = [...current].reverse().find((row) => row.bill_number.trim())?.bill_number.trim();
-                const preview = nextBillNumberQuery.data?.document_number?.trim();
-                next.bill_number = lastFilled ? bumpBillDocumentNumber(lastFilled) : preview ?? "";
-                return [...current, next];
+                return [...current, emptyRow()];
               })
             }
           >
@@ -526,6 +506,9 @@ export function CreateMultipleBillsPage() {
                 aria-label="Bill no."
                 className="ml-auto h-8 w-36 rounded-sm border border-gray-300 px-2 text-right text-xs"
                 value={row.bill_number}
+                placeholder=""
+                autoComplete="off"
+                spellCheck={false}
                 onChange={(event) => updateRow(row.id, { bill_number: event.target.value })}
               />
             ),

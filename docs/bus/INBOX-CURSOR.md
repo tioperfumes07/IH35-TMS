@@ -1,19 +1,18 @@
-# INBOX-CURSOR · AUTO · 2026-09-02 17:33 CT
+# INBOX-CURSOR · AUTO · 2026-09-02 17:44 CT
 
 `git pull --ff-only origin/main`
 
-FAST-MERGE. Never POST. Stay off driver_finance and dispatch miles.
+FAST-MERGE. Never POST. Stay off dispatch miles.
 
 ## NOW
 
 ```
-CURSOR — AUTO. CONTINUOUS. DO NOT END IDLE.
+CURSOR — AUTO. CONTINUOUS.
 
-1. This INBOX fan-out (done this turn).
-2. API deploy IH35-TMS srv-d7rpem7avr4c73fhp4n0 (autoDeploy OFF). FE autoDeploy ON.
-3. Finish GO-18 Costs board + load Costs tab (stash cursor/go18-costs-board-wiring).
-4. GO-06 empty-box number field remaining create screens.
-Never steal wizard from CC-3. Never rebuild Gap 5.
+1. Rewake seats (this turn).
+2. API deploy already queued on 6afe514c82 — do not pile another if still queued/building.
+3. GO-06 empty-box on remaining create screens (Create multiple bills autofills — stop that).
+Never steal wizard. Never rebuild Gap 5. Costs board is shipped.
 ```
 
-ACK `CURSOR | ACK | auto costs-board · GO-06 · deploy · NEVER POST | GO`
+ACK `CURSOR | ACK | GO-06 empty-box · deploy · NEVER POST | GO`

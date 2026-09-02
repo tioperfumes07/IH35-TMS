@@ -152,7 +152,10 @@ describe("CreateMultipleBillsPage", () => {
 
     await waitFor(() => expect(screen.getByTestId("create-multiple-bills-page")).toBeInTheDocument());
     await waitFor(() => expect(screen.getByRole("option", { name: "Acme Repair" })).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByLabelText("Bill no.")).toHaveValue("BILL-2026-00001"));
+    await waitFor(() => expect(screen.getByLabelText("Bill no.")).toHaveValue(""));
+    await waitFor(() =>
+      expect(screen.getByTestId("multi-bills-number-hint")).toHaveTextContent("Next unused is BILL-2026-00001")
+    );
 
     await user.selectOptions(screen.getByLabelText("Select vendor…"), "ven-1");
     await user.selectOptions(screen.getByLabelText("A/P account *"), "acc-ap");
@@ -167,7 +170,7 @@ describe("CreateMultipleBillsPage", () => {
         bill_date: "2026-05-27",
         due_date: "2026-06-26",
         amount_cents: 12500,
-        bill_number: "BILL-2026-00001",
+        bill_number: undefined,
         coa_account_id: "acc-ap",
         lines: [
           expect.objectContaining({
