@@ -296,7 +296,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
               <SelectCombobox
                 value={subjectType}
                 onChange={(event) => setSubjectType(event.target.value as "driver" | "company")}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               >
                 <option value="driver">Driver</option>
                 <option value="company">Company</option>
@@ -327,7 +327,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
               <input
                 value={issuedByAuthority}
                 onChange={(event) => setIssuedByAuthority(event.target.value)}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -335,7 +335,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
               <input
                 value={jurisdiction}
                 onChange={(event) => setJurisdiction(event.target.value)}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               />
             </div>
             <div className="flex flex-col gap-1 md:col-span-2">
@@ -372,7 +372,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
               <input
                 value={violationDescription}
                 onChange={(event) => setViolationDescription(event.target.value)}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
                 required
               />
             </div>
@@ -430,7 +430,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
               <textarea
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
-                className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
                 rows={2}
               />
             </div>
@@ -445,7 +445,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                 id="fine-source-doc"
                 type="file"
                 data-testid="fine-source-doc-input"
-                className="rounded-sm border border-gray-300 px-2 py-1 text-[13px]"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 onChange={(event) => setSourceDocFile(event.target.files?.[0] ?? null)}
               />
               {sourceDocFile ? (

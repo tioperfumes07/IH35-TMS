@@ -82,7 +82,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
       {/* Header */}
       <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-gray-50 p-3">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Pre-Settlement</div>
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Pre-Settlement</div>
           <div className="font-semibold text-gray-900">
             <EntityLinkOrTombstone kind="settlement" id={settlement.id} name={settlement.display_id} noun="Record" />
           </div>
@@ -117,10 +117,10 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
 
       {/* Linked trips */}
       <div className="space-y-1">
-        <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Linked Trips</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Linked Trips</div>
         {settlement.first_load_number ? (
           <div className="flex items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5">
-            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-700">
+            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold uppercase text-slate-700">
               NB
             </span>
             <EntityLinkOrTombstone
@@ -135,7 +135,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
         {settlement.last_load_number &&
         settlement.last_load_number !== settlement.first_load_number ? (
           <div className="flex items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5">
-            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-700">
+            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold uppercase text-slate-700">
               SB
             </span>
             <EntityLinkOrTombstone
@@ -158,7 +158,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
         <div className="space-y-1">
           {earningLines.length > 0 ? (
             <>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                 Earnings
               </div>
               {earningLines.map((l) => (
@@ -171,7 +171,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
           ) : null}
           {deductionLines.length > 0 ? (
             <>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                 Deductions
               </div>
               {deductionLines.map((l) => (
@@ -184,7 +184,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
           ) : null}
           {reimbLines.length > 0 ? (
             <>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                 Reimbursements
               </div>
               {reimbLines.map((l) => (

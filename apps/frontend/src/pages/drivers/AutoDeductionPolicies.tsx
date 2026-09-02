@@ -331,7 +331,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
               />
             </div>
             {lockedDriverId ? (
-              <span className="text-[10px] font-normal text-gray-500">Locked from driver profile.</span>
+              <span className="text-xs font-normal text-gray-500">Locked from driver profile.</span>
             ) : null}
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -363,7 +363,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
               }}
             />
             {deductionTypesQuery.isError ? (
-              <span className="text-[10px] font-normal text-red-600">Could not load deduction types from catalog.</span>
+              <span className="text-xs font-normal text-red-600">Could not load deduction types from catalog.</span>
             ) : null}
           </label>
           {/*
@@ -373,7 +373,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600" data-testid="auto-deduction-recovery-rail-field">
             Recovery rail (always ask)
             <select
-              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               value={recoveryRail}
               onChange={(e) => setRecoveryRail(e.target.value)}
               disabled={!deductionType}
@@ -385,7 +385,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
               ))}
             </select>
             {selectedRecoveryMeta ? (
-              <span className="text-[10px] font-normal text-slate-600" data-testid="auto-deduction-catalog-recovery-meta">
+              <span className="text-xs font-normal text-slate-600" data-testid="auto-deduction-catalog-recovery-meta">
                 Catalog default: {RAIL_LABELS[selectedRecoveryMeta.default_recovery_rail] ?? selectedRecoveryMeta.default_recovery_rail}
                 {" · "}
                 {selectedRecoveryMeta.may_draw_escrow ? "may draw escrow" : "escrow blocked"}
@@ -393,7 +393,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
                 {selectedRecoveryMeta.survives_separation ? "survives separation" : "ends at separation"}
               </span>
             ) : (
-              <span className="text-[10px] font-normal text-slate-500">Select a type to load catalog recovery policy.</span>
+              <span className="text-xs font-normal text-slate-500">Select a type to load catalog recovery policy.</span>
             )}
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -409,7 +409,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
           </div>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Memo
-            <textarea rows={2} className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" value={memo} onChange={(e) => setMemo(e.target.value)} />
+            <textarea rows={2} className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs" value={memo} onChange={(e) => setMemo(e.target.value)} />
           </label>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>

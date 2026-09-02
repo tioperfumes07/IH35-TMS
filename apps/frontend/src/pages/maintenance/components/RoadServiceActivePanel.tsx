@@ -16,8 +16,8 @@ export function RoadServiceActivePanel({ roadside, onOpen }: Props) {
   return (
     <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
       <div className="flex items-center justify-between bg-gray-50 px-2 py-1">
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Road Service Active</span>
-        <span className="rounded-sm bg-white px-1.5 text-[10px] font-bold text-gray-600">{active.length}</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Road Service Active</span>
+        <span className="rounded-sm bg-white px-1.5 text-xs font-bold text-gray-600">{active.length}</span>
       </div>
       {active.length === 0 ? (
         <div className="px-2 py-1.5 text-[11px] text-gray-400">No active road service</div>
@@ -38,12 +38,12 @@ export function RoadServiceActivePanel({ roadside, onOpen }: Props) {
                       className="text-[11px] font-semibold"
                     />
                     {isOos ? (
-                      <span className="text-[9px] font-bold tracking-wide" style={{ color: "#A32D2D" }}>
+                      <span className="text-xs font-bold tracking-wide" style={{ color: "#A32D2D" }}>
                         OOS
                       </span>
                     ) : null}
                   </div>
-                  {where ? <div className="truncate text-[10px] text-gray-500">{where}</div> : null}
+                  {where ? <div className="truncate text-xs text-gray-500">{where}</div> : null}
                   <div className="flex items-center justify-between gap-1 text-[9.5px] text-gray-400">
                     <span>{wo.status}</span>
                     {eta ? <span>{eta}</span> : null}
@@ -51,7 +51,7 @@ export function RoadServiceActivePanel({ roadside, onOpen }: Props) {
                   <button
                     type="button"
                     onClick={() => onOpen(wo.id)}
-                    className="mt-1 text-[10px] font-semibold text-slate-700 hover:underline"
+                    className="mt-1 text-xs font-semibold text-slate-700 hover:underline"
                   >
                     Open work order
                   </button>

@@ -237,7 +237,7 @@ export function TasksChatPage() {
                       ].join(" ")}
                     >
                       <div className="font-medium">{t.title}</div>
-                      <div className="mt-0.5 text-[10px] text-slate-500">
+                      <div className="mt-0.5 text-xs text-slate-500">
                         {formatDateUS(t.scheduled_date)} · {taskStatusLabel(t.status)}
                       </div>
                     </button>
@@ -293,7 +293,7 @@ export function TasksChatPage() {
                         <div key={c.id} className="rounded-sm border border-slate-100 bg-slate-50 p-2" data-testid="tasks-chat-comment">
                           <div className="flex items-baseline justify-between">
                             <span className="text-xs font-semibold text-[#1f2a44]">{c.author_name ?? c.author_email ?? "Unknown"}</span>
-                            <span className="text-[10px] text-slate-400">{formatCompanyTime(c.created_at)}</span>
+                            <span className="text-xs text-slate-400">{formatCompanyTime(c.created_at)}</span>
                           </div>
                           <div className="mt-1 whitespace-pre-wrap text-xs text-slate-700">{renderBody(c.body, mentionNames)}</div>
                         </div>
@@ -335,14 +335,14 @@ export function TasksChatPage() {
                             className="block w-full px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100"
                           >
                             <span className="font-medium text-[#1f2a44]">{emp.name}</span>
-                            {emp.email ? <span className="ml-1 text-[10px] text-slate-400">{emp.email}</span> : null}
+                            {emp.email ? <span className="ml-1 text-xs text-slate-400">{emp.email}</span> : null}
                           </button>
                         </li>
                       ))}
                     </ul>
                   ) : null}
                   <div className="mt-2 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-xs text-slate-400">
                       {mentionIds.size > 0 ? `${mentionIds.size} mention${mentionIds.size === 1 ? "" : "s"}` : ""}
                     </span>
                     <button
@@ -359,7 +359,7 @@ export function TasksChatPage() {
                     </button>
                   </div>
                   {createMutation.isError ? (
-                    <div className="mt-1 text-[10px] text-red-700">Couldn't post the comment. Try again.</div>
+                    <div className="mt-1 text-xs text-red-700">Couldn't post the comment. Try again.</div>
                   ) : null}
                 </div>
               </div>
@@ -390,7 +390,7 @@ export function TasksChatPage() {
                                   ? "linked a record"
                                   : "changed the assignment"}
                           </span>
-                          <span className="text-[10px] text-slate-400">{formatCompanyTime(a.created_at)}</span>
+                          <span className="text-xs text-slate-400">{formatCompanyTime(a.created_at)}</span>
                         </li>
                       ))}
                     </ul>
