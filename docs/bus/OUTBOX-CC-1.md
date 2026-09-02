@@ -168,3 +168,26 @@ loop; a second load-surface payment button would duplicate chrome. Full Costs ta
 (GO-18-LOAD-COSTS-DESIGN.md) stays Codex's seat, not rebuilt here. Fuel-advance HOLD-FOR-JORGE
 marker in book-load.service.ts left untouched, confirmed. Fixed cash-advance recovery-mode design
 (request -> owner-approval -> settlement-deduction, amortize cap) left untouched, confirmed.
+
+CC-1 | GO-23 WAVE STATUS 2026-09-02 | Investigated live before building anything further -- Wave 2
+row 8 (B5) and all of Wave 3 (rows 9-11) are ALREADY SHIPPED, none from this turn:
+B5 driver-pay-rate-resolves-from-profile -- PR #19578 (migration 202613460001), merged earlier
+this session before a context reset: resolveDriverBasePayCents in book-load.service.ts now reads
+driver_finance.driver_pay_rates FIRST/authoritative; a typed per-load rate is used only when
+driver_pay_rate_override_reason is >=10 real chars, logged via appendCrudAudit every time; no
+reason = treated as absent. Frontend reason-capture field is explicitly CC-3's (BookLoadModalV4.tsx
+is VOID for CC-1 per GO-21's lane boundary) -- not built here, not mine to build.
+GO-22a settlement-number-generator -- PR #19573: allocateNextSettlementDisplayId reuses the SAME
+'LOAD' counter via the existing allocateNextLoadNumber allocator (no invented doc_type='SETTLEMENT'
+counter, LD/LOAD trap avoided per its own header comment), prefixes S-<n>.
+GO-22b pre-settlement query service + manual path -- same PR: presettlement-link.service.ts's
+suggestPresettlementLink/confirmPresettlementLink close the book-load.service.ts TODO at ~2264;
+recommend-only, a human must call confirm -- never auto-commits, which sidesteps the still-open
+"does an NB+2TR-no-SB tour close early" owner decision by design (manual path either way).
+Slice 20 company settlement 5753/P&L 2415.11 -- PR #19489 (2026-09-01), re-verified this session:
+computeTripProfitabilityReport unions settlement_loads correctly, GET /api/v1/reports/trip-
+profitability live, frontend page "Company Settlements" reachable from Reports sidebar, vitest ties
+5753 to $2,415.11 exactly, live-Chrome-verified against the owner's own PDF.
+Wave 2/3 CC-1 lane is CLEAR. NOW = Wave 6 row 21 (L4/L6: TRK -> USMCA lease at monthly x 1.16; the
+$10,000 unaccounted EDSA down payment) -- investigating live before building. TONU stays HOLD.
+Never POST Book Load.
