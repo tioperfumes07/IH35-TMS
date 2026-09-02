@@ -102,7 +102,11 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
     return [
       {
         key: "code",
-        label: "Code",
+        // K1 (owner correction 2026-09-02, Plain English Law): this column's underlying `code` key
+        // and catalogs.additional_charges.code are unchanged — only the operator-facing header
+        // moves from the machine term "Code" to what the operator is actually picking: the billable
+        // income item (e.g. Detention, Lumper) they're charging the customer for.
+        label: "Income item",
         sortable: true,
         // LST-PICKER-03: the accessorial code picker now inherits the shared picker law — "+ Create
         // Accessorial charge" is the permanent FIRST ROW INSIDE the dropdown (no external button),
@@ -117,7 +121,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
             createKind="additional_charge"
             operatingCompanyId={operatingCompanyId}
             loading={catalogQuery.isLoading}
-            placeholder="Select code"
+            placeholder="Select income item"
             onOptionCreated={() => void catalogQuery.refetch()}
           />
         ),

@@ -9,7 +9,10 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-accessorial-editor-uses-paritytable";
 const PAGE = "apps/frontend/src/components/dispatch/AccessorialEditor.tsx";
-const REQUIRED_LABELS = ["Code", "Description", "Amount ($)", "Taxable"];
+// K1 (owner correction 2026-09-02, Plain English Law): "Code" -> "Income item" — the operator
+// picks a billable income item (Detention, Lumper, ...), not a machine code. underlying `code`
+// key/catalog column unchanged.
+const REQUIRED_LABELS = ["Income item", "Description", "Amount ($)", "Taxable"];
 
 function assertMigrated(src) {
   const errors = [];
@@ -50,7 +53,7 @@ function selftest() {
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable } from "../parity/ParityTable";
 const cols = [
-  { key: "code", label: "Code" },
+  { key: "code", label: "Income item" },
   { key: "description", label: "Description" },
   { key: "amount_cents", label: "Amount ($)" },
   { key: "taxable", label: "Taxable" },
