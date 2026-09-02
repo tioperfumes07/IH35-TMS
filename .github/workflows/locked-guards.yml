@@ -74,6 +74,21 @@ jobs:
         run: node scripts/verify-dispatch-notify-prefs-onerror.mjs --selftest
       - name: verify:dispatch-notify-prefs-onerror
         run: npm run verify:dispatch-notify-prefs-onerror
+      - name: verify:new-guard-enrollment normal + planted selftests
+        run: |
+          for guard in \
+            verify-driver-f7334-canonical-tags-wired.mjs \
+            verify-expense-class-id-parity.mjs \
+            verify-go20-b-predictive-alerts-wired.mjs \
+            verify-go20-d-cargo-sensor-incidents.mjs \
+            verify-internal-fines-load-settlement-sortable.mjs \
+            verify-legal-contract-batch-download-silent-noop.mjs \
+            verify-todays-attention-425c-canonical-table.mjs \
+            verify-uploadzone-delete-attachment-silent-noop.mjs
+          do
+            node "scripts/$guard" --selftest
+            node "scripts/$guard"
+          done
       - name: verify:damage-continuity-worker-mounted --selftest
         run: node scripts/verify-damage-continuity-worker-mounted.mjs --selftest
       - name: verify:damage-continuity-worker-mounted
