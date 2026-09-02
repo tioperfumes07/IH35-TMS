@@ -210,7 +210,11 @@
       "trace_no",
       "updated_at",
       "vendor_id",
-      "version_int"
+      "version_int",
+      "void_reason",
+      "void_reversal_entry_id",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "accounting.bill_unit_allocation": [
       "allocated_amount_cents",
@@ -814,7 +818,8 @@
       "updated_by_user_id",
       "version_int",
       "void_reason",
-      "voided_at"
+      "voided_at",
+      "voided_by_user_id"
     ],
     "accounting.journal_entries": [
       "created_at",
@@ -1655,7 +1660,11 @@
       "status",
       "trace_key",
       "trace_no",
-      "vendor_id"
+      "vendor_id",
+      "void_reason",
+      "void_reversal_entry_id",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "accounting.vendor_payment_methods": [
       "account_holder_name",
@@ -1913,6 +1922,7 @@
       "deactivated_at",
       "display_name",
       "display_order",
+      "drift_tolerance_cents",
       "hidden_at",
       "hidden_by_user_id",
       "hidden_reason",
@@ -2111,6 +2121,30 @@
       "created_by_user_id",
       "id",
       "operating_company_id"
+    ],
+    "banking.reconciliation_drift_alerts": [
+      "as_of_date",
+      "bank_account_id",
+      "bank_balance_cents",
+      "book_balance_cents",
+      "created_at",
+      "detected_at",
+      "drift_cents",
+      "drift_kind",
+      "id",
+      "is_sample_data",
+      "operating_company_id",
+      "reconciliation_session_id",
+      "resolution_note",
+      "resolved_at",
+      "resolved_by_user_id",
+      "resolving_journal_entry_id",
+      "severity",
+      "tolerance_cents",
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "banking.reconciliation_matches": [
       "bank_transaction_id",
@@ -2492,6 +2526,18 @@
       "updated_at",
       "updated_by_user_id"
     ],
+    "catalogs.driver_tags": [
+      "archived_at",
+      "code",
+      "color",
+      "created_at",
+      "created_by_user_id",
+      "id",
+      "is_active",
+      "label",
+      "operating_company_id",
+      "updated_at"
+    ],
     "catalogs.driver_termination_reasons": [
       "code",
       "created_at",
@@ -2612,6 +2658,18 @@
       "naisc_code",
       "operating_company_id",
       "petition_date",
+      "updated_at"
+    ],
+    "catalogs.historical_import_reasons": [
+      "code",
+      "created_at",
+      "description",
+      "display_name",
+      "id",
+      "is_active",
+      "metadata",
+      "operating_company_id",
+      "sort_order",
       "updated_at"
     ],
     "catalogs.internal_fine_reasons": [
@@ -3627,6 +3685,26 @@
       "canceled_at",
       "canceled_by"
     ],
+    "dispatch.non_owned_trailers": [
+      "counterparty_id",
+      "counterparty_type",
+      "created_at",
+      "created_by_user_id",
+      "id",
+      "is_active",
+      "is_sample_data",
+      "notes",
+      "operating_company_id",
+      "plate_number",
+      "plate_state",
+      "trailer_number",
+      "trailer_type",
+      "updated_at",
+      "vin",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
+    ],
     "dispatch.notify_log": [
       "channel",
       "created_at",
@@ -3722,6 +3800,27 @@
       "stop_uuid",
       "updated_at",
       "uuid"
+    ],
+    "dispatch.trailer_interchanges": [
+      "agreement_document_id",
+      "condition_in",
+      "condition_out",
+      "created_at",
+      "created_by_user_id",
+      "id",
+      "insurance_claim_id",
+      "is_sample_data",
+      "load_id",
+      "non_owned_trailer_id",
+      "operating_company_id",
+      "received_at",
+      "received_from",
+      "returned_at",
+      "status",
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "docs.file_links": [
       "created_at",
@@ -3956,7 +4055,11 @@
       "status",
       "trailer_id",
       "unit_id",
-      "updated_at"
+      "updated_at",
+      "void_reason",
+      "void_reversal_entry_id",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "driver_finance.driver_bills": [
       "bill_number",
@@ -3978,7 +4081,11 @@
       "team_driver_id",
       "trace_key",
       "trace_no",
-      "updated_at"
+      "updated_at",
+      "void_reason",
+      "void_reversal_entry_id",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "driver_finance.driver_deduction_bucket_events": [
       "actor_user_id",
@@ -4049,7 +4156,11 @@
       "source_description",
       "status",
       "type",
-      "updated_at"
+      "updated_at",
+      "void_reason",
+      "void_reversal_entry_id",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "driver_finance.driver_pay_rates": [
       "basis_type",
@@ -4147,7 +4258,11 @@
       "source_fuel_transaction_id",
       "source_pending_id",
       "status",
-      "updated_at"
+      "updated_at",
+      "void_reason",
+      "void_reversal_entry_id",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "driver_finance.driver_settlement_disputes": [
       "closed_at",
@@ -4262,6 +4377,7 @@
       "reversed_by_user_id",
       "settlement_model",
       "status",
+      "tour_id",
       "trace_key",
       "trace_no",
       "trip_closed_at",
@@ -4338,6 +4454,23 @@
       "operating_company_id",
       "settlement_id",
       "status"
+    ],
+    "driver_finance.presettlement_link_suggestions": [
+      "assigned_at",
+      "assigned_by_user_id",
+      "assigned_settlement_id",
+      "created_at",
+      "driver_id",
+      "id",
+      "load_id",
+      "operating_company_id",
+      "status",
+      "suggested_reason",
+      "suggested_settlement_id",
+      "tour_id",
+      "trip_type",
+      "unit_id",
+      "updated_at"
     ],
     "driver_finance.settlement_contract_lines": [
       "amount_cents",
@@ -4420,7 +4553,11 @@
       "source_type",
       "split_partner_driver_id",
       "team_id",
-      "updated_at"
+      "updated_at",
+      "void_reason",
+      "void_reversal_entry_id",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "driver_finance.settlement_payment_events": [
       "created_at",
@@ -7377,6 +7514,18 @@
       "voided_at",
       "voided_by_user_id"
     ],
+    "mdata.driver_tag_memberships": [
+      "assigned_at",
+      "assigned_by_user_id",
+      "created_at",
+      "driver_id",
+      "id",
+      "operating_company_id",
+      "removed_at",
+      "removed_by_user_id",
+      "removed_reason",
+      "tag_id"
+    ],
     "mdata.driver_teams": [
       "co_share_pct",
       "created_at",
@@ -7709,6 +7858,7 @@
       "dispatcher_user_id",
       "driver_instructions_file_id",
       "driver_instructions_text",
+      "driver_pay_rate_override_reason",
       "driver_pay_rate_per_mile",
       "factoring_company_vendor_id",
       "id",
