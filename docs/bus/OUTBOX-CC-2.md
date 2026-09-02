@@ -1212,3 +1212,59 @@ is `short_miles > practical_miles` OR `abs(reverse_lane.short - this_lane.short)
 new law; 13508 trips the first condition today.
 
 Continuing STEP 2 (K2 pickers, Book Load wizard batch first) next.
+
+---
+
+## ★★ CC-2 | MAJOR FINDING | K2 is likely already fixed at the engine — before migrating
+## 268 files, read this · 2026-09-02T~20:15Z
+
+Before starting the batch-by-directory migration STEP 2 asks for, I read the three "trapping"
+components instead of assuming the board's classification is current. **All three already
+delegate to the same fixed engine that dismisses on outside click — live-confirmed, not just
+read.**
+
+**Source, all three files:**
+- `components/shared/SelectCombobox.tsx` (154 importers) — imports `{ Combobox } from
+  "./Combobox"`, i.e. `components/shared/Combobox.tsx`. Its own file-level TODO says exactly
+  this: *"Combobox surface is intentionally 3 files for this PR: components/Combobox.tsx engine
+  + shared/Combobox.tsx wrapper + shared/SelectCombobox.tsx adapter. Collapse to a single shared
+  surface in a dedicated follow-up PR; behavior must stay identical."*
+- `components/shared/Combobox.tsx` (8 direct importers) — is itself nothing but
+  `import { Combobox as BaseCombobox } from "../Combobox"` and a thin prop-mapping wrapper. No
+  own event handling at all.
+- `components/parity/EntityPicker.tsx` (106 importers) — also `import { Combobox } from
+  "../Combobox"`, renders `<Combobox …>` directly (line 274).
+
+**All three render the exact same `components/Combobox.tsx` engine** — the one K2 already
+calls "the good one" with its own outside-click `mousedown` listener
+(`components/Combobox.tsx:291-300`). The wrapper/adapter layers only remap props (native-
+`<select>`-shaped children for SelectCombobox, entity-search config for EntityPicker); neither
+reimplements dismiss behavior, so neither can regress it independently of the engine.
+
+**Live-confirmed, real mouse, both a genuine SelectCombobox call site and a genuine
+EntityPicker call site, on two unrelated stable pages (not Book Load, whose reservation timer
+kept expiring mid-test):**
+- `/lists/accounting/detail-types` → "Account Type" filter (confirmed `SelectCombobox` import
+  in `DetailTypesListPage.tsx`) — clicked to open the full option list, clicked elsewhere on
+  the page, list closed cleanly, field reverted to placeholder.
+- `/lists/accounting/items` → "+ Create" → "Income account" field (confirmed `EntityPicker`
+  import in `ItemEditorModal.tsx`) — same test, same clean dismiss.
+- Modal closed via Close button both times, zero rows written, zero customers/items/accounts
+  created.
+
+**What this means for STEP 2 as written:** migrating 268 files' import statements from
+SelectCombobox/EntityPicker/shared-Combobox to bare `components/Combobox.tsx` would change
+**zero runtime behavior** for the K2 defect (dismiss-on-outside-click) — that part is already
+fixed everywhere, today, live. What's left is an *architecture* cleanup (3 files → 1, per the
+TODO already sitting in the code) and a *tracking* correction (the board's "277 trapping /
+0 fixed" count no longer describes live behavior). I have not tested all 268 files
+individually — I tested 2, chosen because they're genuine, unambiguous, source-confirmed
+instances of 2 of the 3 target components, on stable non-Book-Load pages. **Recommending
+against a 268-file mechanical migration until either (a) a wider live sample confirms this
+holds everywhere, or (b) the owner decides the 3→1 file consolidation is worth doing anyway
+for maintainability** — that's a real but much smaller, much lower-risk job than what STEP 2
+describes.
+
+Not touching the ratchet baseline or ADR-ing this myself — routing it back to whoever owns the
+K2 board row (GO-27/CC-3 per earlier context) plus the owner, since this changes the shape of
+the work, not just the count.
