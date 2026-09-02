@@ -26,3 +26,6 @@ CASCADE | GUARD-FIX | 13 guards fixed this session | PRs=#19242 #19244 #19300 #1
 CASCADE | FAST-MERGE | gate=exit0 | merged #19388 @ b06c237fb2 | neon=N/A | NEXT=go12-doc-append | GO
 CASCADE | ACK | FAST-MERGE-4MIN ON | CPA 1-2-4 FILE+LINE | NEVER WATCH CI | NEVER trigger_deploy | GO
 CASCADE | FINDING | ITEMS-CATALOG-SYNC-RECONCILE-SILENT-NO-OP | ItemsCatalog.tsx:41-45,52-56 Sync/Reconcile buttons no try/catch — silent no-op on API failure | board row OPEN | GO
+CASCADE | FAST-MERGE | gate=exit0 | merged #19441 @ a093dbf68c | neon=N/A | NEXT=unique-finding | GO
+CASCADE | FINDING | GO-18-BILL-HEADER-MISSING-DRIVER-TRAILER | bills.routes.ts:57-58 has unit_id but no driver_id/trailer_id; expense path has both | board row OPEN |
+CASCADE | FINDING | GO-18-BILL-LINES-MISSING-LOAD-REQUIRED | bill_lines has load_id but no load_required; expense_lines has both with fail-closed check | board row OPEN | GO
