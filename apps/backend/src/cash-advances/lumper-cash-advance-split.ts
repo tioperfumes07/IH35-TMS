@@ -1,19 +1,36 @@
 import { randomUUID } from "node:crypto";
 import { withCurrentUser } from "../auth/db.js";
+import { isBillPaymentGlPostingEnabled } from "../accounting/bill-payment-gl.service.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { logger } from "../observability/structured-logger.js";
 
 /**
  * Lumper Lifecycle STEP 3b — cash-advance disburse SPLIT engine.
  *
  * Splits one driver cash advance (e.g. $400) into N atomic legs in ONE transaction (all-or-nothing):
- *   - bill_payment   : the $250 against the load's auto-bill (advance_id + bill_id; existing advance→bill rail)
+ *   - bill_payment   : the $250 against the load's auto-bill (advance_id + bill_id; existing advance→bill rail).
+ *                      C6 (GO-23) — this leg now posts its own JE via postSourceTransactionInClientTx
+ *                      (source_transaction_type='bill_payment'), the SAME poster cc-payment.routes.ts /
+ *                      cash-advances.routes.ts mark-disbursed (#19618) / bills-bulk.routes.ts mark_paid
+ *                      (#19625) already use for this exact data shape — no new GL math, gated by the
+ *                      EXISTING BILL_PAYMENT_GL_POSTING_ENABLED flag (default OFF), not a new one.
  *   - lumper_expense : the $150 lumper → accounting.expenses + expense_lines (load_id, 'lumper' category
  *                      account QBO-117, billable_customer_uuid per rule), then the customer-invoice/posting
- *                      legs are STEP 4/7.
+ *                      legs are STEP 4/7 — GENUINELY NOT YET BUILT. No customer-facing invoice/billing-back
+ *                      poster exists anywhere in this codebase for this leg; posting it correctly requires
+ *                      real design (which revenue account, timing, whether the customer invoice fires here
+ *                      or at a later billing-run step) — not a call to an existing function this file forgot
+ *                      to make. Left unposted on purpose; C6-MONEY-JE-EXEMPT below documents why.
  * Fail-loud if the legs do not sum to the advance total. Emits a spine event via the (now-fixed, #1491)
  * events.log_event. ALL behavior is gated behind LUMPER_LIFECYCLE_ENABLED (default OFF) — nothing posts
  * money until Jorge's Tier-1 sign-off flips the flag. The live path is not exercised until #1440 (load_id on
  * the advance tables) + STEP 3a (the 'lumper' category map) are applied; GUARD verifies the $250/$150 rows +
  * a balanced JE on a Neon branch before any flag flip.
+ *
+ * C6-MONEY-JE-EXEMPT (expense_lines leg only — bill_payments leg has a REAL poster call below, not an
+ * exemption): accounting.expenses/expense_lines here record the lumper fee itself; the customer-facing
+ * invoice/billing-back JE is STEP 4/7 of this same staged build, explicitly not built yet (see above).
+ * Verified 2026-09-02, GO-23 C6 — this is the one gap this session leaves genuinely open, not papered over.
  */
 
 /** Feature flag — default OFF. */
@@ -128,7 +145,35 @@ export async function disburseCashAdvanceSplit(
               billSample.rows[0]?.is_sample_data === true,
             ],
           );
-          billPaymentIds.push(String((bp.rows[0] as { id: string }).id));
+          const billPaymentId = String((bp.rows[0] as { id: string }).id);
+          billPaymentIds.push(billPaymentId);
+
+          // C6 (GO-23) — same-transaction poster (this function manages its own explicit BEGIN/COMMIT,
+          // same reasoning as bills-bulk.routes.ts's #19625 fix): opening a second transaction here
+          // would self-deadlock on the bill row's own lock. Flag-gated by the EXISTING
+          // BILL_PAYMENT_GL_POSTING_ENABLED check — no new flag, no new GL math. Best-effort: a post
+          // failure must not abort the whole split disburse, but must not vanish silently (SWL-1).
+          try {
+            const glPostingEnabled = await isBillPaymentGlPostingEnabled(companyId, actorUserUuid);
+            if (glPostingEnabled) {
+              await postSourceTransactionInClientTx(
+                client,
+                {
+                  operating_company_id: companyId,
+                  source_transaction_type: "bill_payment",
+                  source_transaction_id: billPaymentId,
+                },
+                { userId: actorUserUuid }
+              );
+            }
+          } catch (err) {
+            logger.warn("lumper_split_bill_payment_gl_post_failed", {
+              err: err instanceof Error ? err.message : String(err),
+              company_id: companyId,
+              bill_payment_id: billPaymentId,
+              advance_id: input.advance_id,
+            });
+          }
         } else {
           // lumper expense leg → DR QBO-117 (resolved per entity by account_number; fail-loud if missing).
           const acct = await client.query(
