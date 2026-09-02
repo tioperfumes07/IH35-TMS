@@ -1,10 +1,10 @@
 {
-  "healthzSha": "10e2def",
-  "generated_at": "2026-09-02T17:01:36.103Z",
+  "healthzSha": "7fe443c",
+  "generated_at": "2026-09-02T20:50:19.448Z",
   "meta": {
-    "generatedAt": "2026-09-02T17:01:36.103Z",
+    "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "10e2def",
+    "deployedSha": "7fe443c",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 19677,
-      "title": "FINDING: CI-EIGHT-NEW-GUARDS-ORPHANED-AND-CARGO-GUARD-REJECTED-VALID-MAINTENANCE-WORKER",
+      "number": 19793,
+      "title": "VERIFY: TXH A6 + B10 completed",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 11:53 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19677",
-      "sha": "1bff936b70",
-      "committedAtIso": "2026-09-02T11:53:12-05:00"
+      "mergedAtCt": "09/02/2026, 03:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19793",
+      "sha": "e4bbcbbac0",
+      "committedAtIso": "2026-09-02T15:43:57-05:00"
     },
     {
-      "number": 19684,
-      "title": "FINDING: regeneration could not refresh stored scoreboard timestamp",
+      "number": 19792,
+      "title": "FINDING: N/A — GO-27 Gate 1.4: confirming, with live-mocked evidence, that the driver profile pay rate is the base case and a typed per-load override only wins when explicitly, accountably justified — not building new behavior, the priority already existed correctly",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 11:49 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19684",
-      "sha": "7ac98dc4e8",
-      "committedAtIso": "2026-09-02T11:49:34-05:00"
+      "mergedAtCt": "09/02/2026, 03:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19792",
+      "sha": "9277596c10",
+      "committedAtIso": "2026-09-02T15:40:41-05:00"
     },
     {
-      "number": 19683,
-      "title": "FINDING: defect-class counts re-derived + specs-vs-live schema sweep",
+      "number": 19790,
+      "title": "VERIFY: GO-26 final gate — trace counter fixed",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 11:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19683",
-      "sha": "90bdd224d4",
-      "committedAtIso": "2026-09-02T11:39:42-05:00"
+      "mergedAtCt": "09/02/2026, 03:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19790",
+      "sha": "7fe443c96c",
+      "committedAtIso": "2026-09-02T15:39:06-05:00"
     },
     {
-      "number": 19682,
-      "title": "FINDING: 3 unique silent no-ops — portal download, earnings refresh, CBP widget stuck loading",
+      "number": 19791,
+      "title": "FINDING: ACCT-F19790 — GO-27 Gate 0.3: driver bill numbers carried a B-prefix transformation of the load number instead of equaling it, splitting one document into two different-looking numbers",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 11:34 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19682",
-      "sha": "fdbee03139",
-      "committedAtIso": "2026-09-02T11:34:56-05:00"
+      "mergedAtCt": "09/02/2026, 03:38 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19791",
+      "sha": "4b10983a8d",
+      "committedAtIso": "2026-09-02T15:38:54-05:00"
     },
     {
-      "number": 19680,
-      "title": "@/tmp/final-report/pr-body.txt",
+      "number": 19789,
+      "title": "FINDING: K4-PER-STOP-EXTRA-RATES-RENDERS-FOR-BASE-2-STOP-LOAD",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 10:23 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19680",
-      "sha": "9058e6b9b8",
-      "committedAtIso": "2026-09-02T10:23:52-05:00"
+      "mergedAtCt": "09/02/2026, 03:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19789",
+      "sha": "a4f3f26506",
+      "committedAtIso": "2026-09-02T15:36:43-05:00"
     },
     {
-      "number": 19679,
-      "title": "@/tmp/pr-body6.txt",
+      "number": 19787,
+      "title": "VERIFY: GO-26 done-gate post-dispatch-purge",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 10:13 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19679",
-      "sha": "36c52a40e0",
-      "committedAtIso": "2026-09-02T10:13:57-05:00"
+      "mergedAtCt": "09/02/2026, 03:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19787",
+      "sha": "a74f1fb9f3",
+      "committedAtIso": "2026-09-02T15:35:27-05:00"
     },
     {
-      "number": 19678,
-      "title": "FINDING: N/A (status report)",
+      "number": 19788,
+      "title": "Claude-1- docs: re-ack GO-26 (lead crossed with completed work) + trace_counters LOAD reseed to 13556 done",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 10:08 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19678",
-      "sha": "4828f45c2d",
-      "committedAtIso": "2026-09-02T10:08:10-05:00"
+      "mergedAtCt": "09/02/2026, 03:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19788",
+      "sha": "5cb43c0244",
+      "committedAtIso": "2026-09-02T15:35:10-05:00"
     },
     {
-      "number": 19676,
-      "title": "@/tmp/pr-body5.txt",
+      "number": 19786,
+      "title": "Claude-1- docs: GO-26 purge complete, 6 of 6 schemas, full done-gate held",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 10:05 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19676",
-      "sha": "1cf1256c1f",
-      "committedAtIso": "2026-09-02T10:05:58-05:00"
+      "mergedAtCt": "09/02/2026, 03:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19786",
+      "sha": "cce1e1eb0f",
+      "committedAtIso": "2026-09-02T15:33:25-05:00"
     },
     {
-      "number": 19675,
-      "title": "FINDING: ACCT-F19670",
+      "number": 19785,
+      "title": "FINDING: FUEL-F19784 — GO-26: last of six schemas. fuel schema carried 5 fixture rows; full cross-schema done-gate confirms the entire GO-26 purge is complete except explicitly-held/append-only rows",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 10:02 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19675",
-      "sha": "f3f261ddd3",
-      "committedAtIso": "2026-09-02T10:02:28-05:00"
+      "mergedAtCt": "09/02/2026, 03:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19785",
+      "sha": "a060fa9203",
+      "committedAtIso": "2026-09-02T15:32:00-05:00"
     },
     {
-      "number": 19674,
-      "title": "FINDING: N/A -- CC-3 ACK: NOW=Wave 4 C1 raw UUIDs",
+      "number": 19784,
+      "title": "FINDING: ACCT-F19459 | Gate 2.1 bills.driver_id already landed; Codex was blocked on a non-existent bills.driver_uuid.",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 10:01 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19674",
-      "sha": "e62e465ad9",
-      "committedAtIso": "2026-09-02T10:01:50-05:00"
+      "mergedAtCt": "09/02/2026, 03:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19784",
+      "sha": "a5f9f04c17",
+      "committedAtIso": "2026-09-02T15:31:55-05:00"
     }
   ]
 }
