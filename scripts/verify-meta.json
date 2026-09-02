@@ -66,10 +66,12 @@
     "verify:migration-no-unknown-roles",
     "verify:no-cross-carrier-data-leak",
     "verify:no-orphan-migration-ledger-entries",
+    "verify:no-seat-instruction-overrides-owner-void",
     "verify:no-spurious-duplicates",
     "verify:no-test-seed-in-prod-listings",
     "verify:no-test-units-in-prod",
     "verify:no-unledgered-migrations",
+    "verify:no-unmanifested-prod-financial-fixtures",
     "verify:pre-commit",
     "verify:referenced-tables-exist"
   ],
