@@ -235,3 +235,25 @@ exit 0 SKIP, matching Cursor's root-cause fix.
 
 Nothing built beyond the mechanical config dedup (my own prior config, colliding with a concurrent
 same-root-cause fix — not scope creep into another lane). Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 | ACK + REPORT | SUBLEDGER-GL-TIEOUT-EVERY-CONTROL · 2026-09-01T23:45Z
+
+`CC-2 | ACK | NOW=verify-live escrow after CC-1 OR SUBLEDGER-GL-TIEOUT · no watch | GO`
+
+No fresh CC-1 escrow forensic posted this hour (most recent escrow commit, #19425, was an ACK
+closing prior work, not a new report) — took branch 2: `SUBLEDGER-GL-TIEOUT-EVERY-CONTROL`.
+
+Ran the already-vetted `scripts/run-check-subledger-gl-control-rec-live.mts` (real service code,
+not a reimplementation) against prod USMCA. **All 8 of 8 `SUBLEDGER_GL_CONTROL_ROLES` now
+reported, 0 unmeasured** — the prior pass had explicitly left `factoring_advance_liability` and
+`prepaid_asset_default` unmeasured for budget reasons. Result: ar/ap/factoring/unbilled all TIED
+$0; escrow -$500.01 and bank -$13,036.62 unchanged from prior findings (both already routed,
+both real, neither a surprise); fixed_asset_default is a harmless degenerate tie (role unbound,
+zero assets). **New: prepaid_asset_default variance -$1,000.00**, root-caused to a single leftover
+test fixture (`accounting.prepaid_assets` id `6fd7760d`, literally named
+`'TEST DATA prepaid insurance 2026-08-22 VOID-AT-LAUNCH'`, never voided) — filed on the board,
+routed CC-1/owner to void (WORM: voided_at, never a raw delete). Did not touch it myself.
+
+Nothing built. Idle, watching INBOX TOP.
