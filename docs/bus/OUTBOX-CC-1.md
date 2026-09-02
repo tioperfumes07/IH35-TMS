@@ -288,3 +288,60 @@ active-use) or unconfirmed (Devin-A draft-load rows) -- holding rather than gues
 This closes the purge-33 sweep as specified: counts-first, KEEP honored, before/after pasted for
 every row actually deleted. Recommend NOT auto-deleting the unconfirmed Devin-A rows without either
 Devin-A's own sign-off or an owner ruling.
+
+CC-1 | GO-23 | purge-tail (item 1) EXECUTED -- per-row content verified before every delete, not
+blind count-based. Confirmed-safe deletes this pass (no KEEP tag, no active-regression-fixture
+language, cascade-checked first):
+
+  ops.daily_tasks: before=1 after=0 (+2 dependent daily_task_events/alerts rows cleared first)
+  maintenance.fault_code_severity_rules: before=1 after=0
+  safety.dot_inspections: before=6 after=5
+  safety.company_violations: before=3 after=2 (own drivers/units/fines children auto-cascaded, 0 fine links)
+  safety.accident_reports: before=6 after=3 (+1 accident_cost_lines child cleared first; 1 insurance.claim
+    reference auto-nullified via its own ON DELETE SET NULL, unchanged)
+  safety.hos_violations: before=4 after=1
+  safety.temp_unit_assignments: before=1 after=0
+  safety.training_programs: before=1 after=0
+  safety.training_records: before=2 after=1
+  reports.custom_report_definitions: before=1 after=0
+
+PERMANENTLY BLOCKED (unconditional append-only trigger, confirmed by attempting and reading the
+exact Postgres error, not guessed): safety.safety_events (trg_safety_events_block_delete) -- same
+class as the 2 sample drivers and legal.matters row already reported. 2 candidate rows here
+(SAMPLE_BREAKDOWN_RESCUE_JULY safety event, "verifies canonical safety event to load persistence")
+left in place, correctly voided-by-nature (immutable safety log).
+
+HELD, explicit false positive found and corrected: mdata.qbo_accounts "Antidoping-Drug Test
+Services" -- a REAL business account name, not test data. The predicate matched the standalone
+word "Test" inside a legitimate compliance-service name. NOT touched. This is exactly the failure
+mode tightening to word-boundary was meant to catch, and one slipped through anyway -- flagging so
+the lesson generalizes: even word-boundary matching needs a human read before a delete, always.
+
+HELD, KEEP-tagged or linked to a KEEP row (confirmed by tracing the actual FK, not assumed):
+safety.civil_fines row 38a20872 (SAMPLE_BREAKDOWN_RESCUE_JULY, no keep tag itself) links via
+safety.company_violation_fines to violation 3ab9942c which IS explicitly "TEST DATA FMCSA audit
+keep" -- deleting the fine would orphan a link the owner marked to preserve. Left in place.
+
+HELD, unconfirmed (Devin-A rows, same caution as the driver_qualification_files finding already
+reported): mdata.vendor_payment_methods "DEVIN-AUDIT-TEST" (1 row).
+
+HELD, owner-scoped by the row's own text ("Owner voids when operational 100%"): tasks.task
+16b532a9 "TEST DATA CREATE-TEST-THEN-VOID" -- the row itself says this is the owner's call, not a
+seat's. Left in place.
+
+NOT YET CASCADE-CHECKED (real FK dependents on the parent table exist, column-name mismatches
+stalled the check this pass, time-boxed to move to C6 next): safety.incidents (3 no-keep candidates:
+991a8a82, 0d80fe55, c282dbbe) and tasks.task (2 no-keep candidates: 5e73c4b7, 5e756611). Flagging
+rather than rushing the cascade check.
+
+Additive is_sample_data default-false column on fixture-capable tables NOT done this pass (large,
+separate schema-migration task -- 163 candidate tables from the earlier sweep would all need it;
+holding for a dedicated migration rather than rushing one in under this cadence).
+
+Total purge-tail this session across both passes (finance.loans + this pass): 4 finance.loans +
+156 amortization rows + 10 safety/maintenance/ops/reports rows + 3 accident_reports (+2 children)
++ dispatch.load_templates 1 row = confirmed-deleted. 2 drivers + legal.matters + safety.
+safety_events rows confirmed permanently blocked by design. Pivoting to Wave 2 C6 now per the
+explicit NOW order.
+
+CC-1 | ACK | GO-23 | NOW=purge-tail · C6 · B8 · B5 · NEVER POST | GO
