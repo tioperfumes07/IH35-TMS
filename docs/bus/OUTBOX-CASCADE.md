@@ -1,6 +1,6 @@
 # ★ OUTBOX-CASCADE · 2026-09-01 22:40 CT
 
-FORCE NOW | READ INBOX-CASCADE | GO-19 PASTE | NOW=unique FINDING · 01 mint claim STALE (GO-10 digits) | NEVER restamp U14 | GO
+FORCE NOW | STOP-LOADS | READ INBOX-CASCADE | unique FINDING only | NEVER tell seats to book | NEVER restamp U14 | GO
 
 **Paste:** docs/bus/PASTE-ALL-SEATS-NO-IDLE-2026-09-01.md
 

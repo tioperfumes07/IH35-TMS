@@ -1,6 +1,6 @@
 # OUTBOX-CC-2 · working log (archive older: `docs/bus/archive/OUTBOX-CC-2-2026-09-01.md`)
 
-FORCE NOW | READ INBOX-CC-2 | GO-19 PASTE | NOW=verify-live escrow after CC-1 · mint already digits · grep #19428 · NEVER remint | GO
+FORCE NOW | STOP-LOADS | READ INBOX-CC-2 | NEVER POST Book Load | NEVER create loads | NEVER sample | GO
 
 ---
 

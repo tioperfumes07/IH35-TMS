@@ -1,13 +1,14 @@
-# INBOX-DEVIN-A · 2026-09-01 22:40 CT · FORCE CHROME 12bfbd6
+# INBOX-DEVIN-A · 2026-09-01 22:50 CT · CHROME CANCEL ONLY
 
-Live API `healthz/shallow` **12bfbd6**. Hard-reload `https://app.ih35dispatch.com/dispatch`.
+**HARD:** NEVER POST Book Load. NEVER create a load. NEVER sample. Jorge owns first real book.
 
-**Paste:** `docs/bus/PASTE-ALL-SEATS-GO-19-2026-09-01.md`
+Hard-reload `https://app.ih35dispatch.com/dispatch`.
 
-1. USMCA · + Book Load.
+**Paste:** `docs/bus/PASTE-ALL-SEATS-STOP-NO-SEAT-LOADS-2026-09-01.md`
+
+1. Open + Book Load (Chrome only).
 2. `Laredo TX` → `Denton TX` — Practical **456.7** / Short **452.2**.
-3. Delivery **Chicago, IL** — boxes **empty**. Fill = FAIL stop.
-4. **Cancel.** No POST. No seat money.
-5. First real book waits owner typed seed number after 01 leftover (GET digits) deploys — seats do not POST.
+3. Delivery **Chicago, IL** — boxes **empty**.
+4. **CANCEL.** Abort any plan that POSTs. Browser dead = one unique FINDING, then idle.
 
-ACK `DEVIN-A | ACK | NOW=/dispatch 12bfbd6 Book Load Chrome · Laredo TX → Denton TX Practical 456.7 / Short 452.2 · Chicago IL EMPTY · CANCEL · no POST · no seat money · first real book waits owner typed seed number after 01 leftover (GET digits) deploys · NEVER invent GL | GO`
+ACK `DEVIN-A | ACK | STOP-POST | NOW=/dispatch Chrome Laredo TX → Denton TX 456.7/452.2 · Chicago IL EMPTY · CANCEL · NEVER POST Book Load · NEVER create load · NEVER sample · idle unique FINDING if browser dead | GO`
