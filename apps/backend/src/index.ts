@@ -228,6 +228,7 @@ import { registerSafetyDriverQualificationRoutes } from "./safety/driver-qualifi
 import { registerSafetyHosRoutes } from "./safety/hos.routes.js";
 import { registerSafetyHosViolationsRoutes } from "./routes/safety/hos-violations.js";
 import { registerSafetyIntegrityAlertsRoutes } from "./safety/integrity-alerts.routes.js";
+import { registerAccidentLiabilitiesRoutes } from "./safety/accident-liabilities.routes.js";
 import { registerSafetyDotInspectionsRoutes } from "./routes/safety/dot-inspections.js";
 import { registerSafetyCsaScoresRoutes } from "./routes/safety/csa-scores.js";
 import { registerSafetyComplaintsRoutes } from "./routes/safety/complaints.js";
@@ -1042,6 +1043,7 @@ async function main() {
   await registerSafetyIntegrityRoutes(app);
   await positionHistoryRoutes(app);
   await registerSafetyIntegrityAlertsRoutes(app);
+  await registerAccidentLiabilitiesRoutes(app);
   await registerSafetyMedicalCardsRoutes(app);
   await registerSafetyRemindersRoutes(app);
   await registerSafetyReportsRoutes(app);
