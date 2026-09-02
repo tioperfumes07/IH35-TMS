@@ -23,12 +23,16 @@ const LABEL = "verify-loaded-miles-written-on-book";
 const SVC = "apps/backend/src/dispatch/book-load.service.ts";
 const MODAL = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
 const STRIP = "apps/frontend/src/pages/dispatch/components/book-load-v4/MilesStrip.tsx";
+const ROUTES = "apps/backend/src/dispatch/loads.routes.ts";
+const HELPER = "apps/frontend/src/pages/dispatch/components/book-load-city-state.ts";
 
 function assert(files) {
   const problems = [];
   const src = files[SVC] ?? "";
   const modal = files[MODAL] ?? "";
   const strip = files[STRIP] ?? "";
+  const routes = files[ROUTES] ?? "";
+  const helper = files[HELPER] ?? "";
   const m = /INSERT INTO mdata\.loads\s*\(([\s\S]*?)\)\s*VALUES\s*\(([\s\S]*?)\)/i.exec(src);
   if (!m) return [`${SVC}: INSERT INTO mdata.loads anchor drifted`];
   const columns = m[1].split(",").map((c) => c.replace(/--[^\n]*/g, "").trim()).filter(Boolean);
@@ -85,6 +89,23 @@ function assert(files) {
   if (!/E_MILES_SHORTEST_REQUIRED/.test(src)) {
     problems.push(`${SVC}: must refuse book with seated driver when miles_shortest missing (E_MILES_SHORTEST_REQUIRED).`);
   }
+  if (!/resolveStopPlace/.test(modal) || !/originPlace\.city && originPlace\.state && destPlace\.city && destPlace\.state/.test(modal)) {
+    problems.push(
+      `${MODAL}: lane lookup must parse City "Laredo TX" into city+state — requiring the St picker left miles at 0 and Book toasted Enter practical miles before booking.`,
+    );
+  }
+  if (!/Choose the state on pickup and delivery so miles can fill from history/.test(modal)) {
+    problems.push(`${MODAL}: missing state must tell the operator why miles stayed empty`);
+  }
+  if (!/export function parseCityStateInput/.test(helper) || !/STATE_SUFFIX/.test(helper)) {
+    problems.push(`${HELPER}: must split "Laredo, TX" / "Laredo TX" so lookup can fire without the St picker`);
+  }
+  if (/lane_mileage_lookup_failed[\s\S]{0,500}match:\s*"New lane"/.test(routes)) {
+    problems.push(`${ROUTES}: lookup failure must not pretend New lane — Book then shows empty miles as a miss`);
+  }
+  if (!/reply\.code\(503\)\.send\(\{[\s\S]{0,180}lane_mileage_lookup_failed/.test(routes)) {
+    problems.push(`${ROUTES}: lookup failure must 503 so Book can say Could not load lane miles`);
+  }
   if (/uppercase/.test(strip) || /PC\*MILER/.test(strip) || /fuel and ETA/i.test(strip)) {
     problems.push(`${STRIP}: operator strip still teaches ALL CAPS, PC*MILER, or fuel/ETA — GO-16 Rev B forbids that.`);
   }
@@ -107,7 +128,7 @@ function assert(files) {
 }
 
 const files = Object.fromEntries(
-  [SVC, MODAL, STRIP].map((r) => [r, readFileSync(path.join(ROOT, r), "utf8")]),
+  [SVC, MODAL, STRIP, ROUTES, HELPER].map((r) => [r, readFileSync(path.join(ROOT, r), "utf8")]),
 );
 
 if (SELFTEST) {
@@ -146,6 +167,23 @@ if (SELFTEST) {
     [STRIP]: `${files[STRIP]}\n<span className="uppercase">PC*MILER</span>`,
   };
   checks.push(["uppercase / PC*MILER planted", assert(allCaps).some((p) => /ALL CAPS|PC\*MILER/.test(p))]);
+  const noParse = {
+    ...files,
+    [MODAL]: files[MODAL].replace(/resolveStopPlace/g, "rawStopPlace"),
+  };
+  checks.push(["city/state parse dropped", assert(noParse).some((p) => /Laredo TX/.test(p))]);
+  const swallowed = {
+    ...files,
+    [ROUTES]: files[ROUTES].replace(
+      /return reply\.code\(503\)\.send\(\{[\s\S]*?\}\);/,
+      `return { match: "New lane", provenance: "New lane. Enter the miles." };`,
+    ),
+  };
+  if (swallowed[ROUTES] === files[ROUTES]) {
+    console.error(`${LABEL} SELFTEST FAIL — could not plant the New-lane swallow mutation`);
+    process.exit(1);
+  }
+  checks.push(["lookup failure swallowed as New lane", assert(swallowed).some((p) => /must not pretend New lane/.test(p))]);
   const failed = checks.filter(([, c]) => !c).map(([n]) => n);
   if (failed.length) { console.error(`${LABEL} SELFTEST FAIL — not caught: ${failed.join(", ")}`); process.exit(1); }
   console.log(`${LABEL} SELFTEST PASS — ${checks.length}/${checks.length} planted regressions caught`);

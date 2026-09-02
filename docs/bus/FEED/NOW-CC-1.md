@@ -1,2 +1,2 @@
-# FEED NOW — CC-1 · 2026-09-01 18:06 CT
-FORCE NOW | READ INBOX-CC-1 | SETL+CA CLOSED #19374 | NOW=ESCROW-500-01 then LINKAGE-INTEGRITY-LAW | GO
+# FEED NOW — CC-1 · 2026-09-01 20:35 CT
+FORCE NOW | READ INBOX-CC-1 | escrow $500.01 owner-question only · no zero · bank 97.5% owner authors | GO

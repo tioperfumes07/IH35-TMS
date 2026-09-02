@@ -513,20 +513,10 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       );
     } catch (err) {
       req.log.warn({ err }, "lane_mileage_lookup_failed");
-      return {
-        practical_miles: null,
-        short_miles: null,
-        empty_miles: null,
-        runs: 0,
-        short_runs: null,
-        practical_spread: null,
-        confidence: null,
-        autofill_allowed: false,
-        match: "New lane",
-        provenance: "New lane. Enter the miles.",
-        matched_lane_id: null,
-        source: null,
-      };
+      return reply.code(503).send({
+        error: "lane_mileage_lookup_failed",
+        message: "Could not load lane miles. Type them, or retry.",
+      });
     }
   });
 

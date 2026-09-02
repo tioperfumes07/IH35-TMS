@@ -136,5 +136,8 @@ describe("lane-mileage HTTP", () => {
     expect(src.indexOf('app.get("/api/v1/dispatch/lane-mileage"')).toBeLessThan(
       src.indexOf('app.get("/api/v1/dispatch/loads/:id"')
     );
+    expect(src).toContain("lane_mileage_lookup_failed");
+    expect(src).toContain("reply.code(503)");
+    expect(src).not.toMatch(/lane_mileage_lookup_failed[\s\S]{0,500}match:\s*"New lane"/);
   });
 });
