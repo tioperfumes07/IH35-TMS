@@ -2,6 +2,8 @@
 
 `git pull --ff-only origin/main`
 
+Law: `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md`
+
 **FAST-MERGE ON (4 min).** Never `gh pr checks --watch`. Never POST Book Load.
 
 ## VOID

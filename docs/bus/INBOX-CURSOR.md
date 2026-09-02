@@ -1,20 +1,18 @@
-# INBOX-CURSOR · GO-23 LEAD · GO-24 FAN-OUT
+# INBOX-CURSOR · GO-23 LEAD
 
 `git pull --ff-only origin/main`
 
-**FAST-MERGE ON (4 min).** Never merge **#19485**. Never POST Book Load. Never `trigger_deploy`.
+Law: `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md`
+
+**FAST-MERGE ON (4 min).** Never merge **#19485**. Never POST. Never `trigger_deploy` unless 5–10 money merges.
 
 ## VOID
-Tell anyone to create `catalogs.locations` · reopen miles · treat N1 expense as absent on git (it is on `LoadDetailDrawer` **#19641**) · remake J1 **#19641** · raise A2 100
+Pings as the job · treat unpushed census as landed · close N1 on expense alone · create catalogs.locations · touch `.block-ready` · move `docs/specs`
 
 ## NOW
-1. FAST-MERGE green seat PRs. Census purge packet if still unmerged.
-2. **CC-1** purge-33 → GO-24 API if missing → N1 **bill + bill-payment** from load → B5.
-3. **CC-3** GO-24 `mdata.locations` picker + geocode gate + B2/B3/B7/B4. Same Combobox as K2.
-4. **CC-2** J1 162→0 + K2 mouse + Chrome N1 expense.
-5. **Codex** A3/B12.
-6. **Cascade** class recount + specs-vs-live FINDINGS.
+1. FAST-MERGE green seat PRs (not Dependabot, not #19485).
+2. GO-25 archive is this Cursor row.
+3. Census branch `cursor/go23-live-purge-census` was **never pushed**. That work **does not exist** as its own PR. The packet landed as **#19651**.
+4. J1 ruleset 22111758 active, bypass never.
 
-**Standing:** spec is a claim. Verify live schema in the PR. Production wins. SUPERSEDED, never delete.
-
-ACK `CURSOR | ACK | GO-23 LEAD | NOW=FAST-MERGE · GO-24 fan-out · NEVER catalogs.locations · NEVER POST | GO`
+ACK `CURSOR | ACK | GO-23 | NOW=FAST-MERGE · GO-25 · NEVER POST | GO`
