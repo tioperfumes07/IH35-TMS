@@ -8,18 +8,32 @@ import { ToastProvider } from "../../../components/Toast";
 import { getLaneMileage } from "../../../api/dispatch";
 import { BookLoadModalV4 } from "./BookLoadModalV4";
 
-// The customer field does NOT search-as-you-type: it is a `ReferenceSelect` fed by a react-query bulk
-// preload (`listCustomers({limit: 5000})`, queryKey "book-load-v4-customers"). This file used to mock
-// `searchQboMasterData` — a function BookLoadModalV4 does not reference at all (0 occurrences) — so the
-// spy could never fire and the D3-3 test failed on "expected vi.fn() to be called at least once" while
-// looking like a missing-customer-data bug. Mock the seam the component actually calls.
-const listCustomersMock = vi.fn().mockResolvedValue({
-  customers: [{ id: "61111111-1111-4111-8111-111111111111", name: "LIVE TEST CUSTOMER LLC" }],
-});
+// GO-21/GO-23 A2 (real fix): the customer field is a `ReferenceSelect` fed by the server's ranked
+// ?autocomplete=true search (searchCustomersAutocomplete, queryKey "book-load-v4-customers-
+// autocomplete") — was a plain listCustomers(limit: 200/500) page, same CLS-SILENT-CAP defect
+// fixed the same way as BookLoadCustomerSection.tsx (which is an orphan never rendered live —
+// this is the real, live picker). This file used to mock `searchQboMasterData` — a function
+// BookLoadModalV4 does not reference at all (0 occurrences) — so the spy could never fire and the
+// D3-3 test failed on "expected vi.fn() to be called at least once" while looking like a
+// missing-customer-data bug. Mock the seam the component actually calls.
+const searchCustomersAutocompleteMock = vi.fn().mockResolvedValue([
+  {
+    id: "61111111-1111-4111-8111-111111111111",
+    qbo_id: "",
+    display_name: "LIVE TEST CUSTOMER LLC",
+    primary_email: null,
+    primary_phone: null,
+    mc_number: null,
+    active: true,
+  },
+]);
 
 vi.mock("../../../api/mdata", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../api/mdata")>();
-  return { ...actual, listCustomers: (...args: unknown[]) => listCustomersMock(...args) };
+  return {
+    ...actual,
+    searchCustomersAutocomplete: (...args: unknown[]) => searchCustomersAutocompleteMock(...args),
+  };
 });
 
 vi.mock("../../../auth/useAuth", () => ({
