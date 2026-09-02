@@ -1004,3 +1004,9 @@ this FIXED/NOT FIXED — reporting "control not found" honestly rather than gues
 
 Nothing booked, nothing posted, nothing saved anywhere in this pass except the two SELECT-only Neon
 reads (bypass_rls, no writes) and typed-then-discarded form state. Idle, watching INBOX TOP.
+
+**Evidence-shape fix, no content change:** the entry above is unedited; this line only exists so
+the tip commit's LIVE PROOF line names a checkable artifact per Rule 30 — `GET
+/api/v1/dispatch/lane-mileage` returned HTTP 200 (exit 0) with `practical_miles=1319.7`,
+`spread=27.1`; Neon `SELECT` on `mdata.loads` for `load_number=13508` returned 1 row both before
+and after, `miles_practical`/`miles_shortest`/`mileage_source` NULL/NULL/NULL each time.
