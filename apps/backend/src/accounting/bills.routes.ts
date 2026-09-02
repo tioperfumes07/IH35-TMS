@@ -93,6 +93,9 @@ const createBillLineSchema = z.object({
   category_kind: z.string().trim().max(120).optional().nullable(),
   category_code: z.string().trim().max(120).optional().nullable(),
   load_id: z.string().uuid().optional().nullable(),
+  // GO-18 — mirrors expenses' identical field; the DB trigger (accounting.enforce_load_fk_invariant)
+  // enforces >=20 chars when this line's category requires a load and none was given.
+  load_exemption_reason: z.string().trim().min(20).max(2000).optional().nullable(),
 });
 
 const createBillBodySchema = z.object({
@@ -109,6 +112,10 @@ const createBillBodySchema = z.object({
   // HARD cross-module link (maintenance): persist the WO + unit id as a real FK, not just a memo string.
   work_order_id: z.string().uuid().optional().nullable(),
   unit_id: z.string().uuid().optional().nullable(),
+  // GO-18 (design docs/lockdown/GO-18-LOAD-COSTS-DESIGN.md §3.5) — bill header parity with
+  // accounting.expenses' driver_uuid/trailer_id (migration 202613360001).
+  driver_id: z.string().uuid().optional().nullable(),
+  trailer_id: z.string().uuid().optional().nullable(),
   insurance_claim_id: z.string().uuid().optional().nullable(),
   // ACCT-F5042 — Legal Matter → cost forward FK (reverse API already filtered on this column).
   legal_matter_id: z.string().uuid().optional().nullable(),
@@ -414,6 +421,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           coaAccountId: body.data.coa_account_id,
           workOrderId: body.data.work_order_id,
           unitId: body.data.unit_id,
+          driverId: body.data.driver_id,
+          trailerId: body.data.trailer_id,
           insuranceClaimId: body.data.insurance_claim_id,
           legalMatterId: body.data.legal_matter_id,
           classId: body.data.class_id,
@@ -430,6 +439,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
             categoryKind: line.category_kind,
             categoryCode: line.category_code,
             loadId: line.load_id,
+            loadExemptionReason: line.load_exemption_reason,
           })),
         },
         String(user.uuid)
