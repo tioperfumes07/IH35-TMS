@@ -1,3 +1,11 @@
+// C6-MONEY-JE-EXEMPT: the driver_finance.escrow_ledger row inserted in releaseDriverEscrowSeparation
+// is the DRIVER-FACING MIRROR of a GL release already posted, on the SAME client/transaction,
+// moments earlier via releaseEscrowOnClient (accounting/escrow/service.ts) — traced the real call
+// chain before exempting: releaseEscrowOnClient -> postEscrowTransactionOnClient ->
+// createJournalEntryOnClient (a POSTER_RE match), confirmed live in the source, not assumed from
+// the function name. See ACCT-F5644/ESC-SEPARATION-SPLIT comments below for why both stores must
+// reconcile in one transaction. Verified 2026-09-02, GO-23 C6.
+//
 // BLOCK-02 — Driver Escrow: >=90-day post-separation return path.
 //
 // Reuses the EXISTING Block-23 escrow ledger/posting engine end-to-end (accounting/escrow/service.ts's

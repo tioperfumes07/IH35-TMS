@@ -2,7 +2,7 @@
 // 'pending'/'approved', applied_to_settlement_id NULL); it only becomes a real cash-affecting
 // event via applyApprovedAbandonmentChargebacksToSettlement's settlement_lines insert below, which
 // is itself a settlement-scoped LINE item — the settlement HEADER posts the one aggregate balanced
-// JE at finalize via settlement-posting.service.ts's postSettlementToGl (verified 2026-09-02, C6).
+// JE at finalize via settlement-payrun-close.service.ts's closeSettlementPayRun (createJournalEntry) -- CORRECTED 2026-09-02: postSettlementToGl was RETIRED (SET-01, 2026-07-26), never live in prod (verified 2026-09-02, C6).
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };

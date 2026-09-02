@@ -1,6 +1,6 @@
 // C6-MONEY-JE-EXEMPT: driver_settlement_deductions rows here are approved-but-unapplied
 // (applied_to_settlement_id NULL), not an independent cash movement. The settlement HEADER posts
-// one aggregate balanced JE at finalize via settlement-posting.service.ts's postSettlementToGl
+// one aggregate balanced JE at finalize via settlement-payrun-close.service.ts's closeSettlementPayRun (createJournalEntry) -- CORRECTED 2026-09-02: postSettlementToGl was RETIRED (SET-01, 2026-07-26), never live in prod
 // (verified 2026-09-02, GO-23 C6 shrink).
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
