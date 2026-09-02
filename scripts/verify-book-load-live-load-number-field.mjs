@@ -13,7 +13,7 @@ const src = readFileSync(modalPath, "utf8");
 
 const failures = [];
 
-if (!src.includes('register("live_load_number")')) {
+if (!/form\.register\(\s*["']live_load_number["']/.test(src)) {
   failures.push("BookLoadModalV4 missing form.register live_load_number");
 }
 if (!src.includes("data-testid=\"book-load-live-load-number\"")) {
@@ -24,8 +24,8 @@ if (!src.includes("live_load_number: values.live_load_number")) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const bad = src.replace("book-load-live-load-number", "removed-testid");
-  if (bad.includes("book-load-live-load-number")) {
+  const bad = src.replace(/form\.register\(\s*["']live_load_number["']/, "form.register('removed'");
+  if (/form\.register\(\s*["']live_load_number["']/.test(bad)) {
     console.error("selftest: could not plant failure");
     process.exit(1);
   }
