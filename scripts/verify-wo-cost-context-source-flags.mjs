@@ -19,6 +19,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ROUTE = "apps/backend/src/maintenance/wo-cost-context.routes.ts";
 const FE_API = "apps/frontend/src/api/maintenance.ts";
 const FE_PAGE = "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx";
+const FE_EDITOR = "apps/frontend/src/components/forms/TwoSectionLineEditor.tsx";
+const FE_BOX = "apps/frontend/src/components/forms/shared/CostBreakdownBox.tsx";
+const PHANTOM_PRISMA = "apps/backend/prisma/migrations/0250_create_inventory_parts_table/migration.sql";
 const LABEL = "verify-wo-cost-context-source-flags";
 
 function check(root = ROOT) {
@@ -54,6 +57,35 @@ function check(root = ROOT) {
     errors.push(`${FE_PAGE}: must read sources.inventory_parts`);
   }
 
+  const editor = fs.readFileSync(path.join(root, FE_EDITOR), "utf8");
+  if (!/sources\?\.inventory_parts|sources\.inventory_parts/.test(editor)) {
+    errors.push(`${FE_EDITOR}: must read sources.inventory_parts.status from wo-cost-context`);
+  }
+  if (!/sources\?\.labor_rates|sources\.labor_rates/.test(editor)) {
+    errors.push(`${FE_EDITOR}: must read sources.labor_rates.status from wo-cost-context`);
+  }
+  if (!/partsCatalogStatus|partsCatalogStatus === "unavailable"/.test(editor)) {
+    errors.push(`${FE_EDITOR}: must gate partOptions on parts catalog status (unavailable ≠ empty list)`);
+  }
+  if (!/laborRatesCatalogStatus|laborRatesCatalogStatus === "unavailable"/.test(editor)) {
+    errors.push(`${FE_EDITOR}: must gate laborRateOptions on labor rates catalog status`);
+  }
+
+  const box = fs.readFileSync(path.join(root, FE_BOX), "utf8");
+  if (!/not provisioned/i.test(box)) {
+    errors.push(`${FE_BOX}: must surface "not provisioned" when catalog status === unavailable`);
+  }
+  if (!/partsCatalogStatus === "unavailable"/.test(box)) {
+    errors.push(`${FE_BOX}: must branch parts picker on partsCatalogStatus unavailable`);
+  }
+  if (!/laborRatesCatalogStatus === "unavailable"/.test(box)) {
+    errors.push(`${FE_BOX}: must branch labor picker on laborRatesCatalogStatus unavailable`);
+  }
+
+  if (fs.existsSync(path.join(root, PHANTOM_PRISMA))) {
+    errors.push(`${PHANTOM_PRISMA}: GO-20 F forbids inventory.parts phantom Prisma migration — delete it`);
+  }
+
   return errors;
 }
 
@@ -63,12 +95,18 @@ function selftest() {
     const routeDir = path.join(tmp, "apps/backend/src/maintenance");
     const apiDir = path.join(tmp, "apps/frontend/src/api");
     const pageDir = path.join(tmp, "apps/frontend/src/pages/maintenance");
+    const editorDir = path.join(tmp, "apps/frontend/src/components/forms");
+    const boxDir = path.join(tmp, "apps/frontend/src/components/forms/shared");
     fs.mkdirSync(routeDir, { recursive: true });
     fs.mkdirSync(apiDir, { recursive: true });
     fs.mkdirSync(pageDir, { recursive: true });
+    fs.mkdirSync(editorDir, { recursive: true });
+    fs.mkdirSync(boxDir, { recursive: true });
     fs.copyFileSync(path.join(ROOT, ROUTE), path.join(tmp, ROUTE));
     fs.copyFileSync(path.join(ROOT, FE_API), path.join(tmp, FE_API));
     fs.copyFileSync(path.join(ROOT, FE_PAGE), path.join(tmp, FE_PAGE));
+    fs.copyFileSync(path.join(ROOT, FE_EDITOR), path.join(tmp, FE_EDITOR));
+    fs.copyFileSync(path.join(ROOT, FE_BOX), path.join(tmp, FE_BOX));
     // Mutate: strip sources return — the pre-fix silent-skip shape.
     let route = fs.readFileSync(path.join(tmp, ROUTE), "utf8");
     route = route.replace(/sources:\s*\{[\s\S]*?\},?\n/, "");

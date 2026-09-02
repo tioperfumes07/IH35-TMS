@@ -462,4 +462,44 @@ describe("CostBreakdownBox", () => {
     const next = onSectionBChange.mock.lastCall?.[0] as ItemLine[];
     expect(next[0].sub_rows).toHaveLength(0);
   });
+
+  it("shows not-provisioned notice for parts when catalog status is unavailable", () => {
+    const line = makeItem({
+      sub_rows: [{ id: "part-row", line_type: "parts", description: "", quantity: 1, unit_cost: 0, amount: 0, part_location_codes: [] }],
+    });
+    render(
+      <CostBreakdownBox
+        sectionA={{ lines: [] }}
+        sectionB={{ lines: [line] }}
+        partsLaborMode="parts-and-labor"
+        partsCatalogStatus="unavailable"
+        partOptions={[]}
+        onSectionAChange={vi.fn()}
+        onSectionBChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId("wo-parts-catalog-not-provisioned")).toHaveTextContent(/Parts catalog not provisioned/i);
+    expect(screen.queryByText("Select part...")).not.toBeInTheDocument();
+  });
+
+  it("shows not-provisioned notice for labor rates when catalog status is unavailable", () => {
+    const line = makeItem({
+      sub_rows: [{ id: "labor-row", line_type: "labor", description: "", quantity: 1, unit_cost: 0, amount: 0 }],
+    });
+    render(
+      <CostBreakdownBox
+        sectionA={{ lines: [] }}
+        sectionB={{ lines: [line] }}
+        partsLaborMode="parts-and-labor"
+        laborRatesCatalogStatus="unavailable"
+        laborRateOptions={[]}
+        onSectionAChange={vi.fn()}
+        onSectionBChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId("wo-labor-rates-catalog-not-provisioned")).toHaveTextContent(/Labor rates catalog not provisioned/i);
+    expect(screen.queryByText("Select labor rate…")).not.toBeInTheDocument();
+  });
 });
