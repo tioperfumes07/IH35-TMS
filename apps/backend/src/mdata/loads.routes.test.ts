@@ -219,15 +219,22 @@ describe("mdata loads routes", () => {
 
   it("PATCH /api/v1/mdata/loads/:id/status blocks non-Owner cancel when reason requires owner approval", async () => {
     const loadId = "22222222-2222-4222-8222-222222222222";
+    const companyId = "11111111-1111-4111-8111-111111111111";
     queryMock.mockImplementation(async (sql: string, params?: unknown[]) => {
+      // loadDetailQuerySchema requires ?operating_company_id=...; assertCompanyMembership then
+      // makes its own org.companies lookup (a second, nested withCurrentUser call per
+      // company-membership-guard.ts) before the route's own load-scoped query ever runs.
+      if (sql.includes("FROM org.companies")) {
+        return { rows: [{ "?column?": 1 }], rowCount: 1 };
+      }
       if (sql.includes("FROM mdata.loads") && sql.includes("SELECT id, status")) {
         return {
-          rows: [{ id: loadId, status: "assigned", operating_company_id: "11111111-1111-4111-8111-111111111111" }],
+          rows: [{ id: loadId, status: "assigned", operating_company_id: companyId }],
         };
       }
       if (sql.includes("FROM catalogs.load_cancellation_reasons")) {
         expect(params?.[0]).toBe("DRIVER_WALKOFF");
-        expect(params?.[1]).toBe("11111111-1111-4111-8111-111111111111");
+        expect(params?.[1]).toBe(companyId);
         return { rows: [{ reason_code: "DRIVER_WALKOFF", requires_owner_approval: true }] };
       }
       if (sql.includes("UPDATE mdata.loads")) {
@@ -239,7 +246,7 @@ describe("mdata loads routes", () => {
     const app = await buildApp("Dispatcher");
     const response = await app.inject({
       method: "PATCH",
-      url: `/api/v1/mdata/loads/${loadId}/status`,
+      url: `/api/v1/mdata/loads/${loadId}/status?operating_company_id=${companyId}`,
       payload: {
         new_status: "cancelled",
         cancellation_reason_code: "DRIVER_WALKOFF",
@@ -253,10 +260,14 @@ describe("mdata loads routes", () => {
 
   it("PATCH /api/v1/mdata/loads/:id/status allows Owner cancel for approval-required reason", async () => {
     const loadId = "33333333-3333-4333-8333-333333333333";
+    const companyId = "11111111-1111-4111-8111-111111111111";
     queryMock.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM org.companies")) {
+        return { rows: [{ "?column?": 1 }], rowCount: 1 };
+      }
       if (sql.includes("FROM mdata.loads") && sql.includes("SELECT id, status")) {
         return {
-          rows: [{ id: loadId, status: "assigned", operating_company_id: "11111111-1111-4111-8111-111111111111" }],
+          rows: [{ id: loadId, status: "assigned", operating_company_id: companyId }],
         };
       }
       if (sql.includes("FROM catalogs.load_cancellation_reasons")) {
@@ -267,7 +278,7 @@ describe("mdata loads routes", () => {
           rows: [
             {
               id: loadId,
-              operating_company_id: "11111111-1111-4111-8111-111111111111",
+              operating_company_id: companyId,
               load_number: "L-100",
               customer_id: "44444444-4444-4444-8444-444444444444",
               status: "cancelled",
@@ -287,13 +298,20 @@ describe("mdata loads routes", () => {
           ],
         };
       }
+      // writeLoadCancellationRecord (dispatch/cancellation.service.ts) runs after the status
+      // UPDATE succeeds and throws E_CANCELLATION_RECORD_WRITE_FAILED (-> 500) if this INSERT
+      // doesn't come back with an id -- a real second write the earlier version of this test
+      // never mocked.
+      if (sql.includes("INSERT INTO dispatch.load_cancellations")) {
+        return { rows: [{ id: "55555555-5555-4555-8555-555555555555", status: "approved" }] };
+      }
       return { rows: [] };
     });
 
     const app = await buildApp("Owner");
     const response = await app.inject({
       method: "PATCH",
-      url: `/api/v1/mdata/loads/${loadId}/status`,
+      url: `/api/v1/mdata/loads/${loadId}/status?operating_company_id=${companyId}`,
       payload: {
         new_status: "cancelled",
         cancellation_reason_code: "DRIVER_WALKOFF",
