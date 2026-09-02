@@ -15,6 +15,8 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../../components/ListErrorState";
 import type { EntityPickerOption } from "../../../components/parity/entityPickerRegistry";
+import { InterchangeTrailerPicker } from "./book-load-v4/InterchangeTrailerPicker";
+import type { NonOwnedTrailer } from "../../../api/dispatch";
 
 type Props = {
   register: UseFormRegister<any>;
@@ -53,6 +55,11 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   const [secondaryDriverOption, setSecondaryDriverOption] = useState<EntityPickerOption | null>(null);
   const [unitOption, setUnitOption] = useState<EntityPickerOption | null>(null);
   const [trailerOption, setTrailerOption] = useState<EntityPickerOption | null>(null);
+  // GO-23 A1 — trailer source: our own fleet OR an interchange (non-owned) trailer, never both.
+  // trailer_source defaults to "owned" so every existing load's behavior is unchanged.
+  const trailerSource = watch ? (String(watch("trailer_source") ?? "owned") as "owned" | "interchange") : "owned";
+  const interchangeTrailerId = watch ? String(watch("interchange_trailer_id") ?? "") : "";
+  const [interchangeTrailerOption, setInterchangeTrailerOption] = useState<NonOwnedTrailer | null>(null);
   // AUTHGATE-PANEL-MISSING-ENTITY-LABELS: lift the resolved labels up so BookLoadModalV4's separate
   // <AuthGatePanel> can pass real names instead of leaving EntityLinkOrTombstone id-only.
   useEffect(() => {
@@ -154,22 +161,62 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           }
         />
         <Field
-          label="Trailer unit"
+          label="Trailer"
           input={
-            <EntityPicker
-              kind="trailer"
-              operatingCompanyId={operatingCompanyId ?? ""}
-              value={assignedTrailerUnitId || null}
-              onChange={(next, option) => {
-                setTrailerOption(option ?? null);
-                setValue?.("assigned_trailer_unit_id", next ?? "", { shouldDirty: true });
-              }}
-              onSelectedOptionResolved={setTrailerOption}
-              className="h-7 w-full text-xs"
-              placeholder={operatingCompanyId ? "Select trailer unit" : "Select company first"}
-              dataField="assigned_trailer_unit_id"
-              disabled={!operatingCompanyId}
-            />
+            <div className="space-y-1">
+              {/* GO-23 A1: our trailer XOR an interchange trailer — never both. Switching source
+                  clears the other field so exactly one FK can ever be set. */}
+              <div className="inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]" data-testid="trailer-source-toggle">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setValue?.("trailer_source", "owned", { shouldDirty: true });
+                    setValue?.("interchange_trailer_id", "", { shouldDirty: true });
+                    setInterchangeTrailerOption(null);
+                  }}
+                  className={`px-2 ${trailerSource === "owned" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+                >
+                  Our trailer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setValue?.("trailer_source", "interchange", { shouldDirty: true });
+                    setTrailerOption(null);
+                    setValue?.("assigned_trailer_unit_id", "", { shouldDirty: true });
+                  }}
+                  className={`border-l border-gray-300 px-2 ${trailerSource === "interchange" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+                >
+                  Interchange trailer
+                </button>
+              </div>
+              {trailerSource === "owned" ? (
+                <EntityPicker
+                  kind="trailer"
+                  operatingCompanyId={operatingCompanyId ?? ""}
+                  value={assignedTrailerUnitId || null}
+                  onChange={(next, option) => {
+                    setTrailerOption(option ?? null);
+                    setValue?.("assigned_trailer_unit_id", next ?? "", { shouldDirty: true });
+                  }}
+                  onSelectedOptionResolved={setTrailerOption}
+                  className="h-7 w-full text-xs"
+                  placeholder={operatingCompanyId ? "Select trailer unit" : "Select company first"}
+                  dataField="assigned_trailer_unit_id"
+                  disabled={!operatingCompanyId}
+                />
+              ) : (
+                <InterchangeTrailerPicker
+                  operatingCompanyId={operatingCompanyId ?? ""}
+                  value={interchangeTrailerId || null}
+                  onChange={(next, trailer) => {
+                    setInterchangeTrailerOption(trailer);
+                    setValue?.("interchange_trailer_id", next ?? "", { shouldDirty: true });
+                  }}
+                  disabled={!operatingCompanyId}
+                />
+              )}
+            </div>
           }
         />
       </div>
@@ -182,7 +229,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       ) : null}
       {/* Exact Leaves dispatch.parity.book_load_equipment_section:driver|unit|trailer —
           pickers alone leave selected identities non-navigable; expose EntityLinks. */}
-      {assignedUnitId || assignedTrailerUnitId || primaryDriverId || secondaryDriverId ? (
+      {assignedUnitId || assignedTrailerUnitId || interchangeTrailerId || primaryDriverId || secondaryDriverId ? (
         <div
           className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600"
           data-testid="book-load-equipment-selected-entitylinks"
@@ -208,6 +255,15 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
             <span data-testid="book-load-equipment-trailer-link">
               Trailer:{" "}
               <EntityLinkOrTombstone kind="trailer" id={assignedTrailerUnitId} name={trailerOption?.label ?? null} noun="Trailer" />
+            </span>
+          ) : null}
+          {interchangeTrailerId ? (
+            // Plain English Law: never render the raw non_owned_trailer_id — no EntityLink kind
+            // exists for it yet. interchangeTrailerOption is set synchronously by the picker's own
+            // onChange, so this only ever shows a human label, never a bare UUID.
+            <span data-testid="book-load-equipment-interchange-trailer-summary">
+              Interchange trailer: {interchangeTrailerOption?.trailer_number ?? "selected"}
+              {interchangeTrailerOption?.counterparty_name ? ` (${interchangeTrailerOption.counterparty_name})` : ""}
             </span>
           ) : null}
         </div>

@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createDispatchLoad, getLaneMileage } from "../../../api/dispatch";
+import { createDispatchLoad, createTrailerInterchange, getLaneMileage } from "../../../api/dispatch";
 import { resolveStopPlace } from "./book-load-city-state";
 import { listAllDispatchCatalogRows, loadTypesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
 import { ApiError } from "../../../api/client";
@@ -91,6 +91,9 @@ type FormValues = BookLoadFormValues & {
   load_trailer_equipment_id: string;
   assigned_unit_id: string;
   assigned_trailer_unit_id: string;
+  /** GO-23 A1 — our trailer XOR an interchange (non-owned) trailer, never both. */
+  trailer_source: "owned" | "interchange";
+  interchange_trailer_id: string;
   assignment_mode: "solo" | "team";
   team_id: string;
   assigned_primary_driver_id: string;
@@ -322,6 +325,8 @@ export function BookLoadModalV4({
       load_trailer_equipment_id: "",
       assigned_unit_id: prefillUnitId ?? "",
       assigned_trailer_unit_id: "",
+      trailer_source: "owned",
+      interchange_trailer_id: "",
       assignment_mode: "solo",
       team_id: "",
       assigned_primary_driver_id: prefillDriverId ?? "",
@@ -1065,6 +1070,16 @@ export function BookLoadModalV4({
       }
       const createdId = String((payload as { id?: string }).id ?? "");
       const createdLabel = String((payload as { load_number?: string }).load_number ?? "") || undefined;
+      // GO-23 A1 — trailer_interchanges.load_id is a real FK, so this can only be created AFTER the
+      // load itself exists. The load is already committed at this point regardless of outcome here;
+      // a failure to attach the interchange record must not be reported as a failed save.
+      if (values.trailer_source === "interchange" && values.interchange_trailer_id && createdId) {
+        try {
+          await createTrailerInterchange(operatingCompanyId, createdId, values.interchange_trailer_id);
+        } catch {
+          pushToast("Load booked, but the interchange trailer link failed to save — attach it from the load.", "error");
+        }
+      }
       const proof = (payload as { save_proof?: LoadSaveProof }).save_proof;
       if (proof && createdId) {
         setSaveProof(proof);
