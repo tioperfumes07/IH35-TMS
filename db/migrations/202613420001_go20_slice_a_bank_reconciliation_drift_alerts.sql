@@ -8,6 +8,13 @@
 -- column the spec's WHAT EXISTS section names. No tolerance setting existed anywhere -- the spec
 -- says "Tolerance lives in a setting, not a constant... Owner editable per bank account", so it is
 -- added directly on banking.bank_accounts (the natural per-account home) rather than a global flag.
+--
+-- CANONICAL-CHECK: banking.reconciliation_matches and banking.reconciliation_sessions are the
+-- canonical RECONCILIATION LEDGER (which bank rows cleared which book rows, and the session that
+-- closed them). banking.reconciliation_drift_alerts is not a second ledger: it is a WATCH/ALERT
+-- queue. It records that bank and books disagree beyond tolerance. Resolving an alert MAY create a
+-- journal entry elsewhere (resolving_journal_entry_id is a pointer only). This table never posts,
+-- never matches a transaction, and never closes a session.
 
 BEGIN;
 
