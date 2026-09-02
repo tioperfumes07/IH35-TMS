@@ -192,3 +192,4 @@ profitability live, frontend page "Company Settlements" reachable from Reports s
 Wave 2/3 CC-1 lane is CLEAR. NOW = Wave 6 row 21 (L4/L6: TRK -> USMCA lease at monthly x 1.16; the
 $10,000 unaccounted EDSA down payment) -- investigating live before building. TONU stays HOLD.
 Never POST Book Load.
+CC-1 | ACK | GO-23 | NOW=purge-33 · GO-24 API if missing · N1 bill+bill-payment from load · B5 · NEVER locations table · NEVER POST | GO
