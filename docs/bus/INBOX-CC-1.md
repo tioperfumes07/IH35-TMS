@@ -4,9 +4,23 @@
 
 **FAST-MERGE ON.** Never POST Book Load. USMCA only. **GO NOW — Gate 0 is yours.**
 
-## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY — ROOT CAUSE SETTLED (2026-09-02)
+## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY — JORGE LAW (2026-09-02)
 
-**Do NOT build driver-pay-per-mile on `catalogs.lane_mileage.short_miles` until Jorge picks remediation.**
+**Exact law text (owner ruling — supersedes interim "pay practical+empty" advice):**
+
+```
+Driver pay = ALWAYS short miles. NEVER practical.
+Practical = customer rate / RPM only.
+If the driver drives more than short, that is the driver's problem.
+Empty/deadhead stays company cost: Company CPM = cost/(practical+empty). Customer RPM = rate/practical.
+
+short_miles is untrustworthy on 66% of History lanes (often practical+deadhead artifact).
+STOP auto-paying from catalog short until inverted shorts are corrected or replaced —
+but the definition of pay basis remains short miles, not practical+empty.
+Do NOT change product law to pay on practical. Fix the data so short means shortest route again.
+Remediation must restore short = shortest (PC*MILER, re-key, or quarantine inverted rows so operator types short) — Jorge picks. No mass-swap.
+Wizard must flag short>practical and require operator confirm/override typed short.
+```
 
 **Root cause (settled — NOT a column swap):** Ingest `scripts/ops/seed-lane-mileage.mjs` maps CSV→column 1:1. Data arrived that way. Same column = **two meanings by row** — worse than a swap; no single transform fixes it.
 
@@ -15,19 +29,15 @@
 - Other 1,095 lanes: short = shortest route (correct)
 - Indy→Laredo: 1319.7+207.6=1527.3 vs short 1478.1 (off ~49 ≈ avg gap)
 
-**Owner cost model (LOCKED):**
-- Customer RPM = rate / practical (loaded only) — NEVER fold empty into practical
-- Company CPM = cost / (practical + empty) — deadhead is real cost
-- Until resolved: pay from `practical + empty` explicitly, never `short`
-
 **Your order — IN ORDER:**
 1. ~~Read ingest script~~ **DONE** — no swap; dual semantics confirmed.
-2. **Propose remediation options for Jorge** — do NOT mass-transform without owner pick:
-   - **(a)** Deprecate short_miles for pay; use practical+empty
-   - **(b)** Null/quarantine inverted shorts (short > practical)
-   - **(c)** PC*MILER recompute when live — owner decides scope
+2. **Propose remediation options for Jorge** — restore short = shortest; do NOT mass-transform without owner pick:
+   - **(a)** PC*MILER recompute shortest route when live — owner decides scope
+   - **(b)** Re-key inverted rows (correct short re-entry)
+   - **(c)** Null/quarantine inverted shorts (short > practical; operator types short at book)
 3. Do **NOT** mass-swap (corrupts 1,095 OK lanes).
-4. Wizard must show practical/short/empty and **flag on screen when short > practical**.
+4. **STOP** auto-fill pay from catalog short until data fixed.
+5. Wizard must show practical/short/empty, **flag when short > practical**, require operator confirm/override typed short.
 
 Gate 0 **unaffected** — purge, reseed 13557, drop B- proceed in parallel.
 

@@ -4,13 +4,13 @@
 
 **FAST-MERGE ON.** Never POST Book Load. USMCA only.
 
-## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY (2026-09-02)
+## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY — JORGE LAW (2026-09-02)
 
-**Cursor correction acknowledged:** MilesStrip "short includes empty" copy was **wrong**. Indy→Laredo inverted (2,142/3,237 lanes short>practical). **STOP-BEFORE-PAY** on any driver-pay-per-mile using `short_miles`.
+**Driver pay = ALWAYS short miles. NEVER practical.** MilesStrip "short includes empty" copy was **wrong**. Indy→Laredo inverted (2,142/3,237 lanes short>practical). **STOP auto-fill pay from catalog short** until data fixed — pay basis stays short, not practical+empty.
 
-**Owner cost model (LOCKED):** Customer RPM = rate/practical · Company CPM = cost/(practical+empty) · empty avg 251.9 on 2,398 lanes.
+**Owner law (LOCKED):** Customer RPM = rate/practical · Company CPM = cost/(practical+empty) · driver pay = short miles · overage = driver's problem · empty avg 251.9 on 2,398 lanes.
 
-CC-1 owns ingest investigation (no mass-swap). Gate 0 unaffected. Optional Gate 1 FE after bus lands: wizard flag when short>practical — **no pay math change**.
+CC-1 owns remediation (restore short = shortest; no mass-swap). Gate 0 unaffected. Optional Gate 1 FE: wizard flag when short>practical + operator confirm/override typed short.
 
 Canonical: `docs/bus/MILES-INVERT-01-STOP-BEFORE-PAY-2026-09-02.md`
 
@@ -35,8 +35,8 @@ Jorge UNLOCKED full capacity. WAIT is over. Reconciliation with Claude is CLOSED
    Gate 4.2 — Company settlement table (blocked on 2.1).
    GO-07 KPI drill-through: DispatchOverview.tsx:277 double-counts atRisk+late.
 
-4. MILES-INVERT-01 (STOP-BEFORE-PAY): short_miles is NOT driver pay. CC-1 owns ingest
-   investigation. Optional Gate 1 FE: flag when short>practical — no pay math change.
+4. MILES-INVERT-01 (STOP-BEFORE-PAY): driver pay = short miles always. STOP catalog short
+   auto-fill until data fixed. CC-1 owns remediation. Optional Gate 1 FE: flag + operator confirm.
 
 5. FINDING queued for CC-1 after Gate 0: cancel-load cascade — default pre-checked,
    list each record by number with checkbox, typed reason if unchecked.

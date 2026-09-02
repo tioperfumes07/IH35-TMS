@@ -45,41 +45,51 @@ Do **NOT** mass-swap columns where `short > practical` — that would corrupt **
 
 ---
 
-## Owner cost model (LOCKED everywhere)
+## Owner law — driver pay + cost model (LOCKED 2026-09-02 · Jorge ruling supersedes interim advice)
 
-| Metric | Formula | Notes |
-|---|---|---|
+| Rule | Law |
+|---|---|
+| **Driver pay basis** | **ALWAYS `short_miles`. NEVER practical.** Pay-per-mile uses shortest route only. |
+| **Driver overage** | If the driver drives more than short, that is the **driver's problem** — not company pay. |
 | **Customer RPM** | `rate / practical_miles` | Loaded miles only. **NEVER** fold empty into practical. |
-| **Company CPM** | `cost / (practical_miles + empty_miles)` | Deadhead is real cost. |
+| **Company CPM** | `cost / (practical_miles + empty_miles)` | Deadhead is **company cost**, not driver pay. |
 | **Empty miles** | Already on **2,398 lanes**, avg **251.9** | Wire into cost view; do not hide behind short. |
+| **Practical miles** | Customer rate / RPM only. **Not** driver pay. |
+
+**Do NOT change product law to pay on practical+empty.** Fix the data so `short_miles` means shortest route again.
 
 ---
 
 ## STOP-BEFORE-PAY (all seats)
 
-**Do NOT build any driver-pay-per-mile on `catalogs.lane_mileage.short_miles` until Jorge picks a remediation path.**
+**`short_miles` is untrustworthy on 66% of History lanes** (often a practical+deadhead artifact). Therefore:
 
-Until resolved, driver pay math = **`practical_miles + empty_miles` explicitly** — never `short_miles`.
+**STOP auto-paying from catalog `short_miles` until inverted shorts are corrected or replaced.**
+
+- Do **NOT** auto-fill driver pay miles from catalog `short_miles` while corrupted rows remain.
+- The **definition** of pay basis remains **short miles** — not practical, not practical+empty.
+- **Wizard must flag** when `short > practical` and **require operator confirm/override** with a typed short before pay miles lock.
 
 ---
 
-## CC-1 owns finding — ingest confirmed, next step is owner pick
+## CC-1 owns finding — ingest confirmed, remediation restores short = shortest
 
 **Ingest read (confirmed):** `scripts/ops/seed-lane-mileage.mjs` lines 148–186 — CSV `practical_miles` → `practical_miles`, `short_miles` → `short_miles`, `empty_miles` → `empty_miles`. No column swap. Data arrived with dual semantics.
 
-**Propose remediation options for Jorge — do NOT mass-transform without owner pick:**
+**Remediation must restore `short_miles` = shortest route. Jorge picks path — do NOT mass-transform without owner pick:**
 
 | Option | Description |
 |---|---|
-| **(a)** | Deprecate `short_miles` for pay; use `practical + empty` explicitly everywhere |
-| **(b)** | Null/quarantine inverted shorts (flag rows where `short > practical`) |
-| **(c)** | PC*MILER recompute when live — owner decides scope/timing |
+| **(a)** | PC*MILER recompute shortest route when live — owner decides scope/timing |
+| **(b)** | Re-key inverted rows (operator or scripted re-entry of correct short) |
+| **(c)** | Null/quarantine inverted shorts (flag rows where `short > practical`; operator types short at book) |
 
 **Still locked regardless of option picked:**
 
 1. **Do NOT mass-swap** where `short_miles > practical_miles`.
-2. **Until resolved:** driver pay = `practical_miles + empty_miles` **explicitly**, never `short_miles`.
-3. **Wizard must show** practical / short / empty and **flag on screen when short > practical**.
+2. **Driver pay = `short_miles` always** — never practical, never practical+empty.
+3. **Until data fixed:** do **NOT** auto-fill pay from catalog short; wizard flags `short > practical` and requires operator confirm/override typed short.
+4. **Wizard must show** practical / short / empty on screen.
 
 ---
 
@@ -93,10 +103,10 @@ Purge, reseed **13557**, drop **B-** — all proceed. This finding does **not** 
 
 | Seat | Action |
 |---|---|
-| **CC-1** | Propose remediation options (a/b/c) for Jorge. Gate 0 purge continues in parallel. No mass transform. |
+| **CC-1** | Remediation options (a/b/c) restore short = shortest. Gate 0 purge continues in parallel. No mass transform. |
 | **CC-2** | Chrome-prove 13508 miles with flag visible. Do not verify "short includes empty" copy. |
-| **CURSOR** | Bus fan-out done. Optional Gate 1 FE: wizard flag when `short > practical` (no pay math change). |
-| **CODEX** | Costs tab: use practical + empty for CPM; never short for driver pay. Blocked on Jorge pick for pay-per-mile. |
+| **CURSOR** | Bus fan-out done. Optional Gate 1 FE: wizard flag + operator confirm when `short > practical`. |
+| **CODEX** | Costs tab: CPM = cost/(practical+empty). Driver pay = short miles (never practical). Blocked on catalog short auto-fill until data fixed. |
 | **CC-3** | No lane_mileage mass correction. |
 
 ---
