@@ -1,7 +1,7 @@
 {
   "_comment": "SWEEP-C6 shrink-only baseline — money INSERT / planted money events without a JE poster. Regenerate: UPDATE_C6_MONEY_JE_BASELINE=1. NEW keys fail CI; list may only shrink as gaps are fixed. Exempt with inline C6-MONEY-JE-EXEMPT: <reason>. Confirmed seeds: parts-purchase, warranty, fine-link-payment (#3551→C6), two-section bills/expenses.",
-  "generated_at": "2026-09-02T11:01:59.510Z",
-  "count": 4,
+  "generated_at": "2026-09-02T11:10:24.073Z",
+  "count": 3,
   "required_seeds_present": false,
   "missing_seeds": [
     "two-section-service.ts"
@@ -9,7 +9,6 @@
   "keys": [
     "cash-advances/lumper-cash-advance-split.ts::INSERT INSERT INTO accounting.bill_payments|INSERT INTO accounting.expenses|INSERT INTO accounting.expense_lines",
     "dispatch/cancellation-tonu-invoice.ts::INSERT INSERT INTO accounting.invoices|INSERT INTO accounting.invoice_lines",
-    "insurance/policy-create-atomic.service.ts::INSERT INSERT INTO banking.bank_transactions|INSERT INTO accounting.bills",
     "safety/safety-v5.routes.ts::INSERT INSERT INTO driver_finance.driver_liabilities"
   ]
 }
