@@ -64,7 +64,7 @@ export function ReconMatchSuggestions(props: {
         ) : (
           <div
             key={`${suggestion.obligation_id}-${suggestion.obligation_type}`}
-            className="flex items-center gap-1 rounded-sm bg-slate-100 px-1 text-[10px] text-slate-700"
+            className="flex items-center gap-1 rounded-sm bg-slate-100 px-1 text-xs text-slate-700"
           >
             <EntityLink
               kind={SUGGESTION_ENTITY_KIND[suggestion.obligation_type]}
@@ -77,7 +77,7 @@ export function ReconMatchSuggestions(props: {
               disabled={props.disabled}
               title="Apply this match"
               onClick={() => props.onAccept(suggestion.obligation_type as ObligationType, suggestion.obligation_id)}
-              className="rounded-sm bg-slate-200 px-1 text-[9px] enabled:hover:bg-slate-300 disabled:opacity-50"
+              className="rounded-sm bg-slate-200 px-1 text-xs enabled:hover:bg-slate-300 disabled:opacity-50"
             >
               Apply
             </button>
@@ -90,19 +90,19 @@ export function ReconMatchSuggestions(props: {
 
 function FactoringSuggestionChip(props: { suggestion: ReconcileSuggestion; disabled?: boolean; onApply: () => void }) {
   return (
-    <div className="flex items-center gap-1 rounded-sm border border-slate-300 bg-slate-100 px-1 py-px text-[10px] text-slate-700">
+    <div className="flex items-center gap-1 rounded-sm border border-slate-300 bg-slate-100 px-1 py-px text-xs text-slate-700">
       <EntityLink
         kind="factoring_batch"
         id={props.suggestion.obligation_id}
         label={`Factoring ${props.suggestion.batch_number ?? "batch"}`}
-        className="rounded-sm bg-[#1F2A44] px-1 text-[9px] font-semibold uppercase tracking-wide text-white"
+        className="rounded-sm bg-[#1F2A44] px-1 text-[11px] font-semibold uppercase tracking-wide text-white"
       />
       <span>({Math.round(props.suggestion.confidence * 100)}%)</span>
       <button
         type="button"
         disabled={props.disabled}
         onClick={props.onApply}
-        className="rounded-sm bg-[#1F2A44] px-1 text-[9px] text-white enabled:hover:bg-[#1F2A44] disabled:opacity-50"
+        className="rounded-sm bg-[#1F2A44] px-1 text-xs text-white enabled:hover:bg-[#1F2A44] disabled:opacity-50"
       >
         Apply
       </button>

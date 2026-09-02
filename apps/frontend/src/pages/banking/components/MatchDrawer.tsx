@@ -67,7 +67,7 @@ function candidateDrillLabel(candidate: BankMatchCandidate) {
 
 /** Label-only chrome — EntityLink must stay inline at the call site (entity-link-adoption). */
 function kindBadgeClassName() {
-  return "inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 hover:underline";
+  return "inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-700 hover:underline";
 }
 
 export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, operatingCompanyId, onClose, onAccepted }: Props) {
@@ -275,7 +275,7 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
                     {isTopAuto ? (
                       <span
                         data-testid="match-candidate-top"
-                        className="inline-flex items-center rounded-sm bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white"
+                        className="inline-flex items-center rounded-sm bg-slate-800 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white"
                       >
                         Best match
                       </span>
@@ -290,7 +290,7 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
                   {c.memo?.trim() ? c.memo : "—"}
                 </div>
 
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-slate-500">
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500">
                   <span data-testid="match-candidate-date">Date: {String(c.event_date ?? "").slice(0, 10) || "—"}</span>
                   <span>Amount gap: {formatMoneyCents(c.amount_gap_cents)}</span>
                   <span>Date gap: {c.date_gap_days}d</span>
@@ -299,9 +299,9 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
 
                 <div className="mt-2 flex items-center justify-end gap-2">
                   {isBill ? (
-                    <span className="text-[10px] text-slate-400">Posting available after CHAIN-04</span>
+                    <span className="text-xs text-slate-400">Posting available after CHAIN-04</span>
                   ) : !isExactMatch ? (
-                    <span className="text-[10px] text-slate-400" data-testid="match-candidate-variance-held">
+                    <span className="text-xs text-slate-400" data-testid="match-candidate-variance-held">
                       {VARIANCE_HELD_NOTE}
                     </span>
                   ) : null}

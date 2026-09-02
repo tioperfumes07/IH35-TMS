@@ -34,10 +34,10 @@ export function AccountTile({ tile, selected, onSelect, onView, onInspect }: Pro
     >
       <button type="button" onClick={onSelect} className="min-h-0 flex-1 text-left">
         <div className="mb-1 flex items-start justify-between gap-1">
-          <span className={`rounded-sm px-2 py-0.5 text-[10px] ${badgeClass(tile)}`}>
+          <span className={`rounded-sm px-2 py-0.5 text-xs ${badgeClass(tile)}`}>
             {isRelayWalletTile(tile) ? tile.tag || "Relay" : tile.tag || tile.account_type}
           </span>
-          <span className="text-[10px] text-gray-500">{tile.tile_kind}</span>
+          <span className="text-xs text-gray-500">{tile.tile_kind}</span>
         </div>
         <div className="truncate text-xs font-semibold text-gray-900">{tile.display_name}</div>
         <div className="mt-1 text-sm font-bold tabular-nums text-gray-900">${Number(tile.current_balance ?? 0).toFixed(2)}</div>

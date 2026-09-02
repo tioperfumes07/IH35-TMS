@@ -504,7 +504,7 @@ export function ReconciliationWorkspacePage() {
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-semibold text-gray-900">Bank transactions</p>
               <div className="flex items-center gap-2">
-                <div className="inline-flex overflow-hidden rounded-sm border border-gray-300 text-[10px]">
+                <div className="inline-flex overflow-hidden rounded-sm border border-gray-300 text-xs">
                   {(
                     [
                       ["date", "Date"],
