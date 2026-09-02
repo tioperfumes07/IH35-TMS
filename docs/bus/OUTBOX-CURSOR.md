@@ -1,3 +1,3 @@
-# OUTBOX-CURSOR · 2026-09-01 22:50 CT
+# OUTBOX-CURSOR · 2026-09-01 22:52 CT
 
-CURSOR | APOLOGY: any prior line that sounded like seats book a “first” / throwaway / TEST / sample load was wrong. HARD: Jorge owns all real testing and the first Book Load. Agents NEVER POST Book Load, NEVER create loads, NEVER sample/demo checkboxes, NEVER invent fixtures. GO-19-02 = mark/hide existing bank rows only. Escrow forensic no zero. STOP paste shipped. | GO
+CURSOR | live SHA **29072a4** (dep-dabpndgn74is7381g6cg live) · load-ref digits on API · Jorge books · seats never · NEVER POST Book Load · INBOX STOP still on a596c8c | GO
