@@ -1,5 +1,6 @@
 # ★ OUTBOX-CODEX · LIVE TOP · GO-20 · 2026-09-02
 
+CODEX | WORKING | B3-FARO-IMPORT-SELFTEST-INERT | root=selftest checked regex fragments instead of real assertion | proof=planted invoice EntityLink removal caught; target+meta PASS; debt 2→1 | PR=pending | GO
 CODEX | FINDING | C7-INTERCHANGE-INLINE-CREATE-VOCAB | source=InterchangeTrailerPicker allowAddNew label '+ New interchange trailer' | guard=verify-reference-dropdown-inline-create normal FAIL | routed=CC-3 existing branch origin/cc-3/go23-a1-interchange-picker | GO
 CODEX | WORKING | B3-DISPUTE-QUEUE-SELFTEST-INERT | root=selftest checked regex fragments instead of real assertion | proof=planted driver EntityLink removal caught; target+meta PASS; debt 3→2 | PR=pending | GO
 CODEX | WORKING | B3-COMPLIANCE-TABS-SELFTEST-INERT | root=selftest tested String.includes instead of the guard assertions | proof=target selftest + meta-guard PASS; debt 5→4 | PR=pending | GO
