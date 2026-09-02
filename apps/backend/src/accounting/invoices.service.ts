@@ -1,3 +1,10 @@
+// C6-MONEY-JE-EXEMPT: this creates the invoice DOCUMENT (header). The real revenue-recognition JE
+// posts later, once, via accounting/revrec-delivery-posting/poster.service.ts's
+// postLoadRevenueLatch (calls createJournalEntry — an existing POSTER_RE match), triggered by
+// DELIVERY evidence (dispatch/delivery-evidence-latch.ts, dispatch/loads.routes.ts) and by
+// invoice-linking (Event 2 "bill"), not by invoice creation itself — verified live via the
+// existing revrec-bill-posting-tagged-invoice-source guard. Two-event-latch is the LOCKED owner
+// revenue-recognition design (2026-09-02, GO-23 C6).
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveInvoiceDisplayId } from "./display-id.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
