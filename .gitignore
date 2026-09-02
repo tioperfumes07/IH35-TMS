@@ -11,3 +11,4 @@ docs/certification/*.cert.json
 
 docs/audits/PASS-8-*
 .cursor/rules/00-agent-bus-inbox-CASCADE.mdc
+tmp-from-load-zero-*/

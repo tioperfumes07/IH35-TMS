@@ -1,10 +1,10 @@
 {
-  "healthzSha": "56076a6",
+  "healthzSha": "49f9ef4",
   "generated_at": "2026-08-31T15:22:35.000Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "56076a6",
+    "deployedSha": "49f9ef4",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 19613,
+      "number": 0,
+      "title": "Claude-1- fix(guards): ACCT-F19470 GO-23 C6 — invoice/revrec cluster 12→8",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 05:37 AM CT",
+      "url": "",
+      "sha": "b8ab16c0bc",
+      "committedAtIso": "2026-09-02T05:37:31-05:00"
+    },
+    {
+      "number": 19622,
       "title": "FINDING: ACCT-F19470",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 05:01 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19613",
-      "sha": "800a08211c",
-      "committedAtIso": "2026-09-02T05:01:57-05:00"
+      "mergedAtCt": "09/02/2026, 05:34 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19622",
+      "sha": "17811684a1",
+      "committedAtIso": "2026-09-02T05:34:43-05:00"
     },
     {
-      "number": 19612,
-      "title": "@/private/tmp/claude-501/-Users-jorgemunoz-IH35-TMS-claude/126f94c4-6bb1-461c-bfe4-aabc41df2ef2/scratchpad/pr-body.txt",
+      "number": 0,
+      "title": "Cursor- GO-23 C6 remaining 12 after mark-disbursed #19618",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 04:56 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19612",
-      "sha": "56076a60cc",
-      "committedAtIso": "2026-09-02T04:56:10-05:00"
+      "mergedAtCt": "09/02/2026, 05:32 AM CT",
+      "url": "",
+      "sha": "26223979eb",
+      "committedAtIso": "2026-09-02T05:32:49-05:00"
     },
     {
-      "number": 19611,
+      "number": 19620,
+      "title": "FINDING: N/A (status report)",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 05:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19620",
+      "sha": "45fa76372f",
+      "committedAtIso": "2026-09-02T05:27:38-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Claude-1- fix(cash-advances): ACCT-F19470 GO-23 C6 — mark-disbursed poster + 17→12",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 05:23 AM CT",
+      "url": "",
+      "sha": "49f9ef476f",
+      "committedAtIso": "2026-09-02T05:23:54-05:00"
+    },
+    {
+      "number": 19618,
       "title": "FINDING: ACCT-F19470",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 04:55 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19611",
-      "sha": "95a8a39dfb",
-      "committedAtIso": "2026-09-02T04:55:08-05:00"
+      "mergedAtCt": "09/02/2026, 05:23 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19618",
+      "sha": "3973fa2528",
+      "committedAtIso": "2026-09-02T05:23:28-05:00"
     },
     {
-      "number": 19610,
-      "title": "FINDING: N/A -- CC-3 status log: GO-23 A1 picker done (#19609)",
+      "number": 0,
+      "title": "Cursor- GO-23 C6: #19616 is FINDING — fix mark-disbursed poster",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 04:51 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19610",
-      "sha": "561047d7fd",
-      "committedAtIso": "2026-09-02T04:51:30-05:00"
+      "mergedAtCt": "09/02/2026, 05:17 AM CT",
+      "url": "",
+      "sha": "39b6fee555",
+      "committedAtIso": "2026-09-02T05:17:24-05:00"
     },
     {
-      "number": 19609,
-      "title": "FINDING: GO-23-A1 -- Book Load trailer source is our fleet OR an interchange trailer, never both",
+      "number": 19616,
+      "title": "FINDING: N/A (defect report)",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 04:50 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19609",
-      "sha": "484735ca1b",
-      "committedAtIso": "2026-09-02T04:50:38-05:00"
+      "mergedAtCt": "09/02/2026, 05:12 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19616",
+      "sha": "436ea794bb",
+      "committedAtIso": "2026-09-02T05:12:08-05:00"
     },
     {
-      "number": 19608,
-      "title": "FINDING: ACCT-F19470",
+      "number": 0,
+      "title": "Cursor- GO-23 lead census: C6 17 remaining, CC-3 WAIT, N1 Chrome blocked",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 04:48 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19608",
-      "sha": "d6e8fab81a",
-      "committedAtIso": "2026-09-02T04:48:56-05:00"
+      "mergedAtCt": "09/02/2026, 05:11 AM CT",
+      "url": "",
+      "sha": "502cd5190d",
+      "committedAtIso": "2026-09-02T05:11:00-05:00"
     },
     {
-      "number": 19607,
-      "title": "@/private/tmp/claude-501/-Users-jorgemunoz-IH35-TMS-claude/126f94c4-6bb1-461c-bfe4-aabc41df2ef2/scratchpad/commit-msg.txt",
+      "number": 19614,
+      "title": "FINDING: N/A (status report)",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 04:43 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19607",
-      "sha": "fa25718fd3",
-      "committedAtIso": "2026-09-02T04:43:05-05:00"
-    },
-    {
-      "number": 19606,
-      "title": "FINDING: GO-23-C6-IS-38-GAP-SHRINK-NOT-B8",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 04:36 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19606",
-      "sha": "f9cad5ba7b",
-      "committedAtIso": "2026-09-02T04:36:10-05:00"
-    },
-    {
-      "number": 19605,
-      "title": "FINDING: N/A (board correction)",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 04:31 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19605",
-      "sha": "25c47f530e",
-      "committedAtIso": "2026-09-02T04:31:19-05:00"
-    },
-    {
-      "number": 19604,
-      "title": "FINDING: N/A -- CC-3 ACK: GO-23 Wave 2 A1 interchange screen",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 04:29 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19604",
-      "sha": "69f8c9c642",
-      "committedAtIso": "2026-09-02T04:29:18-05:00"
+      "mergedAtCt": "09/02/2026, 05:06 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19614",
+      "sha": "246f1f1f22",
+      "committedAtIso": "2026-09-02T05:06:46-05:00"
     }
   ]
 }
