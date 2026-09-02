@@ -214,6 +214,11 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
         emptyText="No accessorial charges yet. Use + Create charge or quick seeds (detention · layover · lumper)."
         initialPageSize={50}
         pageSizeOptions={[25, 50, 100]}
+        // K3 (owner correction 2026-09-02): ParityTable's own UniversalListToolbar search box was
+        // rendering above this load's own handful of charge lines -- a client search over 1-5 rows
+        // the operator is actively typing into (Description/Amount), not a dataset to search. Same
+        // shape as the already-documented LV-WORK-ORDERS-CONSOLE-DUPLICATE-SEARCH fix.
+        suppressToolbarSearch
         rowActions={(row) => (
           <button type="button" className="text-xs text-red-700 hover:underline" onClick={() => handleRemove(row.id)}>
             Remove
