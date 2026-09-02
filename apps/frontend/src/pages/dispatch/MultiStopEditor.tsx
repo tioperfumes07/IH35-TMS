@@ -109,7 +109,7 @@ function SortableRow({
         </button>
         <div className="grid flex-1 grid-cols-2 gap-2">
           <div>
-            <div className="text-[10px] font-semibold text-gray-500">#{index + 1} Type</div>
+            <div className="text-xs font-semibold text-gray-500">#{index + 1} Type</div>
             <SelectCombobox
               className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-1 text-xs"
               value={row.stop_type}
@@ -128,7 +128,7 @@ function SortableRow({
             </Button>
           </div>
           <div className="col-span-2" data-testid={`stop-pickup-time-type-${index}`}>
-            <label htmlFor={`stop-pickup-time-type-${row.key}`} className="text-[10px] font-semibold text-gray-500">
+            <label htmlFor={`stop-pickup-time-type-${row.key}`} className="text-xs font-semibold text-gray-500">
               Pickup / appointment type
             </label>
             <div className="mt-0.5">
@@ -147,7 +147,7 @@ function SortableRow({
             </div>
           </div>
           <div className="col-span-2">
-            <div className="text-[10px] font-semibold text-gray-500">Address</div>
+            <div className="text-xs font-semibold text-gray-500">Address</div>
             <input
               className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={row.location_address}
@@ -155,15 +155,15 @@ function SortableRow({
             />
           </div>
           <div>
-            <div className="text-[10px] font-semibold text-gray-500">City</div>
+            <div className="text-xs font-semibold text-gray-500">City</div>
             <input className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={row.city} onChange={(e) => onChange(row.key, { city: e.target.value })} />
           </div>
           <div>
-            <div className="text-[10px] font-semibold text-gray-500">ST</div>
+            <div className="text-xs font-semibold text-gray-500">ST</div>
             <input className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={row.state} onChange={(e) => onChange(row.key, { state: e.target.value })} />
           </div>
           <div>
-            <div className="text-[10px] font-semibold text-gray-500">ZIP</div>
+            <div className="text-xs font-semibold text-gray-500">ZIP</div>
             <input
               className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={row.postal_code}
@@ -172,7 +172,7 @@ function SortableRow({
             />
           </div>
           <div>
-            <div className="text-[10px] font-semibold text-gray-500">Window start</div>
+            <div className="text-xs font-semibold text-gray-500">Window start</div>
             <DateTimePicker
               className="mt-0.5 w-full"
               aria-label="Window start"
@@ -181,7 +181,7 @@ function SortableRow({
             />
           </div>
           <div>
-            <div className="text-[10px] font-semibold text-gray-500">Window end</div>
+            <div className="text-xs font-semibold text-gray-500">Window end</div>
             <DateTimePicker
               className="mt-0.5 w-full"
               aria-label="Window end"
@@ -198,7 +198,7 @@ function SortableRow({
             Photo
           </label>
           <div className="col-span-2">
-            <div className="text-[10px] font-semibold text-gray-500">Notes</div>
+            <div className="text-xs font-semibold text-gray-500">Notes</div>
             <textarea className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={2} value={row.notes} onChange={(e) => onChange(row.key, { notes: e.target.value })} />
           </div>
         </div>

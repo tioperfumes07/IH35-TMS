@@ -308,11 +308,11 @@ function renderUnitLocationCell(
   fleetLocationUnavailable: boolean,
 ): ReactNode {
   if (fleetLocationUnavailable) {
-    return <span className="text-[10px] font-semibold text-amber-700">Unavailable</span>;
+    return <span className="text-xs font-semibold text-amber-700">Unavailable</span>;
   }
   const loc = load.assigned_unit_id ? locationByUnit[load.assigned_unit_id] : undefined;
   const text = loc ? [loc.city, loc.state].filter(Boolean).join(", ") : "";
-  return text ? <span className="text-xs text-slate-700">{text}</span> : <span className="text-[10px] text-slate-400">—</span>;
+  return text ? <span className="text-xs text-slate-700">{text}</span> : <span className="text-xs text-slate-400">—</span>;
 }
 
 function compareDispatch(a: string | number | null | undefined, b: string | number | null | undefined): number {
@@ -424,7 +424,7 @@ function DocComplianceCell({ load }: { load: DispatchLoadRow }) {
   const ready = load.geofence_ready;
   return (
     <span
-      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${ready ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-700"}`}
+      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${ready ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-700"}`}
       title={ready ? "Pre-dispatch doc gate passed" : "Doc compliance pending"}
     >
       {ready ? "Ready" : "Pending"}
@@ -436,7 +436,7 @@ function RiskCell({ load }: { load: DispatchLoadRow }) {
   return (
     <div className="flex flex-col items-start gap-1">
       <span
-        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${riskTierClass(load)}`}
+        className={`rounded-full px-2 py-0.5 text-xs font-semibold ${riskTierClass(load)}`}
         title={isAtRiskOfLate(load) ? "At risk of late delivery" : undefined}
       >
         {riskTierLabel(load)}
@@ -927,7 +927,7 @@ export function DispatchBoard({
         {STATUS_LABEL[load.status]}
       </span>
       {load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id) ? (
-        <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Geofence alert</span>
+        <span className="rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Geofence alert</span>
       ) : null}
     </div>
   );
@@ -1208,12 +1208,12 @@ export function DispatchBoard({
                               <div className="flex items-center justify-between gap-3">
                                 <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                   {section.title}
-                                  <span className="ml-2 rounded-full bg-white px-1.5 text-[10px] font-bold text-gray-500">
+                                  <span className="ml-2 rounded-full bg-white px-1.5 text-xs font-bold text-gray-500">
                                     {rows.length}{rows.length === allRows.length ? "" : ` of ${allRows.length}`}
                                   </span>
                                 </div>
                                 {!isHistoryBoard ? (
-                                  <label className="flex items-center gap-2 text-[10px] font-medium normal-case tracking-normal text-gray-600">
+                                  <label className="flex items-center gap-2 text-xs font-medium normal-case tracking-normal text-gray-600">
                                     Filter {section.title}
                                     <input
                                       type="search"
@@ -1433,7 +1433,7 @@ export function DispatchBoard({
         render: (load) => (
           <button
             type="button"
-            className="rounded-sm border border-slate-300 px-2 py-0.5 text-[10px] font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded-sm border border-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
             onClick={(event) => {
               event.stopPropagation();
               setQuickAssignLoad(load);

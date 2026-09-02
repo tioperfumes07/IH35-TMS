@@ -69,11 +69,11 @@ function TripCard({
         <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} className="font-semibold text-gray-900" onClick={(event) => event.stopPropagation()} />
         <div className="flex items-center gap-1">
           {tag ? (
-            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">{tag}</span>
+            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">{tag}</span>
           ) : null}
           {hasVisibleFlag(load.flag_code) ? (
             <span
-              className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white"
+              className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
               style={{ backgroundColor: flagDotColor(load.flag_code) }}
               title={flagDotLabel(load.flag_code)}
             >
@@ -92,7 +92,7 @@ function TripCard({
         />
       </div>
       <div className="mt-1 text-[11px] text-gray-500">{toRouteSummary(load.first_pickup_city, load.first_delivery_city)}</div>
-      <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-600">
+      <div className="mt-1.5 flex items-center justify-between text-xs text-gray-600">
         <span>
           <EntityLinkOrTombstone
             kind="driver"
@@ -104,7 +104,7 @@ function TripCard({
         </span>
         <span className="rounded-sm bg-gray-100 px-1.5 py-0.5">{STATUS_LABEL[load.status]}</span>
       </div>
-      <div className="mt-1 text-[10px] font-semibold text-gray-800">
+      <div className="mt-1 text-xs font-semibold text-gray-800">
         {formatMoneyCents(load.rate_total_cents, load.currency_code)}
       </div>
     </div>
@@ -371,7 +371,7 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
                 data-rt-sequence={sequence || "empty"}
               >
                 <div className="flex w-36 shrink-0 flex-col justify-start pt-1">
-                  <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                     <EntityLinkOrTombstone
                       kind="unit"
                       id={pair.unitId}
@@ -398,11 +398,11 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
                   </div>
                   <div className="mt-2 hidden md:block">
                     {pair.needsReturn && !pair.returnLoad ? (
-                      <span className="rounded-sm bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700">Needs return</span>
+                      <span className="rounded-sm bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">Needs return</span>
                     ) : pair.returnLoad ? (
-                      <span className="rounded-sm bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700">Paired</span>
+                      <span className="rounded-sm bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">Paired</span>
                     ) : (
-                      <span className="rounded-sm bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-700">Open</span>
+                      <span className="rounded-sm bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">Open</span>
                     )}
                   </div>
                 </div>

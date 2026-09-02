@@ -734,7 +734,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search by name"
                   aria-label="Search drivers by name"
-                  className="h-8 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-[13px]"
+                  className="h-8 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-xs"
                 />
               </div>
               {driversQuery.isError ? (
@@ -976,7 +976,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <input
               value={teamForm.team_name}
               onChange={(event) => setTeamForm((current) => ({ ...current, team_name: event.target.value }))}
-              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-xs"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -986,7 +986,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               onChange={(event) =>
                 setTeamForm((current) => ({ ...current, split_method: event.target.value as DriverTeamSplitMethod }))
               }
-              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-xs"
             >
               <option value="50_50">50_50</option>
               <option value="60_40">60_40</option>
@@ -1005,7 +1005,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               open={teamCreateOpen}
               shell="drawer"
               placeholder="Select primary driver"
-              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-xs"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1017,7 +1017,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               open={teamCreateOpen}
               shell="drawer"
               placeholder="Select co-driver"
-              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-xs"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1026,7 +1026,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               type="number"
               value={teamForm.primary_share_pct}
               onChange={(event) => setTeamForm((current) => ({ ...current, primary_share_pct: event.target.value }))}
-              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-xs"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1035,7 +1035,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               type="number"
               value={teamForm.co_share_pct}
               onChange={(event) => setTeamForm((current) => ({ ...current, co_share_pct: event.target.value }))}
-              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-xs"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1051,7 +1051,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <textarea
               value={teamForm.notes}
               onChange={(event) => setTeamForm((current) => ({ ...current, notes: event.target.value }))}
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               rows={3}
             />
           </div>
