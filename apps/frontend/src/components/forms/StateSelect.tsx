@@ -55,6 +55,20 @@ export function StateSelect({ value, onChange, country = "US", className = "", d
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
+  // B9 / K2: the document mousedown listener above never fires inside BookLoadModalV4 — its
+  // panel calls e.stopPropagation() on mousedown (BOOK-LOAD-MODAL-INVISIBLE-BEHIND-DRAWER guard,
+  // BookLoadModalV4.tsx panelRef) so an outside click on Address/City never reaches document,
+  // leaving this dropdown open forever. components/Combobox.tsx hit the identical class of bug
+  // ("mousedown-only left Payment Terms ... open until a row was picked") and fixed it with a
+  // deferred blur check, which fires on the real DOM focus change and is unaffected by any
+  // ancestor's mousedown stopPropagation. Same fix here. Deferred so a listbox row's own
+  // mousedown->click can still commit before the check runs.
+  function handleSearchBlur() {
+    window.setTimeout(() => {
+      if (ref.current && !ref.current.contains(document.activeElement)) setOpen(false);
+    }, 0);
+  }
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return options;
@@ -81,6 +95,7 @@ export function StateSelect({ value, onChange, country = "US", className = "", d
             placeholder="Search state…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onBlur={handleSearchBlur}
           />
           <div className="max-h-52 overflow-y-auto">
             {filtered.length === 0 ? (
