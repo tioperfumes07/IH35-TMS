@@ -182,7 +182,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
             <SelectCombobox
               value={violationType}
               onChange={(event) => setViolationType(event.target.value)}
-              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-xs"
             >
               <option value="FMCSA_audit">FMCSA audit</option>
               <option value="DOT_inspection">DOT inspection</option>
@@ -201,7 +201,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
             <SelectCombobox
               value={severity}
               onChange={(event) => setSeverity(event.target.value)}
-              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-xs"
             >
               <option value="warning">Warning</option>
               <option value="minor">Minor</option>
@@ -250,7 +250,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               rows={3}
             />
           </div>
@@ -269,7 +269,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
             <textarea
               value={correctivePlan}
               onChange={(event) => setCorrectivePlan(event.target.value)}
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               rows={2}
             />
           </div>

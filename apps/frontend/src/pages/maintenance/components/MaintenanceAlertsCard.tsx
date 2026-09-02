@@ -104,8 +104,8 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
     return (
       <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
         <div className="flex items-center justify-between bg-gray-50 px-2 py-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">PM Alerts</span>
-          <span className="text-[10px] font-semibold" style={{ color: "#854F0B" }}>{openTotalCount} open</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">PM Alerts</span>
+          <span className="text-xs font-semibold" style={{ color: "#854F0B" }}>{openTotalCount} open</span>
         </div>
         {alerts.length === 0 ? (
           <div className="px-2 py-1.5 text-[11px] text-gray-400">No PM alerts</div>
@@ -113,7 +113,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
           <div>
           <ul className="flex flex-col">
             {alerts.map((alert: MaintenancePmAlert) => (
-              <li key={alert.id} className="border-t border-gray-100 px-2 py-1 first:border-t-0 text-[10px]">
+              <li key={alert.id} className="border-t border-gray-100 px-2 py-1 first:border-t-0 text-xs">
                 <div className="font-semibold" style={{ color: "#1F2A44" }}>
                   <EntityLink kind="unit" id={alert.unit_id} label={entityLabel(alert.unit_number, alert.unit_id, "Unit")} /> · {alert.schedule_label}
                 </div>
@@ -122,7 +122,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
             ))}
           </ul>
           {openTotalCount > pageSize ? (
-            <div className="flex items-center justify-end gap-1 border-t border-gray-100 px-2 py-1 text-[10px]" data-testid="pm-alerts-compact-pager">
+            <div className="flex items-center justify-end gap-1 border-t border-gray-100 px-2 py-1 text-xs" data-testid="pm-alerts-compact-pager">
               <button type="button" disabled={openPage <= 1 || alertsQuery.isFetching} onClick={() => setOpenPage((current) => Math.max(1, current - 1))}>Previous</button>
               <span>Page {openPage} of {openPageCount} · {openTotalCount} open</span>
               <button type="button" disabled={openPage >= openPageCount || alertsQuery.isFetching} onClick={() => setOpenPage((current) => Math.min(openPageCount, current + 1))}>Next</button>

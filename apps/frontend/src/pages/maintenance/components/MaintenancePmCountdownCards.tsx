@@ -52,7 +52,7 @@ export function MaintenancePmCountdownCards({ rows, loading = false, compact = f
   if (compact) {
     return (
       <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
-        <div className="bg-gray-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+        <div className="bg-gray-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
           PM Countdown
         </div>
         {loading ? (
@@ -64,10 +64,10 @@ export function MaintenancePmCountdownCards({ rows, loading = false, compact = f
               return (
                 <div key={card.id} className="border-t border-gray-100 px-2 py-1 first:border-t-0">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] uppercase tracking-wide text-gray-500">{card.label}</span>
+                    <span className="text-[11px] uppercase tracking-wide text-gray-500">{card.label}</span>
                     <span className="text-[11px] font-semibold text-gray-900">{dueCount}</span>
                   </div>
-                  <div className="flex items-center justify-between text-[10px]">
+                  <div className="flex items-center justify-between text-xs">
                     <span className="text-gray-500">{formatCountdown(nextRow)}</span>
                     {overdueCount > 0 ? <span className="text-red-600">{overdueCount} overdue</span> : null}
                   </div>
@@ -94,7 +94,7 @@ export function MaintenancePmCountdownCards({ rows, loading = false, compact = f
             const { dueCount, overdueCount, nextRow } = pmCardMetrics(rows, card);
             return (
               <div key={card.id} className="border-t border-gray-100 px-3 py-2 first:border-t-0">
-                <div className="text-[10px] uppercase tracking-wide text-gray-500">{card.label}</div>
+                <div className="text-[11px] uppercase tracking-wide text-gray-500">{card.label}</div>
                 <div className="mt-1 text-lg font-semibold text-gray-900">{dueCount}</div>
                 <div className="text-[11px] text-gray-600">{formatCountdown(nextRow)}</div>
                 {overdueCount > 0 ? (
