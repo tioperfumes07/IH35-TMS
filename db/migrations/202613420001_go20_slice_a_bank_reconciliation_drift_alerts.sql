@@ -8,6 +8,19 @@
 -- column the spec's WHAT EXISTS section names. No tolerance setting existed anywhere -- the spec
 -- says "Tolerance lives in a setting, not a constant... Owner editable per bank account", so it is
 -- added directly on banking.bank_accounts (the natural per-account home) rather than a global flag.
+--
+-- CANONICAL-CHECK: banking.reconciliation_drift_alerts is NOT a duplicate of
+-- banking.reconciliation_matches (line-level: "this bank_transaction_id matches this
+-- ledger_entry_id", per-transaction, many rows per account) nor of
+-- banking.reconciliation_sessions (the container/batch a reconciliation pass runs inside).
+-- reconciliation_drift_alerts is a distinct, account-level, point-in-time exception ledger: "as of
+-- as_of_date, bank_balance_cents vs book_balance_cents for THIS bank_account_id differ by
+-- drift_cents beyond drift_tolerance_cents" -- a balance-drift ALERT with its own severity/
+-- resolved_at/resolving_journal_entry_id lifecycle, not a transaction match and not a session
+-- record. reconciliation_session_id is an optional (nullable) reference FOR CONTEXT, never a
+-- foreign row this table duplicates. All three tables stay live, each covering a different
+-- granularity of the bank-reconciliation domain (session -> matches within it -> drift alerts
+-- against the account as a whole).
 
 BEGIN;
 

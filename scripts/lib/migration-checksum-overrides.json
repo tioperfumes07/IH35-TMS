@@ -364,5 +364,21 @@
     "reason": "SECURITY-AUDIT-FRESH-REPLAY-2026-09-01: the applied production-only GO-01 seed inserted 13 hardcoded driver_schedule rows with a hardcoded policy UUID directly from VALUES. Production had the referenced CIMD-2026-0720 policy and all driver rows, so apply succeeded; a fresh replay has no production policy row and failed driver_schedule_policy_id_fkey. The corrected seed derives from the same immutable VALUES but inner-joins org.companies, insurance.policy (same tenant), and mdata.drivers (same operating company) before INSERT. This is state-identical on production (all 13 prerequisites exist, confirmed policy completeness_count=1) and honestly writes zero rows when production seed prerequisites are absent. No DDL or production data changes; override prevents db:migrate from rejecting the already-applied corrected file.",
     "added_at": "2026-09-01",
     "added_in_pr": "SECURITY-AUDIT-DRIVER-SCHEDULE-FK-REPLAY"
+  },
+  {
+    "filename": "202613450001_go22_presettlement_link_suggestions.sql",
+    "ledger_checksum": "edb14f26e25fef438c674ac50d499159d874e65942e442cb6b7b9b6e0106a0bd",
+    "disk_checksum": "ff0faee3e3410fcb7f47ed3e035930ad07b674fa4e45eab3caf53bbaebb00b5d",
+    "reason": "CC-1 (2026-09-02, follow-up to #19811): added a -- CANONICAL-CHECK: block answering whether driver_finance.presettlement_link_suggestions duplicates driver_finance.trip_link_queue (it does not -- expense-to-load vs load-to-settlement attribution, verified by reading both tables' columns). Applied migration, comment-only edit, no DDL/behavior change -- verified live on Neon prod (tiny-field-89581227/br-fancy-credit-akjnd07a): the table, columns, constraints and RLS policy already applied are byte-identical to what this file still creates.",
+    "added_at": "2026-09-02",
+    "added_in_pr": "CC-1-CANONICAL-CHECK-FOLLOWUP-19811"
+  },
+  {
+    "filename": "202613420001_go20_slice_a_bank_reconciliation_drift_alerts.sql",
+    "ledger_checksum": "ca843ad4622582bdb8176ff237c3c8ca3e58ca0792c8ac378da46df8689b2282",
+    "disk_checksum": "035de8ed3503cc3d383b11f8039999144383588aed029cb5f02518c65ccd2a5d",
+    "reason": "CC-1 (2026-09-02, follow-up to #19811): added a -- CANONICAL-CHECK: block answering whether banking.reconciliation_drift_alerts duplicates banking.reconciliation_matches / reconciliation_sessions (it does not -- a distinct account-level balance-drift ALERT ledger, different granularity from either). Applied migration, comment-only edit, no DDL/behavior change -- verified live on Neon prod: the table, columns, constraints and the bank_accounts.drift_tolerance_cents column already applied are byte-identical to what this file still creates.",
+    "added_at": "2026-09-02",
+    "added_in_pr": "CC-1-CANONICAL-CHECK-FOLLOWUP-19811"
   }
 ]

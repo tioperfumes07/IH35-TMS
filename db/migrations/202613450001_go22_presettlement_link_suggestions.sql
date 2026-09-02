@@ -16,6 +16,19 @@
 -- Additive only, idempotent. No money posting -- this table only records a recommendation and its
 -- resolution; the actual driver_settlements row / mdata.loads.presettlement_link_id write happens
 -- in the confirm step, in the application layer, only after a human confirms.
+--
+-- CANONICAL-CHECK: driver_finance.presettlement_link_suggestions is NOT a duplicate of
+-- driver_finance.trip_link_queue (202606120600), despite the "mirrors trip_link_queue's shape"
+-- line above referring to STRUCTURE, not CONCEPT. Verified by reading trip_link_queue's own
+-- columns/comment: it queues an EXPENSE (maintenance.work_orders / banking.driver_expenses row,
+-- via expense_id/expense_table) needing a manual LOAD assignment, resolving into the legacy
+-- settlement.settlement_line (RETIRE-tier, per LINKAGE LAW -- driver_finance.settlement_lines is
+-- canonical). That is expense-to-load attribution. presettlement_link_suggestions instead queues a
+-- LOAD (already booked, already carrying a driver/tour_id) needing a SETTLEMENT assignment --
+-- load-to-settlement attribution, resolving into driver_finance.driver_settlements (the canonical
+-- settlement table). Different source entity (expense vs. load), different target entity (a load
+-- vs. a settlement), different direction in the linkage chain. Neither supersedes the other; both
+-- stay live, each covering its own leg of expense -> load -> settlement.
 
 BEGIN;
 
