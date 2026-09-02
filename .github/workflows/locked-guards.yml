@@ -1406,6 +1406,10 @@ jobs:
         run: node scripts/verify-go20-cargo-incidents.mjs --selftest
       - name: verify:go20-cargo-incidents
         run: node scripts/verify-go20-cargo-incidents.mjs
+      - name: verify:go20-late-arrival-honesty --selftest
+        run: node scripts/verify-go20-late-arrival-honesty.mjs --selftest
+      - name: verify:go20-late-arrival-honesty
+        run: node scripts/verify-go20-late-arrival-honesty.mjs
 
   # Thin aggregator — required context `locked-guards / locked-guards` always reports.
   locked-guards:

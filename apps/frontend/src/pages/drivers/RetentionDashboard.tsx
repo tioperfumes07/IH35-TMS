@@ -12,6 +12,8 @@ type RetentionRow = {
   retention_risk_score: number;
   retention_tier: string;
   contributing_factors: Record<string, number | null>;
+  features_present: string[];
+  features_missing: string[];
 };
 
 export function RetentionDashboard() {
@@ -58,15 +60,17 @@ export function RetentionDashboard() {
             .filter(([, v]) => v != null)
             .map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`);
           return (
-            <AtRiskDriverCard
-              key={row.driver_uuid}
-              driverUuid={row.driver_uuid}
-              driverName={entityLabel(row.driver_name, row.driver_uuid, "Driver")}
-              operatingCompanyId={companyId}
-              riskScore={row.retention_risk_score}
-              tier={row.retention_tier}
-              topFactors={factors}
-            />
+            <div key={row.driver_uuid} className="space-y-1">
+              <AtRiskDriverCard
+                driverUuid={row.driver_uuid}
+                driverName={entityLabel(row.driver_name, row.driver_uuid, "Driver")}
+                operatingCompanyId={companyId}
+                riskScore={row.retention_risk_score}
+                tier={row.retention_tier}
+                topFactors={factors}
+              />
+              {row.features_missing.length > 0 ? <p className="text-xs text-slate-700">Score missing: {row.features_missing.map((key) => key.replace(/_/g, " ")).join(", ")}</p> : null}
+            </div>
           );
         })}
       </div>
