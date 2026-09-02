@@ -1,4 +1,7 @@
 /**
+ * C6-MONEY-JE-EXEMPT: "NO GL" per this file's own header, one line down. Real GL posts later, once,
+ * at categorization via maybePostBankCategorizationToGl — verified 2026-09-02, GO-23 C6.
+ *
  * Relay Fuel Wallet → banking.bank_transactions feed (visibility + linkage, NO GL).
  *
  * Owner 2026-07-16: Bank feed under "Relay Fuel Wallet" is the surface that shows Relay fuel

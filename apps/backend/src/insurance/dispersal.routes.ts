@@ -1,3 +1,8 @@
+// C6-MONEY-JE-EXEMPT: this "seeds" a bank_transactions row per bill (see the seeded/seed comments
+// below) — a matching-queue entry for the normal bank-feed bill-creation flow
+// (bulkPostTransactionsAsBills), not a live disbursement. No categorization_gl_account_id is set
+// here; the real GL post happens later at categorization via maybePostBankCategorizationToGl
+// (banking/categorization.routes.ts) — verified 2026-09-02, GO-23 C6.
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { PoolClient } from "pg";
 import { z } from "zod";
