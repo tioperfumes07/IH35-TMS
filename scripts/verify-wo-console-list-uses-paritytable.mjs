@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["maintenance"],"cols":["work_orders_console"],"leafRe":"^work_orders_console\\.list$","task":"GO-05-WAVE1"} */
 /**
  * verify-wo-console-list-uses-paritytable — qbo-parity-a1 (WorkOrdersConsoleListPage)
  *
@@ -53,8 +54,12 @@ function assertMigrated(src) {
   if (!/searchParams\.get\(["']sort["']\)/.test(src)) {
     errors.push(`${PAGE}: must read the initial sort from ?sort=`);
   }
-  if (!src.includes("SecondaryNavTabs")) {
-    errors.push(`${PAGE}: must keep SecondaryNavTabs segment filter`);
+  // NAVY-SUBNAV-14-OF-178 (#18891) swapped this page's segment tabs from SecondaryNavTabs to
+  // NavyPageSubNav app-wide standard, before this check was ever exercised (the file was on
+  // TableHeaderCell at the time — see MAINT-05 — so this exact string never matched either
+  // component name until now). Check the component that's actually current, not the retired one.
+  if (!src.includes("NavyPageSubNav")) {
+    errors.push(`${PAGE}: must keep NavyPageSubNav segment filter`);
   }
   if (!/kind\s*=\s*["']work_orders_console["']/.test(src) || !/case\s+["']work_orders_console["']/.test(fs.readFileSync(path.join(ROOT, "apps/frontend/src/components/shared/EntityLink.tsx"), "utf8"))) {
     errors.push(`${PAGE}: must View via EntityLink kind=work_orders_console → /work-orders/:id`);
@@ -67,7 +72,7 @@ function selftest() {
     import { useSearchParams } from "react-router-dom";
     import { ListErrorState } from "../../components/ListErrorState";
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-    import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
+    import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
     import { EntityLink } from "../../components/shared/EntityLink";
     const columns = [
       { key: "display_id", label: "WO #" },
@@ -84,7 +89,7 @@ function selftest() {
       const sort = searchParams.get("sort");
       return (
         <>
-          <SecondaryNavTabs />
+          <NavyPageSubNav />
           <ListErrorState title="Couldn't load work orders" onRetry={() => {}} />
           <ParityTable
             storageKey="work-orders-console-list"

@@ -6,11 +6,20 @@ import process from "node:process";
 const repoRoot = process.cwd();
 
 const WRAPPER_FILE = "apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx";
-// Grouped click-open redesign: wrapper renders ACCOUNTING_SUB_NAV_ITEMS via the canonical
-// NavyPageSubNav, keeping the + Create action, honest vendor navigation, and wrapper data-attr.
+// Grouped click-open redesign: wrapper renders ACCOUNTING_SUB_NAV_ITEMS via the canonical shared
+// HoverDropdownNav in click mode, keeping the + Create action, honest vendor navigation, and wrapper
+// data-attr. Requiring NavyPageSubNav here would pin the retired flat-tab primitive and contradict
+// verify-accounting-subnav-grouped / the accepted accounting navigation contract.
 // ACCT-F5697 (#13541) intentionally replaced the misleading "+ Vendor" label: this link navigates to
 // the vendor roster and does not open a creator, so the product-wide create-label law requires browse copy.
-const REQUIRED_WRAPPER_MARKERS = ["ACCOUNTING_SUB_NAV_ITEMS", "NavyPageSubNav", "+ Create", "Go to vendors", "data-accounting-subnav-wrapper"];
+const REQUIRED_WRAPPER_MARKERS = [
+  "ACCOUNTING_SUB_NAV_ITEMS",
+  "HoverDropdownNav",
+  'openOn="click"',
+  "+ Create",
+  "Go to vendors",
+  "data-accounting-subnav-wrapper",
+];
 
 const REQUIRED_PAGES = ["apps/frontend/src/pages/accounting/BillsPage.tsx"];
 
@@ -79,4 +88,4 @@ if (process.argv.includes("--selftest")) {
   console.log(`[verify-accounting-subpages-have-subnav] SELFTEST PASS — ${mutations.length}/${mutations.length} mutations rejected`);
 }
 
-console.log("[verify-accounting-subpages-have-subnav] OK — BillsPage wrapped with 12-tab accounting subnav");
+console.log("[verify-accounting-subpages-have-subnav] OK — BillsPage wrapped with grouped click-open accounting subnav");

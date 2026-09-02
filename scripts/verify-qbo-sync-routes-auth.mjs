@@ -1,68 +1,82 @@
 #!/usr/bin/env node
 /**
- * verify:qbo-sync-routes-auth — route-auth contract for the /api/v1/qbo-sync/* backend family.
- *
- * Every registered qbo-sync route handler must pass through the canonical auth middleware
- * (requireAuth, directly or via a currentAuthUser() helper that calls it) before doing work.
- * This is defense-in-depth for the VENDOR-401 defect class: it fails the build if any future
- * qbo-sync route is registered without an auth guard.
+ * verify:qbo-sync-routes-auth — route-auth contract for the canonical
+ * /api/v1/qbo/sync/* backend family.
  */
 import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const DIR = path.join(ROOT, "apps", "backend", "src", "qbo-sync");
+const DIR = path.join(ROOT, "apps", "backend", "src", "qbo");
+const routeFiles = fs
+  .readdirSync(DIR)
+  .filter((file) => file.endsWith(".routes.ts"))
+  .map((file) => path.join(DIR, file));
 
-function fail(messages) {
-  console.error("verify:qbo-sync-routes-auth — FAILED");
-  for (const m of messages) console.error(`- ${m}`);
+function inspect(sources) {
+  const problems = [];
+  let handlerCount = 0;
+
+  for (const [file, text] of sources) {
+    const rel = path.relative(ROOT, file);
+    // Allow Fastify's optional route-options object between the path and handler. The bounded
+    // window avoids accidentally pairing a path with a later, unrelated handler.
+    const routeRe = /app\.(get|post|put|patch|delete)\(\s*(["'`])(\/api\/v1\/qbo\/sync\/[^"'`]+)\2[\s\S]{0,600}?\basync\s*\([^)]*\)\s*=>\s*\{/g;
+    let match;
+    let fileHandlers = 0;
+    while ((match = routeRe.exec(text)) !== null) {
+      handlerCount += 1;
+      fileHandlers += 1;
+      const routePath = match[3];
+      let depth = 1;
+      let index = routeRe.lastIndex;
+      for (; index < text.length && depth > 0; index += 1) {
+        if (text[index] === "{") depth += 1;
+        else if (text[index] === "}") depth -= 1;
+      }
+      const body = text.slice(routeRe.lastIndex, index);
+      if (!/\b(?:requireAuth|currentAuthUser)\s*\(/.test(body)) {
+        problems.push(`${rel}: route ${routePath} has no requireAuth/currentAuthUser guard in its handler`);
+      }
+    }
+
+    if (
+      fileHandlers > 0 &&
+      !/import[^;]*\b(?:requireAuth|currentAuthUser)\b[^;]*from\s*["'][^"']+(?:auth\/session-middleware|accounting\/shared)\.js["']/.test(text)
+    ) {
+      problems.push(`${rel}: qbo sync handlers must import requireAuth or currentAuthUser from a canonical auth-bearing module`);
+    }
+  }
+
+  if (handlerCount === 0) problems.push("no /api/v1/qbo/sync/* route registrations matched — guard target moved or parser is stale");
+  return { handlerCount, problems };
+}
+
+if (routeFiles.length === 0) {
+  console.error("verify:qbo-sync-routes-auth — FAILED\n- no *.routes.ts files found under apps/backend/src/qbo — guard target moved");
   process.exit(1);
 }
 
-const routeFiles = fs
-  .readdirSync(DIR)
-  .filter((f) => f.endsWith(".routes.ts"))
-  .map((f) => path.join(DIR, f));
+const sources = new Map(routeFiles.map((file) => [file, fs.readFileSync(file, "utf8")]));
 
-if (routeFiles.length === 0) {
-  fail(["no *.routes.ts files found under apps/backend/src/qbo-sync — guard target moved"]);
-}
-
-const problems = [];
-let handlerCount = 0;
-
-for (const file of routeFiles) {
-  const rel = path.relative(ROOT, file);
-  const text = fs.readFileSync(file, "utf8");
-
-  if (!/from "\.\.\/auth\/session-middleware\.js"/.test(text) || !/\brequireAuth\b/.test(text)) {
-    problems.push(`${rel}: must import requireAuth from ../auth/session-middleware.js`);
-    continue;
+if (process.argv.includes("--selftest")) {
+  const target = routeFiles.find((file) => sources.get(file)?.includes("/api/v1/qbo/sync/"));
+  if (!target) throw new Error("selftest could not find a canonical qbo sync route");
+  const planted = new Map(sources);
+  planted.set(target, sources.get(target).replace(/\bcurrentAuthUser\s*\(/, "removedAuthGuard("));
+  const result = inspect(planted);
+  if (!result.problems.some((problem) => problem.includes("has no requireAuth/currentAuthUser guard"))) {
+    throw new Error("planted unauthenticated qbo sync handler escaped");
   }
-
-  // Locate each route registration and confirm its handler body invokes an auth guard.
-  const routeRe = /app\.(get|post|put|patch|delete)\(\s*(["'`])(\/api\/v1\/qbo-sync\/[^"'`]+)\2\s*,\s*async\s*\([^)]*\)\s*=>\s*\{/g;
-  let m;
-  while ((m = routeRe.exec(text)) !== null) {
-    handlerCount += 1;
-    const routePath = m[3];
-    // Extract the handler body by brace-matching from the opening `{`.
-    let depth = 1;
-    let i = routeRe.lastIndex;
-    for (; i < text.length && depth > 0; i += 1) {
-      if (text[i] === "{") depth += 1;
-      else if (text[i] === "}") depth -= 1;
-    }
-    const body = text.slice(routeRe.lastIndex, i);
-    if (!/requireAuth\s*\(|currentAuthUser\s*\(/.test(body)) {
-      problems.push(`${rel}: route ${routePath} has no requireAuth/currentAuthUser guard in its handler`);
-    }
-  }
+  console.log("verify:qbo-sync-routes-auth SELFTEST PASS — planted unauthenticated handler rejected");
+  process.exit(0);
 }
 
-if (handlerCount === 0) {
-  fail(["no /api/v1/qbo-sync/* route registrations matched — guard pattern is stale"]);
+const result = inspect(sources);
+if (result.problems.length > 0) {
+  console.error("verify:qbo-sync-routes-auth — FAILED");
+  for (const problem of result.problems) console.error(`- ${problem}`);
+  process.exit(1);
 }
-if (problems.length > 0) fail(problems);
 
-console.log(`verify:qbo-sync-routes-auth — OK (${handlerCount} qbo-sync route handlers, all auth-guarded)`);
+console.log(`verify:qbo-sync-routes-auth — OK (${result.handlerCount} qbo sync route handlers, all auth-guarded)`);

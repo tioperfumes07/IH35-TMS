@@ -1,0 +1,64 @@
+State,Variant A,n A,Variant B,n B,Similarity,Decision,Canonical,Note
+AL,PATTVILLE,2,PRATVILLE,1,0.889,MERGE,Prattville,Both are typos of the real city (Autauga County); neither variant is the correct spelling
+AL,TOMASVILLE,2,THOMASVILLE,2,0.952,MERGE,Thomasville,Real city (Clarke County); Variant A drops the H
+AR,FORT SMITH,39,FT SMITH,17,0.889,MERGE,Fort Smith,Same city; FT SMITH is an abbreviation not a different place
+AR,RUSSELLVILLE,3,RUSSELVILLE,3,0.957,MERGE,Russellville,Real city (Pope County); Variant B drops one L
+AR,RUSSELLVILLE,3,RUSSELLLVILLE,2,0.96,MERGE,Russellville,Same real city as the row above; Variant B has an extra L
+AR,RUSSELVILLE,3,RUSSELLLVILLE,2,0.917,MERGE,Russellville,Both are typos of the same real city as the two rows above -- all three Russellville rows fold to one canonical
+CO,PLATEVILLE,1,PLATTEVILLE,1,0.952,MERGE,Platteville,Real city (Weld County); Variant A drops one T
+CT,EAST HATFORD,1,EAST HARTFORD,1,0.96,MERGE,East Hartford,Real city; Variant A drops the R
+FL,PALMETTO,2,PALMETO,1,0.933,MERGE,Palmetto,Real city (Manatee County); Variant B drops one T
+FL,FT PIERCE,1,FORT PIERCE,1,0.9,MERGE,Fort Pierce,Same city; FT PIERCE is an abbreviation
+GA,LA GRANGE,7,LAGRANGE,7,0.941,MERGE,LaGrange,Real city (Troup County); official USPS spelling is one word
+GA,ELLABEL,1,ELLABELL,1,0.933,MERGE,Ellabell,Real city (Bryan County); Variant A drops one L
+IL,MONMOUTH,34,MOUNMOUTH,26,0.941,MERGE,Monmouth,Real city (Warren County); Variant B transposes letters
+IL,BALVIDERE,7,BELVIDERE,4,0.889,MERGE,Belvidere,Real city (Boone County); Variant A misspells the first vowel
+IL,EAST CHICAGO,2,WEST CHICAGO,1,0.917,KEEP SEPARATE,,Two genuinely different real places (East Chicago is actually in Lake County IN not IL -- separate DATA ISSUE filed on the board; West Chicago IL is Du Page County). Not a spelling variant of one city.
+IL,UNIVERSITYPK,2,UNIVRSTY PK,1,0.87,MERGE,University Park,Real city (Will County); both are abbreviated/typo'd
+IL,UNIVERSTY PARK,1,UNIVRSTY PK,1,0.88,MERGE,University Park,Same real city as the row above -- all three University Park IL rows fold to one canonical
+KY,ENLANGER,1,ERLANGER,1,0.875,MERGE,Erlanger,Real city (Kenton County); Variant A transposes letters
+KY,INDEPENDENCE,1,INDEPENDANCE,1,0.917,MERGE,Independence,Real city (Kenton County); Variant B is a common misspelling
+LA,AVE SHREVEPORT,1,AVE SHREVEORT,1,0.963,REJECT,,Neither value is a city name -- looks like a truncated street-address fragment ("Ave" + city), a parsing bug not a spelling variant. Filed on the board for the seed's origin/destination parser, not a merge decision.
+MA,WILMINGTON,2,WILLMINGTON,1,0.952,MERGE,Wilmington,Real city (Middlesex County); Variant B doubles the L
+MD,HAGERSTOWN,2,HARGERSTOWN,1,0.952,MERGE,Hagerstown,Real city (Washington County); Variant B inserts an R
+ME,SCARBROUGH,2,SCARBOROUGH,1,0.952,MERGE,Scarborough,Real city (Cumberland County); Variant A drops one O
+MI,PAW PAW,1,PA PAW,1,0.923,MERGE,Paw Paw,Real city (Van Buren County); Variant B drops a W
+MN,VADNAIS HEIGHTS,1,VADNAIS HEIGHTSMN,1,0.938,MERGE,Vadnais Heights,Real city (Ramsey County); Variant B has the state abbreviation concatenated onto the city with no separator -- SAME underlying parsing bug as the LA row above, filed on the board once for both
+MO,ST LOUIS,3,ST. LOUIS,2,0.941,MERGE,St Louis,Same city; punctuation-only difference, canonicalized without the period to match this seed's own abbreviation style elsewhere (FT SMITH, FT PIERCE)
+NC,TARHEEL,50,TAR HEEL,18,0.933,MERGE,Tar Heel,Real place (Bladen County); official USPS name is two words even though the one-word variant has the higher count -- count does not decide correctness
+NC,BROWNS SUMMIT,3,BROWN SUMMIT,2,0.96,MERGE,Browns Summit,Real place (Guilford County); official name keeps the S, Variant B drops it
+NC,GASTONIA,2,GASTONI,1,0.933,MERGE,Gastonia,Real city (Gaston County); Variant B is truncated
+NC,WHITSETT,2,WHITSET,1,0.933,MERGE,Whitsett,Real place (Guilford County); Variant B drops one T
+NJ,VINELAND,50,VIENLAND,28,0.875,MERGE,Vineland,Real city (Cumberland County); Variant B transposes letters
+NJ,CARLSTAD,8,CARLSTADT,3,0.941,MERGE,Carlstadt,Real borough (Bergen County); Variant A drops the final T
+NJ,NORHTVALE,1,NORTHVALE,1,0.889,MERGE,Northvale,Real borough (Bergen County); Variant A transposes letters
+NJ,NORTH BRUNSWICK,1,SOUTH BRUNSWICK,1,0.867,KEEP SEPARATE,,Two genuinely different real municipalities in Middlesex County NJ -- not a spelling variant of one town
+NY,WILLIAMSON,3,WILLIMASON,2,0.9,MERGE,Williamson,Real town (Wayne County); Variant B transposes letters
+NY,HAUPAUGUE,1,HAUUPAUGE,1,0.889,MERGE,Hauppauge,Real hamlet (Suffolk County), correct spelling is HAUPPAUGE (double P) -- NEITHER of the two listed variants is the correct spelling; canonical is a third string, matches the already-merged Laredo-Hauppauge lane already in lane-mileage-usmca.csv from GO-16 Rev B's 72 automatic merges
+OH,MINSTER,2,MINISTER,1,0.933,MERGE,Minster,Real village (Auglaize County); Variant B inserts an extra I
+OH,HOLIDAY CY,1,HOLIDAY CITY,1,0.909,MERGE,Holiday City,Real CDP (Henry County); Variant A is an abbreviation
+OH,MONTEPELIER,1,MONTPELIER,1,0.952,MERGE,Montpelier,Real village (Williams County); Variant A inserts an extra E
+OK,OWASSO,1,OWASO,1,0.909,MERGE,Owasso,Real city (Tulsa County); Variant B drops one S
+PA,BREININGSVILLE,7,BREINIGSVILLE,3,0.963,MERGE,Breinigsville,Real place (Lehigh County); Variant A inserts an extra N
+PA,HAZELTON,4,HAZLETON,3,0.875,MERGE,Hazleton,Real city (Luzerne County) is spelled without the extra E -- Variant A's spelling is the common mistake
+PA,MCCONNELLSBURG,4,MC CONNELLSBURG,2,0.966,MERGE,McConnellsburg,Real borough (Fulton County); official spelling is one word
+PA,JOHNSTOWN,2,JOHNSTON,1,0.941,MERGE,Johnstown,Real city (Cambria County); Variant B drops the W -- no real "Johnston PA" exists to compete with this
+PA,DUBOIS,2,DU BOIS,1,0.923,MERGE,DuBois,Real city (Clearfield County); official spelling is one word
+SC,BYTHEWOOD,1,BLYTHEWOOD,1,0.947,MERGE,Blythewood,Real town (Richland County); Variant A drops the L
+TX,FORTH WORTH,79,FORT WORTH,40,0.952,MERGE,Fort Worth,Real city; Variant A transposes letters in "Fort" -- count does not decide correctness, the correct spelling has the smaller count here
+TX,CARROLLTON,13,CARROLTON,6,0.947,MERGE,Carrollton,Real city (Dallas/Denton County); Variant B drops one L
+TX,COPPEL,2,COPPELL,1,0.923,MERGE,Coppell,Real city (Dallas County); Variant A drops one L
+TX,LAREDP,2,LARED,1,0.909,MERGE,Laredo,Real city (Webb County), the company's own home base for USMCA lanes -- both variants are keyboard/truncation typos of LAREDO, high operational value to fix
+TX,PITTSBURG,1,PITSSBURG,1,0.889,MERGE,Pittsburg,Real city (Camp County) -- spelled without the final H unlike Pittsburgh PA; Variant B doubles the S
+TX,HOSUTON,1,HOSTON,1,0.923,MERGE,Houston,Real city (Harris County), one of the largest in Texas -- both variants are typos of HOUSTON
+TX,DESOTO,1,DE SOTO,1,0.923,MERGE,DeSoto,Real city (Dallas County); official spelling is one word
+TX,JEFERSON,1,JEFFERSON,1,0.941,MERGE,Jefferson,Real city (Marion County); Variant A drops one F
+TX,WASKOM,1,WASKO,1,0.909,MERGE,Waskom,Real city (Harrison County); Variant B truncates the final M
+TX,MT. PLEASANT,1,MT PLEASANT,1,0.957,MERGE,Mt Pleasant,Real city (Titus County); punctuation-only difference, canonicalized without the period to match this seed's own abbreviation style
+TX,WHTESBORO,1,WHITESBORO,1,0.947,MERGE,Whitesboro,Real city (Grayson County); Variant A drops the I
+TX,RIVERA,1,RIVIERA,1,0.923,MERGE,Riviera,Real place (Kleberg County); Variant A drops the I
+UT,CEDAR CITU,3,CEDAR CITY,2,0.9,MERGE,Cedar City,Real city (Iron County); Variant A is a keyboard-adjacent typo (Y to U)
+VA,MT CRAWFORD,2,MOUNT CRAWFORD,1,0.88,MERGE,Mt Crawford,Real town (Rockingham County); abbreviated to match this seed's own MT PLEASANT convention above, not a typo either way
+VA,HARRISONBURG,1,HARRISONBURNG,1,0.96,MERGE,Harrisonburg,Real independent city; Variant B inserts an extra N
+WI,WISCONSIN RAPIDS,6,WISCONSIN RAPID,3,0.968,MERGE,Wisconsin Rapids,Real city (Wood County); official name is plural, Variant B drops the S
+WI,BEAVER DAM,1,BEAVER DAMN,1,0.952,MERGE,Beaver Dam,Real city (Dodge County); Variant B has an extra N

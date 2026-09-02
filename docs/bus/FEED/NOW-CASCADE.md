@@ -1,2 +1,2 @@
-# FEED NOW — CASCADE · 2026-09-01 15:46 CT
-**NOW=CPA Conflicts 1,2,4 file+line.** Not SQL. Conflict 3 CLOSED. GO.
+# FEED NOW — CASCADE · 2026-09-01 21:40 CT
+NOW=unique FINDING only. Stale Jorge-restore/ZIP AskQuestion VOID. GO-18 cite bill gaps. GO.

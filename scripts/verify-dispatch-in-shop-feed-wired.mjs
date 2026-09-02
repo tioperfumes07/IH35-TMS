@@ -15,9 +15,15 @@ const selftest = process.argv.includes("--selftest");
 
 function placeholderSuppressesFailedFeeds(source) {
   const condition = source.match(/\{section\.placeholder\s*&&([\s\S]*?)\?\s*\(/)?.[1] ?? "";
-  return /rows\.length\s*===\s*0/.test(condition)
+  return /(?:allRows|rows)\.length\s*===\s*0/.test(condition)
     && /!\(section\.key\s*===\s*"in_shop"\s*&&\s*inShopUnitsQuery\.isError\)/.test(condition)
     && /!\(section\.key\s*===\s*"awaiting"\s*&&\s*unitsWithoutLoadQuery\.isError\)/.test(condition);
+}
+
+function awaitingCountUsesRenderedRows(source) {
+  const assignment = source.match(/const awaitingTruckCount\s*=([\s\S]{0,260}?);/)?.[1] ?? "";
+  return /boardSections\.find\(\(section\) => section\.key === "awaiting"\)\?\.rows\.length/.test(assignment)
+    && !/unassignedUnits\.length/.test(assignment);
 }
 
 const api = read("apps/frontend/src/api/dispatch.ts");
@@ -40,7 +46,7 @@ if (!/meta\.key === "in_shop"[\s\S]{0,120}\? inShopRows/.test(board)) {
 if (/key:\s*"in_shop"[\s\S]{0,200}rows:\s*\[\]/.test(board)) {
   fail("in_shop section must not hardcode rows: [] in SECTION_META / boardSections");
 }
-if (!/const awaitingTruckCount\s*=\s*boardSections\.find\(\(section\) => section\.key === "awaiting"\)\?\.rows\.length \?\? 0;/.test(board)) {
+if (!awaitingCountUsesRenderedRows(board)) {
   fail("awaitingTruckCount must use the same filtered rows rendered in the Awaiting section");
 }
 if (/const awaitingTruckCount\s*=\s*unassignedUnits\.length/.test(board)) {
@@ -64,6 +70,10 @@ if (selftest) {
     board.replace('!(section.key === "in_shop" && inShopUnitsQuery.isError) &&', "true &&"),
     board.replace('!(section.key === "awaiting" && unitsWithoutLoadQuery.isError) ?', "true ?"),
     board.replace("inShopUnitsQuery.isError ? [] :", "false ? [] :"),
+    board.replace(
+      'boardSections.find((section) => section.key === "awaiting")?.rows.length ?? 0',
+      "unassignedUnits.length",
+    ),
   ];
   if (mutations.slice(0, 2).some((source) => placeholderSuppressesFailedFeeds(source))) {
     fail("selftest mutation escaped failed-feed empty-state exclusion");
@@ -71,7 +81,10 @@ if (selftest) {
   if (/const inShopUnits = inShopUnitsQuery\.isError \? \[\] :/.test(mutations[2])) {
     fail("selftest stale-row mutation escaped");
   }
-  console.log("PASS verify-dispatch-in-shop-feed-wired SELFTEST — 3/3 failed-feed mutations red");
+  if (awaitingCountUsesRenderedRows(mutations[3])) {
+    fail("selftest awaiting-count mutation escaped");
+  }
+  console.log("PASS verify-dispatch-in-shop-feed-wired SELFTEST — 4/4 mutations red");
   process.exit(0);
 }
 

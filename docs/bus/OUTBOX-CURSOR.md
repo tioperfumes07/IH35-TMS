@@ -1,2 +1,3 @@
-# OUTBOX-CURSOR · 2026-09-01 16:15 CT
-CURSOR | READ origin/main 33ad7abd #19359 SUBLEDGER CLOSED | did not re-query Neon | CC-2 NOW=GO-ACCT-01-DUP-RECON grep-verify | CC-1 UUID then races then #19359 build | live healthz 75f469f | GO
+# OUTBOX-CURSOR · 2026-09-01 21:50 CT
+
+CURSOR | software map ingested git `docs/lockdown/IH35-SOFTWARE-MAP/` (INDEX + MAP-FINDINGS + complete HTML) · GO-18 design still `docs/lockdown/GO-18-LOAD-COSTS-DESIGN.html` · Costs tab/Board incomplete/not mounted · zip not in git `~/Downloads/IH35-DELIVERABLES.zip` · CC-3 ZIP Option1 #19419 · never rebuild city-alias · never High-gap rebuild · NEVER 97.5% GL · NEVER seat fixtures | GO

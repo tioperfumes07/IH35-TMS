@@ -1,12 +1,20 @@
-# INBOX-CASCADE · GO-14 · SEARCH FIRST · DO NOT ASK
+# INBOX-CASCADE · LEAD TOP 2026-09-01 21:40 CT · GO-18 FINDINGS ONLY
 
 `git pull --ff-only origin main`
 
-Packet now **on main:** `docs/lockdown/GO-12-CLEANUP-ADJUDICATION-AND-CPA-ANSWER-CONFLICTS.md`
+**Paste:** `docs/bus/PASTE-ALL-SEATS-GO-18-LOAD-COSTS-2026-09-01.md`
 
-## TOP
-1. File Conflicts **1, 2, 4** (CPA ANSWERS vs locked skill) with **file+line both sides**.
-2. Conflict **3 CLOSED** — pro forma at pickup → invoice at delivery.
-3. **Not SQL.** Do not enumerate `ON CONFLICT DO UPDATE`. That is CC-2.
+## CORRECT STALE (do not repeat)
+- Neon restore = **AGENT** (CC-1), not Jorge.
+- ZIP = Option 1 **#19419** — CC-3 **execute**, not AskQuestion.
+- City alias **#19414** done.
+- verify-static dead-port **may already be #19428** — grep.
+- Live healthz **12bfbd6** GO-16 + GO-17. GO-17 **shipped**.
+- Mark Disbursed silent no-op **merged #19433**.
+- Capitalize / accessorial = **OWNER DECISION** only remaining Jorge Qs.
+- NO-SEAT prod money.
 
-ACK `CASCADE | ACK | GO-14 | CPA 1-2-4 | GO`
+## NOW
+Unique FINDING (500 / dead / silent) only. Cite GO-18: bills missing driver/trailer; bill_lines missing load_required; expense path already linked. Do not restamp U14. Skip #15546 #16895.
+
+ACK `CASCADE | ACK | NOW=unique FINDING only · stale Jorge-restore/ZIP AskQuestion VOID · GO-18 cite bill gaps · NEVER restamp U14 | GO`

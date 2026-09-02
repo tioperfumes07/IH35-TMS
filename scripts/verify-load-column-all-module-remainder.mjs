@@ -27,6 +27,7 @@ const FILES = {
   self: "scripts/verify-load-column-all-module-remainder.mjs",
 };
 const RESERVE_HEADER = '/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["planning.reserve"],"task":"DISP-F5867-PLANNING-RESERVE-REVERSE-EXACT-LEAF","vertical":"column-wave"} */';
+const leafId = (leaf) => (leaf && typeof leaf === "object" && typeof leaf.id === "string" ? leaf.id : "");
 
 const read = () => Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 const matrix = (source, key, failures) => {
@@ -43,10 +44,17 @@ export function verify(source) {
   const legal = matrix(source, "legalMatrix", failures);
   const dispatch = matrix(source, "dispatchMatrix", failures);
   const maintenance = matrix(source, "maintenanceMatrix", failures);
-  const required = (m, id) => m?.leaves?.find((leaf) => leaf.id === id)?.required ?? [];
+  const required = (m, id) => m?.leaves?.find((leaf) => leafId(leaf) === id)?.required ?? [];
 
-  const catalogLoad = lists?.leaves?.filter((leaf) => leaf.id.startsWith("catalog.") && leaf.required?.includes("load")) ?? [];
-  if (catalogLoad.length) failures.push(`generic catalogs must not invent load Required (${catalogLoad.map((leaf) => leaf.id).join(", ")})`);
+  const malformed = (lists?.leaves ?? []).filter((leaf) => !leafId(leaf));
+  if (malformed.length) {
+    failures.push(
+      `lists.required.json leaves must be objects with string id (got ${malformed.length} malformed: ${malformed.map((leaf) => JSON.stringify(leaf)).join(", ")})`,
+    );
+  }
+
+  const catalogLoad = lists?.leaves?.filter((leaf) => leafId(leaf).startsWith("catalog.") && leaf.required?.includes("load")) ?? [];
+  if (catalogLoad.length) failures.push(`generic catalogs must not invent load Required (${catalogLoad.map((leaf) => leafId(leaf)).join(", ")})`);
   if (lists?.honesty_audit?.load_column_2026_08_14?.leaves_touched !== 98) failures.push("Lists load applicability audit must enumerate all 98 corrected catalog leaves");
   need("catalogPage", "selectedCompanyId", "catalog UI must remain explicitly company scoped");
   need("catalogFactory", "operating_company_id", "generic catalog CRUD must remain explicitly company scoped");
@@ -126,8 +134,11 @@ if (process.argv.includes("--selftest")) {
     const parsed = JSON.parse(source[key]); parsed.leaves.find((leaf) => leaf.id === id).required.push("load");
     if (!verify({ ...source, [key]: JSON.stringify(parsed) }).length) throw new Error(`selftest false-applicability mutation survived: ${id}`);
   }
-  const parsedLists = JSON.parse(source.listsMatrix); parsedLists.leaves.find((leaf) => leaf.id.startsWith("catalog.")).required.push("load");
+  const parsedLists = JSON.parse(source.listsMatrix); parsedLists.leaves.find((leaf) => leafId(leaf).startsWith("catalog.")).required.push("load");
   if (!verify({ ...source, listsMatrix: JSON.stringify(parsedLists) }).length) throw new Error("selftest catalog applicability mutation survived");
-  console.log(`verify-load-column-all-module-remainder SELFTEST PASS — ${mutations.length + 5} planted defects rejected`);
+  const stringLeafLists = JSON.parse(source.listsMatrix);
+  stringLeafLists.leaves.push("lists.dialog.bulk_pre_validation");
+  if (!verify({ ...source, listsMatrix: JSON.stringify(stringLeafLists) }).length) throw new Error("selftest string-leaf crash/malformed mutation survived");
+  console.log(`verify-load-column-all-module-remainder SELFTEST PASS — ${mutations.length + 6} planted defects rejected`);
 }
 console.log("verify-load-column-all-module-remainder PASS — all-module load remainder is applicability-honest and genuine create/read/drill paths are guarded");

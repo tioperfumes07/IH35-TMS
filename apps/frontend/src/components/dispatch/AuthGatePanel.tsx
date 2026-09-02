@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -19,7 +20,15 @@ export type AuthGatePanelProps = {
 
 export function AuthGatePanel(props: AuthGatePanelProps) {
   const q = useQuery({
-    queryKey: ["auth-gates", props],
+    queryKey: [
+      "auth-gates",
+      props.operatingCompanyId,
+      props.action,
+      props.loadUuid ?? "",
+      props.unitUuid ?? "",
+      props.driverUuid ?? "",
+      props.trailerUuid ?? "",
+    ],
     enabled: Boolean(props.operatingCompanyId),
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -38,7 +47,10 @@ export function AuthGatePanel(props: AuthGatePanelProps) {
   const blockers = q.data?.blockers ?? [];
   const warnings = q.data?.warnings ?? [];
   const info = q.data?.info ?? [];
-  props.onBlockersChange?.(q.isError || blockers.length > 0);
+  const onBlockersChange = props.onBlockersChange;
+  useEffect(() => {
+    onBlockersChange?.(q.isError || blockers.length > 0);
+  }, [blockers.length, onBlockersChange, q.isError]);
   if (!q.data && !q.isLoading && !q.isError) return null;
   const hasIdentity = Boolean(props.loadUuid || props.unitUuid || props.driverUuid || props.trailerUuid);
   return (

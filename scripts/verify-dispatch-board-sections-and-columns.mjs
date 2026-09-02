@@ -85,8 +85,8 @@ function dsp02ScheduleColumnIssues(content) {
   if (!/function renderPickupDateCell[\s\S]{0,180}pickup_scheduled_at[\s\S]{0,80}pickup_appointment_start_at/.test(content)) {
     issues.push("pickup date must derive from persisted pickup stop schedule/appointment fields (DSP-02)");
   }
-  if (!/function renderDeliveryTimeCell[\s\S]{0,220}delivery_time_window_type[\s\S]{0,120}delivery_scheduled_at[\s\S]{0,100}delivery_appointment_start_at/.test(content)) {
-    issues.push("delivery time must derive from persisted delivery stop window/schedule fields (DSP-02)");
+  if (!/function renderDeliveryTimeCell[\s\S]{0,220}delivery_time_window_type[\s\S]{0,120}effective_delivery_date[\s\S]{0,100}delivery_appointment_start_at/.test(content)) {
+    issues.push("delivery time must derive from canonical effective delivery date with appointment fallback (DSP-02)");
   }
   if (!/function formatStopDate\s*\(/.test(content) || !/function formatStopTime\s*\(/.test(content)) {
     issues.push("formatStopDate + formatStopTime helpers required for stop date/time cells (DSP-02)");
@@ -170,16 +170,24 @@ function kanbanColumnSortIssues(kanbanSrc = readFileSync(join(root, "apps/fronte
   return issues;
 }
 
+// FLEET-OOS-STRIP-PARITYTABLE (GO-05 wave 1): migrated off hand-rolled TableHeaderCell onto
+// ParityTable (drag-resize + drag-reorder + gear, owner's "every table" law). The guard now checks
+// for the CHROME contract (ParityTable + a sortable Unit column + the same two testids, now carried
+// via tableTestId/rowTestId props rather than literal data-testid attributes), not the literal
+// TableHeaderCell markup that chrome used to require.
 function fleetOosSortIssues(oosSrc = readFileSync(join(root, "apps/frontend/src/components/dispatch/FleetOosStrip.tsx"), "utf8")) {
   const issues = [];
-  if (!oosSrc.includes('data-testid="dispatch-fleet-oos-table"')) {
-    issues.push("FleetOosStrip must render a sortable table for OOS/In shop units (DSP-05)");
+  if (!/<ParityTable\b/.test(oosSrc)) {
+    issues.push("FleetOosStrip must render its OOS/In shop table via ParityTable (drag-resize + reorder, DSP-05)");
   }
-  if (!oosSrc.includes('data-testid="dispatch-fleet-oos-headers"')) {
-    issues.push("FleetOosStrip table must expose a header row (DSP-05)");
+  if (!oosSrc.includes('tableTestId="dispatch-fleet-oos-table"')) {
+    issues.push("FleetOosStrip must expose tableTestId=dispatch-fleet-oos-table (DSP-05)");
   }
-  if (!/TableHeaderCell[\s\S]{0,400}columnKey="unit"[\s\S]{0,200}onToggleSort/.test(oosSrc)) {
-    issues.push("FleetOosStrip Unit header must be click-sortable ASC/DESC (DSP-05)");
+  if (!/rowTestId=\{.*fleet-oos-unit-/.test(oosSrc)) {
+    issues.push("FleetOosStrip must expose per-row fleet-oos-unit-* testids (DSP-05)");
+  }
+  if (!/key:\s*"unit"[\s\S]{0,200}sortable:\s*true/.test(oosSrc)) {
+    issues.push("FleetOosStrip Unit column must be click-sortable ASC/DESC (DSP-05)");
   }
   return issues;
 }
@@ -323,6 +331,7 @@ if (process.argv.includes("--selftest")) {
     src.replace('{ key: "delivery_date", header: "Del date", cell: (load) => renderDeliveryDateCell(load) }', '{ key: "delivery", header: "Delivery", cell: (load) => renderDeliveryDateCell(load) }'),
     src.replace('{ key: "delivery_time", header: "Del time", cell: (load) => renderDeliveryTimeCell(load) }', '{ key: "delivery", header: "Delivery", cell: (load) => renderDeliveryTimeCell(load) }'),
     src.replace("function formatStopDate(", "function formatStopDateRemoved("),
+    src.replaceAll("load.effective_delivery_date", "load.delivery_scheduled_at"),
   ];
   if (!dsp02Mutants.every((mutant) => dsp02ScheduleColumnIssues(mutant).length > 0)) {
     fail("selftest mutation escaped DSP-02 four-column schedule guard");
@@ -351,14 +360,15 @@ if (process.argv.includes("--selftest")) {
   const oosFile = join(root, "apps/frontend/src/components/dispatch/FleetOosStrip.tsx");
   const oosSrc = readFileSync(oosFile, "utf8");
   const oosMutants = [
-    oosSrc.replace('data-testid="dispatch-fleet-oos-table"', 'data-testid="dispatch-fleet-oos-cards"'),
-    oosSrc.replaceAll("TableHeaderCell", "th"),
-    oosSrc.replace('data-testid="dispatch-fleet-oos-headers"', 'data-testid="dispatch-fleet-oos-header-row"'),
+    oosSrc.replace('tableTestId="dispatch-fleet-oos-table"', 'tableTestId="dispatch-fleet-oos-cards"'),
+    oosSrc.replaceAll("<ParityTable", "<table"),
+    oosSrc.replace(/rowTestId=\{.*fleet-oos-unit-.*\}/, 'rowTestId={(row) => `removed-${row.unitNumber}`}'),
+    oosSrc.replace('key: "unit",\n    label: "Unit",\n    sortable: true,', 'key: "unit",\n    label: "Unit",\n    sortable: false,'),
   ];
   if (!oosMutants.every((mutant) => fleetOosSortIssues(mutant).length > 0)) {
     fail("selftest mutation escaped DSP-05 fleet OOS sort guard");
   }
-  console.log("PASS verify-dispatch-board-sections-and-columns SELFTEST — 29/29 defects caught");
+  console.log("PASS verify-dispatch-board-sections-and-columns SELFTEST — 30/30 defects caught");
 }
 
 console.log("PASS verify-dispatch-board-sections-and-columns");

@@ -33,6 +33,8 @@ describe("QboDocumentNumberField — empty box (GO-06 owner 2026-09-01)", () => 
       "utf8"
     );
     expect(src).not.toMatch(/onChange\(suggested\)/);
+    expect(src).not.toMatch(/placeholder=\{suggested\}/);
+    expect(src).toMatch(/placeholder=""/);
     expect(src).toMatch(/Leave blank to mint/);
   });
 });

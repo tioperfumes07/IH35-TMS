@@ -234,6 +234,8 @@ export type DispatchBookLoadPayload = {
   miles_practical?: number;
   miles_shortest?: number;
   miles_deadhead?: number;
+  mileage_source?: "History" | "Manual" | "Routing engine" | "Operator entered";
+  stop_count?: string;
   pickup_number?: string;
   border_routing?: string;
   /** FAIL-D6 — marks this load as demo/sample data (mdata.loads.is_sample_data). */
@@ -1358,6 +1360,41 @@ export function getLoadPodBolSummary(loadId: string, operatingCompanyId: string)
   return apiRequest<{ pods: PodDocumentSummary[]; bols: BolDocumentSummary[] }>(
     `/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/pod-bol?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
   );
+}
+
+export type LaneMileageLookupResult = {
+  practical_miles: number | null;
+  short_miles: number | null;
+  empty_miles: number | null;
+  runs: number;
+  short_runs: number | null;
+  practical_spread: number | null;
+  confidence: string | null;
+  autofill_allowed: boolean;
+  match: "Matched by ZIP" | "City match" | "From the reverse lane" | "New lane";
+  provenance: string;
+  matched_lane_id: string | null;
+  source: string | null;
+};
+
+export function getLaneMileage(params: {
+  operating_company_id: string;
+  origin_city: string;
+  origin_state: string;
+  origin_postal_code?: string;
+  dest_city: string;
+  dest_state: string;
+  dest_postal_code?: string;
+}) {
+  const u = new URLSearchParams();
+  u.set("operating_company_id", params.operating_company_id);
+  u.set("origin_city", params.origin_city);
+  u.set("origin_state", params.origin_state);
+  u.set("dest_city", params.dest_city);
+  u.set("dest_state", params.dest_state);
+  if (params.origin_postal_code) u.set("origin_postal_code", params.origin_postal_code);
+  if (params.dest_postal_code) u.set("dest_postal_code", params.dest_postal_code);
+  return apiRequest<LaneMileageLookupResult>(`/api/v1/dispatch/lane-mileage?${u.toString()}`);
 }
 
 export function generateLoadBol(loadId: string, operatingCompanyId: string) {

@@ -1,2 +1,2 @@
-# FEED NOW — CURSOR · 2026-09-01 16:15 CT
-Lead: CC-2 SUBLEDGER closed #19359. Wake CC-1 UUID. Resume GO-06 leftover after bus merge. GO.
+# FEED NOW — CURSOR · 2026-09-01 21:40 CT
+GO-18 design+pastes shipped. API=12bfbd6. First-click stands. No second deploy. GO.

@@ -13,13 +13,16 @@ const manifest = read("apps/frontend/src/routes/manifest.tsx");
 const subnav = read("apps/frontend/src/pages/reports/ReportsSubNav.tsx");
 const page = read("apps/frontend/src/pages/reports/CancellationsReportPage.tsx");
 
-function failures(routeSource = route, pageSource = page, analyticsSource = analytics) {
+function failures(routeSource = route, pageSource = page, analyticsSource = analytics, subnavSource = subnav) {
   return [
     ["backend route path", /\/api\/v1\/dispatch\/cancellations-report/.test(routeSource)],
     ["company scope", routeSource.includes("withCompanyScope") && routeSource.includes("FROM dispatch.load_cancellations")],
     ["route registration", /registerCancellationsReportRoutes\(app\)/.test(index)],
     ["frontend mount", /path="\/reports\/cancellations"/.test(manifest) && /<CancellationsReportPage\b/.test(manifest)],
-    ["subnav link", /href: "\/reports\/cancellations"/.test(subnav)],
+    [
+      "subnav link",
+      /\{[^{}]*label:\s*["']Cancellations["'][^{}]*(?:to|href):\s*["']\/reports\/cancellations["'][^{}]*\}/s.test(subnavSource),
+    ],
     ["all four groupings", ["by_reason", "by_driver", "by_customer", "by_date"].every((value) => routeSource.includes(`${value}:`) && pageSource.includes(value))],
     ["driver canonical key lineage", routeSource.includes('by_driver: groupBy(rows, (r) => r.driver_id ?? "unassigned"')],
     ["report driver active company authorization", /driver_company_authorizations cancellation_report_driver_dca[\s\S]{0,360}cancellation_report_driver_dca\.company_id = lc\.operating_company_id[\s\S]{0,180}cancellation_report_driver_dca\.is_authorized = true[\s\S]{0,180}cancellation_report_driver_dca\.deactivated_at IS NULL/.test(routeSource)],
@@ -53,6 +56,7 @@ function failures(routeSource = route, pageSource = page, analyticsSource = anal
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
+    ["subnav link", subnav.replace('to: "/reports/cancellations"', 'to: "/reports/removed-cancellations"')],
     ["driver canonical key lineage", route.replace("r.driver_id", "r.driver_name")],
     ["customer canonical key lineage", route.replace("r.customer_id", "r.customer_name")],
     ["driver typed mapping", page.replace('entityKind: "driver" as const', "entityKind: null")],
@@ -66,7 +70,9 @@ if (process.argv.includes("--selftest")) {
     ["analytics historical customer label fallback", analytics.replace("mdata.resolve_customer_label_same_company(l.customer_id, lc.operating_company_id)", "NULL")],
   ];
   for (const [expected, source] of mutations) {
-    const problems = expected === "analytics driver active company authorization"
+    const problems = expected === "subnav link"
+      ? failures(route, page, analytics, source)
+      : expected === "analytics driver active company authorization"
       ? failures(route, page, source)
       : expected.startsWith("analytics ")
         ? failures(route, page, source)

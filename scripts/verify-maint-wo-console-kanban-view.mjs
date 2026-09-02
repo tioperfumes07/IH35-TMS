@@ -29,32 +29,43 @@ function kanbanViewIssues(src) {
   return issues;
 }
 
-/** MAINT-05 — WorkOrdersConsole list + kanban must expose Dispatch-class header sort + column reorder/width. */
+/**
+ * MAINT-05→GO-05 SUPERSESSION (2026-09-01, ruling docs/bus/RULING-GO-05-MAINT-05-PARITYTABLE-2026-09-01.md):
+ * MAINT-05 (a8cbb319d6, 06:02 CT) locked TableHeaderCell + useTablePref + useColumnReorder because
+ * ParityTable then lacked ASC/DESC header-click sort and drag-resize/reorder chrome. COLUMN LAW
+ * landed later the same day (ParityTable.tsx: enableColumnResize/enableColumnReorder/controlled
+ * sort). GO-05 wave 1 converts both surfaces back onto ParityTable — this guard now checks the
+ * CHROME CONTRACT (sortable columns, a stable storageKey, reorder not disabled, URL-persisted
+ * sort), not the literal TableHeaderCell/useTablePref/useColumnReorder markup that chrome used to
+ * require. A regression that drops the chrome — not just the old markup — still fails this guard.
+ */
+
+/** WorkOrdersConsole list + kanban must expose Dispatch-class header sort + column reorder/width. */
 function assertConsoleHeaderSort(src) {
   const issues = [];
-  if (!src.includes('data-testid="work-orders-console-headers"')) {
-    issues.push("list view must expose work-orders-console-headers row (MAINT-05)");
+  if (!src.includes('tableTestId="work-orders-console-headers"')) {
+    issues.push("list view must expose tableTestId=work-orders-console-headers (MAINT-05/GO-05)");
   }
-  if (!/<TableHeaderCell/.test(src)) {
-    issues.push("WorkOrdersConsole list must use TableHeaderCell for ASC/DESC header sort (MAINT-05)");
+  if (!/<ParityTable\b/.test(src)) {
+    issues.push("WorkOrdersConsole list must render via ParityTable for ASC/DESC header sort + resize/reorder (MAINT-05/GO-05)");
   }
-  if (!src.includes('useTablePref("work-orders-console-list"')) {
-    issues.push("WorkOrdersConsole must persist column widths/order via useTablePref (MAINT-05)");
+  if (/<ParityTable[\s\S]{0,600}enableColumnReorder=\{false\}/.test(src)) {
+    issues.push("WorkOrdersConsole list must not disable ParityTable's drag-reorder (MAINT-05/GO-05)");
   }
-  if (!/useColumnReorder/.test(src)) {
-    issues.push("WorkOrdersConsole must wire useColumnReorder for drag-reorder (MAINT-05)");
+  if (!src.includes('storageKey="work-orders-console-list"')) {
+    issues.push("WorkOrdersConsole must persist column widths/order via a stable ParityTable storageKey (MAINT-05/GO-05)");
   }
-  if (!/useUrlSort/.test(src) || !/toggleHeaderSort|toggleSort/.test(src)) {
-    issues.push("WorkOrdersConsole must persist header sort via useUrlSort toggle (MAINT-05)");
+  if (!/useUrlSort/.test(src) || !/onSortChange/.test(src)) {
+    issues.push("WorkOrdersConsole must persist header sort via useUrlSort + ParityTable onSortChange (MAINT-05/GO-05)");
   }
-  if (!src.includes('key: "unit_number"') || !src.includes('header: "Unit"')) {
-    issues.push("WorkOrdersConsole must render a sortable Unit column (MAINT-05)");
+  if (!src.includes('key: "unit_number"') || !/key:\s*"unit_number"[\s\S]{0,80}label:\s*"Unit"[\s\S]{0,80}sortable:\s*true/.test(src)) {
+    issues.push("WorkOrdersConsole must render a sortable Unit column (MAINT-05/GO-05)");
   }
-  if (!src.includes('key: "display_id"') || !src.includes('header: "WO #"')) {
-    issues.push("WorkOrdersConsole must render a sortable WO # column (MAINT-05)");
+  if (!/key:\s*"display_id"[\s\S]{0,80}label:\s*"WO #"[\s\S]{0,80}sortable:\s*true/.test(src)) {
+    issues.push("WorkOrdersConsole must render a sortable WO # column (MAINT-05/GO-05)");
   }
-  if (!src.includes('key: "opened_at"') || !src.includes('header: "Opened"')) {
-    issues.push("WorkOrdersConsole must render a sortable Opened/date column (MAINT-05)");
+  if (!/key:\s*"opened_at"[\s\S]{0,80}label:\s*"Opened"[\s\S]{0,80}sortable:\s*true/.test(src)) {
+    issues.push("WorkOrdersConsole must render a sortable Opened/date column (MAINT-05/GO-05)");
   }
   if (!src.includes("work-orders-console-kanban-sort-")) {
     issues.push("kanban columns must expose unit/WO # sort controls (MAINT-05)");
@@ -65,23 +76,23 @@ function assertConsoleHeaderSort(src) {
   return issues;
 }
 
-/** MAINT-05 — Maintenance home active-WO table must match Dispatch table chrome. */
+/** Maintenance home active-WO table must match Dispatch table chrome. */
 function assertMaintActiveWoTable(src) {
   const issues = [];
-  if (!src.includes('data-testid="maint-active-work-orders-headers"')) {
-    issues.push("WorkOrdersTable must expose maint-active-work-orders-headers (MAINT-05)");
+  if (!src.includes('tableTestId="maint-active-work-orders-headers"')) {
+    issues.push("WorkOrdersTable must expose tableTestId=maint-active-work-orders-headers (MAINT-05/GO-05)");
   }
-  if (!/<TableHeaderCell/.test(src)) {
-    issues.push("WorkOrdersTable must use TableHeaderCell for ASC/DESC header sort (MAINT-05)");
+  if (!/<ParityTable\b/.test(src)) {
+    issues.push("WorkOrdersTable must render via ParityTable for ASC/DESC header sort + resize/reorder (MAINT-05/GO-05)");
   }
-  if (!src.includes('useTablePref("maint-active-wos"')) {
-    issues.push("WorkOrdersTable must persist column widths/order via useTablePref (MAINT-05)");
+  if (/<ParityTable[\s\S]{0,600}enableColumnReorder=\{false\}/.test(src)) {
+    issues.push("WorkOrdersTable must not disable ParityTable's drag-reorder (MAINT-05/GO-05)");
   }
-  if (!/useColumnReorder/.test(src)) {
-    issues.push("WorkOrdersTable must wire useColumnReorder for drag-reorder (MAINT-05)");
+  if (!src.includes('storageKey="maint-active-wos"')) {
+    issues.push("WorkOrdersTable must persist column widths/order via a stable ParityTable storageKey (MAINT-05/GO-05)");
   }
-  if (!/useUrlSort/.test(src)) {
-    issues.push("WorkOrdersTable must persist header sort via useUrlSort (MAINT-05)");
+  if (!/useUrlSort/.test(src) || !/onSortChange/.test(src)) {
+    issues.push("WorkOrdersTable must persist header sort via useUrlSort + ParityTable onSortChange (MAINT-05/GO-05)");
   }
   return issues;
 }
@@ -98,25 +109,32 @@ function selftest() {
   assertSource(consoleSrc, maintSrc);
 
   const consoleMutants = [
-    consoleSrc.replace('data-testid="work-orders-console-headers"', 'data-testid="work-orders-console-header-row"'),
-    consoleSrc.replaceAll("<TableHeaderCell", "<th"),
-    consoleSrc.replace('useTablePref("work-orders-console-list"', 'useTablePref("dispatch-board"'),
-    consoleSrc.replaceAll("useColumnReorder", "__RemovedColumnReorder__"),
+    consoleSrc.replace('tableTestId="work-orders-console-headers"', 'tableTestId="work-orders-console-header-row"'),
+    consoleSrc.replaceAll("<ParityTable", "<table"),
+    consoleSrc.replaceAll('storageKey="work-orders-console-list"', 'storageKey="dispatch-board"'),
+    consoleSrc.replace(
+      '<ParityTable<WoConsoleRow>',
+      '<ParityTable<WoConsoleRow>\n        enableColumnReorder={false}',
+    ),
     consoleSrc.replaceAll("useUrlSort", "__RemovedUrlSort__"),
+    consoleSrc.replace('label: "Unit"', 'label: "Unit Removed"'),
+    consoleSrc.replace('label: "WO #"', 'label: "WO Number"'),
+    consoleSrc.replace('key: "opened_at",\n        label: "Opened",\n        sortable: true,', 'key: "opened_at",\n        label: "Opened",\n        sortable: false,'),
     consoleSrc.replaceAll("work-orders-console-kanban-sort-", "removed-kanban-sort-"),
   ];
   if (!consoleMutants.every((mutant) => assertConsoleHeaderSort(mutant).length > 0)) {
-    fail("selftest mutation escaped WorkOrdersConsole MAINT-05 header-sort guard");
+    fail("selftest mutation escaped WorkOrdersConsole MAINT-05/GO-05 header-sort guard");
   }
 
   const maintMutants = [
-    maintSrc.replace('data-testid="maint-active-work-orders-headers"', 'data-testid="maint-active-wo-header-row"'),
-    maintSrc.replaceAll("<TableHeaderCell", "<th"),
-    maintSrc.replace('useTablePref("maint-active-wos"', 'useTablePref("fleet-maint"'),
-    maintSrc.replaceAll("useColumnReorder", "__RemovedColumnReorder__"),
+    maintSrc.replace('tableTestId="maint-active-work-orders-headers"', 'tableTestId="maint-active-wo-header-row"'),
+    maintSrc.replaceAll("<ParityTable", "<table"),
+    maintSrc.replaceAll('storageKey="maint-active-wos"', 'storageKey="fleet-maint"'),
+    maintSrc.replace('<ParityTable<WorkOrder>', '<ParityTable<WorkOrder>\n        enableColumnReorder={false}'),
+    maintSrc.replaceAll("useUrlSort", "__RemovedUrlSort__"),
   ];
   if (!maintMutants.every((mutant) => assertMaintActiveWoTable(mutant).length > 0)) {
-    fail("selftest mutation escaped WorkOrdersTable MAINT-05 header-sort guard");
+    fail("selftest mutation escaped WorkOrdersTable MAINT-05/GO-05 header-sort guard");
   }
 
   const kanbanMutants = [

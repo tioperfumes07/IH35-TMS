@@ -1066,6 +1066,31 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         [body.data.transaction_id, loadId, billId, settlementId]
       );
 
+      // LINKAGE-INTEGRITY-LAW — a match is a record, not a bare pointer. Mirrors the OTHER
+      // subsystem's own accept flow (accounting/bank-recon/match.service.ts), which already writes
+      // banking.reconciliation_matches for its 5 kinds; this route's own 3 kinds (load/bill/
+      // settlement) previously wrote ONLY the bare bank_transactions column with no matches-record
+      // at all (migration 202613350001 widened the kind CHECK to accept them).
+      await client.query(
+        `
+          INSERT INTO banking.reconciliation_matches (
+            operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id,
+            match_score, match_state, matched_at, matched_by_user_uuid
+          )
+          VALUES ($1::uuid, $2::uuid, $3::text, $4::uuid, 1, 'user_matched', now(), $5::uuid)
+          ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id)
+          DO UPDATE SET
+            match_score = 1,
+            match_state = 'user_matched',
+            matched_at = now(),
+            matched_by_user_uuid = EXCLUDED.matched_by_user_uuid,
+            voided_at = NULL,
+            void_reason = NULL,
+            voided_by_user_id = NULL
+        `,
+        [query.data.operating_company_id, body.data.transaction_id, body.data.matched_event_type, body.data.matched_event_id, user.uuid]
+      );
+
       await appendCrudAudit(
         client,
         user.uuid,
@@ -1120,10 +1145,14 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         prev_expense_id: string | null;
         prev_transfer_id: string | null;
         prev_journal_entry_id: string | null;
+        prev_load_id: string | null;
+        prev_bill_id: string | null;
+        prev_settlement_id: string | null;
       }>(
         `
           WITH prior AS (
-            SELECT id, matched_expense_id, matched_transfer_id, matched_journal_entry_id
+            SELECT id, matched_expense_id, matched_transfer_id, matched_journal_entry_id,
+                   matched_load_id, matched_bill_id, matched_settlement_id
             FROM banking.bank_transactions
             WHERE id = $1
               AND bank_account_id = $2
@@ -1145,7 +1174,10 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
             bt.id,
             prior.matched_expense_id::text AS prev_expense_id,
             prior.matched_transfer_id::text AS prev_transfer_id,
-            prior.matched_journal_entry_id::text AS prev_journal_entry_id
+            prior.matched_journal_entry_id::text AS prev_journal_entry_id,
+            prior.matched_load_id::text AS prev_load_id,
+            prior.matched_bill_id::text AS prev_bill_id,
+            prior.matched_settlement_id::text AS prev_settlement_id
         `,
         [
           body.data.transaction_id,
@@ -1158,16 +1190,20 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       const row = res.rows[0];
       if (!row) return false;
 
-      // banking.reconciliation_matches is the OTHER subsystem's own audit-of-record for these 3
-      // kinds (its ledger_entry_kind CHECK only permits payment/bill_payment/transfer/je/expense —
-      // load/bill/settlement never had a row there). Mark each previously-matched kind 'rejected'
-      // there too, mirroring recon-worklist.service.ts's rejectReconMatch, so a future match-suggestion
-      // pass doesn't just re-surface the same pairing with no memory of this unmatch, and the two
-      // subsystems' audit trails stay consistent with each other.
-      const rejectedKinds: Array<{ kind: "expense" | "transfer" | "je"; id: string }> = [];
+      // banking.reconciliation_matches is the audit-of-record for every matched kind (LINKAGE-
+      // INTEGRITY-LAW: a match is a record, not a bare pointer). Mark each previously-matched kind
+      // 'rejected' there too, mirroring recon-worklist.service.ts's rejectReconMatch, so a future
+      // match-suggestion pass doesn't just re-surface the same pairing with no memory of this unmatch.
+      // load/bill/settlement (this route's OWN /match handler's kinds, migration 202613350001 widened
+      // the kind CHECK to accept them) are included here for the same reason expense/transfer/je
+      // already were — no kind should be releasable without leaving a voided/rejected trail.
+      const rejectedKinds: Array<{ kind: "expense" | "transfer" | "je" | "load" | "bill" | "settlement"; id: string }> = [];
       if (row.prev_expense_id) rejectedKinds.push({ kind: "expense", id: row.prev_expense_id });
       if (row.prev_transfer_id) rejectedKinds.push({ kind: "transfer", id: row.prev_transfer_id });
       if (row.prev_journal_entry_id) rejectedKinds.push({ kind: "je", id: row.prev_journal_entry_id });
+      if (row.prev_load_id) rejectedKinds.push({ kind: "load", id: row.prev_load_id });
+      if (row.prev_bill_id) rejectedKinds.push({ kind: "bill", id: row.prev_bill_id });
+      if (row.prev_settlement_id) rejectedKinds.push({ kind: "settlement", id: row.prev_settlement_id });
       for (const { kind, id } of rejectedKinds) {
         await client.query(
           `

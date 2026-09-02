@@ -320,6 +320,15 @@ const BANK_MATCH_REVERSE_TABLE: Partial<Record<VoidableEntityType, string>> = {
   customer_payment: "accounting.payments",
 };
 
+// LINKAGE-INTEGRITY-LAW (board, owner paste 2026-09-01) — this reset used to clear ONLY the
+// categorize-as-X link fields (linked_entity_id/category*), never the SEPARATE reconciliation-session
+// pointer family (matched_load_id/matched_bill_id/matched_settlement_id/matched_expense_id/
+// matched_transfer_id/matched_payment_id/matched_bill_payment_id) reconciliation.routes.ts's own
+// /match route writes. A bill matched via a reconciliation session, then voided, kept a stale
+// matched_bill_id forever — the exact "one-sided pointer that dies with the entity" gap the law
+// names, one level deeper than the original BANK-ORPHAN-01 categorization-only fix. Extended here so
+// void releases EVERY match family on the bank-transaction side, not just one of two.
+//
 // Mirrors banking.routes.ts's undo-categorization reset exactly (same columns, same target status)
 // EXCEPT it does not touch/require reversing matched_journal_entry_id's own JE: the entity being
 // voided already had ITS journal entry reversed by postVoidReversal above (or by the caller, for a
@@ -329,6 +338,13 @@ const BANK_TX_UNMATCH_RESET_SQL = `
   UPDATE banking.bank_transactions
      SET status = 'pending_categorization',
          matched_journal_entry_id = NULL,
+         matched_load_id = NULL,
+         matched_bill_id = NULL,
+         matched_settlement_id = NULL,
+         matched_expense_id = NULL,
+         matched_transfer_id = NULL,
+         matched_payment_id = NULL,
+         matched_bill_payment_id = NULL,
          linked_entity_id = NULL,
          category = NULL,
          category_kind = NULL,
@@ -360,6 +376,58 @@ const BANK_TX_UNMATCH_RESET_SQL = `
    WHERE operating_company_id = $1::uuid
 `;
 
+// LINKAGE-INTEGRITY-LAW — the reconciliation-session match family (load/bill/settlement/expense/
+// transfer/payment/bill_payment) maps 1:1 to banking.reconciliation_matches.ledger_entry_kind
+// (migration 202613350001 widened its CHECK to accept all of these). matched_journal_entry_id maps
+// to 'je' but is intentionally NOT voided here — see BANK_TX_UNMATCH_RESET_SQL's own comment: its JE
+// was already reversed by postVoidReversal, a separate concern from the match record.
+const MATCHED_COLUMN_TO_KIND: Array<{ column: string; kind: string }> = [
+  { column: "matched_load_id", kind: "load" },
+  { column: "matched_bill_id", kind: "bill" },
+  { column: "matched_settlement_id", kind: "settlement" },
+  { column: "matched_expense_id", kind: "expense" },
+  { column: "matched_transfer_id", kind: "transfer" },
+  { column: "matched_payment_id", kind: "payment" },
+  { column: "matched_bill_payment_id", kind: "bill_payment" },
+];
+
+/**
+ * LINKAGE-INTEGRITY-LAW shared step: for whichever matched_* columns the reset just cleared, write a
+ * voided row into banking.reconciliation_matches (the SAME void_reason/voided_at/voided_by_user_id
+ * convention the manual /unmatch route's 'rejected' rows already use — a released match must leave a
+ * trail regardless of which side released it). `prior` is the RETURNING row from the reset UPDATE.
+ */
+async function recordVoidedMatches(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  bankTransactionId: string,
+  prior: Record<string, string | null>,
+  actorUserId: string | null,
+  voidReason: string
+): Promise<void> {
+  for (const { column, kind } of MATCHED_COLUMN_TO_KIND) {
+    const ledgerEntryId = prior[column];
+    if (!ledgerEntryId) continue;
+    await client.query(
+      `
+        INSERT INTO banking.reconciliation_matches (
+          operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id,
+          match_score, match_state, matched_at, matched_by_user_uuid,
+          voided_at, void_reason, voided_by_user_id
+        )
+        VALUES ($1::uuid, $2::uuid, $3::text, $4::uuid, 0, 'rejected', now(), $5::uuid, now(), $6, $5::uuid)
+        ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id)
+        DO UPDATE SET
+          match_state = 'rejected',
+          voided_at = now(),
+          void_reason = EXCLUDED.void_reason,
+          voided_by_user_id = EXCLUDED.voided_by_user_id
+      `,
+      [operatingCompanyId, bankTransactionId, kind, ledgerEntryId, actorUserId, voidReason]
+    );
+  }
+}
+
 /**
  * BANK-ORPHAN-01 shared primitive #1: reset ONE bank_transactions row (known by its own id) back to
  * the review worklist. Callers that already hold a bank_transaction_id directly (a column that is not
@@ -369,13 +437,27 @@ const BANK_TX_UNMATCH_RESET_SQL = `
 export async function unmatchBankTransactionById(
   client: QueryableClient,
   operatingCompanyId: string,
-  bankTransactionId: string
+  bankTransactionId: string,
+  actor?: { userId: string; reason: string }
 ): Promise<boolean> {
-  const res = await client.query<{ id: string }>(
-    `${BANK_TX_UNMATCH_RESET_SQL} AND id = $2::uuid RETURNING id`,
+  const res = await client.query<Record<string, string | null> & { id: string }>(
+    `${BANK_TX_UNMATCH_RESET_SQL} AND id = $2::uuid
+     RETURNING id, matched_load_id::text, matched_bill_id::text, matched_settlement_id::text,
+               matched_expense_id::text, matched_transfer_id::text, matched_payment_id::text,
+               matched_bill_payment_id::text`,
     [operatingCompanyId, bankTransactionId]
   );
-  return res.rows.length > 0;
+  const row = res.rows[0];
+  if (!row) return false;
+  await recordVoidedMatches(
+    client,
+    operatingCompanyId,
+    bankTransactionId,
+    row,
+    actor?.userId ?? null,
+    actor?.reason ?? "unmatched via unmatchBankTransactionById"
+  );
+  return true;
 }
 
 /**
@@ -387,18 +469,31 @@ export async function unmatchBankTransactionById(
  */
 export async function unmatchBankTransactionsForVoid(
   client: QueryableClient,
-  params: { operatingCompanyId: string; entityType: VoidableEntityType; entityId: string }
+  params: { operatingCompanyId: string; entityType: VoidableEntityType; entityId: string },
+  actor?: { userId: string }
 ): Promise<number> {
   const reverseTable = BANK_MATCH_REVERSE_TABLE[params.entityType];
   const reverseIdSql = reverseTable
     ? `(SELECT source_bank_transaction_id FROM ${reverseTable} WHERE id = $2::uuid AND operating_company_id = $1::uuid)`
     : `NULL::uuid`;
-  const res = await client.query<{ id: string }>(
+  const res = await client.query<Record<string, string | null> & { id: string }>(
     `${BANK_TX_UNMATCH_RESET_SQL}
        AND (linked_entity_id = $2::uuid OR id = ${reverseIdSql})
-     RETURNING id`,
+     RETURNING id, matched_load_id::text, matched_bill_id::text, matched_settlement_id::text,
+               matched_expense_id::text, matched_transfer_id::text, matched_payment_id::text,
+               matched_bill_payment_id::text`,
     [params.operatingCompanyId, params.entityId]
   );
+  for (const row of res.rows) {
+    await recordVoidedMatches(
+      client,
+      params.operatingCompanyId,
+      row.id,
+      row,
+      actor?.userId ?? null,
+      `void: ${params.entityType} ${params.entityId}`
+    );
+  }
   return res.rows.length;
 }
 
@@ -425,11 +520,15 @@ export async function postVoidReversal(
   // document with zero posted lines could still (in principle) carry a bank match, and the owner's
   // rule has no "only if something reversed" exception: "no voided document may leave a bank
   // transaction categorized against it."
-  await unmatchBankTransactionsForVoid(client, {
-    operatingCompanyId: params.operatingCompanyId,
-    entityType: params.entityType,
-    entityId: params.entityId,
-  });
+  await unmatchBankTransactionsForVoid(
+    client,
+    {
+      operatingCompanyId: params.operatingCompanyId,
+      entityType: params.entityType,
+      entityId: params.entityId,
+    },
+    actor
+  );
 
   const originalLines = await readOriginalGlPostings(client, params.operatingCompanyId, params.entityType, params.entityId);
   if (originalLines.length === 0) {

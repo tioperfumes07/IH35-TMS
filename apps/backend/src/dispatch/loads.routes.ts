@@ -52,6 +52,7 @@ import {
   type DriverBillMintOutcome,
 } from "./book-load.service.js";
 import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
+import { resolveLaneMileage } from "./lane-mileage.service.js";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
 // (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
@@ -246,6 +247,8 @@ const createDispatchLoadBodySchema = z.object({
   miles_practical: z.number().min(0).multipleOf(0.1).optional(),
   miles_shortest: z.number().min(0).multipleOf(0.1).optional(),
   miles_deadhead: z.number().min(0).multipleOf(0.1).optional(),
+  mileage_source: z.enum(["History", "Manual", "Routing engine", "Operator entered"]).optional(),
+  stop_count: z.string().trim().max(40).optional(),
   pickup_number: z.string().trim().max(120).optional(),
   border_routing: z.string().trim().max(120).optional(),
   // FAIL-D6 — demo/sample flag, set at creation. Column exists since 0403 (NOT NULL DEFAULT false) but
@@ -479,6 +482,44 @@ async function withCompanyScope<T>(
 }
 
 export async function registerDispatchLoadRoutes(app: FastifyInstance) {
+  app.get("/api/v1/dispatch/lane-mileage", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const query = z
+      .object({
+        operating_company_id: z.string().uuid(),
+        origin_city: z.string().trim().max(120).optional().default(""),
+        origin_state: z.string().trim().max(8).optional().default(""),
+        origin_postal_code: z.string().trim().max(20).optional(),
+        dest_city: z.string().trim().max(120).optional().default(""),
+        dest_state: z.string().trim().max(8).optional().default(""),
+        dest_postal_code: z.string().trim().max(20).optional(),
+      })
+      .safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    try {
+      return await withCompanyScope(authUser.uuid, query.data.operating_company_id, async (client) =>
+        resolveLaneMileage(client, query.data.operating_company_id, {
+          origin_city: query.data.origin_city,
+          origin_state: query.data.origin_state,
+          origin_postal_code: query.data.origin_postal_code,
+          dest_city: query.data.dest_city,
+          dest_state: query.data.dest_state,
+          dest_postal_code: query.data.dest_postal_code,
+        })
+      );
+    } catch (err) {
+      req.log.warn({ err }, "lane_mileage_lookup_failed");
+      return reply.code(503).send({
+        error: "lane_mileage_lookup_failed",
+        message: "Could not load lane miles. Type them, or retry.",
+      });
+    }
+  });
+
   app.post("/api/v1/dispatch/loads/reserve-id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return reply;

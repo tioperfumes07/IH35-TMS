@@ -133,6 +133,14 @@ async function notifyDriverPwaIfAvailable(
 export async function nextCashAdvanceRequestDisplayId(client: QueryableClient, operatingCompanyId: string): Promise<string> {
   const year = new Date().getUTCFullYear();
   const y = String(year);
+  // ACCT-F19367 (board: CASH-ADVANCE-REQUEST-DISPLAY-ID-UNPROTECTED-RACE) -- this was a bare
+  // MAX()+1 with zero race protection, unlike every sibling series in accounting/display-id.ts.
+  // Serialize concurrent callers for the same (opco, year) before the read below, matching that
+  // module's withDisplayLock pattern. pg_advisory_xact_lock auto-releases at transaction end; both
+  // call sites already run this + their own INSERT inside one transaction.
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
+    `driver_finance.cash_advance_request.display_id:${operatingCompanyId}:${y}`,
+  ]);
   const rows = await client.query(
     `
       SELECT COALESCE(

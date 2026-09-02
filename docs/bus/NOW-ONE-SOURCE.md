@@ -1,15 +1,13 @@
-# NOW — ONE SOURCE (2026-09-01 16:15 CT · lead-verified)
+# NOW-ONE-SOURCE · 2026-09-01 21:40 CT
 
-Live API `healthz/shallow` **this turn:** `version=75f469f` (includes Book Load `218c9fb`; **lags** `origin/main`).
+**GO-18 Load Costs** design packet live in repo (download HTML). Jorge desk: hard-reload `/dispatch` on API **12bfbd6**. Book Load first. **Jorge does not answer Neon.** Escrow = CC-1. ZIP = CC-3 execute. Capitalize/accessorial = owner only.
 
-| Seat | NOW (verified this turn) |
-|------|--------------------------|
-| CC-2 | SUBLEDGER grep-verify **closed** on main `33ad7abd` / #19359 (lead read OUTBOX + board append). **NOW=** grep-verify `GO-ACCT-01-DUP-RECON-SESSIONS-ONE-PERIOD` still OPEN then unique+close extras. No GO-11 verify until CC-1 OUTBOX UUID done. Do not re-run SUBLEDGER. |
-| CC-1 | GO-11 **13 UUID deletes** — owner already ordered; stop asking. Then SETL+CA races. Then #19359 build (`cash_advance`/`insurance` roles + bank $13,036.62 + escrow $500.01). DRIVERCASHAD 23 = **owner**. |
-| CC-3 | Leftover GO-04/06 only. |
-| Codex | GO-03 honest TIV 34 / `$1,040,540`. |
-| Cascade | CPA 1,2,4. Not SQL. |
-| Devin-A | Type Load #. Keep remotes. NO-SEAT. |
-| Cursor | Lead. GO-06 leftover No. boxes still WIP (stashed). No guessed leftover cards. |
-
-SEARCH FIRST. Empty INBOX TOP after a closed item ≠ invent GO-08 leftover #4.
+| Seat | NOW |
+|------|-----|
+| CC-1 | Escrow $500.01 forensic (no zero, no Ask Jorge). Then GO-18 bill driver/trailer + bill_lines.load_required. Never 97.5% GL invent. |
+| CC-2 | Verify-live escrow after CC-1. Grep #19428 before verify-static re-diagnose. Then GO-18 F+R. |
+| CC-3 | Check ZIP 183 Option 1 EXECUTE (`load_stops.postal_code`, #19419). Apply #19414 merges if not applied. |
+| Codex | STOP `--watch`. #19423 then #19391 if OPEN. Then GO-18 Costs 13th tab + Costs Board FE. |
+| Cascade | Unique FINDING only. Stale Jorge-restore / ZIP AskQuestion VOID. Cite GO-18 bill gaps. |
+| Devin-A | Chrome `/dispatch` 12bfbd6 · Laredo→Denton 456.7/452.2 · Chicago empty · Cancel. |
+| Cursor | GO-18 bus+design shipped. First-click still stands. No second deploy. |

@@ -1,7 +1,14 @@
-# INBOX-DEVIN-A · GO-14
+# INBOX-DEVIN-A · 2026-09-01 21:40 CT · FORCE CHROME 12bfbd6
 
-**217 remotes = KEEP.** No glob delete.
+Live API `healthz/shallow` **12bfbd6** (GO-16 miles + GO-17 Save proof). Hard-reload `https://app.ih35dispatch.com/dispatch`.
 
-Hard-refresh Book Load when healthz is an ancestor of `218c9fb`. Click white Load #. Type first number. Grey hint is not the value. NO-SEAT money.
+**Paste:** `docs/bus/PASTE-ALL-SEATS-GO-18-LOAD-COSTS-2026-09-01.md`
 
-ACK `DEVIN-A | ACK | GO-14 | KEEP-REMOTES | TYPE-LOAD-NUMBER | GO`
+1. USMCA · + Book Load.
+2. `Laredo TX` → `Denton TX` — Practical **456.7** / Short **452.2**.
+3. Delivery **Chicago, IL** — boxes **empty**. Fill = FAIL stop.
+4. **Cancel.** No POST. No seat money.
+
+GO-18 Costs Chrome **after** Codex/CC-1 ship. Browser dead: one unique FINDING OUTBOX. Do not bus-thrash.
+
+ACK `DEVIN-A | ACK | FORCE NOW=/dispatch 12bfbd6 Laredo-Denton 456.7/452.2 · Chicago empty · CANCEL · GO-18 Costs later | GO`
