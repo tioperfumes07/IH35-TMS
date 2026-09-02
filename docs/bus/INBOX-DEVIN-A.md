@@ -1,23 +1,15 @@
-# INBOX-DEVIN-A · LEAD TOP 2026-09-01 18:23 CT · FORCE NOW = CHROME PROOF URL
+# INBOX-DEVIN-A · LEAD TOP 2026-09-01 20:35 CT · FORCE NOW = CHROME AFTER API MOVES
 
-**217 remotes = KEEP.** NO-SEAT money. **Do not book. Do not create a load.** Cancel the modal after miles proof.
+**217 remotes = KEEP.** NO-SEAT money. **Cancel after miles.** Do not leave a booked fixture.
 
 ## FORCE NOW
-**Chrome proof URL:** `https://app.ih35dispatch.com/dispatch`
+`https://app.ih35dispatch.com/dispatch` — **hard-reload**. Wait until `healthz/shallow` is **not** `441ac88` (miles PR must be deployed).
 
-Cursor lead retried `cursor-ide-browser` this turn (18:23 CT):
-- `browser_tabs` new → viewId issued (`3e4c92`, `728094`)
-- Immediate `browser_navigate` / `browser_lock` → **`Browser view not found` / `No browser tab available`**
-- `browser_tabs` list → **empty**
-- Cannot click **+ Book Load**. **GO-16 Live Chrome remains UNVERIFIED.**
+## Exact click
+1. USMCA · **+ Book Load**.
+2. City `Laredo TX` → `Denton TX` — expect Practical **456.7** / Short **452.2**.
+3. Delivery **Chicago, IL** — boxes **empty** (Check ZIP). Not a bug.
+4. **Cancel.** No POST.
+5. OUTBOX: filled vs empty + healthz SHA.
 
-API **LIVE** `healthz/shallow` **`version=441ac88`**. Bundle proofs exist (#19403). Human fill is the missing hop.
-
-## Exact click (same modal, cancel after)
-1. USMCA · open **`https://app.ih35dispatch.com/dispatch`** · **+ Book Load**.
-2. Pickup **Laredo, TX** → delivery **Denton, TX** — prove **Practical miles** + **Short miles** fill when High / `autofill_allowed`.
-3. Same modal · delivery **Chicago, IL** — boxes **empty** + **Check ZIP** hint. No silent fill.
-4. **Cancel.** No POST. No fixture.
-5. OUTBOX: URL + filled vs empty numbers (or screenshot).
-
-ACK `DEVIN-A | ACK | FORCE NOW=https://app.ih35dispatch.com/dispatch Chrome Laredo-Denton + Chicago empty | GO`
+ACK `DEVIN-A | ACK | FORCE NOW=/dispatch Laredo-Denton 456.7/452.2 · Chicago empty · CANCEL | GO`

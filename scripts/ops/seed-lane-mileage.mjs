@@ -84,6 +84,15 @@ if (process.argv.includes("--selftest")) {
     console.error("seed-lane-mileage SELFTEST FAIL — quoted city / decimal column");
     process.exit(1);
   }
+  const src = readFileSync(fileURLToPath(import.meta.url), "utf8");
+  if (!/ON CONFLICT \(operating_company_id, origin_postal_code, dest_postal_code\)/.test(src)) {
+    console.error("seed-lane-mileage SELFTEST FAIL — zip-pair ON CONFLICT missing (re-seed unique violation)");
+    process.exit(1);
+  }
+  if (!/ON CONFLICT \(operating_company_id, origin_city, origin_state, dest_city, dest_state\)/.test(src)) {
+    console.error("seed-lane-mileage SELFTEST FAIL — city-pair ON CONFLICT missing");
+    process.exit(1);
+  }
   console.log("seed-lane-mileage SELFTEST PASS");
   process.exit(0);
 }
@@ -107,22 +116,7 @@ async function main() {
   await client.query("BEGIN");
   await client.query("SELECT set_config('app.bypass_rls', 'lucia', true)");
   let n = 0;
-  for (const r of rows) {
-    await client.query(
-      `INSERT INTO catalogs.lane_mileage (
-         operating_company_id, origin_city, origin_state, origin_postal_code,
-         dest_city, dest_state, dest_postal_code,
-         practical_miles, short_miles, empty_miles,
-         n_practical, n_short, practical_min, practical_max, practical_spread,
-         short_min, short_max, confidence, autofill_allowed, source, first_seen, last_seen
-       ) VALUES (
-         $1::uuid, $2, $3, $4, $5, $6, $7,
-         $8, $9, COALESCE($10, 0),
-         $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21::date, $22::date
-       )
-       ON CONFLICT (operating_company_id, origin_city, origin_state, dest_city, dest_state)
-         WHERE origin_postal_code IS NULL AND dest_postal_code IS NULL
-       DO UPDATE SET
+  const setSql = `DO UPDATE SET
          practical_miles = EXCLUDED.practical_miles,
          short_miles = EXCLUDED.short_miles,
          empty_miles = EXCLUDED.empty_miles,
@@ -138,15 +132,37 @@ async function main() {
          source = EXCLUDED.source,
          first_seen = EXCLUDED.first_seen,
          last_seen = EXCLUDED.last_seen,
-         updated_at = now()`,
+         updated_at = now()`;
+  for (const r of rows) {
+    const originZip = zip(r["Origin ZIP"]);
+    const destZip = zip(r["Destination ZIP"]);
+    const conflict = originZip && destZip
+      ? `ON CONFLICT (operating_company_id, origin_postal_code, dest_postal_code)
+         WHERE origin_postal_code IS NOT NULL AND dest_postal_code IS NOT NULL`
+      : `ON CONFLICT (operating_company_id, origin_city, origin_state, dest_city, dest_state)
+         WHERE origin_postal_code IS NULL AND dest_postal_code IS NULL`;
+    await client.query(
+      `INSERT INTO catalogs.lane_mileage (
+         operating_company_id, origin_city, origin_state, origin_postal_code,
+         dest_city, dest_state, dest_postal_code,
+         practical_miles, short_miles, empty_miles,
+         n_practical, n_short, practical_min, practical_max, practical_spread,
+         short_min, short_max, confidence, autofill_allowed, source, first_seen, last_seen
+       ) VALUES (
+         $1::uuid, $2, $3, $4, $5, $6, $7,
+         $8, $9, COALESCE($10, 0),
+         $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21::date, $22::date
+       )
+       ${conflict}
+       ${setSql}`,
       [
         USMCA,
         r["Origin City"],
         r["Origin State"],
-        zip(r["Origin ZIP"]),
+        originZip,
         r["Destination City"],
         r["Destination State"],
-        zip(r["Destination ZIP"]),
+        destZip,
         num(r.practical_miles) ?? num(r.short_miles),
         num(r.short_miles),
         num(r.empty_miles) ?? 0,

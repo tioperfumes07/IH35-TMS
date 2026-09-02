@@ -14,6 +14,7 @@ import { createPortal } from "react-dom";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad, getLaneMileage } from "../../../api/dispatch";
+import { resolveStopPlace } from "./book-load-city-state";
 import { listAllDispatchCatalogRows, loadTypesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -563,29 +564,50 @@ export function BookLoadModalV4({
   const destCity = String(deliveryStop?.city ?? "").trim();
   const destState = String(deliveryStop?.state ?? "").trim();
   const destZip = String(deliveryStop?.postal_code ?? "").trim();
+  const originPlace = resolveStopPlace(originCity, originState);
+  const destPlace = resolveStopPlace(destCity, destState);
   const milesOperatorTouched = useRef(false);
 
   const laneMileageQuery = useQuery({
-    queryKey: ["book-load-lane-mileage", operatingCompanyId, originCity, originState, originZip, destCity, destState, destZip],
+    queryKey: [
+      "book-load-lane-mileage",
+      operatingCompanyId,
+      originPlace.city,
+      originPlace.state,
+      originZip,
+      destPlace.city,
+      destPlace.state,
+      destZip,
+    ],
     queryFn: () =>
       getLaneMileage({
         operating_company_id: operatingCompanyId,
-        origin_city: originCity,
-        origin_state: originState,
+        origin_city: originPlace.city,
+        origin_state: originPlace.state,
         origin_postal_code: originZip || undefined,
-        dest_city: destCity,
-        dest_state: destState,
+        dest_city: destPlace.city,
+        dest_state: destPlace.state,
         dest_postal_code: destZip || undefined,
       }),
-    enabled: Boolean(operatingCompanyId && originCity && originState && destCity && destState),
+    enabled: Boolean(operatingCompanyId && originPlace.city && originPlace.state && destPlace.city && destPlace.state),
     staleTime: 30_000,
   });
+
+  const milesLookupNote = !originPlace.city || !destPlace.city
+    ? ""
+    : !originPlace.state || !destPlace.state
+      ? "Choose the state on pickup and delivery so miles can fill from history."
+      : laneMileageQuery.isError
+        ? "Could not load lane miles. Type them, or retry after pickup and delivery city and state are set."
+        : laneMileageQuery.isFetching && !laneMileageQuery.data
+          ? "Looking up miles for this lane…"
+          : "";
 
   useEffect(() => {
     if (!(Number(form.getValues("miles_practical")) > 0) && !(Number(form.getValues("miles_shortest")) > 0)) {
       milesOperatorTouched.current = false;
     }
-  }, [destCity, destState, form, originCity, originState]);
+  }, [destPlace.city, destPlace.state, form, originPlace.city, originPlace.state]);
 
   useEffect(() => {
     const lane = laneMileageQuery.data;
@@ -974,11 +996,13 @@ export function BookLoadModalV4({
                 // W7 — per-stop extra rates as customer charge lines (were dropped from the payload).
                 ...stopExtraRateChargeLines(values.stops ?? []),
               ],
-        stops: values.stops.map((stop, index) => ({
+        stops: values.stops.map((stop, index) => {
+          const place = resolveStopPlace(stop.city ?? "", stop.state ?? "");
+          return {
           stop_type: stop.stop_type,
           sequence_number: index + 1,
-          city: stop.city?.trim() ? properPersonOrPlaceName(stop.city) : "",
-          state: stop.state,
+          city: place.city.trim() ? properPersonOrPlaceName(place.city) : "",
+          state: place.state,
           // LV-STOP-ZIP-DROPPED: this mapping is an explicit field-by-field allow-list and postal_code was
           // never added to it. Every other layer was already correct - the Zip Code input is registered as
           // stops.N.postal_code (BookLoadStopsSection.tsx:132), the geocode autofill writes it, the backend
@@ -1012,7 +1036,8 @@ export function BookLoadModalV4({
           site_contact_name: stop.site_contact_name?.trim() ? properPersonOrPlaceName(stop.site_contact_name) : undefined,
           site_contact_phone: stop.site_contact_phone || undefined,
           gate_dock_text: stop.gate_dock_text || undefined,
-        })),
+        };
+        }),
         save_mode: saveMode,
         override_token: token,
         override_reason: opts?.override ? overrideReason : undefined,
@@ -1844,6 +1869,11 @@ export function BookLoadModalV4({
                     form.setValue("miles_deadhead", n, { shouldDirty: true, shouldValidate: true });
                   }}
                 />
+                {milesLookupNote ? (
+                  <p className="blw-note" data-testid="book-load-miles-lookup-note">
+                    {milesLookupNote}
+                  </p>
+                ) : null}
                 <p className="blw-note">
                   Enter destination and the customer rate. Practical miles fill revenue per mile. Short miles pay the driver.
                   Practical miles must be greater than 0. With a driver seated, short miles must also be greater than 0 or Book is refused.

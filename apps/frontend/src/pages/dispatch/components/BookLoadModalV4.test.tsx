@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { ToastProvider } from "../../../components/Toast";
+import { getLaneMileage } from "../../../api/dispatch";
 import { BookLoadModalV4 } from "./BookLoadModalV4";
 
 // The customer field does NOT search-as-you-type: it is a `ReferenceSelect` fed by a react-query bulk
@@ -151,5 +152,89 @@ describe("BookLoadModalV4", () => {
     await waitFor(() => expect(screen.getByTestId("deadhead-optimizer-panel")).toBeTruthy());
     expect(screen.getByTestId("book-miles-shortest").getAttribute("required")).not.toBeNull();
     expect(screen.queryByText("Select driver / unit / customer to run checks")).toBeNull();
+  });
+
+  it("autofills Laredo TX → Denton TX when the city field carries the state", async () => {
+    const user = userEvent.setup();
+    vi.mocked(getLaneMileage).mockResolvedValue({
+      practical_miles: 456.7,
+      short_miles: 452.2,
+      empty_miles: 0,
+      runs: 12,
+      short_runs: 12,
+      practical_spread: 4.5,
+      confidence: "High",
+      autofill_allowed: true,
+      match: "City match",
+      provenance: "12 runs on this lane. Miles filled from history.",
+      matched_lane_id: "lane-laredo-denton",
+      source: "history",
+    });
+
+    render(
+      wrap(
+        <ToastProvider>
+          <BookLoadModalV4
+            open
+            operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
+            onClose={vi.fn()}
+            onCreated={vi.fn()}
+          />
+        </ToastProvider>
+      )
+    );
+
+    const pickupCity = document.querySelector<HTMLInputElement>('input[name="stops.0.city"]');
+    const deliveryCity = document.querySelector<HTMLInputElement>('input[name="stops.1.city"]');
+    expect(pickupCity).toBeTruthy();
+    expect(deliveryCity).toBeTruthy();
+    await user.type(pickupCity!, "Laredo TX");
+    await user.type(deliveryCity!, "Denton TX");
+
+    await waitFor(() => {
+      expect(getLaneMileage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          origin_city: "Laredo",
+          origin_state: "TX",
+          dest_city: "Denton",
+          dest_state: "TX",
+        }),
+      );
+    });
+    await waitFor(() => {
+      expect((screen.getByTestId("book-miles-practical") as HTMLInputElement).value).toBe("456.7");
+      expect((screen.getByTestId("book-miles-shortest") as HTMLInputElement).value).toBe("452.2");
+    });
+  });
+
+  it("keeps miles empty and names the blocker when Chicago has no state", async () => {
+    const user = userEvent.setup();
+    vi.mocked(getLaneMileage).mockClear();
+
+    render(
+      wrap(
+        <ToastProvider>
+          <BookLoadModalV4
+            open
+            operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
+            onClose={vi.fn()}
+            onCreated={vi.fn()}
+          />
+        </ToastProvider>
+      )
+    );
+
+    const pickupCity = document.querySelector<HTMLInputElement>('input[name="stops.0.city"]');
+    const deliveryCity = document.querySelector<HTMLInputElement>('input[name="stops.1.city"]');
+    await user.type(pickupCity!, "Chicago");
+    await user.type(deliveryCity!, "Denton");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("book-load-miles-lookup-note").textContent).toMatch(
+        /Choose the state on pickup and delivery so miles can fill from history/,
+      );
+    });
+    expect((screen.getByTestId("book-miles-practical") as HTMLInputElement).value).toBe("");
+    expect(getLaneMileage).not.toHaveBeenCalled();
   });
 });
