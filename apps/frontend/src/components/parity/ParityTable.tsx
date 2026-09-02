@@ -615,7 +615,7 @@ export function ParityTable<T>({
     for (const column of visibleColumns) {
       const key = String(column.key);
       if (colWidths[key] != null) continue; // manual resize already won for this column.
-      let widest = measureTextWidth(column.label, typography.kpiLabel ?? 11);
+      let widest = measureTextWidth(column.label, typography.panelHeader ?? 11);
       for (const row of sample) {
         const text = cellTextForMeasurement(column, row);
         if (!text) continue;
@@ -1212,7 +1212,7 @@ export function ParityTable<T>({
                     enableColumnReorder ? "cursor-grab active:cursor-grabbing" : ""
                   } ${dragOverKey === key ? "outline outline-2 -outline-offset-2" : ""} ${column.className ?? ""}`}
                   style={{
-                    fontSize: typography.kpiLabel ?? 11,
+                    fontSize: typography.panelHeader ?? 11,
                     letterSpacing: 0.3,
                     ...(w ? { width: w } : {}),
                     // §7 LOCKED palette (verify:section7-palette-maintenance) — drop-target highlight
