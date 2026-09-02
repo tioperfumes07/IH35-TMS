@@ -29,6 +29,9 @@ type Props = {
   filter: Filter;
   /** Short context phrase, e.g. "this trailer". */
   contextLabel: string;
+  /** N1 — load's own display number, carried into the Add Expense URL's ?load_number= so the
+   *  create-page banner and the persisted expense memo never show a raw UUID. load_id filter only. */
+  createLoadNumber?: string;
   "data-testid"?: string;
 };
 
@@ -36,6 +39,7 @@ export function ExpensesReverseSection({
   operatingCompanyId,
   filter,
   contextLabel,
+  createLoadNumber,
   "data-testid": testId = "expenses-reverse",
 }: Props) {
   const filterKey = Object.keys(filter)[0] as keyof Filter;
@@ -54,12 +58,26 @@ export function ExpensesReverseSection({
           Expenses
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
-        <Link
-          className="text-xs font-semibold text-slate-700 underline"
-          to={`/accounting/expenses?${filterKey}=${encodeURIComponent(filterValue)}`}
-        >
-          Open Expenses
-        </Link>
+        <span className="flex items-center gap-3">
+          {/* N1 (GO-23 wave 1) — ExpenseCreatePage was routed but nothing in dispatch reached it,
+              so load-scoped cost had nowhere to go. Only the load filter carries a create path;
+              driver/trailer/unit/work_order/insurance_claim entry points are a separate ask. */}
+          {filterKey === "load_id" ? (
+            <Link
+              className="text-xs font-semibold text-slate-700 underline"
+              to={`/accounting/expenses/new?load_id=${encodeURIComponent(filterValue)}${createLoadNumber ? `&load_number=${encodeURIComponent(createLoadNumber)}` : ""}`}
+              data-testid="expenses-reverse-add-expense"
+            >
+              + Add Expense
+            </Link>
+          ) : null}
+          <Link
+            className="text-xs font-semibold text-slate-700 underline"
+            to={`/accounting/expenses?${filterKey}=${encodeURIComponent(filterValue)}`}
+          >
+            Open Expenses
+          </Link>
+        </span>
       </div>
       {expensesQ.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
       {expensesQ.isError ? <p className="text-sm text-red-600">Could not load expenses for {contextLabel}.</p> : null}
