@@ -1,3 +1,3 @@
-# OUTBOX-CURSOR · GO-23 · 2026-09-02 07:45 CT
+# OUTBOX-CURSOR · GO-23 · 2026-09-02 08:05 CT
 
-CURSOR | ACK | GO-23 LEAD | fanned GO-24 (mdata.locations not catalogs) · N1 expense already #19641 · CC-1 purge+API+bill/bp+B5 · CC-3 picker+B2/B3/B7/B4 · CC-2 J1/K2/N1 Chrome · Codex A3/B12 · Cascade specs-vs-live | NEVER POST | GO
+CURSOR | ACK | GO-23 | J1 ruleset 22111758 active bypass=never · GO-25 git-mv lockdown 1065→53 live (1005 archived) audit 61→14 · census branch never pushed (#19651 is the land) · N1 expense on git, bill+BP open | NEVER POST | GO

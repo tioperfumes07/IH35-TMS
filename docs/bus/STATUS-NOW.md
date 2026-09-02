@@ -1,8 +1,8 @@
-# STATUS-NOW · GO-23 LEAD · 2026-09-02 07:45 CT
+# STATUS-NOW · GO-23 LEAD · 2026-09-02 08:05 CT
 
-- GO-24 Wave 1: wire **existing** `mdata.locations` (27/9 USMCA). No new table.
-- Miles CLOSED. Trimble dormant. Spec 0251 SUPERSEDED in CC-3 PR.
-- N1 expense on git `#19641` LoadDetailDrawer. Bills/bill-payments from load still open.
-- J1 git baseline 2218/268 PASS after #19641. Protection API 404 — admin squash can still bypass.
-- Purge 33 + B5 + B2/B3/B7/B4 still live-broken.
-- Never POST Book Load. Tip check `origin/main` before push.
+- No open product PRs to FAST-MERGE (only #19485 + Dependabot — do not merge).
+- J1: GitHub ruleset `ui-design-system-ratchet` **22111758** enforcement=active, current_user_can_bypass=never.
+- GO-25: lockdown live 53 / archived 1005; audit live 14 / archived 47. `.block-ready` 1429 untouched. `docs/specs` untouched.
+- Census `cursor/go23-live-purge-census` never pushed. Does not exist on remote. Packet = #19651.
+- N1 expense on git #19641. Bill+BP remainder CC-1. Chrome CC-2.
+- Never POST Book Load.
