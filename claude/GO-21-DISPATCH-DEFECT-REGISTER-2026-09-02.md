@@ -25,7 +25,7 @@ Companion: `claude/GO-22-PRESETTLEMENT-REGISTER-2026-09-02.md`
 | # | Seat | Row | Notes |
 |---|------|-----|--------|
 | 1 | **CC-3** | **A2** | Customer picker. Blocks data entry. One file. First PR. |
-| 2 | **CC-2** | **J1** starting **K2** | ONE combobox with outside-click dismiss. Highest leverage. Then tokens. Verify-live (Devin retired). |
+| 2 | **CC-2** | **J1 + K2** | Transcribe locked scale to **zero this week**. Claim ≡3 verify-step **first**. Do not design tokens. |
 | 3 | **CC-1** | **B5** then **B8** | A1 data+API already **#19567**. Do not remake A1 SQL. |
 | 4 | **CC-3** | **K1 K3 K4 K5** then B1–B4 B7 B9 | After A2. Then **A1 FE** (XOR our unit / interchange). |
 | 5 | **CC-1** | **GO-22** | Pre-settlement query + number + recommend (trip_link_queue shape) + manual. |
@@ -139,7 +139,7 @@ Claim = owner wording. Seat = only implementer.
 
 | ID | Claim | Seat | PR | Status |
 |----|-------|------|----|--------|
-| **J1** | No design system — text sizes, column headers, groupings all different across every dispatch page and likely every other module. | **CC-2** | | OPEN |
+| **J1** | No design system — text sizes, column headers, groupings all different across every dispatch page and likely every other module. Tokens = transcription of `docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md`. Closes at off-scale 0 + trapping pickers 0 this week, not when the ratchet is green. | **CC-2** | | OPEN |
 
 ### K — Section A (owner 2026-09-02 follow-up) · five rows · board = 49
 

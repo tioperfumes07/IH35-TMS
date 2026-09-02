@@ -10,7 +10,7 @@ Seats **never POST Book Load.** Owner books. USMCA loads = 1 cancelled (`L-20260
 |------|-----|--------|
 | **CC-3** | **A2** customer picker | K1 K3 K4 K5 → B1–B4 B7 B9 → A1 FE (#19567 APIs) → boards (not J1 children) |
 | **CC-1** | **B5** pay-from-profile | B8 → GO-22 PS1–PS5 API → GO-20 A screen → **20** → F7334 |
-| **CC-2** | **K2/J1** one combobox | Tokens + C/D/E2/E3/F2/F4/H3/I1/B10/B11 · **verify-live** |
+| **CC-2** | Claim ≡3 J1 ratchet **then** transcribe locked scale to **zero this week** | K2 one picker · Chrome Section D/boards/planners · **not** guard-green |
 | **Codex** | **B12** save-block | B6 rate-con |
 | **Cascade** | Unique FINDING only | — |
 | **Devin-A** | **RETIRED** | — |

@@ -1,0 +1,188 @@
+#!/usr/bin/env node
+/**
+ * UI-DESIGN-SYSTEM-RATCHET (GO-21 row J1, owner 2026-09-02, routed=CC-2).
+ *
+ * The owner's complaint — "the text sizes, column headers, are all different sizes and
+ * looks too dirty" — is ONE defect on many screens, not many defects. Measured on main
+ * the day this guard was written: 2,213 hand-written font sizes across 530 files, and
+ * 285 files importing a combobox that does not dismiss on outside click (GO-21 K2).
+ *
+ * Ratchet = backslide lock, not the plan. J1 is ONE job this week: both counts to zero.
+ * The guard going green does not close J1. Existing violations are OWED, not forgiven.
+ *
+ * Baseline: scripts/ui-design-system-baseline.json  (committed, only ever goes down)
+ *
+ *   node scripts/verify-ui-design-system-ratchet.mjs              check
+ *   node scripts/verify-ui-design-system-ratchet.mjs --selftest   self-check, no repo scan
+ *   node scripts/verify-ui-design-system-ratchet.mjs --lower      rewrite baseline DOWN only
+ *   node scripts/verify-ui-design-system-ratchet.mjs --worklist   per-file off-scale counts (no hunt)
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const LABEL = "verify-ui-design-system-ratchet";
+const BASELINE = path.join(ROOT, "scripts", "ui-design-system-baseline.json");
+const SRC = path.join(ROOT, "apps", "frontend", "src");
+
+/** The one picker that dismisses on outside mousedown. Everything else traps the user. */
+const GOOD_PICKER = "components/Combobox";
+const TRAPPING_PICKERS = [
+  "components/parity/EntityPicker",
+  "components/shared/SelectCombobox",
+  "components/shared/Combobox",
+];
+
+/**
+ * The LOCKED scale — docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md, Claude + Jorge approved
+ * 2026-06-07: body 12px, column/section headers 11px/700/UPPERCASE/#4B5563, H1 22px/600.
+ * "No component may deviate without Jorge's explicit approval."
+ * Anything else is a deviation from a standard the owner already locked.
+ */
+const LOCKED_SIZES_PX = new Set(["11", "12", "22"]);
+const RAW_SIZE = /\btext-\[([0-9.]+)px\]/g;
+
+function walk(dir, out = []) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) { walk(p, out); continue; }
+    if (!/\.tsx?$/.test(e.name)) continue;
+    if (/\.test\.tsx?$/.test(e.name)) continue;
+    out.push(p);
+  }
+  return out;
+}
+
+function measure() {
+  const files = walk(SRC);
+  let rawSizeCount = 0;
+  let offScaleCount = 0;
+  const rawSizeFiles = new Set();
+  const offScaleFiles = new Set();
+  const offPerFile = new Map();
+  const trapping = Object.fromEntries(TRAPPING_PICKERS.map((p) => [p, 0]));
+
+  for (const f of files) {
+    const s = fs.readFileSync(f, "utf8");
+    let mm;
+    RAW_SIZE.lastIndex = 0;
+    while ((mm = RAW_SIZE.exec(s)) !== null) {
+      rawSizeCount += 1;
+      rawSizeFiles.add(f);
+      if (!LOCKED_SIZES_PX.has(mm[1])) {
+        offScaleCount += 1;
+        offScaleFiles.add(f);
+        offPerFile.set(f, (offPerFile.get(f) || 0) + 1);
+      }
+    }
+    for (const p of TRAPPING_PICKERS) {
+      // shared/Combobox must not swallow shared/SelectCombobox
+      const re = new RegExp(`["'\`][^"'\`]*${p.replace(/\//g, "\\/")}["'\`]`);
+      if (re.test(s)) trapping[p] += 1;
+    }
+  }
+  return {
+    off_locked_scale_sizes: offScaleCount,
+    files_off_locked_scale: offScaleFiles.size,
+    raw_font_sizes: rawSizeCount,
+    files_with_raw_font_sizes: rawSizeFiles.size,
+    trapping_picker_importers: trapping,
+    trapping_picker_total: Object.values(trapping).reduce((a, b) => a + b, 0),
+    off_per_file: offPerFile,
+  };
+}
+
+function flatten(o) {
+  return {
+    off_locked_scale_sizes: o.off_locked_scale_sizes,
+    files_off_locked_scale: o.files_off_locked_scale,
+    raw_font_sizes: o.raw_font_sizes,
+    files_with_raw_font_sizes: o.files_with_raw_font_sizes,
+    trapping_picker_total: o.trapping_picker_total,
+    ...Object.fromEntries(
+      Object.entries(o.trapping_picker_importers).map(([k, v]) => [`picker:${k}`, v])
+    ),
+  };
+}
+
+function selftest() {
+  const probe = { off_locked_scale_sizes: 3, files_off_locked_scale: 1,
+    raw_font_sizes: 5, files_with_raw_font_sizes: 2,
+    trapping_picker_importers: { a: 1, b: 2 }, trapping_picker_total: 3 };
+  const f = flatten(probe);
+  const ok = f.raw_font_sizes === 5 && f.trapping_picker_total === 3 && f["picker:a"] === 1;
+  if (!ok) { console.error(`${LABEL}: SELFTEST FAIL — flatten() wrong`); process.exit(1); }
+  if (!fs.existsSync(SRC)) { console.error(`${LABEL}: SELFTEST FAIL — ${SRC} missing`); process.exit(1); }
+  console.log(`${LABEL}: SELFTEST PASS`);
+  process.exit(0);
+}
+
+const argv = process.argv.slice(2);
+if (argv.includes("--selftest")) selftest();
+
+const measured = measure();
+if (argv.includes("--worklist")) {
+  const rows = [...measured.off_per_file.entries()]
+    .map(([f, n]) => [n, path.relative(ROOT, f)])
+    .sort((a, b) => b[0] - a[0] || a[1].localeCompare(b[1]));
+  const occ = rows.reduce((a, [n]) => a + n, 0);
+  console.log(`# GO-21 J1 worklist — off locked scale (not 11/12/22px)`);
+  console.log(`# source: docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md`);
+  console.log(`# files=${rows.length} occurrences=${occ}`);
+  for (const [n, f] of rows) console.log(`${String(n).padStart(4, " ")}  ${f}`);
+  process.exit(0);
+}
+
+const now = flatten(measured);
+
+if (!fs.existsSync(BASELINE)) {
+  fs.writeFileSync(BASELINE, JSON.stringify(now, null, 2) + "\n");
+  console.log(`${LABEL}: baseline created at scripts/ui-design-system-baseline.json`);
+  console.log(JSON.stringify(now, null, 2));
+  process.exit(0);
+}
+
+const base = JSON.parse(fs.readFileSync(BASELINE, "utf8"));
+const worse = [];
+const better = [];
+for (const [k, v] of Object.entries(now)) {
+  const b = base[k];
+  if (b === undefined) continue;
+  if (v > b) worse.push(`${k}: ${b} -> ${v}  (+${v - b})`);
+  else if (v < b) better.push(`${k}: ${b} -> ${v}  (-${b - v})`);
+}
+
+if (argv.includes("--lower")) {
+  if (worse.length) {
+    console.error(`${LABEL}: refusing to raise the baseline. Fix these first:`);
+    for (const w of worse) console.error(`  ${w}`);
+    process.exit(1);
+  }
+  fs.writeFileSync(BASELINE, JSON.stringify({ ...base, ...now }, null, 2) + "\n");
+  console.log(`${LABEL}: baseline lowered.`);
+  for (const b of better) console.log(`  ${b}`);
+  process.exit(0);
+}
+
+if (worse.length) {
+  console.error(`${LABEL}: FAIL — a design-system count went UP.`);
+  for (const w of worse) console.error(`  ${w}`);
+  console.error("");
+  console.error("  THE SCALE IS ALREADY LOCKED: docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md");
+  console.error("  (Claude + Jorge approved 2026-06-07). Body 12px. Column and section");
+  console.error("  headers 11px / weight 700 / UPPERCASE / #4B5563. H1 22px / 600.");
+  console.error("  It also locks equal paired-field sizes, centered column headers and");
+  console.error("  sortable headers. No component may deviate without the owner's approval.");
+  console.error(`  A picker belongs to ${GOOD_PICKER} — the only one that dismisses on`);
+  console.error("  outside mousedown. The other three trap the operator (GO-21 K2).");
+  console.error("  Existing off-scale sizes and trapping pickers are OWED — they are");
+  console.error("  not forgiven. J1 closes only at off_locked_scale_sizes = 0 and");
+  console.error("  trapping_picker_total = 0. Guard-green is not done. Adding one is FAIL.");
+  process.exit(1);
+}
+
+console.log(`${LABEL}: PASS`);
+for (const b of better) console.log(`  improved  ${b}`);
+if (better.length) console.log(`  run with --lower to bank it into the baseline`);
+process.exit(0);
