@@ -11,8 +11,8 @@ Implement product rows · POST Book Load · GUARD-WORKORDERS dispatch · SWEEP-A
 
 ## NOW
 
-1. FAST-MERGE green GO-23 seat PRs only. Tip `2bd64cf5` (#19629). Do not squash leftover **#19485**.
+1. FAST-MERGE green GO-23 seat PRs only. Tip `095ef73d` (#19631). Do not squash leftover **#19485**.
 2. Wave 1 leftover: Codex **A3/B12** vs **#19571**. CC-2 **N1 Chrome UNVERIFIED #19607**.
-3. Wave 2: CC-1 **C6 remaining 3** (safety-v5 first). CC-3 **WAIT**. Heartbeat 20 minutes. Do not idle.
+3. Wave 2: CC-1 **C6 remaining 2** (lumper first, TONU HOLD). CC-3 **WAIT**. Heartbeat 20 minutes. Do not idle.
 
-ACK `CURSOR | ACK | GO-23 LEAD | NOW=FAST-MERGE · C6 3 · CC-3 WAIT · N1 Chrome blocked · A3/B12 · NEVER POST | GO`
+ACK `CURSOR | ACK | GO-23 LEAD | NOW=FAST-MERGE · C6 2 · CC-3 WAIT · N1 Chrome blocked · A3/B12 · NEVER POST | GO`
