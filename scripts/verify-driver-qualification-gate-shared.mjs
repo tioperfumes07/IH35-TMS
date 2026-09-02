@@ -21,7 +21,10 @@ const DISPATCH = path.join(ROOT, "apps/backend/src/dispatch");
 const SHARED_FN = "assertDriverQualifiedForLoad";
 const SHARED_FILE = "driver-qualification.service.ts";
 
-function read(rel) {
+function read(rel, overrides = new Map()) {
+  if (overrides.has(rel)) {
+    return { missing: false, src: overrides.get(rel) };
+  }
   const p = path.join(DISPATCH, rel);
   if (!fs.existsSync(p)) {
     return { missing: true, src: "" };
@@ -29,11 +32,11 @@ function read(rel) {
   return { missing: false, src: fs.readFileSync(p, "utf8") };
 }
 
-function check() {
+function check(overrides = new Map()) {
   const errors = [];
 
   // 1. Shared module exists, exports the gate, and carries the hazmat branch.
-  const shared = read(SHARED_FILE);
+  const shared = read(SHARED_FILE, overrides);
   if (shared.missing) {
     errors.push(`MISSING FILE: apps/backend/src/dispatch/${SHARED_FILE}`);
   } else {
@@ -67,7 +70,7 @@ function check() {
     "planner.service.ts",
   ];
   for (const rel of CALLERS) {
-    const { missing, src } = read(rel);
+    const { missing, src } = read(rel, overrides);
     if (missing) {
       errors.push(`MISSING FILE: apps/backend/src/dispatch/${rel}`);
       continue;
@@ -81,21 +84,15 @@ function check() {
 }
 
 function selftest() {
-  const p = path.join(DISPATCH, SHARED_FILE);
-  const backup = fs.readFileSync(p, "utf8");
-  try {
-    const planted = backup
-      .replace(/endorsement_h/g, "ENDORSEMENT_H_REMOVED")
-      .replace(/hazmat_endorsement_expires_at/g, "HAZMAT_EXPIRY_REMOVED");
-    fs.writeFileSync(p, planted, "utf8");
-    const plantedErrors = check();
-    if (!plantedErrors.some((e) => e.includes("endorsement_h") || e.includes("hazmat_endorsement_expires_at"))) {
-      throw new Error("selftest expected planted hazmat column removal to be detected");
-    }
-    console.log(`verify-driver-qualification-gate-shared: SELFTEST PASS (${plantedErrors.length} planted failures detected)`);
-  } finally {
-    fs.writeFileSync(p, backup, "utf8");
+  const original = read(SHARED_FILE).src;
+  const planted = original
+    .replace(/endorsement_h/g, "ENDORSEMENT_H_REMOVED")
+    .replace(/hazmat_endorsement_expires_at/g, "HAZMAT_EXPIRY_REMOVED");
+  const plantedErrors = check(new Map([[SHARED_FILE, planted]]));
+  if (!plantedErrors.some((e) => e.includes("endorsement_h") || e.includes("hazmat_endorsement_expires_at"))) {
+    throw new Error("selftest expected planted hazmat column removal to be detected");
   }
+  console.log(`verify-driver-qualification-gate-shared: SELFTEST PASS (${plantedErrors.length} planted failures detected)`);
 }
 
 function main() {
