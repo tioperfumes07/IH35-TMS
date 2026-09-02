@@ -5,7 +5,7 @@
  * z-tier updated 2026-08-21 (CC-3) alongside CANCEL-LOAD-MODAL-INVISIBLE-BEHIND-DRAWER's Modal
  * z-[70]->z-[215] bump — see verify-parity-drawer-z-index-above-modal.mjs for the primary lock.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
@@ -24,16 +24,17 @@ const FILES = {
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
 const LABEL = "verify-wo-create-ux-escape-zindex";
 
-export function run() {
-  const parityDrawer = strip(readFileSync(FILES.parityDrawer, "utf8"));
-  const quickCreate = strip(readFileSync(FILES.quickCreate, "utf8"));
-  const catalogQuickCreate = strip(readFileSync(FILES.catalogQuickCreate, "utf8"));
-  const inlineCreate = strip(readFileSync(FILES.inlineCreate, "utf8"));
-  const combobox = strip(readFileSync(FILES.combobox, "utf8"));
-  const modal = strip(readFileSync(FILES.modal, "utf8"));
-  const woNewPage = strip(readFileSync(FILES.woNewPage, "utf8"));
-  const manifest = strip(readFileSync(FILES.manifest, "utf8"));
-  const vehicleActionBar = strip(readFileSync(FILES.vehicleActionBar, "utf8"));
+export function run(reader = readFileSync) {
+  const read = (file) => strip(reader(file, "utf8"));
+  const parityDrawer = read(FILES.parityDrawer);
+  const quickCreate = read(FILES.quickCreate);
+  const catalogQuickCreate = read(FILES.catalogQuickCreate);
+  const inlineCreate = read(FILES.inlineCreate);
+  const combobox = read(FILES.combobox);
+  const modal = read(FILES.modal);
+  const woNewPage = read(FILES.woNewPage);
+  const manifest = read(FILES.manifest);
+  const vehicleActionBar = read(FILES.vehicleActionBar);
 
   const checks = [
     ["parity-stack-prop", /stackAboveModal\?:\s*boolean/.test(parityDrawer)],
@@ -69,19 +70,13 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL: guard already red — ${run().message}`);
     process.exit(1);
   }
-  try {
-    writeFileSync(
-      FILES.parityDrawer,
-      original.replace('stackAboveModal ? "z-[218]" : "z-[60]"', '"z-[60]"'),
-      "utf8",
-    );
-    const caught = run();
-    if (caught.ok || !caught.failed.includes("parity-z218")) {
-      console.error(`${LABEL} SELFTEST FAIL: planted z-index regression not caught`, caught);
-      process.exit(1);
-    }
-  } finally {
-    writeFileSync(FILES.parityDrawer, original, "utf8");
+  const planted = original.replace('stackAboveModal ? "z-[218]" : "z-[60]"', '"z-[60]"');
+  const caught = run((file, encoding) =>
+    file === FILES.parityDrawer ? planted : readFileSync(file, encoding)
+  );
+  if (caught.ok || !caught.failed.includes("parity-z218")) {
+    console.error(`${LABEL} SELFTEST FAIL: planted z-index regression not caught`, caught);
+    process.exit(1);
   }
   console.log(`${LABEL} SELFTEST OK`);
 }
