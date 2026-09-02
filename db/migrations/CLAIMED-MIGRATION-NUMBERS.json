@@ -571,6 +571,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-02",
       "purpose": "go19_09_expense_class_id (CC-3 handoff -- migration-lane-band bars cc-3/ chrome-only branches from authoring db/migrations/*.sql; CC-3's expenses.routes.ts/posting-engine.service.ts/frontend/guard already built and applied live, this claims + ships the ledger-file catch-up migration content verbatim)"
+    },
+    "202613390001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-02",
+      "purpose": "go19_accessorial_parent_id_under_4200 (owner ruling docs/lockdown/GO-19-OWNER-DECISIONS-CLOSED-2026-09-01.md section 3: set catalogs.accounts.parent_account_id on 4210/4220/4230/4240 -> 4200, mirroring the existing 4900->4910-4980 pattern; no new account)"
     }
   }
 }
