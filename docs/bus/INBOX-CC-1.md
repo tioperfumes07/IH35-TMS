@@ -18,9 +18,12 @@ Miles / GO-16 (Cursor alone) · remake N1 (expense #19641 + bill/BP #19676 are D
    - Home base = **23918 Mines Rd, Laredo TX 78045** (geofence that address).
    - Load mint → enters a **pre-settlement**. Settlement stays OPEN while the driver still physically has a load.
    - Truck inside Laredo geofence with **no load** = closeable. Southbound leg does **not** close it. Deadhead back to yard must **prompt**, not assume.
-   - At close: accountant/admin/owner decides pay timing. Outstanding loan/debt → **blocking** pop-up (cannot skip/defer). Wire recovery policy as **config** (5% net-pay floor vs full deduct first) — **Jorge still decides which**; do not hardcode.
-   - B1 = hired drivers. **FUEL is truck operating cost** (fuel card / Corpay) — **never** a settlement deduction.
+   - At close: accountant/admin/owner decides pay timing. Outstanding loan/debt → **blocking** pop-up (cannot skip/defer). Wire **§9.2 Accept/Edit + who-chose register** per `OWNER-RULINGS-LOCKED-SYNC-2026-09-02.md` §1 — 5% floor default, editable; do not hardcode full-deduct-only.
+   - **B8 fuel advance — LOCKED (HOLD-FOR-JORGE cleared).** USMCA = B1 hired drivers, **no owner-operators**. Implement **both paths distinctly**; remove any code that deducts **company** fuel advances from driver pay:
+     - **We** send fuel advance (cash at pump) → **IH35/company money**, NOT driver responsibility, **NEVER** settlement deduction.
+     - **Broker** sends fuel cash advance → **prepayment toward customer invoice** (AR reduction / unearned/prepaid against that load invoice), not driver liability.
+   - Card overage (BANK-DOM-06) stays separate — approve-then-recover driver liability only.
    - Three dates: incurred / due / paid — never collapse.
-3. Kill the **2 remaining USMCA sample drivers**. Counts before/after.
+3. Kill the **2 remaining USMCA sample drivers**. Counts before/after. Keep USMCA blank except bank uncategorized since Dec 2025.
 
 ACK `CC-1 | ACK | GO-22 ONLY · sample drivers · N1 already shipped · NEVER POST | GO`
