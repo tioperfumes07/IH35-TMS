@@ -1,12 +1,10 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
-const SELF = path.join(ROOT, "scripts/verify-fuel-reconciliation-print-letter.mjs");
 const PAGE = path.join(ROOT, "apps/frontend/src/pages/reports/FuelReconciliationPage.tsx");
 const HELPER = path.join(ROOT, "apps/frontend/src/lib/openPrintableDocument.ts");
 
@@ -15,29 +13,41 @@ function fail(msg) {
   process.exit(1);
 }
 
-function assertSource() {
+function validateSource({ page, helper }) {
+  const failures = [];
+  if (!helper.includes("export function printLetterHtml")) failures.push("missing printLetterHtml");
+  if (!page.includes("printLetterHtml")) failures.push("FuelReconciliationPage must use printLetterHtml");
+  if (!/onClick=\{printLetter\}/.test(page)) failures.push("Print must call printLetter");
+  if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) failures.push("must not window.print() on SPA");
+  return failures;
+}
+
+function readSource() {
   if (!fs.existsSync(PAGE)) fail("missing FuelReconciliationPage");
   if (!fs.existsSync(HELPER)) fail("missing openPrintableDocument");
-  const helper = fs.readFileSync(HELPER, "utf8");
-  if (!helper.includes("export function printLetterHtml")) fail("missing printLetterHtml");
-  const page = fs.readFileSync(PAGE, "utf8");
-  if (!page.includes("printLetterHtml")) fail("FuelReconciliationPage must use printLetterHtml");
-  if (!/onClick=\{printLetter\}/.test(page)) fail("Print must call printLetter");
-  if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) fail("must not window.print() on SPA");
+  return {
+    page: fs.readFileSync(PAGE, "utf8"),
+    helper: fs.readFileSync(HELPER, "utf8"),
+  };
+}
+
+function assertSource() {
+  const failures = validateSource(readSource());
+  if (failures.length > 0) fail(failures.join("; "));
 }
 
 function selftest() {
   assertSource();
-  const backup = fs.readFileSync(PAGE, "utf8");
-  try {
-    const planted = backup.replace(/onClick=\{printLetter\}/, 'onClick={() => window.print()}');
-    fs.writeFileSync(PAGE, planted.includes("window.print()") ? planted : `${backup}\nonClick={() => window.print()}\n`);
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
-    if (r.status === 0) fail("mutated still passed");
-  } finally {
-    fs.writeFileSync(PAGE, backup);
-  }
-  console.log("PASS: verify-fuel-reconciliation-print-letter --selftest");
+  const source = readSource();
+  const plantedPage = source.page.replace(
+    /onClick=\{printLetter\}/,
+    "onClick={() => window.print()}"
+  );
+  const plantedFailures = validateSource({ ...source, page: plantedPage });
+  if (plantedFailures.length < 2) fail("planted SPA print regression was not fully detected");
+  console.log(
+    `PASS: verify-fuel-reconciliation-print-letter --selftest (${plantedFailures.length} planted failures detected)`
+  );
 }
 
 if (process.argv.includes("--selftest")) selftest();
