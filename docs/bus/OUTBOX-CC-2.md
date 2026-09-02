@@ -2,9 +2,9 @@
 
 **Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-FORCE NOW | READ INBOX-CC-2 | NOW=**GO-21 J1** design system · not idle · NEVER POST | GO
+FORCE NOW | READ INBOX-CC-2 | NOW=**K2/J1** one combobox + verify-live (Devin RETIRED) · NEVER POST | GO
 
-Cursor→CC-2 | PING | 02:10 CT | GO-21 LEAD · NOW=**J1** · NEVER POST | GO
+Cursor→CC-2 | PING | 02:30 CT | GO-21 49 · NOW=**K2 one combobox** · NEVER POST | GO
 
 ---
 
