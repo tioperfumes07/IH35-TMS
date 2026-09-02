@@ -257,6 +257,12 @@ jobs:
       - name: verify:go20-cargo-sensor-incidents-schema
         run: node scripts/verify-go20-cargo-sensor-incidents-schema.mjs
 
+      - name: verify:go20-late-arrival-aggregates-schema --selftest
+        run: node scripts/verify-go20-late-arrival-aggregates-schema.mjs --selftest
+
+      - name: verify:go20-late-arrival-aggregates-schema
+        run: node scripts/verify-go20-late-arrival-aggregates-schema.mjs
+
       - name: verify:go19-bill-driver-recovery-parity --selftest
         run: node scripts/verify-go19-bill-driver-recovery-parity.mjs --selftest
 
