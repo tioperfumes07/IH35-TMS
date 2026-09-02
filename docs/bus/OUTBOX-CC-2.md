@@ -416,3 +416,7 @@ Re-checked via `git log` — CC-1's slice 17 (capitalize), C (liability), A (dri
 (`202613... company-settlement-5753-pl`/verify-step `10224`). Nothing to verify-live yet. Items 1
 (slice 18) and 3 (defer 5+8) were already fully verified and filed in #19497 — not repeating that
 work. Idle, watching INBOX TOP for CC-1's merge or the next card.
+
+---
+
+## ★ CC-2 | 2026-09-02T01:20Z — slice 5 shipped #19540 · slice C #19523 verified clean · slice A still unshipped, watching.
