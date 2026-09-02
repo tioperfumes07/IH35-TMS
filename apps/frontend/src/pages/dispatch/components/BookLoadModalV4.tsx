@@ -1610,8 +1610,13 @@ export function BookLoadModalV4({
                       Customer WO #
                       <input {...form.register("customer_wo_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
+                    {/* B1 (GO-27 Gate 1.2, owner 2026-09-02): "AlwaysTrack" is a predecessor tracking
+                        system's brand name -- a machine/vendor name on an operator-facing label
+                        (Plain English Law). Reworded; live_load_number field, testid, and the
+                        race-overwrite guard (verify-bookload-alwaystrack-field-race-overwrite.mjs,
+                        which asserts on the testid/field, not this label string) are unchanged. */}
                     <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                      AlwaysTrack load # (legacy)
+                      Legacy load reference #
                       <input
                         {...form.register("live_load_number", {
                           onChange: () => {
