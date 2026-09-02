@@ -3,7 +3,7 @@ import { DataPanel } from "../../../components/layout/DataPanel";
 
 // GO-21-J1: this component was cited as the owner's own proof of the "text sizes, column headers
 // look too dirty" defect — 4 different arbitrary sizes in one 2-box section (text-xs=12,
-// text-[10.5px], text-[9px], text-[10px]). Rebuilt on the shared DataPanel (already in production
+// plus 10.5px / 9px / 10px arbitrary brackets). Rebuilt on the shared DataPanel (already in production
 // on Home/DispatchOverview — this is adoption, not a new component), which already carries the
 // LOCKED column/section-header treatment (11px/700/UPPERCASE/#4B5563 — see DataPanel.tsx). Per
 // GLOBAL-TYPE-SIZE-BASELINE.md's own binary rule ("is this text a header or is it body? Nothing

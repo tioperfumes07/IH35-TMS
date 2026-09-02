@@ -91,18 +91,18 @@ export function DeadheadOptimizerPanel({
               </span>
               <span className="font-mono text-[11px] text-slate-700">{row.score.toFixed(2)} ¢/mi score</span>
             </div>
-            <div className="text-[10px] text-slate-600">
+            <div className="text-xs text-slate-600">
               DH {fmtMiles(row.deadhead_miles)} mi · Loaded {fmtMiles(row.loaded_miles)} mi · Rev {fmtMoneyCents(row.est_revenue_cents)} ·
               Margin {fmtMoneyCents(row.est_margin_cents)}
             </div>
-            <div className="text-[10px] text-slate-500">
+            <div className="text-xs text-slate-500">
               → {row.delivery_city}, {row.delivery_state}
             </div>
           </li>
         ))}
       </ul> : null}
 
-      {disabled ? <p className="text-[10px] text-slate-500">Suggestions are read-only while the form is disabled.</p> : null}
+      {disabled ? <p className="text-xs text-slate-500">Suggestions are read-only while the form is disabled.</p> : null}
     </div>
   );
 }
