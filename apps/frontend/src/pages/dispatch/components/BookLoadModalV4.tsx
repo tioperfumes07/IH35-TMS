@@ -78,27 +78,7 @@ import {
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
-
-/**
- * FAIL-D2 — human labels for the fields a blocked submit names back to the dispatcher. Only the
- * fields that can realistically fail validation need an entry; anything unmapped falls back to the
- * de-underscored key, which is still an honest answer and never a silent one.
- */
-const FIELD_LABELS: Record<string, string> = {
-  customer_id: "Customer",
-  trip_type: "Trip Type",
-  rate_total_cents: "Rate",
-  stops: "Stops",
-  team_id: "Team",
-  assigned_unit_id: "Truck",
-  assigned_trailer_unit_id: "Trailer",
-  assigned_primary_driver_id: "Driver",
-  commodity: "Commodity",
-  weight_lbs: "Weight",
-  trailer_type: "Trailer type",
-  reefer_setpoint: "Reefer setpoint",
-  detention_reason_id: "Detention reason",
-};
+import { describeBookLoadValidationErrors } from "./book-load-v4/invalidSubmitDetails";
 
 type FormValues = BookLoadFormValues & {
   load_type: "broker" | "direct";
@@ -790,18 +770,27 @@ export function BookLoadModalV4({
   // re-opens the hole. Never fail silently: name the fields that blocked the write.
   const onInvalidSubmit = useCallback(
     (errors: FieldErrors<FormValues>) => {
-      const names = Object.keys(errors ?? {});
-      const shown = names.slice(0, 6).map((name) => FIELD_LABELS[name] ?? name.replace(/_/g, " "));
-      const more = names.length > shown.length ? ` (+${names.length - shown.length} more)` : "";
+      const issues = describeBookLoadValidationErrors(errors, form.getValues("stops") ?? []);
       setGateBanner(null);
       setSubmitErrorMessage(
-        shown.length > 0
-          ? `Not saved — these fields blocked it: ${shown.join(", ")}${more}. Nothing was written.`
+        issues.length > 0
+          ? `Not saved — ${issues.map((issue) => issue.description).join("; ")}. Nothing was written.`
           : "Not saved — the form did not pass validation. Nothing was written."
       );
+      const firstPath = issues[0]?.path;
+      if (firstPath) {
+        form.setFocus(firstPath as Parameters<typeof form.setFocus>[0]);
+        requestAnimationFrame(() => {
+          const field = document.getElementsByName(firstPath)[0];
+          const stopIndex = /^stops\.(\d+)\./.exec(firstPath)?.[1];
+          const target = stopIndex ? document.querySelector(`[data-testid="stop-card-${stopIndex}"]`) : field;
+          target?.scrollIntoView({ behavior: "smooth", block: "center" });
+          field?.focus();
+        });
+      }
       pushToast(isEditMode ? "Not saved — fix the flagged fields" : "Not booked — fix the flagged fields", "error");
     },
-    [isEditMode, pushToast]
+    [form, isEditMode, pushToast]
   );
 
   async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
