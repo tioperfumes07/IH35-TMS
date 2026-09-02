@@ -33,7 +33,8 @@ const ALLOWLIST = new Map([
   // in apps/frontend/src/api/accounting.ts hit /api/v1/accounting/reconciliation/{workspace,
   // match,unmatch}.
   ["registerSafetyDrugPoolRoutes", "dead code — no frontend caller"],
-  ["registerSamsaraMasterSyncRoutes", "dead code / admin-only — no frontend caller"],
+  // registerSamsaraMasterSyncRoutes — MOUNTED (apps/backend/src/index.ts, direct call) and pinned
+  // by verify-samsara-master-sync-routes-mounted.mjs; its former dead-code exception was stale.
   // registerScheduledReportsRoutes — MOUNTED (apps/backend/src/index.ts:963, direct call) with a
   // live frontend caller (apps/frontend/src/api/scheduled-reports.ts); "dead code" was stale.
   // registerCategorizationRulesRoutes — MOUNTED 2026-07-30 (ACCT-LINK-06 apply-historical live ops).
