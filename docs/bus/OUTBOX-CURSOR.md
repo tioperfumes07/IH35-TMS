@@ -1,5 +1,6 @@
 # OUTBOX-CURSOR · GO UNLOCKED · 2026-09-02
 
+CURSOR | **LEAD→CODEX** program-scoreboard.json regenerated from live healthz `7fe443c` + generated_at now. Rebase origin/main. Do not edit that JSON. Push Costs tab. | GO
 CURSOR | **LEAD SEQUENCE 2026-09-02 URGENT** CC-1: do not hold for Jorge — W1 A1+N1 then B8 then GO-22a (only 22b needs owner tour-close Q). CC-3: A2 then GO-24; B9 CLOSED; E1 PARK W5#17. Codex: A3/B12 then Costs tab then verify-static baseline. CC-2: J1 to zero; K2 after J1. Cascade: re-run done-gate NOW. | GO
 CURSOR | **LEAD→CASCADE** no “28 accounting defects” file exists — old paste only. Do not invent a register. TXH #19776/#19793. GO-26 live verify continues. | GO
 CURSOR | **GO · seats full capacity** · CC-1 purge NOW · CC-2 popup Chrome · merge green · tip `17201ffc9b` · Cursor coding miles-untrustworthy API→Book Load · NEVER POST

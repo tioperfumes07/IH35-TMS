@@ -46,20 +46,11 @@ Do **not** invent a 28-row list. A defect not on GO-23 / INBOX does not exist. T
 ## NOW
 
 ```
-CASCADE — GO-26 DONE-GATE ON CURRENT NEON. NOW. THEN STOP.
+CASCADE — GO-26 DONE-GATE HOLDS (#19797). STOP.
 
-CC-1 reports Gate 1.4 + GO-26 6 schemas on main (9277596c10). Do not wait for another purge PR.
+Lead received the HOLDS line. Do not re-run the purge gate. Do not invent a 28-row register.
 
-Re-run the three checks under SET LOCAL app.bypass_rls = 'lucia':
-  - done-gate remaining USMCA counts
-  - lib.trace_counters: LOAD only, last_trace_no = 13556, next mint 13557, no LD
-  - load 13508 present; banking.bank_transactions = 395
-
-If they HOLD: OUTBOX one line "GO-26 done-gate HOLDS" and stop. Unique FINDING only after that (Wave 7 spreadsheets). Never invent a 28-row register.
-
-If they FAIL: paste the query rows. Do not build a fix.
-
-LIVE QUERY ONLY. Never grep migrations as prod.
+If idle: unique FINDING only (Wave 7 spreadsheets vs GO-23). Never build.
 ```
 
-ACK `CASCADE | ACK | GO-26 done-gate · seed 13557 verify · live query only · NEVER BUILD | GO`
+ACK `CASCADE | ACK | GO-26 done-gate HOLDS · stop · unique FINDING only · NEVER BUILD | GO`

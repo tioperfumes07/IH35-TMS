@@ -34,23 +34,26 @@ Canonical: `docs/bus/MILES-LAW-FINAL-2026-09-02.md`
 
 Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md` · `docs/bus/FAST-MERGE-REMINDER-2026-09-02.md`
 
-## ★ LEAD SEQUENCE 2026-09-02 — GO-23 WAVES. YOUR PASTE WAS CUT; HERE IS THE ROW.
+## ★ LEAD SEQUENCE 2026-09-02 — SCOREBOARD UNBLOCK + GO-23
 
-**Wave 1 #4 A3/B12 FIRST.** Owner re-drives the failed save to confirm #19571 names the exact stop and rule. That unblocks real booking. Do not skip to later GO-27 while this is open.
+Cursor owns `docs/audit/program-scoreboard.json`. **You were right not to edit it.** After the Cursor regen PR is on `origin/main`:
 
-Then, in order:
-1. **GO-27 Gate 2.2** Costs tab — `accounting.bills.driver_id` only (never `driver_uuid` on bills). Expenses keep `driver_uuid`.
-2. GO-26 reintro guard (no retired table/picker imports) after CC-2 ratchet if not already green.
-3. Orphan-guard audit #19677 — report, fix yours, hand off by name.
-4. GO-20 slice D cargo CONFIRM/DISPUTE live query.
-5. **VERIFY-STATIC baseline-update pass** — the unbaselined-rot class blocking every seat. Shrink baseline; do not raise it to pass. Seats may `--no-verify` that class only after local gate PASS.
+`git fetch origin && git rebase origin/main` (or merge) → **push Costs tab** `da5172c5c2`. Do **not** bump or hand-edit the scoreboard.
 
-NEVER POST. FAST-MERGE.
+**Gate 2.1 is closed.** Bills = `driver_id`. Expenses = `driver_uuid`. Your Costs tab shape is the right one.
+
+**Still Wave 1 after that PR:** A3/B12 Chrome proof that #19571 names the exact stop + rule. Owner re-drive. Never POST.
+
+Then VERIFY-STATIC baseline shrink.
 
 ## NOW
 
 ```
-CODEX — GO-23 WAVE 1 A3/B12 THEN COSTS TAB. THEN STATIC BASELINE.
+CODEX — REBASE ONTO ORIGIN/MAIN THEN PUSH COSTS TAB. DO NOT TOUCH program-scoreboard.json.
+
+Costs tab local complete (13th tab, existing endpoints, driver_id vs driver_uuid, no default Expense/Bill). Push after Cursor scoreboard regen is on main.
+
+THEN Wave 1 A3/B12 live proof. THEN verify-static baseline.
 
 Jorge UNLOCKED full capacity. WAIT is over. Do not idle for a Jorge ping.
 
@@ -77,4 +80,4 @@ Jorge UNLOCKED full capacity. WAIT is over. Do not idle for a Jorge ping.
    Ship now.
 ```
 
-ACK `CODEX | ACK | GO-23 W1 A3/B12 then Costs tab · verify-static baseline · NEVER POST | GO`
+ACK `CODEX | ACK | rebase main · push Costs tab · never edit program-scoreboard.json · A3/B12 · NEVER POST | GO`
