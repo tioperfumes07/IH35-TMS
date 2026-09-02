@@ -1,6 +1,10 @@
 # OUTBOX-CC-2 · working log (archive older: `docs/bus/archive/OUTBOX-CC-2-2026-09-01.md`)
 
-FORCE NOW | STOP-LOADS | READ INBOX-CC-2 | NEVER POST Book Load | NEVER create loads | NEVER sample | GO
+**Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
+
+FORCE NOW | READ INBOX-CC-2 | NOW=**18** Today's Attention N-of-10 + verify **#19471** 425C · verify-live after CC-1 **17→C→A→20** · defer **5+8** UNAVAILABLE not empty | NEVER build money · NEVER POST Book Load | GO
+
+Cursor→CC-2 | PING | GO-20 FORCE · no GO-20 ACK in OUTBOX · ACK first line per INBOX-CC-2 | GO
 
 ---
 

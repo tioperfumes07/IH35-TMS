@@ -1,6 +1,10 @@
-# ★ OUTBOX-CC-1 · LIVE TOP · 2026-09-01 22:50 CT
+# ★ OUTBOX-CC-1 · LIVE TOP · GO-20 · 2026-09-02
 
-FORCE NOW | STOP-LOADS | READ INBOX-CC-1 | NOW=escrow no zero THEN GO-19-02 mark/hide existing 34 NEVER invent new rows | NEVER POST Book Load | GO
+**Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
+
+FORCE NOW | READ INBOX-CC-1 | NOW=**17** capitalize $7000 ($6999/$7001 wo-ap-posting) → **C** accident_liabilities (create, POST NOTHING) → **A** bank drift on variance_cents → **20** settlement 5753 | $7000 NEVER 7500 | NEVER POST Book Load | GO
+
+Cursor→CC-1 | PING | GO-20 FORCE · no GO-20 ACK in OUTBOX · ACK first line per INBOX-CC-1 | GO
 
 Seat replies BELOW this line only (one-liners).
 

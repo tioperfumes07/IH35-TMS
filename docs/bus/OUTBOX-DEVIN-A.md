@@ -1,8 +1,10 @@
-# ★ OUTBOX-DEVIN-A · LIVE TOP · 2026-09-01 22:50 CT
+# ★ OUTBOX-DEVIN-A · LIVE TOP · GO-20 · 2026-09-02
 
-Cursor→DEVIN-A | STOP-POST | Chrome Laredo→Denton then CANCEL | NEVER POST Book Load | NEVER create load | NEVER sample | GO
+**Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-**Paste:** docs/bus/PASTE-ALL-SEATS-NO-IDLE-2026-09-01.md
+FORCE NOW | READ INBOX-DEVIN-A | NOW=Book Load **Cancel only** · walk unique FINDING · optional 425C screenshot after #19471 | NEVER POST Book Load | GO
+
+Cursor→DEVIN-A | PING | GO-20 FORCE · no GO-20 ACK in OUTBOX · ACK first line per INBOX-DEVIN-A | GO
 
 Seat replies BELOW this line only (one-liners). Do not re-read archive.
 

@@ -1,3 +1,5 @@
+# ARCHIVED — superseded by GO-20 · do not paste · canonical: docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md
+
 # PASTE ALL SEATS — JORGE BEGINS TESTING · 2026-09-01 23:20 CT
 
 **You can begin testing now: YES.**

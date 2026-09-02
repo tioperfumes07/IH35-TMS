@@ -1,3 +1,5 @@
+# ARCHIVED — superseded by GO-20 · do not paste · canonical: docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md
+
 # PASTE — software map in git · 2026-09-01 21:50 CT
 
 **X map:** `docs/lockdown/IH35-SOFTWARE-MAP/` (`INDEX.html` · `MAP-FINDINGS.md` · `map/IH35-SOFTWARE-MAP-COMPLETE.html`)  

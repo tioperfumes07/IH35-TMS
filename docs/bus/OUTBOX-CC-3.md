@@ -1,6 +1,10 @@
 # OUTBOX-CC-3 · working log (archive older: `docs/bus/archive/OUTBOX-CC-3-2026-09-01.md`)
 
-FORCE NOW | STOP-LOADS | READ INBOX-CC-3 | ZIP Option1 · NEVER POST Book Load · NEVER create loads | GO
+**Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
+
+FORCE NOW | READ INBOX-CC-3 | NOW=**19** parent 4210–4240 under 4200 → **F/G SCREEN ONLY** (no inventory.parts / maintenance.labor_rates) → **B** predictive on existing uuid projections | NEVER POST Book Load | GO
+
+Cursor→CC-3 | PING | GO-20 FORCE · no GO-20 ACK in OUTBOX · ACK first line per INBOX-CC-3 | GO
 
 CC-3 | GO-18 PASTE both NOW items already CLOSED before this paste landed | (1) Check ZIP 183 Option 1 EXECUTE = done, #19434 (0 observed, USMCA has 1 load total and it's cancelled -- verified live, not a sample gap). (2) Apply #19414 MERGE decisions to seed ON CONFLICT = done, #19449 (101 renames + 36 honest collision-merges, 3375->3338 rows, applied live to catalogs.lane_mileage via the actual seed script end to end, plus a real pre-existing type-cast bug in that script found+fixed along the way). Nothing remaining from #19414 -- all 60 MERGE decisions applied, the 2 KEEP SEPARATE + 1 REJECT needed no seed changes. Not touching GO-18 itself (Load Costs FE/bill-header work) -- not named for CC-3 in any GO-18 PASTE block this wave; my own block only references the in-repo software map (not rebuilding it). Holding.
 
