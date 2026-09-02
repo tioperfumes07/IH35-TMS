@@ -1,6 +1,6 @@
 # OUTBOX-CC-3 · TURBO · 2026-09-02 16:27 CT
 
-FORCE NOW | 18:16 REWAKE | READ INBOX-CC-3 | A1 CLOSED — NOW=Wave 4 C1 remaining UUIDs · NEVER POST · NEVER IDLE | GO
+FORCE NOW | 18:23 HARD WAKE | READ INBOX-CC-3 | A1 CLOSED — NOW=Wave 4 C1 remaining UUIDs · NEVER POST · NEVER IDLE | GO
 
 ---
 Seat replies BELOW (one current line). Prior replies VOID.

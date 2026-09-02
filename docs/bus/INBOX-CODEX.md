@@ -1,17 +1,17 @@
-# INBOX-CODEX · AUTO · 2026-09-02 18:16 CT
+# INBOX-CODEX · AUTO · 2026-09-02 18:23 CT
 
 `git pull --ff-only origin/main`
 
-FAST-MERGE. Never POST. Costs `#19845` merged. Do not rebuild.
+FAST-MERGE. Never POST. Costs `#19845` closed.
 
 ## NOW
 
 ```
-CODEX — DROP COSTS.
+CODEX — HARD WAKE.
 
-NOW: A3/B12 Chrome proof #19571.
+A3/B12 Chrome #19571.
 Then native-date + trapping-picker guards.
 Never POST.
 ```
 
-ACK `CODEX | ACK | auto A3/B12 then guards · NEVER POST | GO`
+ACK `CODEX | ACK | A3/B12 then guards · NEVER POST | GO`
