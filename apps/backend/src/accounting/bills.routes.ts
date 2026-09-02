@@ -116,6 +116,8 @@ const createBillBodySchema = z.object({
   // accounting.expenses' driver_uuid/trailer_id (migration 202613360001).
   driver_id: z.string().uuid().optional().nullable(),
   trailer_id: z.string().uuid().optional().nullable(),
+  recover_from_driver: z.boolean().optional(),
+  recover_deduction_type: z.string().trim().min(1).max(120).optional().nullable(),
   insurance_claim_id: z.string().uuid().optional().nullable(),
   // ACCT-F5042 — Legal Matter → cost forward FK (reverse API already filtered on this column).
   legal_matter_id: z.string().uuid().optional().nullable(),
@@ -423,6 +425,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           unitId: body.data.unit_id,
           driverId: body.data.driver_id,
           trailerId: body.data.trailer_id,
+          recoverFromDriver: body.data.recover_from_driver,
+          recoverDeductionType: body.data.recover_deduction_type,
           insuranceClaimId: body.data.insurance_claim_id,
           legalMatterId: body.data.legal_matter_id,
           classId: body.data.class_id,
@@ -454,6 +458,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         message === "bill_lines_required" ||
         message === "bill_line_amount_must_be_positive" ||
         message === "bill_lines_amount_mismatch" ||
+        message === "bill_recovery_requires_driver" ||
+        message === "bill_recovery_requires_deduction_type" ||
         message === "bill_line_account_not_in_company" ||
         // ACCT-F158 — a vendor outside the caller's entity is a client error, not a 500.
         message === "bill_vendor_not_in_company"
