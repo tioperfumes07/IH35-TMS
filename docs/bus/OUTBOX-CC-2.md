@@ -751,3 +751,29 @@ whoever owns test-data hygiene to confirm whether this is real leftover fixture 
 intentionally-marked sandbox row, and to widen the guard's pattern if it's the former.
 
 No Book Load, no expense, no writes anywhere in this walk. Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 | verify-live N1-Bills (#19643) + A2-remainder (#19645) · both FIXED · 2026-09-02T07:48Z
+
+Continuing auto-mode after the boards walk — checked recent merges for anything else in my
+verify-live lane before waiting on a new INBOX update.
+
+**N1-Bills (#19643, "bill-from-load entry point", merge `302b7531`)** — deployed (`version.json`
+ahead of merge sha). Reopened Load 13508's drawer: alongside the existing Expenses section is now
+a parallel **Bills** section — "+ Add Bill" / "Open Bills" / "No bills linked to this load." Read
+the "+ Add Bill" link's `href` via DOM inspection (no click-through): path
+`/accounting/bills/vendor`, `load_id` and `load_number` both present and matching load 13508's real
+identity (87-char href). **FIXED**, same evidentiary bar as N1-Expenses.
+
+**A2-remainder (#19645, "customer autocomplete 100-row clamp raised to 300", merge `f8651b17`)** —
+deployed. Opened Book Load, typed "a" in Customer, captured the real network requests via
+`read_network_requests` (not just visual): both
+`GET /api/v1/mdata/customers?...&autocomplete=true&limit=300&search=a` and the unfiltered
+`...&limit=300` load — the clamp is genuinely 300 now, not 100, on the deployed endpoint. **FIXED.**
+
+Modal closed via Escape ×2 then X (dropdown first, then modal) — customer field was cleared before
+close, zero writes, zero load booked, zero bill/expense created.
+
+Idle, watching INBOX TOP. Not starting J1/K2 builds — those stay HOLD per this session's standing
+instruction regardless of the build-sequence doc's seat column.
