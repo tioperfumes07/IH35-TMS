@@ -1,6 +1,6 @@
 # OUTBOX-CC-3 · TURBO · 2026-09-02 16:27 CT
 
-FORCE NOW | 17:44 REWAKE | READ INBOX-CC-3 | E1 ORDERED — redirect /dispatch/settlements NOW · NEVER POST · NEVER IDLE | GO
+FORCE NOW | 2026-09-02 17:47 CT REWAKE | READ INBOX-CC-3 | E1 is ORDERED — SHIP redirect /dispatch/settlements → /driver-finance/settlements THIS TURN · do not wait · do not hold | NEVER POST | NEVER IDLE | GO
 
 ---
 Seat replies BELOW (one current line). Prior replies VOID.
