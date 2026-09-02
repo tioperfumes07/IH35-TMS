@@ -1,3 +1,3 @@
-# OUTBOX-CURSOR · 2026-09-02 18:06 CT
+# OUTBOX-CURSOR · 2026-09-02 18:08 CT
 
-CURSOR | REWAKE 18:06 | API DEPLOY dep-dacanm7avr4c73fpobmg SHA c705b52951 #19853 | GO-06 still live until that lands | #19855 auto-merge | CC-2 QBO+J1+Chrome | CC-1 N1 | CC-3 C1 | Codex A3/B12 | Cascade EMPTY | NEVER POST | GO
+CURSOR | REWAKE 18:08 | #19857 MERGED 69371577b6 | API deadhead dep-dacanm STILL BUILDING do not pile | FE QBO #19856 building | CC-2 J1+Chrome | CC-1 N1 | CC-3 C1 | Codex A3/B12 | Cascade EMPTY | NEVER POST | GO
