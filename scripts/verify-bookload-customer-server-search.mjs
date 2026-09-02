@@ -42,8 +42,8 @@ export function collectProblems(root = ROOT) {
   if (/limit:\s*5000/.test(code)) {
     problems.push(`${FILE}: must not fetch silent limit:5000 customer page`);
   }
-  if (!/label:\s*String\(c\.name\s*\|\|\s*c\.customer_code/.test(code) || /c\.legal_name/.test(code)) {
-    problems.push(`${FILE}: picker label must use the typed canonical Customer name/code contract`);
+  if (!/label:\s*c\.display_name\.trim\(\)\s*\|\|\s*c\.id/.test(code) || /c\.(?:name|customer_code|legal_name)/.test(code)) {
+    problems.push(`${FILE}: picker label must use the typed canonical Customer display_name contract`);
   }
   const live = readRel(root, LIVE_WIZARD);
   if (!live) {
@@ -57,8 +57,8 @@ export function collectProblems(root = ROOT) {
   if (/limit:\s*5000/.test(liveCode) && /book-load-v4-customers/.test(liveCode)) {
     problems.push(`${LIVE_WIZARD}: must not fetch silent limit:5000 for the customer picker`);
   }
-  if (!/label:\s*String\(c\.name\s*\|\|\s*c\.customer_code/.test(liveCode) || /c\.legal_name/.test(liveCode)) {
-    problems.push(`${LIVE_WIZARD}: picker label must use the typed canonical Customer name/code contract`);
+  if (!/label:\s*c\.display_name\.trim\(\)\s*\|\|\s*c\.id/.test(liveCode) || /c\.(?:name|customer_code|legal_name)/.test(liveCode)) {
+    problems.push(`${LIVE_WIZARD}: picker label must use the typed canonical Customer display_name contract`);
   }
   if (!/disabled=\{customersQuery\.isLoading \|\| customersQuery\.isError\}/.test(liveCode)) {
     problems.push(`${LIVE_WIZARD}: failed customer reads must disable the dependent picker`);
@@ -99,6 +99,19 @@ if (process.argv.includes("--selftest")) {
     const planted = collectProblems(stubRoot);
     if (!planted.length) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
+      process.exit(1);
+    }
+
+    for (const rel of [FILE, LIVE_WIZARD]) {
+      const target = path.join(stubRoot, rel);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      const source = readRel(ROOT, rel);
+      if (!source) throw new Error(`missing selftest source ${rel}`);
+      fs.writeFileSync(target, source.replace("label: c.display_name.trim() || c.id", "label: c.id"));
+    }
+    const labelMutation = collectProblems(stubRoot);
+    if (!labelMutation.some((problem) => problem.includes("typed canonical Customer display_name contract"))) {
+      console.error(`${LABEL} SELFTEST FAIL: real-source display_name mutation did not FAIL`);
       process.exit(1);
     }
   } finally {
