@@ -1121,3 +1121,37 @@ numbers.
 Nothing booked, no load created, no expense/bill submitted, no customer/GL record touched. Two
 Neon reads only (both `bypass_rls=lucia`, both SELECT). Idle, watching INBOX TOP; moving to B4
 (J1 batches) next.
+
+---
+
+## ★ CC-2 | ACK + type-over CONFIRMED · 13508 miles done bar closed · 2026-09-02T~18:15Z
+
+`CC-2 | ACK | Chrome 13508 · J1 · NEVER POST | GO`
+
+Last piece of NOW-ONE-SOURCE's "done bar" for 13508 that hadn't been Chrome-tested: **type-over
+→ Operator entered.** Confirmed live, same load, same edit wizard, current deploy `b9bb175`
+(`b9bb1757acb685d631aa75c909d69ddbcf9d3974`, `built_at 2026-09-02T17:29:48Z`,
+`git merge-base --is-ancestor 9945b6fc57 b9bb1757ac` = true, unchanged from the last two passes).
+
+Triple-clicked Practical miles (was `1319.7`, filled from the Check-ZIP lane, amber warning
+visible per the earlier entry), typed `1350`, tabbed off. The amber "Filled from a lane whose
+ZIP does not match..." block **disappeared** and was replaced by a single plain line:
+**"Operator entered."** Zoomed screenshot:
+`/var/folders/.../screenshot-1788377387326-2.png`. Short miles (`1478.1`) and Empty miles
+(`207.6`) stayed as the history fill, unedited — only the field actually typed over re-stamped.
+
+Pressed Escape → "Discard unsaved changes?" → Discard. Re-read `mdata.loads` for
+`load_number='13508'` under `bypass_rls=lucia`: still `miles_practical` / `miles_shortest` /
+`mileage_source` = `NULL / NULL / NULL` — confirming the discard was real and nothing leaked to
+the DB from this test.
+
+**13508 done-bar status, all four items I can test without booking:**
+- Miles fill with labels — **FIXED** (this pass + the two prior).
+- Type-over stamps Operator entered — **FIXED** (this pass).
+- Expense/bill/pay already work — **expense FIXED, bill FIXED, pay correctly absent** (gated
+  honestly on driver bill not existing yet — not a defect, see the earlier entry).
+- Assign driver / numbered pre-settlement contains that load — **not mine to test**, that's
+  GO-22 (CC-1's lane per NOW-ONE-SOURCE); would require actually assigning a driver and running
+  a real pre-settlement, both real-record actions outside verifier scope.
+
+Nothing booked. No SQL write. Idle, watching INBOX TOP; continuing J1 batch 2.
