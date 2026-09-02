@@ -8,6 +8,9 @@ import { getAppliedVendorCreditsCents, getAppliedBillPaymentApplicationsCents, v
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { BATCH_VOID_ACTION } from "./bulk-void.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
+import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
+import { logger } from "../observability/structured-logger.js";
 
 const billStatusSchema = z.enum(["open", "partial", "paid", "voided"]);
 
@@ -190,7 +193,7 @@ async function handleBillBulk(ctx: BulkPerEntityContext<BillBulkPayload>): Promi
       return { ok: false, code: "E_STATE_INVALID", message: "Bill has no remaining balance" };
     }
 
-    await client.query(
+    const bulkPaymentRes = await client.query(
       `
         INSERT INTO accounting.bill_payments (
           operating_company_id,
@@ -212,6 +215,7 @@ async function handleBillBulk(ctx: BulkPerEntityContext<BillBulkPayload>): Promi
           -- path, where a per-caller parameter is most likely to be forgotten and least likely to be
           -- noticed: one omission silently marks an entire batch of payments as real money.
           COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid AND b.operating_company_id = $1::uuid), false))
+        RETURNING id
       `,
       [
         operatingCompanyId,
@@ -225,6 +229,46 @@ async function handleBillBulk(ctx: BulkPerEntityContext<BillBulkPayload>): Promi
         actorUserId,
       ]
     );
+    const bulkPaymentId = (bulkPaymentRes.rows[0] as { id?: string } | undefined)?.id;
+
+    // C6 (GO-23) — bills-bulk's mark-paid action inserted accounting.bill_payments with NO JE
+    // poster call at all (unlike vendor-bill-payments.routes.ts / cc-payment.routes.ts /
+    // cash-advances.routes.ts's mark-disbursed, all of which correctly post this exact data
+    // shape). Uses postSourceTransactionInClientTx (the SAME-transaction variant
+    // disburseDriverAdvanceCore uses) rather than postBillPaymentGlIfEnabled, because every item
+    // in a bulk call shares ONE outer transaction (bulk-update.factory.ts's processBulkPerId) —
+    // opening a second transaction per item here would self-deadlock on the bill row's own lock,
+    // same reasoning cc-payment.routes.ts documents for its own after-commit call. Flag-gated by
+    // the SAME BILL_PAYMENT_GL_POSTING_ENABLED check postBillPaymentGlIfEnabled uses internally —
+    // no new flag, no new GL math. Best-effort: a post failure must not fail the whole batch or
+    // this one bill's payment record, but must not vanish silently either (SWL-1) — logged.
+    if (bulkPaymentId) {
+      try {
+        const glPostingEnabled = await isBillPaymentGlPostingEnabled(operatingCompanyId, actorUserId);
+        if (glPostingEnabled) {
+          await postSourceTransactionInClientTx(
+            // BulkPerEntityContext's client is a narrower structural type (non-generic query());
+            // same underlying pg client every other InClientTx caller passes, just typed loosely
+            // here for the bulk-framework's generic reuse across many entity kinds.
+            client as unknown as Parameters<typeof postSourceTransactionInClientTx>[0],
+            {
+              operating_company_id: operatingCompanyId,
+              source_transaction_type: "bill_payment",
+              source_transaction_id: bulkPaymentId,
+            },
+            { userId: actorUserId }
+          );
+        }
+      } catch (err) {
+        logger.warn("bills_bulk_bill_payment_gl_post_failed", {
+          err: err instanceof Error ? err.message : String(err),
+          company_id: operatingCompanyId,
+          bill_id: id,
+          bill_payment_id: bulkPaymentId,
+          bulk_call_id: bulkCallId,
+        });
+      }
+    }
 
     const newPaidCents = paidCents + remaining;
     const updateRes = await client.query(

@@ -61,4 +61,25 @@ describe("bills-bulk.routes", () => {
     expect(voidBranch?.[0]).toContain("voidBillInClientTx");
     expect(voidBranch?.[0]).toContain("UPDATE accounting.bills");
   });
+
+  // C6 (GO-23) — mark_paid inserted accounting.bill_payments with NO JE poster call at all (unlike
+  // every other bill_payment writer). Fixed by posting via postSourceTransactionInClientTx (the
+  // SAME-transaction variant — a bulk call shares one outer transaction across every item, so
+  // opening a second transaction per item here would self-deadlock on the bill row's own lock),
+  // flag-gated by the SAME BILL_PAYMENT_GL_POSTING_ENABLED check every other bill_payment poster
+  // uses, best-effort so a post failure never fails the batch or the payment record.
+  it("mark_paid now posts a bill_payment JE via postSourceTransactionInClientTx, flag-gated, best-effort", () => {
+    expect(routes).toContain('import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js"');
+    expect(routes).toContain('import { postSourceTransactionInClientTx } from "./posting-engine.service.js"');
+    expect(routes).toContain("RETURNING id");
+    expect(routes).toContain("isBillPaymentGlPostingEnabled(operatingCompanyId, actorUserId)");
+    expect(routes).toContain('source_transaction_type: "bill_payment"');
+    expect(routes).toContain("source_transaction_id: bulkPaymentId");
+    // Best-effort: the poster call must be wrapped so a failure cannot escape and abort the batch.
+    const posterBlock = routes.match(/if \(bulkPaymentId\) \{[\s\S]*?\n    \}/);
+    expect(posterBlock).toBeTruthy();
+    expect(posterBlock?.[0]).toContain("try {");
+    expect(posterBlock?.[0]).toContain("} catch (err) {");
+    expect(posterBlock?.[0]).toContain("logger.warn(");
+  });
 });
