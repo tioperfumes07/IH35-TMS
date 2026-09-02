@@ -2751,6 +2751,8 @@
       "practical_spread",
       "short_max",
       "short_miles",
+      "short_miles_untrustworthy",
+      "short_miles_untrustworthy_reason",
       "short_min",
       "source",
       "updated_at"
