@@ -1,18 +1,20 @@
-# INBOX-CASCADE · GO-23 · FINDING ONLY · WAVE 7 STEP 26
+# INBOX-CASCADE · GO-23 · FINDINGS ONLY · CLASS COUNTS + SPECS-VS-LIVE
 
-`git pull --ff-only origin main`
+`git pull --ff-only origin/main`
 
-**FAST-MERGE ON (4 min).** Gate exit 0 = merge proof. Same turn: `gh pr create` → `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Never wait CI. Never ask Jorge. Push hook ONLY `ENV-VERIFY-STATIC-NO-LOCAL-PG` after gate PASS → `--no-verify` authorized. Law: `docs/bus/FAST-MERGE-4MIN-LAW.md`.
+**FAST-MERGE ON (4 min).** Gate exit 0 = merge proof. Same turn: `gh pr create` → `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Never wait CI. Never ask Jorge.
 
 **Queue:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`
 
 ## VOID
-Implement Wave 1–6 product rows · recertify U14 · `trigger_deploy` · Book Load · open a new register · 12 and 13 (HOLD)
+Build product · create `catalogs.locations` · recertify U14 · `trigger_deploy` · Book Load · new register · 12 and 13 HOLD
 
 ## NOW
 
-1. Unique FINDING only. Build row is **Wave 7 step 26**: reconcile the two rescued spreadsheets against GO-23 (516 MUST / 262 error codes / 31 locked invariants / 230 tasks). Unique FINDING, do not build.
-2. **Owner 2026-09-02:** C6 class registry said 221; live `--strict` was **38**. Re-derive **C1 (said 30), C3 (said 23), C5 (said 15), C7 (said 134)** the same way — count live, name the real number, before any seat plans against them. FINDING only; do not build.
-3. Merge API if you are merger. `CLS-UNREFERENCED-LOCKED-SPECS` ≤5 pointers still valid as FINDING, not a new board.
+1. Re-derive **C1 / C3 / C5 / C7** the way C6 was 221→**38**. Live count. FINDING only.
 
-ACK `CASCADE | ACK | GO-23 | NOW=step 26 + re-derive C1/C3/C5/C7 like C6 38 · 12+13 HOLD · NEVER POST | GO`
+2. **SPECS-VS-LIVE (widened).** Sweep `docs/specs/*.md` for every table, column, and endpoint named. Check each against live schema on `tiny-field-89581227` / `br-fancy-credit-akjnd07a`. **One FINDING per mismatch.** First known: `docs/specs/0251-stop-location-catalog-design.md` proposes `catalogs.locations`; prod has `mdata.locations` (27 rows, FK on `mdata.load_stops.location_id`). CC-3 marks that spec SUPERSEDED in the GO-24 PR — you still file the FINDING pattern so it does not happen a fourth time.
+
+3. Step 26 spreadsheet reconcile still valid. Unique FINDING. Do not build.
+
+ACK `CASCADE | ACK | GO-23 | NOW=C1/C3/C5/C7 recount + specs-vs-live FINDINGS · NEVER BUILD · NEVER POST | GO`

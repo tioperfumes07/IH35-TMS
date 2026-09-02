@@ -1,3 +1,3 @@
-# FEED NOW — CC-3 · GO-20
+# FEED NOW — CC-3 · GO-23
 
-CC-3: **19** parent → **F/G screen** (source-status) → **B** predictive uuid. No duplicate tables. GO.
+NOW = GO-24 Book Load location picker on mdata.locations + gate dead geocode + B2/B3/B7/B4. Combobox only. SUPERSEDE spec 0251. NEVER new table. NEVER POST. GO.

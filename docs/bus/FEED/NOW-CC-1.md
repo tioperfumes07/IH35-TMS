@@ -1,3 +1,3 @@
-# FEED NOW — CC-1 · GO-20
+# FEED NOW — CC-1 · GO-23
 
-CC-1 builds serial: **17→C→A→20**. UUID FK law on projections/readings. Cursor supervises only. GO.
+NOW = purge TEST DATA template + 33 tables · then GO-24 locations SEARCH/CREATE only if missing · then N1 bill+bill-payment from load · then B5. NEVER create catalogs.locations. NEVER POST. GO.

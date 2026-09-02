@@ -2,6 +2,7 @@
 
 **Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
+FORCE NOW | READ INBOX-CC-3 | NOW=**GO-24 mdata.locations picker + geocode gate + B2/B3/B7/B4** · NEVER catalogs.locations · NEVER raise 100 · NEVER POST | GO
 FORCE NOW | READ INBOX-CC-3 | NOW=**A2 remainder first-100** · A1 toggle FIXED live · NEVER WAIT · NEVER POST | GO
 FORCE NOW | READ INBOX-CC-3 | NOW=**WAIT** · A1 FIXED #19609/#19612 · Wave 3 is CC-1 GO-22 · NEVER Wave 4 C1 · NEVER POST | GO
 FORCE NOW | READ INBOX-CC-3 | NOW=**GO-23 WAVE 2 A1 screen** · A2 done #19594/#19597 · NEVER POST | GO

@@ -1,21 +1,24 @@
-# INBOX-CC-2 · GO-23 · LIVE BOOK LOAD (OWNER IS IN THE WIZARD)
+# INBOX-CC-2 · GO-23 · J1 162→0 + K2 + LIVE N1 (NOT GREP)
 
-`git pull --ff-only origin main`
+`git pull --ff-only origin/main`
 
 **FAST-MERGE ON (4 min).** Gate exit 0 = merge proof. Same turn: `gh pr create` → `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`. Never `gh pr checks --watch`. Never wait CI. Never ask Jorge. Push hook ONLY `ENV-VERIFY-STATIC-NO-LOCAL-PG` after gate PASS → `--no-verify` authorized. Law: `docs/bus/FAST-MERGE-4MIN-LAW.md`.
 
-**Queue:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`
+Open `docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md` before any size.
 
 ## VOID
-POST Book Load · POST a production expense · grep-as-proof · treat A2 **#19597** as FIXED · treat B12 as live-proven without a mouse click · design a token set · remake verify-step **#19577**
+POST Book Load · POST expense · grep-as-proof of N1 · remake J1 workflow **#19641** · raise A2 100 · reopen miles · design a token set
 
 ## NOW
 
-Owner is live as **USMCA Freight Solutions**. Will not submit. Your job is the live walk — **yes, keep going in that tab.**
+1. **J1 first adoption = this Book Load wizard:** 365 nodes, **162 off-scale → 0**. Eleven sizes vs 11/12/22. D1: CUSTOMER / CUSTOMER WO # / ALWAYSTRACK equal paired widths.
 
-1. **Finish K2 with a real mouse:** click the customer box, then click away. Report dismiss or trap. Synthetic events are invalid.
-2. Then walk boards / trip pairing / planners the same way. Measured verdict per GO-23 row. FIXED or NOT FIXED with numbers.
-3. **Already recorded live (do not contradict):** A1 toggle FIXED. B1 ALWAYSTRACK legacy FIXED. Load # first-number guidance FIXED. Trip type NB/TR/SB rule FIXED. **NOT FIXED:** B2 HISTORICAL INACTIVE DRIVER UUID; B3 HISTORICAL IMPORT REASON free-text; B7 SAMPLE/DEMO LOAD checkbox; B5 pay rate typed 0; B4 equipment fields under CUSTOMER · INVOICE · CHARGES; A2 still first-100 display; D1 unequal widths CUSTOMER / CUSTOMER WO # / ALWAYSTRACK. **J1 live on this wizard:** 365 visible text nodes, **162 (44%) off locked scale**, eleven sizes vs three allowed (10px×97, 9px×33, plus 9.5/10.5/13/13.5/14/16). E1: three stacked nav rows, "Load board" in two of them.
-4. Tab 1770138763 + Book Load freeze: note as UNVERIFIED one-off vs real defect after one more open.
+2. **K2:** type in customer box, get results, **click away**. Template field is not the test. Report dismiss or trap.
 
-ACK `CC-2 | ACK | GO-23 | NOW=LIVE Book Load · K2 real click · then boards · NEVER POST | GO`
+3. **N1 live Chrome:** `origin/main` `LoadDetailDrawer` has Add expense (`/accounting/expenses/new?load_id=`) + Record expense modal. Open a **real load** (do not create one). Click both. FIXED or NOT FIXED with what rendered. Bill / bill-payment from load is CC-1 remainder if those buttons are absent.
+
+4. **Guard answer (lead, paste in OUTBOX):** git `scripts/ui-design-system-baseline.json` on `origin/main` is **2218 / 268**. `node scripts/verify-ui-design-system-ratchet.mjs` **PASS** after **#19641**. Workflow `ui-design-system-ratchet` is a required-check **context**. GitHub branch protection was API **404** (not actually blocking merges). Local gate now fails closed on UP. Do not remake the workflow. If you measure 2224, you are on a deploy older than `2d737c46` / rebase tip.
+
+Mileage CLOSED. Geocode OFF. Do not plan PC*MILER.
+
+ACK `CC-2 | ACK | GO-23 | NOW=J1 Book Load 162→0 · K2 type-click-away · N1 Chrome on load drawer · NEVER POST | GO`

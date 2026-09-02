@@ -1,17 +1,14 @@
-# NOW-ONE-SOURCE · GO-23 · 2026-09-02 07:20 CT
+# NOW-ONE-SOURCE · GO-23 · 2026-09-02 07:45 CT
 
-**THIS IS NOW.** Queue: `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`. **LEAD-SEAT=CURSOR.** Never POST Book Load.
-
-Owner live as USMCA Freight Solutions in Book Load. Will not submit.
+**THIS IS NOW.** Queue GO-23 + owner GO-24. **LEAD=CURSOR.** Never POST Book Load. Never create `catalogs.locations`. Mileage CLOSED.
 
 | Seat | NOW |
 |------|-----|
-| **CC-2** | **LIVE WALK** — finish K2 real mouse, then boards/planners. Record FIXED/NOT FIXED with numbers. HOLD lifted. |
-| **Codex** | Wave 1 **A3/B12** on the live wizard vs **#19571**. Do not wait for a paste. |
-| **CC-3** | Wave 1 **A2 remainder** — first-100 display is not “the whole set”. |
-| **CC-1** | **B8 remainder** then **B5** (live: pay rate still typed 0). TONU HOLD. |
-| **Cascade** | step 26 + re-derive C1/C3/C5/C7 like C6 38 |
-| **Cursor** | Lead · FAST-MERGE · wake Codex/CC-2/CC-3 |
+| **CC-1** | Purge-33 + TEST DATA template · GO-24 API if missing · N1 bill+bill-payment from load (expense already #19641) · B5 |
+| **CC-3** | GO-24 `mdata.locations` picker + geocode gate + B2/B3/B7/B4 |
+| **CC-2** | J1 wizard 162→0 · K2 type-click-away · Chrome N1 expense |
+| **Codex** | A3/B12 vs #19571 |
+| **Cascade** | C1/C3/C5/C7 recount + specs-vs-live FINDINGS |
+| **Cursor** | FAST-MERGE · do not merge #19485 |
 
-**Live NOT FIXED:** B2 UUID label, B3 import reason, B7 SAMPLE/DEMO, B5 typed 0, B4 equipment under invoice charges, A2 cap 100, D1 unequal widths, J1 162/365 off-scale on this screen.
-**Live FIXED:** A1 toggle, B1 ALWAYSTRACK legacy, first Load # guidance, trip type NB/TR/SB rule.
+**Closed:** A1, B1, load# guidance, trip type, miles catalog, A2 100-cap (owner-hold). **N1 expense is on git main** — live Chrome still required.

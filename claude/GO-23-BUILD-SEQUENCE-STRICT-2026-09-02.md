@@ -41,8 +41,11 @@ Supersedes every earlier queue note. Registers merged into one board:
 | 2 | **A1** trailer interchange, data + backend. Load 13508 ran on a broker's trailer with nowhere to record it. Never put a non-owned trailer in `mdata.units`. Post the ledger file to `INBOX-CC-3` on merge. | CC-1 |
 | 3 | **N1** create an expense from a load. `ExpenseCreatePage` is routed at `/accounting/expenses/new` but nothing in dispatch or on a load reaches it, so load-scoped cost cannot be entered. Master map 11.5: 129 NULL expense numbers. | CC-1 |
 | 4 | **A3 / B12** owner re-drives the failed save to confirm #19571 names the exact stop and rule. | Codex |
+| 4b | **GO-24** wire **existing** `mdata.locations` into Book Load stops (picker + fill address + inline add). **Do not create `catalogs.locations`.** Spec `docs/specs/0251-stop-location-catalog-design.md` is STALE — mark SUPERSEDED in the same PR. Remove or gate dead geocode UI (`enabled:false`). Mileage / `catalogs.lane_mileage` is **CLOSED** — do not reopen. | CC-3 screen · CC-1 backend only if search/create is missing |
 
-In parallel, no dependency: **CC-2** registers the J1 ratchet as a required verify-step.
+**Owner 2026-09-02 (live):** a written spec is a claim, not a fact. Before building from any spec, verify live schema in the PR. Production wins; mark the spec SUPERSEDED, never delete.
+
+In parallel, no dependency: **CC-2** registers the J1 ratchet as a required verify-step. **#19641** registered the workflow + local gate; git baseline on tip is 2218/268 PASS. Live GitHub branch protection may still be unset.
 
 ## WAVE 2 — THIS WEEK. Money is live. Protect it.
 

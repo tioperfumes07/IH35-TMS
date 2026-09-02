@@ -1,3 +1,3 @@
-# FEED NOW — CASCADE · GO-20
+# FEED NOW — CASCADE · GO-23
 
-Cascade: unique FINDING · 12+13 HOLD · defer 5+8 working-empty FINDING. Never U14 recertify. GO.
+NOW = FINDING: C1/C3/C5/C7 live recount + docs/specs vs live schema. First mismatch 0251 catalogs.locations vs mdata.locations. NEVER BUILD. GO.
