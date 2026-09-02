@@ -312,7 +312,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
           <div className="text-lg font-semibold text-slate-700" data-testid="driver-earnings-cash-advances-unpaid">
             {moneyOrError(liabilitiesQuery.isError, cashAdvancesUnpaid)}
           </div>
-          <div className="text-[10px] text-slate-700">
+          <div className="text-xs text-slate-700">
             {cashAdvancesQuery.isError ? (
               <span className="text-red-600">Error loading advances</span>
             ) : (
@@ -321,7 +321,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
           </div>
           <Link
             to={`/cash-advances?driver_id=${encodeURIComponent(driverId)}`}
-            className="text-[10px] text-slate-700 underline"
+            className="text-xs text-slate-700 underline"
             data-testid="driver-earnings-cash-advances-link"
           >
             View all cash advances →
@@ -332,7 +332,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
           <div className="text-lg font-semibold text-slate-800">
             {money(Number(debt?.pending_ack_total ?? 0))}
           </div>
-          <div className="text-[10px] text-slate-700">{Number(debt?.pending_ack_count ?? 0)} pending</div>
+          <div className="text-xs text-slate-700">{Number(debt?.pending_ack_count ?? 0)} pending</div>
         </div>
       </div>
 
@@ -423,7 +423,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
                     ? "…"
                     : money(openBillTotalCents / 100)}
               </div>
-              <div className="text-[10px] text-gray-500">
+              <div className="text-xs text-gray-500">
                 {openBillsQuery.isError ? (
                   <span className="text-red-600">Error loading open bills</span>
                 ) : (

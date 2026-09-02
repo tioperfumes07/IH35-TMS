@@ -331,7 +331,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
                 />
                 <button
                   type="button"
-                  className="text-[10px] font-medium text-slate-500 underline hover:text-slate-700"
+                  className="text-xs font-medium text-slate-500 underline hover:text-slate-700"
                   data-testid={`customer-quick-view-${row.id}`}
                   title="Quick view"
                   onClick={(e: { stopPropagation(): void }) => {
@@ -360,7 +360,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             sortable: true,
             render: (row) =>
               row.overdue_label === "Yes" ? (
-                <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-800">Yes</span>
+                <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">Yes</span>
               ) : (
                 <span className="text-gray-400">—</span>
               ),
@@ -378,7 +378,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             render: (row) => {
               const tier = row.relationship_health_tier ?? (atRiskCustomerIds.has(row.id) ? "at_risk" : null);
               const b = relationshipTierBadge(tier, atRiskQuery.isError && !row.relationship_health_tier);
-              return <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${b.className}`}>{b.label}</span>;
+              return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${b.className}`}>{b.label}</span>;
             },
           },
           {
@@ -387,7 +387,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             sortable: true,
             render: (row) => {
               const b = qualityBadge(row);
-              return <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${b.className}`}>{b.label}</span>;
+              return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${b.className}`}>{b.label}</span>;
             },
           },
           {

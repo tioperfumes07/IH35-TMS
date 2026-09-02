@@ -230,16 +230,16 @@ export function CashAdvanceRequestsPage() {
                 </span>
                 {ownerUrl ? (
                   <div>
-                    <div className="text-[10px] uppercase text-gray-500">Owner link (copy)</div>
+                    <div className="text-[11px] uppercase text-gray-500">Owner link (copy)</div>
                     <input
                       readOnly
-                      className="mt-0.5 w-full max-w-xs rounded-sm border border-gray-200 px-1 py-0.5 font-mono text-[10px]"
+                      className="mt-0.5 w-full max-w-xs rounded-sm border border-gray-200 px-1 py-0.5 font-mono text-xs"
                       value={ownerUrl}
                       onFocus={(e) => e.target.select()}
                     />
                   </div>
                 ) : (
-                  <p className="text-[10px] text-gray-500">Link was emailed to Owners. Re-escalate to mint a fresh link.</p>
+                  <p className="text-xs text-gray-500">Link was emailed to Owners. Re-escalate to mint a fresh link.</p>
                 )}
               </div>
             );
@@ -439,7 +439,7 @@ export function CashAdvanceRequestsPage() {
                   </Button>
                 </div>
                 {isMaker ? (
-                  <div className="text-right text-[10px] text-slate-700">You submitted this — needs a different approver.</div>
+                  <div className="text-right text-xs text-slate-700">You submitted this — needs a different approver.</div>
                 ) : null}
               </div>
             );
