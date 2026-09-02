@@ -66,3 +66,5 @@ CC-3 | ACK | GO-23/GO-24 | NOW=WAIT for Chrome verify · NEVER POST | GO
 CC-3 | GO-24 follow-up | caught my own miss re-reading INBOX-CC-3 NOW-1 after #19661: "Same PR: mark docs/specs/0251-stop-location-catalog-design.md SUPERSEDED" was not done. Fixed as its own docs-only PR #19666 (sha 3b01e3b6) -- SUPERSEDED notice added at the top pointing at the real mdata.locations catalog + #19661, historical §2 schema kept below (never-delete) so nobody re-proposes catalogs.locations off the stale doc. All GO-24/B2/B3/B4/B7 items now fully closed out.
 
 CC-3 | ACK | GO-23/GO-24 | NOW=WAIT for Chrome verify · NEVER POST | GO
+
+CC-3 | ACK | GO-23 | NOW=C1 raw UUIDs · NEVER remake GO-24 · NEVER POST | GO
