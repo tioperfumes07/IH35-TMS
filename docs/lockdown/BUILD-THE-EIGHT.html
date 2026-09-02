@@ -1,0 +1,122 @@
+<title>Build The Eight</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--ink:#0f1620;--ink2:#3b4655;--muted:#6b7787;--paper:#eef1f5;--card:#fff;--sunk:#f5f7fa;
+--rule:#d2d9e3;--rule2:#e6eaf0;--accent:#24467d;--accent-soft:#e2e9f4;--ok:#1c6650;--ok-soft:#e0efe9;
+--amber:#8a6208;--amber-soft:#f7efdd;--red:#93301f;--red-soft:#f6e3df;--shadow:rgba(15,22,32,.07);
+--mono:"IBM Plex Mono",ui-monospace,monospace;--body:"Karla",-apple-system,sans-serif;--disp:"Bricolage Grotesque","Karla",sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#e3e8ee;--ink2:#b0bac6;--muted:#828e9c;--paper:#0d1218;--card:#151b23;--sunk:#11171e;--rule:#262f3a;--rule2:#1d242d;--accent:#7fa9e8;--accent-soft:#17222f;--ok:#6cbb9d;--ok-soft:#132420;--amber:#d5a94a;--amber-soft:#241f14;--red:#e08a76;--red-soft:#2c1d19;--shadow:rgba(0,0,0,.4)}}
+:root[data-theme=dark]{--ink:#e3e8ee;--ink2:#b0bac6;--muted:#828e9c;--paper:#0d1218;--card:#151b23;--sunk:#11171e;--rule:#262f3a;--rule2:#1d242d;--accent:#7fa9e8;--accent-soft:#17222f;--ok:#6cbb9d;--ok-soft:#132420;--amber:#d5a94a;--amber-soft:#241f14;--red:#e08a76;--red-soft:#2c1d19;--shadow:rgba(0,0,0,.4)}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.58}
+.wrap{max-width:1000px;margin:0 auto;padding:38px 20px 90px;display:flex;flex-direction:column;gap:42px}
+h1{font-family:var(--disp);font-weight:800;font-size:clamp(28px,4.3vw,44px);margin:0;line-height:1.06;letter-spacing:-.02em;text-wrap:balance}
+h2{font-family:var(--disp);font-weight:700;font-size:clamp(20px,2.6vw,27px);margin:0;letter-spacing:-.012em;text-wrap:balance}
+h3{font-family:var(--disp);font-weight:700;font-size:18.5px;margin:0;line-height:1.25;text-wrap:balance}
+p{margin:0}.m{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--accent);font-weight:500}
+header.top{border-bottom:3px solid var(--ink);padding-bottom:20px;display:flex;flex-direction:column;gap:12px}
+.lede{font-size:17.5px;color:var(--ink2);max-width:66ch}
+.built{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.sec{border-top:1px solid var(--rule);padding-top:16px;display:flex;flex-direction:column;gap:5px}
+section{display:flex;flex-direction:column;gap:18px}.lead{color:var(--ink2);max-width:78ch}
+.big{font-family:var(--disp);font-weight:700;font-size:clamp(19px,2.3vw,24px);line-height:1.26;letter-spacing:-.008em;max-width:42ch;text-wrap:balance}
+.s{border:1px solid var(--rule);background:var(--card);box-shadow:0 1px 2px var(--shadow)}
+.sh{display:flex;border-bottom:1px solid var(--rule);align-items:stretch}
+.sn{font-family:var(--disp);font-weight:800;font-size:30px;color:var(--accent);background:var(--accent-soft);width:70px;flex:0 0 70px;text-align:center;padding-top:16px;letter-spacing:-.02em}
+.st{padding:15px 18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.meta{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;padding:3px 9px;border:1px solid var(--rule);color:var(--muted);white-space:nowrap}
+.chip.seat{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:500}
+:root[data-theme=dark] .chip.seat{color:#0d1218}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .chip.seat{color:#0d1218}}
+.chip.new{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.chip.del{background:var(--amber-soft);color:var(--amber);border-color:transparent}
+.chip.tbl{font-size:10.5px}
+.sb{padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.b{display:flex;flex-direction:column;gap:5px}
+.bl{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+.b p{font-size:15.2px;color:var(--ink2);max-width:80ch}
+.slices{display:flex;flex-direction:column;gap:14px}
+.callout{border:1px solid var(--rule);border-left:4px solid var(--accent);background:var(--card);padding:16px 18px;display:flex;flex-direction:column;gap:9px}
+.callout.amber{border-left-color:var(--amber)}.callout.red{border-left-color:var(--red)}.callout.ok{border-left-color:var(--ok)}
+ul.pl{margin:0;padding-left:19px;display:flex;flex-direction:column;gap:5px;font-size:15px;color:var(--ink2);max-width:80ch}
+code{font-family:var(--mono);font-size:.87em;background:var(--rule2);padding:1px 5px}
+footer{border-top:1px solid var(--rule);padding-top:18px;font-size:13.5px;color:var(--muted);max-width:80ch;line-height:1.6}
+@media (max-width:620px){.sn{width:54px;flex-basis:54px;font-size:24px}}
+</style>
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">IH35 &middot; GO-20 &middot; the eight half-built features</div>
+  <h1>Build The Eight</h1>
+  <p class="lede">All eight built fully. Two of them turned out not to need a table at all. Every one of the other six has real source data already sitting in production, so none of this is built beside the data — it is built on it.</p>
+  <p class="built m">Every foreign key target verified against the live database, September 2, 2026</p>
+</header>
+
+<section>
+  <div class="sec"><div class="eyebrow">The decision</div><h2>Eight built, two blocked, two deferred</h2></div>
+  <ul class="pl">
+   <li><b>Build fully:</b> bank drift, predictive maintenance, accident liabilities, cargo sensor incidents, workers compensation claims, work order parts, work order labor rates, driver late arrival rate.</li>
+   <li><b>Blocked:</b> the QuickBooks and bank feed health checks. Both are already served correctly elsewhere and their endpoint already throws. The action is to delete the dead file and repoint the uptime monitor, not to build them.</li>
+   <li><b>Deferred to launch:</b> cooling customers and recommended fuel stops. Neither may be left as a silent empty in the meantime — each reports itself unavailable or comes off its screen.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">The finding</div><h2>Two of the eight must not get a new table</h2></div>
+  <div class="callout amber">
+   <p class="big">Slices F and G look like missing tables and are not.</p>
+   <p class="lead">The parts data already lives in <code>maintenance.parts_inventory</code> and the labor rates already live in <code>catalogs.labor_rates</code>. Both are real, both are populated, and the code already falls back to them correctly and flags the fallback. Creating <code>inventory.parts</code> would add a whole schema to hold one duplicate table; creating <code>maintenance.labor_rates</code> would create a second rate list that disagrees with the first the day it ships. That is precisely the fragmentation the linkage law exists to prevent.</p>
+   <p class="lead">The real defect in both is on the screen, not in the database. The work order picker never reads the source status the backend is already returning, so a catalog that is unavailable looks exactly like a catalog with zero rows. Fix that and both slices are done, with no migration and one deleted stray file.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">The other six</div><h2>Every one has real source data already in production</h2></div>
+  <p class="lead">This is what made the specification possible without guessing. The projections, the readings, the variances, the arrivals and the accident cost lines are all already being written. What was never built is the layer that turns them into something a person is told about.</p>
+  <div class="callout ok">
+   <p class="big">The strongest single piece of evidence: <code>insurance.claim</code> already has a <code>liability_id</code> column.</p>
+   <p class="lead">It points at <code>safety.accident_liabilities</code> — a table nobody ever created. Beside it sit <code>driver_responsible</code>, <code>deductible_cents</code>, <code>recovery_rail</code> and <code>deduction_id</code>. The entire accident to liability to chargeback to insurance chain was designed, the columns were written to hold it, and one link in the middle was never built. That is why filing an accident today records the accident and decides nothing.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">The eight</div><h2>What each one is, and what gets built</h2></div>
+  <div class="slices"><article class="s"><div class="sh"><div class="sn">A</div>
+<div class="st"><h3>Bank reconciliation drift alerts</h3><div class="meta"><span class="chip seat">CC-3</span><span class="chip new">New table</span><span class="chip tbl">banking.reconciliation_drift_alerts</span></div></div></div>
+<div class="sb"><div class="b"><div class="bl">What already exists</div><p>banking.reconciliation_sessions already computes and stores variance_cents, statement and book balances. The drift is being measured and nobody is ever told. The alert layer is the only missing piece.</p></div>
+<div class="b"><div class="bl">What gets built</div><p>The detector opens an alert when a finalized session is outside tolerance, when a live bank balance disagrees with its ledger account, or when a feed goes stale past 24 hours. It never posts a journal entry. Resolving requires a written reason and records the correcting entry if one is made. Tolerance is a setting per bank account, not a constant.</p></div></div></article><article class="s"><div class="sh"><div class="sn">B</div>
+<div class="st"><h3>Predictive maintenance alerts</h3><div class="meta"><span class="chip seat">CC-3</span><span class="chip new">New table</span><span class="chip tbl">maintenance.predictive_alerts</span></div></div></div>
+<div class="sb"><div class="b"><div class="bl">What already exists</div><p>maintenance.brake_projections and maintenance.tire_projections already hold projected_replacement_date and a wear rate per day for every position. The projection math is done and finished. Only the alerting was never built.</p></div>
+<div class="b"><div class="bl">What gets built</div><p>A nightly job opens an alert when a projection falls inside the horizon, warning at 14 days and critical at 7. Creating a work order from an alert stamps the work order on it, so the unit history reads prediction then repair as one chain. The alert closes when a newer projection clears it or the work order closes.</p></div></div></article><article class="s"><div class="sh"><div class="sn">C</div>
+<div class="st"><h3>Accident liabilities</h3><div class="meta"><span class="chip seat">CURSOR</span><span class="chip new">New table</span><span class="chip tbl">safety.accident_liabilities</span></div></div></div>
+<div class="sb"><div class="b"><div class="bl">What already exists</div><p>insurance.claim already carries a liability_id column pointing at a table nobody ever created, alongside driver_responsible, deductible_cents and deduction_id. safety.accidents and safety.accident_cost_lines are live. The whole chain was designed and this one link is missing.</p></div>
+<div class="b"><div class="bl">What gets built</div><p>Filing an accident creates a liability with no decision and posts nothing. Only the owner decides, choosing driver chargeback, company absorbs, insurance only, or split, with a written note. A split must sum exactly to the net exposure. A chargeback creates a pending deduction that is never automatic and never silent. A liability with no decision never posts.</p></div></div></article><article class="s"><div class="sh"><div class="sn">D</div>
+<div class="st"><h3>Cargo sensor incidents</h3><div class="meta"><span class="chip seat">CC-2</span><span class="chip new">New table</span><span class="chip tbl">dispatch.cargo_sensor_incidents</span></div></div></div>
+<div class="sb"><div class="b"><div class="bl">What already exists</div><p>dispatch.cargo_sensor_readings already writes an out_of_range flag with temperature, humidity and door status against a load and trailer. Nothing groups those readings into an incident and nothing tells anybody.</p></div>
+<div class="b"><div class="bl">What gets built</div><p>A watcher opens one incident on the first out-of-range reading, extends it while readings stay out, and closes it after a settling window — one incident per excursion, not one per reading. Thresholds come from the load or the customer, never a constant. It can be handed to a customer as a claim.</p></div></div></article><article class="s"><div class="sh"><div class="sn">E</div>
+<div class="st"><h3>Workers compensation claims</h3><div class="meta"><span class="chip seat">CURSOR</span><span class="chip new">New table</span><span class="chip tbl">safety.workers_comp_claims</span></div></div></div>
+<div class="sb"><div class="b"><div class="bl">What already exists</div><p>safety.incidents already carries incident_type and an auto_created_claim_id column, and insurance.claim and insurance.policy are live. A driver files an injury today, is told it succeeded, and nothing is created.</p></div>
+<div class="b"><div class="bl">What gets built</div><p>The injury branch stops skipping. If the claim cannot be created the submission fails loudly, because a driver must never be told an injury was filed when nothing was recorded. The open count stops returning zero when the table is missing and reports unavailable instead. The Safety Home indicator finally renders the count it has been parsing and throwing away.</p></div></div></article><article class="s"><div class="sh"><div class="sn">F</div>
+<div class="st"><h3>Work order parts</h3><div class="meta"><span class="chip seat">CC-1</span><span class="chip del">No table — delete the phantom</span><span class="chip tbl">maintenance.parts_inventory</span></div></div></div>
+<div class="sb"><div class="b"><div class="bl">What already exists</div><p>maintenance.parts_inventory is live and already holds part number, description, category, on-hand quantity, location, reorder threshold and last purchase. The code already falls back to it and already flags the fallback correctly.</p></div>
+<div class="b"><div class="bl">What gets built</div><p>Do not create inventory.parts. A schema holding one duplicate table is exactly the fragmentation the linkage law forbids. Delete the stray Prisma migration so nobody applies it later by accident, read the canonical table directly, and fix the real defect: the screen never reads the source status, so an unavailable catalog looks identical to zero parts.</p></div></div></article><article class="s"><div class="sh"><div class="sn">G</div>
+<div class="st"><h3>Work order labor rates</h3><div class="meta"><span class="chip seat">CC-1</span><span class="chip del">No table — delete the phantom</span><span class="chip tbl">catalogs.labor_rates</span></div></div></div>
+<div class="sb"><div class="b"><div class="bl">What already exists</div><p>catalogs.labor_rates is live with rate code, name, hourly rate and active flag, and it is already mounted as a generic catalog. The code already falls back to it correctly.</p></div>
+<div class="b"><div class="bl">What gets built</div><p>Do not create maintenance.labor_rates. A second labor rate table would disagree with the first the day it shipped. Repoint the reader, and apply the same screen fix as the parts picker. One caution for the guard: the generic catalog registry uses that string as a catalog name, not a table name, so the guard must not trip on that line.</p></div></div></article><article class="s"><div class="sh"><div class="sn">H</div>
+<div class="st"><h3>Driver late arrival rate</h3><div class="meta"><span class="chip seat">CC-3</span><span class="chip new">New table</span><span class="chip tbl">dispatch.late_arrival_aggregates</span></div></div></div>
+<div class="sb"><div class="b"><div class="bl">What already exists</div><p>dispatch.stop_arrivals and mdata.load_stops already carry appointment windows, scheduled arrivals and actual arrivals. Everything needed to define late is already recorded.</p></div>
+<div class="b"><div class="bl">What gets built</div><p>Late means arriving after the appointment window, or after the scheduled arrival when there is no window. A stop with no recorded arrival is not counted in either direction, and no grace period is invented. But the part that matters most is not the table: when any weighted input is unavailable the score must say which one. A retention score computed on nine of ten inputs must never be presented as ten.</p></div></div></article></div>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">The standard</div><h2>One rule all eight are measured against</h2></div>
+  <div class="callout ok">
+   <p class="lead">The Fuel Planner already does this correctly and is the reference every one of the eight is held to. It returns null rather than zero. It prints on the screen that the values are unavailable and are not zero. It returns a refusal on the detail rather than an empty page. It labels its fallback tank size as a fallback. Nobody looking at that screen can mistake missing for empty.</p>
+   <p class="big">No silent empty. No zero that means unknown. No screen that shows nothing without saying why.</p>
+  </div>
+</section>
+
+<footer>
+  The full specification with the six create statements, every index, every linkage declaration and every guard is in GO-20, delivered to all seven seats. Every foreign key target in it was read from the live production database this morning and confirmed to exist: twenty tables, all keyed on id, except <code>dispatch.cargo_sensor_readings</code>, <code>maintenance.brake_projections</code> and <code>maintenance.tire_projections</code>, which key on uuid — a difference that would fail a migration on apply and cost a lane slot. <code>mdata.units</code> carries no company column, so unit queries scope through the row that does. None of the DDL was written from memory.
+</footer>
+</div>

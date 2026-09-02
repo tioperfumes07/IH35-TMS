@@ -1,13 +1,8 @@
-# QUEUE — CODEX · DRAIN CI → COSTS FE (matches INBOX TOP)
-
-**NOW = INBOX-CODEX.md FORCE.**
+# QUEUE — CODEX · GO-20 D + H
 
 OPEN:
-1. Drain open Codex CI reds — no `gh pr checks --watch`
-2. Mechanical connectivity / reverse linkage + entity floors until CC-1 05/06 on main
-3. **BLOCKED:** GO-18/GO-19-07 Load Costs 13th tab + board — after bills schema merges
+1. Slice **D** cargo sensor incidents (uuid FK discipline)
+2. Slice **H** late-arrival factor + honest retention score
+3. Drain open Codex CI reds (no `--watch`)
 
-VOID: Book Load for Costs screenshot · money migrations · `--watch`
-
-DONE:
-- (none this shift until CI drain starts)
+VOID: inventory.parts · maintenance.labor_rates table · POST Book Load · settlement 5753

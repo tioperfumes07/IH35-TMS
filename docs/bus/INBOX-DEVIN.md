@@ -1,5 +1,3 @@
 # ★ DEVIN (non-A)
 
-Redirect → **INBOX-DEVIN-A.md** only.
-
-**HARD:** NEVER POST Book Load · NEVER create loads · NEVER sample. Jorge owns first real book.
+Redirect → **INBOX-DEVIN-A.md**. GO-20: NEVER POST Book Load.

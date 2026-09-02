@@ -1,3 +1,3 @@
-# FEED NOW — CURSOR · 2026-09-01 23:05 CT
+# FEED NOW — CURSOR · GO-20
 
-Lead bus FORCE rewrite all seats. Live 29072a4. Jorge books · seats never POST/sample/fixtures. Overflow chrome only. GO.
+Cursor SUPERVISE ONLY. GO-20 bus FAST-MERGE. CC/Codex/Cascade/Devin build. Ping idle. GO.

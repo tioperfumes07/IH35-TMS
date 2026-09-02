@@ -1,13 +1,8 @@
-# QUEUE — CASCADE · FINDING + MERGE (matches INBOX TOP)
-
-**NOW = INBOX-CASCADE.md FORCE.**
+# QUEUE — CASCADE · GO-20 audit
 
 OPEN:
-1. File unique FINDING only (500 / dead / silent) — append AUDIT-COVERAGE + lane owner
-2. Squash merge green PRs via direct API — one in-flight; no trigger_deploy
-3. Kill stale cards: L- mint, Ask Jorge Neon restore, AskQuestion ZIP
+1. Unique FINDING append-only
+2. Watch defer **5+8** for working-empty (FINDING)
+3. **12+13 HOLD** — no build order this hour
 
-VOID: tell seats to Book Load · U14 recertify · invent GL categorize
-
-DONE:
-- Load plain digits on main + live 29072a4
+VOID: U14 recertify · inventory.parts recommendation · trigger_deploy · seat book loads

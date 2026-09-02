@@ -1,22 +1,20 @@
-# INBOX-CURSOR · FORCE · 2026-09-01 23:05 CT · LEAD BUS · NO LOADS · NO MONEY
+# INBOX-CURSOR · GO-20 · SUPERVISE ONLY
 
-`git pull --ff-only origin main` · live API **29072a4**
+`git pull --ff-only origin main`
 
-**HARD (locked):**
-- **Lead bus this shift** — rewrite INBOX/QUEUE/FEED/CENSUS/STATUS/OUTBOX; FAST-MERGE bus PR; rewake idle seats.
-- Jorge books loads. Cursor **NEVER POST Book Load** · **NEVER create loads** · **NEVER seat prod money** · **never money math / GL**.
-- Overflow only: chrome/guards/scoreboard when bus green. **Never `trigger_deploy`.**
+**Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-**Paste:** `docs/bus/PASTE-ALL-SEATS-STOP-NO-SEAT-LOADS-2026-09-01.md`
+**HARD — OWNER ADDENDUM:** Cursor **SUPERVISES ONLY**. CC-1 / CC-2 / CC-3 / Codex / Cascade / Devin-A **build**. Cursor **does not implement** their slices. **NEVER POST Book Load** · **never money math/GL** · **never `trigger_deploy`**.
 
 ## NOW
 
-1. **FORCE — Ship this bus PR** (Claude-green FINDING block · `cursor-ship-preflight` · squash merge).
-2. **OUTBOX-CURSOR one-liner:** all seats FORCE rewritten · Jorge books · seats never POST.
-3. **LEAD-CENSUS:** idle=none after rewrite; ping any seat without ACK in 15m.
-4. **Overflow (only if no seat idle):** GO-19-04 proforma-at-pickup prep · load-ref GET guard if still red · honest Built scoreboard rows — **no Book Load proof**.
+1. **Ship this GO-20 bus PR** — lockdown copies + all seven seat INBOX/QUEUE/FEED · FAST-MERGE squash.
+2. **LEAD-CENSUS + STATUS-NOW + OUTBOX** — one-liner after merge.
+3. **Ping idle seats** — any seat without ACK in 15m gets Cursor→Seat ping (not owner).
+4. **Deploy law** — batch deploy every **5–10 min AND 5–10 merged PRs** (one in-flight); never per-merge Render API.
+5. **Overflow:** bus hygiene only — no CC-1/2/3/Codex product code from Cursor this shift.
 
 ## VOID
-- Second book-load plan. Seat-create language in bus. Babysit CI. Money cluster touches.
+- Implement slice 17/C/A/20 (CC-1) · 18 (CC-2) · 19/F/G/B (CC-3) · D/H (Codex) · Book Load proof · babysit CI · app migrations/tests from Cursor.
 
-ACK `CURSOR | ACK | FORCE | NOW=lead bus PR all seats rewritten · live 29072a4 · overflow chrome only · NEVER POST Book Load · NEVER money math | GO`
+ACK `CURSOR | ACK | GO-20 FORCE | NOW=supervise FAST-MERGE bus · ping idle · deploy 5-10 law · NEVER implement CC/Codex work · NEVER POST | GO`

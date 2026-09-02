@@ -1,11 +1,9 @@
 # CURRENT-GO
 
-**NOW:** `docs/bus/NOW-ONE-SOURCE.md` + `docs/bus/INBOX-<SEAT>.md` TOP (FORCE)
+**NOW:** `docs/bus/NOW-ONE-SOURCE.md` + `docs/bus/INBOX-<SEAT>.md`
 
-**STOP:** `docs/bus/PASTE-ALL-SEATS-STOP-NO-SEAT-LOADS-2026-09-01.md`
+**GO-20:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/lockdown/BUILD-THE-EIGHT.html`
 
-**GO-19:** `docs/lockdown/GO-19-BUILD-QUEUE.md` (code after STOP; no seat books)
+**Paste:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-**Live API:** **29072a4** — plain load-ref digits. Jorge owns first real load. Seats never POST Book Load.
-
-CREATE-TEST keep-until-launch does **not** authorize seat money/loads.
+**Cursor supervises only.** CC/Codex build. NEVER POST Book Load.
