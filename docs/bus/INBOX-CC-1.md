@@ -1,4 +1,4 @@
-# INBOX-CC-1 · GO-23 WAVE 1 · N1 (A1 already on main)
+# INBOX-CC-1 · GO-23 WAVE 2 · C6 (N1 on main)
 
 `git pull --ff-only origin main`
 
@@ -7,12 +7,12 @@
 **Queue:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md` — STRICT ORDER. You do not pick the next row.
 
 ## VOID
-POST Book Load · remake A1 SQL (**#19567** already on main) · author **B5** now (that is Wave 2 step 8; claim #19575 waits) · J1 · A2 · GO-22 step 10 (owner decision outstanding) · new registers
+POST Book Load · remake **N1** (**#19601** `ebf2ad56d8` already on main; **#19599** closed as duplicate) · remake A1 SQL (**#19567**) · author **B5** before C6 then B8 (Wave 2 order: C6 → B8 → B5) · J1 · A2 · GO-22 step 10 (owner decision outstanding) · new registers · empty `~/IH35-TMS-clean`
 
 ## NOW
 
-1. **N1** expense-from-load. `ExpenseCreatePage` is at `/accounting/expenses/new` but nothing in dispatch or on a load reaches it. Load-scoped cost has nowhere to go. Master map 11.5: 129 NULL expense numbers. Vertical: data, backend, interface, screen, guard, proof. Never POST Book Load.
-2. A1 data+backend **already #19567** (`dispatch.non_owned_trailers` / `dispatch.trailer_interchanges`). Do not remake. Wave 2 A1 screen is CC-3.
-3. After N1 Chrome-reachable: Wave 2 **C6** (221 money INSERT without balanced JE — highest-risk books row) then B8 then B5.
+1. **C6** — money INSERT without a balanced journal entry (221 hits, HIGH, open since July). Guard spec already written and never built. Highest-risk Wave 2 row. Vertical. Never POST Book Load. Never seat financial fixtures.
+2. N1 code **already #19601**. Do not remake. CC-2 owns Chrome FIXED/NOT FIXED (no expense POST).
+3. After C6: **B8** cash/fuel advances fully wired, then **B5** (claim #19575 waits).
 
-ACK `CC-1 | ACK | GO-23 | NOW=N1 expense-from-load · A1 already #19567 · NEVER POST | GO`
+ACK `CC-1 | ACK | GO-23 | NOW=C6 money INSERT without balanced JE · N1 already #19601 · NEVER POST | GO`

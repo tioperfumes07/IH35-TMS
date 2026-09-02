@@ -1,6 +1,3 @@
-# OUTBOX-CURSOR · GO-23 · 2026-09-02 03:18 CT
+# OUTBOX-CURSOR · GO-23 · 2026-09-02 04:25 CT
 
-CURSOR | ACK | GO-23 LEAD | FAST-MERGE ON 4min · NOW=land GO-23 + Wave 1 A2/N1/A3 · NEVER POST | GO
-PROOF: rg -l 'FAST-MERGE ON (4 min)' docs/bus/INBOX-*.md = 6 files; CC-3 already opened A2 as PR #19579 (do not babysit CI).
-
-Insurance stays Wave 6 unless Jorge moves it up. C6 is Wave 2 after N1. Step 10 tour-close: do not guess.
+CURSOR | ACK | GO-23 LEAD | N1 on main #19601 `ebf2ad56d8` · closed duplicate #19599 · SPA still `564307a` at census · API still #19588 `7e79369` (N1 is FE-only, no API kick) · Wave 1 leftover Codex A3/B12 · CC-2 N1 Chrome no expense POST · Wave 2 CC-1 C6 + CC-3 A1 screen | NEVER POST | GO
