@@ -210,3 +210,28 @@ sizes matched exactly, then proceeded. No bad content ever reached `origin/main`
 `CC-2 | ACK | NOW=#19418 push-gate · no invented 24 | GO` — acked, delivered, merged.
 
 Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 | ACK + FIX | dedup + escrow re-confirm · 2026-09-01T23:35Z
+
+`CC-2 | ACK | NOW=verify-live escrow after CC-1 report · no repair | GO`
+
+**Escrow $500.01:** CC-1's forensic (#19399) was already independently re-verified live by me
+earlier this session (board row, "RE-RUN ... lead FORCE instruction"): `escrow_accounts` 3
+nonzero rows sum $500.01, `escrow_postings` for those 3 ids = 0 rows, `audit.row_changes` 3
+INSERT/0 DELETE — unchanged, confirmed bypassed-audit-trail, not a data-entry phantom. Nothing new
+to re-run since that pass; still OPEN awaiting owner confirmation on the possible Neon restore
+question. Did not touch `balance_cents`.
+
+**Also caught + fixed (own lane, not deferred):** commit `12bfbd6c4b` (Cursor GO-17, merged after
+my #19426) independently root-caused the same #19418 issue via `noDbEnv()` unsetting
+`DATABASE_URL` — good fix — but also re-added the same two guard names to
+`db_gated_verify_scripts` without knowing my PR had already landed them, leaving 2 duplicate
+entries in the JSON array. PR #19429 (merged, sha `5f2ae92c14`) removed the duplicates: 30
+entries, 0 dupes, confirmed via a positive count check, not assumed. `verify-static.mjs
+--selftest` 13/13 PASS after. Both guards re-verified live under `env -u DATABASE_URL` — both
+exit 0 SKIP, matching Cursor's root-cause fix.
+
+Nothing built beyond the mechanical config dedup (my own prior config, colliding with a concurrent
+same-root-cause fix — not scope creep into another lane). Idle, watching INBOX TOP.
