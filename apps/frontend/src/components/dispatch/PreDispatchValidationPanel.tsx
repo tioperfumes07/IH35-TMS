@@ -284,7 +284,7 @@ export function PreDispatchValidationPanel({
               the append-only audit trail with who/when/why/which-reasons. */}
           {canOwnerOverride ? (
             <div className="mt-2 flex items-center justify-between gap-2">
-              <span className="text-[10px] text-red-700">
+              <span className="text-xs text-red-700">
                 Owner override — this is recorded to the audit trail with your name, the time, and the
                 exact blockers overridden.
               </span>
@@ -299,7 +299,7 @@ export function PreDispatchValidationPanel({
             </div>
           ) : (
             hasUnackedBlockers && (
-              <div className="mt-1 text-[10px] text-red-600">
+              <div className="mt-1 text-xs text-red-600">
                 Dispatcher-level override requires owner approval. Contact your owner to proceed.
               </div>
             )
@@ -308,7 +308,7 @@ export function PreDispatchValidationPanel({
       )}
 
       {!loading && !error && (
-        <div className="flex items-center justify-between text-[10px] text-gray-400">
+        <div className="flex items-center justify-between text-xs text-gray-400">
           <span>
             {result.blockers.length > 0
               ? `${result.blockers.length} blocker(s) — override required to dispatch`

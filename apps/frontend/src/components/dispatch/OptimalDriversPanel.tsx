@@ -156,9 +156,9 @@ export function OptimalDriversPanel({
                   </span>
                   <span className="font-mono text-[11px] text-slate-700">{fmtScore(d.total_score)} pts</span>
                 </span>
-                <span className="text-[10px] text-slate-500">{breakdownLabel(d)}</span>
-                {blockedByHos ? <span className="text-[10px] text-slate-700">Insufficient HOS for estimated drive</span> : null}
-                {routingSettings.auto_routing_respect_equipment && d.ineligible_reason ? <span className="text-[10px] text-slate-700">{d.ineligible_reason}</span> : null}
+                <span className="text-xs text-slate-500">{breakdownLabel(d)}</span>
+                {blockedByHos ? <span className="text-xs text-slate-700">Insufficient HOS for estimated drive</span> : null}
+                {routingSettings.auto_routing_respect_equipment && d.ineligible_reason ? <span className="text-xs text-slate-700">{d.ineligible_reason}</span> : null}
               </div>
             </li>
           );

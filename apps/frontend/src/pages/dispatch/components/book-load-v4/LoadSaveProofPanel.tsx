@@ -35,7 +35,7 @@ export function LoadSaveProofPanel({
 }) {
   return (
     <div className="border-t border-slate-200 bg-slate-50 px-3 py-3" data-testid="load-save-proof-panel">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">What this save did</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">What this save did</p>
       <section className="mt-2" data-testid="save-proof-created">
         <h3 className="text-[11px] font-semibold text-slate-800">Created</h3>
         <p className="text-[11px] text-slate-700">
@@ -44,7 +44,7 @@ export function LoadSaveProofPanel({
           {proof.created.audit_insert ? " · audit INSERT recorded" : " · audit INSERT not found"}
         </p>
         {proof.created.trace_no ? (
-          <p className="font-mono text-[10px] text-slate-500">trace {proof.created.trace_no}</p>
+          <p className="font-mono text-xs text-slate-500">trace {proof.created.trace_no}</p>
         ) : null}
       </section>
       <section className="mt-2" data-testid="save-proof-linked">
@@ -63,7 +63,7 @@ export function LoadSaveProofPanel({
         ) : (
           <ul className="mt-0.5 space-y-0.5">
             {proof.ledger.postings.map((p) => (
-              <li key={`${p.journal_entry_id}-${p.debit_or_credit}-${p.amount_cents}`} className="text-[10px] text-slate-700">
+              <li key={`${p.journal_entry_id}-${p.debit_or_credit}-${p.amount_cents}`} className="text-xs text-slate-700">
                 {p.debit_or_credit} {(p.amount_cents / 100).toFixed(2)} ·{" "}
                 <EntityLink kind="journal_entry" id={p.journal_entry_id} label="journal entry" />
               </li>

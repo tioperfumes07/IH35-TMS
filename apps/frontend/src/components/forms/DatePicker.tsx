@@ -187,7 +187,7 @@ export function DatePicker({
   return (
     <div className={`relative ${shell}`.trim()} ref={ref} data-testid={dataTestId}>
       <div
-        className={`flex ${heightClass} w-full items-center gap-1 rounded-sm border border-gray-300 px-2 text-left text-[13px] ${
+        className={`flex ${heightClass} w-full items-center gap-1 rounded-sm border border-gray-300 px-2 text-left text-xs ${
           disabled ? "cursor-not-allowed bg-gray-50 text-gray-400" : "bg-white"
         }`}
       >
@@ -293,7 +293,7 @@ export function DatePicker({
               ›
             </button>
           </div>
-          <div className="grid grid-cols-7 gap-0.5 text-center text-[10px] text-gray-400">
+          <div className="grid grid-cols-7 gap-0.5 text-center text-xs text-gray-400">
             {DOW.map((d, i) => (
               <div key={i}>{d}</div>
             ))}

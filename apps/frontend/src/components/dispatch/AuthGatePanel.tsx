@@ -88,7 +88,7 @@ export function AuthGatePanel(props: AuthGatePanelProps) {
         </div>
       ) : null}
       {q.isError ? (
-        <div className="bg-red-50 px-2 py-1.5 text-[13px] text-red-800" role="alert">
+        <div className="bg-red-50 px-2 py-1.5 text-xs text-red-800" role="alert">
           <p>{userFacingApiError(q.error, "Could not verify dispatch authorization")}</p>
           <button
             type="button"
