@@ -452,6 +452,7 @@
     "verify:tail-cosmetic-no-internal-string": "node scripts/verify-tail-cosmetic-no-internal-string.mjs",
     "verify:applied-migrations-immutable": "node scripts/verify-applied-migrations-immutable.mjs",
     "verify:content-drift-check": "node scripts/verify-content-drift-check.mjs",
+    "verify:ui-design-system-ratchet": "node scripts/verify-ui-design-system-ratchet.mjs",
     "verify:google-oauth-lazy-env": "node scripts/verify-google-oauth-lazy-env.mjs",
     "verify:maintenance-routes-bootstrapped": "node scripts/verify-maintenance-routes-bootstrapped.mjs",
     "verify:maintenance-tab-coverage": "node scripts/verify-maintenance-tab-coverage.mjs",
