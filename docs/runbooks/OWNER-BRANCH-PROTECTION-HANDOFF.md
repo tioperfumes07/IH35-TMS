@@ -49,7 +49,7 @@ token:
 GH_ADMIN_TOKEN="$(gh auth token)" node scripts/verify-ci-policy-applied.mjs
 ```
 
-The verifier must print `LIVE PASS — 9 owner-approved contexts verified via GH_ADMIN_TOKEN`. A 403, 404,
+The verifier must print `LIVE PASS — N owner-approved contexts verified via GH_ADMIN_TOKEN` (N = length of `REQUIRED_GATE_CONTEXTS` in `scripts/verify-ci-policy-applied.mjs`, including `ui-design-system-ratchet / ui-design-system-ratchet`). A 403, 404,
 or policy drift is a hard failure. Standard CI intentionally supplies no token to this verifier; it validates
 the committed baseline only and prints
 `BASELINE PASS — LIVE UNVERIFIED, owner handoff required`.

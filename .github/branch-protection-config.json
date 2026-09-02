@@ -18,7 +18,8 @@
         "security-checks / security-audit",
         "premerge-gates / rls-migration-scan",
         "premerge-gates / typescript-strict-null",
-        "premerge-gates / migration-role-validation"
+        "premerge-gates / migration-role-validation",
+        "ui-design-system-ratchet / ui-design-system-ratchet"
       ]
     },
     "enforce_admins": true,

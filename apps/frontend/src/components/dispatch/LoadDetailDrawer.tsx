@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { type LoadDetail, type LoadStatus, updateLoad, useDispatchLoad, useLoad, useLoadAudit, useRemintDriverBill, useUpdateLoadStatus } from "../../api/loads";
 import { createInvoiceFromLoad, listLoadExpenses, listLoadInvoices } from "../../api/accounting";
@@ -40,6 +41,7 @@ import { LoadInTransitIssuesReverseSection } from "./LoadInTransitIssuesReverseS
 import { LoadDriverReportsReverseSection } from "../maintenance/LoadDriverReportsReverseSection";
 import { FuelTransactionsReverseSection } from "../fuel/FuelTransactionsReverseSection";
 import { ExpensesReverseSection } from "../accounting/ExpensesReverseSection";
+import { RecordExpenseModal } from "../expenses/RecordExpenseModal";
 import { BillsReverseSection } from "../accounting/BillsReverseSection";
 import { InvoicesReverseSection } from "../accounting/InvoicesReverseSection";
 import { BookLoadModalV4 } from "../../pages/dispatch/components/BookLoadModalV4";
@@ -155,6 +157,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [templateLibraryOpen, setTemplateLibraryOpen] = useState(false);
   const [abandonmentOpen, setAbandonmentOpen] = useState(false);
+  const [recordExpenseOpen, setRecordExpenseOpen] = useState(false);
   const { pushToast } = useToast();
 
   // Prefer entity-scoped dispatch GET (fuller payload). ALWAYS race mdata GET in parallel —
@@ -449,9 +452,28 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
               </h2>
               <p className="text-xs text-gray-500">{routeSummary}</p>
             </div>
-            <Button type="button" variant="secondary" size="sm" onClick={onClose}>
-              Close
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* N1: ExpenseCreatePage at /accounting/expenses/new plus RecordExpenseModal, both load-scoped. */}
+              <Link
+                className="text-xs font-semibold text-slate-700 underline"
+                to={`/accounting/expenses/new?load_id=${encodeURIComponent(load?.id ?? loadId)}${load?.load_number ? `&load_number=${encodeURIComponent(load.load_number)}` : ""}`}
+                data-testid="load-detail-add-expense"
+              >
+                Add expense
+              </Link>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setRecordExpenseOpen(true)}
+                data-testid="load-detail-record-expense"
+              >
+                Record expense
+              </Button>
+              <Button type="button" variant="secondary" size="sm" onClick={onClose}>
+                Close
+              </Button>
+            </div>
           </div>
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
             {visibleTabs.map((tab) => (
@@ -1396,6 +1418,15 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
             refetchLoad();
             void auditQuery.refetch();
           }}
+        />
+      ) : null}
+      {operatingCompanyId || load?.operating_company_id ? (
+        <RecordExpenseModal
+          open={recordExpenseOpen}
+          operatingCompanyId={String(operatingCompanyId || load?.operating_company_id || "")}
+          defaultLoadId={load?.id ?? loadId}
+          linkedLoadDisplayId={load?.load_number ?? undefined}
+          onClose={() => setRecordExpenseOpen(false)}
         />
       ) : null}
     </>,

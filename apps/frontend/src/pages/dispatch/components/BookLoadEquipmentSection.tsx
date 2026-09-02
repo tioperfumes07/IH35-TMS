@@ -166,7 +166,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
             <div className="space-y-1">
               {/* GO-23 A1: our trailer XOR an interchange trailer — never both. Switching source
                   clears the other field so exactly one FK can ever be set. */}
-              <div className="inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]" data-testid="trailer-source-toggle">
+              <div className="inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-xs" data-testid="trailer-source-toggle">
                 <button
                   type="button"
                   onClick={() => {
@@ -337,7 +337,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
         <Field
           label="Assignment mode"
           input={
-            <div className="inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
+            <div className="inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
               <label className={`flex cursor-pointer items-center px-3 ${assignmentMode === "solo" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
                 <input type="radio" value="solo" className="hidden" {...register("assignment_mode")} />
                 Solo

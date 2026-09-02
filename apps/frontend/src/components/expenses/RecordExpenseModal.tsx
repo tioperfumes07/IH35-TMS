@@ -8,6 +8,9 @@ type Props = {
   onClose: () => void;
   /** LINK-F5189: fired with the real created accounting.expenses id (was previously discarded). */
   onCreated?: (expenseId: string | null) => void;
+  /** N1 — prefill the load FK when opened from dispatch LoadDetailDrawer. */
+  defaultLoadId?: string;
+  linkedLoadDisplayId?: string;
 };
 
 /**
@@ -15,7 +18,14 @@ type Props = {
  * Reuses ParityDrawer; form body is unchanged RecordExpenseForm.
  * Export name kept so list / Quick Actions callers stay additive.
  */
-export function RecordExpenseModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
+export function RecordExpenseModal({
+  open,
+  operatingCompanyId,
+  onClose,
+  onCreated,
+  defaultLoadId,
+  linkedLoadDisplayId,
+}: Props) {
   return (
     <ParityDrawer open={open} onClose={onClose} title="Record expense" size="wide">
       <div className="space-y-4">
@@ -27,10 +37,12 @@ export function RecordExpenseModal({ open, operatingCompanyId, onClose, onCreate
             showing when this same modal instance reopens for a DIFFERENT company. Same fix
             already shipped for the Maintenance wrapper, MAINT-F6508. */}
         <RecordExpenseForm
-          key={`record-expense-modal-${operatingCompanyId}`}
+          key={`record-expense-modal-${operatingCompanyId}-${defaultLoadId ?? ""}`}
           operatingCompanyId={operatingCompanyId}
           idPrefix="record-expense-modal"
           submitLabel="Record expense"
+          defaultLoadId={defaultLoadId}
+          linkedLoadDisplayId={linkedLoadDisplayId}
           onSubmitted={(created) => {
             onCreated?.(created?.targetId ?? null);
             onClose();

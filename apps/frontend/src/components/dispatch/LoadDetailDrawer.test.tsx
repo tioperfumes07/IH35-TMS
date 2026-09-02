@@ -36,6 +36,7 @@ vi.mock("../../api/accounting", () => ({
   // not passed through — and the invoice-existence query below is what the $0-rate gate reads.
   listLoadInvoices: vi.fn().mockResolvedValue({ invoices: [] }),
   listLoadExpenses: vi.fn().mockResolvedValue({ expenses: [] }),
+  listExpenses: vi.fn().mockResolvedValue({ rows: [] }),
 }));
 
 vi.mock("../../api/dispatch", () => ({
@@ -122,6 +123,11 @@ vi.mock("../../pages/dispatch/cargo-sensors/CargoSensorTimeline", () => ({
 
 vi.mock("../documents/DocumentsTab", () => ({
   DocumentsTab: () => null,
+}));
+
+vi.mock("../expenses/RecordExpenseModal", () => ({
+  RecordExpenseModal: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="record-expense-modal">RecordExpenseModal</div> : null,
 }));
 
 vi.mock("../insurance/InsuranceClaimsReverseSection", () => ({
@@ -503,5 +509,34 @@ describe("DISP-F6XXX — delivered_pending_docs must not dead-click the invoice 
     await waitFor(() => expect(vi.mocked(accountingApi.listLoadInvoices)).toHaveBeenCalled());
     await waitFor(() => expect(screen.getByText(/available once load is delivered/i)).toBeInTheDocument());
     expect(button).toBeDisabled();
+  });
+});
+
+describe("LoadDetailDrawer N1 expense-from-load", () => {
+  it("exposes ExpenseCreate and RecordExpenseModal from the dispatch load drawer header", () => {
+    mockUseDispatchLoad.mockReturnValue({
+      data: mockLoadDetail(),
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUseLoad.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUseLoadAudit.mockReturnValue({ data: [], refetch: vi.fn() });
+
+    renderDrawer(
+      <LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />,
+    );
+
+    const add = screen.getByTestId("load-detail-add-expense");
+    expect(add).toHaveAttribute("href", "/accounting/expenses/new?load_id=load-1&load_number=L-100");
+    fireEvent.click(screen.getByTestId("load-detail-record-expense"));
+    expect(screen.getByTestId("record-expense-modal")).toBeInTheDocument();
   });
 });
