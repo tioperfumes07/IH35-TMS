@@ -778,3 +778,57 @@ close, zero writes, zero load booked, zero bill/expense created.
 
 Idle, watching INBOX TOP. Not starting J1/K2 builds — those stay HOLD per this session's standing
 instruction regardless of the build-sequence doc's seat column.
+
+---
+
+## ★ CC-2 | J1 Book Load 162→45 · K2 re-confirmed dismiss · N1 both buttons FIXED · 2026-09-02T08:16Z
+
+Answering all three NOW items from `INBOX-CC-2 · J1 162→0 + K2 + LIVE N1`.
+
+**1. J1 — Book Load wizard, 162→45 off-scale (modal-scoped census, not whole-page).** Two PRs:
+- **#19652** (BookLoadModalV4.tsx + BookLoadEquipmentSection.tsx): fixed every off-scale Tailwind
+  `text-[Npx]` bracket and bare `text-sm`/`text-base` in these two files — 21 uppercase/bold field
+  labels (9px→11px, header role), the modal's own title (16px→22px, H1 role, the only remaining
+  option once it's not header/body), and every other instance (10/10.5/13.5/9.5px) → `text-xs`
+  (12px body). Guard-equivalent bracket count on these 2 files: 34→0.
+- **#19654** (second pass, after a live re-census scoped to just the modal's own DOM subtree found
+  78 still off-scale): traced every sample back to its real source — a raw CSS `<style>` block
+  hand-authored inline in BookLoadModalV4.tsx (`.blw-sec-name`/`.blw-sec-chip`/`.blw-sec-meta`/
+  `.blw-note`, driving every "A/B/C/D section" header at 10px — **invisible to the ratchet guard
+  entirely**, since its regex only matches Tailwind's `text-[Npx]` syntax, not plain CSS
+  `font-size:` — a real guard coverage gap, not closed here) plus 4 always-mounted subcomponents
+  never touched by #19652: `LiveLoadIdBar` (Reserved bar), `RateConUploadPanel` (upload button),
+  `MultiStopExtraRateEditor` (per-stop rate rows), `AccessorialEditor` (charge-table actions).
+
+**Re-censused after both deployed: 78→45 off-scale, out of 280 modal text nodes.** Remaining 45
+traced to sources NOT yet touched: `AccessorialEditor`'s ParityTable column headers ("Code" /
+"Description" / "Amount ($)" / "Taxable", 9px — ParityTable's own source is clean 11/12px by grep,
+so this is a CSS class applied at the table-instance level, not found yet); `DriverInstructionsTextarea`
+("Driver instructions" / "Visible to driver" / "New", 9-10px); `DriverHosClocksBlock` ("Drive" /
+"Shift" / "Break" / "Cycle" / "Stop By" / "Resume At", 9px); `ExpectedAdjustmentsCallout`
+("Anticipated chargeback" / "Detention expected" / "Late delivery risk", 10px); the stops section's
+own "PICKUP" / "Stop 1" labels (9-10.5px); "Load from template" dropdown (10px); a "Range" label
+(13px, likely a shared date-range picker). **Honest count: not 0. 162→45 is real, measured
+progress (72% reduction on the modal-scoped, strict 3-value count), not closure.** Did not chase
+further this pass — each remaining source is a distinct shared component, more work than the
+"first adoption" scope covers in one sitting; listed precisely so the next pass doesn't have to
+re-discover them by census.
+
+**2. K2 — re-confirmed with the exact instruction: type in customer box, get results, click away.**
+Fresh test on the current deploy: typed "log" in the Customer field, 5 real results rendered
+(Arnold Advantage, BUDDY MOORE TRUCKING, GULF RELAY LOGISTICS, LOGISTICS DYNAMICS, LOGISTICS PLUS),
+clicked a neutral point elsewhere in the modal. **Dropdown closed, field cleared — DISMISS, not
+trap.** Same result as this session's earlier K2 correction (#19642): the Customer field (built on
+`ReferenceSelect`→`Combobox`) does not reproduce the claimed non-dismiss behavior.
+
+**3. N1 — clicked BOTH buttons on load 13508's live drawer, not just read the href this time.**
+- **Record expense**: opened a real modal (Vendor / Driver optional / Category / Payment Date
+  fields), page context still showed Load 13508 throughout. Closed via ✕, no submission.
+- **Add expense**: navigated to `/accounting/expenses/new?load_id=926f4142-...&load_number=13508`
+  — the side panel rendered **"Load-scoped: 13508"** explicitly at the top of the form, definitive
+  proof the load context carries through end-to-end, not just a correctly-shaped URL. Closed via
+  ✕ before touching any field.
+
+Zero writes, zero submissions, zero Book Load posted, anywhere in this pass.
+
+Idle, watching INBOX TOP.
