@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { StatusBadge } from "../../components/StatusBadge";
 import { ParityTable } from "../../components/parity/ParityTable";
@@ -13,6 +13,13 @@ import { companyToday } from "../../lib/businessDate";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { employmentStatusCatalogClient } from "../../api/lists-drivers-catalogs";
+import {
+  bulkTagDrivers,
+  createDriverTag,
+  listDriverTagMemberships,
+  listDriverTags,
+  type DriverTagMembership,
+} from "../../api/driver-tags";
 
 const DRIVER_STATUS_FILTERS: Array<{ value: string; label: string }> = [
   { value: "", label: "All statuses" },
@@ -54,10 +61,57 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
   const [deactivateRows, setDeactivateRows] = useState<DriverTableRow[]>([]);
   const [employmentReasonId, setEmploymentReasonId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
+  const [tagFilterId, setTagFilterId] = useState("");
   const staged = useStagedListFilters({
-    applied: { status: statusFilter },
-    empty: { status: "" },
-    onApply: (next) => setStatusFilter(next.status),
+    applied: { status: statusFilter, tag: tagFilterId },
+    empty: { status: "", tag: "" },
+    onApply: (next) => {
+      setStatusFilter(next.status);
+      setTagFilterId(next.tag);
+    },
+  });
+
+  // DRIVER-F7334 — canonical company-scoped driver tags.
+  const qc = useQueryClient();
+  const [tagRows, setTagRows] = useState<DriverTableRow[]>([]);
+  const [tagAction, setTagAction] = useState<"add" | "remove">("add");
+  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+  const driverTagsQ = useQuery({
+    queryKey: ["drivers", "driver-tags", companyId],
+    queryFn: () => listDriverTags(companyId),
+    enabled: Boolean(companyId),
+    staleTime: 30_000,
+  });
+  const driverTagOptions = useMemo(
+    () => (driverTagsQ.data?.tags ?? []).map((t) => ({ value: t.id, label: t.label })),
+    [driverTagsQ.data?.tags]
+  );
+  const rosterDriverIds = useMemo(() => rows.map((r) => r.driverId), [rows]);
+  const membershipsQ = useQuery({
+    queryKey: ["drivers", "driver-tag-memberships", companyId, rosterDriverIds.join(",")],
+    queryFn: () => listDriverTagMemberships(companyId, rosterDriverIds),
+    enabled: Boolean(companyId && rosterDriverIds.length > 0),
+    staleTime: 15_000,
+  });
+  const membershipsByDriver: Record<string, DriverTagMembership[]> = membershipsQ.data?.memberships ?? {};
+  const createTagMut = useMutation({
+    mutationFn: (input: { code: string; label: string }) => createDriverTag(companyId, input.code, input.label),
+    onSuccess: async (result) => {
+      await qc.invalidateQueries({ queryKey: ["drivers", "driver-tags", companyId] });
+      setSelectedTagId(result.tag.id);
+    },
+    onError: () => pushToast("Couldn't create tag", "error"),
+  });
+  const bulkTagMut = useMutation({
+    mutationFn: (input: { driverIds: string[]; tagId: string; action: "add" | "remove"; reason?: string }) =>
+      bulkTagDrivers(companyId, input.driverIds, input.tagId, input.action, input.reason),
+    onSuccess: async (result) => {
+      pushToast(`${result.affected} driver(s) ${tagAction === "add" ? "tagged" : "untagged"}`, "success");
+      await qc.invalidateQueries({ queryKey: ["drivers", "driver-tag-memberships", companyId] });
+      setTagRows([]);
+      setSelectedTagId(null);
+    },
+    onError: () => pushToast("Bulk tag action failed", "error"),
   });
 
   const enrichedRows = useMemo<EnrichedDriverRow[]>(
@@ -66,9 +120,16 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
   );
 
   const filteredRows = useMemo(() => {
-    if (!statusFilter) return enrichedRows;
-    return enrichedRows.filter((row) => row.status === statusFilter);
-  }, [enrichedRows, statusFilter]);
+    let out = enrichedRows;
+    if (statusFilter) out = out.filter((row) => row.status === statusFilter);
+    if (tagFilterId) {
+      // Filters the currently-loaded roster page by active tag membership. A full server-side
+      // roster-wide tag filter (beyond the current page) is a follow-on if the owner wants it —
+      // see this PR's REMAINING note.
+      out = out.filter((row) => (membershipsByDriver[row.driverId] ?? []).some((m) => m.tag_id === tagFilterId));
+    }
+    return out;
+  }, [enrichedRows, statusFilter, tagFilterId, membershipsByDriver]);
 
   const employmentReasonsQ = useQuery({
     queryKey: ["lists", "drivers", "employment-status", companyId],
@@ -83,6 +144,9 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
   useEffect(() => {
     setDeactivateRows([]);
     setEmploymentReasonId(null);
+    setTagRows([]);
+    setSelectedTagId(null);
+    setTagFilterId("");
   }, [companyId]);
 
   function handleExportSelected(selected: DriverTableRow[]) {
@@ -121,7 +185,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
       selectable={bulkPermission.canUseBulkOps}
       filterBar={
         <CollapsedListFilters
-          activeFilterCount={statusFilter ? 1 : 0}
+          activeFilterCount={(statusFilter ? 1 : 0) + (tagFilterId ? 1 : 0)}
           onApply={staged.apply}
           onReset={staged.reset}
           onCancel={staged.cancel}
@@ -137,8 +201,21 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
               className="mt-1"
               options={DRIVER_STATUS_FILTERS.filter((option) => option.value)}
               value={staged.draft.status || null}
-              onChange={(next) => staged.setDraft({ status: next ?? "" })}
+              onChange={(next) => staged.setDraft((prev) => ({ ...prev, status: next ?? "" }))}
               placeholder="All statuses"
+              allowClear
+            />
+          </div>
+          <div className="w-full max-w-xs text-xs font-semibold text-slate-600">
+            <label htmlFor="drivers-table-tag-filter">Tag</label>
+            <Combobox
+              id="drivers-table-tag-filter"
+              dataTestId="drivers-table-tag-filter"
+              className="mt-1"
+              options={driverTagOptions}
+              value={staged.draft.tag || null}
+              onChange={(next) => staged.setDraft((prev) => ({ ...prev, tag: next ?? "" }))}
+              placeholder="All tags"
               allowClear
             />
           </div>
@@ -156,10 +233,14 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
             </button>
             <button
               type="button"
-              disabled
-              title="Bulk tagging is not available yet."
+              disabled={selected.length === 0}
+              title="Add or remove a tag on the selected drivers"
               className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
-              onClick={() => pushToast("Bulk tagging is not available yet.", "info")}
+              onClick={() => {
+                setTagRows(selected);
+                setTagAction("add");
+                setSelectedTagId(null);
+              }}
             >
               Tag
             </button>
@@ -224,6 +305,24 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
           cellClass: "text-slate-600",
           sortable: true,
           render: (row) => `${row.summary.presentCount} present · ${row.summary.missingCount} missing · ${row.summary.expiredCount} expired`,
+        },
+        {
+          // EXEMPT (derived from a batch reverse-lookup, no single sortable scalar on the row).
+          key: "tags",
+          label: "Tags",
+          render: (row) => {
+            const tags = membershipsByDriver[row.driverId] ?? [];
+            if (tags.length === 0) return <span className="text-xs text-gray-400">—</span>;
+            return (
+              <div className="flex flex-wrap gap-1" data-testid={`drivers-table-tags-${row.driverId}`}>
+                {tags.map((t) => (
+                  <span key={t.tag_id} className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-700">
+                    {t.label}
+                  </span>
+                ))}
+              </div>
+            );
+          },
         },
         {
           // EXEMPT (pure action column — reuses the standing "actions" key already registered in
@@ -293,6 +392,78 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
           setDeactivateRows([]);
           setEmploymentReasonId(null);
         }).catch(() => undefined);
+      }}
+    />
+    <BulkActionModal
+      open={tagRows.length > 0}
+      actionLabel={tagAction === "add" ? "Tag drivers" : "Remove tag"}
+      affectedCount={tagRows.length}
+      requiresReason={tagAction === "remove"}
+      confirming={bulkTagMut.isPending}
+      description={
+        tagAction === "add"
+          ? "Selected drivers will be tagged. Tag membership history is retained; removing later archives it, it is never deleted."
+          : "Selected drivers will have this tag removed. A reason is required and the membership is archived, not deleted."
+      }
+      payloadFields={
+        <div className="space-y-3">
+          <div className="flex gap-2 text-xs font-semibold">
+            <button
+              type="button"
+              className={`rounded-sm border px-2 py-1 ${tagAction === "add" ? "border-slate-700 bg-slate-700 text-white" : "border-gray-300 text-slate-700"}`}
+              onClick={() => setTagAction("add")}
+            >
+              Add tag
+            </button>
+            <button
+              type="button"
+              className={`rounded-sm border px-2 py-1 ${tagAction === "remove" ? "border-slate-700 bg-slate-700 text-white" : "border-gray-300 text-slate-700"}`}
+              onClick={() => setTagAction("remove")}
+            >
+              Remove tag
+            </button>
+          </div>
+          <div>
+            <label htmlFor="driver-bulk-tag-picker" className="text-sm font-medium text-gray-800">Tag</label>
+            <Combobox
+              id="driver-bulk-tag-picker"
+              options={driverTagOptions}
+              value={selectedTagId}
+              onChange={setSelectedTagId}
+              placeholder={driverTagsQ.isLoading ? "Loading tags…" : "Select tag"}
+              allowAddNew={
+                tagAction === "add"
+                  ? {
+                      label: "+ Create new tag",
+                      onAdd: (query) => {
+                        const code = query.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-").slice(0, 48);
+                        if (!code) return;
+                        createTagMut.mutate({ code, label: query.trim() });
+                      },
+                    }
+                  : undefined
+              }
+            />
+            {driverTagsQ.isError ? <p className="text-xs text-red-600">Could not load tags.</p> : null}
+          </div>
+        </div>
+      }
+      onCancel={() => {
+        if (bulkTagMut.isPending) return;
+        setTagRows([]);
+        setSelectedTagId(null);
+      }}
+      onConfirm={({ reason }) => {
+        if (!selectedTagId) {
+          pushToast("Select a tag.", "error");
+          return;
+        }
+        bulkTagMut.mutate({
+          driverIds: tagRows.map((row) => row.driverId),
+          tagId: selectedTagId,
+          action: tagAction,
+          reason,
+        });
       }}
     />
     <BulkProgressDialog
