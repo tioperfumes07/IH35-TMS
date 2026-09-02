@@ -31,27 +31,39 @@ Live numbers (Jorge, USMCA, 2026-09-02):
 
 **Root cause is NOT a column swap.** Ingest `scripts/ops/seed-lane-mileage.mjs` maps CSV → column **1:1** — no swap. Data arrived that way from historical operators.
 
+Same column, **two meanings by row** — worse than a swap; no single transform fixes it:
+
+- On ~2/3 of lanes (~2,047), `short_miles` holds **practical + deadhead** — historical operators entered "short" as whole trip incl empty.
+- On the other **1,095 lanes**, `short_miles` means **shortest route** (correct semantics).
+
 **Do NOT mass-swap** columns where `short > practical` — that would corrupt **1,095 lanes** that already have correct shortest-route semantics.
+
+**Indy→Laredo proof:** practical 1319.7 + empty 207.6 = **1527.3** vs short **1478.1** (off ~49 ≈ avg gap).
 
 ---
 
 ## UX — OWNER (Book Load wizard)
 
-Autofill · Flag when untrustworthy · Popup → OK → continue · Operator can edit · **DO NOT BLOCK BOOKING.**
+1. **Autofill** practical / short / empty as normal — do not blank or block autofill.
+2. **Flag** when untrustworthy — visible inline, not silent.
+3. **Popup → OK → continue** — operator must press **OK** (no outside click, no Esc, no X-only close).
+4. **Operator can edit** any field after OK.
+5. **DO NOT BLOCK BOOKING.**
 
-Trigger when **short > practical** OR reverse-lane short differs by **> 100 miles**.
+**Trigger flag when EITHER:**
+
+- `short_miles > practical_miles` (column inversion), **OR**
+- reverse-lane short differs by **> 100 miles** (direction-pair mismatch).
+
+**CC-2 owns Book Load chrome** — popup + inline flag on `BookLoadModalV4`. CC-3 may assist on wizard shell sizing (J1) but does not own the popup.
 
 ---
 
-## URGENT — GO-22 settlements
+## CC-1 — catalog remediation
 
-GO-22 settlements will use **short miles**. Must **not** quietly pay on broken catalog.
+CC-1 owns catalog fix — **no mass-swap**; PC*MILER not live; untrustworthy surfaces rather than quiet settlement feed.
 
----
-
-## CC-1 remediation — restore short = shortest
-
-**PC*MILER not live.** Jorge picks path — do NOT mass-transform without owner pick:
+Remediation must restore `short_miles` = shortest route. Jorge picks path — do NOT mass-transform without owner pick:
 
 | Option | Description |
 |---|---|
@@ -61,22 +73,34 @@ GO-22 settlements will use **short miles**. Must **not** quietly pay on broken c
 
 ---
 
+## URGENT — GO-22 settlements
+
+GO-22 settlements will use **short miles**. Must **not** quietly pay on broken catalog. Flag untrustworthy short; do not silently auto-fill driver pay from corrupted catalog `short_miles`.
+
+---
+
 ## Seat assignments
 
 | Seat | Action |
 |---|---|
-| **CC-1** | Remediation options (a/b/c); Gate 0 purge in parallel; no mass transform; may compare direction pairs later. |
-| **CC-2** | Book Load chrome: autofill + inline flag + OK-only popup when triggers fire; Chrome-prove 13508. |
-| **CC-3** | Wizard shell sizing (J1) only — popup owned by CC-2. |
-| **CURSOR** | Bus fan-out; docs canonical. |
-| **CODEX** | Costs tab: CPM = cost/(practical+empty); driver pay = short miles. |
-| **CASCADE** | FINDINGS only. Never build. |
+| **CC-1** | Catalog remediation (a/b/c). No mass transform. Gate 0 purge continues in parallel. |
+| **CC-2** | Book Load chrome: autofill + inline flag + OK-only popup. Chrome-prove 13508. |
+| **CC-3** | Wizard shell sizing (J1) only — popup owned by CC-2. No lane_mileage mass correction. |
+| **CODEX** | Costs tab: CPM = cost/(practical+empty). Driver pay = short miles (never practical). |
+| **CURSOR** | Bus fan-out. Docs only this turn. |
+| **CASCADE** | Live-query verify only. Never build. |
+
+---
+
+## Gate 0 unaffected
+
+Purge, reseed **13557**, drop **B-** — all proceed. This finding does **not** block GO-26/27 Gate 0.
 
 ---
 
 ## References
 
-- Load **13508** — Indianapolis→Laredo (inverted lane).
+- Load **13508** — owner real, Indianapolis→Laredo (the inverted lane).
 - Ingest: `scripts/ops/seed-lane-mileage.mjs` (1:1 CSV mapping confirmed).
 - `catalogs.lane_mileage` — `practical_miles`, `short_miles`, `empty_miles`, `source`.
-
+- Prior doc (superseded for pay law): `docs/bus/MILES-INVERT-01-STOP-BEFORE-PAY-2026-09-02.md` — redirect here.
