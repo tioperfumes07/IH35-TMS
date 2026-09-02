@@ -46,7 +46,7 @@ function KpiTile({
 }) {
   const inner = (
     <>
-      <div className="text-[10px] uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="text-[11px] uppercase tracking-wide text-slate-500">{label}</div>
       {isError ? (
         <div className="text-sm font-semibold text-red-600" data-testid="safety-home-kpi-error">
           Unavailable
@@ -104,7 +104,7 @@ function DrillRow({ record }: { record: DrillRecord }) {
       <span className="w-20 shrink-0 text-slate-500">{record.when || "—"}</span>
       <span className="min-w-[8rem] flex-1 text-slate-700">{record.label}</span>
       <span className="flex items-center gap-2">
-        <span className="text-[10px] uppercase text-slate-400">Driver</span>
+        <span className="text-[11px] uppercase text-slate-400">Driver</span>
         <EntityLink
           kind="driver"
           id={record.driverId}
@@ -113,7 +113,7 @@ function DrillRow({ record }: { record: DrillRecord }) {
         />
       </span>
       <span className="flex items-center gap-2">
-        <span className="text-[10px] uppercase text-slate-400">Unit</span>
+        <span className="text-[11px] uppercase text-slate-400">Unit</span>
         <EntityLink
           kind="unit"
           id={record.unitId}
@@ -267,7 +267,7 @@ export function SafetyHomeTab() {
         data-testid="safety-home-active-drivers"
       >
         <div>
-          <div className="text-[10px] uppercase tracking-wide text-slate-500">
+          <div className="text-[11px] uppercase tracking-wide text-slate-500">
             Active Drivers (Samsara GPS activity)
           </div>
           {activeDriversQuery.isError ? (
@@ -287,7 +287,7 @@ export function SafetyHomeTab() {
               {/* §7 LOCKED palette — no amber/yellow status bands; both states stay in the slate
                   family, distinguished by text only ("Cached" vs "Recomputed live"). */}
               <span
-                className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600"
+                className="rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600"
                 data-testid="safety-home-active-drivers-freshness"
                 title={
                   activeDriversQuery.data?.snapshot_at

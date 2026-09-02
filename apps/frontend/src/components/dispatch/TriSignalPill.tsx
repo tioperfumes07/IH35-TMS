@@ -20,20 +20,20 @@ function pillLabel(signal: TriSignalResult["signal"]) {
 
 export function TriSignalPill({ signal, loading, unavailable }: Props) {
   if (loading) {
-    return <span className="text-[10px] text-gray-400">Signal …</span>;
+    return <span className="text-xs text-gray-400">Signal …</span>;
   }
   if (unavailable) {
-    return <span className="text-[10px] font-semibold text-amber-700">Unavailable</span>;
+    return <span className="text-xs font-semibold text-amber-700">Unavailable</span>;
   }
   if (!signal) {
-    return <span className="text-[10px] text-gray-300">—</span>;
+    return <span className="text-xs text-gray-300">—</span>;
   }
 
   return (
     <span
       data-testid="tri-signal-pill"
       data-signal={signal.signal}
-      className={`group relative inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${pillClass(signal.signal)}`}
+      className={`group relative inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${pillClass(signal.signal)}`}
     >
       {pillLabel(signal.signal)}
       <span className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden min-w-[220px] rounded-sm border border-slate-200 bg-white p-2 text-left shadow-lg group-hover:block">

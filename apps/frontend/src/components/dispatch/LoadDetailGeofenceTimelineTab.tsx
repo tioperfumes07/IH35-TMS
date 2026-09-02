@@ -106,7 +106,7 @@ function StopCard({ stop }: { stop: GeofenceStop }) {
       className={`relative rounded-sm border p-3 text-sm ${stop.is_layover ? "border-slate-200 bg-slate-100" : "border-gray-200 bg-white"}`}
     >
       {stop.is_layover && (
-        <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-slate-700">
+        <div className="mb-1 text-[11px] font-bold uppercase tracking-widest text-slate-700">
           Layover — dwell &gt; 8 hours
         </div>
       )}
@@ -121,9 +121,9 @@ function StopCard({ stop }: { stop: GeofenceStop }) {
           </div>
         </div>
         <div className="flex flex-wrap justify-end gap-1">
-          <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${src.className}`}>{src.label}</span>
+          <span className={`rounded-sm px-1.5 py-0.5 text-xs font-semibold ${src.className}`}>{src.label}</span>
           {det && (
-            <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${det.className}`}>{det.label}</span>
+            <span className={`rounded-sm px-1.5 py-0.5 text-xs font-semibold ${det.className}`}>{det.label}</span>
           )}
         </div>
       </div>
@@ -211,7 +211,7 @@ export function LoadDetailGeofenceTimelineTab({ loadId, operatingCompanyId }: Pr
         </div>
       )}
 
-      <div className="flex items-center gap-4 text-[10px] text-gray-500">
+      <div className="flex items-center gap-4 text-xs text-gray-500">
         <span className="flex items-center gap-1">
           <span className="inline-block h-2 w-8 rounded-full bg-slate-300" /> Within free time
         </span>

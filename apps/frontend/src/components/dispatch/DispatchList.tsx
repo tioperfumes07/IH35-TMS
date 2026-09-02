@@ -345,7 +345,7 @@ export function DispatchList({
                     {STATUS_LABEL[load.status]}
                   </span>
                   {load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id) ? (
-                    <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Geofence alert</span>
+                    <span className="rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Geofence alert</span>
                   ) : null}
                 </div>
               ),
@@ -448,7 +448,7 @@ export function DispatchList({
                   {(load.progress_status ?? "unknown").replace("_", " ")}
                 </span>
                 {load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id) ? (
-                  <span className="ml-2 rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Geofence alert</span>
+                  <span className="ml-2 rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Geofence alert</span>
                 ) : null}
               </div>
               {showEtaColumn && load.status === "in_transit" && load.samsara_eta_at ? (

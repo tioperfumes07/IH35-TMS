@@ -76,9 +76,9 @@ function KpiTile({
       }`}
       data-testid={testId}
     >
-      <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
       <div className="text-xl font-semibold text-slate-900">{value}</div>
-      <div className="text-[10px] text-slate-500">{hint}</div>
+      <div className="text-xs text-slate-500">{hint}</div>
       <div className="mt-1">
         <MiniSparkline points={sparkline} testId={`${testId}-sparkline`} />
       </div>
@@ -212,7 +212,7 @@ export function MaintKpiDashboardPage() {
           >
             <div className="flex flex-wrap items-end gap-2 text-xs">
               <label className="flex flex-col gap-0.5">
-                <span className="text-[10px] uppercase text-slate-500">From</span>
+                <span className="text-[11px] uppercase text-slate-500">From</span>
                 <DatePicker
                   className=""
                   value={staged.draft.periodStart}
@@ -221,7 +221,7 @@ export function MaintKpiDashboardPage() {
                 />
               </label>
               <label className="flex flex-col gap-0.5">
-                <span className="text-[10px] uppercase text-slate-500">To</span>
+                <span className="text-[11px] uppercase text-slate-500">To</span>
                 <DatePicker
                   className=""
                   value={staged.draft.periodEnd}
@@ -230,7 +230,7 @@ export function MaintKpiDashboardPage() {
                 />
               </label>
               <div className="flex min-w-48 flex-col gap-0.5">
-                <span className="text-[10px] uppercase text-slate-500">Unit</span>
+                <span className="text-[11px] uppercase text-slate-500">Unit</span>
                 <EntityPicker
                   kind="unit"
                   operatingCompanyId={companyId}

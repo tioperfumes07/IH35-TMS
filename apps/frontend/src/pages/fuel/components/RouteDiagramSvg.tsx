@@ -64,7 +64,7 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
         {avoidZones.map((zone) => (
           <g key={`zone-${zone.pointId}`}>
             <rect x={zone.x! - 35} y={LINE_Y - 30} width={70} height={60} fill="rgba(239,68,68,0.08)" stroke="#DC2626" strokeDasharray="4 4" />
-            <text x={zone.x!} y={LINE_Y - 36} textAnchor="middle" className="fill-red-700 text-[10px]">{String(zone.station_state ?? zone.state ?? "")}</text>
+            <text x={zone.x!} y={LINE_Y - 36} textAnchor="middle" className="fill-red-700 text-xs">{String(zone.station_state ?? zone.state ?? "")}</text>
           </g>
         ))}
 
@@ -90,17 +90,17 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
                 strokeWidth={skipped ? 2 : 0}
                 strokeDasharray={skipped ? "3 2" : undefined}
               />
-              <text x={stop.x!} y={LINE_Y - 14} textAnchor="middle" className={`text-[10px] ${skipped ? "line-through fill-red-700" : "fill-gray-700"}`}>
+              <text x={stop.x!} y={LINE_Y - 14} textAnchor="middle" className={`text-xs ${skipped ? "line-through fill-red-700" : "fill-gray-700"}`}>
                 ${Number(stop.price_per_gallon ?? 0).toFixed(2)}
               </text>
-              <text x={stop.x!} y={LINE_Y + 24} textAnchor="middle" className="fill-gray-700 text-[10px]">
+              <text x={stop.x!} y={LINE_Y + 24} textAnchor="middle" className="fill-gray-700 text-xs">
                 {String(stop.station_name ?? `Stop ${idx + 1}`).slice(0, 16)}
               </text>
-              <text x={stop.x!} y={LINE_Y + 36} textAnchor="middle" className="fill-gray-500 text-[9px]">
+              <text x={stop.x!} y={LINE_Y + 36} textAnchor="middle" className="fill-gray-500 text-xs">
                 {String(stop.station_state ?? stop.state ?? "")} · mi {stop.mile.toFixed(0)} · {(stop.gallons_added ?? stop.gallons) == null ? "—" : Number(stop.gallons_added ?? stop.gallons).toFixed(0)} gal
               </text>
               {strategic ? (
-                <text x={stop.x!} y={LINE_Y - 26} textAnchor="middle" className="fill-amber-700 text-[10px]">
+                <text x={stop.x!} y={LINE_Y - 26} textAnchor="middle" className="fill-amber-700 text-xs">
                   ⚡ STRATEGIC
                 </text>
               ) : null}
