@@ -2,15 +2,25 @@
 
 `git pull --ff-only origin/main`
 
-**FAST-MERGE ON.** Never POST Book Load. USMCA only.
+## ⚡ FAST-MERGE + DEPLOY (ALL SEATS · OWNER 2026-09-02)
 
-## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY — JORGE LAW (2026-09-02)
+**Loop (~4–5 min):** `node scripts/money-pr-local-gate.mjs` (Cursor: `node scripts/cursor-ship-preflight.mjs --body-file …`) → **exit 0 FIRST** (that is merge proof) → `git push` → `gh pr create` → **immediately** `gh pr merge N --squash --delete-branch --admin` (or `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`). **NEVER** `gh pr checks --watch`. **NEVER** ask Jorge to merge. **NEVER** idle after merge. `git push --no-verify` **only AFTER gate PASS** and **only** for ENV-VERIFY-STATIC class (~54+ main env reds) — **never** for your own red guard.
 
-**Driver pay = ALWAYS short miles. NEVER practical.** MilesStrip "short includes empty" copy was **wrong**. Indy→Laredo inverted (2,142/3,237 lanes short>practical). **STOP auto-fill pay from catalog short** until data fixed — pay basis stays short, not practical+empty.
+**Deploy:** batch every **5–10** merges; never per-merge prod deploy; CC seats **never** `trigger_deploy`; Cursor lead batches.
 
-**Owner law (LOCKED):** Customer RPM = rate/practical · Company CPM = cost/(practical+empty) · driver pay = short miles · overage = driver's problem · empty avg 251.9 on 2,398 lanes.
+**Law:** USMCA only · Never POST Book Load · Never seat financial fixtures · Cursor PR titles **`Cursor-`** prefix.
 
-CC-1 owns remediation (restore short = shortest; no mass-swap). Gate 0 unaffected. Optional Gate 1 FE: wizard flag when short>practical + operator confirm/override typed short.
+Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md` · `docs/bus/FAST-MERGE-REMINDER-2026-09-02.md`
+
+## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY (2026-09-02)
+
+**Cursor correction acknowledged:** MilesStrip "short includes empty" copy was **wrong**. Indy→Laredo inverted (2,142/3,237 lanes short>practical).
+
+**Owner law (LOCKED):** Driver pay = **short miles always**. NEVER practical. Customer RPM = rate/practical · Company CPM = cost/(practical+empty).
+
+**STOP-BEFORE-PAY:** Do not autofill/trust corrupted catalog short without OK popup. CC-1 remediates catalog so short = shortest. Book Load: autofill + flag + OK-only popup landed this PR.
+
+CC-1 owns ingest remediation (no mass-swap). Gate 0 unaffected.
 
 Canonical: `docs/bus/MILES-INVERT-01-STOP-BEFORE-PAY-2026-09-02.md`
 
@@ -35,8 +45,7 @@ Jorge UNLOCKED full capacity. WAIT is over. Reconciliation with Claude is CLOSED
    Gate 4.2 — Company settlement table (blocked on 2.1).
    GO-07 KPI drill-through: DispatchOverview.tsx:277 double-counts atRisk+late.
 
-4. MILES-INVERT-01 (STOP-BEFORE-PAY): driver pay = short miles always. STOP catalog short
-   auto-fill until data fixed. CC-1 owns remediation. Optional Gate 1 FE: flag + operator confirm.
+4. MILES-INVERT-01: driver pay = short always. Book Load autofill + flag + OK popup shipped. CC-1 catalog remediation continues.
 
 5. FINDING queued for CC-1 after Gate 0: cancel-load cascade — default pre-checked,
    list each record by number with checkbox, typed reason if unchecked.

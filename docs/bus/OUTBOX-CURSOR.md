@@ -1,3 +1,3 @@
 # OUTBOX-CURSOR · GO UNLOCKED · 2026-09-02
 
-CURSOR | **MILES-INVERT-01 Jorge law locked** · driver pay = ALWAYS short NEVER practical · STOP catalog short auto-fill until data fixed · CPM = cost/(practical+empty) · CC-1 remediation (a/b/c) restore shortest route · no mass-swap · wizard flag+confirm · Gate 0 purge proceeds · NEVER POST
+CURSOR | **FAST-MERGE reminder fan-out all seats** · deploy batch 5–10 · MILES-INVERT Book Load OK popup + driver pay=short law synced · NEVER POST

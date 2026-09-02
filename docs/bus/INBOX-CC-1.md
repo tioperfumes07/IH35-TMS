@@ -2,9 +2,23 @@
 
 `git pull --ff-only origin/main`
 
-**FAST-MERGE ON.** Never POST Book Load. USMCA only. **GO NOW — Gate 0 is yours.**
+## ⚡ FAST-MERGE + DEPLOY (ALL SEATS · OWNER 2026-09-02)
 
-## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY — JORGE LAW (2026-09-02)
+**Loop (~4–5 min):** `node scripts/money-pr-local-gate.mjs` (Cursor: `node scripts/cursor-ship-preflight.mjs --body-file …`) → **exit 0 FIRST** (that is merge proof) → `git push` → `gh pr create` → **immediately** `gh pr merge N --squash --delete-branch --admin` (or `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`). **NEVER** `gh pr checks --watch`. **NEVER** ask Jorge to merge. **NEVER** idle after merge. `git push --no-verify` **only AFTER gate PASS** and **only** for ENV-VERIFY-STATIC class (~54+ main env reds) — **never** for your own red guard.
+
+**Deploy:** batch every **5–10** merges; never per-merge prod deploy; CC seats **never** `trigger_deploy`; Cursor lead batches.
+
+**Law:** USMCA only · Never POST Book Load · Never seat financial fixtures · Cursor PR titles **`Cursor-`** prefix.
+
+Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md` · `docs/bus/FAST-MERGE-REMINDER-2026-09-02.md`
+
+**GO NOW — Gate 0 is yours.**
+
+## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY — ROOT CAUSE SETTLED (2026-09-02)
+
+**Two meanings — do NOT confuse:**
+1. **Column inversion:** same lane Origin→Dest where `short_miles > practical_miles` (66% History). NOT wrong direction.
+2. **Direction pair:** Laredo→Chicago vs Chicago→Laredo should have essentially the same loaded miles. Wild divergence = catalog quality defect — show in finding; **you may compare pairs later**.
 
 **Exact law text (owner ruling — supersedes interim "pay practical+empty" advice):**
 
@@ -15,11 +29,11 @@ If the driver drives more than short, that is the driver's problem.
 Empty/deadhead stays company cost: Company CPM = cost/(practical+empty). Customer RPM = rate/practical.
 
 short_miles is untrustworthy on 66% of History lanes (often practical+deadhead artifact).
-STOP auto-paying from catalog short until inverted shorts are corrected or replaced —
-but the definition of pay basis remains short miles, not practical+empty.
-Do NOT change product law to pay on practical. Fix the data so short means shortest route again.
-Remediation must restore short = shortest (PC*MILER, re-key, or quarantine inverted rows so operator types short) — Jorge picks. No mass-swap.
-Wizard must flag short>practical and require operator confirm/override typed short.
+Do not autofill/trust corrupted catalog short for pay without OK popup.
+Driver pay basis remains short miles — not practical, not practical+empty.
+Fix the data so short means shortest route again.
+Remediation must restore short = shortest (PC*MILER, re-key, or quarantine inverted rows) — Jorge picks. No mass-swap.
+Book Load wizard: still autofill practical/short/empty; flag inversion; OK-only popup (CC-2 owns chrome).
 ```
 
 **Root cause (settled — NOT a column swap):** Ingest `scripts/ops/seed-lane-mileage.mjs` maps CSV→column 1:1. Data arrived that way. Same column = **two meanings by row** — worse than a swap; no single transform fixes it.
@@ -29,15 +43,20 @@ Wizard must flag short>practical and require operator confirm/override typed sho
 - Other 1,095 lanes: short = shortest route (correct)
 - Indy→Laredo: 1319.7+207.6=1527.3 vs short 1478.1 (off ~49 ≈ avg gap)
 
+**Owner cost model (LOCKED):**
+- Customer RPM = rate / practical (loaded only) — NEVER fold empty into practical
+- Company CPM = cost / (practical + empty) — deadhead is real cost
+- **Driver pay = short miles always — NEVER practical**
+
 **Your order — IN ORDER:**
 1. ~~Read ingest script~~ **DONE** — no swap; dual semantics confirmed.
-2. **Propose remediation options for Jorge** — restore short = shortest; do NOT mass-transform without owner pick:
+2. **Propose remediation options for Jorge** — do NOT mass-transform without owner pick:
    - **(a)** PC*MILER recompute shortest route when live — owner decides scope
-   - **(b)** Re-key inverted rows (correct short re-entry)
+   - **(b)** Re-key inverted rows (operator or scripted re-entry of correct short)
    - **(c)** Null/quarantine inverted shorts (short > practical; operator types short at book)
 3. Do **NOT** mass-swap (corrupts 1,095 OK lanes).
-4. **STOP** auto-fill pay from catalog short until data fixed.
-5. Wizard must show practical/short/empty, **flag when short > practical**, require operator confirm/override typed short.
+4. **STOP** silently trusting catalog short for pay until data fixed — wizard autofill + flag + OK popup.
+5. Book Load wizard UX (CC-2 owns): still autofill practical/short/empty; flag when short > practical; OK-only popup before continue.
 
 Gate 0 **unaffected** — purge, reseed 13557, drop B- proceed in parallel.
 

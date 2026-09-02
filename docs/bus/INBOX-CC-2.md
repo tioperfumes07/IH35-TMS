@@ -2,17 +2,37 @@
 
 `git pull --ff-only origin/main`
 
-**FAST-MERGE ON.** Never POST Book Load. You own the verified flag.
+## ⚡ FAST-MERGE + DEPLOY (ALL SEATS · OWNER 2026-09-02)
 
-## ⚠ MILES-INVERT-01 — STOP-BEFORE-PAY — JORGE LAW (2026-09-02)
+**Loop (~4–5 min):** `node scripts/money-pr-local-gate.mjs` (Cursor: `node scripts/cursor-ship-preflight.mjs --body-file …`) → **exit 0 FIRST** (that is merge proof) → `git push` → `gh pr create` → **immediately** `gh pr merge N --squash --delete-branch --admin` (or `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`). **NEVER** `gh pr checks --watch`. **NEVER** ask Jorge to merge. **NEVER** idle after merge. `git push --no-verify` **only AFTER gate PASS** and **only** for ENV-VERIFY-STATIC class (~54+ main env reds) — **never** for your own red guard.
 
-**Driver pay = ALWAYS short miles. NEVER practical.** Do NOT verify "short includes empty" copy — it is wrong.
+**Deploy:** batch every **5–10** merges; never per-merge prod deploy; CC seats **never** `trigger_deploy`; Cursor lead batches.
 
-Indy→Laredo: practical 1319.7 + empty 207.6 = 1527.3 ≠ short 1478.1. **2,142/3,237 lanes (66.2%)** have short>practical. **STOP auto-fill pay from catalog short** until CC-1 fixes data. Pay basis stays short — not practical+empty.
+**Law:** USMCA only · Never POST Book Load · Never seat financial fixtures · Cursor PR titles **`Cursor-`** prefix.
 
-**Owner law (LOCKED):** Customer RPM = rate/practical · Company CPM = cost/(practical+empty) · driver pay = short miles · overage = driver's problem.
+Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md` · `docs/bus/FAST-MERGE-REMINDER-2026-09-02.md`
 
-Chrome-prove 13508 (Gate 1.3): show practical/short/empty; **flag when short > practical**; require operator confirm/override typed short.
+You own the verified flag.
+
+## ⚠ MILES-INVERT-01 — Book Load UX (LOCKED · CC-2 owns chrome)
+
+**Two meanings — do NOT confuse:**
+1. **Column inversion:** same lane where `short > practical` (66% History). NOT wrong direction.
+2. **Direction pair:** opposite lanes (A→B vs B→A) should have same loaded miles; wild divergence = catalog defect — flag in finding.
+
+**Do NOT verify "short includes empty" copy — it is wrong.** Driver pay = short miles always.
+
+Indy→Laredo: practical 1319.7 + empty 207.6 = 1527.3 ≠ short 1478.1. **2,142/3,237 lanes (66.2%)** have short>practical. CC-1 owns root-cause (ingest script, no mass-swap).
+
+**Owner cost model (LOCKED):** Customer RPM = rate/practical · Company CPM = cost/(practical+empty).
+
+**Book Load wizard UX — exact bullets (you own popup on `BookLoadModalV4`):**
+1. **Still autofill** all three fields: practical / short / empty.
+2. **Flag** inversion inline when `short > practical` (and pair mismatch if detected).
+3. **Popup** explains the issue; operator must press **OK** — cannot dismiss without OK (no outside click, no Esc, no X-only close).
+4. After **OK**, booking continues with those values — operator may still edit any field.
+
+Chrome-prove 13508 (Gate 1.3): show autofill + flag + popup flow on Indianapolis→Laredo.
 
 Canonical: `docs/bus/MILES-INVERT-01-STOP-BEFORE-PAY-2026-09-02.md`
 
