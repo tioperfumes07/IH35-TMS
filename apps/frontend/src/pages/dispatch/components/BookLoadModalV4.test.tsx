@@ -75,6 +75,13 @@ vi.mock("../../../api/dispatch", async (importOriginal) => {
       short_miles_untrustworthy: false,
       short_miles_untrustworthy_reason: null,
     }),
+    // GO-23: real getChainDeadhead calls fetch(); unmocked it hangs every test that sets a unit
+    // + pickup city/state (chainDeadheadQuery becomes enabled). Default: no prior delivery found.
+    getChainDeadhead: vi.fn().mockResolvedValue({
+      deadhead_miles: null,
+      source: "blank",
+      reason: "no_prior_delivery_for_unit",
+    }),
   };
 });
 

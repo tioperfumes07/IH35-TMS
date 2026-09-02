@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createDispatchLoad, createTrailerInterchange, getLaneMileage } from "../../../api/dispatch";
+import { createDispatchLoad, createTrailerInterchange, getLaneMileage, getChainDeadhead } from "../../../api/dispatch";
 import { resolveStopPlace } from "./book-load-city-state";
 import { historicalImportReasonsCatalogClient, listAllDispatchCatalogRows, loadTypesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
 import { ApiError } from "../../../api/client";
@@ -619,6 +619,36 @@ export function BookLoadModalV4({
           ? "Looking up miles for this lane…"
           : "";
 
+  // GO-23 owner ruling 2026-09-02: deadhead is a TRIP property (this unit's real last delivery
+  // to this pickup), never catalogs.lane_mileage's lane average — that put a lane AVERAGE into a
+  // driver's paycheck (August ranged 0 to 598.7 miles on comparable lanes). Chain-computed from
+  // this SAME unit's most recent delivery across all three entities; blank with a stated reason
+  // when there is no locatable prior delivery, never a false 0.
+  const chainDeadheadQuery = useQuery({
+    queryKey: ["book-load-chain-deadhead", operatingCompanyId, assignedUnitId, originPlace.city, originPlace.state],
+    queryFn: () =>
+      getChainDeadhead({
+        operating_company_id: operatingCompanyId,
+        unit_uuid: assignedUnitId,
+        pickup_city: originPlace.city,
+        pickup_state: originPlace.state,
+      }),
+    enabled: Boolean(operatingCompanyId && assignedUnitId && originPlace.city && originPlace.state),
+    staleTime: 30_000,
+  });
+
+  const deadheadBlankReason = (() => {
+    const r = chainDeadheadQuery.data;
+    if (!assignedUnitId) return "";
+    if (!originPlace.city || !originPlace.state) return "";
+    if (chainDeadheadQuery.isFetching && !r) return "Looking up this unit's last delivery…";
+    if (chainDeadheadQuery.isError) return "Could not compute deadhead from this unit's history. Type it.";
+    if (!r || r.source !== "blank") return "";
+    if (r.reason === "no_prior_delivery_for_unit") return "No prior delivery on file for this unit — enter deadhead miles.";
+    if (r.reason === "prior_delivery_not_locatable") return "This unit's last delivery has no locatable city/state — enter deadhead miles.";
+    return "This pickup has no locatable city/state yet — enter deadhead miles.";
+  })();
+
   useEffect(() => {
     if (!(Number(form.getValues("miles_practical")) > 0) && !(Number(form.getValues("miles_shortest")) > 0)) {
       milesOperatorTouched.current = false;
@@ -637,9 +667,11 @@ export function BookLoadModalV4({
     if (!(Number(form.getValues("miles_shortest")) > 0) && lane.short_miles != null) {
       form.setValue("miles_shortest", lane.short_miles, { shouldDirty: true, shouldValidate: true });
     }
-    if (!(Number(form.getValues("miles_deadhead")) > 0) && lane.empty_miles != null && lane.empty_miles > 0) {
-      form.setValue("miles_deadhead", lane.empty_miles, { shouldDirty: true, shouldValidate: true });
-    }
+    // GO-23 owner law: catalogs.lane_mileage.empty_miles is the LANE's historical average
+    // deadhead, not this truck's real deadhead from wherever it actually is to this pickup.
+    // Filling miles_deadhead from it fed a fictional number straight into driver pay/company
+    // cost. Deadhead now fills separately below, from this unit's actual delivery chain
+    // (chainDeadheadQuery) — never re-add a fill from lane.empty_miles here.
     if (lane.practical_miles != null) {
       const source =
         lane.fill_confidence === "check_zip"
@@ -662,6 +694,19 @@ export function BookLoadModalV4({
       setShowMilesInvertAck(true);
     }
   }, [destPlace.city, destPlace.state, form, laneMileageQuery.data, originPlace.city, originPlace.state]);
+
+  // GO-23 owner ruling 2026-09-02: fill miles_deadhead from this unit's real delivery chain
+  // (computeChainDeadheadMiles), never from the lane catalog. A "blank" result is a deliberate,
+  // honest answer (deadheadBlankReason renders it on screen) — it must NOT be coerced to 0.
+  useEffect(() => {
+    const chain = chainDeadheadQuery.data;
+    if (!chain) return;
+    if (milesOperatorTouched.current) return;
+    if (Number(form.getValues("miles_deadhead")) > 0) return;
+    if (chain.source === "chain") {
+      form.setValue("miles_deadhead", chain.deadhead_miles, { shouldDirty: true, shouldValidate: true });
+    }
+  }, [chainDeadheadQuery.data, form]);
 
   // GO-21/GO-23 A2 (real fix — BookLoadCustomerSection.tsx is an orphan, never rendered by the
   // live Book Load flow; this inline picker is the one CC-2 verified live). Identical
@@ -2038,6 +2083,16 @@ export function BookLoadModalV4({
                 {milesLookupNote ? (
                   <p className="blw-note" data-testid="book-load-miles-lookup-note">
                     {milesLookupNote}
+                  </p>
+                ) : null}
+                {deadheadBlankReason ? (
+                  <p className="blw-note" data-testid="book-load-deadhead-blank-reason">
+                    {deadheadBlankReason}
+                  </p>
+                ) : chainDeadheadQuery.data?.source === "chain" ? (
+                  <p className="blw-note" data-testid="book-load-deadhead-chain-source">
+                    Deadhead from {chainDeadheadQuery.data.prior_load_number ?? "this unit's last delivery"} (
+                    {chainDeadheadQuery.data.prior_delivery_city}, {chainDeadheadQuery.data.prior_delivery_state}) to this pickup.
                   </p>
                 ) : null}
                 <p className="blw-note">
