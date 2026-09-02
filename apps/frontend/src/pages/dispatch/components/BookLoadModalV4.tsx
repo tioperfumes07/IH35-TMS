@@ -683,14 +683,17 @@ export function BookLoadModalV4({
   // capped/searched result page can omit the already-committed customer. Combobox then shows the
   // empty placeholder even though the FK is set — and clearCommittedOnEdit + typing one keystroke
   // clears the FK, so Save looks like a dead click. Always seed the committed customer.
+  // C1 (owner correction 2026-09-02): both fallbacks below used to fall to the raw uuid
+  // (`c.display_name.trim() || c.id` / `name || id`) whenever a name came back empty/blank —
+  // a raw machine ID on an operator-facing option label. entityLabel() rejects an empty AND a
+  // uuid-shaped name and falls back to "Customer — not visible" instead, same convention as
+  // every other reverse-link label in this codebase (BillsReverseSection, EntityLinkOrTombstone).
   const customerOptions = useMemo(() => {
-    const fromApi = (customersQuery.data ?? [])
-      .map((c) => ({ value: c.id, label: c.display_name.trim() || c.id }))
-      .filter((o) => o.label);
+    const fromApi = (customersQuery.data ?? []).map((c) => ({ value: c.id, label: entityLabel(c.display_name, c.id, "Customer") }));
     const id = String(watchedCustomerId || "").trim();
     const name = String(watchedCustomerName || "").trim();
     if (id && !fromApi.some((o) => o.value === id)) {
-      return [{ value: id, label: name || id }, ...fromApi];
+      return [{ value: id, label: entityLabel(name, id, "Customer") }, ...fromApi];
     }
     return fromApi;
   }, [customersQuery.data, watchedCustomerId, watchedCustomerName]);
