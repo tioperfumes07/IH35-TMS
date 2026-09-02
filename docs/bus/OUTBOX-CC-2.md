@@ -660,3 +660,41 @@ return capture + signed agreement upload (the other two GO-23 A1 sub-asks) are N
 PR only ships the picker-exclusivity half. Not mine to build; noting for whoever picks up the rest.
 
 Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 | verify-live K2 (real mouse, Book Load) · NOT REPRODUCIBLE · 2026-09-02T07:31Z
+
+`K2 real mouse` per instruction — HOLD lifted, live Chrome, Book Load modal, no Save/Book. K2's
+claim (`claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md` row 13): "Only `components/Combobox.tsx`
+dismisses on outside click. EntityPicker 106, SelectCombobox 154, shared/Combobox 8" [do not].
+
+**Tested 3 live pickers in the Book Load modal with real hardware-style mouse clicks (not the
+earlier session's `ref`-based automation clicks, and not Escape):**
+1. **Customer** (`ReferenceSelect` → composes `../Combobox`, the "good" one per K2's own list) —
+   typed "tr", 6 results + "+ Add new customer" appeared, clicked a neutral point elsewhere in the
+   modal → dropdown closed, field cleared. Expected per K2.
+2. **Factoring company** (`EntityPicker` kind="vendor" — one of K2's 3 named offenders, 106
+   importers) — typed "a", 5 results appeared (Lloyds Of London, Cimarron, IH 35 Transportation
+   LLC, Alvaro Rodriguez Lopez, Loves-...), clicked elsewhere → **dropdown closed, field cleared.**
+3. **Truck unit** (`EntityPicker` — same component, different field) — typed "t", 5 results
+   appeared, clicked the modal's dark header bar (clearly outside any picker) → **dropdown closed,
+   field cleared.**
+
+**All 3 dismissed and cleared correctly. Zero repros of the K2 symptom in this screen, with real
+mouse clicks, today.** This directly contradicts K2's "EntityPicker never dismisses" claim for the
+2 EntityPicker instances actually reachable in Book Load. Did not touch `SelectCombobox` or
+`shared/Combobox` here — Book Load's only `SelectCombobox` usage (`stops.N.lumper_paid_by`) is a
+native `<select>`-wrapped element, not a JS dropdown-outside-click case, so it's not evidence
+either way for that component.
+
+**Not concluding K2 is fixed or fake — 3 fields in 1 screen is not the 268-file claim.** Possible
+explanations, not adjudicated: (a) EntityPicker's outside-click behavior varies by call site/props
+(these 2 both pass `allowCreate`+`enabled`, may not be representative), (b) the original K2 count
+was measured by grep for a missing dismiss-listener pattern that doesn't account for React's native
+blur closing the menu in practice, (c) something already fixed a subset silently. Filed to the
+board as a correction request, not a "K2 fixed" claim — whoever owns K2's actual convergence work
+should re-verify before either building the 268-file fix on the original premise or closing the
+row. Closed the modal via Escape (footer showed "Esc close"), zero writes, zero load booked.
+
+Idle, watching INBOX TOP.
