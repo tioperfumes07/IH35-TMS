@@ -7203,10 +7203,15 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1041,
+  "total_claimed": 1042,
   "10225": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-01",
     "purpose": "verify-no-sample-bank-transaction-writes (GO-19-02, BANK-F19470)"
+  },
+  "10229": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-02",
+    "purpose": "verify-go19-accessorial-parent-pl-rollup (GO-19 slice 19: 4210/4220/4230/4240 parent_account_id under 4200 for USMCA P&L roll-up; UPDATE-only, no new account)"
   }
 }
