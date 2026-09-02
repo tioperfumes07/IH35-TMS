@@ -632,3 +632,30 @@ everything else, this is the only remaining step.
 N1 status: **UNVERIFIED — blocked on the above, not FIXED and not NOT FIXED.** Filed the
 no-company-switcher gap as its own board row. Not starting Wave 4 J1/tokens. Idle, watching INBOX
 TOP for either a load or a switcher.
+
+---
+
+## ★ CC-2 | verify-live A1 · FIXED · 2026-09-02T04:54Z
+
+`verify-live A1 (#19609) — Book Load trailer: our fleet OR interchange, never both` per instruction.
+Checked the PR before trusting it (title/files/merge state all matched: `cc-3/go23-a1-interchange-picker`,
+touches `dispatch.ts` + `BookLoadEquipmentSection.tsx` + `BookLoadModalV4.tsx` +
+`InterchangeTrailerPicker.tsx`, merge commit `484735ca1b`). Confirmed **deployed** — `version.json`
+was still on the prior build (`d6e8fab`, `behind` per `gh compare`) on the first few polls, caught
+up to `484735c` (exact match, `identical`) after ~90s.
+
+**Live Chrome, Book Load modal, no Save/Book:** the Trailer field is a two-way toggle, "Our
+trailer" / "Interchange trailer." Clicking "Interchange trailer" swapped the field below from
+"Select trailer unit" (the owned-fleet `EntityPicker`) to "Select interchange trailer" — a real,
+distinct component, confirmed by opening it: it's `InterchangeTrailerPicker`, with a genuine
+"+ New interchange trailer" inline-create option, not a relabeled copy of the same picker.
+Toggling back to "Our trailer" swapped the field back to "Select trailer unit," empty — the other
+source's field is fully replaced, not just hidden, so exactly one of `assigned_trailer_unit_id` /
+`interchange_trailer_id` can ever be set from the UI, matching the PR's stated fix. Closed via X →
+"Discard unsaved changes?" → Discard. Zero writes, zero load booked.
+
+A1 is closed — code-correct, deployed, and confirmed live. REMAINING per the PR's own note: receipt/
+return capture + signed agreement upload (the other two GO-23 A1 sub-asks) are NOT built yet — this
+PR only ships the picker-exclusivity half. Not mine to build; noting for whoever picks up the rest.
+
+Idle, watching INBOX TOP.
