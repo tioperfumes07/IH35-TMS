@@ -1,17 +1,14 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const TARGET = path.join(ROOT, "apps/frontend/src/pages/maintenance/FleetTablePage.tsx");
-const SELF = path.join(ROOT, "scripts/verify-fleet-oos-status-filter.mjs");
 
 function fail(msg) {
-  console.error(`FAIL: ${msg}`);
-  process.exit(1);
+  throw new Error(`FAIL: ${msg}`);
 }
 
 function assertSource(src) {
@@ -51,22 +48,24 @@ function assertSource(src) {
 function selftest() {
   const good = fs.readFileSync(TARGET, "utf8");
   assertSource(good);
-  const backup = good;
-  fs.writeFileSync(
-    TARGET,
-    good.replaceAll("normalizeFleetStatusParam", "X").replaceAll('"out-of-service"', '"gone"'),
-  );
+  const planted = good.replaceAll("normalizeFleetStatusParam", "X").replaceAll('"out-of-service"', '"gone"');
+  let failed = false;
   try {
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
-    if (r.status === 0) fail("mutated still passed");
-  } finally {
-    fs.writeFileSync(TARGET, backup);
+    assertSource(planted);
+  } catch {
+    failed = true;
   }
+  if (!failed) fail("mutated still passed");
   console.log("PASS: verify-fleet-oos-status-filter --selftest");
 }
 
-if (process.argv.includes("--selftest")) selftest();
-else {
-  assertSource(fs.readFileSync(TARGET, "utf8"));
-  console.log("PASS: verify-fleet-oos-status-filter");
+try {
+  if (process.argv.includes("--selftest")) selftest();
+  else {
+    assertSource(fs.readFileSync(TARGET, "utf8"));
+    console.log("PASS: verify-fleet-oos-status-filter");
+  }
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
 }
