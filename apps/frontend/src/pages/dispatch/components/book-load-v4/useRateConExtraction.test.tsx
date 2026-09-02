@@ -9,7 +9,7 @@ import { RateConUploadPanel } from "./RateConUploadPanel";
 // LV-DOCS-FILES-NOT-HASHED: the hook now calls requestUploadUrlFromFile (hashes the file's bytes
 // before minting the upload URL), not the lower-level requestUploadUrl it used to call directly.
 vi.mock("../../../../api/docs", () => ({
-  requestUploadUrlFromFile: vi.fn(async () => ({ file_id: "file-1", presigned_url: "https://r2.example/put" })),
+  requestUploadUrlFromFile: vi.fn(async () => ({ file_id: "file-1", presigned_url: "https://r2.example/put", r2_key: "org/oc-1/files/file-1/v1/ratecon.pdf" })),
   confirmUpload: vi.fn(async () => ({ ok: true, file_id: "file-1", already_completed: false })),
 }));
 
@@ -97,6 +97,10 @@ describe("useRateConExtraction", () => {
     expect(result.current.error).toBeNull();
     expect(onPrefill).toHaveBeenCalledTimes(1);
     expect((onPrefill.mock.calls[0][0] as { brokerMatch: { name: string } }).brokerMatch.name).toBe("ACME Broker");
+    expect(onPrefill.mock.calls[0][2]).toEqual({
+      fileId: "file-1",
+      r2Key: "org/oc-1/files/file-1/v1/ratecon.pdf",
+    });
   });
 
   it("suppresses a prior-company extraction completion after scope changes", async () => {

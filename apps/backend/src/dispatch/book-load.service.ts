@@ -123,6 +123,7 @@ export type BookLoadInput = {
   late_delivery_est_deduction_cents?: number;
   late_delivery_reason?: string;
   ocr_source_pdf_r2_key?: string;
+  rate_confirmation_file_id?: string;
   miles_practical?: number;
   miles_shortest?: number;
   miles_deadhead?: number;
@@ -930,6 +931,32 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
 
   return withCurrentUser(input.requestingUserUuid, async (client) => {
     await setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id);
+
+    // B6 — resolve the uploaded rate confirmation inside the SAME transaction that creates the load.
+    // Never trust a browser-supplied R2 key as document identity, and never return 201 unless the
+    // completed, entity-scoped docs.files row can also be linked to the created load.
+    let rateConfirmationFile: { id: string; r2_key: string; category_id: string } | null = null;
+    if (input.rate_confirmation_file_id) {
+      const fileRes = await client.query<{ id: string; r2_key: string; category_id: string }>(
+        `SELECT f.id::text, f.r2_key, fc.id::text AS category_id
+           FROM docs.files f
+           CROSS JOIN LATERAL (
+             SELECT id FROM catalogs.file_categories
+              WHERE code = 'rate_confirmation' AND is_active = true AND deactivated_at IS NULL
+              ORDER BY created_at ASC LIMIT 1
+           ) fc
+          WHERE f.id = $1::uuid
+            AND f.operating_company_id = $2::uuid
+            AND f.upload_completed_at IS NOT NULL
+            AND f.deleted_at IS NULL
+          LIMIT 1`,
+        [input.rate_confirmation_file_id, input.operating_company_id]
+      );
+      rateConfirmationFile = fileRes.rows[0] ?? null;
+      if (!rateConfirmationFile) {
+        return { kind: "error", status: 400, payload: { error: "rate_confirmation_file_not_found" } };
+      }
+    }
 
     const historicalImportDriverId = input.historical_import_driver_id?.trim() || null;
     let historicalDriverAttestation: Record<string, unknown> | null = null;
@@ -1827,7 +1854,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         Boolean(input.late_delivery_risk_y_n),
         input.late_delivery_est_deduction_cents ?? null,
         input.late_delivery_reason ?? null,
-        input.ocr_source_pdf_r2_key ?? null,
+        rateConfirmationFile?.r2_key ?? input.ocr_source_pdf_r2_key ?? null,
         input.miles_practical ?? null,
         input.miles_shortest ?? null,
         input.miles_deadhead ?? null,
@@ -1870,6 +1897,19 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       };
     }
     const load = loadRes.rows[0] as Record<string, unknown>;
+
+    if (rateConfirmationFile) {
+      await client.query(
+        `UPDATE docs.files SET category_id = $2::uuid, updated_at = now() WHERE id = $1::uuid`,
+        [rateConfirmationFile.id, rateConfirmationFile.category_id]
+      );
+      await client.query(
+        `INSERT INTO docs.file_links (file_id, entity_type, entity_id, created_by_user_id)
+         VALUES ($1::uuid, 'load', $2::uuid, $3::uuid)
+         ON CONFLICT (file_id, entity_type, entity_id) WHERE deleted_at IS NULL DO NOTHING`,
+        [rateConfirmationFile.id, String(load.id), input.requestingUserUuid]
+      );
+    }
 
     for (const [index, charge] of input.charges.entries()) {
       const isSystem = ["linehaul", "fuel_surcharge"].includes(charge.code.toLowerCase());

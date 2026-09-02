@@ -1,4 +1,4 @@
-import { useRateConExtraction } from "./useRateConExtraction";
+import { useRateConExtraction, type RateConUploadedFile } from "./useRateConExtraction";
 import type { RateConExtractResponse } from "../../../../api/ratecon";
 import type { RateConPrefill } from "./rateConPrefill";
 
@@ -15,7 +15,7 @@ export function RateConUploadPanel({
 }: {
   operatingCompanyId: string;
   /** Called when extraction succeeds — parent opens the Book Load wizard with prefill.json as templatePrefillJson. */
-  onPrefill: (prefill: RateConPrefill, response: RateConExtractResponse) => void;
+  onPrefill: (prefill: RateConPrefill, response: RateConExtractResponse, uploadedFile: RateConUploadedFile) => void;
 }) {
   const { phase, error, result, busy, handleFile } = useRateConExtraction({ operatingCompanyId, onPrefill });
 

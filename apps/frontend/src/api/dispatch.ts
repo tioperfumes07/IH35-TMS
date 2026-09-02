@@ -231,6 +231,8 @@ export type DispatchBookLoadPayload = {
   late_delivery_est_deduction_cents?: number;
   late_delivery_reason?: string;
   ocr_source_pdf_r2_key?: string;
+  /** Completed docs.files row to link atomically to the newly booked load. */
+  rate_confirmation_file_id?: string;
   miles_practical?: number;
   miles_shortest?: number;
   miles_deadhead?: number;

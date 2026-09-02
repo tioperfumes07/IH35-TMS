@@ -62,9 +62,8 @@ import {
   markLiveLoadNumberUserTyped,
   resetLiveLoadNumberUserTyped,
 } from "./book-load-v4/liveLoadNumberFieldGuard";
-// RATECON-2: rate-con intake is now the single OcrDropZone block in §E (Documents). RateConUploadPanel
-// (button variant) still shares the useRateConExtraction hook and is retained for reuse, but is no longer
-// rendered here — one intake surface, no duplicate affordance.
+// RATECON-2: Section A's button and Section E's drag/drop affordance share one useRateConExtraction
+// pipeline and one persisted docs.files→load link contract.
 import { AccessorialEditor } from "../../../components/dispatch/AccessorialEditor";
 import { sumStopExtraRatesCents, stopExtraRateChargeLines } from "../../../components/dispatch/book-load-extra-rates";
 import {
@@ -136,6 +135,7 @@ type FormValues = BookLoadFormValues & {
   late_delivery_est_deduction_cents: number;
   late_delivery_reason: string;
   ocr_source_pdf_r2_key: string;
+  rate_confirmation_file_id: string;
   miles_practical: number;
   miles_shortest: number;
   miles_deadhead: number;
@@ -365,6 +365,7 @@ export function BookLoadModalV4({
       late_delivery_est_deduction_cents: 0,
       late_delivery_reason: "",
       ocr_source_pdf_r2_key: "",
+      rate_confirmation_file_id: "",
       miles_practical: 0,
       miles_shortest: 0,
       miles_deadhead: 0,
@@ -938,6 +939,7 @@ export function BookLoadModalV4({
         late_delivery_est_deduction_cents: numOrUndef(values.late_delivery_est_deduction_cents),
         late_delivery_reason: values.late_delivery_reason || undefined,
         ocr_source_pdf_r2_key: values.ocr_source_pdf_r2_key || undefined,
+        rate_confirmation_file_id: values.rate_confirmation_file_id || undefined,
         miles_practical: numOrUndef(values.miles_practical),
         miles_shortest: numOrUndef(values.miles_shortest),
         miles_deadhead: numOrUndef(values.miles_deadhead),
@@ -1435,7 +1437,9 @@ export function BookLoadModalV4({
                       <label className="text-[11px] font-semibold text-gray-600">Upload rate confirmation (auto-fills this load)</label>
                       <RateConUploadPanel
                         operatingCompanyId={operatingCompanyId}
-                        onPrefill={(prefill) => {
+                        onPrefill={(prefill, _response, uploadedFile) => {
+                          form.setValue("rate_confirmation_file_id", uploadedFile.fileId, { shouldDirty: true });
+                          form.setValue("ocr_source_pdf_r2_key", uploadedFile.r2Key, { shouldDirty: true });
                           applyBookLoadPrefillToForm(form.setValue, prefill.json, liveLoadNumberUserTypedRef.current);
                           const accRows = rateConAccessorialRows(prefill.json);
                           if (accRows.length > 0) {
@@ -1990,7 +1994,9 @@ export function BookLoadModalV4({
                 {!editLoadId ? (
                   <OcrDropZone
                     operatingCompanyId={operatingCompanyId}
-                    onPrefill={(prefill) => {
+                    onPrefill={(prefill, _response, uploadedFile) => {
+                      form.setValue("rate_confirmation_file_id", uploadedFile.fileId, { shouldDirty: true });
+                      form.setValue("ocr_source_pdf_r2_key", uploadedFile.r2Key, { shouldDirty: true });
                       applyBookLoadPrefillToForm(form.setValue, prefill.json, liveLoadNumberUserTypedRef.current);
                       const accRows = rateConAccessorialRows(prefill.json);
                       if (accRows.length > 0) {

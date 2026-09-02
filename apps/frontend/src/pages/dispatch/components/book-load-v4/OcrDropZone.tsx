@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { useRateConExtraction } from "./useRateConExtraction";
+import { useRateConExtraction, type RateConUploadedFile } from "./useRateConExtraction";
 import type { RateConExtractResponse } from "../../../../api/ratecon";
 import type { RateConPrefill } from "./rateConPrefill";
 
@@ -10,7 +10,7 @@ import type { RateConPrefill } from "./rateConPrefill";
 type Props = {
   operatingCompanyId: string;
   /** Called when extraction succeeds — parent opens/updates the wizard with the editable prefill. */
-  onPrefill: (prefill: RateConPrefill, response: RateConExtractResponse) => void;
+  onPrefill: (prefill: RateConPrefill, response: RateConExtractResponse, uploadedFile: RateConUploadedFile) => void;
 };
 
 export function OcrDropZone({ operatingCompanyId, onPrefill }: Props) {
