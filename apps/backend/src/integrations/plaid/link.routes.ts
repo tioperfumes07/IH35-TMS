@@ -57,6 +57,9 @@ const companyTransactionsQuerySchema = z.object({
   q: z.string().trim().min(1).optional(),
   bank_account_id: z.string().uuid().optional(),
   sort: z.enum(["date_desc", "date_asc", "amount_desc", "amount_asc"]).default("date_desc"),
+  // GO-19-02 (docs/lockdown/GO-19-BUILD-QUEUE.md slice 02): owner-only reveal toggle, same as the
+  // account register — default false keeps the 34 GO-11 fixture rows out of this list.
+  include_sample_data: z.coerce.boolean().default(false),
 });
 
 const updateLinkBodySchema = z.object({
@@ -600,7 +603,12 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const predicates: string[] = [
         "bt.operating_company_id = $1::uuid",
-        "bt.voided_at IS NULL",
+        // GO-19-02: sample rows are voided AND is_sample_data=true — they stay hidden under the
+        // normal voided_at filter unless include_sample_data explicitly asks to reveal them. Any
+        // other voided (real) row stays excluded either way.
+        query.data.include_sample_data
+          ? "(bt.voided_at IS NULL OR bt.is_sample_data = true)"
+          : "bt.voided_at IS NULL",
         "bt.transaction_date <= (CURRENT_DATE + INTERVAL '1 day')",
       ];
       const values: unknown[] = [query.data.operating_company_id];

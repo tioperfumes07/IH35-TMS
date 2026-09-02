@@ -110,15 +110,22 @@ export async function countUncategorizedTransactions(
 // same hidden-account convention as countUncategorizedTransactions so all three counts agree.
 // UNFILTERED by the BANK_ACCOUNT_HIDE flag on purpose: the register (/plaid/company-transactions,
 // /plaid/accounts) does not filter hidden accounts, so this tile must count the same to match it.
+//
+// GO-19-02 (docs/lockdown/GO-19-BUILD-QUEUE.md slice 02): excludes is_sample_data rows by default —
+// the same 34 already-voided USMCA fixture rows the register endpoint already effectively drops via
+// its own voided_at IS NULL filter. includeSampleData=true is the owner-only reveal toggle; nothing
+// is ever deleted, the rows just don't count toward the live total unless explicitly asked.
 export async function countTotalBankTransactions(
   client: Queryable,
-  operatingCompanyId: string
+  operatingCompanyId: string,
+  includeSampleData = false
 ): Promise<number> {
   const res = await client.query<{ count: number }>(
     `
       SELECT count(*)::int AS count
       FROM banking.bank_transactions bt
       WHERE bt.operating_company_id = $1::uuid
+        ${includeSampleData ? "" : "AND bt.is_sample_data = false"}
     `,
     [operatingCompanyId]
   );
