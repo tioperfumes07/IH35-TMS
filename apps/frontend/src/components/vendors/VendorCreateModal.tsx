@@ -310,7 +310,7 @@ export function VendorCreateModal({
         <Section title="Name and contact">
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             <Field
-              label="Vendor display name"
+              label="Company / Vendor name — display name"
               value={name}
               onChange={setName}
               required
@@ -358,9 +358,9 @@ export function VendorCreateModal({
 
         <Section title="Classification">
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            <Field label="Tax ID" value={taxId} onChange={setTaxId} />
+            <Field label="Tax ID (1099)" value={taxId} onChange={setTaxId} />
             <Field
-              label="Vendor code"
+              label="Account no. / Vendor code"
               value={vendorCode}
               onChange={setVendorCode}
               dataField="vendor_code"
@@ -371,7 +371,7 @@ export function VendorCreateModal({
             <Field label="Print on check as" value={printOnCheckName} onChange={setPrintOnCheckName} placeholder="Leave blank to use vendor display name" />
             <label className="flex items-center gap-2 text-sm text-gray-700 md:col-span-2">
               <input type="checkbox" checked={eligible1099} onChange={(event) => setEligible1099(event.target.checked)} />
-              Track payments for 1099 (Form 1099-NEC)
+              Track 1099? (Form 1099-NEC)
             </label>
           </div>
         </Section>
