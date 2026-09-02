@@ -8,6 +8,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
@@ -66,8 +67,12 @@ if (qa.includes("is_dispatch_blocked") && !qa.includes("is_oos")) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const tmp = fs.mkdtempSync(path.join(path.dirname(fileURLToPath(import.meta.url)), ".oos-selftest-"));
+  const tmp = fs.mkdtempSync(path.join(tmpdir(), "dispatch-oos-selftest-"));
   try {
+    if (tmp.startsWith(ROOT + path.sep)) {
+      console.error("selftest FAILED — fixture directory must never be created inside the repository");
+      process.exit(1);
+    }
     const dirs = [
       "apps/backend/src/dispatch",
       "apps/backend/src/dispatch/assignments",
