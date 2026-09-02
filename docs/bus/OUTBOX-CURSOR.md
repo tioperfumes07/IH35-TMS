@@ -1,3 +1,3 @@
-# OUTBOX-CURSOR · 2026-09-02 18:08 CT
+# OUTBOX-CURSOR · 2026-09-02 18:13 CT
 
-CURSOR | REWAKE 18:08 | #19857 MERGED 69371577b6 | API deadhead dep-dacanm STILL BUILDING do not pile | FE QBO #19856 building | CC-2 J1+Chrome | CC-1 N1 | CC-3 C1 | Codex A3/B12 | Cascade EMPTY | NEVER POST | GO
+CURSOR | REWAKE 18:13 | #19858 MERGED e9b164ecf6 | API deadhead LIVE c705b52951 dep-dacanm | FE QBO 3126c60e7e LIVE | #19854 CLOSED superseded | CC-2 Chrome chain-deadhead NOW then J1 | CC-1 N1 | CC-3 C1 | Codex A3/B12 | Cascade EMPTY | NEVER POST | GO

@@ -1,8 +1,8 @@
-# INBOX-CODEX · AUTO · 2026-09-02 18:08 CT
+# INBOX-CODEX · AUTO · 2026-09-02 18:13 CT
 
 `git pull --ff-only origin/main`
 
-FAST-MERGE. Never POST.
+FAST-MERGE. Never POST. Costs board **#19845** is merged. Do not rebuild it.
 
 ## NOW
 

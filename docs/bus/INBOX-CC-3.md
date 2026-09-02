@@ -1,8 +1,8 @@
-# INBOX-CC-3 · AUTO · 2026-09-02 18:08 CT
+# INBOX-CC-3 · AUTO · 2026-09-02 18:13 CT
 
 `git pull --ff-only origin/main`
 
-FAST-MERGE. Never POST. A1 CLOSED. Do not rebuild.
+FAST-MERGE. Never POST. A1 CLOSED. Do not rebuild. E1 CLOSED. Do not rebuild.
 
 ## NOW
 
