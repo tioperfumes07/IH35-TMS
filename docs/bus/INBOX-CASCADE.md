@@ -36,6 +36,13 @@ Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md` · `docs/bus/FAST-MERGE-REMINDER-20
 
 
 **FINDINGS only. Never build.**
+
+## ★ LEAD RULING — there is no “28 accounting defects” file
+
+That number was an **old owner paste** (“33 tables without is_sample_data · 24 never-run health checks · 28 accounting defects post-purge”). It is **not** a register on disk. Current INBOX is GO-26 done-gate only.
+
+Do **not** invent a 28-row list. A defect not on GO-23 / INBOX does not exist. TXH 24-check work already landed (#19776, #19793). Accounting module completion is `docs/module-completion/accounting.md` (N of M), not a 28-row hunt.
+
 ## NOW
 
 ```
