@@ -287,6 +287,7 @@ const InvoicesListPage = React.lazy(() => import("../pages/accounting/InvoicesLi
 const TransactionRegisterPage = React.lazy(() => import("../pages/accounting/TransactionRegisterPage").then((m) => ({ default: m.TransactionRegisterPage })));
 const MultiEntityAccountingPage = React.lazy(() => import("../pages/accounting/MultiEntityAccountingPage").then((m) => ({ default: m.MultiEntityAccountingPage })));
 const AccountingHubPage = React.lazy(() => import("../pages/accounting/AccountingHubPage").then((m) => ({ default: m.AccountingHubPage })));
+const LoadCostsBoardPage = React.lazy(() => import("../pages/accounting/LoadCostsBoardPage").then((m) => ({ default: m.LoadCostsBoardPage })));
 const DisputeQueuePage = React.lazy(() => import("../pages/accounting/DisputeQueuePage").then((m) => ({ default: m.DisputeQueuePage })));
 const AbandonmentQueuePage = React.lazy(() => import("../pages/accounting/AbandonmentQueuePage").then((m) => ({ default: m.AbandonmentQueuePage })));
 const LoansAdvancesPage = React.lazy(() => import("../pages/accounting/loans/LoansAdvancesPage").then((m) => ({ default: m.LoansAdvancesPage })));
@@ -3779,6 +3780,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <AccountingHubPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/load-costs"
+          element={
+            <ProtectedRoute>
+              <LoadCostsBoardPage />
             </ProtectedRoute>
           }
         />

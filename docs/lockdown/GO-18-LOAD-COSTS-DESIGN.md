@@ -54,13 +54,13 @@ When the operator chooses **Expense**: paid-now path; bank account required; loa
 
 ## 2. Costs Board home
 
-Dispatch sub-nav leaf (additive — do not delete existing dispatch tabs).
+Accounting sub-nav leaf at `/accounting/load-costs` (owner correction 2026-09-02). It composes the canonical load, expense, and bill readers; it is not a dispatch write surface.
 
 **Not** a second load page. Rows are loads with cost activity or gaps. Click → load detail **Costs** tab.
 
 Suggested columns: Load # · Customer · Booked · Approx margin · Costs $ · Unlinked count · Unpaid bills · Driver · Truck.
 
-Filters: missing vendor · missing load-required line · unpaid · unmatched bank.
+The first shipped slice provides the sortable/exportable load register, paid-now vs owed split, approximate margin, unpaid-bill count, and a direct drill into the load's Costs tab. Missing-vendor / missing-load-required / unmatched-bank exception filters remain a subsequent read-model enhancement; they must not be faked from capped client lists.
 
 ---
 
