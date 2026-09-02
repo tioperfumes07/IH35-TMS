@@ -264,7 +264,7 @@ export function LegacyAuditScoreboardPage() {
       <ProgramBoardsExplainer active="legacy" />
 
       <div
-        className="px-4 py-3 text-[13px] leading-snug"
+        className="px-4 py-3 text-xs leading-snug"
         style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", color: "#334155" }}
         data-testid="legacy-board-honest-purpose"
       >

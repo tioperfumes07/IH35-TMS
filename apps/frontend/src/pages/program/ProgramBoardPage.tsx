@@ -525,7 +525,7 @@ export function ProgramBoardPage() {
           Blocks data as of{" "}
           <span className="font-semibold tabular-nums">{data?.data_as_of_ct ?? "…"}</span>
           {typeof data?.live?.snapshot_age_days === "number" && data.live.snapshot_age_days > 0 ? (
-            <span className="ml-1 rounded px-1 py-0.5 text-[10px] font-semibold" style={{ background: "#FEF3C7", color: "#854F0B" }}>
+            <span className="ml-1 rounded px-1 py-0.5 text-xs font-semibold" style={{ background: "#FEF3C7", color: "#854F0B" }}>
               {data.live.snapshot_age_days}d old
             </span>
           ) : null}
@@ -535,7 +535,7 @@ export function ProgramBoardPage() {
           <span className="font-semibold tabular-nums">{data?.refreshed_at_ct ?? "…"}</span>
           {isFetching ? <span className="ml-1 text-slate-400">· refreshing…</span> : null}
         </span>
-        <span className="text-[10px] text-slate-400">auto-refreshes every 60s</span>
+        <span className="text-xs text-slate-400">auto-refreshes every 60s</span>
         {Object.entries(data?.live?.counts ?? data?.counts ?? {}).map(([k, v]) => {
           const c = statusChip(k);
           return (
@@ -552,7 +552,7 @@ export function ProgramBoardPage() {
       </div>
       {/* Honesty note — PR/HOLD figures are snapshot-based, not a live GitHub feed. */}
       {data?.live ? (
-        <p className="text-[10px] text-slate-400">{data.live.note}</p>
+        <p className="text-xs text-slate-400">{data.live.note}</p>
       ) : null}
 
       {/* LOCKED DECISIONS — owner-locked answers surfaced up top so they are never buried in a thread. */}
@@ -566,9 +566,9 @@ export function ProgramBoardPage() {
               <li key={d.id} className="flex gap-2 px-3 py-2 text-xs text-slate-700">
                 <span className="tabular-nums font-semibold text-slate-400">{i + 1}.</span>
                 <span className="flex-1">
-                  <span className="mr-2 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">{d.id}</span>
+                  <span className="mr-2 rounded bg-slate-200 px-1.5 py-0.5 text-xs font-semibold text-slate-600">{d.id}</span>
                   {d.decision}
-                  <span className="ml-2 tabular-nums text-[10px] text-slate-400">{d.date_ct}</span>
+                  <span className="ml-2 tabular-nums text-xs text-slate-400">{d.date_ct}</span>
                 </span>
               </li>
             ))}
@@ -721,12 +721,12 @@ export function ProgramBoardPage() {
                         <td className="whitespace-nowrap px-2 py-1.5 text-slate-500">{r.wave}</td>
                         <td className="px-2 py-1.5 text-slate-700">
                           {r.description}
-                          {qs.length ? <span className="ml-1 rounded bg-slate-200 px-1 text-[10px] text-slate-600">Q{qs.length}</span> : null}
+                          {qs.length ? <span className="ml-1 rounded bg-slate-200 px-1 text-xs text-slate-600">Q{qs.length}</span> : null}
                         </td>
                         <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-slate-600">{r.tier || "—"}</td>
                         <td className="px-2 py-1.5">
                           {r.fin ? (
-                            <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: "#FEE2E2", color: "#991B1B" }}>
+                            <span className="rounded px-1.5 py-0.5 text-xs font-semibold" style={{ background: "#FEE2E2", color: "#991B1B" }}>
                               FIN
                             </span>
                           ) : (
@@ -734,7 +734,7 @@ export function ProgramBoardPage() {
                           )}
                         </td>
                         <td className="whitespace-nowrap px-2 py-1.5">
-                          <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: chip.bg, color: chip.fg }}>
+                          <span className="rounded px-1.5 py-0.5 text-xs font-semibold" style={{ background: chip.bg, color: chip.fg }}>
                             {r.status}
                           </span>
                         </td>
@@ -768,7 +768,7 @@ export function ProgramBoardPage() {
                               </span>
                             </td>
                             <td className="px-2 py-1.5 text-slate-500">
-                              <span className="block max-w-[190px] truncate font-mono text-[10px]" title={r.where || undefined}>
+                              <span className="block max-w-[190px] truncate font-mono text-xs" title={r.where || undefined}>
                                 {r.where || "—"}
                               </span>
                             </td>
@@ -777,7 +777,7 @@ export function ProgramBoardPage() {
                                 (() => {
                                   const lc = liveStateChip(r.live);
                                   return (
-                                    <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: lc.bg, color: lc.fg }}>
+                                    <span className="rounded px-1.5 py-0.5 text-xs font-semibold" style={{ background: lc.bg, color: lc.fg }}>
                                       {lc.label}
                                     </span>
                                   );
@@ -800,7 +800,7 @@ export function ProgramBoardPage() {
                               const needsPreview = tagVal === "needs-your-preview";
                               return (
                                 <span
-                                  className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                                  className="rounded px-1.5 py-0.5 text-xs font-semibold"
                                   style={needsPreview ? { background: "#FEF3C7", color: "#854F0B" } : { background: "#E2E8F0", color: "#334155" }}
                                 >
                                   {tagVal}
@@ -898,7 +898,7 @@ export function ProgramBoardPage() {
                     </td>
                     <td className="px-2 py-1.5 text-slate-700">{p.title}</td>
                     <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-slate-500">{formatDateTimeCt(p.mergedAt)}</td>
-                    <td className="whitespace-nowrap px-2 py-1.5 font-mono text-[10px] text-slate-500">{p.branch ?? "—"}</td>
+                    <td className="whitespace-nowrap px-2 py-1.5 font-mono text-xs text-slate-500">{p.branch ?? "—"}</td>
                   </tr>
                 ))}
                 {mergedFiltered.length === 0 ? (
@@ -961,7 +961,7 @@ export function ProgramBoardPage() {
                       <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-slate-500">{formatDateTimeCt(p.mergedAt)}</td>
                       <td className="whitespace-nowrap px-2 py-1.5">
                         <span
-                          className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                          className="rounded px-1.5 py-0.5 text-xs font-semibold"
                           style={isTier1 ? { background: "#FEE2E2", color: "#991B1B" } : { background: "#E2E8F0", color: "#334155" }}
                         >
                           {p.category}
@@ -992,7 +992,7 @@ export function ProgramBoardPage() {
             const ans = answersByBlock.get(q.block_id ?? "__general__") ?? [];
             return (
               <div key={q.id} className="rounded border border-gray-200 bg-white p-3">
-                <div className="mb-1 flex items-center gap-2 text-[10px] text-slate-400">
+                <div className="mb-1 flex items-center gap-2 text-xs text-slate-400">
                   <span className="tabular-nums font-semibold text-slate-500">{i + 1}.</span>
                   <span className="rounded bg-slate-200 px-1.5 py-0.5 font-semibold text-slate-600">
                     {q.block_id ?? "general"}
@@ -1028,7 +1028,7 @@ export function ProgramBoardPage() {
           {ideas.length === 0 ? <div className="py-6 text-center text-slate-400">No ideas yet.</div> : null}
           {ideas.map((n, i) => (
             <div key={n.id} className="rounded border border-gray-200 bg-white p-3">
-              <div className="mb-1 flex items-center gap-2 text-[10px] text-slate-400">
+              <div className="mb-1 flex items-center gap-2 text-xs text-slate-400">
                 <span className="tabular-nums font-semibold text-slate-500">{i + 1}.</span>
                 <span className="rounded bg-slate-200 px-1.5 py-0.5 font-semibold text-slate-600">{n.author}</span>
                 {n.block_id ? <span className="rounded bg-slate-100 px-1.5 py-0.5">{n.block_id}</span> : null}
@@ -1077,7 +1077,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
     <div className="space-y-3 rounded border border-gray-200 bg-white p-3" style={{ borderLeft: "3px solid #1F2A44" }}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-slate-800">Audit Truth — 2026-07-10</h2>
-        <span className="text-[10px] text-slate-400">{audit.source}</span>
+        <span className="text-xs text-slate-400">{audit.source}</span>
       </div>
       <p className="text-xs font-semibold text-slate-700">{audit.headline}</p>
 
@@ -1105,11 +1105,11 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
               <div className="text-lg font-semibold tabular-nums" style={{ color: t.accent ?? "#1F2A44" }}>
                 {t.value}
               </div>
-              <div className="text-[10px] uppercase tracking-wide text-slate-500">{t.label}</div>
+              <div className="text-[11px] uppercase tracking-wide text-slate-500">{t.label}</div>
             </div>
           ))}
         </div>
-        <p className="mt-1 text-[10px] text-slate-400">{audit.true_totals.note}</p>
+        <p className="mt-1 text-xs text-slate-400">{audit.true_totals.note}</p>
       </div>
 
       <div>
@@ -1151,7 +1151,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold text-slate-800">{f.fact}</span>
                   <span
-                    className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                    className="rounded px-1.5 py-0.5 text-xs font-semibold"
                     style={{ background: "#E2E8F0", color: "#334155" }}
                   >
                     {f.verdict}
@@ -1225,11 +1225,11 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
                 const isNotBuilt = it.verdict.toLowerCase().replace(/\s+/g, "-").includes("not-built");
                 return (
                   <tr key={it.id} className="border-t border-gray-100">
-                    <td className="whitespace-nowrap px-2 py-1.5 font-mono text-[10px] text-slate-500">{it.id}</td>
+                    <td className="whitespace-nowrap px-2 py-1.5 font-mono text-xs text-slate-500">{it.id}</td>
                     <td className="whitespace-nowrap px-2 py-1.5 text-slate-600">{it.module}</td>
                     <td className="whitespace-nowrap px-2 py-1.5">
                       <span
-                        className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                        className="rounded px-1.5 py-0.5 text-xs font-semibold"
                         style={isNotBuilt ? { background: "#FEE2E2", color: "#991B1B" } : { background: "#E2E8F0", color: "#334155" }}
                       >
                         {it.verdict}
@@ -1289,7 +1289,7 @@ function DeltasBadge({ deltas, open, onToggle }: { deltas?: BoardDeltas; open: b
       <button
         type="button"
         onClick={onToggle}
-        className="rounded px-2 py-1 text-[10px] font-semibold tabular-nums"
+        className="rounded px-2 py-1 text-xs font-semibold tabular-nums"
         style={{ background: "#1F2A44", color: "#FFFFFF" }}
         title={deltas?.since ? `Since ${deltas.since}` : undefined}
       >
@@ -1297,14 +1297,14 @@ function DeltasBadge({ deltas, open, onToggle }: { deltas?: BoardDeltas; open: b
       </button>
       {open ? (
         <div className="absolute left-0 z-20 mt-1 w-72 max-w-[80vw] rounded border border-gray-200 bg-white p-2 text-[11px] shadow-lg">
-          {deltas?.since ? <div className="mb-1 text-[10px] text-slate-400">since {deltas.since}</div> : null}
+          {deltas?.since ? <div className="mb-1 text-xs text-slate-400">since {deltas.since}</div> : null}
           {added.length ? (
             <div className="mb-1.5">
               <div className="font-semibold text-slate-600">New ({added.length})</div>
               <ul className="mt-0.5 space-y-0.5">
                 {added.map((d) => (
                   <li key={`add-${d.id}`} className="truncate text-slate-700" title={d.name || d.id}>
-                    <span className="font-mono text-[10px] text-slate-500">{d.id}</span>
+                    <span className="font-mono text-xs text-slate-500">{d.id}</span>
                     {d.name ? ` — ${d.name}` : ""}
                   </li>
                 ))}
@@ -1317,10 +1317,10 @@ function DeltasBadge({ deltas, open, onToggle }: { deltas?: BoardDeltas; open: b
               <ul className="mt-0.5 space-y-0.5">
                 {completed.map((d) => (
                   <li key={`done-${d.id}`} className="truncate text-slate-700" title={d.name || d.id}>
-                    <span className="rounded px-1 text-[9px] font-semibold" style={{ background: "#DCFCE7", color: "#166534" }}>
+                    <span className="rounded px-1 text-xs font-semibold" style={{ background: "#DCFCE7", color: "#166534" }}>
                       done
                     </span>{" "}
-                    <span className="font-mono text-[10px] text-slate-500">{d.id}</span>
+                    <span className="font-mono text-xs text-slate-500">{d.id}</span>
                     {d.pr ? <span className="ml-1 text-slate-500">{d.pr}</span> : null}
                   </li>
                 ))}
@@ -1379,7 +1379,7 @@ function TallyBar({ tally, totals, lastSyncedCt }: { tally?: TabTally; totals?: 
               {typeof deployed === "number" ? deployed : "—"} of {typeof total === "number" ? total : "—"} deployed
               {typeof pct === "number" ? ` · ${pct}%` : ""}
             </span>
-            {lastSyncedCt ? <span className="text-[10px] text-slate-400">synced {lastSyncedCt}</span> : null}
+            {lastSyncedCt ? <span className="text-xs text-slate-400">synced {lastSyncedCt}</span> : null}
           </div>
           {typeof pct === "number" ? (
             <div
@@ -1414,7 +1414,7 @@ function TallyBar({ tally, totals, lastSyncedCt }: { tally?: TabTally; totals?: 
       ) : null}
 
       {hasModules ? (
-        <div className="flex flex-wrap items-center gap-1 text-[10px]">
+        <div className="flex flex-wrap items-center gap-1 text-xs">
           <span className="font-semibold uppercase tracking-wide text-slate-500">Pending by module:</span>
           {shown.map(([mod, n]) => (
             <span
@@ -1448,7 +1448,7 @@ function LifecycleCell({ row }: { row: Row }) {
   ];
   if (!stages.some((s) => s.ts)) return <span className="text-slate-300">—</span>;
   return (
-    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] leading-tight">
+    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs leading-tight">
       {stages.map((s, i) => {
         const done = Boolean(s.ts);
         // Render stage reads "Render ✓ <sha>"; others read "✓ <label>". Render green when done.
@@ -1491,7 +1491,7 @@ function ThreadPanel({
     <div className="space-y-2">
       {questions.map((q) => (
         <div key={q.id} className="rounded border-l-2 border-slate-300 bg-white px-3 py-2">
-          <div className="mb-0.5 flex items-center gap-2 text-[10px] text-slate-400">
+          <div className="mb-0.5 flex items-center gap-2 text-xs text-slate-400">
             <span className="font-semibold text-slate-500">Agent question</span>
             <span className="tabular-nums">{q.created_at_ct}</span>
           </div>
@@ -1500,7 +1500,7 @@ function ThreadPanel({
       ))}
       {answers.map((a) => (
         <div key={a.id} className="rounded border-l-2 px-3 py-2" style={{ borderColor: "#1F2A44", background: "#EAECF1" }}>
-          <div className="mb-0.5 flex items-center gap-2 text-[10px] text-slate-500">
+          <div className="mb-0.5 flex items-center gap-2 text-xs text-slate-500">
             <span className="font-semibold">{a.author === "owner" ? "Jorge" : a.author}</span>
             <span className="tabular-nums">{a.created_at_ct}</span>
           </div>
