@@ -58,6 +58,9 @@ export function buildEditPrefill(load: LoadDetail): AnyValues {
   const stops = (load.stops ?? []).map((s, i) => ({
     stop_type: s.stop_type === "delivery" ? "delivery" : "pickup",
     sequence_number: s.sequence_number ?? i + 1,
+    // GO-24: round-trip the mdata.locations FK on edit (was silently dropped — the picker had no
+    // field to populate FROM before this pass, so every existing stop looked location-less on reopen).
+    location_id: str(s.location_id),
     city: str(s.city),
     state: str(s.state),
     country: str(s.country) || "USA",
@@ -244,6 +247,7 @@ export function buildEditPatchBody(values: AnyValues, dirty: Dirty, operatingCom
     body.stops = stops.map((s, i) => ({
       stop_type: s.stop_type === "delivery" ? "delivery" : "pickup",
       sequence_number: i + 1,
+      location_id: str(s.location_id) || undefined,
       city: str(s.city) || undefined,
       state: str(s.state) || undefined,
       country: str(s.country) || undefined,

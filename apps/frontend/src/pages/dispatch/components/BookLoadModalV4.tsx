@@ -15,7 +15,7 @@ import { useForm, type FieldErrors } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad, createTrailerInterchange, getLaneMileage } from "../../../api/dispatch";
 import { resolveStopPlace } from "./book-load-city-state";
-import { listAllDispatchCatalogRows, loadTypesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
+import { historicalImportReasonsCatalogClient, listAllDispatchCatalogRows, loadTypesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { properPersonOrPlaceName } from "../../../lib/properDisplayText";
@@ -154,6 +154,9 @@ type FormValues = BookLoadFormValues & {
   stops: Array<{
     stop_type: "pickup" | "delivery";
     sequence_number: number;
+    // GO-24: mdata.locations catalog FK (load_stops.location_id, already live). Set by LocationPicker
+    // on a catalog match; empty when the operator typed an address with no match — never blocks booking.
+    location_id?: string;
     city: string;
     state: string;
     country: string;
@@ -384,8 +387,8 @@ export function BookLoadModalV4({
       factoring_company_vendor_id: "",
       accessorial_rows: [],
       stops: [
-        { stop_type: "pickup", sequence_number: 1, city: "", state: "", country: "USA", address_line1: "", postal_code: "", latitude: "", longitude: "", scheduled_arrival_at: "", time_window_type: "appointment" },
-        { stop_type: "delivery", sequence_number: 2, city: "", state: "", country: "USA", address_line1: "", postal_code: "", latitude: "", longitude: "", scheduled_arrival_at: "", time_window_type: "appointment" },
+        { stop_type: "pickup", sequence_number: 1, location_id: "", city: "", state: "", country: "USA", address_line1: "", postal_code: "", latitude: "", longitude: "", scheduled_arrival_at: "", time_window_type: "appointment" },
+        { stop_type: "delivery", sequence_number: 2, location_id: "", city: "", state: "", country: "USA", address_line1: "", postal_code: "", latitude: "", longitude: "", scheduled_arrival_at: "", time_window_type: "appointment" },
       ],
     },
   });
@@ -677,6 +680,19 @@ export function BookLoadModalV4({
   const loadTypeOptions = useMemo(
     () => (loadTypesQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code })),
     [loadTypesQuery.data?.rows]
+  );
+  // GO-21 B3 — historical import reason quick-pick (migration 202613480001). Consumed like the
+  // "Customer reference lookup" pattern: onChange writes the picked row's TEXT into the existing
+  // free-text historical_import_reason field, never a committed id — the Owner-only audited create
+  // path in book-load.service.ts is unchanged.
+  const historicalImportReasonsQuery = useQuery({
+    queryKey: ["book-load-catalog-historical-import-reasons", operatingCompanyId],
+    queryFn: () => listAllDispatchCatalogRows(historicalImportReasonsCatalogClient, { operating_company_id: operatingCompanyId, is_active: "true" }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const historicalImportReasonOptions = useMemo(
+    () => (historicalImportReasonsQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code })),
+    [historicalImportReasonsQuery.data?.rows]
   );
 
   const sectionTotal = useMemo(
@@ -1003,6 +1019,7 @@ export function BookLoadModalV4({
           return {
           stop_type: stop.stop_type,
           sequence_number: index + 1,
+          location_id: stop.location_id || undefined,
           city: place.city.trim() ? properPersonOrPlaceName(place.city) : "",
           state: place.state,
           // LV-STOP-ZIP-DROPPED: this mapping is an explicit field-by-field allow-list and postal_code was
@@ -1572,96 +1589,73 @@ export function BookLoadModalV4({
                       Pickup #
                       <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
+                    {/* B2 (Plain English Law): was labeled "Historical inactive driver UUID" — a raw
+                        machine-ID term on an operator-facing label. Reworded; the field, testid and
+                        submit wiring are unchanged (verify-book-load-historical-inactive-driver.mjs
+                        checks the testid, not the label text). */}
                     <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                      Historical inactive driver UUID
+                      Historical driver import (inactive drivers only)
                       <input
                         {...form.register("historical_import_driver_id")}
                         data-testid="book-load-historical-inactive-driver-id"
-                        placeholder="Historical import only"
+                        placeholder="Historical import only — inactive driver record ID"
                         className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
                       />
                     </label>
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500 md:col-span-2">
+                    {/* B3 (owner ruling, GO-21 register 2026-09-02): "no catalog, no dropdown filter,
+                        no +; on the left, belongs on the right." Was a bare free-text input with no
+                        catalog and, in the 3-col grid, effectively left-aligned (col-span-2 wrapped
+                        onto its own row starting at col 1). Now a catalog quick-pick (dropdown +
+                        "+ Add new", catalogs.historical_import_reasons) sits beside the driver-id
+                        field so it renders on the RIGHT; picking a reason fills the text field below
+                        it, which stays freely editable/extendable (min-10-char server rule unchanged). */}
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Historical import reason
+                      <div className="mt-0.5">
+                        <ReferenceSelect
+                          value={null}
+                          onChange={(next) => {
+                            if (!next) return;
+                            const match = historicalImportReasonOptions.find((o) => o.value === next);
+                            if (match) form.setValue("historical_import_reason", match.label, { shouldDirty: true });
+                          }}
+                          options={historicalImportReasonOptions}
+                          createKind="historical_import_reason"
+                          operatingCompanyId={operatingCompanyId}
+                          placeholder="Pick a reason…"
+                          loading={historicalImportReasonsQuery.isLoading}
+                          disabled={historicalImportReasonsQuery.isLoading || historicalImportReasonsQuery.isError}
+                          onOptionCreated={(opt) => {
+                            void historicalImportReasonsQuery.refetch();
+                            form.setValue("historical_import_reason", opt.label, { shouldDirty: true });
+                          }}
+                        />
+                        {historicalImportReasonsQuery.isError ? (
+                          <ListErrorBanner message="Could not load historical import reasons." onRetry={() => void historicalImportReasonsQuery.refetch()} />
+                        ) : null}
+                      </div>
                       <input
                         {...form.register("historical_import_reason")}
                         data-testid="book-load-historical-import-reason"
                         placeholder="Why an inactive driver belongs on this historical load"
-                        className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
+                        className="mt-1 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
                       />
                       <span className="mt-0.5 block normal-case tracking-normal text-gray-400">
                         Owner-only. This does not reactivate the driver or widen the live dispatch picker.
                       </span>
                     </label>
-                    {/* FAIL-D6 — the ONLY UI path that sets mdata.loads.is_sample_data. The column has
-                        existed since migration 0403 (NOT NULL DEFAULT false) but no create surface ever
-                        populated it, so every TMS-native load was written `false` whether it was real or a
-                        demo fixture — and nothing downstream could tell them apart. Owner ruling §9.8 keeps
-                        this column BANNED as a delete-selector; this marks data at birth, it selects
-                        nothing for destruction. */}
-                    <label className="flex items-end gap-1.5 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                      <input
-                        type="checkbox"
-                        data-testid="book-load-is-sample-data"
-                        {...form.register("is_sample_data")}
-                        className="mb-1 h-3.5 w-3.5 rounded-sm border-gray-300"
-                      />
-                      <span className="mb-0.5">Sample / demo load</span>
-                    </label>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                      Equipment / load type
-                      <div className="mt-0.5">
-                        <ReferenceSelect
-                          value={form.watch("catalog_load_type_id") || null}
-                          onChange={(value) => form.setValue("catalog_load_type_id", value ?? "", { shouldDirty: true })}
-                          options={loadTypeOptions}
-                          createKind="load_type"
-                          operatingCompanyId={operatingCompanyId}
-                          placeholder="Select load type"
-                          loading={loadTypesQuery.isLoading}
-                          disabled={loadTypesQuery.isLoading || loadTypesQuery.isError}
-                          onOptionCreated={() => void loadTypesQuery.refetch()}
-                        />
-                        {loadTypesQuery.isError ? <ListErrorBanner message="Could not load load types." onRetry={() => void loadTypesQuery.refetch()} /> : null}
-                      </div>
-                    </label>
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                      Type
-                      <div className="mt-0.5 inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
-                        <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
-                          <input type="radio" value="broker" className="hidden" {...form.register("load_type")} />
-                          Broker
-                        </label>
-                        <label className={`flex cursor-pointer items-center border-l border-gray-300 px-3 ${loadType === "direct" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
-                          <input type="radio" value="direct" className="hidden" {...form.register("load_type")} />
-                          Direct
-                        </label>
-                      </div>
-                    </label>
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                      Commodity
-                      <input {...form.register("commodity")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
-                    </label>
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                      Weight (lbs)
-                      {/* GO-21-J1 / C2: was a raw <input type="number"> — no thousands separator past
-                          999 lbs, native spinner. NumberInput is MoneyInput's plain-number sibling,
-                          same QuickBooks display convention minus the $. */}
-                      <NumberInput
-                        value={form.watch("weight_lbs")}
-                        onChange={(v) => form.setValue("weight_lbs", v ?? 0, { shouldDirty: true })}
-                        unit="lbs"
-                        ariaLabel="Weight"
-                        className="mt-0.5 w-full"
-                      />
-                    </label>
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                      Pieces
-                      <input {...form.register("pieces")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
-                    </label>
+                    {/* B7 (owner ruling, GO-21 register 2026-09-02): "Sample load demo box unnecessary" —
+                        removed from the operator-facing wizard. FAIL-D6's original concern (the column
+                        must not silently write `false` for a real demo fixture) still holds, so
+                        is_sample_data stays form-backed and still submits — it just can no longer be SET
+                        from Book Load, which the owner judged is the right call for a wizard real
+                        dispatchers use to book real freight (STOP-NO-SEAT-LOADS: agent seats are already
+                        barred from creating prod fixtures through this flow either way). */}
+                    <input type="hidden" {...form.register("is_sample_data")} data-testid="book-load-is-sample-data" />
+                    {/* B4 (owner ruling, GO-21 register 2026-09-02): Equipment/load type, Type, Commodity,
+                        Weight, Pieces moved to §B ("Equipment · Driver · Trailer") — see below, right
+                        before <BookLoadEquipmentSection>. This is where J1's rebase now lives; the
+                        duplicate block that used to render here was removed, not left behind. */}
                   </div>
 
                   <div className="overflow-x-auto rounded-sm border border-gray-200">
@@ -1851,6 +1845,63 @@ export function BookLoadModalV4({
                     <span className="blw-sec-meta">Class <b>T120-SMITH</b></span>
                   </div>
                   <div className="space-y-2 p-3">
+                    {/* B4 — moved from §A: these ARE the equipment/cargo fields §B's own header
+                        ("Equipment · Driver · Trailer") already promises, so they belong here, not
+                        under §A ("Customer · Invoice · Charges"). Form field names are unchanged —
+                        this is a render-position move only, nothing round-trips differently. */}
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+                      <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                        Equipment / load type
+                        <div className="mt-0.5">
+                          <ReferenceSelect
+                            value={form.watch("catalog_load_type_id") || null}
+                            onChange={(value) => form.setValue("catalog_load_type_id", value ?? "", { shouldDirty: true })}
+                            options={loadTypeOptions}
+                            createKind="load_type"
+                            operatingCompanyId={operatingCompanyId}
+                            placeholder="Select load type"
+                            loading={loadTypesQuery.isLoading}
+                            disabled={loadTypesQuery.isLoading || loadTypesQuery.isError}
+                            onOptionCreated={() => void loadTypesQuery.refetch()}
+                          />
+                          {loadTypesQuery.isError ? <ListErrorBanner message="Could not load load types." onRetry={() => void loadTypesQuery.refetch()} /> : null}
+                        </div>
+                      </label>
+                      <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                        Type
+                        <div className="mt-0.5 inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
+                          <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
+                            <input type="radio" value="broker" className="hidden" {...form.register("load_type")} />
+                            Broker
+                          </label>
+                          <label className={`flex cursor-pointer items-center border-l border-gray-300 px-3 ${loadType === "direct" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
+                            <input type="radio" value="direct" className="hidden" {...form.register("load_type")} />
+                            Direct
+                          </label>
+                        </div>
+                      </label>
+                      <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                        Commodity
+                        <input {...form.register("commodity")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+                      </label>
+                      <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                        Weight (lbs)
+                        {/* GO-21-J1 / C2: was a raw <input type="number"> — no thousands separator past
+                            999 lbs, native spinner. NumberInput is MoneyInput's plain-number sibling,
+                            same QuickBooks display convention minus the $. */}
+                        <NumberInput
+                          value={form.watch("weight_lbs")}
+                          onChange={(v) => form.setValue("weight_lbs", v ?? 0, { shouldDirty: true })}
+                          unit="lbs"
+                          ariaLabel="Weight"
+                          className="mt-0.5 w-full"
+                        />
+                      </label>
+                      <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                        Pieces
+                        <input {...form.register("pieces")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+                      </label>
+                    </div>
                     {/* Trip Type lifted to the full-width banner above the body (A3). §B starts at Equipment.
                         SKIP inventing a driver picker here — create-worthy Driver / Team driver fields live in
                         BookLoadEquipmentSection (DriverPickerWithCreate + CreateDriverModal). */}

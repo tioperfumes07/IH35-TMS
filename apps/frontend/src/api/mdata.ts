@@ -1954,11 +1954,45 @@ export function reactivateVendor(id: string) {
   );
 }
 
+// GO-24: mdata.locations is the live stop-location catalog (FK'd from mdata.load_stops.location_id,
+// catalogs.locations does NOT exist — never create it). Typed so the Book Load stop location picker
+// can read name/city/state/postal_code/lat/lng off a selected row without an `unknown` cast.
+export type MdataLocation = {
+  id: string;
+  name: string;
+  location_code: string | null;
+  location_type: string;
+  linked_customer_id: string | null;
+  linked_vendor_id: string | null;
+  operating_company_id: string;
+  address: string | null;
+  address_line2: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
+  lat: number | null;
+  lng: number | null;
+};
+
 export function listLocations(params: CompanyScopedListParams = {}) {
   const query = new URLSearchParams();
   appendCompanyScopedQuery(query, params);
   const qs = query.toString();
-  return apiRequest<{ locations: unknown[] }>(`/api/v1/mdata/locations${qs ? `?${qs}` : ""}`);
+  return apiRequest<{ locations: MdataLocation[] }>(`/api/v1/mdata/locations${qs ? `?${qs}` : ""}`);
+}
+
+export function createLocation(body: {
+  name: string;
+  operating_company_id?: string;
+  location_code?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  country?: string;
+}) {
+  return apiRequest<MdataLocation>(`/api/v1/mdata/locations`, { method: "POST", body });
 }
 
 export function listUnits(

@@ -1,16 +1,34 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
 import { BookLoadStopsSection } from "./BookLoadStopsSection";
+import { ToastProvider } from "../../../components/Toast";
 
 // AddressGeocodeInput debounce-fetches our geocoding proxy; mock it so the typing test never hits the
 // network and no geocode result auto-resolves (we test the TYPED-but-not-selected path for FIX-2).
+// GO-24: the geocode-enabled probe also calls this — resolving `[]` (no `.enabled`) means the probe
+// reads as falsy/disabled, so these tests exercise the plain-input fallback branch, same as before.
 vi.mock("../../../api/geocoding", () => ({ geocodeSearch: vi.fn(async () => []) }));
+// GO-24: LocationPicker calls listLocations — mock it empty so the picker mounts with no network call.
+vi.mock("../../../api/mdata", () => ({ listLocations: vi.fn(async () => ({ locations: [] })), createLocation: vi.fn() }));
 
 // GUARD render-truth §C: each stop is a TWO-ROW card (locrow / siterow) + a collapsible Customer
 // instructions — NOT a vertical field stack. This test mounts one stop and asserts the exact design
 // labels are in the DOM, in the right row container, with no expand interaction.
+
+// GO-24: BookLoadStopsSection now calls useQuery (geocode-enabled probe + LocationPicker) — every
+// harness needs a QueryClientProvider in the tree or react-query throws "No QueryClient set".
+function wrap(ui: ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return (
+    <QueryClientProvider client={qc}>
+      <ToastProvider>{ui}</ToastProvider>
+    </QueryClientProvider>
+  );
+}
 
 function Harness() {
   const form = useForm({
@@ -18,6 +36,7 @@ function Harness() {
       stops: [
         {
           stop_type: "pickup",
+          location_id: "",
           address_full: "",
           address_line1: "",
           city: "",
@@ -35,7 +54,9 @@ function Harness() {
       ],
     },
   });
-  return <BookLoadStopsSection control={form.control as never} register={form.register as never} setValue={form.setValue as never} />;
+  return wrap(
+    <BookLoadStopsSection operatingCompanyId="" control={form.control as never} register={form.register as never} setValue={form.setValue as never} />
+  );
 }
 
 describe("BookLoadStopsSection — render-v6 §C two-row stop card", () => {
@@ -88,12 +109,14 @@ describe("BookLoadStopsSection — address binding (FIX-2 guard)", () => {
     const form = useForm({
       defaultValues: {
         stops: [
-          { stop_type: "pickup", address_full: "", address_line1: "", city: "", state: "", country: "USA", postal_code: "", scheduled_arrival_at: "", site_contact_name: "", site_contact_phone: "", gate_dock_text: "", free_time_summary: "", lumper_amount_cents: 0, stop_notes: "" },
+          { stop_type: "pickup", location_id: "", address_full: "", address_line1: "", city: "", state: "", country: "USA", postal_code: "", scheduled_arrival_at: "", site_contact_name: "", site_contact_phone: "", gate_dock_text: "", free_time_summary: "", lumper_amount_cents: 0, stop_notes: "" },
         ],
       },
     });
     getValues = () => form.getValues() as Record<string, unknown>;
-    return <BookLoadStopsSection control={form.control as never} register={form.register as never} setValue={form.setValue as never} />;
+    return wrap(
+      <BookLoadStopsSection operatingCompanyId="" control={form.control as never} register={form.register as never} setValue={form.setValue as never} />
+    );
   }
 
   it("commits a typed address to stops[0].address_line1 even with NO geocode match selected", async () => {
