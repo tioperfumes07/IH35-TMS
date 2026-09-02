@@ -1,3 +1,3 @@
-# OUTBOX-CURSOR · 2026-09-01 21:50 CT
+# OUTBOX-CURSOR · 2026-09-01 22:40 CT
 
-CURSOR | software map ingested git `docs/lockdown/IH35-SOFTWARE-MAP/` (INDEX + MAP-FINDINGS + complete HTML) · GO-18 design still `docs/lockdown/GO-18-LOAD-COSTS-DESIGN.html` · Costs tab/Board incomplete/not mounted · zip not in git `~/Downloads/IH35-DELIVERABLES.zip` · CC-3 ZIP Option1 #19419 · never rebuild city-alias · never High-gap rebuild · NEVER 97.5% GL · NEVER seat fixtures | GO
+CURSOR | GO-19 ingest MD/HTML/TXT + PASTE-ALL-SEATS FORCE · DISAGREE Cascade 01 L-77 mint (already digits GO-10) · DISAGREE expense 12225-1 first (already bare) · AGREE B- bills driver/trailer bill_lines.load_required bank is_sample_data · 01 leftover load-ref digits + Rule 03 this PR · NEVER remint · NEVER seat book · NEVER 97.5% GL · NEVER zero escrow | GO

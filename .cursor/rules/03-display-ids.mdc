@@ -7,12 +7,14 @@ alwaysApply: true
 
 All display IDs are server-generated only. The frontend never composes a display ID. The user never edits one.
 
+**GO-19 (owner packet 2026-09-01) + GO-10 REV-B (#19325) supersede the old Load `L-{n}` / `L-YYYYMMDD-NNNN` row.** Live mint is plain digits (`allocateNextLoadNumber`). Book Load may still type the first number when the company has no numeric seed. Do not remint. Driver-bill `B-` drop is slice 03 (CC-1), not a silent Cursor change.
+
 ## Format table (locked)
 
 | Entity | Format | Example |
 |--------|--------|---------|
-| Load | `L-{n}` | L-12047 |
-| Driver Bill | `B-{load_number}` | B-L-12047 |
+| Load | `{n}` digits only (no `L-` prefix). GO-10 REV-B + GO-19. Legacy cancelled rows like `L-20260901-0001` stay readable. | 13561 |
+| Driver Bill | `B-{load_number}` until GO-19 slice 03 (CC-1). Owner packet: equal to the load number, no `B-`. | B-12225 (until 03) |
 | Settlement | `S-YYYY-NNNN` | S-2026-0185 |
 | Cash Advance | `CA-YYYY-NNNN` | CA-2026-0033 |
 | Factoring Advance | `FA-YYYY-NNNN` | FA-2026-1842 |

@@ -1,0 +1,329 @@
+<title>Build Queue And Order</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Roboto+Mono:wght@400;500&display=swap">
+<style>
+:root{
+--ink:#1a1a18;--ink2:#42423d;--muted:#6f6f67;--paper:#eceae4;--card:#fbfaf7;--sunk:#f3f1eb;
+--rule:#d6d3ca;--rule2:#e6e3db;--accent:#2f4858;--accent-soft:#e0e7ec;
+--stamp:#a83a1e;--stamp-soft:#f3e2dc;--ochre:#8a6a10;--ochre-soft:#f3ecd9;
+--shadow:rgba(26,26,24,.08);
+--mono:"Roboto Mono",ui-monospace,Menlo,monospace;
+--body:"Source Sans 3",-apple-system,"Segoe UI",sans-serif;
+--disp:"Archivo","Source Sans 3",-apple-system,sans-serif;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--ink:#e8e6e0;--ink2:#b5b2aa;--muted:#87847c;--paper:#16171a;--card:#1e2024;--sunk:#191b1e;
+--rule:#2c2f34;--rule2:#232629;--accent:#8fb0c4;--accent-soft:#1a232a;
+--stamp:#e0846a;--stamp-soft:#2b1d18;--ochre:#d4b055;--ochre-soft:#261f12;
+--shadow:rgba(0,0,0,.45);}}
+:root[data-theme="dark"]{
+--ink:#e8e6e0;--ink2:#b5b2aa;--muted:#87847c;--paper:#16171a;--card:#1e2024;--sunk:#191b1e;
+--rule:#2c2f34;--rule2:#232629;--accent:#8fb0c4;--accent-soft:#1a232a;
+--stamp:#e0846a;--stamp-soft:#2b1d18;--ochre:#d4b055;--ochre-soft:#261f12;
+--shadow:rgba(0,0,0,.45);}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
+.wrap{max-width:1020px;margin:0 auto;padding:38px 20px 90px;display:flex;flex-direction:column;gap:44px}
+h1{font-family:var(--disp);font-weight:800;font-size:clamp(28px,4.4vw,46px);margin:0;line-height:1.05;letter-spacing:-.022em;text-wrap:balance}
+h2{font-family:var(--disp);font-weight:700;font-size:clamp(20px,2.6vw,27px);margin:0;letter-spacing:-.012em;text-wrap:balance}
+h3{font-family:var(--disp);font-weight:700;font-size:19px;margin:0;line-height:1.25;letter-spacing:-.008em;text-wrap:balance}
+p{margin:0}
+.m{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--stamp);font-weight:500}
+header.top{border-bottom:3px solid var(--ink);padding-bottom:20px;display:flex;flex-direction:column;gap:12px}
+.lede{font-size:17.5px;color:var(--ink2);max-width:66ch}
+.built{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.sec{border-top:1px solid var(--rule);padding-top:16px;display:flex;flex-direction:column;gap:5px}
+section{display:flex;flex-direction:column;gap:18px}
+.lead{color:var(--ink2);max-width:74ch}
+
+.spine{display:grid;grid-template-columns:repeat(auto-fit,minmax(146px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.sp{background:var(--card);padding:12px 13px;display:flex;flex-direction:column;gap:2px}
+.sp b{font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.01em}
+.sp span{font-size:12.5px;color:var(--muted);line-height:1.4}
+
+.slices{display:flex;flex-direction:column;gap:16px}
+.slice{border:1px solid var(--rule);background:var(--card);box-shadow:0 1px 2px var(--shadow)}
+.shead{display:flex;gap:0;border-bottom:1px solid var(--rule);align-items:stretch}
+.snum{font-family:var(--disp);font-weight:800;font-size:30px;line-height:1;color:var(--stamp);background:var(--stamp-soft);
+ padding:16px 0 0;width:74px;flex:0 0 74px;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stitle{padding:15px 18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.meta{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;padding:3px 9px;border:1px solid var(--rule);color:var(--muted);white-space:nowrap}
+.chip.seat{background:var(--accent);color:var(--card);border-color:var(--accent);font-weight:500}
+.sbody{padding:16px 18px 0 18px;display:flex;flex-direction:column;gap:15px}
+.block{display:flex;flex-direction:column;gap:5px}
+.blabel{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+.block p{max-width:76ch;font-size:15.4px;color:var(--ink2)}
+.now{font-size:14.6px !important;border-left:3px solid var(--ochre);padding-left:12px;color:var(--ink2)}
+.lyrs{display:grid;grid-template-columns:1fr;gap:1px;background:var(--rule2);border:1px solid var(--rule2)}
+.lyr{background:var(--sunk);display:grid;grid-template-columns:104px 1fr;gap:12px;padding:8px 12px;align-items:baseline}
+.lyrk{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:500}
+.lyrv{font-size:14.4px;color:var(--ink2);line-height:1.5}
+.done{margin:2px -18px 0;padding:12px 18px;border-top:1px solid var(--rule);background:var(--stamp-soft);
+ font-size:14.8px;color:var(--ink);display:flex;gap:11px;align-items:baseline;flex-wrap:wrap}
+.dlabel{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--stamp);font-weight:500;white-space:nowrap}
+
+ul.dl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule)}
+ul.dl li{background:var(--card);padding:13px 16px;display:flex;flex-direction:column;gap:4px}
+ul.dl b{font-family:var(--disp);font-weight:700;font-size:15.5px}
+ul.dl span{font-size:14.6px;color:var(--ink2);max-width:80ch;line-height:1.55}
+
+footer{border-top:1px solid var(--rule);padding-top:18px;font-size:13.6px;color:var(--muted);max-width:80ch;line-height:1.6}
+
+@media (max-width:620px){
+ .snum{width:56px;flex-basis:56px;font-size:24px;padding-top:14px}
+ .lyr{grid-template-columns:1fr;gap:2px}
+ .stitle{padding:13px 14px}.sbody{padding:14px 14px 0}.done{margin:2px -14px 0;padding:12px 14px}
+}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">IH35 Transportation Management System &middot; build queue</div>
+  <h1>What Is Left, And The Order To Build It</h1>
+  <p class="lede">Sixteen pieces of work, each one a full slice from the database up to the screen and back down to a proof. Seven decisions waiting on the owner. Two things that are not code. Every fact on this page was checked against the live production database and against the code on the main branch before it was written.</p>
+  <p class="built m">Checked September 2, 2026 against commit fcc5d40d6 and the live USMCA books</p>
+</header>
+
+<section class="intro">
+  <div class="sec"><div class="eyebrow">The rule</div><h2>Every fix goes all the way down and all the way up</h2></div>
+  <p class="lead">A vertical slice means one piece of work carries its own table change, its own backend rule, its own endpoint, its own screen, its own guard and its own proof. It is finished when somebody can click it in a browser and see the right thing happen. Nothing on this list is a layer waiting for another layer. That is deliberate: horizontal work produces six things that are each ninety percent done and zero things that work.</p>
+  <div class="spine">
+    <div class="sp"><b>Data</b><span>the table, the column, the constraint</span></div>
+    <div class="sp"><b>Backend</b><span>the rule that decides</span></div>
+    <div class="sp"><b>Interface</b><span>the endpoint that carries it</span></div>
+    <div class="sp"><b>Screen</b><span>what the operator sees and does</span></div>
+    <div class="sp"><b>Guard</b><span>the thing that stops it regressing</span></div>
+    <div class="sp"><b>Proof</b><span>a screenshot of it working, not an assertion</span></div>
+  </div>
+  <p class="lead">The order is not a preference. Slices 01 and 03 are first because every number in the system is cut from the load number, and after the first real load is created those numbers are on live money and have to be corrected by hand. Slice 02 is first because thirty-four fake bank rows are sitting in the feed the owner is about to start matching against. Everything after that follows its dependencies.</p>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">The queue</div><h2>Sixteen slices, in order</h2></div>
+  <div class="slices"><article class="slice" id="s01">
+<div class="shead">
+  <div class="snum">01</div>
+  <div class="stitle"><h3>The load number becomes a plain number</h3>
+    <div class="meta"><span class="chip seat">CC-2</span><span class="chip dep">Depends on: None. Start here.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>Every other number in the system is cut from the load number. The proforma, the expenses, the driver bill and the settlement all inherit it. If the first real load is minted as L-20260902-0001 and the format is corrected afterward, every child number is already wrong and has to be re-cut by hand, on live money. This is the only item that gets more expensive by the hour.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">load-id-reservation.service.ts line 77 returns `L-${ymd}-${seq padded to 4}`. The one load in USMCA is L-20260901-0001 and it is cancelled. Owner ruling: a load number is plain, for example 13561.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Data</div><div class="lyrv">lib.trace_counters holds the load counter. Set the USMCA seed to the number the owner names. No new table.</div></div><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">load-id-reservation.service.ts — drop the L- and the date block. Keep the FOR UPDATE lock exactly as it is; it is correct.</div></div><div class="lyr"><div class="lyrk">Interface</div><div class="lyrv">POST /api/v1/loads and the book-load route already accept a typed load_number. No change.</div></div><div class="lyr"><div class="lyrk">Screen</div><div class="lyrv">Book Load — the number box shows the next plain number, stays editable, and blank means the system assigns.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">Reject any minted load number that is not digits. Fail the build if the L- template returns.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">Book one load in a real browser. Screenshot the number box before save and the saved load after.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>A load booked through the browser carries a plain number, and a second one increments by one.</div>
+</div>
+</article><article class="slice" id="s02">
+<div class="shead">
+  <div class="snum">02</div>
+  <div class="stitle"><h3>Clean slate — the fake bank rows come out before real money goes in</h3>
+    <div class="meta"><span class="chip seat">CC-1</span><span class="chip dep">Depends on: None. Runs beside slice 01.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>The owner is about to enter real expenses, bills and payments and match them in banking. Thirty-four fake rows are sitting in the USMCA bank feed right now. The moment real matching starts, a real charge can be matched to a fixture and the two become impossible to separate without an audit. This has to be finished before the first real transaction, not after.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">415 bank transactions in USMCA. 381 are the real Plaid feed. 34 are not: 24 with no source, 7 marked manual test, 2 csv import, 1 manual — every one of them carrying test, sample, demo or fixture in its description. banking.bank_transactions still has no is_sample_data column, so nothing can even mark them.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Data</div><div class="lyrv">Add is_sample_data boolean not null default false to banking.bank_transactions. Mark the 34. Do not delete: the owner&#x27;s standing rule is that nothing is ever permanently deleted and every void keeps a register.</div></div><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">Every banking read filters is_sample_data = false by default, the same way the other money tables already do.</div></div><div class="lyr"><div class="lyrk">Interface</div><div class="lyrv">The bank transaction list endpoints exclude sample rows unless explicitly asked.</div></div><div class="lyr"><div class="lyrk">Screen</div><div class="lyrv">Banking shows 381, not 415. A single owner-only toggle can reveal the quarantined rows.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">No new row may be written with is_sample_data true against USMCA. Fail the build if a seed script targets this company.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">Banking count before and after, side by side, with the 34 listed by description.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>Banking shows 381 real transactions, the 34 are marked and hidden, none are deleted, and the register lists all 34.</div>
+</div>
+</article><article class="slice" id="s03">
+<div class="shead">
+  <div class="snum">03</div>
+  <div class="stitle"><h3>The child numbers follow the load number</h3>
+    <div class="meta"><span class="chip seat">CC-1</span><span class="chip dep">Depends on: Slice 01. The load number has to be right first.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>The owner&#x27;s rule is that the first expense on load 12225 is 12225, the second is 12225-1, the third is 12225-2, and the driver bill is 12225. The code does not do either. It has to be fixed before the first load generates its first expense, for the same reason as slice 01: after that, the numbers are on real money.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">expense-number.ts line 47 builds `${loadNumber}-${seq}` with the sequence starting at 1, so the first expense is 12225-1 and no expense is ever numbered 12225. driver-bill-number.ts line 4 returns `B-${suffix}`, which is neither the load number nor anything the owner asked for.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Data</div><div class="lyrv">expense_attribution.expense_seq_per_load already exists and already locks correctly. Only the formatting changes.</div></div><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">expense-number.ts — sequence 1 renders as the bare load number, sequence 2 as -1, sequence 3 as -2. driver-bill-number.ts — return the load number unchanged.</div></div><div class="lyr"><div class="lyrk">Interface</div><div class="lyrv">No route change. The number is produced server side and returned on create.</div></div><div class="lyr"><div class="lyrk">Screen</div><div class="lyrv">The expense creator and the driver bill creator show the number that will be assigned, in an editable box, blank meaning assign for me.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">A test that creates three expenses on one load and asserts 12225, 12225-1, 12225-2 in that order.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">Three expenses created on the first real load, screenshotted.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>First expense is the bare load number. Driver bill number equals the load number. The B- prefix is gone from the code.</div>
+</div>
+</article><article class="slice" id="s04">
+<div class="shead">
+  <div class="snum">04</div>
+  <div class="stitle"><h3>The proforma is created at pickup, not at booking</h3>
+    <div class="meta"><span class="chip seat">CURSOR</span><span class="chip dep">Depends on: Slice 01.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>The owner stated this rule directly and the code contradicts it. A proforma minted at booking exists for loads that are never picked up, which means the revenue pipeline carries documents for work that never happened. It also means the number is burned before the load is real.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">book-load.service.ts line 1756 carries the comment ND-INV-01, auto-create non-posting proforma invoice at book. There is no pickup trigger anywhere in the codebase. The delivery half is correct and must not be touched.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Data</div><div class="lyrv">No new table. mdata.load_stops already records arrival and departure on the pickup stop.</div></div><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">Remove the mint from book-load.service.ts. Add the mint to the first pickup stop completion, mirroring the existing delivery latch, which is already correct.</div></div><div class="lyr"><div class="lyrk">Interface</div><div class="lyrv">The stop completion endpoint returns the proforma when it creates one.</div></div><div class="lyr"><div class="lyrk">Screen</div><div class="lyrv">The load drawer shows no proforma at booking and shows one the moment the pickup is completed.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">A test that books a load and asserts zero proforma, then completes pickup and asserts exactly one.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">Book, screenshot no proforma. Complete pickup, screenshot the proforma with the load&#x27;s number.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>Booking creates nothing. Pickup creates the proforma with the load number. Delivery still converts it, unchanged.</div>
+</div>
+</article><article class="slice" id="s05">
+<div class="shead">
+  <div class="snum">05</div>
+  <div class="stitle"><h3>A bill can name a driver and a trailer</h3>
+    <div class="meta"><span class="chip seat">CURSOR</span><span class="chip dep">Depends on: None on code, but it is the gate for slices 06 and 07.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>This is the owner&#x27;s road repair scenario and it cannot work today. A repair billed on thirty day terms that must appear on the driver settlement has nowhere to record which driver. The Costs board design shows it; the table cannot hold it.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">accounting.expenses has driver_uuid, trailer_id, recover_from_driver and recover_deduction_type. accounting.bills has none of the four. Verified in production this morning.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Data</div><div class="lyrv">Add driver_uuid, trailer_id, recover_from_driver and recover_deduction_type to accounting.bills, referencing the same hub tables the expense already references.</div></div><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">bills.service.ts create and update accept and persist all four. The chargeback path mirrors the expense chargeback path exactly.</div></div><div class="lyr"><div class="lyrk">Interface</div><div class="lyrv">The bill create and update endpoints accept the four fields.</div></div><div class="lyr"><div class="lyrk">Screen</div><div class="lyrv">The bill creator gains Driver, Trailer and Recover from driver, laid out the same as on the expense creator.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">A bill marked recoverable with no driver is rejected. A driver deduction from a bill is pending until approved, never automatic.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">Create a bill on thirty day terms against a load, mark it recoverable, and show the pending deduction on that driver&#x27;s settlement preview.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>A road repair bill on terms reaches the load margin on the day incurred and the driver settlement as a pending deduction.</div>
+</div>
+</article><article class="slice" id="s06">
+<div class="shead">
+  <div class="snum">06</div>
+  <div class="stitle"><h3>A bill line cannot be saved without a load</h3>
+    <div class="meta"><span class="chip seat">CC-1</span><span class="chip dep">Depends on: Slice 05, same table family, same migration lane, one author.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>This is the quietest and most damaging defect on the list. A repair billed on terms can be saved today with no load attached, and nothing stops it. It never reaches the load margin, never reaches the company settlement, never reaches the driver settlement. It becomes an unattributed cost that makes every load look more profitable than it is. That is how a carrier convinces itself a lane makes money when it does not.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">accounting.expense_lines has load_required and load_exemption_reason. accounting.bill_lines has load_id but neither guard. The rule exists on one side of the house and not the other.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Data</div><div class="lyrv">Add load_required boolean not null default true and load_exemption_reason text to accounting.bill_lines.</div></div><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">Enforce in the bill service using the existing expense service rule. Copy it. Do not write a second rule with different words.</div></div><div class="lyr"><div class="lyrk">Interface</div><div class="lyrv">Saving a bill line with no load and no exemption reason returns a clear refusal, not a silent success.</div></div><div class="lyr"><div class="lyrk">Screen</div><div class="lyrv">The bill line requires a load, or an exemption chosen from the same list the expense uses.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">A test proving a bill line with no load and no exemption cannot be saved.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">Attempt to save one without a load and screenshot the refusal.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>No bill line reaches the ledger without either a load or a written reason it has none.</div>
+</div>
+</article><article class="slice" id="s07">
+<div class="shead">
+  <div class="snum">07</div>
+  <div class="stitle"><h3>The Load Costs board</h3>
+    <div class="meta"><span class="chip seat">CODEX</span><span class="chip dep">Depends on: Slices 05 and 06.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>This is the screen the owner asked for: live loads with their costs underneath and an approximate settlement beside them. It is the place costs get created with every link already filled in, instead of being gathered afterward. It cannot be built before slices 05 and 06, because the links it displays do not exist in the tables yet.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">Designed and delivered. The load drawer has twelve tabs and no Costs tab. Nothing is built.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Data</div><div class="lyrv">No new table. Reads mdata.loads, accounting.expenses, accounting.bills and the driver pay tables.</div></div><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">One read model returning open loads with revenue, costs so far, driver pay so far and approximate margin. It reads. It writes nothing.</div></div><div class="lyr"><div class="lyrk">Interface</div><div class="lyrv">One endpoint for the board, one for the expanded load.</div></div><div class="lyr"><div class="lyrk">Screen</div><div class="lyrv">Accounting gains a Load Costs board. The load drawer gains a thirteenth tab named Costs. Both follow the delivered design.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">The word approximate stays on the approximate panel. No posting happens from this screen.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">Click a live load, create a cost from the board, and show all twelve links filled in without typing any of them.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>A cost created from the board carries the load, customer, vendor, driver, truck, trailer, locations and the vendor&#x27;s own receipt number, with none of it typed twice.</div>
+</div>
+</article><article class="slice" id="s08">
+<div class="shead">
+  <div class="snum">08</div>
+  <div class="stitle"><h3>Twenty-eight bank transactions are dated in the future</h3>
+    <div class="meta"><span class="chip seat">CC-3</span><span class="chip dep">Depends on: Slice 02, so the fake rows are already separated from the real ones.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>Twenty-eight rows in the USMCA bank feed carry transaction dates after today, the furthest being July 2027. A cash flow forecast built on this is wrong in a way nobody will notice, because the numbers look reasonable. Any forecast, aging or period report that reads this feed is currently reporting fiction.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">Verified in production: 28 rows with transaction_date greater than today, maximum 2027-07-05.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Data</div><div class="lyrv">No schema change. The rows need investigation and correction, with an audit record of each change.</div></div><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">A check that refuses a bank transaction dated more than one day ahead of the company business date.</div></div><div class="lyr"><div class="lyrk">Interface</div><div class="lyrv">The import path rejects and reports rather than accepting silently.</div></div><div class="lyr"><div class="lyrk">Screen</div><div class="lyrv">Banking shows a clearly labelled exception list for anything dated ahead.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">Fail the build if any import path can write a future-dated bank transaction.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">The 28 listed with their source, before and after.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>No bank transaction is dated ahead of the business date, and the import path can no longer create one.</div>
+</div>
+</article><article class="slice" id="s09">
+<div class="shead">
+  <div class="snum">09</div>
+  <div class="stitle"><h3>An expense can carry a class</h3>
+    <div class="meta"><span class="chip seat">CC-3</span><span class="chip dep">Depends on: None.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>accounting.bills has class_id and accounting.expenses does not. The two sides of the same ledger report differently, which means any class-based report is incomplete on one side and nobody can tell which.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">Verified in production: class_id present on bills, absent on expenses.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Data</div><div class="lyrv">Add class_id uuid to accounting.expenses, referencing catalogs.classes as the bill does.</div></div><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">Expense create and update accept it. Class reports read both sides.</div></div><div class="lyr"><div class="lyrk">Interface</div><div class="lyrv">The expense endpoints accept class.</div></div><div class="lyr"><div class="lyrk">Screen</div><div class="lyrv">The expense creator gains the same Class field the bill creator has, in the same place.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">A class report test that asserts bills and expenses are both counted.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">One class report showing an expense and a bill in the same class.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>Class reporting covers both bills and expenses.</div>
+</div>
+</article><article class="slice" id="s10">
+<div class="shead">
+  <div class="snum">10</div>
+  <div class="stitle"><h3>The proof trail — click to ledger</h3>
+    <div class="meta"><span class="chip seat">CC-2</span><span class="chip dep">Depends on: Slices 01 through 07, so the chain it proves is the corrected one.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>The owner asked for a tracker that follows a click and shows the transaction landing in the correct accounts, proving the chain is really linked. This is the thing that makes every other claim in this system checkable by somebody who does not trust it, including a CPA, an auditor or a lender.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">GO-17 written. Not started. Every money table already carries trace_no and trace_key, so the spine exists.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Data</div><div class="lyrv">No new table. audit.audit_events and the trace columns already carry what is needed.</div></div><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">One service that, given any document, returns the full chain: what was clicked, what was written, which accounts moved, and every record it linked to.</div></div><div class="lyr"><div class="lyrk">Interface</div><div class="lyrv">One endpoint per document type.</div></div><div class="lyr"><div class="lyrk">Screen</div><div class="lyrv">A proof panel on every money document showing the accounts touched and the links made, in plain English.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">A test asserting that a load, an expense, a bill and a settlement each return a complete chain with no missing link.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">Click Save on a real expense and screenshot the panel showing every account and every link.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>Any money document shows, on its own screen, exactly where the money went and what it is attached to.</div>
+</div>
+</article><article class="slice" id="s11">
+<div class="shead">
+  <div class="snum">11</div>
+  <div class="stitle"><h3>Thirteen half-built features — build or remove</h3>
+    <div class="meta"><span class="chip seat">OWNER decides, then CC-3</span><span class="chip dep">Depends on: None, but do not start until slices 01 through 07 are merged.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>For each of these the screen exists, the endpoint exists, the code runs, and the table was never created. The code checks and quietly skips. Nothing crashes; the operator sees an empty screen and is told nothing. Software that looks like it works and silently returns nothing is worse than software that is plainly missing, because nobody reports it.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">Thirteen confirmed against production and listed in the map under Gaps. They include fuel route recommendations, maintenance predictive alerts, maintenance labor rates, inventory parts, safety workers compensation claims, safety accident liabilities, telematics cargo sensor incidents, customer health scores, dispatch late arrival aggregates and banking reconciliation drift alerts.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Decision</div><div class="lyrv">The owner decides one at a time: build it, or take the screen out. There is no third answer that leaves the operator informed.</div></div><div class="lyr"><div class="lyrk">Data</div><div class="lyrv">For anything kept: create the table properly, with the linkage declaration.</div></div><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">Remove the silent skip. A missing feature says so.</div></div><div class="lyr"><div class="lyrk">Screen</div><div class="lyrv">An empty screen states why it is empty. It never just shows nothing.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">Fail the build on any new silent skip of a missing relation.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">One list, thirteen rows, each marked built or removed, signed off.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>No screen in the software silently shows nothing.</div>
+</div>
+</article><article class="slice" id="s12">
+<div class="shead">
+  <div class="snum">12</div>
+  <div class="stitle"><h3>Four hundred and thirty-seven screens cannot be linked to</h3>
+    <div class="meta"><span class="chip seat">CODEX</span><span class="chip dep">Depends on: None. Can run in parallel throughout.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>437 of the 521 real screens are not in the deep link manifest. They can be reached by clicking, but a saved bookmark or a link sent to somebody is not reliable. For a company that will send a driver, a customer or an attorney a link to a specific record, that is a daily problem.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">Verified in the map. 86 of 584 routes are in the manifest.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Data</div><div class="lyrv">None.</div></div><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">None.</div></div><div class="lyr"><div class="lyrk">Interface</div><div class="lyrv">None.</div></div><div class="lyr"><div class="lyrk">Screen</div><div class="lyrv">Add the missing routes to the deep link manifest, in module order, and confirm each one loads cold from a pasted address.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">Fail the build if a new route is added without a manifest entry.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">A run that opens every route cold and reports which ones do not render.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>Every screen has an address that works when pasted into a fresh browser.</div>
+</div>
+</article><article class="slice" id="s13">
+<div class="shead">
+  <div class="snum">13</div>
+  <div class="stitle"><h3>A health check that can never pass</h3>
+    <div class="meta"><span class="chip seat">CASCADE</span><span class="chip dep">Depends on: None.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>The deep health endpoint runs four checks. Two of them query tables that do not exist and are in no migration. The file admits it in its own comment. A health check that cannot pass trains everyone to ignore the health check, which is worse than not having one.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">/api/v1/health/deep queries qbo.connections and banking.plaid_items. The real table is integrations.qbo_connections. banking.plaid_items does not exist anywhere.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">Point the QuickBooks check at integrations.qbo_connections. Remove the Plaid check or create the table it needs.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">Fail the build if any health check queries a relation that is not in the migrations.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">The endpoint returning healthy on a healthy system, for the first time.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>Every check in the deep health endpoint can pass, and does.</div>
+</div>
+</article><article class="slice" id="s14">
+<div class="shead">
+  <div class="snum">14</div>
+  <div class="stitle"><h3>The static verifier connects to a dead port instead of running with no database</h3>
+    <div class="meta"><span class="chip seat">CASCADE</span><span class="chip dep">Depends on: None.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>Guards that are supposed to run without a database instead connect to a fake address, fail to connect, and crash. Those guards have not actually been running. Every green check they produced was green because the guard never got far enough to look.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">scripts/verify-static.mjs sets DATABASE_URL and DATABASE_DIRECT_URL to postgresql://verify_static:none@127.0.0.1:59999 instead of unsetting them. Guards that test whether the variable is absent see a value, connect, and fail.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">Unset the two variables instead of setting a sentinel.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">A test asserting both are absent inside the static verifier.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">The named guards running to completion for the first time, with their real result whatever it is.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>The static guards run and report a real answer instead of an error.</div>
+</div>
+</article><article class="slice" id="s15">
+<div class="shead">
+  <div class="snum">15</div>
+  <div class="stitle"><h3>The posting contract still describes the invoice entry wrongly</h3>
+    <div class="meta"><span class="chip seat">CC-2</span><span class="chip dep">Depends on: None.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>The contract file specifies an entry shape that, if followed, counts revenue twice. It has not caused a defect yet because the code does not follow it. That is luck, not design, and the next person to implement from the contract will implement the double count.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">POSTING-CONTRACTS.json invoice contract. Filed with file and line.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Data</div><div class="lyrv">None.</div></div><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">Correct the contract to the two event latch the code actually implements: delivery earns, conversion creates the receivable.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">A test that reads the contract and asserts the posting engine matches it.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">Contract and engine agreeing, proven by the test rather than by reading.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>The contract and the code say the same thing, and a test enforces it.</div>
+</div>
+</article><article class="slice" id="s16">
+<div class="shead">
+  <div class="snum">16</div>
+  <div class="stitle"><h3>Four hundred and seven bank transactions are uncategorized</h3>
+    <div class="meta"><span class="chip seat">CC-3 builds, OWNER decides</span><span class="chip dep">Depends on: Slices 02 and 08, so the feed is clean and correctly dated before anyone categorizes it.</span></div>
+  </div>
+</div>
+<div class="sbody">
+  <div class="block"><div class="blabel">Why it is here</div><p>Eight of 415 bank transactions are categorized. Until they are, the balance sheet, the profit and loss and the cash position are all incomplete, and no report from this company can be trusted by anyone outside it. This is the largest single block of work on the list and most of it is the owner&#x27;s decisions, not code.</p></div>
+  <div class="block"><div class="blabel">What is true today</div><p class="now">Verified in production: 8 categorized, 407 not, spanning December 2025 to September 2026.</p></div>
+  <div class="block"><div class="blabel">The vertical slice</div><div class="lyrs"><div class="lyr"><div class="lyrk">Backend</div><div class="lyrv">Categorization rules that suggest, never decide. A suggestion is not a posting.</div></div><div class="lyr"><div class="lyrk">Screen</div><div class="lyrv">A categorization queue that works in bulk, groups by merchant, and remembers a decision so the same merchant is never asked twice.</div></div><div class="lyr"><div class="lyrk">Guard</div><div class="lyrv">No rule may post automatically. Every categorization records who decided and when.</div></div><div class="lyr"><div class="lyrk">Proof</div><div class="lyrv">The count falling, with an audit row behind every change.</div></div></div></div>
+  <div class="done"><span class="dlabel">Done means</span>Every bank transaction is categorized by a person or by a rule that person approved, with a name and a date on each.</div>
+</div>
+</article></div>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">Blocked</div><h2>Seven decisions only the owner can make</h2></div>
+  <p class="lead">None of these are code problems and none of them can be decided by a coder. Each one blocks work that is otherwise ready.</p>
+  <ul class="dl"><li><b>The escrow question</b><span>Whether the escrow branch is restored, and on what basis. Named as the most serious open item in the register of September 1 and still unanswered. Nothing downstream of escrow can be certified until this is decided.</span></li><li><b>The cutover date and the opening entry</b><span>USMCA began operating August 7 but has bank transactions from December 2025. Somebody has to decide the date the books open and what the opening entry is. Without it, no period can close and no balance sheet is meaningful.</span></li><li><b>Capitalize threshold</b><span>Seven thousand dollars or two thousand five hundred. Affects every repair and every purchase from here forward.</span></li><li><b>Accessorials parent account</b><span>Which account accessorial charges roll up to.</span></li><li><b>Company settlement table design</b><span>The driver settlement exists. The company settlement does not have an agreed shape.</span></li><li><b>The sample insurance policies</b><span>Whether they are deleted or kept and marked.</span></li><li><b>The thirteen half-built features</b><span>Build or remove, one decision each. Slice 11 cannot start without this.</span></li></ul>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">Not in the queue</div><h2>Two things that are not build work</h2></div>
+  <ul class="dl"><li><b>Insurance is short thirty-seven thousand four hundred dollars</b><span>Policy 437539 covers 34 units at 1,040,540 dollars against a required 1,077,940. Verified. This is not a code task and it does not belong in the build queue. It is an insurance action and it is the only item on this page that costs money every day it is open. The signed schedule is a scan and needs transcribing by hand before anything can be reconciled against it.</span></li><li><b>Nobody has clicked Book Load in a real browser</b><span>Every test that has been run is a test the software wrote about itself. The only USMCA load in production is cancelled. Until a person books a load through the browser, nothing in this system is proven to work end to end. Slice 01 makes this the first thing worth doing.</span></li></ul>
+</section>
+
+<footer>
+  Nothing on this page is reported as done. Where a previous report said something was closed and it was not, this page says so and gives the file and line. The counts come from the live USMCA books read this morning: 415 bank transactions of which 8 are categorized and 28 are dated in the future, 176 drivers, 1,232 customers, 8 insurance policies, 3,375 seeded lanes, and one load, which is cancelled.
+</footer>
+</div>

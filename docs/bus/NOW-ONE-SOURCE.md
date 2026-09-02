@@ -1,13 +1,13 @@
-# NOW-ONE-SOURCE · 2026-09-01 21:40 CT
+# NOW-ONE-SOURCE · 2026-09-01 22:40 CT
 
-**GO-18 Load Costs** design packet live in repo (download HTML). Jorge desk: hard-reload `/dispatch` on API **12bfbd6**. Book Load first. **Jorge does not answer Neon.** Escrow = CC-1. ZIP = CC-3 execute. Capitalize/accessorial = owner only.
+**GO-19** build queue in git (`docs/lockdown/GO-19-BUILD-QUEUE.md` + html/txt). Paste: `docs/bus/PASTE-ALL-SEATS-GO-19-2026-09-01.md`. Live **12bfbd6**. **Jorge does not answer Neon.** No seat fixtures. Never invent bank GL. Never zero escrow.
 
 | Seat | NOW |
 |------|-----|
-| CC-1 | Escrow $500.01 forensic (no zero, no Ask Jorge). Then GO-18 bill driver/trailer + bill_lines.load_required. Never 97.5% GL invent. |
-| CC-2 | Verify-live escrow after CC-1. Grep #19428 before verify-static re-diagnose. Then GO-18 F+R. |
-| CC-3 | Check ZIP 183 Option 1 EXECUTE (`load_stops.postal_code`, #19419). Apply #19414 merges if not applied. |
-| Codex | STOP `--watch`. #19423 then #19391 if OPEN. Then GO-18 Costs 13th tab + Costs Board FE. |
-| Cascade | Unique FINDING only. Stale Jorge-restore / ZIP AskQuestion VOID. Cite GO-18 bill gaps. |
-| Devin-A | Chrome `/dispatch` 12bfbd6 · Laredo→Denton 456.7/452.2 · Chicago empty · Cancel. |
-| Cursor | GO-18 bus+design shipped. First-click still stands. No second deploy. |
+| CC-1 | Escrow forensic (no zero). Then GO-19-02 `is_sample_data` on bank txns. Then 03 drop `B-`. Then 05/06 bills driver/trailer + `bill_lines.load_required`. Then suggest-only categorize (owner decides). |
+| CC-2 | Verify-live escrow after CC-1. Grep #19428. Do not remint loads (already digits). |
+| CC-3 | Check ZIP Option 1 #19419. Then GO-19-09 expense class when money lane free. |
+| Codex | STOP `--watch`. GO-19-07 Costs FE after CC-1 05/06. |
+| Cascade | Unique FINDING. Slice 01 mint claim is STALE (GO-10 digits). |
+| Devin-A | Chrome `/dispatch` 12bfbd6 · Laredo→Denton · Chicago empty · Cancel. No POST. |
+| Cursor | GO-19 ingest. 01 leftover = load-ref digits + Rule 03 (this PR). |
