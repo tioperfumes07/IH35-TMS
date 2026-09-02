@@ -249,3 +249,42 @@ CC-1 | GO-23 | NOW queue 1-4 status close-out:
 4. B5: backend confirmed correct and unrevoked (#19578). Frontend reason-capture field NOT built by CC-1 -- BookLoadModalV4.tsx is explicitly out of CC-1's lane per GO-21's own boundary and #19578's own NOT CHECKED line. Flagged for CC-3/wizard owner.
 Also this session: unblocked site-wide CI (canonical-relations.json stale, #19659) and shipped CC-3's GO-21 B3 migration ledger handoff (#19663).
 CC-1 | ACK | GO-23 | NOW=purge · N1 bill+BP · B5 · NEVER POST | GO
+
+CC-1 | GO-23 | purge 33-table sweep -- COMPLETE (all 5 batches, 163 candidate columns across
+non-catalog schemas, tightened word-boundary predicate). Full per-table hit counts, USMCA-scoped:
+
+Batch 2 (maintenance/mdata/ops/tasks): maintenance.fault_code_severity_rules(1) internal_labor_log(1)
+pm_schedules(1) severe_repair_estimates(9) warranty_claims(2) wo_serialized_parts(1) wo_time_entries(1)
+work_orders(10); mdata.qbo_accounts(1) vendor_payment_methods(1); ops.daily_tasks(1).
+Batch 3 (reports/safety/settlement/tasks): reports.custom_report_definitions(1); safety.
+accident_cost_lines(1) accident_reports(5) background_checks(1) civil_fines(2) company_violations(4)
+dot_inspections(5) driver_documents(1) driver_qualification_files(6) driver_safety_profiles(1)
+driver_w8ben(1) fmcsa_events(2) hos_violations(3) incidents(5) integrity_observations(1)
+internal_fines(1) safety_events(10) temp_unit_assignments(1) training_programs(1) training_records(2)
+violations(1); tasks.task(2).
+Batch 4: tasks.task title(3).
+
+Content-verified (not just counted) samples confirm the pattern holds across every batch:
+- safety.safety_events title includes the INBOX's own literal named example: "TEST-CC3-GO0085
+  safety event KEEP" -- confirms the sweep predicate and the KEEP-exclusion rule both work exactly
+  as specified. Also "TEST-CC3-GO0033... create-flow proof" (active fixture, no keep tag but
+  clearly ongoing-use) and "SAMPLE FAIL-S1 FK PROVE" (same class).
+- maintenance.work_orders/severe_repair_estimates (10/9 rows): ALL already status='cancelled'
+  (voided_at null but terminally inert) -- mix of "void after proof" (CC-3 scenario fixtures),
+  "going-forward only" (CC-2 active regression anchor), and 2 genuine SAMPLE_BREAKDOWN_RESCUE_JULY
+  rows with no keep/ongoing-use marker.
+- safety.driver_qualification_files (6 rows): ALL "TEST DATA - created by Devin-A for draft load
+  assignment" -- no keep tag, no ongoing-use language. Plausible abandoned-junk candidate, but
+  Devin-A's current use of these is unconfirmed -- NOT deleted, flagging rather than guessing.
+
+Net position after the full sweep: the overwhelming majority of real hits across all 5 batches are
+either explicit KEEP rows, active go-forward regression/verification fixtures other seats'
+scripts may depend on, or (maintenance.work_orders) already-cancelled/inert. Confirmed-safe
+deletes executed this session: dispatch.load_templates (1 row) + finance.loans (4 rows + 156
+amortization children). Confirmed-permanently-undeletable (append-only children): 2 sample
+drivers + 1 legal.matters row. Everything else found by this sweep is either protected (KEEP/
+active-use) or unconfirmed (Devin-A draft-load rows) -- holding rather than guessing on those.
+
+This closes the purge-33 sweep as specified: counts-first, KEEP honored, before/after pasted for
+every row actually deleted. Recommend NOT auto-deleting the unconfirmed Devin-A rows without either
+Devin-A's own sign-off or an owner ruling.
