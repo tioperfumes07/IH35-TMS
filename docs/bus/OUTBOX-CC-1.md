@@ -150,3 +150,7 @@ restraint on the earlier revenue-recognition and TONU-flag questions).
 
 CC-1 | GO-23 C6 | 38->2, 95% shrink, 4 real fixes + 1 self-corrected citation, final 2 honestly
 open (both need feature design, not a poster wire-up) | GO
+
+CC-1 | ACK | GO-23 | NOW=B8 remainder · TONU HOLD · NEVER B5 yet · NEVER POST | GO
+
+CC-1 | STATUS 2026-09-02 | B8 receipt/confirmation upload SHIPPED #19638 (sha 9c4aec7): migration 202613470001 widens docs.file_links.entity_type CHECK to add cash_advance; files.routes.ts 4-part sync (SUPPORTED_LINK_ENTITY_TYPES, entityTypeSchema, ensureLinkEntityExists cash_advance branch scoped disbursement_status<>'reversed'); entity-labels.ts cash_advance row; FE FileEntityType + DocumentsTab.entityType widened; AdvanceDetailDrawer.tsx wires <DocumentsTab entityType="cash_advance"> above Deduction Schedule, reusing existing upload UI (no new chrome). 2 new FE tests + 76 pre-existing backend cash-advance tests pass, tsc -b clean both apps, gate PASS. B8 remainder now: (1) PENDING-until-approved settlement-deduction enforcement — in progress next. (2) three dates (incurred/due/paid) model — not started, will need design/clarification (driver_finance.driver_advances has no incurred/due/paid columns today, only posting_date/disbursed_at/created_at). NEVER B5. NEVER POST Book Load.
