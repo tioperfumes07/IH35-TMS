@@ -174,7 +174,7 @@ export function AccountingCatalogModal({
           className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
         />
         {mode === "edit" ? (
-          <span className="mt-1 block text-[10px] font-normal text-slate-400">Stable identifier — immutable after create.</span>
+          <span className="mt-1 block text-xs font-normal text-slate-400">Stable identifier — immutable after create.</span>
         ) : null}
         {errors.code ? <div className="mt-1 text-[11px] text-red-700">{errors.code}</div> : null}
       </label>
@@ -257,7 +257,7 @@ export function AccountingCatalogModal({
           onChange={(event) => setForm((value) => ({ ...value, sort_order: Number(event.target.value || 0) }))}
           className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
         />
-        <span className="mt-1 block text-[10px] font-normal text-slate-400">Dropdown display order (lower = earlier). Defaults to next available.</span>
+        <span className="mt-1 block text-xs font-normal text-slate-400">Dropdown display order (lower = earlier). Defaults to next available.</span>
       </label>
 
       <label className="flex items-center gap-2 text-xs text-gray-700">
@@ -271,7 +271,7 @@ export function AccountingCatalogModal({
       </label>
 
       {mode === "edit" && row ? (
-        <div className="border-t border-gray-100 pt-2 text-[10px] text-slate-400">
+        <div className="border-t border-gray-100 pt-2 text-xs text-slate-400">
           Created {new Date(row.created_at).toLocaleString()} · Updated {new Date(row.updated_at).toLocaleString()}
         </div>
       ) : null}

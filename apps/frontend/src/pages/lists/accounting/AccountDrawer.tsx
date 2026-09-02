@@ -359,12 +359,12 @@ export function AccountDrawer({
               {mode === "create" ? "New Account" : "Edit Account"}
             </h2>
             {isLocked ? (
-              <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+              <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
                 LOCKED
               </span>
             ) : null}
             {isArchived ? (
-              <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+              <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
                 ARCHIVED
               </span>
             ) : null}

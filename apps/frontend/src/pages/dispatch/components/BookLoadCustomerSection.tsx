@@ -241,7 +241,7 @@ export function BookLoadCustomerSection({
           <div className="mt-2">
             <label className="text-[11px] font-semibold text-gray-600">
               Driver instructions
-              <span className="ml-2 rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">VISIBLE TO DRIVER</span>
+              <span className="ml-2 rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">VISIBLE TO DRIVER</span>
             </label>
             <textarea {...register("driver_instructions_text")} rows={3} className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" />
           </div>

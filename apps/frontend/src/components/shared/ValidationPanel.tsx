@@ -63,19 +63,19 @@ function ValidationRow({
       className={`flex items-start gap-2.5 rounded-sm border px-3 py-2 text-xs ${styles.bg} ${styles.border} ${acknowledged ? "opacity-60" : ""}`}
     >
       <span
-        className={`mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-white ${styles.iconBg}`}
+        className={`mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${styles.iconBg}`}
       >
         {acknowledged ? "✓" : styles.icon}
       </span>
       <span className="flex-1 leading-snug">
-        <span className="font-mono text-[9px] text-gray-400 mr-1">[{item.rule_id}]</span>
+        <span className="font-mono text-xs text-gray-400 mr-1">[{item.rule_id}]</span>
         {item.message}
       </span>
       {item.severity === "warn" && onAck && !acknowledged && (
         <button
           type="button"
           onClick={() => onAck(item.rule_id)}
-          className="ml-1 shrink-0 rounded-sm border border-amber-400 bg-white px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 hover:bg-amber-50"
+          className="ml-1 shrink-0 rounded-sm border border-amber-400 bg-white px-1.5 py-0.5 text-xs font-semibold text-amber-700 hover:bg-amber-50"
         >
           {item.evidence?.confirmation_required ? "Confirm" : "Ack"}
         </button>
@@ -106,7 +106,7 @@ export function ValidationPanel({ result, loading, acknowledgedRules, onAck }: P
   if (allItems.length === 0) {
     return (
       <div className="flex items-center gap-2 rounded-sm border border-green-300 bg-green-50 px-3 py-2 text-xs text-green-800">
-        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-green-600 text-[9px] font-bold text-white">✓</span>
+        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-green-600 text-xs font-bold text-white">✓</span>
         All pre-dispatch checks pass. Ready to book.
       </div>
     );

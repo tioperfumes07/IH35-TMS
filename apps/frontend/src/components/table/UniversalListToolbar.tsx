@@ -190,7 +190,7 @@ export function UniversalListToolbar({
         >
           <SlidersHorizontal className={TOOLBAR_ICON_SIZE_CLASS} aria-hidden />
           Range
-          {range?.key ? <span className="rounded-full bg-[#1F2A44] px-1 text-[10px] text-white">1</span> : null}
+          {range?.key ? <span className="rounded-full bg-[#1F2A44] px-1 text-xs text-white">1</span> : null}
         </Button>
         {open ? (
           <div className="absolute left-0 z-30 mt-1 w-[min(520px,90vw)] space-y-3 rounded-sm border border-gray-200 bg-white p-3 shadow-lg">

@@ -114,7 +114,7 @@ export function CatalogQuickCreateDrawer({
         data-testid="catalog-quick-create-drawer"
       >
         {/* Provenance, visible to the operator: this create writes the same table the list reads. */}
-        <p className="text-[10px] text-[#64748b]" data-testid="catalog-quick-create-target">
+        <p className="text-xs text-[#64748b]" data-testid="catalog-quick-create-target">
           Saves to {config.writeTable}
         </p>
 
@@ -146,7 +146,7 @@ export function CatalogQuickCreateDrawer({
                 onChange={(e) => setValues((prev) => ({ ...prev, [field.name]: e.target.value }))}
               />
             )}
-            {field.help ? <span className="mt-0.5 block text-[10px] text-[#64748b]">{field.help}</span> : null}
+            {field.help ? <span className="mt-0.5 block text-xs text-[#64748b]">{field.help}</span> : null}
           </label>
         ))}
 

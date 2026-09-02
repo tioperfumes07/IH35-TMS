@@ -401,7 +401,7 @@ export function Combobox({
             className="overflow-auto rounded-sm border border-gray-200 bg-white shadow-md"
           >
             {loading ? (
-              <div className="flex items-center gap-2 px-2 py-2 text-[13px] text-gray-600">
+              <div className="flex items-center gap-2 px-2 py-2 text-xs text-gray-600">
                 <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-500" />
                 Loading...
               </div>
@@ -418,7 +418,7 @@ export function Combobox({
                   closeListbox();
                 }}
                 onMouseEnter={() => setActiveIndex(0)}
-                className={`w-full border-b border-gray-100 px-2 py-1.5 text-left text-[13px] font-medium ${
+                className={`w-full border-b border-gray-100 px-2 py-1.5 text-left text-xs font-medium ${
                   activeIndex === 0 ? "bg-slate-100 text-slate-700" : "text-slate-600 hover:bg-gray-50"
                 }`}
               >
@@ -426,7 +426,7 @@ export function Combobox({
               </button>
             ) : null}
             {!loading && filteredOptions.length === 0 && !showAddNew ? (
-              <div className="px-2 py-2 text-[13px] text-gray-500">No matches</div>
+              <div className="px-2 py-2 text-xs text-gray-500">No matches</div>
             ) : null}
             {!loading && localBrowseTruncated ? (
               <div
@@ -453,7 +453,7 @@ export function Combobox({
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => commitSelection(option.value, option)}
                     onMouseEnter={() => setActiveIndex(listIndex)}
-                    className={`w-full px-2 py-1.5 text-left text-[13px] ${
+                    className={`w-full px-2 py-1.5 text-left text-xs ${
                       activeIndex === listIndex ? "bg-slate-100 text-slate-700" : "text-gray-800 hover:bg-gray-50"
                     }`}
                   >
@@ -521,7 +521,7 @@ export function Combobox({
           aria-controls={listboxId}
           aria-autocomplete="list"
           aria-invalid={Boolean(error)}
-          className="w-full bg-transparent text-[13px] outline-hidden placeholder:text-gray-400 disabled:cursor-not-allowed"
+          className="w-full bg-transparent text-xs outline-hidden placeholder:text-gray-400 disabled:cursor-not-allowed"
         />
         {allowClear && value ? (
           <button
