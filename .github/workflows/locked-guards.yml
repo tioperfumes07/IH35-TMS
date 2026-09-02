@@ -1401,6 +1401,12 @@ jobs:
       - name: verify:inventory-reorder-threshold-ui
         run: node scripts/verify-inventory-reorder-threshold-ui.mjs
 
+      # GO-21 B12 — blocked booking saves name the exact stop/rule and focus the first failure
+      - name: verify:book-load-stop-validation-honesty --selftest
+        run: node scripts/verify-book-load-stop-validation-honesty.mjs --selftest
+      - name: verify:book-load-stop-validation-honesty
+        run: node scripts/verify-book-load-stop-validation-honesty.mjs
+
       # GO-20 D — persistent cargo incident lifecycle from reading UUID through worker/API/UI/attention
       - name: verify:go20-cargo-incidents --selftest
         run: node scripts/verify-go20-cargo-incidents.mjs --selftest
