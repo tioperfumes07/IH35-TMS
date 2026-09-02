@@ -1,0 +1,35 @@
+name: go26-consolidation-ratchet
+
+# Dedicated check for the GO-26 consolidation guard (owner ruling 2026-09-02): freezes
+# imports of the 3 trapping pickers + 3 legacy table components, raw <table> outside the
+# 6 infra files, and off-scale text-[Npx], before the 277-file K2/J1 conversion starts.
+# Same pattern as ui-design-system-ratchet.yml (step 10230) — a fast, no-npm-ci job so
+# a squash-merge can't silently land past a red script buried inside verify:pre-commit.
+#
+# This workflow reports a status check but is NOT yet a required branch-protection
+# context — that needs scripts/ci-apply-branch-protection.mjs, which is explicitly
+# OWNER HANDOFF ONLY (refuses to run without JORGE_AUTHORIZED_BRANCH_PROTECTION_APPLY=YES
+# and a GH_ADMIN_TOKEN). This PR adds go26-consolidation-ratchet to the config's
+# `contexts` list; the owner runs the apply script to make it bypass=never like the
+# ui-design-system-ratchet check already is.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  go26-consolidation-ratchet:
+    name: go26-consolidation-ratchet
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: verify-go26-consolidation-ratchet --selftest
+        run: node scripts/verify-go26-consolidation-ratchet.mjs --selftest
+      - name: verify-go26-consolidation-ratchet
+        run: node scripts/verify-go26-consolidation-ratchet.mjs
