@@ -256,6 +256,7 @@ import { registerLiabilitiesRoutes } from "./liabilities/liabilities.routes.js";
 import { registerBankTxCategorizationRoutes } from "./banking/categorization.routes.js";
 import { registerCategorizationRulesRoutes } from "./banking/categorization-rules.routes.js";
 import { registerBankingRoutes } from "./banking/banking.routes.js";
+import { registerBankingDriftAlertsRoutes } from "./banking/drift-alerts.routes.js";
 import { registerBankAccountCompanyAuditRoutes } from "./banking/integrity/account-company-audit.routes.js";
 import { registerAccountBalanceRoutes } from "./banking/account-balance.routes.js";
 import { registerPlaidLinkRoutes } from "./integrations/plaid/link.routes.js";
@@ -398,6 +399,7 @@ import { initializeQboSyncQueueRunner } from "./cron/qbo-sync-queue-runner.js";
 import { initializeQboInboundSyncCron, stopQboInboundSyncCron } from "./cron/qbo-inbound-sync.cron.js";
 import { initializeQboCdcPollCron } from "./cron/qbo-cdc-poll.cron.js";
 import { initializeDepreciationAutopostCron } from "./cron/depreciation-autopost.cron.js";
+import { initializeBankDriftAlertsCron } from "./cron/bank-drift-alerts.cron.js";
 import { initializeCashFlowProjectionSnapshotCron } from "./cron/cash-flow-projection-snapshot.cron.js";
 import { initializeRecurringTemplatesCron } from "./cron/recurring-templates.cron.js";
 import { initializeRecurringBillGeneratorWorker, stopRecurringBillGeneratorWorker } from "./jobs/recurring-bill-generator-worker.js";
@@ -1068,6 +1070,7 @@ async function main() {
   // ACCT-LINK-06 — apply-historical + rules CRUD (was orphan HELD; owner live-ops 2026-07-30).
   await registerCategorizationRulesRoutes(app);
   await registerBankingRoutes(app);
+  await registerBankingDriftAlertsRoutes(app);
   await registerBankAccountCompanyAuditRoutes(app);
   await registerPlaidBankingItemsRoutes(app);
   await registerAccountBalanceRoutes(app);
@@ -1254,6 +1257,15 @@ async function main() {
       app.log.info("[STARTUP] depreciation-autopost cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] depreciation-autopost cron failed");
+    }
+
+    try {
+      // GO-20 slice A — nightly leg of the drift detector (the other leg runs synchronously after
+      // every reconciliation-session finalize, apps/backend/src/banking/p7-wave2.routes.ts).
+      initializeBankDriftAlertsCron(app);
+      app.log.info("[STARTUP] bank-drift-alerts cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] bank-drift-alerts cron failed");
     }
 
     try {

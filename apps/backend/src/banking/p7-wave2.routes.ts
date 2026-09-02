@@ -7,6 +7,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { findCandidates } from "../accounting/bank-recon/match.service.js";
 import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
 import { supersedePlaidPendingByExactPostedCandidate } from "./bank-tx-dedup.js";
+import { runDriftDetectors } from "./drift-alerts.service.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 
@@ -543,6 +544,10 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
         return;
       }
       await appendCrudAudit(client, user.uuid, "banking.reconciliation_finalized", { id: params.data.id }, "info", "P7-W2-BANK");
+      // GO-20 slice A — "A detector that runs after every reconciliation finalize and once
+      // nightly." Never posts a journal entry; only reads sessions/balances and writes drift-alert
+      // rows in the same scoped client/transaction as the finalize itself.
+      await runDriftDetectors(client, body.data.operating_company_id);
     });
     if (reply.sent) return;
     return { ok: true };
