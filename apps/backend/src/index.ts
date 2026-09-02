@@ -509,6 +509,7 @@ import { registerBillPaymentGlRoutes } from "./accounting/bill-payment-gl.routes
 import { registerRelatedPartyLoanRoutes } from "./accounting/related-party-loan-posting/routes.js";
 import { registerCashForecastManualRoutes } from "./forecast/cash-forecast-manual.routes.js";
 import { registerGeocodingRoutes } from "./integrations/trimble/geocoding.routes.js";
+import { registerGooglePlacesRoutes } from "./integrations/google/places.routes.js";
 import { registerSafetyOfficerRoleHomeRoutes } from "./safety-officer/role-views/routes.js";
 import { registerDriverManagerRoleHomeRoutes } from "./driver-manager/role-views/routes.js";
 import { initializeTodaysAttentionWorker, stopTodaysAttentionWorker } from "./jobs/todays-attention-worker.js";
@@ -792,6 +793,9 @@ async function main() {
   // PC*MILER/Trimble geocoding proxy — always mounts; PCMILER_ENABLED flag is checked inside the handler
   // (registration must NOT depend on an env var — that 404'd the forecast routes). Key stays server-side.
   await registerGeocodingRoutes(app);
+  // Google address-autocomplete proxy (RULING 3, 2026-09-02) — address field only, never miles.
+  // Same always-mounts / gate-inside-handler shape as the Trimble route above.
+  await registerGooglePlacesRoutes(app);
   await registerQboSyncAlertsRoutes(app);
   await registerQboSyncRunsListRoutes(app);
   await registerQboSyncConflictDetectionRoutes(app);
