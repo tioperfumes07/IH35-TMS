@@ -193,7 +193,7 @@ function renderPickupTimeCell(load: DispatchLoadRow) {
 }
 
 function renderDeliveryDateCell(load: DispatchLoadRow) {
-  const date = formatStopDate(load.delivery_scheduled_at, load.delivery_appointment_start_at);
+  const date = formatStopDate(load.effective_delivery_date, load.delivery_appointment_start_at);
   const late = Boolean(load.delivery_late_vs_appt);
   if (!date) return "—";
   return (
@@ -207,7 +207,7 @@ function renderDeliveryDateCell(load: DispatchLoadRow) {
 function renderDeliveryTimeCell(load: DispatchLoadRow) {
   return formatStopTime(
     load.delivery_time_window_type,
-    load.delivery_scheduled_at,
+    load.effective_delivery_date,
     load.delivery_appointment_start_at
   );
 }
@@ -340,11 +340,11 @@ function dispatchSortValue(load: BoardLoad, key: string): string | number | null
         : (load.pickup_appointment_start_at ?? load.pickup_scheduled_at ?? null);
     case "delivery": return load.first_delivery_city ?? null;
     case "delivery_date":
-      return load.delivery_scheduled_at ?? load.delivery_appointment_start_at ?? null;
+      return load.effective_delivery_date ?? load.delivery_appointment_start_at ?? null;
     case "delivery_time":
       return load.delivery_time_window_type === "open_window"
         ? "FCFS"
-        : (load.delivery_appointment_start_at ?? load.delivery_scheduled_at ?? null);
+        : (load.effective_delivery_date ?? load.delivery_appointment_start_at ?? null);
     case "wo": return load.customer_wo_number ?? null;
     case "linehaul": return load.rate_total_cents ?? null;
     case "status": return load.status ?? null;
