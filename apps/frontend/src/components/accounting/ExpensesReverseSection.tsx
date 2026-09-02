@@ -54,7 +54,7 @@ export function ExpensesReverseSection({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-slate-900">
           Expenses
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
@@ -79,15 +79,15 @@ export function ExpensesReverseSection({
           </Link>
         </span>
       </div>
-      {expensesQ.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {expensesQ.isError ? <p className="text-sm text-red-600">Could not load expenses for {contextLabel}.</p> : null}
+      {expensesQ.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
+      {expensesQ.isError ? <p className="text-xs text-red-600">Could not load expenses for {contextLabel}.</p> : null}
       {!expensesQ.isLoading && !expensesQ.isError && rows.length === 0 ? (
-        <p className="text-sm text-gray-500">No expenses linked to {contextLabel}.</p>
+        <p className="text-xs text-gray-500">No expenses linked to {contextLabel}.</p>
       ) : null}
       {rows.length > 0 ? (
         <ul className="space-y-2">
           {rows.map((row) => (
-            <li key={row.id} className="text-sm text-slate-700" data-testid={`expense-reverse-${row.id}`}>
+            <li key={row.id} className="text-xs text-slate-700" data-testid={`expense-reverse-${row.id}`}>
               {/* TRAILER-EXPENSE-REVERSE-LABEL-NOT-VISIBLE — this row is already fetched and
                   rendering right here with real date/amount/status/vendor data; `entityLabel`'s
                   "Expense — not visible" fallback is for an UNRESOLVED cross-entity join, not a
