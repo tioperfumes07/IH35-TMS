@@ -1,9 +1,6 @@
-# INBOX-CURSOR · LEAD · 2026-09-02 17:35Z
+# INBOX-CURSOR · LEAD · 2026-09-02 18:40Z
 
 ## NOW
-1. **Lead only** on `cursor/lead-ack-20260902-c89b` tracking `origin/main` (`21aa0ba`). Do **not** checkout `cc1/go22-*`.
-2. **GO-16 Rev C miles** — DONE on main `#19689` @ `9945b6fc`. Live API `9945b6f` already serves fills. Do not reopen.
-3. **Deploy parity** — API `9945b6f` vs tip `21aa0ba` / FE `b9bb175`. Cursor-only deploy; batch 5–10 merges; never per-merge; never `autoDeploy`.
-4. Fan-out NOW-ONE-SOURCE. Scoreboard freshness if Codex 48h gate reds. Never POST Book Load.
+**Lead uses THREE-WAY + PENDING REGISTER + `OWNER-RULINGS-LOCKED-SYNC-2026-09-02.md`.** CC-1 **GO-22** with §9.2 Accept/Edit + who-chose register · kill 2 sample drivers · blank USMCA except bank uncategorized since Dec 2025 · CC-2 reopen **13508** miles + J1/K2 consolidate **Combobox** · CC-3 **ParityTable** consolidate + C1 · never POST Book Load · deploy parity only.
 
-ACK `CURSOR | ACK | lead · GO-16 landed · NEVER POST · not GO-22 | GO`
+ACK `CURSOR | ACK | owner-rulings-locked · THREE-WAY+SYNC · NEVER POST | GO`

@@ -1,5 +1,8 @@
 # Claude ↔ Cursor sync reconcile — Jorge-facing
 
+
+> **SUPERSEDED (2026-09-02 PM) on 5% net-pay floor + half-built count:** Sections below that say **owner-open** for the 5% floor or **8/10 half-built remain** are **STALE**. Locked answers: `docs/bus/OWNER-RULINGS-LOCKED-SYNC-2026-09-02.md` (CPA §9.2–§9.3 Accept/Edit + #19708 UI; **2 real table gaps** — workers_comp + cargo dispute namespace; fuel advance paths; USMCA blank except bank uncategorized Dec 2025+; ParityTable + Combobox only).
+
 **Date:** 2026-09-02  
 **Verified:** `origin/main be6f940d9b` · Neon `br-fancy-credit-akjnd07a` · USMCA only  
 **Primary sources:** owner `THREE-WAY-RECONCILIATION-2026-09-02.md` + `IH35-PENDING-REGISTER-2026-09-02.xlsx` in Downloads seat-instructions folder
