@@ -1,6 +1,6 @@
 # OUTBOX-CC-2 · working log (archive older: `docs/bus/archive/OUTBOX-CC-2-2026-09-01.md`)
 
-FORCE NOW | READ INBOX-CC-2 | NOW=SUBLEDGER-GL-TIEOUT-EVERY-CONTROL verify-live | VOID B-2/F7316/GO-ACCT-01 | NEVER #19305 | GO
+FORCE NOW | READ INBOX-CC-2 | NOW=verify-live escrow after CC-1 OR SUBLEDGER-GL-TIEOUT · NOT watch | NEVER invent 24 | NEVER #19305 | GO
 
 ---
 
