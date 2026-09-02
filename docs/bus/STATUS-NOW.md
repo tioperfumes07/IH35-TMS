@@ -1,12 +1,12 @@
-# STATUS-NOW · LEAD CENSUS · 2026-09-02 18:02 CT
+# STATUS-NOW · LEAD CENSUS · 2026-09-02 18:06 CT
 
-Idle = defect. Tip `a0da06355e` (#19852). **API LIVE** `102a380c69`. **E1 FE LIVE** `c389ddc0ee`. Census FE auto-deploys — do not `trigger_deploy` API.
+Idle = defect. Tip `c705b52951` (#19853 deadhead). API GO-06 live `102a380c69`. **Triggered API deploy** `dep-dacanm7avr4c73fpobmg` for chain-deadhead. FE deadhead already live. Do not pile another API trigger.
 
 | Seat | Live check | Verdict | Forced NOW |
 |------|------------|---------|------------|
-| **CC-1** | last ship 17:41 | **STALE vs GO-23** | A1 data claimed live by CC-3 (`non_owned_trailers`). **NOW N1 remaining (NULL expense numbers)** then miles. NEVER POST |
-| **CC-2** | last OUTBOX **16:40** | **STALE** | **Chrome E1 + Load costs + GO-06** (all live). Then deadhead → QBO → J1. NEVER POST |
-| **CC-3** | ACK 17:57 — A1 screen already live #19609 | **WORKING / waiting** | Do not rebuild A1. **Wave 4 C1** remaining raw UUIDs (27 actionable). NEVER POST |
-| **Codex** | still pending Costs | **WRONG ROW** | Drop Costs. **A3/B12**. NEVER POST |
-| **Cascade** | OUTBOX empty | **IDLE DEFECT** | FINDING file:line THIS TURN. NEVER BUILD |
-| **Cursor** | this census | **WORKING** | Stay off A1/N1/C1. NEVER POST |
+| **CC-1** | last ship 17:41 | **STALE vs GO-23** | **N1 remaining**. NEVER POST |
+| **CC-2** | #19853 merged | **WORKING** | Chrome E1+costs+GO-06; Chrome chain-deadhead after API live; **QBO → J1**. NEVER POST |
+| **CC-3** | ACK 17:57 A1 closed | **NEEDS C1** | Wave 4 C1 remaining UUIDs. NEVER POST |
+| **Codex** | still pending Costs | **WRONG ROW** | A3/B12. NEVER POST |
+| **Cascade** | OUTBOX empty | **IDLE DEFECT** | FINDING this turn. NEVER BUILD |
+| **Cursor** | API deploy this turn | **WORKING** | Stay off N1/C1. NEVER POST |
