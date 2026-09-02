@@ -40,18 +40,18 @@ const SEVERITY_LABELS: Record<DriverTerminationSeverity, string> = {
 function severityBadgeClass(severity: DriverTerminationSeverity) {
   switch (severity) {
     case "severe":
-      return "rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700";
+      return "rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700";
     case "warning":
-      return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
+      return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700";
     default:
-      return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
+      return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700";
   }
 }
 
 function statusPillClass(isActive: boolean) {
   return isActive
-    ? "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
-    : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
+    ? "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
+    : "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600";
 }
 
 type FormState = {
