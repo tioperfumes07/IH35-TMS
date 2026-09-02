@@ -1,7 +1,6 @@
 {
   "note": "Guards whose --selftest predates verify-selftests-can-fail and cannot currently fail. RATCHET: this list may only SHRINK. Fix one by making its selftest run the real assertion against a planted-bad fixture (or mutated real source), then remove its line.",
   "debt": [
-    "verify-compliance-tabs-url-sync.mjs",
     "verify-dispute-queue-entitylink-reverse.mjs",
     "verify-faro-import-linkage.mjs",
     "verify-owner-home-linkage.mjs",

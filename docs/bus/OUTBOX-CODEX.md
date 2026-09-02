@@ -1,5 +1,6 @@
 # ★ OUTBOX-CODEX · LIVE TOP · GO-20 · 2026-09-02
 
+CODEX | WORKING | B3-COMPLIANCE-TABS-SELFTEST-INERT | root=selftest tested String.includes instead of the guard assertions | proof=target selftest + meta-guard PASS; debt 5→4 | PR=pending | GO
 CODEX | WORKING | B3-SELFTEST-META-GUARD-INERT | root=top-level selftest bypassed verify-selftests-can-fail function-body classifier | proof=target selftest PASS + meta-guard PASS | routed=Cursor legacy form425 tracked-source debt exposed separately | PR=pending | GO
 CODEX | WORKING | CI-EIGHT-NEW-GUARDS-ORPHANED-AND-CARGO-GUARD-REJECTED-VALID-MAINTENANCE-WORKER | guard-wired orphan 8→0 | eight normal+selftest PASS | PR=pending | GO
 CODEX | WORKING | CI-BOOKLOAD-CUSTOMER-LABEL-GUARD-STILL-EXPECTED-LEGACY-SHAPE | root=guard required removed name/customer_code expression after typed display_name adoption | guard=normal+selftest PASS | PR=#19672 merged | GO

@@ -47,10 +47,16 @@ function run() {
 }
 
 function selftest() {
-  const planted = 'const [tab, setTab] = useState<ComplianceTab>("filings");\n';
-  if (!planted.includes('useState<ComplianceTab>("filings")')) {
-    throw new Error(`${LABEL}: selftest fixture broken`);
+  const forbidden = 'useState<ComplianceTab>("filings")';
+  let caught = false;
+  try {
+    assertNotContains(`const [tab, setTab] = ${forbidden};`, forbidden);
+  } catch (error) {
+    caught = error instanceof Error && error.message.includes("forbidden");
   }
+  if (!caught) throw new Error(`${LABEL}: planted local-only tab state escaped assertNotContains`);
+
+  assertContains('searchParams.get("tab")', 'searchParams.get("tab")');
   console.log(`${LABEL}: selftest PASS`);
 }
 
