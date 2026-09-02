@@ -1,5 +1,15 @@
 # Design — Stop → Location Catalog (address validation / consistency)
 
+> **SUPERSEDED (2026-09-02, GO-24, owner ruling via INBOX-CC-3).** This doc proposed a NEW
+> `catalogs.locations` table (§2 below) as design-only, never built. **The real thing already
+> existed the whole time as `mdata.locations`** (27 rows live, 9 for USMCA) with `location_type`,
+> `linked_customer_id`/`linked_vendor_id`, geocoding fields, contacts, and a live FK already on
+> `mdata.load_stops.location_id` — none of which needed this doc's proposed schema or an owner
+> migration ceremony. `GET`/`POST /api/v1/mdata/locations` (`apps/backend/src/mdata/locations.routes.ts`)
+> was already mounted, unused by any picker. GO-24 wired the actual Book Load stop picker against
+> `mdata.locations` (see `LocationPicker.tsx`, PR #19661) — **never create `catalogs.locations`.**
+> Kept below, never-delete, for historical reference only — do not build against §2's schema.
+
 **Block covered:** 0251-gap21 (link stops to a location catalog for address validation/consistency).
 **Status:** DESIGN ONLY. **Classification:** dispatch/operational in nature, but needs a new
 `catalogs.*`/`mdata.*` table + an FK on `mdata.load_stops` → migration → gated (§1.3). tier-3.
