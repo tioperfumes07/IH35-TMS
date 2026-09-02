@@ -53,14 +53,6 @@ import { listDispatchFlagColors } from "../../api/catalogs";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { getOfficeTransitionButtons, loadCanMarkInvoiced, type OfficeTransitionButton } from "@ih35/shared-types";
 
-type Props = {
-  loadId: string | null;
-  isOpen: boolean;
-  canEdit: boolean;
-  operatingCompanyId?: string;
-  onClose: () => void;
-};
-
 const tabs = [
   "Overview",
   "Stops",
@@ -77,6 +69,15 @@ const tabs = [
   "Costs",
 ] as const;
 type DrawerTab = (typeof tabs)[number];
+
+type Props = {
+  loadId: string | null;
+  isOpen: boolean;
+  canEdit: boolean;
+  operatingCompanyId?: string;
+  initialTab?: DrawerTab;
+  onClose: () => void;
+};
 
 // RENDER-load-side-panel B1a: the Overview mirrors the Book Load wizard sections (read-only) so the
 // dispatcher sees the load the way it was booked, with a per-section "Edit ▸" into the prefilled wizard.
@@ -147,10 +148,13 @@ function serializeFactoringPackageNotes(meta: FactoringPackageMeta, visibleNotes
   return `${FACTORING_PACKAGE_META_PREFIX}${JSON.stringify(meta)}\n${visibleNotes.trim()}`.trim();
 }
 
-export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, onClose }: Props) {
+export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, initialTab = "Overview", onClose }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<DrawerTab>("Overview");
+  const [activeTab, setActiveTab] = useState<DrawerTab>(initialTab);
+  useEffect(() => {
+    if (isOpen) setActiveTab(initialTab);
+  }, [initialTab, isOpen, loadId]);
   // Block 7 — Edit opens the FULL Book/Edit wizard (BookLoadModalV4) pre-filled, replacing the old
   // rate+notes inline stub (which could only edit those two fields). The wizard is a superset.
   const [editWizardOpen, setEditWizardOpen] = useState(false);

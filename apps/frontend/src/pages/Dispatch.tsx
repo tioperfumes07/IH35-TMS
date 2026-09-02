@@ -629,6 +629,7 @@ export function DispatchPage({
         isOpen={Boolean(loadId)}
         canEdit={canEdit}
         operatingCompanyId={defaultCompanyIds[0] ?? ""}
+        initialTab={searchParams.get("tab") === "Costs" ? "Costs" : "Overview"}
         onClose={() => {
           setPinnedLoadId(null);
           // On the canonical route the load id lives in the PATH — deleting a query param there
