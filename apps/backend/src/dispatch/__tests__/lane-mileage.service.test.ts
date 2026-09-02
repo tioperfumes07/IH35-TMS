@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { provenanceFromRow, resolveLaneMileage, type LaneMileageRow } from "../lane-mileage.service.js";
+import {
+  fillConfidenceFromRow,
+  mileageSourceFromFill,
+  provenanceFromRow,
+  resolveLaneMileage,
+  type LaneMileageRow,
+} from "../lane-mileage.service.js";
 
 function row(partial: Partial<LaneMileageRow>): LaneMileageRow {
   return {
@@ -36,7 +42,9 @@ function clientFrom(rowsByKind: { zip?: LaneMileageRow; city?: LaneMileageRow; r
       if (sql.includes("lower(origin_city) = lower($2)")) {
         const origin = String(values?.[1] ?? "");
         const dest = String(values?.[3] ?? "");
-        if (origin === "Chicago" && dest === "Laredo") return { rows: rowsByKind.reverse ? [rowsByKind.reverse] : [] };
+        if (origin === "Chicago" && dest === "Laredo") {
+          return { rows: rowsByKind.reverse ? [rowsByKind.reverse] : [] };
+        }
         return { rows: rowsByKind.city ? [rowsByKind.city] : [] };
       }
       return { rows: [] };
@@ -44,21 +52,43 @@ function clientFrom(rowsByKind: { zip?: LaneMileageRow; city?: LaneMileageRow; r
   };
 }
 
-describe("resolveLaneMileage", () => {
-  it("fills only when autofill is allowed (Laredo to Denton)", async () => {
+describe("resolveLaneMileage — GO-16 Rev C (fill all bands)", () => {
+  it("High: fills and stays high (Laredo → Denton)", async () => {
     const result = await resolveLaneMileage(clientFrom({ city: row({}) }), "5c854333-6ea5-4faa-af31-67cb272fef80", {
       origin_city: "Laredo",
       origin_state: "TX",
       dest_city: "Denton",
       dest_state: "TX",
     });
-    expect(result.autofill_allowed).toBe(true);
-    expect(result.match).toBe("City match");
+    expect(result.fills).toBe(true);
+    expect(result.fill_confidence).toBe("high");
+    expect(result.autofill_allowed).toBe(true); // audit mirror unchanged
     expect(result.practical_miles).toBe(456.7);
-    expect(result.provenance).toMatch(/34 prior runs/);
+    expect(result.provenance).toMatch(/From history/);
+    expect(mileageSourceFromFill(result.fill_confidence)).toBe("History");
   });
 
-  it("returns a hint and blocks fill on Check ZIP (Laredo to Chicago)", async () => {
+  it("Thin: fills with verify (was blocked under Rev B)", async () => {
+    const thin = row({
+      confidence: "Thin",
+      autofill_allowed: false,
+      n_practical: 1,
+      practical_spread: 2,
+    });
+    const result = await resolveLaneMileage(clientFrom({ city: thin }), "5c854333-6ea5-4faa-af31-67cb272fef80", {
+      origin_city: "Laredo",
+      origin_state: "TX",
+      dest_city: "Denton",
+      dest_state: "TX",
+    });
+    expect(result.fills).toBe(true);
+    expect(result.fill_confidence).toBe("verify");
+    expect(result.autofill_allowed).toBe(false); // DB flag untouched / audit
+    expect(result.provenance).toMatch(/verify/i);
+    expect(mileageSourceFromFill(result.fill_confidence)).toBe("History — verify");
+  });
+
+  it("Check ZIP: fills but flagged (Laredo → Chicago)", async () => {
     const chicago = row({
       dest_city: "Chicago",
       dest_state: "IL",
@@ -75,12 +105,15 @@ describe("resolveLaneMileage", () => {
       dest_city: "Chicago",
       dest_state: "IL",
     });
+    expect(result.fills).toBe(true);
+    expect(result.fill_confidence).toBe("check_zip");
     expect(result.autofill_allowed).toBe(false);
-    expect(result.provenance).toMatch(/Enter ZIP to narrow/);
-    expect(result.provenance).toMatch(/spread 351/);
+    expect(result.provenance).toMatch(/ZIP mismatch/i);
+    expect(result.provenance).toMatch(/351/);
+    expect(mileageSourceFromFill(result.fill_confidence)).toBe("History — ZIP mismatch, verify");
   });
 
-  it("labels reverse as a hint and never sets autofill", async () => {
+  it("reverse lane: fills and labelled reverse (Rev C contract change from Rev B)", async () => {
     const reverse = row({
       origin_city: "Chicago",
       origin_state: "IL",
@@ -98,11 +131,38 @@ describe("resolveLaneMileage", () => {
       dest_state: "IL",
     });
     expect(result.match).toBe("From the reverse lane");
-    expect(result.autofill_allowed).toBe(false);
-    expect(result.provenance).toMatch(/From the reverse lane/);
+    expect(result.fills).toBe(true);
+    expect(result.fill_confidence).toBe("reverse");
+    expect(result.provenance).toMatch(/reverse lane/i);
+    expect(mileageSourceFromFill(result.fill_confidence)).toBe("History — verify");
   });
 
-  it("returns New lane for same-city (Laredo to Laredo)", async () => {
+  it("no miles on row: does not fill", async () => {
+    const empty = row({ practical_miles: null, short_miles: null, confidence: "Thin", autofill_allowed: false });
+    const result = await resolveLaneMileage(clientFrom({ city: empty }), "5c854333-6ea5-4faa-af31-67cb272fef80", {
+      origin_city: "Laredo",
+      origin_state: "TX",
+      dest_city: "Denton",
+      dest_state: "TX",
+    });
+    expect(result.fills).toBe(false);
+    expect(result.fill_confidence).toBe("none");
+    expect(result.practical_miles).toBeNull();
+  });
+
+  it("unknown lane: New lane, no fill", async () => {
+    const result = await resolveLaneMileage(clientFrom({}), "5c854333-6ea5-4faa-af31-67cb272fef80", {
+      origin_city: "Laredo",
+      origin_state: "TX",
+      dest_city: "Nowhere",
+      dest_state: "TX",
+    });
+    expect(result.match).toBe("New lane");
+    expect(result.fills).toBe(false);
+    expect(result.provenance).toBe("New lane. Enter the miles.");
+  });
+
+  it("same-city: New lane", async () => {
     const result = await resolveLaneMileage(clientFrom({ city: row({}) }), "5c854333-6ea5-4faa-af31-67cb272fef80", {
       origin_city: "Laredo",
       origin_state: "TX",
@@ -110,11 +170,10 @@ describe("resolveLaneMileage", () => {
       dest_state: "TX",
     });
     expect(result.match).toBe("New lane");
-    expect(result.autofill_allowed).toBe(false);
-    expect(result.provenance).toBe("New lane. Enter the miles.");
+    expect(result.fills).toBe(false);
   });
 
-  it("never 500-shapes a miss: empty cities are New lane", async () => {
+  it("empty cities: New lane (never 500-shape)", async () => {
     const result = await resolveLaneMileage(clientFrom({}), "5c854333-6ea5-4faa-af31-67cb272fef80", {
       origin_city: "",
       origin_state: "TX",
@@ -122,6 +181,12 @@ describe("resolveLaneMileage", () => {
       dest_state: "TX",
     });
     expect(result.match).toBe("New lane");
+  });
+
+  it("stray High with autofill_allowed=false still fills as high (fix the DATA row, not the code)", () => {
+    const stray = row({ confidence: "High", autofill_allowed: false });
+    expect(fillConfidenceFromRow(stray, "City match")).toBe("high");
+    expect(provenanceFromRow(stray, "City match")).toMatch(/From history/);
   });
 });
 

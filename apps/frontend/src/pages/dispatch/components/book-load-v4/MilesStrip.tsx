@@ -1,10 +1,15 @@
+import type { LaneMileageFillConfidence } from "../../../../api/dispatch";
+
 type Props = {
   practical?: number;
   shortest?: number;
   deadhead?: number;
   /** Linehaul divided by practical miles. Not the customer invoice basis. */
   ratePerMile?: number;
+  /** Operator-facing fill label from the lane lookup (or "Operator entered"). */
   provenance?: string;
+  /** Drives warning chrome. check_zip must stay visible — those miles feed pay. */
+  fillConfidence?: LaneMileageFillConfidence | "operator";
   onPracticalChange?: (n: number) => void;
   onShortestChange?: (n: number) => void;
   onDeadheadChange?: (n: number) => void;
@@ -25,10 +30,26 @@ function inputValue(n: number): string {
   return Number.isFinite(n) && n > 0 ? String(n) : "";
 }
 
+function provenanceClass(fillConfidence?: LaneMileageFillConfidence | "operator"): string {
+  switch (fillConfidence) {
+    case "check_zip":
+      // §7 slate only (no amber). Weight + border make ZIP mismatch louder than a quiet History fill.
+      return "border-t border-slate-400 bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-900";
+    case "verify":
+    case "reverse":
+      return "border-t border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600";
+    case "operator":
+      return "border-t border-slate-200 px-2 py-1 text-xs text-slate-700";
+    default:
+      return "border-t border-slate-200 px-2 py-1 text-xs text-slate-600";
+  }
+}
+
 /**
  * Practical miles drive revenue per mile (typed linehaul / practical).
  * Short miles drive driver pay. Empty miles are deadhead into the pickup.
  * Operator labels are English words only (owner 2026-09-01). Column names stay on the wire.
+ * GO-16 Rev C / CC-3: provenance under the boxes; Check ZIP stays bold and visible (§7 slate).
  */
 export function MilesStrip({
   practical = 0,
@@ -36,12 +57,14 @@ export function MilesStrip({
   deadhead = 0,
   ratePerMile = 0,
   provenance,
+  fillConfidence,
   onPracticalChange,
   onShortestChange,
   onDeadheadChange,
   shortestRequired = false,
   practicalRequired = false,
 }: Props) {
+  // fillConfidence drives chrome; provenance is the operator sentence.
   const cell = "flex flex-1 flex-col items-center justify-center border-r border-slate-200 px-2 py-2 text-center last:border-r-0";
   const editable = Boolean(onPracticalChange && onShortestChange);
   return (
@@ -119,9 +142,16 @@ export function MilesStrip({
         </div>
       </div>
       <p className="border-t border-slate-200 px-2 py-1 text-xs text-slate-600">
-        Customer pays the typed rate. Practical miles compute revenue per mile. Short miles pay the driver and already include empty miles.
-        {provenance ? ` ${provenance}` : ""}
+        Customer pays the typed rate. Practical miles compute revenue per mile. Short miles pay the driver and
+        already include empty miles.
       </p>
+      {provenance ? (
+        <p className={provenanceClass(fillConfidence)} data-testid="book-load-miles-provenance">
+          {fillConfidence === "check_zip"
+            ? `Filled from a lane whose ZIP does not match. Check these miles before you book. ${provenance}`
+            : provenance}
+        </p>
+      ) : null}
     </div>
   );
 }

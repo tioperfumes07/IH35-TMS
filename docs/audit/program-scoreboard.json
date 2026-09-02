@@ -1,8 +1,8 @@
 {
   "healthzSha": "10e2def",
-  "generated_at": "2026-09-02T16:43:21.200Z",
+  "generated_at": "2026-09-02T17:01:36.103Z",
   "meta": {
-    "generatedAt": "2026-08-31T10:22:35-05:00",
+    "generatedAt": "2026-09-02T17:01:36.103Z",
     "sourceSha": "237d06c610",
     "deployedSha": "10e2def",
     "prodReadAt": "2026-08-02 22:02 CDT",
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 19677,
+      "title": "FINDING: CI-EIGHT-NEW-GUARDS-ORPHANED-AND-CARGO-GUARD-REJECTED-VALID-MAINTENANCE-WORKER",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 11:53 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19677",
+      "sha": "1bff936b70",
+      "committedAtIso": "2026-09-02T11:53:12-05:00"
+    },
+    {
+      "number": 19684,
+      "title": "FINDING: regeneration could not refresh stored scoreboard timestamp",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 11:49 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19684",
+      "sha": "7ac98dc4e8",
+      "committedAtIso": "2026-09-02T11:49:34-05:00"
+    },
+    {
       "number": 19683,
       "title": "FINDING: defect-class counts re-derived + specs-vs-live schema sweep",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19674",
       "sha": "e62e465ad9",
       "committedAtIso": "2026-09-02T10:01:50-05:00"
-    },
-    {
-      "number": 19673,
-      "title": "@/private/tmp/claude-501/-Users-jorgemunoz-IH35-TMS-claude/126f94c4-6bb1-461c-bfe4-aabc41df2ef2/scratchpad/j1c/pr-body4.txt",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 09:59 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19673",
-      "sha": "9dc3bbdac3",
-      "committedAtIso": "2026-09-02T09:59:17-05:00"
-    },
-    {
-      "number": 19672,
-      "title": "FINDING: CI-BOOKLOAD-CUSTOMER-LABEL-GUARD-STILL-EXPECTED-LEGACY-SHAPE",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 09:57 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19672",
-      "sha": "4d39fe4ed1",
-      "committedAtIso": "2026-09-02T09:57:16-05:00"
     }
   ]
 }

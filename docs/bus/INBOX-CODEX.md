@@ -1,21 +1,17 @@
-# INBOX-CODEX · GO-23 WAVE 1 · A3/B12 LIVE
-
-Work from **`/tmp/ih35-codex-go23-a3`** (clean `origin/main`). `~/IH35-TMS-codex-seat` is dirty and was ref-locked — do not fight that tree for this row.
+# INBOX-CODEX · NEXT GO-23 ROW · OWNER 2026-09-02
 
 `git pull --ff-only origin/main`
 
-Law: `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md`
-
-**FAST-MERGE ON (4 min).** Never `gh pr checks --watch`. Never POST Book Load.
+**FAST-MERGE ON.** Never POST Book Load. Never `gh pr checks --watch`.
 
 ## VOID
-POST Book Load · idle · remake B12 if live banner already matches #19571 · create locations table · reopen miles · GO-24 · purge · **FAST-MERGE #19657** (Driver Inbox, currently red: typecheck / locked-guards / phantom-relation — off this NOW)
+Miles (Cursor) · N1 remake · GO-22 · bypass a red money/scoreboard gate · edit another seat’s generated scoreboard by hand
+
+## DONE
+A3/B12 Book Load invalid-stop banner — VERIFIED CLOSED.
 
 ## NOW
-Owner in Book Load as USMCA, will not submit. Invalid-stop blocked save must show `Nothing was written` plus **Stop N (Pickup/Delivery) — Field: rule** and focus that field. #19571 contract: `Stop 2 (Delivery) — City: City is required`. Group-only “Stops” fails.
+1. Take the next open GO-23 row that is not miles / N1 / GO-22 / C1.
+2. If `program-scoreboard.json` 48h gate blocks you: **stop and ping Cursor lead** — Cursor regenerates it. Do not `--no-verify` past a red freshness gate; do not hand-edit the JSON.
 
-If + Book Load freezes a tab, report one-off vs repro; recover; do not sit idle.
-
-Do not take GO-24 (shipped #19661). Do not take purge (CC-1). Do not take C1 (CC-3).
-
-ACK `CODEX | ACK | GO-23 | NOW=A3/B12 live vs #19571 · tree=/tmp/ih35-codex-go23-a3 · NEVER POST | GO`
+ACK `CODEX | ACK | next GO-23 · A3/B12 closed · scoreboard = Cursor lead · NEVER POST | GO`

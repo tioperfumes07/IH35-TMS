@@ -236,7 +236,13 @@ export type DispatchBookLoadPayload = {
   miles_practical?: number;
   miles_shortest?: number;
   miles_deadhead?: number;
-  mileage_source?: "History" | "Manual" | "Routing engine" | "Operator entered";
+  mileage_source?:
+    | "History"
+    | "History — verify"
+    | "History — ZIP mismatch, verify"
+    | "Manual"
+    | "Routing engine"
+    | "Operator entered";
   stop_count?: string;
   pickup_number?: string;
   border_routing?: string;
@@ -1478,6 +1484,8 @@ export function getLoadPodBolSummary(loadId: string, operatingCompanyId: string)
   );
 }
 
+export type LaneMileageFillConfidence = "high" | "verify" | "check_zip" | "reverse" | "none";
+
 export type LaneMileageLookupResult = {
   practical_miles: number | null;
   short_miles: number | null;
@@ -1486,7 +1494,11 @@ export type LaneMileageLookupResult = {
   short_runs: number | null;
   practical_spread: number | null;
   confidence: string | null;
+  /** Audit-only. Wizard fills on `fills` (GO-16 Rev C). */
   autofill_allowed: boolean;
+  /** True when practical_miles exists — Thin / High / Check ZIP / reverse all fill. */
+  fills: boolean;
+  fill_confidence: LaneMileageFillConfidence;
   match: "Matched by ZIP" | "City match" | "From the reverse lane" | "New lane";
   provenance: string;
   matched_lane_id: string | null;

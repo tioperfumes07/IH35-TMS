@@ -1,5 +1,7 @@
 /**
- * GO-16 Rev B — lane mileage lookup. History first. Fill only when autofill_allowed.
+ * GO-16 Rev C — lane mileage lookup. History first.
+ * Owner 2026-09-02: EVERY lane with stored practical miles fills the wizard; every value stays typeable.
+ * autofill_allowed stays on the row for audit only — do NOT flip it in the DB to "simplify".
  * Never derive short miles from practical. Never rebuild stats from Pay / RPM without the team flag.
  * Owner 2026-09-01: customer pays the typed rate; practical miles compute revenue per mile only.
  */
@@ -33,6 +35,9 @@ export type LaneMileageLookup = {
   dest_postal_code?: string | null;
 };
 
+/** Wizard fill confidence — drives labels. Never silent on Check ZIP. */
+export type FillConfidence = "high" | "verify" | "check_zip" | "reverse" | "none";
+
 export type LaneMileageResult = {
   practical_miles: number | null;
   short_miles: number | null;
@@ -41,7 +46,11 @@ export type LaneMileageResult = {
   short_runs: number | null;
   practical_spread: number | null;
   confidence: string | null;
+  /** Audit-only mirror of the catalog flag. Wizard fills on `fills`, not this. */
   autofill_allowed: boolean;
+  /** True whenever practical_miles exists — Thin / High / Check ZIP / reverse all fill. */
+  fills: boolean;
+  fill_confidence: FillConfidence;
   match: "Matched by ZIP" | "City match" | "From the reverse lane" | "New lane";
   provenance: string;
   matched_lane_id: string | null;
@@ -70,31 +79,58 @@ function sameLane(a: LaneMileageLookup): boolean {
   );
 }
 
-export function provenanceFromRow(
+export function fillConfidenceFromRow(
   row: LaneMileageRow,
   match: LaneMileageResult["match"]
+): FillConfidence {
+  if (match === "From the reverse lane") return "reverse";
+  if (row.confidence === "Check ZIP") return "check_zip";
+  if (row.confidence === "Thin") return "verify";
+  // High band fills as high. The one stray High+autofill_allowed=false is a DATA fix, not a code gate.
+  if (row.confidence === "High") return "high";
+  return row.autofill_allowed ? "high" : "verify";
+}
+
+/**
+ * Operator-facing provenance. Weak fills must never read like settled History.
+ */
+export function provenanceFromRow(
+  row: LaneMileageRow,
+  match: LaneMileageResult["match"],
+  fillConfidence: FillConfidence = fillConfidenceFromRow(row, match)
 ): string {
   const runs = intOrZero(row.n_practical);
-  const practical = numOrNull(row.practical_miles);
   const spread = numOrNull(row.practical_spread);
-  if (match === "From the reverse lane") {
-    return `From the reverse lane, ${runs} prior runs.`;
+  if (fillConfidence === "reverse" || match === "From the reverse lane") {
+    return `From the reverse lane, ${runs} prior run${runs === 1 ? "" : "s"}.`;
   }
-  if (row.autofill_allowed && practical != null) {
-    return `${runs} prior runs, median ${practical.toLocaleString(undefined, { maximumFractionDigits: 1 })} miles.`;
-  }
-  if (row.confidence === "Check ZIP") {
+  if (fillConfidence === "check_zip") {
     const spreadTxt =
-      spread != null ? `, spread ${spread.toLocaleString(undefined, { maximumFractionDigits: 0 })} miles` : "";
-    return `${runs} prior runs${spreadTxt}. Enter ZIP to narrow.`;
+      spread != null ? ` spread ${spread.toLocaleString(undefined, { maximumFractionDigits: 0 })} miles` : "";
+    return `ZIP mismatch,${spreadTxt} — VERIFY (${runs} prior runs).`;
   }
-  if (row.confidence === "Thin") {
-    return `${runs} prior run${runs === 1 ? "" : "s"}. Not a rate basis yet.`;
+  if (fillConfidence === "verify") {
+    return `From ${runs} run${runs === 1 ? "" : "s"} — verify.`;
   }
-  if (practical != null) {
-    return `${runs} prior runs, median ${practical.toLocaleString(undefined, { maximumFractionDigits: 1 })} miles.`;
+  if (fillConfidence === "high") {
+    return `From history, ${runs} run${runs === 1 ? "" : "s"}.`;
   }
   return "New lane. Enter the miles.";
+}
+
+/** mileage_source stamp when the wizard fills (never overwrites Operator entered). */
+export function mileageSourceFromFill(fillConfidence: FillConfidence): string {
+  switch (fillConfidence) {
+    case "check_zip":
+      return "History — ZIP mismatch, verify";
+    case "verify":
+    case "reverse":
+      return "History — verify";
+    case "high":
+      return "History";
+    default:
+      return "History";
+  }
 }
 
 function toResult(row: LaneMileageRow | null, match: LaneMileageResult["match"]): LaneMileageResult {
@@ -108,24 +144,31 @@ function toResult(row: LaneMileageRow | null, match: LaneMileageResult["match"])
       practical_spread: null,
       confidence: null,
       autofill_allowed: false,
+      fills: false,
+      fill_confidence: "none",
       match: "New lane",
       provenance: "New lane. Enter the miles.",
       matched_lane_id: null,
       source: null,
     };
   }
-  const labelled = match === "From the reverse lane" ? match : match;
+  const practical = numOrNull(row.practical_miles);
+  const fillConfidence = fillConfidenceFromRow(row, match);
+  const fills = practical != null;
   return {
-    practical_miles: numOrNull(row.practical_miles),
+    practical_miles: practical,
     short_miles: numOrNull(row.short_miles),
     empty_miles: numOrNull(row.empty_miles),
     runs: intOrZero(row.n_practical),
     short_runs: numOrNull(row.n_short) != null ? intOrZero(row.n_short) : null,
     practical_spread: numOrNull(row.practical_spread),
     confidence: row.confidence,
-    autofill_allowed: Boolean(row.autofill_allowed) && match !== "From the reverse lane",
-    match: labelled,
-    provenance: provenanceFromRow(row, labelled),
+    // Audit mirror — unchanged semantics for historical judgement. Wizard ignores this for fill.
+    autofill_allowed: Boolean(row.autofill_allowed),
+    fills,
+    fill_confidence: fills ? fillConfidence : "none",
+    match,
+    provenance: provenanceFromRow(row, match, fillConfidence),
     matched_lane_id: row.id,
     source: row.source,
   };

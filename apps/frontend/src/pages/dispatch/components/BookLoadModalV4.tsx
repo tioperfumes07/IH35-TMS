@@ -143,7 +143,14 @@ type FormValues = BookLoadFormValues & {
   miles_practical: number;
   miles_shortest: number;
   miles_deadhead: number;
-  mileage_source: "" | "History" | "Manual" | "Routing engine" | "Operator entered";
+  mileage_source:
+    | ""
+    | "History"
+    | "History — verify"
+    | "History — ZIP mismatch, verify"
+    | "Manual"
+    | "Routing engine"
+    | "Operator entered";
   pickup_number: string;
   border_routing: string;
   is_sample_data: boolean;
@@ -549,6 +556,7 @@ export function BookLoadModalV4({
   const milesShortest = form.watch("miles_shortest");
   const milesPractical = form.watch("miles_practical");
   const milesDeadhead = form.watch("miles_deadhead");
+  const mileageSource = form.watch("mileage_source");
   const reservedLoadNumber = form.watch("reserved_load_number");
   const factoringCompanyVendorId = form.watch("factoring_company_vendor_id");
   const pickupStop = (stops ?? []).find((s) => s.stop_type === "pickup") ?? (stops ?? [])[0];
@@ -608,7 +616,8 @@ export function BookLoadModalV4({
     const lane = laneMileageQuery.data;
     if (!lane) return;
     if (milesOperatorTouched.current) return;
-    if (!lane.autofill_allowed) return;
+    // GO-16 Rev C: fill whenever practical miles exist. autofill_allowed is audit-only.
+    if (!lane.fills) return;
     if (!(Number(form.getValues("miles_practical")) > 0) && lane.practical_miles != null) {
       form.setValue("miles_practical", lane.practical_miles, { shouldDirty: true, shouldValidate: true });
     }
@@ -619,7 +628,13 @@ export function BookLoadModalV4({
       form.setValue("miles_deadhead", lane.empty_miles, { shouldDirty: true, shouldValidate: true });
     }
     if (lane.practical_miles != null) {
-      form.setValue("mileage_source", "History", { shouldDirty: true });
+      const source =
+        lane.fill_confidence === "check_zip"
+          ? "History — ZIP mismatch, verify"
+          : lane.fill_confidence === "verify" || lane.fill_confidence === "reverse"
+            ? "History — verify"
+            : "History";
+      form.setValue("mileage_source", source, { shouldDirty: true });
     }
   }, [form, laneMileageQuery.data]);
 
@@ -1943,7 +1958,16 @@ export function BookLoadModalV4({
                   shortest={milesShortest}
                   deadhead={milesDeadhead}
                   ratePerMile={ratePerMile}
-                  provenance={laneMileageQuery.data?.provenance}
+                  provenance={
+                    mileageSource === "Operator entered"
+                      ? "Operator entered"
+                      : laneMileageQuery.data?.provenance
+                  }
+                  fillConfidence={
+                    mileageSource === "Operator entered"
+                      ? "operator"
+                      : laneMileageQuery.data?.fill_confidence
+                  }
                   shortestRequired={Boolean(assignedPrimaryDriverId)}
                   practicalRequired
                   onPracticalChange={(n) => {

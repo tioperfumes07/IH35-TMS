@@ -127,7 +127,13 @@ export type BookLoadInput = {
   miles_practical?: number;
   miles_shortest?: number;
   miles_deadhead?: number;
-  mileage_source?: "History" | "Manual" | "Routing engine" | "Operator entered";
+  mileage_source?:
+    | "History"
+    | "History — verify"
+    | "History — ZIP mismatch, verify"
+    | "Manual"
+    | "Routing engine"
+    | "Operator entered";
   stop_count?: string;
   pickup_number?: string;
   border_routing?: string;
