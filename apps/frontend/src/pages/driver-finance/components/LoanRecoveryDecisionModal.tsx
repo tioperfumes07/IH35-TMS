@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Modal } from "../../../components/Modal";
 import { Button } from "../../../components/Button";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import type { OutstandingLoanDecisionDetails } from "../../../api/driverFinance";
 
 type Props = {
@@ -29,13 +30,13 @@ function formatCents(cents: number): string {
  */
 export function LoanRecoveryDecisionModal({ open, details, onClose, onDecide }: Props) {
   const [editing, setEditing] = useState(false);
-  const [amountDollars, setAmountDollars] = useState("");
+  const [amountCents, setAmountCents] = useState<number | null>(null);
   const [reason, setReason] = useState("");
 
   useEffect(() => {
     if (open && details) {
       setEditing(false);
-      setAmountDollars((details.total_recoverable_cents / 100).toFixed(2));
+      setAmountCents(details.total_recoverable_cents);
       setReason("");
     }
   }, [open, details]);
@@ -43,7 +44,7 @@ export function LoanRecoveryDecisionModal({ open, details, onClose, onDecide }: 
   if (!details) return null;
 
   const totalCents = details.total_recoverable_cents;
-  const editedCents = Math.round(Number(amountDollars || "0") * 100);
+  const editedCents = amountCents ?? 0;
   const editedValid = editing ? Number.isFinite(editedCents) && editedCents >= 0 && editedCents <= totalCents : true;
   const canConfirmEdit = editing ? editedValid && reason.trim().length >= 10 : true;
 
@@ -94,16 +95,14 @@ export function LoanRecoveryDecisionModal({ open, details, onClose, onDecide }: 
               <span className="mb-1 block font-medium text-gray-600">
                 Recover this close (max {formatCents(totalCents)}; the remainder stays outstanding and rolls to the next settlement)
               </span>
-              <input
-                type="number"
-                min={0}
-                max={totalCents / 100}
-                step="0.01"
-                value={amountDollars}
-                onChange={(event) => setAmountDollars(event.target.value)}
-                className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                data-testid="loan-recovery-partial-amount"
-              />
+              <div data-testid="loan-recovery-partial-amount">
+                <MoneyInput
+                  valueCents={amountCents}
+                  onChangeCents={setAmountCents}
+                  ariaLabel="Recover this close"
+                  className="w-full"
+                />
+              </div>
               {!editedValid ? <span className="mt-1 block text-red-700">Amount must be between $0 and {formatCents(totalCents)}.</span> : null}
             </label>
             <label className="block">
