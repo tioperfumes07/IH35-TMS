@@ -631,6 +631,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-02",
       "purpose": "go21_b5_driver_pay_rate_override_reason (GO-21 B5, CC-1 money lane: mdata.loads.driver_pay_rate_override_reason -- a hand-typed per-load driver pay rate becomes an explicit, logged, reason-carrying override instead of silently outranking the driver's real pay-rate card in resolveDriverBasePayCents)"
+    },
+    "202613510001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-02",
+      "purpose": "miles_spec_deadhead_driver_pay (MILES SPEC FOR DISPATCH, FINAL -- owner direct instruction 2026-09-02: driver_finance.driver_pay_rates.rate_empty_per_mile_cents + driver_finance.driver_bills.miles_deadhead/rate_empty_per_mile_cents/loaded_pay_cents/deadhead_pay_cents -- DRIVER PAY = (miles_shortest x rate_loaded) + (miles_deadhead x rate_empty), two settlement lines always; widens settlement_lines line_type CHECK + uniqueness to (source_driver_bill_id, line_type) so a bill can carry both an earnings/team-split line and a deadhead_pay line"
     }
   }
 }
