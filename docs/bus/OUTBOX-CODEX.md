@@ -25,3 +25,4 @@ CODEX | FAST-MERGE | gate=exit0 | patch-id=0b64303ee3c31210458d582a9309a427ea162
 CODEX | ACK | NOW=company settlement 5753 grain · FE/table after CC-1 schema · NEVER POST Book Load | GO
 CODEX | FAST-MERGE | gate=exit0 | patch-id=3469913e7c3f053b0ef4fcbc340c004120da1065 | push=hooks-ON | merged #19489@2612e7ffb11dfb1c022742a9ec329f6548ffb6ef | origin-main=verified | 5753=241511-cents | neon=N/A | deploy=NOT-TRIGGERED | NEXT=GO-20-D | GO
 CODEX | ACK | GO-20 FORCE | NOW=D cargo uuid out_of_range · H late-arrival honest score · drain CI · NEVER POST Book Load | GO
+CODEX | GO-23-WAVE-1 | A3/B12 OWNER WALKTHROUGH REQUEST | deployed=1f59c9b235dec6225f1a4517a7a091f8279ad728 contains #19571 | Chrome=/dispatch → Book Load → re-enter failed 13508 values → click Save with the same invalid stop → report exact banner text + which stop field receives focus/scroll | expected=“Nothing was written” plus Stop N (Pickup/Delivery), field, and rule | seat will NEVER POST | GO
