@@ -77,8 +77,29 @@ import {
 } from "../../../components/dispatch/accessorial-editor-lib";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { NumberInput } from "../../../components/forms/NumberInput";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
-import { describeBookLoadValidationErrors } from "./book-load-v4/invalidSubmitDetails";
+
+/**
+ * FAIL-D2 — human labels for the fields a blocked submit names back to the dispatcher. Only the
+ * fields that can realistically fail validation need an entry; anything unmapped falls back to the
+ * de-underscored key, which is still an honest answer and never a silent one.
+ */
+const FIELD_LABELS: Record<string, string> = {
+  customer_id: "Customer",
+  trip_type: "Trip Type",
+  rate_total_cents: "Rate",
+  stops: "Stops",
+  team_id: "Team",
+  assigned_unit_id: "Truck",
+  assigned_trailer_unit_id: "Trailer",
+  assigned_primary_driver_id: "Driver",
+  commodity: "Commodity",
+  weight_lbs: "Weight",
+  trailer_type: "Trailer type",
+  reefer_setpoint: "Reefer setpoint",
+  detention_reason_id: "Detention reason",
+};
 
 type FormValues = BookLoadFormValues & {
   load_type: "broker" | "direct";
@@ -770,27 +791,18 @@ export function BookLoadModalV4({
   // re-opens the hole. Never fail silently: name the fields that blocked the write.
   const onInvalidSubmit = useCallback(
     (errors: FieldErrors<FormValues>) => {
-      const issues = describeBookLoadValidationErrors(errors, form.getValues("stops") ?? []);
+      const names = Object.keys(errors ?? {});
+      const shown = names.slice(0, 6).map((name) => FIELD_LABELS[name] ?? name.replace(/_/g, " "));
+      const more = names.length > shown.length ? ` (+${names.length - shown.length} more)` : "";
       setGateBanner(null);
       setSubmitErrorMessage(
-        issues.length > 0
-          ? `Not saved — ${issues.map((issue) => issue.description).join("; ")}. Nothing was written.`
+        shown.length > 0
+          ? `Not saved — these fields blocked it: ${shown.join(", ")}${more}. Nothing was written.`
           : "Not saved — the form did not pass validation. Nothing was written."
       );
-      const firstPath = issues[0]?.path;
-      if (firstPath) {
-        form.setFocus(firstPath as Parameters<typeof form.setFocus>[0]);
-        requestAnimationFrame(() => {
-          const field = document.getElementsByName(firstPath)[0];
-          const stopIndex = /^stops\.(\d+)\./.exec(firstPath)?.[1];
-          const target = stopIndex ? document.querySelector(`[data-testid="stop-card-${stopIndex}"]`) : field;
-          target?.scrollIntoView({ behavior: "smooth", block: "center" });
-          field?.focus();
-        });
-      }
       pushToast(isEditMode ? "Not saved — fix the flagged fields" : "Not booked — fix the flagged fields", "error");
     },
-    [form, isEditMode, pushToast]
+    [isEditMode, pushToast]
   );
 
   async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
@@ -1613,7 +1625,16 @@ export function BookLoadModalV4({
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Weight (lbs)
-                      <input type="number" {...form.register("weight_lbs", { valueAsNumber: true })} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+                      {/* GO-21-J1 / C2: was a raw <input type="number"> — no thousands separator past
+                          999 lbs, native spinner. NumberInput is MoneyInput's plain-number sibling,
+                          same QuickBooks display convention minus the $. */}
+                      <NumberInput
+                        value={form.watch("weight_lbs")}
+                        onChange={(v) => form.setValue("weight_lbs", v ?? 0, { shouldDirty: true })}
+                        unit="lbs"
+                        ariaLabel="Weight"
+                        className="mt-0.5 w-full"
+                      />
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Pieces

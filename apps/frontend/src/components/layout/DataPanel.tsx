@@ -23,9 +23,12 @@ export function DataPanel({ title, accentColor, viewAllHref, children }: Props) 
         className="flex items-center justify-between bg-gray-50"
         style={{ height: spacing.panelHeaderHeight, paddingLeft: spacing.panelPaddingX, paddingRight: spacing.panelPaddingX }}
       >
+        {/* GLOBAL-TYPE-SIZE-BASELINE.md (locked): column/section headers are 11px/700/UPPERCASE/
+            #4B5563 specifically, not the generic mutedText role — colors.columnHeader is that
+            exact locked value, transcribed, not invented. */}
         <span
           className="uppercase"
-          style={{ fontSize: typography.panelHeader, color: colors.mutedText, letterSpacing: typography.tightUpper, fontWeight: 700 }}
+          style={{ fontSize: typography.panelHeader, color: colors.columnHeader, letterSpacing: typography.tightUpper, fontWeight: 700 }}
         >
           {title}
         </span>
