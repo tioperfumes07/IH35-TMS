@@ -223,8 +223,15 @@ export function UploadZone({
                 size="sm"
                 variant="secondary"
                 onClick={async () => {
-                  await deleteAttachment(row.id, operatingCompanyId);
-                  await refreshList();
+                  setError(null);
+                  try {
+                    await deleteAttachment(row.id, operatingCompanyId);
+                    await refreshList();
+                  } catch (deleteError) {
+                    setError(
+                      `Failed to delete ${row.filename}: ${userFacingApiError(deleteError, "Delete failed")}`,
+                    );
+                  }
                 }}
               >
                 Delete
