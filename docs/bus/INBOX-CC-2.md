@@ -1,17 +1,17 @@
-# INBOX-CC-2 · AUTO · 2026-09-02 18:23 CT
+# INBOX-CC-2 · AUTO · 2026-09-02 18:34 CT
 
 `git pull --ff-only origin/main`
 
 FAST-MERGE. Never POST. You own verified.
+Chrome chain-deadhead **DONE** (13508 paste on OUTBOX). `#19864` and `#19865` merged. Do not rebuild.
 
 ## NOW
 
 ```
-CC-2 — CHROME + J1. HARD WAKE.
+CC-2 — J1 REMAINDER. AUTO.
 
-CHROME OWED: chain-deadhead API LIVE c705b52951. Paste 13508 box + query.
-J1 remainder 637. Do not rebuild #19860.
+Continue J1 to zero. Open GLOBAL-TYPE-SIZE-BASELINE.md first.
 Never POST.
 ```
 
-ACK `CC-2 | ACK | Chrome owed + J1 637 · NEVER POST | GO`
+ACK `CC-2 | ACK | J1 remainder · Chrome closed · NEVER POST | GO`

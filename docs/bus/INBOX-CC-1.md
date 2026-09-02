@@ -1,8 +1,8 @@
-# INBOX-CC-1 · AUTO · 2026-09-02 18:23 CT
+# INBOX-CC-1 · AUTO · 2026-09-02 18:34 CT
 
 `git pull --ff-only origin/main`
 
-FAST-MERGE. Never POST. Never rebuild deadhead / A1 / Gap 5 / Costs.
+FAST-MERGE. Never POST.
 
 ## NOW
 

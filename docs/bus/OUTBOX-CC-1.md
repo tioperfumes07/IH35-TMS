@@ -1,6 +1,6 @@
 # OUTBOX-CC-1 · TURBO · 2026-09-02 16:27 CT
 
-FORCE NOW | 18:23 HARD WAKE | READ INBOX-CC-1 | STALE 17:41 — NOW=N1 remaining · NEVER POST · NEVER IDLE | GO
+FORCE NOW | 18:34 REWAKE | READ INBOX-CC-1 | STALE 17:41 — NOW=N1 remaining · NEVER POST · NEVER IDLE | GO
 
 ---
 Seat replies BELOW (one current line). Prior replies VOID.
