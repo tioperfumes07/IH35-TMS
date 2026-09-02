@@ -14,11 +14,12 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
-function assertFaroImportLinkage() {
+function assertFaroImportLinkage({
+  page = read("apps/frontend/src/pages/factoring/FaroImportPage.tsx"),
+  routes = read("apps/backend/src/factoring/faro-csv-import.routes.ts"),
+  service = read("apps/backend/src/factoring/faro-csv-import.ts"),
+} = {}) {
   const errors = [];
-  const page = read("apps/frontend/src/pages/factoring/FaroImportPage.tsx");
-  const routes = read("apps/backend/src/factoring/faro-csv-import.routes.ts");
-  const service = read("apps/backend/src/factoring/faro-csv-import.ts");
 
   if (!/enrichFaroPreviewLines/.test(routes)) {
     errors.push("faro-csv-import.routes: preview must call enrichFaroPreviewLines");
@@ -36,14 +37,20 @@ function assertFaroImportLinkage() {
 }
 
 function selftest() {
-  const good = `
-    enrichFaroPreviewLines(client, companyId, lines)
-    kind="invoice" invoice_id
-    kind="customer" customer_id
-    data-testid="faro-import-invoice-link"
+  const page = `
+    import EntityLink from "../../components/shared/EntityLink";
+    <EntityLink kind="invoice" id={row.invoice_id} data-testid="faro-import-invoice-link" />
+    <EntityLink kind="customer" id={row.customer_id} />
   `;
-  const bad = `<span>{row.invoice_number}</span>`;
-  if (!/kind="invoice"/.test(good) || /kind="invoice"/.test(bad)) {
+  const routes = `await enrichFaroPreviewLines(client, companyId, lines);`;
+  const service = `return { invoice_id, customer_id };`;
+  const goodErrors = assertFaroImportLinkage({ page, routes, service });
+  const plantedErrors = assertFaroImportLinkage({
+    page: page.replace(/<EntityLink kind="invoice"[^>]*\/>/, `<span>{row.invoice_number}</span>`),
+    routes,
+    service,
+  });
+  if (goodErrors.length !== 0 || !plantedErrors.some((error) => error.includes("invoice + customer"))) {
     console.error(`${LABEL} --selftest FAIL`);
     process.exit(1);
   }
