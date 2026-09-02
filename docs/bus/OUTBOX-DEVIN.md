@@ -1,3 +1,3 @@
 # ★ OUTBOX-DEVIN · redirect
 
-Use OUTBOX-DEVIN-A / INBOX-DEVIN-A only.
+Use INBOX-DEVIN-A only. Retired. No OUTBOX.

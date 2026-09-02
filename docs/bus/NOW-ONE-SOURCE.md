@@ -1,41 +1,25 @@
-# NOW-ONE-SOURCE · OWNER URGENT · 2026-09-02 17:35Z
+# NOW-ONE-SOURCE · GO-23 · 2026-09-02 16:17 CT
 
-Pre-flight before any built/not-built claim: open PRs + branch tips + Neon under `bypass_rls` — never judge from main alone.
-USMCA only. Never POST Book Load. Never flip `autofill_allowed` in the DB.
+USMCA only. Never POST Book Load. Never seat financial fixtures.
+Queue: `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`. Waves in order. A defect not on that board does not exist.
 
-`origin/main` tip = `21aa0ba` (#19691 CC-2 chrome verify). GO-16 Rev C miles = `#19689` @ `9945b6fc` (ancestor of tip).
+`origin/main` tip after this purge: pull. Live API healthzSha still `7fe443c` until Cursor batches deploy.
 
-## Production blockers that remain
-| Item | Owner | State |
-|------|-------|-------|
-| **GO-22 pre-settlement / settlement** | **CC-1** | Build against **tour close law** (Jorge 17:20Z). Tour = leave Laredo home → return home. Home = 23918 Mines Rd, Laredo TX 78045. Closeable when truck in geofence with no load. SB leg does not close. Deadhead-to-yard prompts. Loan/debt blocking pop-up at close (config: 5% floor vs full — Jorge decides). B1 fuel = truck cost, never driver deduction. |
-| J1 type/picker ratchet | CC-2 | ~1015 off-scale remaining + Chrome-prove load **13508** |
-| C1 UUID sweep | CC-3 | After Cascade recount (#19681 open) |
-| Deploy tip current | Cursor lead | API live `9945b6f` (GO-16); tip `21aa0ba` — batch deploy, not per-merge |
+## Seat NOW (this is the only table)
 
-## DONE — do not re-cut / do not reassign
-| Item | Proof |
-|------|-------|
-| Miles GO-16 Rev C | #19689 @ 9945b6fc · live API `9945b6f` |
-| N1 expense | #19641 |
-| N1 bill + bill-payment from a load | #19676 |
-| A3/B12 Book Load banner | Codex CLOSED |
-| B2 / B7 / geocode gate | Shipped |
-
-**Discarded bad re-balance:** do **not** move bill/bill-payment to CC-3. N1 is complete. CC-1 stays on GO-22 only.
-
-## Seat NOW
 | Seat | NOW |
 |------|-----|
-| **Cursor** | Lead · bus ACK · deploy parity when batch · scoreboard freshness · **not** GO-22 · **not** J1 |
-| **CC-1** | **GO-22 only** — tour close law above · `lib.trace_counters` match `LD`/`LOAD` · kill 2 sample drivers · ask Jorge only on 5% floor vs full deduct |
-| **CC-2** | Chrome-prove load **13508** (report FIXED/NOT FIXED) · keep J1 · #19691 merged |
-| **CC-3** | C1 UUID sweep after Cascade count · Not N1 · Not miles |
-| **Codex** | Next GO-23 row · do not hand-edit scoreboard |
-| **Cascade** | FINDINGS only · #19681 · re-derive C1 for CC-3 |
+| **CC-1** | Wave 1 **A1 data** (interchange ledger, never `mdata.units` for broker trailers) then **N1** load→expense. Then B8. Then **GO-22a**. Do not idle for Jorge. Only GO-22b needs owner tour-close Q. |
+| **CC-3** | Wave 1 **A2** customer picker (~2700, not capped 500/200) then **GO-24** `mdata.locations`. **B9 CLOSED.** **E1 PARK** Wave 5 #17. No more wizard K-rows until A2+GO-24 are on main. |
+| **CC-2** | **J1 to zero** this week (`GLOBAL-TYPE-SIZE-BASELINE.md` only). K2 after J1. Chrome 13508 miles flag+OK. Never POST. |
+| **Codex** | `git rebase origin/main` — do **not** edit `program-scoreboard.json`. Push Costs tab. Then Wave 1 **A3/B12** Chrome that #19571 names the exact stop+rule. |
+| **Cascade** | GO-26 done-gate **HOLDS** (#19797). **STOP.** Unique FINDING only (Wave 7 spreadsheets). Never build. Never invent a 28-row register. |
+| **Cursor** | Lead. Gate 1.5 GO-06 empty-box + Gate 2.3 proforma at first pickup. Deploy batch 5–10. Never `trigger_deploy` from other seats. |
+| **Devin-A** | **RETIRED.** Stop. No Book Load. No Cancel walk. |
 
-## Open PRs — do not collide
-#19681 Cascade hunt2 · #19485 CC-1 escrow board · #19305 tracker sync · dependabot
+## Standing (not a queue)
 
-## Done bar (owner Chrome)
-Load **13508**: miles fill with labels → type-over stamps Operator entered → expense/bill/pay already work → assign driver → numbered pre-settlement contains that load.
+Pay = **short** always. RPM = practical. Company cost = practical+empty. Flag+OK popup. No mass-swap. Canonical: `docs/bus/MILES-LAW-FINAL-2026-09-02.md`.
+FAST-MERGE: `docs/bus/FAST-MERGE-4MIN-LAW.md`.
+
+Everything else in older NOW-ONE-SOURCE / INBOX / OUTBOX copies is **VOID**.

@@ -2,12 +2,12 @@
 
 **SINGLE CHANNEL:** `docs/bus/` in git. Jorge is not the messenger.
 
-**Canonical NOW:** `docs/bus/NOW-ONE-SOURCE.md` TOP + current GO packet + `INBOX-<SEAT>.md` TOP. U14 campaign is CLOSED (never restamp); leftover unique FINDINGS still fix.
+**Canonical NOW:** `docs/bus/NOW-ONE-SOURCE.md` + `INBOX-<SEAT>.md`. Queue = `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md` only.
 
-**INBOX HYGIENE (2026-08-30):** Cursor lead keeps each `INBOX-<SEAT>.md` to **one CURRENT GO**. The file must contain the full packet text (or an in-repo path under `docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/<SEAT>/` that the seat can open without Jorge's Downloads folder). A one-line pointer to `~/Downloads/...` is not sufficient. Stacked `THIS IS NOW` lines from prior days are VOID. Do not execute a Thursday GO because it is still in git history.
+**INBOX HYGIENE (OWNER, restated 2026-09-02 16:17 CT):** Each `INBOX-<SEAT>.md` is **one CURRENT row**. Stacked `THIS IS NOW` / GO-26 purge packets / GO-20 FORCE / GO-21 Cancel walks are **VOID**. Do not execute a packet because it is still in git history or `docs/bus/archive/`. Miles law lives in `docs/bus/MILES-LAW-FINAL-2026-09-02.md`. FAST-MERGE lives in `docs/bus/FAST-MERGE-4MIN-LAW.md`. Do not paste those into every INBOX.
 
-**LIVE CHROME (2026-08-31):** `docs/lockdown/LIVE-CHROME-NOT-API-LAW-2026-08-31.md` — API/curl/PATCH-response/script backfill ≠ product proof. Every seat OUTBOX must use `LIVE-CHROME | healthz | url | click | reload` or lead rejects the claim.
+**OUTBOX HYGIENE:** One FORCE NOW line + one current seat reply. Truncate the rest. Lead rejects claims that cite a stale FORCE NOW.
 
-Seats do not write their own INBOX (Cursor lead only). OUTBOX first line every hop. Money FAIL → `OUTBOX-CC-1.md`. Picker FAIL → `OUTBOX-CC-3.md`. Live-verify FAIL → `OUTBOX-CC-2.md`. Plus `OUTBOX-CURSOR.md`.
+**LIVE CHROME:** `docs/lockdown/LIVE-CHROME-NOT-API-LAW-2026-08-31.md` — API/curl ≠ product proof.
 
-HOLD / empty-queue as idle = forbidden. Next = next row on **your** exclusive list.
+Seats do not write their own INBOX (Cursor lead only).
