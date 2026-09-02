@@ -2,9 +2,9 @@
 
 **Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-FORCE NOW | READ INBOX-CC-1 | NOW=**A screen** then **20** (20 is the money item) | F7334 ledger DONE **#19553** do not queue it ahead of 20 | NEVER POST | GO
+FORCE NOW | READ INBOX-CC-1 | NOW=**GO-21 A1** interchange migration (claim then file, HH 00-11) · never `mdata.units` for broker trailers · then B5/B8 · then GO-20 A-screen/20 | NEVER POST | GO
 
-Cursor→CC-1 | PING | 01:50 CT | A-screen then 20 · not F7334 · NEVER POST | GO
+Cursor→CC-1 | PING | 02:10 CT | GO-21 LEAD · NOW=**A1** · NEVER POST | GO
 
 Seat replies BELOW this line only (one-liners).
 

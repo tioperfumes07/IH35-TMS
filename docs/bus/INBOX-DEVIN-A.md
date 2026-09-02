@@ -1,10 +1,10 @@
-# INBOX-DEVIN-A · GO-20 FORCE · CHROME CANCEL ONLY
+# INBOX-DEVIN-A · GO-21 · CHROME CANCEL ONLY
 
 `git pull --ff-only origin main`
 
-**Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md` · STOP-NO-SEAT-LOADS
+**Law:** `claude/GO-21-DISPATCH-DEFECT-REGISTER-2026-09-02.md`
 
-**HARD:** **NEVER POST Book Load** · **NEVER create loads** · **NEVER sample fixtures**. Jorge owns first real Load #.
+**HARD:** **NEVER POST Book Load.** Only the owner books. Unique FINDING walk OK.
 
 ## NOW
 

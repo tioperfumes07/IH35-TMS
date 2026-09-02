@@ -2,9 +2,9 @@
 
 **Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-FORCE NOW | READ INBOX-CASCADE | NOW=unique FINDING only · **12+13 HOLD** · PARALLEL-BOOKS stub **#19495** if still open · merge API only · never trigger_deploy | NEVER tell seats to book | NEVER restamp U14 | GO
+FORCE NOW | READ INBOX-CASCADE | NOW=unique FINDING only · GO-21 is seat build not Cascade restamp · 12+13 HOLD · NEVER tell seats to POST Book Load | GO
 
-Cursor→CASCADE | PING | 00:35 CT | GO-20 LEAD · NOW=unique FINDING · 12+13 HOLD · ACK first line if idle · NEVER POST · NEVER restamp U14 | GO
+Cursor→CASCADE | PING | 02:10 CT | GO-21 LEAD · FINDING only · NEVER POST | GO
 
 Seat replies BELOW this line only (one-liners). Do not re-read archive.
 
