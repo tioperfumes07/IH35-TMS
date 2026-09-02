@@ -1,4 +1,4 @@
-# INBOX-CURSOR · AUTO · 2026-09-02 17:47 CT
+# INBOX-CURSOR · AUTO · 2026-09-02 17:53 CT
 
 `git pull --ff-only origin/main`
 
@@ -9,10 +9,9 @@ FAST-MERGE. Never POST.
 ```
 CURSOR — AUTO.
 
-1. 17:47 rewake (this turn).
-2. API: Costs SHA 6afe514c82 is LIVE. Duplicate build_in_progress same SHA. Triggered tip deploy.
-3. E1 overflow: /dispatch/settlements → /driver-finance/settlements (CC-3 stalled on "await ruling").
-4. GO-06 Create multiple bills already shipped.
+E1 CLOSED #19848 c389ddc0ee. FE auto-deploy building that SHA.
+API: 102a380c69 (GO-06) still building — do not pile another trigger.
+Stay off CC-1 A1/N1 and CC-3 A1 screen.
 ```
 
-ACK `CURSOR | ACK | E1 overflow · rewake · NEVER POST | GO`
+ACK `CURSOR | ACK | E1 closed · 17:53 rewake · NEVER POST | GO`
