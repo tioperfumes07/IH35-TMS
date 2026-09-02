@@ -226,6 +226,40 @@ if (process.argv.includes("--selftest")) {
     );
     process.exit(1);
   }
+
+  // Plant the mutation against the repository's real required.json inventory,
+  // not only the synthetic fixture above.  If an owned surface is removed from
+  // its canonical leaf, the guard must fail closed even while the leaf id and
+  // the FILE_OWNED_BY_LEAF entry still exist.
+  const realInv = loadInventory();
+  const plantedHost = "components/vehicle-profile/StatusChangeModal.tsx";
+  const plantedOwner = FILE_OWNED_BY_LEAF[plantedHost];
+  const realLeaf = realInv.leafById.get(plantedOwner);
+  if (!realLeaf || !leafOwnsPath(realLeaf, plantedHost)) {
+    console.error(
+      `${LABEL} SELFTEST FAIL — planted real ownership fixture is absent: ${plantedOwner} → ${plantedHost}`,
+    );
+    process.exit(1);
+  }
+  const mutatedLeaf = {
+    ...realLeaf,
+    owned_surface_paths: (realLeaf.owned_surface_paths || []).filter(
+      (owned) => normalizePath(owned) !== plantedHost,
+    ),
+  };
+  const plantedInv = {
+    ...realInv,
+    surfacePaths: new Set(
+      [...realInv.surfacePaths].filter((surfacePath) => normalizePath(surfacePath) !== plantedHost),
+    ),
+    leafById: new Map(realInv.leafById).set(plantedOwner, mutatedLeaf),
+  };
+  if (!audit([plantedHost], plantedInv).length) {
+    console.error(
+      `${LABEL} SELFTEST FAIL — planted removal from the real required.json ownership escaped`,
+    );
+    process.exit(1);
+  }
   console.log(`${LABEL} --selftest OK`);
   process.exit(0);
 }
