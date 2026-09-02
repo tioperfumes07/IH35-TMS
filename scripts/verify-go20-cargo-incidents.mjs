@@ -6,8 +6,9 @@ const ROUTES = "apps/backend/src/integrations/samsara/cap-14-cargo-sensors/route
 const WORKER = "apps/backend/src/jobs/cap-14-cargo-sensor-worker.ts";
 const PAGE = "apps/frontend/src/pages/dispatch/cargo-sensors/CargoSensorTimeline.tsx";
 const AGGREGATOR = "apps/backend/src/owner/todays-attention/aggregator.service.ts";
+const INDEX = "apps/backend/src/index.ts";
 
-function verify(service, routes, worker, page, aggregator) {
+function verify(service, routes, worker, page, aggregator, index) {
   const errors = [];
   for (const token of [
     "dispatch.cargo_sensor_incidents",
@@ -29,13 +30,17 @@ function verify(service, routes, worker, page, aggregator) {
   ]) {
     if (!routes.includes(token)) errors.push(`routes missing ${token}`);
   }
+  if (index.includes("./dispatch/cargo-sensor-incidents.routes.js")) errors.push("startup registers duplicate cargo incident routes");
+  if (index.includes("predictive-alerts-worker.js") || index.includes("predictive-alerts.routes.js")) {
+    errors.push("startup registers predictive-alert modules that do not exist");
+  }
   if (!worker.includes("processCargoSensorIncidents(client, operatingCompanyId)")) errors.push("worker does not run incident lifecycle");
   if (!page.includes('data-testid="cargo-sensor-incidents"')) errors.push("load timeline does not render incidents above readings");
   if (!aggregator.includes('const table = "dispatch.cargo_sensor_incidents"')) errors.push("owner attention not repointed to dispatch incidents");
   return errors;
 }
 
-const sources = [SERVICE, ROUTES, WORKER, PAGE, AGGREGATOR].map((path) => fs.readFileSync(path, "utf8"));
+const sources = [SERVICE, ROUTES, WORKER, PAGE, AGGREGATOR, INDEX].map((path) => fs.readFileSync(path, "utf8"));
 if (process.argv.includes("--selftest")) {
   const perReading = sources[0].replace("last_reading_uuid IS DISTINCT FROM EXCLUDED.last_reading_uuid", "true");
   if (!verify(perReading, ...sources.slice(1)).some((error) => error.includes("last_reading_uuid"))) {
@@ -52,7 +57,17 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-go20-cargo-incidents SELFTEST FAIL — settling-window mutation escaped");
     process.exit(1);
   }
-  console.log("verify-go20-cargo-incidents SELFTEST PASS — planted per-reading, threshold, and settling regressions caught");
+  const duplicateRoute = `${sources[5]}\nimport './dispatch/cargo-sensor-incidents.routes.js';`;
+  if (!verify(...sources.slice(0, 5), duplicateRoute).some((error) => error.includes("duplicate cargo incident routes"))) {
+    console.error("verify-go20-cargo-incidents SELFTEST FAIL — duplicate route mutation escaped");
+    process.exit(1);
+  }
+  const danglingStartup = `${sources[5]}\nimport './jobs/predictive-alerts-worker.js';`;
+  if (!verify(...sources.slice(0, 5), danglingStartup).some((error) => error.includes("do not exist"))) {
+    console.error("verify-go20-cargo-incidents SELFTEST FAIL — dangling startup import mutation escaped");
+    process.exit(1);
+  }
+  console.log("verify-go20-cargo-incidents SELFTEST PASS — planted lifecycle, duplicate-route, and dangling-startup regressions caught");
   process.exit(0);
 }
 
