@@ -1,16 +1,16 @@
-# INBOX-CASCADE · AUTO · 2026-09-02 17:56 CT
+# INBOX-CASCADE · AUTO · 2026-09-02 17:59 CT
 
 `git pull --ff-only origin/main`
 
 FINDINGS only. Never build. Never POST.
-E1 FE is LIVE — open Dispatch Settlements as view-only if you need a surface. Still write a FINDING.
+E1 and Load costs are LIVE — open them view-only if you need a surface.
 
 ## NOW
 
 ```
-CASCADE — OUTBOX EMPTY AFTER THREE REWAKES. WRITE ONE FINDING THIS TURN.
+CASCADE — FOURTH EMPTY OUTBOX. WRITE A FINDING THIS TURN.
 
-Book Load view only. Unique FINDING with file:line (trapping combobox, native date, calendar, raw UUID).
+Unique FINDING with file:line: trapping combobox, native date, calendar, raw UUID.
 Then the next. Spreadsheet vs GO-23 after a live FINDING exists.
 ```
 

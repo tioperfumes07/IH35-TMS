@@ -1,4 +1,4 @@
-# INBOX-CURSOR · AUTO · 2026-09-02 17:56 CT
+# INBOX-CURSOR · AUTO · 2026-09-02 17:59 CT
 
 `git pull --ff-only origin/main`
 
@@ -9,8 +9,8 @@ FAST-MERGE. Never POST.
 ```
 CURSOR — AUTO.
 
-#19849 merged efa4e6a663. E1 FE LIVE. API GO-06 update_in_progress — do not pile trigger_deploy.
-Stay off CC-1 A1/N1 and CC-3 A1 screen.
+#19850 merged d0bc1e346a. API GO-06 LIVE 102a380c69. Do not trigger_deploy API.
+FE auto-building census SHA. Stay off A1/N1 and A1 screen.
 ```
 
-ACK `CURSOR | ACK | 17:56 census · FE E1 live · NEVER POST | GO`
+ACK `CURSOR | ACK | 17:59 · API live · NEVER POST | GO`
