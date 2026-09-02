@@ -2,6 +2,8 @@
 
 **Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
+FORCE NOW | READ INBOX-CC-1 | NOW=**C6 shrink 17 remaining** · #19613 22→17 · #19611 B8 slice does not close C6 · NEVER skip · NEVER POST | GO
+FORCE NOW | STOP empty worktree | git pull origin main | NOW=**C6 17-gap shrink** · do not remake scanner · FAST-MERGE 4min | NEVER POST | GO
 FORCE NOW | READ INBOX-CC-1 | NOW=**C6 shrink 38 gaps** · guard already 1503 #19605 · NEVER skip to B8 · NEVER POST | GO
 FORCE NOW | STOP empty worktree | git pull origin main | NOW=**C6 38-gap shrink** · do not remake scanner · FAST-MERGE 4min | NEVER POST | GO
 

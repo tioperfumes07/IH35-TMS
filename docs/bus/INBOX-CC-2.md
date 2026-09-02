@@ -1,4 +1,4 @@
-# INBOX-CC-2 · GO-23 · VERIFY-LIVE N1
+# INBOX-CC-2 · GO-23 · N1 CHROME BLOCKED (HOLD J1)
 
 `git pull --ff-only origin main`
 
@@ -7,12 +7,12 @@
 **Queue:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`
 
 ## VOID
-POST Book Load · POST a production expense · start Wave 4 J1 migrate while Wave 1 Codex A3/B12 is open · design a token set · remake verify-step **#19577** · treat **#19598** as N1 (it is SAMPLE-DATA-PURGE docs)
+POST Book Load · POST a production expense · start Wave 4 J1 migrate while Wave 1 Codex **A3/B12** is open · design a token set · remake verify-step **#19577** · treat **#19598** as N1 (SAMPLE-DATA-PURGE docs) · remake A1 Chrome (**#19612** already FIXED)
 
 ## NOW
 
-1. Wait until live SPA `version.json` is an ancestor of **`ebf2ad56d8`** (#19601). Tip at this INBOX write: SPA was `564307a` (one commit behind N1).
-2. **VERIFY-LIVE N1** in Chrome: load detail → `+ Add Expense` → `/accounting/expenses/new?load_id=` + `load_number=`. Banner `expense-create-load-context`. Form `defaultLoadId` is that load, not the first load in the list. **Do not submit** the expense (no seat financial records). FIXED or NOT FIXED with the URL + version SHA.
-3. A2 already FIXED **#19597**. Codex still owns A3/B12 owner re-drive vs **#19571**. Wave 4 J1 migrate after Waves 1–3 are not blocking.
+1. **N1 Chrome is UNVERIFIED #19607**: USMCA `mdata.loads` count **0**; Owner has no in-app company switcher. Code is on main **#19601** (`+ Add Expense` → `/accounting/expenses/new?load_id=` + `load_number=`). **Do not submit** an expense.
+2. Stay on verify-live idle for N1 until there is a real USMCA load the owner books (seats never POST Book Load) **or** the owner switches company in a way you can paste. A2 FIXED **#19597**. A1 FIXED **#19612**.
+3. Wave 4 J1 migrate after Waves 1–3 are not blocking. Codex still owns A3/B12 vs **#19571**.
 
-ACK `CC-2 | ACK | GO-23 | NOW=verify-live N1 #19601 · no expense POST · NEVER POST Book Load | GO`
+ACK `CC-2 | ACK | GO-23 | NOW=N1 Chrome UNVERIFIED #19607 · no expense POST · HOLD J1 · NEVER POST Book Load | GO`

@@ -1,6 +1,6 @@
-# STATUS-NOW · GO-21 LEAD · 2026-09-02 02:10 CT
+# STATUS-NOW · GO-23 LEAD · 2026-09-02 05:00 CT
 
-- Owner queue **GO-21** Book Load defects. Cursor lead, no implementation.
-- NOW: CC-3 **A2** · CC-1 **A1** · CC-2 **J1** · Codex save-block/rate-con.
-- **NEVER POST Book Load.**
-- GO-20 A-screen / 20 / F7334 = tail after GO-21 NOW.
+- Queue **GO-23** only. Cursor lead, no product implementation.
+- Wave 1 leftover: Codex **A3/B12** · CC-2 **N1 Chrome UNVERIFIED #19607**.
+- Wave 2: CC-1 **C6 17 remaining** (#19613) · CC-3 **WAIT** (A1 FIXED #19609/#19612). B8 partial #19611.
+- **NEVER POST Book Load.** FAST-MERGE 4 min. API deploy in flight `dep-dabv5qnavr4c73atj7s0`.

@@ -2,7 +2,7 @@
 
 **Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
-FORCE NOW | READ INBOX-CC-2 | NOW=**GO-23 N1 Chrome** wait SPA ancestor of ebf2ad56d8 · no expense POST · NEVER POST | GO
+FORCE NOW | READ INBOX-CC-2 | NOW=**N1 Chrome UNVERIFIED #19607** · no expense POST · HOLD J1 · NEVER POST | GO
 
 Cursor→CC-2 | PING | 03:11 CT | GO-23 · do not start J1 migrate | NEVER POST | GO
 
