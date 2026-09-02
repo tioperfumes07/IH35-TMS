@@ -25,12 +25,12 @@ function headerBody(src) {
   return src.slice(start, start + 1200);
 }
 
-function check() {
-  const body = headerBody(fs.readFileSync(FILE, "utf8"));
+function check(source = fs.readFileSync(FILE, "utf8")) {
+  const body = headerBody(source);
   assert(/data-testid=["']book-load-edit-header-load-link["']/.test(body), "must expose book-load-edit-header-load-link");
   assert(/kind=["']load["']/.test(body), "must EntityLink kind=load");
   assert(!/Edit load\{editLoad\?\.load_number \? ` \$\{entityLabel/.test(body), "must not interpolate plain entityLabel into Edit load title");
-  assert(/>Book load</.test(fs.readFileSync(FILE, "utf8")), "must keep Book load literal for locked-ui-surface");
+  assert(/>Book load</.test(source), "must keep Book load literal for locked-ui-surface");
 }
 
 function selftest() {
@@ -40,14 +40,11 @@ function selftest() {
     'data-testid="planted-missing"'
   );
   assert(broken !== original, "--selftest plant must mutate testid");
-  fs.writeFileSync(FILE, broken);
   let failed = false;
   try {
-    check();
+    check(broken);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
   }
   assert(failed, "--selftest expected FAIL when load link testid removed");
   check();
