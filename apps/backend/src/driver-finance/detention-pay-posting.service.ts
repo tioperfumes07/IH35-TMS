@@ -1,3 +1,7 @@
+// C6-MONEY-JE-EXEMPT: driver_finance.settlement_lines rows here are settlement-scoped LINE items,
+// not independent cash movements — the settlement HEADER posts one aggregate balanced JE at
+// finalize via settlement-posting.service.ts's postSettlementToGl (verified 2026-09-02, GO-23 C6).
+//
 // DWELL-01-D3-DETENTION-DRIVER-PAY-SETTLEMENT-LINE (owner GO-DWELL-01, routed via GO-PENDING-01,
 // board finding filed 2026-08-29) — the driver-side leg of detention pay. Customer-side detention
 // billing already exists (dispatch/detention-approval.service.ts's approveDetentionRequest bridges

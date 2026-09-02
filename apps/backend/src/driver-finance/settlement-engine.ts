@@ -1,3 +1,6 @@
+// C6-MONEY-JE-EXEMPT: driver_finance.settlement_lines rows here are settlement-scoped LINE items,
+// not independent cash movements — the settlement HEADER posts one aggregate balanced JE at
+// finalize via settlement-posting.service.ts's postSettlementToGl (verified 2026-09-02, GO-23 C6).
 import type { TeamSplitMethod } from "../mdata/driver-team.service.js";
 import { normalizeShares } from "../mdata/driver-team.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";

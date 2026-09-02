@@ -471,6 +471,11 @@ export async function provisionDriverEscrowSubAccount(
  * bridge (migration 0234); its UNIQUE (operating_company_id, holder_id, purpose) makes the upsert
  * idempotent and re-points coa_account_id if it ever changes. Forward: driver_id -> coa_account_id;
  * reverse: coa_account_id -> holder_id (driver). Escrow is a LIABILITY (held-in-trust).
+ *
+ * C6-MONEY-JE-EXEMPT: this INSERT/UPSERT carries no amount/balance column at all (see the column
+ * list below — holder/purpose/coa_account_id only) — it provisions the account SHELL, not a money
+ * movement. The actual dollar events land later in escrow_ledger/escrow_postings when funds are
+ * deposited or drawn against this account, which post their own JE separately. Zero GL effect here.
  */
 export async function upsertDriverEscrowAccountLink(
   client: DbClient,
