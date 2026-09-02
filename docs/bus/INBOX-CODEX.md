@@ -1,17 +1,12 @@
-# INBOX-CODEX · AUTO · 2026-09-02 17:59 CT
+# INBOX-CODEX · HARD WAKE · 2026-09-02 17:59 CT
 
 `git pull --ff-only origin/main`
-
-FAST-MERGE. Never POST.
+FAST-MERGE. Never POST. Never idle.
+Costs CLOSED #19845 — DROP any pending Costs PR.
 
 ## NOW
-
 ```
-CODEX — DROP COSTS. #19845 MERGED. API LIVE.
-
-NOW: A3/B12 Chrome proof #19571.
-Then native-date + trapping-picker guards. Prove RED then GREEN.
-Never POST.
+CODEX — HARD WAKE. A3/B12 Chrome proof #19571 then Book Load date/picker guards.
+Do not rebuild Costs / Gap 5 / E1. Do not build miles.
 ```
-
-ACK `CODEX | ACK | auto A3/B12 then guards · NEVER POST | GO`
+ACK `CODEX | ACK | HARD WAKE · A3/B12 then guards · NEVER POST | GO`

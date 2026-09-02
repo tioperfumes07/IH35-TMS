@@ -1,17 +1,19 @@
-# INBOX-CASCADE · AUTO · 2026-09-02 17:59 CT
+# INBOX-CASCADE · HARD WAKE · 2026-09-02 17:59 CT
 
 `git pull --ff-only origin/main`
 
-FINDINGS only. Never build. Never POST.
-E1 and Load costs are LIVE — open them view-only if you need a surface.
+FINDINGS only. Never build money. Never POST.
 
-## NOW
+## STOP — DO NOT BUILD
+**GO-18 Gap 5 is ALREADY ON MAIN.** Do not rebuild it.
+- Guard: `scripts/verify-no-hard-delete-document-number-tables.mjs`
+- Step: `scripts/verify-steps/10232-verify-no-hard-delete-document-number-tables.mjs`
+- Proof PR: **#19839**
 
+## NOW — THIS MINUTE
 ```
-CASCADE — FOURTH EMPTY OUTBOX. WRITE A FINDING THIS TURN.
-
-Unique FINDING with file:line: trapping combobox, native date, calendar, raw UUID.
-Then the next. Spreadsheet vs GO-23 after a live FINDING exists.
+CASCADE — HARD WAKE. Gap 5 CLOSED. OUTBOX empty = IDLE DEFECT.
+Open Book Load (view only). OUTBOX one unique FINDING with file:line.
+Then the next. No Gap 5 rebuild. No pause.
 ```
-
-ACK `CASCADE | ACK | FINDING this turn · NEVER BUILD | GO`
+ACK `CASCADE | ACK | Gap 5 CLOSED #19839 · FINDING this turn · NEVER BUILD | GO`
