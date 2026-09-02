@@ -156,9 +156,34 @@ export async function createDriverCashAdvanceCore(
       message: "Fuel deposit requires load and unit",
     };
   }
-  if (body.disbursement_method === "direct_bank_transfer" && !body.from_bank_account_id) {
-    // Soft prefer: allow legacy callers without bank id, but FE wizard requires it.
-    // Keep permissive for existing approve/request paths that still disburse via Comdata.
+  // B8 (GO-23 wave 2) — the FE wizard's own zod schema already requires from_bank_account_id for
+  // direct_bank_transfer (cash-advances.routes.ts createAdvanceBodySchema superRefine), but this
+  // core function is also called directly by cash-advance-owner-approval.service.ts,
+  // driver-hub-requests.service.ts, and bank-driver-advance.service.ts — none of which go through
+  // that zod gate. A cash advance with no payment account AND no vendor recipient to stand in for
+  // one is an orphan: nothing downstream (settlement deduction, GL cash leg, bank reconciliation)
+  // can resolve which real-world account the money actually moved out of. Refuse it here, at the
+  // one place every caller passes through, instead of leaving it "soft preferred" permissive.
+  const isElectronicDisbursement = body.disbursement_method === "direct_bank_transfer" || body.disbursement_method === "wire";
+  if (isElectronicDisbursement && !body.from_bank_account_id && body.recipient_info.recipient_type !== "vendor") {
+    return {
+      ok: false,
+      code: 400,
+      error: "cash_advance_orphan_no_payment_account",
+      message: `${body.disbursement_method} disbursement requires from_bank_account_id (or a vendor recipient) — a cash advance with no resolvable payment account cannot reconcile against a real bank leg`,
+    };
+  }
+  // Instrument reference (Comchek/Comdata/EFT/wire number) is the one field that lets the owner
+  // match this advance to what actually cleared the bank — required, not optional, for every
+  // disbursement method that produces a real external instrument. in_person_check is the one
+  // legitimate exception (a physical handoff with no clearing-network reference to capture).
+  if (body.disbursement_method !== "in_person_check" && !body.recipient_info.bank_reference?.trim()) {
+    return {
+      ok: false,
+      code: 400,
+      error: "cash_advance_instrument_reference_required",
+      message: `${body.disbursement_method} disbursement requires an instrument/reference number (recipient_info.bank_reference) — never optional for a real clearing-network disbursement`,
+    };
   }
 
   const driverRes = await client.query(

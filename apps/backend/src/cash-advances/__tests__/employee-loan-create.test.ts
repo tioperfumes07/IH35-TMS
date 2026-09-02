@@ -16,6 +16,7 @@ function makeClient() {
     query: vi.fn(async (sql: string, params: unknown[] = []) => {
       if (sql.includes("information_schema.columns")) return { rows: [{ ok: false }] };
       if (sql.includes("FROM mdata.drivers")) return { rows: [{ id: params[0], status: "active" }] };
+      if (sql.includes("FROM banking.bank_accounts")) return { rows: [{ id: params[0] }] };
       if (sql.includes("INSERT INTO driver_finance.driver_liabilities")) {
         captured.liabilityType = params[2];
         return { rows: [{ id: "liab-1" }] };
@@ -37,7 +38,11 @@ const baseBody = {
   amount: 500,
   purpose: "other" as const,
   disbursement_method: "wire" as const,
-  recipient_info: { recipient_type: "driver" as const },
+  // B8 (GO-23 wave 2) — a wire disbursement with no payment account and no instrument reference
+  // is now a refused orphan (cash-advance-create.ts); every fixture in this file represents a
+  // real, resolvable advance, not the defect the new check exists to catch.
+  from_bank_account_id: "bank-1",
+  recipient_info: { recipient_type: "driver" as const, bank_reference: "WIRE-REF-0001" },
   repayment_schedule: { weekly_installment_amount: 50, total_periods: 10, cadence: "weekly" as const },
 };
 

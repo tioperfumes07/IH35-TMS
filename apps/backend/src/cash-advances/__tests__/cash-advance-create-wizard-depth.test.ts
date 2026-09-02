@@ -99,7 +99,7 @@ describe("createDriverCashAdvanceCore — wizard depth", () => {
       amount: 500,
       purpose: "family_emergency",
       disbursement_method: "direct_bank_transfer",
-      recipient_info: { recipient_type: "driver" },
+      recipient_info: { recipient_type: "driver", bank_reference: "EFT-REF-0043" },
       from_bank_account_id: BANK,
       recovery_mode: "full",
     });
@@ -126,7 +126,8 @@ describe("createDriverCashAdvanceCore — wizard depth", () => {
       amount: 150,
       purpose: "lumper",
       disbursement_method: "direct_bank_transfer",
-      recipient_info: { recipient_type: "driver" },
+      // B8 (GO-23 wave 2) — instrument reference is required for every non-in_person_check method.
+      recipient_info: { recipient_type: "driver", bank_reference: "EFT-REF-0042" },
       load_id: LOAD,
       unit_id: UNIT,
       from_bank_account_id: BANK,
