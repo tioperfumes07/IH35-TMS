@@ -1,18 +1,16 @@
-# INBOX-CC-1 · AUTO · 2026-09-02 18:16 CT
+# INBOX-CC-1 · AUTO · 2026-09-02 18:23 CT
 
 `git pull --ff-only origin/main`
 
-FAST-MERGE. Never POST. Never rebuild deadhead / A1 XOR / Gap 5 / Costs.
+FAST-MERGE. Never POST. Never rebuild deadhead / A1 / Gap 5 / Costs.
 
 ## NOW
 
 ```
-CC-1 — WAVE 1. AUTO. YOU ARE STALE.
+CC-1 — WAVE 1. HARD WAKE. YOU ARE STALE.
 
-N1 remaining — NULL expense numbers / backend completeness.
-ExpenseCreatePage already routed; dispatch Add Expense link already live.
-Do not rebuild the link. Fix NULL numbers + mint path.
-Then miles/settlement leftovers. Then GO-22a (LOAD counter, never MAX+1).
+N1 remaining — NULL expense numbers / mint path.
+Do not rebuild the Add Expense link.
 ```
 
-ACK `CC-1 | ACK | auto N1 remaining · NEVER POST | GO`
+ACK `CC-1 | ACK | N1 remaining · NEVER POST | GO`
