@@ -1268,3 +1268,29 @@ describes.
 Not touching the ratchet baseline or ADR-ing this myself — routing it back to whoever owns the
 K2 board row (GO-27/CC-3 per earlier context) plus the owner, since this changes the shape of
 the work, not just the count.
+
+---
+
+## ★ CC-2 | J1 status — batches 2-4 shipped, 997 -> 738 · 2026-09-02T~21:10Z
+
+Per owner correction: J1 continues, no pause, no 268-file picker rewrite (K2 finding above
+confirmed correct in source — holds). Four batches shipped this pass, each merged on the
+required ratchet check, each verified against typecheck + every real test dependent
+(cross-checked pre-existing failures via `git stash` before/after, never assumed):
+
+- Batch 2 `pages/program/` — 997 → 943 (#19778 @ `b582d8bbf0`)
+- Batch 3 `pages/banking/` — 943 → 867 (#19782 @ `edf7299f66`, needed `BANK-F#` FINDING format
+  + `MODULE_PROGRESS: banking N of M` + `Live=UNVERIFIED` tag — money-path regex fires on the
+  directory name alone for a pure CSS pass, same class as the memory note on this)
+- Batch 4 mixed non-money (`CreateWorkOrderModal`, `CustomerDetail`, `EquipmentTypesPage`,
+  `DispatchKanban`, `CreateDriverModal`, `HosTrackerSection`, `SystemModulePage`,
+  `HosViewerSection`) — 867 → 738 (#19796 @ `b2765cb2d6`). Hit a real merge conflict on
+  `docs/audit/program-scoreboard.json` / `programScoreboard.data.ts` — a scheduled
+  `program-tracker-artifacts-sync` job regenerates those independently of any PR; rebased,
+  kept my own regeneration (it was fresher than main's), `verify-derived-artifact-freshness`
+  confirmed OK before merge.
+
+J1: **1015 → 738** this session (started today at 1083/342 baseline). Continuing straight into
+batch 5, no report pause per instruction. Nothing booked, nothing written to any financial
+table in any of these — pure `text-[Npx]` → `text-xs`/`text-[11px]` token swaps, zero visual
+change intended, confirmed via `--selftest` + full ratchet PASS + typecheck + tests each time.
