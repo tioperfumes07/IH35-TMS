@@ -34,6 +34,12 @@ export function TodaysAttentionTop5({ operatingCompanyId }: Props) {
   const items = query.data?.items ?? [];
   const totalSources = query.data?.totalSources ?? 10;
   const sourcesRan = query.data?.sourcesRan ?? 0;
+  const skippedSources = query.data?.skippedSources ?? [];
+  // GO-20 deferred slice 5 — cooling-customer monitoring is deliberately not built yet
+  // (owner ruling 2026-09-02: revisit at launch). This source always skips today because its
+  // table doesn't exist; say so honestly rather than silently omitting it (fuel-planner
+  // null-not-zero pattern — never let a deferred feature look like a working zero-count).
+  const coolingCustomersUnavailable = skippedSources.includes("cooling_customers");
 
   if (query.isLoading) {
     return (
@@ -70,6 +76,9 @@ export function TodaysAttentionTop5({ operatingCompanyId }: Props) {
       </div>
       <div className="space-y-2 p-3">
         {dismissError ? <p role="alert" className="text-xs text-red-700">{dismissError}</p> : null}
+        {coolingCustomersUnavailable ? (
+          <p className="text-[11px] text-slate-400">Cooling customers monitoring: unavailable.</p>
+        ) : null}
         {items.length === 0 ? (
           <p className="text-xs text-slate-500">
             No priority items right now. {sourcesRan} of {totalSources} attention sources are reporting.

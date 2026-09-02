@@ -314,6 +314,36 @@ check(
   )
 );
 
+// GO-20 deferred slice 5 (cooling customers) — reports itself unavailable, never a silent
+// empty-looking-like-it-works gap (fuel-planner null-not-zero pattern, owner ruling 2026-09-02).
+check(
+  "routes.ts threads skippedSources through every response branch",
+  () => fileContains(
+    "apps/backend/src/owner/todays-attention/routes.ts",
+    "skippedSources: live.skippedSources",
+    "skippedSources = live.skippedSources",
+    "skippedSources = statsFromMeta.skippedSources",
+    "skippedSources: []"
+  )
+);
+
+check(
+  "home.ts parses skippedSources",
+  () => fileContains(
+    "apps/frontend/src/api/home.ts",
+    "skippedSources"
+  )
+);
+
+check(
+  "TodaysAttentionTop5 reports cooling customers unavailable, not silently empty",
+  () => fileContains(
+    "apps/frontend/src/components/home/TodaysAttentionTop5.tsx",
+    "cooling_customers",
+    "Cooling customers monitoring: unavailable"
+  )
+);
+
 // ─── Summary ──────────────────────────────────────────────────────────────────
 
 console.log(`\n[${LABEL}] ${passed} passed, ${failed} failed\n`);
