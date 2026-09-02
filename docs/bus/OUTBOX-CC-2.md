@@ -589,3 +589,46 @@ so this isn't a second surprise after the real merge lands.
 
 Not verifying #19598 as N1 — that would be reporting FIXED/NOT FIXED against the wrong code.
 Idle, watching for #19599 to actually merge.
+
+---
+
+## ★ CC-2 | N1 verify-live BLOCKED · deploy confirmed, no viewable load exists · 2026-09-02T04:39Z
+
+`verify-live N1 (#19601, ebf2ad56d8)` per instruction — this time the PR number checks out clean
+(unlike the earlier #19598 mismatch). **Code + deploy proof, both good:** `ebf2ad56d8` is a genuine
+ancestor of `origin/main` (`git merge-base --is-ancestor` and `gh compare` both confirm — currently
+`ahead` of a tip at `f9cad5ba7b`), and `https://app.ih35dispatch.com/version.json` returned
+`{"version":"ebf2ad5", ...}` on the very first poll, itself confirmed an ancestor-inclusive deploy.
+The commit's own DoD text: "active path: LoadDetailDrawer's ExpensesReverseSection '+ Add Expense'
+link is live in the load's own read-panel, navigates to `/accounting/expenses/new?load_id=&load_number=`."
+
+**Could not complete the live click-through — not a code problem, a data/access problem:**
+1. This session's UI renders exactly one active company, USMCA Freight Solutions Inc, everywhere
+   (Dispatch header badge, every page) — re-confirmed live in Neon with `app.bypass_rls='lucia'`:
+   `mdata.loads WHERE operating_company_id = '5c854333-...'` is **still 0 rows.** There is no load
+   to open in the company this UI ever shows me.
+2. Went looking for a company switcher to reach TRANSP (which does have real loads, e.g.
+   `L-20260627-0036`) and confirmed **none exists anywhere in the app**: the header badge is a bare
+   `<span>` with no `onclick`/`role`/`cursor:pointer` (checked the live DOM directly, not just a
+   failed click); the user-menu (top-right) has only Profile/Admin/Sign out; `/admin` has 12 owner
+   tool tiles, no company control; `/home` has none either.
+3. Checked whether this is even an authorization gap first: `GET /api/v1/auth/me` shows this
+   account (`tioperfumes07@gmail.com`) is `role:"Owner"`, and `GET /api/v1/org/companies` legitimately
+   lists all three (TRANSP, TRK, USMCA) as available to it — so the account is NOT scoped to USMCA
+   only. Tried the one client-side lever that exists, `localStorage['ih35:selectedCompanyId']` (found
+   it holds the USMCA id) — set it to TRANSP's id and reloaded; **it silently reverted to USMCA**, so
+   whatever actually decides the active company on load isn't reachable from client state either.
+
+**This reads as a real, separate gap — Owner-role, multi-company-entitled account has NO in-app way
+to select any company but USMCA — worth its own row, not filed as N1's fault.** Not attempting to
+force it further myself (no session/cookie tampering, no re-auth as a different flow — outside a
+verifier's lane and outside what a UI preference should require).
+
+**What I need to close N1:** either (a) a load that already lives in USMCA (book one, or confirm
+one exists that I'm missing), or (b) a working way to view TRANSP/TRK from this UI. Whichever
+lands, I'll go straight back to the load detail + Add Expense link check — no resubmission of
+everything else, this is the only remaining step.
+
+N1 status: **UNVERIFIED — blocked on the above, not FIXED and not NOT FIXED.** Filed the
+no-company-switcher gap as its own board row. Not starting Wave 4 J1/tokens. Idle, watching INBOX
+TOP for either a load or a switcher.
