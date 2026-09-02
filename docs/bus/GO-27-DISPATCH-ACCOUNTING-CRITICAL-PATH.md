@@ -87,10 +87,10 @@ Further along than any register says. `next-number` endpoints already exist for 
 
 # GATE 2 — COST THE LOAD. Days 2–4. This is the accounting half.
 
-### 2.1 · `accounting.bills.driver_uuid` — MISSING. Fix this first in Gate 2.
-`trailer_id` ✅ and `recover_from_driver` ✅ landed. The driver column did not.
-**This is your road-repair scenario.** A repair billed on 30-day terms that must appear on a driver settlement has nowhere to record which driver. It blocks the Load Costs board and the company settlement behind it.
-**Seat: CURSOR. Data + backend + the bill creator screen.**
+### 2.1 · `accounting.bills.driver_id` — LANDED (#19459). Do not add `driver_uuid`.
+Production and git: column is **`driver_id uuid`** FK → `mdata.drivers(id)`, plus `trailer_id` and `recover_from_driver`. `createBill` already stamps `driver_id` from POST `driver_id`. Expenses stay on `driver_uuid` — two tables, two names, no twin column on bills.
+**This is your road-repair scenario.** A repair billed on 30-day terms that must appear on a driver settlement records the driver on `accounting.bills.driver_id`.
+**Seat: CURSOR (closed for schema).** Bill creator must POST `driver_id` (not memo-only). Codex Gate 2.2 Costs tab uses `driver_id` on bills and `driver_uuid` on expenses.
 
 ### 2.2 · The Load Costs tab — your 13th tab
 The screen you designed: open a load, see its costs underneath, add diesel, tolls, lumpers and vendor bills against it, each born attached to the load with the number assigned automatically. Expense-or-Bill toggle per row, because one load routinely has both.
@@ -138,7 +138,7 @@ Pre-settlement query service (`book-load.service.ts:2354` still logs `presettlem
 
 ### 4.2 · Company settlement table
 No table exists. `TripProfitability.tsx` is a read view. Build the header keyed by settlement number with start and end dates plus child rows, eight sections per your own Settlement 5753, and a test that rebuilds 5753 from source records and ties the P&L to **2,415.11** exactly.
-**Seat: CURSOR. Blocked on 2.1.**
+**Seat: CURSOR. Blocked on bills.driver_id being stamped from the Costs tab / bill creator — schema already exists.**
 
 ---
 
@@ -166,7 +166,7 @@ GATE 0   purge · reseed counter · drop B-        HOURS      <- blocks booking
          YOU BOOK LOAD ONE
 ─────────────────────────────────────────────────────────────
 GATE 1   pickers · B1 · Chrome-prove · B5 · numbers UI   DAYS 1-2
-GATE 2   bills.driver_uuid · Costs tab · proforma · $7k   DAYS 2-4
+GATE 2   bills.driver_id (landed) · Costs tab · proforma · $7k   DAYS 2-4
 GATE 3   bank categorization · proof trail · three dates  DAYS 4-7
 GATE 4   GO-22 settlement spine · company settlement      WEEK 2
 ```

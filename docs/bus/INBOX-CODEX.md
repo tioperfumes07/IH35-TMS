@@ -56,9 +56,10 @@ Jorge UNLOCKED full capacity. WAIT is over.
    report CONFIRM or DISPUTE with query.
 
 4. GO-27 Gate 2.2 — LOAD COSTS TAB (13th tab on load detail).
-   BLOCKED on Cursor Gate 2.1 (accounting.bills.driver_uuid).
-   Expense-or-Bill toggle per row; calls existing endpoints only.
-   Start design/wiring prep now; ship after driver_uuid lands.
+   UNBLOCKED. Canonical bill driver column is **`accounting.bills.driver_id`** (Neon + #19459).
+   There is no `bills.driver_uuid` and there will not be one. Expenses keep `driver_uuid`.
+   POST/read bills with `driver_id`. Expense-or-Bill toggle per row; existing endpoints only.
+   Ship now.
 ```
 
-ACK `CODEX | ACK | GO-26 reintro guard · Costs tab after driver_uuid · NEVER POST | GO`
+ACK `CODEX | ACK | GO-26 reintro guard · Costs tab on bills.driver_id · NEVER POST | GO`
