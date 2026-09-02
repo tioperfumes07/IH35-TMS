@@ -1,4 +1,9 @@
 {
+  "10231": {
+    "claimed_at": "2026-09-02",
+    "claimed_by": "cc-2",
+    "purpose": "verify-go26-consolidation-ratchet (GO-26 owner ruling: freeze today's counts on SelectCombobox/EntityPicker/shared-Combobox/DataTable/ResizableTable/MobileOptimizedTable imports + raw <table> outside 6 infra files + off-scale text, before the 277-file K2/J1 conversion starts)"
+  },
   "2426": {
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
