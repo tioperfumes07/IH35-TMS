@@ -238,7 +238,9 @@ Full text: `docs/specs/DEFINITION-OF-DONE.md` + `docs/specs/EVERY-PR-AUDIT-CHECK
    CC-2 = GUARD verify-live-never-build (GL-DARK/DUAL-PATH prod+fork only). Cascade = merger via direct API +
    scribe.
 4. **VOID = reversal, nothing deletable.** TRANSP/USMCA own no assets today (archive USMCA 1500/1510/1600,
-   keep 2400 generic). ALL TMS data is test; only the TRANSP QBO mirror is real; an empty TMS table is
+   keep 2400 generic). **CORRECTED 2026-09-02 — do not act on the next clause:** "ALL TMS data is test; only the TRANSP
+   QBO mirror is real" is FALSE for USMCA, which is live with real money. Every USMCA record is REAL
+   unless `is_sample_data = true`; never write test/sample/demo fixtures into USMCA. An empty TMS table is
    expected. RLS is NOT a backstop for Owner sessions (`org.user_accessible_company_ids()` returns all
    entities) — every unscoped read is load-bearing on its own predicate.
 5. **EVERY loop, EVERY agent:** read board → grep-verify top OPEN row against main (done → mark DONE w/ SHA;

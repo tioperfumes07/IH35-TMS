@@ -108,7 +108,10 @@ stay judgment.
 community #190610).
 
 **4. ENTITY + DATA LAW.** VOID = reversal; **nothing is deletable**. TRANSP / USMCA own **no assets
-today**. **ALL TMS-native data is TEST** — only the TRANSP QBO mirror is real. **RLS is NOT a backstop for
+today**. ~~**ALL TMS-native data is TEST** — only the TRANSP QBO mirror is real.~~ **FALSE AS OF
+2026-09-02 — do not act on the struck line above.** USMCA is live with real money: **every USMCA record
+is REAL unless it carries `is_sample_data = true`**, and no seat writes test/sample/demo fixtures into
+USMCA, including for proof. **RLS is NOT a backstop for
 Owner sessions**: `org.user_accessible_company_ids()` returns EVERY active company when the role is Owner,
 so **every unscoped read is load-bearing on its own predicate**.
 
