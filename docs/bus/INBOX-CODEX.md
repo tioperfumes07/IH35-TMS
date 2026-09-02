@@ -1,4 +1,4 @@
-# INBOX-CODEX · GO-23 WAVE 1 · A3/B12 RE-DRIVE
+# INBOX-CODEX · GO-23 WAVE 1 · A3/B12 — OWNER IS IN BOOK LOAD NOW
 
 `git pull --ff-only origin main`
 
@@ -7,10 +7,14 @@
 **Queue:** `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`
 
 ## VOID
-POST Book Load · `gh pr checks --watch` · A1 SQL · A2 · N1 · remake B12 if #19571 already names the stop
+POST Book Load · `gh pr checks --watch` · idle waiting for Jorge to paste · remake B12 if the live banner already matches #19571
 
 ## NOW
 
-1. **A3 / B12** — owner re-drives the failed save against **#19571**. Confirm it names the exact stop and rule. OUTBOX FIXED or NOT FIXED with the message text. Ask the owner via OUTBOX if you need a live repro — never book a load.
+Owner is **in Book Load live as USMCA Freight Solutions and will not submit.** You do the A3/B12 re-drive on the **rendered** wizard:
 
-ACK `CODEX | ACK | GO-23 | NOW=A3/B12 owner re-drive #19571 · NEVER POST | GO`
+1. Open Book Load (do not Save a real load). Trigger the **invalid-stop** blocked save the same way #19571 named: flatten must show `Nothing was written` plus **Stop N (Pickup/Delivery) — Field: rule**, and focus/scroll that field. OUTBOX FIXED with the exact banner text, or NOT FIXED with what rendered instead.
+2. #19571 merged `2026-09-02T07:42:52Z` — `Stop 2 (Delivery) — City: City is required` is the contract. Group-only “Stops” is a fail.
+3. If the renderer freezes (owner saw tab 1770138763 lock on + Book Load), recover or report; do not sit idle.
+
+ACK `CODEX | ACK | GO-23 | NOW=A3/B12 live wizard vs #19571 · NEVER POST | GO`

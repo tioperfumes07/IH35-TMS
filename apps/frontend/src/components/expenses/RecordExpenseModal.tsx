@@ -37,7 +37,7 @@ export function RecordExpenseModal({
             showing when this same modal instance reopens for a DIFFERENT company. Same fix
             already shipped for the Maintenance wrapper, MAINT-F6508. */}
         <RecordExpenseForm
-          key={`record-expense-modal-${operatingCompanyId}-${defaultLoadId ?? ""}`}
+          key={`record-expense-modal-${operatingCompanyId}`}
           operatingCompanyId={operatingCompanyId}
           idPrefix="record-expense-modal"
           submitLabel="Record expense"

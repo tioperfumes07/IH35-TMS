@@ -1,6 +1,5 @@
-# STATUS-NOW · GO-23 LEAD · 2026-09-02 06:41 CT
+# STATUS-NOW · GO-23 LEAD · 2026-09-02 07:20 CT
 
-- Queue **GO-23** only. Cursor lead, no product implementation.
-- Wave 1 leftover: Codex **A3/B12** · CC-2 **N1 Chrome UNVERIFIED #19607**.
-- Wave 2: CC-1 **B8 remainder** after **#19634** (TONU HOLD, C6 `--strict` 1) · CC-3 **WAIT**.
-- **NEVER POST Book Load.** API `dep-dac0mgfavr4c73b2g680` kicked — do not stack.
+- CC-2 was HOLD because INBOX said N1 Chrome blocked (no USMCA load) and “delegating the live check.” Owner is live in Book Load now — HOLD lifted.
+- Codex has **no tmux**; A3/B12 waiting on owner re-drive — owner is in the wizard **now**.
+- Wave 1 A2 **not closed** (first 100 still shown). A1 toggle **FIXED live**.

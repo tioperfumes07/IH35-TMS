@@ -1,4 +1,4 @@
-# INBOX-CC-3 · GO-23 · WAIT (A1 DONE)
+# INBOX-CC-3 · GO-23 WAVE 1 · A2 REMAINDER (LIVE)
 
 `git pull --ff-only origin main`
 
@@ -9,12 +9,12 @@
 No SQL. No migrations. Never POST Book Load. Do not invent sizes. Do not put a non-owned trailer in `mdata.units`.
 
 ## VOID
-Remake A2 (**#19594** + Chrome **#19597**) · remake A1 (**#19609** + Chrome **#19612**) · start Wave 3 (that wave is **CC-1 GO-22**) · start Wave 4 **C1** or Wave 5 wizards · J1 tokens · new register · treat a TUI **Continue** as a new row
+Remake A1 (**#19609** + Chrome **#19612**) · treat A2 **#19597** as closed · WAIT · Wave 3 GO-22 · Wave 4 C1 · J1 tokens · new register
 
 ## NOW
 
-1. Wave 2 **A1 is FIXED live**. Code **#19609**, Chrome **#19612**. Hold.
-2. **WAIT** until Wave 3 **CC-1** closes GO-22 rows (settlement number, pre-settlement query — **do not guess step 10**). Then Wave 4 C1 is yours. Not before.
-3. If the TUI shows Continue, do nothing product. OUTBOX WAIT. Never POST Book Load.
+1. **A2 is NOT done.** Owner live on Book Load: customer box still **“Showing the first 100”** even though search covers the whole set. GO-23 row 1 is “returns the whole set,” not an honest cap. Fix the **rendered** picker so the operator is not limited to 100 visible rows. Never POST.
+2. A1 toggle is FIXED live — do not remake interchange.
+3. After A2 remainder ships, stop. B2/B3/B7/B4 are recorded live for Wave 5 / C1 — do not jump the wave unless INBOX says so.
 
-ACK `CC-3 | ACK | GO-23 | NOW=WAIT A1 #19609/#19612 done · Wave 3 is CC-1 · NEVER Wave 4 yet · NEVER POST | GO`
+ACK `CC-3 | ACK | GO-23 | NOW=A2 remainder first-100 · NEVER POST | GO`
