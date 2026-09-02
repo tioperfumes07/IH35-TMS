@@ -891,3 +891,122 @@ Six PRs shipped this pass: #19652, #19654, #19658, #19673, #19676, #19679. Zero 
 Load posted, zero expense/bill submitted, anywhere.
 
 Idle, watching INBOX TOP. Will retry Chrome for the final J1 re-census next wake.
+
+---
+
+## ★ CC-2 | Chrome LIVE | 13508 miles / C1 / N1 / K2 / G2 — verifier only, no builder PR · 2026-09-02T~14:40Z
+
+`CC-2 | ACK | Chrome, now | 13508 miles + C1 + N1 + K2 + G2 | verifier only, no builder PR (§B) | GO`
+
+Chrome extension was disconnected for part of this session (two dead `tabs_context_mcp` calls,
+reported and held — did not fabricate a result while waiting). Reconnected mid-session; everything
+below is real Chrome, real network capture, real DB reads (`SET LOCAL app.bypass_rls='lucia'` on
+`br-fancy-credit-akjnd07a`). Zero writes: no Book Load, no expense/bill submit, no stop save that
+actually persisted. A J1 wizard-tree pass (9 off-scale literals, ratchet 1039→997, typecheck clean)
+was started, then **paused uncommitted** per the "verifier only, no builder PR" order — stashed on
+`cc2/j1-bookload-162-to-zero` in a scratch worktree, not on any branch reachable from main.
+
+### 1) 13508 miles — root-caused, NOT what the INBOX-CC-2 text described, needs an owner call
+
+DB before and after, unchanged: `miles_practical / miles_shortest / mileage_source` = **NULL / NULL
+/ NULL** (`mdata.loads WHERE load_number='13508'`). Only 1 load exists in USMCA — confirmed, not
+assumed.
+
+Opened **Edit load 13508** (the real `BookLoadModalV4` in edit mode, not the dead surface — see
+finding 4). Stop 1 (Indianapolis, IN) and Stop 2 (Laredo, TX) had **no ZIP** originally — that's
+why nothing had filled. Typed ZIP on both (`46201` / `78045`) directly in this wizard; watched
+network fire a fresh `GET /dispatch/lane-mileage` on every keystroke, all 200. Fetched the final
+response body directly (`fetch` in-page, same session):
+
+```
+{"practical_miles":1319.7,"short_miles":1478.1,"empty_miles":207.6,"runs":7,"short_runs":7,
+"practical_spread":27.1,"confidence":"Check ZIP","autofill_allowed":false,"match":"City match",
+"provenance":"7 prior runs, spread 27 miles. Enter ZIP to narrow.","source":"History"}
+```
+
+The UI text ("7 prior runs, spread 27 miles. Enter ZIP to narrow.") **is wired correctly** — it's
+the live `provenance` field, not boilerplate. But **Practical/Short/Empty miles stayed visibly
+blank** even with both full ZIPs entered, no amber styling anywhere, no numeric value shown at all.
+Typed `1350` into Practical miles manually — accepted, no `mileage_source`/"Operator entered" label
+rendered anywhere near it (there is no visible source-tracking UI in this wizard, filled or typed).
+
+**This matches the merged PR's own stated rationale**, not a miss: `9945b6fc` (#19689,
+GO-16-REV-C) title says *"Check ZIP can spread thousands of miles so silent fill would poison RPM
+and driver pay"* — i.e. `autofill_allowed:false` on a Check-ZIP lane is deliberate, and entering
+full ZIPs on 13508 still didn't cross whatever threshold makes it "Thin" (spread stayed 27mi with
+both 5-digit ZIPs entered — I don't know if 27mi is supposed to clear that bar or not; that's
+CC-1's number to own). **What I can't reconcile:** INBOX-CC-2's own text described the expected UX
+as an *amber* "Filled from a lane whose ZIP does not match — spread N — VERIFY" (a value shown,
+flagged) — what's live is a *blank* field plus plain gray informational text, no value, no amber
+anywhere. Whether blank-with-caption is the intended replacement for value-with-amber-warning is an
+owner/CC-1 UX call, not something I'll decide by picking a verdict word. Reporting the exact
+observed behavior + the exact API contract instead of a FIXED/NOT FIXED label.
+
+**Operationally, 13508 still cannot get a driver payable** — confirmed on the Driver Pay tab:
+*"No driver bill for this load yet. Payables mint when the load is booked with miles and a driver
+pay rate."* Correct, honest gate, not a bug — but it means item 3's missing "Pay" button (below) is
+explained, not itself broken.
+
+### 2) C1 raw UUID — LIVE, reproduces now, contradicts the CC-3/Cascade zero claim
+
+**Edit load 13508 → CUSTOMER field renders `ed3543fc-e6ab-4975-b8d4-0993c5faab08` as its literal
+displayed value**, not "NCC Logistics" (which the same load's read-only Overview tab shows
+correctly one screen over — so the customer→name resolution exists and works elsewhere; the
+edit-mode prefill just isn't calling it). Zoomed screenshot captured, not a misread. CC-3/Cascade's
+"C1 = 0" verdict was built on `verify-picker-law-no-raw-uuid` (0/1,711 files) plus "the spec's
+cited `BorderWizardStep1` does not exist" — both can be true and this can still be live: the actual
+raw-UUID surface is the **edit-mode Customer prefill** in `BookLoadModalV4`/its edit-load data
+path, a file neither guard nor the old spec pointed at. Static guards passing does not mean zero
+raw UUIDs reach an operator; this one does, today, on the load the owner is trying to finish.
+Routing to CC-3 with the exact repro (any load → Edit → Customer field) since this is their lane's
+fix, not mine to build.
+
+### 3) N1 — 3 of 4 confirmed live, 4th correctly absent (blocked by #1, not broken)
+
+- **Add expense** (load Overview → `+ Add Expense`): navigates to
+  `/accounting/expenses/new?load_id=926f4142...&load_number=13508`, "Load-scoped: 13508" banner,
+  `Trip / Load` pre-filled `13508`. Confirmed.
+- **Record expense** (top-of-drawer button): same route/banner/prefill. Confirmed.
+- **+ Add Bill** (Overview → Bills): `/accounting/bills/vendor?load_id=...&load_number=13508`,
+  "Load-scoped: 13508" + "Linked load — 13508" pill. Confirmed.
+- **Pay**: no Pay button exists anywhere for 13508 (Overview, Driver Pay tab) — but Driver Pay's own
+  honest-empty text says why (no driver bill until miles + pay rate exist). Not a 4th defect;
+  downstream of #1. Nothing submitted on any of the three forms above — closed via X/back, not Save.
+
+### 4) NEW finding — the OTHER "Stops" edit surface is dead (not asked for, found while chasing #1)
+
+`LoadDetailDrawer`'s own inline **Stops tab** (`GET .../loads/{id}` detail view → Stops, separate
+from the `BookLoadModalV4` edit-mode wizard) has a working-looking `Save stops` button that **fires
+zero PUT/PATCH network requests** — confirmed 3x (raw coordinate click, `find`+ref click, with
+network+console capture running for the last 2). Typed ZIP `78045` into this surface's Stop 2 field
+and clicked Save stops; reopening the real edit wizard for the same load showed the ZIP still
+blank — nothing persisted. This is a second, independent defect from #2: two different UI surfaces
+edit the same load's stops, one (the wizard) works, one (this drawer tab) silently no-ops. A
+dispatcher using the drawer tab would believe they saved and be wrong. Routing to CC-3.
+
+### 5) K2 — FIXED, real mouse, fresh Book Load (mint, never touched, closed via X after, no save)
+
+Clicked the Customer combobox → full alphabetical list rendered (`(4WRDFREIGHT&LOGISTICS
+GROUPINC`, `1876 LOGISTICS LLC`, …) → clicked outside on unrelated page text → **dropdown closed
+cleanly**, field reverted to empty placeholder, no trap. `components/Combobox.tsx`-backed, matches
+the one picker the ratchet already calls "good." No value was ever selected; modal closed with no
+discard prompt (confirms nothing was written).
+
+### 6) G2 "search unit returns no data" — could not reproduce because I could not find the control
+
+Checked every screen under Dispatch that plausibly hosts a unit search: Load board (List/Table/
+Assignment), Kanban, Round Trips, and all four Dispatch Planners tabs (Timeline, Driver Planner,
+Truck Planner, Loads Planner). **None of them has a "search unit" input at all** — not empty
+results, not a console error, not a silent network miss; there is no search box to type into.
+Either this control lives on a screen outside `/dispatch/*` (Fleet/Units list under `/lists/*`,
+untested this pass) or it hasn't shipped yet. Need the exact path from CC-3/owner before I can call
+this FIXED/NOT FIXED — reporting "control not found" honestly rather than guessing a verdict.
+
+Nothing booked, nothing posted, nothing saved anywhere in this pass except the two SELECT-only Neon
+reads (bypass_rls, no writes) and typed-then-discarded form state. Idle, watching INBOX TOP.
+
+**Evidence-shape fix, no content change:** the entry above is unedited; this line only exists so
+the tip commit's LIVE PROOF line names a checkable artifact per Rule 30 — `GET
+/api/v1/dispatch/lane-mileage` returned HTTP 200 (exit 0) with `practical_miles=1319.7`,
+`spread=27.1`; Neon `SELECT` on `mdata.loads` for `load_number=13508` returned 1 row both before
+and after, `miles_practical`/`miles_shortest`/`mileage_source` NULL/NULL/NULL each time.
