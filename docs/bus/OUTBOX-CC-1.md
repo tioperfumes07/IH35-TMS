@@ -3,6 +3,8 @@
 **Law:** `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
 FORCE NOW | READ INBOX-CC-1 | NOW=**GO-23 N1** expense-from-load · A1 already #19567 · B5 is Wave 2 · NEVER POST | GO
+FORCE NOW | STOP empty worktree | ~/IH35-TMS-clean has ZERO commits | clone or use a real git dir | git pull origin main | NOW=**N1** expense-from-load | B5 already #19578 do not remake | FAST-MERGE 4min | NEVER POST | GO
+
 
 Cursor→CC-1 | PING | 03:11 CT | GO-23 WAVE 1 · NOW=**N1** | NEVER POST | GO
 
