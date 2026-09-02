@@ -1,5 +1,7 @@
 import { withLuciaBypass } from "../auth/db.js";
 import { withCurrentUser } from "../auth/db.js";
+import { decideRepairBooksTreatment, repairBooksCoaRole, type RepairBooksTreatment } from "../accounting/capitalize-threshold.js";
+import { resolveRoleAccountOptional, type CoaRole } from "../accounting/coa-roles/resolver.service.js";
 import { assertBillPsePostingEnforced, PseEnforcementError } from "../accounting/pse-enforce.middleware.js";
 import { enforcePsePostingSelection } from "../accounting/pse-enforce.middleware.js";
 import { processMaintenanceWorkOrderClose } from "../accounting/maintenance-posting/poster.service.js";
@@ -169,6 +171,20 @@ async function listWoPostingLines(client: DbClient, workOrderId: string) {
   return res.rows;
 }
 
+
+export function resolveWoApRepairCoaRole(billTotalCents: number): CoaRole {
+  return repairBooksCoaRole(billTotalCents);
+}
+async function resolveWoApThresholdCoaAccountId(
+  client: DbClient,
+  operatingCompanyId: string,
+  billTotalCents: number
+) {
+  const booksTreatment = decideRepairBooksTreatment(billTotalCents);
+  const coaRole = resolveWoApRepairCoaRole(billTotalCents);
+  const accountId = await resolveRoleAccountOptional(client, operatingCompanyId, coaRole);
+  return { account_id: accountId, coa_role: coaRole, books_treatment: booksTreatment };
+}
 export async function buildMaintWoApPostingPreview(
   userId: string,
   input: WoApContextInput & { actor_user_id?: string }
@@ -192,6 +208,8 @@ export async function buildMaintWoApPostingPreview(
           ps_item_qbo_id: null,
           resolved_coa_account_id: null,
           coa_account_id: null,
+          repair_coa_role: null,
+          books_treatment: null,
         },
         lines: [],
         bill_total_cents: 0,
@@ -217,7 +235,7 @@ export async function buildMaintWoApPostingPreview(
           psCategoryQboId: psCategory,
           psItemQboId: psItem,
         });
-        coaAccountId = enforced.resolved_coa_account_id;
+        void enforced;
       } catch (error) {
         blocking.push(String((error as Error).message ?? "pse_enforcement_failed"));
       }
@@ -228,13 +246,12 @@ export async function buildMaintWoApPostingPreview(
       } else {
         psCategory = mapped.ps_category_qbo_id;
         psItem = mapped.ps_item_qbo_id;
-        coaAccountId = mapped.coa_account_id;
         try {
           const enforced = await enforcePsePostingSelection(userId, input.operating_company_id, {
             psCategoryQboId: psCategory,
             psItemQboId: psItem,
           });
-          coaAccountId = enforced.resolved_coa_account_id;
+          void enforced;
         } catch (error) {
           blocking.push(String((error as Error).message ?? "pse_enforcement_failed"));
         }
@@ -253,6 +270,15 @@ export async function buildMaintWoApPostingPreview(
     const billTotalCents = lines.reduce((sum, line) => sum + line.amount_cents, 0);
     if (billTotalCents <= 0) blocking.push("bill_total_must_be_positive");
 
+    let repairCoaRole: CoaRole | null = null;
+    let booksTreatment: RepairBooksTreatment | null = null;
+    if (billTotalCents > 0) {
+      const threshold = await resolveWoApThresholdCoaAccountId(client as DbClient, input.operating_company_id, billTotalCents);
+      repairCoaRole = threshold.coa_role;
+      booksTreatment = threshold.books_treatment;
+      if (threshold.account_id) coaAccountId = threshold.account_id;
+      else blocking.push(`coa_role_unbound:${threshold.coa_role}`);
+    }
     const existing = await client.query<{ id: string }>(
       `
         SELECT id::text AS id
@@ -281,6 +307,8 @@ export async function buildMaintWoApPostingPreview(
         ps_item_qbo_id: psItem,
         resolved_coa_account_id: coaAccountId,
         coa_account_id: coaAccountId,
+        repair_coa_role: repairCoaRole,
+        books_treatment: booksTreatment,
       },
       lines,
       bill_total_cents: billTotalCents,
@@ -412,6 +440,8 @@ export async function processMaintWorkOrderApPosting(input: WoApContextInput & {
       ps_category_qbo_id: preview.pse.ps_category_qbo_id,
       ps_item_qbo_id: preview.pse.ps_item_qbo_id,
       resolved_coa_account_id: preview.pse.resolved_coa_account_id,
+      repair_coa_role: preview.pse.repair_coa_role,
+      books_treatment: preview.pse.books_treatment,
       asset_id: preview.asset_id,
       bill_total_cents: preview.bill_total_cents,
     },
