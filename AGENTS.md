@@ -1,98 +1,63 @@
-**HONEST BUILT + LAUNCH (2026-08-14):** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — launch without Live Chrome = Fully-Wired 1–11 with leaf-specific Built only; seat lanes Cursor/CC-1/Codex; no `leafRe:.*` / `|.*` / word-blanket Built; no new scoreboard columns.
+# IH35-TMS — Agent coordination (GO-20)
 
-> **Model tiers (permanent):** [docs/specs/MODEL-TIER-POLICY.md](docs/specs/MODEL-TIER-POLICY.md) — Cursor mechanical=C, feature/scoreboard=B; money=A.
+> **AUTOLOAD (2026-09-02 — only these are current law):**
+> - `.cursor/rules/00-IH35-LAW.mdc` + `.cursor/rules/03-display-ids.mdc` — the **only** always-apply project rules
+> - `claude/00-IH35-CURRENT-STATE-AND-LAW-READ-FIRST.md` — live state, traps, scope
+> - `docs/lockdown/PROJECT-INSTRUCTIONS-2026-09-02.md` — owner law copy
+> - **Queue:** `docs/bus/INBOX-<SEAT>.md` TOP + `docs/lockdown/GO-20-EIGHT-FEATURES.txt` · bus index: `READ-AGENT-BUS.md`
+> - **Cursor lead:** `docs/bus/INBOX-CURSOR.md` — coordinates seats; **does not** sweep `GUARD-WORKORDERS` / `Downloads/abb`
+> - **Ship:** `node scripts/cursor-ship-preflight.mjs --body-file …` before push · PR title **`Cursor-`** prefix
+> - **Model tiers:** mechanical=C, feature=B, money=A — [docs/specs/MODEL-TIER-POLICY.md](docs/specs/MODEL-TIER-POLICY.md)
 
-# IH35-TMS — Agent coordination
+> Merge on green + proof. No `JORGE-APPROVED`. **USMCA only.** Every USMCA row is REAL unless `is_sample_data=true`. Never POST Book Load. No seat financial fixtures. U14 closed — never recertify.
 
-> **★★★★ OWNER LAW (2026-08-03, FINAL — reads above every other pointer in this file): NO HOLDS. NO
-> `JORGE-APPROVED` LABEL.** Claude and all coders (Cursor / Cascade / Devin / Claude Coder) have **FULL Neon
-> access and merge authority** — they merge on green in every lane, including financial/migrations, and
-> apply migrations + flip posting flags themselves on Neon. The owner steers by **DECISION in chat**, never
-> by a label or a merge click. Safeguard = **PROOF, not approval**. Canonical:
-> `.cursor/rules/00-operating-method-LAW.mdc` (CI: `verify-no-approval-holds` / step 2218) (governance section) + `.windsurf/rules/00-operating-method-LAW.md`.
-> Any older text below referencing `JORGE-APPROVED`, "Devin merges on green" as an exclusive role, "owner
-> applies on Neon," or "STOP for owner approval" is **SUPERSEDED** by this line.
+> **On-demand (not session queue):** DoD/evidence — [docs/specs/DEFINITION-OF-DONE.md](docs/specs/DEFINITION-OF-DONE.md) · PR checklist — [docs/specs/PER-PR-CHECKLIST.md](docs/specs/PER-PR-CHECKLIST.md) · architecture — [docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md](docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md)
 
-> **★★ SESSION BOOT:** [docs/specs/STANDING-SESSION-DIRECTIVE.md](docs/specs/STANDING-SESSION-DIRECTIVE.md) (§0–§10 · **§6 SEARCH BEFORE YOU ASK** · **§7 TEST WITH PLACEHOLDER NUMBERS** · **CREATE-TEST-THEN-VOID** [docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md](docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md) · **§10 FULLY WIRED** · **URGENT 14 exclusive** [docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md](docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md) · **session announce** [docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md](docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md)) +
-> [docs/specs/OWNER-QUALITY-COMPACT.md](docs/specs/OWNER-QUALITY-COMPACT.md) (**ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED** · Desktop `Claude.docx` permanized as `OWNER-QUALITY-COMPACT-Claude.docx`) +
-> [docs/specs/DELIVERY-METHOD-LOCKED.md](docs/specs/DELIVERY-METHOD-LOCKED.md) +
-> [docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md](docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md) — load every session.
-> Presence ratchet: `verify-standing-directive-present` (step **2374**) · `verify-owner-quality-compact-present` (step **2380**) · `verify-cursor-pr-title-prefix` (step **2377** — every Cursor PR title **MUST** begin with `Cursor-`).
+---
 
-> **★★★ FULL SYSTEM AUDIT LAW (owner 2026-08-03 v3 — MANDATORY):** [docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md](docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md) — **"Complete" is NOT five layers.** Complete = **DoD A–E + VERIFY 1–8** PROD-VERIFIED per entity (live V2 picker+creator · V3 wiring · V4 deep linkage F+R). Cascade Always-On: `.windsurf/rules/ih35-deep-linkage-audit.md`. Cursor: Rule **31** (`.cursor/rules/31-full-system-audit-mandatory.mdc`). Ledger: [AUDIT-COVERAGE-LIVE.md](docs/audit/AUDIT-COVERAGE-LIVE.md) · run-log: [AUDIT-RUN-LOG.md](docs/audit/AUDIT-RUN-LOG.md). A code trace / count / CI-green is NOT proof. A guess is a defect.
+<!-- HISTORY BELOW: pre-GO-20 autoload banner. Kept (never-delete). Do not treat as session queue. -->
 
-> **★★★ BEFORE ANY BLOCK — READ [docs/audit/AUDIT-COVERAGE-LIVE.md](docs/audit/AUDIT-COVERAGE-LIVE.md).**
-> It is the single source of truth for what is actually broken. **Your work list = its rows where
-> `Verdict = FAIL` and `Status = OPEN` in your lane.** Do not invent a work list, do not work from a stale
-> tracker, and do not re-audit what already has a row. `git pull --ff-only origin main` before you write to it.
-> **Column ownership is strict — never edit another role's column:** CASCADE owns Module/Layer/Entity/Verdict/
-> Evidence/Date/Auditor (appends new rows only) · CODER/CURSOR own Status + Block/PR on rows in their own lane
-> (only `FIXED (PR #)`) · **only GUARD writes `VERIFIED`**. Append-only: never delete a row; supersede by adding
-> a new dated row and marking the old one `SUPERSEDED`. A row with no `Evidence` is not a finding.
-> Rows marked `Owner-gate? = YES` need an owner DECISION — a coder never self-answers one.
-> **`Module` must be a `SIDEBAR_ITEM_IDS` id** (optional ` · subtag`). **Scoreboard is generated** — after row edits run
-> `node scripts/audit-coverage-scoreboard.mjs --write`. Progress query: `node scripts/audit-coverage-scoreboard.mjs`
-> (CI: verify-step **2014** fails if Scoreboard ≠ Findings).
+<details>
+<summary>Pre-2026-09-02 autoload block (superseded — expand only if needed)</summary>
 
-> **★★★ THEN READ [docs/audit/GUARD-WORKORDERS.md](docs/audit/GUARD-WORKORDERS.md)** — the GUARD fix board: your lane's OPEN items, the fix
-> requirement + standard for each, and GUARD status. Pull the top OPEN item in your lane; do not idle.
+**HONEST BUILT + LAUNCH (2026-08-14):** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md`
 
-> **★★★ FINDINGS TRIPLE-LOCK (owner 2026-08-11 — PERMANENT):** [docs/audit/FINDINGS-TRIPLE-LOCK-LAW.md](docs/audit/FINDINGS-TRIPLE-LOCK-LAW.md) —
-> every finding = board OPEN + register ☐ + Desktop routing row + OUTBOX same turn; FIXED = five proofs same
-> turn as merge. **Chat-only or "already fixed" without main grep = unfixed.** Never skip cross-lane without filing.
+> **Model tiers (permanent):** [docs/specs/MODEL-TIER-POLICY.md](docs/specs/MODEL-TIER-POLICY.md)
 
-> **Consolidated index:** docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md — the complete 24-rule + 18-key-gate map (source .cursor/rule wins on conflict).
+> **★★★★ OWNER LAW (2026-08-03):** NO HOLDS. NO `JORGE-APPROVED`. Superseded by `00-IH35-LAW.mdc`.
 
-> **★ DEFINITION OF DONE (owner-agreed, BINDING — read before you call anything done):** [docs/specs/DEFINITION-OF-DONE.md](docs/specs/DEFINITION-OF-DONE.md) — five DONE layers (DOD-A…E) + evidence. **CI-green is the floor, not the verdict.**
->
-> **★ EVERY PR AUDIT CHECKLIST (Claude-consolidated, BINDING, every session):** [docs/specs/EVERY-PR-AUDIT-CHECKLIST.md](docs/specs/EVERY-PR-AUDIT-CHECKLIST.md) — FINDING · LANE · DOD-A…E · **VERIFY-1…8** · **MODULE_PROGRESS** · MIGRATE · Rule 16. Money commits missing these keys **FAIL** commit-msg + verify-step **1430** (`verify-no-money-theater`). Rule **23** bans EntityLink/honesty theater. Rule **24** — module DONE = **N of M** checklist items in [docs/module-completion/](docs/module-completion/) (CI **1431**). Also enforced by verify-step **1324**.
->
-> **★ Rule 25 — ONE PUSH / FAIL-FAST (permanent):** [`.cursor/rules/25-one-push-money-fail-fast.mdc`](.cursor/rules/25-one-push-money-fail-fast.mdc) — `scripts/money-pr-local-gate.mjs` is the **first** husky `branch:precheck-push` step (DoD + money-theater in seconds). Amend no longer skips checks on empty staged. **One push** after local PASS; never rebase/force-push while `build-typecheck` is running. CI: verify-step **1702** (`verify-money-pr-local-gate`).
->
-> **★ Rule 29 — CURSOR = CLAUDE SHIP PARITY (permanent):** [`.cursor/rules/29-cursor-claude-parity-ship.mdc`](.cursor/rules/29-cursor-claude-parity-ship.mdc) — before **every** push run `node scripts/money-pr-local-gate.mjs` (DoD + theater + migration HH band + EVEN verify-step + no CLAIMED-NUMBERS edit + EntityLink adoption). **Never** `git commit --no-verify` / `git push --no-verify`. One labelled commit; PR body is not enough. CI: verify-step **1998** (`verify-cursor-claude-parity-ship`).
->
-> **★ Rule 36 — CLAUDE SERIAL SHIP SEQUENCE (permanent — owner 2026-08-05):** [`.cursor/rules/36-claude-serial-ship-sequence.mdc`](.cursor/rules/36-claude-serial-ship-sequence.mdc) — Cursor ships like Claude: tip `origin/main` + one FINDING commit + Claude title/body + max **1** open CLAIMED/verify-step PR + `cursor-ship-preflight` fails if behind main. Mirror: [docs/specs/CLAUDE-SERIAL-SHIP-RULE-36.md](docs/specs/CLAUDE-SERIAL-SHIP-RULE-36.md). Delivery §9.2.1 rev G.
->
-> **★ Rule 37 — CLAIM → MERGE → AUTHOR (permanent — owner 2026-08-05):** [`.cursor/rules/37-claim-merge-then-author.mdc`](.cursor/rules/37-claim-merge-then-author.mdc) — never author `verify-steps/NNNN-*.mjs` until `NNNN` is on `origin/main`; never claim+guard same PR; `money-pr-local-gate` runs `verify-verify-step-claimed-on-main`. Law: `docs/specs/VERIFY-STEP-MOD4-CLAIM-BEFORE-WRITE-LAW-2026-08-04.md`.
+> **★★ SESSION BOOT (SUPERSEDED):** STANDING-SESSION-DIRECTIVE · CREATE-TEST-THEN-VOID · URGENT 14 exclusive.
 
-> **★ Rule 30 — CLAUDE-GREEN EVIDENCE FORMAT (permanent):** [`.cursor/rules/30-claude-green-evidence-format.mdc`](.cursor/rules/30-claude-green-evidence-format.mdc) — FINDING-first body/commit (template [docs/templates/CLAUDE-GREEN-PR-BODY.md](docs/templates/CLAUDE-GREEN-PR-BODY.md)); `LIVE PROOF: … exit 0` (not `UNVERIFIED browser`); one commit on `origin/main` (never stack / never soft-reset); run `node scripts/cursor-pr-body-gate.mjs --body-file …` before `gh pr create|edit`. Gate suite + CI verify-step **2088**.
-> **★★ PER-PR CHECKLIST (read FIRST, every PR):** [docs/specs/PER-PR-CHECKLIST.md](docs/specs/PER-PR-CHECKLIST.md) — the single consolidated list of everything audited and fixed in **every** PR: the 5 DONE layers, the 8 audit layers (QBO chrome · universal picker law · connectivity/wiring · deep forward+reverse linkage chains · catalogs/entity scope · CPA-grade economics · tab/design law · security/RLS), the required evidence block, the guard rules, the verification traps, the merge gates, and the migration rules. Consolidated because **scattered law is skipped law**. Enforced by `.github/workflows/pr-evidence-block.yml` (PR body) + `scripts/verify-definition-of-done-evidence.mjs` (commits) + always-apply `.cursor/rules/23-per-pr-checklist.mdc`.
+> **★★★ FULL SYSTEM AUDIT / AUDIT-COVERAGE / GUARD-WORKORDERS (SUPERSEDED as queue):** Use INBOX + GO-20.
 
-> **Rule #0 (LOCKED):** Before any work, read [docs/specs/QUALITY-STANDARD-LOCKED.md](docs/specs/QUALITY-STANDARD-LOCKED.md) — the first standing quality law; it supersedes other docs on hardline conflict.
+> **★ Rule 25–37 ship law (on-demand):** `.cursor/rules/25-one-push-money-fail-fast.mdc` · `29-cursor-claude-parity-ship.mdc` · `36-claude-serial-ship-sequence.mdc` · `37-claim-merge-then-author.mdc` · `30-claude-green-evidence-format.mdc`
 
-> **Cursor permanent charter:** [docs/specs/CURSOR-OPERATING-CONSTITUTION.md](docs/specs/CURSOR-OPERATING-CONSTITUTION.md) — applies to every Cursor session/agent; when instructions conflict, the more conservative / more protective reading wins. Enforced by always-apply `.cursor/rules/00`–`07` + `10`–`18`.
+> **Rule #0 / Charter / Rule 16 / Architecture (on-demand):** QUALITY-STANDARD-LOCKED · CURSOR-OPERATING-CONSTITUTION · 16-fix-not-patch · ARCHITECTURE-BLUEPRINT
 
-> **Rule 16 (owner law):** [`.cursor/rules/16-fix-not-patch-evidence-law.mdc`](.cursor/rules/16-fix-not-patch-evidence-law.mdc) — fix root cause, never patch, never defer without written tracker entry, evidence before done. Skill: `.claude/skills/ih35-evidence-before-done`. Template: `docs/templates/ACCEPTANCE-EVIDENCE-BLOCK.md`. Session hook: `.cursor/hooks/session-evidence-law.sh`.
-
-> **★ CONSOLIDATED ARCHITECTURE GUARDRAIL (read this too):** [docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md](docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md) is the current consolidated guardrail — the **Law of the Land** total-connectivity rule, the driver **Bill + BillPayment** settlement model, the **Faro** exact factoring terms, the auto-provisioned **driver accounts**, the **posting flags**, and the **per-build-block linkage checklist**. **Every build block (especially financial) conforms to it.** See the checklist reproduced at the bottom of this file.
+</details>
 
 ## Verify-step claims (TOOL-F03 — 2026-07-31)
 
 Verify-step law (2026-08-04): **mod-4** Cursor EVEN · CC-1 ≡1 · CC-2 ≡3 + **claim-before-write** — reserve on `chore/claim-reserve*` + merge to main **before** authoring `NNNN-*.mjs` (Rule 37; `CLAIMED-REGEN` = registry tooling only) (Rule 25 bands file + step **2400**). Feature PRs must **not** edit `CLAIMED-NUMBERS.json` except allowlisted claim PRs. Do not renumber after collisions. Law: `docs/specs/VERIFY-STEP-MOD4-CLAIM-BEFORE-WRITE-LAW-2026-08-04.md`. Enforced by **1803** (lane-band) + **2400** (claimed-on-main) + **1906** (no feature CLAIMED edits).
 
-## Dual lanes (always parallel when queue has work)
+## Dual lanes (SUPERSEDED 2026-09-02 — history only)
 
 | Lane | Path | Role |
 |------|------|------|
 | A | `IH35-TMS` | Safety, Drivers, Lists, INFRA-1 |
 | B | `IH35-TMS-agent2` | Dispatch, Maintenance, INFRA-2 |
 
-## Never idle
+## Never idle (SUPERSEDED — GO-20 queue is INBOX + GO-20)
 
-Cursor rule: `.cursor/rules/dual-lane-never-idle.mdc` (`alwaysApply: true`)
+Cursor rule: `.cursor/rules/dual-lane-never-idle.mdc` (`alwaysApply: false` since #19524)
 
-**Continuous mode (Rule 32):** `.cursor/rules/32-continuous-mode-no-idle.mdc` (`alwaysApply: true`) — never pause/idle after merge/PR/Neon/CI; always keep writing the next ranked FAIL.
+**Continuous mode (Rule 32):** `.cursor/rules/32-continuous-mode-no-idle.mdc` (`alwaysApply: false`)
 
-> **★ DELIVERY METHOD (LOCKED 2026-08-04):** [docs/specs/DELIVERY-METHOD-LOCKED.md](docs/specs/DELIVERY-METHOD-LOCKED.md) — vertical money skeleton → certify modules under WIP≤3. Do not invent a fourth method. Do not restart the block pile as primary queue.
+> **★ DELIVERY METHOD (reference):** [docs/specs/DELIVERY-METHOD-LOCKED.md](docs/specs/DELIVERY-METHOD-LOCKED.md)
 
-Hook: `.cursor/hooks.json` → on **subagentStop**, injects follow-up to dispatch the top **OPEN** item in that
-coder's lane from [docs/audit/GUARD-WORKORDERS.md](docs/audit/GUARD-WORKORDERS.md)
-(Claude Coder = financial/migrations/posting; Cursor = frontend/UI/measurability). Fall back to abb only when
-the GUARD board has no OPEN item for that lane.
+**Primary queue (current):** `docs/bus/INBOX-<SEAT>.md` + `docs/lockdown/GO-20-EIGHT-FEATURES.txt`
 
-**Primary queue:** `docs/audit/GUARD-WORKORDERS.md` (GUARD-maintained fix board)
-
-**Fallback queue:** `/Users/jorgemunoz/Downloads/abb/00-TIER-2-3-DISPATCH-INDEX.txt`
+**Retired queues (do not dispatch):** `docs/audit/GUARD-WORKORDERS.md` sweep rows · `/Users/jorgemunoz/Downloads/abb/`
 
 **Done:** squash merge SHA on `origin/main`, branch deleted, CI green.
 
@@ -102,7 +67,7 @@ the GUARD board has no OPEN item for that lane.
 
 ## If coordinator looks stale
 
-Say: `agent is idle and stale` — or run `/loop 10m STATUS both lanes — abb queue, dispatch if idle`
+Say: `agent is idle and stale` — or run `/loop 10m STATUS` from `docs/bus/INBOX-CURSOR.md` (GO-20 lead census). Do not dispatch from `Downloads/abb`.
 
 ## Canonical rules (tracked source of truth)
 
@@ -129,11 +94,9 @@ satisfy ALL of these before it is "done", verified on **live data**, forward AND
 
 ---
 
-## ★★ PERMANENT LAW — owner-locked 2026-08-05 (supreme; applies to every agent, every session)
+## ★★ PERMANENT LAW — owner-locked 2026-08-05 (partially superseded by `00-IH35-LAW.mdc`)
 
-**1. FINDINGS FLOW AGENT → BOARD → AGENT, NEVER THROUGH THE OWNER.** Find a defect in another lane →
-**WRITE an OPEN row into `docs/audit/GUARD-WORKORDERS.md` yourself and commit it**; the target coder pulls
-it on their next loop. **The owner is NOT a message bus — ever, in any session.**
+**1. FINDINGS FLOW (queue superseded):** File cross-lane defects on the board when appropriate; **session queue** is INBOX + GO-20, not GUARD-WORKORDERS sweep. **The owner is NOT a message bus — ever, in any session.**
 
 **2. LAW = ENFORCED GUARD, OR IT IS NOT LAW** (phased). Every NEW rule ships with a guard registered in
 `docs/law/LAW.json`. `verify-law-registry.mjs` is a required check (<2s, existence-only) and fails the

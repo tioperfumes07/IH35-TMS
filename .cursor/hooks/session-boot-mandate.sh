@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
-# Inject SESSION-BOOT-MANDATE on every Cursor sessionStart so agents cannot "forget."
+# Inject GO-20 session boot on every Cursor sessionStart.
 set -euo pipefail
 read -r _input || true
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-FILE="$ROOT/docs/bus/SESSION-BOOT-MANDATE.md"
-if [[ -f "$FILE" ]]; then
-  BODY="$(head -n 40 "$FILE")"
+INBOX="$ROOT/docs/bus/INBOX-CURSOR.md"
+if [[ -f "$INBOX" ]]; then
+  BODY="$(head -n 25 "$INBOX")"
 else
-  BODY="MISSING docs/bus/SESSION-BOOT-MANDATE.md — load CODER-INSTRUCTIONS-NOW.md TOP."
+  BODY="MISSING docs/bus/INBOX-CURSOR.md — read .cursor/rules/00-IH35-LAW.mdc"
 fi
-MSG="SESSION BOOT MANDATE (autoload — do not skip):
+MSG="GO-20 SESSION BOOT (autoload — do not skip):
+Current law: .cursor/rules/00-IH35-LAW.mdc + 03-display-ids.mdc only.
+Queue: docs/bus/INBOX-<SEAT>.md + GO-20-EIGHT-FEATURES.txt. Do NOT sweep GUARD-WORKORDERS.
 ${BODY}"
 if command -v jq >/dev/null 2>&1; then
   jq -n --arg msg "$MSG" '{additional_context: $msg}'
