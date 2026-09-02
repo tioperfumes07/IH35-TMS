@@ -9,6 +9,9 @@ import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
+import { isBillGlPostingEnabled } from "../accounting/bill-gl.service.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { logger } from "../observability/structured-logger.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import {
   computeInsuranceDispersal,
@@ -225,6 +228,37 @@ async function persistBillsOnClient(
       billId,
       { policy_id: input.policyId, bill_sequence: bill.sequence, idempotency_key: idempotencyKey }
     );
+
+    // C6 (GO-23) — this file hand-rolled its own accounting.bills INSERT instead of going through
+    // the shared createBill() (bills.service.ts), which is the one that normally calls
+    // postBillGlIfEnabled — bypassing it left every insurance-wizard bill permanently unposted
+    // regardless of flag state. Uses postSourceTransactionInClientTx (the SAME-transaction variant,
+    // matching bills-bulk.routes.ts's own C6 fix) since this whole function is one BEGIN/COMMIT —
+    // opening a second transaction per bill here would self-deadlock on the bill row's own lock.
+    // Flag-gated by the SAME BILL_GL_POSTING_ENABLED check postBillGlIfEnabled uses internally — no
+    // new flag, no new GL math. Best-effort: a post failure must not abort policy creation or any
+    // other bill in this loop, but must not vanish silently either (SWL-1) — logged.
+    try {
+      const glPostingEnabled = await isBillGlPostingEnabled(input.operatingCompanyId, input.userId);
+      if (glPostingEnabled) {
+        await postSourceTransactionInClientTx(
+          client,
+          {
+            operating_company_id: input.operatingCompanyId,
+            source_transaction_type: "bill",
+            source_transaction_id: billId,
+          },
+          { userId: input.userId }
+        );
+      }
+    } catch (err) {
+      logger.warn("insurance_policy_bill_gl_post_failed", {
+        err: err instanceof Error ? err.message : String(err),
+        company_id: input.operatingCompanyId,
+        bill_id: billId,
+        policy_id: input.policyId,
+      });
+    }
 
     billIds.push(billId);
   }

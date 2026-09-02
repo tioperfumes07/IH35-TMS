@@ -1,5 +1,5 @@
 import { membershipAware } from "../../../test-helpers/membership-aware-query.js";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createInsurancePolicyWithBills } from "../policy-create-atomic.service.js";
 
 vi.mock("../../auth/db.js", async (importOriginal) => {
@@ -55,6 +55,19 @@ vi.mock("../../audit/crud-audit.js", () => ({
   appendCrudAudit: vi.fn(async () => {}),
 }));
 
+// C6 (GO-23) — createInsurancePolicyWithBills hand-rolled its own accounting.bills INSERT and
+// never called the bill-GL poster; every insurance-wizard bill was permanently unposted regardless
+// of flag state. Mocked separately (not left to fall through the generic query stub above) so the
+// flag-on path gets real coverage, matching this session's own established convention.
+const mockIsBillGlPostingEnabled = vi.fn().mockResolvedValue(false);
+const mockPostSourceTransactionInClientTx = vi.fn().mockResolvedValue({ journal_entry_id: "je-1" });
+vi.mock("../../accounting/bill-gl.service.js", () => ({
+  isBillGlPostingEnabled: (...args: unknown[]) => mockIsBillGlPostingEnabled(...args),
+}));
+vi.mock("../../accounting/posting-engine.service.js", () => ({
+  postSourceTransactionInClientTx: (...args: unknown[]) => mockPostSourceTransactionInClientTx(...args),
+}));
+
 describe("createInsurancePolicyWithBills", () => {
   const baseInput = {
     operatingCompanyId: "00000000-0000-0000-0000-000000000001",
@@ -101,5 +114,59 @@ describe("createInsurancePolicyWithBills", () => {
       manualPcts: { "unit-a": 40, "unit-b": 35, "unit-c": 25 },
     });
     expect(result.billCount).toBe(12);
+  });
+});
+
+describe("createInsurancePolicyWithBills — C6 bill GL poster", () => {
+  beforeEach(() => {
+    mockIsBillGlPostingEnabled.mockClear();
+    mockPostSourceTransactionInClientTx.mockClear();
+  });
+
+  const baseInput = {
+    operatingCompanyId: "00000000-0000-0000-0000-000000000001",
+    vendorId: "00000000-0000-4000-8000-0000000000f1",
+    userId: "00000000-0000-0000-0000-000000000002",
+    insurerName: "Test Insurer",
+    policyNumber: "POL-001",
+    coverageType: "auto_liability" as const,
+    effectiveDate: "2026-01-01",
+    expiryDate: "2026-12-31",
+    totalPremiumCents: 120000 * 100,
+    downPaymentCents: 0,
+    termMonths: 2,
+    allocationMethod: "equal_split" as const,
+    unitIds: ["00000000-0000-4000-8000-000000000aa1"],
+  };
+
+  it("never calls the poster when BILL_GL_POSTING_ENABLED is off (default)", async () => {
+    mockIsBillGlPostingEnabled.mockResolvedValue(false);
+    await createInsurancePolicyWithBills(baseInput);
+    expect(mockIsBillGlPostingEnabled).toHaveBeenCalledTimes(2); // one per bill (termMonths=2)
+    expect(mockPostSourceTransactionInClientTx).not.toHaveBeenCalled();
+  });
+
+  it("posts each bill via postSourceTransactionInClientTx (source_transaction_type='bill') when the flag is on", async () => {
+    mockIsBillGlPostingEnabled.mockResolvedValue(true);
+    const result = await createInsurancePolicyWithBills(baseInput);
+    expect(mockPostSourceTransactionInClientTx).toHaveBeenCalledTimes(2);
+    expect(mockPostSourceTransactionInClientTx).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        operating_company_id: baseInput.operatingCompanyId,
+        source_transaction_type: "bill",
+        source_transaction_id: expect.stringMatching(/^bill-/),
+      }),
+      { userId: baseInput.userId }
+    );
+    expect(result.billCount).toBe(2);
+  });
+
+  it("a poster failure for one bill does not abort policy creation or the remaining bills", async () => {
+    mockIsBillGlPostingEnabled.mockResolvedValue(true);
+    mockPostSourceTransactionInClientTx.mockRejectedValueOnce(new Error("boom")).mockResolvedValueOnce({ journal_entry_id: "je-2" });
+    const result = await createInsurancePolicyWithBills(baseInput);
+    expect(result.billCount).toBe(2);
+    expect(mockPostSourceTransactionInClientTx).toHaveBeenCalledTimes(2);
   });
 });
