@@ -668,11 +668,14 @@ export function BookLoadModalV4({
   // CLS-SILENT-CAP defect: was a plain paginated listCustomers(limit: 200/500) against ~2,700 prod
   // customers — a slice, not a search. Now hits the server's ranked ?autocomplete=true mode
   // (exact match, then prefix match, then full-text relevance, across the WHOLE company customer
-  // set), server-clamped (customer-autocomplete.shared.ts) to 300 rows per request regardless of
-  // what's asked — raised from the original 100 (GO-21/GO-23 A2 remainder) so a broad/common
-  // search term or no term at all can't still put the wanted row past the cap with no way to
-  // reach it.
-  const CUSTOMER_AUTOCOMPLETE_LIMIT = 300;
+  // set), server-clamped (customer-autocomplete.shared.ts) to 2000 rows per request regardless of
+  // what's asked — raised from 100 (GO-21/GO-23 A2 remainder), then from 300 (A2 TURBO 2026-09-02):
+  // 300 still fell short of the actual whole set for an EMPTY search term or a broad common prefix
+  // -- largest live entity (TRK) carries 1,447 active customers (Neon prod, tiny-field-89581227,
+  // bypass_rls), so 300 alphabetically-first rows genuinely hid 1,100+ real customers from a blank
+  // search. 2000 covers every live entity's full roster with headroom; payload stays trivial
+  // (id/name/email/phone/mc_number only).
+  const CUSTOMER_AUTOCOMPLETE_LIMIT = 2000;
   const customersQuery = useQuery({
     queryKey: ["book-load-v4-customers-autocomplete", operatingCompanyId, customerSearch],
     queryFn: () => searchCustomersAutocomplete(operatingCompanyId, customerSearch, { limit: CUSTOMER_AUTOCOMPLETE_LIMIT }),
