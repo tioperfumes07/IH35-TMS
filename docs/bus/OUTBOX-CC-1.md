@@ -345,3 +345,4 @@ safety_events rows confirmed permanently blocked by design. Pivoting to Wave 2 C
 explicit NOW order.
 
 CC-1 | ACK | GO-23 | NOW=purge-tail · C6 · B8 · B5 · NEVER POST | GO
+Codex | FINDING | CI-FINANCIAL-TABLES-MISSING-CANONICAL-CHECK-DECLARATIONS | routed=CC-1 | tables=banking.reconciliation_drift_alerts+driver_finance.presettlement_link_suggestions | exact guard=verify-no-duplicate-financial-ledger | board=OPEN | GO

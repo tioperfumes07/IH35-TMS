@@ -1,6 +1,7 @@
 # ★ OUTBOX-CODEX · LIVE TOP · GO-20 · 2026-09-02
 
-CODEX | WORKING | CI-BOOKLOAD-CUSTOMER-LABEL-GUARD-STILL-EXPECTED-LEGACY-SHAPE | root=guard required removed name/customer_code expression after typed display_name adoption | guard=normal+selftest PASS | PR=pending | GO
+CODEX | WORKING | CI-EIGHT-NEW-GUARDS-ORPHANED-AND-CARGO-GUARD-REJECTED-VALID-MAINTENANCE-WORKER | guard-wired orphan 8→0 | eight normal+selftest PASS | PR=pending | GO
+CODEX | WORKING | CI-BOOKLOAD-CUSTOMER-LABEL-GUARD-STILL-EXPECTED-LEGACY-SHAPE | root=guard required removed name/customer_code expression after typed display_name adoption | guard=normal+selftest PASS | PR=#19672 merged | GO
 
 **Law:** `docs/bus/PASTE-ALL-SEATS-GO-20-2026-09-02.md`
 
