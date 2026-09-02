@@ -25,7 +25,7 @@ Reply shape: **what I did · proof it is real · what’s next.**
 - **USMCA only** (`5c854333-6ea5-4faa-af31-67cb272fef80`). TRANSP and TRK frozen — do not read/write/report them.
 - Neon `tiny-field-89581227` branch `br-fancy-credit-akjnd07a`. Scoped reads: `SET LOCAL app.bypass_rls = 'lucia'` and/or `app.operating_company_id`. Completeness discriminator on the **same** table.
 - **Every USMCA record is REAL** unless `is_sample_data = true`. Never write test/sample/demo/proof fixtures into USMCA. Seats **never POST Book Load**.
-- Queue = `docs/bus/INBOX-<SEAT>.md` + `docs/lockdown/GO-20-EIGHT-FEATURES.txt`. **Never** `Downloads/final`, `Downloads/20 blocks`, `Downloads/abb`, `Downloads/ab`, `Downloads/sdf`.
+- Queue = `docs/bus/INBOX-<SEAT>.md` + `docs/lockdown/GO-20-EIGHT-FEATURES.txt`. **Never** `Downloads/final`, `Downloads/20 blocks`, `Downloads/abb`, `Downloads/ab`, `Downloads/sdf`. **Never** start from GUARD-WORKORDERS sweep rows (SWEEP-A, SORT-03, BOOKLOAD-ALWAYSTRACK). Cursor lead **coordinates seats**, does not sweep.
 - U14 CERTIFIED — never recertify. No `JORGE-APPROVED`. Merge on green + proof. CC never `trigger_deploy`.
 - Write canonical hubs (`driver_finance.*`, `mdata.qbo_*`, `banking.*`, `maintenance.*`, `mdata.vendors`, `catalogs.load_cancellation_reasons`, `mdata.loads`). Never RETIRE twins.
 - Display IDs: `.cursor/rules/03-display-ids.mdc`.

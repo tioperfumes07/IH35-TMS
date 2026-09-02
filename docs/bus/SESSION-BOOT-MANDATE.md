@@ -1,3 +1,5 @@
+**SUPERSEDED 2026-09-02:** Cursor NOW is GO-20 seat coordination (`docs/bus/INBOX-CURSOR.md`). Do **not** treat leftover OPEN / CERTIFIED COMPLETE / SWEEP-A as this session’s queue. Lines below are history.
+
 **Every session:** `bash gen-state-of-truth.sh > STATE.md` then read `STATE.md` (live healthz + origin/main module-completion; do not type numbers).
 
 **19:20 CT GO-0106:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0106.md` · FEED `docs/bus/FEED/NOW-<SEAT>.md` · never ARM QBO jobs for OAuth · Devin STOP stamps · idle = defect.
