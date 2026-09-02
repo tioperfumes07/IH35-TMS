@@ -1012,7 +1012,7 @@ export function BankingTransactionsDesignView({
         key: "date",
         label: "Date",
         sortable: true,
-        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
         render: (tx) => {
           const expanded = expandedTxId === tx.id;
           if (viewSettings.editableDateField && expanded) {
@@ -1044,7 +1044,7 @@ export function BankingTransactionsDesignView({
         key: "description",
         label: "Full bank description",
         sortable: true,
-        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
         render: (tx) => (
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
@@ -1179,7 +1179,7 @@ export function BankingTransactionsDesignView({
           key: "driver",
           label: "Driver",
           sortable: true,
-          className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+          className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
           cellClass: "truncate text-gray-700",
           render: (tx) =>
             tx.categorization_driver_id ? (
@@ -1198,7 +1198,7 @@ export function BankingTransactionsDesignView({
           key: "truck",
           label: "Truck",
           sortable: true,
-          className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+          className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
           cellClass: "truncate text-gray-700",
           render: (tx) =>
             tx.categorization_unit_id ? (
@@ -1217,7 +1217,7 @@ export function BankingTransactionsDesignView({
           key: "load",
           label: "Load",
           sortable: true,
-          className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+          className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
           cellClass: "truncate text-gray-700",
           render: (tx) =>
             tx.resolved_load_id ? (
@@ -1240,7 +1240,7 @@ export function BankingTransactionsDesignView({
         key: "amount",
         label: "Amount",
         sortable: true,
-        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
         render: (tx) => {
           const { spent, received } = spentReceived(tx);
           return (
@@ -1256,7 +1256,7 @@ export function BankingTransactionsDesignView({
           key: "spent",
           label: "Spent",
           sortable: true,
-          className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+          className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
           cellClass: "text-red-700",
           render: (tx) => {
             const { spent } = spentReceived(tx);
@@ -1267,7 +1267,7 @@ export function BankingTransactionsDesignView({
           key: "received",
           label: "Received",
           sortable: true,
-          className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+          className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
           cellClass: "text-slate-700",
           render: (tx) => {
             const { received } = spentReceived(tx);
@@ -1282,7 +1282,7 @@ export function BankingTransactionsDesignView({
         key: "balance",
         label: "Balance",
         sortable: true,
-        className: `font-semibold normal-case text-[10px] uppercase tracking-wide ${sortBy.key !== "date" ? "text-gray-300" : ""}`,
+        className: `font-semibold normal-case text-[11px] uppercase tracking-wide ${sortBy.key !== "date" ? "text-gray-300" : ""}`,
         cellClass: "whitespace-nowrap text-right tabular-nums",
         render: (tx) => {
           const bal = runningBalanceById.get(tx.id);
@@ -1301,7 +1301,7 @@ export function BankingTransactionsDesignView({
         key: "fromTo",
         label: "From/To",
         sortable: true,
-        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
         cellClass: "truncate text-gray-700",
         render: (tx) => computeFromTo(tx, getDraft(tx)) || "—",
       },
@@ -1309,7 +1309,7 @@ export function BankingTransactionsDesignView({
         key: "customer",
         label: "Customer",
         sortable: true,
-        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
         cellClass: "truncate text-gray-700",
         render: (tx) => {
           const draft = getDraft(tx);
@@ -1328,7 +1328,7 @@ export function BankingTransactionsDesignView({
         key: "productService",
         label: "Product/Service",
         sortable: true,
-        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
         cellClass: "truncate text-gray-700",
         render: (tx) => getDraft(tx).productService || "—",
       }
@@ -1339,7 +1339,7 @@ export function BankingTransactionsDesignView({
         key: "checkNo",
         label: "Check No.",
         sortable: true,
-        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
         cellClass: "truncate text-gray-700",
         render: (tx) => getDraft(tx).checkNo || "—",
       });
@@ -1349,7 +1349,7 @@ export function BankingTransactionsDesignView({
         key: "payee",
         label: "Payee",
         sortable: true,
-        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
         cellClass: "truncate text-gray-700",
         render: (tx) => {
           const draft = getDraft(tx);
@@ -1370,7 +1370,7 @@ export function BankingTransactionsDesignView({
         key: "className",
         label: "Class",
         sortable: true,
-        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
         cellClass: "truncate text-gray-700",
         render: (tx) => getDraft(tx).className || "—",
       });
@@ -1380,7 +1380,7 @@ export function BankingTransactionsDesignView({
         key: "location",
         label: "Location",
         sortable: true,
-        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
         cellClass: "truncate text-gray-700",
         render: (tx) => getDraft(tx).location || "—",
       });
@@ -1391,7 +1391,7 @@ export function BankingTransactionsDesignView({
         key: "matchCategorize",
         label: "Match/Categorize",
         sortable: true,
-        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
         render: (tx) => (
           <span className="rounded-sm bg-gray-100 px-2 py-1 text-[11px] text-gray-700">
             {getDraft(tx).mode === "match" ? "Match" : "Categorize"}
@@ -1402,7 +1402,7 @@ export function BankingTransactionsDesignView({
         key: "action",
         label: "Action",
         sortable: true,
-        className: "font-semibold normal-case text-[10px] uppercase tracking-wide",
+        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
         render: (tx) => {
           const menuOpen = actionMenuTxId === tx.id;
           return (
@@ -2252,10 +2252,10 @@ export function BankingTransactionsDesignView({
                         kind={MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind]}
                         id={candidate.ledger_entry_id}
                         label={MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
-                        className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 hover:underline"
+                        className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-700 hover:underline"
                       />
                       {candidate.auto_match ? (
-                        <span className="inline-flex items-center rounded-sm bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+                        <span className="inline-flex items-center rounded-sm bg-slate-800 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
                           Best match
                         </span>
                       ) : null}
@@ -2267,7 +2267,7 @@ export function BankingTransactionsDesignView({
                   <div className="mt-1 truncate text-gray-700" title={candidate.memo}>
                     {candidate.memo?.trim() ? candidate.memo : "—"}
                   </div>
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-500">
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500">
                     <span>Date: {String(candidate.event_date ?? "").slice(0, 10) || "—"}</span>
                     <span>Amount gap: {formatUsdCents(Math.abs(Number(candidate.amount_gap_cents ?? 0)))}</span>
                     <span>Date gap: {candidate.date_gap_days}d</span>
@@ -2278,7 +2278,7 @@ export function BankingTransactionsDesignView({
           </div>
 
           <div className="mt-3 border-t border-gray-100 pt-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
               Similar past categorizations
             </p>
             {!viewSettings.enableSuggestedCategorization ? (
@@ -2575,7 +2575,7 @@ export function BankingTransactionsDesignView({
                     <button
                       key={label}
                       type="button"
-                      className="rounded-sm border border-gray-300 px-1.5 py-0.5 text-[10px] text-gray-700 hover:bg-gray-50"
+                      className="rounded-sm border border-gray-300 px-1.5 py-0.5 text-xs text-gray-700 hover:bg-gray-50"
                       onClick={() => { apply(); setShowDateFilterMenu(false); }}
                     >
                       {label}
@@ -2583,13 +2583,13 @@ export function BankingTransactionsDesignView({
                   ))}
                 </div>
                 <div>
-                  <label htmlFor="tx-date-from" className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                  <label htmlFor="tx-date-from" className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                     From
                   </label>
                   <DatePicker id="tx-date-from" value={dateFrom} onChange={setDateFrom} className="mt-0.5 w-full" />
                 </div>
                 <div className="mt-1">
-                  <label htmlFor="tx-date-to" className="block text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                  <label htmlFor="tx-date-to" className="block text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                     To
                   </label>
                   <DatePicker id="tx-date-to" value={dateTo} onChange={setDateTo} className="mt-0.5 w-full" />
@@ -2662,7 +2662,7 @@ export function BankingTransactionsDesignView({
             ))}
           </SelectCombobox>
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Categorize by</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Categorize by</span>
             <div className="inline-flex overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
               {(["category", "item"] as const).map((option) => (
                 <button
@@ -2712,14 +2712,14 @@ export function BankingTransactionsDesignView({
               </button>
               {viewSettingsOpen ? (
                 <div className="absolute right-0 z-20 mt-1 w-[360px] rounded-sm border border-gray-200 bg-white p-3 shadow-sm">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Columns</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Columns</p>
                   <div className="mt-1 grid grid-cols-2 gap-1 text-xs">
                     <ToggleLine label="Check No." checked={viewSettings.showCheckNo} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showCheckNo: checked }))} />
                     <ToggleLine label="Payee" checked={viewSettings.showPayee} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showPayee: checked }))} />
                     <ToggleLine label="Class" checked={viewSettings.showClass} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showClass: checked }))} />
                     <ToggleLine label="Location" checked={viewSettings.showLocation} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showLocation: checked }))} />
                   </div>
-                  <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Groups</p>
+                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Groups</p>
                   <ToggleLine
                     label="Turn off grouping"
                     checked={viewSettings.turnOffGrouping}
@@ -2749,7 +2749,7 @@ export function BankingTransactionsDesignView({
                       </button>
                     </div>
                   ) : null}
-                  <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Automation review</p>
+                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Automation review</p>
                   <label
                     className="inline-flex items-center gap-2 text-xs text-gray-500"
                     data-testid="banking-add-new-vendors-automation-not-wired"
@@ -2758,7 +2758,7 @@ export function BankingTransactionsDesignView({
                     <input type="checkbox" checked={false} disabled readOnly aria-disabled="true" />
                     Add new vendors (automation — not wired)
                   </label>
-                  <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Transaction details</p>
+                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Transaction details</p>
                   <div className="grid grid-cols-1 gap-1 text-xs">
                     <ToggleLine label="Show amounts in 1 column" checked={viewSettings.showAmountsInOneColumn} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showAmountsInOneColumn: checked }))} />
                     <ToggleLine label="Show tags field" checked={viewSettings.showTagsField} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showTagsField: checked }))} />
@@ -2767,7 +2767,7 @@ export function BankingTransactionsDesignView({
                     <ToggleLine label="Copy bank detail to memo" checked={viewSettings.copyBankDetailToMemo} onChange={(checked) => setViewSettings((prev) => ({ ...prev, copyBankDetailToMemo: checked }))} />
                     <ToggleLine label="Enable suggested categorization" checked={viewSettings.enableSuggestedCategorization} onChange={(checked) => setViewSettings((prev) => ({ ...prev, enableSuggestedCategorization: checked }))} />
                   </div>
-                  <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Page size</p>
+                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Page size</p>
                   <div className="mt-1 flex flex-wrap gap-1">
                     {([50, 75, 100, 200, 300] as const).map((size) => (
                       <button

@@ -537,7 +537,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               onClick={() => navigate("/lists/accounting/chart-of-accounts")}
               className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
             >
-              <div className="truncate text-[10px] uppercase text-gray-500">Cash posting</div>
+              <div className="truncate text-[11px] uppercase text-gray-500">Cash posting</div>
               <div className="truncate font-semibold" title={formatUsd(cashPosting)}>{formatUsd(cashPosting)}</div>
             </button>
             <button
@@ -545,7 +545,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               onClick={() => (dipAccountId ? navigate(`/banking/accounts/${dipAccountId}`) : setActiveTab("accounts"))}
               className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
             >
-              <div className="truncate text-[10px] uppercase text-gray-500">DIP balance</div>
+              <div className="truncate text-[11px] uppercase text-gray-500">DIP balance</div>
               <div className="truncate font-semibold" title={money.format(dipBalance)}>{money.format(dipBalance)}</div>
             </button>
             <button
@@ -556,7 +556,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               }}
               className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-100"
             >
-              <div className="truncate text-[10px] uppercase text-slate-700">Uncategorized</div>
+              <div className="truncate text-[11px] uppercase text-slate-700">Uncategorized</div>
               <div className="truncate font-semibold text-slate-700" title={String(uncategorizedCount)}>{uncategorizedCount}</div>
             </button>
             <button
@@ -564,7 +564,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}
               className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
             >
-              <div className="truncate text-[10px] uppercase text-gray-500">Recon accts</div>
+              <div className="truncate text-[11px] uppercase text-gray-500">Recon accts</div>
               <div className="truncate font-semibold" title={String(reconAccounts)}>{reconAccounts}</div>
             </button>
             <button
@@ -572,7 +572,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               onClick={() => navigate("/factoring/reserve-tracker")}
               className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-200"
             >
-              <div className="truncate text-[10px] uppercase text-slate-700">Factoring res</div>
+              <div className="truncate text-[11px] uppercase text-slate-700">Factoring res</div>
               <div className="truncate font-semibold text-slate-700" title={money.format(factoringReserve)}>{money.format(factoringReserve)}</div>
             </button>
             <button
@@ -580,7 +580,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               onClick={() => navigate(BANKING_TAB_PATH.driver_escrow)}
               className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-200"
             >
-              <div className="truncate text-[10px] uppercase text-slate-700">Escrow feed</div>
+              <div className="truncate text-[11px] uppercase text-slate-700">Escrow feed</div>
               <div className="truncate font-semibold text-slate-700" title={money.format(escrowFeed)}>{money.format(escrowFeed)}</div>
             </button>
           </div>
@@ -628,7 +628,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             <div className="rounded-sm border border-slate-300 bg-slate-100">
               <div className="flex items-center justify-between border-b border-slate-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
                 <Link to="/factoring" className="hover:underline">Factoring · virtual bank</Link>
-                <span className="text-[10px]">Open</span>
+                <span className="text-xs">Open</span>
               </div>
               <div className="space-y-1 px-3 py-2 text-sm">
                 <Link to="/factoring/reserve-tracker" className="flex justify-between hover:underline">
@@ -832,7 +832,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           <div className="rounded-sm border border-slate-300 bg-slate-100">
             <div className="flex items-center justify-between border-b border-slate-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
               <span>Factoring (Faro) · Banking entry</span>
-              <Link to="/factoring" className="text-[10px] font-semibold normal-case text-slate-800 hover:underline">
+              <Link to="/factoring" className="text-xs font-semibold normal-case text-slate-800 hover:underline">
                 Open Factoring module →
               </Link>
             </div>
@@ -893,7 +893,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                     dataTestId="banking-factoring-filter-load"
                   />
                 </label>
-                <Link to="/accounting/factoring" className="text-[10px] font-semibold text-slate-800 hover:underline">
+                <Link to="/accounting/factoring" className="text-xs font-semibold text-slate-800 hover:underline">
                   All advances →
                 </Link>
               </div>

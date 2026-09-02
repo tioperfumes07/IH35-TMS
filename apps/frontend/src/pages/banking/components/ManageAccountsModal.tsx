@@ -63,7 +63,7 @@ export function ManageAccountsModal({ open, operatingCompanyId, accounts, onClos
               <span className="cursor-grab text-gray-500">⋮⋮</span>
               <div>
                 <div className="font-semibold">{row.display_name}</div>
-                <div className="text-[10px] text-gray-500">{row.account_type}</div>
+                <div className="text-xs text-gray-500">{row.account_type}</div>
               </div>
               <label className="flex items-center gap-1">
                 <input
@@ -96,7 +96,7 @@ export function ManageAccountsModal({ open, operatingCompanyId, accounts, onClos
                 />
                 DIP
               </label>
-              <div className="text-[10px] text-gray-500">#{idx + 1}</div>
+              <div className="text-xs text-gray-500">#{idx + 1}</div>
             </div>
           ))}
         </div>

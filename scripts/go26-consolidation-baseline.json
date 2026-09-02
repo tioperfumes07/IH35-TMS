@@ -6,7 +6,7 @@
   "import_resizable_table": 2,
   "import_mobile_optimized_table": 3,
   "raw_table_outside_infra": 39,
-  "raw_text_off_locked_scale": 942,
+  "raw_text_off_locked_scale": 866,
   "import_files": {
     "components/shared/SelectCombobox": [
       "apps/frontend/src/pages/CustomerDetail.tsx",

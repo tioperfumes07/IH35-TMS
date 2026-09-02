@@ -238,7 +238,7 @@ export function BankingPlaidConnectionsPanel({
                   ))}
                 </p>
                 {showReconnectCta && itemId ? (
-                  <p className="mt-1 text-[10px] font-semibold uppercase text-slate-700">Reconnect needed</p>
+                  <p className="mt-1 text-[11px] font-semibold uppercase text-slate-700">Reconnect needed</p>
                 ) : null}
               </div>
             </div>

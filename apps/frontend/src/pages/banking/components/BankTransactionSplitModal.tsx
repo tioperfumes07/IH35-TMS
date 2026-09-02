@@ -286,7 +286,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Mode</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Mode</span>
             <button
               type="button"
               className={`rounded-sm border px-2 py-1 text-xs ${mode === "single_vendor_multi_category" ? "border-slate-400 bg-slate-100 text-slate-800" : "border-gray-300 text-gray-600"}`}
@@ -305,7 +305,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
 
           {mode === "single_vendor_multi_category" ? (
             <div className="text-xs text-gray-600">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Vendor (applies to every line)</span>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Vendor (applies to every line)</span>
               <div className="mt-0.5 max-w-sm">
                 <ReferenceSelect
                   value={singleVendorId || null}
@@ -329,7 +329,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
               return (
                 <div key={line._key} className="rounded-sm border border-gray-200 p-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Line {idx + 1}</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Line {idx + 1}</span>
                     <button
                       type="button"
                       className="text-slate-600 underline disabled:text-gray-300"
@@ -345,7 +345,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                   <div className={`mt-2 grid grid-cols-1 gap-2 md:items-end ${mode === "multi_vendor" ? "md:grid-cols-12" : "md:grid-cols-9"}`}>
                     {mode === "multi_vendor" ? (
                       <div className="md:col-span-3">
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Vendor</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Vendor</span>
                         <ReferenceSelect
                           value={line.vendor_id ?? null}
                           onChange={(v) => {
@@ -366,7 +366,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                       </div>
                     ) : null}
                     <div className="md:col-span-4">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Category</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Category</span>
                       <ReferenceSelect
                         value={line.gl_account_id ?? null}
                         onChange={(v) => {
@@ -387,9 +387,9 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                         onOptionCreated={() => void coaQuery.refetch()}
                       />
                     </div>
-                    <div className="hidden text-center text-[10px] text-gray-400 md:col-span-1 md:block md:pb-2">or</div>
+                    <div className="hidden text-center text-xs text-gray-400 md:col-span-1 md:block md:pb-2">or</div>
                     <div className="md:col-span-4">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Product/Service</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Product/Service</span>
                       <ReferenceSelect
                         value={line.item_id ?? null}
                         onChange={(v) => {
@@ -418,7 +418,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                   missing/cramped. Description writes to the EXISTING memo payload field. */}
                   <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-12">
                     <div className="md:col-span-8">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Description</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Description</span>
                       <input
                         className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
                         value={line.memo ?? ""}
@@ -428,7 +428,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                       />
                     </div>
                     <div className="md:col-span-4">
-                      <span className="block text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500 md:text-right">Amount</span>
+                      <span className="block text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500 md:text-right">Amount</span>
                       <MoneyInput
                         valueCents={line.amount_cents || null}
                         onChangeCents={(cents) => patchLine(line._key, { amount_cents: cents ?? 0 })}
@@ -439,7 +439,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                   </div>
 
                   {result ? (
-                    <div className={`mt-1 text-[10px] ${result.posted ? "text-slate-700" : "text-gray-500"}`}>
+                    <div className={`mt-1 text-xs ${result.posted ? "text-slate-700" : "text-gray-500"}`}>
                       {result.posted ? (
                         <>
                           Posted
@@ -502,7 +502,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                   {expanded ? (
                     <div className="mt-2 grid grid-cols-1 gap-2 rounded-sm border border-gray-100 bg-gray-50 p-2 md:grid-cols-4">
                       <div>
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Driver</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Driver</span>
                         <DriverAutocomplete
                           companyId={companyId}
                           value={line.driver_id ?? ""}
@@ -522,7 +522,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                           onRequestCreate={() => {}}
                         />
                         {line.driver_id ? (
-                          <label className="mt-1 flex items-center gap-1 text-[10px] text-gray-600">
+                          <label className="mt-1 flex items-center gap-1 text-xs text-gray-600">
                             <input
                               type="checkbox"
                               checked={Boolean(line.recover_from_driver)}
@@ -533,7 +533,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                         ) : null}
                       </div>
                       <div>
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Unit</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Unit</span>
                         <UnitAutocomplete
                           companyId={companyId}
                           value={line.unit_id ?? ""}
@@ -541,7 +541,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Trailer</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Trailer</span>
                         <EntityPicker
                           kind="trailer"
                           operatingCompanyId={companyId}
@@ -555,7 +555,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Trip (load)</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Trip (load)</span>
                         <EntityPicker
                           kind="load"
                           operatingCompanyId={companyId}
