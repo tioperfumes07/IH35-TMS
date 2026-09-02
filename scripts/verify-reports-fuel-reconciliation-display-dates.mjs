@@ -52,34 +52,27 @@ function fail(msg) {
 }
 
 function selftest() {
-  const pagePath = path.join(process.cwd(), PAGE);
-  const original = fs.readFileSync(pagePath, "utf8");
-  try {
-    // Plant Card omission independently
-    let planted = original.replace(
-      /key:\s*["']transaction_date["'][\s\S]*?render:\s*\(row\)\s*=>\s*\(row\.transaction_date \? formatDateUS\(row\.transaction_date\) : ["']—["']\)\s*\},/,
-      '{ key: "transaction_date", label: "Date", sortable: true },',
-    );
-    fs.writeFileSync(pagePath, planted);
-    const badCard = analyze(planted);
-    if (!badCard.some((m) => /transaction_date must render/.test(m) || /bare ParityTable/.test(m))) {
-      fail(`selftest Card omission expected fail, got: ${badCard.join("; ") || "none"}`);
-    }
-    // Plant WO omission independently from original
-    planted = original.replace(
-      /key:\s*["']wo_date["'][\s\S]*?render:\s*\(row\)\s*=>\s*\(row\.wo_date \? formatDateUS\(row\.wo_date\) : ["']—["']\)\s*\},/,
-      '{ key: "wo_date", label: "Date", sortable: true },',
-    );
-    fs.writeFileSync(pagePath, planted);
-    const badWo = analyze(planted);
-    if (!badWo.some((m) => /wo_date must render/.test(m) || /bare ParityTable/.test(m))) {
-      fail(`selftest WO omission expected fail, got: ${badWo.join("; ") || "none"}`);
-    }
-  } finally {
-    fs.writeFileSync(pagePath, original);
+  const original = read(PAGE);
+  // Plant Card omission independently, entirely in memory.
+  let planted = original.replace(
+    /key:\s*["']transaction_date["'][\s\S]*?render:\s*\(row\)\s*=>\s*\(row\.transaction_date \? formatDateUS\(row\.transaction_date\) : ["']—["']\)\s*\},/,
+    '{ key: "transaction_date", label: "Date", sortable: true },',
+  );
+  const badCard = analyze(planted);
+  if (!badCard.some((m) => /transaction_date must render/.test(m) || /bare ParityTable/.test(m))) {
+    fail(`selftest Card omission expected fail, got: ${badCard.join("; ") || "none"}`);
+  }
+  // Plant WO omission independently from original, entirely in memory.
+  planted = original.replace(
+    /key:\s*["']wo_date["'][\s\S]*?render:\s*\(row\)\s*=>\s*\(row\.wo_date \? formatDateUS\(row\.wo_date\) : ["']—["']\)\s*\},/,
+    '{ key: "wo_date", label: "Date", sortable: true },',
+  );
+  const badWo = analyze(planted);
+  if (!badWo.some((m) => /wo_date must render/.test(m) || /bare ParityTable/.test(m))) {
+    fail(`selftest WO omission expected fail, got: ${badWo.join("; ") || "none"}`);
   }
   const good = analyze(original);
-  if (good.length) fail(`selftest expected GOOD after restore: ${good.join("; ")}`);
+  if (good.length) fail(`selftest expected GOOD source: ${good.join("; ")}`);
   console.log(`${LABEL} selftest PASS`);
 }
 
