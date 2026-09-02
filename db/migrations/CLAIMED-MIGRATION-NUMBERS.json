@@ -591,6 +591,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-02",
       "purpose": "go20_slice_c_accident_liabilities (GO-20-EIGHT-FEATURES.txt slice C, CC-1 money lane: create safety.accident_liabilities exactly per spec + wire insurance.claim.liability_id FK; also backfills a missing CREATE TABLE for safety.accidents itself -- live-verified it exists on prod with 1 real row but no migration anywhere creates it, so a fresh-CI-DB replay of a new FK referencing it would fail without this)"
+    },
+    "202613410001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-02",
+      "purpose": "go20_b_maintenance_predictive_alerts (CC-3 handoff -- migration-lane-band bars cc-3/ chrome-only branches from authoring db/migrations/*.sql; CC-3's worker/routes/frontend/guard already built and applied live. Also fixes a live grant drift found while shipping: maintenance schema's ALTER DEFAULT PRIVILEGES was auto-granting PUBLIC arwd on every new table in the schema -- removed at the schema level, plus an explicit REVOKE DELETE for this specific table (void-not-delete law))"
     }
   }
 }
