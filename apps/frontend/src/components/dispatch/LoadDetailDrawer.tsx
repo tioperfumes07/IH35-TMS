@@ -19,6 +19,7 @@ import { getDownloadUrl, listAllFiles } from "../../api/docs";
 import { CancelLoadModal } from "./CancelLoadModal";
 import { LoadBolPanel } from "./LoadBolPanel";
 import { LoadDetailDriverPayTab } from "./LoadDetailDriverPayTab";
+import { LoadDetailCostsTab } from "./LoadDetailCostsTab";
 import { LoadDetailSettlementTab } from "./LoadDetailSettlementTab";
 import { LoadDetailGeofenceTimelineTab } from "./LoadDetailGeofenceTimelineTab";
 import { EntityAuditHistoryTab } from "../audit/EntityAuditHistoryTab";
@@ -73,6 +74,7 @@ const tabs = [
   "Assignment History",
   "Audit",
   "Pre-Settlement",
+  "Costs",
 ] as const;
 type DrawerTab = (typeof tabs)[number];
 
@@ -1257,6 +1259,8 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
               <div className="text-sm text-gray-500">No driver assigned to this load.</div>
             )
           ) : null}
+
+          {activeTab === "Costs" && load ? <LoadDetailCostsTab load={load} canEdit={canEdit} /> : null}
 
           {/* Block 7 — Factoring packet tab (wired to the real per-load packet/submit-to-FARO UI;
               the dead duplicate drawer-tabs/FactoringTab.tsx stub was deleted, orphan-triage F1). */}

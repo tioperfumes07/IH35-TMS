@@ -27,7 +27,7 @@ Today `LoadDetailDrawer` tabs (12, Customs hidden on domestic):
 11. Audit  
 12. Pre-Settlement  
 
-**Costs is the 13th.** English label **Costs**. Never `load_costs`. Architectural-design tab count updates in the **same PR that mounts the tab** (Rule 05). This file is design law until then.
+**Costs is the 13th.** English label **Costs**. Never `load_costs`. **Implemented on 2026-09-02:** the drawer mounts the combined read model and explicit Expense-or-Bill entry choice; production Chrome proof remains required after deployment.
 
 ### What the tab shows
 
