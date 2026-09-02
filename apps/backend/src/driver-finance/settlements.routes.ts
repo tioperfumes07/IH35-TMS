@@ -1002,7 +1002,10 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         // the same shared primitive so the reset shape is identical everywhere in the codebase.
         let bankTransactionUnmatched = false;
         if (current.paid_via_bank_txn_id) {
-          bankTransactionUnmatched = await unmatchBankTransactionById(client, companyId, current.paid_via_bank_txn_id);
+          bankTransactionUnmatched = await unmatchBankTransactionById(client, companyId, current.paid_via_bank_txn_id, {
+            userId: user.uuid,
+            reason: `settlement reversal: ${params.data.id}`,
+          });
           await client.query(
             `UPDATE driver_finance.driver_settlements SET paid_via_bank_txn_id = NULL WHERE id = $1::uuid`,
             [params.data.id]

@@ -91,7 +91,10 @@ async function handleSettlementBulk(
     }
 
     if (current.paid_via_bank_txn_id) {
-      await unmatchBankTransactionById(client as never, operatingCompanyId, current.paid_via_bank_txn_id);
+      await unmatchBankTransactionById(client as never, operatingCompanyId, current.paid_via_bank_txn_id, {
+        userId: actorUserId,
+        reason: `settlement reversal (bulk): ${id}`,
+      });
       await client.query(
         `UPDATE driver_finance.driver_settlements SET paid_via_bank_txn_id = NULL WHERE id = $1::uuid`,
         [id]
