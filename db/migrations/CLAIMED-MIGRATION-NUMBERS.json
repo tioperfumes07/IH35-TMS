@@ -611,6 +611,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-02",
       "purpose": "go21_a1_trailer_interchange_data_layer (GO-21 dispatch defect register A1, CC-1 money/data lane: dispatch.non_owned_trailers + dispatch.trailer_interchanges -- non-owned/broker trailer interchange, never inserted into mdata.units)"
+    },
+    "202613450001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-02",
+      "purpose": "go22_presettlement_link_suggestions (GO-22 pre-settlement, CC-1 money lane: driver_finance.driver_settlements.tour_id + driver_finance.presettlement_link_suggestions -- suggest-then-confirm queue for book-load.service.ts's TODO P6-FOLLOWUP-PRESETTLEMENT-LINK, mirrors driver_finance.trip_link_queue's shape, never auto-commits a load onto a settlement)"
     }
   }
 }
