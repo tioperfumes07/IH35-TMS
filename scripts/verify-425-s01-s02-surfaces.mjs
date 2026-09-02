@@ -16,12 +16,12 @@ function assert(cond, msg, errors) {
   if (!cond) errors.push(msg);
 }
 
-export function run() {
+export function run(readSource = read) {
   const errors = [];
-  const manifest = read("apps/frontend/src/routes/manifest.tsx");
-  const home = read("apps/frontend/src/pages/form425c/Form425CHome.tsx");
-  const exhibits = read("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx");
-  const backend = read("apps/backend/src/reports/form-425c/exhibits/routes.ts");
+  const manifest = readSource("apps/frontend/src/routes/manifest.tsx");
+  const home = readSource("apps/frontend/src/pages/form425c/Form425CHome.tsx");
+  const exhibits = readSource("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx");
+  const backend = readSource("apps/backend/src/reports/form-425c/exhibits/routes.ts");
 
   assert(/path="\/425c"/.test(manifest), "manifest missing /425c route", errors);
   assert(/<Form425CHome\s*\/>/.test(manifest), "manifest /425c must mount Form425CHome", errors);
@@ -54,32 +54,31 @@ export function run() {
 }
 
 function selftest() {
-  const realPath = path.join(ROOT, "apps/frontend/src/routes/manifest.tsx");
-  const backup = fs.readFileSync(realPath, "utf8");
-  try {
-    fs.writeFileSync(realPath, backup.replace('path="/425c"', 'path="/425c-old"'), "utf8");
-    const planted = run();
-    if (!planted.some((e) => e.includes("/425c"))) {
-      console.error("[verify-425-s01-s02] SELFTEST FAIL: planted stale /425c route not detected");
-      process.exit(1);
-    }
-    fs.writeFileSync(realPath, backup, "utf8");
-    const homePath = path.join(ROOT, "apps/frontend/src/pages/form425c/Form425CHome.tsx");
-    const homeBackup = fs.readFileSync(homePath, "utf8");
-    try {
-      fs.writeFileSync(homePath, homeBackup.replace('label: "Deposit Import"', 'label: "QB Import"'), "utf8");
-      const copyPlanted = run();
-      if (!copyPlanted.some((e) => e.includes("QuickBooks-only wording"))) {
-        console.error("[verify-425-s01-s02] SELFTEST FAIL: planted QB Import operator copy not detected");
-        process.exit(1);
-      }
-    } finally {
-      fs.writeFileSync(homePath, homeBackup, "utf8");
-    }
-    console.log(`[verify-425-s01-s02] SELFTEST PASS (${planted.length} planted failures detected)`);
-  } finally {
-    fs.writeFileSync(realPath, backup, "utf8");
+  const manifestPath = "apps/frontend/src/routes/manifest.tsx";
+  const homePath = "apps/frontend/src/pages/form425c/Form425CHome.tsx";
+  const source = new Map([
+    [manifestPath, read(manifestPath)],
+    [homePath, read(homePath)],
+  ]);
+  const readPlanted = (rel) => source.get(rel) ?? read(rel);
+
+  source.set(manifestPath, source.get(manifestPath).replace('path="/425c"', 'path="/425c-old"'));
+  const routePlanted = run(readPlanted);
+  if (!routePlanted.some((error) => error.includes("/425c"))) {
+    console.error("[verify-425-s01-s02] SELFTEST FAIL: planted stale /425c route not detected");
+    process.exit(1);
   }
+
+  source.set(manifestPath, read(manifestPath));
+  source.set(homePath, source.get(homePath).replace('label: "Deposit Import"', 'label: "QB Import"'));
+  const copyPlanted = run(readPlanted);
+  if (!copyPlanted.some((error) => error.includes("QuickBooks-only wording"))) {
+    console.error("[verify-425-s01-s02] SELFTEST FAIL: planted QB Import operator copy not detected");
+    process.exit(1);
+  }
+  console.log(
+    `[verify-425-s01-s02] SELFTEST PASS (${routePlanted.length + copyPlanted.length} planted failures detected)`,
+  );
 }
 
 function main() {
