@@ -1,3 +1,7 @@
+// C6-MONEY-JE-EXEMPT: builds the invoice DOCUMENT (header+lines) from a load. The real revenue-
+// recognition JE posts later, once, via revrec-delivery-posting/poster.service.ts's
+// postLoadRevenueLatch (calls createJournalEntry), triggered by delivery evidence and invoice-
+// linking, not by invoice creation itself — verified 2026-09-02, GO-23 C6.
 import { resolveInvoiceDisplayId } from "./display-id.js";
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { recomputeInvoiceTotals } from "./shared.js";

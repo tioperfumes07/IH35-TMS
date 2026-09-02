@@ -1,3 +1,7 @@
+// C6-MONEY-JE-EXEMPT: mutates invoice LINE rows under an existing invoice header. The real
+// revenue-recognition JE posts once via revrec-delivery-posting/poster.service.ts's
+// postLoadRevenueLatch (calls createJournalEntry), triggered by delivery evidence and invoice-
+// linking, not by a line edit — verified 2026-09-02, GO-23 C6.
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";

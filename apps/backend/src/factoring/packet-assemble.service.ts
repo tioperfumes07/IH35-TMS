@@ -1,4 +1,10 @@
 /**
+ * C6-MONEY-JE-EXEMPT: the accounting.invoices row created here is the same LOAD invoice document
+ * from-load.ts builds (backfill when none exists yet) — the real revenue-recognition JE posts once
+ * via revrec-delivery-posting/poster.service.ts's postLoadRevenueLatch (calls createJournalEntry),
+ * triggered by the SAME delivery/POD-approval evidence this file's own trigger points already fire
+ * on, not by this invoice creation — verified 2026-09-02, GO-23 C6.
+ *
  * packet-assemble.service.ts — Auto-assemble factoring packet on delivery + POD approval.
  *
  * ACCT-F5630 — this header used to CLAIM a live trigger ("wired by callers, e.g. pod.routes.ts on POD
