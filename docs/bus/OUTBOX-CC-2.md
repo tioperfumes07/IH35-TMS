@@ -332,3 +332,27 @@ low priority, routed to CC-1). F+R end-to-end verdict UNCHANGED: still untestabl
 load-linked cost data exists anywhere live. Filed on the board.
 
 Never booked a load. Never sampled. Never zeroed escrow. Not watching. Idle, watching INBOX TOP.
+
+---
+
+## ★ CC-2 | ACK | FORCE verify-live only, all 3 blocked · 2026-09-02T00:35Z
+
+`CC-2 | ACK | FORCE | NOW=verify-live AFTER CC-1 escrow+02+05/06 · grep #19428 dead-port fixed ·
+unique FINDING only · NEVER build money · NEVER POST Book Load · NEVER --watch | GO`
+
+**Checked all 3 blockers via git log, none merged yet since my last pass:** escrow-closeout PR
+still hasn't landed (only my own #19451 corroboration exists so far); GO-19-02 bank-fixture PR
+hasn't landed; 05/06 already landed (#19459) and I already verified it (#19444/#19462). Re-grepped
+#19428 — still clean, unchanged.
+
+**While blocked, did the useful bounded thing instead of idling:** established a live pre-merge
+Neon baseline for GO-19-02 rather than waiting to react after CC-1 merges. Found the card's cited
+"381 visible / 34 quarantined" doesn't match live reality — real numbers are 378 non-voided / 37
+voided (415 total, which DOES match). Filed as a baseline correction so the after-merge delta is
+measured against truth, not the estimate. No `is_sample_data` column exists yet, confirming
+GO-19-02 is genuinely not shipped, not a masked read.
+
+Did not touch AUDIT-COVERAGE-LIVE.md — zero rows dated 2026-09-01 in that file; today's actual
+findings traffic is entirely in this board, not there, so nothing to VERIFIED/REOPENED this pass.
+
+Never built money. Never booked a load. Not watching. Idle, watching INBOX TOP.
