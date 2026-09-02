@@ -25,14 +25,6 @@ function fail(message) {
   failures.push(message);
 }
 
-function read(relativePath) {
-  return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
-}
-
-function exists(relativePath) {
-  return fs.existsSync(path.join(ROOT, relativePath));
-}
-
 function assertCallSite(indexSrc, symbol) {
   const importRe = new RegExp(
     String.raw`import\s*\{[^}]*\b${symbol}\b[^}]*\}\s*from\s*["'][^"']+["']`
@@ -47,8 +39,15 @@ function assertCallSite(indexSrc, symbol) {
   }
 }
 
-export function run() {
+export function run(overrides = new Map()) {
   failures.length = 0;
+
+  const read = (relativePath) =>
+    overrides.has(relativePath)
+      ? overrides.get(relativePath)
+      : fs.readFileSync(path.join(ROOT, relativePath), "utf8");
+  const exists = (relativePath) =>
+    overrides.has(relativePath) || fs.existsSync(path.join(ROOT, relativePath));
 
   const routesExist = exists(ROUTES);
   const workerExist = exists(WORKER);
@@ -94,23 +93,16 @@ function main() {
   const args = process.argv.slice(2);
   if (args.includes("--selftest")) {
     // Planted-failure: empty index must fail when sources exist.
-    const realIndex = path.join(ROOT, INDEX);
-    const backup = fs.readFileSync(realIndex, "utf8");
-    try {
-      fs.writeFileSync(realIndex, "// selftest empty index\n", "utf8");
-      const planted = run();
-      if (planted.length === 0) {
-        console.error(
-          "[verify-active-driver-set-worker-registered] SELFTEST FAIL: planted empty index did not fail"
-        );
-        process.exit(1);
-      }
-      console.log(
-        `[verify-active-driver-set-worker-registered] SELFTEST PASS (${planted.length} planted failures detected)`
+    const planted = run(new Map([[INDEX, "// selftest empty index\n"]]));
+    if (planted.length === 0) {
+      console.error(
+        "[verify-active-driver-set-worker-registered] SELFTEST FAIL: planted empty index did not fail"
       );
-    } finally {
-      fs.writeFileSync(realIndex, backup, "utf8");
+      process.exit(1);
     }
+    console.log(
+      `[verify-active-driver-set-worker-registered] SELFTEST PASS (${planted.length} planted failures detected)`
+    );
     process.exit(0);
   }
 
