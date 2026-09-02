@@ -76,6 +76,8 @@ type CreateBillInput = {
    */
   driverId?: string | null;
   trailerId?: string | null;
+  recoverFromDriver?: boolean;
+  recoverDeductionType?: string | null;
   // Claim→Bill hop (held migration 202607740000). Only persisted when the column exists on the
   // connected DB (colExists) — Neon may not have owner-applied the held DDL yet.
   insuranceClaimId?: string | null;
@@ -1918,6 +1920,10 @@ export async function resolveLineCategoryForLoadRequirement(
 }
 
 export async function createBill(input: CreateBillInput, userId: string) {
+  if (input.recoverFromDriver && !input.driverId) throw new Error("bill_recovery_requires_driver");
+  if (input.recoverFromDriver && !input.recoverDeductionType?.trim()) {
+    throw new Error("bill_recovery_requires_deduction_type");
+  }
   if (input.amountCents <= 0) throw new Error("bill_amount_must_be_positive");
 
   // LAW-E2E #3167: when the UI (or any caller) sends lines, fail closed — never create a header-only
@@ -2263,10 +2269,11 @@ export async function createBill(input: CreateBillInput, userId: string) {
     // GO-18 — stamp driver_id/trailer_id when present (UPDATE-after-INSERT; avoid exploding the
     // already-4-way header INSERT). Column-gated the same way legal_matter_id is below, so a DB that
     // predates migration 202613360001 still creates the bill successfully (columns just stay unset).
-    if (insertedId && (input.driverId || input.trailerId)) {
+    if (insertedId && (input.driverId || input.trailerId || input.recoverFromDriver || input.recoverDeductionType)) {
       const colsRes = await client.query<{ column_name: string }>(
         `SELECT column_name FROM information_schema.columns
-          WHERE table_schema='accounting' AND table_name='bills' AND column_name IN ('driver_id','trailer_id')`
+          WHERE table_schema='accounting' AND table_name='bills'
+            AND column_name IN ('driver_id','trailer_id','recover_from_driver','recover_deduction_type')`
       );
       const presentCols = new Set(colsRes.rows.map((r) => r.column_name));
       const setClauses: string[] = [];
@@ -2278,6 +2285,14 @@ export async function createBill(input: CreateBillInput, userId: string) {
       if (input.trailerId && presentCols.has("trailer_id")) {
         values.push(input.trailerId);
         setClauses.push(`trailer_id = $${values.length}::uuid`);
+      }
+      if (presentCols.has("recover_from_driver")) {
+        values.push(input.recoverFromDriver ?? false);
+        setClauses.push(`recover_from_driver = $${values.length}::boolean`);
+      }
+      if (presentCols.has("recover_deduction_type")) {
+        values.push(input.recoverFromDriver ? input.recoverDeductionType?.trim() ?? null : null);
+        setClauses.push(`recover_deduction_type = $${values.length}::text`);
       }
       if (setClauses.length > 0) {
         await client.query(
