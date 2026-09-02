@@ -34,6 +34,9 @@ export function check425cTableUsage(src) {
   if (!/warnSkipped\(/.test(src)) {
     offenders.push(`${AGGREGATOR}: must log warnSkipped when a source is skipped`);
   }
+  if (!/sourcesRan/.test(src) || !/sourcesSkipped/.test(src)) {
+    offenders.push(`${AGGREGATOR}: must return sourcesRan and sourcesSkipped (GO-19 slice 18)`);
+  }
   return offenders;
 }
 
@@ -41,6 +44,8 @@ function runSelftest() {
   const good = `
     FROM compliance.form_425c_reports
     warnSkipped(log, source, "table_missing", table);
+    sourcesRan
+    sourcesSkipped
   `;
   const bad = `
     FROM legal.form_425c_filings

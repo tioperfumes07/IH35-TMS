@@ -1,16 +1,16 @@
 /**
  * GAP-65 — Owner Today's Attention Routes
- *
- * GET  /api/v1/owner/todays-attention          — fetch top-5 for current Owner
- * POST /api/v1/owner/todays-attention/dismiss/:item_id — dismiss an item (Owner-only)
- *
- * RBAC: Owner role only. Attempts by other roles → 403.
  */
 
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { withCompanyScope } from "../../accounting/shared.js";
+import {
+  ATTENTION_SOURCE_COUNT,
+  ATTENTION_SOURCE_STATS_ITEM_ID,
+  computeTodaysAttention,
+} from "./aggregator.service.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -38,13 +38,23 @@ function authedOwner(req: Parameters<typeof requireAuth>[0], reply: Parameters<t
   return user;
 }
 
+function parseSourceStats(extra: unknown): {
+  sourcesRan: number;
+  sourcesSkipped: number;
+  totalSources: number;
+} | null {
+  if (!extra || typeof extra !== "object" || Array.isArray(extra)) return null;
+  const o = extra as Record<string, unknown>;
+  const sourcesRan = Number(o.sourcesRan);
+  const sourcesSkipped = Number(o.sourcesSkipped);
+  const totalSources = Number(o.totalSources);
+  if (!Number.isFinite(sourcesRan) || !Number.isFinite(sourcesSkipped) || !Number.isFinite(totalSources)) {
+    return null;
+  }
+  return { sourcesRan, sourcesSkipped, totalSources };
+}
+
 export async function registerOwnerTodaysAttentionRoutes(app: FastifyInstance) {
-  /**
-   * GET /api/v1/owner/todays-attention?operating_company_id=<uuid>
-   *
-   * Returns the current top-5 attention items for the Owner, ordered by score DESC.
-   * Falls back to live aggregator computation if snapshot table is empty/missing.
-   */
   app.get("/api/v1/owner/todays-attention", async (req, reply) => {
     const user = authedOwner(req, reply);
     if (!user) return;
@@ -58,34 +68,30 @@ export async function registerOwnerTodaysAttentionRoutes(app: FastifyInstance) {
 
     return withCompanyScope(user.uuid, operating_company_id, async (client) => {
       try {
-        // Check if snapshot table exists
         const tableOk = await client.query(
           `SELECT to_regclass('owner.todays_attention_snapshot') IS NOT NULL AS ok`
         );
 
         if (!tableOk.rows[0]?.ok) {
-          // Table not yet migrated — return empty gracefully
-          return { items: [], computed_at: null, source: "no_snapshot" };
+          const live = await computeTodaysAttention(client, operating_company_id, 5, app.log);
+          return {
+            items: live.items,
+            computed_at: null,
+            source: "live",
+            sourcesRan: live.sourcesRan,
+            sourcesSkipped: live.sourcesSkipped,
+            totalSources: live.totalSources,
+          };
         }
 
         const res = await client.query(
           `
-            SELECT
-              id::text,
-              item_id,
-              source,
-              score,
-              title,
-              body,
-              action_url,
-              action_label,
-              severity,
-              extra,
-              dismissed,
-              computed_at::text
+            SELECT id::text, item_id, source, score, title, body, action_url, action_label,
+                   severity, extra, dismissed, computed_at::text
             FROM owner.todays_attention_snapshot
             WHERE operating_company_id = $1::uuid
               AND dismissed = false
+              AND item_id NOT LIKE '__attention_%'
             ORDER BY score DESC
             LIMIT 5
           `,
@@ -107,22 +113,50 @@ export async function registerOwnerTodaysAttentionRoutes(app: FastifyInstance) {
           computed_at: typeof r.computed_at === "string" ? r.computed_at : null,
         }));
 
-        const computed_at = items[0]?.computed_at ?? null;
-        return { items, computed_at, source: "snapshot" };
+        const statsRow = await client.query(
+          `
+            SELECT extra, computed_at::text
+            FROM owner.todays_attention_snapshot
+            WHERE operating_company_id = $1::uuid AND item_id = $2
+            LIMIT 1
+          `,
+          [operating_company_id, ATTENTION_SOURCE_STATS_ITEM_ID]
+        );
+
+        let sourcesRan = ATTENTION_SOURCE_COUNT;
+        let sourcesSkipped = 0;
+        let totalSources = ATTENTION_SOURCE_COUNT;
+        let computed_at = items[0]?.computed_at ?? null;
+
+        const statsFromMeta = parseSourceStats(statsRow.rows[0]?.extra);
+        if (statsFromMeta) {
+          sourcesRan = statsFromMeta.sourcesRan;
+          sourcesSkipped = statsFromMeta.sourcesSkipped;
+          totalSources = statsFromMeta.totalSources;
+          computed_at =
+            typeof statsRow.rows[0]?.computed_at === "string" ? statsRow.rows[0].computed_at : computed_at;
+        } else if (items.length === 0) {
+          const live = await computeTodaysAttention(client, operating_company_id, 5, app.log);
+          sourcesRan = live.sourcesRan;
+          sourcesSkipped = live.sourcesSkipped;
+          totalSources = live.totalSources;
+        }
+
+        return { items, computed_at, source: "snapshot", sourcesRan, sourcesSkipped, totalSources };
       } catch (err) {
         app.log.warn({ err }, "[owner-attention] GET failed — returning empty");
-        return { items: [], computed_at: null, source: "error" };
+        return {
+          items: [],
+          computed_at: null,
+          source: "error",
+          sourcesRan: 0,
+          sourcesSkipped: ATTENTION_SOURCE_COUNT,
+          totalSources: ATTENTION_SOURCE_COUNT,
+        };
       }
     });
   });
 
-  /**
-   * POST /api/v1/owner/todays-attention/dismiss/:item_id
-   * Body: { operating_company_id: uuid }
-   *
-   * Marks an attention item as dismissed. Creates an audit_log entry.
-   * Dismissed items are excluded from the top-5 until re-triggered (24h window).
-   */
   app.post("/api/v1/owner/todays-attention/dismiss/:item_id", async (req, reply) => {
     const user = authedOwner(req, reply);
     if (!user) return;
@@ -140,8 +174,11 @@ export async function registerOwnerTodaysAttentionRoutes(app: FastifyInstance) {
     const { item_id } = paramsParsed.data;
     const { operating_company_id } = bodyParsed.data;
 
+    if (item_id.startsWith("__attention_")) {
+      return reply.code(400).send({ error: "validation_error", message: "Cannot dismiss internal meta rows" });
+    }
+
     return withCompanyScope(user.uuid, operating_company_id, async (client) => {
-      // Check snapshot table exists
       const tableOk = await client.query(
         `SELECT to_regclass('owner.todays_attention_snapshot') IS NOT NULL AS ok`
       );
@@ -152,14 +189,8 @@ export async function registerOwnerTodaysAttentionRoutes(app: FastifyInstance) {
       const updated = await client.query(
         `
           UPDATE owner.todays_attention_snapshot
-          SET
-            dismissed    = true,
-            dismissed_by = $3::uuid,
-            dismissed_at = now(),
-            updated_at   = now()
-          WHERE operating_company_id = $1::uuid
-            AND item_id              = $2
-            AND dismissed            = false
+          SET dismissed = true, dismissed_by = $3::uuid, dismissed_at = now(), updated_at = now()
+          WHERE operating_company_id = $1::uuid AND item_id = $2 AND dismissed = false
           RETURNING id::text AS id, item_id
         `,
         [operating_company_id, item_id, user.uuid]
@@ -169,10 +200,7 @@ export async function registerOwnerTodaysAttentionRoutes(app: FastifyInstance) {
         return reply.code(404).send({ error: "not_found", message: "Item not found or already dismissed" });
       }
 
-      // Audit log — best-effort, don't fail the dismiss if audit write fails
       try {
-        // Canonical audit sink is audit.audit_events (audit.audit_log never existed, so these
-        // events were silently dropped — G5). Repointed; still best-effort inside the try/catch.
         await client.query(
           `
             INSERT INTO audit.audit_events (event_class, severity, payload, actor_user_uuid, source)
@@ -191,7 +219,7 @@ export async function registerOwnerTodaysAttentionRoutes(app: FastifyInstance) {
           ]
         );
       } catch {
-        // audit write failure is non-fatal
+        // non-fatal
       }
 
       return { ok: true, item_id, dismissed: true };

@@ -898,7 +898,10 @@ export type OwnerAttentionItem = {
 export type OwnerTodaysAttentionResult = {
   items: OwnerAttentionItem[];
   computed_at: string | null;
-  source: "snapshot" | "no_snapshot" | "error";
+  source: "snapshot" | "no_snapshot" | "live" | "error";
+  sourcesRan: number;
+  sourcesSkipped: number;
+  totalSources: number;
 };
 
 function normalizeAttentionSeverity(raw: unknown): OwnerAttentionItemSeverity {
@@ -935,10 +938,22 @@ export async function fetchOwnerTodaysAttention(companyId: string): Promise<Owne
   const items = rawItems
     .map(normalizeOwnerAttentionItem)
     .filter((x): x is OwnerAttentionItem => x !== null);
+  const sourcesRan = Number(payload.sourcesRan);
+  const sourcesSkipped = Number(payload.sourcesSkipped);
+  const totalSources = Number(payload.totalSources);
   return {
     items,
     computed_at: typeof payload.computed_at === "string" ? payload.computed_at : null,
-    source: (payload.source as "snapshot" | "no_snapshot" | "error") ?? "snapshot",
+    source:
+      payload.source === "snapshot" ||
+      payload.source === "no_snapshot" ||
+      payload.source === "live" ||
+      payload.source === "error"
+        ? payload.source
+        : "snapshot",
+    sourcesRan: Number.isFinite(sourcesRan) ? sourcesRan : 0,
+    sourcesSkipped: Number.isFinite(sourcesSkipped) ? sourcesSkipped : 0,
+    totalSources: Number.isFinite(totalSources) ? totalSources : 10,
   };
 }
 

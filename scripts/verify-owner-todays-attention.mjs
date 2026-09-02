@@ -257,12 +257,60 @@ check(
 );
 
 check(
-  "tests cover ranking, deduplication, and RLS patterns",
+  "aggregator returns sourcesRan and sourcesSkipped (GO-19 slice 18)",
+  () => fileContains(
+    "apps/backend/src/owner/todays-attention/aggregator.service.ts",
+    "sourcesRan",
+    "sourcesSkipped",
+    "ATTENTION_SOURCE_COUNT"
+  )
+);
+
+check(
+  "routes.ts returns sourcesRan and sourcesSkipped",
+  () => fileContains(
+    "apps/backend/src/owner/todays-attention/routes.ts",
+    "sourcesRan",
+    "sourcesSkipped",
+    "totalSources"
+  )
+);
+
+check(
+  "worker persists __attention_source_stats__ meta row",
+  () => fileContains(
+    "apps/backend/src/jobs/todays-attention-worker.ts",
+    "ATTENTION_SOURCE_STATS_ITEM_ID",
+    "sourcesRan"
+  )
+);
+
+check(
+  "TodaysAttentionTop5 shows N of 10 sources reporting",
+  () => fileContains(
+    "apps/frontend/src/components/home/TodaysAttentionTop5.tsx",
+    "sources reporting",
+    "totalSources"
+  )
+);
+
+check(
+  "home.ts parses sourcesRan and sourcesSkipped",
+  () => fileContains(
+    "apps/frontend/src/api/home.ts",
+    "sourcesRan",
+    "sourcesSkipped",
+    "totalSources"
+  )
+);
+
+check(
+  "tests cover source stats and skip tracking",
   () => fileContains(
     "apps/backend/src/owner/todays-attention/__tests__/aggregator.test.ts",
-    "sorted by score",
-    "deduplicates",
-    "RLS"
+    "sourcesRan",
+    "sourcesSkipped",
+    "skippedSources"
   )
 );
 

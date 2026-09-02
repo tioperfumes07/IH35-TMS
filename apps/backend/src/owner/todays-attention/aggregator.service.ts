@@ -46,6 +46,17 @@ export type AttentionLog = {
   warn: (payload: Record<string, unknown>, message: string) => void;
 };
 
+export const ATTENTION_SOURCE_STATS_ITEM_ID = "__attention_source_stats__";
+export const ATTENTION_SOURCE_COUNT = 10;
+
+export interface AttentionComputeResult {
+  items: AttentionItem[];
+  sourcesRan: number;
+  sourcesSkipped: number;
+  totalSources: number;
+  skippedSources: string[];
+}
+
 function num(v: unknown, fallback = 0): number {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
@@ -508,44 +519,50 @@ async function sourceAtRiskUnits(
 
 // ─── Main aggregator ──────────────────────────────────────────────────────────
 
+const ATTENTION_SOURCE_KEYS = [
+  "form_425c_deadline", "fuel_fraud", "bank_drift", "eng_fault_wo", "cargo_sensor",
+  "period_close_warnings", "damage_liability", "detention_approval", "cooling_customers", "at_risk_units",
+] as const;
+
 export async function computeTodaysAttention(
   client: DbClient,
   operatingCompanyId: string,
   topN = 5,
   log?: AttentionLog
-): Promise<AttentionItem[]> {
+): Promise<AttentionComputeResult> {
+  const skippedSources = new Set<string>();
+  const trackedLog: AttentionLog = {
+    warn: (payload, message) => {
+      const source = typeof payload.source === "string" ? payload.source : "";
+      if (source) skippedSources.add(source);
+      log?.warn(payload, message);
+    },
+  };
   const sourceFns = [
-    source425CDeadline,
-    sourceFuelFraudAlerts,
-    sourceBankDrift,
-    sourceEngFaultWOs,
-    sourceCargoSensorIncidents,
-    sourcePeriodCloseAttention,
-    sourceDamageLiabilities,
-    sourceDetentionApprovals,
-    sourceCoolingCustomers,
-    sourceAtRiskUnits,
+    source425CDeadline, sourceFuelFraudAlerts, sourceBankDrift, sourceEngFaultWOs,
+    sourceCargoSensorIncidents, sourcePeriodCloseAttention, sourceDamageLiabilities,
+    sourceDetentionApprovals, sourceCoolingCustomers, sourceAtRiskUnits,
   ];
-
-  const results = await Promise.allSettled(
-    sourceFns.map((fn) => fn(client, operatingCompanyId, log))
-  );
-
+  const results = await Promise.allSettled(sourceFns.map((fn) => fn(client, operatingCompanyId, trackedLog)));
+  for (let i = 0; i < results.length; i++) {
+    if (results[i]?.status === "rejected") skippedSources.add(ATTENTION_SOURCE_KEYS[i] ?? `source_${i}`);
+  }
   const all: AttentionItem[] = [];
   const seen = new Set<string>();
-
   for (const r of results) {
     if (r.status === "fulfilled") {
       for (const item of r.value) {
-        if (!seen.has(item.item_id)) {
-          seen.add(item.item_id);
-          all.push(item);
-        }
+        if (!seen.has(item.item_id)) { seen.add(item.item_id); all.push(item); }
       }
     }
   }
-
-  return all
-    .sort((a, b) => b.score - a.score)
-    .slice(0, topN);
+  const items = all.sort((a, b) => b.score - a.score).slice(0, topN);
+  const sourcesSkipped = skippedSources.size;
+  return {
+    items,
+    sourcesRan: ATTENTION_SOURCE_COUNT - sourcesSkipped,
+    sourcesSkipped,
+    totalSources: ATTENTION_SOURCE_COUNT,
+    skippedSources: [...skippedSources],
+  };
 }

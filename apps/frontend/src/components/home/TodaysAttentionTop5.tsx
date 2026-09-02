@@ -1,23 +1,10 @@
-/**
- * GAP-65 — TodaysAttentionTop5
- *
- * Displays the Owner's ranked top-5 attention items fetched from
- * GET /api/v1/owner/todays-attention.
- *
- * Mounted at the top of OwnerHome, above all existing cards.
- * Uses graceful degradation: if the endpoint is unavailable, the section
- * hides rather than breaking the page.
- */
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { dismissOwnerAttentionItem, fetchOwnerTodaysAttention } from "../../api/home.js";
 import { AttentionItemCard } from "./AttentionItemCard.js";
 
-type Props = {
-  operatingCompanyId: string | null | undefined;
-};
+type Props = { operatingCompanyId: string | null | undefined };
 
 export function TodaysAttentionTop5({ operatingCompanyId }: Props) {
   const navigate = useNavigate();
@@ -29,7 +16,7 @@ export function TodaysAttentionTop5({ operatingCompanyId }: Props) {
     queryKey: ["owner", "todays-attention", cid],
     queryFn: () => fetchOwnerTodaysAttention(cid),
     enabled: Boolean(cid),
-    refetchInterval: 15 * 60 * 1000, // re-poll every 15 min
+    refetchInterval: 15 * 60 * 1000,
     retry: false,
   });
 
@@ -42,27 +29,36 @@ export function TodaysAttentionTop5({ operatingCompanyId }: Props) {
     onError: (error) => setDismissError(error instanceof Error ? error.message : "Failed to dismiss attention item"),
   });
 
-  // Hide section completely on error or when loading for the first time
   if (query.isError) return null;
 
   const items = query.data?.items ?? [];
+  const totalSources = query.data?.totalSources ?? 10;
+  const sourcesRan = query.data?.sourcesRan ?? 0;
 
-  // Don't render if no attention items
-  if (!query.isLoading && items.length === 0) return null;
+  if (query.isLoading) {
+    return (
+      <section className="rounded-sm border border-slate-300 bg-white" aria-label="Today's attention — top priority items">
+        <div className="border-b border-slate-300 bg-slate-100/60 px-3 py-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Today's Attention</span>
+        </div>
+        <div className="space-y-2 p-3">
+          <div className="h-16 animate-pulse rounded-sm bg-slate-100" />
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section
-      className="rounded-sm border border-slate-300 bg-white"
-      aria-label="Today's attention — top priority items"
-    >
+    <section className="rounded-sm border border-slate-300 bg-white" aria-label="Today's attention — top priority items">
       <div className="flex items-center justify-between border-b border-slate-300 bg-slate-100/60 px-3 py-2">
         <div>
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">
-            Today's Attention
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Today's Attention</span>
+          <span className="ml-2 rounded-full bg-[#1F2A44] px-2 py-0.5 text-[10px] font-bold text-white">
+            {sourcesRan} of {totalSources} sources reporting
           </span>
-          {!query.isLoading && items.length > 0 ? (
-            <span className="ml-2 rounded-full bg-[#1F2A44] px-2 py-0.5 text-[10px] font-bold text-white">
-              {items.length}
+          {items.length > 0 ? (
+            <span className="ml-2 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+              {items.length} item{items.length === 1 ? "" : "s"}
             </span>
           ) : null}
         </div>
@@ -72,15 +68,12 @@ export function TodaysAttentionTop5({ operatingCompanyId }: Props) {
           </span>
         ) : null}
       </div>
-
       <div className="space-y-2 p-3">
         {dismissError ? <p role="alert" className="text-xs text-red-700">{dismissError}</p> : null}
-        {query.isLoading ? (
-          <>
-            <div className="h-16 animate-pulse rounded-sm bg-slate-100" />
-            <div className="h-16 animate-pulse rounded-sm bg-slate-100" />
-            <div className="h-16 animate-pulse rounded-sm bg-slate-100" />
-          </>
+        {items.length === 0 ? (
+          <p className="text-xs text-slate-500">
+            No priority items right now. {sourcesRan} of {totalSources} attention sources are reporting.
+          </p>
         ) : (
           items.map((item, idx) => (
             <AttentionItemCard
