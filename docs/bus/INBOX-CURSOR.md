@@ -1,8 +1,4 @@
-# INBOX-CURSOR · LEAD SELF 2026-09-01 20:35 CT
-
-## NEXT
-1. FAST-MERGE miles P0 + seed zip ON CONFLICT + desk bus.
-2. Deploy **one** (API lags `441ac88`). Do not second-kick.
-3. GO-17 **after** Jorge can click Book Load. No packet in repo this turn.
-
-ACK `CURSOR | ACK | NOW=miles ship + deploy | GO`
+# INBOX-CURSOR · 20:52 CT
+1. FAST-MERGE GO-17 + verify-static.
+2. Do not second-kick deploy (3cac77f live).
+3. No seat fixtures.

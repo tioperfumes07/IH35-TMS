@@ -1,3 +1,7 @@
-# OUTBOX-CURSOR · 2026-09-01 20:35 CT
+# OUTBOX-CURSOR · 2026-09-01 20:52 CT
 
-CURSOR | Cascade Book Load facts AGREE on seed 3375/474 autofill/183 Check ZIP (Neon lucia this turn) + GO-16 Chrome UNVERIFIED + escrow $500.01 audit-bypass (do not zero) + bank 97.5% owner-categorizes + VERIFY-STATIC-37 is #19418 dead-port not “24”. DISAGREE GO-11 “half-done” (CLOSED #19366; 34 bank fixtures already voided) and GO-17 as ready-to-build (no packet). Jorge can book: NO until miles PR live on healthz (API still 441ac88; FE d3ed578). Shipping GO-16-MILES-CREATE-BLOCK + zip-pair seed ON CONFLICT + desk order. | GO
+CURSOR | APOLOGY: asking Jorge “did anyone restore Neon?” was an owner-as-message-bus defect. He is not the bus. Evidence path = Neon operations (last 200: no restore/reset) + snapshots (daily create, not restore) + audit.row_changes (3 INSERT / 0 DELETE on escrow_postings) + live tables (0 postings, $500.01 balances). FORCE INBOX-CC-1 forensic-only. | GO
+
+CURSOR | Miles P0 #19424 merged d60f2c4 · live API+FE healthz **3cac77f** (includes miles). Chrome click UNVERIFIED — cursor-ide-browser tab evaporates. Jorge: hard-reload /dispatch · Laredo TX → Denton TX expect 456.7 / 452.2 · Chicago empty. If Chicago fills = FAIL. | GO
+
+CURSOR | Shipping GO-17 Part 1 Save proof panel + verify-static dead-port unset. No seat money creates. | GO

@@ -25,6 +25,9 @@ const MODAL = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
 const STRIP = "apps/frontend/src/pages/dispatch/components/book-load-v4/MilesStrip.tsx";
 const ROUTES = "apps/backend/src/dispatch/loads.routes.ts";
 const HELPER = "apps/frontend/src/pages/dispatch/components/book-load-city-state.ts";
+const PROOF_BE = "apps/backend/src/dispatch/load-save-proof.ts";
+const PROOF_FE = "apps/frontend/src/pages/dispatch/components/book-load-v4/LoadSaveProofPanel.tsx";
+const PROOF_LAW = "docs/lockdown/GO-17-LOAD-SAVE-PROOF-PANEL-2026-09-01.md";
 
 function assert(files) {
   const problems = [];
@@ -109,6 +112,30 @@ function assert(files) {
   if (/uppercase/.test(strip) || /PC\*MILER/.test(strip) || /fuel and ETA/i.test(strip)) {
     problems.push(`${STRIP}: operator strip still teaches ALL CAPS, PC*MILER, or fuel/ETA — GO-16 Rev B forbids that.`);
   }
+  const proofBe = files[PROOF_BE] ?? "";
+  const proofFe = files[PROOF_FE] ?? "";
+  const proofLaw = files[PROOF_LAW] ?? "";
+  if (!/save_proof/.test(src) || !/buildLoadSaveProof/.test(src)) {
+    problems.push(`${SVC}: Book Load 201 must attach save_proof from buildLoadSaveProof (GO-17 Part 1)`);
+  }
+  if (!/if \(!sid\) return \{ state: "not_set"/.test(proofBe)) {
+    problems.push(`${PROOF_BE}: empty id must be not_set — null driver must never be Linked`);
+  }
+  if (!/journal_entry_postings/.test(proofBe) || !/audit\.row_changes/.test(proofBe)) {
+    problems.push(`${PROOF_BE}: must read journal_entry_postings + audit.row_changes — no parallel log`);
+  }
+  if (!/LoadSaveProofPanel/.test(modal) || !/data-testid="load-save-proof-panel"/.test(proofFe)) {
+    problems.push(`${MODAL}: must render LoadSaveProofPanel after Save`);
+  }
+  if (!/save-proof-did-not/.test(proofFe) || !/DID NOT/.test(proofFe)) {
+    problems.push(`${PROOF_FE}: must have an explicit DID NOT section`);
+  }
+  if (/emerald|text-green-/.test(proofFe)) {
+    problems.push(`${PROOF_FE}: Linked must not use green/emerald — missing driver looked "Linked"`);
+  }
+  if (!/null\/empty driver is \*\*never\*\* Linked/.test(proofLaw)) {
+    problems.push(`${PROOF_LAW}: GO-17 Part 1 law missing driver honesty`);
+  }
   const note = modal.match(/<p className="blw-note">[\s\S]*?<\/p>/)?.[0] ?? "";
   const visible = `${strip}\n${note}`
     .replace(/\/\*[\s\S]*?\*\//g, "")
@@ -128,7 +155,7 @@ function assert(files) {
 }
 
 const files = Object.fromEntries(
-  [SVC, MODAL, STRIP, ROUTES, HELPER].map((r) => [r, readFileSync(path.join(ROOT, r), "utf8")]),
+  [SVC, MODAL, STRIP, ROUTES, HELPER, PROOF_BE, PROOF_FE, PROOF_LAW].map((r) => [r, readFileSync(path.join(ROOT, r), "utf8")]),
 );
 
 if (SELFTEST) {
@@ -184,6 +211,16 @@ if (SELFTEST) {
     process.exit(1);
   }
   checks.push(["lookup failure swallowed as New lane", assert(swallowed).some((p) => /must not pretend New lane/.test(p))]);
+  const noProof = {
+    ...files,
+    [SVC]: files[SVC].replace(/buildLoadSaveProof/g, "skipSaveProof").replace(/save_proof,/g, "save_skipped,"),
+  };
+  checks.push(["save_proof dropped", assert(noProof).some((p) => /save_proof from buildLoadSaveProof/.test(p))]);
+  const greenLinked = {
+    ...files,
+    [PROOF_FE]: files[PROOF_FE].replace("text-slate-900", "text-green-600"),
+  };
+  checks.push(["Linked painted green", assert(greenLinked).some((p) => /green\/emerald/.test(p))]);
   const failed = checks.filter(([, c]) => !c).map(([n]) => n);
   if (failed.length) { console.error(`${LABEL} SELFTEST FAIL — not caught: ${failed.join(", ")}`); process.exit(1); }
   console.log(`${LABEL} SELFTEST PASS — ${checks.length}/${checks.length} planted regressions caught`);
