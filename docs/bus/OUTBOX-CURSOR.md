@@ -1,3 +1,3 @@
-# OUTBOX-CURSOR · GO-23 · 2026-09-02 06:06 CT
+# OUTBOX-CURSOR · GO-23 · 2026-09-02 06:19 CT
 
-CURSOR | ACK | GO-23 LEAD | squash #19627 C6 6→4 citation · API live dep-dac00sfqj5pc739h7qhg · CC-1 remaining 4 · CC-3 WAIT · N1 Chrome blocked · A3/B12 | NEVER POST | GO
+CURSOR | ACK | GO-23 LEAD | #19629 policy-create 4→3 live-kick dep-dac0chqjnfac73ehob2g · CC-1 remaining 3 safety-v5 first · CC-3 WAIT · N1 Chrome blocked · A3/B12 | NEVER POST | GO
