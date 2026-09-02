@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>GO-18 · Load Costs · IH35-TMS</title>
+<style>
+:root {
+  --navy: #1A1F36;
+  --navy-dk: #0F1320;
+  --bg: #FAFAF7;
+  --surface: #FFFFFF;
+  --alt: #F1EFE8;
+  --text: #1A1F36;
+  --muted: #4A5170;
+  --faint: #8A92AB;
+  --border: #E5E7EB;
+  --blue: #1557A0;
+  --green: #1A7A3C;
+  --gold: #B07D00;
+  --red: #C5221F;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+}
+header.top {
+  background: var(--navy);
+  color: #fff;
+  padding: 16px 28px;
+}
+header.top h1 { margin: 0; font-size: 18px; font-weight: 600; }
+header.top p { margin: 6px 0 0; color: #C5C9D6; font-size: 12px; }
+main { max-width: 1180px; margin: 0 auto; padding: 24px 28px 64px; }
+h2 { font-size: 15px; margin: 28px 0 10px; }
+h3 { font-size: 13px; margin: 18px 0 8px; }
+p, li { color: var(--muted); line-height: 1.5; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 18px;
+  margin: 12px 0;
+}
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); }
+th { background: var(--alt); font-weight: 600; }
+.tabstrip { display: flex; gap: 4px; flex-wrap: wrap; margin: 8px 0 12px; }
+.tab {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.tab.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+.banner { background: #E6F1FB; border: 1px solid #93C5FD; color: #1E3A8A; padding: 8px 12px; border-radius: 4px; font-size: 12px; }
+.choice { display: flex; gap: 10px; margin: 12px 0; }
+.choice button {
+  flex: 1;
+  padding: 14px;
+  border: 2px dashed var(--border);
+  background: var(--alt);
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: default;
+}
+.choice button span { display: block; font-weight: 400; color: var(--muted); font-size: 11px; margin-top: 4px; }
+.flow {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  background: var(--navy-dk);
+  color: #E5E7EB;
+  padding: 14px 16px;
+  border-radius: 6px;
+  white-space: pre;
+  overflow-x: auto;
+}
+.warn { color: var(--red); font-weight: 600; }
+.ok { color: var(--green); font-weight: 600; }
+footer { margin-top: 32px; font-size: 11px; color: var(--faint); }
+@media print { header.top { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>GO-18 · Load Costs</h1>
+  <p>13th load-detail tab · Costs Board home · same Accounting posters · USMCA only · 2026-09-01</p>
+</header>
+<main>
+  <div class="banner">Download this file. Markdown twin: <code>docs/lockdown/GO-18-LOAD-COSTS-DESIGN.md</code>. Lineage: <code>GO-18-LOAD-COSTS-AND-LINEAGE-MAP.md</code>. Not a second load page.</div>
+
+  <h2>Load detail — Costs is the 13th tab</h2>
+  <div class="card">
+    <div class="tabstrip">
+      <span class="tab">Overview</span>
+      <span class="tab">Stops</span>
+      <span class="tab">Driver Pay</span>
+      <span class="tab">Documents</span>
+      <span class="tab">Factoring</span>
+      <span class="tab">Customs</span>
+      <span class="tab">Cargo Sensors</span>
+      <span class="tab">Settlement</span>
+      <span class="tab">Geofence Timeline</span>
+      <span class="tab">Assignment History</span>
+      <span class="tab">Audit</span>
+      <span class="tab">Pre-Settlement</span>
+      <span class="tab on">Costs</span>
+    </div>
+    <p style="margin:0 0 8px;color:var(--text)"><strong>L-12047</strong> · Customer Acme · Driver Linked · Truck Linked · Trailer Not set</p>
+    <p style="margin:0 0 12px">Approximate margin (before settlement): linehaul $2,400 − costs $0 − est. driver pay — <em>empty costs = honest $2,400 until a cost is recorded</em>.</p>
+    <p class="warn" style="margin:0 0 8px">Never silent Expense / Bill default. Operator chooses.</p>
+    <div class="choice">
+      <button type="button">Expense<span>Paid now · bank account · existing POST /api/v1/expenses</span></button>
+      <button type="button">Bill<span>Vendor invoice · due = bill date + 30 days unless terms picker · same Vendor Bill drawer</span></button>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Date</th><th>Type</th><th>Vendor</th><th>Amount</th><th>Driver</th><th>Truck</th><th>Trailer</th><th>JE</th><th>Bank match</th></tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="9" style="color:var(--faint)">No costs on this load yet. Empty TMS is expected. Owner walk only — no seat fixtures.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Costs Board home</h2>
+  <div class="card">
+    <p>Dispatch leaf. Click a row → <strong>the same</strong> load detail Costs tab. Do not invent a parallel load screen.</p>
+    <table>
+      <thead>
+        <tr><th>Load</th><th>Customer</th><th>Approx margin</th><th>Costs</th><th>Unlinked</th><th>Unpaid bills</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>L-12047</td><td>Acme</td><td>—</td><td>$0</td><td>0</td><td>0</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Cascade findings (cite)</h3>
+      <ul>
+        <li><strong>Bills</strong> missing driver and trailer (unit exists).</li>
+        <li><strong>bill_lines</strong> missing <code>load_required</code> (expense_lines already has it).</li>
+        <li><strong>Expense</strong> already stamps load / vendor / driver / truck / trailer.</li>
+        <li>Never silent Expense vs Bill.</li>
+        <li>Same endpoints as Accounting chrome.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>30-day bill + bank payoff</h3>
+      <ul>
+        <li>Bill due date = bill_date + 30 unless canonical terms.</li>
+        <li>Bank match of that expense/bill payment fills the Bank match cell.</li>
+        <li><span class="warn">Do not invent GL rules for 97.5% unmatched bank txns.</span> Owner categorizes.</li>
+        <li>GO-17 Save proof later lists costs created from the load.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Lineage (incomplete map — Costs is the missing hop, not a new app)</h2>
+  <div class="flow">Dispatch Book Load → GO-17 proof → Costs tab
+    → Accounting Expense/Bill drawers (same POST)
+    → existing GL poster (flags OFF)
+    → Banking match
+    → Settlements / cash flow reports
+No dispatch.load_costs table. No second books.</div>
+
+  <h2>Measured corrections (do not paste stale Cascade)</h2>
+  <table>
+    <thead><tr><th>Stale</th><th>Truth</th></tr></thead>
+    <tbody>
+      <tr><td>Jorge restores Neon</td><td class="ok">Agent job. CC-1 forensic.</td></tr>
+      <tr><td>Ask Jorge ZIP</td><td class="ok">#19419 Option 1. CC-3 execute.</td></tr>
+      <tr><td>City alias open</td><td class="ok">#19414 63/63 done. Apply merges.</td></tr>
+      <tr><td>Re-diagnose verify-static</td><td class="ok">Grep #19428 first.</td></tr>
+      <tr><td>Miles not live</td><td class="ok">healthz 12bfbd6 GO-16 + GO-17.</td></tr>
+      <tr><td>Escrow ask / zero</td><td class="ok">CC-1 only. $500.01. No zero.</td></tr>
+      <tr><td>GO-17 unbuilt</td><td class="ok">Shipped #19428.</td></tr>
+      <tr><td>Mark Disbursed silent</td><td class="ok">Merged #19433. Grep before rebuild.</td></tr>
+      <tr><td>Capitalize / accessorial</td><td>Still owner decision (CPA 1, 2, 4).</td></tr>
+    </tbody>
+  </table>
+
+  <footer>IH35-TMS GO-18 · print or Save As. Architectural tab-count update ships with the implementation PR, not this design packet.</footer>
+</main>
+</body>
+</html>

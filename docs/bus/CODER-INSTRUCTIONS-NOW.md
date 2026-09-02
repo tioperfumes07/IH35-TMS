@@ -1,6 +1,7 @@
-# CODER INSTRUCTIONS — NOW (2026-09-01 15:46 CT)
+# CODER INSTRUCTIONS — NOW (2026-09-01 21:40 CT)
 
-**Read `docs/bus/INBOX-<SEAT>.md` TOP.** That is the only queue.
+**Read `docs/bus/INBOX-<SEAT>.md` TOP.** That is the only queue.  
+**GO-18 pastes:** `docs/bus/PASTE-ALL-SEATS-GO-18-LOAD-COSTS-2026-09-01.md`
 
 Older GO-0006 / GO-0009 / GO-11 paste stacks below this line are **SUPERSEDED**. Do not ACK them.
 
