@@ -250,6 +250,241 @@ describe("driver bills schema separation (P6-T11172)", () => {
     expect((overrideCall?.[3] as Record<string, unknown> | undefined)?.override_cents).toBe(25000);
   });
 
+  it("MILES SPEC: splits loaded vs deadhead pay using the driver's own rate_empty_per_mile_cents (never equal to rate_loaded by assumption)", async () => {
+    const statements: string[] = [];
+    const client = {
+      async query<T = Record<string, unknown>>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> {
+        statements.push(sql);
+        if (sql.includes("to_regclass")) return { rows: [{ exists: true }] as T[] };
+        if (sql.includes("driver_finance.driver_pay_rates")) {
+          return {
+            rows: [
+              {
+                basis_type: "per_mile_pay",
+                rate_per_mile_cents: "48",
+                flat_per_load_cents: null,
+                miles_basis: "short_miles",
+                rate_empty_per_mile_cents: "30",
+              },
+            ] as T[],
+          };
+        }
+        if (sql.includes("INSERT INTO driver_finance.driver_bills")) {
+          // 48c/mi loaded x 500 short miles = 24,000c; 30c/mi empty x 100 deadhead miles = 3,000c.
+          expect(values?.[6]).toBe(27000); // gross_amount_cents — the one payable total, unchanged shape
+          expect(values?.[12]).toBe(100); // miles_deadhead snapshotted
+          expect(values?.[13]).toBe(30); // rate_empty_per_mile_cents actually used
+          expect(values?.[14]).toBe(24000); // loaded_pay_cents
+          expect(values?.[15]).toBe(3000); // deadhead_pay_cents
+          return { rows: [{ id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" }] as T[] };
+        }
+        return { rows: [] };
+      },
+    };
+
+    await createDriverBillArtifacts(
+      client,
+      {
+        requestingUserUuid: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        requestingUserRole: "Owner",
+        operating_company_id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        customer_id: "dddddddd-dddd-dddd-dddd-dddddddddddd",
+        status: "dispatched",
+        charges: [{ code: "LH", amount_cents: 30000 }],
+        stops: [],
+        save_mode: "book_dispatch",
+        assigned_primary_driver_id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+      },
+      {
+        id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        load_number: "L-20260902-0001",
+        miles_shortest: 500,
+        miles_practical: null,
+        miles_deadhead: 100,
+      },
+      "L-20260902-0001",
+      []
+    );
+
+    expect(statements.some((s) => s.includes("INSERT INTO driver_finance.driver_bills"))).toBe(true);
+  });
+
+  it("MILES SPEC: deadhead falls back LIVE to the loaded rate_per_mile_cents when rate_empty_per_mile_cents is not configured for this driver (a live fallback, never a stored duplicate)", async () => {
+    const statements: string[] = [];
+    const client = {
+      async query<T = Record<string, unknown>>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> {
+        statements.push(sql);
+        if (sql.includes("to_regclass")) return { rows: [{ exists: true }] as T[] };
+        if (sql.includes("driver_finance.driver_pay_rates")) {
+          return {
+            rows: [
+              {
+                basis_type: "per_mile_pay",
+                rate_per_mile_cents: "48",
+                flat_per_load_cents: null,
+                miles_basis: "short_miles",
+                rate_empty_per_mile_cents: null,
+              },
+            ] as T[],
+          };
+        }
+        if (sql.includes("INSERT INTO driver_finance.driver_bills")) {
+          expect(values?.[6]).toBe(28800); // 24,000 loaded + 4,800 deadhead (100mi @ the loaded 48c fallback)
+          expect(values?.[13]).toBe(48); // the resolved rate used IS the loaded rate — a live fallback
+          expect(values?.[14]).toBe(24000);
+          expect(values?.[15]).toBe(4800);
+          return { rows: [{ id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" }] as T[] };
+        }
+        return { rows: [] };
+      },
+    };
+
+    await createDriverBillArtifacts(
+      client,
+      {
+        requestingUserUuid: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        requestingUserRole: "Owner",
+        operating_company_id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        customer_id: "dddddddd-dddd-dddd-dddd-dddddddddddd",
+        status: "dispatched",
+        charges: [{ code: "LH", amount_cents: 30000 }],
+        stops: [],
+        save_mode: "book_dispatch",
+        assigned_primary_driver_id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+      },
+      {
+        id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        load_number: "L-20260902-0002",
+        miles_shortest: 500,
+        miles_practical: null,
+        miles_deadhead: 100,
+      },
+      "L-20260902-0002",
+      []
+    );
+
+    expect(statements.some((s) => s.includes("INSERT INTO driver_finance.driver_bills"))).toBe(true);
+  });
+
+  it("MILES SPEC: no miles_deadhead captured on the load -> bill stays loaded-only, deadhead columns null/zero (backward compatible with pre-spec bookings)", async () => {
+    const client = {
+      async query<T = Record<string, unknown>>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> {
+        if (sql.includes("to_regclass")) return { rows: [{ exists: true }] as T[] };
+        if (sql.includes("driver_finance.driver_pay_rates")) {
+          return {
+            rows: [
+              { basis_type: "per_mile_pay", rate_per_mile_cents: "48", flat_per_load_cents: null, miles_basis: "short_miles", rate_empty_per_mile_cents: "30" },
+            ] as T[],
+          };
+        }
+        if (sql.includes("INSERT INTO driver_finance.driver_bills")) {
+          expect(values?.[6]).toBe(24000);
+          expect(values?.[12]).toBeNull();
+          expect(values?.[13]).toBeNull();
+          expect(values?.[14]).toBe(24000);
+          expect(values?.[15]).toBe(0);
+          return { rows: [{ id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" }] as T[] };
+        }
+        return { rows: [] };
+      },
+    };
+
+    await createDriverBillArtifacts(
+      client,
+      {
+        requestingUserUuid: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        requestingUserRole: "Owner",
+        operating_company_id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        customer_id: "dddddddd-dddd-dddd-dddd-dddddddddddd",
+        status: "dispatched",
+        charges: [{ code: "LH", amount_cents: 30000 }],
+        stops: [],
+        save_mode: "book_dispatch",
+        assigned_primary_driver_id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+      },
+      {
+        id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        load_number: "L-20260902-0003",
+        miles_shortest: 500,
+        miles_practical: null,
+        // no miles_deadhead
+      },
+      "L-20260902-0003",
+      []
+    );
+  });
+
+  it("MILES SPEC: team split proportions deadhead pay the SAME WAY it proportions the total (no separate guess at which co-driver drove the empty leg)", async () => {
+    const inserted: Array<{ driverId: unknown; gross: unknown; deadhead: unknown; loaded: unknown }> = [];
+    const client = {
+      async query<T = Record<string, unknown>>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> {
+        if (sql.includes("to_regclass")) return { rows: [{ exists: true }] as T[] };
+        if (sql.includes("driver_finance.driver_pay_rates")) {
+          return {
+            rows: [
+              { basis_type: "per_mile_pay", rate_per_mile_cents: "48", flat_per_load_cents: null, miles_basis: "short_miles", rate_empty_per_mile_cents: "30" },
+            ] as T[],
+          };
+        }
+        if (sql.includes("FROM mdata.driver_teams")) {
+          return {
+            rows: [
+              {
+                primary_driver_id: "11111111-1111-1111-1111-111111111111",
+                secondary_driver_id: "22222222-2222-2222-2222-222222222222",
+                split_method: "60_40",
+                primary_share_pct: null,
+                co_share_pct: null,
+                is_active: true,
+              },
+            ] as T[],
+          };
+        }
+        if (sql.includes("INSERT INTO driver_finance.driver_bills")) {
+          inserted.push({ driverId: values?.[4], gross: values?.[6], deadhead: values?.[15], loaded: values?.[14] });
+          return { rows: [{ id: `bill-${inserted.length}` }] as T[] };
+        }
+        return { rows: [] };
+      },
+    };
+
+    await createDriverBillArtifacts(
+      client,
+      {
+        requestingUserUuid: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        requestingUserRole: "Owner",
+        operating_company_id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        customer_id: "dddddddd-dddd-dddd-dddd-dddddddddddd",
+        status: "dispatched",
+        charges: [{ code: "LH", amount_cents: 30000 }],
+        stops: [],
+        save_mode: "book_dispatch",
+        assigned_primary_driver_id: "11111111-1111-1111-1111-111111111111",
+        team_id: "99999999-9999-9999-9999-999999999999",
+      },
+      {
+        id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        load_number: "L-20260902-0004",
+        miles_shortest: 500,
+        miles_practical: null,
+        miles_deadhead: 100,
+      },
+      "L-20260902-0004",
+      []
+    );
+
+    // total = 27,000c (24,000 loaded + 3,000 deadhead); 60/40 split.
+    expect(inserted).toHaveLength(2);
+    const primary = inserted.find((r) => r.driverId === "11111111-1111-1111-1111-111111111111");
+    const secondary = inserted.find((r) => r.driverId === "22222222-2222-2222-2222-222222222222");
+    expect(primary?.gross).toBe(16200); // round(27000 * 0.6)
+    expect(primary?.deadhead).toBe(1800); // round(3000 * 0.6)
+    expect(primary?.loaded).toBe(14400); // 16200 - 1800
+    expect(secondary?.gross).toBe(10800); // 27000 - 16200
+    expect(secondary?.deadhead).toBe(1200); // 3000 - 1800
+    expect(secondary?.loaded).toBe(9600); // 10800 - 1200
+  });
+
   it("ACCT-F63: refuses to mint a driver bill when no pay rate resolves, and records the skip", async () => {
     const statements: string[] = [];
     const client = {
