@@ -2123,6 +2123,51 @@
   },
   "recentActivity": [
     {
+      "number": 19534,
+      "title": "FINDING: N/A -- CC-3 status log: GO-20-B in progress, migration handed off",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 12:57 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19534",
+      "sha": "0948d5a555",
+      "committedAtIso": "2026-09-02T00:57:44-05:00"
+    },
+    {
+      "number": 19533,
+      "title": "FINDING: N/A -- CC-3 status log: GO-20-B migration handoff to CC-1 (lane-band block)",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 12:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19533",
+      "sha": "587e8bf975",
+      "committedAtIso": "2026-09-02T00:56:24-05:00"
+    },
+    {
+      "number": 19532,
+      "title": "FINDING: ACCT-F19531 -- frontend build broken repo-wide: CargoSensorTimeline.tsx dead code",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 12:52 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19532",
+      "sha": "393b6b3e29",
+      "committedAtIso": "2026-09-02T00:52:42-05:00"
+    },
+    {
+      "number": 19531,
+      "title": "FINDING: AGENTS-MD-GO20-SLIM LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 12:48 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19531",
+      "sha": "06827830e6",
+      "committedAtIso": "2026-09-02T00:48:44-05:00"
+    },
+    {
+      "number": 19529,
+      "title": "FINDING: GO-20-LEAD-CENSUS-PINGS",
+      "state": "merged",
+      "mergedAtCt": "09/02/2026, 12:39 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19529",
+      "sha": "f324f02cdb",
+      "committedAtIso": "2026-09-02T00:39:07-05:00"
+    },
+    {
       "number": 19528,
       "title": "FINDING: SORT-03-FLEET-OOS-STRIP-PARITYTABLE-GUARD",
       "state": "merged",
@@ -2166,51 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19524",
       "sha": "4d634a9f7a",
       "committedAtIso": "2026-09-02T00:19:22-05:00"
-    },
-    {
-      "number": 19523,
-      "title": "FINDING: ACCT-F19470",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 12:19 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19523",
-      "sha": "3ada789b5b",
-      "committedAtIso": "2026-09-02T00:19:02-05:00"
-    },
-    {
-      "number": 19522,
-      "title": "FINDING: N/A -- CC-3 ACK: GO-20 slice B predictive alerts",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 12:16 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19522",
-      "sha": "eadacc76f6",
-      "committedAtIso": "2026-09-02T00:16:18-05:00"
-    },
-    {
-      "number": 19521,
-      "title": "FINDING: N/A -- CC-3 status log: GO-19-09 done (#19520)",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 12:15 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19521",
-      "sha": "851c3e4d38",
-      "committedAtIso": "2026-09-02T00:15:20-05:00"
-    },
-    {
-      "number": 19520,
-      "title": "FINDING: ACCT-F19500 -- GO-19-09 accounting.expenses had no class_id column, so an expense could never carry",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 12:14 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19520",
-      "sha": "94c8d3a9e5",
-      "committedAtIso": "2026-09-02T00:14:25-05:00"
-    },
-    {
-      "number": 19519,
-      "title": "FINDING: GO-20-H — make late-arrival retention input honest",
-      "state": "merged",
-      "mergedAtCt": "09/02/2026, 12:13 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19519",
-      "sha": "4aa5478fa6",
-      "committedAtIso": "2026-09-02T00:13:37-05:00"
     }
   ]
 }
