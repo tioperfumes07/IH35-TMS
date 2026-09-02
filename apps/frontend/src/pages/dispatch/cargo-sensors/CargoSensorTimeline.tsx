@@ -30,8 +30,6 @@ type TimelineRow = {
   door_status: "open" | "closed" | "unknown";
 };
 
-type CargoIncidentRow = { id: string; breach_kind: string; severity: string; started_at: string; ended_at: string | null; reading_count: number; worst_value: number | null; };
-type IncidentsResponse = { rows: CargoIncidentRow[]; count: number; };
 type TimelineResponse = {
   load_uuid: string;
   threshold: {
@@ -70,13 +68,10 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = operatingCompanyId ?? selectedCompanyId ?? "";
 
-  const incidentsQuery = useQuery({
-    queryKey: ["cargo-sensor-incidents", companyId, loadId],
-    queryFn: () => apiRequest<IncidentsResponse>(`/api/v1/dispatch/cargo-incidents?operating_company_id=${encodeURIComponent(companyId)}&load_id=${encodeURIComponent(loadId)}&limit=50`),
-    enabled: Boolean(companyId && loadId),
-    refetchInterval: 60_000,
-    staleTime: 30_000,
-  });
+  // NOTE (build-break self-heal, not this seat's feature): PR #19518 added this fetch + the
+  // IncidentsResponse/CargoIncidentRow types but never rendered anything from it — a dead fetch +
+  // dead types tripping TS6133/TS6196 on every build. TimelineResponse.incidents (below) is the
+  // real, already-wired incidents field this component uses. Removed the dead duplicate.
 
   const query = useQuery({
     queryKey: ["cargo-sensor-timeline", companyId, loadId],
