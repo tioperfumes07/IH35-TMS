@@ -3,7 +3,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE = path.join(ROOT, "apps/frontend/src/components/fleet/CreateTrailerModal.tsx");
@@ -31,14 +30,11 @@ function run() {
 
 function selftest() {
   const original = fs.readFileSync(FILE, "utf8");
-  try {
-    const planted = original.replace('dataTestId="fleet-create-trailer-type"', 'data-testid="fleet-create-trailer-type"').replace("<Combobox", "<select");
-    if (planted === original) throw new Error("could not plant native-select defect");
-    fs.writeFileSync(FILE, planted);
-    const result = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], { cwd: ROOT, encoding: "utf8" });
-    if (result.status === 0) throw new Error("planted native-select defect did not redden guard");
-  } finally {
-    fs.writeFileSync(FILE, original);
+  const planted = original.replace('dataTestId="fleet-create-trailer-type"', 'data-testid="fleet-create-trailer-type"').replace("<Combobox", "<select");
+  if (planted === original) throw new Error("could not plant native-select defect");
+  const plantedFailures = failures(planted);
+  if (!plantedFailures.some((message) => message.includes("native select"))) {
+    throw new Error("planted native-select defect did not redden guard");
   }
   console.log("verify-fleet-create-trailer-type-combobox --selftest PASS — planted defect reddened guard");
 }
