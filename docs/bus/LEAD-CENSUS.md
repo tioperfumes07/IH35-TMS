@@ -8,7 +8,7 @@ Seats **never POST Book Load.** Tip `800a08211c` (#19613 C6 17). API deploy `dep
 | Seat | NOW | Must not |
 |------|-----|----------|
 | **CC-3** | **WAIT** (A1 #19609/#19612) | Wave 3 GO-22; Wave 4 C1; Wave 5 wizards |
-| **CC-1** | **C6 17 remaining** | skip to B8 remainder; B5; Wave 3; remake N1 |
+| **CC-1** | **C6 17** — fix mark-disbursed `#19616` | skip to B8; B5; Wave 3; remake N1; board-only |
 | **Codex** | **A3/B12** vs #19571 | POST a load |
 | **CC-2** | N1 Chrome **#19607** blocked | expense POST; J1 migrate |
 | **Cascade** | step 26 FINDING | 12+13; new register |
