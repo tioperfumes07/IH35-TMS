@@ -22,6 +22,7 @@ import {
 import { toMdataStatus, type DispatchStatus } from "./load-state-machine.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.js";
+import { buildLoadSaveProof } from "./load-save-proof.js";
 
 type BookLoadStop = {
   stop_type: "pickup" | "delivery";
@@ -2371,6 +2372,13 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       payload: { load_number: load.load_number ?? null },
     });
 
+    const save_proof = await buildLoadSaveProof(client, {
+      operatingCompanyId: input.operating_company_id,
+      load,
+      trailerId: input.assigned_trailer_unit_id ?? null,
+      driverBillMint,
+    });
+
     return {
       kind: "ok",
       row: {
@@ -2378,6 +2386,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         wf_044_maintenance_warnings: wf044Warnings,
         insurance_coverage_gap_warnings: insuranceCoverageWarnings,
         driver_bill_mint: driverBillMint,
+        save_proof,
       },
     };
   });

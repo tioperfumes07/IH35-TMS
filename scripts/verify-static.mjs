@@ -13,13 +13,10 @@
  *   - does NOT fail-fast: runs ALL guards, prints a summary (counts + names of every FAIL and SKIP),
  *   - exits 1 iff any real test fails; dirty/conflict/freshness are enforced by branch:precheck-push.
  *
- * ★ Prod-safety deviation from the block's literal "UNSET DATABASE_URL": simply unsetting is UNSAFE here.
- * The repo has a root .env and several guards `import 'dotenv/config'`; with the vars unset, dotenv would
- * reload DATABASE_URL/DATABASE_DIRECT_URL from .env and a DB guard could connect to whatever it points at
- * (the §1.5 prod-connection landmine). Instead we POINT the DB env at a guaranteed-dead local sentinel
- * (127.0.0.1:59999). dotenv (override:false by default) will not overwrite an already-set var, so guards
- * can never reach a real database: DB guards fail fast with ECONNREFUSED → SKIP-needs-db. Same
- * classification as a true unset, with zero risk of touching prod. Also neutralizes libpq PG* fallbacks.
+ * Prod-safety: UNSET DATABASE_URL / DATABASE_DIRECT_URL so live-prod guards that SKIP on
+ * `if (!databaseUrl)` actually skip (#19418). Pin DOTENV_CONFIG_PATH=/dev/null so dotenv/config
+ * cannot reload a real URL from `.env`. libpq PG* still points at 127.0.0.1:59999 so a bare
+ * `new Pool()` cannot reach prod. A truthy dead-port DATABASE_URL is FORBIDDEN (selftest).
  *
  * --selftest exercises the runner against temp fixture guards (pass + fail + db-skip).
  */
@@ -127,14 +124,20 @@ export function capabilityPreflight(
   return { ok: false, missing, ciEquivalents };
 }
 
-/** Child env with NO reachable database (dead-port sentinel; see the prod-safety note above). */
-function noDbEnv() {
+/**
+ * Child env with NO reachable database.
+ *
+ * Guards that SKIP on `if (!process.env.DATABASE_URL)` (live-prod audits) must see an unset URL.
+ * A truthy dead-port sentinel (`127.0.0.1:59999`) made SKIP never fire → uncaught ECONNREFUSED
+ * (#19418). We UNSET the URL vars. dotenv/config (override:false) would reload `.env` if the
+ * keys were merely absent — so we also pin DOTENV_CONFIG_PATH at /dev/null. libpq/node-pg
+ * fallbacks still point at a dead local port so a bare `new Pool()` cannot reach prod.
+ */
+export function noDbEnv() {
   const env = { ...process.env };
-  const SENTINEL = "postgresql://verify_static:none@127.0.0.1:59999/verify_static_none";
-  env.DATABASE_URL = SENTINEL;
-  env.DATABASE_DIRECT_URL = SENTINEL;
-  // libpq / node-pg default fallbacks → also point at the dead port so a bare new Pool() can't reach a
-  // real local postgres either.
+  delete env.DATABASE_URL;
+  delete env.DATABASE_DIRECT_URL;
+  env.DOTENV_CONFIG_PATH = "/dev/null";
   env.PGHOST = "127.0.0.1";
   env.PGPORT = "59999";
   env.PGUSER = "verify_static";
@@ -347,7 +350,11 @@ function selftest() {
     });
     const get = (n) => results.find((r) => r.name === n);
     const kindOf = (n) => get(n)?.kind;
+    const isolated = noDbEnv();
     const checks = [
+      ["noDbEnv unsets DATABASE_URL (SKIP path for live-prod audits)", !isolated.DATABASE_URL],
+      ["noDbEnv unsets DATABASE_DIRECT_URL", !isolated.DATABASE_DIRECT_URL],
+      ["noDbEnv never sets a truthy dead-port DATABASE_URL", !/59999/.test(String(isolated.DATABASE_URL || ""))],
       ["pass fixture → PASS", kindOf("verify-pass-fixture.mjs") === STATIC_RESULT_CATEGORIES.PASS],
       ["fail fixture → FAIL-test", kindOf("verify-fail-fixture.mjs") === STATIC_RESULT_CATEGORIES.FAIL_TEST],
       ["DATABASE_URL text fixture → FAIL-test", kindOf("verify-db-fixture.mjs") === STATIC_RESULT_CATEGORIES.FAIL_TEST],

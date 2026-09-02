@@ -45,6 +45,8 @@ import { BookLoadValidationSection } from "./BookLoadValidationSection";
 import type { LiveReservation } from "./book-load-v4/LiveLoadIdBar";
 import { LiveLoadIdBar } from "./book-load-v4/LiveLoadIdBar";
 import { MilesStrip } from "./book-load-v4/MilesStrip";
+import { LoadSaveProofPanel } from "./book-load-v4/LoadSaveProofPanel";
+import type { LoadSaveProof } from "./book-load-v4/load-save-proof-types";
 import { OcrDropZone } from "./book-load-v4/OcrDropZone";
 import { RateConUploadPanel } from "./book-load-v4/RateConUploadPanel";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
@@ -314,6 +316,8 @@ export function BookLoadModalV4({
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [headerTime] = useState(() => new Date().toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }));
   const [showSpecialNotes, setShowSpecialNotes] = useState(false);
+  const [saveProof, setSaveProof] = useState<LoadSaveProof | null>(null);
+  const [saveProofCreated, setSaveProofCreated] = useState<{ id: string; label?: string } | null>(null);
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -1071,6 +1075,12 @@ export function BookLoadModalV4({
       }
       const createdId = String((payload as { id?: string }).id ?? "");
       const createdLabel = String((payload as { load_number?: string }).load_number ?? "") || undefined;
+      const proof = (payload as { save_proof?: LoadSaveProof }).save_proof;
+      if (proof && createdId) {
+        setSaveProof(proof);
+        setSaveProofCreated({ id: createdId, label: createdLabel });
+        return;
+      }
       onCreated(createdId ? { id: createdId, label: createdLabel } : undefined);
       onClose();
     } catch (error) {
@@ -2008,6 +2018,18 @@ export function BookLoadModalV4({
             </section>
           </div>
 
+          {saveProof ? (
+            <LoadSaveProofPanel
+              proof={saveProof}
+              onContinue={() => {
+                const created = saveProofCreated;
+                setSaveProof(null);
+                setSaveProofCreated(null);
+                onCreated(created ?? undefined);
+                onClose();
+              }}
+            />
+          ) : null}
           <div className="flex shrink-0 items-center justify-between border-t border-gray-200 bg-white px-3 py-2">
             <div className="text-xs text-gray-600">
               Driver bill preview <span className="font-mono font-semibold text-gray-800">{billNumberPreview}</span>{" "}
