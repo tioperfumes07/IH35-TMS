@@ -1762,18 +1762,29 @@ export function BookLoadModalV4({
                   {/* GAP-31 per-stop extra rates — relocated to §A (with the charges) per GUARD 2026-06-23.
                       Lives here, NOT in the §C stop card (which is exactly the 11 render-v6 fields). Each
                       editor instance is stop-scoped (stopIndex → stops.N.extra_rates) so the per-stop model
-                      + verify-multi-stop-extra-rates guard hold. */}
-                  <div data-testid="section-a-extra-rates" className="space-y-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Per-stop extra rates</p>
-                    {((form.watch("stops") as Array<{ stop_type?: string }> | undefined) ?? []).map((stopRow, i) => (
-                      <div key={i} className="rounded-sm border border-gray-200 p-1">
-                        <div className="text-xs font-semibold text-gray-600">
-                          Stop {i + 1} · {stopRow?.stop_type === "delivery" ? "Delivery" : "Pickup"}
-                        </div>
-                        <MultiStopExtraRateEditor control={form.control as never} register={form.register as never} stopIndex={i} />
+                      + verify-multi-stop-extra-rates guard hold.
+                      K4 (owner correction 2026-09-02): this block must not render for the form's own
+                      default 2-stop load (1 pickup + 1 delivery) — "extra rate" is only a real concept
+                      once an operator has added an extra stop or delivery. Once triggered, every stop
+                      (including the base 2) still gets an editor instance — stopIndex/guard shape below
+                      is unchanged, only the render is gated. */}
+                  {(() => {
+                    const stopsForExtraRates = (form.watch("stops") as Array<{ stop_type?: string }> | undefined) ?? [];
+                    if (stopsForExtraRates.length <= 2) return null;
+                    return (
+                      <div data-testid="section-a-extra-rates" className="space-y-1">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Per-stop extra rates</p>
+                        {stopsForExtraRates.map((stopRow, i) => (
+                          <div key={i} className="rounded-sm border border-gray-200 p-1">
+                            <div className="text-xs font-semibold text-gray-600">
+                              Stop {i + 1} · {stopRow?.stop_type === "delivery" ? "Delivery" : "Pickup"}
+                            </div>
+                            <MultiStopExtraRateEditor control={form.control as never} register={form.register as never} stopIndex={i} />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })()}
 
                   {/* Lumper responsibility — relocated to §A per GUARD 2026-06-23 (was hidden in §C). Per-stop,
                       referencing the stop (McLeod/QBO keep lumper-responsibility per-line in the charges).
