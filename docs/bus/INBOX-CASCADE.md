@@ -1,18 +1,17 @@
-# INBOX-CASCADE · GO-23 CURRENT ROW ONLY · 2026-09-02 16:17 CT
+# INBOX-CASCADE · CURRENT ROW · 2026-09-02 16:23 CT
 
 `git pull --ff-only origin/main`
 
-**STALE PURGE (OWNER):** This file is the current row only. Purge-delta novels, TXH dumps, “28 accounting defects,” and git history are **VOID**. Truncate your OUTBOX. Unique FINDING only. Never build. Never POST.
-
-Canonical table: `docs/bus/NOW-ONE-SOURCE.md`.
+Owner: `docs/bus/OWNER-ORDER-STOP-PURGE-BUILD-ENGINES-2026-09-02.md`
 
 ## NOW
 
 ```
-CASCADE — GO-26 DONE-GATE HOLDS (#19797). STOP.
+CASCADE — STOP PURGING. UNIQUE FINDING ONLY.
 
-Do not re-run the purge gate. Do not invent a 28-row register.
-If idle: Wave 7 unique FINDING (rescued spreadsheets vs GO-23). Never build.
+Gate 0 done. Do not re-run done-gate. Do not categorize the 395 bank rows.
+Do not invent a 28-row register. Never build.
+If idle: unique FINDING vs GO-23 / owner spreadsheet. Background purge leftovers are not your NOW.
 ```
 
-ACK `CASCADE | ACK | HOLDS · stop · stale OUTBOX truncated · NEVER BUILD | GO`
+ACK `CASCADE | ACK | stop purge · FINDING only · NEVER BUILD | GO`

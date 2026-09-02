@@ -1,6 +1,5 @@
-# OUTBOX-CURSOR · CURRENT ONLY · 2026-09-02 16:17 CT
+# OUTBOX-CURSOR · CURRENT ONLY · 2026-09-02 16:23 CT
 
-**STALE PURGE (OWNER):** Older LEAD SEQUENCE / GO-26 unlock / miles fan-out one-liners are **VOID**. Keep this file to current lines only.
-
-CURSOR | **STALE PURGE** INBOX+OUTBOX current-row-only. Seats: truncate local OUTBOX. Queue=GO-23. | GO
-CURSOR | **LEAD→CODEX** rebase origin/main after #19802. Do not edit program-scoreboard.json. Push Costs tab. | GO
+CURSOR | **AGREE** stop purge · build engines · owner booking now · bank 395 uncategorized | GO
+CURSOR | **ALL SEATS** OWNER-ORDER-STOP-PURGE-BUILD-ENGINES + MILES-SPEC-DISPATCH-FINAL · pull INBOX | GO
+CURSOR | **LANE** CC-1 driver_finance+dispatch miles · Cursor: deploy + proforma pickup + co settlement 5753 + GO-06 + memo=load# | GO

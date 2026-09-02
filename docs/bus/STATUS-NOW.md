@@ -1,14 +1,12 @@
-# STATUS-NOW · GO-23 · 2026-09-02 16:17 CT
+# STATUS-NOW · 2026-09-02 16:23 CT
 
-Same table as `docs/bus/NOW-ONE-SOURCE.md`. That file wins if they drift.
+Same as `docs/bus/NOW-ONE-SOURCE.md`. Owner: stop purge, build engines.
 
 | Seat | NOW |
 |------|-----|
-| **CC-1** | W1 A1 data + N1 |
-| **CC-3** | W1 A2 then GO-24 |
-| **CC-2** | J1 to zero |
-| **Codex** | rebase + push Costs tab · then A3/B12 |
-| **Cascade** | HOLDS · stop |
-| **Cursor** | lead · GO-06 + proforma overflow |
-
-Never POST Book Load. Wave 1 is not closed until A2 + A1 + N1 + A3/B12 + GO-24 are live-proven.
+| **CC-1** | miles + settlement engines · then A1/N1 |
+| **CC-3** | A2 then GO-24 |
+| **CC-2** | J1 · no lane-empty deadhead |
+| **Codex** | Costs tab · A3/B12 |
+| **Cascade** | stop purge |
+| **Cursor** | deploy batch · proforma pickup · co settlement 5753 · GO-06 · memo=load# |

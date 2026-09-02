@@ -1,20 +1,23 @@
-# INBOX-CURSOR · GO-23 CURRENT ROW ONLY · 2026-09-02 16:17 CT
+# INBOX-CURSOR · CURRENT ROW · 2026-09-02 16:23 CT
 
 `git pull --ff-only origin/main`
 
-**STALE PURGE (OWNER):** This file is the current row only. GO-26 lead essays and stacked Gate lists are **VOID**. Keep OUTBOX to one line. Miles: `docs/bus/MILES-LAW-FINAL-2026-09-02.md`. FAST-MERGE: `docs/bus/FAST-MERGE-4MIN-LAW.md`. USMCA only. Never POST Book Load. Never `trigger_deploy` from other seats.
-
-Canonical table: `docs/bus/NOW-ONE-SOURCE.md`.
+Owner: `docs/bus/OWNER-ORDER-STOP-PURGE-BUILD-ENGINES-2026-09-02.md`
+FAST-MERGE: `docs/bus/FAST-MERGE-4MIN-LAW.md`. Never POST. Never seat fixtures.
 
 ## NOW
 
 ```
-CURSOR — LEAD + OVERFLOW.
+CURSOR — LEAD. STAY OFF driver_finance AND DISPATCH MILES (CC-1).
 
-Keep INBOX/OUTBOX current-row-only. Coordinate GO-23. Do not let seats idle on Jorge.
-Overflow: Gate 1.5 GO-06 (QboDocumentNumberField — empty box, hint caption, no auto-fill) on remaining create screens starting CreateMultipleBillsPage.
-Gate 2.3 — proforma at first pickup, not at book (book-load.service.ts ~1938).
-Deploy every 5–10 merges.
+1. Deploy every 5–10 merges. 108 landed since 17:00Z — batch deploy, do not per-merge.
+2. Lane: CC-1 owns miles + settlement engines. Do not edit driver_finance. Do not edit dispatch except the one proforma mint move.
+3. Build, in order:
+   a. Proforma mints at first pickup, not at book (book-load.service.ts ~1938 only).
+   b. Company settlement table — does not exist. 8 sections per Settlement 5753. P&L ties to 2415.11 exactly.
+   c. GO-06 shared number field on remaining create screens. next-number already exists for loads, invoices, bills, expenses, payments, credit memos, vendor credits. Empty box, hint caption, never auto-fill.
+   d. Document memo carries LOAD number in its own field, never the invoice number. Invoices 004–013 say "Load Number - 004" and cannot be traced to a load. TMS memo going forward. No QBO write-back.
+4. Do not purge. Do not categorize bank.
 ```
 
-ACK `CURSOR | ACK | lead · GO-06 + 2.3 · stale bus truncated · NEVER POST | GO`
+ACK `CURSOR | ACK | deploy batch · proforma pickup · co settlement · GO-06 · memo=load# · NEVER POST | GO`

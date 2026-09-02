@@ -1,4 +1,12 @@
-# ALL SEATS — MILES LAW, CORRECTED AND FINAL — 2026-09-02
+# ALL SEATS — MILES LAW — SUPERSEDED FOR PAY FORMULA 2026-09-02 16:21 CT
+
+**Pay formula, autofill-empty, and deadhead attribution:** use `docs/bus/MILES-SPEC-DISPATCH-FINAL-2026-09-02.md` (owner paste). This file's "extra miles = driver's problem" and "autofill empty as normal" rows are **STRUCK**.
+
+Still true from this file: no mass-swap of `catalogs.lane_mileage`; Book Load flag + OK popup; do not block booking.
+
+---
+
+## STRUCK — do not execute
 
 **SUPERSEDES #19740.** That bus said pay from practical + empty and forbade short miles. Owner overruled — **STRUCK**. Any INBOX still carrying it is stale.
 
@@ -8,11 +16,11 @@
 
 | Rule | Law |
 |---|---|
-| **Driver pay** | **SHORT MILES, ALWAYS.** Never practical. |
+| **Driver pay** | **STRUCK as a single number.** Two lines: shortest×rate_loaded + deadhead×rate_empty. See MILES-SPEC-DISPATCH-FINAL. |
 | **Customer rate / RPM** | **PRACTICAL only** (loaded lane). |
-| **Company cost** | **PRACTICAL + EMPTY** (deadhead is real cost). |
-| **Driver overage** | Extra miles beyond short = **driver's problem**. |
-| **Empty vs practical** | **NEVER** fold empty into practical. |
+| **Company cost** | **PRACTICAL + DEADHEAD** (never fold deadhead into practical). |
+| **Driver overage** | **STRUCK** “extra miles = driver's problem.” Empty is paid on its own line. |
+| **Empty vs practical** | **NEVER** fold deadhead into practical. NEVER autofill deadhead from the lane. |
 
 ---
 

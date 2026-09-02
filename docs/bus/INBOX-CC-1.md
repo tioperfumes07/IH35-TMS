@@ -1,24 +1,28 @@
-# INBOX-CC-1 · GO-23 CURRENT ROW ONLY · 2026-09-02 16:17 CT
+# INBOX-CC-1 · CURRENT ROW · 2026-09-02 16:23 CT
 
 `git pull --ff-only origin/main`
 
-**STALE PURGE (OWNER):** This file is the current row only. GO-26 purge packets, Gate 0 essays, stacked NOW, and git history are **VOID**. Truncate your OUTBOX to match. Miles: `docs/bus/MILES-LAW-FINAL-2026-09-02.md`. FAST-MERGE: `docs/bus/FAST-MERGE-4MIN-LAW.md`. USMCA only. Never POST Book Load. Never seat fixtures.
+Owner: `docs/bus/OWNER-ORDER-STOP-PURGE-BUILD-ENGINES-2026-09-02.md`
+Miles: `docs/bus/MILES-SPEC-DISPATCH-FINAL-2026-09-02.md`
+FAST-MERGE: `docs/bus/FAST-MERGE-4MIN-LAW.md`. Never POST. Never seat fixtures.
 
-Canonical table: `docs/bus/NOW-ONE-SOURCE.md`. Queue: `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`.
+**You own `driver_finance` + dispatch miles/settlement.** Cursor stays off those schemas.
 
 ## NOW
 
 ```
-CC-1 — WAVE 1 THEN GO-22a. DO NOT IDLE.
+CC-1 — BUILD THE MILES + SETTLEMENT ENGINES. PURGE IS BACKGROUND.
 
-1. A1 interchange data layer. Never put a broker trailer in mdata.units. Post ledger path to INBOX-CC-3 on merge.
-2. N1 — wire dispatch/load to /accounting/expenses/new.
-3. Then B8 advances.
-4. C6 already 0 on guards — confirm green, do not hunt 221.
-5. Then GO-22a settlement numbers = LOAD counter, never LD, never MAX+1.
-6. GO-22b: one OUTBOX line for Jorge (close early vs wait Laredo). Do not guess. Do not idle 22a waiting.
+1. Store three numbers per load: miles_shortest, miles_practical, miles_deadhead. Never derive.
+2. Two settlement lines: (shortest × rate_loaded) + (deadhead × rate_empty). rate_empty own per-driver field; equals loaded today; do not hardcode.
+3. Deadhead COMPUTE from truck last delivery, ALL entities. Never lane empty. Unknown = BLANK.
+4. Deadhead on the pickup load, not the delivered load.
+5. Guard: reconcile deadhead to previous delivery or flag. Flag short>practical OR reverse >100mi. Never block book.
+6. Do not "fix" catalog short>practical or the 2.9% settlement gap.
 
-NEXT PR: A1 data or N1.
+THEN Wave 1 A1 interchange data + N1 load→expense. Then GO-22a LOAD counter.
+
+Bank 395 stay uncategorized. Fake match bills/expenses: void later, not this PR. Escrow leftovers: between builds only.
 ```
 
-ACK `CC-1 | ACK | GO-23 W1 A1+N1 · stale OUTBOX truncated · NEVER POST | GO`
+ACK `CC-1 | ACK | miles+settlement engines now · purge background · NEVER POST | GO`
