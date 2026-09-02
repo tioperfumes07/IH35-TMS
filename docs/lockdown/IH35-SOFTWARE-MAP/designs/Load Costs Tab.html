@@ -1,0 +1,254 @@
+<title>Load Costs Tab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{--ink:#131820;--ink2:#3d4650;--muted:#6a7480;--paper:#f4f5f3;--card:#fff;--rule:#dbdfd8;--rule2:#eceee9;
+--accent:#2b5f52;--accent-soft:#e3ece8;--debit:#8a4020;--warn:#8a6410;--warn-soft:#f5eeda;--bad:#93301f;--bad-soft:#f6e3df;--blue:#2f4858;
+--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;--body:"Public Sans",-apple-system,"Segoe UI",sans-serif;--display:"Newsreader",Georgia,serif;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#e7eae6;--ink2:#b6bdb8;--muted:#8b948d;--paper:#14171a;--card:#1b1f22;--rule:#2e3439;--rule2:#23282c;--accent:#6fbba3;--accent-soft:#1d2a27;--debit:#d99168;--warn:#d8b562;--warn-soft:#2a2418;--bad:#e08a76;--bad-soft:#2c1d19;--blue:#9dbcd0;}}
+:root[data-theme="dark"]{--ink:#e7eae6;--ink2:#b6bdb8;--muted:#8b948d;--paper:#14171a;--card:#1b1f22;--rule:#2e3439;--rule2:#23282c;--accent:#6fbba3;--accent-soft:#1d2a27;--debit:#d99168;--warn:#d8b562;--warn-soft:#2a2418;--bad:#e08a76;--bad-soft:#2c1d19;--blue:#9dbcd0;}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:36px 22px 90px;display:flex;flex-direction:column;gap:38px}
+.col{max-width:68ch}
+h1,h2{font-family:var(--display);font-weight:600;margin:0;line-height:1.18;text-wrap:balance}
+h1{font-size:clamp(28px,4vw,42px)}h2{font-size:clamp(20px,2.5vw,27px)}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.lede{font-size:17.5px;color:var(--ink2);max-width:64ch}
+header.mh{border-bottom:2px solid var(--ink);padding-bottom:18px;display:flex;flex-direction:column;gap:12px}
+.sec{border-top:1px solid var(--rule);padding-top:20px;display:flex;flex-direction:column;gap:7px}
+section{display:flex;flex-direction:column;gap:16px}
+code{font-family:var(--mono);font-size:.86em;background:var(--rule2);padding:1px 5px;border-radius:3px}
+
+/* ---- the mock ---- */
+.app{border:1px solid var(--rule);background:var(--card);border-radius:3px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.crumb{padding:9px 16px;border-bottom:1px solid var(--rule2);font-size:12.5px;color:var(--muted);display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.crumb b{color:var(--ink2);font-weight:500}
+.lhead{padding:15px 16px;border-bottom:1px solid var(--rule);display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.lnum{font-family:var(--mono);font-size:25px;font-weight:600;letter-spacing:-.01em}
+.lroute{font-size:14.5px;color:var(--ink2);margin-top:2px}
+.chip{display:inline-block;font-size:11px;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;font-weight:600;padding:3px 9px;border-radius:2px;background:var(--accent-soft);color:var(--accent)}
+.hstats{display:flex;gap:26px;flex-wrap:wrap}
+.hstat{display:flex;flex-direction:column;gap:1px}
+.hstat .k{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.hstat .v{font-family:var(--mono);font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.tabs{display:flex;gap:2px;padding:0 10px;border-bottom:1px solid var(--rule);overflow-x:auto;background:var(--rule2)}
+.tab{padding:9px 13px;font-size:13px;color:var(--muted);white-space:nowrap;border-bottom:2px solid transparent}
+.tab.on{color:var(--ink);font-weight:600;border-bottom-color:var(--accent);background:var(--card)}
+.tab.new{color:var(--accent);font-weight:600}
+.body{padding:18px 16px;display:flex;flex-direction:column;gap:16px}
+.rowbar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.btn{font-size:13px;font-weight:600;padding:7px 13px;border-radius:3px;border:1px solid var(--accent);color:var(--accent);background:transparent;display:inline-flex;gap:6px;align-items:center}
+.btn.p{background:var(--accent);color:#fff;border-color:var(--accent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.p{color:#12201c}}
+:root[data-theme="dark"] .btn.p{color:#12201c}
+
+.entry{border:1px solid var(--rule);border-radius:3px;overflow:hidden}
+.entry+.entry{margin-top:-1px}
+.ehead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 12px;background:var(--rule2);border-bottom:1px solid var(--rule);flex-wrap:wrap}
+.enum{font-family:var(--mono);font-size:13.5px;font-weight:600}
+.emeta{font-size:11.5px;color:var(--muted);font-family:var(--mono)}
+.toggle{display:inline-flex;border:1px solid var(--rule);border-radius:3px;overflow:hidden;font-size:11.5px;font-weight:600}
+.toggle span{padding:3px 10px;color:var(--muted);background:var(--card)}
+.toggle span.on{background:var(--accent);color:#fff}
+:root[data-theme="dark"] .toggle span.on{color:#12201c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .toggle span.on{color:#12201c}}
+.fields{display:grid;grid-template-columns:1fr;gap:10px;padding:12px}
+@media(min-width:760px){.fields{grid-template-columns:104px 1.3fr 1.5fr 1fr 118px}}
+.fld{display:flex;flex-direction:column;gap:3px}
+.fld label{font-size:10.5px;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.inp{border:1px solid var(--rule);border-radius:2px;padding:6px 8px;font-size:13.5px;background:var(--paper);min-height:32px;display:flex;align-items:center}
+.inp.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;justify-content:flex-end;font-weight:600}
+.inp.ph{color:var(--muted)}
+.hint{font-size:11.5px;color:var(--muted);padding:0 12px 11px}
+.hint b{color:var(--accent)}
+
+.totals{border:1px solid var(--rule);border-radius:3px;background:var(--paper)}
+.trow{display:flex;justify-content:space-between;padding:8px 14px;font-size:14px;border-bottom:1px solid var(--rule2)}
+.trow:last-child{border-bottom:0}
+.trow.big{font-weight:700;font-size:15.5px;background:var(--accent-soft);color:var(--accent)}
+.trow .m{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+.bank{border:1px solid var(--rule);border-radius:3px;overflow:hidden}
+.bank .bh{padding:8px 13px;background:var(--rule2);border-bottom:1px solid var(--rule);font-size:12px;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.brow{display:flex;justify-content:space-between;gap:12px;padding:9px 13px;font-size:13.5px;border-bottom:1px solid var(--rule2);align-items:center;flex-wrap:wrap}
+.brow:last-child{border-bottom:0}
+.brow .l{display:flex;flex-direction:column;gap:1px}
+.brow .s{font-size:11.5px;color:var(--muted)}
+.match{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:2px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.match.w{background:var(--warn-soft);color:var(--warn)}
+
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:13px 15px;display:flex;flex-direction:column;gap:6px}
+.note.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.note.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.note h3{font-family:var(--body);font-size:12.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;margin:0}
+.note p{font-size:14.5px;color:var(--ink2)}
+ul.t{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+ul.t li{color:var(--ink2);font-size:15px}
+ul.t b{color:var(--ink)}
+.doors{display:grid;grid-template-columns:1fr;gap:1px;background:var(--rule);border:1px solid var(--rule)}
+@media(min-width:720px){.doors{grid-template-columns:1fr 1fr}}
+.door{background:var(--card);padding:15px 16px;display:flex;flex-direction:column;gap:5px}
+.door .dn{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--accent)}
+.door .dd{font-size:14px;color:var(--ink2)}
+footer{border-top:1px solid var(--rule);padding-top:16px;font-size:13px;color:var(--muted);max-width:68ch}
+</style>
+<div class="wrap">
+
+<header class="mh">
+  <div class="eyebrow">IH35-TMS · Design proposal</div>
+  <h1>Enter every cost from inside the load itself</h1>
+  <p class="lede">One screen where you open a load, see its real state, and add every diesel, toll, lumper and vendor bill against it — each one linked to the load the moment it is created, numbered automatically, and already a candidate for the bank match.</p>
+</header>
+
+<section>
+  <div class="sec"><div class="eyebrow">Where it goes</div><h2>A thirteenth tab, not a fourteenth screen</h2></div>
+  <p class="col">The load detail already has twelve tabs: Overview, Stops, Driver Pay, Documents, Factoring, Customs, Cargo Sensors, Settlement, Geofence Timeline, Assignment History, Audit, Pre-Settlement. There is a place for what you pay the <b>driver</b> and a place for the <b>settlement</b> — and nowhere at all for what the <b>company</b> spends on the load. That is the hole.</p>
+  <p class="col">So this becomes tab thirteen, <b>Costs</b>, on the load detail you already have. Not a new page. The app is already carrying 575 screens and 509 of them cannot even be deep-linked; a parallel accounting-side load page would be a second way to do the same thing, and second ways are how two numbers start disagreeing.</p>
+  <div class="doors">
+    <div class="door"><div class="dn">Door 1 — Dispatch</div><div class="dd">Open a load on the board, click Costs. Same drawer you use today, one more tab.</div></div>
+    <div class="door"><div class="dn">Door 2 — Accounting</div><div class="dd">A list of live loads with what has been spent on each so far. Click one, land on the same Costs tab. One screen, two ways in.</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">The screen</div><h2>Load 3232, Costs</h2></div>
+
+  <div class="app">
+    <div class="crumb">Accounting <span>›</span> Live loads <span>›</span> <b>3232</b></div>
+
+    <div class="lhead">
+      <div>
+        <div class="lnum">3232</div>
+        <div class="lroute">Laredo, TX → Denton, TX · Sethmar Transportation</div>
+        <div style="margin-top:7px"><span class="chip">In transit</span></div>
+      </div>
+      <div class="hstats">
+        <div class="hstat"><span class="k">Rate</span><span class="v">$1,850.00</span></div>
+        <div class="hstat"><span class="k">Practical miles</span><span class="v">456.7</span></div>
+        <div class="hstat"><span class="k">Revenue per mile</span><span class="v">$4.05</span></div>
+        <div class="hstat"><span class="k">Driver</span><span class="v" style="font-size:14px">J. P. Padilla</span></div>
+        <div class="hstat"><span class="k">Truck</span><span class="v">T163</span></div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <span class="tab">Overview</span><span class="tab">Stops</span><span class="tab on new">Costs</span>
+      <span class="tab">Driver Pay</span><span class="tab">Documents</span><span class="tab">Factoring</span>
+      <span class="tab">Customs</span><span class="tab">Settlement</span><span class="tab">Pre-Settlement</span><span class="tab">Audit</span>
+    </div>
+
+    <div class="body">
+      <div class="rowbar">
+        <div style="font-size:14px;color:var(--ink2)">Three costs on this load. Every one carries the load number.</div>
+        <div style="display:flex;gap:8px"><span class="btn">Save all</span><span class="btn p">+ Add another cost</span></div>
+      </div>
+
+      <div>
+        <div class="entry">
+          <div class="ehead">
+            <span class="enum">3232</span>
+            <span class="toggle"><span class="on">Expense · paid now</span><span>Bill · owed</span></span>
+            <span class="emeta">saved · matched to bank</span>
+          </div>
+          <div class="fields">
+            <div class="fld"><label>Date</label><div class="inp">08 / 21</div></div>
+            <div class="fld"><label>Vendor</label><div class="inp">Love's Travel Stop #372</div></div>
+            <div class="fld"><label>Category</label><div class="inp">Diesel — over the road</div></div>
+            <div class="fld"><label>Paid with</label><div class="inp">Relay card ····4471</div></div>
+            <div class="fld"><label>Amount</label><div class="inp mono">612.40</div></div>
+          </div>
+          <div class="hint">Posts <b>debit Diesel expense</b>, <b>credit Relay card</b>. Numbered <b>3232</b> because it is the first cost on this load.</div>
+        </div>
+
+        <div class="entry">
+          <div class="ehead">
+            <span class="enum">3232-1</span>
+            <span class="toggle"><span class="on">Expense · paid now</span><span>Bill · owed</span></span>
+            <span class="emeta">saved · waiting for the bank</span>
+          </div>
+          <div class="fields">
+            <div class="fld"><label>Date</label><div class="inp">08 / 21</div></div>
+            <div class="fld"><label>Vendor</label><div class="inp">TxTag</div></div>
+            <div class="fld"><label>Category</label><div class="inp">Tolls</div></div>
+            <div class="fld"><label>Paid with</label><div class="inp">Operating bank ····8802</div></div>
+            <div class="fld"><label>Amount</label><div class="inp mono">18.75</div></div>
+          </div>
+          <div class="hint">Second cost on the load, so it becomes <b>3232-1</b>. You never type the number.</div>
+        </div>
+
+        <div class="entry">
+          <div class="ehead">
+            <span class="enum">3232-2</span>
+            <span class="toggle"><span>Expense · paid now</span><span class="on">Bill · owed</span></span>
+            <span class="emeta">new — not saved</span>
+          </div>
+          <div class="fields">
+            <div class="fld"><label>Date</label><div class="inp">08 / 22</div></div>
+            <div class="fld"><label>Vendor</label><div class="inp">Denton Lumper Service</div></div>
+            <div class="fld"><label>Category</label><div class="inp">Lumper</div></div>
+            <div class="fld"><label>Vendor invoice no.</label><div class="inp ph">off the paper</div></div>
+            <div class="fld"><label>Amount</label><div class="inp mono">125.00</div></div>
+          </div>
+          <div class="hint">Switched to <b>Bill</b>, so it posts <b>credit Accounts Payable</b> instead of a bank account, and the vendor's own invoice number gets its own box — never filled in for you, because that number is what stops us paying the same bill twice.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px"><span class="btn p">+ Add another cost</span><span class="btn">+ Add from a receipt photo</span></div>
+
+      <div class="totals">
+        <div class="trow"><span>Line haul revenue</span><span class="m">$1,850.00</span></div>
+        <div class="trow"><span>Costs on this load — 3 entries</span><span class="m">$756.15</span></div>
+        <div class="trow"><span>Driver pay — short miles 452.2 at $0.42</span><span class="m">$189.92</span></div>
+        <div class="trow big"><span>Margin on load 3232</span><span class="m">$903.93 · 48.9%</span></div>
+      </div>
+
+      <div class="bank">
+        <div class="bh">What the bank will do with these</div>
+        <div class="brow">
+          <div class="l"><span>LOVES #372 LAREDO TX — $612.40</span><span class="s">Relay card, posted 08/22</span></div>
+          <span class="match">Matched to 3232</span>
+        </div>
+        <div class="brow">
+          <div class="l"><span>TXTAG AUTOPAY — $18.75</span><span class="s">Operating bank, not yet posted</span></div>
+          <span class="match w">Will be offered when it lands</span>
+        </div>
+        <div class="brow">
+          <div class="l"><span>Denton Lumper Service — $125.00</span><span class="s">Bill, unpaid</span></div>
+          <span class="match w">Matches on the bill payment, not now</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">Why it is worth building</div><h2>Four problems this closes at once</h2></div>
+  <ul class="t col">
+    <li><b>The link cannot be forgotten.</b> A cost created here is born attached to the load. Today the link is a field somebody has to remember to fill, and the ones nobody fills are the ones that never reach per-load margin.</li>
+    <li><b>The numbering happens by itself.</b> First cost is <code>3232</code>, then <code>3232-1</code>, <code>3232-2</code>. You never type a number and two people entering costs on the same load cannot collide.</li>
+    <li><b>The bank match gets a short list.</b> Matching against 11,651 transactions is guesswork. Matching a $612.40 Love's charge against the three costs already sitting on load 3232 is not.</li>
+    <li><b>Margin is visible while the load is still moving.</b> Revenue, costs, driver pay and margin on one screen, before the settlement closes — not discovered a week later.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">Rules it must follow</div><h2>The parts that are easy to get wrong</h2></div>
+  <div class="note">
+    <h3>Expense or Bill is a real accounting choice, not a preference</h3>
+    <p>Paid now is an <b>Expense</b> and credits the bank or card. Owed is a <b>Bill</b> and credits Accounts Payable, then clears later with a bill payment. The toggle sits on every row because a single load routinely has both. Never default it silently — an unpaid bill recorded as a paid expense understates what the company owes.</p>
+  </div>
+  <div class="note warn">
+    <h3>Nothing saves until it has an account and a payment source</h3>
+    <p>The system already refuses a cost with no payment account and no vendor. Keep that here. A row that cannot post should say so on the row, in English, not fail quietly on Save.</p>
+  </div>
+  <div class="note bad">
+    <h3>One screen, one write path</h3>
+    <p>This tab must call the same expense and bill creation endpoints everything else uses. If it gets its own path, two screens will start disagreeing about what a cost is, and that is exactly the class of defect this whole build has been digging out.</p>
+  </div>
+</section>
+
+<footer>
+  Design proposal, 2026-09-02. The twelve existing tabs are read from <span style="font-family:var(--mono)">LoadDetailDrawer.tsx</span> on origin/main; the absence of any company-cost tab is why this one is proposed. Figures shown are an illustration on a sample load, not live data.
+</footer>
+</div>

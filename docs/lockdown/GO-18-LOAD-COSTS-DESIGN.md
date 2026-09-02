@@ -3,6 +3,7 @@
 **Date:** 2026-09-01  
 **HTML twin (open in browser / download):** `docs/lockdown/GO-18-LOAD-COSTS-DESIGN.html`  
 **Lineage map:** `docs/lockdown/GO-18-LOAD-COSTS-AND-LINEAGE-MAP.md`  
+**Complete software map (git):** `docs/lockdown/IH35-SOFTWARE-MAP/INDEX.html`  
 **Seat pastes:** `docs/bus/PASTE-ALL-SEATS-GO-18-LOAD-COSTS-2026-09-01.md`
 
 USMCA only. Same endpoints as Accounting chrome. No parallel load ledger. NO-SEAT prod money.

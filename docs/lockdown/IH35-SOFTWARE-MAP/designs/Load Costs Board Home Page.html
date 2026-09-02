@@ -1,0 +1,247 @@
+<title>Load Costs Board</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{--ink:#131820;--ink2:#3d4650;--muted:#6a7480;--paper:#f4f5f3;--card:#fff;--sunk:#f0f2ee;--rule:#dbdfd8;--rule2:#eceee9;
+--accent:#2b5f52;--accent-soft:#e3ece8;--gold:#8a6410;--gold-soft:#f5eeda;--rust:#8a4020;--rust-soft:#f4e7e0;--bad:#93301f;--bad-soft:#f6e3df;
+--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;--body:"Public Sans",-apple-system,"Segoe UI",sans-serif;--display:"Newsreader",Georgia,serif;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#e7eae6;--ink2:#b6bdb8;--muted:#8b948d;--paper:#14171a;--card:#1b1f22;--sunk:#191d20;--rule:#2e3439;--rule2:#23282c;--accent:#6fbba3;--accent-soft:#1d2a27;--gold:#d8b562;--gold-soft:#2a2418;--rust:#d99168;--rust-soft:#2b2019;--bad:#e08a76;--bad-soft:#2c1d19;}}
+:root[data-theme="dark"]{--ink:#e7eae6;--ink2:#b6bdb8;--muted:#8b948d;--paper:#14171a;--card:#1b1f22;--sunk:#191d20;--rule:#2e3439;--rule2:#23282c;--accent:#6fbba3;--accent-soft:#1d2a27;--gold:#d8b562;--gold-soft:#2a2418;--rust:#d99168;--rust-soft:#2b2019;--bad:#e08a76;--bad-soft:#2c1d19;}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;margin:0}
+.wrap{max-width:1240px;margin:0 auto;padding:34px 20px 90px;display:flex;flex-direction:column;gap:36px}
+.col{max-width:68ch}
+h1,h2{font-family:var(--display);font-weight:600;margin:0;line-height:1.16;text-wrap:balance}
+h1{font-size:clamp(28px,4vw,42px)}h2{font-size:clamp(20px,2.5vw,27px)}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.lede{font-size:17.5px;color:var(--ink2);max-width:64ch}
+header.mh{border-bottom:2px solid var(--ink);padding-bottom:18px;display:flex;flex-direction:column;gap:12px}
+.sec{border-top:1px solid var(--rule);padding-top:20px;display:flex;flex-direction:column;gap:7px}
+section{display:flex;flex-direction:column;gap:16px}
+code{font-family:var(--mono);font-size:.86em;background:var(--rule2);padding:1px 5px;border-radius:3px}
+.m{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+.app{border:1px solid var(--rule);background:var(--card);border-radius:3px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.topbar{padding:13px 16px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap}
+.title{font-family:var(--display);font-size:20px;font-weight:600}
+.pills{display:flex;gap:5px;flex-wrap:wrap}
+.pill{font-size:12px;padding:4px 11px;border-radius:14px;border:1px solid var(--rule);color:var(--muted)}
+.pill.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+:root[data-theme="dark"] .pill.on{color:#12201c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pill.on{color:#12201c}}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--rule);border-bottom:1px solid var(--rule)}
+.tile{background:var(--card);padding:13px 15px;display:flex;flex-direction:column;gap:2px}
+.tile .k{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.tile .v{font-family:var(--mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.tile .s{font-size:11.5px;color:var(--muted)}
+.tile.alert .v{color:var(--gold)}
+.tile.good .v{color:var(--accent)}
+
+.lhead{display:grid;grid-template-columns:150px 1fr 96px 96px 96px 104px 34px;gap:10px;padding:8px 15px;background:var(--rule2);border-bottom:1px solid var(--rule);
+  font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.lhead span:nth-child(n+3):nth-child(-n+6){text-align:right}
+.lrow{display:grid;grid-template-columns:150px 1fr 96px 96px 96px 104px 34px;gap:10px;padding:11px 15px;border-bottom:1px solid var(--rule2);align-items:center;font-size:14px}
+.lrow.open{background:var(--accent-soft)}
+.lrow .num{font-family:var(--mono);font-weight:600;font-size:15px}
+.lrow .sub{font-size:11.5px;color:var(--muted)}
+.lrow .r{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.lrow .pct{font-weight:600}
+.pct.hi{color:var(--accent)} .pct.mid{color:var(--gold)} .pct.lo{color:var(--bad)}
+.caret{text-align:center;color:var(--muted)}
+.status{display:inline-block;font-size:10px;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;font-weight:600;padding:2px 7px;border-radius:2px;margin-top:3px}
+.s-transit{background:var(--accent-soft);color:var(--accent)}
+.s-deliv{background:var(--gold-soft);color:var(--gold)}
+.s-load{background:var(--rust-soft);color:var(--rust)}
+
+.expand{background:var(--sunk);border-bottom:1px solid var(--rule);padding:15px;display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:900px){.expand{grid-template-columns:1.55fr 1fr}}
+.panel{border:1px solid var(--rule);background:var(--card);border-radius:2px;overflow:hidden}
+.ph{padding:7px 12px;background:var(--rule2);border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.ci{display:grid;grid-template-columns:78px 1fr 84px 96px;gap:9px;padding:8px 12px;border-bottom:1px solid var(--rule2);font-size:13.5px;align-items:center}
+.ci:last-child{border-bottom:0}
+.ci .n{font-family:var(--mono);font-weight:600;font-size:12.5px}
+.ci .who{display:flex;flex-direction:column;gap:0}
+.ci .who .s{font-size:11px;color:var(--muted)}
+.ci .amt{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600}
+.tag{font-size:9.5px;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;font-weight:600;padding:2px 6px;border-radius:2px;text-align:center;white-space:nowrap}
+.t-paid{background:var(--accent-soft);color:var(--accent)}
+.t-owed{background:var(--gold-soft);color:var(--gold)}
+.srow{display:flex;justify-content:space-between;padding:7px 12px;font-size:13.5px;border-bottom:1px solid var(--rule2)}
+.srow:last-child{border-bottom:0}
+.srow.tot{font-weight:700;background:var(--accent-soft);color:var(--accent);font-size:14.5px}
+.srow.sub{color:var(--muted);font-size:12.5px}
+.addbar{padding:9px 12px;border-top:1px solid var(--rule);display:flex;gap:7px;flex-wrap:wrap}
+.btn{font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:3px;border:1px solid var(--accent);color:var(--accent);background:transparent}
+.btn.p{background:var(--accent);color:#fff}
+:root[data-theme="dark"] .btn.p{color:#12201c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.p{color:#12201c}}
+
+.dates{display:grid;grid-template-columns:1fr;gap:1px;background:var(--rule);border:1px solid var(--rule)}
+@media(min-width:760px){.dates{grid-template-columns:repeat(3,1fr)}}
+.d{background:var(--card);padding:15px 16px;display:flex;flex-direction:column;gap:5px}
+.d .dn{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.d .dv{font-family:var(--mono);font-size:17px;font-weight:600}
+.d .dd{font-size:13.5px;color:var(--ink2)}
+
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:13px 15px;display:flex;flex-direction:column;gap:6px}
+.note.gold{border-left-color:var(--gold);background:var(--gold-soft)}
+.note.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.note h3{font-family:var(--body);font-size:12.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;margin:0}
+.note p{font-size:14.5px;color:var(--ink2)}
+.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.lk{background:var(--card);padding:11px 13px;display:flex;flex-direction:column;gap:2px}
+.lk .n{font-size:13.5px;font-weight:600}
+.lk .v{font-size:12px;color:var(--muted);font-family:var(--mono)}
+ul.t{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+ul.t li{color:var(--ink2);font-size:15px}
+ul.t b{color:var(--ink)}
+footer{border-top:1px solid var(--rule);padding-top:16px;font-size:13px;color:var(--muted);max-width:68ch}
+</style>
+<div class="wrap">
+
+<header class="mh">
+  <div class="eyebrow">IH35-TMS · Design proposal · Accounting</div>
+  <h1>Every load in motion, and what it is really making</h1>
+  <p class="lede">The board you work from all day: live loads, every cost sitting underneath the load it belongs to, the driver's approximate pay, and the margin — recalculating as you type, before any settlement closes.</p>
+</header>
+
+<section>
+  <div class="sec"><div class="eyebrow">The board</div><h2>Costs · live loads</h2></div>
+
+  <div class="app">
+    <div class="topbar">
+      <div class="title">Costs</div>
+      <div class="pills"><span class="pill on">In motion · 6</span><span class="pill">Delivered, not settled · 3</span><span class="pill">All open</span><span class="pill">This week</span></div>
+    </div>
+
+    <div class="tiles">
+      <div class="tile"><span class="k">Loads in motion</span><span class="v">6</span><span class="s">2 delivering today</span></div>
+      <div class="tile"><span class="k">Revenue booked</span><span class="v">$11,240</span><span class="s">6 loads</span></div>
+      <div class="tile"><span class="k">Costs recorded</span><span class="v">$3,918</span><span class="s">17 entries</span></div>
+      <div class="tile"><span class="k">Driver pay accruing</span><span class="v">$1,847</span><span class="s">short miles</span></div>
+      <div class="tile good"><span class="k">Approximate margin</span><span class="v">48.6%</span><span class="s">$5,475</span></div>
+      <div class="tile alert"><span class="k">Bank items unmatched</span><span class="v">4</span><span class="s">$1,102 · 2 suggested</span></div>
+    </div>
+
+    <div class="lhead"><span>Load</span><span>Route and crew</span><span>Revenue</span><span>Costs</span><span>Driver</span><span>Margin</span><span></span></div>
+
+    <div class="lrow">
+      <div><div class="num">3230</div><span class="status s-transit">In transit</span></div>
+      <div>Laredo, TX → Sioux City, IA<div class="sub">Sethmar · M. Gomez · T144 · Reefer 10827</div></div>
+      <div class="r">2,940.00</div><div class="r">1,104.60</div><div class="r">471.20</div>
+      <div class="r pct hi">46.4%</div><div class="caret">›</div>
+    </div>
+
+    <div class="lrow open">
+      <div><div class="num">3232</div><span class="status s-transit">In transit</span></div>
+      <div>Laredo, TX → Denton, TX<div class="sub">Sethmar · J. P. Padilla · T163 · Dry van 10113</div></div>
+      <div class="r">1,850.00</div><div class="r">756.15</div><div class="r">189.92</div>
+      <div class="r pct hi">48.9%</div><div class="caret">⌄</div>
+    </div>
+
+    <div class="expand">
+      <div class="panel">
+        <div class="ph"><span>Costs on this load</span><span>3 entries · every one carries the load number</span></div>
+        <div class="ci"><span class="n">3232</span>
+          <span class="who">Love's Travel Stop #372<span class="s">Diesel · receipt 8841207 · Relay ····4471</span></span>
+          <span class="tag t-paid">Paid</span><span class="amt">612.40</span></div>
+        <div class="ci"><span class="n">3232-1</span>
+          <span class="who">TxTag<span class="s">Tolls · statement 0822-A · Bank ····8802</span></span>
+          <span class="tag t-paid">Paid</span><span class="amt">18.75</span></div>
+        <div class="ci"><span class="n">3232-2</span>
+          <span class="who">Denton Lumper Service<span class="s">Lumper · vendor invoice 44-2210 · due 09/21</span></span>
+          <span class="tag t-owed">Owed</span><span class="amt">125.00</span></div>
+        <div class="addbar"><span class="btn p">+ Add a cost</span><span class="btn">+ From a receipt photo</span><span class="btn">+ Fuel advance</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="ph"><span>Approximate settlement</span><span>not final</span></div>
+        <div class="srow"><span>Line haul revenue</span><span class="m">2,850.00</span></div>
+        <div class="srow sub"><span>Practical miles 456.7 · $4.05 per mile</span><span></span></div>
+        <div class="srow"><span>Costs on the load</span><span class="m">−756.15</span></div>
+        <div class="srow"><span>Driver pay · 452.2 short miles at $0.42</span><span class="m">−189.92</span></div>
+        <div class="srow sub"><span>Driver deduction · lumper, pending approval</span><span class="m">+0.00</span></div>
+        <div class="srow tot"><span>Approximate margin</span><span class="m">903.93 · 48.9%</span></div>
+      </div>
+    </div>
+
+    <div class="lrow">
+      <div><div class="num">3233</div><span class="status s-deliv">Delivered</span></div>
+      <div>Phenix City, AL → Laredo, TX<div class="sub">Watco · C. Mosco + C. Duran · T120 · Reefer 10006</div></div>
+      <div class="r">3,180.00</div><div class="r">1,612.40</div><div class="r">742.10</div>
+      <div class="r pct mid">25.9%</div><div class="caret">›</div>
+    </div>
+
+    <div class="lrow">
+      <div><div class="num">3234</div><span class="status s-load">Loading</span></div>
+      <div>Laredo, TX → Chicago, IL<div class="sub">TQL · A. Ramirez · T156 · Dry van 10221</div></div>
+      <div class="r">3,270.00</div><div class="r">444.60</div><div class="r">443.60</div>
+      <div class="r pct hi">72.9%</div><div class="caret">›</div>
+    </div>
+  </div>
+
+  <p class="col" style="font-size:14.5px;color:var(--muted)">Margin on a loading or in-transit load is honestly incomplete — the fuel is not all in yet. The percentage is shown because a lane running at 25% when it usually runs at 48% is worth seeing on day one, not at settlement.</p>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">Your question</div><h2>A road repair today, payable in thirty days</h2></div>
+  <p class="col">This is the case that separates real accounting software from a spreadsheet, and the system already has the answer built in: <b>a document carries three different dates, and different screens read different ones.</b></p>
+  <div class="dates">
+    <div class="d"><div class="dn">Incurred</div><div class="dv">Aug 22</div><div class="dd">The day the truck was repaired. This is the date the <b>load margin</b>, the <b>settlement</b> and the <b>profit and loss</b> all use. The cost belongs to the trip that caused it, not to the month you happen to pay it.</div></div>
+    <div class="d"><div class="dn">Due</div><div class="dv">Sep 21</div><div class="dd">Thirty-day terms. This is the only date <b>cash flow</b> and <b>accounts payable aging</b> care about. The money is still in the bank today, and the forecast must say so.</div></div>
+    <div class="d"><div class="dn">Paid</div><div class="dv">— not yet</div><div class="dd">Filled in when the check clears. Until then the bill sits in Accounts Payable as something the company owes.</div></div>
+  </div>
+  <div class="note">
+    <h3>So on the day you enter it</h3>
+    <p>The bill posts <b>debit Repairs expense, credit Accounts Payable</b>. It appears immediately in the load's margin and in the company settlement, because the cost was incurred. It appears in the <b>cash flow forecast dated September 21</b>, not today, because no money has moved. One document, two reports, two dates, no contradiction.</p>
+  </div>
+  <div class="note gold">
+    <h3>And on the driver settlement</h3>
+    <p>If the repair is driver-caused, it shows on the settlement as a <b>deduction pending approval</b> — visible immediately, not deducted automatically. Your own rule: a chargeback reaches a driver only when it is driver-caused and someone approves it. The company owes the vendor and the driver may owe the company; those are two separate obligations and both are recorded the day it happens.</p>
+  </div>
+  <div class="note bad">
+    <h3>What must never happen</h3>
+    <p>The bill must not be recorded as a paid expense because it was easier. That understates Accounts Payable, overstates cash, and makes a thirty-day obligation invisible until the vendor calls. If someone chooses Paid on a row where no money left, the row is wrong.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">Linkage</div><h2>What one cost attaches itself to</h2></div>
+  <p class="col">Because the cost is created from inside the load, it inherits every link the load already knows about. Nothing is typed twice and nothing can be forgotten.</p>
+  <div class="links">
+    <div class="lk"><span class="n">Load</span><span class="v">3232</span></div>
+    <div class="lk"><span class="n">Customer</span><span class="v">Sethmar</span></div>
+    <div class="lk"><span class="n">Vendor</span><span class="v">Love's #372</span></div>
+    <div class="lk"><span class="n">Driver</span><span class="v">J. P. Padilla</span></div>
+    <div class="lk"><span class="n">Truck</span><span class="v">T163</span></div>
+    <div class="lk"><span class="n">Trailer</span><span class="v">10113</span></div>
+    <div class="lk"><span class="n">Stop / location</span><span class="v">Laredo, TX</span></div>
+    <div class="lk"><span class="n">Work order</span><span class="v">when a repair</span></div>
+    <div class="lk"><span class="n">GL account</span><span class="v">Diesel — OTR</span></div>
+    <div class="lk"><span class="n">Paid from</span><span class="v">Relay ····4471</span></div>
+    <div class="lk"><span class="n">Receipt number</span><span class="v">8841207</span></div>
+    <div class="lk"><span class="n">Journal entry</span><span class="v">on save</span></div>
+  </div>
+  <div class="note">
+    <h3>The receipt number is not optional decoration</h3>
+    <p>Every cost stores the vendor's own number — the receipt from the pump, the statement line, the shop's invoice. It is captured per vendor, so the same vendor cannot bill the same number twice, and so any charge on the bank statement can be tied back to a piece of paper. That is what makes the chain hold up when somebody outside the company asks.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec"><div class="eyebrow">Downstream</div><h2>Where these numbers go next, automatically</h2></div>
+  <ul class="t col">
+    <li><b>Cash flow</b> — paid costs reduce the bank on the day they cleared; owed bills appear on their due date. The forecast stops being a guess.</li>
+    <li><b>Accounts payable aging</b> — every Owed row lands in the vendor's bucket the moment it is saved.</li>
+    <li><b>Company settlement</b> — the load closes with its real costs already attached, not gathered afterward.</li>
+    <li><b>Driver settlement</b> — driver pay accrues from short miles; deductions appear as pending until approved.</li>
+    <li><b>Banking</b> — each cost becomes a match candidate. A $612.40 Love's charge is checked against three costs on one load, not against 11,651 transactions.</li>
+    <li><b>Per-lane profitability</b> — because every cost carries the load, and every load carries the lane, this board is what finally makes lane margin real instead of theoretical.</li>
+  </ul>
+</section>
+
+<footer>
+  Design proposal, September 2, 2026. The three-date model, the driver-chargeback approval rule and the expense-versus-bill posting shapes are the ones already locked in this system; the figures on this page are an illustration on sample loads, not live data.
+</footer>
+</div>

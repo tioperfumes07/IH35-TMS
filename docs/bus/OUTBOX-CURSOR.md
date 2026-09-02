@@ -1,3 +1,3 @@
-# OUTBOX-CURSOR · 2026-09-01 21:40 CT
+# OUTBOX-CURSOR · 2026-09-01 21:50 CT
 
-CURSOR | GO-18 Load Costs design+lineage+PASTE-ALL-SEATS FORCE · MD/HTML under docs/lockdown · live SHA **12bfbd6** GO-16/GO-17 · first-click Laredo→Denton still stands · #19433 Mark Disbursed already on main · escrow stays CC-1 forensic · ZIP Option 1 #19419 CC-3 execute · verify-static dead-port grep #19428 · NEVER 97.5% GL invent · NEVER seat fixtures | GO
+CURSOR | software map ingested git `docs/lockdown/IH35-SOFTWARE-MAP/` (INDEX + MAP-FINDINGS + complete HTML) · GO-18 design still `docs/lockdown/GO-18-LOAD-COSTS-DESIGN.html` · Costs tab/Board incomplete/not mounted · zip not in git `~/Downloads/IH35-DELIVERABLES.zip` · CC-3 ZIP Option1 #19419 · never rebuild city-alias · never High-gap rebuild · NEVER 97.5% GL · NEVER seat fixtures | GO
