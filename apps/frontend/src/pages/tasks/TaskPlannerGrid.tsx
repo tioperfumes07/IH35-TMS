@@ -112,7 +112,7 @@ function ProgressBar({ pct }: { pct: number }) {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="w-6 text-right text-[9px] text-gray-500">{pct}%</span>
+      <span className="w-6 text-right text-xs text-gray-500">{pct}%</span>
     </div>
   );
 }
@@ -175,7 +175,7 @@ function TaskBlock({ task, onClick, overdueRolled }: TaskBlockProps) {
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
-      className={`group cursor-pointer rounded-sm border px-1.5 py-0.5 text-[10px] leading-tight mb-0.5 ${STATUS_COLORS[task.status]}`}
+      className={`group cursor-pointer rounded-sm border px-1.5 py-0.5 text-xs leading-tight mb-0.5 ${STATUS_COLORS[task.status]}`}
       style={{ minHeight: 27 }}
       title={overdueRolled ? `Overdue · scheduled ${formatDateUS(task.scheduled_date)}` : undefined}
     >
@@ -266,7 +266,7 @@ export function TaskPlannerGrid() {
             <thead className="sticky top-0 z-10 bg-gray-50">
               <tr>
                 <th
-                  className="relative border border-gray-200 px-2 py-1 text-left text-[10px] font-semibold text-gray-600 select-none"
+                  className="relative border border-gray-200 px-2 py-1 text-left text-[11px] font-semibold text-gray-600 select-none"
                   style={{ width: empColWidth }}
                 >
                   Employee
@@ -280,10 +280,10 @@ export function TaskPlannerGrid() {
                   return (
                     <th
                       key={d}
-                      className={`border border-gray-200 px-1 py-1 text-center text-[10px] font-semibold ${isToday ? "bg-slate-100 text-slate-700" : "text-gray-600"}`}
+                      className={`border border-gray-200 px-1 py-1 text-center text-[11px] font-semibold ${isToday ? "bg-slate-100 text-slate-700" : "text-gray-600"}`}
                     >
                       <div>{fmtDow(d)}</div>
-                      <div className="text-[9px] font-normal opacity-70">{fmtMD(d)}</div>
+                      <div className="text-xs font-normal opacity-70">{fmtMD(d)}</div>
                     </th>
                   );
                 })}
@@ -303,7 +303,7 @@ export function TaskPlannerGrid() {
               )}
               {employees.map(([uid, name]) => (
                 <tr key={uid} style={{ height: 30 }}>
-                  <td className="border border-gray-200 px-2 py-0.5 text-[10px] font-medium text-gray-700 truncate bg-white">
+                  <td className="border border-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 truncate bg-white">
                     {name}
                   </td>
                   {dates.map((d) => {
