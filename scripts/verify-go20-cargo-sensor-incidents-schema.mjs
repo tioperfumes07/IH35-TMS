@@ -1,6 +1,6 @@
 import fs from "node:fs";
 
-const file = "db/migrations/202613390002_go20_cargo_sensor_incidents.sql";
+const file = "db/migrations/202613390002_go20_d_cargo_sensor_incidents.sql";
 const sql = fs.readFileSync(file, "utf8");
 
 function verify(text) {
