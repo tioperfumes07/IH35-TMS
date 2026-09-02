@@ -1,12 +1,16 @@
 import type { JSX } from "react";
 import { useFieldArray, Controller, type Control, type UseFormRegister, type UseFormSetValue } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { StateSelect } from "../../../components/forms/StateSelect";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { TimePicker } from "../../../components/forms/TimePicker";
 import { AddressGeocodeInput } from "../../../components/dispatch/AddressGeocodeInput";
+import { geocodeSearch } from "../../../api/geocoding";
 import { stopGeocodePatches } from "./book-load-stop-geocode";
+import { stopLocationPatches, stopLocationClearPatch } from "./book-load-stop-location-patches";
+import { LocationPicker } from "./book-load-v4/LocationPicker";
 import { TimeWindowDropdown } from "./book-load-v4/TimeWindowDropdown";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 
@@ -46,10 +50,27 @@ export function BookLoadStopsSection({
       Record<string, unknown>
     >;
 
+  // GO-24 dead-geocode gate: AddressGeocodeInput gates ITSELF on the local PCMILER_ENABLED feature
+  // flag, but the flag being ON does not mean the provider actually IS — the backend also requires
+  // TRIMBLE_MAPS_API_KEY configured (isTrimbleConfigured()) and returns {enabled:false} either way.
+  // Owner's live authenticated check confirmed {enabled:false}; an unauthenticated curl is NOT that
+  // proof. Probe the REAL endpoint once (q="x" — length < the 3-char minimum, so the backend returns
+  // immediately on both branches without ever calling Trimble) and gate the smart widget on the
+  // actual server answer, not the flag alone. AddressGeocodeInput itself is UNTOUCHED — still
+  // rendered when genuinely enabled; never render its dropdown-implying UI while enabled:false.
+  const geocodeProbeQuery = useQuery({
+    queryKey: ["book-load-geocode-probe"],
+    queryFn: () => geocodeSearch("x"),
+    staleTime: 10 * 60 * 1000,
+    retry: false,
+  });
+  const geocodeReallyEnabled = Boolean((geocodeProbeQuery.data as { enabled?: boolean } | undefined)?.enabled);
+
   function newStop(stopType: "pickup" | "delivery", seq: number) {
     return {
       stop_type: stopType,
       sequence_number: seq,
+      location_id: "",
       city: "",
       state: "",
       country: "USA",
@@ -109,36 +130,84 @@ export function BookLoadStopsSection({
                 <input type="hidden" {...register(`stops.${index}.country`)} />
 
                 {/* Row 1 — .locrow */}
-                <div data-testid={`stop-locrow-${index}`} className="grid grid-cols-1 gap-2 md:grid-cols-6">
+                <div data-testid={`stop-locrow-${index}`} className="grid grid-cols-1 gap-2 md:grid-cols-7">
+                  {/* GO-24 — same catalog-first, type-when-missing pattern as lane mileage autofill.
+                      mdata.locations is the live catalog (FK already wired: load_stops.location_id).
+                      Picking fills Address/City/St/Zip/lat/lon below; typing without a match leaves
+                      location_id unset and does not block booking. */}
+                  <Field
+                    label="Location"
+                    input={
+                      <Controller
+                        control={control}
+                        name={`stops.${index}.location_id`}
+                        render={({ field: f }) => (
+                          <LocationPicker
+                            operatingCompanyId={operatingCompanyId}
+                            value={f.value || null}
+                            onChange={(locationId, location) => {
+                              f.onChange(locationId ?? "");
+                              if (locationId && location) {
+                                for (const patch of stopLocationPatches(index, location)) {
+                                  setValue?.(patch.field, patch.value, { shouldDirty: true });
+                                }
+                              } else {
+                                const clear = stopLocationClearPatch(index);
+                                setValue?.(clear.field, clear.value, { shouldDirty: true });
+                              }
+                            }}
+                            dataTestId={`stop-location-picker-${index}`}
+                          />
+                        )}
+                      />
+                    }
+                  />
                   <Field
                     label="Address"
                     input={
                       <Controller
                         control={control}
                         name={`stops.${index}.address_full`}
-                        render={({ field: f }) => (
-                          <AddressGeocodeInput
-                            value={f.value ?? ""}
-                            onChange={(v) => {
-                              f.onChange(v);
-                              // FIX-2 (address binding): commit the raw typed address to address_line1
-                              // immediately, so it serializes into the booking payload even when no geocode
-                              // match is selected. onResolve refines it when a match IS chosen. Without this
-                              // the payload sent address_line1: "" (the typed text lived only in address_full).
-                              setValue?.(`stops.${index}.address_line1`, v, { shouldDirty: true });
-                            }}
-                            onResolve={(r) => {
-                              // W8: map the geocode match onto the stop, INCLUDING zip→postal_code
-                              // (was omitted, so City could populate but Zip never did).
-                              for (const patch of stopGeocodePatches(index, r)) {
-                                setValue?.(patch.field, patch.value, { shouldDirty: true });
-                              }
-                            }}
-                            placeholder="123 Main St"
-                            className={CELL}
-                            dataAttrs={{ "data-stop-address-oneline": "true" }}
-                          />
-                        )}
+                        render={({ field: f }) =>
+                          geocodeReallyEnabled ? (
+                            <AddressGeocodeInput
+                              value={f.value ?? ""}
+                              onChange={(v) => {
+                                f.onChange(v);
+                                // FIX-2 (address binding): commit the raw typed address to address_line1
+                                // immediately, so it serializes into the booking payload even when no geocode
+                                // match is selected. onResolve refines it when a match IS chosen. Without this
+                                // the payload sent address_line1: "" (the typed text lived only in address_full).
+                                setValue?.(`stops.${index}.address_line1`, v, { shouldDirty: true });
+                              }}
+                              onResolve={(r) => {
+                                // W8: map the geocode match onto the stop, INCLUDING zip→postal_code
+                                // (was omitted, so City could populate but Zip never did).
+                                for (const patch of stopGeocodePatches(index, r)) {
+                                  setValue?.(patch.field, patch.value, { shouldDirty: true });
+                                }
+                              }}
+                              placeholder="123 Main St"
+                              className={CELL}
+                              dataAttrs={{ "data-stop-address-oneline": "true" }}
+                            />
+                          ) : (
+                            // GO-24 dead-geocode gate: provider confirmed enabled:false live — render the
+                            // plain field FIX-2 already relies on, no dropdown affordance implying a
+                            // lookup that will never fire. Same field, same binding, no Trimble call.
+                            <input
+                              value={f.value ?? ""}
+                              onChange={(e) => {
+                                f.onChange(e.target.value);
+                                setValue?.(`stops.${index}.address_line1`, e.target.value, { shouldDirty: true });
+                              }}
+                              placeholder="123 Main St"
+                              className={CELL}
+                              autoComplete="off"
+                              data-stop-address-oneline="true"
+                            />
+                          )
+                        }
                       />
                     }
                   />

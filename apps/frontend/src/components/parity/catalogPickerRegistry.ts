@@ -448,6 +448,20 @@ export const CATALOG_PICKER_CONFIGS = {
     consumerPath: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
   }),
 
+  // GO-21 B3 — a canned-reason-TEXT quick-pick, not an FK picker: the caller reads the picked
+  // option's `label` and writes it into the existing free-text historical_import_reason field
+  // (Owner-only audited create path, unchanged). Same shape as detention_reason but consumed via
+  // the "reference lookup" pattern (BookLoadCustomerSection's customer reference field), not via a
+  // committed id.
+  historical_import_reason: catalogEntry({
+    key: "historical_import_reason",
+    label: "Historical import reason",
+    table: "catalogs.historical_import_reasons",
+    endpoint: "/api/v1/catalogs/dispatch/historical-import-reasons",
+    evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
+    consumerPath: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+  }),
+
   dispatch_flag_color: {
     key: "dispatch_flag_color",
     label: "dispatch flag",

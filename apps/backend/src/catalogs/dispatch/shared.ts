@@ -11,8 +11,8 @@ type DbClient = {
 
 type CatalogRouteOptions = {
   catalogPath: string;
-  tableName: "load_types" | "detention_reasons" | "pickup_time_types" | "additional_charges";
-  auditKey: "load_types" | "detention_reasons" | "pickup_time_types" | "additional_charges";
+  tableName: "load_types" | "detention_reasons" | "pickup_time_types" | "additional_charges" | "historical_import_reasons";
+  auditKey: "load_types" | "detention_reasons" | "pickup_time_types" | "additional_charges" | "historical_import_reasons";
 };
 
 export const companyQuerySchema = z.object({
