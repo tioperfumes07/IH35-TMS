@@ -53,6 +53,7 @@ import {
 } from "./book-load.service.js";
 import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
 import { resolveLaneMileage } from "./lane-mileage.service.js";
+import { computeChainDeadheadMiles } from "./deadhead/chain-deadhead.service.js";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
 // (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
@@ -529,6 +530,55 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       });
     }
   });
+
+  // GO-23 owner ruling 2026-09-02: deadhead is a TRIP property (this unit's actual last delivery
+  // to this pickup), never a lane average. operating_company_id here is the NEW load's company,
+  // used only for the membership check -- the historical search is deliberately cross-entity
+  // (a truck is the same truck under any of the three companies) via computeChainDeadheadMiles's
+  // own bypass_rls, scoped to exactly this unit_uuid.
+  app.get(
+    "/api/v1/dispatch/deadhead-from-chain",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
+        return reply.code(403).send({ error: "forbidden" });
+      }
+      const query = z
+        .object({
+          operating_company_id: z.string().uuid(),
+          unit_uuid: z.string().uuid(),
+          pickup_city: z.string().trim().max(120),
+          pickup_state: z.string().trim().max(8),
+          pickup_latitude: z.coerce.number().optional(),
+          pickup_longitude: z.coerce.number().optional(),
+          before_iso: z.string().datetime().optional(),
+        })
+        .safeParse(req.query ?? {});
+      if (!query.success) return sendValidationError(reply, query.error);
+      try {
+        await assertCompanyMembership(authUser.uuid, query.data.operating_company_id);
+        const result = await computeChainDeadheadMiles(authUser.uuid, {
+          unit_uuid: query.data.unit_uuid,
+          pickup_city: query.data.pickup_city,
+          pickup_state: query.data.pickup_state,
+          pickup_latitude: query.data.pickup_latitude ?? null,
+          pickup_longitude: query.data.pickup_longitude ?? null,
+          before_iso: query.data.before_iso ?? null,
+        });
+        return result;
+      } catch (err) {
+        req.log.warn({ err }, "chain_deadhead_lookup_failed");
+        return reply.code(503).send({
+          deadhead_miles: null,
+          source: "blank",
+          reason: "prior_delivery_not_locatable",
+          message: "Could not compute deadhead from this unit's history. Type it, or retry.",
+        });
+      }
+    }
+  );
 
   app.post("/api/v1/dispatch/loads/reserve-id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);

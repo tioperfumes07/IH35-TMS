@@ -1528,6 +1528,42 @@ export function getLaneMileage(params: {
   return apiRequest<LaneMileageLookupResult>(`/api/v1/dispatch/lane-mileage?${u.toString()}`);
 }
 
+// GO-23 owner ruling 2026-09-02: deadhead is a TRIP property (this unit's real last delivery to
+// this pickup), never catalogs.lane_mileage's lane average. Returns { source: "blank", reason }
+// rather than a number when there is no locatable prior delivery — never a false 0.
+export type ChainDeadheadResult =
+  | {
+      deadhead_miles: number;
+      source: "chain";
+      prior_load_number: string | null;
+      prior_delivery_city: string;
+      prior_delivery_state: string;
+      prior_delivered_at: string | null;
+    }
+  | {
+      deadhead_miles: null;
+      source: "blank";
+      reason: "no_prior_delivery_for_unit" | "prior_delivery_not_locatable" | "pickup_not_locatable";
+    };
+
+export function getChainDeadhead(params: {
+  operating_company_id: string;
+  unit_uuid: string;
+  pickup_city: string;
+  pickup_state: string;
+  pickup_latitude?: number;
+  pickup_longitude?: number;
+}) {
+  const u = new URLSearchParams();
+  u.set("operating_company_id", params.operating_company_id);
+  u.set("unit_uuid", params.unit_uuid);
+  u.set("pickup_city", params.pickup_city);
+  u.set("pickup_state", params.pickup_state);
+  if (params.pickup_latitude != null) u.set("pickup_latitude", String(params.pickup_latitude));
+  if (params.pickup_longitude != null) u.set("pickup_longitude", String(params.pickup_longitude));
+  return apiRequest<ChainDeadheadResult>(`/api/v1/dispatch/deadhead-from-chain?${u.toString()}`);
+}
+
 export function generateLoadBol(loadId: string, operatingCompanyId: string) {
   return apiRequest<{ bol: BolDocumentSummary & { filename?: string } }>(
     `/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/bol/generate`,
