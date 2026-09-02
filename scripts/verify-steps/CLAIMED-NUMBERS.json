@@ -5207,6 +5207,11 @@
     "purpose": "verify-settlement-header-backlink-written (repair duplicate 3909 claim collision)"
   },
   "10222": "verify-driver-pay-rate-create-writes-billing-table",
+  "10224": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-01",
+    "purpose": "verify-company-settlement-5753-pl (GO-19 slice 20)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
