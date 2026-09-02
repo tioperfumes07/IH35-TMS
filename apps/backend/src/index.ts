@@ -257,6 +257,7 @@ import { registerBankTxCategorizationRoutes } from "./banking/categorization.rou
 import { registerCategorizationRulesRoutes } from "./banking/categorization-rules.routes.js";
 import { registerBankingRoutes } from "./banking/banking.routes.js";
 import { registerBankingDriftAlertsRoutes } from "./banking/drift-alerts.routes.js";
+import { registerTrailerInterchangeRoutes } from "./dispatch/trailer-interchange.routes.js";
 import { registerBankAccountCompanyAuditRoutes } from "./banking/integrity/account-company-audit.routes.js";
 import { registerAccountBalanceRoutes } from "./banking/account-balance.routes.js";
 import { registerPlaidLinkRoutes } from "./integrations/plaid/link.routes.js";
@@ -1071,6 +1072,7 @@ async function main() {
   await registerCategorizationRulesRoutes(app);
   await registerBankingRoutes(app);
   await registerBankingDriftAlertsRoutes(app);
+  await registerTrailerInterchangeRoutes(app);
   await registerBankAccountCompanyAuditRoutes(app);
   await registerPlaidBankingItemsRoutes(app);
   await registerAccountBalanceRoutes(app);
