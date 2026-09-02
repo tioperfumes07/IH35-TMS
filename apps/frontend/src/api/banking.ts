@@ -382,6 +382,47 @@ export function getBankingKpis(companyId: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/banking/dashboard/kpis?${q(companyId)}`);
 }
 
+// GO-20 slice A — banking.reconciliation_drift_alerts (docs/lockdown/GO-20-EIGHT-FEATURES.txt).
+export type DriftAlert = {
+  id: string;
+  operating_company_id: string;
+  bank_account_id: string;
+  reconciliation_session_id: string | null;
+  detected_at: string;
+  as_of_date: string;
+  drift_kind: "session_variance" | "live_balance" | "stale_feed";
+  bank_balance_cents: string | number;
+  book_balance_cents: string | number;
+  drift_cents: string | number;
+  tolerance_cents: string | number;
+  severity: "warning" | "critical";
+  resolved_at: string | null;
+  resolved_by_user_id: string | null;
+  resolution_note: string | null;
+  resolving_journal_entry_id: string | null;
+  account_name: string | null;
+  account_mask: string | null;
+  institution_name: string | null;
+};
+
+export type DriftAlertsResponse = {
+  rows: DriftAlert[];
+  total_count: number;
+};
+
+export function getDriftAlerts(companyId: string, resolved = false) {
+  return apiRequest<DriftAlertsResponse>(
+    `/api/v1/banking/drift-alerts?${q(companyId)}&resolved=${resolved ? "true" : "false"}`
+  );
+}
+
+export function resolveDriftAlert(alertId: string, companyId: string, note: string) {
+  return apiRequest<{ id: string; resolved: boolean }>(`/api/v1/banking/drift-alerts/${alertId}/resolve?${q(companyId)}`, {
+    method: "POST",
+    body: { operating_company_id: companyId, note },
+  });
+}
+
 export type FactoringVirtualCompany = {
   id: string;
   display_name: string;

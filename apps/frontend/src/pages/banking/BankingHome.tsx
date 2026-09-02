@@ -30,6 +30,7 @@ import { useAuth } from "../../auth/useAuth";
 import { ManageAccountsModal } from "./components/ManageAccountsModal";
 import { AccountTilesRow } from "./components/AccountTilesRow";
 import { SyncStatusStrip } from "./components/SyncStatusStrip";
+import { DriftAlertsPanel } from "./components/DriftAlertsPanel";
 import { getQboConnectionStatus } from "../../api/forensic";
 import { ManualJEModal } from "../accounting/ManualJEModal";
 import { BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
@@ -393,6 +394,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           to: BANKING_TAB_PATH[tab.id],
         }))}
       />
+      {/* GO-20 slice A — "Blocks the highest-value card on the owner home page after 425C." Shown
+          regardless of the active sub-tab, same as the highest-priority attention surface should be. */}
+      <DriftAlertsPanel companyId={companyId} />
       {kpiQuery.isError || tilesQuery.isError || uncategorizedQuery.isError ? <ListErrorBanner onRetry={() => void uncategorizedQuery.refetch()} /> : null}
       <PlaidSyncStatusPanel operatingCompanyId={companyId} />
       <PlaidLink
