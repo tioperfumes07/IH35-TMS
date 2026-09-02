@@ -1,2 +1,2 @@
-# FEED NOW — CC-2 · 2026-09-01 21:19 CT
-FORCE NOW | READ INBOX-CC-2 | verify-live escrow after CC-1 OR SUBLEDGER-GL-TIEOUT · not watch | GO
+# FEED NOW — CC-2 · 2026-09-01 21:40 CT
+FORCE NOW | READ INBOX-CC-2 | grep #19428 before verify-static · escrow verify-live after CC-1 | GO

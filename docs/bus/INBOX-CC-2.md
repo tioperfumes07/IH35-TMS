@@ -1,15 +1,17 @@
-# INBOX-CC-2 · LEAD TOP 2026-09-01 21:19 CT · FORCE VERIFY-LIVE (NOT WATCH)
+# INBOX-CC-2 · LEAD TOP 2026-09-01 21:40 CT · GO-18 VERIFY
 
 `git pull --ff-only origin main`
 
+**Paste:** `docs/bus/PASTE-ALL-SEATS-GO-18-LOAD-COSTS-2026-09-01.md`
+
 ## VOID
-- Watching INBOX / babysitting stale verify-static. **Not a card.**
-- Inventing 24 or 991 guards. Measured: crash class = **2**. Do not re-audit 37.
+- Re-diagnosing verify-static dead-port **without grepping #19428**. Unset DATABASE_URL + dead-port selftest already in `scripts/verify-static.mjs` on that merge.
+- Inventing 24 guards. Crash class = **2**.
+- Repair/zero escrow. `--watch`. `trigger_deploy`. Seat fixtures.
 
-## NOW (FORCE) — pick one, execute, OUTBOX
-1. **If CC-1 posted escrow forensic this hour:** verify-live only. Never build the repair. Never zero.
-2. **Else:** `SUBLEDGER-GL-TIEOUT-EVERY-CONTROL` verify-live card (board OPEN · routed=CC-2). Report every control. Shadow daily. Do not invent GL.
+## NOW
+1. After CC-1 escrow report: **verify-live only**.
+2. Grep `#19428` / `verify-static.mjs` UNSET DATABASE_URL **before** any new static card.
+3. Then GO-18: verify F+R load↔expense↔bill↔JE↔bank match after CC-1 schema. Empty TMS expected.
 
-Never `trigger_deploy`. Never seat fixtures.
-
-ACK `CC-2 | ACK | NOW=verify-live escrow after CC-1 OR SUBLEDGER-GL-TIEOUT · no watch | GO`
+ACK `CC-2 | ACK | NOW=verify-live escrow AFTER CC-1 · grep #19428 BEFORE re-diagnose dead-port · THEN GO-18 F+R · NEVER repair/zero · NEVER --watch | GO`

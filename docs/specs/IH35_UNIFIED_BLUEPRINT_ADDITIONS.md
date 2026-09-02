@@ -1983,3 +1983,16 @@ Source: Jorge chat 2026-09-01 (GO-16 lane miles + Book Load).
 **Every operator-facing string is English spelling.** Never show snake_case, kebab-case, enum codes, or raw tokens (`miles_practical`, `check_zip`, `lane_history`, `1/1` as a code dump). Show “Practical miles”, “Short miles”, “Empty miles”, “Check ZIP”, “Lane history”, “High”, “Thin”. Database columns and API keys stay machine names on the wire only. City names display in proper title case (Fort Worth, Hauppauge), never seed ALL CAPS or misspellings.
 
 **Lane history fills boxes only when the seed says it is safe (`autofill_allowed`).** High-confidence tight lanes (example: Laredo to Denton) fill Practical / Short / Empty from `catalogs.lane_mileage`. Check ZIP and Thin lanes show an English hint and leave the boxes empty. Reverse-direction history is a labeled hint, never a silent swap. Same-city (Laredo to Laredo) is no suggestion. Reuse `mdata.loads.miles_practical` and `miles_shortest`; do not add a second mileage pair. Never rebuild lane statistics from Pay ÷ RPM without the team flag (`mdata.driver_teams`). Never wait on PC*MILER. Never derive short miles from a practical ratio.
+
+---
+
+## 17. Load Costs tab + Costs Board (owner 2026-09-01 · GO-18)
+
+Source: Jorge chat 2026-09-01 (Load Costs / lineage completeness). Design download: `docs/lockdown/GO-18-LOAD-COSTS-DESIGN.md` + `.html`. Map: `docs/lockdown/GO-18-LOAD-COSTS-AND-LINEAGE-MAP.md`.
+
+**Costs is the 13th tab on load detail** (after the existing twelve in `LoadDetailDrawer`). **Costs Board** is a dispatch home of cost completeness, not a second load page — row click opens that same tab.
+
+Costs **must write the same Accounting Expense and Bill posters and drawers** (`POST /api/v1/expenses`, existing create-bill, `ParityDrawer`). Never a `dispatch.load_costs` table. Never a silent Expense vs Bill default — operator chooses. Bill due date = bill_date + 30 days unless canonical payment terms. Forward and reverse: load ↔ expense/bill ↔ JE ↔ bank match. Expense path already stamps load/vendor/driver/truck/trailer; bill header must gain driver/trailer; `bill_lines` must gain `load_required` like `expense_lines`.
+
+Approximate pre-settlement margin may show on the Costs tab (typed linehaul minus linked costs minus estimated driver pay), labeled Approximate · before settlement. GO-17 Save proof later lists costs created from the load. Do not invent bank GL rules for unmatched feed density. Architectural-design tab count updates in the implementation PR that mounts the tab (Rule 05).
+
