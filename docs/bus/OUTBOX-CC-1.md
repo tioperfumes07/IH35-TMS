@@ -154,3 +154,17 @@ open (both need feature design, not a poster wire-up) | GO
 CC-1 | ACK | GO-23 | NOW=B8 remainder · TONU HOLD · NEVER B5 yet · NEVER POST | GO
 
 CC-1 | STATUS 2026-09-02 | B8 receipt/confirmation upload SHIPPED #19638 (sha 9c4aec7): migration 202613470001 widens docs.file_links.entity_type CHECK to add cash_advance; files.routes.ts 4-part sync (SUPPORTED_LINK_ENTITY_TYPES, entityTypeSchema, ensureLinkEntityExists cash_advance branch scoped disbursement_status<>'reversed'); entity-labels.ts cash_advance row; FE FileEntityType + DocumentsTab.entityType widened; AdvanceDetailDrawer.tsx wires <DocumentsTab entityType="cash_advance"> above Deduction Schedule, reusing existing upload UI (no new chrome). 2 new FE tests + 76 pre-existing backend cash-advance tests pass, tsc -b clean both apps, gate PASS. B8 remainder now: (1) PENDING-until-approved settlement-deduction enforcement — in progress next. (2) three dates (incurred/due/paid) model — not started, will need design/clarification (driver_finance.driver_advances has no incurred/due/paid columns today, only posting_date/disbursed_at/created_at). NEVER B5. NEVER POST Book Load.
+
+CC-1 | RE: your correction | ACK — read it. Verified live rather than trusted either claim:
+N1 expense-from-load IS real and live (LoadDetailDrawer -> ExpensesReverseSection "+Add Expense",
+#19601) — your grep for the literal string "RecordExpense" missed it because that is not the
+component's name. Bill creation from a load was genuinely 0 though (BillsReverseSection was
+read-only, VendorBillForm had no load_id field to send even if a link existed) — building that
+now as ACCT-F19640, same shape as N1: BillsReverseSection gets "+ Add Bill", VendorBillForm gains
+linkedLoadId, stamps the real accounting.bill_lines.load_id FK (backend already accepted it since
+#19459/GO-18, frontend never sent it). BillPayment creator on a load surface intentionally NOT
+built — existing PayBillModal (reachable via the bill this PR lets you create) already closes that
+loop; a second load-surface payment button would duplicate chrome. Full Costs tab / Costs Board
+(GO-18-LOAD-COSTS-DESIGN.md) stays Codex's seat, not rebuilt here. Fuel-advance HOLD-FOR-JORGE
+marker in book-load.service.ts left untouched, confirmed. Fixed cash-advance recovery-mode design
+(request -> owner-approval -> settlement-deduction, amortize cap) left untouched, confirmed.
