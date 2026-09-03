@@ -9,6 +9,9 @@ const files = {
   routes: "apps/backend/src/accounting/audit-trail/routes.ts",
   api: "apps/frontend/src/api/accounting.ts",
   panel: "apps/frontend/src/components/accounting/MoneyProofTrailPanel.tsx",
+  page: "apps/frontend/src/pages/accounting/MoneyProofTrailPage.tsx",
+  manifest: "apps/frontend/src/routes/manifest.tsx",
+  subnav: "apps/frontend/src/pages/accounting/subnav-manifest.ts",
 };
 const mounts = {
   invoice: "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
@@ -38,6 +41,11 @@ function audit(override = {}) {
   if (!source.api.includes("function getMoneyProofTrail")) errors.push("frontend API client is missing");
   if (!/kind="journal_entry"/.test(source.panel)) errors.push("proof panel must click through to the ledger JE");
   if (!source.panel.includes("No ledger posting exists for this document.")) errors.push("proof panel must expose honest unposted state");
+  if (!source.manifest.includes('path="/accounting/proof-trail"')) errors.push("proof trail has no mounted menu landing route");
+  if (!source.subnav.includes('{ label: "Proof trail", path: "/accounting/proof-trail", section: "more" }')) errors.push("proof trail has no Accounting menu path");
+  for (const path of ["/accounting/bills", "/accounting/expenses/list", "/accounting/invoices", "/accounting/payments", "/driver-finance/settlements", "/accounting/load-costs"]) {
+    if (!source.page.includes(`[\"${path}\"]`) && !source.page.includes(`\"${path}\"`)) errors.push(`proof trail landing is missing browse destination ${path}`);
+  }
   for (const [type, rel] of Object.entries(mounts)) {
     const text = override[rel] ?? read(rel);
     const panelMount = text.includes("MoneyProofTrailPanel") && text.includes(`documentType="${type}"`);
@@ -56,10 +64,16 @@ function fail(errors) {
 if (process.argv.includes("--selftest")) {
   const service = read(files.service);
   const panel = read(files.panel);
+  const manifest = read(files.manifest);
+  const subnav = read(files.subnav);
+  const page = read(files.page);
   const plants = [
     { service: service.replace("p.source_trace_key = $4::text", "p.source_trace_key = ''") },
     { service: service.replace("  settlement: {", "  settlement_removed: {") },
     { panel: panel.replace('kind="journal_entry"', 'kind="invoice"') },
+    { manifest: manifest.replace('path="/accounting/proof-trail"', 'path="/accounting/proof-trail-hidden"') },
+    { subnav: subnav.replace('{ label: "Proof trail", path: "/accounting/proof-trail", section: "more" }', '{ label: "Proof trail", path: "/accounting/posting-lineage", section: "more" }') },
+    { page: page.replace('["Bills", "/accounting/bills"]', '["Bills", "/accounting/missing-bills"]') },
   ];
   for (const plant of plants) if (audit(plant).length === 0) fail(["selftest planted mutation escaped"]);
   console.log(`verify-money-proof-trail-click-to-ledger SELFTEST PASS (${plants.length}/${plants.length})`);
