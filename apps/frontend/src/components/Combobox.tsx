@@ -401,6 +401,20 @@ export function Combobox({
       event.stopPropagation();
       closeListbox();
     }
+    if (event.key === "Tab" && open) {
+      // BUS-HARD-WAKE-COMBOBOX-TAB-F5: handleKeyDown had no Tab case. VERIFIED before writing
+      // this: handleInputBlur (above) ALREADY closes the listbox on Tab -- it runs on every blur,
+      // deferred one tick (`window.setTimeout(..., 0)`) so a listbox-option mousedown can still
+      // commit first. Combobox.test.tsx's new Tab case (added to the existing "Combobox
+      // dismissal" describe block) passes identically with this handler present or removed --
+      // it does not discriminate a real regression here, so the originally-reported "portal
+      // option buttons can trap keyboard" was very likely already prevented by that blur path,
+      // not a live, reproduced trap. This handler is a real but narrower improvement: it closes
+      // SYNCHRONOUSLY on keydown instead of one tick later on blur, so `aria-expanded` cannot
+      // read stale-true for even a frame after Tab. No preventDefault -- the browser still
+      // advances focus to the next tabbable element exactly as it would with no listbox at all.
+      closeListbox();
+    }
   }
 
   const listbox =
