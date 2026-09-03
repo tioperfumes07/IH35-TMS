@@ -1,6 +1,6 @@
 {
   "healthzSha": "629f6c9",
-  "generated_at": "2026-09-03T23:22:40.341Z",
+  "generated_at": "2026-09-03T23:27:32.046Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 20166,
+      "title": "FINDING: SAFETY-CDL-INTAKE-STATUS-COLUMN-READY-CC1-MUST-AUTHOR",
+      "state": "merged",
+      "mergedAtCt": "09/03/2026, 06:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20166",
+      "sha": "af55045482",
+      "committedAtIso": "2026-09-03T18:26:49-05:00"
+    },
+    {
       "number": 20165,
       "title": "FINDING: BANK-F9998",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20160",
       "sha": "f50bc9833f",
       "committedAtIso": "2026-09-03T17:59:20-05:00"
-    },
-    {
-      "number": 20159,
-      "title": "FINDING: SAFETY-DQF-CATALOG-AUDITED-AGAINST-FMCSA-REGS",
-      "state": "merged",
-      "mergedAtCt": "09/03/2026, 05:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20159",
-      "sha": "8ef5d700fa",
-      "committedAtIso": "2026-09-03T17:57:43-05:00"
     }
   ]
 }
