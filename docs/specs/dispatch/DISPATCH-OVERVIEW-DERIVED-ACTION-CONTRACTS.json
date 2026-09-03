@@ -23,7 +23,7 @@
       "id": "units-available",
       "label": "Units available",
       "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
-      "required_tokens": ["unitsAvailable", "to=\"/dispatch?view=loads\""]
+      "required_tokens": ["unitsAvailable", "to=\"/dispatch#unassigned-units\"", "id=\"unassigned-units\""]
     },
     {
       "id": "units-needing-return",
