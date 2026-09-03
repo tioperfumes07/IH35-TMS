@@ -107,6 +107,11 @@ describe("disburseCashAdvanceSplit — C6 bill_payment leg GL poster", () => {
       if (sql.includes("INSERT INTO accounting.bill_payments")) return { rows: [{ id: BILL_PAYMENT_ID }] };
       if (sql.includes("FROM catalogs.accounts")) return { rows: [{ id: "acct-117" }] };
       if (sql.includes("SELECT is_sample_data FROM mdata.loads")) return { rows: [{ is_sample_data: false }] };
+      // N1 — generateExpenseNumber's own queries (expense_attribution.expense_seq_per_load atomic
+      // upsert-counter, then the load's own number to format against).
+      if (sql.includes("INSERT INTO expense_attribution.expense_seq_per_load")) return { rows: [] };
+      if (sql.includes("UPDATE expense_attribution.expense_seq_per_load")) return { rows: [{ last_seq: 1 }] };
+      if (sql.includes("SELECT load_number") && sql.includes("FROM mdata.loads")) return { rows: [{ load_number: "13508" }] };
       if (sql.includes("INSERT INTO accounting.expenses")) return { rows: [{ id: "exp-1" }] };
       if (sql.includes("INSERT INTO accounting.expense_lines")) return { rows: [] };
       if (sql.includes("events.log_event")) return { rows: [] };
@@ -149,5 +154,35 @@ describe("disburseCashAdvanceSplit — C6 bill_payment leg GL poster", () => {
     const result = await disburseCashAdvanceSplit(ACTOR, OPCO, { advance_id: ADVANCE_ID, splits });
     expect(result.ok).toBe(true);
     expect(mockPostSourceTransactionInClientTx).toHaveBeenCalledTimes(1);
+  });
+
+  it("N1: the lumper_expense leg mints a real expense_number via the canonical load-scoped generator, never NULL", async () => {
+    const calls: { sql: string; values?: unknown[] }[] = [];
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      calls.push({ sql, values });
+      if (sql.includes("SELECT set_config")) return { rows: [] };
+      if (sql === "BEGIN" || sql === "COMMIT" || sql === "ROLLBACK") return { rows: [] };
+      if (sql.includes("FROM driver_finance.driver_advances")) return { rows: [{ amount: "400.00" }] };
+      if (sql.includes("SELECT is_sample_data FROM accounting.bills")) return { rows: [{ is_sample_data: false }] };
+      if (sql.includes("INSERT INTO accounting.bill_payments")) return { rows: [{ id: BILL_PAYMENT_ID }] };
+      if (sql.includes("FROM catalogs.accounts")) return { rows: [{ id: "acct-117" }] };
+      if (sql.includes("SELECT is_sample_data FROM mdata.loads")) return { rows: [{ is_sample_data: false }] };
+      if (sql.includes("INSERT INTO expense_attribution.expense_seq_per_load")) return { rows: [] };
+      if (sql.includes("UPDATE expense_attribution.expense_seq_per_load")) return { rows: [{ last_seq: 1 }] };
+      if (sql.includes("SELECT load_number") && sql.includes("FROM mdata.loads")) return { rows: [{ load_number: "13508" }] };
+      if (sql.includes("INSERT INTO accounting.expenses")) return { rows: [{ id: "exp-1" }] };
+      if (sql.includes("INSERT INTO accounting.expense_lines")) return { rows: [] };
+      if (sql.includes("events.log_event")) return { rows: [] };
+      return { rows: [] };
+    });
+
+    const result = await disburseCashAdvanceSplit(ACTOR, OPCO, { advance_id: ADVANCE_ID, splits });
+    expect(result.ok).toBe(true);
+
+    const expenseInsert = calls.find((c) => c.sql.includes("INSERT INTO accounting.expenses"));
+    expect(expenseInsert).toBeTruthy();
+    expect(expenseInsert!.sql).toContain("expense_number");
+    // First mint for this load — LOAD_ID's own number, no "-N" suffix (formatLoadExpenseNumber seq=1).
+    expect(expenseInsert!.values).toContain("13508");
   });
 });
