@@ -44,8 +44,8 @@ function violations(drawer, costs, board, routes, backend, finance, sidebar, dis
   if (!drawer.includes('"Costs",') || !drawer.includes('activeTab === "Costs"') || !drawer.includes("<LoadDetailCostsTab")) errors.push("13th Costs tab is not mounted");
   if (!costs.includes("listExpenses(opco, { load_id: load.id") || !costs.includes("listBills(opco, { load_id: load.id")) errors.push("existing load-scoped expense/bill reads are missing");
   if (!costs.includes('data-cost-driver-column="driver_uuid"') || !costs.includes('data-cost-driver-column="driver_id"')) errors.push("expense.driver_uuid and bill.driver_id identities are not explicit");
-  if (!costs.includes('type CostChoice = "expense" | "bill" | null') || !costs.includes("Choose a cost type to continue.")) errors.push("Expense-or-Bill choice no longer starts with no default");
-  if (costs.includes('method: "POST"') || costs.includes("dispatch.load_costs")) errors.push("Costs tab introduced a writer or parallel ledger");
+  if (!costs.includes('type CostChoice = "expense" | "bill" | null') || !costs.includes("Choose whether this cost was paid now or is owed.")) errors.push("Expense-or-Bill choice no longer starts with no default");
+  if (!costs.includes("createExpense(") || !costs.includes("createVendorBill(") || costs.includes("dispatch.load_costs")) errors.push("Costs tab is not using the canonical expense and bill writers");
   if (!costs.includes("Approximate · before settlement") || !costs.includes("No costs on this load yet.")) errors.push("honest margin or empty-state copy is missing");
   if (!board.includes('data-testid="load-costs-title"') || !board.includes('?tab=Costs`')) errors.push("Accounting Costs board or canonical Costs-tab drill is missing");
   if (!board.includes("/api/v1/accounting/load-costs-board")) errors.push("Costs board is not composed from canonical load/accounting reader");
@@ -81,6 +81,13 @@ function runBookLoadGuard() {
 
 function runBoardManifestGuard() {
   const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "verify-load-costs-board-manifest.mjs");
+  const args = process.argv.includes("--selftest") ? [script, "--selftest"] : [script];
+  const result = spawnSync(process.execPath, args, { stdio: "inherit" });
+  if (result.status !== 0) process.exit(result.status ?? 1);
+}
+
+function runTabManifestGuard() {
+  const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "verify-load-costs-tab-manifest.mjs");
   const args = process.argv.includes("--selftest") ? [script, "--selftest"] : [script];
   const result = spawnSync(process.execPath, args, { stdio: "inherit" });
   if (result.status !== 0) process.exit(result.status ?? 1);
@@ -142,11 +149,13 @@ if (process.argv.includes("--selftest")) {
   console.log(`PASS load-cost reverse-link selftest (${reverseCaught}/${reverseMutations.length})`);
   console.log(`PASS verify-load-detail-costs-tab --selftest (${caught}/${mutations.length})`);
   runBoardManifestGuard();
+  runTabManifestGuard();
   runBookLoadGuard();
 } else {
   check(drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage);
   checkReverse(billsReverse, driverProfile, trailerProfile);
   console.log("PASS verify-load-detail-costs-tab");
   runBoardManifestGuard();
+  runTabManifestGuard();
   runBookLoadGuard();
 }
