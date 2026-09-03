@@ -17,6 +17,7 @@ import {
 } from "../integrations/fmcsa/errors.js";
 import { verifyCustomerWithSafer } from "../integrations/fmcsa/safer.service.js";
 import { decrypt, encrypt } from "../lib/encryption.js";
+import { repairUtf8Mojibake } from "../lib/repair-utf8-mojibake.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
 import { enqueueTmsCustomerPushRequested } from "../qbo/tms-customer-push-chain.service.js";
 import { listActiveCustomerClassifications } from "./classification-queries.js";
@@ -662,7 +663,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const parsedBody = createCustomerBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
-    const normalizedName = b.legal_name ?? b.name ?? "";
+    const normalizedName = repairUtf8Mojibake(b.legal_name ?? b.name ?? "");
     const normalizedCode = b.code ?? b.customer_code;
     const normalizedCustomerType = normalizeCustomerType(b.customer_type);
     // Resolve the operating company BEFORE the dedup check so the check is entity-scoped (G6-3).
@@ -1038,7 +1039,10 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       values.push(val);
       setParts.push(`${col} = $${values.length}`);
     };
-    if ("name" in b || "legal_name" in b) add("customer_name", b.legal_name ?? b.name ?? null);
+    if ("name" in b || "legal_name" in b) {
+      const nextName = b.legal_name ?? b.name ?? null;
+      add("customer_name", nextName == null ? null : repairUtf8Mojibake(String(nextName)));
+    }
     if ("customer_code" in b || "code" in b) add("customer_code", b.code ?? b.customer_code ?? null);
     if ("email" in b) add("billing_email", b.email ?? null);
     if ("phone" in b) add("billing_phone", b.phone ?? null);
@@ -1360,7 +1364,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         const res = await withLuciaBypass(
           (bypassClient) =>
             bypassClient.query(
-              `UPDATE mdata.customers SET deactivated_at = now(), updated_by_user_id = $2 WHERE id = $1 AND operating_company_id = $3::uuid AND deactivated_at IS NULL RETURNING id, deactivated_at`,
+              `UPDATE mdata.customers SET deactivated_at = now(), status = CASE WHEN status = 'active'::mdata.customer_status THEN 'inactive'::mdata.customer_status ELSE status END, updated_by_user_id = $2 WHERE id = $1 AND operating_company_id = $3::uuid AND deactivated_at IS NULL RETURNING id, deactivated_at`,
               [parsedParams.data.id, authUser.uuid, scopedCompanyId]
             ),
           { actorUserId: authUser.uuid }
@@ -1412,7 +1416,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         const res = await withLuciaBypass(
           (bypassClient) =>
             bypassClient.query(
-              `UPDATE mdata.customers SET deactivated_at = NULL, updated_by_user_id = $2 WHERE id = $1 AND operating_company_id = $3::uuid AND deactivated_at IS NOT NULL RETURNING id, deactivated_at`,
+              `UPDATE mdata.customers SET deactivated_at = NULL, status = CASE WHEN status = 'inactive'::mdata.customer_status THEN 'active'::mdata.customer_status ELSE status END, updated_by_user_id = $2 WHERE id = $1 AND operating_company_id = $3::uuid AND deactivated_at IS NOT NULL RETURNING id, deactivated_at`,
               [parsedParams.data.id, authUser.uuid, scopedCompanyId]
             ),
           { actorUserId: authUser.uuid }

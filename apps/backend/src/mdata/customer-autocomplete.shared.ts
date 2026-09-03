@@ -8,6 +8,7 @@ export type CustomerAutocompleteRow = {
   id: string;
   qbo_id: string;
   display_name: string;
+  customer_code?: string;
   primary_email: string | null;
   primary_phone: string | null;
   mc_number: string | null;
@@ -24,7 +25,9 @@ export async function searchCustomersForAutocomplete(
   }
 ): Promise<CustomerAutocompleteRow[]> {
   const term = args.term.trim();
-  const prefix = term.length > 0 ? `${term}%` : "%";
+  const contains = term.length > 0 ? `%${term}%` : "%";
+  const folded = term.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  const containsFolded = folded.length > 0 ? `%${folded}%` : "%";
   // GO-21/GO-23 A2 remainder: the picker itself surfaces truncation honestly (CappedListNotice),
   // but a 100-row hard clamp against ~2,700 prod customers meant a broad or common search term
   // (e.g. a common surname, or no term at all) could still legitimately exceed the cap with the
@@ -36,12 +39,18 @@ export async function searchCustomersForAutocomplete(
   const limit = Math.max(1, Math.min(args.limit ?? 25, 2000));
   const activeOnly = args.active_only !== false;
 
+  // ACTIVE PREDICATE (one, everywhere): deactivated_at IS NULL.
+  // Same as GET /customers?status=active and the Customers roster tabs.
+  // status is credit/ops (active|inactive|credit_hold|blacklist), not liveness.
+  // POST /deactivate used to stamp deactivated_at only, leaving the status enum unchanged.
+
   const res = await client.query<CustomerAutocompleteRow>(
     `
       SELECT
         c.id,
         COALESCE(c.qbo_customer_id, '') AS qbo_id,
         c.customer_name AS display_name,
+        COALESCE(c.customer_code, '') AS customer_code,
         c.billing_email AS primary_email,
         c.billing_phone AS primary_phone,
         c.mc_number,
@@ -63,6 +72,16 @@ export async function searchCustomersForAutocomplete(
           OR COALESCE(c.customer_code, '') ILIKE $4
           OR COALESCE(c.mc_number, '') ILIKE $4
           OR COALESCE(c.billing_email, '') ILIKE $4
+          OR translate(
+            lower(c.customer_name),
+            'áàäâãåéèëêíìïîóòöôõúùüûñçýÿ',
+            'aaaaaaeeeeiiiiooooouuuuncyy'
+          ) ILIKE $5
+          OR translate(
+            lower(COALESCE(c.customer_code, '')),
+            'áàäâãåéèëêíìïîóòöôõúùüûñçýÿ',
+            'aaaaaaeeeeiiiiooooouuuuncyy'
+          ) ILIKE $5
         )
       ORDER BY
         CASE
@@ -78,9 +97,9 @@ export async function searchCustomersForAutocomplete(
           plainto_tsquery('english', CASE WHEN length($3::text) >= 3 THEN $3::text ELSE 'zzzunused' END)
         ) DESC NULLS LAST,
         c.customer_name ASC
-      LIMIT $5::int
+      LIMIT $6::int
     `,
-    [args.operating_company_id, activeOnly, term, prefix, limit]
+    [args.operating_company_id, activeOnly, term, contains, containsFolded, limit]
   );
 
   return res.rows;

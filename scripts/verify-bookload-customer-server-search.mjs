@@ -96,6 +96,23 @@ export function collectProblems(root = ROOT) {
   ) {
     problems.push(`${LIVE_WIZARD}: seeded customer option must use customer_name (or id) as label`);
   }
+  const customerKey = liveCode.match(/queryKey:\s*\[[^\]]*book-load-v4-customers-autocomplete[^\]]*\]/);
+  if (customerKey && /trip_type/.test(customerKey[0])) {
+    problems.push(`${LIVE_WIZARD}: customer autocomplete must never include trip_type in the query`);
+  }
+  const auto = readRel(root, "apps/backend/src/mdata/customer-autocomplete.shared.ts") ?? "";
+  if (!auto.includes("`%${term}%`")) {
+    problems.push("customer-autocomplete.shared.ts: search must be substring (%term%), not prefix");
+  }
+  if (!/translate\(\s*lower\(c\.customer_name\)/.test(auto)) {
+    problems.push("customer-autocomplete.shared.ts: name search must be accent-insensitive");
+  }
+  if (!/deactivated_at IS NULL/.test(auto) || /c\.status\s*=/.test(auto)) {
+    problems.push("customer-autocomplete.shared.ts: active predicate must be deactivated_at IS NULL (not status)");
+  }
+  if (/\btrip_type\b/.test(auto)) {
+    problems.push("customer-autocomplete.shared.ts: must not filter by trip_type");
+  }
   return problems;
 }
 
