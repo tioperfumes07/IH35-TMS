@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -60,8 +60,6 @@ import {
   BulkActionBar,
   BulkActionModal,
   BulkProgressDialog,
-  TableSelection,
-  TableSelectionHeader,
   useBulkSelection,
 } from "../../components/bulk";
 import { bulkRowLabelsFromRows, loadBulkRowLabel } from "../../components/bulk/bulkRowLabels";
@@ -91,8 +89,6 @@ import { TriSignalPill } from "../../components/dispatch/TriSignalPill";
 import { UnitsWithoutLoadTable } from "./components/UnitsWithoutLoadTable";
 import { QuickAssignModal } from "./components/QuickAssignModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { TableHeaderCell, useTablePref } from "../../components/table";
-import { useColumnReorder } from "../../components/lists/ListView/hooks/useColumnReorder";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
 
@@ -156,10 +152,6 @@ function persistBoardMode(mode: BoardMode) {
 function readBoardModeFromLocation(): BoardMode {
   if (typeof window === "undefined") return "list";
   return parseBoardMode(new URLSearchParams(window.location.search).get("board"));
-}
-
-function readBoardLoad(load: DispatchLoadRow): BoardLoad {
-  return load as BoardLoad;
 }
 
 function laneSummary(load: DispatchLoadRow) {
@@ -494,8 +486,6 @@ export function DispatchBoard({
     onCapExceeded: (error) => pushToast(error.message, "error"),
   });
 
-  const pageRowIds = useMemo(() => loads.map((load) => load.id), [loads]);
-
   const companyId = operatingCompanyId ?? loads[0]?.operating_company_id ?? "";
   const inlineQuicksaveEnabled = true;
 
@@ -570,12 +560,11 @@ export function DispatchBoard({
     [loads, rowOverrides]
   );
 
-  const { widths: dispatchColWidths, setColumnWidth: setDispatchColWidth, columnOrder: savedColumnOrder, setColumnOrder: persistColumnOrder } = useTablePref("dispatch-board", { pageSize: 200 });
   // BANK-SORT-ROLLOUT-OPS — ?sort=/?dir= URL persistence so a dispatcher's chosen column sort
   // survives a refresh or a shared/bookmarked board link (same contract as ?board= board-mode above).
   // Uses the shared useUrlSort hook (BANK-SORT-ROLLOUT-ACCT); TableHeaderCell wants sortKey as
   // string|null (useUrlSort returns "" when unset), so coerce below.
-  const { sortKey: rawDispatchSortKey, sortDirection: urlDispatchSortDir, toggleSort: toggleDispatchSort } = useUrlSort();
+  const { sortKey: rawDispatchSortKey, sortDirection: urlDispatchSortDir } = useUrlSort();
   const defaultDispatchSort = useMemo(() => readDispatchBoardDefaultSort(companyId), [companyId]);
   const dispatchSortKey = rawDispatchSortKey || defaultDispatchSort.key;
   const dispatchSortDir = rawDispatchSortKey ? urlDispatchSortDir : defaultDispatchSort.direction;
@@ -666,19 +655,6 @@ export function DispatchBoard({
     return [...filtered].sort((a, b) => {
       const cmp = compareDispatch(dispatchSortValue(a, sectionSort.key), dispatchSortValue(b, sectionSort.key));
       return sectionSort.direction === "asc" ? cmp : -cmp;
-    });
-  };
-
-  const toggleSectionSort = (sectionKey: string, columnKey: string) => {
-    setSectionSorts((current) => {
-      const prior = current[sectionKey] ?? { key: dispatchSortKey, direction: dispatchSortDir };
-      return {
-        ...current,
-        [sectionKey]: {
-          key: columnKey,
-          direction: prior.key === columnKey && prior.direction === "asc" ? "desc" : "asc",
-        },
-      };
     });
   };
 
@@ -932,7 +908,7 @@ export function DispatchBoard({
     </div>
   );
 
-  const renderPreSettlementPrompt = (load: DispatchLoadRow, colSpan: number) => {
+  const renderPreSettlementPrompt = (load: DispatchLoadRow) => {
     const effectiveDriverId = rowOverrides[load.id]?.driverId ?? load.assigned_primary_driver_id;
     const openPreSettlement = effectiveDriverId ? openPreSettlementsMap.get(effectiveDriverId) : undefined;
     const showPreSettlementPrompt = Boolean(
@@ -944,33 +920,29 @@ export function DispatchBoard({
     );
     if (!showPreSettlementPrompt || !openPreSettlement) return null;
     return (
-      <tr className="border-b border-slate-200 bg-slate-100">
-        <td colSpan={colSpan} className="px-3 py-1.5">
-          <div className="flex items-center gap-2 text-xs text-slate-700">
-            <span className="font-semibold">Driver has open pre-settlement</span>
-            {openPreSettlement.settlement_number ? (
-              <span className="font-mono text-slate-700">
-                <EntityLink kind="settlement" id={openPreSettlement.settlement_id} label={entityLabel(openPreSettlement.settlement_number, openPreSettlement.settlement_id, "Settlement")} />
-              </span>
-            ) : null}
-            <span className="text-slate-700">· add this load to it?</span>
-            <button
-              type="button"
-              className="rounded-sm bg-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-slate-300"
-              onClick={(event) => {
-                event.stopPropagation();
-                addLoadMutation.mutate({
-                  settlementId: openPreSettlement.settlement_id,
-                  loadId: load.id,
-                  ocId: load.operating_company_id,
-                });
-              }}
-            >
-              Add to it
-            </button>
-          </div>
-        </td>
-      </tr>
+      <div className="flex items-center gap-2 text-xs text-slate-700">
+        <span className="font-semibold">Driver has open pre-settlement</span>
+        {openPreSettlement.settlement_number ? (
+          <span className="font-mono text-slate-700">
+            <EntityLink kind="settlement" id={openPreSettlement.settlement_id} label={entityLabel(openPreSettlement.settlement_number, openPreSettlement.settlement_id, "Settlement")} />
+          </span>
+        ) : null}
+        <span className="text-slate-700">· add this load to it?</span>
+        <button
+          type="button"
+          className="rounded-sm bg-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-slate-300"
+          onClick={(event) => {
+            event.stopPropagation();
+            addLoadMutation.mutate({
+              settlementId: openPreSettlement.settlement_id,
+              loadId: load.id,
+              ocId: load.operating_company_id,
+            });
+          }}
+        >
+          Add to it
+        </button>
+      </div>
     );
   };
 
@@ -1048,35 +1020,20 @@ export function DispatchBoard({
     { key: "samsara_eta", header: "Samsara ETA", cell: (load) => <SamsaraEtaColumn load={load} /> },
     { key: "on_time", header: "On-time", cell: (load) => <OnTimePredictionColumn load={load} /> },
     { key: "eta_freshness", header: "Freshness", cell: (load) => <LiveEtaFreshnessColumn load={load} /> },
+    { key: "pre_settlement", header: "Pre-settlement", cell: (load) => renderPreSettlementPrompt(load) },
   ];
 
-  // List and Table share the same column model (the grid look is identical).
-  const listColumns = boardColumns;
-  const tableColumns = boardColumns;
+  const parityColumns: ParityColumn<BoardLoad>[] = boardColumns.map((column) => ({
+    key: column.key,
+    label: column.header,
+    render: column.cell,
+    sortable: DISPATCH_SORTABLE_COLS.has(column.key),
+    sortValue: DISPATCH_SORTABLE_COLS.has(column.key)
+      ? (load: BoardLoad) => dispatchSortValue(load, column.key)
+      : undefined,
+  }));
 
-  const defaultColumnKeys = useMemo(() => boardColumns.map((column) => column.key), [boardColumns]);
-  const { order: columnOrder, setOrder: setColumnOrder, dragHandleProps, dragOverId } = useColumnReorder(
-    savedColumnOrder.length > 0 ? savedColumnOrder : defaultColumnKeys
-  );
-
-  useEffect(() => {
-    if (savedColumnOrder.length > 0) setColumnOrder(savedColumnOrder);
-  }, [savedColumnOrder, setColumnOrder]);
-
-  useEffect(() => {
-    if (columnOrder.length > 0) persistColumnOrder(columnOrder);
-  }, [columnOrder, persistColumnOrder]);
-
-  const orderColumns = (columns: typeof boardColumns) => {
-    const byKey = new Map(columns.map((column) => [column.key, column]));
-    const keys = columnOrder.length > 0 ? columnOrder : columns.map((column) => column.key);
-    return keys.map((key) => byKey.get(key)).filter((column): column is (typeof boardColumns)[number] => Boolean(column));
-  };
-
-  const orderedListColumns = useMemo(() => orderColumns(listColumns), [listColumns, columnOrder]);
-  const orderedTableColumns = useMemo(() => orderColumns(tableColumns), [tableColumns, columnOrder]);
-
-  const renderListOrTable = (columns: typeof listColumns) => {
+  const renderListOrTable = () => {
     if (listError) {
       return (
         <ListErrorState
@@ -1088,7 +1045,7 @@ export function DispatchBoard({
       );
     }
 
-    if (!loading && sortedLoads.length === 0) {
+    if (!loading && boardSections.every((section) => section.rows.length === 0)) {
       return (
         <div className="rounded-sm border border-gray-200 bg-white p-6 text-sm text-gray-500">
           No loads match your filters.{" "}
@@ -1098,6 +1055,15 @@ export function DispatchBoard({
         </div>
       );
     }
+
+    const handleRowClick = (row: BoardLoad) => {
+      const unitId = unitIdFromBoardRowId(row.id);
+      if (unitId && onBookForUnit) {
+        onBookForUnit(unitId);
+      } else if (!unitId && onRowClick) {
+        onRowClick(row.id);
+      }
+    };
 
     return (
       <section className="space-y-2">
@@ -1144,206 +1110,102 @@ export function DispatchBoard({
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-          <TableSelection
-            rows={sortedLoads}
-            getId={(load) => load.id}
-            selectedIds={selection.selectedIds}
-            onSelectionChange={selection.setSelectedIds}
-            pageRowIds={pageRowIds}
-            onCapExceeded={(message) => pushToast(message, "error")}
-          >
-            {(selectCtx) => (
-              <table className="w-full text-sm">
-                {isHistoryBoard ? (
-                  <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-                    <tr>
-                      <th className="w-10 px-2 py-2">
-                        <TableSelectionHeader
-                          selectedIds={selection.selectedIds}
-                          pageRowIds={pageRowIds}
-                          onSelectionChange={selection.setSelectedIds}
-                          onCapExceeded={(message) => pushToast(message, "error")}
-                        />
-                      </th>
-                      {columns.map((column) => (
-                        <TableHeaderCell
-                          key={column.key}
-                          columnKey={column.key}
-                          label={column.header}
-                          sortable={DISPATCH_SORTABLE_COLS.has(column.key)}
-                          sortKey={dispatchSortKey}
-                          sortDir={dispatchSortDir}
-                          onToggleSort={toggleDispatchSort}
-                          width={dispatchColWidths[column.key]}
-                          onResize={setDispatchColWidth}
-                          draggable
-                          dragHandleProps={dragHandleProps(column.key)}
-                          dragOver={dragOverId === column.key}
-                        />
-                      ))}
-                    </tr>
-                  </thead>
+        {boardSections.map((section) => {
+          const allRows = section.rows;
+          const rows = visibleSectionRows(section.key, allRows);
+          const sectionSort = sectionSorts[section.key] ?? { key: dispatchSortKey, direction: dispatchSortDir };
+          const sectionLoading =
+            section.key === "awaiting"
+              ? unitsWithoutLoadQuery.isLoading
+              : section.key === "in_shop"
+                ? inShopUnitsQuery.isLoading
+                : loading;
+          return (
+            <div key={section.key} className="space-y-1">
+              <div
+                className="flex items-center justify-between gap-3 rounded-sm border-b border-gray-200 bg-gray-100 px-3 py-1.5"
+                data-testid={`dispatch-board-section-${section.key}`}
+              >
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                  {section.title}
+                  <span className="ml-2 rounded-full bg-white px-1.5 text-xs font-bold text-gray-500">
+                    {rows.length}{rows.length === allRows.length ? "" : ` of ${allRows.length}`}
+                  </span>
+                </div>
+                {!isHistoryBoard ? (
+                  <label className="flex items-center gap-2 text-xs font-medium normal-case tracking-normal text-gray-600">
+                    Filter {section.title}
+                    <input
+                      type="search"
+                      value={sectionFilters[section.key] ?? ""}
+                      onChange={(event) => setSectionFilters((current) => ({ ...current, [section.key]: event.target.value }))}
+                      placeholder={`Search ${section.title.toLocaleLowerCase()}`}
+                      className="w-48 rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-normal text-gray-900"
+                      data-testid={`dispatch-board-filter-${section.key}`}
+                    />
+                  </label>
                 ) : null}
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={columns.length + 1} className="px-3 py-3 text-gray-400">
-                        Loading loads...
-                      </td>
-                    </tr>
-                  ) : (
-                    // DSP-04 — every LIVE partition owns its filter and repeated sortable header.
-                    // Column order/width remain shared because they describe the same record shape;
-                    // row visibility and sort direction are section-local so operating one queue
-                    // cannot silently reorder or hide another queue.
-                    boardSections.map((section) => {
-                      const allRows = section.rows;
-                      const rows = visibleSectionRows(section.key, allRows);
-                      const sectionSort = sectionSorts[section.key] ?? { key: dispatchSortKey, direction: dispatchSortDir };
-                      return (
-                        <Fragment key={section.key}>
-                          <tr className="border-b border-gray-200 bg-gray-100" data-testid={`dispatch-board-section-${section.key}`}>
-                            <td colSpan={columns.length + 1} className="px-3 py-1.5">
-                              <div className="flex items-center justify-between gap-3">
-                                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">
-                                  {section.title}
-                                  <span className="ml-2 rounded-full bg-white px-1.5 text-xs font-bold text-gray-500">
-                                    {rows.length}{rows.length === allRows.length ? "" : ` of ${allRows.length}`}
-                                  </span>
-                                </div>
-                                {!isHistoryBoard ? (
-                                  <label className="flex items-center gap-2 text-xs font-medium normal-case tracking-normal text-gray-600">
-                                    Filter {section.title}
-                                    <input
-                                      type="search"
-                                      value={sectionFilters[section.key] ?? ""}
-                                      onChange={(event) => setSectionFilters((current) => ({ ...current, [section.key]: event.target.value }))}
-                                      placeholder={`Search ${section.title.toLocaleLowerCase()}`}
-                                      className="w-48 rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-normal text-gray-900"
-                                      data-testid={`dispatch-board-filter-${section.key}`}
-                                    />
-                                  </label>
-                                ) : null}
-                              </div>
-                            </td>
-                          </tr>
-                          {!isHistoryBoard ? (
-                            <tr className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-600" data-testid={`dispatch-board-headers-${section.key}`}>
-                              <th className="w-10 px-2 py-2" aria-label={`${section.title} selection`}>
-                                <TableSelectionHeader
-                                  selectedIds={selection.selectedIds}
-                                  pageRowIds={rows.map((row) => row.id)}
-                                  onSelectionChange={selection.setSelectedIds}
-                                  onCapExceeded={(message) => pushToast(message, "error")}
-                                />
-                              </th>
-                              {columns.map((column) => (
-                                <TableHeaderCell
-                                  key={column.key}
-                                  columnKey={column.key}
-                                  label={column.header}
-                                  sortable={DISPATCH_SORTABLE_COLS.has(column.key)}
-                                  sortKey={sectionSort.key}
-                                  sortDir={sectionSort.direction}
-                                  onToggleSort={(columnKey) => toggleSectionSort(section.key, columnKey)}
-                                  width={dispatchColWidths[column.key]}
-                                  onResize={setDispatchColWidth}
-                                />
-                              ))}
-                            </tr>
-                          ) : null}
-                          {section.key === "in_shop" && inShopUnitsQuery.isError ? (
-                            <tr className="border-b border-gray-100">
-                              <td colSpan={columns.length + 1} className="px-3 py-2">
-                                <ListErrorState
-                                  title="Couldn't load in-shop units"
-                                  status={(inShopUnitsQuery.error as { status?: number } | null)?.status ?? 0}
-                                  message={
-                                    inShopUnitsQuery.error instanceof Error
-                                      ? inShopUnitsQuery.error.message
-                                      : "In-shop unit feed failed"
-                                  }
-                                  onRetry={() => void inShopUnitsQuery.refetch()}
-                                  className="py-4"
-                                />
-                              </td>
-                            </tr>
-                          ) : null}
-                          {section.key === "awaiting" && unitsWithoutLoadQuery.isError ? (
-                            <tr className="border-b border-gray-100">
-                              <td colSpan={columns.length + 1} className="px-3 py-2">
-                                <ListErrorState
-                                  title="Couldn't load unassigned units"
-                                  status={(unitsWithoutLoadQuery.error as { status?: number } | null)?.status ?? 0}
-                                  message={
-                                    unitsWithoutLoadQuery.error instanceof Error
-                                      ? unitsWithoutLoadQuery.error.message
-                                      : "Unassigned-unit feed failed"
-                                  }
-                                  onRetry={() => void unitsWithoutLoadQuery.refetch()}
-                                  className="py-4"
-                                />
-                              </td>
-                            </tr>
-                          ) : null}
-                          {section.placeholder &&
-                          allRows.length === 0 &&
-                          !(section.key === "in_shop" && inShopUnitsQuery.isError) &&
-                          !(section.key === "awaiting" && unitsWithoutLoadQuery.isError) ? (
-                            <tr className="border-b border-gray-100">
-                              <td colSpan={columns.length + 1} className="px-3 py-2 text-[11px] italic text-gray-400">
-                                {section.placeholder}
-                              </td>
-                            </tr>
-                          ) : null}
-                          {allRows.length > 0 && rows.length === 0 ? (
-                            <tr className="border-b border-gray-100">
-                              <td colSpan={columns.length + 1} className="px-3 py-2 text-[11px] italic text-gray-500">
-                                No {section.title.toLocaleLowerCase()} rows match this section filter.
-                              </td>
-                            </tr>
-                          ) : null}
-                          {rows.map((load) => {
-                            const boardLoad = readBoardLoad(load);
-                            const unitId = unitIdFromBoardRowId(load.id);
-                            const onUnitBook = unitId && onBookForUnit ? () => onBookForUnit(unitId) : undefined;
-                            return (
-                              <Fragment key={load.id}>
-                                <tr
-                                  onClick={() => {
-                                    if (onUnitBook) onUnitBook();
-                                    else if (!unitId) onRowClick(load.id);
-                                  }}
-                                  className={`border-b border-gray-100 hover:bg-gray-50 ${onUnitBook || !unitId ? "cursor-pointer" : ""}`}
-                                >
-                                  <td className="px-2 py-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
-                                    <input
-                                      type="checkbox"
-                                      aria-label={`Select load ${load.load_number}`}
-                                      checked={selectCtx.isSelected(load.id)}
-                                      onChange={() => selectCtx.toggle(load.id)}
-                                    />
-                                  </td>
-                                  {columns.map((column) => (
-                                    <td key={column.key} className="px-3 py-1 text-[11px] leading-tight">
-                                      {column.cell(boardLoad)}
-                                    </td>
-                                  ))}
-                                </tr>
-                                {renderPreSettlementPrompt(load, columns.length + 1)}
-                              </Fragment>
-                            );
-                          })}
-                        </Fragment>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            )}
-          </TableSelection>
-        </div>
+              </div>
+
+              {section.key === "in_shop" && inShopUnitsQuery.isError ? (
+                <ListErrorState
+                  title="Couldn't load in-shop units"
+                  status={(inShopUnitsQuery.error as { status?: number } | null)?.status ?? 0}
+                  message={
+                    inShopUnitsQuery.error instanceof Error
+                      ? inShopUnitsQuery.error.message
+                      : "In-shop unit feed failed"
+                  }
+                  onRetry={() => void inShopUnitsQuery.refetch()}
+                  className="py-4"
+                />
+              ) : null}
+              {section.key === "awaiting" && unitsWithoutLoadQuery.isError ? (
+                <ListErrorState
+                  title="Couldn't load unassigned units"
+                  status={(unitsWithoutLoadQuery.error as { status?: number } | null)?.status ?? 0}
+                  message={
+                    unitsWithoutLoadQuery.error instanceof Error
+                      ? unitsWithoutLoadQuery.error.message
+                      : "Unassigned-unit feed failed"
+                  }
+                  onRetry={() => void unitsWithoutLoadQuery.refetch()}
+                  className="py-4"
+                />
+              ) : null}
+
+              <ParityTable
+                columns={parityColumns}
+                rows={rows}
+                rowKey={(row) => row.id}
+                loading={sectionLoading}
+                emptyText={
+                  allRows.length === 0
+                    ? (section.placeholder ?? "No rows.")
+                    : `No ${section.title.toLocaleLowerCase()} rows match this section filter.`
+                }
+                onRowClick={handleRowClick}
+                selectable
+                selectedKeys={Array.from(selection.selectedIds)}
+                onSelectionChange={(keys) => selection.setSelectedIds(new Set(keys))}
+                maxSelectable={200}
+                onSelectionCapExceeded={() => pushToast("Cannot select more than 200 rows.", "error")}
+                sortKey={sectionSort.key}
+                sortDirection={sectionSort.direction}
+                onSortChange={(key, direction) =>
+                  setSectionSorts((current) => ({ ...current, [section.key]: { key, direction } }))
+                }
+                sortMode="external"
+                suppressToolbarSearch
+                suppressToolbarRange
+                hidePager
+                storageKey="dispatch-board"
+                tableTestId={`dispatch-board-section-table-${section.key}`}
+                rowTestId={(row) => `dispatch-board-row-${row.id}`}
+              />
+            </div>
+          );
+        })}
 
         <div className="flex items-center justify-between border-t border-gray-200 pt-2 text-sm">
           <Button type="button" variant="secondary" size="sm" disabled={!hasPrev} onClick={() => onPageChange(Math.max(0, offset - limit))}>
@@ -1631,9 +1493,7 @@ export function DispatchBoard({
 
       {boardMode === "assignment"
         ? renderAssignmentView()
-        : boardMode === "table"
-          ? renderListOrTable(orderedTableColumns)
-          : renderListOrTable(orderedListColumns)}
+        : renderListOrTable()}
 
       <BulkActionModal
         open={statusModalOpen}

@@ -1,6 +1,8 @@
 {
   "healthzSha": "629f6c9",
-  "generated_at": "2026-09-03T23:39:07.565Z",
+
+  "generated_at": "2026-09-03T23:25:46.101Z",
+
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
@@ -2123,87 +2125,7 @@
   },
   "recentActivity": [
     {
-      "number": 20170,
-      "title": "FINDING: unblock FleetTable production build",
-      "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20170",
-      "sha": "a861529601",
-      "committedAtIso": "2026-09-03T18:37:11-05:00"
-    },
-    {
-      "number": 20167,
-      "title": "FINDING: BANK-F9998",
-      "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20167",
-      "sha": "a223f82e4a",
-      "committedAtIso": "2026-09-03T18:35:34-05:00"
-    },
-    {
-      "number": 20169,
-      "title": "FINDING: N/A (docs only, derived-artifact regen)",
-      "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20169",
-      "sha": "5cc7642505",
-      "committedAtIso": "2026-09-03T18:31:44-05:00"
-    },
-    {
-      "number": 20168,
-      "title": "FINDING: N/A (docs only) — owner 72h/96h inventory and defect register on main",
-      "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20168",
-      "sha": "92d4d03bca",
-      "committedAtIso": "2026-09-03T18:30:45-05:00"
-    },
-    {
-      "number": 20166,
-      "title": "FINDING: SAFETY-CDL-INTAKE-STATUS-COLUMN-READY-CC1-MUST-AUTHOR",
-      "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20166",
-      "sha": "af55045482",
-      "committedAtIso": "2026-09-03T18:26:49-05:00"
-    },
-    {
-      "number": 20165,
-      "title": "FINDING: BANK-F9998",
-      "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20165",
-      "sha": "2c39c9754f",
-      "committedAtIso": "2026-09-03T18:19:07-05:00"
-    },
-    {
-      "number": 20164,
-      "title": "FINDING: LST-F10160",
-      "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:17 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20164",
-      "sha": "61dc1a4a30",
-      "committedAtIso": "2026-09-03T18:17:43-05:00"
-    },
-    {
-      "number": 20162,
-      "title": "CC-2-FINDING: BANK-F9998 F6 — unmatch now reverses a posted variance JE",
-      "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20162",
-      "sha": "cacf6a89e7",
-      "committedAtIso": "2026-09-03T18:13:55-05:00"
-    },
-    {
-      "number": 20163,
-      "title": "FINDING: SAFETY-DRIVER-PROFILE-REHIRE-CHAIN-NEVER-SURFACED-IN-UI",
-      "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20163",
-      "sha": "aec9c41801",
-      "committedAtIso": "2026-09-03T18:13:44-05:00"
-    },
-    {
+
       "number": 20161,
       "title": "FINDING: WIZ-22 — four Book Load deletions and miles strip above stops",
       "state": "merged",
@@ -2211,6 +2133,88 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20161",
       "sha": "856c3be8f6",
       "committedAtIso": "2026-09-03T18:10:56-05:00"
+    },
+    {
+      "number": 20153,
+      "title": "FINDING: Fleet column order was fixed and not persisted",
+      "state": "merged",
+      "mergedAtCt": "09/03/2026, 06:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20153",
+      "sha": "629f6c9f85",
+      "committedAtIso": "2026-09-03T18:08:23-05:00"
+    },
+    {
+      "number": 20157,
+      "title": "FINDING: LST-F20306 (GO-19-2b item 3: pre-settlement linking was opt-in and suggest-only, never auto-confirmed)",
+      "state": "merged",
+      "mergedAtCt": "09/03/2026, 06:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20157",
+      "sha": "3b05ce8b1c",
+      "committedAtIso": "2026-09-03T18:04:34-05:00"
+    },
+    {
+      "number": 20156,
+      "title": "CC-2-FINDING: BANK-F9998 F3+F4 — Match drawer excludes reversed JEs and closes the multi-match hole",
+      "state": "merged",
+      "mergedAtCt": "09/03/2026, 06:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20156",
+      "sha": "71d772e0dc",
+      "committedAtIso": "2026-09-03T18:02:37-05:00"
+    },
+    {
+      "number": 20160,
+      "title": "docs(bus): OUTBOX -- item 3 closed + phantom-relation-guard registry fix + entity-scope flag on cited gap figures",
+      "state": "merged",
+      "mergedAtCt": "09/03/2026, 05:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20160",
+      "sha": "f50bc9833f",
+      "committedAtIso": "2026-09-03T17:59:20-05:00"
+    },
+    {
+      "number": 20159,
+      "title": "FINDING: SAFETY-DQF-CATALOG-AUDITED-AGAINST-FMCSA-REGS",
+      "state": "merged",
+      "mergedAtCt": "09/03/2026, 05:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20159",
+      "sha": "8ef5d700fa",
+      "committedAtIso": "2026-09-03T17:57:43-05:00"
+    },
+    {
+      "number": 20158,
+      "title": "FINDING: N/A (docs only, cross-seat finding batch for Cursor)",
+      "state": "merged",
+      "mergedAtCt": "09/03/2026, 05:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20158",
+      "sha": "2863f3c446",
+      "committedAtIso": "2026-09-03T17:57:12-05:00"
+    },
+    {
+      "number": 20154,
+      "title": "FINDING: BANK-F9999",
+      "state": "merged",
+      "mergedAtCt": "09/03/2026, 05:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20154",
+      "sha": "b8f0e7471d",
+      "committedAtIso": "2026-09-03T17:55:15-05:00"
+    },
+    {
+      "number": 20155,
+      "title": "FINDING: LST-F20305 (25-task #12: deadhead pay line missing from driver-facing settlement screen)",
+      "state": "merged",
+      "mergedAtCt": "09/03/2026, 05:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20155",
+      "sha": "7d5ea3b27a",
+      "committedAtIso": "2026-09-03T17:52:51-05:00"
+    },
+    {
+      "number": 20150,
+      "title": "CC-1- FINDING: LST-F20304 -- lane_mileage punctuation/SAINT-ST normalization pass",
+      "state": "merged",
+      "mergedAtCt": "09/03/2026, 05:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20150",
+      "sha": "e4924ea4e0",
+      "committedAtIso": "2026-09-03T17:50:19-05:00"
+
     }
   ]
 }
