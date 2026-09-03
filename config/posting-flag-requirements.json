@@ -23,7 +23,10 @@
     "INSURANCE_CLAIM_RECOVERY_GL_POSTING_ENABLED": ["insurance_recovery", "cash_clearing"],
     "FUEL_CARD_OVERAGE_GL_POSTING_ENABLED": ["fuel_overage_receivable"],
     "REVENUE_RECOGNITION_POST_ENABLED": ["unbilled_revenue", "revenue_default", "ar_control"],
-    "DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED": ["damage_recovery"]
+    "DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED": ["damage_recovery"],
+    "PROPERTY_TAX_GL_POSTING_ENABLED": ["property_tax_expense", "property_tax_payable", "cash_clearing"],
+    "WARRANTY_REIMBURSE_GL_POSTING_ENABLED": ["cash_clearing", "warranty_recovery"],
+    "RELATED_PARTY_LOAN_GL_POSTING_ENABLED": ["cash_clearing"]
   },
   "labels": {
     "QBO_AR_PAYMENTS_PROJECTION_ENABLED": "A/R payment projection",
@@ -37,6 +40,9 @@
     "INSURANCE_CLAIM_RECOVERY_GL_POSTING_ENABLED": "Insurance claim recovery posting",
     "FUEL_CARD_OVERAGE_GL_POSTING_ENABLED": "Fuel card overage GL posting",
     "REVENUE_RECOGNITION_POST_ENABLED": "Revenue recognition posting",
-    "DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED": "Driver escrow forfeiture GL posting"
+    "DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED": "Driver escrow forfeiture GL posting",
+    "PROPERTY_TAX_GL_POSTING_ENABLED": "Property tax accrual GL posting",
+    "WARRANTY_REIMBURSE_GL_POSTING_ENABLED": "Warranty reimbursement GL posting",
+    "RELATED_PARTY_LOAN_GL_POSTING_ENABLED": "Related-party loan GL posting"
   }
 }
