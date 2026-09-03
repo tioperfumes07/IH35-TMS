@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { PoolClient } from "pg";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { computePayloadHashFromTxn, enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
@@ -1204,6 +1205,19 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       if (row.prev_load_id) rejectedKinds.push({ kind: "load", id: row.prev_load_id });
       if (row.prev_bill_id) rejectedKinds.push({ kind: "bill", id: row.prev_bill_id });
       if (row.prev_settlement_id) rejectedKinds.push({ kind: "settlement", id: row.prev_settlement_id });
+
+      // BANK-F9998 F6 — unmatch used to only null matched_journal_entry_id on the bank row; the JE
+      // itself stayed posted forever, orphaned. Rule 4 (VOID = reversal) applies here exactly like
+      // any other void: reverse the JE through the shared service before releasing the link.
+      if (row.prev_journal_entry_id) {
+        await reverseJournalEntryNoFlip(client, {
+          operatingCompanyId: query.data.operating_company_id,
+          journalEntryId: row.prev_journal_entry_id,
+          reason: "bank_transaction_unmatched",
+          actorUserId: user.uuid,
+        });
+      }
+
       for (const { kind, id } of rejectedKinds) {
         await client.query(
           `
