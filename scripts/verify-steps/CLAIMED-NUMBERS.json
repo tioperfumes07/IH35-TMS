@@ -5337,6 +5337,11 @@
     "claimed_at": "2026-09-03",
     "purpose": "verify-presettlement-auto-assign-at-creation (owner ruling 2026-09-03: assignment is automatic at load creation, closing is human-confirmed -- book-load.service.ts's presettlement linking was opt-in (input.addToOpenPresettlement, defaulted false in BookLoadModalV4.tsx) and suggest-only (never called confirmPresettlementLink); now unconditional and auto-confirming)"
   },
+  "10277": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-cash-advance-reversal-guard-fires (CASH-ADV-F9930-REVERSE-GUARD-NEVER-BLOCKS, filed 2026-08-28: the reversal route's settlement-usage guard queried the nonexistent settlement_lines.liability_id column wrapped in a .catch swallowing to cnt=0 -- never blocked a reversal, ever; now blocks on driver_liabilities.paid_to_date > 0, the correct grain)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
