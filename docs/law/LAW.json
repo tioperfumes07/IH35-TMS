@@ -43,189 +43,189 @@
   },
   {
     "id": "LAW-2026-08-05-B2-ENFORCED-GUARD-OR-NOT-LAW",
-    "title": "LAW = ENFORCED GUARD, OR IT IS NOT LAW \u2014 every NEW rule ships a guard registered in docs/law/LAW.json; verify-law-registry.mjs is a required check that reddens when a registered law's guard file is missing",
+    "title": "LAW = ENFORCED GUARD, OR IT IS NOT LAW — every NEW rule ships a guard registered in docs/law/LAW.json; verify-law-registry.mjs is a required check that reddens when a registered law's guard file is missing",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-law-registry.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-05-B4-ENTITY-SCOPE-IS-LOAD-BEARING",
-    "title": "RLS is NOT a backstop for Owner sessions \u2014 org.user_accessible_company_ids() returns every active company, so every read carries its own entity predicate (CLS-JOIN-ENTITY-UNSCOPED)",
+    "title": "RLS is NOT a backstop for Owner sessions — org.user_accessible_company_ids() returns every active company, so every read carries its own entity predicate (CLS-JOIN-ENTITY-UNSCOPED)",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-join-entity-scoped.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-05-A6-WORM-VOID-NOT-DELETE",
-    "title": "WORM / void-not-delete \u2014 financial rows are voided or soft-deleted, never physically DELETEd",
+    "title": "WORM / void-not-delete — financial rows are voided or soft-deleted, never physically DELETEd",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-inv2-no-hard-delete-accounting.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-05-A1-DEPRECIATION-ON-TITLE-HOLDER-ONLY",
-    "title": "TRK is the sole asset holder \u2014 depreciation and Accumulated Depreciation book on the owner entity, never on the lessee (TRANSP/USMCA own no assets today)",
+    "title": "TRK is the sole asset holder — depreciation and Accumulated Depreciation book on the owner entity, never on the lessee (TRANSP/USMCA own no assets today)",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-depreciation-posts-on-owner-entity.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-05-A2-QBO-MIRROR-IS-THE-ONLY-REAL-DATA",
-    "title": "ALL TMS-native data is TEST; only the TRANSP QBO mirror is real \u2014 QBO-origin documents are correctly unposted and must never be backfilled into the TMS GL",
+    "title": "ALL TMS-native data is TEST; only the TRANSP QBO mirror is real — QBO-origin documents are correctly unposted and must never be backfilled into the TMS GL",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-invoice-qbo-origin-guard.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-05-B1-FINDINGS-FLOW-AGENT-BOARD-AGENT",
-    "title": "Findings flow AGENT \u2192 BOARD \u2192 AGENT, never through the owner \u2014 a defect in another lane is written as an OPEN row in docs/audit/GUARD-WORKORDERS.md",
+    "title": "Findings flow AGENT → BOARD → AGENT, never through the owner — a defect in another lane is written as an OPEN row in docs/audit/GUARD-WORKORDERS.md",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": null,
     "type": "judgment"
   },
   {
     "id": "LAW-2026-08-05-B3-ROLES",
-    "title": "Lane roles \u2014 CC-1 money/GL/WORM, CC-3 mechanical/entity-scope/FE/CI-guards, CC-2 GUARD verify-live-never-build, CASCADE merger",
+    "title": "Lane roles — CC-1 money/GL/WORM, CC-3 mechanical/entity-scope/FE/CI-guards, CC-2 GUARD verify-live-never-build, CASCADE merger",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": null,
     "type": "judgment"
   },
   {
     "id": "LAW-2026-08-05-A3-ANSWERED-IS-CLOSED",
-    "title": "ANSWERED = CLOSED \u2014 an owner decision written in a locked file is closed; re-asking it is a process defect and a question never stops the loop",
+    "title": "ANSWERED = CLOSED — an owner decision written in a locked file is closed; re-asking it is a process defect and a question never stops the loop",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": null,
     "type": "judgment"
   },
   {
     "id": "LAW-2026-08-05-A4-CONTINUOUS-MODE",
-    "title": "CONTINUOUS MODE \u2014 pull the top OPEN board item in your lane, build to standard, arm merge, emit one line, start the next; never idle, never pause to summarize",
+    "title": "CONTINUOUS MODE — pull the top OPEN board item in your lane, build to standard, arm merge, emit one line, start the next; never idle, never pause to summarize",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": null,
     "type": "judgment"
   },
   {
     "id": "LOCK-01-SIDEBAR-CONTRACT-ADDITIVE-ONLY",
-    "title": "\u00a71 Sidebar is additive-only; the count source of truth is SIDEBAR_ITEM_IDS in sidebar-config.ts, never a number written in prose",
+    "title": "§1 Sidebar is additive-only; the count source of truth is SIDEBAR_ITEM_IDS in sidebar-config.ts, never a number written in prose",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-sidebar-contract.mjs",
     "type": "enforced"
   },
   {
     "id": "LOCK-02-CASHFLOW-IS-A-MODULE",
-    "title": "\u00a72 Cash Flow is a top-level MODULE at /cash-flow between eld and accounting \u2014 not a report, and it must not import /reports/cash-flow-*",
+    "title": "§2 Cash Flow is a top-level MODULE at /cash-flow between eld and accounting — not a report, and it must not import /reports/cash-flow-*",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-cashflow-module.mjs",
     "type": "enforced"
   },
   {
     "id": "LOCK-03-INSURANCE-FINANCIAL-WRITES",
-    "title": "\u00a73 Insurance delegates all financial math to computeInsuranceDispersal \u2014 no new ledger math; bill writes carry an idempotency key",
+    "title": "§3 Insurance delegates all financial math to computeInsuranceDispersal — no new ledger math; bill writes carry an idempotency key",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-insurance-financial-writes.mjs",
     "type": "enforced"
   },
   {
     "id": "LOCK-08-3-QBO-NO-WRITE-BACK",
-    "title": "\u00a78.3 Parallel double-books \u2014 TMS never writes back to QBO; the JE push path is gated by QBO_JE_PUSH_ENABLED plus a structural refusal of any source_system != 'tms'",
+    "title": "§8.3 Parallel double-books — TMS never writes back to QBO; the JE push path is gated by QBO_JE_PUSH_ENABLED plus a structural refusal of any source_system != 'tms'",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-qbo-push-gates.mjs",
     "type": "enforced"
   },
   {
     "id": "LOCK-10-ACCOUNTING-SUBNAV-GROUPED-CLICK-OPEN",
-    "title": "\u00a710 The Accounting sub-nav is the approved grouped CLICK-open dropdown row; the flat clean-tabs render cannot silently return",
+    "title": "§10 The Accounting sub-nav is the approved grouped CLICK-open dropdown row; the flat clean-tabs render cannot silently return",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-accounting-subnav-grouped.mjs",
     "type": "enforced"
   },
   {
     "id": "LOCK-10-ACCOUNTING-NAV-TOP-BAR-ONLY",
-    "title": "\u00a710 Accounting navigation is TOP-BAR ONLY \u2014 never a left rail (QboAccountingSubNav.tsx must stay absent)",
+    "title": "§10 Accounting navigation is TOP-BAR ONLY — never a left rail (QboAccountingSubNav.tsx must stay absent)",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-accounting-nav.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-16-FIX-NOT-PATCH-EVIDENCE-BLOCK",
-    "title": "Rule 16 \u2014 every shipped-code commit carries the Definition-of-Done evidence block (FINDING/LANE/DOD-A..E/VERIFY-1..8/ROOT CAUSE/FIX/GUARD/LIVE PROOF/REMAINING)",
+    "title": "Rule 16 — every shipped-code commit carries the Definition-of-Done evidence block (FINDING/LANE/DOD-A..E/VERIFY-1..8/ROOT CAUSE/FIX/GUARD/LIVE PROOF/REMAINING)",
     "source_file": ".cursor/rules/16-fix-not-patch-evidence-law.mdc",
     "guard": "scripts/verify-definition-of-done-evidence.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-23-NO-MONEY-THEATER",
-    "title": "Rule 23 \u2014 money-path PRs may not ship theater; MODULE_PROGRESS + VERIFY-1..8 + live proof are mandatory on money and migration commits",
+    "title": "Rule 23 — money-path PRs may not ship theater; MODULE_PROGRESS + VERIFY-1..8 + live proof are mandatory on money and migration commits",
     "source_file": ".cursor/rules/23-no-money-theater-prs.mdc",
     "guard": "scripts/verify-no-money-theater.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-24-MODULE-COMPLETION-N-OF-M",
-    "title": "Rule 24 \u2014 a module is DONE only as an explicit N of M in docs/module-completion/, never as a prose claim",
+    "title": "Rule 24 — a module is DONE only as an explicit N of M in docs/module-completion/, never as a prose claim",
     "source_file": ".cursor/rules/24-module-completion-n-of-m.mdc",
     "guard": "scripts/verify-module-completion.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-25-ONE-PUSH-MONEY-FAIL-FAST",
-    "title": "Rule 25 \u2014 money-pr-local-gate runs first on pre-push; one push after local PASS, never rebase while build-typecheck runs",
+    "title": "Rule 25 — money-pr-local-gate runs first on pre-push; one push after local PASS, never rebase while build-typecheck runs",
     "source_file": ".cursor/rules/25-one-push-money-fail-fast.mdc",
     "guard": "scripts/verify-money-pr-local-gate.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-25B-VERIFY-STEP-LANE-BANDS",
-    "title": "Rule 25 bands \u2014 verify-step numbers are claimed from disjoint mod-4 bands (Cursor EVEN \u00b7 CC-1 \u22611 \u00b7 CC-2 \u22613) so parallel lanes cannot collide",
+    "title": "Rule 25 bands — verify-step numbers are claimed from disjoint mod-4 bands (Cursor EVEN · CC-1 ≡1 · CC-2 ≡3) so parallel lanes cannot collide",
     "source_file": ".cursor/rules/25-verify-step-odd-even-bands.mdc",
     "guard": "scripts/verify-verify-step-lane-band.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-29-CURSOR-CLAUDE-SHIP-PARITY",
-    "title": "Rule 29 \u2014 every lane runs the same expanded local gate before every push; never --no-verify",
+    "title": "Rule 29 — every lane runs the same expanded local gate before every push; never --no-verify",
     "source_file": ".cursor/rules/29-cursor-claude-parity-ship.mdc",
     "guard": "scripts/verify-cursor-claude-parity-ship.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-30-CLAUDE-GREEN-EVIDENCE-FORMAT",
-    "title": "Rule 30 \u2014 the tip commit's LIVE PROOF must be Claude-green (a real exit code / sha / row), never 'UNVERIFIED browser' theater",
+    "title": "Rule 30 — the tip commit's LIVE PROOF must be Claude-green (a real exit code / sha / row), never 'UNVERIFIED browser' theater",
     "source_file": ".cursor/rules/30-claude-green-evidence-format.mdc",
     "guard": "scripts/verify-claude-green-evidence-shape.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-37-CLAIM-MERGE-THEN-AUTHOR",
-    "title": "Rule 37 \u2014 a verify-step number must already be on origin/main's CLAIMED-NUMBERS.json before the step file is authored",
+    "title": "Rule 37 — a verify-step number must already be on origin/main's CLAIMED-NUMBERS.json before the step file is authored",
     "source_file": ".cursor/rules/37-claim-merge-then-author.mdc",
     "guard": "scripts/verify-verify-step-claimed-on-main.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-07-NEVER-DELETE-ONLY-ADD",
-    "title": "Rule 07 \u2014 archive, never delete; a branch may not delete a scripts/verify-*.mjs or verify-step that exists on origin/main",
+    "title": "Rule 07 — archive, never delete; a branch may not delete a scripts/verify-*.mjs or verify-step that exists on origin/main",
     "source_file": ".cursor/rules/07-never-delete-only-add.mdc",
     "guard": "scripts/verify-no-guard-file-deletion.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-06-QUALITY-HARDLINE",
-    "title": "Rule 06 \u2014 never take the short way, never defer a root cause, never fake-green; build to surpass QBO/NetSuite/McLeod/Alvys",
+    "title": "Rule 06 — never take the short way, never defer a root cause, never fake-green; build to surpass QBO/NetSuite/McLeod/Alvys",
     "source_file": ".cursor/rules/06-quality-hardline-and-law.mdc",
     "guard": null,
     "type": "judgment"
   },
   {
     "id": "RULE-15-RESEARCH-MANDATE",
-    "title": "Rule 15 \u2014 ground every recommendation in verified live state plus fresh research of how the reference systems actually do it",
+    "title": "Rule 15 — ground every recommendation in verified live state plus fresh research of how the reference systems actually do it",
     "source_file": ".cursor/rules/15-research-mandate.mdc",
     "guard": null,
     "type": "judgment"
   },
   {
     "id": "SCHEMA-CANONICAL-NAMES",
-    "title": "Schema canonicals \u2014 accounting.* (never finance.*), audit.row_changes, driver_finance.*, mdata.qbo_*, banking.*, maintenance.*; there is NO ih35_app data schema",
+    "title": "Schema canonicals — accounting.* (never finance.*), audit.row_changes, driver_finance.*, mdata.qbo_*, banking.*, maintenance.*; there is NO ih35_app data schema",
     "source_file": "docs/CLAUDE.md",
     "guard": "scripts/verify-canonical-schema-names.mjs",
     "type": "enforced"
@@ -239,56 +239,56 @@
   },
   {
     "id": "MIGRATION-APPLIED-IMMUTABLE",
-    "title": "An applied migration is checksum-frozen \u2014 never edit a migration that has already run",
+    "title": "An applied migration is checksum-frozen — never edit a migration that has already run",
     "source_file": "docs/CLAUDE.md",
     "guard": "scripts/verify-applied-migrations-immutable.mjs",
     "type": "enforced"
   },
   {
     "id": "SECTION7-PALETTE-LOCK",
-    "title": "\u00a77 Palette is LOCKED \u2014 navy/slate/bg tokens only; --green-pill is the Class pill, --red is delete/Accident; off-palette status colour is a ratchet that may only shrink",
+    "title": "§7 Palette is LOCKED — navy/slate/bg tokens only; --green-pill is the Class pill, --red is delete/Accident; off-palette status colour is a ratchet that may only shrink",
     "source_file": "AGENTS.md",
     "guard": "scripts/verify-section7-palette-nonfinancial.mjs",
     "type": "enforced"
   },
   {
     "id": "SECTION7-WO-DISPLAY-ID-FORMAT",
-    "title": "\u00a77 Work-order display ID is WO-{UNIT}-{TYPE}-{MM-DD-YYYY}-{NNNN}-{V5} over the 7 immutable source types",
+    "title": "§7 Work-order display ID is WO-{UNIT}-{TYPE}-{MM-DD-YYYY}-{NNNN}-{V5} over the 7 immutable source types",
     "source_file": "AGENTS.md",
     "guard": "scripts/verify-wo-display-id-format.mjs",
     "type": "enforced"
   },
   {
     "id": "SECTION7-INLINE-ADD-NEW-IN-EVERY-PICKER",
-    "title": "\u00a77 Every reference dropdown carries an inline '+ Add new ___' that writes the CANONICAL table, never a mdata.qbo_* mirror",
+    "title": "§7 Every reference dropdown carries an inline '+ Add new ___' that writes the CANONICAL table, never a mdata.qbo_* mirror",
     "source_file": "AGENTS.md",
     "guard": "scripts/verify-universal-picker-law.mjs",
     "type": "enforced"
   },
   {
     "id": "PICKER-LAW-NO-RAW-UUID-LABELS",
-    "title": "CLS-UUID-LABEL \u2014 a human-facing link or picker option is never labelled with a raw or truncated uuid",
+    "title": "CLS-UUID-LABEL — a human-facing link or picker option is never labelled with a raw or truncated uuid",
     "source_file": "docs/audit/GUARD-WORKORDERS.md",
     "guard": "scripts/verify-no-uuid-label-rendering.mjs",
     "type": "enforced"
   },
   {
     "id": "CLS-SILENT-CAP-NO-SILENT-LIST-CAPS",
-    "title": "No silent list caps \u2014 a screen that fetches a hard cap must surface the truncation; the ratchet may only shrink",
+    "title": "No silent list caps — a screen that fetches a hard cap must surface the truncation; the ratchet may only shrink",
     "source_file": "docs/audit/GUARD-WORKORDERS.md",
     "guard": "scripts/verify-no-silent-list-caps.mjs",
     "type": "enforced"
   },
   {
     "id": "DISPLAY-ID-LOOKUPS-ENTITY-SCOPED",
-    "title": "A display ID is unique PER ENTITY, not globally \u2014 every display-id lookup carries its entity predicate",
+    "title": "A display ID is unique PER ENTITY, not globally — every display-id lookup carries its entity predicate",
     "source_file": ".cursor/rules/03-display-ids.mdc",
     "guard": "scripts/verify-display-id-lookups-entity-scoped.mjs",
     "type": "enforced"
   },
   {
     "id": "SAFETY-TAB-COUNT-CONTRACT",
-    "title": "Safety is 28 tabs / 9 groups sourced from SAFETY_TABS_CONFIG.ts \u2014 never a count written in prose",
+    "title": "Safety is 28 tabs / 9 groups sourced from SAFETY_TABS_CONFIG.ts — never a count written in prose",
     "source_file": "docs/CLAUDE.md",
     "guard": "scripts/verify-safety-count-nav-integrity.mjs",
     "type": "enforced"
@@ -302,63 +302,63 @@
   },
   {
     "id": "CASH-BASIS-CLOSED-PERIOD-SNAPSHOT-READONLY",
-    "title": "Block-20.3 \u2014 closed-period cash-basis output is snapshotted at period close and read-only thereafter; closed-period reads return the snapshot, never a recompute",
+    "title": "Block-20.3 — closed-period cash-basis output is snapshotted at period close and read-only thereafter; closed-period reads return the snapshot, never a recompute",
     "source_file": "docs/CLAUDE.md",
     "guard": "scripts/verify-period-cash-basis-snapshot-readonly.mjs",
     "type": "enforced"
   },
   {
     "id": "CASH-BASIS-SELECTOR-ALLOWED-PAGES",
-    "title": "Block-20.2 \u2014 the basis selector renders only on Balance Sheet, Trial Balance, P&L and Reports Home; Cash Flow, AR/AP Aging and IFTA stay accrual-only",
+    "title": "Block-20.2 — the basis selector renders only on Balance Sheet, Trial Balance, P&L and Reports Home; Cash Flow, AR/AP Aging and IFTA stay accrual-only",
     "source_file": "docs/CLAUDE.md",
     "guard": "scripts/verify-basis-selector-allowed-pages.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-06-CI-CONCURRENCY-SHA-SCOPED",
-    "title": "A workflow may not key its concurrency group on a bare ref \u2014 a queued run that never executed can otherwise be cancelled into a permanently dead required check, leaving the PR unmergeable with no code failure",
+    "title": "A workflow may not key its concurrency group on a bare ref — a queued run that never executed can otherwise be cancelled into a permanently dead required check, leaving the PR unmergeable with no code failure",
     "source_file": ".github/workflows/ci.yml",
     "guard": "scripts/verify-ci-concurrency-sha-scoped.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-06-DISP-WIRE-07-DEPARTURE-EVIDENCE",
-    "title": "Every path stamping mdata.load_stops.actual_departure_at must write a real clock value (now() or COALESCE onto now()), never a bare client parameter \u2014 that stamp is the delivery evidence revenue recognition and invoice gating hang off",
+    "title": "Every path stamping mdata.load_stops.actual_departure_at must write a real clock value (now() or COALESCE onto now()), never a bare client parameter — that stamp is the delivery evidence revenue recognition and invoice gating hang off",
     "source_file": "apps/backend/src/dispatch/stamp-final-delivery-departure.ts",
     "guard": "scripts/verify-disp-wire-07-departure-evidence.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-DISPLAYID-ENTITY-SCOPED",
-    "title": "display_id is unique only per (operating_company_id, display_id) \u2014 it may never be an equality lookup key without an entity predicate; resolve money documents by UUID (PERMANENT LAW B: void by UUID, never display_id)",
+    "title": "display_id is unique only per (operating_company_id, display_id) — it may never be an equality lookup key without an entity predicate; resolve money documents by UUID (PERMANENT LAW B: void by UUID, never display_id)",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-displayid-entity-scoped-lookups.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-06-SCENARIO-TRACKER-SINGLE-MOUNT",
-    "title": "A component that owns a polling query is a page-level singleton \u2014 mounting it inside a .map()ed child multiplies both the render and the prod read rate by the collection length, silently and with no visual error",
+    "title": "A component that owns a polling query is a page-level singleton — mounting it inside a .map()ed child multiplies both the render and the prod read rate by the collection length, silently and with no visual error",
     "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
     "guard": "scripts/verify-scenario-tracker-single-mount.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-06-CALLER-SCOPED-GUC-MEMBERSHIP",
-    "title": "A route may not SET app.operating_company_id to a company the caller named without first asserting the caller belongs to it \u2014 RLS then enforces whatever the attacker asked for, and an accessible-companies predicate is not a membership check because user_accessible_company_ids() returns every active company for an Owner",
+    "title": "A route may not SET app.operating_company_id to a company the caller named without first asserting the caller belongs to it — RLS then enforces whatever the attacker asked for, and an accessible-companies predicate is not a membership check because user_accessible_company_ids() returns every active company for an Owner",
     "source_file": "apps/backend/src/mdata/driver-messages.routes.ts",
     "guard": "scripts/verify-caller-scoped-guc-membership.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-06-INVITE-WRITE-ENTITY-GATED",
-    "title": "A route that writes an invite must prove the caller belongs to the invited driver's company BEFORE the write \u2014 a membership guard scoped by helper-import is vacuous, because a route with zero asserts is exactly the vulnerable state and is invisible to it",
+    "title": "A route that writes an invite must prove the caller belongs to the invited driver's company BEFORE the write — a membership guard scoped by helper-import is vacuous, because a route with zero asserts is exactly the vulnerable state and is invisible to it",
     "source_file": "apps/backend/src/mdata/drivers.routes.ts",
     "guard": "scripts/verify-invite-write-entity-gated.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-06-SCOPED-COMPANY-CONTEXT-ASSERTS-FIRST",
-    "title": "setScopedCompanyContext must assert company membership before setting app.operating_company_id \u2014 it concentrates the cross-entity authorization of every handler that delegates to it, and a call-site guard cannot see it break",
+    "title": "setScopedCompanyContext must assert company membership before setting app.operating_company_id — it concentrates the cross-entity authorization of every handler that delegates to it, and a call-site guard cannot see it break",
     "source_file": "apps/backend/src/_helpers/scoped-company-context.ts",
     "guard": "scripts/verify-scoped-company-context-asserts-first.mjs",
     "type": "enforced"
@@ -372,49 +372,49 @@
   },
   {
     "id": "LAW-2026-08-06-KANBAN-DROPSTATUS-CONTRACT",
-    "title": "Every dispatch Kanban lane dropStatus must be a status loadStatusSchema accepts AND must reach the money-aware /dispatch transition (or be an explicitly listed pre-dispatch exception) \u2014 a lane whose drop the API rejects is a silent dead end, and after #4769 a lane the mapper does not handle silently falls back to the non-money mdata path, stamping no departure and opening no settlement; all three ends live in separate files owned by separate lanes so they drift independently",
+    "title": "Every dispatch Kanban lane dropStatus must be a status loadStatusSchema accepts AND must reach the money-aware /dispatch transition (or be an explicitly listed pre-dispatch exception) — a lane whose drop the API rejects is a silent dead end, and after #4769 a lane the mapper does not handle silently falls back to the non-money mdata path, stamping no departure and opening no settlement; all three ends live in separate files owned by separate lanes so they drift independently",
     "source_file": "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
     "guard": "scripts/verify-kanban-dropstatus-contract.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-06-BUSINESS-DATE-PARSED-LOCAL",
-    "title": "A business date (YYYY-MM-DD) must never be pinned to UTC for display \u2014 it has no timezone, and new Date(iso+\"T00:00:00Z\") renders one day early for every viewer west of UTC, which silently showed the wrong day cash position in Central Time",
+    "title": "A business date (YYYY-MM-DD) must never be pinned to UTC for display — it has no timezone, and new Date(iso+\"T00:00:00Z\") renders one day early for every viewer west of UTC, which silently showed the wrong day cash position in Central Time",
     "source_file": "apps/frontend/src/lib/businessDate.ts",
     "guard": "scripts/verify-business-date-parsed-local.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX",
-    "title": "NEVER GUESS \u00b7 NEVER DEFER \u00b7 ALWAYS VERIFY \u00b7 ALWAYS FIX, NEVER PATCH \u2014 every change fixes the root cause at its source, ships a guard that fails on the bug and passes on the fix, and is proven live on prod; CI-green is the floor, not the verdict; when a fact cannot be verified the required output is UNVERIFIED, never a guess",
+    "title": "NEVER GUESS · NEVER DEFER · ALWAYS VERIFY · ALWAYS FIX, NEVER PATCH — every change fixes the root cause at its source, ships a guard that fails on the bug and passes on the fix, and is proven live on prod; CI-green is the floor, not the verdict; when a fact cannot be verified the required output is UNVERIFIED, never a guess",
     "source_file": "docs/law/NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX.md",
     "guard": "scripts/verify-no-patch-or-defer-language.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-06-CLASS-SCOREBOARD-FRESH",
-    "title": "The Programs by-class scoreboard is GENERATED from docs/audit/wave-queue.json and must match it \u2014 a board that renders stale class status is trusted precisely because it looks authoritative, so drift must fail the build rather than mislead",
+    "title": "The Programs by-class scoreboard is GENERATED from docs/audit/wave-queue.json and must match it — a board that renders stale class status is trusted precisely because it looks authoritative, so drift must fail the build rather than mislead",
     "source_file": "apps/frontend/src/pages/program/classScoreboard.data.ts",
     "guard": "scripts/verify-class-scoreboard-fresh.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-06-LOAD-DETAIL-RESOLVES-NAMES",
-    "title": "EVERY by-id load read the detail drawer can land on must RESOLVE the primary driver name and unit number, not only carry their ids \u2014 a drawer that renders a covered load as \"Unassigned\" invites double-assignment; the entity predicates on those joins must scope units by the owner/leased pair; and the assertion is per-route, because a LIST query resolving the names does not make the by-id payload carry them",
+    "title": "EVERY by-id load read the detail drawer can land on must RESOLVE the primary driver name and unit number, not only carry their ids — a drawer that renders a covered load as \"Unassigned\" invites double-assignment; the entity predicates on those joins must scope units by the owner/leased pair; and the assertion is per-route, because a LIST query resolving the names does not make the by-id payload carry them",
     "source_file": "apps/backend/src/dispatch/loads.routes.ts",
     "guard": "scripts/verify-load-detail-resolves-names.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-VERTICAL-METHOD",
-    "title": "Work is drained VERTICALLY by CLASS, globally and universally \u2014 never module-by-module, never the old block way",
+    "title": "Work is drained VERTICALLY by CLASS, globally and universally — never module-by-module, never the old block way",
     "source_file": "docs/standing-orders/CC-1-MONEY-CI.md",
     "guard": "scripts/verify-vertical-method-law-present.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-06-ASSIGNMENT-HISTORY-NAMES-AND-SCOPE",
-    "title": "The load assignment-history trail must name the drivers it records and must assert company membership before setting the RLS scope \u2014 a uuid prefix is not an identification of a person, and a caller-supplied company is not an authorization",
+    "title": "The load assignment-history trail must name the drivers it records and must assert company membership before setting the RLS scope — a uuid prefix is not an identification of a person, and a caller-supplied company is not an authorization",
     "source_file": "apps/backend/src/dispatch/quick-assign.service.ts",
     "guard": "scripts/verify-assignment-history-resolves-names.mjs",
     "type": "enforced"
@@ -428,63 +428,63 @@
   },
   {
     "id": "LAW-2026-08-11-FINDINGS-TRIPLE-LOCK",
-    "title": "Every finding is filed in four locks same turn (board OPEN + register \u2610 + Desktop routing + OUTBOX); FIXED requires five proofs same turn as merge (main grep + guard + register \u2611 + board/routing FIXED); anti-resurrection before OPEN; cross-lane skip without filing is forbidden",
+    "title": "Every finding is filed in four locks same turn (board OPEN + register ☐ + Desktop routing + OUTBOX); FIXED requires five proofs same turn as merge (main grep + guard + register ☑ + board/routing FIXED); anti-resurrection before OPEN; cross-lane skip without filing is forbidden",
     "source_file": "docs/audit/FINDINGS-TRIPLE-LOCK-LAW.md",
     "guard": "scripts/verify-findings-triple-lock-law.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-DRIVER-VENDOR-RESOLVED-NEVER-SUBSTITUTED",
-    "title": "A driver's A/P vendor must be RESOLVED through the shared entity-scoped resolver and a miss must THROW \u2014 never a fallback to the driver's own id, which put driver pay into A/P against a vendor that does not exist and made the DRIVER_VENDOR_MISSING check dead code (0 of 181 prod drivers carry qbo_vendor_id, so the fallback was the only reachable branch)",
+    "title": "A driver's A/P vendor must be RESOLVED through the shared entity-scoped resolver and a miss must THROW — never a fallback to the driver's own id, which put driver pay into A/P against a vendor that does not exist and made the DRIVER_VENDOR_MISSING check dead code (0 of 181 prod drivers carry qbo_vendor_id, so the fallback was the only reachable branch)",
     "source_file": "apps/backend/src/accounting/driver-vendor-link.service.ts",
     "guard": "scripts/verify-driver-vendor-no-uuid-fallback.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-BILL-VENDOR-ENTITY-CONSISTENT",
-    "title": "A bill's vendor must resolve inside the bill's OWN entity \u2014 an unresolvable vendor is an error, never a NULL FK (which escapes the ACCT-F142 duplicate index, partial on mdata_vendor_id IS NOT NULL) and never a pass-through uuid (which the single-column bills_mdata_vendor_id_fkey accepts from another entity)",
+    "title": "A bill's vendor must resolve inside the bill's OWN entity — an unresolvable vendor is an error, never a NULL FK (which escapes the ACCT-F142 duplicate index, partial on mdata_vendor_id IS NOT NULL) and never a pass-through uuid (which the single-column bills_mdata_vendor_id_fkey accepts from another entity)",
     "source_file": "apps/backend/src/accounting/bills.service.ts",
     "guard": "scripts/verify-bill-vendor-entity-consistent.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-RECENT-ACTIVITY-LEDGER-SOURCED",
-    "title": "A board panel must not depend on an unauthenticated runtime GitHub call \u2014 a visibility change empties it silently, and an empty array is indistinguishable from 'nothing happened'; derive it from the ledger at generation time",
+    "title": "A board panel must not depend on an unauthenticated runtime GitHub call — a visibility change empties it silently, and an empty array is indistinguishable from 'nothing happened'; derive it from the ledger at generation time",
     "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
     "guard": "scripts/verify-recent-activity-ledger-sourced.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-CLASS-SCOREBOARD-LIVE-SOURCED",
-    "title": "A status board must be served from the source of truth at REQUEST time, not rendered from a committed build artifact \u2014 a generated module can only change on a redeploy, so the Programs by-class grid silently drifted to 26 classes while the wave queue held 31; and where a fallback is shown, the board must say so",
+    "title": "A status board must be served from the source of truth at REQUEST time, not rendered from a committed build artifact — a generated module can only change on a redeploy, so the Programs by-class grid silently drifted to 26 classes while the wave queue held 31; and where a fallback is shown, the board must say so",
     "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
     "guard": "scripts/verify-class-scoreboard-live-sourced.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-TENANT-GUC-INSIDE-TXN",
-    "title": "set_config('app.operating_company_id', \u2026, true) is TRANSACTION-LOCAL \u2014 setting it on a raw pool.connect() client with no BEGIN sets nothing, it is discarded before the next statement (proven on PostgreSQL 16.14), so every FORCED-RLS policy sees an empty scope; use withCurrentUser, which opens the transaction and issues SET LOCAL ROLE ih35_app fail-closed",
+    "title": "set_config('app.operating_company_id', …, true) is TRANSACTION-LOCAL — setting it on a raw pool.connect() client with no BEGIN sets nothing, it is discarded before the next statement (proven on PostgreSQL 16.14), so every FORCED-RLS policy sees an empty scope; use withCurrentUser, which opens the transaction and issues SET LOCAL ROLE ih35_app fail-closed",
     "source_file": "apps/backend/src/maintenance/severe-repair-estimate.routes.ts",
     "guard": "scripts/verify-tenant-guc-inside-txn.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-VOID-STATUS-LITERAL-MATCHES-COLUMN",
-    "title": "A query must not filter a status column on a literal the column's CHECK constraint forbids \u2014 A/R aging excluded accounting.invoices.status 'voided', a value invoices_status_check makes impossible (the real spelling is 'void'), so the exclusion could never fire and rested on voided_at alone; one invoice with status='void' and voided_at NULL was counted, and USMCA reported $4,325.50 of receivables where $1,875.50 was real",
+    "title": "A query must not filter a status column on a literal the column's CHECK constraint forbids — A/R aging excluded accounting.invoices.status 'voided', a value invoices_status_check makes impossible (the real spelling is 'void'), so the exclusion could never fire and rested on voided_at alone; one invoice with status='void' and voided_at NULL was counted, and USMCA reported $4,325.50 of receivables where $1,875.50 was real",
     "source_file": "apps/backend/src/accounting/ar-aging.service.ts",
     "guard": "scripts/verify-void-status-literal-matches-column.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-SQL-SELECT-LIST-PHANTOM-COLUMN",
-    "title": "A phantom column in the SELECT LIST is as fatal as one in WHERE \u2014 both throw 42703 and 500 the endpoint \u2014 so verify-sql-column-existence must check PROJECTED columns, not only WHERE/SET/ORDER-BY ones; a select-list-only phantom passed the guard with exit 0 while the route it lived in failed on every call",
+    "title": "A phantom column in the SELECT LIST is as fatal as one in WHERE — both throw 42703 and 500 the endpoint — so verify-sql-column-existence must check PROJECTED columns, not only WHERE/SET/ORDER-BY ones; a select-list-only phantom passed the guard with exit 0 while the route it lived in failed on every call",
     "source_file": "apps/backend/src/dispatch/auth-gates/wf-038-active-driver.gate.ts",
     "guard": "scripts/verify-sql-column-existence.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-BILLPAY-VOID-REVERSES-GL",
-    "title": "Voiding a bill payment must reverse its GL, and no caller may opt out by hardcoding the flag \u2014 voidBillPayment passed reversePostedGl:false, so every void through the UI reversed nothing while the panel promised an equal-and-opposite entry and the GL kept $33.40 of cash that had already left the bank; the decision is a property of the payment (a non-cash settlement deduction has no GL of its own), never of the caller",
+    "title": "Voiding a bill payment must reverse its GL, and no caller may opt out by hardcoding the flag — voidBillPayment passed reversePostedGl:false, so every void through the UI reversed nothing while the panel promised an equal-and-opposite entry and the GL kept $33.40 of cash that had already left the bank; the decision is a property of the payment (a non-cash settlement deduction has no GL of its own), never of the caller",
     "source_file": "apps/backend/src/accounting/bills.service.ts",
     "guard": "scripts/verify-billpay-void-reverses-gl.mjs",
     "type": "enforced"
@@ -498,161 +498,161 @@
   },
   {
     "id": "LAW-2026-08-07-POD-BOL-EVIDENCE-LINKAGE",
-    "title": "A POD/BOL captured at a stop must be linked to its PARENT LOAD (docs.file_links has no load_stop entity type, so dropping the link orphans the evidence), and the hop.pod_bol scenario probe must COUNT the canonical stores the office reads back \u2014 dispatch.pod_documents + dispatch.bol_documents \u2014 not only the document library",
+    "title": "A POD/BOL captured at a stop must be linked to its PARENT LOAD (docs.file_links has no load_stop entity type, so dropping the link orphans the evidence), and the hop.pod_bol scenario probe must COUNT the canonical stores the office reads back — dispatch.pod_documents + dispatch.bol_documents — not only the document library",
     "source_file": "apps/driver-pwa/src/lib/upload-sync.ts",
     "guard": "scripts/verify-pod-bol-evidence-linkage.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-MONEY-SIDE-EFFECT-AFTER-COMMIT",
-    "title": "A GL poster that opens its OWN connection must never be awaited from inside an open transaction \u2014 under READ COMMITTED that second connection cannot see the caller's uncommitted writes, so the poster's evidence gate re-read a delivery departure the caller had just stamped, found NULL, returned missing_delivery_evidence and posted nothing while every static guard stayed green; defer it with enqueueAfterCommit(client, \u2026) so it runs after COMMIT, and drop the queue on ROLLBACK and on ROLLBACK TO SAVEPOINT so a side effect never outlives the write that justified it",
+    "title": "A GL poster that opens its OWN connection must never be awaited from inside an open transaction — under READ COMMITTED that second connection cannot see the caller's uncommitted writes, so the poster's evidence gate re-read a delivery departure the caller had just stamped, found NULL, returned missing_delivery_evidence and posted nothing while every static guard stayed green; defer it with enqueueAfterCommit(client, …) so it runs after COMMIT, and drop the queue on ROLLBACK and on ROLLBACK TO SAVEPOINT so a side effect never outlives the write that justified it",
     "source_file": "apps/backend/src/lib/after-commit.ts",
     "guard": "scripts/verify-money-side-effect-after-commit.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-DELIVERY-PATH-SCOPED-BY-STAMP",
-    "title": "A guard that scopes delivery paths by a STRING-LITERAL status match is green-while-broken \u2014 the bulk route writes the status from a variable and its one literal sits inside a Set, so the file was never considered and verify-delivery-evidence-latch-wired printed OK exit 0 while bulk 'Mark delivered' stamped delivery evidence and never latched revenue; scope on stampFinalActiveDeliveryDeparture(), a shared call name that cannot be written as a variable",
+    "title": "A guard that scopes delivery paths by a STRING-LITERAL status match is green-while-broken — the bulk route writes the status from a variable and its one literal sits inside a Set, so the file was never considered and verify-delivery-evidence-latch-wired printed OK exit 0 while bulk 'Mark delivered' stamped delivery evidence and never latched revenue; scope on stampFinalActiveDeliveryDeparture(), a shared call name that cannot be written as a variable",
     "source_file": "apps/backend/src/dispatch/loads-bulk.routes.ts",
     "guard": "scripts/verify-delivery-evidence-latch-wired.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-08-SETTLEMENT-SAMPLE-TAG-EVERY-WRITER",
-    "title": "driver_finance.driver_settlements is the ONE money create type with no writable free-text column, so is_sample_data is the ONLY Gate-B tag path \u2014 and NAMING the column is not enough: the load-bookended writer (the one dispatch calls on in_transit) named it and then supplied the LITERAL false, so every settlement a sample load auto-opened was hardcoded \"not sample data\" while the guard sat green; every production INSERT must both name the column AND derive its value from the parent row (load for the dispatch/bookended writer, driver for the weekly close), never a literal, because the writers that strand untagged money are precisely the ones no human calls by hand",
+    "title": "driver_finance.driver_settlements is the ONE money create type with no writable free-text column, so is_sample_data is the ONLY Gate-B tag path — and NAMING the column is not enough: the load-bookended writer (the one dispatch calls on in_transit) named it and then supplied the LITERAL false, so every settlement a sample load auto-opened was hardcoded \"not sample data\" while the guard sat green; every production INSERT must both name the column AND derive its value from the parent row (load for the dispatch/bookended writer, driver for the weekly close), never a literal, because the writers that strand untagged money are precisely the ones no human calls by hand",
     "source_file": "apps/backend/src/driver-finance/settlements.routes.ts",
     "guard": "scripts/verify-settlement-sample-tag-wired.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-08-VENDOR-TYPE-APP-DB-PARITY",
-    "title": "The app-layer vendor_type allow-list must equal the mdata.vendors CHECK constraint, case-normalised \u2014 a bare z.string() over a case-sensitive closed CHECK turns the most likely input ('other') into an opaque HTTP 500/23514 instead of a 400 naming the legal values; every DB CHECK/enum needs an app-layer counterpart that fails FIRST",
+    "title": "The app-layer vendor_type allow-list must equal the mdata.vendors CHECK constraint, case-normalised — a bare z.string() over a case-sensitive closed CHECK turns the most likely input ('other') into an opaque HTTP 500/23514 instead of a 400 naming the legal values; every DB CHECK/enum needs an app-layer counterpart that fails FIRST",
     "source_file": "apps/backend/src/mdata/vendors.routes.ts",
     "guard": "scripts/verify-vendor-type-app-db-parity.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-08-BOOK-LOAD-TOAST-REPORTS-SERVER-STATUS",
-    "title": "A success toast must report the status the SERVER returned, never the one the click intended \u2014 save_mode 'book_dispatch' does not force 'dispatched', so asserting dispatch from the local save mode told a dispatcher a truck was rolling under an audited DOT override while the load sat at assigned_not_dispatched",
+    "title": "A success toast must report the status the SERVER returned, never the one the click intended — save_mode 'book_dispatch' does not force 'dispatched', so asserting dispatch from the local save mode told a dispatcher a truck was rolling under an audited DOT override while the load sat at assigned_not_dispatched",
     "source_file": "apps/frontend/src/pages/dispatch/components/book-load-toast.ts",
     "guard": "scripts/verify-book-load-toast-server-status.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-08-BOOK-LOAD-STOP-FIELDS-SENT",
-    "title": "The book-load submit handler must not silently discard operator input \u2014 every stop field the form registers AND the backend can persist must appear in the stops payload; postal_code was omitted from the explicit allow-list, so 0 of 20 prod load_stops ever carried the PC*MILER routing key that driver pay-per-mile and IFTA jurisdiction miles depend on",
+    "title": "The book-load submit handler must not silently discard operator input — every stop field the form registers AND the backend can persist must appear in the stops payload; postal_code was omitted from the explicit allow-list, so 0 of 20 prod load_stops ever carried the PC*MILER routing key that driver pay-per-mile and IFTA jurisdiction miles depend on",
     "source_file": "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
     "guard": "scripts/verify-book-load-toast-server-status.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-08-REGCLASS-FALLBACK-DECLARES-INTENT",
-    "title": "A to_regclass table-presence probe must declare what its FALSE branch means \u2014 throw, fail closed, or degrade WITH a signal; a bare permissive return silently disables the control (notifications.suppression_rules FAILED OPEN and mailed every suppressed recipient). Ratcheted per file against a frozen baseline so the class cannot grow while individual sites are dispositioned",
+    "title": "A to_regclass table-presence probe must declare what its FALSE branch means — throw, fail closed, or degrade WITH a signal; a bare permissive return silently disables the control (notifications.suppression_rules FAILED OPEN and mailed every suppressed recipient). Ratcheted per file against a frozen baseline so the class cannot grow while individual sites are dispositioned",
     "source_file": "scripts/verify-regclass-fallback-intent.mjs",
     "guard": "scripts/verify-regclass-fallback-intent.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-FLAG-HONESTY-BANNER-READS-FLAG",
-    "title": "A banner that tells the operator what a feature flag is doing must READ that flag \u2014 two Banking banners asserted 'stays OFF by default' from literals while BANK_FEED_GL_POSTING_ENABLED and TRANSFER_GL_POSTING_ENABLED were overridden ON for all three entities, so categorizing a row posted a real balanced journal entry the operator had just been told would not exist",
+    "title": "A banner that tells the operator what a feature flag is doing must READ that flag — two Banking banners asserted 'stays OFF by default' from literals while BANK_FEED_GL_POSTING_ENABLED and TRANSFER_GL_POSTING_ENABLED were overridden ON for all three entities, so categorizing a row posted a real balanced journal entry the operator had just been told would not exist",
     "source_file": "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
     "guard": "scripts/verify-flag-honesty-banner-reads-flag.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-AR-RECEIPT-POSTS-IN-CALLER-TX",
-    "title": "A customer-payment (A/R receipt) GL post must run on the CALLER'S transaction \u2014 postSourceTransactionInClientTx. The pool-connection poster opens a second connection where the caller's uncommitted payment and applications are invisible, so it silently posts nothing: the subledger moves, the GL stays dark, and the subledger-to-GL tie-out fails (USMCA: 3 payments, $1,287.25, zero postings; an invoice reading 'paid' against GL A/R still carrying $1,200.00)",
+    "title": "A customer-payment (A/R receipt) GL post must run on the CALLER'S transaction — postSourceTransactionInClientTx. The pool-connection poster opens a second connection where the caller's uncommitted payment and applications are invisible, so it silently posts nothing: the subledger moves, the GL stays dark, and the subledger-to-GL tie-out fails (USMCA: 3 payments, $1,287.25, zero postings; an invoice reading 'paid' against GL A/R still carrying $1,200.00)",
     "source_file": "apps/backend/src/accounting/payments/apply.service.ts",
     "guard": "scripts/verify-customer-payment-posts-in-caller-tx.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-08-DELIVERY-LATCH-PAIRS-WITH-SETTLEMENT",
-    "title": "A delivery has TWO money halves and a guard that checks only one is green while the other is dark: latchOnDeliveryEvidence recognises the revenue, while pingSettlementOnLoadEvent on delivered_pending_docs calls closeSettlementForFinalLoad and closes the driver trip settlement \u2014 four of the five production latch paths (office fallback, driver route, bulk mark-delivered, driver-PWA departure) fired the latch and never pinged, leaving revenue on the books and the settlement that pays the driver OPEN FOREVER while verify-delivery-evidence-latch-wired stayed correctly green because it only ever asked about one half; every production route firing the latch must also ping settlement, non-fatally, and the guard must assert the PAIR rather than the call",
+    "title": "A delivery has TWO money halves and a guard that checks only one is green while the other is dark: latchOnDeliveryEvidence recognises the revenue, while pingSettlementOnLoadEvent on delivered_pending_docs calls closeSettlementForFinalLoad and closes the driver trip settlement — four of the five production latch paths (office fallback, driver route, bulk mark-delivered, driver-PWA departure) fired the latch and never pinged, leaving revenue on the books and the settlement that pays the driver OPEN FOREVER while verify-delivery-evidence-latch-wired stayed correctly green because it only ever asked about one half; every production route firing the latch must also ping settlement, non-fatally, and the guard must assert the PAIR rather than the call",
     "source_file": "apps/backend/src/dispatch/delivery-evidence-latch.ts",
     "guard": "scripts/verify-delivery-latch-pings-settlement.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-06-CATALOG-CONFIG-PHYSICAL-COLUMNS",
-    "title": "A GenericCatalogConfig may not assume a physical `deactivated_at` column exists on its table \u2014 Postgres resolves column references at PLAN time, so an unconditional reference 500s on EVERY request for any table lacking it, independent of data. 30 of 30 generic catalog configs lack an explicit hasDeactivatedAt declaration and 6 factory SQL sites reference deactivated_at unconditionally (LV-CAT-500, live-confirmed 2026-08-06). Every config must declare hasDeactivatedAt explicitly and every deactivated_at SQL reference in the factory must be gated on it. Guard is mutation-proven (--selftest PASS) but currently RED against the live tree (36 offenders) and NOT YET CI-wired \u2014 Cascade holds no verify-step band (same gap as CC-3; see scripts/.guard-exempt.json), so wiring is deferred to whichever banded lane (CC-2/Cursor) authors the fix under CLS-SCHEMA-DRIFT. This is the audit red-inventory baseline, not a fixed/enforced state. Fix authorship belongs to the mechanical lane, not Cascade.",
+    "title": "A GenericCatalogConfig may not assume a physical `deactivated_at` column exists on its table — Postgres resolves column references at PLAN time, so an unconditional reference 500s on EVERY request for any table lacking it, independent of data. 30 of 30 generic catalog configs lack an explicit hasDeactivatedAt declaration and 6 factory SQL sites reference deactivated_at unconditionally (LV-CAT-500, live-confirmed 2026-08-06). Every config must declare hasDeactivatedAt explicitly and every deactivated_at SQL reference in the factory must be gated on it. Guard is mutation-proven (--selftest PASS) but currently RED against the live tree (36 offenders) and NOT YET CI-wired — Cascade holds no verify-step band (same gap as CC-3; see scripts/.guard-exempt.json), so wiring is deferred to whichever banded lane (CC-2/Cursor) authors the fix under CLS-SCHEMA-DRIFT. This is the audit red-inventory baseline, not a fixed/enforced state. Fix authorship belongs to the mechanical lane, not Cascade.",
     "source_file": "apps/backend/src/catalogs/generic-catalog.factory.ts",
     "guard": "scripts/verify-catalog-config-physical-columns.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-09-CLS-CALENDAR-INVOICE-SEND-DATE-CAST",
-    "title": "CLS-CALENDAR \u2014 invoice send/post SQL that binds a calendar date must use a Postgres-safe date string (toISOString().slice(0,10) or equivalent), never String(Date) which is not castable to ::date and blocks the money send path",
+    "title": "CLS-CALENDAR — invoice send/post SQL that binds a calendar date must use a Postgres-safe date string (toISOString().slice(0,10) or equivalent), never String(Date) which is not castable to ::date and blocks the money send path",
     "source_file": "apps/backend/src/accounting/invoice-send.service.ts",
     "guard": "scripts/verify-invoice-send-date-cast.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-12-VERTICAL-WIRING",
-    "title": "Matrix vertical wiring \u2014 one column id or one codebase class swept across every module that owes it (priority 10 gate; extend to 28); module-deep slices and seat module subsets forbidden",
+    "title": "Matrix vertical wiring — one column id or one codebase class swept across every module that owes it (priority 10 gate; extend to 28); module-deep slices and seat module subsets forbidden",
     "source_file": "docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md",
     "guard": "scripts/verify-vertical-wiring-law-present.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-HONEST-BUILT-LAUNCH",
-    "title": "HONEST BUILT + LAUNCH LAW \u2014 launch-ready without Live Chrome = Fully-Wired 1\u201311 with leaf-specific Built only; ban leafRe:.* / |.* / word-blanket Built; seat lanes Cursor/CC-1/Codex permanent; no new scoreboard columns; soft Done while theater remains is a defect",
+    "title": "HONEST BUILT + LAUNCH LAW — launch-ready without Live Chrome = Fully-Wired 1–11 with leaf-specific Built only; ban leafRe:.* / |.* / word-blanket Built; seat lanes Cursor/CC-1/Codex permanent; no new scoreboard columns; soft Done while theater remains is a defect",
     "source_file": "docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md",
     "guard": "scripts/verify-honest-built-launch-law-present.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-PICKER-LAW-BUILT-MATCH-CAP",
-    "title": "picker_law @matrix-built / wire-sprint Built claims must not match more than 40 Required leaves in one shot \u2014 prefix-family theater ban (HONEST-BUILT companion)",
+    "title": "picker_law @matrix-built / wire-sprint Built claims must not match more than 40 Required leaves in one shot — prefix-family theater ban (HONEST-BUILT companion)",
     "source_file": "docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md",
     "guard": "scripts/verify-picker-law-built-match-cap.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-SURFACE-BAR-CREATE-DRAWER-INVENTORY",
-    "title": "Fully-Wired item 7 surface-bar create-drawer inventory \u2014 every Modal/ParityDrawer create shell in FE must have required.json leaf.surface_path or explicit FILE_OWNED_BY_LEAF/ALLOWED_NESTED map (no fuzzy theater)",
+    "title": "Fully-Wired item 7 surface-bar create-drawer inventory — every Modal/ParityDrawer create shell in FE must have required.json leaf.surface_path or explicit FILE_OWNED_BY_LEAF/ALLOWED_NESTED map (no fuzzy theater)",
     "source_file": "docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md",
     "guard": "scripts/verify-surface-bar-create-drawer-inventory.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-SURFACE-BAR-TOOLBAR-LEAF-INVENTORY",
-    "title": "Fully-Wired item 7 surface-bar toolbar inventory \u2014 every chrome.toolbar_* matrix leaf must carry an allowlisted surface_path to UniversalListToolbar / ParityTable / DataTable / ListView / TableControls / TableSearch (no null-path theater)",
+    "title": "Fully-Wired item 7 surface-bar toolbar inventory — every chrome.toolbar_* matrix leaf must carry an allowlisted surface_path to UniversalListToolbar / ParityTable / DataTable / ListView / TableControls / TableSearch (no null-path theater)",
     "source_file": "docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md",
     "guard": "scripts/verify-surface-bar-toolbar-leaf-inventory.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-SURFACE-BAR-WIZARD-INVENTORY",
-    "title": "Fully-Wired item 7 surface-bar wizard inventory \u2014 every FE *Wizard*.tsx must have required.json leaf.surface_path or explicit FILE_OWNED_BY_LEAF (steps / shared StepWizard shells)",
+    "title": "Fully-Wired item 7 surface-bar wizard inventory — every FE *Wizard*.tsx must have required.json leaf.surface_path or explicit FILE_OWNED_BY_LEAF (steps / shared StepWizard shells)",
     "source_file": "docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md",
     "guard": "scripts/verify-surface-bar-wizard-inventory.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-SURFACE-BAR-MODAL-INVENTORY",
-    "title": "Fully-Wired item 7 surface-bar Modal inventory \u2014 every FE <Modal open=> host must have required.json leaf.surface_path or explicit FILE_OWNED_BY_LEAF/ALLOWED_NESTED map (no fuzzy theater)",
+    "title": "Fully-Wired item 7 surface-bar Modal inventory — every FE <Modal open=> host must have required.json leaf.surface_path or explicit FILE_OWNED_BY_LEAF/ALLOWED_NESTED map (no fuzzy theater)",
     "source_file": "docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md",
     "guard": "scripts/verify-surface-bar-modal-inventory.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-SURFACE-BAR-PARITYDRAWER-INVENTORY",
-    "title": "Fully-Wired item 7 surface-bar ParityDrawer inventory \u2014 every FE <ParityDrawer open=> host must have required.json leaf.surface_path or explicit FILE_OWNED_BY_LEAF/ALLOWED_NESTED map (no fuzzy theater)",
+    "title": "Fully-Wired item 7 surface-bar ParityDrawer inventory — every FE <ParityDrawer open=> host must have required.json leaf.surface_path or explicit FILE_OWNED_BY_LEAF/ALLOWED_NESTED map (no fuzzy theater)",
     "source_file": "docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md",
     "guard": "scripts/verify-surface-bar-paritydrawer-inventory.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-SURFACE-BAR-COMBOBOX-INVENTORY",
-    "title": "Fully-Wired item 7 surface-bar Combobox inventory \u2014 every FE <Combobox> host must have required.json leaf.surface_path or explicit FILE_OWNED_BY_LEAF/ALLOWED_NESTED map (no fuzzy theater)",
+    "title": "Fully-Wired item 7 surface-bar Combobox inventory — every FE <Combobox> host must have required.json leaf.surface_path or explicit FILE_OWNED_BY_LEAF/ALLOWED_NESTED map (no fuzzy theater)",
     "source_file": "docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md",
     "guard": "scripts/verify-surface-bar-combobox-inventory.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-13-FULLY-WIRED-COMPLETE-BAR",
-    "title": "FULLY WIRED = complete 12-item bar (create\u2192canonical \u00b7 money \u00b7 F+R \u00b7 matrix \u00b7 surface bar every control\u2192matrix \u00b7 chrome \u00b7 pickers \u00b7 RLS \u00b7 guard \u00b7 Live Chrome LAST) plus item 13 GL delta (C25\u2013C31) \u2014 soft yes to owner without this list is a defect",
+    "title": "FULLY WIRED = complete 12-item bar (create→canonical · money · F+R · matrix · surface bar every control→matrix · chrome · pickers · RLS · guard · Live Chrome LAST) plus item 13 GL delta (C25–C31) — soft yes to owner without this list is a defect",
     "source_file": "docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md",
     "guard": "scripts/verify-fully-wired-complete-bar-present.mjs",
     "type": "enforced"
@@ -694,119 +694,119 @@
   },
   {
     "id": "LAW-2026-08-14-LINK-GEOFENCE-ENTITYLINK-DRILL",
-    "title": "geofences gain a real EntityLink kind \u2014 EntityLink.tsx kind=geofence resolves to /dispatch/geofencing?geofence_id=, GeofencesPage.tsx reads that param and highlights the row (was previously write-only, no consumer), GeofenceBreachesTab.tsx's geofence label drills through instead of rendering dead text",
+    "title": "geofences gain a real EntityLink kind — EntityLink.tsx kind=geofence resolves to /dispatch/geofencing?geofence_id=, GeofencesPage.tsx reads that param and highlights the row (was previously write-only, no consumer), GeofenceBreachesTab.tsx's geofence label drills through instead of rendering dead text",
     "source_file": "apps/frontend/src/components/shared/EntityLink.tsx",
     "guard": "scripts/verify-geofence-entitylink-drill.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-13-MATRIX-BUILT-LEAF-SPECIFIC",
-    "title": "Box 3 Built claims (@matrix-built tags + wire-sprint-built.json) must be leaf-specific \u2014 a match-all leafRe (\".*\", \"^.*$\", \".+\", \"^.+$\", or empty) can never credit a column as Built for every leaf in every listed module; violates FULLY-WIRED item 6. New/changed claims hard-fail; the 63-entry legacy corpus is tracked backlog for the vertical-column sweep, not silently-green Built",
+    "title": "Box 3 Built claims (@matrix-built tags + wire-sprint-built.json) must be leaf-specific — a match-all leafRe (\".*\", \"^.*$\", \".+\", \"^.+$\", or empty) can never credit a column as Built for every leaf in every listed module; violates FULLY-WIRED item 6. New/changed claims hard-fail; the 63-entry legacy corpus is tracked backlog for the vertical-column sweep, not silently-green Built",
     "source_file": "apps/backend/src/program/matrix-built-auto.ts",
     "guard": "scripts/verify-matrix-built-leaf-specific.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-LINK-FACTOR-ENTITYLINK-DRILL",
-    "title": "factors gain a real EntityLink kind \u2014 EntityLink.tsx kind=factor resolves to /factoring/factors?factor_id=, FactorAdmin.tsx reads that param and resolves the full Factor object from factorsQuery to highlight the row, ReserveDashboard.tsx + ReserveTracker.tsx's per-balance factor labels drill through instead of rendering dead text",
+    "title": "factors gain a real EntityLink kind — EntityLink.tsx kind=factor resolves to /factoring/factors?factor_id=, FactorAdmin.tsx reads that param and resolves the full Factor object from factorsQuery to highlight the row, ReserveDashboard.tsx + ReserveTracker.tsx's per-balance factor labels drill through instead of rendering dead text",
     "source_file": "apps/frontend/src/components/shared/EntityLink.tsx",
     "guard": "scripts/verify-factor-entitylink-drill.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-LINK-LOADCREATE-ASSET-UNIT",
-    "title": "LoadCreateModal's repair-block banner renders the blocking asset as a real EntityLink kind=unit instead of dead text \u2014 confirmed against the backend's own dispatcher-facing label (load-assign.routes.ts) that asset_id is always a unit here, not a guess",
+    "title": "LoadCreateModal's repair-block banner renders the blocking asset as a real EntityLink kind=unit instead of dead text — confirmed against the backend's own dispatcher-facing label (load-assign.routes.ts) that asset_id is always a unit here, not a guess",
     "source_file": "apps/frontend/src/pages/dispatch/LoadCreateModal.tsx",
     "guard": "scripts/verify-load-create-modal-asset-unit-link.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-ACCT-F5152-AP-BILL-SURFACE-WIRING",
-    "title": "accounting ap_bill money-cell gap closed to 0 \u2014 PayBillModal, CCPaymentModal, BillDetailPanel, VendorBillForm (VendorBillCreatePage), and BillPaymentModal each carry a verified vendor + CoA/bank-account + bill-reference contract, proven (not assumed) via the real submit payloads and EntityLinks in each file",
+    "title": "accounting ap_bill money-cell gap closed to 0 — PayBillModal, CCPaymentModal, BillDetailPanel, VendorBillForm (VendorBillCreatePage), and BillPaymentModal each carry a verified vendor + CoA/bank-account + bill-reference contract, proven (not assumed) via the real submit payloads and EntityLinks in each file",
     "source_file": "apps/frontend/src/pages/accounting/PayBillModal.tsx",
     "guard": "scripts/verify-acct-ap-bill-surface-wiring.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-ACCT-F5153-BANKING-MATCHED-BILL-DRILL",
-    "title": "banking money-cell gap closed to 0 \u2014 matched_bill_id (already selected by /api/v1/banking/plaid/company-transactions) is now joined to accounting.bills for a human label and rendered as a real EntityLink on the transactions surface, matching the load/settlement/journal_entry pattern already present",
+    "title": "banking money-cell gap closed to 0 — matched_bill_id (already selected by /api/v1/banking/plaid/company-transactions) is now joined to accounting.bills for a human label and rendered as a real EntityLink on the transactions surface, matching the load/settlement/journal_entry pattern already present",
     "source_file": "apps/backend/src/integrations/plaid/link.routes.ts",
     "guard": "scripts/verify-banking-matched-bill-drill.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-ACCT-F5158-REPORTS-AP-BILL-HONEST-MAP",
-    "title": "reports money-cell gap closed to 0 \u2014 11 leaves' false ap_bill Required marking removed (GL-rollup reports own no bill-level data: trial_balance/profit_loss/balance_sheet/cash_flow*/settlement_summary/customer_profitability/maintenance_cost_per_unit/runner.cash_position/report.ar_aging; documented in reports.required.json honesty_audit), and report.ap_aging + report.management's genuine vendor-level ap_bill wiring given real leaf-specific proof instead of the removed broad claim",
+    "title": "reports money-cell gap closed to 0 — 11 leaves' false ap_bill Required marking removed (GL-rollup reports own no bill-level data: trial_balance/profit_loss/balance_sheet/cash_flow*/settlement_summary/customer_profitability/maintenance_cost_per_unit/runner.cash_position/report.ar_aging; documented in reports.required.json honesty_audit), and report.ap_aging + report.management's genuine vendor-level ap_bill wiring given real leaf-specific proof instead of the removed broad claim",
     "source_file": "docs/specs/scoreboard/modules/reports.required.json",
     "guard": "scripts/verify-report-management-ap-aging.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-ACCT-F5159-COMPLIANCE-FLEET-AP-BILL-HONEST-MAP",
-    "title": "compliance + fleet money-cell gaps closed to 0/1->0-remaining \u2014 compliance's 3 false ap_bill Requireds removed (property_tax.list/detail post a direct GL JE with zero accounting.bills row; form2290 is a pure filing tracker with zero bill_id anywhere); fleet's 3 false ap_bill Requireds removed (roster.row.edit_unit/unit.profile.maintenance/trailer.profile.maintenance surface no accounting.bills data \u2014 WO/parts widgets show vendor_invoice_number as a plain string, never a real bill FK) while fleet's genuinely-wired unit.detail.finance_linkage (real Unit->Bill reverse drill, tenant+unit-scoped) gets a real leaf-specific Built guard instead of riding the removed broad claim",
+    "title": "compliance + fleet money-cell gaps closed to 0/1->0-remaining — compliance's 3 false ap_bill Requireds removed (property_tax.list/detail post a direct GL JE with zero accounting.bills row; form2290 is a pure filing tracker with zero bill_id anywhere); fleet's 3 false ap_bill Requireds removed (roster.row.edit_unit/unit.profile.maintenance/trailer.profile.maintenance surface no accounting.bills data — WO/parts widgets show vendor_invoice_number as a plain string, never a real bill FK) while fleet's genuinely-wired unit.detail.finance_linkage (real Unit->Bill reverse drill, tenant+unit-scoped) gets a real leaf-specific Built guard instead of riding the removed broad claim",
     "source_file": "docs/specs/scoreboard/modules/fleet.required.json",
     "guard": "scripts/verify-unit-finance-linkage-ap-bill.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-ACCT-F5160-HOME-INSURANCE-INVENTORY-LEGAL-AP-BILL-HONEST-MAP",
-    "title": "home + insurance + inventory + legal money-cell gaps closed to 0 \u2014 9 leaves' false ap_bill Required markings removed with live per-leaf evidence: home's role.accountant (aggregate KPI/aging-bucket totals only, zero bill_id across 4 sub-widgets) and jump.accounting (a static nav card, no bill data rendered); insurance's policies.create/detail/claims.create/lawsuits.create (insurer vendor_id is real, but premiums route through the standalone insurance.payment_schedules mark-paid tracker with no bill FK, same direct-posting pattern as property tax); inventory's assignments.vendor_link (real vendor EntityLink, but vendor_invoice_number/amount are plain captured fields, not a bill FK); legal's matters.create (create-only form, zero bill/vendor fields \u2014 the real linked-costs bills array lives on the separate matters.detail leaf, not flagged as gapped)",
+    "title": "home + insurance + inventory + legal money-cell gaps closed to 0 — 9 leaves' false ap_bill Required markings removed with live per-leaf evidence: home's role.accountant (aggregate KPI/aging-bucket totals only, zero bill_id across 4 sub-widgets) and jump.accounting (a static nav card, no bill data rendered); insurance's policies.create/detail/claims.create/lawsuits.create (insurer vendor_id is real, but premiums route through the standalone insurance.payment_schedules mark-paid tracker with no bill FK, same direct-posting pattern as property tax); inventory's assignments.vendor_link (real vendor EntityLink, but vendor_invoice_number/amount are plain captured fields, not a bill FK); legal's matters.create (create-only form, zero bill/vendor fields — the real linked-costs bills array lives on the separate matters.detail leaf, not flagged as gapped)",
     "source_file": "docs/specs/scoreboard/modules/home.required.json",
     "guard": null,
     "type": "judgment"
   },
   {
     "id": "LAW-2026-08-14-ACCT-F5161-MAINTENANCE-AP-BILL-HONEST-MAP",
-    "title": "maintenance money-cell gap closed \u2014 13 of 15 flagged leaves' false ap_bill Required markings removed (wo.create/wo.source.is|es|ac|et|rt|it|rs are WO-list/create surfaces with zero bill_id anywhere; road_service.active, parts_inventory.record_purchase (real vendor_id, but last_purchase_invoice_number is a plain string not a bill FK), warranty.create_claim, maintenance.modal.fault_rule, and maintenance.modal.create_expense all own zero bill data), while the 2 genuinely-wired leaves (wo.create_bill + maintenance.modal.create_bill \u2014 the SAME CreateBillModal.tsx, a real createVendorBill call persisting a hard accounting.bills.work_order_id FK, reusing the canonical VendorBillForm) get a real leaf-specific Built guard instead of riding the removed broad claim \u2014 closes the OWNER-EXECUTION-PLAN \u00a72 all-8-module ap_bill money-cell sweep (compliance/fleet/home/insurance/inventory/legal/maintenance/reports)",
+    "title": "maintenance money-cell gap closed — 13 of 15 flagged leaves' false ap_bill Required markings removed (wo.create/wo.source.is|es|ac|et|rt|it|rs are WO-list/create surfaces with zero bill_id anywhere; road_service.active, parts_inventory.record_purchase (real vendor_id, but last_purchase_invoice_number is a plain string not a bill FK), warranty.create_claim, maintenance.modal.fault_rule, and maintenance.modal.create_expense all own zero bill data), while the 2 genuinely-wired leaves (wo.create_bill + maintenance.modal.create_bill — the SAME CreateBillModal.tsx, a real createVendorBill call persisting a hard accounting.bills.work_order_id FK, reusing the canonical VendorBillForm) get a real leaf-specific Built guard instead of riding the removed broad claim — closes the OWNER-EXECUTION-PLAN §2 all-8-module ap_bill money-cell sweep (compliance/fleet/home/insurance/inventory/legal/maintenance/reports)",
     "source_file": "docs/specs/scoreboard/modules/maintenance.required.json",
     "guard": "scripts/verify-maintenance-wo-create-bill.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-ACCT-F5162-WAVE-C-FLOOR-SELF-REGRESSION-FIX",
-    "title": "verify-wave-c-ap-bill-fe-all-modules.mjs's own fixed floors (p10<27, leaves<67, module-Set<12) were the count-floor-not-proof pattern LINK-F5156 named this guard as evidence of \u2014 they broke on the very next run after ACCT-F5158..F5161 honestly dropped the ap_bill count from 67+ to 39 (5 of 12 modules now correctly own zero ap_bill leaves), because a floor cannot distinguish real wiring loss from an honest false-claim correction; floors removed, replaced with per-leaf auditConnectivity + the unchanged file-pattern/composed-guard checks, module list corrected to the honest 7 (accounting/banking/fleet/maintenance/reports/settlements/vendors) in both the guard's own @matrix-built tag and wire-sprint-built.json",
+    "title": "verify-wave-c-ap-bill-fe-all-modules.mjs's own fixed floors (p10<27, leaves<67, module-Set<12) were the count-floor-not-proof pattern LINK-F5156 named this guard as evidence of — they broke on the very next run after ACCT-F5158..F5161 honestly dropped the ap_bill count from 67+ to 39 (5 of 12 modules now correctly own zero ap_bill leaves), because a floor cannot distinguish real wiring loss from an honest false-claim correction; floors removed, replaced with per-leaf auditConnectivity + the unchanged file-pattern/composed-guard checks, module list corrected to the honest 7 (accounting/banking/fleet/maintenance/reports/settlements/vendors) in both the guard's own @matrix-built tag and wire-sprint-built.json",
     "source_file": "scripts/verify-wave-c-ap-bill-fe-all-modules.mjs",
     "guard": "scripts/verify-wave-c-ap-bill-fe-all-modules.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-LINK-F5164-RATCHET-IDENTITY-BASED-NEW-VS-LEGACY",
-    "title": "verify-matrix-built-leaf-specific.mjs's new-vs-legacy ratchet gated \"new\" purely by FILE path (branchTouchedFiles) \u2014 docs/specs/scoreboard/wire-sprint-built.json is a single shared feed holding 8+ independent broad-claim entries (ap_bill/load/trailer/unit/vendor/customer/driver/connectivity), so editing ONE entry's modules list (an honest correction, same pattern as ACCT-F5162) flagged ALL 8 as new/changed and would have hard-blocked the exact legitimate metadata fix this guard is supposed to allow for already-legacy entries; same problem for any scripts/verify-*.mjs file whose @matrix-built tag's modules list is corrected without narrowing leafRe. Fixed with identity-based diffing (new exported splitNewVsLegacy()): an entry is only \"new\" if no broad-claim entry with the same (file, task) identity existed in origin/main's committed state, fetched via git show/git ls-tree, fail-open to \"everything new\" if origin/main is unreachable. Verified to still catch a genuinely new broad-claim task and a leaf-specific-to-broad regression on an existing task, both via real selftest cases (not just manual spot-checks).",
+    "title": "verify-matrix-built-leaf-specific.mjs's new-vs-legacy ratchet gated \"new\" purely by FILE path (branchTouchedFiles) — docs/specs/scoreboard/wire-sprint-built.json is a single shared feed holding 8+ independent broad-claim entries (ap_bill/load/trailer/unit/vendor/customer/driver/connectivity), so editing ONE entry's modules list (an honest correction, same pattern as ACCT-F5162) flagged ALL 8 as new/changed and would have hard-blocked the exact legitimate metadata fix this guard is supposed to allow for already-legacy entries; same problem for any scripts/verify-*.mjs file whose @matrix-built tag's modules list is corrected without narrowing leafRe. Fixed with identity-based diffing (new exported splitNewVsLegacy()): an entry is only \"new\" if no broad-claim entry with the same (file, task) identity existed in origin/main's committed state, fetched via git show/git ls-tree, fail-open to \"everything new\" if origin/main is unreachable. Verified to still catch a genuinely new broad-claim task and a leaf-specific-to-broad regression on an existing task, both via real selftest cases (not just manual spot-checks).",
     "source_file": "scripts/verify-matrix-built-leaf-specific.mjs",
     "guard": "scripts/verify-matrix-built-leaf-specific.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-LINK-F5163-TRAILER-COLUMN-VERTICAL-SWEEP",
-    "title": "trailer-column vertical sweep across all 6 modules that ever claimed it (dispatch/fleet/lists/insurance/maintenance/safety) \u2014 live per-leaf verification of all 115 flagged leaves via 4 parallel read-only investigations found 64 false blanket Required markings (removed, honesty_audit-documented; the entire `lists` module's 20 fleet-catalog pages own zero trailer leaves \u2014 pure catalog-VALUE CRUD, no trailer record reference) and 2 real product bugs masquerading as wiring gaps (FleetTable.tsx's roster row Edit button always opened the unit-only EditVehicleModal regardless of row.kind, never branching to EditTrailerModal for trailer rows; TransfersInProgressPage.tsx labeled every row \"Unit:\" with EntityLink kind=\"unit\" even though row.equipment_id is always sourced from mdata.equipment/trailers, never mdata.units) \u2014 both fixed in code, not just metadata, and their Required marking corrected from the wrong 'unit' to the now-genuinely-true 'trailer'. The 53 genuinely-wired leaves (TrailerProfilePage.tsx's 13 self-referential sections + status/edit modals, fleet roster kind-branching, dispatch board/Book-Load/load-drawer/quick-assign/equipment-transfer, and real trailer pickers in fuel/insurance/maintenance/safety create flows) get 8 new leaf-specific Built guards instead of riding the removed WAVE-A-trailer-all-modules broad claim, whose own count floors (p10<49, leaves<93, module-Set<6) were proactively fixed in the SAME PR this time (see LINK-F5163's sibling ACCT-F5162 pattern) rather than shipped as a second self-caused regression.",
+    "title": "trailer-column vertical sweep across all 6 modules that ever claimed it (dispatch/fleet/lists/insurance/maintenance/safety) — live per-leaf verification of all 115 flagged leaves via 4 parallel read-only investigations found 64 false blanket Required markings (removed, honesty_audit-documented; the entire `lists` module's 20 fleet-catalog pages own zero trailer leaves — pure catalog-VALUE CRUD, no trailer record reference) and 2 real product bugs masquerading as wiring gaps (FleetTable.tsx's roster row Edit button always opened the unit-only EditVehicleModal regardless of row.kind, never branching to EditTrailerModal for trailer rows; TransfersInProgressPage.tsx labeled every row \"Unit:\" with EntityLink kind=\"unit\" even though row.equipment_id is always sourced from mdata.equipment/trailers, never mdata.units) — both fixed in code, not just metadata, and their Required marking corrected from the wrong 'unit' to the now-genuinely-true 'trailer'. The 53 genuinely-wired leaves (TrailerProfilePage.tsx's 13 self-referential sections + status/edit modals, fleet roster kind-branching, dispatch board/Book-Load/load-drawer/quick-assign/equipment-transfer, and real trailer pickers in fuel/insurance/maintenance/safety create flows) get 8 new leaf-specific Built guards instead of riding the removed WAVE-A-trailer-all-modules broad claim, whose own count floors (p10<49, leaves<93, module-Set<6) were proactively fixed in the SAME PR this time (see LINK-F5163's sibling ACCT-F5162 pattern) rather than shipped as a second self-caused regression.",
     "source_file": "docs/specs/scoreboard/modules/fleet.required.json",
     "guard": "scripts/verify-trailer-profile-page-self-referential.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
-    "title": "customer-column vertical sweep across all 17 modules that ever claimed it \u2014 5 parallel read-only investigations of all 278 flagged leaves found 184 false blanket Required markings (removed, honesty_audit-documented; lists' 66 catalog.* pages and reports' 38 GL-rollup/unit-scoped reports are the two biggest clusters \u2014 same generic catalog-VALUE-CRUD and account-rollup patterns already confirmed in prior column sweeps) and 95 genuinely-wired leaves proven with 8 new leaf-specific Built guards (customers module's 37 self-referential list+detail leaves; dispatch's 19 real customer_id/EntityLink queues, planners, and Book-Load/load-drawer surfaces; factoring's 11 customer-invoice-scoped submission/batch/recourse leaves; the remaining 28 spread across accounting/docs/reports/safety/banking/legal/finance/maintenance/system/home). One investigation gap was caught and corrected before shipping: home.role.dispatcher was initially marked false because DispatcherHome.tsx's own text has zero \"customer\" hits, but it unconditionally mounts a child component (DispatcherActiveLoadsPanel.tsx) that does \u2014 a reminder that a leaf's own file text is not sufficient evidence when it delegates rendering to an imported component. verify-wave-a-customer-all-modules.mjs's own count floors (p10<177, leaves<262, module-Set<16) were proactively fixed in the SAME PR (matching the ACCT-F5162/LINK-F5163 pattern) rather than shipped as a third self-caused regression, and a genuinely pre-existing, unrelated stale-regex bug in its composed verify-wave-a-customer-remainder-column.mjs guard (an EntityLink prop-order mismatch against NamesMasterHub.tsx, broken on main before this PR) was found and repaired in the same pass.",
+    "title": "customer-column vertical sweep across all 17 modules that ever claimed it — 5 parallel read-only investigations of all 278 flagged leaves found 184 false blanket Required markings (removed, honesty_audit-documented; lists' 66 catalog.* pages and reports' 38 GL-rollup/unit-scoped reports are the two biggest clusters — same generic catalog-VALUE-CRUD and account-rollup patterns already confirmed in prior column sweeps) and 95 genuinely-wired leaves proven with 8 new leaf-specific Built guards (customers module's 37 self-referential list+detail leaves; dispatch's 19 real customer_id/EntityLink queues, planners, and Book-Load/load-drawer surfaces; factoring's 11 customer-invoice-scoped submission/batch/recourse leaves; the remaining 28 spread across accounting/docs/reports/safety/banking/legal/finance/maintenance/system/home). One investigation gap was caught and corrected before shipping: home.role.dispatcher was initially marked false because DispatcherHome.tsx's own text has zero \"customer\" hits, but it unconditionally mounts a child component (DispatcherActiveLoadsPanel.tsx) that does — a reminder that a leaf's own file text is not sufficient evidence when it delegates rendering to an imported component. verify-wave-a-customer-all-modules.mjs's own count floors (p10<177, leaves<262, module-Set<16) were proactively fixed in the SAME PR (matching the ACCT-F5162/LINK-F5163 pattern) rather than shipped as a third self-caused regression, and a genuinely pre-existing, unrelated stale-regex bug in its composed verify-wave-a-customer-remainder-column.mjs guard (an EntityLink prop-order mismatch against NamesMasterHub.tsx, broken on main before this PR) was found and repaired in the same pass.",
     "source_file": "docs/specs/scoreboard/modules/customers.required.json",
     "guard": "scripts/verify-customer-detail-page-self-referential.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
-    "title": "vendor-column vertical sweep across all 21 modules that ever claimed it \u2014 5 parallel read-only investigations of all 306 flagged leaves found 191 false blanket Required markings (removed, honesty_audit-documented; lists' 120 catalog.* pages \u2014 including catalog.maintenance.vendors.list/create, which only outbound-links to a separate hub route rather than rendering a vendor record itself \u2014 is the single biggest cluster, same generic catalog-VALUE-CRUD pattern already confirmed in the trailer/customer sweeps) and 115 genuinely-wired leaves proven with 6 new leaf-specific Built guards (the vendors module's full 40 leaves, all genuine \u2014 its own native pages; maintenance's 21 real vendor_id/ReferenceSelect/EntityLink WO/bill/expense/road-service/parts/warranty surfaces; accounting's 18 real vendor-scoped bills/expenses/AP surfaces, all 4 bill-type category routes sharing one unconditional Vendor* picker; inventory's 8 real vendor-linked parts/assignments leaves; 26 more spread across docs/customers/fleet/banking/dispatch/factoring/legal/reports/finance/fuel/insurance/safety/system). Two comprehensive drop-vs-actual-state cross-checks (the same systematic verification introduced after catching a silent-failure bug during the customer-column sweep) ran clean with zero mismatches across all 191 removals before shipping. verify-wave-a-vendor-all-modules.mjs's own count floors (p10<195, leaves<290, module-Set<20) were proactively fixed in the SAME PR (matching the ACCT-F5162/LINK-F5163/LINK-F5165 pattern) rather than shipped as a fourth self-caused regression \u2014 cash-flow/compliance/home dropped to zero genuine vendor leaves and correctly left the module set, system was added (audit.trail genuinely maps subject_type to vendor).",
+    "title": "vendor-column vertical sweep across all 21 modules that ever claimed it — 5 parallel read-only investigations of all 306 flagged leaves found 191 false blanket Required markings (removed, honesty_audit-documented; lists' 120 catalog.* pages — including catalog.maintenance.vendors.list/create, which only outbound-links to a separate hub route rather than rendering a vendor record itself — is the single biggest cluster, same generic catalog-VALUE-CRUD pattern already confirmed in the trailer/customer sweeps) and 115 genuinely-wired leaves proven with 6 new leaf-specific Built guards (the vendors module's full 40 leaves, all genuine — its own native pages; maintenance's 21 real vendor_id/ReferenceSelect/EntityLink WO/bill/expense/road-service/parts/warranty surfaces; accounting's 18 real vendor-scoped bills/expenses/AP surfaces, all 4 bill-type category routes sharing one unconditional Vendor* picker; inventory's 8 real vendor-linked parts/assignments leaves; 26 more spread across docs/customers/fleet/banking/dispatch/factoring/legal/reports/finance/fuel/insurance/safety/system). Two comprehensive drop-vs-actual-state cross-checks (the same systematic verification introduced after catching a silent-failure bug during the customer-column sweep) ran clean with zero mismatches across all 191 removals before shipping. verify-wave-a-vendor-all-modules.mjs's own count floors (p10<195, leaves<290, module-Set<20) were proactively fixed in the SAME PR (matching the ACCT-F5162/LINK-F5163/LINK-F5165 pattern) rather than shipped as a fourth self-caused regression — cash-flow/compliance/home dropped to zero genuine vendor leaves and correctly left the module set, system was added (audit.trail genuinely maps subject_type to vendor).",
     "source_file": "docs/specs/scoreboard/modules/vendors.required.json",
     "guard": "scripts/verify-vendor-detail-page-self-referential.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-    "title": "unit-column vertical sweep across all 24 modules that ever claimed it \u2014 parallel read-only investigations of all 406 flagged leaves found 227 false blanket Required markings (removed, honesty_audit-documented; lists' 110 catalog.* leaves \u2014 safety/maintenance/fuel/fleet catalog domains \u2014 is the single biggest cluster, the same generic catalog-VALUE-CRUD pattern already confirmed false for trailer/customer/vendor; 117 more removed across fleet/dispatch/maintenance/reports/safety/compliance/insurance/fuel/driver-hub/home/tasks/legal/drivers/form_425/settlements/banking/vendors) and 178 genuinely-wired leaves proven with 12 new leaf-specific Built guards (fleet's 50 self-referential unit.profile/unit.edit/unit.detail + roster/bulk/modal leaves across 2 guards; maintenance's 34 real unit_id/EntityLink WO/queue/PM/modal/panel surfaces; dispatch's 29 real assigned_unit_id/EntityPicker queue/planner/load/book-load surfaces; safety's 12 real unit_id-columned inspection/incident/permit leaves; insurance's 10 (11th, policies.list, corrected OUT during this sweep \u2014 the list surface itself renders no unit column, no unit filter, no unit-scoped drill link; only policies.detail's real Units-Assigned table and both create surfaces' real unit multi-select earned the column); reports' 7 real unit_id-columned CPM/profit/fuel/maintenance-cost/geofence/deadhead leaves; compliance's 6 sharing ComplianceTable.tsx's real ownerEntityKind() dynamic-kind EntityLink plus real HOS/property-tax/2290 unit rows; docs' 6 sharing DocsHomePage.tsx's real docsLinkToEntityKind() entity_type-to-kind map and Units tab; accounting's 5 \u2014 all 4 bill-type category routes (vendor/maintenance/fuel/driver) resolving through BillsPage.tsx's billTypeForCategory() into the SAME VendorBillForm.tsx unit EntityPicker, plus expenses.create's own RecordExpenseForm.tsx unit EntityPicker; tasks' 5 sharing TaskSubjectLink.tsx's real subject_type-to-kind map and CreateTaskModal's unit EntityPicker; and 14 more spread across fuel/driver-hub/inventory/legal/customers/drivers/factoring/home/system in one consolidated guard). A comprehensive drop-vs-actual-state cross-check (the standing verification introduced after catching 2 silent-failure removals in this same sweep's earlier required.json pass \u2014 runner.fleet_utilization and runner.maint_cost_unit in reports.required.json, root cause never diagnosed, fixed via direct isolated re-removal) ran clean with zero mismatches across all 228 logged drops before shipping. verify-wave-a-unit-all-modules.mjs's own count floors (p10<178\u2192<49, leaves<355\u2192<178, module-Set<23\u2192<19) were proactively fixed in the SAME PR (matching the ACCT-F5162/LINK-F5163/LINK-F5165/LINK-F5166 pattern) rather than shipped as a fifth self-caused regression \u2014 banking/form_425/lists/settlements/vendors dropped to zero genuine unit leaves and correctly left the module set, system was added (audit.trail genuinely maps subject_type to unit).",
+    "title": "unit-column vertical sweep across all 24 modules that ever claimed it — parallel read-only investigations of all 406 flagged leaves found 227 false blanket Required markings (removed, honesty_audit-documented; lists' 110 catalog.* leaves — safety/maintenance/fuel/fleet catalog domains — is the single biggest cluster, the same generic catalog-VALUE-CRUD pattern already confirmed false for trailer/customer/vendor; 117 more removed across fleet/dispatch/maintenance/reports/safety/compliance/insurance/fuel/driver-hub/home/tasks/legal/drivers/form_425/settlements/banking/vendors) and 178 genuinely-wired leaves proven with 12 new leaf-specific Built guards (fleet's 50 self-referential unit.profile/unit.edit/unit.detail + roster/bulk/modal leaves across 2 guards; maintenance's 34 real unit_id/EntityLink WO/queue/PM/modal/panel surfaces; dispatch's 29 real assigned_unit_id/EntityPicker queue/planner/load/book-load surfaces; safety's 12 real unit_id-columned inspection/incident/permit leaves; insurance's 10 (11th, policies.list, corrected OUT during this sweep — the list surface itself renders no unit column, no unit filter, no unit-scoped drill link; only policies.detail's real Units-Assigned table and both create surfaces' real unit multi-select earned the column); reports' 7 real unit_id-columned CPM/profit/fuel/maintenance-cost/geofence/deadhead leaves; compliance's 6 sharing ComplianceTable.tsx's real ownerEntityKind() dynamic-kind EntityLink plus real HOS/property-tax/2290 unit rows; docs' 6 sharing DocsHomePage.tsx's real docsLinkToEntityKind() entity_type-to-kind map and Units tab; accounting's 5 — all 4 bill-type category routes (vendor/maintenance/fuel/driver) resolving through BillsPage.tsx's billTypeForCategory() into the SAME VendorBillForm.tsx unit EntityPicker, plus expenses.create's own RecordExpenseForm.tsx unit EntityPicker; tasks' 5 sharing TaskSubjectLink.tsx's real subject_type-to-kind map and CreateTaskModal's unit EntityPicker; and 14 more spread across fuel/driver-hub/inventory/legal/customers/drivers/factoring/home/system in one consolidated guard). A comprehensive drop-vs-actual-state cross-check (the standing verification introduced after catching 2 silent-failure removals in this same sweep's earlier required.json pass — runner.fleet_utilization and runner.maint_cost_unit in reports.required.json, root cause never diagnosed, fixed via direct isolated re-removal) ran clean with zero mismatches across all 228 logged drops before shipping. verify-wave-a-unit-all-modules.mjs's own count floors (p10<178→<49, leaves<355→<178, module-Set<23→<19) were proactively fixed in the SAME PR (matching the ACCT-F5162/LINK-F5163/LINK-F5165/LINK-F5166 pattern) rather than shipped as a fifth self-caused regression — banking/form_425/lists/settlements/vendors dropped to zero genuine unit leaves and correctly left the module set, system was added (audit.trail genuinely maps subject_type to unit).",
     "source_file": "docs/specs/scoreboard/modules/insurance.required.json",
     "guard": "scripts/verify-fleet-unit-profile-edit-detail.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-14-LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-    "title": "driver-column vertical sweep across all 24 modules that ever claimed it \u2014 parallel read-only investigations of all 411 flagged leaves found 215 false blanket Required markings (removed, honesty_audit-documented; lists' 96 catalog.* leaves \u2014 safety/dispatch/drivers/fuel catalog-VALUE domains plus 2 generic catalog modals \u2014 is the single biggest cluster, the same generic catalog-VALUE-CRUD pattern already confirmed false for trailer/customer/vendor/unit; reports' 26 GL-rollup/unit-scoped/unwired-runner leaves; fleet's 13 roster-grid/create-modal/unit-scoped leaves; dispatch's 22 aggregate-dashboard/plain-text/authorization-only leaves; safety's 10 plain-text/catalog/placeholder leaves; the 12 small-module batch's 25; settlements' 5; insurance's 10; compliance's 3; maintenance's 3; drivers' 2 \u2014 each with a live evidence citation of the actual mounted component showing zero driver_id/EntityLink kind=\"driver\" anywhere) and 196 genuinely-wired leaves proven with 12 new leaf-specific Built guards (safety's 43 \u2014 the largest single-module count in the sweep, file/training/HOS/inspection/event/incident/claim/fine/scheduler surfaces; dispatch's 36 home/queue/planner/load/modal surfaces; drivers' 24 \u2014 the module's own native pages, near-total self-referential coverage; maintenance's 13 WO/queue leaves sharing one shared CreateWOSectionIdentification.tsx driver_id field across all 7 wo.source.* variants; settlements' 12 real driver_id-columned settlement/advance/liability leaves; compliance's 9 sharing ComplianceTable.tsx's real ownerEntityKind() dynamic-kind map (driver-capable) plus HOS surfaces; fleet's 7 assign/transfer/map leaves; the 12-small-module consolidated guard's 38 (fuel/home/driver-hub/tasks/docs/legal/accounting/vendors/banking/factoring/system/customers, several sharing real dynamic entity-kind maps \u2014 TaskSubjectLink, DocsHomePage's docsLinkToEntityKind, AuditTrailPage's SUBJECT_ENTITY_KINDS, LegalContractInstancesPage's signerKind \u2014 already proven driver-capable in this same sweep or the prior unit-column sweep); reports' 5; insurance's 5; tasks' 5; lists' 4 \u2014 hub.names_search's real LINKABLE_NAME_KINDS[\"driver\"] map plus catalog.drivers.teams.*'s real DriverPickerWithCreate). Two investigation gaps \u2014 leaves the read-only agents omitted from both their genuine and false lists (lists.required.json's hub.names_search, dispatch.required.json's queues.late) \u2014 were caught and independently verified GENUINE before shipping, matching this sweep's standing practice of never trusting an agent's silence as a verdict. A comprehensive drop-vs-actual-state cross-check (the standing verification introduced during the unit-column sweep) caught 3 further silent-failure removals in reports.required.json (report.late_arrival, runner.driver_settlement, runner.hos_violations \u2014 logged dropped but still present in `required`, root cause never diagnosed, same unexplained class as the unit-column sweep's 2 silent failures) and confirmed zero mismatches across all 215 logged drops after a direct isolated re-removal. verify-wave-a-driver-all-modules.mjs's own count floors (p10<200, leaves<325, module-Set<23) were proactively fixed in the SAME PR (matching the ACCT-F5162/LINK-F5163/LINK-F5165/LINK-F5166/LINK-F5167 pattern) rather than shipped as a sixth self-caused regression \u2014 floors dropped to p10<129/leaves<196/module-Set<22; cash-flow and form_425 dropped to zero genuine driver leaves and correctly left the module set, system was added (audit.trail and the samsara HOS-driver-map page both genuinely map to driver).",
+    "title": "driver-column vertical sweep across all 24 modules that ever claimed it — parallel read-only investigations of all 411 flagged leaves found 215 false blanket Required markings (removed, honesty_audit-documented; lists' 96 catalog.* leaves — safety/dispatch/drivers/fuel catalog-VALUE domains plus 2 generic catalog modals — is the single biggest cluster, the same generic catalog-VALUE-CRUD pattern already confirmed false for trailer/customer/vendor/unit; reports' 26 GL-rollup/unit-scoped/unwired-runner leaves; fleet's 13 roster-grid/create-modal/unit-scoped leaves; dispatch's 22 aggregate-dashboard/plain-text/authorization-only leaves; safety's 10 plain-text/catalog/placeholder leaves; the 12 small-module batch's 25; settlements' 5; insurance's 10; compliance's 3; maintenance's 3; drivers' 2 — each with a live evidence citation of the actual mounted component showing zero driver_id/EntityLink kind=\"driver\" anywhere) and 196 genuinely-wired leaves proven with 12 new leaf-specific Built guards (safety's 43 — the largest single-module count in the sweep, file/training/HOS/inspection/event/incident/claim/fine/scheduler surfaces; dispatch's 36 home/queue/planner/load/modal surfaces; drivers' 24 — the module's own native pages, near-total self-referential coverage; maintenance's 13 WO/queue leaves sharing one shared CreateWOSectionIdentification.tsx driver_id field across all 7 wo.source.* variants; settlements' 12 real driver_id-columned settlement/advance/liability leaves; compliance's 9 sharing ComplianceTable.tsx's real ownerEntityKind() dynamic-kind map (driver-capable) plus HOS surfaces; fleet's 7 assign/transfer/map leaves; the 12-small-module consolidated guard's 38 (fuel/home/driver-hub/tasks/docs/legal/accounting/vendors/banking/factoring/system/customers, several sharing real dynamic entity-kind maps — TaskSubjectLink, DocsHomePage's docsLinkToEntityKind, AuditTrailPage's SUBJECT_ENTITY_KINDS, LegalContractInstancesPage's signerKind — already proven driver-capable in this same sweep or the prior unit-column sweep); reports' 5; insurance's 5; tasks' 5; lists' 4 — hub.names_search's real LINKABLE_NAME_KINDS[\"driver\"] map plus catalog.drivers.teams.*'s real DriverPickerWithCreate). Two investigation gaps — leaves the read-only agents omitted from both their genuine and false lists (lists.required.json's hub.names_search, dispatch.required.json's queues.late) — were caught and independently verified GENUINE before shipping, matching this sweep's standing practice of never trusting an agent's silence as a verdict. A comprehensive drop-vs-actual-state cross-check (the standing verification introduced during the unit-column sweep) caught 3 further silent-failure removals in reports.required.json (report.late_arrival, runner.driver_settlement, runner.hos_violations — logged dropped but still present in `required`, root cause never diagnosed, same unexplained class as the unit-column sweep's 2 silent failures) and confirmed zero mismatches across all 215 logged drops after a direct isolated re-removal. verify-wave-a-driver-all-modules.mjs's own count floors (p10<200, leaves<325, module-Set<23) were proactively fixed in the SAME PR (matching the ACCT-F5162/LINK-F5163/LINK-F5165/LINK-F5166/LINK-F5167 pattern) rather than shipped as a sixth self-caused regression — floors dropped to p10<129/leaves<196/module-Set<22; cash-flow and form_425 dropped to zero genuine driver leaves and correctly left the module set, system was added (audit.trail and the samsara HOS-driver-map page both genuinely map to driver).",
     "source_file": "docs/specs/scoreboard/modules/safety.required.json",
     "guard": "scripts/verify-safety-driver-wiring.mjs",
     "type": "enforced"
@@ -844,6 +844,13 @@
     "title": "C28 reversal_symmetry is registry-driven from POSTING-CONTRACTS. Drawn is not computed. Live restore after SCEN-01 chains.",
     "source_file": "docs/specs/accounting/POSTING-CONTRACTS.json",
     "guard": "scripts/verify-reversal-symmetry.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-09-03-DISPATCH-BOARD-COLUMN-REORDER-PERSISTED",
+    "title": "Dispatch board columns are drag-reorderable and drag-resizable, persisted per user per view under the shared dispatch-board storage key; all sections share one column model so dragging in one section moves the same column in every section",
+    "source_file": "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
+    "guard": "scripts/verify-dispatch-board-column-reorder.mjs",
     "type": "enforced"
   }
 ]

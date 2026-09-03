@@ -1200,6 +1200,8 @@ export function DispatchBoard({
                 suppressToolbarRange
                 hidePager
                 storageKey="dispatch-board"
+                enableColumnReorder
+                enableColumnResize
                 tableTestId={`dispatch-board-section-table-${section.key}`}
                 rowTestId={(row) => `dispatch-board-row-${row.id}`}
               />
