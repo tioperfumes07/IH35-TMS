@@ -1459,7 +1459,16 @@ export function BankingTransactionsDesignView({
                     Create backdated check
                   </button>
                   <Link
-                    to="/banking/categorization-rules"
+                    // GO-23 (owner FINISH LAW 2026-09-03) — "remember a merchant decision": carry this
+                    // row's merchant text over as a prefill so the rule editor doesn't need it retyped.
+                    // Trimmed to the merchant name alone (not the full description, which often carries
+                    // a one-off reference/confirmation number that would never match a future
+                    // transaction from the same merchant).
+                    to={`/banking/categorization-rules${
+                      (tx.merchant_name || tx.description || "").trim()
+                        ? `?merchant=${encodeURIComponent((tx.merchant_name || tx.description || "").trim())}`
+                        : ""
+                    }`}
                     className="block border-b border-gray-100 px-3 py-2 text-xs hover:bg-gray-50"
                     onClick={() => setActionMenuTxId(null)}
                   >

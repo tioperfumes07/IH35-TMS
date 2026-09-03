@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import {
   applyCategorizationRuleHistorical,
   createCategorizationRule,
@@ -34,6 +35,16 @@ export function CategorizationRulesPage() {
   const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
   const [dragRuleId, setDragRuleId] = useState<string | null>(null);
   const [pattern, setPattern] = useState("");
+  // GO-23 (owner FINISH LAW 2026-09-03) — "remember a merchant decision": merchant/description text
+  // this rule matches, scored ahead of plaid_category_pattern by autoCategorize (plaid.service.ts).
+  // `merchant` search param prefills this when arriving from a transaction's "Create rule" action
+  // (BankingTransactionsDesignView) so the merchant text doesn't have to be retyped.
+  const [searchParams] = useSearchParams();
+  const merchantPrefill = searchParams.get("merchant") ?? "";
+  const [descriptionPattern, setDescriptionPattern] = useState(merchantPrefill);
+  useEffect(() => {
+    if (merchantPrefill) setDescriptionPattern(merchantPrefill);
+  }, [merchantPrefill]);
   const [priority, setPriority] = useState("100");
   const [coaAccountId, setCoaAccountId] = useState("");
   const [saving, setSaving] = useState(false);
@@ -83,6 +94,9 @@ export function CategorizationRulesPage() {
 
   async function onSaveRule() {
     const nextPattern = (selectedRule ? pattern || selectedRule.plaid_category_pattern : pattern).trim();
+    const nextDescriptionPattern = (
+      selectedRule ? descriptionPattern || selectedRule.description_pattern || "" : descriptionPattern
+    ).trim();
     const nextPriority = Number(selectedRule ? priority || String(selectedRule.priority) : priority || "100");
     const nextCoa = selectedRule ? (coaAccountId || selectedRule.coa_account_id || null) : (coaAccountId || null);
     if (!nextPattern) {
@@ -94,17 +108,20 @@ export function CategorizationRulesPage() {
       if (selectedRule) {
         await updateCategorizationRule(selectedRule.id, companyId, {
           plaid_category_pattern: nextPattern,
+          description_pattern: nextDescriptionPattern || null,
           coa_account_id: nextCoa,
           priority: nextPriority,
         });
       } else {
         await createCategorizationRule(companyId, {
           plaid_category_pattern: nextPattern,
+          description_pattern: nextDescriptionPattern || null,
           coa_account_id: nextCoa,
           priority: nextPriority,
         });
       }
       setPattern("");
+      setDescriptionPattern("");
       setPriority("100");
       setCoaAccountId("");
       setSelectedRuleId(null);
@@ -184,7 +201,16 @@ export function CategorizationRulesPage() {
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Rules</p>
-            <ActionButton disabled={saving} onClick={() => setSelectedRuleId(null)}>
+            <ActionButton
+              disabled={saving}
+              onClick={() => {
+                setSelectedRuleId(null);
+                setPattern("");
+                setDescriptionPattern("");
+                setPriority("100");
+                setCoaAccountId("");
+              }}
+            >
               Add Rule
             </ActionButton>
           </div>
@@ -206,6 +232,7 @@ export function CategorizationRulesPage() {
                   onClick={() => {
                     setSelectedRuleId(rule.id);
                     setPattern(rule.plaid_category_pattern);
+                    setDescriptionPattern(rule.description_pattern ?? "");
                     setPriority(String(rule.priority));
                     setCoaAccountId(rule.coa_account_id ?? "");
                   }}
@@ -213,6 +240,11 @@ export function CategorizationRulesPage() {
                   <span className="block font-semibold text-gray-900">
                     #{rule.priority} {rule.plaid_category_pattern}
                   </span>
+                  {rule.description_pattern ? (
+                    <span className="block text-xs font-normal text-gray-600">
+                      Merchant text: {rule.description_pattern}
+                    </span>
+                  ) : null}
                 </button>
                 <p className="text-gray-600">
                   {rule.coa_account_id ? (
@@ -238,9 +270,25 @@ export function CategorizationRulesPage() {
                 if (selectedRule) setSelectedRuleId(selectedRule.id);
                 setPattern(event.target.value);
               }}
-              placeholder="Pattern (e.g. FOOD_* or TRANSPORTATION.GAS)"
+              placeholder="Pattern (e.g. FOOD_* or TRANSPORTATION.GAS) — required, use * if matching by merchant text only"
               className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
             />
+            <div>
+              <input
+                value={descriptionPattern}
+                onChange={(event) => {
+                  if (selectedRule) setSelectedRuleId(selectedRule.id);
+                  setDescriptionPattern(event.target.value);
+                }}
+                placeholder="Merchant text (optional) — e.g. LOVE'S TRAVEL — beats a wrong Plaid category"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              />
+              <p className="mt-0.5 text-xs text-gray-500">
+                Matches the bank's own description text. Takes priority over the pattern above — set
+                this to "remember" how you categorized a merchant so future transactions from the same
+                merchant match automatically.
+              </p>
+            </div>
             <input
               value={priority}
               onChange={(event) => setPriority(event.target.value)}
