@@ -3,8 +3,8 @@
 
 FAST-MERGE. Gate exit 0 → push → PR → merge → next. Never POST.
 
-## HARD WAKE NOW (IDLE defect · re-wake +6m)
-Still no Load Costs reverse 1–12 ACK after #20027. OUTBOX still ends KPI ACK.
+## HARD WAKE NOW (IDLE defect · re-wake +7m after #20028)
+Still no Load Costs reverse 1–12 ACK. OUTBOX still ends KPI ACK.
 Pull this INBOX. Same job. Execute THIS TURN.
 
 ## NOW
