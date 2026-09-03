@@ -18,3 +18,5 @@ AFTER P0 (Cursor second job, not this send)
 Done without the packet PROOF list pasted in OUTBOX = not done.
 Cursor P0 is not delivered until a REAL USMCA load number is pasted by the owner.
 Never POST Book Load as a seat fixture. Leave #20064.
+
+Packet on this branch: 8 files under docs/bus/packets/2026-09-03-16-P0-SEND including MONEY-CONTRACT-ALL-SEATS.txt.
