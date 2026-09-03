@@ -1,13 +1,13 @@
-# INBOX-CODEX · MAINTENANCE · 2026-09-03
+# INBOX-CODEX · MAINTENANCE NEXT · 2026-09-03 15:32 CT
 `git pull --ff-only origin main`
 
-NO MONEY. Canonical `maintenance.*`. Never `maint.*`. Never POST. Click **No** on `cd`/`HEAD~1`.
+Fleet OOS + owner/lease scope is **CLOSED** (#20115). Do not rebuild. Do not wait on Cursor lock.
+NO MONEY. Never POST. Never DELETE units. Click **No** on `cd`/`HEAD~1`.
+Canonical `maintenance.*`. Never `maint.*`.
 
-## NOW
-1. Fleet OOS columns: if already on main, **prove live** — do not rebuild.
-2. Unit scoping: `owner_company_id` / `currently_leased_to_company_id`. Do not DELETE 00–119 / T* / CODEX-*.
-3. Report `is_sample_data` and CODEX-* rows. Void-not-delete.
+## NOW — GO-20 Feature 9 then 10 (one vertical)
+9: Work order parts picker reads `maintenance.parts_inventory`. Do **not** create `inventory.parts`.
+10: Labor rates from `catalogs.labor_rates`. Do **not** create `maintenance.labor_rates`. Guard fails if that table is referenced.
+Finish 9 fully, then 10. FIND IT, FILE IT, DO NOT FIX IT (wizard/dispatch → Cursor).
 
-FIND IT, FILE IT, DO NOT FIX IT.
-
-ACK `CODEX | ACK | fleet scope + OOS prove · NEVER POST | GO`
+ACK `CODEX | ACK | GO-20 F9 then F10 · NEVER POST | GO`

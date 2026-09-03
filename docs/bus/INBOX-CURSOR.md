@@ -1,13 +1,10 @@
-# INBOX-CURSOR · OWNERSHIP LOCK · WIZARD HELD · 2026-09-03
+# INBOX-CURSOR · LOCK + PARKED FINDINGS · 2026-09-03 15:32 CT
 `git pull --ff-only origin main`
 
-Leave #20064. Never POST Book Load.
+Leave #20064. Never POST Book Load. Wizard **HELD**.
 
-## NOW (only this)
-Seat ownership lock: CODEOWNERS + `verify-seat-surface-ownership` (EVEN claim-before-write, then author).
-Prove guard FAILS on the 28 BookLoadModalV4 commits, then wire.
+## NOW
+Ownership lock (CODEOWNERS + guard, Rule 37 claim first). Not wizard UI.
 
-## HELD
-Book Load STEP 1–4 (last-good commit, T120-SMITH, templates, sizing, rate-con). Wait for Jorge’s Claude redesign paste.
-
-FIND IT, FILE IT, DO NOT FIX IT outside BookLoad* / book-load.service.ts.
+## PARKED (do not fix until redesign paste)
+Cascade #20120: `DispatchSubnav.tsx:51` late-arrivals unmounted; Load costs twice (`DispatchSubnav.tsx:42` + `Dispatch.tsx:48`).

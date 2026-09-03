@@ -2,6 +2,7 @@
 `git pull --ff-only origin main`
 
 NO MONEY. No Book Load. No Load Costs. No banking.
+START NOW. Do not wait for Cursor lock.
 
 ## NOW
 Live: 264 drivers, 9 CDL expiry, 9 DOT medical. Gate is correct; data is missing.

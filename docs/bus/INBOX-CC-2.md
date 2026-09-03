@@ -2,6 +2,7 @@
 `git pull --ff-only origin main`
 
 Leave #20064. You own `pages/banking/**` + `backend/src/banking/**` alone. Not wizard, not Load Costs.
+START NOW. Do not wait for Cursor lock.
 
 ## NOW
 USMCA live (RESET ROLE): ~369 uncategorized + ~22 pending_categorization. A 0 is masked, not empty.

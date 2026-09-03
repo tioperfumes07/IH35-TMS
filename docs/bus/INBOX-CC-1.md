@@ -4,7 +4,7 @@
 STOP Book Load. STOP dispatch wizard. You own Load Costs + mileage **alone** (design + money).
 
 ## NOW
-After ownership lock is on main (or in parallel only on YOUR paths):
+START NOW. Do not wait for Cursor lock. Stay on YOUR files only.
 1. Guards G1–G5 with `bypass_rls` — prove FAIL on prod, then rebuild `catalogs.lane_mileage` from `~/Downloads/lane-mileage-reimport-source.csv` → `db/seeds/…`. TRUNCATE-reload. `short_miles` NULL. Never derive short from practical+empty.
 2. Load Costs board + **in-tab** stacked rows (not a link-out). KPI buttons, expand, back arrow, columns per block.
 3. Report load **13508** shortest > practical. Do not delete the load.

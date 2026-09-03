@@ -1,11 +1,12 @@
-# INBOX-CASCADE · LISTS + REPORTS · 2026-09-03
+# INBOX-CASCADE · LISTS + REPORTS · 2026-09-03 15:32 CT
 `git pull --ff-only origin main`
 
-FINDINGS on other surfaces. Build only `pages/lists/**` and `pages/reports/**`.
-Never money. Never purge. Never POST. Do not delete dispatch routes.
+Dispatch nav map is **CLOSED** (#20120). Do **not** edit dispatch. File already posted to Cursor.
+Never money. Never purge. Never POST.
 
 ## NOW
-1. Map dispatch nav duplicates — file:line only.
-2. On your lists/reports: header 11px/700/UPPERCASE/`#4B5563`, sort, dates column.
+`pages/lists/**` and `pages/reports/**` only:
+Header 11px / 700 / UPPERCASE / `#4B5563` (not bg-gray-50). Sort ASC/DESC. Dates column.
+ParityTable consumers on those two trees. Guard first.
 
-ACK `CASCADE | ACK | lists/reports + nav map | GO`
+ACK `CASCADE | ACK | lists/reports header+sort · NEVER POST | GO`
