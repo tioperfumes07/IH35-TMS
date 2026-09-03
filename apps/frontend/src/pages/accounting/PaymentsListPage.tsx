@@ -271,7 +271,7 @@ export function PaymentsListPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Payment # or customer"
-            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
+            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-xs"
             aria-label="Search payments"
           />
         }
@@ -279,7 +279,7 @@ export function PaymentsListPage() {
         <div className="grid gap-2 md:grid-cols-4">
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Status
-            <SelectCombobox value={staged.draft.status} onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as "all" | "active" | "voided" })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+            <SelectCombobox value={staged.draft.status} onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as "all" | "active" | "voided" })} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
               <option value="all">All</option>
               <option value="active">Active</option>
               <option value="voided">Voided</option>
@@ -288,7 +288,7 @@ export function PaymentsListPage() {
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Method
-            <SelectCombobox value={staged.draft.method} onChange={(event) => staged.setDraft({ ...staged.draft, method: event.target.value as "" | PaymentMethod | "factoring" })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+            <SelectCombobox value={staged.draft.method} onChange={(event) => staged.setDraft({ ...staged.draft, method: event.target.value as "" | PaymentMethod | "factoring" })} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
               {METHOD_OPTIONS.map((option) => (
                 <option key={option.label} value={option.value}>
                   {option.label}

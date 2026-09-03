@@ -301,7 +301,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
             </label>
             <SelectCombobox
               id="hos-vio-source"
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               value={form.source}
               onChange={(e) => setForm((v) => ({ ...v, source: e.target.value as Source }))}
             >
@@ -318,7 +318,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
               id="hos-vio-duration"
               type="number"
               min={0}
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               value={form.duration_minutes}
               onChange={(e) => setForm((v) => ({ ...v, duration_minutes: e.target.value }))}
             />
@@ -330,7 +330,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
             <textarea
               id="hos-vio-notes"
               rows={2}
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               value={form.notes}
               onChange={(e) => setForm((v) => ({ ...v, notes: e.target.value }))}
             />

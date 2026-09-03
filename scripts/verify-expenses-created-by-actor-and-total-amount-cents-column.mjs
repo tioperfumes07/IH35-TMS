@@ -80,7 +80,17 @@ const lumperSrc = readFileSync(lumperPath, "utf8");
 if (!/INSERT INTO accounting\.expenses[\s\S]{0,200}?created_by_user_id/.test(lumperSrc)) {
   failures.push(`${lumperPath}: lumper-expense leg's INSERT into accounting.expenses no longer includes created_by_user_id`);
 }
-if (!/actorUserUuid\],\s*\n\s*\);/.test(lumperSrc) && !/loadSample\.rows\[0\]\?\.is_sample_data === true, actorUserUuid\]/.test(lumperSrc)) {
+// N1 (2026-09-02): the values array grew a 6th element (numbered.number, for
+// LV-EXPENSE-NUMBER-NEVER-POPULATED) after actorUserUuid, so it is no longer the
+// terminal array element. Match actorUserUuid as a bound value ANYWHERE inside that
+// specific INSERT's values array. Anchored on the array's own open/close (a trailing
+// "],\n  );" closes both the array literal and the client.query(...) call) rather than
+// the first "]" found, since loadSample.rows[0] inside the array has its own nested
+// brackets that would otherwise truncate the capture early.
+const lumperInsertValuesMatch = lumperSrc.match(
+  /INSERT INTO accounting\.expenses[\s\S]{0,400}?\n\s*\[([\s\S]{0,300}?)\],\s*\n\s*\);/
+);
+if (!lumperInsertValuesMatch || !/\bactorUserUuid\b/.test(lumperInsertValuesMatch[1])) {
   failures.push(`${lumperPath}: lumper-expense leg's INSERT no longer passes actorUserUuid as a value`);
 }
 
