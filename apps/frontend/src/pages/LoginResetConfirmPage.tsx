@@ -45,7 +45,7 @@ export function LoginResetConfirmPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F7F8FA] p-4">
         <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-6 shadow-xs">
-          <h1 style={{ fontFamily: typography.fontSerif }} className="text-[20px] font-semibold text-gray-900">
+          <h1 style={{ fontFamily: typography.fontSerif }} className="text-[22px] font-semibold text-gray-900">
             Invalid link
           </h1>
           <p className="mt-2 text-sm text-gray-700">Open the link from your email, or request a new reset.</p>
@@ -61,7 +61,7 @@ export function LoginResetConfirmPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F7F8FA] p-4">
         <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-6 shadow-xs">
-          <h1 style={{ fontFamily: typography.fontSerif }} className="text-[20px] font-semibold text-gray-900">
+          <h1 style={{ fontFamily: typography.fontSerif }} className="text-[22px] font-semibold text-gray-900">
             Password updated
           </h1>
           <p className="mt-2 text-sm text-gray-700">You can sign in with your new password.</p>
@@ -76,7 +76,7 @@ export function LoginResetConfirmPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F7F8FA] p-4">
       <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-6 shadow-xs">
-        <h1 style={{ fontFamily: typography.fontSerif }} className="text-[20px] font-semibold text-gray-900">
+        <h1 style={{ fontFamily: typography.fontSerif }} className="text-[22px] font-semibold text-gray-900">
           Choose a new password
         </h1>
         <form onSubmit={onSubmit} className="mt-4 space-y-3" noValidate>

@@ -14,9 +14,9 @@ import { statusPillClass, type StatusFilter } from "./shared";
 import { CatalogStatusFilterCombobox } from "./CatalogStatusFilterCombobox";
 
 function severityBadgeClass(severity: number) {
-  if (severity <= 3) return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
-  if (severity <= 6) return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-800";
-  return "rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700";
+  if (severity <= 3) return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700";
+  if (severity <= 6) return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-800";
+  return "rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700";
 }
 
 export function CompanyViolationTypesListPage() {

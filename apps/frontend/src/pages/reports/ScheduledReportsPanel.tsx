@@ -125,7 +125,7 @@ export function ScheduledReportsPanel() {
                 <div className="text-xs text-slate-600">{row.recipients}</div>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
-                <label className="flex items-center gap-1 text-[10px] text-slate-600">
+                <label className="flex items-center gap-1 text-xs text-slate-600">
                   <input
                     type="checkbox"
                     checked={row.status === "active"}
@@ -139,14 +139,14 @@ export function ScheduledReportsPanel() {
                 </label>
                 <button
                   type="button"
-                  className="text-[10px] font-semibold text-[#1f2a44] hover:underline"
+                  className="text-xs font-semibold text-[#1f2a44] hover:underline"
                   onClick={() => sendNowMut.mutate(row.id)}
                 >
                   Send now
                 </button>
                 <button
                   type="button"
-                  className="text-[10px] font-semibold text-red-700 hover:underline"
+                  className="text-xs font-semibold text-red-700 hover:underline"
                   onClick={() => deleteMut.mutate(row.id)}
                 >
                   Delete
