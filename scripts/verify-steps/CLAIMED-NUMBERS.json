@@ -7213,7 +7213,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1042,
+  "total_claimed": 1043,
   "10225": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-01",
@@ -7233,5 +7233,10 @@
     "claimed_at": "2026-09-02",
     "claimed_by": "cursor",
     "purpose": "verify-worm-delete-trigger-coverage (GO-18 Gap 5 corrected: every display-id.ts MAX+1 table must carry trg_worm_refuse_delete)"
+  },
+  "10236": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-settlement-display-id-advisory-lock (ACCT-F19367 regression guard: settlement + cash-advance-request display-id generators must keep pg_advisory_xact_lock)"
   }
 }
