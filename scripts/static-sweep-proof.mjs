@@ -70,14 +70,45 @@ export function ensureVerifyStaticOnce({
   return { ran: true, skipped: false, proof };
 }
 
+/**
+ * GATE-LIVELOCK-01: computes the current push's changed-file set (against origin/main's
+ * merge-base, matching the freshness check's own base) and passes it to verify-static.mjs so a
+ * LOCAL pre-push run only executes guards whose owned paths intersect it. `GATE_FULL=1` (already
+ * read by verify-static.mjs itself) forces the full unscoped run; this function still computes
+ * the diff in that case so a caller can log it, but verify-static.mjs ignores it once GATE_FULL
+ * wins. Diff computation failing (fresh clone with no origin/main, detached HEAD, etc.) fails
+ * OPEN to unscoped (null → every guard runs) — never silently narrows the gate because the diff
+ * could not be computed.
+ */
+export function computeChangedFilesForGate(root, { run = spawnSync } = {}) {
+  try {
+    const mergeBase = run("git", ["merge-base", "HEAD", "origin/main"], { cwd: root, encoding: "utf8" });
+    if (mergeBase.status !== 0) return null;
+    const base = mergeBase.stdout.trim();
+    if (!base) return null;
+    const diff = run("git", ["diff", "--name-only", `${base}..HEAD`], { cwd: root, encoding: "utf8" });
+    if (diff.status !== 0) return null;
+    return diff.stdout.split("\n").map((s) => s.trim()).filter(Boolean);
+  } catch {
+    return null;
+  }
+}
+
 function defaultRunStatic(root) {
   const script = path.join(root, "scripts/verify-static.mjs");
+  const changedFiles = computeChangedFilesForGate(root);
+  const env = { ...process.env };
+  if (changedFiles !== null) env.IH35_GATE_DIFF_FILES = changedFiles.join("\n");
+  // GATE-LIVELOCK-01: stderr inherited so verify-static.mjs's every-10-steps progress prints
+  // stream live — a fully-buffered/piped stderr was read as "hung" during a real long run
+  // (Cascade, 2026-09-03). stdout stays piped so the final PASS/FAIL summary can still be
+  // captured into the thrown error's detail on failure.
   const res = spawnSync(process.execPath, [script], {
     cwd: root,
     encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-    env: process.env,
+    stdio: ["ignore", "pipe", "inherit"],
+    env,
   });
-  const detail = `${res.stdout || ""}\n${res.stderr || ""}`.trim().slice(-500);
+  const detail = `${res.stdout || ""}`.trim().slice(-500);
   return { ok: (res.status ?? 1) === 0, status: res.status ?? 1, detail };
 }

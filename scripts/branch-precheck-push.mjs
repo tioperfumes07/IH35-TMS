@@ -13,6 +13,8 @@ import {
   isLocalVerifyDatabaseUrl,
   validateOwnershipProof,
 } from "./vlci-lifecycle.mjs";
+import { ciRunGuardSet, runStatic, STATIC_RESULT_CATEGORIES } from "./verify-static.mjs";
+import { ensureFreshGateStepMap } from "./generate-gate-step-map.mjs";
 
 const MODULE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -685,18 +687,115 @@ export function runPrecheckPush(options = {}) {
   };
 }
 
+/**
+ * GATE-LIVELOCK-01 STEP 2 — kill the race between the local gate and a busy main.
+ *
+ * Scoping (STEP 1) shrinks the gate from ~53min to low minutes, but on a busy queue that is
+ * still not zero: a FRESHNESS rejection (branch behind AND overlapping origin/main) can still
+ * happen. The naive fix — rebase, then run the WHOLE gate again — just repeats the same 53min
+ * risk on the rebuilt branch. Instead: on a FRESHNESS failure, rebase onto origin/main, then
+ * re-verify ONLY the guards whose owned paths intersect the files main advanced by (NOT the
+ * whole gate, NOT even this branch's own diff, which already passed and did not change) — using
+ * the exact same runStatic()/guardIsInScope() machinery STEP 1 built, just pointed at a
+ * different, much smaller file set. If that delta touches nothing any guard owns, no guard runs
+ * at all and the retry proceeds immediately. Bounded to 3 attempts; a real rebase conflict (or
+ * still-stale after 3 tries) stops the loop and reports the exact blocker — it never loops
+ * unboundedly.
+ */
+export function computeMainDeltaFiles(root) {
+  const mergeBase = runGitOrThrow(["merge-base", "HEAD", "origin/main"], { cwd: root });
+  return runGitOrThrow(["diff", "--name-only", `${mergeBase}..origin/main`], { cwd: root })
+    .split("\n")
+    .filter(Boolean);
+}
+
+/** True iff at least one non-alwaysRun guard's owned path intersects `files`. alwaysRun guards
+ * already ran in this hook's own prior full pass and are not re-triggered by a delta-only
+ * check — see the module comment above for why. */
+export function deltaTouchesAnyGuard(files, stepMap) {
+  if (files.length === 0) return false;
+  return Object.entries(stepMap.entries).some(([, entry]) => {
+    if (entry.alwaysRun) return false;
+    return entry.ownedPaths.some((owned) => files.some((f) => f === owned || f.startsWith(owned) || owned.startsWith(f)));
+  });
+}
+
+/**
+ * ONE rebase + delta-scoped re-check. The bounded-3-attempts loop lives in main(), which calls
+ * this once per retry and re-runs runPrecheckPush() from the top afterward (its own freshness
+ * check is the authoritative "are we caught up now" answer — a race could still leave us behind
+ * again, which is exactly why main()'s loop, not this function, owns the attempt count).
+ */
+export function attemptStaleBaseRecovery(root) {
+  const deltaFiles = computeMainDeltaFiles(root);
+  if (deltaFiles.length === 0) {
+    // Nothing to catch up on after all (race resolved itself) — freshness will pass now.
+    return { ok: true, ranGuards: false };
+  }
+  console.log(
+    `[branch:precheck-push] stale-base recovery: rebasing onto origin/main ` +
+    `(${deltaFiles.length} file(s) main advanced by)`
+  );
+  const rebase = spawnSync("git", ["rebase", "origin/main"], { cwd: root, encoding: "utf8" });
+  if (rebase.status !== 0) {
+    spawnSync("git", ["rebase", "--abort"], { cwd: root, encoding: "utf8" });
+    return {
+      ok: false,
+      reason: `git rebase origin/main failed (real conflict, not auto-resolved; aborted cleanly) — ` +
+        `resolve by hand: ${tailLines(`${rebase.stdout || ""}\n${rebase.stderr || ""}`, 20)}`,
+    };
+  }
+  const { map: stepMap } = ensureFreshGateStepMap({ dir: path.join(root, "scripts") });
+  if (!deltaTouchesAnyGuard(deltaFiles, stepMap)) {
+    console.log(`[branch:precheck-push] delta touches no guard's owned path — no re-run needed`);
+    return { ok: true, ranGuards: false };
+  }
+  const results = runStatic({
+    dir: path.join(root, "scripts"),
+    changedFiles: deltaFiles,
+    stepMap,
+    ciSet: ciRunGuardSet(root),
+  });
+  const gatedFails = results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && r.gated);
+  if (gatedFails.length) {
+    return {
+      ok: false,
+      reason: `${gatedFails.length} guard(s) touching what main just advanced now fail: ${gatedFails.map((r) => r.name).join(", ")}`,
+    };
+  }
+  console.log(
+    `[branch:precheck-push] delta-scoped re-check clean ` +
+    `(${results.filter((r) => r.kind !== STATIC_RESULT_CATEGORIES.SKIP_SCOPE).length} guard(s) touched)`
+  );
+  return { ok: true, ranGuards: true };
+}
+
 function main() {
   // Production CLI takes NO caller step override and NO env fetch-skip: `BRANCH_PRECHECK_STEPS_JSON`
   // and `IH35_BRANCH_TOOLING_SKIP_FETCH` are ignored here so no user-settable env can suppress the
   // freshness fetch or the gate steps (Rule 18 P0-1 — the combined all-gates bypass is closed).
-  const result = runPrecheckPush();
-  if (!result.ok) {
-    console.error(`branch:precheck-push FAIL category=${result.category}: ${result.reason}`);
-    if (result.tail) {
-      console.error("Last output:");
-      console.error(result.tail);
+  const root = repoRoot();
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts + 1; attempt++) {
+    const result = runPrecheckPush();
+    if (result.ok) {
+      console.log(result.message);
+      return;
     }
-    process.exit(1);
+    if (result.category !== GATE_RESULT_CATEGORIES.FRESHNESS || attempt > maxAttempts) {
+      console.error(`branch:precheck-push FAIL category=${result.category}: ${result.reason}`);
+      if (result.tail) {
+        console.error("Last output:");
+        console.error(result.tail);
+      }
+      process.exit(1);
+    }
+    const recovery = attemptStaleBaseRecovery(root);
+    if (!recovery.ok) {
+      console.error(`branch:precheck-push FAIL category=freshness: stale-base recovery failed: ${recovery.reason}`);
+      process.exit(1);
+    }
+    // loop: re-run runPrecheckPush() from the top now that we are rebased onto origin/main.
   }
 }
 
