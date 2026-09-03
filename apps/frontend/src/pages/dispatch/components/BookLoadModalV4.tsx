@@ -57,7 +57,6 @@ import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 // old layout stays the default until LOAD_WIZARD_V5 is enabled. V5 changes are visual
 // density only — the submit payload is byte-identical.
 export const LOAD_WIZARD_V5_FLAG = "LOAD_WIZARD_V5";
-import { LoadTemplatePicker } from "../LoadTemplateLibrary";
 import { applyBookLoadPrefillToForm } from "./book-load-v4/applyBookLoadPrefill";
 import {
   createLiveLoadNumberUserTypedRef,
@@ -1507,9 +1506,6 @@ export function BookLoadModalV4({
             ) : watchedTripType === "TR" || watchedTripType === "SB" ? (
               <p className="mt-1 text-[11px] text-gray-600">Part of this unit's tour — follows its most recent Northbound leg (joined automatically).</p>
             ) : null}
-            <p className="mt-1 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
-              Every load must be classified NB, TR, or SB. NB starts a tour; TR/SB join it; the settlement closes when the SB leg returns to Laredo.
-            </p>
           </div>
 
           {gateBanner ? (
@@ -1666,17 +1662,6 @@ export function BookLoadModalV4({
                       />
                     </div>
                   ) : null}
-                  <LoadTemplatePicker
-                    operatingCompanyId={operatingCompanyId}
-                    onSelectTemplate={(row) => {
-                      const json = row.template_json as Record<string, unknown>;
-                      applyBookLoadPrefillToForm(form.setValue, json, liveLoadNumberUserTypedRef.current);
-                      if (typeof json.accessorial_cents === "number" && json.accessorial_cents > 0) {
-                        form.setValue("accessorial_rows", rowFromLegacyAccessorialCents(json.accessorial_cents), { shouldDirty: true });
-                      }
-                      pushToast("Template applied", "success");
-                    }}
-                  />
 
                   {/* RATECON-2: the rate-con intake (drop OR click → real extraction) is the single OcrDropZone
                       block in §E (Documents). The duplicate button-panel affordance was removed here. */}
@@ -1728,30 +1713,20 @@ export function BookLoadModalV4({
                       Customer WO #
                       <input {...form.register("customer_wo_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
-                    {/* B1 (GO-27 Gate 1.2, owner 2026-09-02): "AlwaysTrack" is a predecessor tracking
-                        system's brand name -- a machine/vendor name on an operator-facing label
-                        (Plain English Law). Reworded; live_load_number field, testid, and the
-                        race-overwrite guard (verify-bookload-alwaystrack-field-race-overwrite.mjs,
-                        which asserts on the testid/field, not this label string) are unchanged. */}
-                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
-                      Legacy load reference #
-                      <input
-                        {...form.register("live_load_number", {
-                          onChange: () => {
-                            markLiveLoadNumberUserTyped(liveLoadNumberUserTypedRef.current);
-                          },
-                        })}
-                        className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs"
-                        placeholder="e.g. 13521"
-                        autoComplete="off"
-                        data-lpignore="true"
-                        data-testid="book-load-live-load-number"
-                      />
-                    </label>
                     <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Pickup #
                       <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
+                    <input
+                      type="hidden"
+                      {...form.register("live_load_number", {
+                        onChange: () => {
+                          markLiveLoadNumberUserTyped(liveLoadNumberUserTypedRef.current);
+                        },
+                      })}
+                      autoComplete="off"
+                      data-testid="book-load-live-load-number"
+                    />
                   </div>
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
                     {/* Customer type + freight identity — belong in §A with the customer/charges.
@@ -2059,7 +2034,7 @@ export function BookLoadModalV4({
                   <div className="blw-sec-hd">
                     <span className="blw-sec-chip">B</span>
                     <span className="blw-sec-name">Equipment · Driver · Trailer</span>
-                    <span className="blw-sec-meta">Class <b>T120-SMITH</b></span>
+                    <span className="blw-sec-meta">unit · driver · trailer</span>
                   </div>
                   <div className="space-y-2 p-3">
                     {/* Pieces lives in §A with Commodity/Weight (v4 mockup + owner 2026-09-03).
@@ -2086,17 +2061,6 @@ export function BookLoadModalV4({
                 <span className="blw-sec-meta">1 pickup, 1 delivery, practical miles (short miles optional)</span>
               </div>
               <div className="space-y-2 p-3">
-                <BookLoadStopsSection
-                  operatingCompanyId={operatingCompanyId}
-                  pickupTimeTypeOptions={pickupTimeTypeOptions}
-                  pickupTimeTypesLoading={pickupTimeTypesQuery.isLoading}
-                  pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}
-                  onPickupTimeTypesRetry={() => void pickupTimeTypesQuery.refetch()}
-                  onPickupTimeTypeCreated={() => void pickupTimeTypesQuery.refetch()}
-                  control={form.control as never}
-                  register={form.register as never}
-                  setValue={form.setValue as never}
-                />
                 <MilesStrip
                   practical={milesPractical}
                   shortest={milesShortest}
@@ -2153,6 +2117,17 @@ export function BookLoadModalV4({
                     form.setValue("mileage_source", "Operator entered", { shouldDirty: true });
                     form.setValue("miles_deadhead", n, { shouldDirty: true, shouldValidate: true });
                   }}
+                />
+                <BookLoadStopsSection
+                  operatingCompanyId={operatingCompanyId}
+                  pickupTimeTypeOptions={pickupTimeTypeOptions}
+                  pickupTimeTypesLoading={pickupTimeTypesQuery.isLoading}
+                  pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}
+                  onPickupTimeTypesRetry={() => void pickupTimeTypesQuery.refetch()}
+                  onPickupTimeTypeCreated={() => void pickupTimeTypesQuery.refetch()}
+                  control={form.control as never}
+                  register={form.register as never}
+                  setValue={form.setValue as never}
                 />
                 {milesLookupNote ? (
                   <p className="blw-note" data-testid="book-load-miles-lookup-note">
