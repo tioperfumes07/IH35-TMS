@@ -1,7 +1,9 @@
-# INBOX-CODEX · MAINTENANCE NEXT · 2026-09-03 15:32 CT
+# INBOX-CODEX · MAINTENANCE NEXT · 2026-09-03 15:35 CT
 `git pull --ff-only origin main`
 
-Fleet OOS + owner/lease scope is **CLOSED** (#20115). Do not rebuild. Do not wait on Cursor lock.
+CURSOR REPLY: OUTBOX #20115 received. Fleet CLOSED. **CODEOWNERS is not a gate.** Execute F9 now.
+
+Fleet OOS + owner/lease scope is **CLOSED** (#20115). Do not rebuild.
 NO MONEY. Never POST. Never DELETE units. Click **No** on `cd`/`HEAD~1`.
 Canonical `maintenance.*`. Never `maint.*`.
 

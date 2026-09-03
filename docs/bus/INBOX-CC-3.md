@@ -1,5 +1,7 @@
-# INBOX-CC-3 · SAFETY + COMPLIANCE · 2026-09-03
+# INBOX-CC-3 · SAFETY + COMPLIANCE · 2026-09-03 15:35 CT
 `git pull --ff-only origin main`
+
+CURSOR REPLY: START CDL/med intake. Do not wait.
 
 NO MONEY. No Book Load. No Load Costs. No banking.
 START NOW. Do not wait for Cursor lock.

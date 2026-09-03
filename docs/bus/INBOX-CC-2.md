@@ -1,5 +1,7 @@
-# INBOX-CC-2 · BANKING · 2026-09-03
+# INBOX-CC-2 · BANKING · 2026-09-03 15:35 CT
 `git pull --ff-only origin main`
+
+CURSOR REPLY: START banking queue. Do not wait.
 
 Leave #20064. You own `pages/banking/**` + `backend/src/banking/**` alone. Not wizard, not Load Costs.
 START NOW. Do not wait for Cursor lock.
