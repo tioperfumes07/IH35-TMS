@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { withCurrentUser } from "../auth/db.js";
 import { isBillPaymentGlPostingEnabled } from "../accounting/bill-payment-gl.service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { logger } from "../observability/structured-logger.js";
 
 /**
@@ -193,14 +194,22 @@ export async function disburseCashAdvanceSplit(
             [leg.load_id, companyId],
           );
 
+          // N1 (owner direct instruction, 2026-09-02) — this insert had a real load_id in hand
+          // (LumperExpenseSplit.load_id is required, never optional) and never called the canonical
+          // mint path, leaving expense_number NULL — the same LV-EXPENSE-NUMBER-NEVER-POPULATED shape
+          // already fixed for the main create route (accounting/expenses.routes.ts), just never
+          // ported to this sibling writer. Same generator, same load-scoped format (12225/12225-1),
+          // no second numbering series invented.
+          const numbered = await generateExpenseNumber(client, leg.load_id, companyId);
+
           // ACT-F5413 (LV-EXPENSES-UNAUDITED-AND-ACTORLESS, actor half, sibling site): actorUserUuid
           // is already threaded into this function — it was just never stamped on the expense row.
           const exp = await client.query(
             `INSERT INTO accounting.expenses
-               (operating_company_id, status, transaction_date, total_amount_cents, load_id, is_sample_data, created_by_user_id)
-             VALUES ($1::uuid, 'posted', CURRENT_DATE, $2, $3::uuid, $4, $5::uuid)
+               (operating_company_id, status, transaction_date, total_amount_cents, load_id, is_sample_data, created_by_user_id, expense_number)
+             VALUES ($1::uuid, 'posted', CURRENT_DATE, $2, $3::uuid, $4, $5::uuid, $6)
              RETURNING id::text AS id`,
-            [companyId, leg.amount_cents, leg.load_id, loadSample.rows[0]?.is_sample_data === true, actorUserUuid],
+            [companyId, leg.amount_cents, leg.load_id, loadSample.rows[0]?.is_sample_data === true, actorUserUuid, numbered.number],
           );
           const expenseId = String((exp.rows[0] as { id: string }).id);
           expenseIds.push(expenseId);
