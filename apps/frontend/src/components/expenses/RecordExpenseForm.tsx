@@ -14,7 +14,7 @@ import { CappedListNotice } from "../CappedListNotice";
 import { DatePicker } from "../forms/DatePicker";
 import { QboDocumentNumberField } from "../forms/QboDocumentNumberField";
 import { MoneyInput } from "../forms/MoneyInput";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { SelectCombobox } from "../Combobox";

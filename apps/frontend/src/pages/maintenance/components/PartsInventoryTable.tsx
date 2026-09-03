@@ -4,7 +4,7 @@ import { adjustPartsInventory, listPartsInventory, recordPartsPurchase, type Par
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { SelectCombobox } from "../../../components/Combobox";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";

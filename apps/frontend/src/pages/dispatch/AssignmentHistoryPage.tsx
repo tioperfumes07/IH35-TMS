@@ -10,7 +10,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useStagedListFilters } from "../../components/table";
 

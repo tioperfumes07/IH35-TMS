@@ -17,7 +17,7 @@ import { useListState } from "../../components/list-state";
 import { useSafetyUiContext } from "./SafetyLayout";
 import { SafetyEventsTable } from "./components/SafetyEventsTable";
 import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { suggestExpenseLoad } from "../../api/maintenance";
 import { LoadSuggestionReadError } from "../../components/shared/LoadSuggestionReadError";
 import { Button } from "../../components/Button";

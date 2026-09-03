@@ -11,7 +11,7 @@ import { useSearchParams } from "react-router-dom";
 import { listPositionHistory, type PositionHistoryRecord } from "../../api/position-history";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";

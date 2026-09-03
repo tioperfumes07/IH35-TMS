@@ -10,7 +10,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { listCompanyViolationTypes } from "../../../api/catalogs-safety";
 import { companyToday } from "../../../lib/businessDate";
 import { CappedListNotice } from "../../../components/CappedListNotice";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { uploadSourceDocumentFromFile } from "../../../api/docs";
 
 type Props = {

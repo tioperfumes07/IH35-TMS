@@ -7,7 +7,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { Button } from "../../../components/Button";
 import { fetchAuditReport, type AuditReportParams, type AuditReportRow } from "../../../api/auditReports";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { ReportsSubNav } from "../ReportsSubNav";
 

@@ -11,7 +11,7 @@ import {
 } from "../../api/insurance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ApiError } from "../../api/client";

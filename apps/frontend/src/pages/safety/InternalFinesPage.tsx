@@ -12,7 +12,7 @@ import { listInternalFineReasons } from "../../api/catalogs-safety";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { SelectCombobox } from "../../components/Combobox";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { useAuth } from "../../auth/useAuth";

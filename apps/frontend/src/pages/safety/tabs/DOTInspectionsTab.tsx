@@ -13,7 +13,7 @@ import { useListState } from "../../../components/list-state";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { InspectionScoreBadge } from "../../../components/safety/InspectionScoreBadge";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";

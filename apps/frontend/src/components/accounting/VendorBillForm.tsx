@@ -11,7 +11,7 @@ import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLi
 import { TotalsStack } from "../forms/shared/TotalsStack";
 import { BILL_TYPE_TABS, TypeTabBar, type BillTypeId } from "../forms/shared/TypeTabBar";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 import { vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { UploadZone } from "../UploadZone";
 import { EntityLink } from "../shared/EntityLink";

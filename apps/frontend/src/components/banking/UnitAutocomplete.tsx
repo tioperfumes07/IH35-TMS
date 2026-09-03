@@ -1,4 +1,4 @@
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 
 type Props = {
   companyId: string;

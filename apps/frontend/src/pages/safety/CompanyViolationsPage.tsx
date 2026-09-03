@@ -4,7 +4,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCompanyViolations } from "../../api/safety";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";

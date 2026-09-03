@@ -5,7 +5,7 @@ import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTo
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import {
   completeWorkOrder,
   getSevereRepairRollup,

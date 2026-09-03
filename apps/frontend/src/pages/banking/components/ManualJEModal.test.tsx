@@ -17,7 +17,7 @@ vi.mock("../../../api/accounting", () => ({
 // has its own coverage (verify-picker-law-no-raw-uuid.mjs + the registry's tests); this test is
 // about ManualJEModal's wiring TO it (kind select → picker → payload), so it stands in for the real
 // picker with a minimal control that exposes the same value/onChange contract.
-vi.mock("../../../components/parity/EntityPicker", () => ({
+vi.mock("../../../components/EntityPicker", () => ({
   EntityPicker: ({ kind, value, onChange }: { kind: string; value: string | null; onChange: (v: string | null) => void }) => (
     <input
       data-testid={`entity-picker-${kind}`}

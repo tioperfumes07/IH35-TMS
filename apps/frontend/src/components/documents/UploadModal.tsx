@@ -14,7 +14,7 @@ import { Combobox } from "../Combobox";
 import { Modal } from "../Modal";
 import { useToast } from "../Toast";
 import { useQuery } from "@tanstack/react-query";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 import type { EntityPickerKind } from "../parity/entityPickerRegistry";
 import { companyToday } from "../../lib/businessDate";
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { Modal } from "../Modal";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 import type { EntityPickerOption } from "../parity/entityPickerRegistry";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 

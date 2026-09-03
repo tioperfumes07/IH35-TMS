@@ -19,7 +19,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
 import { BillsReverseSection } from "../../components/accounting/BillsReverseSection";

@@ -21,7 +21,7 @@ import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { ReferenceSelect } from "../components/parity/ReferenceSelect";
-import { EntityPicker } from "../components/parity/EntityPicker";
+import { EntityPicker } from "../components/EntityPicker";
 import { DriverPickerWithCreate } from "../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { DatePicker } from "../components/forms/DatePicker";

@@ -28,7 +28,7 @@ import { useToast } from "../../components/Toast";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { StatusBadge } from "../../components/layout/StatusBadge";

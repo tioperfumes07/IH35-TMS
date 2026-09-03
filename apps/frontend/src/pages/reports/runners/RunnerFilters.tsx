@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import type { RunnerFilter } from "./runner-config";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { SelectCombobox } from "../../../components/Combobox";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 

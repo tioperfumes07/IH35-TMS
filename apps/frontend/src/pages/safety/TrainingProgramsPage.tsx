@@ -10,7 +10,7 @@ import {
 } from "../../api/safety";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";

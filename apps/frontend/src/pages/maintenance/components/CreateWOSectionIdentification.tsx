@@ -5,7 +5,7 @@ import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch }
 import { getDriver, getUnit } from "../../../api/mdata";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { SimpleCombobox as Combobox } from "../../../components/Combobox";

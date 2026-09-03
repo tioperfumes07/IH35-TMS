@@ -6,7 +6,7 @@ import {
   VendorBillForm,
   type VendorBillFormSubmitPayload,
 } from "../../../components/accounting/VendorBillForm";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { Button } from "../../../components/Button";

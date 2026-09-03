@@ -11,7 +11,7 @@ import {
 } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/forms/shared/PageHeader";

@@ -5,7 +5,7 @@ import { legalMattersApi, type LegalMatterListRow } from "../../../api/legal-mat
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";

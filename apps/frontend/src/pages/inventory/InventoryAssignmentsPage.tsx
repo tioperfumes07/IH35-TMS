@@ -10,7 +10,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 
 function formatMoney(value: number | null | undefined) {
   return `$${Number(value ?? 0).toFixed(2)}`;

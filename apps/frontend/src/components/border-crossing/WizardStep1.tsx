@@ -1,4 +1,4 @@
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import type { WizardFormState } from "./borderCrossingApi";

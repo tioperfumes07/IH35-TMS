@@ -8,7 +8,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Combobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { Button } from "../../components/Button";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";

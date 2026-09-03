@@ -4,7 +4,7 @@ import { createPartsAssignment } from "../../api/maintenance";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { MoneyInput } from "../forms/MoneyInput";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 
 type Props = {
   open: boolean;

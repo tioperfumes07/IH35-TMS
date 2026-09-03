@@ -16,7 +16,7 @@ vi.mock("../../../api/maintenance", () => ({
   getMaintenanceKpiPmCompliance: (...args: unknown[]) => getMaintenanceKpiPmCompliance(...args),
 }));
 
-vi.mock("../../../components/parity/EntityPicker", () => ({
+vi.mock("../../../components/EntityPicker", () => ({
   EntityPicker: ({ dataTestId }: { dataTestId?: string }) => <input data-testid={dataTestId} role="combobox" />,
 }));
 

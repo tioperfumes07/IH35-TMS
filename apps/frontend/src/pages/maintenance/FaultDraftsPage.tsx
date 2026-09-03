@@ -10,7 +10,7 @@ import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 

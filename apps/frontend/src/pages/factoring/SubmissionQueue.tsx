@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listSubmissionQueue, submitFactoringQueueBatch, type SubmissionQueueItem } from "../../api/factoring";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";

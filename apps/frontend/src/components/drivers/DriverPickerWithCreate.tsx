@@ -1,4 +1,4 @@
-import { EntityPicker, type EntityPickerProps } from "../parity/EntityPicker";
+import { EntityPicker, type EntityPickerProps } from "../EntityPicker";
 
 export type DriverPickerWithCreateProps = {
   operatingCompanyId: string;

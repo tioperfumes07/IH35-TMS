@@ -31,7 +31,7 @@ import { ConfirmDiscardDialog } from "../../../components/dialogs/ConfirmDiscard
 import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import type { EntityPickerOption } from "../../../components/parity/entityPickerRegistry";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import type { BookLoadFormValues } from "./BookLoadCustomerSection";

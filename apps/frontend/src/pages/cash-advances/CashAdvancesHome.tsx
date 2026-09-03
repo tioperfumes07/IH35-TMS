@@ -5,7 +5,7 @@ import { getCashAdvanceDetail, getCashAdvancesKpis, listCashAdvances } from "../
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useListState } from "../../components/list-state";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AdvanceDetailDrawer } from "./components/AdvanceDetailDrawer";

@@ -20,7 +20,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useSearchParams } from "react-router-dom";

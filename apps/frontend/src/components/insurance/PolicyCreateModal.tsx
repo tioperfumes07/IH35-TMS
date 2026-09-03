@@ -6,7 +6,7 @@ import { insurancePoliciesApi, listInsuranceTypeCatalog, type InsurancePolicySta
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { ListErrorState } from "../ListErrorState";
 import { ParityDrawer } from "../parity/ParityDrawer";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 import type { EntityPickerOption } from "../parity/entityPickerRegistry";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { MoneyInput } from "../forms/MoneyInput";

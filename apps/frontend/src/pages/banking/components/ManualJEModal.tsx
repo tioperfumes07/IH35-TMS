@@ -5,7 +5,7 @@ import type { JournalEntryPostingInput } from "../../../api/accounting";
 import { Button } from "../../../components/Button";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { SelectCombobox } from "../../../components/Combobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";

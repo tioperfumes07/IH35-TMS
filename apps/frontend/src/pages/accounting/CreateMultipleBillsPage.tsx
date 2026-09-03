@@ -10,7 +10,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../../components/parity/referenceOptionLabels";

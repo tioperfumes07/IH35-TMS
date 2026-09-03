@@ -10,7 +10,7 @@ import { legalContractsApi, type LegalContractLanguage, type LegalSignerType } f
 import { legalTemplatesApi, type LegalTemplateSummary } from "../../../api/legal-templates";
 import { getDriver, getVendor, getCustomerDetail } from "../../../api/mdata";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { useListState } from "../../../components/list-state";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";

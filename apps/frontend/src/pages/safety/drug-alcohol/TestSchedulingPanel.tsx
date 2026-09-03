@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { resolveApiUrl } from "../../../api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { Combobox } from "../../../components/Combobox";
 
 type TestType = "pre_employment" | "random" | "post_accident" | "reasonable_suspicion" | "return_to_duty" | "follow_up";

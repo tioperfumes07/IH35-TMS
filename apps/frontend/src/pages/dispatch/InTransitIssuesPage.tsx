@@ -14,7 +14,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useStagedListFilters } from "../../components/table";
 import { formatQueryErrorDetail } from "../../lib/tableError";

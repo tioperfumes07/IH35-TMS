@@ -6,7 +6,7 @@ import { Button } from "../../../components/Button";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { getVendor } from "../../../api/mdata";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";

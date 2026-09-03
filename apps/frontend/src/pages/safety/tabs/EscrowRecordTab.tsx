@@ -7,7 +7,7 @@ import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { EscrowForfeitModal } from "../components/EscrowForfeitModal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { Button } from "../../../components/Button";

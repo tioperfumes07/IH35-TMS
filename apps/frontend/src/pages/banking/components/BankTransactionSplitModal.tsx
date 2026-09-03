@@ -27,7 +27,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useToast } from "../../../components/Toast";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { listVendors } from "../../../api/mdata";
 import { getCoaAccounts } from "../../../api/banking";

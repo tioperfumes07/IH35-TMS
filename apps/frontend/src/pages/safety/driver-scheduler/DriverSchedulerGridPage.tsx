@@ -11,7 +11,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { formatDateUS } from "../../../lib/formatDate";

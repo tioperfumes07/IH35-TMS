@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DriverPickerWithCreate } from "./DriverPickerWithCreate";
 
-vi.mock("../parity/EntityPicker", () => ({
+vi.mock("../EntityPicker", () => ({
   EntityPicker: ({ placeholder }: { placeholder?: string }) => (
     <input role="combobox" aria-label={placeholder ?? "driver"} data-testid="entity-picker-driver-stub" />
   ),

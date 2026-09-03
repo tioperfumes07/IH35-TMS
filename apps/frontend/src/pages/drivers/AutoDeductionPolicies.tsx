@@ -15,7 +15,7 @@ import { Modal } from "../../components/Modal";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useStagedListFilters } from "../../components/table";

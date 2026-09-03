@@ -4,7 +4,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { useDriverLabels } from "../../../hooks/useDriverLabels";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDrivers } from "../../../api/mdata";
 import { companyToday } from "../../../lib/businessDate";

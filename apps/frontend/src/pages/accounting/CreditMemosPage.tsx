@@ -21,7 +21,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { QboDocumentNumberField } from "../../components/forms/QboDocumentNumberField";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";

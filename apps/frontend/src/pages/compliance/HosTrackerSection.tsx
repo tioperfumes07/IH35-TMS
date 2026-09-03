@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getHosDailyRoster, DUTY_LABEL, DUTY_COLOR, type HosRosterDriver } from "../../api/hosTracker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { Button } from "../../components/Button";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 import { companyToday } from "../../lib/businessDate";

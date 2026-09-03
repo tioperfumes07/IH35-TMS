@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import type { EntityPickerOption } from "../../../components/parity/entityPickerRegistry";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";

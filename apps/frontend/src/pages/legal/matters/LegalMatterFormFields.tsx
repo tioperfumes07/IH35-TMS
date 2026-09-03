@@ -2,7 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { SelectCombobox } from "../../../components/Combobox";
 import { properEnumOrFilterLabel } from "../../../lib/properDisplayText";
 

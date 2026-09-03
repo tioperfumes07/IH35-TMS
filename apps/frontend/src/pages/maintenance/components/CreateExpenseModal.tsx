@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { RecordExpenseForm } from "../../../components/expenses/RecordExpenseForm";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { Button } from "../../../components/Button";

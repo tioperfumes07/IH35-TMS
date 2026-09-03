@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { entityLabel } from "../../lib/entity-label";
 import { getDriver } from "../../api/mdata";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 
 type Props = {
   companyId: string;

@@ -12,7 +12,7 @@ import { getAllAccounts } from "../../../api/banking";
 import { getLoad } from "../../../api/loads";
 import { Button } from "../../../components/Button";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";

@@ -17,7 +17,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 import { entityLabel } from "../../lib/entity-label";

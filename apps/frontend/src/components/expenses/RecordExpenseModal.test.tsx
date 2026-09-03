@@ -38,7 +38,7 @@ vi.mock("../../api/mdata", () => ({
   listVendors: vi.fn().mockResolvedValue({ vendors: [] }),
 }));
 
-vi.mock("../parity/EntityPicker", () => ({
+vi.mock("../EntityPicker", () => ({
   EntityPicker: ({
     value,
     onChange,

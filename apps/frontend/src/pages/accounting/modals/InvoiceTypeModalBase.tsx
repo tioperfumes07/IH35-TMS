@@ -13,7 +13,7 @@ import { FieldError, fieldErrorClassname } from "../../../components/forms/Field
 import { FormErrorBanner } from "../../../components/forms/FormErrorBanner";
 import { useFormValidation } from "../../../components/forms/useFormValidation";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { listAllCustomers } from "../../../api/mdata";
 import { getLoad } from "../../../api/loads";

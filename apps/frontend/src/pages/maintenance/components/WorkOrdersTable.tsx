@@ -4,7 +4,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { Button } from "../../../components/Button";
 import { SelectCombobox } from "../../../components/Combobox";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { useToast } from "../../../components/Toast";
 import { companyToday } from "../../../lib/businessDate";
 import { useMemo, useState } from "react";

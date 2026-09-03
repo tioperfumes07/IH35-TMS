@@ -4,7 +4,7 @@ import { createSafetyFine } from "../../../api/safety";
 import { listCivilFineTypes } from "../../../api/catalogs-safety";
 import { confirmUpload, requestUploadUrlFromFile } from "../../../api/docs";
 import { Button } from "../../../components/Button";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";

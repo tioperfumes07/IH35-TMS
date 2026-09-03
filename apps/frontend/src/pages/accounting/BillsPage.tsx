@@ -23,7 +23,7 @@ import { useToast } from "../../components/Toast";
 import { TasksTab } from "../../components/tasks/TasksTab";
 import { Button } from "../../components/Button";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";

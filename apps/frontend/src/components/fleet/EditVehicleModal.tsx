@@ -10,7 +10,7 @@ import { FieldSet } from "../forms/FieldSet";
 import { FormField } from "../forms/FormField";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Combobox } from "../Combobox";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 import { listMyCompanies, type MyCompany } from "../../api/org";
 import type { FleetRow } from "../FleetTable";
 import { ListErrorState } from "../ListErrorState";

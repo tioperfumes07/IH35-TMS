@@ -8,7 +8,7 @@ import {
   type FleetLocationHosRow,
 } from "../../api/reports";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 import { formatClockTimeCT } from "../../lib/businessDate";

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { listDriverTeams } from "../../../api/mdata";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { SelectCombobox } from "../../../components/Combobox";
 import { OptimalDriversPanel } from "../../../components/dispatch/OptimalDriversPanel";
 import { DriverHosClocksBlock } from "../../../components/dispatch/hos/DriverHosClocks";

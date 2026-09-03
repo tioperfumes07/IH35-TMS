@@ -7,7 +7,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/Combobox";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";

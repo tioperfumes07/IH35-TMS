@@ -9,7 +9,7 @@ import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWit
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Modal } from "../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
