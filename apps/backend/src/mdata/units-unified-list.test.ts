@@ -50,6 +50,9 @@ describe("units unified list", () => {
                 days_oos: "2.5",
                 oos_reason: "Engine repair",
                 oos_location: "Laredo shop",
+                estimated_completion_date: "2026-09-08",
+                work_order_id: "wo-1",
+                work_order_display_id: "WO-101-ENGINE-09-03-2026-0001-V5",
                 vehicle_type: "Sleeper",
               },
             ],
@@ -85,6 +88,9 @@ describe("units unified list", () => {
       days_oos: 2.5,
       oos_reason: "Engine repair",
       oos_location: "Laredo shop",
+      estimated_completion_date: "2026-09-08",
+      work_order_id: "wo-1",
+      work_order_display_id: "WO-101-ENGINE-09-03-2026-0001-V5",
     });
     expect(rows.find((r) => r.id === "trailer-1")?.type).toBe("Reefer (2019 Thermo King)");
   });

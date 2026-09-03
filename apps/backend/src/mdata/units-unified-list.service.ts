@@ -28,6 +28,9 @@ export type UnifiedFleetRow = {
   days_oos?: number | null;
   oos_reason?: string | null;
   oos_location?: string | null;
+  estimated_completion_date?: string | null;
+  work_order_id?: string | null;
+  work_order_display_id?: string | null;
 };
 
 export function buildReeferSummary(row: Record<string, unknown>): string | null {
@@ -96,6 +99,7 @@ export async function fetchUnifiedFleetList(
   }
   // ALWAYS bind the tenant predicate (operating_company_id is required) — never blend entities.
   truckFilters.push(tenantFilter(truckValues, options.operating_company_id));
+  const truckCompanyParamIndex = truckValues.length;
 
   const trailerValues: unknown[] = [];
   // FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP (equipment half, migration 202613140000): mdata.equipment
@@ -137,11 +141,30 @@ export async function fetchUnifiedFleetList(
         END AS days_oos,
         oos_reason,
         oos_location,
+        oos_detail.estimated_completion_date,
+        oos_detail.work_order_id,
+        oos_detail.work_order_display_id,
         vehicle_type,
         owner_company_id,
         currently_leased_to_company_id,
         deactivated_at
       FROM mdata.units
+      LEFT JOIN LATERAL (
+        SELECT
+          estimate.estimated_completion_date::text AS estimated_completion_date,
+          estimate.trigger_wo_id::text AS work_order_id,
+          work_order.display_id AS work_order_display_id
+        FROM maintenance.severe_repair_estimates estimate
+        LEFT JOIN maintenance.work_orders work_order
+          ON work_order.id = estimate.trigger_wo_id
+         AND work_order.operating_company_id = estimate.operating_company_id
+         AND work_order.voided_at IS NULL
+        WHERE estimate.unit_id = mdata.units.id
+          AND estimate.operating_company_id = $${truckCompanyParamIndex}
+          AND estimate.estimate_status IN ('open', 'awaiting_approval', 'approved')
+        ORDER BY estimate.estimated_completion_date ASC NULLS LAST, estimate.refreshed_at DESC
+        LIMIT 1
+      ) oos_detail ON TRUE
       WHERE ${truckFilters.join(" AND ")}
       ORDER BY unit_number ASC NULLS LAST
     `,
@@ -191,6 +214,9 @@ export async function fetchUnifiedFleetList(
     days_oos: row.days_oos != null ? Number(row.days_oos) : null,
     oos_reason: row.oos_reason != null ? String(row.oos_reason) : null,
     oos_location: row.oos_location != null ? String(row.oos_location) : null,
+    estimated_completion_date: row.estimated_completion_date != null ? String(row.estimated_completion_date) : null,
+    work_order_id: row.work_order_id != null ? String(row.work_order_id) : null,
+    work_order_display_id: row.work_order_display_id != null ? String(row.work_order_display_id) : null,
   }));
 
   const trailers: UnifiedFleetRow[] = trailerRes.rows.map((row) => ({

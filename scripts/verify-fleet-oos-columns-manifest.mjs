@@ -44,14 +44,17 @@ export function collectProblems(stripSrc, routesSrc, unifiedSrc = "", tableSrc =
   const selectBlock = selectBlockMatch ? selectBlockMatch[0] : "";
   if (!/\boos_since\b/.test(selectBlock)) problems.push("units.routes.ts list SELECT must include oos_since");
   if (!/\boos_location\b/.test(selectBlock)) problems.push("units.routes.ts list SELECT must include oos_location");
-  for (const field of ["oos_since", "days_oos", "oos_reason", "oos_location"]) {
+  for (const field of ["oos_since", "days_oos", "oos_reason", "oos_location", "estimated_completion_date", "work_order_id", "work_order_display_id"]) {
     if (!new RegExp(`\\b${field}\\b`).test(unifiedSrc)) problems.push(`unified fleet rows must carry ${field}`);
   }
-  for (const key of ["oos_since", "days_oos"]) {
+  for (const key of ["oos_reason", "oos_since", "days_oos", "estimated_completion_date", "work_order_id"]) {
     if (!new RegExp(`key:\\s*["']${key}["']`).test(tableSrc)) problems.push(`main Fleet registry must expose ${key}`);
   }
   if (!/tone=["']in-shop["']/.test(pageSrc) || !/tone=["']oos["']/.test(pageSrc)) {
     problems.push("In-Shop and OOS KPI controls must use distinct visual tones");
+  }
+  if (!/kind=["']work_order["']/.test(tableSrc)) {
+    problems.push("main Fleet registry must drill its OOS work order to the canonical work-order route");
   }
   return problems;
 }
@@ -66,8 +69,8 @@ function check() {
 function selftest() {
   const goodStrip = `data-testid="fleet-oos-since" data-testid="fleet-oos-days" data-testid="fleet-oos-location"`;
   const goodRoutes = `SELECT id, unit_number, vin, status, oos_since, oos_location FROM mdata.units WHERE 1=1`;
-  const goodUnified = `oos_since days_oos oos_reason oos_location`;
-  const goodTable = `key: "oos_since" key: "days_oos"`;
+  const goodUnified = `oos_since days_oos oos_reason oos_location estimated_completion_date work_order_id work_order_display_id`;
+  const goodTable = `key: "oos_reason" key: "oos_since" key: "days_oos" key: "estimated_completion_date" key: "work_order_id" kind="work_order"`;
   const goodPage = `tone="in-shop" tone="oos"`;
   if (collectProblems(goodStrip, goodRoutes, goodUnified, goodTable, goodPage).length) {
     throw new Error("selftest good fixture must pass");
@@ -83,6 +86,11 @@ function selftest() {
     [() => collectProblems(goodStrip, goodRoutes, goodUnified.replace("days_oos", ""), goodTable, goodPage), "days_oos"],
     [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('key: "oos_since"', ""), goodPage), "oos_since"],
     [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('key: "days_oos"', ""), goodPage), "days_oos"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('key: "oos_reason"', ""), goodPage), "oos_reason"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified.replace("estimated_completion_date", ""), goodTable, goodPage), "estimated_completion_date"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified.replace("work_order_display_id", ""), goodTable, goodPage), "work_order_display_id"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('key: "estimated_completion_date"', ""), goodPage), "estimated_completion_date"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('kind="work_order"', ""), goodPage), "canonical work-order route"],
     [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable, goodPage.replace('tone="oos"', "")), "distinct visual tones"],
   ];
   for (const [run, expected] of mutations) {
