@@ -94,8 +94,12 @@ export function QboSyncQueuePage() {
             <div key={item.id} className="rounded-sm border border-gray-100 p-2 text-xs">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="space-y-0.5">
+                  {/* GO-23 C1: this rendered the raw entity_id UUID -- the backend's listSyncQueue
+                      query (qbo-sync.service.ts) already resolves a real display_id per entity_type
+                      (bill/expense/invoice/payment/settlement/etc.'s own display number, or an honest
+                      8-char id prefix when no matching row exists), it was just never read here. */}
                   <p className="font-semibold text-gray-900">
-                    {item.entity_type} - {item.entity_id}
+                    {item.entity_type} - {item.display_id}
                   </p>
                   <p className="text-gray-600">
                     status={item.sync_status} attempts={item.attempt_count}/{item.max_attempts}
