@@ -34,7 +34,7 @@ import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { Button } from "../../../components/Button";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { useBulkSelection } from "../../../hooks/useBulkSelection";
-import { SelectCombobox } from "../../../components/Combobox";
+import { Combobox, SelectCombobox } from "../../../components/Combobox";
 import { useToast } from "../../../components/Toast";
 import { formatUsdCents } from "../../../lib/money";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
@@ -492,6 +492,23 @@ export function BankingTransactionsDesignView({
     return rows.filter((tx) => !tx.bank_account_id || tx.bank_account_id === selectedAccount.id);
   }, [transactionsQuery.data?.transactions, selectedAccount?.id]);
 
+  // CC-3 owner instructions 2026-09-02, item 8: "Filter control is a Combobox from live values,
+  // not free text" -- descriptionFilter used to drive a raw <input>. Distinct real merchant/
+  // description labels from the currently-scoped rows (server already filters by descriptionFilter
+  // via transactionsQuery's own queryKey, so this list previews exactly what's matching as the
+  // user types, not an arbitrary global catalog).
+  const descriptionFilterOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const options: { value: string; label: string }[] = [];
+    for (const tx of scopedRows) {
+      const label = transactionLabel(tx);
+      if (label === "—" || seen.has(label)) continue;
+      seen.add(label);
+      options.push({ value: label, label });
+    }
+    return options.slice(0, 200);
+  }, [scopedRows]);
+
   const reviewTabBuckets = useMemo(() => {
     const out: Record<ReviewTabId, PlaidBankTransaction[]> = {
       for_review: [],
@@ -619,6 +636,20 @@ export function BankingTransactionsDesignView({
       return 0;
     });
   }, [activeReviewTab, amountFilter, dateFrom, dateTo, drafts, reviewTabBuckets, selectedTransactionType, sortBy]);
+
+  // CC-3 owner instructions 2026-09-02, item 9: "Empty state names the filter, never a blank
+  // panel" -- names every active filter that could be why the list is empty, instead of one
+  // static sentence regardless of what's actually applied.
+  const emptyStateText = useMemo(() => {
+    const reviewTabLabel = BANKING_REVIEW_TABS.find((t) => t.id === activeReviewTab)?.label ?? activeReviewTab;
+    const typeLabel = TRANSACTION_TYPE_FILTER_OPTIONS.find((t) => t.id === selectedTransactionType)?.label;
+    const parts = [`No "${reviewTabLabel}" transactions`];
+    if (selectedTransactionType !== "all" && typeLabel) parts.push(`type "${typeLabel}"`);
+    if (amountFilter !== "all") parts.push(`amount "${amountFilter}"`);
+    if (descriptionFilter.trim()) parts.push(`description containing "${descriptionFilter.trim()}"`);
+    if (dateFrom || dateTo) parts.push(`date ${dateFrom || "…"} to ${dateTo || "…"}`);
+    return parts.length > 1 ? `${parts[0]} matching ${parts.slice(1).join(", ")}.` : `${parts[0]}.`;
+  }, [activeReviewTab, selectedTransactionType, amountFilter, descriptionFilter, dateFrom, dateTo]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -1257,7 +1288,9 @@ export function BankingTransactionsDesignView({
           label: "Spent",
           sortable: true,
           className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
-          cellClass: "text-red-700",
+          // CC-3 owner instructions 2026-09-02, item 7: money right-aligned + tabular-nums, same
+          // treatment the Balance column already gets below -- Spent/Received never had it.
+          cellClass: "whitespace-nowrap text-right tabular-nums text-red-700",
           render: (tx) => {
             const { spent } = spentReceived(tx);
             return spent > 0 ? USD.format(spent / 100) : "—";
@@ -1268,7 +1301,7 @@ export function BankingTransactionsDesignView({
           label: "Received",
           sortable: true,
           className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
-          cellClass: "text-slate-700",
+          cellClass: "whitespace-nowrap text-right tabular-nums text-slate-700",
           render: (tx) => {
             const { received } = spentReceived(tx);
             return received > 0 ? USD.format(received / 100) : "—";
@@ -2511,12 +2544,17 @@ export function BankingTransactionsDesignView({
           })}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <input
-            value={descriptionFilter}
-            onChange={(event) => setDescriptionFilter(event.target.value)}
-            placeholder="Filter by description"
-            className="h-8 min-w-[260px] rounded-sm border border-gray-300 px-2 text-sm"
-          />
+          <div className="h-8 min-w-[260px]">
+            <Combobox
+              options={descriptionFilterOptions}
+              value={descriptionFilter || null}
+              onChange={(next) => setDescriptionFilter(next ?? "")}
+              onSearch={setDescriptionFilter}
+              allowClear
+              placeholder="Filter by description"
+              dataTestId="banking-transactions-description-filter"
+            />
+          </div>
           <div className="inline-flex overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
             {(["all", "spent", "received"] as const).map((option) => (
               <button
@@ -2856,7 +2894,7 @@ export function BankingTransactionsDesignView({
         rows={pagedRows}
         rowKey={(tx) => tx.id}
         loading={transactionsQuery.isLoading}
-        emptyText="No transactions for selected account and filters."
+        emptyText={emptyStateText}
         storageKey="banking-transactions"
         enableColumnResize
         stickyHeader
