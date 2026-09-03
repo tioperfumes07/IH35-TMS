@@ -478,7 +478,9 @@ export function FleetTable({
 
   const orderedVisibleColumns = useMemo(() => {
     const byKey = new Map(columns.map((column) => [column.key, column]));
-    return columnOrder.map((key) => byKey.get(key)).filter((column): column is TableColumn => Boolean(column) && isVisible(column.key));
+    return columnOrder
+      .map((key) => byKey.get(key))
+      .filter((column): column is TableColumn => column !== undefined && isVisible(column.key));
   }, [columns, columnOrder, table.hidden]);
 
   const renderFleetCell = (row: FleetRow, key: string) => {
@@ -699,63 +701,6 @@ export function FleetTable({
                       />
                     </td>
                     {orderedVisibleColumns.map((column) => renderFleetCell(row, column.key))}
-                    {/* Persisted order owns both headers and cells. The fixed legacy cells remain
-                        disabled below as source history until the next cleanup sweep. */}
-                    {false && (<>{showMaintenanceColumns ? (
-                      <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                        <Link to={fleetProfilePath(row)} className="font-semibold text-slate-700 hover:underline">
-                          {entityLabel(row.unit_number, row.id, "Unit")}
-                        </Link>
-                      </td>
-                    ) : (
-                      /* Base /fleet: EntityLink (not plain text / not Link) so reverse_link is Live-clickable;
-                       * arms stay distinct from maintenance Link (LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES). */
-                      <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                        <EntityLink
-                          kind={row.kind === "trailer" ? "trailer" : "unit"}
-                          id={row.id}
-                          label={entityLabel(
-                            row.unit_number,
-                            row.id,
-                            row.kind === "trailer" ? "Trailer" : "Unit"
-                          )}
-                          className="font-semibold text-slate-700 hover:underline"
-                        />
-                      </td>
-                    )}
-                    {isVisible("vin") ? <td className="truncate px-2 py-1">{String(row.vin ?? "—")}</td> : null}
-                    {isVisible("type") ? <td className="truncate px-2 py-1">{displayType(row)}</td> : null}
-                    {isVisible("make_model") ? (
-                      <td className="truncate px-2 py-1">{`${String(row.make ?? "—")} ${String(row.model ?? "")}`.trim()}</td>
-                    ) : null}
-                    {isVisible("year") ? <td className="px-2 py-1">{String(row.year ?? "—")}</td> : null}
-                    {isVisible("status") ? <td className="px-2 py-1">{String(row.status ?? "—")}</td> : null}
-                    {isVisible("oos_reason") ? <td className="truncate px-2 py-1">{row.oos_reason || "—"}</td> : null}
-                    {isVisible("oos_since") ? <td className="px-2 py-1 tabular-nums">{formatOosDate(row.oos_since)}</td> : null}
-                    {isVisible("days_oos") ? <td className="px-2 py-1 tabular-nums">{row.days_oos == null ? "—" : formatOosDays(row.days_oos)}</td> : null}
-                    {isVisible("estimated_completion_date") ? <td className="px-2 py-1 tabular-nums">{formatOosDate(row.estimated_completion_date)}</td> : null}
-                    {isVisible("work_order_id") ? (
-                      <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                        {row.work_order_id ? (
-                          <EntityLink kind="work_order" id={row.work_order_id} label={entityLabel(row.work_order_display_id, row.work_order_id, "Work order")} />
-                        ) : "—"}
-                      </td>
-                    ) : null}
-                    {isVisible("location") ? <td className="truncate px-2 py-1 text-xs text-slate-700">{fleetLocationText(row) || "—"}</td> : null}
-                    {showMaintenanceColumns && isVisible("odometer") ? <td className="px-2 py-1 tabular-nums">{fmtMiles(row.odometer_mi)}</td> : null}
-                    {showMaintenanceColumns && isVisible("next_pm") ? <td className="px-2 py-1 tabular-nums">{fmtMiles(row.next_due_odometer)}</td> : null}
-                    {showMaintenanceColumns && isVisible("open_wo") ? (
-                      <td className="px-2 py-1 tabular-nums">
-                        {row.open_wo_count != null && row.open_wo_count > 0 ? (
-                          <span className="font-semibold text-slate-800">{row.open_wo_count}</span>
-                        ) : (
-                          <span className="text-gray-400">{row.kind === "trailer" ? "—" : "0"}</span>
-                        )}
-                      </td>
-                    ) : null}
-                    {isVisible("dot_oo") ? (
-                      <td className="px-2 py-1">{row.kind === "trailer" ? "—" : row.is_oos ? "Yes" : "No"}</td>
-                    ) : null}</>)}
                     <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <button
                         type="button"
