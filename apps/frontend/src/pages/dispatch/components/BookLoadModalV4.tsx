@@ -15,7 +15,7 @@ import { useForm, type FieldErrors } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad, createTrailerInterchange, getLaneMileage, getChainDeadhead } from "../../../api/dispatch";
 import { resolveStopPlace } from "./book-load-city-state";
-import { historicalImportReasonsCatalogClient, listAllDispatchCatalogRows, loadTypesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
+import { historicalImportReasonsCatalogClient, listAllDispatchCatalogRows, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { properPersonOrPlaceName } from "../../../lib/properDisplayText";
@@ -771,23 +771,14 @@ export function BookLoadModalV4({
     () => (lumperProvidersQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code })),
     [lumperProvidersQuery.data?.rows]
   );
-  const loadTypesQuery = useQuery({
-    queryKey: ["book-load-catalog-load-types", operatingCompanyId],
-    queryFn: () => listAllDispatchCatalogRows(loadTypesCatalogClient, { operating_company_id: operatingCompanyId, is_active: "true" }),
-    enabled: Boolean(operatingCompanyId),
-  });
-  const loadTypeOptions = useMemo(
-    () => (loadTypesQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code })),
-    [loadTypesQuery.data?.rows]
-  );
   // GO-21 B3 — historical import reason quick-pick (migration 202613480001). Consumed like the
   // "Customer reference lookup" pattern: onChange writes the picked row's TEXT into the existing
   // free-text historical_import_reason field, never a committed id — the Owner-only audited create
-  // path in book-load.service.ts is unchanged.
+  // path in book-load.service.ts is unchanged. Gated off the normal create path (edit only).
   const historicalImportReasonsQuery = useQuery({
     queryKey: ["book-load-catalog-historical-import-reasons", operatingCompanyId],
     queryFn: () => listAllDispatchCatalogRows(historicalImportReasonsCatalogClient, { operating_company_id: operatingCompanyId, is_active: "true" }),
-    enabled: Boolean(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId && editLoadId),
   });
   const historicalImportReasonOptions = useMemo(
     () => (historicalImportReasonsQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code })),
@@ -1041,7 +1032,8 @@ export function BookLoadModalV4({
         requires_load_locks: values.requires_load_locks,
         requires_straps: values.requires_straps,
         load_type: values.load_type,
-        catalog_load_type_id: values.catalog_load_type_id || undefined,
+        // catalog_load_type_id: UI removed 2026-09-03 (owner) — duplicated Trailer type
+        // (load_trailer_equipment_id). Column stays on mdata.loads for legacy rows; wizard no longer writes it.
         driver_pay_rate_per_mile:
           Number.isFinite(values.driver_pay_rate_per_mile) && values.driver_pay_rate_per_mile > 0
             ? values.driver_pay_rate_per_mile
@@ -1726,73 +1718,96 @@ export function BookLoadModalV4({
                       Pickup #
                       <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
-                    {/* B2 (Plain English Law): was labeled "Historical inactive driver UUID" — a raw
-                        machine-ID term on an operator-facing label. Reworded; the field, testid and
-                        submit wiring are unchanged (verify-book-load-historical-inactive-driver.mjs
-                        checks the testid, not the label text). */}
+                    {/* Customer type + freight identity — belong in §A with the customer/charges.
+                        Restored 2026-09-03 after an unauthorized move into §B. */}
                     <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                      Historical driver import (inactive drivers only)
-                      <input
-                        {...form.register("historical_import_driver_id")}
-                        data-testid="book-load-historical-inactive-driver-id"
-                        placeholder="Historical import only — inactive driver record ID"
-                        className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
-                      />
-                    </label>
-                    {/* B3 (owner ruling, GO-21 register 2026-09-02): "no catalog, no dropdown filter,
-                        no +; on the left, belongs on the right." Was a bare free-text input with no
-                        catalog and, in the 3-col grid, effectively left-aligned (col-span-2 wrapped
-                        onto its own row starting at col 1). Now a catalog quick-pick (dropdown +
-                        "+ Add new", catalogs.historical_import_reasons) sits beside the driver-id
-                        field so it renders on the RIGHT; picking a reason fills the text field below
-                        it, which stays freely editable/extendable (min-10-char server rule unchanged). */}
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                      Historical import reason
-                      <div className="mt-0.5">
-                        <ReferenceSelect
-                          value={null}
-                          onChange={(next) => {
-                            if (!next) return;
-                            const match = historicalImportReasonOptions.find((o) => o.value === next);
-                            if (match) form.setValue("historical_import_reason", match.label, { shouldDirty: true });
-                          }}
-                          options={historicalImportReasonOptions}
-                          createKind="historical_import_reason"
-                          operatingCompanyId={operatingCompanyId}
-                          placeholder="Pick a reason…"
-                          loading={historicalImportReasonsQuery.isLoading}
-                          disabled={historicalImportReasonsQuery.isLoading || historicalImportReasonsQuery.isError}
-                          onOptionCreated={(opt) => {
-                            void historicalImportReasonsQuery.refetch();
-                            form.setValue("historical_import_reason", opt.label, { shouldDirty: true });
-                          }}
-                        />
-                        {historicalImportReasonsQuery.isError ? (
-                          <ListErrorBanner message="Could not load historical import reasons." onRetry={() => void historicalImportReasonsQuery.refetch()} />
-                        ) : null}
+                      Broker / Direct
+                      <div className="mt-0.5 inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
+                        <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
+                          <input type="radio" value="broker" className="hidden" {...form.register("load_type")} />
+                          Broker
+                        </label>
+                        <label className={`flex cursor-pointer items-center border-l border-gray-300 px-3 ${loadType === "direct" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
+                          <input type="radio" value="direct" className="hidden" {...form.register("load_type")} />
+                          Direct
+                        </label>
                       </div>
-                      <input
-                        {...form.register("historical_import_reason")}
-                        data-testid="book-load-historical-import-reason"
-                        placeholder="Why an inactive driver belongs on this historical load"
-                        className="mt-1 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
-                      />
-                      <span className="mt-0.5 block normal-case tracking-normal text-gray-400">
-                        Owner-only. This does not reactivate the driver or widen the live dispatch picker.
-                      </span>
                     </label>
-                    {/* B7 (owner ruling, GO-21 register 2026-09-02): "Sample load demo box unnecessary" —
-                        removed from the operator-facing wizard. FAIL-D6's original concern (the column
-                        must not silently write `false` for a real demo fixture) still holds, so
-                        is_sample_data stays form-backed and still submits — it just can no longer be SET
-                        from Book Load, which the owner judged is the right call for a wizard real
-                        dispatchers use to book real freight (STOP-NO-SEAT-LOADS: agent seats are already
-                        barred from creating prod fixtures through this flow either way). */}
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Commodity
+                      <input {...form.register("commodity")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+                    </label>
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Weight (lbs)
+                      <NumberInput
+                        value={form.watch("weight_lbs")}
+                        onChange={(v) => form.setValue("weight_lbs", v ?? 0, { shouldDirty: true })}
+                        unit="lbs"
+                        ariaLabel="Weight"
+                        className="mt-0.5 w-full"
+                      />
+                    </label>
+                    {/* Historical driver import — past loads whose driver has left. Must NOT render on
+                        the normal create path (owner 2026-09-03). Gate: editLoadId only. */}
+                    {editLoadId ? (
+                      <>
+                        <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                          Historical driver import (inactive drivers only)
+                          <input
+                            {...form.register("historical_import_driver_id")}
+                            data-testid="book-load-historical-inactive-driver-id"
+                            placeholder="Historical import only — inactive driver record ID"
+                            className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
+                          />
+                        </label>
+                        <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                          Historical import reason
+                          <div className="mt-0.5">
+                            <ReferenceSelect
+                              value={null}
+                              onChange={(next) => {
+                                if (!next) return;
+                                const match = historicalImportReasonOptions.find((o) => o.value === next);
+                                if (match) form.setValue("historical_import_reason", match.label, { shouldDirty: true });
+                              }}
+                              options={historicalImportReasonOptions}
+                              createKind="historical_import_reason"
+                              operatingCompanyId={operatingCompanyId}
+                              placeholder="Pick a reason…"
+                              loading={historicalImportReasonsQuery.isLoading}
+                              disabled={historicalImportReasonsQuery.isLoading || historicalImportReasonsQuery.isError}
+                              onOptionCreated={(opt) => {
+                                void historicalImportReasonsQuery.refetch();
+                                form.setValue("historical_import_reason", opt.label, { shouldDirty: true });
+                              }}
+                            />
+                            {historicalImportReasonsQuery.isError ? (
+                              <ListErrorBanner message="Could not load historical import reasons." onRetry={() => void historicalImportReasonsQuery.refetch()} />
+                            ) : null}
+                          </div>
+                          <input
+                            {...form.register("historical_import_reason")}
+                            data-testid="book-load-historical-import-reason"
+                            placeholder="Why an inactive driver belongs on this historical load"
+                            className="mt-1 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
+                          />
+                          <span className="mt-0.5 block normal-case tracking-normal text-gray-400">
+                            Owner-only. This does not reactivate the driver or widen the live dispatch picker.
+                          </span>
+                        </label>
+                      </>
+                    ) : (
+                      <>
+                        <input type="hidden" {...form.register("historical_import_driver_id")} data-testid="book-load-historical-inactive-driver-id" />
+                        <input type="hidden" {...form.register("historical_import_reason")} data-testid="book-load-historical-import-reason" />
+                      </>
+                    )}
+                    {/* is_sample_data stays form-backed and still submits — it just can no longer be SET
+                        from Book Load (STOP-NO-SEAT-LOADS). */}
                     <input type="hidden" {...form.register("is_sample_data")} data-testid="book-load-is-sample-data" />
-                    {/* B4 (owner ruling, GO-21 register 2026-09-02): Equipment/load type, Type, Commodity,
-                        Weight, Pieces moved to §B ("Equipment · Driver · Trailer") — see below, right
-                        before <BookLoadEquipmentSection>. This is where J1's rebase now lives; the
-                        duplicate block that used to render here was removed, not left behind. */}
+                    {/* catalog_load_type_id kept in form state for edit hydrate of legacy rows only —
+                        no operator control (duplicates Trailer type). Never written from create. */}
+                    <input type="hidden" {...form.register("catalog_load_type_id")} />
                   </div>
 
                   <div className="overflow-x-auto rounded-sm border border-gray-200">
@@ -1999,66 +2014,15 @@ export function BookLoadModalV4({
                     <span className="blw-sec-meta">Class <b>T120-SMITH</b></span>
                   </div>
                   <div className="space-y-2 p-3">
-                    {/* B4 — moved from §A: these ARE the equipment/cargo fields §B's own header
-                        ("Equipment · Driver · Trailer") already promises, so they belong here, not
-                        under §A ("Customer · Invoice · Charges"). Form field names are unchanged —
-                        this is a render-position move only, nothing round-trips differently. */}
+                    {/* Pieces stayed in §B when Commodity/Weight/Broker·Direct returned to §A
+                        (owner 2026-09-03 — do not move Pieces without an explicit order).
+                        catalog_load_type_id control removed — duplicated Trailer type. */}
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
-                      <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                        Equipment / load type
-                        <div className="mt-0.5">
-                          <ReferenceSelect
-                            value={form.watch("catalog_load_type_id") || null}
-                            onChange={(value) => form.setValue("catalog_load_type_id", value ?? "", { shouldDirty: true })}
-                            options={loadTypeOptions}
-                            createKind="load_type"
-                            operatingCompanyId={operatingCompanyId}
-                            placeholder="Select load type"
-                            loading={loadTypesQuery.isLoading}
-                            disabled={loadTypesQuery.isLoading || loadTypesQuery.isError}
-                            onOptionCreated={() => void loadTypesQuery.refetch()}
-                          />
-                          {loadTypesQuery.isError ? <ListErrorBanner message="Could not load load types." onRetry={() => void loadTypesQuery.refetch()} /> : null}
-                        </div>
-                      </label>
-                      <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                        Type
-                        <div className="mt-0.5 inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
-                          <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
-                            <input type="radio" value="broker" className="hidden" {...form.register("load_type")} />
-                            Broker
-                          </label>
-                          <label className={`flex cursor-pointer items-center border-l border-gray-300 px-3 ${loadType === "direct" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
-                            <input type="radio" value="direct" className="hidden" {...form.register("load_type")} />
-                            Direct
-                          </label>
-                        </div>
-                      </label>
-                      <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                        Commodity
-                        <input {...form.register("commodity")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
-                      </label>
-                      <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                        Weight (lbs)
-                        {/* GO-21-J1 / C2: was a raw <input type="number"> — no thousands separator past
-                            999 lbs, native spinner. NumberInput is MoneyInput's plain-number sibling,
-                            same QuickBooks display convention minus the $. */}
-                        <NumberInput
-                          value={form.watch("weight_lbs")}
-                          onChange={(v) => form.setValue("weight_lbs", v ?? 0, { shouldDirty: true })}
-                          unit="lbs"
-                          ariaLabel="Weight"
-                          className="mt-0.5 w-full"
-                        />
-                      </label>
                       <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                         Pieces
                         <input {...form.register("pieces")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                       </label>
                     </div>
-                    {/* Trip Type lifted to the full-width banner above the body (A3). §B starts at Equipment.
-                        SKIP inventing a driver picker here — create-worthy Driver / Team driver fields live in
-                        BookLoadEquipmentSection (DriverPickerWithCreate + CreateDriverModal). */}
                     <BookLoadEquipmentSection
                       register={form.register}
                       watch={form.watch}

@@ -163,7 +163,8 @@ const SCALAR_FIELDS: Array<[string, string, (v: AnyValues) => unknown]> = [
   ["anticipated_chargeback_reason", "anticipated_chargeback_reason", (v) => str(v.anticipated_chargeback_reason) || null],
   ["detention_expected_y_n", "detention_expected_y_n", (v) => Boolean(v.detention_expected_y_n)],
   ["detention_reason_id", "detention_reason_id", (v) => str(v.detention_reason_id) || null],
-  ["catalog_load_type_id", "catalog_load_type_id", (v) => str(v.catalog_load_type_id) || null],
+  // catalog_load_type_id: wizard no longer writes this column (owner 2026-09-03 — Equipment/load type
+  // duplicated Trailer type). Legacy values remain on mdata.loads; edit hydrate still reads them.
   ["load_trailer_equipment_id", "load_trailer_equipment_id", (v) => str(v.load_trailer_equipment_id)],
   ["detention_expected_hours", "detention_expected_hours", (v) => num(v.detention_expected_hours)],
   ["detention_bill_customer_per_hour_cents", "detention_bill_customer_per_hour_cents", (v) => num(v.detention_bill_customer_per_hour_cents)],

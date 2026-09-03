@@ -59,31 +59,33 @@ function Harness() {
   );
 }
 
-describe("BookLoadStopsSection — render-v6 §C two-row stop card", () => {
-  it("renders the locrow + siterow with the exact design labels", () => {
+describe("BookLoadStopsSection — owner stop row order 2026-09-03", () => {
+  it("renders locrow + siterow + timewindow with the owner labels", () => {
     render(<Harness />);
 
     expect(screen.getByTestId("stop-card-0")).toBeInTheDocument();
     expect(screen.getByText("PICKUP")).toBeInTheDocument();
 
-    // Row 1 (.locrow): Address | City | St | Zip Code | Date | Time
+    // Row 1: Location · Address · City · State · Zip
     const locrow = screen.getByTestId("stop-locrow-0");
-    for (const label of ["Address", "City", "St", "Zip Code", "Date", "Time"]) {
+    for (const label of ["Location", "Address", "City", "State", "Zip"]) {
       expect(within(locrow).getByText(label)).toBeInTheDocument();
     }
+    expect(within(locrow).queryByText("Date")).not.toBeInTheDocument();
+    expect(within(locrow).queryByText("Appointment date")).not.toBeInTheDocument();
 
-    // Row 2 (.siterow): Site contact | Site phone | Dock | Free time / lumper | Lumper amount ($)
+    // Row 2: Appointment date/time · Site contact · Site phone · Dock
     const siterow = screen.getByTestId("stop-siterow-0");
-    for (const label of ["Site contact", "Site phone", "Dock", "Free time / lumper", "Lumper amount ($)"]) {
+    for (const label of ["Appointment date", "Time", "Site contact", "Site phone", "Dock"]) {
       expect(within(siterow).getByText(label)).toBeInTheDocument();
     }
 
-    // Row 3 (additive, orphan-triage wiring): Time window — the only field beyond the original
-    // render-v6 §C 11-field spec (see component comment).
+    // Row 3: Time window (+ free time / lumper)
     const timeWindowRow = screen.getByTestId("stop-timewindow-0");
     expect(within(timeWindowRow).getByText("Time window")).toBeInTheDocument();
+    expect(within(timeWindowRow).getByText("Free time / lumper")).toBeInTheDocument();
+    expect(within(timeWindowRow).getByText("Lumper amount ($)")).toBeInTheDocument();
 
-    // Empty-diff (GUARD): NOTHING extra renders in the stop card — the relocated fields must be absent.
     for (const extra of ["Customer instructions", "Appointment start", "Appointment end", "Lumper paid by", "Lumper required", "Tarp stop", "Tarp count", "Instructions / directions"]) {
       expect(screen.queryByText(extra)).not.toBeInTheDocument();
     }
@@ -91,8 +93,6 @@ describe("BookLoadStopsSection — render-v6 §C two-row stop card", () => {
 
   it("offers Create pickup / Create delivery / multi-leg buttons", () => {
     render(<Harness />);
-    // CLAUDE.md §7 vocab lock: "+ Create" / "+ Book" only, never "+ New" / "+ Add" — the component
-    // already renders the locked vocab; this test was stale (still asserting the pre-lock "+ Add" text).
     expect(screen.getByText("+ Create pickup")).toBeInTheDocument();
     expect(screen.getByText("+ Create delivery")).toBeInTheDocument();
     expect(screen.getByText(/Create stop/)).toBeInTheDocument();

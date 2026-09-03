@@ -376,9 +376,9 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       {teamsQuery.isError ? (
         <ListErrorState status={0} message="Driver teams unavailable." onRetry={() => void teamsQuery.refetch()} />
       ) : null}
-      {/* RENDER-A-v2 §B: Driver pay rate / mi is TOP-LEVEL, half-row (standard field width). The separate
-          "Reefer setpoint" field is REMOVED — the reefer panel's temperature IS the single setpoint. */}
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+      {/* Driver pay rate — compact QuickBooks money format (h-7, narrow, right-aligned, tabular 2dp).
+          Not full-width: sized to a rate like 0.70, not a charge column. */}
+      <div className="flex flex-wrap items-end gap-3">
         <Field
           label="Driver pay rate / mi"
           hint="Leave blank — pay resolves automatically from the driver's profile rate card."
@@ -387,15 +387,23 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
               type="number"
               step="0.01"
               min="0"
-              {...register("driver_pay_rate_per_mile", { valueAsNumber: true })}
-              className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs"
+              {...register("driver_pay_rate_per_mile", {
+                valueAsNumber: true,
+                setValueAs: (v) => {
+                  if (v === "" || v == null) return 0;
+                  const n = Number(v);
+                  return Number.isFinite(n) ? Math.round(n * 100) / 100 : 0;
+                },
+              })}
+              data-testid="driver-pay-rate-per-mile"
+              className="h-7 w-[5.5rem] rounded-sm border border-gray-300 px-2 text-right text-xs tabular-nums"
             />
           }
         />
         {driverPayRatePerMileTyped > 0 ? (
           <Field
             label="Override reason (required)"
-            hint="GO-21 B5 — a typed rate with no reason is never used; the driver's profile card prices the load instead."
+            hint="A typed rate with no reason is never used; the driver's profile card prices the load instead."
             input={
               <input
                 type="text"
@@ -404,7 +412,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                 placeholder="Why does this load override the driver's card rate?"
                 data-testid="driver-pay-rate-override-reason"
                 {...register("driver_pay_rate_override_reason")}
-                className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                className="h-7 w-full min-w-[16rem] rounded-sm border border-gray-300 px-2 text-xs"
               />
             }
           />

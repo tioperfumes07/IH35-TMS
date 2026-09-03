@@ -282,7 +282,7 @@ export function LoadCostsBoardPage() {
       {query.isError ? <ListErrorState title="Could not load the costs board." status={(query.error as { status?: number })?.status ?? 0} onRetry={() => void query.refetch()} /> : null}
       {query.isLoading ? <div className="rounded border border-[#E5E7EB] bg-white p-4 text-xs text-[#6B7280]">Loading load costs…</div> : null}
       {!query.isLoading && !query.isError ? (
-        <div className="overflow-hidden rounded border border-[#E5E7EB] bg-white" data-testid="accounting-load-costs-board">
+        <div className="overflow-hidden rounded border border-[#E5E7EB] bg-white" data-testid="accounting-load-costs-board" title="Load costs">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E5E7EB] px-4 py-3">
             <div className="font-semibold text-[#0F1219]" style={{ fontSize: 22 }}>Costs</div>
             <div className="flex flex-wrap gap-1">

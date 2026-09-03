@@ -227,6 +227,17 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
         // paging through. hidePager (ParityTable's own documented suppression flag, Phase A3) keeps
         // internal slicing at initialPageSize=50 (every row still renders) and only hides the chrome.
         hidePager
+        footer={
+          <>
+            <td className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-600" colSpan={2}>
+              Amounts total
+            </td>
+            <td className="px-2 py-1.5 text-right font-mono text-gray-900" data-testid="accessorial-amounts-column-total">
+              {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(sumAccessorialCents(rows) / 100)}
+            </td>
+            <td />
+          </>
+        }
         rowActions={(row) => (
           <button type="button" className="text-xs text-red-700 hover:underline" onClick={() => handleRemove(row.id)}>
             Remove
