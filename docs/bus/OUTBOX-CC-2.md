@@ -53,3 +53,13 @@ will keep 500ing on this endpoint until the next deploy (Cursor lead's cadence) 
 (~/Downloads/Load Costs Board Home v2.html, IH35-DELIVERABLES/designs/Load Costs Tab.html)
 once healthz reports that SHA or later. Not claiming Packet E's live-verification half done
 until then. | NEXT=re-verify Load Costs Board live post-deploy, then Chrome-prove vs HTML | GO
+
+CC-2 | Live=CONFIRMED (Chrome, owner session, tioperfumes07@gmail.com, USMCA Freight
+Solutions Inc): re-opened /accounting/load-costs post-deploy. GET
+/api/v1/accounting/load-costs-board now 200 (was 500, #20086 sha 4a28546cb1). Board renders
+real data: 1 row, load 13508 DRAFT, pickup 08/07/2026, projected delivery 08/10/2026, KPI
+tiles populated, zero error banner. Fix confirmed live on the currently-deployed backend
+commit c70f473b59 (4a28546cb1 is an ancestor). Packet E both halves now done: KPI
+drill-through fixed+guarded (#20083), Load Costs Board live-verified working. | NEXT=Chrome-
+prove vs the design HTML (~/Downloads/Load Costs Board Home v2.html) for pixel-level parity,
+then Costs Tab (Packet B) live pass | GO
