@@ -16,7 +16,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
-const PICKER = join(ROOT, "apps/frontend/src/components/parity/EntityPicker.tsx");
+const PICKER = join(ROOT, "apps/frontend/src/components/EntityPicker.tsx");
 const REGISTRY = join(ROOT, "apps/frontend/src/components/parity/entityPickerRegistry.ts");
 
 const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");

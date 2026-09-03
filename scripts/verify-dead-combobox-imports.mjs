@@ -18,7 +18,7 @@ const REEXPORT = new Set([
   "apps/frontend/src/components/Combobox.tsx",
   "apps/frontend/src/components/shared/Combobox.tsx",
   "apps/frontend/src/components/parity/ReferenceSelect.tsx",
-  "apps/frontend/src/components/parity/EntityPicker.tsx",
+  "apps/frontend/src/components/EntityPicker.tsx",
   "apps/frontend/src/components/drivers/DriverPickerWithCreate.tsx",
 ]);
 

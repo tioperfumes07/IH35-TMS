@@ -41,7 +41,7 @@
  *   - A uuid rendered read-only (no `value=` binding and no matching placeholder) is display, not
  *     entry, and is out of scope.
  *
- * FIX PRIMITIVE (one component, propagates): components/parity/EntityPicker.tsx — a searchable
+ * FIX PRIMITIVE (one component, propagates): components/EntityPicker.tsx — a searchable
  * picker over the CANONICAL roster for its kind, with inline "+ Create" as the FIRST ROW INSIDE the
  * dropdown (never a button beside it), opening that entity's wizard in the C7 480px right drawer,
  * writing the SAME canonical table the picker reads. It composes the EXISTING shared Combobox and
@@ -63,7 +63,7 @@ const SRC = "apps/frontend/src";
 const LABEL = "verify-picker-law-no-raw-uuid";
 const MISSING = " MISSING ";
 
-const PICKER_FILE = `${SRC}/components/parity/EntityPicker.tsx`;
+const PICKER_FILE = `${SRC}/components/EntityPicker.tsx`;
 const REGISTRY_FILE = `${SRC}/components/parity/entityPickerRegistry.ts`;
 /** The pre-existing catalog mechanism (PR #3550). C1 EXTENDS it; it may never be forked away. */
 const REFERENCE_SELECT_FILE = `${SRC}/components/parity/ReferenceSelect.tsx`;

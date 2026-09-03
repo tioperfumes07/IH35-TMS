@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = [
-  "apps/frontend/src/components/parity/EntityPicker.tsx",
+  "apps/frontend/src/components/EntityPicker.tsx",
   "apps/frontend/src/components/drivers/CreateDriverModal.tsx",
   "apps/frontend/src/components/fleet/CreateUnitModal.tsx",
   "apps/frontend/src/components/fleet/CreateTrailerModal.tsx",
@@ -29,7 +29,7 @@ function assertAll(srcs) {
   for (const [file, src] of Object.entries(srcs)) {
     if (/\.slice\(0,\s*8\)/.test(src)) problems.push(`${file}: still UUID-slices`);
   }
-  const picker = srcs["apps/frontend/src/components/parity/EntityPicker.tsx"];
+  const picker = srcs["apps/frontend/src/components/EntityPicker.tsx"];
   if (!/onChange:\s*\(value: string \| null, option\?: EntityPickerOption \| null\)/.test(picker)) {
     problems.push("EntityPicker: onChange must return the selected canonical option with its FK");
   }
@@ -126,7 +126,7 @@ const read = () => Object.fromEntries(FILES.map((f) => [f, fs.readFileSync(path.
 if (SELFTEST) {
   const srcs = read();
   const mutations = [
-    ["apps/frontend/src/components/parity/EntityPicker.tsx", "onChange(next, next ? options.find((option) => option.value === next) ?? null : null)", "onChange(next)", "picker option return"],
+    ["apps/frontend/src/components/EntityPicker.tsx", "onChange(next, next ? options.find((option) => option.value === next) ?? null : null)", "onChange(next)", "picker option return"],
     ["apps/frontend/src/components/drivers/CreateDriverModal.tsx", "onCreated(created.id, displayName)", "onCreated(created.id)", "created driver label"],
     ["apps/frontend/src/components/fleet/CreateUnitModal.tsx", "onCreated?.(String(created.id), submission.draft.unit_number.trim())", "onCreated?.(String(created.id))", "created unit label"],
     ["apps/frontend/src/components/fleet/CreateTrailerModal.tsx", "onCreated?.(String(created.id), input.draft.equipment_number.trim())", "onCreated?.(String(created.id))", "created trailer label"],

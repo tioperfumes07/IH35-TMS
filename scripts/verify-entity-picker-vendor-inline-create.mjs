@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SELFTEST = process.argv.includes("--selftest");
-const ENTITY_PICKER = "apps/frontend/src/components/parity/EntityPicker.tsx";
+const ENTITY_PICKER = "apps/frontend/src/components/EntityPicker.tsx";
 const REGISTRY = "apps/frontend/src/components/parity/entityPickerRegistry.ts";
 const SOURCE_ROOT = "apps/frontend/src";
 

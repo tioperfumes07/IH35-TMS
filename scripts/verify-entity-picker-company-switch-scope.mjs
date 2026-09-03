@@ -8,7 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const PICKER = "apps/frontend/src/components/parity/EntityPicker.tsx";
+const PICKER = "apps/frontend/src/components/EntityPicker.tsx";
 const TEST = "apps/frontend/src/components/parity/__tests__/EntityPicker.test.tsx";
 const REFERENCE_SELECT = "apps/frontend/src/components/parity/ReferenceSelect.tsx";
 const REFERENCE_TEST = "apps/frontend/src/components/parity/ReferenceSelect.test.tsx";

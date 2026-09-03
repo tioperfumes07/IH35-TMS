@@ -11,7 +11,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   helper: "apps/frontend/src/components/parity/mergePickerOptionsByValue.ts",
   helperTest: "apps/frontend/src/components/parity/mergePickerOptionsByValue.test.ts",
-  entityPicker: "apps/frontend/src/components/parity/EntityPicker.tsx",
+  entityPicker: "apps/frontend/src/components/EntityPicker.tsx",
   referenceSelect: "apps/frontend/src/components/parity/ReferenceSelect.tsx",
 };
 

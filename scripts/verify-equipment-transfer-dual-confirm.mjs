@@ -143,7 +143,7 @@ contains("apps/backend/src/index.ts", indexTs, [
 ]);
 
 const transferModal = read("apps/frontend/src/components/dispatch/EquipmentTransferModal.tsx");
-const entityPicker = read("apps/frontend/src/components/parity/EntityPicker.tsx");
+const entityPicker = read("apps/frontend/src/components/EntityPicker.tsx");
 const createTrailer = read("apps/frontend/src/components/fleet/CreateTrailerModal.tsx");
 const pickerRegistry = read("apps/frontend/src/components/parity/entityPickerRegistry.ts");
 const equipmentRoutes = read("apps/backend/src/mdata/equipment.routes.ts");
