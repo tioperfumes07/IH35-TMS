@@ -500,7 +500,7 @@ export function FleetTable({
       case "location": return <td key={key} className="truncate px-2 py-1 text-xs text-slate-700">{fleetLocationText(row) || row.oos_location || "—"}</td>;
       case "odometer": return <td key={key} className="px-2 py-1 tabular-nums">{fmtMiles(row.odometer_mi)}</td>;
       case "next_pm": return <td key={key} className="px-2 py-1 tabular-nums">{fmtMiles(row.next_due_odometer)}</td>;
-      case "open_wo": return <td key={key} className="px-2 py-1 tabular-nums">{row.open_wo_count != null && row.open_wo_count > 0 ? <span className="font-semibold text-slate-800">{row.open_wo_count}</span> : <span className="text-gray-400">{row.kind === "trailer" ? "—" : "0"}</span>}</td>;
+      case "open_wo": return <td key={key} className="px-2 py-1 tabular-nums">{Number(row.open_wo_count ?? 0) > 0 ? <span className="font-semibold text-slate-800">{row.open_wo_count ?? 0}</span> : <span className="text-gray-400">{row.kind === "trailer" ? "—" : "0"}</span>}</td>;
       case "dot_oo": return <td key={key} className="px-2 py-1">{row.kind === "trailer" ? "—" : row.is_oos ? "Yes" : "No"}</td>;
       default: return null;
     }

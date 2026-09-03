@@ -17,6 +17,7 @@ const quickAssignBodySchema = z.object({
   trailer_id: z.string().uuid().optional(),
   assignment_method: z.enum(["quicksave", "drag_drop"]).default("quicksave"),
   acknowledged_warnings: z.array(z.string()).optional(),
+  reason_code: z.string().trim().min(1).optional(),
 });
 const completeBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -58,6 +59,17 @@ function mapQuickAssignError(error: unknown) {
     return {
       status: 404,
       payload: { error: code, message: "Trailer is not active in this operating company." },
+    };
+  }
+  if (code === "E_VEHICLE_SWAP_REASON_REQUIRED" || code === "E_VEHICLE_SWAP_REASON_INVALID") {
+    return {
+      status: 422,
+      payload: {
+        error: code,
+        message: code.endsWith("REQUIRED")
+          ? "Select a reason before changing the assigned unit."
+          : "The selected vehicle-swap reason is not active for this company.",
+      },
     };
   }
   if (code.startsWith("E_UNIT_OOS")) {
