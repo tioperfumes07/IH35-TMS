@@ -12,3 +12,8 @@ docs/certification/*.cert.json
 docs/audits/PASS-8-*
 .cursor/rules/00-agent-bus-inbox-CASCADE.mdc
 tmp-from-load-zero-*/
+
+# GATE-LIVELOCK-01 — derived, regenerated in ~0.3s by ensureFreshGateStepMap() on every scoped
+# local pre-push run; committing it would be a constant merge-conflict generator across this
+# repo's many concurrent branches for zero benefit (never read by CI).
+scripts/.gate-step-map.json

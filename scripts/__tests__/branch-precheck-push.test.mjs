@@ -8,7 +8,10 @@ import { fileURLToPath } from "node:url";
 import { attachBareOrigin, initFixtureRepo, runGitOrThrow, writeAndCommit } from "./fixtures/branch-tooling/git-fixture.mjs";
 import {
   GATE_RESULT_CATEGORIES,
+  attemptStaleBaseRecovery,
   buildPrecheckSteps,
+  computeMainDeltaFiles,
+  deltaTouchesAnyGuard,
   detectLocalCapabilities,
   preflightStep,
   probeVerifyDatabaseIdentity,
@@ -686,4 +689,107 @@ test("the replay step always runs — its command refuses safely when no databas
 test("block-ready keeps its CI-equivalent skip — migrations are not coupled to manifest ceremony", () => {
   const step = { label: "block-ready", requiredCapabilities: ["database"], serverRequiredCiEquivalent: "ci / build-typecheck" };
   assert.equal(preflightStep(step, { database: false }, validCapabilityPolicy).action, "skip-capability");
+});
+
+// ── GATE-LIVELOCK-01 STEP 2: stale-base recovery (rebase + delta-scoped re-check only) ──────────────
+
+function makeFeatureRepoWithGuard(guardName, guardSource) {
+  const dir = makeFeatureRepo();
+  fs.mkdirSync(path.join(dir, "scripts"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "scripts", guardName), guardSource, "utf8");
+  // Register it as CI-run the same way real guards are: a scripts/verify-steps/ wrapper file
+  // whose content names it. Without this, ciRunGuardSet() sees it as "unwired" and a real FAIL
+  // is informational-only — exactly the existing FAIL-test(gated)/FAIL-test(unwired) split.
+  fs.mkdirSync(path.join(dir, "scripts/verify-steps"), { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, "scripts/verify-steps", `9999-${guardName}`),
+    `import "../${guardName}";\n`,
+    "utf8"
+  );
+  runGitOrThrow(["add", `scripts/${guardName}`, `scripts/verify-steps/9999-${guardName}`], { cwd: dir });
+  runGitOrThrow(["commit", "-m", `add ${guardName}`], { cwd: dir });
+  runGitOrThrow(["push", "origin", "feat/precheck"], { cwd: dir });
+  return dir;
+}
+
+test("computeMainDeltaFiles: empty when main has not moved past the merge-base", () => {
+  const dir = makeFeatureRepo();
+  assert.deepEqual(computeMainDeltaFiles(dir), []);
+});
+
+test("computeMainDeltaFiles: lists exactly the files main advanced by", () => {
+  const dir = makeFeatureRepo();
+  runGitOrThrow(["checkout", "main"], { cwd: dir });
+  writeAndCommit(dir, "docs/unrelated.md", "hi\n", "main moved, unrelated file");
+  runGitOrThrow(["push", "origin", "main"], { cwd: dir });
+  runGitOrThrow(["checkout", "feat/precheck"], { cwd: dir });
+  assert.deepEqual(computeMainDeltaFiles(dir), ["docs/unrelated.md"]);
+});
+
+test("deltaTouchesAnyGuard: false for a file no guard owns", () => {
+  const map = { entries: { "verify-x.mjs": { ownedPaths: ["apps/backend/src/y.ts"], alwaysRun: false } } };
+  assert.equal(deltaTouchesAnyGuard(["docs/unrelated.md"], map), false);
+});
+
+test("deltaTouchesAnyGuard: true when a delta file is under an owned path", () => {
+  const map = { entries: { "verify-x.mjs": { ownedPaths: ["apps/backend/src/"], alwaysRun: false } } };
+  assert.equal(deltaTouchesAnyGuard(["apps/backend/src/y.ts"], map), true);
+});
+
+test("deltaTouchesAnyGuard: alwaysRun guards never trigger a delta-only re-check", () => {
+  const map = { entries: { "verify-x.mjs": { ownedPaths: [], alwaysRun: true } } };
+  assert.equal(deltaTouchesAnyGuard(["anything.ts"], map), false);
+});
+
+test("attemptStaleBaseRecovery: delta touches nothing any guard owns — rebases, runs no guard", () => {
+  const dir = makeFeatureRepoWithGuard(
+    "verify-owns-backend.mjs",
+    // Owns "apps/backend/src/x.ts" — not alwaysRun (has an extractable path), and the delta
+    // below (docs/unrelated.md) does not intersect it.
+    `const OWNED = "apps/backend/src/x.ts";\nconsole.error("planted: must never run when delta is out of scope"); process.exit(1);\n`
+  );
+  runGitOrThrow(["checkout", "main"], { cwd: dir });
+  writeAndCommit(dir, "docs/unrelated.md", "hi\n", "main moved, unrelated file");
+  runGitOrThrow(["push", "origin", "main"], { cwd: dir });
+  runGitOrThrow(["checkout", "feat/precheck"], { cwd: dir });
+  const result = attemptStaleBaseRecovery(dir);
+  assert.equal(result.ok, true, result.reason);
+  assert.equal(result.ranGuards, false);
+  assert.equal(runGitOrThrow(["log", "-1", "--format=%s", "origin/main"], { cwd: dir }), "main moved, unrelated file");
+});
+
+test("attemptStaleBaseRecovery: delta touches an owned path — the owning guard runs and can fail the recovery", () => {
+  const dir = makeFeatureRepoWithGuard(
+    "verify-owns-touched.mjs",
+    `console.error("planted failure — must surface in the recovery result"); process.exit(1);\n`
+  );
+  runGitOrThrow(["checkout", "main"], { cwd: dir });
+  writeAndCommit(dir, "apps/backend/src/touched.ts", "export const x = 1;\n", "main moved, owned path");
+  runGitOrThrow(["push", "origin", "main"], { cwd: dir });
+  runGitOrThrow(["checkout", "feat/precheck"], { cwd: dir });
+  // Rewrite the guard so its only extractable path literal matches what main just changed.
+  fs.writeFileSync(
+    path.join(dir, "scripts/verify-owns-touched.mjs"),
+    `// owns "apps/backend/src/touched.ts"\nconsole.error("planted failure — must surface in the recovery result"); process.exit(1);\n`
+  );
+  runGitOrThrow(["add", "scripts/verify-owns-touched.mjs"], { cwd: dir });
+  runGitOrThrow(["commit", "-m", "guard now owns the path main will touch"], { cwd: dir });
+  const result = attemptStaleBaseRecovery(dir);
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /verify-owns-touched\.mjs/);
+});
+
+test("attemptStaleBaseRecovery: a real rebase conflict aborts cleanly, never leaves the repo mid-rebase", () => {
+  const dir = makeFeatureRepo();
+  runGitOrThrow(["checkout", "main"], { cwd: dir });
+  writeAndCommit(dir, "change.txt", "main edited the same line differently\n", "main moved, conflicting");
+  runGitOrThrow(["push", "origin", "main"], { cwd: dir });
+  runGitOrThrow(["checkout", "feat/precheck"], { cwd: dir });
+  const result = attemptStaleBaseRecovery(dir);
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /conflict/i);
+  const status = runGitOrThrow(["status", "--porcelain=v1", "-z"], { cwd: dir });
+  assert.equal(status, "", "working tree must be clean after an aborted rebase");
+  assert.equal(fs.existsSync(path.join(dir, ".git", "rebase-merge")), false);
+  assert.equal(fs.existsSync(path.join(dir, ".git", "rebase-apply")), false);
 });

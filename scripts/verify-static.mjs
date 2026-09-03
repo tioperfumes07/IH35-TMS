@@ -30,6 +30,7 @@ import {
   validateCapabilityEquivalent,
 } from "./push-gate-capability-policy.mjs";
 import { extraFailsNotInBaseline, loadHeadBaseline } from "./verify-static-ratchet.mjs";
+import { ensureFreshGateStepMap } from "./generate-gate-step-map.mjs";
 
 const SELF_PATH = fileURLToPath(import.meta.url);
 const SELF_NAME = path.basename(SELF_PATH);
@@ -43,8 +44,30 @@ const NON_STATIC_ORCHESTRATORS = new Set(["verify-local-ci.mjs"]);
 export const STATIC_RESULT_CATEGORIES = Object.freeze({
   PASS: "PASS",
   SKIP_CAPABILITY: "SKIP-capability",
+  SKIP_SCOPE: "SKIP-scope",
   FAIL_TEST: "FAIL-test",
 });
+
+/**
+ * GATE-LIVELOCK-01 — decide whether a guard runs given the current push's changed-file set.
+ * `changedFiles === null` means "no scoping requested" (the CI/standalone default: everything
+ * runs, matching pre-fix behavior exactly). A guard runs when: its own file is itself among the
+ * changed files (its logic changed — must re-verify itself), OR the map marks it alwaysRun (no
+ * extractable owned path — fail-safe), OR one of its owned paths intersects a changed file
+ * (prefix match either direction, so an owned directory root like "apps/frontend/src" matches a
+ * changed file under it, and an owned exact file matches itself).
+ */
+export function guardIsInScope(guardFile, entry, changedFiles) {
+  if (changedFiles === null) return true;
+  if (changedFiles.some((f) => f === guardFile || f.endsWith("/" + guardFile))) return true;
+  if (!entry || entry.alwaysRun) return true;
+  for (const owned of entry.ownedPaths ?? []) {
+    for (const changed of changedFiles) {
+      if (changed === owned || changed.startsWith(owned) || owned.startsWith(changed)) return true;
+    }
+  }
+  return false;
+}
 
 /**
  * STOP-THE-THRASH-2026-07-17: package.json edits to register a new verify:* are FORBIDDEN — the
@@ -240,7 +263,12 @@ export function ciRunGuardSet(root = path.resolve(SCRIPTS_DIR, "..")) {
   const chunks = [];
   const wfDir = path.join(root, ".github/workflows");
   try { for (const f of fs.readdirSync(wfDir)) chunks.push(fs.readFileSync(path.join(wfDir, f), "utf8")); } catch {}
-  const stepsDir = path.join(SCRIPTS_DIR, "verify-steps");
+  // GATE-LIVELOCK-01: was hardcoded to SCRIPTS_DIR (this project's real scripts/ dir) even when a
+  // caller passed a different `root` — dormant in production (every real caller invokes this with
+  // no args), but it makes a custom-`root` call (a test fixture, GATE-LIVELOCK-01's stale-base
+  // delta re-check against a fixture repo) silently read the WRONG project's verify-steps/, never
+  // its own. `root`'s own scripts/verify-steps now, consistent with every other path here.
+  const stepsDir = path.join(root, "scripts/verify-steps");
   try { for (const f of fs.readdirSync(stepsDir)) chunks.push(fs.readFileSync(path.join(stepsDir, f), "utf8")); } catch {}
   for (const txt of chunks) for (const mm of txt.matchAll(/verify-[a-z0-9-]+\.mjs/gi)) set.add(mm[0]);
   return set;
@@ -254,8 +282,14 @@ export function runStatic({
   ciSet,
   classifyOptions,
   policyLoader = loadCapabilityPolicy,
+  // GATE-LIVELOCK-01: null (default) = no scoping, every guard runs — the CI/standalone shape,
+  // unchanged from before this feature existed. An array = the local pre-push scoped path; each
+  // guard not in scope becomes a cheap SKIP-scope result instead of a spawned child process.
+  changedFiles = null,
+  stepMap = null,
 } = {}) {
   const set = ciSet || ciRunGuardSet();
+  const scopeMap = changedFiles !== null ? (stepMap ?? ensureFreshGateStepMap({ dir }).map) : null;
   const sharedClassifyOptions = { ...(classifyOptions ?? {}) };
   // Live capability verification is intentionally authoritative but must run once per sweep, not once
   // per ~1,100 guard files. A repeated network lookup is both unbounded and vulnerable to mid-run drift.
@@ -283,13 +317,21 @@ export function runStatic({
       return 0;
     })
     .map((f) => path.join(dir, f));
-  // Pre-push runs this under husky with stdout fully buffered (not a TTY). With ~1,100 guards
-  // and no progress, the process looks hung for minutes. stderr is line-buffered even when piped.
+  // Pre-push runs this under husky with stdout fully buffered (not a TTY). With ~4,767 guards
+  // and no progress, the process looks hung for minutes (an agent read a prior silent run as
+  // "hung" — GATE-LIVELOCK-01). Progress prints every 10 steps with elapsed wall-clock seconds,
+  // stderr is line-buffered even when piped.
   const total = files.length;
+  const startedAt = Date.now();
   return files.map((f, i) => {
     const n = i + 1;
-    if (n === 1 || n === total || n % 25 === 0) {
-      process.stderr.write(`[verify-static] ${n}/${total} ${path.basename(f)}\n`);
+    const base = path.basename(f);
+    if (n === 1 || n === total || n % 10 === 0) {
+      const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+      process.stderr.write(`[verify-static] ${n}/${total} (${elapsed}s elapsed) ${base}\n`);
+    }
+    if (scopeMap && !guardIsInScope(base, scopeMap.entries[base], changedFiles)) {
+      return { name: base, kind: STATIC_RESULT_CATEGORIES.SKIP_SCOPE, detail: "not touched by this push's changed files", gated: set.has(base) };
     }
     const r = classify(f, sharedClassifyOptions);
     r.gated = set.has(r.name);
@@ -301,14 +343,22 @@ function printSummary(results) {
   const by = (k) => results.filter((r) => r.kind === k);
   const pass = by(STATIC_RESULT_CATEGORIES.PASS);
   const skipped = by(STATIC_RESULT_CATEGORIES.SKIP_CAPABILITY);
+  const skippedScope = by(STATIC_RESULT_CATEGORIES.SKIP_SCOPE);
   const gatedFail = results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && r.gated);
   const unwiredFail = results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && !r.gated);
   console.log(`\n=== ${LABEL} summary ===`);
   console.log(
     `total ${results.length}  |  PASS ${pass.length}  ` +
     `FAIL-test(gated) ${gatedFail.length}  FAIL-test(unwired) ${unwiredFail.length}  ` +
-    `SKIP-capability ${skipped.length}`,
+    `SKIP-capability ${skipped.length}  SKIP-scope ${skippedScope.length}`,
   );
+  if (skippedScope.length) {
+    console.log(
+      `\nSKIP-scope (${skippedScope.length}) — path-scoped local pre-push only, NEVER how CI runs this ` +
+      `(GATE_FULL=1 forces every guard; CI always globs the full unchanged set):`
+    );
+    for (const r of skippedScope) console.log(`  · ${r.name}`);
+  }
   if (skipped.length) {
     console.log(`\nSKIP-capability (${skipped.length}) — explicit preflight + server-required equivalent:`);
     for (const r of skipped) console.log(`  · ${r.name} — ${r.detail}`);
@@ -375,6 +425,41 @@ function selftest() {
       ["wired fail is gated", get("verify-fail-fixture.mjs")?.gated === true],
       ["unwired fail not gated", get("verify-selftest-broken-fixture.mjs")?.gated === false],
     ];
+
+    // GATE-LIVELOCK-01 scoping selftest — guardIsInScope() as a pure-function unit test, plus a
+    // full runStatic() pass proving an out-of-scope guard becomes SKIP-scope without being
+    // spawned (a planted fixture that would exit 1 if actually run must NOT appear as FAIL).
+    const ownedMap = { entries: { "verify-owned-fixture.mjs": { ownedPaths: ["apps/backend/src/x.ts"], alwaysRun: false } } };
+    fs.writeFileSync(path.join(tmp, "verify-owned-fixture.mjs"), `console.error("planted: must never run when out of scope"); process.exit(1);\n`);
+    const outOfScopeResults = runStatic({
+      dir: tmp,
+      self: SELF_NAME,
+      ciSet: new Set(),
+      classifyOptions: { preflight: { ok: true, missing: [], ciEquivalents: [] } },
+      changedFiles: ["docs/unrelated.md"],
+      stepMap: ownedMap,
+    });
+    const inScopeResults = runStatic({
+      dir: tmp,
+      self: SELF_NAME,
+      ciSet: new Set(),
+      classifyOptions: { preflight: { ok: true, missing: [], ciEquivalents: [] } },
+      changedFiles: ["apps/backend/src/x.ts"],
+      stepMap: ownedMap,
+    });
+    const outOfScope = outOfScopeResults.find((r) => r.name === "verify-owned-fixture.mjs");
+    const inScope = inScopeResults.find((r) => r.name === "verify-owned-fixture.mjs");
+    const scopingChecks = [
+      ["guardIsInScope: null changedFiles never scopes", guardIsInScope("x.mjs", { ownedPaths: ["apps/x"] }, null) === true],
+      ["guardIsInScope: alwaysRun always runs even with no overlap", guardIsInScope("x.mjs", { alwaysRun: true, ownedPaths: [] }, ["docs/unrelated.md"]) === true],
+      ["guardIsInScope: missing map entry fails safe to run (never invented as out-of-scope)", guardIsInScope("x.mjs", undefined, ["docs/unrelated.md"]) === true],
+      ["guardIsInScope: own filename in the diff always runs", guardIsInScope("verify-x.mjs", { ownedPaths: ["docs/y"] }, ["scripts/verify-x.mjs"]) === true],
+      ["guardIsInScope: no overlap, not alwaysRun, own file not changed → out of scope", guardIsInScope("verify-x.mjs", { ownedPaths: ["apps/a"] }, ["docs/unrelated.md"]) === false],
+      ["out-of-scope guard classified SKIP-scope, never spawned/FAIL", outOfScope?.kind === STATIC_RESULT_CATEGORIES.SKIP_SCOPE],
+      ["in-scope guard with matching diff actually runs and is classified", inScope?.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST],
+    ];
+    checks.push(...scopingChecks);
+
     let bad = 0;
     for (const [n, ok] of checks) { if (!ok) bad++; console.log(`${ok ? "ok  " : "FAIL"}  ${n}`); }
     if (bad) { console.error(`\n${LABEL} SELFTEST FAILED: ${bad}`); process.exit(1); }
@@ -384,13 +469,34 @@ function selftest() {
   }
 }
 
+/**
+ * GATE-LIVELOCK-01: resolve scoping from the environment. `IH35_GATE_DIFF_FILES` is a newline-
+ * separated changed-file list set ONLY by the local pre-push caller (static-sweep-proof.mjs) —
+ * unset here means "run everything", the exact pre-fix default, so a bare
+ * `node scripts/verify-static.mjs` (a human, CI, or any other caller) is never scoped by
+ * accident. `GATE_FULL=1` always wins and forces every guard regardless of the diff env.
+ */
+export function resolveChangedFilesFromEnv(env = process.env) {
+  if (env.GATE_FULL === "1" || env.GATE_FULL === "true") return null;
+  const raw = env.IH35_GATE_DIFF_FILES;
+  if (raw === undefined || raw === null) return null;
+  return raw.split("\n").map((s) => s.trim()).filter(Boolean);
+}
+
 const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === SELF_PATH;
 if (isDirectRun) {
   if (process.argv.includes("--selftest")) {
     selftest();
     process.exit(0);
   }
-  const results = runStatic();
+  const changedFiles = resolveChangedFilesFromEnv();
+  if (changedFiles !== null) {
+    console.log(
+      `[${LABEL}] SCOPED local pre-push run — ${changedFiles.length} changed file(s). ` +
+      `GATE_FULL=1 forces every guard; CI never scopes.`
+    );
+  }
+  const results = runStatic({ changedFiles });
   printSummary(results);
   const gatedFails = results.filter(
     (r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && r.gated
