@@ -3,9 +3,9 @@
 
 FAST-MERGE. Never POST. Never pile trigger_deploy.
 
-## HARD WAKE NOW (IDLE defect)
-OUTBOX still ends nav-dropdown-verify CLOSED / awaiting next. No ACK of
-Combobox Tab F5. Pull this INBOX. Same job. Execute THIS TURN.
+## HARD WAKE NOW (IDLE defect · re-wake +6m)
+Still no Combobox Tab F5 ACK after #20027. OUTBOX still ends nav-verify CLOSED.
+Pull this INBOX. Same job. Execute THIS TURN.
 
 ## NOW
 ```
