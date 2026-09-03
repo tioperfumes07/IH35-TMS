@@ -1,16 +1,17 @@
-# INBOX-CODEX · ALL AWAKE · 2026-09-02 21:04 CT
+# INBOX-CODEX · ALL AWAKE · 2026-09-03
 `git pull --ff-only origin main`
 
-FAST-MERGE. Never POST. Costs closed. Silent = defect.
+FAST-MERGE. Gate exit 0 → push → PR → merge → next. Never POST.
 
 ## NOW
 ```
-CODEX — WAVE 1 ROW 4. ALL AWAKE.
+CODEX — TAB COMPLETION A. ALL AWAKE.
 
-KPI drill-through is not your GO-23 row. Do not invent a queue.
+A3/B12 #19571 Chrome is CLOSED per your OUTBOX. Do not re-drive it as the queue.
 
-NEXT: A3/B12 — owner re-drive of the failed save; confirm #19571 names the exact stop and rule. Chrome proof.
-THEN: native-date + trapping-picker guards (Wave 7 C3/C4 only after A3/B12).
+NEXT: Load Costs twelve-hub BOTH WAYS — Cursor declared LOAD_COSTS_HUB_LINKAGE on the GET.
+Close the reverse walks (driver/unit/vendor/customer/JE/docs surfaces find the load-cost row).
+Explicit N/A already stated for maintenance.work_orders. Then Wave 7 date/picker guards.
 Never POST.
 ```
-ACK `CODEX | ACK | A3/B12 · NEVER POST | GO`
+ACK `CODEX | ACK | Load Costs reverse 1-12 · NEVER POST | GO`

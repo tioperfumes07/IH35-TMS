@@ -2,4 +2,4 @@
 FORCE NOW | READ INBOX-CURSOR | ALL AWAKE · IDLE=DEFECT | NEVER POST | GO
 ---
 Seat replies BELOW. Prior VOID.
-CURSOR | LOAD COSTS three doors | Finance tab+flyout + Dispatch Approximate panel + Expenses ▾ kept | same /accounting/load-costs | NEVER POST | GO
+CURSOR | CENSUS + HEADER SWEEP 10240 | CC-1 B8 (10236+10238 closed) · CC-2 Chrome nav/header · CC-3 row16 · Codex reverse hubs · Cascade row26 empty | NEVER POST | GO

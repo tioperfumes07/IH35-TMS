@@ -35,6 +35,7 @@ export type ParityDensity = "regular" | "compact" | "ultra";
 export type ParityColumn<T> = {
   key: keyof T | string;
   label: string;
+  /** Default true (owner 2026-09-03). Set false only when a column must not sort. */
   sortable?: boolean;
   render?: (row: T) => ReactNode;
   className?: string;
@@ -1157,11 +1158,15 @@ export function ParityTable<T>({
 
       <div className="overflow-x-auto">
       <table className="w-full table-fixed text-left" style={{ fontSize: d.font }}>
-        <thead className={stickyHeader ? "sticky top-0 z-10 bg-gray-50" : "bg-gray-50"}>
+        <thead
+          className={stickyHeader ? "sticky top-0 z-10" : ""}
+          style={{ backgroundColor: colors.tableHeaderBg, color: colors.tableHeaderText }}
+          data-table-header="locked"
+        >
           <tr style={{ height: DENSITY[density].rowH }}>
-            {renderExpanded ? <th className={`w-8 px-2 ${stickyHeader ? "bg-gray-50" : ""}`} /> : null}
+            {renderExpanded ? <th className="w-8 px-2" style={{ backgroundColor: colors.tableHeaderBg }} /> : null}
             {selectable ? (
-              <th className={`w-8 px-2 ${stickyHeader ? "bg-gray-50" : ""}`}>
+              <th className="w-8 px-2" style={{ backgroundColor: colors.tableHeaderBg }}>
                 {/* UI CONTROL LAW — same >=24x24 hit-target wrap as the row checkbox. */}
                 <span className={MIN_HIT_TARGET_CLASS}>
                   <input
@@ -1208,19 +1213,20 @@ export function ParityTable<T>({
                       : undefined
                   }
                   onDragEnd={enableColumnReorder ? () => { setDragKey(null); setDragOverKey(null); } : undefined}
-                  className={`relative px-2 font-semibold uppercase text-gray-600 ${stickyHeader ? "bg-gray-50" : ""} ${
+                  className={`relative px-2 font-semibold uppercase ${
                     enableColumnReorder ? "cursor-grab active:cursor-grabbing" : ""
                   } ${dragOverKey === key ? "outline outline-2 -outline-offset-2" : ""} ${column.className ?? ""}`}
                   style={{
                     fontSize: typography.panelHeader ?? 11,
+                    fontWeight: 700,
                     letterSpacing: 0.3,
+                    backgroundColor: dragOverKey === key ? colors.accentTint : colors.tableHeaderBg,
+                    color: colors.tableHeaderText,
                     ...(w ? { width: w } : {}),
-                    // §7 LOCKED palette (verify:section7-palette-maintenance) — drop-target highlight
-                    // must use the navy/slate accent tokens, never Tailwind's default blue-50/blue-300.
-                    ...(dragOverKey === key ? { backgroundColor: colors.accentTint, outlineColor: colors.navy } : {}),
+                    ...(dragOverKey === key ? { outlineColor: colors.navy } : {}),
                   }}
                 >
-                  {column.sortable ? (
+                  {column.sortable !== false ? (
                     <button
                       type="button"
                       // GLOBAL-SORT / Cascade 2026-08-31: hit target must be the full <th> cell
@@ -1263,7 +1269,7 @@ export function ParityTable<T>({
                 </th>
               );
             })}
-            {rowActions ? <th className={`w-10 px-2 ${stickyHeader ? "bg-gray-50" : ""}`} /> : null}
+            {rowActions ? <th className="w-10 px-2" style={{ backgroundColor: colors.tableHeaderBg }} /> : null}
           </tr>
         </thead>
         <tbody>

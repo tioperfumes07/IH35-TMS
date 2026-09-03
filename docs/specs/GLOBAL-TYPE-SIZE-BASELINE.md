@@ -4,7 +4,8 @@ Source: Claude + Jorge approved 2026-06-07
 ## Typography
 - Base body: 12px
 - H1: 22px / weight 600
-- Column/section headers: 11px / weight 700 / UPPERCASE / color #4B5563
+- Column/section headers (page subheads, not table thead): 11px / weight 700 / UPPERCASE / color #4B5563
+- Table header row (ParityTable thead): 11px / weight 700 / UPPERCASE / background #14314F / text #FFFFFF (owner 2026-09-03 — grey-on-near-white did not differentiate)
 - Text colors: primary #0F1219 | secondary #1F2A44 | muted #6B7280
 - Cell padding: ~7px
 
