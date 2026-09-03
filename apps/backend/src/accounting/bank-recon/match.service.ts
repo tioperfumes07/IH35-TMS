@@ -525,6 +525,10 @@ async function fetchLedgerCandidates(
       WHERE je.operating_company_id = $1::uuid
         AND je.entry_date BETWEEN ($2::date - make_interval(days => $3)) AND ($2::date + make_interval(days => $3))
         AND ($4::text IS NULL OR lower(COALESCE(je.memo, '')) LIKE $4)
+        -- BANK-F9998 F3 — a reversed JE (Rule 4 VOID=reversal) is no longer real economic activity;
+        -- it must not be offered as a match candidate. Every other of the 6 sources already excludes
+        -- its own void marker (voided_at/revoked_at); this was the one gap.
+        AND je.reversed_by_je_id IS NULL
       GROUP BY je.id, je.entry_date, je.memo
       LIMIT $5
     `,
