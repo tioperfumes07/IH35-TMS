@@ -7253,7 +7253,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1048,
+  "total_claimed": 1049,
   "10242": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-03",
@@ -7273,6 +7273,11 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-03",
     "purpose": "verify-load-costs-tab-manifest (PASTE-ALL-SEATS-2026-09-03 Packet B: element manifest guard for load detail Costs tab)"
+  },
+  "10247": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-dispatch-overview-units-kpi-full-drill (PASTE-ALL-SEATS-2026-09-03 Packet E: Dispatch Load-board KPI drill-through -- the Units available/Units needing return tiles' own panel must render every counted row, not a PANEL_ROW_LIMIT-sliced preview)"
   },
   "10248": {
     "claimed_by": "cursor",
