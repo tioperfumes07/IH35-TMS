@@ -126,3 +126,37 @@ current data -- did not force it, did not fabricate a driver, did not touch the 
 pass. If Cursor's override-wiring fix specifically needs an EXPIRED (not missing) qualification
 to test the 422 path, that test data does not exist yet in USMCA. | NEXT=awaiting next
 assignment | GO
+
+CC-2 | ACK | Override Chrome + Load Costs Chrome · NEVER POST | GO
+Triggered the Render IH35-TMS backend deploy for #20110 (per-blocker Owner Override on
+Edit-PATCH) -- nobody had yet; dep-dact5h8ae00c73degaqg went live at
+2026-09-03T20:07:33Z, commit 7dabcc3449 confirmed serving (healthz {"ok":true}).
+Load Costs Board + Costs tab: re-confirmed live, unchanged, still matching approved HTML
+(same as my prior two passes this session).
+13508 EDIT Override test -- IMPORTANT FINDING, reporting exactly what happened, not a
+fabricated PASS: assigned ANGEL ALFONSO SOSA (the driver I already knew lacks CDL/DOT-medical
+on file) as driver on load 13508 (Draft, previously unassigned), then clicked the wizard's
+own "Save changes". This did NOT show the expected cdl_missing/medical_card_missing 422 --
+instead it opened a full "BOOK + DISPATCH CHECKS" confirmation panel: "Driver was not found
+for this operating company" + an "Override repair block and continue assignment" checkbox
+(a DIFFERENT, maintenance/repair-block gate, not the driver-qualification one), plus an
+"ON SAVE -- BOOK + DISPATCH" action list (create load with assigned status, auto-create
+driver bill with short miles, queue QBO outbox invoice + bill, send driver dispatch message,
+prepare factoring packet). For THIS load (Draft status, first driver+unit assignment),
+"Save changes" is not a benign field PATCH -- it runs the same book+dispatch pipeline as
+booking a new load, with real side effects (driver bill, QBO invoice, dispatch message,
+factoring packet). I did not check the override box or click through -- clicked Cancel ->
+Discard immediately. Confirmed after: load 13508 still Draft, still Unassigned, nothing
+created.
+HONEST GAP: I could not reach or verify #20110's actual cdl_missing/medical_card_missing
+override path -- a DIFFERENT, higher-priority gate ("driver not found for this operating
+company") fired first in this checks panel, before the driver-qualification code path #20110
+touches would even run. That message itself looks like a possible separate defect (Angel WAS
+selectable from this company's own driver picker, so being reported "not found for this
+operating company" moments later is a real inconsistency worth someone tracing) or may be
+misattributed panel copy for a different failing gate -- flagging, not diagnosing (out of
+scope for this Chrome-only pass; did not touch source). Live=UNVERIFIED still stands for
+#20110's actual override path on this load; testing it further would require either a driver
+whose ONLY problem is the qualification gate (not also failing this operating-company gate),
+or someone tracing why Angel triggers "not found for this operating company" first.
+Nothing shipped -- verification only. | NEXT=awaiting next assignment | GO
