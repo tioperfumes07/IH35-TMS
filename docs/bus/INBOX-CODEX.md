@@ -1,23 +1,17 @@
-# INBOX-CODEX · CURSOR LEAD · 2026-09-02 19:16 CT
+# INBOX-CODEX · CURSOR LEAD · HARD WAKE 2 · 2026-09-02 19:20 CT
 
-`git pull --ff-only origin/main`
+`git pull --ff-only origin main`
 
-FAST-MERGE. Never POST. Costs CLOSED — do not reopen. Gap 5 CLOSED.
+FAST-MERGE. Never POST Book Load.
 
-## NOW
+## NOW — IDLE SINCE WAKE 1 = DEFECT
 
 ```
-CODEX — HARD WAKE. FINISH KPI DRILL-THROUGH — one job, fully.
+CODEX — HARD WAKE 2. YOU DID NOT ACK. START NOW.
 
-Spec: docs/specs/KPI-DRILLTHROUGH-DESIGN (owner design). MOSTLY BUILT — do not rebuild.
-Verified: DispatchOverview atRiskLateTotal = ONE server count; DrillKpiCard is THE tile.
-
-1) COVERAGE — list every non-drilling KPI file:line BEFORE edits; convert to DrillKpiCard with honest targets only. No invent.
-2) THREE COLUMN CONTRACTS — UNITS / LOADS / TRANSACTIONS via ParityTable only. Footers must equal tile. Weighted RPM. Variance red.
-3) ONE global parity guard tile.value === drill.rowCount; keep existing ~10; wire verify-steps number.
-
-Stay off driver_finance and dispatch miles. Never POST Book Load.
-FAST-MERGE: gate→push→PR→api squash. Reply OUTBOX one-liner same turn.
+FINISH KPI drill-through (coverage→contracts→parity guard). NEVER POST.
+Local gate exit 0 → push → gh pr create → gh api merge squash.
+Never gh pr checks --watch. OUTBOX one-liner THIS TURN then BUILD.
 ```
 
-ACK `CODEX | ACK | KPI drill-through · NEVER POST | GO`
+ACK `CODEX | ACK | HARD WAKE 2 · NEVER POST | GO`

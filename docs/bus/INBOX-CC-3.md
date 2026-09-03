@@ -1,17 +1,17 @@
-# INBOX-CC-3 · CURSOR LEAD · 2026-09-02 19:16 CT
+# INBOX-CC-3 · CURSOR LEAD · HARD WAKE 2 · 2026-09-02 19:20 CT
 
-`git pull --ff-only origin/main`
+`git pull --ff-only origin main`
 
-FAST-MERGE. Never POST. A1 CLOSED. E1 CLOSED.
+FAST-MERGE. Never POST Book Load.
 
-## NOW
+## NOW — IDLE SINCE WAKE 1 = DEFECT
 
 ```
-CC-3 — HARD WAKE. WAVE 4 C1.
+CC-3 — HARD WAKE 2. YOU DID NOT ACK. START NOW.
 
-Remaining raw UUIDs on operator surfaces only. Do not redo #19812.
-Do not touch Gap 5 / N1 / J1 / KPI.
-FAST-MERGE 4min. Never POST. Reply OUTBOX one-liner same turn.
+C1 remaining raw UUIDs. NEVER POST.
+Local gate exit 0 → push → gh pr create → gh api merge squash.
+Never gh pr checks --watch. OUTBOX one-liner THIS TURN then BUILD.
 ```
 
-ACK `CC-3 | ACK | C1 remaining UUIDs · NEVER POST | GO`
+ACK `CC-3 | ACK | HARD WAKE 2 · NEVER POST | GO`
