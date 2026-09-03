@@ -30,6 +30,23 @@ const TRAILER_ASSET_TYPES = new Set(["dry_van", "reefer", "flatbed"]);
  *   - mismatched = some active required coverage but still missing >= 1 required type.
  * coverage_gap_count = uncovered.length + mismatched.length (= units missing >= 1 required type).
  *
+ * SCOPE (GAP-COUNT-TRACTOR-ONLY-SCOPE, 2026-09-02): "fleet unit" here means `mdata.units` rows only —
+ * i.e. tractors (Samsara-ingested, the "authoritative fleet" per GUARD #40 / INS-COVERAGE, which fixed
+ * a real 2026-08 incident where this same query ran `FROM mdata.assets` and made tractors with no asset
+ * mirror row invisible). `verify-insurance-coverage-gap-units.mjs` fails the build if this query's base
+ * table ever moves off `mdata.units` again — that guard is protecting a real prior fix, not a mistake.
+ * `mdata.units` structurally CANNOT contain trailers (docs/CLAUDE.md §4/§5 schema landmines). Trailer
+ * insurance status lives on a SEPARATE, wider population — `mdata.assets` (tractor + dry_van/reefer/
+ * flatbed rows), read by `COVERAGE_GAP_UNITS_DETAIL_SQL`/`buildCoverageGapUnitDetails` below and by
+ * `FLEET_COVERED_SQL` (fleet-covered.shared.ts). Live-verified on prod (USMCA, 2026-09-02): `mdata.units`
+ * in scope = 16 rows / 5 gaps (reconciles exactly to this KPI); `mdata.assets` in scope (FLEET_COVERED_SQL's
+ * own WHERE) = 65 rows / 54 rows missing >= 1 required type. **These two counts are NOT the same
+ * population and are never expected to reconcile with each other** — only `coverage_gap_count` here vs.
+ * `uncovered_units.length + mismatched_units.length` (both drawn from THIS SAME query) are guaranteed
+ * equal. Do not "fix" this KPI by widening it to `mdata.assets` — that is the exact regression GUARD #40
+ * already caught once. If trailer coverage needs its own headline KPI, that is a new, separate metric to
+ * design (own label, own drill-down), not a redefinition of this one.
+ *
  * Read-only (SELECT) — no posting/GL, no writes.
  *
  * INSURANCE-DASHBOARD-FIXTURE-LEAK (2026-08-23): live-verified on prod — two agent-created fixture

@@ -109,6 +109,16 @@ export async function registerInsuranceSummaryRoutes(app: FastifyInstance) {
       // COVERAGE_GAP_UNITS_SQL + classifyCoverageGapUnits. (Previously the summary counted units with
       // no active policy via a separate SQL aggregate, while the detail per-unit fan-out 404'd on units
       // lacking an mdata.assets mirror and collapsed to 0 — the headline could not be drilled into.)
+      //
+      // GAP-COUNT-TRACTOR-ONLY-SCOPE (2026-09-02): this reconciliation is scoped to `coverage_gap_count`
+      // vs. the detail tab's own uncovered/mismatched rows ONLY — both come from `mdata.units` (tractors,
+      // GUARD #40-protected, see coverage-gap-units.shared.ts's top docstring). `fleet_total_units`/
+      // `fleet_covered_units` just below are a DIFFERENT, wider population (`mdata.assets`, tractors +
+      // trailers, via COVERAGE_GAP_UNITS_DETAIL_SQL) — live-verified NOT expected to net against
+      // `coverage_gap_count` (USMCA: 16 mdata.units / 5 gaps here, vs. 65 mdata.assets / 54 rows missing
+      // >= 1 required type in fleet_total_units/fleet_covered_units). Do not "fix" a future report that
+      // these two don't add up by widening coverage_gap_count's population — read the scope note above
+      // COVERAGE_GAP_UNITS_SQL first.
       const coverageGapRows = await client.query<CoverageGapUnitRow>(COVERAGE_GAP_UNITS_SQL, [
         tenantId,
         REQUIRED_COVERAGE_TYPES,
