@@ -536,7 +536,7 @@ function Field({ label, input, hint }: { label: string; input: JSX.Element; hint
     <div className="space-y-1">
       <label className="text-[11px] font-semibold text-gray-600">{label}</label>
       {input}
-      {hint ? <p className="text-[10px] text-gray-500">{hint}</p> : null}
+      {hint ? <p className="mt-1 text-xs text-gray-600">{hint}</p> : null}
     </div>
   );
 }
