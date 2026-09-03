@@ -104,14 +104,14 @@ export function AccountingSubNavWrapper({
           </div>
         </div>
         {/*
-          ACCT-CHROME-UNIFORM-01 — one toolbar scale (Button md = h-8 / text-[13px]):
+          ACCT-CHROME-UNIFORM-01 — one toolbar scale (Button md = h-8 / locked 12px body text, GO-21 J1):
           [non-create actions] · Go to vendors · ONE create control.
         */}
         <div className="flex flex-wrap items-center gap-2" data-accounting-toolbar="true">
           {actions}
           <Link
             to="/vendors"
-            className="inline-flex h-8 items-center rounded-sm border border-gray-300 bg-white px-3 text-[13px] font-medium text-[#0F1219] hover:bg-gray-50"
+            className="inline-flex h-8 items-center rounded-sm border border-gray-300 bg-white px-3 text-xs font-medium text-[#0F1219] hover:bg-gray-50"
           >
             Go to vendors
           </Link>
@@ -129,7 +129,7 @@ export function AccountingSubNavWrapper({
                       key={item.label}
                       to={item.to}
                       onClick={() => setCreateMenuOpen(false)}
-                      className="block border-b border-gray-100 px-3 py-2 text-[13px] text-gray-800 hover:bg-gray-50 last:border-b-0"
+                      className="block border-b border-gray-100 px-3 py-2 text-xs text-gray-800 hover:bg-gray-50 last:border-b-0"
                     >
                       {item.label}
                     </Link>

@@ -80,7 +80,7 @@ function bandClassName(band: BasicTile["risk_band"]) {
 }
 
 function Sparkline({ points }: { points: number[] }) {
-  if (points.length < 2) return <div className="h-8 text-[10px] text-slate-400">No trend yet</div>;
+  if (points.length < 2) return <div className="h-8 text-xs text-slate-400">No trend yet</div>;
   const min = Math.min(...points);
   const max = Math.max(...points);
   const span = max - min || 1;
@@ -244,7 +244,7 @@ export function CSAScorePage() {
                     </div>
                   </div>
                 </div>
-                <div className="mt-2 text-[10px] text-slate-500">
+                <div className="mt-2 text-xs text-slate-500">
                   {tile.availability === "requires_authenticated_carrier_sms"
                     ? "Unavailable from public sources · authenticated carrier SMS required"
                     : tile.availability === "not_available_from_public_source"
@@ -253,7 +253,7 @@ export function CSAScorePage() {
                 </div>
                 <div className="mt-2 rounded-sm bg-slate-50 p-1 text-slate-600">
                   {trendsQuery.isError ? (
-                    <div className="h-8 text-[10px] text-red-700">Trend unavailable — fetch failed</div>
+                    <div className="h-8 text-xs text-red-700">Trend unavailable — fetch failed</div>
                   ) : (
                     <Sparkline points={sparklinePoints} />
                   )}

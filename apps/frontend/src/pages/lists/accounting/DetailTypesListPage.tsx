@@ -76,7 +76,7 @@ export function DetailTypesListPage() {
       sortable: true,
       sortValue: (row) => (row.is_system ? "System (locked)" : "Custom"),
       render: (row) => (
-        <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${row.is_system ? "bg-slate-100 text-slate-600" : "bg-slate-200 text-slate-800"}`}>
+        <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${row.is_system ? "bg-slate-100 text-slate-600" : "bg-slate-200 text-slate-800"}`}>
           {row.is_system ? "System (locked)" : "Custom"}
         </span>
       ),
@@ -93,7 +93,7 @@ export function DetailTypesListPage() {
       sortable: true,
       sortValue: (row) => (row.is_active ? "Active" : "Inactive"),
       render: (row) => (
-        <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${row.is_active ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-600"}`}>
+        <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${row.is_active ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-600"}`}>
           {row.is_active ? "Active" : "Inactive"}
         </span>
       ),
@@ -260,7 +260,7 @@ function DetailTypeModal({
             <option value="">Select an account type…</option>
             {accountTypes.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </SelectCombobox>
-          {mode === "edit" ? <span className="mt-1 block text-[10px] font-normal text-slate-400">Account Type is fixed after create.</span> : null}
+          {mode === "edit" ? <span className="mt-1 block text-xs font-normal text-slate-400">Account Type is fixed after create.</span> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">

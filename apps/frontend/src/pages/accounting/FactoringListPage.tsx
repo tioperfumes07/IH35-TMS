@@ -33,7 +33,7 @@ function money(cents: number) {
 }
 
 function statusPill(status: FactoringAdvance["status"]) {
-  const base = "rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
+  const base = "rounded-sm px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide";
   if (status === "advanced") return `${base} bg-slate-100 text-slate-700 border border-slate-300`;
   if (status === "reserve_held" || status === "collected") return `${base} bg-slate-50 text-slate-600 border border-slate-200`;
   if (status === "released") return `${base} bg-slate-100 text-slate-700 border border-slate-200`;
@@ -152,7 +152,7 @@ export function FactoringListPage() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="FAC-2026-00012"
-          className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
+          className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-xs"
           aria-label="Search factoring advances"
         />
       }
@@ -172,7 +172,7 @@ export function FactoringListPage() {
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Status
-          <SelectCombobox value={staged.draft.status} onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as "all" | FactoringAdvance["status"] })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+          <SelectCombobox value={staged.draft.status} onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as "all" | FactoringAdvance["status"] })} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
             {STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
