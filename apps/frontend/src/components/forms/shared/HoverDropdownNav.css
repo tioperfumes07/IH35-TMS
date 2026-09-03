@@ -58,11 +58,15 @@
   gap: 0;
 }
 
+/* Positioning (position/top/left/min-width/z-index) is NOT set here. `.hover-dropdown-nav` sets
+   `overflow-x: auto`, which the CSS Overflow spec forces to also compute `overflow-y: auto` on the
+   SAME element -- a `position: absolute` menu here would be clipped by that ancestor box (confirmed
+   live via getComputedStyle/getBoundingClientRect, GO-23 nav-dropdown-clip finding). HoverDropdownNav.tsx
+   renders this element into a document.body portal instead and positions it inline via
+   `measureNavDropdownStyle()` (position: fixed, from a live getBoundingClientRect() read) -- the same
+   fix already proven in components/Combobox.tsx's measureListboxStyle(). Do not add position/z-index
+   here; it would be dead code at best and a stale conflicting value at worst. */
 .nav-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: var(--z-dropdown);
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-md);
@@ -71,7 +75,6 @@
   margin: 0;
   padding: var(--space-2) 0;
   width: max-content;
-  min-width: 100%;
 }
 
 .nav-dropdown li a {

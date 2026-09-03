@@ -1,5 +1,15 @@
 import { ChevronDown } from "lucide-react";
-import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import "./HoverDropdownNav.css";
 
@@ -29,6 +39,31 @@ function itemOrChildActive(item: NavItem, activeHref?: string): boolean {
   return item.children?.some((c) => c.href === activeHref) ?? false;
 }
 
+// GO-23 nav-dropdown-clip fix: `.hover-dropdown-nav { overflow-x: auto }` forces the CSS Overflow
+// spec's paired `overflow-y` to also compute `auto` on that same element -- a `position: absolute`
+// `.nav-dropdown` (whose containing block is `.nav-item-with-dropdown`, a descendant of that clipping
+// ancestor) renders correctly in the DOM (real links, visible/opacity/display all fine, confirmed live
+// via getComputedStyle) but is clipped off-screen because absolute positioning only escapes normal-flow
+// LAYOUT, never an ancestor's overflow clipping. Every consumer of HoverDropdownNav (openOn="click" AND
+// the default openOn="hover") shares this one CSS rule, so every dropdown group was equally affected --
+// one bug, not one per menu. Fixed the same way components/Combobox.tsx's measureListboxStyle() already
+// solves this class of problem: render the menu into a document.body portal, positioned with
+// `position: fixed` from a live getBoundingClientRect() read, so no ancestor's overflow or stacking
+// context can clip or bury it. Reuses the same z-index rationale (220 sits above every explicit
+// z-index found in the codebase, including the z-[200]/z-[210] slide-over drawer tier).
+const NAV_DROPDOWN_Z_INDEX = 220;
+
+function measureNavDropdownStyle(anchor: HTMLElement): CSSProperties {
+  const rect = anchor.getBoundingClientRect();
+  return {
+    position: "fixed",
+    top: rect.bottom,
+    left: rect.left,
+    minWidth: rect.width,
+    zIndex: NAV_DROPDOWN_Z_INDEX,
+  };
+}
+
 function DropdownColumn({
   item,
   activeHref,
@@ -40,6 +75,7 @@ function DropdownColumn({
 }) {
   const menuId = useId().replace(/:/g, "");
   const [open, setOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
   const isClick = openOn === "click";
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLUListElement>(null);
@@ -47,6 +83,26 @@ function DropdownColumn({
   const splitRef = useRef<HTMLDivElement>(null);
   const openViaKey = useRef(false);
   const hasDefaultHref = item.href != null && item.href.length > 0;
+
+  useLayoutEffect(() => {
+    if (!open || !splitRef.current) return;
+    setMenuStyle(measureNavDropdownStyle(splitRef.current));
+  }, [open, item.children?.length]);
+
+  useEffect(() => {
+    if (!open) return;
+    function reposition() {
+      if (!splitRef.current) return;
+      setMenuStyle(measureNavDropdownStyle(splitRef.current));
+    }
+    window.addEventListener("resize", reposition);
+    // Capture: `.hover-dropdown-nav` itself scrolls horizontally (overflow-x: auto) without bubbling.
+    document.addEventListener("scroll", reposition, true);
+    return () => {
+      window.removeEventListener("resize", reposition);
+      document.removeEventListener("scroll", reposition, true);
+    };
+  }, [open]);
 
   const clearHide = useCallback(() => {
     if (hideTimer.current != null) {
@@ -175,36 +231,40 @@ function DropdownColumn({
           {hasDefaultHref ? null : item.label}
           <ChevronDown size={12} aria-hidden />
         </button>
-        {open ? (
-          <ul
-            ref={menuRef}
-            id={menuId}
-            role="menu"
-            className="nav-dropdown"
-            data-testid={
-              item.label === "Bills"
-                ? "bills-dropdown-menu"
-                : item.label === "Expenses"
-                  ? "expenses-dropdown-menu"
-                  : undefined
-            }
-            onKeyDown={onMenuKeyDown}
-            tabIndex={-1}
-          >
-            {children.map((child) => (
-              <li key={child.href} role="none">
-                <Link
-                  role="menuitem"
-                  to={child.href}
-                  className={activeHref === child.href ? "active" : undefined}
-                  onClick={() => setOpen(false)}
-                >
-                  {child.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : null}
+        {open && typeof document !== "undefined"
+          ? createPortal(
+              <ul
+                ref={menuRef}
+                id={menuId}
+                role="menu"
+                className="nav-dropdown"
+                data-testid={
+                  item.label === "Bills"
+                    ? "bills-dropdown-menu"
+                    : item.label === "Expenses"
+                      ? "expenses-dropdown-menu"
+                      : undefined
+                }
+                style={menuStyle}
+                onKeyDown={onMenuKeyDown}
+                tabIndex={-1}
+              >
+                {children.map((child) => (
+                  <li key={child.href} role="none">
+                    <Link
+                      role="menuitem"
+                      to={child.href}
+                      className={activeHref === child.href ? "active" : undefined}
+                      onClick={() => setOpen(false)}
+                    >
+                      {child.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>,
+              document.body,
+            )
+          : null}
       </div>
     </li>
   );
