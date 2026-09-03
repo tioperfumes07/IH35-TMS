@@ -1,6 +1,7 @@
 import type { PoolClient } from "pg";
 import { qboCompanyContext, qboPaginateEntity } from "../integrations/qbo/qbo-client.js";
 import { withLuciaBypass } from "../auth/db.js";
+import { repairUtf8Mojibake } from "../lib/repair-utf8-mojibake.js";
 
 export type CustomersPullResult = {
   rowsPulled: number;
@@ -30,9 +31,9 @@ function qboPhone(row: Record<string, unknown>): string | null {
 
 function displayName(row: Record<string, unknown>): string {
   const display = row.DisplayName;
-  if (typeof display === "string" && display.trim()) return display.trim();
+  if (typeof display === "string" && display.trim()) return repairUtf8Mojibake(display.trim());
   const fqn = row.FullyQualifiedName;
-  if (typeof fqn === "string" && fqn.trim()) return fqn.trim();
+  if (typeof fqn === "string" && fqn.trim()) return repairUtf8Mojibake(fqn.trim());
   return String(row.Id ?? "");
 }
 

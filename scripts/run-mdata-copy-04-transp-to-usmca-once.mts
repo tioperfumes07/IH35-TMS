@@ -31,6 +31,7 @@
  *   DATABASE_URL=<pooled, neondb_owner> npx tsx scripts/run-mdata-copy-04-transp-to-usmca-once.mts --commit  # apply
  */
 import pg from "pg";
+import { repairUtf8Mojibake } from "../apps/backend/src/lib/repair-utf8-mojibake.js";
 
 const TRANSP = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -239,7 +240,7 @@ async function main() {
     await client.query("SELECT set_config('app.bypass_rls', 'lucia', true)");
     let customersCopied = 0;
     for (const id of survivorIds) {
-      const nameOverride = candidateNameById.get(id) ?? null;
+      const nameOverride = candidateNameById.get(id);
       const res = await client.query(
         `
           INSERT INTO mdata.customers (
@@ -258,7 +259,13 @@ async function main() {
             tax_exempt, tax_exempt_reason, is_sample_data, created_by_user_id, updated_by_user_id
           )
           SELECT
-            COALESCE($2::text, customer_name), billing_email, billing_phone, billing_address_line1, billing_address_line2,
+            COALESCE(
+              $2::text,
+              CASE
+                WHEN customer_name ~ 'Ã.|Â.' THEN convert_from(convert_to(customer_name, 'LATIN1'), 'UTF8')
+                ELSE customer_name
+              END
+            ), billing_email, billing_phone, billing_address_line1, billing_address_line2,
             billing_city, billing_state, billing_postal_code, billing_country, mc_number, dot_number,
             notes, $3::uuid, customer_type, default_billing_miles_basis,
             default_free_time_hours, default_detention_rate, status, website, office_phone, fax_phone,
@@ -274,7 +281,7 @@ async function main() {
           FROM mdata.customers WHERE id = $1::uuid
           RETURNING id
         `,
-        [id, nameOverride, USMCA, SOURCE_TAG, ACTOR_USER_UUID]
+        [id, nameOverride ? repairUtf8Mojibake(nameOverride) : null, USMCA, SOURCE_TAG, ACTOR_USER_UUID]
       );
       if (res.rows[0]) customersCopied++;
     }

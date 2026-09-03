@@ -4,6 +4,7 @@
 // are not a new TMS-native money event requiring its own JE. Not a production write endpoint.
 import pg from "pg";
 import { normalizeBankTransactionDescription } from "../banking/transaction-ingestion.js";
+import { repairUtf8Mojibake } from "../lib/repair-utf8-mojibake.js";
 
 // NEVER bulk-apply default classification tags (Late-pay, FMCSA: Not verified, Medium)
 // to real customer/vendor rows during seed import. Classifications require explicit
@@ -85,7 +86,7 @@ function assertHeaders(found: string[], expected: readonly string[], label: stri
 function nonempty(value: unknown): string {
   const text = typeof value === "string" ? value.trim() : "";
   if (!text) throw new Error("Required value missing");
-  return text;
+  return repairUtf8Mojibake(text);
 }
 
 function nullable(value: unknown): string | null {
