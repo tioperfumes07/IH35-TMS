@@ -27,6 +27,7 @@
 import { pointInPolygon, normalizeVertices } from "../../telematics/geofence.js";
 import { DISPATCH_ACTIVE_LOAD_STATUSES } from "../active-loads-count.js";
 import { getActiveSettlementForDriver, stampTripClosedForBookendedSettlement } from "../../driver-finance/settlements-load-bookended.service.js";
+import { closeCompanySettlementAlongsideDriverSettlement } from "../../accounting/company-settlement-close.service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 
 export type DbClient = {
@@ -205,6 +206,10 @@ export type TourCloseResult = {
   settlement_id: string | null;
   settlement_number: string | null;
   trip_closed_at: string | null;
+  // 25-TASK #4: the company settlement that closed alongside this driver settlement (null only
+  // when there was nothing to close — no open driver settlement in the first place).
+  company_settlement_id: string | null;
+  company_settlement_number: string | null;
 };
 
 /**
@@ -231,7 +236,14 @@ export async function closeTourForDriver(
       "info",
       "TOUR-CLOSE"
     );
-    return { closed: false, settlement_id: null, settlement_number: null, trip_closed_at: null };
+    return {
+      closed: false,
+      settlement_id: null,
+      settlement_number: null,
+      trip_closed_at: null,
+      company_settlement_id: null,
+      company_settlement_number: null,
+    };
   }
 
   const stamp = await stampTripClosedForBookendedSettlement(client, {
@@ -239,6 +251,21 @@ export async function closeTourForDriver(
     operatingCompanyId: input.operatingCompanyId,
     actorUserId: input.actorUserId,
   });
+
+  const closed = stamp.stamped ? true : stamp.reason === "already_closed";
+
+  // 25-TASK #4: "one close, two settlements" — same transaction as the driver settlement's own
+  // close above, so a failure here rolls back BOTH; the company settlement never closes without
+  // the driver settlement, and vice versa. Only when the driver settlement is actually closed.
+  let companySettlement: { company_settlement_id: string; display_id: string } | null = null;
+  if (closed) {
+    const result = await closeCompanySettlementAlongsideDriverSettlement(client, {
+      operatingCompanyId: input.operatingCompanyId,
+      driverSettlementId: active.settlementId,
+      actorUserId: input.actorUserId,
+    });
+    companySettlement = { company_settlement_id: result.company_settlement_id, display_id: result.display_id };
+  }
 
   await appendCrudAudit(
     client,
@@ -250,16 +277,18 @@ export async function closeTourForDriver(
       settlement_id: active.settlementId,
       unit_id: eligibility.unit_id,
       position_captured_at: eligibility.position_captured_at,
+      company_settlement_id: companySettlement?.company_settlement_id ?? null,
     },
     "info",
     "TOUR-CLOSE"
   );
 
-  const closed = stamp.stamped ? true : stamp.reason === "already_closed";
   return {
     closed,
     settlement_id: active.settlementId,
     settlement_number: active.settlementNumber,
     trip_closed_at: stamp.trip_closed_at ?? null,
+    company_settlement_id: companySettlement?.company_settlement_id ?? null,
+    company_settlement_number: companySettlement?.display_id ?? null,
   };
 }
