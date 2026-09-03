@@ -176,7 +176,7 @@ export function CustomerProfitabilityPage() {
               const label = meta?.label ?? formatCustomerProfitabilityFlagLabel(f);
               const className = meta?.className ?? "border-slate-200 bg-slate-50 text-slate-700";
               return (
-                <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${className}`} title={String(f)}>
+                <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-xs font-semibold ${className}`} title={String(f)}>
                   {label}
                 </span>
               );

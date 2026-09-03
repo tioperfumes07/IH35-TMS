@@ -403,7 +403,7 @@ export function ForensicReviewPage() {
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-gray-900">{anomaly.anomaly_type}</span>
-                  <span className={`rounded-sm px-2 py-0.5 text-[10px] ${severityClass(anomaly.severity)}`}>{anomaly.severity}</span>
+                  <span className={`rounded-sm px-2 py-0.5 text-xs ${severityClass(anomaly.severity)}`}>{anomaly.severity}</span>
                 </div>
                 <div className="mt-1 text-xs text-gray-600">{anomaly.qbo_txn_type ?? "txn"} | {(Number(anomaly.total_cents ?? 0) / 100).toFixed(2)} USD</div>
                 <div className="text-xs text-gray-500">Status: {anomaly.review_status ?? "pending"}</div>

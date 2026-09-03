@@ -58,7 +58,7 @@ function DriverTeamMemberCell({ row, slot }: { row: MdataDriverTeam; slot: "prim
 
 
 function statusPillClass() {
-  return "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700";
+  return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700";
 }
 
 const TEAM_COLUMNS: Array<ParityColumn<MdataDriverTeam>> = [

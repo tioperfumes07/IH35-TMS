@@ -44,7 +44,7 @@ export function RoadServiceActivePanel({ roadside, onOpen }: Props) {
                     ) : null}
                   </div>
                   {where ? <div className="truncate text-xs text-gray-500">{where}</div> : null}
-                  <div className="flex items-center justify-between gap-1 text-[9.5px] text-gray-400">
+                  <div className="flex items-center justify-between gap-1 text-xs text-gray-400">
                     <span>{wo.status}</span>
                     {eta ? <span>{eta}</span> : null}
                   </div>

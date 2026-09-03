@@ -170,7 +170,7 @@ export function ScheduledReportsPage() {
         label: "Status",
         sortable: true,
         render: (r) => (
-          <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold ${statusPill(r.status)}`}>
+          <span className={`rounded-sm border px-2 py-0.5 text-xs font-semibold ${statusPill(r.status)}`}>
             {scheduledStatusLabel(r.status)}
           </span>
         ),

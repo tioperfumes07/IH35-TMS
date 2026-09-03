@@ -74,7 +74,7 @@ export function DamageReportDetail({ damageUuid, operatingCompanyId }: Props) {
               }}
             >
               <div className="font-semibold text-slate-800">Evidence {index + 1}</div>
-              <div className="font-mono text-[10px] text-slate-500">hash {photo.sha256_hash.slice(0, 12)}…</div>
+              <div className="font-mono text-xs text-slate-500">hash {photo.sha256_hash.slice(0, 12)}…</div>
             </button>
           ))}
           {photos.length === 0 ? <p className="text-xs text-slate-500">No EXIF-verified photos attached.</p> : null}

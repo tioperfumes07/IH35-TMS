@@ -100,7 +100,7 @@ function KpiCard({
   }`;
   const inner = (
     <>
-      <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
       <div className="font-semibold">{value}</div>
     </>
   );

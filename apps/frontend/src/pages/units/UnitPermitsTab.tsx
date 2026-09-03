@@ -107,7 +107,7 @@ export function UnitPermitsTab({ unitId, companyId }: UnitPermitsTabProps) {
           <>
             <CertExpiryBadge label="Expiry" expiresAt={permit.expiration_date} />
             {alertByPermit.get(permit.uuid) === "critical" ? (
-              <span className="ml-1 text-[10px] font-semibold text-red-600">Critical</span>
+              <span className="ml-1 text-xs font-semibold text-red-600">Critical</span>
             ) : null}
           </>
         ),

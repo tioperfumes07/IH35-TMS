@@ -310,7 +310,7 @@ export function TireProgramPage() {
             <div className="mb-1 flex items-center justify-between gap-2">
               <span className="font-medium text-gray-900">{slot.label}</span>
               {slot.record?.is_low_tread ? (
-                <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-red-700">
+                <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[11px] font-semibold uppercase text-red-700">
                   Low tread
                 </span>
               ) : null}

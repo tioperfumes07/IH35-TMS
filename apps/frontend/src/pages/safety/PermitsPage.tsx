@@ -203,7 +203,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
       >
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <span className="text-xs font-semibold uppercase text-slate-700">Renewal alerts</span>
-          <span className="text-[10px] text-slate-700">
+          <span className="text-xs text-slate-700">
             Alert window: {String((reminder as { days_before_expiry?: number })?.days_before_expiry ?? 30)} days before expiry
           </span>
           <div className="ml-auto flex items-center gap-2">

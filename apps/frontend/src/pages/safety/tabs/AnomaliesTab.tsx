@@ -79,7 +79,7 @@ export function AnomaliesTab() {
         key: "severity",
         label: "Severity",
         sortable: true,
-        render: (row) => <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${severityBadgeClass(row.severity)}`}>{row.severity}</span>,
+        render: (row) => <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${severityBadgeClass(row.severity)}`}>{row.severity}</span>,
       },
       { key: "anomaly_type", label: "Type", sortable: true },
       {

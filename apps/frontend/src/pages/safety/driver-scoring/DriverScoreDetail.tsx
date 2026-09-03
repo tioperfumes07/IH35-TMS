@@ -41,7 +41,7 @@ function TrendChart({ periods }: { periods: DriverSafetyScoreRow[] }) {
       <svg viewBox="0 0 100 100" className="h-24 w-full rounded-sm border border-slate-100 bg-slate-50 p-2">
         <polyline points={coordinates} fill="none" stroke="currentColor" strokeWidth="4" className="text-slate-700" />
       </svg>
-      <div className="flex justify-between text-[10px] text-slate-500">
+      <div className="flex justify-between text-xs text-slate-500">
         <span>{periods[0]?.period_start ?? ""}</span>
         <span>{periods[periods.length - 1]?.period_end ?? ""}</span>
       </div>

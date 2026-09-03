@@ -525,7 +525,7 @@ export function ManagementReportPackagePage() {
               <div><span className="font-semibold text-slate-700">Basis</span><br />{applied.basis === "cash" ? "Cash" : "Accrual"}</div>
               <div><span className="font-semibold text-slate-700">Prepared</span><br />{preparedDate}</div>
             </div>
-            <p className="mt-4 text-[10px] text-slate-400 italic">
+            <p className="mt-4 text-xs text-slate-400 italic">
               Pre-import: amounts reflect TMS-posted entries only. Verified against QBO import post data-cutover.
             </p>
           </div>

@@ -197,7 +197,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
         <ul className="space-y-1">
           {card.issues.map((issue) => (
             <li key={issue.issue_id} className="flex flex-wrap items-center gap-2 text-xs">
-              <span className={`rounded-sm border px-1.5 py-0.5 text-[10px] ${severityChip(issue.severity)}`}>
+              <span className={`rounded-sm border px-1.5 py-0.5 text-xs ${severityChip(issue.severity)}`}>
                 {issue.severity}
               </span>
               <span className="font-medium text-gray-800">{issue.issue_type}</span>

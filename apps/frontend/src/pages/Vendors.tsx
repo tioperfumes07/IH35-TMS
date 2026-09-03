@@ -625,7 +625,7 @@ export function VendorsPage() {
                         />
                       </h2>
                       <p className="text-sm text-gray-500">{selectedVendor.vendor_code || "Vendor"} — {selectedVendor.vendor_type ?? "Type not set"}</p>
-                      <p className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${vendorQualityLabel(selectedVendor.notes).className}`}>
+                      <p className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${vendorQualityLabel(selectedVendor.notes).className}`}>
                         Vendor quality: {vendorQualityLabel(selectedVendor.notes).label}
                       </p>
                     </div>
