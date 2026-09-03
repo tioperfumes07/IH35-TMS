@@ -168,7 +168,7 @@ export function CSAMitigationQueuePage() {
       render: (row) => (
         <>
           {formatDateUS(row.due_date)}
-          <div className="text-[10px] text-slate-500">{row.days_until_due} days</div>
+          <div className="text-xs text-slate-500">{row.days_until_due} days</div>
         </>
       ),
     },

@@ -217,7 +217,7 @@ export default function Audit425cPage() {
         label: "Action",
         sortable: true,
         render: (row) => (
-          <span className="inline-block rounded-sm bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
+          <span className="inline-block rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-medium text-slate-700">
             {row.event_type}
           </span>
         ),

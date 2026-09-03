@@ -40,7 +40,7 @@ export function TripPlanSummaryBanner({ route }: Props) {
 function Cell({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
   return (
     <div>
-      <div className="text-[10px] uppercase text-gray-600">{label}</div>
+      <div className="text-[11px] uppercase text-gray-600">{label}</div>
       <div className={`text-gray-900 ${className}`}>{children}</div>
     </div>
   );

@@ -19,7 +19,7 @@ export function DomainFlyout({ rows, onCatalogClick, onViewAllInDomain, onCreate
             className="flex w-full items-center justify-between gap-4 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-slate-100"
           >
             <span className="text-slate-800">{row.display_name}</span>
-            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600">{row.row_count}</span>
+            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">{row.row_count}</span>
           </button>
         ))}
       </div>

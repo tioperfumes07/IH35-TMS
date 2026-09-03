@@ -125,7 +125,7 @@ export function DrugAlcoholProgramTab() {
         key: "result",
         label: "Result",
         render: () => (
-          <span className="rounded-sm bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
+          <span className="rounded-sm bg-red-50 px-1.5 py-0.5 text-xs font-medium text-red-700">
             positive
           </span>
         ),

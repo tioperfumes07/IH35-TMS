@@ -117,7 +117,7 @@ export function ReturnToDuty() {
                 </span>
                 <button
                   type="button"
-                  className="rounded-sm bg-slate-700 px-2 py-1 text-[10px] font-medium text-white disabled:opacity-50"
+                  className="rounded-sm bg-slate-700 px-2 py-1 text-xs font-medium text-white disabled:opacity-50"
                   disabled={reportMutation.isPending}
                   onClick={() =>
                     reportMutation.mutate({

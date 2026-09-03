@@ -160,7 +160,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
                 {flagged ? (
                   <Link
                     to="/425c?tab=form"
-                    className="rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white hover:underline"
+                    className="rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-[11px] font-semibold uppercase text-white hover:underline"
                   >
                     Save Exhibit on Form 425C
                   </Link>

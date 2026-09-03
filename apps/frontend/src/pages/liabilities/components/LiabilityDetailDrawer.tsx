@@ -79,7 +79,7 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
         <div className="mt-2 rounded-sm border border-gray-200 p-2">
           <div className="mb-1 font-semibold">Settlement History (reverse-link)</div>
           {liability.settlement_history_is_driver_level ? (
-            <div className="mb-1 text-[10px] text-gray-500">
+            <div className="mb-1 text-xs text-gray-500">
               Driver-level settlement deductions (exact per-liability attribution is a HOLD — see REMAINING in the
               PR).
             </div>

@@ -52,7 +52,7 @@ export function RelayHistoryImport({ operatingCompanyId }: { operatingCompanyId:
 
   return (
     <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-[11px]">
-      <div className="text-[10px] uppercase text-gray-500">Import Relay history</div>
+      <div className="text-[11px] uppercase text-gray-500">Import Relay history</div>
       <div className="mt-1 flex items-center gap-2">
         <label className="text-gray-600">
           Months

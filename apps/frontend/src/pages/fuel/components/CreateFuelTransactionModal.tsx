@@ -405,7 +405,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
             id="fuel-source-doc"
             type="file"
             data-testid="fuel-create-source-doc-input"
-            className="rounded-sm border border-gray-300 px-2 py-1 text-[13px]"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
             onChange={(event) => setSourceDocFile(event.target.files?.[0] ?? null)}
           />
           {sourceDocFile ? (

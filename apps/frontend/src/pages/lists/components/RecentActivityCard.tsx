@@ -37,7 +37,7 @@ export function RecentActivityCard({ rows }: Props) {
             </div>
             <div className="mt-1 flex items-center justify-between">
               <span className="text-slate-500">{row.user_display_name}</span>
-              <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${statusClass(row.qbo_sync_status)}`}>{row.qbo_sync_status}</span>
+              <span className={`rounded-sm px-1.5 py-0.5 text-xs font-semibold ${statusClass(row.qbo_sync_status)}`}>{row.qbo_sync_status}</span>
             </div>
           </div>
         ))}

@@ -83,7 +83,7 @@ export function UnitTollTagsTab({ unitId, companyId }: UnitTollTagsTabProps) {
               {formatMoney(row.balance_current)}
             </span>
             {lowBalanceIds.has(row.uuid) ? (
-              <span className="ml-1 rounded-sm bg-amber-100 px-1 py-0.5 text-[10px] font-semibold text-amber-800">
+              <span className="ml-1 rounded-sm bg-amber-100 px-1 py-0.5 text-xs font-semibold text-amber-800">
                 Low
               </span>
             ) : null}

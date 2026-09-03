@@ -33,7 +33,7 @@ const SEVERITY_ORDER = ["critical", "high", "medium", "low"] as const;
 
 function SeverityChips({ bySeverity }: { bySeverity: Record<string, number> }) {
   const entries = SEVERITY_ORDER.filter((s) => (bySeverity[s] ?? 0) > 0).map((s) => ({ severity: s, count: bySeverity[s] ?? 0 }));
-  if (entries.length === 0) return <span className="text-[13px] text-gray-400">None open</span>;
+  if (entries.length === 0) return <span className="text-xs text-gray-400">None open</span>;
   return (
     <div className="mt-1 flex flex-wrap gap-1">
       {entries.map(({ severity, count }) => (

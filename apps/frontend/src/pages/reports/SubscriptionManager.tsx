@@ -312,7 +312,7 @@ export function SubscriptionManager() {
               header: "Status",
               render: (row) => (
                 <span
-                  className={`rounded border px-2 py-0.5 text-[10px] font-semibold ${
+                  className={`rounded border px-2 py-0.5 text-xs font-semibold ${
                     row.is_active
                       ? "border-slate-200 bg-slate-100 text-slate-900"
                       : "border-gray-200 bg-gray-100 text-gray-700"

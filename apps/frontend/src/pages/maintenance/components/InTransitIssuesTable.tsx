@@ -67,7 +67,7 @@ export function InTransitIssuesTable({ issues, totalCount, loading = false, onTr
       label: "Severity",
       sortable: true,
       render: (issue) => (
-        <span className={`rounded-sm border px-1.5 py-0.5 text-[10px] ${severityChip(issue.severity)}`}>{issue.severity}</span>
+        <span className={`rounded-sm border px-1.5 py-0.5 text-xs ${severityChip(issue.severity)}`}>{issue.severity}</span>
       ),
     },
     { key: "gps_label", label: "Location", render: (issue) => issue.gps_label ?? "—" },

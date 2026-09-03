@@ -322,7 +322,7 @@ export function WorkOrdersConsoleDetailPage() {
       <div className="grid gap-3 md:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Details</div>
-          <div className="mt-2 grid grid-cols-2 gap-2 text-[13px]">
+          <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
             <div className="text-slate-500">Status</div>
             <div>{String(wo?.status ?? "—")}</div>
             <div className="text-slate-500">Billing type</div>

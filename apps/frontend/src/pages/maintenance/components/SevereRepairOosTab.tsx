@@ -216,7 +216,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       label: "Severity",
       sortable: true,
       render: (row) => (
-        <span className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${severityBadgeClass(row.damage_severity)}`}>
+        <span className={`rounded-sm border px-1.5 py-0.5 text-xs font-semibold ${severityBadgeClass(row.damage_severity)}`}>
           {row.damage_severity}
         </span>
       ),

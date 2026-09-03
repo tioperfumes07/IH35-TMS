@@ -469,7 +469,7 @@ export function DrugAlcoholTab() {
                   return (
                     <span
                       key={stage}
-                      className={`rounded px-2 py-0.5 text-[10px] uppercase tracking-wide ${
+                      className={`rounded px-2 py-0.5 text-[11px] uppercase tracking-wide ${
                         active ? "bg-slate-100 text-slate-700" : completed ? "bg-slate-50 text-slate-700" : "bg-gray-100 text-gray-600"
                       }`}
                     >

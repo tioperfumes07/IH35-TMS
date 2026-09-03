@@ -20,7 +20,7 @@ export function DomainTab({ label, count, loading = false, unavailable = false, 
       }`}
     >
       {label}{" "}
-      <span className="ml-1 rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px]">{loading ? "…" : unavailable ? "—" : count}</span>
+      <span className="ml-1 rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs">{loading ? "…" : unavailable ? "—" : count}</span>
     </button>
   );
 }

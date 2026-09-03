@@ -169,7 +169,7 @@ export function CurrentPeriodTab({
                 <span className="flex items-center gap-2">
                   {q.text}
                   {flagged ? (
-                    <span className="rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white">
+                    <span className="rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-[11px] font-semibold uppercase text-white">
                       Exhibit {letter} required
                     </span>
                   ) : null}

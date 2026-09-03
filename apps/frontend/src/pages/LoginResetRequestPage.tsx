@@ -39,7 +39,7 @@ export function LoginResetRequestPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F7F8FA] p-4">
       <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-6 shadow-xs">
-        <h1 style={{ fontFamily: typography.fontSerif }} className="text-[20px] font-semibold text-gray-900">
+        <h1 style={{ fontFamily: typography.fontSerif }} className="text-[22px] font-semibold text-gray-900">
           Reset password
         </h1>
         <p className="mt-2 text-sm text-gray-700">We will email you a link to choose a new password.</p>

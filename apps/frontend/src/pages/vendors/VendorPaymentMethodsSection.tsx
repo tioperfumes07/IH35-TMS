@@ -204,7 +204,7 @@ export function VendorPaymentMethodsSection({ operatingCompanyId, vendorId, canW
                 {method.bank_name ? <span className="text-gray-600">{method.bank_name}</span> : null}
                 {method.account_mask ? <span className="text-gray-500">••{method.account_mask}</span> : null}
                 {method.is_primary ? (
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
                     Primary
                   </span>
                 ) : null}

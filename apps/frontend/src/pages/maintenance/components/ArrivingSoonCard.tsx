@@ -22,7 +22,7 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
           <EntityLinkOrTombstone kind="driver" id={card.driver_id} name={card.driver_name} noun="Driver" /> ·{" "}
           <EntityLinkOrTombstone kind="load" id={card.load_id} name={card.load_display_id} noun="Load" />
         </div>
-        <span className={`rounded-full px-2 py-0.5 text-[10px] ${card.severe_count > 0 ? "bg-red-100 text-red-700" : card.warning_count > 0 ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-700"}`}>
+        <span className={`rounded-full px-2 py-0.5 text-xs ${card.severe_count > 0 ? "bg-red-100 text-red-700" : card.warning_count > 0 ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-700"}`}>
           {card.severe_count > 0 ? "SEVERE" : card.warning_count > 0 ? "WARNING" : "INFO"}
         </span>
       </div>

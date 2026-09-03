@@ -93,7 +93,7 @@ export function FuelGlMappingCoverage({ companyId }: { companyId: string }) {
                   className={`inline-block h-[7px] w-[7px] rounded-full ${c.mapped ? "bg-slate-400" : "bg-slate-700"}`}
                 />
                 {c.label}
-                <span className="text-[10px] font-normal">{c.mapped ? "mapped" : "unmapped"}</span>
+                <span className="text-xs font-normal">{c.mapped ? "mapped" : "unmapped"}</span>
               </span>
             ))}
           </div>
