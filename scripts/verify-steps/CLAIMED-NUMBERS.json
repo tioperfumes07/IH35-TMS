@@ -7258,5 +7258,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-03",
     "purpose": "verify-driver-pay-rate-override-reason-wired (GO-21 B5: driver_pay_rate_override_reason must stay wired end-to-end from CREATE schema through the INSERT/in-memory patch to the frontend send, or a typed per-load override rate is silently discarded again)"
+  },
+  "10243": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-book-load-money-and-controls (CC-2-INSTRUCTIONS-09-02-2026.txt tasks 1-5: negative accessorial reaches charge lines uncapped, linehaul/fuel surcharge still clamp but raise a field error instead of silently zeroing, Invoice total binds to customerInvoiceTotal not sectionTotal alone; tasks 19-20: MoneyInput/NumberInput are h-7 with tabular-nums)"
   }
 }
