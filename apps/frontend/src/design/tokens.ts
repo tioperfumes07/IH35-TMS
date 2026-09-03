@@ -22,11 +22,12 @@ export const colors = {
   bodyText: "#1F2937",
   mutedText: "#6B7280",
   tinyLabel: "#9CA3AF",
-  // GLOBAL-TYPE-SIZE-BASELINE.md (owner-locked 2026-06-07): column/section headers are
-  // 11px/700/UPPERCASE/#4B5563 specifically — a distinct role from the generic mutedText
-  // (#6B7280) above, which several existing header treatments (e.g. DataPanel) were using
-  // instead. Transcribed verbatim from the locked doc, not invented.
+  // GLOBAL-TYPE-SIZE-BASELINE.md: section labels stay 11px/700/UPPERCASE/#4B5563.
+  // Owner 2026-09-03: TABLE header rows use navy fill + white type so they differentiate
+  // from the white card. Type scale unchanged. Do not use this pair on buttons/chips/tabs.
   columnHeader: "#4B5563",
+  tableHeaderBg: "#14314F",
+  tableHeaderText: "#FFFFFF",
   safety: { strong: "#DC2626", soft: "#FEE2E2" },
   maintenance: { strong: "#6B7280", soft: "#F3F4F6" },
   dispatch: { strong: "#2563EB", soft: "#DBEAFE" },

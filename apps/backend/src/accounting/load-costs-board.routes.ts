@@ -3,6 +3,22 @@ import fp from "fastify-plugin";
 import { countUncategorizedTransactions } from "../banking/pending-categorization.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 
+/** TAB-COMPLETION-STANDARD A — twelve hubs, both-way or explicit N/A. Silence is a defect. */
+export const LOAD_COSTS_HUB_LINKAGE = {
+  1: { hub: "org.companies", via: "operating_company_id on loads, expenses, bills, driver_bills", reverse: "company-scoped lists" },
+  2: { hub: "identity.users", via: "created_by / actor on expense and bill rows when present", reverse: "user activity / audit" },
+  3: { hub: "mdata.drivers", via: "load.assigned_primary_driver_id; expense.driver_uuid; bill.driver_id", reverse: "driver profile costs / bills" },
+  4: { hub: "mdata.units", via: "load.assigned_unit_id", reverse: "unit profile loads" },
+  5: { hub: "mdata.loads", via: "load_id on expenses, bill_lines, driver_bills — the board key", reverse: "this board and load Costs tab" },
+  6: { hub: "catalogs.accounts", via: "expense and bill line GL account when coded", reverse: "GL / account register" },
+  7: { hub: "mdata.customers", via: "load.customer_id", reverse: "customer loads" },
+  8: { hub: "maintenance.work_orders", na: "A load cost is an expense or vendor bill, not a shop work order. When a shop bill is load-coded, the bill still carries load_id; the WO surface finds it through the bill, not this aggregate." },
+  9: { hub: "mdata.vendors", via: "expense.vendor_id and bills.vendor_id", reverse: "vendor bills / expenses" },
+  10: { hub: "accounting.journal_entries", via: "posting on the expense or bill, never a parallel ledger", reverse: "JE source links" },
+  11: { hub: "docs.files", via: "receipts / attachments on the expense or bill", reverse: "Docs module by source id" },
+  12: { hub: "mdata.equipment", via: "load.trailer_id when a trailer is assigned", reverse: "equipment / trailer loads" },
+} as const;
+
 export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
   app.get("/api/v1/accounting/load-costs-board", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -59,7 +75,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
         [parsed.data.operating_company_id]
       );
       const unmatchedBank = await countUncategorizedTransactions(client, parsed.data.operating_company_id);
-      return { rows: result.rows, unmatched_bank_count: unmatchedBank };
+      return { rows: result.rows, unmatched_bank_count: unmatchedBank, linkage: LOAD_COSTS_HUB_LINKAGE };
     });
   });
 }

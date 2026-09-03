@@ -324,8 +324,9 @@ export function LoadCostsBoardPage() {
             </div>
           </div>
 
-          <div className="hidden grid-cols-[150px_1fr_96px_96px_96px_104px_34px] gap-2.5 border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-2 md:grid">
+          <div className="hidden grid-cols-[150px_88px_1fr_96px_96px_96px_104px_34px] gap-2.5 border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-2 md:grid">
             {headerBtn("load", "Load")}
+            <div className="text-center font-bold uppercase tracking-wide text-[#4B5563]" style={{ fontSize: 11 }}>Incurred</div>
             <div className="text-center font-bold uppercase tracking-wide text-[#4B5563]"
       style={{ fontSize: 11 }}>Route and crew</div>
             {headerBtn("revenue", "Revenue")}
@@ -346,7 +347,7 @@ export function LoadCostsBoardPage() {
                 <button
                   type="button"
                   onClick={() => setOpenId(open ? null : row.load.id)}
-                  className={`grid w-full grid-cols-1 items-center gap-2 border-b border-[#E5E7EB] px-4 py-2.5 text-left text-xs md:grid-cols-[150px_1fr_96px_96px_96px_104px_34px] ${open ? "bg-[#F0FDF4]" : "bg-white"}`}
+                  className={`grid w-full grid-cols-1 items-center gap-2 border-b border-[#E5E7EB] px-4 py-2.5 text-left text-xs md:grid-cols-[150px_88px_1fr_96px_96px_96px_104px_34px] ${open ? "bg-[#F0FDF4]" : "bg-white"}`}
                 >
                   <div>
                     <Link className="font-semibold text-slate-700 underline" to={`/dispatch/loads/${encodeURIComponent(row.load.id)}?tab=Costs`} onClick={(event) => event.stopPropagation()}>
@@ -354,6 +355,7 @@ export function LoadCostsBoardPage() {
                     </Link>
                     <div className="mt-0.5 font-bold uppercase text-[#4B5563]" style={{ fontSize: 11 }}>{statusLabel(row.load.status)}</div>
                   </div>
+                  <div className="text-center tabular-nums text-[#0F1219]">{formatDateUS(row.load.created_at)}</div>
                   <div>
                     <div>{lane(row.load)}</div>
                     <div className="text-xs text-[#6B7280]">
