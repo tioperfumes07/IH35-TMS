@@ -76,7 +76,7 @@ const oosColumns: ParityColumn<OosUnitRow>[] = [
     sortable: true,
     sortValue: (row) => row.statusLabel,
     render: (row) => (
-      <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
+      <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">
         {row.statusLabel}
       </span>
     ),
@@ -209,7 +209,7 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
           claim happens to hold; it stops holding the moment the fleet outgrows the cap, and nothing
           would have surfaced that. The label now states what is actually known.
         */}
-        <span className="text-[10px] text-slate-700">
+        <span className="text-xs text-slate-700">
           {unitsCap.truncated ? capNotice(unitsCap, "units") : "Pinned — full fleet visibility"}
         </span>
       </div>

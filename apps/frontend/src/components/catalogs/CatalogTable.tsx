@@ -20,8 +20,8 @@ type Props = {
 
 function statusPillClass(isActive: boolean) {
   return isActive
-    ? "rounded-sm bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700"
-    : "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
+    ? "rounded-sm bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700"
+    : "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600";
 }
 
 function renderCell(row: CatalogRow, key: string) {

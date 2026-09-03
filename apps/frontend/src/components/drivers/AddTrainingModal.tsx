@@ -194,7 +194,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
             <input
               value={customName}
               onChange={(event) => setCustomName(event.target.value)}
-              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-xs"
               data-testid="add-training-custom-name"
               required
               autoFocus
@@ -227,7 +227,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
           <textarea
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+            className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
             rows={3}
             maxLength={2000}
             data-testid="add-training-notes"
