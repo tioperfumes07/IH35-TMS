@@ -51,3 +51,4 @@ CC-3 | ACK | Fleet OOS columns then interchange≠fleet | GO -- BOTH shipped thi
 
 CC-3 | GO-23 C1 raw UUIDs, DISP-F9997/9998 follow-ups shipped: BANK-F9996 (#20105) + DISP-F9999B per-blocker Override on Edit Load (#20110) | GO
 CC-3 | STOP | wait Jorge · one job one seat | GO
+CC-3 | ACK | safety CDL intake · NEVER POST | GO -- gated AFTER CURSOR's ownership lock (CODEOWNERS + guard). Holding until that lands; mode for this round is FIND IT, FILE IT, DO NOT FIX IT -- will file the CDL/med-card intake, duplicate-report, and RLS-aggregate-verdict findings to GUARD-WORKORDERS.md, not patch code.
