@@ -198,9 +198,11 @@ export function CoverageGapDashboard() {
   return (
     <div className="space-y-4">
       <header className="rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Coverage Gap Dashboard</h2>
+        <h2 className="text-sm font-semibold text-slate-900">Tractor Coverage Gap Dashboard</h2>
         <p className="mt-1 text-xs text-slate-600">
-          One column per coverage type from the catalog. Gap count {coverageGapsQuery.data?.coverage_gap_count ?? gapRows.length} must equal units with at least one Missing.
+          Scoped to tractors (fleet units with a Samsara-tracked unit record) — trailers are tracked
+          separately on Fleet Covered. One column per coverage type from the catalog. Gap count{" "}
+          {coverageGapsQuery.data?.coverage_gap_count ?? gapRows.length} must equal units with at least one Missing.
         </p>
         <CollapsedListFilters
           activeFilterCount={unitPickerId ? 1 : 0}

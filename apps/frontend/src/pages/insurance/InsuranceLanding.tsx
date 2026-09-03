@@ -90,7 +90,7 @@ export function InsuranceLanding() {
         <Card label="Total active policies" value={n("total_active_policies")} to="/safety/insurance/policies" />
         <Card label="Policies expiring in 30 days" value={n("policies_expiring_30d")} to="/safety/insurance/policies" />
         <Card
-          label="Coverage gap count"
+          label="Tractor coverage gap count"
           value={n("coverage_gap_count")}
           alert
           actionLabel="View gap list"
