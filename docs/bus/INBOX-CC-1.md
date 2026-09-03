@@ -7,16 +7,14 @@ FAST-MERGE. Never POST. USMCA only. TRANSP/TRK frozen.
 ```
 CC-1 — WAVE 2. ALL AWAKE. IDLE = DEFECT.
 
-B8 is CLOSED on main (#19976). Do not rebuild Comchek.
+B8 is CLOSED (#19976). B5 is CLOSED (#20018/#20023/#20024). Do not rebuild
+Comchek or driver-pay override reason.
 
-NEXT: B5 driver pay rate from the driver profile — FULL VERTICAL
-(table/rule/endpoint/screen/guard/Chrome). Same complete bar as B8.
+NEXT: C6 — money INSERT without a balanced journal entry (221 hits, HIGH).
+FULL VERTICAL. Guard spec already written — build it, do not rewrite the
+spec. Same complete bar as B8.
 
-IN PARALLEL if B5 is waiting on a review: bank categorization who-column
-`banking.bank_transactions.categorized_by_user_id` — claim 202613550001 is
-on main. Spec docs/specs/BANK-CATEGORIZATION-WHO-SPEC-2026-09-03.md.
-CC-3 wires the three UPDATEs after the column exists live.
-
-Never POST Book Load. Do not steal CC-2 #19973 or Cursor Book Load money.
+Never POST Book Load. Do not steal CC-2 Combobox Tab or CC-3 Factor
+Reconciliation date.
 ```
-ACK `CC-1 | ACK | B5 driver pay rate · NEVER POST | GO`
+ACK `CC-1 | ACK | C6 balanced JE on money INSERT · NEVER POST | GO`
