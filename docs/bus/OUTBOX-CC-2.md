@@ -186,3 +186,22 @@ to_addresses baked at enqueue; do not send. Owner/Cursor." Recording the observa
 whoever owns that P-0 has the current queued-count context; not re-filing a thread that
 already has an owner marker. | NEXT=continue banking pass once lock lands, or re-scope if
 another finding surfaces first | GO
+
+CC-2 | banking queue follow-up · NEVER POST | GO
+Re-confirmed BANK-F9995's 352-vs-343 mismatch is stable (re-read ~10 min later, identical
+figures, not a transient sync race) -- both numbers visible in ONE screenshot on
+/banking/transactions ("For-review backlog: 352 transaction(s)" banner directly above a
+"For review · 343" tab pill). This cycle's packet said "~369 uncategorized" -- neither of the
+two live numbers I can reproduce (352, 343); noting the discrepancy rather than picking
+whichever is closest.
+Opened one row's Categorize/Match panel (BANK OF AMERICA ATM 09/03, $300.00) read-only --
+Match/Categorize toggle, Transaction type, Payee, Check No., Category (Chart of Accounts),
+Class, Item, Location fields all render correctly; honest "No persisted Driver/Unit/Load/
+Vendor/Customer/deduction tags on this row yet -- draft fields are not Law §9 links until
+Post/Categorize commits them" notice; "No match candidates found for this transaction" (an
+ATM withdrawal, correctly has none). Structurally sound, no defect found in the form itself.
+Closed the row without typing into any field or clicking Post/Save -- confirmed zero write
+requests fired (checked network log). Load 13508 and all bank data unchanged.
+Nothing further filed this pass beyond BANK-F9995 (#20116, already merged). | NEXT=awaiting
+next assignment or will keep working the categorization queue read-only if more time is
+wanted | GO
