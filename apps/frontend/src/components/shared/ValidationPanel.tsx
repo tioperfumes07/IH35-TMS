@@ -62,6 +62,10 @@ const SEVERITY_STYLES: Record<ValidationSeverity, { bg: string; border: string; 
   },
 };
 
+function ruleCodeLabel(item: ValidationItem): string {
+  return `${item.rule_id}`;
+}
+
 function subjectFromItem(item: ValidationItem): string {
   const ev = item.evidence ?? {};
   if (typeof ev.driver_name === "string" && ev.driver_name.trim()) return ev.driver_name;
@@ -202,7 +206,7 @@ export function ValidationPanel({
                 const reason = rowReasons[item.rule_id] ?? "";
                 return (
                   <tr key={item.rule_id} className="h-[30px] border-b border-gray-200 even:bg-slate-50">
-                    <td className="border-r border-gray-200 px-2 font-mono">{item.rule_id}</td>
+                    <td className="border-r border-gray-200 px-2 font-mono">{ruleCodeLabel(item)}</td>
                     <td className="border-r border-gray-200 px-2">{subjectFromItem(item)}</td>
                     <td className="border-r border-gray-200 px-2">{missingFromItem(item)}</td>
                     <td className="px-2 py-1">
