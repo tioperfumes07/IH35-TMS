@@ -160,3 +160,29 @@ scope for this Chrome-only pass; did not touch source). Live=UNVERIFIED still st
 whose ONLY problem is the qualification gate (not also failing this operating-company gate),
 or someone tracing why Angel triggers "not found for this operating company" first.
 Nothing shipped -- verification only. | NEXT=awaiting next assignment | GO
+
+CC-2 | ACK | banking queue · NEVER POST | GO
+Waiting on the ownership lock (CODEOWNERS + guard) -- not landed yet as of this write; kept
+audit-only this cycle per "FIND IT, FILE IT, DO NOT FIX IT" (no code touched, nothing waits
+on the lock for this mode). Live USMCA banking categorization queue walked read-only, zero
+categorize/post clicks (BANK_FEED_GL_POSTING_ENABLED is ON for this company -- confirmed --
+so a real click posts a real JE; none taken, no fixtures).
+FILED: BANK-F9995 (#20116, merged) -- /banking's headline UNCATEGORIZED KPI reads 352
+(sourced from a "QBO Sync: Not connected" banner) but the per-account breakdown on the same
+screen sums to 343; /banking/transactions independently confirms 343 via its own tab count
+while carrying the same stale 352 in its own top banner. Filed, not fixed, per this cycle's
+mode.
+"22 pending" from the packet: could not locate a distinct live figure matching that label
+anywhere in Banking Home / Transactions / Reconciliation / Plaid Connections -- Reconciliation
+shows 0/0 sessions, no separate "pending" count surfaced. Not claiming it doesn't exist
+elsewhere; just didn't find it in this pass's surface area.
+Noted, NOT filed as new (already tracked elsewhere, has its own P-0 owner annotation):
+/banking/email-queue shows dozens of report-cadence/invoice-send jobs stuck status=queued
+from ~Aug 24 onward (Daily Dispatch Board, Weekly Profit per Truck, Cash Position + AR Aging,
+several real invoices) vs status=sent for everything Aug 20 and earlier -- consistent with
+EMAIL_CRON being intentionally paused, per the existing annotation on two cancelled invoice
+rows: "P-0 2026-08-31: parked before EMAIL_CRON -- TEST invoice queued to real broker AP;
+to_addresses baked at enqueue; do not send. Owner/Cursor." Recording the observation here so
+whoever owns that P-0 has the current queued-count context; not re-filing a thread that
+already has an owner marker. | NEXT=continue banking pass once lock lands, or re-scope if
+another finding surfaces first | GO
