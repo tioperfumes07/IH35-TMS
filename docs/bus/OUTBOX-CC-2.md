@@ -108,3 +108,21 @@ works; this may be Angel's test data having no CDL/medical issue rather than a m
 feature. Flagging for whoever owns that wiring (Cursor, per the broadcast) to verify with a
 driver that actually has an expired/missing CDL or medical card.
 No FE defect found in my lane this pass -- nothing shipped. | NEXT=awaiting next assignment | GO
+
+CC-2 | ACK | Load Costs Chrome · NEVER POST | GO
+No code changes to LoadCostsBoardPage.tsx / BookLoadModalV4.tsx since my prior full pixel
+audit this session (git log confirms) -- re-confirmed live, fresh, right now, both surfaces
+unchanged and still matching ~/Downloads/Load Costs Board Home v2.html and .../Load Costs
+Tab.html (unchanged MD5s from my earlier read): Board GET /api/v1/accounting/load-costs-board
+still 200, load 13508 renders with real KPIs/columns; Costs tab (?tab=Costs) still renders
+DATE/VENDOR/CATEGORY/PAID WITH/AMOUNT + Expense/Bill toggle + totals block, zero console
+errors. Did NOT click Save all or Record expense -- read-only pass, no money created.
+Override-on-blocker test: checked live first (/safety/driver-files, "Expiring ≤30d" and
+"Expired" filters) before attempting anything -- both read **0** for this company right now;
+every driver missing a CDL/DOT-medical shows "Not on file" (a MISSING-qual state, e.g. Angel
+Alfonso Sosa from my prior pass), not an EXPIRED one. The conditional in this cycle's
+instruction ("13508 EDIT only for Override IF a real expired-qual driver exists") is FALSE on
+current data -- did not force it, did not fabricate a driver, did not touch the wizard this
+pass. If Cursor's override-wiring fix specifically needs an EXPIRED (not missing) qualification
+to test the 422 path, that test data does not exist yet in USMCA. | NEXT=awaiting next
+assignment | GO
