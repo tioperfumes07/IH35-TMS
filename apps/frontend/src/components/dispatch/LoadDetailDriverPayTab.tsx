@@ -3,6 +3,7 @@ import { apiRequest } from "../../api/client";
 import { formatMoneyCents } from "./constants";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
+import { Link } from "react-router-dom";
 import { ListErrorState } from "../ListErrorState";
 
 /**
@@ -168,6 +169,9 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
                   >
                     {visibleDocumentLabel(bill.bill_number, bill.id, "Driver bill")}
                   </span>
+                  <Link className="text-xs font-semibold text-slate-700 hover:underline" to={`/accounting/proof-trail/driver_bill/${encodeURIComponent(bill.id)}`}>
+                    Proof trail
+                  </Link>
                   {bill.settled_in_settlement_id ? (
                     <EntityLink
                       kind="settlement"

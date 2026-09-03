@@ -34,6 +34,7 @@ import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 
 // ACCT-F5606 — AR mirror of VendorCreditsPage.tsx's proven AP shape.
 
@@ -478,6 +479,7 @@ export function CreditMemosPage() {
               <h3 className="text-sm font-semibold text-slate-900">Applied invoices</h3>
               <CreditMemoApplications applications={creditMemoDetailQuery.data?.applications ?? []} />
             </div>
+            <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="credit_memo" documentId={creditMemo.id} />
           </div>
         ) : null}
       </ParityDrawer>

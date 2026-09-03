@@ -13,6 +13,7 @@ import { StatusBadge } from "../../components/layout/StatusBadge";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
@@ -211,6 +212,7 @@ export function BillPaymentDetailPage() {
         </DataPanelRow>
       </DataPanel>
       </div>
+      <MoneyProofTrailPanel operatingCompanyId={selectedCompanyId!} documentType="bill_payment" documentId={id} />
     </AccountingSubNavWrapper>
   );
 }

@@ -23,6 +23,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { openCanonicalDocument, openPrintableDocument } from "../../lib/openPrintableDocument";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
@@ -442,6 +443,7 @@ export function BillDetailPage() {
           )}
         </div>
       </DataPanel>
+      <MoneyProofTrailPanel operatingCompanyId={selectedCompanyId!} documentType="bill" documentId={id} />
     </AccountingSubNavWrapper>
   );
 }

@@ -20,6 +20,7 @@ import { CancelLoadModal } from "./CancelLoadModal";
 import { LoadBolPanel } from "./LoadBolPanel";
 import { LoadDetailDriverPayTab } from "./LoadDetailDriverPayTab";
 import { LoadDetailCostsTab } from "./LoadDetailCostsTab";
+import { MoneyProofTrailPanel } from "../accounting/MoneyProofTrailPanel";
 import { LoadDetailSettlementTab } from "./LoadDetailSettlementTab";
 import { LoadDetailGeofenceTimelineTab } from "./LoadDetailGeofenceTimelineTab";
 import { EntityAuditHistoryTab } from "../audit/EntityAuditHistoryTab";
@@ -1264,7 +1265,12 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
             )
           ) : null}
 
-          {activeTab === "Costs" && load ? <LoadDetailCostsTab load={load} canEdit={canEdit} /> : null}
+          {activeTab === "Costs" && load ? (
+            <div className="space-y-3">
+              <LoadDetailCostsTab load={load} canEdit={canEdit} />
+              <MoneyProofTrailPanel operatingCompanyId={load.operating_company_id} documentType="load" documentId={load.id} />
+            </div>
+          ) : null}
 
           {/* Block 7 — Factoring packet tab (wired to the real per-load packet/submit-to-FARO UI;
               the dead duplicate drawer-tabs/FactoringTab.tsx stub was deleted, orphan-triage F1). */}

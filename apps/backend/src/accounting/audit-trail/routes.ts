@@ -6,6 +6,7 @@ import {
   listAccountingAuditTrail,
   listAccountingSourceLineage,
 } from "./service.js";
+import { getMoneyProofTrail, isMoneyProofDocumentType } from "../proof-trail.service.js";
 
 function canAccessAccountingAudit(role: string) {
   return ["Owner", "Administrator", "Accountant"].includes(role);
@@ -27,7 +28,33 @@ const lineageQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).default(200),
 });
 
+const proofTrailParamsSchema = z.object({
+  documentType: z.string().trim().min(1),
+  id: z.string().uuid(),
+});
+
+const proofTrailQuerySchema = z.object({ operating_company_id: z.string().uuid() });
+
 export async function registerAccountingAuditTrailRoutes(app: FastifyInstance) {
+  app.get("/api/v1/accounting/proof-trail/:documentType/:id", async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canAccessAccountingAudit(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const params = proofTrailParamsSchema.safeParse(req.params ?? {});
+    const query = proofTrailQuerySchema.safeParse(req.query ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    if (!query.success) return validationError(reply, query.error);
+    if (!isMoneyProofDocumentType(params.data.documentType)) {
+      return reply.code(400).send({ error: "unsupported_document_type" });
+    }
+    const documentType = params.data.documentType;
+    const proof = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      getMoneyProofTrail(client, query.data.operating_company_id, documentType, params.data.id),
+    );
+    if (!proof) return reply.code(404).send({ error: "document_not_found" });
+    return proof;
+  });
+
   app.get("/api/v1/accounting/audit-trail", async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;

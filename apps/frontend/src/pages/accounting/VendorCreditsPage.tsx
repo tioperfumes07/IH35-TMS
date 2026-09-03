@@ -32,6 +32,7 @@ import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 
 const WRITE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 
@@ -455,6 +456,7 @@ export function VendorCreditsPage() {
               <h3 className="text-sm font-semibold text-slate-900">Applied bills</h3>
               <VendorCreditApplications applications={creditDetailQuery.data?.applications ?? []} />
             </div>
+            <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="vendor_credit" documentId={credit.id} />
           </div>
         ) : null}
       </ParityDrawer>

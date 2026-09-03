@@ -2094,6 +2094,41 @@ export function getAccountingSourceLineage(
   return apiRequest<{ rows: AccountingSourceLineageRow[] }>(`/api/v1/accounting/audit-trail/source-lineage?${query.toString()}`);
 }
 
+export type MoneyProofDocumentType =
+  | "load" | "invoice" | "bill" | "expense" | "payment" | "bill_payment"
+  | "credit_memo" | "vendor_credit" | "driver_bill" | "settlement";
+
+export type MoneyProofTrail = {
+  document_type: MoneyProofDocumentType;
+  document_id: string;
+  display_id: string | null;
+  trace_no: string;
+  trace_key: string;
+  postings: Array<{
+    posting_id: string;
+    journal_entry_id: string;
+    memo: string | null;
+    entry_date: string | null;
+    status: string | null;
+    account_id: string;
+    account_number: string | null;
+    account_name: string | null;
+    debit_or_credit: "debit" | "credit";
+    amount_cents: number;
+    description: string | null;
+    linked_object_type: string | null;
+    linked_object_id: string | null;
+    relationship_role: string | null;
+  }>;
+};
+
+export function getMoneyProofTrail(operatingCompanyId: string, documentType: MoneyProofDocumentType, documentId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<MoneyProofTrail>(
+    `/api/v1/accounting/proof-trail/${encodeURIComponent(documentType)}/${encodeURIComponent(documentId)}?${query.toString()}`,
+  );
+}
+
 export type MonthClosePendingAccount = {
   bank_account_id: string;
   bank_account_name: string;
