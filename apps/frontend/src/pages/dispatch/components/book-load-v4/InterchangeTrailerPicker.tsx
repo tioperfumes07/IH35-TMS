@@ -15,6 +15,9 @@ type Props = {
   value: string | null;
   onChange: (nonOwnedTrailerId: string | null, trailer: NonOwnedTrailer | null) => void;
   disabled?: boolean;
+  /** Pass-through to Combobox's size — "sm" (h-7) for a dense wizard/form row; default "md" (h-9)
+   * matches every existing list-toolbar-filter call site unchanged. */
+  size?: "md" | "sm";
 };
 
 /**
@@ -25,7 +28,7 @@ type Props = {
  * Counterparty picker is components/Combobox (outside-click dismiss). #19609 imported EntityPicker
  * here and the J1/K2 ratchet went UP.
  */
-export function InterchangeTrailerPicker({ operatingCompanyId, value, onChange, disabled }: Props) {
+export function InterchangeTrailerPicker({ operatingCompanyId, value, onChange, disabled, size }: Props) {
   const qc = useQueryClient();
   const { pushToast } = useToast();
   const [showCreate, setShowCreate] = useState(false);
@@ -94,6 +97,7 @@ export function InterchangeTrailerPicker({ operatingCompanyId, value, onChange, 
   return (
     <div className="space-y-1">
       <Combobox
+        size={size}
         options={options}
         value={value}
         onChange={(next) => {
@@ -147,6 +151,7 @@ export function InterchangeTrailerPicker({ operatingCompanyId, value, onChange, 
             {newCounterpartyType === "customer" ? "Customer" : "Vendor"} (owner of this trailer)
             <div className="mt-0.5">
               <Combobox
+                size={size}
                 options={counterpartyOptions}
                 value={newCounterpartyId}
                 onChange={(next) => setNewCounterpartyId(next ?? null)}

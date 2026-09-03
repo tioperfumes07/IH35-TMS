@@ -1,10 +1,10 @@
 {
-  "healthzSha": "753d4e3",
-  "generated_at": "2026-09-03T03:04:05.876Z",
+  "healthzSha": "297b06b",
+  "generated_at": "2026-09-03T17:46:54.619Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "753d4e3",
+    "deployedSha": "297b06b",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 19983,
-      "title": "FINDING: N/A (docs only, bus announcement)",
+      "number": 20078,
+      "title": "docs: route Load Costs live proof to CC-2",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 09:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19983",
-      "sha": "adc1321cbd",
-      "committedAtIso": "2026-09-02T21:59:06-05:00"
+      "mergedAtCt": "09/03/2026, 12:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20078",
+      "sha": "297b06ba71",
+      "committedAtIso": "2026-09-03T12:32:36-05:00"
     },
     {
-      "number": 19981,
-      "title": "docs(bus): bank-categorization who-column handoff closed, returning to B5",
+      "number": 20077,
+      "title": "FINDING: ACCT-F20073B build guarded load costs tab",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 09:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19981",
-      "sha": "ac5dfefbb4",
-      "committedAtIso": "2026-09-02T21:57:14-05:00"
+      "mergedAtCt": "09/03/2026, 12:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20077",
+      "sha": "c1f0474619",
+      "committedAtIso": "2026-09-03T12:31:08-05:00"
     },
     {
-      "number": 19982,
-      "title": "FINDING: ACCT-F9971 -- Factoring list is the one money list still showing voided rows by",
+      "number": 20076,
+      "title": "FINDING: ACCT-F20073 | Load Costs board element manifest",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 09:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19982",
-      "sha": "62e8347099",
-      "committedAtIso": "2026-09-02T21:56:53-05:00"
+      "mergedAtCt": "09/03/2026, 12:17 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20076",
+      "sha": "98d2420d1e",
+      "committedAtIso": "2026-09-03T12:17:14-05:00"
     },
     {
-      "number": 19973,
-      "title": "CC-2-FINDING: ACCT-F19968 — accounting nav dropdown clipped by overflow-y (HoverDropdownNav portal fix)",
+      "number": 20075,
+      "title": "FINDING: Cloud agent froze hours on draft PRs + CI babysit instead of 4-min FAST-MERGE.",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 09:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19973",
-      "sha": "a6e352bad1",
-      "committedAtIso": "2026-09-02T21:55:53-05:00"
+      "mergedAtCt": "09/03/2026, 12:12 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20075",
+      "sha": "856898e6a1",
+      "committedAtIso": "2026-09-03T12:12:06-05:00"
     },
     {
-      "number": 19980,
-      "title": "GO-FINISH: bank_categorization_who_column (CC-3 handoff, BANK-CATEGORIZATION-WHO-SPEC-2026-09-03)",
+      "number": 20073,
+      "title": "Cursor-FINDING: Load Costs element-manifest packets for all seats",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 09:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19980",
-      "sha": "30195409b1",
-      "committedAtIso": "2026-09-02T21:55:21-05:00"
+      "mergedAtCt": "09/03/2026, 12:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20073",
+      "sha": "eed441fee8",
+      "committedAtIso": "2026-09-03T12:08:13-05:00"
     },
     {
-      "number": 19979,
-      "title": "CLAIM-RESERVE: fix claimed_by lane label for 202613550001 (cc-1 -> claude)",
+      "number": 0,
+      "title": "CLAIM-RESERVE: load-costs/fleet-oos even verify-step numbers",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 09:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19979",
-      "sha": "753d4e34b3",
-      "committedAtIso": "2026-09-02T21:53:24-05:00"
+      "mergedAtCt": "09/03/2026, 12:08 PM CT",
+      "url": "",
+      "sha": "0f69d18bd5",
+      "committedAtIso": "2026-09-03T12:08:05-05:00"
     },
     {
-      "number": 19978,
-      "title": "CLAIM-RESERVE: 202613550001 bank_categorization_who_column (CC-3 handoff)",
+      "number": 20072,
+      "title": "Cursor-FINDING: Book Load layout restore — §A freight fields, drop Equipment/load type",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 09:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19978",
-      "sha": "c2fd4b89ea",
-      "committedAtIso": "2026-09-02T21:51:34-05:00"
+      "mergedAtCt": "09/03/2026, 11:59 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20072",
+      "sha": "5a147c0f00",
+      "committedAtIso": "2026-09-03T11:59:37-05:00"
     },
     {
-      "number": 19977,
-      "title": "FINDING: ACCT-F19974 route exact post-deploy proof",
+      "number": 20071,
+      "title": "FINDING: BUS — census ticks OFF; GATE-LIVELOCK-01 on main; wake Codex+Cascade",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 09:50 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19977",
-      "sha": "7f68fb43a0",
-      "committedAtIso": "2026-09-02T21:50:51-05:00"
+      "mergedAtCt": "09/03/2026, 11:21 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20071",
+      "sha": "847300b19c",
+      "committedAtIso": "2026-09-03T11:21:27-05:00"
     },
     {
-      "number": 19976,
-      "title": "docs(bus): B8 comchek closed, deploy-blocked on final Chrome submit-proof",
+      "number": 20070,
+      "title": "docs(bus): OUTBOX -- GATE-LIVELOCK-01 closed, task #4 closed, settlement-lock re-verified live and confirmed correct",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 09:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19976",
-      "sha": "012528812d",
-      "committedAtIso": "2026-09-02T21:48:06-05:00"
+      "mergedAtCt": "09/03/2026, 10:54 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20070",
+      "sha": "9492c2f572",
+      "committedAtIso": "2026-09-03T10:54:13-05:00"
     },
     {
-      "number": 19975,
-      "title": "FINDING: ACCT-F19974 | money documents lacked a complete click-to-ledger proof trail",
+      "number": 20069,
+      "title": "FINDING: ACCT-25TASK-F04 -- company settlement closes alongside the driver settlement at tour-close",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 09:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19975",
-      "sha": "cb599ad500",
-      "committedAtIso": "2026-09-02T21:47:49-05:00"
+      "mergedAtCt": "09/03/2026, 10:52 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20069",
+      "sha": "2fc9a3ec01",
+      "committedAtIso": "2026-09-03T10:52:30-05:00"
     }
   ]
 }

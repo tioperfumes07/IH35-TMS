@@ -22,6 +22,9 @@ export type DriverPickerWithCreateProps = {
    * keep default `active_only`.
    */
   driverRoster?: "active_only" | "active_or_probation";
+  /** Pass-through to EntityPicker/Combobox's size — "sm" (h-7) for a dense wizard/form row;
+   * default "md" (h-9) matches every existing list-toolbar-filter call site unchanged. */
+  size?: "md" | "sm";
 };
 
 /** mdata.drivers exposes first_name + last_name only. EntityPicker kind=driver uses this shape. */
@@ -51,6 +54,7 @@ export function DriverPickerWithCreate({
   allowClear = true,
   dataField,
   driverRoster = "active_only",
+  size,
 }: DriverPickerWithCreateProps) {
   const queryEnabled = (enabled ?? true) && open && Boolean(operatingCompanyId);
 
@@ -70,6 +74,7 @@ export function DriverPickerWithCreate({
       allowClear={allowClear}
       dataField={dataField}
       driverRoster={driverRoster}
+      size={size}
     />
   );
 }

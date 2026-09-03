@@ -109,6 +109,9 @@ export type EntityPickerProps = {
   driverRoster?: "active_only" | "active_or_probation";
   /** Restrict mdata.equipment to the transfer/assignment subtype selected by the parent. */
   equipmentKind?: "trailer" | "chassis";
+  /** Pass-through to Combobox's size — "sm" (h-7) for a dense wizard/form row; default "md" (h-9)
+   * matches every existing list-toolbar-filter call site unchanged. See components/Combobox.tsx. */
+  size?: "md" | "sm";
 };
 
 export function EntityPicker({
@@ -131,6 +134,7 @@ export function EntityPicker({
   onCreated,
   driverRoster = "active_only",
   equipmentKind,
+  size,
 }: EntityPickerProps) {
   const config = getEntityPickerConfig(kind);
   const [createOpen, setCreateOpen] = useState(false);
@@ -273,6 +277,7 @@ export function EntityPicker({
         ) : null}
         <Combobox
           className={className}
+          size={size}
           ariaLabel={ariaLabel}
           dataField={dataField}
           dataTestId={dataTestId}
