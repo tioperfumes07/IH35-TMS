@@ -14,6 +14,7 @@ import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 import { PaymentApplyModal } from "./PaymentApplyModal";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
@@ -357,6 +358,7 @@ export function PaymentDetailPage() {
         onClose={() => setApplyOpen(false)}
         onSubmit={(payload) => applyMutation.mutate(payload)}
       />
+      <MoneyProofTrailPanel operatingCompanyId={selectedCompanyId!} documentType="payment" documentId={id} />
     </AccountingSubNavWrapper>
   );
 }
