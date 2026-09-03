@@ -681,6 +681,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-03",
       "purpose": "25-task #6 (owner instructions 2026-09-02, owner-corrected 2026-09-03): bind accounting.chart_of_accounts_roles role='fixed_asset_default' for USMCA to the EXISTING account 1500 'Trucks & Tractors' (Asset/Vehicles, live, postable) -- owner ruling: do not create a new account, do not rename 1500. Closes the 409 CoaRoleResolutionError repairs >= $7,000 hit at maint/wo-ap-posting.service.ts (capitalize-threshold.ts CAPITALIZE_REPAIR_THRESHOLD_CENTS=700000) via maintenance-posting/poster.service.ts's resolveRoleAccount(..., 'fixed_asset_default')"
+    },
+    "202613612300": {
+      "claimed_by": "cursor",
+      "claimed_at": "2026-09-03",
+      "purpose": "company_settlements WORM — trg_worm_refuse_delete on accounting.company_settlements + accounting.company_settlement_driver_settlements (ratchet 91->93)"
     }
   },
   "202613590001": {
