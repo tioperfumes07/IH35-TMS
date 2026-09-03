@@ -1,6 +1,6 @@
 {
   "healthzSha": "297b06b",
-  "generated_at": "2026-09-03T17:46:54.619Z",
+  "generated_at": "2026-09-03T17:53:54.171Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 20079,
+      "title": "FINDING: COMBOBOX-SIZE-SM-WIZARD-BASELINE -- align Book Load picker fields to h-7",
+      "state": "merged",
+      "mergedAtCt": "09/03/2026, 12:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20079",
+      "sha": "6ef25c0662",
+      "committedAtIso": "2026-09-03T12:51:20-05:00"
+    },
+    {
       "number": 20078,
       "title": "docs: route Load Costs live proof to CC-2",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20070",
       "sha": "9492c2f572",
       "committedAtIso": "2026-09-03T10:54:13-05:00"
-    },
-    {
-      "number": 20069,
-      "title": "FINDING: ACCT-25TASK-F04 -- company settlement closes alongside the driver settlement at tour-close",
-      "state": "merged",
-      "mergedAtCt": "09/03/2026, 10:52 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20069",
-      "sha": "2fc9a3ec01",
-      "committedAtIso": "2026-09-03T10:52:30-05:00"
     }
   ]
 }
