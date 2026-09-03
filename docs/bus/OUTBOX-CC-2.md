@@ -77,3 +77,34 @@ data, not fixtures), Save all + Add another cost + From a receipt photo, totals 
 in "Approximate margin on 13508", "WHAT THE BANK WILL DO WITH THESE" explainer panel -- no
 discrepancy found; zero console errors either screen. Both packets fully live-verified,
 nothing further open on Packet E. | NEXT=awaiting next assignment | GO
+
+CC-2 | ACK | KPI Chrome + Book Load Chrome | NEVER POST | GO
+LIVE_SHA=650935d (app.ih35dispatch.com/version.json, matches origin/main tip at read time).
+(1) Dispatch KPI #20083 tile.value === drill.rowCount, live-proven with real distinguishing
+counts: UNITS AVAILABLE tile=16, drill panel (Unassigned units, T171/T163/T152/T164/T175/
+T147/T173/T174/T168/T156/T124/T122/T177/T148/T176/T170) = 16 rows. UNITS NEEDING RETURN
+tile=0, drill panel "No delivered units are waiting for a return load." = 0 rows. Clicked the
+Units available tile live -- confirmed anchor scroll to the matching panel. Both counts
+match exactly, not a trivial 0-vs-0.
+(2) Edit load 13508 (EDIT ONLY, never Booked/Saved -- every open ended in the wizard's own
+"Discard unsaved changes?" dialog -> Discard, confirmed load stays Unassigned/Draft
+throughout on the board): §A CUSTOMER·INVOICE·CHARGES has Broker/Direct toggle, Commodity,
+Weight (lbs), Pieces in that exact order, Pieces immediately under Weight, both inside §A
+(not equipment) -- matches spec. §B EQUIPMENT·DRIVER·TRAILER trailer control is ONE row:
+"Ours | Interchange" toggle + picker on the same line -- matches spec, no overlap. §C STOPS
+AND MILES: PICKUP Stop 1 and DELIVERY Stop 2 header bars and field stacks (Location/Address/
+City/State/Zip/Appointment date/Time) are visually identical box heights and header styling
+-- no discrepancy. Names resolve correctly, not "— not visible": Customer "NCC Logistics",
+Truck unit "T156", and after typing "Angel" into Driver the real name "ANGEL ALFONSO SOSA"
+(with Samsara ID) resolved and rendered live in the DRIVER field and the "Driver: ANGEL
+ALFONSO SOSA · Unit: T156" summary line.
+HONEST GAP (not a confirmed FE defect -- reporting exactly, not inventing a PASS): assigning
+Angel surfaced only a RANKING-suggestion override ("Selected driver is not the top-ranked
+suggestion. Enable Manual override to confirm a non-optimal pick."), not a distinct
+CDL/medical-card BLOCKER+Override control. I could not reach the cdl_missing/
+medical_card_missing 422 scenario without an actual Save attempt (forbidden -- NEVER POST/
+Book/Save), so I cannot confirm or deny whether that specific override wiring exists or
+works; this may be Angel's test data having no CDL/medical issue rather than a missing
+feature. Flagging for whoever owns that wiring (Cursor, per the broadcast) to verify with a
+driver that actually has an expired/missing CDL or medical card.
+No FE defect found in my lane this pass -- nothing shipped. | NEXT=awaiting next assignment | GO
