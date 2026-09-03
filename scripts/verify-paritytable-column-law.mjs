@@ -68,7 +68,12 @@ function assertComponent(src) {
   }
   // SWEEP-A / SORT-01 — sortable header button must fill the <th> (DataTable already w-full);
   // label-only inline-flex left most of the header dead; resize grip keeps the right w-2 edge.
-  const sortBtn = src.match(/column\.sortable \? \(\s*<button[\s\S]{0,1200}?onClick=\{\(\) => toggleSort\(key\)\}/);
+  // DISP-F9999 (COL-01) — GLOBAL-SORT / Cascade 2026-08-31 flipped the condition from opt-in
+  // (`column.sortable ?`, sortable required explicit `true` per column) to opt-out
+  // (`column.sortable !== false`, every column sortable unless explicitly excluded) — a real,
+  // dated upgrade that makes COL-01 ("every column sortable") true by default app-wide. Re-anchored
+  // to the current condition, not the old opt-in one.
+  const sortBtn = src.match(/column\.sortable !== false \? \(\s*<button[\s\S]{0,1200}?onClick=\{\(\) => toggleSort\(key\)\}/);
   if (!sortBtn) {
     errors.push(`${COMPONENT}: could not locate sortable header <button> (structure drift)`);
   } else if (!/\bh-full\b/.test(sortBtn[0]) || !/\bw-full\b/.test(sortBtn[0])) {
@@ -147,7 +152,7 @@ function selftest() {
     onDragStart={enableColumnReorder ? () => {} : undefined}
     onDrop={enableColumnReorder ? (e) => { if (dragKey) moveColumn(dragKey, key); } : undefined}
     const w = colWidths[key] ?? autoFitWidths[key];
-    {column.sortable ? (
+    {column.sortable !== false ? (
     <button type="button" className="inline-flex h-full w-full items-center gap-1" onClick={() => toggleSort(key)}>label</button>) : null}
     data-testid="parity-table-col-resize"
   `;
