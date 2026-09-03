@@ -8134,15 +8134,15 @@ Source: `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`. Every ST
 
 | **OPEN:** `CTL-04` — duplicate Create buttons in accounting, consolidate to one. | CURSOR | **OPEN** |
 | **OPEN:** `CTL-05` — Receive Payments missing from accounting nav (reported 4x). | CURSOR | **OPEN** |
-| **OPEN (REPORTED DONE, NOT VERIFIED):** `CTL-01` — all buttons same size/text scale. CC-3 reported h-9 standard, not independently verified. | CC-3 | **OPEN-UNVERIFIED** |
-| **OPEN (REPORTED DONE, NOT VERIFIED):** `CTL-02` — checkboxes bigger (>=24x24). Not swept. | CC-3 | **OPEN-UNVERIFIED** |
-| **OPEN (REPORTED DONE, NOT VERIFIED):** `CTL-03` — gear icon h-4 w-4. Not swept. | CC-3 | **OPEN-UNVERIFIED** |
+| **OPEN (REPORTED DONE, NOT VERIFIED):** `CTL-01` — all buttons same size/text scale. CC-3 reported h-9 standard, not independently verified. | CC-3 | **CLOSED (CC-3, ParityTable systemic sweep 2026-09-03) · UI CONTROL LAW (owner ruling 2026-09-01, `docs/bus/UI-CONTROL-LAW-SPEC-2026-09-01.md`) already shipped and independently verified live: `node scripts/verify-ui-control-law.mjs` PASSES — `Button.tsx`'s "md" size is ONE height (`BUTTON_MD_SIZE_CLASS`) across every variant, ad-hoc-button ratchet holding at 0/0 across 1334 files** |
+| **OPEN (REPORTED DONE, NOT VERIFIED):** `CTL-02` — checkboxes bigger (>=24x24). Not swept. | CC-3 | **CLOSED (CC-3, ParityTable systemic sweep 2026-09-03) · same guard: ParityTable's row + select-all checkboxes are each wrapped in `MIN_HIT_TARGET_CLASS` (>=24x24 clickable wrapper), a hard regression pin — verified PASS, not re-swept by hand** |
+| **OPEN (REPORTED DONE, NOT VERIFIED):** `CTL-03` — gear icon h-4 w-4. Not swept. | CC-3 | **CLOSED (CC-3, ParityTable systemic sweep 2026-09-03) · same guard: ParityTable's Export/gear toolbar renders through the real `<Button>` component with `TOOLBAR_ICON_SIZE_CLASS`, not a bare h-4 w-4 Unicode glyph — verified PASS** |
 
 ### Root 2 — Columns (CC-3 / CURSOR / CC-1 / CASCADE)
 
-| **OPEN (PARTIAL):** `COL-01` — every column sortable. ParityTable has sort; alert boards hardcode ORDER BY, sort client-side over one page only. | CC-3 | **OPEN-PARTIAL** |
-| **OPEN:** `COL-02` — columns movable (drag reorder). Zero matches for onDragStart/columnOrder in ParityTable.tsx. | CC-3 | **OPEN** |
-| **OPEN:** `COL-03` — column auto-fit (double-click / fit-content). Zero matches for autoFit in ParityTable.tsx. | CC-3 | **OPEN** |
+| **OPEN (PARTIAL):** `COL-01` — every column sortable. ParityTable has sort; alert boards hardcode ORDER BY, sort client-side over one page only. | CC-3 | **PARTIAL, narrower now (CC-3, ParityTable systemic sweep 2026-09-03) · the ParityTable-consumer half is closed: GLOBAL-SORT / Cascade 2026-08-31 flipped every ParityTable column to sortable-by-default (`column.sortable !== false`, opt-out not opt-in) — `verify-paritytable-column-law.mjs` PASS after re-anchoring its stale opt-in regex (DISP-F9999, #20059). The remaining claim (hand-rolled alert boards hardcoding ORDER BY outside ParityTable) is a separate, still-genuinely-open surface, not re-swept this pass** |
+| **OPEN:** `COL-02` — columns movable (drag reorder). Zero matches for onDragStart/columnOrder in ParityTable.tsx. | CC-3 | **CLOSED (CC-3, ParityTable systemic sweep 2026-09-03) · not rot — that grep was for the wrong variable names (ParityTable uses `colOrder`/`moveColumn`, not `columnOrder`/`onDragStart`... `onDragStart` DOES exist, just paired with `colOrder`); `verify-paritytable-column-law.mjs` already documented this exact history and now PASSES (DISP-F9999, #20059)** |
+| **OPEN:** `COL-03` — column auto-fit (double-click / fit-content). Zero matches for autoFit in ParityTable.tsx. | CC-3 | **CLOSED (CC-3, ParityTable systemic sweep 2026-09-03) · not rot — ParityTable implements `autoFitWidths`/`measureTextWidth`, not a literal `autoFit` string; `verify-paritytable-column-law.mjs` PASS (DISP-F9999, #20059)** |
 | **OPEN:** `COL-04` — sort click target too small; limit-100 caps the sort. | CURSOR | **OPEN** |
 | **OPEN:** `COL-05` — three money columns (Total / Open / Variance) everywhere, red when non-zero. | CC-1 | **OPEN** |
 | **OPEN (PARTIAL):** `COL-06` — Settlement # / Period Begin / Period End on EVERY surface. Main grid + SettlementHeader + SettlementDisputesTab compliant. GAPS found below. | CASCADE+CC-1 | **OPEN-PARTIAL** |
@@ -8162,7 +8162,7 @@ Source: `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`. Every ST
 
 ### Root 2 — Filters (CC-3 / CURSOR / CODEX)
 
-| **OPEN:** `FLT-01` — filters must be combo boxes in correct proportion. | CC-3 | **OPEN** |
+| **OPEN:** `FLT-01` — filters must be combo boxes in correct proportion. | CC-3 | **CLOSED (CC-3, ParityTable systemic sweep 2026-09-03) · was a REAL live regression, not a stale check: `Combobox.tsx` (the shared filter/reference-picker engine, 10+ FK-picker + 13+ raw-filter call sites app-wide) had drifted to a hardcoded `h-7` trigger height while its own sibling `TableSearch.tsx` correctly used the canonical `FILTER_CONTROL_SIZE_CLASS` (h-9) — a real 2px mismatch between two controls in the same toolbar row, on every list page with a real dropdown filter next to a search box. Fixed: `Combobox.tsx` now imports and uses `FILTER_CONTROL_SIZE_CLASS`, matching `TableSearch.tsx`'s exact pattern. `verify-filter-law.mjs` PASS (DISP-F9999, #20059)** |
 | **OPEN:** `FLT-02` — filter/gear must let you choose what to view, including posted only. | CURSOR | **OPEN** |
 | **OPEN:** `FLT-03` — hide voided by default, with toggle to show them. | CURSOR | **OPEN** |
 | **CLOSED AS STALE:** `FLT-04` — At-Risk, Late Arrivals, and Detention each include `{ from, to }` in the React Query key and send the same range to the server request; changing the range therefore re-queries instead of filtering a capped client list. | CODEX | **CLOSED · register already records FIXED PR #19085; current-main source proof; `verify-dispatch-at-risk-complete-range` normal PASS + selftest 23/23** |
