@@ -1,0 +1,77 @@
+CC-2 | 1c · BANKING CATEGORIZATION QUEUE | GO
+Blocked by: Cursor P0, then ownership lock
+
+YOU OWN BANKING ALONE. You do not commit to Book Load, Load Costs, the
+mileage tables, or accounting.
+
+======================================================================
+STRAIGHT TALK
+======================================================================
+You have 3 commits in the last 500. Cursor has 17, Claude-1 has 16.
+You are getting ONE surface, and deliberately the smallest of the three
+money surfaces. Land it completely and the next one is bigger.
+
+======================================================================
+SCOPE
+======================================================================
+  /apps/frontend/src/pages/banking/**
+  /apps/backend/src/banking/**
+  CANONICAL TABLE IS banking.*   —   NEVER write bank.*
+  USMCA ONLY — 5c854333-6ea5-4faa-af31-67cb272fef80.
+  TRANSPORTATION and TRUCKING are FROZEN.
+
+======================================================================
+RLS
+======================================================================
+  WITH b AS (SELECT set_config('app.bypass_rls','lucia',false))
+  SELECT ... FROM b, banking.<table> ...
+A BARE 0 UNDER FORCED RLS IS MASKED, NOT EMPTY. If a count comes back 0,
+check the entity, the filter, the bypass, the join and the spelling
+BEFORE reporting it as empty. EMPTY IS A QUESTION, NOT AN ANSWER.
+
+======================================================================
+THE JOB — categorization queue, 0 of 395 processed
+======================================================================
+1. Report the LIVE count under bypass_rls before you touch anything:
+   how many uncategorized, by account, by date range.
+
+2. Build the queue so a categorization is ONE ACTION, not a form.
+   395 rows through a form is a week. Through a queue it is an hour.
+
+3. Every categorization WRITES A JOURNAL ENTRY with a traceable link
+   back to the bank row. No silent failures. No unposted
+   categorizations. A categorization that does not hit the ledger did
+   not happen.
+
+4. Reconciliation: a categorized row must reconcile against the
+   statement, and the screen must SHOW WHICH ROWS DO NOT. Do not hide
+   the exceptions — they are the whole point.
+
+======================================================================
+STANDARD
+======================================================================
+QuickBooks level. Correct accounting, traceable numbers, real audit
+trail, no silent failures.
+Columns sortable ASCENDING and DESCENDING · draggable · adjustable
+width · filter combobox · QuickBooks money format · ALWAYS a dates
+column · back arrow · header colour design/tokens.ts:29 #14314F ·
+visible column dividers · visible section divisions.
+Full 1-12 linkage, declared.
+
+======================================================================
+PROOF
+======================================================================
+· the live pre-count under bypass_rls
+· the live post-count
+· ONE categorized row traced click-by-click to its journal entry
+· the exceptions list showing rows that do not reconcile
+· the guard you wrote in scripts/verify-steps/, failing then passing
+
+FIND IT, FILE IT, DO NOT FIX IT.
+
+
+======================================================================
+BINDING: REFERENCE/MONEY-CONTRACT-ALL-SEATS.txt
+You write money. Read that contract before your first commit and build
+against it. It is what makes independent surface ownership safe.
+======================================================================

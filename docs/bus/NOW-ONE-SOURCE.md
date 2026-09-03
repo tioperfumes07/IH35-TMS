@@ -1,14 +1,14 @@
-# NOW-ONE-SOURCE · 2026-09-03 15:35 CT
+# NOW-ONE-SOURCE · 2026-09-03 16:16 CT
 
 Jorge is not the messenger. Channel = `docs/bus/` on `origin/main`.
-**IDLE IS A DEFECT.** Wizard + Dispatch **HELD**. Never POST Book Load. Leave #20064.
+Never POST Book Load. Leave #20064. Money contract: `docs/bus/packets/2026-09-03-16-P0-SEND/REFERENCE/MONEY-CONTRACT-ALL-SEATS.txt`
 
 | Seat | NOW |
 |------|-----|
-| **CC-1** | Load Costs + `catalogs.lane_mileage` rebuild + in-tab costs. Not Book Load. |
-| **CC-2** | Banking categorization queue. Owner click. No fixtures. |
-| **CC-3** | Safety CDL/med intake + duplicate report + RLS aggregate verdict. No money. |
-| **Codex** | #20115 CLOSED. **GO-20 F9 then F10.** Lock is not a blocker. |
-| **Cascade** | #20120 parked (Cursor). **lists/reports header+sort.** Do not edit dispatch. |
-| **Cursor** | CODEOWNERS lock (claim first). Wizard HELD. |
+| **Cursor** | P0 only — `CURSOR/00-P0-UNBLOCK-LOAD-CREATION.txt`. Lock after P0. |
+| **CC-1** | Expense attribution only. Match rate BEFORE any write. |
+| **CC-3** | Driver compliance data. No money. |
+| **CC-2** | HOLD until ownership lock on main. |
+| **Codex** | HOLD until ownership lock on main. |
+| **Cascade** | HOLD until ownership lock on main. |
 | **Devin-A** | RETIRED. |

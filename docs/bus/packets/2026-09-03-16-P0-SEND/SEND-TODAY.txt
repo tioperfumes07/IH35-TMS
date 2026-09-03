@@ -1,0 +1,22 @@
+SEND 2026-09-03 ~16:15 CT — owner via Cursor lead. Claude 16:00 packet + 21:00 P0 rewrite.
+
+GO NOW (three seats only)
+  Cursor  docs/bus/packets/2026-09-03-16-P0-SEND/CURSOR/00-P0-UNBLOCK-LOAD-CREATION.txt
+  CC-3    docs/bus/packets/2026-09-03-16-P0-SEND/CC-3/01-DRIVER-COMPLIANCE.txt
+  CC-1    docs/bus/packets/2026-09-03-16-P0-SEND/CC-1/01-EXPENSE-ATTRIBUTION.txt
+          Report match rate to owner BEFORE any USMCA write.
+
+HOLD until Cursor ownership lock is on origin/main
+  CC-2 · Codex · Cascade
+  Do not open a new PR. Pull, ACK HOLD, wait.
+
+AFTER P0 (Cursor second job, not this send)
+  CODEOWNERS + verify-seat-surface-ownership + money-contract guards M1–M7
+  Contract file is in REFERENCE/MONEY-CONTRACT-ALL-SEATS.txt (§10: read, do not re-derive).
+  Do not invent a fourth money seat.
+
+Done without the packet PROOF list pasted in OUTBOX = not done.
+Cursor P0 is not delivered until a REAL USMCA load number is pasted by the owner.
+Never POST Book Load as a seat fixture. Leave #20064.
+
+Packet on this branch: 8 files under docs/bus/packets/2026-09-03-16-P0-SEND including MONEY-CONTRACT-ALL-SEATS.txt.

@@ -1,14 +1,10 @@
-# INBOX-CASCADE · LISTS + REPORTS · 2026-09-03 15:35 CT
+# INBOX-CASCADE · HOLD · 2026-09-03 16:16 CT
 `git pull --ff-only origin main`
 
-CURSOR REPLY: #20120 received. Parked. **Do not edit dispatch.** Execute lists/reports header now.
+HOLD until Cursor ownership lock is on `origin/main`.
 
-Dispatch nav map is **CLOSED** (#20120). Do **not** edit dispatch. File already posted to Cursor.
-Never money. Never purge. Never POST.
+Do not edit dispatch. #20120 nav map stays PARKED for Cursor after P0.
 
-## NOW
-`pages/lists/**` and `pages/reports/**` only:
-Header 11px / 700 / UPPERCASE / `#4B5563` (not bg-gray-50). Sort ASC/DESC. Dates column.
-ParityTable consumers on those two trees. Guard first.
+NO MONEY. Never POST. Leave #20064.
 
-ACK `CASCADE | ACK | lists/reports header+sort · NEVER POST | GO`
+ACK `CASCADE | ACK | HOLD until lock · NEVER POST`

@@ -1,0 +1,129 @@
+IH35-TMS  ·  AGENT INSTRUCTIONS
+Issued 2026-09-03 16:00 · owner: Jorge Pablo Munoz
+
+======================================================================
+SCOPE — READ THIS BEFORE ANY QUERY
+======================================================================
+USMCA ONLY.  operating_company_id = 5c854333-6ea5-4faa-af31-67cb272fef80
+TRANSPORTATION (91e0bf0a-133f-4ce8-a734-2586cfa66d96) and TRUCKING
+(b49a737b-...) ARE FROZEN. Do not read, write or report on them.
+
+USMCA's real size, verified 2026-09-03:
+  36 loads · 12 trucks · 2026-08-07 -> 2026-08-28
+  leg kinds  TR 16 · NB 11 · SB 8 · local 1
+  picks/drops  1/1 = 33 · 1/2 = 3
+
+THERE IS NO HISTORICAL BACKFILL. The eight-year AlwaysTrack exports are
+all "Invoiced By IH35 Transportation, LLC" — a frozen entity. Any
+statistic quoted from them is reference only and must NEVER be written
+into USMCA. Build forward from what USMCA actually has.
+
+The owner will create the first 10 loads MANUALLY. If those go clean,
+the rest get bulk-uploaded. Everything in these folders exists to make
+that possible.
+
+======================================================================
+P0 — THE ONLY THING THAT MATTERS TODAY
+======================================================================
+The owner has been blocked for THREE DAYS trying to enter loads by hand.
+CURSOR/00-P0-UNBLOCK-LOAD-CREATION.txt is the top of the queue and
+outranks everything else in this folder, including the ownership lock.
+
+Nobody starts a "nice to have" while the owner cannot book a load.
+
+======================================================================
+BUILD ORDER
+======================================================================
+ #    SEAT      JOB                                     BLOCKED BY
+ P0   Cursor    Unblock load creation + override column  —
+ 0    Cursor    Ownership lock                           P0
+ 1a   Cursor    Dispatch board — nav, table, RoundTrips  0
+ 1b   CC-1      Expense attribution                      0
+ 1c   CC-2      Banking categorization queue             0
+ 1d   CC-3      Driver compliance data                   0
+ 1e   Codex     Fleet OOS + unit scoping                 0
+ 1f   Cascade   Lists / reports table standard           0
+ 2a   Cursor    Book Load wizard layout                  1a
+ 2b   CC-1      Mileage + lane table                     1b
+ 2c   CC-1      Tours + settlement model                 2b
+ 3a   CC-1      Load Costs board                         2c
+ 3b   CC-1      Settlement screen                        2c
+
+======================================================================
+LAWS THAT APPLY TO EVERY BLOCK
+======================================================================
+FINISH LAW — a seat finishes its surface before starting anything else.
+  One permitted interruption: unblock another seat, finish that, come
+  straight back.
+
+FIND IT, FILE IT, DO NOT FIX IT — a seat WILL find a real bug outside
+  its surface. Fixing it is a violation EVEN WHEN THE FIX IS CORRECT,
+  because the owner gets an edit they did not make in a file they are
+  mid-way through. Post the finding to the owning seat and keep going.
+
+RLS MASKING — reads on catalogs.lane_mileage, accounting.expenses,
+  mdata.drivers and the settlement tables are masked. Aggregates return
+  counts while row SELECTs return []. Wrap EVERY query:
+     WITH b AS (SELECT set_config('app.bypass_rls','lucia',false))
+     SELECT ... FROM b, <table> ...
+  A count taken without the bypass is NOT EVIDENCE. This burned an
+  entire investigation on 2026-09-03.
+  EMPTY IS A QUESTION, NOT AN ANSWER. Check the entity, the filter, the
+  bypass, the join and the spelling before reporting something missing.
+
+NEVER report done without proof — the live row, the live screen, the
+  live query, pasted. No fake green.
+
+NEVER write test, sample or demo records into USMCA, including for
+  proof. Every USMCA record is REAL unless is_sample_data = true.
+
+MONEY IS INTEGER CENTS. Never float.
+
+DRIVER PAY IS ALWAYS TWO LINES:
+    loaded miles   x rate_loaded
+    deadhead miles x rate_empty
+  rate_empty_per_mile_cents is its own config value. It equals the
+  loaded rate TODAY. Never hardcode that equality.
+
+CANONICAL TABLES — write left, never right:
+  driver_finance.*  not payroll.* / settlement.*
+  mdata.qbo_*       not accounting.qbo_*
+  banking.*         not bank.*
+  maintenance.*     not maint.*
+  mdata.vendors     not mdata.qbo_vendors
+  mdata.loads is the canonical hub.
+
+======================================================================
+SURFACE MAP — enforced by CODEOWNERS + guard after block 0
+======================================================================
+ Cursor  /apps/frontend/src/pages/dispatch/**
+         /apps/frontend/src/components/dispatch/**
+         /apps/backend/src/dispatch/book-load.service.ts
+ CC-1    /apps/frontend/src/pages/accounting/**
+         /apps/backend/src/accounting/**
+         /apps/backend/src/dispatch/mileage/**
+         /apps/backend/src/dispatch/lane-mileage.service.ts
+ CC-2    /apps/frontend/src/pages/banking/**  /apps/backend/src/banking/**
+ CC-3    /apps/frontend/src/pages/safety/**   /apps/backend/src/compliance/**
+ Codex   /apps/frontend/src/pages/maintenance/**
+         /apps/backend/src/maintenance/**
+ Cascade /apps/frontend/src/pages/lists/**    /apps/frontend/src/pages/reports/**
+
+======================================================================
+FOLDER CONTENTS
+======================================================================
+ CURSOR/     00-P0-UNBLOCK-LOAD-CREATION.txt   <- START HERE
+             01-OWNERSHIP-LOCK.txt
+             02-DISPATCH-BOARD.txt
+             03-BOOK-LOAD-WIZARD.txt
+ CC-1/       01-EXPENSE-ATTRIBUTION.txt
+             02-MILEAGE-AND-LANE-TABLE.txt
+             03-TOURS-AND-SETTLEMENT-MODEL.txt
+             04-LOAD-COSTS-BOARD.txt
+             05-SETTLEMENT-SCREEN.txt
+ CC-2/       01-BANKING.txt
+ CC-3/       01-DRIVER-COMPLIANCE.txt
+ CODEX/      01-FLEET-OOS-AND-UNIT-SCOPING.txt
+ CASCADE/    01-LISTS-AND-REPORTS.txt
+ REFERENCE/  DESIGN-SPEC-MEASUREMENTS.txt
+             LIVE-FINDINGS-EVIDENCE.txt
