@@ -1,7 +1,7 @@
 {
-  "off_locked_scale_sizes": 16,
-  "files_off_locked_scale": 6,
-  "raw_font_sizes": 1401,
+  "off_locked_scale_sizes": 14,
+  "files_off_locked_scale": 5,
+  "raw_font_sizes": 1399,
   "files_with_raw_font_sizes": 401,
   "trapping_picker_total": 268,
   "picker:components/parity/EntityPicker": 106,
