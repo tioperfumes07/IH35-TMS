@@ -59,7 +59,7 @@ export function useTableController<T>({
   defaultPageSize = 50,
   defaultHidden = [],
 }: Options<T>) {
-  const { pageSize, setPageSize, hidden, toggleColumn, widths, setColumnWidth } = useTablePref(tableKey, {
+  const { pageSize, setPageSize, hidden, toggleColumn, widths, setColumnWidth, columnOrder, setColumnOrder } = useTablePref(tableKey, {
     pageSize: defaultPageSize,
     hidden: defaultHidden,
   });
@@ -148,6 +148,8 @@ export function useTableController<T>({
     // column widths (resize)
     widths,
     setColumnWidth,
+    columnOrder,
+    setColumnOrder,
     filtered: sorted,
     paged,
     pageCount,
