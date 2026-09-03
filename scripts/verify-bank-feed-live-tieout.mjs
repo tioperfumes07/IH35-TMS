@@ -21,6 +21,67 @@ import pg from "pg";
 
 dotenv.config();
 
+// BANK-F10000 (2026-09-03) — this guard's own check #2 already asserted the exact invariant that
+// caught 126 USMCA rows sitting review_state='matched' with every matched_*_id NULL (a raw SQL
+// write outside the app, root-caused and reset the same day). The guard existed and was CORRECT —
+// it had simply never been wired into any scripts/verify-steps/NNNN-*.mjs file, so it never ran in
+// CI. `verify-load-costs-board-trailer-unit-columns.mjs` proved the same "written but never wired"
+// pattern earlier this session. Pure predicate extracted below so --selftest can prove the logic
+// with planted fixtures, not a live DB connection.
+export function isOrphanMatchedRow(row) {
+  return (
+    row.review_state === "matched" &&
+    row.matched_invoice_id == null &&
+    row.matched_bill_id == null &&
+    row.matched_payment_id == null &&
+    row.matched_bill_payment_id == null &&
+    row.matched_transfer_id == null &&
+    row.matched_journal_entry_id == null &&
+    row.matched_load_id == null &&
+    row.matched_settlement_id == null &&
+    row.matched_expense_id == null &&
+    row.matched_advance_id == null
+  );
+}
+
+function runSelftest() {
+  const allNull = {
+    review_state: "matched",
+    matched_invoice_id: null,
+    matched_bill_id: null,
+    matched_payment_id: null,
+    matched_bill_payment_id: null,
+    matched_transfer_id: null,
+    matched_journal_entry_id: null,
+    matched_load_id: null,
+    matched_settlement_id: null,
+    matched_expense_id: null,
+    matched_advance_id: null,
+  };
+  if (!isOrphanMatchedRow(allNull)) {
+    throw new Error("selftest: matched with every matched_*_id NULL must be detected as orphaned — it was not");
+  }
+  const realMatch = { ...allNull, matched_bill_id: "11111111-1111-4111-8111-111111111111" };
+  if (isOrphanMatchedRow(realMatch)) {
+    throw new Error("selftest: a row with a real matched_bill_id must NOT be flagged orphaned — it was");
+  }
+  const notMatched = { ...allNull, review_state: "for_review" };
+  if (isOrphanMatchedRow(notMatched)) {
+    throw new Error("selftest: review_state='for_review' must never be flagged as an orphaned match — it was");
+  }
+  console.log("[verify-bank-feed-live-tieout] --selftest OK (orphan-matched fixture + real-match fixture + non-matched fixture all behave as expected)");
+}
+
+if (process.argv.includes("--selftest")) {
+  try {
+    runSelftest();
+  } catch (err) {
+    console.error(String(err?.message ?? err));
+    process.exit(1);
+  }
+  process.exit(0);
+}
+
 const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
 if (!connectionString) {
   console.error("verify:bank-feed-live-tieout — SKIPPED (no DATABASE_DIRECT_URL/DATABASE_URL in environment)");
