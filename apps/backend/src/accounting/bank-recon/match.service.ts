@@ -363,11 +363,19 @@ async function fetchLedgerCandidates(
     const payments = await client.query<{ id: string; amount_cents: number; event_date: string; memo: string | null }>(
       `
         SELECT id::text, amount_cents::int, payment_date::text AS event_date, display_id::text AS memo
-        FROM accounting.payments
+        FROM accounting.payments p
         WHERE operating_company_id = $1::uuid
           AND payment_date BETWEEN ($2::date - make_interval(days => $3)) AND ($2::date + make_interval(days => $3))
           AND voided_at IS NULL
           AND ($4::text IS NULL OR lower(COALESCE(display_id, '')) LIKE $4)
+          -- BANK-F9998 F4 — was offered/matchable to unlimited bank rows; only bill/expense had this
+          -- guard. Extended to every kind so a document already confirmed-matched drops out.
+          AND NOT EXISTS (
+            SELECT 1 FROM banking.reconciliation_matches m
+            WHERE m.ledger_entry_kind = 'payment'
+              AND m.ledger_entry_id = p.id
+              AND m.match_state IN ('auto_matched', 'user_matched')
+          )
         LIMIT $5
       `,
       [operatingCompanyId, txnDate, windowDays, likeParam, rowLimit]
@@ -388,11 +396,17 @@ async function fetchLedgerCandidates(
     const billPayments = await client.query<{ id: string; amount_cents: number; event_date: string; memo: string | null }>(
       `
         SELECT id::text, amount_cents::int, payment_date::text AS event_date, COALESCE(reference_number, memo)::text AS memo
-        FROM accounting.bill_payments
+        FROM accounting.bill_payments bp
         WHERE operating_company_id = $1::uuid
           AND payment_date BETWEEN ($2::date - make_interval(days => $3)) AND ($2::date + make_interval(days => $3))
           AND revoked_at IS NULL
           AND ($4::text IS NULL OR lower(COALESCE(reference_number, memo, '')) LIKE $4)
+          AND NOT EXISTS (
+            SELECT 1 FROM banking.reconciliation_matches m
+            WHERE m.ledger_entry_kind = 'bill_payment'
+              AND m.ledger_entry_id = bp.id
+              AND m.match_state IN ('auto_matched', 'user_matched')
+          )
         LIMIT $5
       `,
       [operatingCompanyId, txnDate, windowDays, likeParam, rowLimit]
@@ -498,6 +512,12 @@ async function fetchLedgerCandidates(
         AND t.revoked_at IS NULL
         AND (${transferDirectionClause})
         AND ($5::text IS NULL OR lower(COALESCE(t.memo, t.reference_number, '')) LIKE $5)
+        AND NOT EXISTS (
+          SELECT 1 FROM banking.reconciliation_matches m
+          WHERE m.ledger_entry_kind = 'transfer'
+            AND m.ledger_entry_id = t.id
+            AND m.match_state IN ('auto_matched', 'user_matched')
+        )
       LIMIT $6
     `,
     [operatingCompanyId, txnDate, bankAccountId, windowDays, likeParam, rowLimit]
@@ -529,6 +549,12 @@ async function fetchLedgerCandidates(
         -- it must not be offered as a match candidate. Every other of the 6 sources already excludes
         -- its own void marker (voided_at/revoked_at); this was the one gap.
         AND je.reversed_by_je_id IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM banking.reconciliation_matches m
+          WHERE m.ledger_entry_kind = 'je'
+            AND m.ledger_entry_id = je.id
+            AND m.match_state IN ('auto_matched', 'user_matched')
+        )
       GROUP BY je.id, je.entry_date, je.memo
       LIMIT $5
     `,
