@@ -29,3 +29,27 @@ BONUS (INBOX-CC-2 HARD WAKE, same session): Combobox.tsx handleKeyDown had no Ta
   Discarded via the wizard's own "Discard unsaved changes" dialog before closing (unit selection AND the -250 accessorial). Neon re-check: mdata.loads.updated_at for 13508 unchanged (predates this session), status=draft, assigned_unit_id/assigned_primary_driver_id still NULL. NEVER booked, NEVER posted.
 REMAINING: DispatchSubnav.tsx Planning ▾/Settlements/Documents port onto the shared HoverDropdownNav.tsx (INBOX-CC-2's second HARD WAKE item, and the same gap this session's own GO23-NAV-DROPDOWN-CLIP-ONE-BUG board row already flagged) -- assessed, not shipped: DispatchSubnav's items carry queue-count badges HoverDropdownNav's NavItem/NavChild types do not model, so it's a real type-extension change, not a drop-in swap. Item 15's full field trace incomplete (see above). Item 18 needs an owner decision on City before any code changes. | NEXT=awaiting next assignment | GO
 CC-2 | FAST-MERGE | gate=exit0 | push=no-verify-static-ENV-OK | merged #20079 @ 6ef25c0662 | neon=N/A (pure FE, no DB write) | Combobox regained a size="sm" (h-7) opt-in after #20059 correctly made its default h-9 for list-toolbar filters (COLUMN LAW) but left every picker inside the Book Load wizard (customer/historical-import-reason/lumper-provider/factoring-vendor/trailer-type/unit/trailer/interchange-trailer/primary+secondary driver) sitting at h-9 next to the wizard's own h-7 plain inputs -- the exact "fields on the same row do not share a baseline" defect (task 9). Also found: 4 EntityPicker/DriverPickerWithCreate call sites in BookLoadEquipmentSection.tsx had tried className="h-7 ..." to fix this pre-#20059 too -- never worked, Combobox applies className to its outer wrapper, not the height-bearing box. ReferenceSelect/EntityPicker/DriverPickerWithCreate/InterchangeTrailerPicker forward the new size prop; wired size="sm" at all 10 wizard call sites. Purely additive, zero regression to any existing call site -- 5 test files/34 tests + both guards (verify-book-load-money-and-controls, verify-filter-law) green, tsc clean. Collided in flight with #20072 (concurrent Book Load layout restore + its own verify-session-law-autoload fix for the same #19524 always-apply-diet staleness I'd independently found and fixed -- theirs landed first, discarded my duplicate branch, cleanly rebased mine on top). Push blocked ~25 min on the known ENV-VERIFY-STATIC-NO-LOCAL-PG false-block (docs/bus/FAST-MERGE-4MIN-LAW.md) -- gate was green the whole time; also hit + fixed one real blocker along the way (docs/audit/program-scoreboard.json 97 commits stale, regenerated). | NEXT=Packet E (PASTE-ALL-SEATS 2026-09-03): Dispatch Load-board KPI drill-through, then Chrome-prove Codex's Load Costs Board+Tab | GO
+
+CC-2 | Packet E (PASTE-ALL-SEATS 2026-09-03) | Dispatch KPI drill-through: fixed
+DispatchOverview.tsx's "Units available"/"Units needing return" tiles -- both drilled to an
+in-page panel truncated at PANEL_ROW_LIMIT=6 (or, for "Units available", to an unrelated
+general loads board that shows no unit data at all), breaking the file's own stated law "Tile
+value must equal the drill table row count" once a fleet exceeds 6 idle/return-pending units.
+Fixed + guarded (#20083, sha a5b338a679). Then opened the live Load Costs Board (Codex Packet
+A, just-merged) in Chrome as the owner to Chrome-prove it per Wave 4 -- found it 500ing
+instead: `GET /api/v1/accounting/load-costs-board` joined `l.trailer_id` (mdata.loads has no
+such column, documented+fixed 4x elsewhere in this codebase -- W-FIX-3b) and
+`u.operating_company_id` (mdata.units has owner_company_id/currently_leased_to_company_id,
+never that). Fixed to the exact pattern GET /api/v1/dispatch/loads already uses
+(dispatch.load_assignment_history.new_trailer_id LATERAL + COALESCE owner/leased), verified
+by running the corrected query against a freshly-migrated ephemeral Postgres (not just static
+read), guarded, shipped (#20086, sha 4a28546cb1). Two claim-reserve cycles (#20081 -> 10247,
+#20085 -> 10251) landed first per Rule 25. Also shipped the Combobox size="sm" wizard-baseline
+fix from the tail end of the CC-2-INSTRUCTIONS pass (#20079 sha 6ef25c0662, plus its own
+claim-reserve collision-resolution with a concurrent #20059/#20072). REMAINING: Live=UNVERIFIED
+on the Load Costs Board fix specifically -- autoDeploy is OFF (owner law), so app.ih35dispatch.com
+will keep 500ing on this endpoint until the next deploy (Cursor lead's cadence) picks up sha
+4a28546cb1; re-open in Chrome and confirm the board renders + Chrome-prove vs the design HTML
+(~/Downloads/Load Costs Board Home v2.html, IH35-DELIVERABLES/designs/Load Costs Tab.html)
+once healthz reports that SHA or later. Not claiming Packet E's live-verification half done
+until then. | NEXT=re-verify Load Costs Board live post-deploy, then Chrome-prove vs HTML | GO
