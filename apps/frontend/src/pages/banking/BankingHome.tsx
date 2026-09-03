@@ -53,6 +53,18 @@ import { userFacingApiError } from "../../lib/api-error-message";
 
 type BankingTabId = BankingModuleTabId;
 
+// DISP-F9993 -- FactoringStatus is a machine enum ("reserve_held", "recourse_returned");
+// same label convention as FactoringListPage.tsx / SubmissionWorkqueue.tsx's local STATUS_LABEL.
+const FACTORING_STATUS_LABEL: Record<string, string> = {
+  submitted: "Submitted",
+  advanced: "Funded",
+  reserve_held: "Reserve Held",
+  collected: "Collected",
+  released: "Released",
+  recourse_returned: "Recourse",
+  voided: "Voided",
+};
+
 type Props = {
   initialTab?: BankingTabId;
 };
@@ -920,7 +932,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                             label={entityLabel(row.display_id, row.id, "Factoring advance")}
                             data-testid={`banking-factoring-advance-link-${row.id}`}
                           />
-                          <span className="ml-2 text-[11px] uppercase text-gray-500">{row.status}</span>
+                          <span className="ml-2 text-[11px] uppercase text-gray-500">
+                            {FACTORING_STATUS_LABEL[row.status] ?? row.status}
+                          </span>
                         </span>
                         <span className="tabular-nums text-xs text-gray-800">
                           {Number.isFinite(cents) ? money.format(cents / 100) : "—"}
