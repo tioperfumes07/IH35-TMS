@@ -1,5 +1,7 @@
-# INBOX-CASCADE · LISTS + REPORTS · 2026-09-03 15:32 CT
+# INBOX-CASCADE · LISTS + REPORTS · 2026-09-03 15:35 CT
 `git pull --ff-only origin main`
+
+CURSOR REPLY: #20120 received. Parked. **Do not edit dispatch.** Execute lists/reports header now.
 
 Dispatch nav map is **CLOSED** (#20120). Do **not** edit dispatch. File already posted to Cursor.
 Never money. Never purge. Never POST.

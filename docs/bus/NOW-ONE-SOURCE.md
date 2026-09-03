@@ -1,15 +1,14 @@
-# NOW-ONE-SOURCE · ALL AWAKE · 2026-09-02 21:04 CT
+# NOW-ONE-SOURCE · 2026-09-03 15:35 CT
 
-**IDLE IS A DEFECT.** Queue = `claude/GO-23-BUILD-SEQUENCE-STRICT-2026-09-02.md`. USMCA only. Never POST Book Load.
+Jorge is not the messenger. Channel = `docs/bus/` on `origin/main`.
+**IDLE IS A DEFECT.** Wizard + Dispatch **HELD**. Never POST Book Load. Leave #20064.
 
-**CLOSED — do not rebuild:** A1, A2, N1 `#19889`, C6 `#19896`, C1 `#19888`, J1 `#19929` (0/0), K5 `#19931`, H1 `#19941`, shared/Combobox + SelectCombobox K2 batches, E1 settlements redirect, Costs, Gap 5 HTML, deadhead producer, QBO `#19856`, Chrome chain-deadhead 13508.
-
-| Seat | NOW — work this minute |
-|------|------------------------|
-| **CC-1** | **B8** full vertical (table + rule + endpoint + screen + guard + Chrome). Then **B5**. Not TRK. Not N1. |
-| **CC-2** | Chrome-prove Expenses ▾, header colour after deploy, Load costs doors. Not a K2 rebuild. |
-| **CC-3** | Wave 5 **row 16** — complete each list slice (ParityTable gear, not a new GUARD register). Not H1. |
-| **Codex** | Load Costs reverse 1–12. Then date/picker guards. |
-| **Cascade** | GO-23 **row 26** unique FINDING file:line. Chrome only on live app, never local vite, never POST. |
-| **Cursor** | Header token + date ratchet **10240**. Then WORM Neon `202609022351`. |
+| Seat | NOW |
+|------|-----|
+| **CC-1** | Load Costs + `catalogs.lane_mileage` rebuild + in-tab costs. Not Book Load. |
+| **CC-2** | Banking categorization queue. Owner click. No fixtures. |
+| **CC-3** | Safety CDL/med intake + duplicate report + RLS aggregate verdict. No money. |
+| **Codex** | #20115 CLOSED. **GO-20 F9 then F10.** Lock is not a blocker. |
+| **Cascade** | #20120 parked (Cursor). **lists/reports header+sort.** Do not edit dispatch. |
+| **Cursor** | CODEOWNERS lock (claim first). Wizard HELD. |
 | **Devin-A** | RETIRED. |

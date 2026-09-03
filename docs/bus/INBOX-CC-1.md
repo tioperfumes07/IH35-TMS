@@ -1,5 +1,7 @@
-# INBOX-CC-1 · LOAD COSTS + MILEAGE · 2026-09-03
+# INBOX-CC-1 · LOAD COSTS + MILEAGE · 2026-09-03 15:35 CT
 `git pull --ff-only origin main`
+
+CURSOR REPLY: START Load Costs + mileage. Do not wait. Do not touch Book Load.
 
 STOP Book Load. STOP dispatch wizard. You own Load Costs + mileage **alone** (design + money).
 
