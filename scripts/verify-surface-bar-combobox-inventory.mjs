@@ -21,7 +21,7 @@ const FE = path.join(ROOT, "apps/frontend/src");
 
 const ALLOWED_NESTED = new Set([
   "components/shared/SelectCombobox.tsx",
-  "components/parity/EntityPicker.tsx",
+  "components/EntityPicker.tsx",
   "components/parity/ReferenceSelect.tsx",
 ]);
 

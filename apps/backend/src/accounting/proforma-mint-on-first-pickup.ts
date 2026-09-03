@@ -157,10 +157,12 @@ export async function mintProformaInvoiceOnFirstPickup(
       return { outcome: "skipped", reason: "load_has_no_rate" };
     }
   } catch (err) {
+    // Real error is logged by the outer catch below regardless of this nested rollback outcome.
     try {
       await client.query("ROLLBACK TO SAVEPOINT pickup_proforma_mint");
+      // intentional swallow: nested rollback-of-a-rollback, savepoint may already be gone
     } catch {
-      /* nested rollback already failed — outer still swallows */
+      /* see comment above */
     }
     console.warn({ err, load_id: input.loadId }, "go19_04_proforma_mint_on_pickup_failed");
     return { outcome: "skipped", reason: "mint_failed" };

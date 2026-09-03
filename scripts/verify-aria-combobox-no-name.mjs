@@ -24,7 +24,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 
 const COMBOBOX_FILE = "apps/frontend/src/components/Combobox.tsx";
-const ENTITY_PICKER_FILE = "apps/frontend/src/components/parity/EntityPicker.tsx";
+const ENTITY_PICKER_FILE = "apps/frontend/src/components/EntityPicker.tsx";
 const LEGAL_MATTERS_FILE = "apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx";
 const FLEET_HOS_FILE = "apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx";
 const PARITY_TABLE_FILE = "apps/frontend/src/components/parity/ParityTable.tsx";

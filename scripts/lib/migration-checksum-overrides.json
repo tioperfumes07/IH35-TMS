@@ -380,5 +380,13 @@
     "reason": "Comment-only CANONICAL-CHECK after #19811 baselined this table instead of answering the duplicate-ledger question. Names driver_finance.trip_link_queue: load-to-settlement suggest/confirm is distinct from expense-to-load; driver_settlements remains the money document. No DDL change. Never edit applied DDL again.",
     "added_at": "2026-09-02",
     "added_in_pr": "CONVERT-19811-CANONICAL-CHECK"
+  },
+  {
+    "filename": "202609022351_go18_gap5_worm_expenses_factoring_advances.sql",
+    "ledger_checksum": "3555ca962c55bec70f0e5cb54f7900b05002a7ce05ff54278766f2ac1b059fbe",
+    "disk_checksum": "67d2cd28944ff7e37d0f4d91b77aedf469d2f68f6d4fbeb234f5b0bea3773dab",
+    "reason": "ACCT-F5684-class fresh-DB CI fix: two ordering bugs in this filename, both numerically behind their own dependencies -- (1) accounting.refuse_financial_row_delete() from 202612220000/ACCT-F141, RAISE EXCEPTION'd on a fresh replay; (2) accounting.bills.driver_id from 202613360001, COMMENT ON COLUMN errored 'column does not exist' on a fresh replay -- both red-lined security-audit-heavy on every PR, proven by actually running npm run db:migrate against a genuinely empty local postgres:16-alpine container matching CI's own setup. Fix: (1) fails soft (RAISE NOTICE + RETURN) instead of aborting; (2) both COMMENT ON COLUMN statements execute only when their column already exists. 202613570001 idempotently completes the deferred trigger attach AND both comments once every dependency is guaranteed to exist. Verified live on Neon prod (tiny-field-89581227): both refuse_financial_row_delete() and both trg_worm_refuse_delete triggers already exist there, so this file is a pure no-op on the environment that actually ran the old content -- the ledger_checksum above matches _system._schema_migrations exactly. Full from-scratch replay re-run clean after both fixes, confirmed via the same local postgres:16-alpine container.",
+    "added_at": "2026-09-03",
+    "added_in_pr": "ACCT-F5684-CLASS-GO18-GAP5-FRESH-DB-FIX"
   }
 ]

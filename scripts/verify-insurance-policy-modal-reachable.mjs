@@ -12,7 +12,7 @@ import process from "node:process";
 const LABEL = "verify-insurance-policy-modal-reachable";
 const TARGET = "apps/frontend/src/pages/insurance/PoliciesList.tsx";
 const POLICY_MODAL = "apps/frontend/src/components/insurance/PolicyCreateModal.tsx";
-const ENTITY_PICKER = "apps/frontend/src/components/parity/EntityPicker.tsx";
+const ENTITY_PICKER = "apps/frontend/src/components/EntityPicker.tsx";
 
 function analyze(src) {
   if (!/PolicyCreateModal/.test(src)) {
