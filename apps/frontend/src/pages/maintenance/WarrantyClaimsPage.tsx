@@ -18,6 +18,7 @@ import { EntityPicker } from "../../components/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useSearchParams } from "react-router-dom";
+import { formatDateUS } from "../../lib/formatDate";
 
 type ClaimDraft = {
   part_description: string;
@@ -146,6 +147,10 @@ export function WarrantyClaimsPage() {
 
   const columns = useMemo<ParityColumn<MaintenanceWarrantyClaimRow>[]>(
     () => [
+      // GO-23 row16 (owner FINISH LAW 2026-09-03): filed_at is already fetched (CLAIM_SELECT,
+      // warranty.routes.ts) and typed on MaintenanceWarrantyClaimRow, but this list never
+      // rendered it -- no date column existed on the claims roster at all.
+      { key: "filed_at", label: "Filed", sortable: true, render: (row) => formatDateUS(row.filed_at) },
       { key: "part_description", label: "Part", sortable: true, render: (row) => row.part_description },
       { key: "vendor_name", label: "Vendor", sortable: true, render: (row) => <EntityLinkOrTombstone kind="vendor" id={row.vendor_id} name={row.vendor_name} noun="Vendor" /> },
       { key: "work_order_id", label: "Work order", render: (row) => <EntityLinkOrTombstone kind="work_order" id={row.work_order_id} name={row.work_order_display_id} noun="Work order" /> },
