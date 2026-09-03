@@ -7308,5 +7308,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-03",
     "purpose": "verify-mileage-g1-g5-live (GO-19-2b Section 8: G1-G5 live guards on catalogs.lane_mileage/mdata.loads short-miles/mileage_source/St.Miles invariants)"
+  },
+  "10265": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-mileage-service-null-not-zero (GO-19-2b Section 6: mileage.service.ts provider-miss returns NULL+reason, never 0, never fabricates a point_mileage row)"
   }
 }
