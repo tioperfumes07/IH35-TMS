@@ -70,6 +70,7 @@ if (process.argv.includes("--selftest")) {
     ["missing registry entry", { ...registry, contracts: registry.contracts.slice(0, -1) }, goodFiles],
     ["missing component file", registry, { ...goodFiles, [componentPath]: undefined }],
     ["dead return drill", registry, { ...goodFiles, [componentPath]: goodFiles[componentPath].replace('to="/dispatch#units-needing-return"', "disabled") }],
+    ["active drill population widened", registry, { ...goodFiles, [componentPath]: goodFiles[componentPath].replace("to={ACTIVE_LOAD_DRILL_HREF}", 'to="/dispatch/loads"') }],
     ["dead detention drill", registry, { ...goodFiles, [componentPath]: goodFiles[componentPath].replace('to="/dispatch/detention"', "disabled") }],
     ["missing rendered panel", registry, { ...goodFiles, [componentPath]: goodFiles[componentPath].replace('data-testid="dispatch-units-needing-return-panel"', "") }],
     ["active-load contradiction restored", registry, { ...goodFiles, [sourcePath]: goodFiles[sourcePath].replaceAll("last_delivery.last_drop_at", "MAX(ls.actual_departure_at)") }],

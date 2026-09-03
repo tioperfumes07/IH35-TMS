@@ -44,6 +44,20 @@ type BorderCrossingEvent = {
 
 const PANEL_ROW_LIMIT = 6;
 
+// GO-07 COUNTING LAW: the tile is counted by countActiveDispatchLoads() on these six statuses.
+// Carry the identical set into the drill URL; the generic live board is a different population
+// (it includes other non-terminal states and excludes delivered_pending_docs), so linking there
+// without an explicit filter makes the tile and its table disagree.
+const ACTIVE_LOAD_DRILL_STATUSES = [
+  "assigned_not_dispatched",
+  "dispatched",
+  "at_pickup",
+  "in_transit",
+  "at_delivery",
+  "delivered_pending_docs",
+] as const;
+const ACTIVE_LOAD_DRILL_HREF = `/dispatch/loads?statuses=${ACTIVE_LOAD_DRILL_STATUSES.join(",")}`;
+
 const CROSSING_LABELS: Record<string, string> = {
   "laredo-i": "Laredo I",
   "laredo-ii": "Laredo II",
@@ -305,7 +319,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
           label="Active loads"
           value={dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.active_loads ?? 0)}
           hint={dashboardQ.data ? `${dashboardQ.data.in_transit} in transit` : undefined}
-          to="/dispatch/loads"
+          to={ACTIVE_LOAD_DRILL_HREF}
         />
         <KpiCard
           label="At-risk / late"

@@ -13,6 +13,7 @@ const live = {
   drivers: read("apps/frontend/src/pages/Drivers.tsx"),
   dispatch: read("apps/frontend/src/pages/dispatch/DispatchOverview.tsx"),
   backend: read("apps/backend/src/dispatch/loads.routes.ts"),
+  activeCounts: read("apps/backend/src/dispatch/active-loads-count.ts"),
 };
 
 function verify(s) {
@@ -27,6 +28,8 @@ function verify(s) {
     ["availability derives from complete set", /onLoadsCount = useMemo\([\s\S]*?dispatchLoadsQuery\.data\?\.loads/.test(s.drivers) && /availableCount = useMemo/.test(s.drivers)],
     ["dispatch OOS complete active set", /const oosLoadsQ = useQuery\([\s\S]*?listAllDispatchLoads\(\{[\s\S]*?delivered_pending_docs/.test(s.dispatch)],
     ["dispatch OOS filtering preserved", /oosLoadsQ\.data\?\.loads[\s\S]*?filter\(\(load\) => load\.is_dispatch_blocked\)/.test(s.dispatch)],
+    ["active tile uses exact filtered drill", /const ACTIVE_LOAD_DRILL_STATUSES = \[[\s\S]*?"assigned_not_dispatched",[\s\S]*?"dispatched",[\s\S]*?"at_pickup",[\s\S]*?"in_transit",[\s\S]*?"at_delivery",[\s\S]*?"delivered_pending_docs",[\s\S]*?\] as const;[\s\S]*?const ACTIVE_LOAD_DRILL_HREF = `\/dispatch\/loads\?statuses=\$\{ACTIVE_LOAD_DRILL_STATUSES\.join\(","\)\}`;[\s\S]*?label="Active loads"[\s\S]*?to=\{ACTIVE_LOAD_DRILL_HREF\}/.test(s.dispatch)],
+    ["active tile and service share exact statuses", /export const DISPATCH_ACTIVE_LOAD_STATUSES = \[[\s\S]*?"assigned_not_dispatched",[\s\S]*?"dispatched",[\s\S]*?"at_pickup",[\s\S]*?"in_transit",[\s\S]*?"at_delivery",[\s\S]*?"delivered_pending_docs",[\s\S]*?\] as const;/.test(s.activeCounts)],
     ["intentional exposure preview remains bounded", /const exposureLoadsQ = useQuery\([\s\S]*?listDispatchLoads\(\{[\s\S]*?limit:\s*20/.test(s.dispatch)],
   ];
   return checks.filter(([, ok]) => !ok).map(([label]) => label);
@@ -46,6 +49,8 @@ if (process.argv.includes("--selftest")) {
     ["drivers first page", { ...live, drivers: live.drivers.replace("listAllDispatchLoads({", "listDispatchLoads({\n        limit: 200, offset: 0,") }],
     ["OOS first page", { ...live, dispatch: live.dispatch.replace(/(const oosLoadsQ = useQuery\([\s\S]*?)listAllDispatchLoads\(\{/, "$1listDispatchLoads({\n        limit: 50, offset: 0,") }],
     ["OOS predicate lost", { ...live, dispatch: live.dispatch.replace("load.is_dispatch_blocked", "true") }],
+    ["active drill loses a counted status", { ...live, dispatch: live.dispatch.replace('  "at_delivery",\n', "") }],
+    ["active tile returns to generic board", { ...live, dispatch: live.dispatch.replace("to={ACTIVE_LOAD_DRILL_HREF}", 'to="/dispatch/loads"') }],
   ];
   for (const [label, mutation] of mutations) {
     if (verify(mutation).length === 0) {
@@ -56,4 +61,4 @@ if (process.argv.includes("--selftest")) {
   console.log(`verify-active-dispatch-load-complete-range SELFTEST PASS — ${mutations.length} planted defects rejected`);
 }
 
-console.log("verify-active-dispatch-load-complete-range PASS — Drivers availability and Dispatch OOS derive from the complete scoped active-load population");
+console.log("verify-active-dispatch-load-complete-range PASS — Active-load KPI drills to its exact six-status set; Drivers availability and Dispatch OOS use complete scoped populations");
