@@ -148,9 +148,9 @@ type FormValues = BookLoadFormValues & {
   late_delivery_reason: string;
   ocr_source_pdf_r2_key: string;
   rate_confirmation_file_id: string;
-  miles_practical: number;
-  miles_shortest: number;
-  miles_deadhead: number;
+  miles_practical: number | null;
+  miles_shortest: number | null;
+  miles_deadhead: number | null;
   mileage_source:
     | ""
     | "History"
@@ -393,9 +393,9 @@ export function BookLoadModalV4({
       late_delivery_reason: "",
       ocr_source_pdf_r2_key: "",
       rate_confirmation_file_id: "",
-      miles_practical: 0,
-      miles_shortest: 0,
-      miles_deadhead: 0,
+      miles_practical: null,
+      miles_shortest: null,
+      miles_deadhead: null,
       mileage_source: "",
       pickup_number: "",
       border_routing: "",
@@ -417,12 +417,20 @@ export function BookLoadModalV4({
   const watchedCustomerId = form.watch("customer_id");
   const watchedCustomerName = form.watch("customer_name");
   const watchedTripType = form.watch("trip_type");
-  const [preDispatch, setPreDispatch] = useState<{ canDispatch: boolean; hasBlockers: boolean; hasWarnings: boolean; hasUnackedInsScheduleConfirm: boolean }>({
+  const [preDispatch, setPreDispatch] = useState<{
+    canDispatch: boolean;
+    hasBlockers: boolean;
+    hasWarnings: boolean;
+    hasUnackedInsScheduleConfirm: boolean;
+    remainingBlockers: number;
+  }>({
     canDispatch: true,
     hasBlockers: false,
     hasWarnings: false,
     hasUnackedInsScheduleConfirm: false,
+    remainingBlockers: 0,
   });
+  const blockOverridesRef = useRef<Record<string, { reason: string; at: string }>>({});
   // GAP-47 — dispatch authorization gates (distinct from GAP-14's physical-readiness checks above):
   // server-side already enforces these on POST .../book (auth-gates preHandler, 422 dispatch_auth_gate_blocked
   // if it fails), so this is a pre-submit PREVIEW, same "read-only preview, submit-time gate is the real
@@ -667,19 +675,12 @@ export function BookLoadModalV4({
     const lane = laneMileageQuery.data;
     if (!lane) return;
     if (milesOperatorTouched.current) return;
-    // GO-16 Rev C: fill whenever practical miles exist. autofill_allowed is audit-only.
-    if (!lane.fills) return;
-    if (!(Number(form.getValues("miles_practical")) > 0) && lane.practical_miles != null) {
+    if (!lane.autofill_allowed) return;
+    if (lane.practical_miles == null) return;
+    if (!(Number(form.getValues("miles_practical") ?? 0) > 0) && lane.practical_miles != null) {
       form.setValue("miles_practical", lane.practical_miles, { shouldDirty: true, shouldValidate: true });
     }
-    if (!(Number(form.getValues("miles_shortest")) > 0) && lane.short_miles != null) {
-      form.setValue("miles_shortest", lane.short_miles, { shouldDirty: true, shouldValidate: true });
-    }
-    // GO-23 owner law: catalogs.lane_mileage.empty_miles is the LANE's historical average
-    // deadhead, not this truck's real deadhead from wherever it actually is to this pickup.
-    // Filling miles_deadhead from it fed a fictional number straight into driver pay/company
-    // cost. Deadhead now fills separately below, from this unit's actual delivery chain
-    // (chainDeadheadQuery) — never re-add a fill from lane.empty_miles here.
+    // short_miles stays NULL (P0). Never fill from catalog.
     if (lane.practical_miles != null) {
       const source =
         lane.fill_confidence === "check_zip"
@@ -823,19 +824,19 @@ export function BookLoadModalV4({
   // showing a confident $ figure for a rate that will actually be silently discarded is exactly
   // the "wrong side of the ledger" defect class this preview already exists to avoid.
   const driverBillPreview = useMemo<number | null>(() => {
-    const miles = Number(milesShortest || 0);
+    const miles = Number(milesPractical || 0);
     const rate = Number(driverPayRatePerMile || 0);
     const reasonOk = String(driverPayRateOverrideReason ?? "").trim().length >= 10;
     if (miles > 0 && rate > 0 && reasonOk) return Math.round(miles * rate * 100);
     return null;
-  }, [driverPayRatePerMile, driverPayRateOverrideReason, milesShortest]);
+  }, [driverPayRatePerMile, driverPayRateOverrideReason, milesPractical]);
   const driverBillMissing = useMemo(() => {
     const missing: string[] = [];
-    if (!(Number(milesShortest || 0) > 0)) missing.push("short miles");
+    if (!(Number(milesPractical || 0) > 0)) missing.push("practical miles");
     if (!(Number(driverPayRatePerMile || 0) > 0)) missing.push("driver pay rate / mile");
     else if (String(driverPayRateOverrideReason ?? "").trim().length < 10) missing.push("override reason (10+ chars)");
     return missing;
-  }, [milesShortest, driverPayRatePerMile, driverPayRateOverrideReason]);
+  }, [milesPractical, driverPayRatePerMile, driverPayRateOverrideReason]);
   const ratePerMile = useMemo(() => {
     const miles = Number(milesPractical || 0);
     if (miles <= 0) return 0;
@@ -942,7 +943,18 @@ export function BookLoadModalV4({
           values as unknown as Record<string, unknown>,
           form.formState.dirtyFields as unknown as Record<string, unknown>,
           operatingCompanyId,
-          opts?.override ? overrideReason : undefined
+          opts?.override
+            ? overrideReason.trim().length >= 10
+              ? overrideReason
+              : Object.values(blockOverridesRef.current)[0]?.reason
+            : undefined,
+          opts?.override
+            ? Object.entries(blockOverridesRef.current).map(([rule_code, rec]) => ({
+                rule_code,
+                reason: rec.reason,
+                subject: rule_code,
+              }))
+            : undefined
         );
         // DRV-BILL-SKIP-PATHS — Edit Load calls ensureDriverBillArtifactsForLoad (#5408); surface mint skips
         // the same way Book does (LV-DISPATCH-TOAST-LIES companion: report server outcome, never invent pay).
@@ -992,7 +1004,6 @@ export function BookLoadModalV4({
       pushToast("Select a Trip Type before booking", "error");
       return;
     }
-    const seatedDriver = Boolean(values.assigned_primary_driver_id?.trim?.() || values.assigned_primary_driver_id);
     const linehaulNeg = linehaulFuelError("linehaul", Number(values.linehaul_cents || 0));
     if (linehaulNeg) {
       form.setError("linehaul_cents", { type: "validate", message: linehaulNeg });
@@ -1013,14 +1024,6 @@ export function BookLoadModalV4({
           message: "Enter practical miles so revenue per mile can be computed from the typed rate.",
         });
         pushToast("Enter practical miles before booking", "error");
-        return;
-      }
-      if (seatedDriver && !(Number(values.miles_shortest) > 0)) {
-        form.setError("miles_shortest", {
-          type: "required",
-          message: "Enter short miles (driver pay) before booking with a driver.",
-        });
-        pushToast("Enter short miles before booking with a driver", "error");
         return;
       }
     }
@@ -1193,7 +1196,18 @@ export function BookLoadModalV4({
         }),
         save_mode: saveMode,
         override_token: token,
-        override_reason: opts?.override ? overrideReason : undefined,
+        override_reason: opts?.override
+          ? overrideReason.trim().length >= 10
+            ? overrideReason
+            : Object.values(blockOverridesRef.current)[0]?.reason
+          : undefined,
+        override_rules: opts?.override
+          ? Object.entries(blockOverridesRef.current).map(([rule_code, rec]) => ({
+              rule_code,
+              reason: rec.reason,
+              subject: rule_code,
+            }))
+          : undefined,
         override_credit_limit: overrideCreditLimit || undefined,
       });
       const warnings = Array.isArray((payload as Record<string, unknown>)?.wf_044_maintenance_warnings)
@@ -1410,7 +1424,8 @@ export function BookLoadModalV4({
               return;
             }
             void form.handleSubmit(async (values) => {
-              await submitLoad(values, "book_dispatch");
+              const hasRowOverrides = Object.keys(blockOverridesRef.current).length > 0;
+              await submitLoad(values, "book_dispatch", { override: hasRowOverrides });
             }, onInvalidSubmit)(event);
           }}
         >
@@ -2068,7 +2083,7 @@ export function BookLoadModalV4({
               <div className="blw-sec-hd">
                 <span className="blw-sec-chip">C</span>
                 <span className="blw-sec-name">Stops and miles</span>
-                <span className="blw-sec-meta">1 pickup, 1 delivery, practical and short miles</span>
+                <span className="blw-sec-meta">1 pickup, 1 delivery, practical miles (short miles optional)</span>
               </div>
               <div className="space-y-2 p-3">
                 <BookLoadStopsSection
@@ -2097,10 +2112,32 @@ export function BookLoadModalV4({
                       ? "operator"
                       : laneMileageQuery.data?.fill_confidence
                   }
-                  shortestRequired={Boolean(assignedPrimaryDriverId)}
+                  shortestRequired={false}
                   practicalRequired
                   milesColumnInverted={milesColumnInverted}
                   reverseLaneShortDiff={reverseLaneShortDiff}
+                  newLane={
+                    Boolean(originPlace.city && destPlace.city && laneMileageQuery.data?.match === "New lane")
+                  }
+                  historyOffer={
+                    laneMileageQuery.data &&
+                    !laneMileageQuery.data.autofill_allowed &&
+                    laneMileageQuery.data.practical_miles != null &&
+                    laneMileageQuery.data.match !== "New lane"
+                      ? {
+                          runs: laneMileageQuery.data.runs,
+                          median: laneMileageQuery.data.practical_miles,
+                          spread: laneMileageQuery.data.practical_spread,
+                        }
+                      : null
+                  }
+                  onUseHistoryMiles={() => {
+                    const lane = laneMileageQuery.data;
+                    if (lane?.practical_miles == null) return;
+                    milesOperatorTouched.current = true;
+                    form.setValue("miles_practical", lane.practical_miles, { shouldDirty: true, shouldValidate: true });
+                    form.setValue("mileage_source", "Operator entered", { shouldDirty: true });
+                  }}
                   onPracticalChange={(n) => {
                     milesOperatorTouched.current = true;
                     form.setValue("mileage_source", "Operator entered", { shouldDirty: true });
@@ -2133,8 +2170,8 @@ export function BookLoadModalV4({
                   </p>
                 ) : null}
                 <p className="blw-note">
-                  Enter destination and the customer rate. Practical miles fill revenue per mile. Short miles pay the driver.
-                  Practical miles must be greater than 0. With a driver seated, short miles must also be greater than 0 or Book is refused.
+                  Type practical miles or accept history. Short miles stay empty unless you type them. Driver pay is two
+                  lines: loaded miles and empty miles.
                 </p>
                 {/* border_routing stays form-backed but not operator-facing here */}
                 <div className="hidden">
@@ -2183,8 +2220,22 @@ export function BookLoadModalV4({
                     (watchedCustomerName || null)
                   }
                   onValidationChange={(canDispatch, hasBlockers, hasWarnings, hasUnackedInsScheduleConfirm) =>
-                    setPreDispatch({ canDispatch, hasBlockers, hasWarnings, hasUnackedInsScheduleConfirm })
+                    setPreDispatch((prev) => ({
+                      ...prev,
+                      canDispatch,
+                      hasBlockers,
+                      hasWarnings,
+                      hasUnackedInsScheduleConfirm,
+                    }))
                   }
+                  onRemainingBlockersChange={(remainingBlockers) =>
+                    setPreDispatch((prev) => ({ ...prev, remainingBlockers, hasBlockers: remainingBlockers > 0 }))
+                  }
+                  onBlockOverridesChange={(rows) => {
+                    blockOverridesRef.current = rows;
+                    const first = Object.values(rows)[0];
+                    if (first?.reason) setOverrideReason(first.reason);
+                  }}
                   // OWNER-ALWAYS-OVERRIDE: these two props were NEVER passed. Both are optional, so
                   // inside the panel `value={overrideReason ?? ""}` was permanently "" and onChange
                   // optional-chained to a no-op — the override textarea could not receive a single
@@ -2298,8 +2349,8 @@ export function BookLoadModalV4({
               )}
               <div className="text-xs text-gray-500">
                 {driverBillPreview === null
-                  ? `Missing ${driverBillMissing.join(" and ")} for this preview. The load still books; the backend uses an active driver rate card when available, otherwise it records a skipped-no-rate event.`
-                  : `${Number(milesShortest || 0).toLocaleString()} short miles × $${Number(driverPayRatePerMile || 0).toFixed(2)} per mile. Recalculates when fields change.`}
+                  ? `Missing ${driverBillMissing.join(" and ")} for this preview. Booking is not blocked. Driver pay on submit is loaded miles × loaded rate plus empty miles × empty rate when a rate card exists.`
+                  : `${Number(milesPractical || 0).toLocaleString()} loaded miles × $${Number(driverPayRatePerMile || 0).toFixed(2)} per mile (empty miles billed on submit from the rate card). Recalculates when fields change.`}
               </div>
             </div>
             <div className="flex gap-2">
@@ -2318,8 +2369,21 @@ export function BookLoadModalV4({
                   Save draft
                 </Button>
               )}
-              <Button type="submit" disabled={form.formState.isSubmitting || (isEditMode && !editLoad) || repairBlockSubmitBlocked || preDispatch.hasUnackedInsScheduleConfirm || (creditLimitBlock != null && (!canOverrideCreditLimit || !overrideCreditLimit))}>
-                {isEditMode ? "Save changes" : "Book + dispatch"}
+              <Button
+                type="submit"
+                disabled={
+                  form.formState.isSubmitting || (isEditMode && !editLoad) ||
+                  repairBlockSubmitBlocked ||
+                  preDispatch.hasUnackedInsScheduleConfirm ||
+                  (!isEditMode && preDispatch.remainingBlockers > 0) ||
+                  (creditLimitBlock != null && (!canOverrideCreditLimit || !overrideCreditLimit))
+                }
+              >
+                {isEditMode
+                  ? "Save changes"
+                  : preDispatch.remainingBlockers > 0
+                    ? `Book + dispatch (${preDispatch.remainingBlockers} remain)`
+                    : "Book + dispatch"}
               </Button>
             </div>
           </div>

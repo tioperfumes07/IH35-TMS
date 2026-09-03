@@ -30,6 +30,11 @@ const num = (v: unknown): number => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
 };
+const numMiles = (v: unknown): number | null => {
+  if (v == null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
 
 /** datetime-local input wants "YYYY-MM-DDTHH:mm" (local); tolerate already-local values. */
 function toLocalInput(iso: string | null | undefined): string {
@@ -116,9 +121,9 @@ export function buildEditPrefill(load: LoadDetail): AnyValues {
     late_delivery_risk_y_n: Boolean(load.late_delivery_risk_y_n),
     late_delivery_est_deduction_cents: num(load.late_delivery_est_deduction_cents),
     late_delivery_reason: str(load.late_delivery_reason),
-    miles_practical: num(load.miles_practical),
-    miles_shortest: num(load.miles_shortest),
-    miles_deadhead: num(load.miles_deadhead),
+    miles_practical: numMiles(load.miles_practical),
+    miles_shortest: numMiles(load.miles_shortest),
+    miles_deadhead: numMiles(load.miles_deadhead),
     assigned_unit_id: str(load.assigned_unit_id),
     assignment_mode: load.team_id ? "team" : "solo",
     team_id: str(load.team_id),
@@ -172,9 +177,9 @@ const SCALAR_FIELDS: Array<[string, string, (v: AnyValues) => unknown]> = [
   ["late_delivery_risk_y_n", "late_delivery_risk_y_n", (v) => Boolean(v.late_delivery_risk_y_n)],
   ["late_delivery_est_deduction_cents", "late_delivery_est_deduction_cents", (v) => num(v.late_delivery_est_deduction_cents)],
   ["late_delivery_reason", "late_delivery_reason", (v) => str(v.late_delivery_reason) || null],
-  ["miles_practical", "miles_practical", (v) => num(v.miles_practical)],
-  ["miles_shortest", "miles_shortest", (v) => num(v.miles_shortest)],
-  ["miles_deadhead", "miles_deadhead", (v) => num(v.miles_deadhead)],
+  ["miles_practical", "miles_practical", (v) => numMiles(v.miles_practical)],
+  ["miles_shortest", "miles_shortest", (v) => numMiles(v.miles_shortest)],
+  ["miles_deadhead", "miles_deadhead", (v) => numMiles(v.miles_deadhead)],
   ["assigned_unit_id", "assigned_unit_id", (v) => str(v.assigned_unit_id) || null],
   // ACCT-F9508 (migration 202613220000): commodity + cargo_weight_lbs restored — the backend PATCH
   // schema accepts them again now that the columns are real (dispatch/loads.routes.ts).
@@ -222,12 +227,20 @@ export function buildEditPatchBody(
   // GO-23 per-blocker Override: NOT a form field, so it can't be tracked by dirtyFields — sent only
   // when the Owner actually clicked "Override & dispatch" on the pre-dispatch panel. Mirrors Book
   // Load's create path (createDispatchLoad's own override_reason), which Edit never had.
-  overrideReason?: string
+  overrideReason?: string,
+  overrideRules?: Array<{ rule_code: string; reason: string; subject?: string }>
 ): AnyValues {
   const body: AnyValues = { operating_company_id: operatingCompanyId };
   const isDirty = (k: string) => Boolean((dirty as Record<string, unknown>)[k]);
   if (overrideReason && overrideReason.trim().length >= 10) {
     body.override_reason = overrideReason.trim();
+  }
+  if (Array.isArray(overrideRules) && overrideRules.length > 0) {
+    body.override_rules = overrideRules;
+    if (!body.override_reason) {
+      const first = overrideRules.find((r) => String(r.reason ?? "").trim().length >= 10);
+      if (first) body.override_reason = first.reason.trim();
+    }
   }
 
   for (const [formKey, patchKey, transform] of SCALAR_FIELDS) {

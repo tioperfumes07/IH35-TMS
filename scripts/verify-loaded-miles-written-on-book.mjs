@@ -3,13 +3,8 @@
  * LV-LOADED-MILES-NEVER-WRITTEN — the Book wizard must persist mdata.loads.loaded_miles.
  *
  * loaded_miles was NULL on every load because NO code path wrote it, so every mileage-based settlement
- * computed $0 — a number that is obviously broken, unlike a plausible-but-wrong one.
- *
- * BASIS = SHORTEST, decided on the pay side's own evidence, not preference: all 5 active pay rates are
- * per_mile_pay / short_miles, and the only load that ever computed pay correctly (L-20260802-0258) did it as
- * 2300 mi x 48c = 110,400c exactly. The wizard also states "Shortest miles used for driver pay" on screen.
- * This guard pins the PAY basis. It deliberately does NOT pin routing: migration 0311 resolves lane
- * profitability with COALESCE(loaded_miles, miles_practical, miles_shortest) and that ruling is unmade.
+ * computed $0. P0 2026-09-03: catalog short_miles is NULL; pay is two lines (loaded + empty).
+ * loaded_miles must fall back to practical when shortest is missing. Booking requires practical, not shortest.
  *
  *   node scripts/verify-loaded-miles-written-on-book.mjs [--selftest]
  */
@@ -65,13 +60,13 @@ function assert(files) {
   if (columns.length !== valueEntries.length) {
     problems.push(`${SVC}: lockstep broken — ${columns.length} columns vs ${valueEntries.length} VALUES entries`);
   }
-  // Anchor to the loaded_miles VALUE SLOT specifically: the file also passes input.miles_shortest for the
-  // miles_shortest column, so a bare search matches the wrong occurrence and the guard would pass while the
-  // basis had been flipped. (My own selftest caught exactly that.)
-  if (!/input\.is_sample_data \?\? false,[\s\S]{0,900}?input\.miles_shortest \?\? null,/.test(src)) {
+  // loaded_miles VALUE SLOT sits after is_sample_data. P0: shortest when typed, else practical.
+  if (
+    !/input\.is_sample_data \?\? false,[\s\S]{0,900}?miles_shortest[\s\S]{0,120}?miles_practical \?\? null/.test(src)
+  ) {
     problems.push(
-      `${SVC}: loaded_miles must be fed from miles_shortest (PAY basis). All active pay rates are ` +
-        `per_mile_pay/short_miles; using practical here would silently change what drivers are paid.`,
+      `${SVC}: loaded_miles must fall back to miles_practical when miles_shortest is missing — ` +
+        `catalog short_miles is NULL and a shortest-only write leaves every new load unpaid.`,
     );
   }
   // Manual miles (no PC*MILER): MilesStrip must expose editable shortest/practical — hidden register-only = FAIL.
@@ -89,8 +84,23 @@ function assert(files) {
   if (!/onShortestChange=\{/.test(modal) || !/Stops and miles/.test(modal)) {
     problems.push(`${MODAL}: must wire MilesStrip onShortestChange and label the section Stops and miles.`);
   }
-  if (!/E_MILES_SHORTEST_REQUIRED/.test(src)) {
-    problems.push(`${SVC}: must refuse book with seated driver when miles_shortest missing (E_MILES_SHORTEST_REQUIRED).`);
+  if (!/E_MILES_PRACTICAL_REQUIRED/.test(src)) {
+    problems.push(`${SVC}: must refuse book when miles_practical is missing (E_MILES_PRACTICAL_REQUIRED).`);
+  }
+  if (/E_MILES_SHORTEST_REQUIRED/.test(src)) {
+    problems.push(`${SVC}: must not require shortest miles to book (P0 — short_miles has no source).`);
+  }
+  if (!/miles_practical:\s*null/.test(modal) || /miles_practical:\s*0/.test(modal)) {
+    problems.push(`${MODAL}: miles_practical must default to null (empty box), never 0.`);
+  }
+  if (!/if \(!lane\.autofill_allowed\) return/.test(modal)) {
+    problems.push(`${MODAL}: High/Check ZIP fill must be gated on autofill_allowed (Thin must not silent-fill).`);
+  }
+  if (!/data-testid="book-load-lane-history-use"/.test(strip)) {
+    problems.push(`${STRIP}: Thin lanes must offer a Use button (State B).`);
+  }
+  if (!/data-testid="book-load-lane-new"/.test(strip)) {
+    problems.push(`${STRIP}: new lanes must say the lane is new (State C).`);
   }
   if (!/resolveStopPlace/.test(modal) || !/originPlace\.city && originPlace\.state && destPlace\.city && destPlace\.state/.test(modal)) {
     problems.push(
@@ -147,7 +157,12 @@ function assert(files) {
     .replace(/id="[^"]*"/g, "");
   const underscored = [...visible.matchAll(/>([^<{][^<]*)</g)]
     .map((m) => m[1])
-    .filter((t) => t.includes("_") && !t.includes("http"));
+    .filter((t) => {
+      if (!t.includes("_") || t.includes("http")) return false;
+      // Ignore TypeScript / JSX expressions the naive `>` scanner also matches (=> void, check_zip).
+      if (/void;|\?:|function |=>|fillConfidence|onShortestChange|onPracticalChange|onDeadheadChange/.test(t)) return false;
+      return true;
+    });
   if (underscored.length) {
     problems.push(`${STRIP}: user-visible underscore on Book Load miles chrome: ${underscored.join(" | ")}`);
   }
@@ -165,20 +180,18 @@ if (SELFTEST) {
     [SVC]: files[SVC].replace("border_routing, is_sample_data, loaded_miles", "border_routing, is_sample_data"),
   };
   checks.push(["column dropped", assert(dropped).some((p) => /must write loaded_miles|lockstep broken/.test(p))]);
-  // Mutate the loaded_miles VALUE SLOT, not the miles_shortest column that precedes it — replacing the
-  // first occurrence plants no defect at all, which is what this selftest originally did.
-  const practical = {
+  const noFallback = {
     ...files,
     [SVC]: files[SVC].replace(
-      /(input\.is_sample_data \?\? false,[\s\S]{0,900}?)input\.miles_shortest \?\? null,/,
-      "$1input.miles_practical ?? null,",
+      /Number\(input\.miles_shortest \?\? 0\) > 0 \? input\.miles_shortest : input\.miles_practical \?\? null,/,
+      "input.miles_shortest ?? null,",
     ),
   };
-  if (practical[SVC] === files[SVC]) {
-    console.error(`${LABEL} SELFTEST FAIL — could not plant the practical-basis mutation`);
+  if (noFallback[SVC] === files[SVC]) {
+    console.error(`${LABEL} SELFTEST FAIL — could not plant the loaded_miles no-fallback mutation`);
     process.exit(1);
   }
-  checks.push(["basis flipped to practical", assert(practical).some((p) => /PAY basis/.test(p))]);
+  checks.push(["loaded_miles practical fallback removed", assert(noFallback).some((p) => /fall back to miles_practical/.test(p))]);
   const hiddenMiles = {
     ...files,
     [STRIP]: files[STRIP].replace(/data-testid="book-miles-shortest"/g, 'data-testid="book-miles-shortest-GONE"'),
@@ -186,9 +199,9 @@ if (SELFTEST) {
   checks.push(["miles strip not editable", assert(hiddenMiles).some((p) => /editable shortest/.test(p))]);
   const noServerRefuse = {
     ...files,
-    [SVC]: files[SVC].replace(/E_MILES_SHORTEST_REQUIRED/g, "E_MILES_GONE"),
+    [SVC]: files[SVC].replace(/E_MILES_PRACTICAL_REQUIRED/g, "E_MILES_GONE"),
   };
-  checks.push(["server refuse removed", assert(noServerRefuse).some((p) => /E_MILES_SHORTEST_REQUIRED/.test(p))]);
+  checks.push(["server refuse removed", assert(noServerRefuse).some((p) => /E_MILES_PRACTICAL_REQUIRED/.test(p))]);
   const allCaps = {
     ...files,
     [STRIP]: `${files[STRIP]}\n<span className="uppercase">PC*MILER</span>`,
@@ -229,5 +242,5 @@ if (SELFTEST) {
 
 const problems = assert(files);
 if (problems.length) { console.error(`${LABEL} FAIL:`); for (const p of problems) console.error("  - " + p); process.exit(1); }
-console.log(`${LABEL}: OK — Book writes loaded_miles from miles_shortest (pay basis), lockstep intact`);
+console.log(`${LABEL}: OK — Book writes loaded_miles (shortest or practical fallback), practical required to book`);
 process.exit(0);

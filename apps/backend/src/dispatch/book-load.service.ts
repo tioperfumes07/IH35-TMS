@@ -128,9 +128,9 @@ export type BookLoadInput = {
   late_delivery_reason?: string;
   ocr_source_pdf_r2_key?: string;
   rate_confirmation_file_id?: string;
-  miles_practical?: number;
-  miles_shortest?: number;
-  miles_deadhead?: number;
+  miles_practical?: number | null;
+  miles_shortest?: number | null;
+  miles_deadhead?: number | null;
   mileage_source?:
     | "History"
     | "History — verify"
@@ -176,6 +176,7 @@ export type BookLoadInput = {
   save_mode: "draft" | "book_dispatch";
   override_token?: string;
   override_reason?: string;
+  override_rules?: Array<{ rule_code: string; reason: string; subject?: string }>;
 };
 
 export type BookLoadResult =
@@ -496,7 +497,7 @@ async function resolveDriverBasePayCents(
       // per_mile_pay — SHORTEST miles by default, because the approved Load Wizard prototype states
       // shortest miles are what a driver is paid on; practical miles drive fuel and ETA, not pay.
       const miles =
-        rate.miles_basis === "practical_miles"
+        rate.miles_basis === "practical_miles" || !(Number(load.miles_shortest ?? 0) > 0)
           ? Number(load.miles_practical ?? Number.NaN)
           : Number(load.miles_shortest ?? Number.NaN);
       const perMile = Number(rate.rate_per_mile_cents ?? 0);
@@ -531,7 +532,10 @@ async function resolveDriverBasePayCents(
   // rule enforced in code, not just in the wizard.
   const overrideReason = typeof load.driver_pay_rate_override_reason === "string" ? load.driver_pay_rate_override_reason.trim() : "";
   const perLoadRateDollars = Number(load.driver_pay_rate_per_mile ?? Number.NaN);
-  const perLoadMiles = Number(load.miles_shortest ?? Number.NaN);
+  const perLoadMiles =
+    Number(load.miles_shortest ?? Number.NaN) > 0
+      ? Number(load.miles_shortest)
+      : Number(load.miles_practical ?? Number.NaN);
   if (
     overrideReason.length >= 10 &&
     Number.isFinite(perLoadRateDollars) &&
@@ -1414,17 +1418,16 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         [input.assigned_primary_driver_id, input.operating_company_id]
       );
       const hos = hosRows[0] ?? null;
-      // Manual miles (no PC*MILER): refuse book with a seated driver when shortest miles are missing.
-      // Pay basis is short_miles — silent 0 produces no driver bill (F277) and looks like success.
-      if (!(Number(input.miles_shortest ?? 0) > 0) && !input.override_token) {
+      // Manual miles: refuse book when practical miles are missing. Short miles stay optional (P0).
+      if (!(Number(input.miles_practical ?? 0) > 0) && !input.override_token) {
         return {
           kind: "error",
           status: 422,
           payload: {
-            error: "E_MILES_SHORTEST_REQUIRED",
+            error: "E_MILES_PRACTICAL_REQUIRED",
             message:
-              "Enter shortest miles before booking with a driver. PC*MILER is not connected — type short and practical miles manually on Book Load.",
-            details: { missing: ["shortest miles"] },
+              "Enter practical miles before booking with a driver. Type them, accept history, or let High/Check ZIP autofill.",
+            details: { missing: ["practical miles"] },
             wf_044_maintenance_warnings: wf044Warnings,
             insurance_coverage_gap_warnings: insuranceCoverageWarnings,
           },
@@ -1623,48 +1626,54 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
 
           const ownerOverridingQualification =
             canOwnerOverrideQualification(input.requestingUserRole) &&
-            typeof input.override_reason === "string" &&
-            input.override_reason.trim().length >= 10;
+            ((typeof input.override_reason === "string" && input.override_reason.trim().length >= 10) ||
+              (Array.isArray(input.override_rules) &&
+                input.override_rules.some((r) => String(r.reason ?? "").trim().length >= 10)));
 
           if (ownerOverridingQualification) {
-            await appendCrudAudit(
-              client,
-              input.requestingUserUuid,
-              "dispatch.driver_qualification_overridden_by_owner",
-              {
-                operating_company_id: input.operating_company_id,
-                driver_id: block.driverId,
-                driver_name: block.driverName,
-                block_code: "E_DRIVER_NOT_QUALIFIED",
-                overridden_reasons: block.reasons,
-                cdl_expires_at: block.cdlExpiresAt,
-                medical_expiry_date: block.medicalExpiryDate,
-                hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
-                override_reason: input.override_reason,
-                role: input.requestingUserRole,
-                // GUARD requirement 2026-08-02: a stable class tag so an insurer, DOT/FMCSA reviewer
-                // or attorney can query EXACTLY this event class without pattern-matching prose.
-                // Keep this literal stable — it is the query key for the Owner-Override Log report.
-                override_class: "DOT_QUALIFICATION",
-                // The attestation must tie to the SPECIFIC dispatch it authorized, not just a driver.
-                load_context: loadContext,
-                // PER-DISPATCH ATTESTATION — this is the line that keeps the override defensible.
-                // The override lives ONLY in this request: the gate re-evaluates on every book-load
-                // call, nothing is written that suppresses it, and there is no cache, flag, column or
-                // token that carries the decision to the next load. The Owner attests for THIS load,
-                // never "CDL gate off". Recorded in the audit row so the record itself says so.
-                attestation_scope: "single_dispatch",
-                severity_label: "critical",
-              },
-              "warning",
-              "BT-3-DISPATCH-AUTH-GATES"
-            );
+            const ruleRows =
+              Array.isArray(input.override_rules) && input.override_rules.length > 0
+                ? input.override_rules.filter((r) => String(r.reason ?? "").trim().length >= 10)
+                : [
+                    {
+                      rule_code: "DOT_QUALIFICATION",
+                      reason: String(input.override_reason ?? "").trim(),
+                      subject: block.driverName,
+                    },
+                  ];
+            for (const row of ruleRows) {
+              await appendCrudAudit(
+                client,
+                input.requestingUserUuid,
+                "dispatch.driver_qualification_overridden_by_owner",
+                {
+                  operating_company_id: input.operating_company_id,
+                  driver_id: block.driverId,
+                  driver_name: block.driverName,
+                  block_code: "E_DRIVER_NOT_QUALIFIED",
+                  rule_code: row.rule_code,
+                  subject: row.subject ?? block.driverName,
+                  overridden_reasons: block.reasons,
+                  cdl_expires_at: block.cdlExpiresAt,
+                  medical_expiry_date: block.medicalExpiryDate,
+                  hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
+                  override_reason: row.reason.trim(),
+                  role: input.requestingUserRole,
+                  override_class: "DOT_QUALIFICATION",
+                  load_context: loadContext,
+                  attestation_scope: "single_dispatch",
+                  severity_label: "critical",
+                },
+                "warning",
+                "BT-3-DISPATCH-AUTH-GATES"
+              );
+            }
             await enqueueOverrideNotice(client, block.driverId, {
               override_type: "driver_qualification",
               notify_channels: ["email", "sms"],
               operating_company_id: input.operating_company_id,
               overridden_reasons: block.reasons,
-              override_reason: input.override_reason,
+              override_reason: ruleRows[0]?.reason.trim() ?? input.override_reason,
               override_by_user_id: input.requestingUserUuid,
               override_class: "DOT_QUALIFICATION",
               load_context: loadContext,
@@ -1955,14 +1964,9 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         input.pickup_number ?? null,
         input.border_routing ?? null,
         input.is_sample_data ?? false,
-        // LV-LOADED-MILES-NEVER-WRITTEN — mdata.loads.loaded_miles was NULL on every load because nothing
-        // wrote it, so every mileage-based settlement computed $0. Basis = SHORTEST, on the pay side's own
-        // evidence: all 5 active pay rates are per_mile_pay/short_miles, and the one load that ever computed
-        // pay correctly (L-20260802-0258) did it as 2300 mi x 48c = 110,400c exactly. The Book wizard says
-        // the same on screen ("Shortest miles used for driver pay"). This settles the PAY basis only —
-        // PRACTICAL-for-routing (migration 0311's COALESCE prefers practical) is a separate, unmade ruling
-        // and is deliberately NOT decided here.
-        input.miles_shortest ?? null,
+        // P0 2026-09-03: short miles have no trustworthy source (catalog short_miles is NULL).
+        // Loaded miles for pay = typed shortest when present, else practical (loaded line of the two-line rule).
+        Number(input.miles_shortest ?? 0) > 0 ? input.miles_shortest : input.miles_practical ?? null,
         loadTrailerEquipmentId,
         // ACCT-F9508-DISPATCH-LOAD-COMMODITY-CREATE-SILENT-NOOP: input.commodity/input.weight_lbs
         // were declared on this interface and accepted by the create schema but never read here —

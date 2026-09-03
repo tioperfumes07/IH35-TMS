@@ -1,37 +1,44 @@
 import type { LaneMileageFillConfidence } from "../../../../api/dispatch";
 
 type Props = {
-  practical?: number;
-  shortest?: number;
-  deadhead?: number;
+  practical?: number | null;
+  shortest?: number | null;
+  deadhead?: number | null;
   /** Linehaul divided by practical miles. Not the customer invoice basis. */
   ratePerMile?: number;
   /** Operator-facing fill label from the lane lookup (or "Operator entered"). */
   provenance?: string;
   /** Drives warning chrome. check_zip must stay visible — those miles feed pay. */
   fillConfidence?: LaneMileageFillConfidence | "operator";
-  onPracticalChange?: (n: number) => void;
-  onShortestChange?: (n: number) => void;
-  onDeadheadChange?: (n: number) => void;
+  onPracticalChange?: { (n: number | null): void };
+  onShortestChange?: { (n: number | null): void };
+  onDeadheadChange?: { (n: number | null): void };
   shortestRequired?: boolean;
   practicalRequired?: boolean;
   /** MILES-INVERT-01 — inline flag when catalog short > practical. */
   milesColumnInverted?: boolean;
   /** Reverse-lane short miles differ by >100mi (catalog trigger). */
   reverseLaneShortDiff?: boolean;
+  /** P0 State B — Thin lane: history + Use, never silent fill. */
+  historyOffer?: { runs: number; median: number; spread: number | null } | null;
+  onUseHistoryMiles?: { (): void };
+  /** P0 State C */
+  newLane?: boolean;
 };
 
-function numFromInput(raw: string): number {
-  const n = Number(raw);
-  return Number.isFinite(n) && n >= 0 ? n : 0;
+function numFromInput(raw: string): number | null {
+  const t = raw.trim();
+  if (t === "") return null;
+  const n = Number(t);
+  return Number.isFinite(n) && !(n < 0) ? n : null;
 }
 
-function formatMiles(n: number): string {
-  return Number.isFinite(n) && n > 0 ? n.toLocaleString(undefined, { maximumFractionDigits: 1 }) : "";
+function formatMiles(n: number | null | undefined): string {
+  return n != null && Number.isFinite(n) && !(n <= 0) ? n.toLocaleString(undefined, { maximumFractionDigits: 1 }) : "";
 }
 
-function inputValue(n: number): string {
-  return Number.isFinite(n) && n > 0 ? String(n) : "";
+function inputValue(n: number | null | undefined): string {
+  return n != null && Number.isFinite(n) && !(n <= 0) ? String(n) : "";
 }
 
 function provenanceClass(fillConfidence?: LaneMileageFillConfidence | "operator"): string {
@@ -56,9 +63,9 @@ function provenanceClass(fillConfidence?: LaneMileageFillConfidence | "operator"
  * GO-16 Rev C / CC-3: provenance under the boxes; Check ZIP stays bold and visible (§7 slate).
  */
 export function MilesStrip({
-  practical = 0,
-  shortest = 0,
-  deadhead = 0,
+  practical,
+  shortest,
+  deadhead,
   ratePerMile = 0,
   provenance,
   fillConfidence,
@@ -69,6 +76,9 @@ export function MilesStrip({
   practicalRequired = false,
   milesColumnInverted = false,
   reverseLaneShortDiff = false,
+  historyOffer = null,
+  onUseHistoryMiles,
+  newLane = false,
 }: Props) {
   // fillConfidence drives chrome; provenance is the operator sentence.
   const cell = "flex flex-1 flex-col items-center justify-center border-r border-slate-200 px-2 py-2 text-center last:border-r-0";
@@ -144,13 +154,37 @@ export function MilesStrip({
         </div>
         <div className={cell}>
           <div className="text-slate-600">Revenue per mile</div>
-          <div className="font-mono text-xs text-slate-900">{ratePerMile > 0 ? `$${ratePerMile.toFixed(3)}` : ""}</div>
+          <div className="font-mono text-xs text-slate-900">{!(ratePerMile <= 0) ? `$${ratePerMile.toFixed(3)}` : ""}</div>
         </div>
       </div>
       <p className="border-t border-slate-200 px-2 py-1 text-xs text-slate-600">
-        Customer pays the typed rate. Practical miles compute revenue per mile. Short miles pay the driver. Empty miles
-        are deadhead company cost.
+        Customer pays the typed rate. Practical miles compute revenue per mile. Driver pay is loaded miles times the
+        loaded rate plus empty miles times the empty rate — two lines. Short miles stay blank until a trustworthy source
+        exists; you may type them.
       </p>
+      {historyOffer ? (
+        <p className="border-t border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-800" data-testid="book-load-lane-history">
+          Seen {historyOffer.runs} times · median {historyOffer.median.toLocaleString(undefined, { maximumFractionDigits: 1 })} mi
+          {historyOffer.spread != null
+            ? ` · spread ${historyOffer.spread.toLocaleString(undefined, { maximumFractionDigits: 1 })}`
+            : ""}{" "}
+          {onUseHistoryMiles ? (
+            <button
+              type="button"
+              data-testid="book-load-lane-history-use"
+              onClick={onUseHistoryMiles}
+              className="ml-2 rounded-sm border border-slate-400 bg-white px-2 py-0.5 text-xs font-semibold"
+            >
+              Use
+            </button>
+          ) : null}
+        </p>
+      ) : null}
+      {newLane ? (
+        <p className="border-t border-slate-200 px-2 py-1 text-xs text-slate-700" data-testid="book-load-lane-new">
+          New lane — not in the history table. Type practical miles.
+        </p>
+      ) : null}
       {milesColumnInverted || reverseLaneShortDiff ? (
         <p
           className="border-t border-slate-400 bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-900"

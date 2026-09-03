@@ -251,9 +251,9 @@ const createDispatchLoadBodySchema = z.object({
   // LOADS-MILEAGE-INTEGER-TRUNCATION (migration 202613310000 widened the columns to numeric(10,1)):
   // AlwaysTrack carries tenths of a mile; multipleOf(0.1) matches the DB precision exactly instead
   // of forcing the caller to round to a whole mile.
-  miles_practical: z.number().min(0).multipleOf(0.1).optional(),
-  miles_shortest: z.number().min(0).multipleOf(0.1).optional(),
-  miles_deadhead: z.number().min(0).multipleOf(0.1).optional(),
+  miles_practical: z.number().min(0).multipleOf(0.1).nullable().optional(),
+  miles_shortest: z.number().min(0).multipleOf(0.1).nullable().optional(),
+  miles_deadhead: z.number().min(0).multipleOf(0.1).nullable().optional(),
   mileage_source: z
     .enum([
       "History",
@@ -341,6 +341,16 @@ const createDispatchLoadBodySchema = z.object({
   save_mode: z.enum(["draft", "book_dispatch"]).default("book_dispatch"),
   override_token: z.string().uuid().optional(),
   override_reason: z.string().trim().min(10).max(1000).optional(),
+  override_rules: z
+    .array(
+      z.object({
+        rule_code: z.string().trim().min(1).max(80),
+        reason: z.string().trim().min(10).max(1000),
+        subject: z.string().trim().max(200).optional(),
+      })
+    )
+    .max(40)
+    .optional(),
   // CUSTVEND-PAR-1: Manager+ override when customer is at/over credit limit.
   override_credit_limit: z.boolean().optional(),
 });
@@ -465,6 +475,16 @@ const updateDispatchLoadBodySchema = z.object({
   // (line ~343 above). Unlocks assertDriverQualifiedForLoad's CDL/DOT-medical/hazmat gate on this
   // PATCH the same way book-load's create path already does; previously Edit had no override path.
   override_reason: z.string().trim().min(10).max(1000).optional(),
+  override_rules: z
+    .array(
+      z.object({
+        rule_code: z.string().trim().min(1).max(80),
+        reason: z.string().trim().min(10).max(1000),
+        subject: z.string().trim().max(200).optional(),
+      })
+    )
+    .max(40)
+    .optional(),
 });
 
 const reserveLoadIdBodySchema = z.object({
@@ -1560,7 +1580,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const body = updateDispatchLoadBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
 
-    const { operating_company_id, charges, stops, override_reason, ...fields } = body.data;
+    const { operating_company_id, charges, stops, override_reason, override_rules, ...fields } = body.data;
     try {
       const result = await withCompanyScope(authUser.uuid, operating_company_id, (client) =>
         updateDispatchLoad(client, {
@@ -1569,6 +1589,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           requestingUserUuid: authUser.uuid,
           requestingUserRole: authUser.role,
           override_reason,
+          override_rules,
           fields: fields as UpdateDispatchLoadFields,
           charges,
           stops,

@@ -25,7 +25,7 @@ export function BookLoadValidationSection({ checks }: Props) {
   const onSaveCount = checks.filter((check) => check.state === "on_save").length;
   const saveActions = [
     "Create load with assigned status",
-    "Auto-create driver bill with short miles",
+    "Auto-create driver bill (loaded miles × loaded rate + empty miles × empty rate)",
     "Queue QBO outbox invoice + bill",
     "Send driver dispatch message",
     "Prepare factoring packet",

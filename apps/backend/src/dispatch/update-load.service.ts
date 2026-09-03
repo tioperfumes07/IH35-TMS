@@ -136,6 +136,7 @@ export type UpdateDispatchLoadInput = {
    * driver assignment had NO override path at all — an absolute 422, even for an Owner attesting a
    * stale/unreadable credential. */
   override_reason?: string;
+  override_rules?: Array<{ rule_code: string; reason: string; subject?: string }>;
   fields: UpdateDispatchLoadFields;
   charges?: UpdateLoadCharge[];
   stops?: UpdateLoadStopInput[];
@@ -610,8 +611,9 @@ export async function updateDispatchLoad(
     // an absolute 422 with no way out, even for an Owner attesting a stale/unreadable credential.
     const ownerOverridingQualification =
       canOwnerOverrideQualification(input.requestingUserRole ?? "") &&
-      typeof input.override_reason === "string" &&
-      input.override_reason.trim().length >= 10;
+      ((typeof input.override_reason === "string" && input.override_reason.trim().length >= 10) ||
+        (Array.isArray(input.override_rules) &&
+          input.override_rules.some((r) => String(r.reason ?? "").trim().length >= 10)));
     for (const driverId of driverIdsToGate) {
       const block = await assertDriverQualifiedForLoad(client, {
         driverId,
@@ -620,42 +622,56 @@ export async function updateDispatchLoad(
       });
       if (!block) continue;
       if (ownerOverridingQualification) {
-        await appendCrudAudit(
-          client,
-          requestingUserUuid,
-          "dispatch.driver_qualification_overridden_by_owner",
-          {
-            operating_company_id: operatingCompanyId,
-            load_id: loadId,
-            driver_id: block.driverId,
-            driver_name: block.driverName,
-            block_code: "E_DRIVER_NOT_QUALIFIED",
-            overridden_reasons: block.reasons,
-            cdl_expires_at: block.cdlExpiresAt,
-            medical_expiry_date: block.medicalExpiryDate,
-            hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
-            override_reason: input.override_reason,
-            role: input.requestingUserRole,
-            override_class: "DOT_QUALIFICATION",
-            load_context: {
+        const ruleRows =
+          Array.isArray(input.override_rules) && input.override_rules.length > 0
+            ? input.override_rules.filter((r) => String(r.reason ?? "").trim().length >= 10)
+            : [
+                {
+                  rule_code: "DOT_QUALIFICATION",
+                  reason: String(input.override_reason ?? "").trim(),
+                  subject: block.driverName,
+                },
+              ];
+        for (const row of ruleRows) {
+          await appendCrudAudit(
+            client,
+            requestingUserUuid,
+            "dispatch.driver_qualification_overridden_by_owner",
+            {
+              operating_company_id: operatingCompanyId,
               load_id: loadId,
-              load_number: old.live_load_number ?? null,
-              customer_id: old.customer_id ?? null,
-              assigned_unit_id: old.assigned_unit_id ?? null,
+              driver_id: block.driverId,
+              driver_name: block.driverName,
+              block_code: "E_DRIVER_NOT_QUALIFIED",
+              rule_code: row.rule_code,
+              subject: row.subject ?? block.driverName,
+              overridden_reasons: block.reasons,
+              cdl_expires_at: block.cdlExpiresAt,
+              medical_expiry_date: block.medicalExpiryDate,
+              hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
+              override_reason: row.reason.trim(),
+              role: input.requestingUserRole,
+              override_class: "DOT_QUALIFICATION",
+              load_context: {
+                load_id: loadId,
+                load_number: old.live_load_number ?? null,
+                customer_id: old.customer_id ?? null,
+                assigned_unit_id: old.assigned_unit_id ?? null,
+              },
+              attestation_scope: "single_dispatch",
+              severity_label: "critical",
+              edit_patch: true,
             },
-            attestation_scope: "single_dispatch",
-            severity_label: "critical",
-            edit_patch: true,
-          },
-          "warning",
-          "BT-3-DISPATCH-AUTH-GATES"
-        );
+            "warning",
+            "BT-3-DISPATCH-AUTH-GATES"
+          );
+        }
         await enqueueOverrideNotice(client, block.driverId, {
           override_type: "driver_qualification",
           notify_channels: ["email", "sms"],
           operating_company_id: operatingCompanyId,
           overridden_reasons: block.reasons,
-          override_reason: input.override_reason,
+          override_reason: ruleRows[0]?.reason.trim() ?? input.override_reason,
           override_by_user_id: requestingUserUuid,
           override_class: "DOT_QUALIFICATION",
           load_context: { load_id: loadId, load_number: old.live_load_number ?? null },
