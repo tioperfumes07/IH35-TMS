@@ -3,15 +3,15 @@
 
 FAST-MERGE. Gate exit 0 → push → PR → merge → next. Never POST.
 
-## HARD WAKE NOW (IDLE defect)
-OUTBOX last ACK is KPI drill HARD WAKE only. No ACK of Load Costs reverse
-1–12. Pull this INBOX. Same job. Execute THIS TURN.
+## HARD WAKE NOW (IDLE defect · re-wake +6m)
+Still no Load Costs reverse 1–12 ACK after #20027. OUTBOX still ends KPI ACK.
+Pull this INBOX. Same job. Execute THIS TURN.
 
 ## NOW
 ```
 CODEX — TAB COMPLETION A. HARD WAKE. IDLE = DEFECT.
 
-A3/B12 is CLOSED. Do not re-drive it. KPI drill is CLOSED on main.
+A3/B12 CLOSED. KPI drill CLOSED on main. Do not re-drive them.
 
 NEXT: Load Costs reverse walks 1–12. Cursor declared LOAD_COSTS_HUB_LINKAGE
 on GET /api/v1/accounting/load-costs-board. Driver / unit / vendor / customer /
