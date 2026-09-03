@@ -57,11 +57,11 @@ function ConversationList({
                 <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" data-testid={`inbox-conversation-driver-${row.driver_id}`} />
               </span>
               {row.unread_count > 0 ? (
-                <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">{row.unread_count}</span>
+                <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white">{row.unread_count}</span>
               ) : null}
             </div>
             <p className="line-clamp-2 text-xs text-gray-600">{row.latest_message}</p>
-            <p className="text-[10px] text-gray-400">{formatWhen(row.latest_at)} · {row.latest_channel}</p>
+            <p className="text-xs text-gray-400">{formatWhen(row.latest_at)} · {row.latest_channel}</p>
           </button>
         </li>
       ))}
@@ -126,7 +126,7 @@ function ThreadPane({
             } ${!msg.read_at && msg.sender_side === "driver" ? "ring-2 ring-slate-400" : ""}`}
           >
             <p>{msg.message}</p>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-gray-500">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
               <span>{formatWhen(msg.created_at)}</span>
               <span>{msg.channel}</span>
               <span>{msg.delivery_status}</span>

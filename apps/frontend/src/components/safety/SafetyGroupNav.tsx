@@ -43,7 +43,7 @@ export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
                   style={hasActive ? { color: "#1f2a44", borderBottomColor: "#1f2a44" } : undefined}
                 >
                   <span>{group.label}</span>
-                  <span className="text-[9px] opacity-60">v</span>
+                  <span className="text-xs opacity-60">v</span>
                 </span>
               }
               minWidth={240}
@@ -60,11 +60,11 @@ export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
                   >
                     <span>{tab.label}</span>
                     {tab.badge === "new" ? (
-                      <span className="rounded-sm px-1.5 py-0.5 text-[8px] font-bold" style={{ background: "#d1fae5", color: "#065f46" }}>
+                      <span className="rounded-sm px-1.5 py-0.5 text-xs font-bold" style={{ background: "#d1fae5", color: "#065f46" }}>
                         NEW
                       </span>
                     ) : tab.badge === "renamed" ? (
-                      <span className="rounded-sm px-1.5 py-0.5 text-[8px] font-bold" style={{ background: "#f1f5f9", color: "#334155" }}>
+                      <span className="rounded-sm px-1.5 py-0.5 text-xs font-bold" style={{ background: "#f1f5f9", color: "#334155" }}>
                         RENAMED
                       </span>
                     ) : null}

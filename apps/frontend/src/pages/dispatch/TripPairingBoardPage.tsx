@@ -153,11 +153,11 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void): Parity
     sortValue: (t) => t.settlement_signal ?? t.status ?? "",
     render: (t) => {
       if (t.settlement_signal === "round_trip") {
-        return <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">Round trip</span>;
+        return <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">Round trip</span>;
       }
       if (t.settlement_signal === "settlement_open") {
         return (
-          <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
+          <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">
             Up north · settlement open{t.up_north_days != null ? ` · ${t.up_north_days}d` : ""}
           </span>
         );
@@ -347,7 +347,7 @@ export function TripPairingBoardPage() {
                     <EntityLinkOrTombstone kind="unit" id={u.unit_id} name={u.unit_number} noun="Unit" className="font-semibold text-slate-800" />
                     <span className="text-slate-500"><EntityLinkOrTombstone kind="driver" id={u.driver_id} name={u.driver_name} noun="Driver" /></span>
                     {/* C1b: live location ("now: <city>") arrives with the backend payload — not fabricated. */}
-                    <span className="text-[10px] text-slate-400">now: —</span>
+                    <span className="text-xs text-slate-400">now: —</span>
                     <button
                       type="button"
                       onClick={() => setBookUnitId(u.unit_id)}

@@ -112,7 +112,7 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
     <section data-testid="compliance-section-hos-history">
       <div className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white px-3 py-3">
         <div className="min-w-[240px] flex-1" data-testid="hos-history-driver-picker">
-          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">Driver</label>
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500">Driver</label>
           {/* Picker law: EntityPicker kind=driver — not Combobox over listDrivers page. */}
           <EntityPicker
             kind="driver"
@@ -126,7 +126,7 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
           />
         </div>
         <div>
-          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">From</label>
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500">From</label>
           <DatePicker
             value={fromDate}
             max={toDate}
@@ -136,7 +136,7 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
           />
         </div>
         <div>
-          <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">To</label>
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500">To</label>
           <DatePicker
             value={toDate}
             min={fromDate}

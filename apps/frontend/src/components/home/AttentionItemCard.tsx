@@ -80,7 +80,7 @@ export function AttentionItemCard({ item, rank, onAction, onDismiss, dismissing 
       aria-label={`Attention item ${rank}: ${item.title}`}
     >
       {/* Rank badge */}
-      <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[10px] font-bold text-slate-500 ring-1 ring-slate-200">
+      <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-slate-500 ring-1 ring-slate-200">
         {rank}
       </div>
 
@@ -92,12 +92,12 @@ export function AttentionItemCard({ item, rank, onAction, onDismiss, dismissing 
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold text-slate-900">{item.title}</span>
           <span
-            className="rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+            className="rounded-full px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide"
             style={{ backgroundColor: cfg.badge, color: cfg.badgeFg }}
           >
             {item.severity}
           </span>
-          <span className="ml-auto text-[10px] font-medium text-slate-400">Score {item.score}</span>
+          <span className="ml-auto text-xs font-medium text-slate-400">Score {item.score}</span>
         </div>
 
         {item.body ? (
