@@ -1066,6 +1066,8 @@ export function getPlaidCompanyTransactions(
     q?: string;
     bank_account_id?: string;
     sort?: CompanyTransactionsSort;
+    date_from?: string;
+    date_to?: string;
   } = {}
 ) {
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
@@ -1074,6 +1076,8 @@ export function getPlaidCompanyTransactions(
   if (options.q?.trim()) params.set("q", options.q.trim());
   if (options.bank_account_id) params.set("bank_account_id", options.bank_account_id);
   if (options.sort) params.set("sort", options.sort);
+  if (options.date_from) params.set("date_from", options.date_from);
+  if (options.date_to) params.set("date_to", options.date_to);
   return apiRequest<{ transactions: PlaidBankTransaction[] }>(`/api/v1/banking/plaid/company-transactions?${params.toString()}`);
 }
 
