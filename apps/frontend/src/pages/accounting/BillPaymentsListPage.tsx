@@ -294,7 +294,7 @@ export function BillPaymentsListPage() {
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 min-w-[240px] flex-1">
           Unpaid bill selector
           <SelectCombobox
-            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
             value={selectedBillId}
             onChange={(event) => setSelectedBillId(event.target.value)}
           >
@@ -313,7 +313,7 @@ export function BillPaymentsListPage() {
           dataAttributes={{ "data-bill-payments-filter-toolbar": "collapsed" }}
           searchSlot={
             <input
-              className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
+              className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-xs"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search payment rows"

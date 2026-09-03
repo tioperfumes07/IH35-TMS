@@ -126,7 +126,7 @@ export function ListViewDemo() {
           density="cozy"
           badgeSlot={(r) =>
             r.status === "Inactive" ? (
-              <span className="ml-1 text-[9px] bg-gray-200 text-gray-600 rounded-sm px-1 py-0.5">
+              <span className="ml-1 text-xs bg-gray-200 text-gray-600 rounded-sm px-1 py-0.5">
                 Inactive
               </span>
             ) : null

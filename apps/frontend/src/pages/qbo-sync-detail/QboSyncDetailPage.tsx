@@ -88,7 +88,7 @@ export function QboSyncDetailPage() {
         label: "Kind",
         sortable: true,
         render: (row) => (
-          <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold uppercase ${kindPillClass(row.kind)}`}>{row.kind}</span>
+          <span className={`rounded-sm border px-2 py-0.5 text-[11px] font-semibold uppercase ${kindPillClass(row.kind)}`}>{row.kind}</span>
         ),
       },
       {
@@ -96,7 +96,7 @@ export function QboSyncDetailPage() {
         label: "Severity",
         sortable: true,
         render: (row) => (
-          <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold uppercase ${severityPillClass(row.severity)}`}>
+          <span className={`rounded-sm border px-2 py-0.5 text-[11px] font-semibold uppercase ${severityPillClass(row.severity)}`}>
             {row.severity}
           </span>
         ),

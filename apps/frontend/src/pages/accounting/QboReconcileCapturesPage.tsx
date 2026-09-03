@@ -26,7 +26,7 @@ import { fetchReconRuns, fetchReconExceptions, type ReconRun, type ReconExceptio
 import { ApiError } from "../../api/client";
 
 const FLAG = "QBO_RECONCILE_UI_ENABLED";
-const SELECT_CLASS = "h-9 rounded-sm border border-gray-300 px-2 text-[13px] focus:outline-hidden focus:ring-1 focus:ring-slate-400";
+const SELECT_CLASS = "h-9 rounded-sm border border-gray-300 px-2 text-xs focus:outline-hidden focus:ring-1 focus:ring-slate-400";
 
 const fmtDt = (s: string | null) => (s ? new Date(s).toLocaleString("en-US") : "—");
 const titleize = (s: string | null) => (s ? s.replace(/_/g, " ") : "—");

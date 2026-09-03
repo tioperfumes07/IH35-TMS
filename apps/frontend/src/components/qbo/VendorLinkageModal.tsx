@@ -93,7 +93,7 @@ export function VendorLinkageModal({
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-[13px]"
+              className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
               placeholder="Search display/company name"
             />
           </label>
@@ -120,7 +120,7 @@ export function VendorLinkageModal({
               rows={4}
               value={reason}
               onChange={(event) => setReason(event.target.value)}
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
             />
           </label>
           {error ? <div className="rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">{error}</div> : null}

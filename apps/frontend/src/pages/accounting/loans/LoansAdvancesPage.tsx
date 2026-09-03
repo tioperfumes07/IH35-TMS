@@ -136,7 +136,7 @@ export function LoansAdvancesPage() {
       </div>
 
       {!companyId && (
-        <div className="mt-4 rounded-sm border border-slate-200 bg-white p-4 text-[13px] text-slate-600">
+        <div className="mt-4 rounded-sm border border-slate-200 bg-white p-4 text-xs text-slate-600">
           Select an operating company to load its loans and advances.
         </div>
       )}
