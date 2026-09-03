@@ -7213,7 +7213,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1043,
+  "total_claimed": 1044,
   "10225": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-01",
@@ -7238,5 +7238,10 @@
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-03",
     "purpose": "verify-settlement-display-id-advisory-lock (ACCT-F19367 regression guard: settlement + cash-advance-request display-id generators must keep pg_advisory_xact_lock)"
+  },
+  "10238": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-cash-advance-disbursement-method-parity (GO-21 B8: disbursement_method must be the same set across all 6 backend+frontend surfaces)"
   }
 }
