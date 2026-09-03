@@ -7253,7 +7253,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1049,
+  "total_claimed": 1050,
   "10242": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-03",
@@ -7283,5 +7283,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-03",
     "purpose": "verify-fleet-oos-columns-manifest (PASTE-ALL-SEATS-2026-09-03 Packet C: element manifest guard for OOS/in-shop columns)"
+  },
+  "10251": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-load-costs-board-trailer-unit-columns (live-confirmed HTTP 500 on GET /api/v1/accounting/load-costs-board -- l.trailer_id does not exist on mdata.loads, u.operating_company_id does not exist on mdata.units; pins the fix to the same pattern loads.routes.ts already uses)"
   }
 }
