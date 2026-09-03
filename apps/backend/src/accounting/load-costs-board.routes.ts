@@ -17,7 +17,7 @@ export const LOAD_COSTS_HUB_LINKAGE = {
   9: { hub: "mdata.vendors", via: "expense.vendor_id and bills.vendor_id", reverse: "vendor bills / expenses" },
   10: { hub: "accounting.journal_entries", via: "posting on the expense or bill, never a parallel ledger", reverse: "JE source links" },
   11: { hub: "docs.files", via: "receipts / attachments on the expense or bill", reverse: "Docs module by source id" },
-  12: { hub: "mdata.equipment", via: "load.trailer_id when a trailer is assigned", reverse: "equipment / trailer loads" },
+  12: { hub: "mdata.equipment", via: "dispatch.load_assignment_history.new_trailer_id, most recent row (mdata.loads has no trailer_id column)", reverse: "equipment / trailer loads" },
 } as const;
 
 export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
@@ -82,8 +82,22 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
            FROM views.dispatch_load_with_driver_status l
            LEFT JOIN expense_costs ec ON ec.load_id=l.id LEFT JOIN bill_costs bc ON bc.load_id=l.id LEFT JOIN driver_pay dp ON dp.load_id=l.id
            LEFT JOIN mdata.customers c ON c.id=l.customer_id AND c.operating_company_id=l.operating_company_id
-           LEFT JOIN mdata.units u ON u.id=l.assigned_unit_id AND u.operating_company_id=l.operating_company_id
-           LEFT JOIN mdata.equipment tr ON tr.id=l.trailer_id AND tr.operating_company_id=l.operating_company_id
+           -- W-FIX-3b (loads.routes.ts, same rule): mdata.units has owner_company_id /
+           -- currently_leased_to_company_id, never operating_company_id. mdata.loads has NO
+           -- trailer_id column at all -- the only real trailer<->load link is
+           -- dispatch.load_assignment_history.new_trailer_id (mdata.equipment). Both were wrong
+           -- here (confirmed live: HTTP 500 on this exact endpoint); fixed to the same pattern
+           -- already used by GET /api/v1/dispatch/loads (loads.routes.ts).
+           LEFT JOIN mdata.units u ON u.id=l.assigned_unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id)=l.operating_company_id
+           LEFT JOIN LATERAL (
+             SELECT eq.equipment_number
+               FROM dispatch.load_assignment_history lah
+               JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
+                                      AND (eq.owner_company_id = l.operating_company_id OR eq.currently_leased_to_company_id = l.operating_company_id)
+              WHERE lah.load_id = l.id AND lah.new_trailer_id IS NOT NULL
+              ORDER BY lah.assigned_at DESC
+              LIMIT 1
+           ) tr ON true
            LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='pickup' AND soft_deleted_at IS NULL ORDER BY sequence_number ASC LIMIT 1) pickup ON true
            LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at,actual_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='delivery' AND soft_deleted_at IS NULL ORDER BY sequence_number DESC LIMIT 1) delivery ON true
           WHERE l.operating_company_id=$1::uuid AND l.soft_deleted_at IS NULL
