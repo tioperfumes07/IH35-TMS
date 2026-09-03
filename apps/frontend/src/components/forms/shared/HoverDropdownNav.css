@@ -58,15 +58,28 @@
   gap: 0;
 }
 
-/* Positioning (position/top/left/min-width/z-index) is NOT set here. `.hover-dropdown-nav` sets
-   `overflow-x: auto`, which the CSS Overflow spec forces to also compute `overflow-y: auto` on the
-   SAME element -- a `position: absolute` menu here would be clipped by that ancestor box (confirmed
-   live via getComputedStyle/getBoundingClientRect, GO-23 nav-dropdown-clip finding). HoverDropdownNav.tsx
-   renders this element into a document.body portal instead and positions it inline via
-   `measureNavDropdownStyle()` (position: fixed, from a live getBoundingClientRect() read) -- the same
-   fix already proven in components/Combobox.tsx's measureListboxStyle(). Do not add position/z-index
-   here; it would be dead code at best and a stale conflicting value at worst. */
+/* GO-23-REGRESSION-CORRECTION: `.nav-dropdown` is used by TWO independent implementations that
+   both import this stylesheet -- HoverDropdownNav.tsx (the shared component) AND
+   components/dispatch/DispatchSubnav.tsx (its own hand-rolled `<nav className="hover-dropdown-nav">`
+   + local `DropdownColumn`, confirmed via grep: it imports only this .css file, never the TSX
+   component). A prior pass here deleted position/top/left/z-index/min-width on the theory that ONLY
+   HoverDropdownNav.tsx renders `.nav-dropdown` -- that was false, and it silently broke
+   DispatchSubnav.tsx's menu to `position: static` (confirmed live via getComputedStyle on
+   app.ih35dispatch.com/dispatch: position was "static", not "absolute"). Restored the base
+   positioning as the DEFAULT here so DispatchSubnav.tsx's still-unported implementation keeps
+   working. HoverDropdownNav.tsx's own instances are unaffected: its React inline `style={menuStyle}`
+   (position: fixed, from `measureNavDropdownStyle()`, portal-rendered into document.body) always wins
+   over these class rules regardless of what's declared here -- inline style beats any class
+   selector's specificity, full stop. DispatchSubnav.tsx's `.nav-dropdown` still sits inside
+   `.hover-dropdown-nav`'s CSS-spec-forced `overflow-y: auto` and is therefore still clipped exactly
+   like HoverDropdownNav.tsx was before its portal fix -- that is a PRE-EXISTING, NOT NEWLY
+   INTRODUCED, defect in DispatchSubnav.tsx's own separate implementation, out of this fix's scope;
+   flagged in docs/audit/GUARD-WORKORDERS.md, not silently left broken by this correction. */
 .nav-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: var(--z-dropdown);
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-md);
@@ -75,6 +88,7 @@
   margin: 0;
   padding: var(--space-2) 0;
   width: max-content;
+  min-width: 100%;
 }
 
 .nav-dropdown li a {
