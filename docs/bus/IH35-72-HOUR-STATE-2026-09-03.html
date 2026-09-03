@@ -1,0 +1,211 @@
+<title>IH35 72-Hour State</title>
+<style>
+:root{--bg:#f6f7f5;--card:#fff;--ink:#16191c;--dim:#5c6570;--line:#d9dee3;--hdr:#14314F;--ok:#1c6b3f;--okbg:#e8f4ec;--pend:#8a3d10;--pendbg:#fdefe4;--part:#6b5a10;--partbg:#fbf4dd;--accent:#14314F}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111417;--card:#181c20;--ink:#e8ecef;--dim:#9aa5ae;--line:#2b3238;--hdr:#1d4670;--ok:#7ed3a3;--okbg:#12291d;--pend:#f0a874;--pendbg:#2c1a0e;--part:#e0cd7a;--partbg:#2a2410}}
+:root[data-theme="dark"]{--bg:#111417;--card:#181c20;--ink:#e8ecef;--dim:#9aa5ae;--line:#2b3238;--hdr:#1d4670;--ok:#7ed3a3;--okbg:#12291d;--pend:#f0a874;--pendbg:#2c1a0e;--part:#e0cd7a;--partbg:#2a2410}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;margin:0;padding:28px 20px 80px}
+.wrap{max-width:1120px;margin:0 auto}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:-.02em}
+.sub{color:var(--dim);font-size:13px;margin:0 0 22px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:0 0 26px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:11px 13px}
+.stat b{display:block;font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stat span{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.09em;color:#fff;background:var(--hdr);padding:7px 12px;border-radius:5px 5px 0 0;margin:26px 0 0}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-top:0;border-radius:0 0 5px 5px;overflow:hidden}
+td{padding:8px 12px;border-top:1px solid var(--line);vertical-align:top;font-size:13px}
+tr:first-child td{border-top:0}
+td.s{width:96px;white-space:nowrap}
+td.i{width:34%;font-weight:600}
+.b{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.05em;padding:2px 7px;border-radius:3px;text-transform:uppercase}
+.done{color:var(--ok);background:var(--okbg)} .pending{color:var(--pend);background:var(--pendbg)} .partial{color:var(--part);background:var(--partbg)}
+code{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;background:rgba(128,128,128,.14);padding:1px 4px;border-radius:3px}
+.p{color:var(--dim);font-size:12.5px;margin:3px 0 0}
+ol.seq{counter-reset:s;list-style:none;padding:0;margin:14px 0 0}
+ol.seq li{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:12px 14px 12px 48px;position:relative;margin-bottom:8px}
+ol.seq li::before{content:counter(s);position:absolute;left:12px;top:11px;width:24px;height:24px;border-radius:50%;background:var(--hdr);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center}
+ol.seq b{display:block;font-size:14px}
+ol.seq span{color:var(--dim);font-size:12.5px}
+.note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:5px;padding:12px 14px;margin:18px 0;font-size:13px}
+.scroll{overflow-x:auto}
+</style>
+<div class="wrap">
+<h1>IH35 — 72-Hour State</h1>
+<p class="sub">Every row verified against <code>main @ 37a29389c</code> and live Neon production (<code>bypass_rls</code>, counts run twice). Sept 1 00:00 → Sept 3 22:30.</p>
+
+<div class="stats">
+<div class="stat"><b>1,094</b><span>commits</span></div>
+<div class="stat"><b>487</b><span>touched code</span></div>
+<div class="stat"><b>598</b><span>documents only</span></div>
+<div class="stat"><b>310</b><span>guard scripts</span></div>
+<div class="stat"><b>73</b><span>migrations</span></div>
+<div class="stat"><b>1</b><span>USMCA load</span></div>
+</div>
+
+<div class="note"><b>The one-line read:</b> 55% of everything merged was paperwork, and 310 of the 487 code commits were guard scripts — infrastructure that checks work rather than work. The plumbing (void, override, miles, roster) is real. The money spine you specified — pre-settlement at load creation, driver bill at creation, advance→loan — is 0% wired.</div>
+
+<h2>1 · Book Load Wizard</h2>
+<div class="scroll"><table>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Three-state miles component</td><td><code>book-load-v4/MilesStrip.tsx</code> — High / Thin (runs · median · spread + Use) / New lane.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Miles no longer default to 0</td><td><code>BookLoadModalV4.tsx:396-398</code> all three null. Zero was a false statement that paid the driver nothing.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Per-blocker override table</td><td><code>ValidationPanel.tsx:181</code> → <code>loads.routes.ts:344</code>. One audited decision per blocker, extended to Edit Load.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Deadhead never coerced to 0</td><td>Chain deadhead from the unit's previous delivery. Blank stays blank.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Customer search is a real server search</td><td>Ranked autocomplete, limit 2,000 — not the old 200-row slice.</td></tr>
+<tr><td class="s"><span class="b partial">Partial</span></td><td class="i">Miles autofill on a real lane</td><td>Rescore ran; <code>practical_min</code>/<code>practical_max</code> still <b>NULL on all 3,006 lanes</b> — the spread shown to you is computed from empty columns.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Miles strip above the stop cards</td><td>Stops <code>:2089</code>, MilesStrip <code>:2100</code>. Still buried below.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">The four removals you ordered</td><td><code>Class T120-SMITH :2062</code> · <code>Legacy load reference :1737</code> · <code>LoadTemplatePicker :60/:1669</code> · <code>classification banner :1511</code>. All still in the file.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Customer data defects</td><td>2 mojibake names (<code>NCC Logistics MÃ©xico</code>) · <b>14</b> USMCA customers with <code>status='active'</code> AND <code>deactivated_at</code> set. This is why the customer vanished — not trip type.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Box sizes / money format / dropdowns</td><td>Customer WO vs Always Track · accessorial · weight · adjustments · advance boxes · assignment mode · state dropdown · load start/end dates · read-only driver pay rate · rate-con verify. No code has touched any of it.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Cash / fuel advance fully wired</td><td>Receipt-upload migration applied; the link to driver bill + settlement + Comchek/EFTPS reference is not built.</td></tr>
+</table></div>
+
+<h2>2 · Voids, Cancellations &amp; Reversals</h2>
+<div class="scroll"><table>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Void primitive</td><td><code>accounting/void.service.ts</code> — <code>postVoidReversal</code> flips the postings, asserts balance, detects closed periods. Never deletes.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Void is Owner + Accountant only</td><td><code>canVoid()</code>. Administrator excluded.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">8 voidable document types</td><td>invoice · journal entry · bill · expense · bill payment · customer payment · prepaid purchase · prepaid amortization.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Load-cancel cascade</td><td>One transaction: driver bills voided → settlements cancelled via the shared executor → invoices voided <i>with reversing JEs</i> → orphan check recorded.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Paid / factored fail loud</td><td>A paid invoice is never silently voided — real cash was collected. Factored is a different liability.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">TONU becomes its own invoice</td><td>The cancellation charge is booked as a new invoice, not left riding on the dead load.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">WORM delete refusal</td><td>Triggers on all 7 document-number tables. Deletes are refused at the database.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Flags ON for USMCA — live</td><td><code>VOID_ENFORCEMENT_ENABLED</code> ✓ · <code>MONEY_CONTROL_VOID_REVERSAL_ENABLED</code> ✓ · <code>TONU_CANCELLATION_AR_POSTING_ENABLED</code> ✓ · <code>WO_VOID_ENABLED</code> ✓ · <code>VOID_QBO_MIRROR_ENABLED</code> OFF (correct).</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Expenses are NOT voided on load cancel</td><td>The <code>expense</code> executor exists; <code>cancellation.service.ts</code> never calls it. Cancel a load with fuel/tolls/lumper and those expenses stay live on a dead load.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Bank matches are NOT released on load cancel</td><td><code>unmatchBankTransactionById</code> is called only from the settlement routes. Your register's "5 bank transactions matched to voided documents" is this bug's footprint.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Advances / liabilities not reversed</td><td>Zero references in the cancel path. Harmless today (0 rows) — becomes a live loan with no document the moment the spine is wired.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">4 parallel void-column conventions</td><td>Schema-wide. Collapse to one.</td></tr>
+</table></div>
+
+<h2>3 · Settlements · Pre-settlements · Load Costs — the money spine</h2>
+<div class="scroll"><table>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Every table and column exists</td><td><code>driver_bills</code> (load_id, load_number, miles_basis, rate_per_mile_cents, settled_in_settlement_id) · <code>driver_liabilities</code> · <code>driver_advances</code> · <code>presettlement_link_suggestions</code> · <code>settlement_lines</code> · escrow ledger.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Driver bill = load number, no prefix</td><td>Merged this window.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Settlement void / reverse executor</td><td>Reused by the cancel cascade. No duplicate GL math.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Pre-settlement created at LOAD CREATION</td><td><b>0 rows</b> in <code>presettlement_link_suggestions</code>. The link column points at a query service nobody wrote.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Driver bill created at load creation</td><td><b>4 driver bills app-wide.</b> Columns ready, nothing writes them at creation.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Proforma income + cash-flow forecast at creation</td><td>Not wired.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Advance → bill payment → loan overflow</td><td><code>driver_advances</code> <b>0</b> · <code>driver_liabilities</code> <b>0</b>. The $500/$1,000 rule is unbuilt.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Mandatory loan pop-up at close</td><td>Not built. Cannot be deferred by design; nothing enforces it yet.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Home-base geofence + empty-miles-home prompt</td><td>23918 Mines Rd, Laredo TX 78045. Not built.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Tour = settlement boundary, three states</td><td><code>driver_settlements</code> <b>0 rows</b>. open → ready_to_close → closed not implemented.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Vehicle swap: both trucks partially assigned</td><td>Cost split by miles each actually ran. Not built.</td></tr>
+</table></div>
+
+<h2>4 · Mileage &amp; Lanes</h2>
+<div class="scroll"><table>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Lane table rebuilt clean</td><td>The St.Miles→short_miles mis-mapping that created 2,142 impossible lanes is gone. 0 impossible lanes.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Duplicate-key merge + relative-spread rescore</td><td>Live: 3,092 → <b>3,006</b> lanes (86 merged) · High 472 → <b>543</b> · autofill 876 → <b>939</b> · Check ZIP 396 · Thin 2,067.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i"><code>catalogs.point_mileage</code> + provider contract</td><td>Table and service contract merged.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i"><code>short_miles</code> CHECK constraint + G1–G5 guards</td><td>Prevents the mis-mapping recurring.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i"><code>practical_min</code> / <code>practical_max</code></td><td><b>NULL on all 3,006 rows.</b></td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">The routing engine itself</td><td>Free OSM routing (0.67% median error over 7,601 loads) — infra blocker filed, not stood up. Google barred on licence; Trimble trial dead.</td></tr>
+</table></div>
+
+<h2>5 · Dispatch Board · Round Trips · Planners</h2>
+<div class="scroll"><table>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Nav route map filed</td><td>Dead <code>/dispatch/alerts/late-arrivals</code> leaf and duplicate Load costs tab identified.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Surfaces exist</td><td><code>DispatchBoard</code> · <code>RoundTripsTimeline</code> · <code>TripPairingBoardPage</code> · <code>PlannerCalendarPage</code> · <code>LateArrivalsPage</code> · <code>DetentionBoardPage</code> · <code>AtRiskQueuePage</code>.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Two rows of identical tabs</td><td>Not touched.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Hand-rolled table → ParityTable</td><td><code>DispatchBoard.tsx:1157</code> raw <code>&lt;table&gt;</code>; ParityTable imported at <code>:93</code> and never used.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Column drag (regression)</td><td>Worked before. Gone.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">85px rows · no dividers · wrong header colour</td><td><code>bg-gray-50 :1159/:1232</code>, <code>bg-gray-100 :1206</code> vs token <code>#14314F</code>.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Round Trips timeline regression</td><td>Old design at <code>67faa3dcd</code> (NB #1f2a44 · SB #475569 · TR #b45309) not restored.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Trip pairing = Round Trip built twice</td><td>Two surfaces, one concept. Not consolidated. Dead grey "All trailer types"; "Search unit" returns nothing.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Planners</td><td>Name not in its own column · Book/Reserve/Leave has no column · boxes sit on the calendar · dates not MMM-DD · inactive drivers still listed · no calendar ranges.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Location column = live truck position</td><td>Still bound to load origin, not Samsara.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Late arrivals shows closed loads</td><td>8/9/26 delivered load still listed. No sort by date/unit/driver.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Kanban drag · Factoring out of dispatch</td><td>Not touched.</td></tr>
+</table></div>
+
+<h2>6 · Banking</h2>
+<div class="scroll"><table>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Duplicate purge</td><td>48 duplicates voided. Live: <b>400 total · 57 voided · 343 active · 0 duplicate groups · 0 orphans · 0 sample rows</b>. Verified twice.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Match + categorize drawers exist</td><td><code>MatchDrawer.tsx</code> 394 lines · <code>CategorizeDrawer.tsx</code> 173 lines.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Bank-transaction sample-data column</td><td>Migration applied.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Match-flow audit</td><td>Not started. Entity filter, void exclusion, GL path, one-to-one integrity, unmatch, partial-payment variance — all unverified.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">343 rows still uncategorized</td><td>By design — they wait for your first load-created expenses and bills.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">QBO reconciliation module</td><td>Your ruling: never sync — compare counts and chart-of-accounts, flag every mismatch. Not built.</td></tr>
+</table></div>
+
+<h2>7 · Accounting</h2>
+<div class="scroll"><table>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i"><code>unit_id</code> mandatory on every new expense</td><td>G1 rejects no-unit · G2 rejects unit/load mismatch · G3 rejects fixed-cost-with-load. Guard proven failing on pre-fix code.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Three dates, three columns</td><td>Cleared-date migration applied. Incurred / due / paid separated.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Posted-requires-JE check</td><td>A document cannot claim posted with no journal entry — going forward.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Accessorial 4200 hierarchy · dual numbering · expense class</td><td>Migrations applied.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">USMCA ledger is clean by design</td><td>Live: expenses 0 · bills 0 · invoices 0 · journal entries 0. Not a gap.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">24 of 39 transaction-health checks never run</td><td>Bank tie-out, unbilled revenue, escrow, prepaid, fixed assets, factoring, intercompany, entity leak, closed-period, both-way linkage.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">A/R out $1,215.75 · A/P out $268.77</td><td>From your register. Not re-verified since.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">$109,158.50 stranded in Unbilled Revenue</td><td>Frozen-entity balance; needs an entity-scoped re-read before any action.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Test-named GL account holding $1,200</td><td>On the balance sheet.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">129 NULL expense numbers · 3 posted-with-no-JE · 1 void without reason</td><td>Existing rows, pre-guard.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Health endpoint has zero financial checks</td><td>Not built.</td></tr>
+</table></div>
+
+<h2>8 · Drivers &amp; Safety</h2>
+<div class="scroll"><table>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Roster reconciled against Samsara</td><td>Live: <b>20 active</b> of 167 USMCA drivers (was ~90). All 20 carry <code>cdl_expires_at</code>.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">CDL / medical intake path</td><td>Merged. Mexican <i>Categoría E</i> rejected by a CHECK constraint — found and filed.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Canonical driver tags</td><td>Migration applied.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Categoría E constraint fix</td><td>Filed, not fixed. Mexican drivers cannot be classified correctly.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">15 Mexico licence PDFs</td><td>Still unloaded.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">DQ file checklist &amp; sequence at hire</td><td>Not built. "+ Create checklist item" greyed out.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Nowhere to upload the DOT medical card</td><td>Same for drug tests, MVR, background, fines, inspections, border credentials.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Payment methods: no create wizard</td><td>ACH/Check listed; "+ Create" missing; "bank token" meaningless — needs account + routing entry.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Driver profile action row half-dead</td><td>Edit / Assign Truck / Message / Map / Export PDF / Suspend / Terminate — out of proportion, not all work.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Legal · Claims · Expenses · Fuel · Fines tiles go nowhere</td><td>Click does nothing.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Driver report of the whole DQ file</td><td>Not produced.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Digital signature capture</td><td>Print-and-sign or sign-in-app, saved to the file. Not built.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Duplicate driver rows</td><td>4 known clusters not merged.</td></tr>
+</table></div>
+
+<h2>9 · Fleet &amp; Maintenance</h2>
+<div class="scroll"><table>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">OOS reason · return date · work order surfaced</td><td>Merged this window.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">OOS downtime + distinct status controls</td><td>Merged.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Unit scoping proven correct</td><td>43 USMCA units of 196 — audited, no defect.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Work-order void enabled</td><td><code>WO_VOID_ENABLED</code> ON for USMCA. 17 work orders live.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">In-shop vs OOS visual split</td><td>Still one bucket.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Vehicle-swap catalog + event</td><td>Not built. Blocks the two-truck cost split.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Zero insurance documents on any unit</td><td>$10,000 unaccounted · T163 uncovered for liability.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">20 insured trailers absent from the asset register</td><td>299 equipment rows exist; the register is incomplete.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Unit compliance calendar</td><td>DOT annual · registration · IFTA · 2290 · insurance with real cadences.</td></tr>
+</table></div>
+
+<h2>10 · Global standards (every module)</h2>
+<div class="scroll"><table>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Type-size ratchet guard</td><td>Stops new arbitrary font sizes. Does not fix existing ones.</td></tr>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Header colour token</td><td><code>tokens.ts:29 #14314F</code> exists. Not adopted everywhere.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">One type scale app-wide</td><td>Text size differs on every page, tab and KPI.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">One money component</td><td>QuickBooks format, right aligned, tabular numerals. Not enforced anywhere.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Upload everywhere</td><td>Every create surface accepts and saves an attachment. 211 USMCA files exist total.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Fit to page · uniform box rows · real dividers · MMM-DD dates · live dropdowns</td><td>None enforced.</td></tr>
+</table></div>
+
+<h2>11 · Border Ops</h2>
+<div class="scroll"><table>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Crossing wizard + history pages exist</td><td><code>BorderCrossingWizardPage</code> · <code>BorderCrossingHistoryPage</code>.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Manifest PDF</td><td>Not generated, not auto-saved to the load.</td></tr>
+</table></div>
+
+<h2>12 · Process</h2>
+<div class="scroll"><table>
+<tr><td class="s"><span class="b done">Built</span></td><td class="i">Seat ownership map</td><td>Six seats, six modules, permanent. No seat opens Chrome or books a load.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">598 docs-only commits</td><td>CLAIM-RESERVE, OUTBOX status and ACK PRs are clogging the merge queue. One number-reservation PR per guard is pure overhead.</td></tr>
+<tr><td class="s"><span class="b pending">Pending</span></td><td class="i">Hung pre-push guard</td><td><code>verify-static.mjs</code> hangs and gets killed — blocking pushes for at least one seat.</td></tr>
+</table></div>
+
+<h2>The sequence — so you can create loads while we fix behind you</h2>
+<ol class="seq">
+<li><b>Cursor: the four removals + move the miles strip above the stops.</b><span>One PR, one hour. Nothing here is hard — it is deletion and a reorder. This is what makes the screen usable enough to book on.</span></li>
+<li><b>Cursor: the customer data repair.</b><span>2 mojibake names, 14 status/deactivated contradictions, one active-predicate everywhere, accent-insensitive search. Without this your customers keep disappearing.</span></li>
+<li><b>CC-1: populate practical_min / practical_max.</b><span>Same rescore pass. Until this lands the Thin-lane spread you are shown is fiction, and you will keep typing miles by hand.</span></li>
+<li><b>You create loads 1–10 by hand.</b><span>Every defect you hit goes straight to the owning seat while the other five keep building. This is the point where the app starts proving itself.</span></li>
+<li><b>CC-1: pre-settlement + driver bill at load creation.</b><span>The tables and columns already exist. This is wiring, not a build. Nothing about your settlement design works until this is live.</span></li>
+<li><b>CC-1: advance → bill payment → loan overflow, and the mandatory pop-up at close.</b><span>Plus the home-base geofence and the empty-miles-home prompt.</span></li>
+<li><b>CC-1: close the three void-cascade holes.</b><span>Expenses, bank matches, advances — in the same PR as the spine, never after.</span></li>
+<li><b>Cascade: dispatch board and Round Trips.</b><span>Two nav rows, ParityTable, column drag, row height, dividers, the 67faa3dcd timeline. Runs in parallel with 4–7.</span></li>
+<li><b>CC-2: match-flow audit, then fix in severity order.</b><span>Then the QBO reconciliation module. Runs in parallel.</span></li>
+<li><b>CC-3 and Codex: uploads everywhere, DQ checklist, Categoría E, insurance documents, vehicle-swap catalog.</b><span>Runs in parallel.</span></li>
+</ol>
+</div>
