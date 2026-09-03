@@ -461,6 +461,10 @@ const updateDispatchLoadBodySchema = z.object({
     )
     .min(2)
     .optional(),
+  // GO-23 per-blocker Override — Owner-only, mirrors createLoadBodySchema's override_reason
+  // (line ~343 above). Unlocks assertDriverQualifiedForLoad's CDL/DOT-medical/hazmat gate on this
+  // PATCH the same way book-load's create path already does; previously Edit had no override path.
+  override_reason: z.string().trim().min(10).max(1000).optional(),
 });
 
 const reserveLoadIdBodySchema = z.object({
@@ -1556,7 +1560,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const body = updateDispatchLoadBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
 
-    const { operating_company_id, charges, stops, ...fields } = body.data;
+    const { operating_company_id, charges, stops, override_reason, ...fields } = body.data;
     try {
       const result = await withCompanyScope(authUser.uuid, operating_company_id, (client) =>
         updateDispatchLoad(client, {
@@ -1564,6 +1568,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           operatingCompanyId: operating_company_id,
           requestingUserUuid: authUser.uuid,
           requestingUserRole: authUser.role,
+          override_reason,
           fields: fields as UpdateDispatchLoadFields,
           charges,
           stops,

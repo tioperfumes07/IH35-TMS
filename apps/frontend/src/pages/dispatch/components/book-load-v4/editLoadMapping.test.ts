@@ -145,3 +145,25 @@ describe("editLoadMapping — prefill", () => {
     expect("reefer_setpoint" in v).toBe(false);
   });
 });
+
+// GO-23 per-blocker Override: Edit Load's PATCH body had no way to carry an owner-attested override
+// reason for the driver-qualification gate (CDL/DOT medical/hazmat) -- the Owner clicking
+// "Override & dispatch" on an Edit silently saved with no reason, and the backend still 422'd.
+describe("editLoadMapping — GO-23 per-blocker Override (override_reason)", () => {
+  const values = { ...buildEditPrefill(baseLoad), linehaul_cents: 300000 };
+
+  it("sets body.override_reason when a >=10 char reason is passed", () => {
+    const body = buildEditPatchBody(values, { linehaul_cents: true }, OCID, "Angel's CDL is current per FMCSA, system record is stale");
+    expect(body.override_reason).toBe("Angel's CDL is current per FMCSA, system record is stale");
+  });
+
+  it("never sets body.override_reason when omitted", () => {
+    const body = buildEditPatchBody(values, { linehaul_cents: true }, OCID);
+    expect("override_reason" in body).toBe(false);
+  });
+
+  it("never sets body.override_reason for a reason under 10 characters (matches the >=10 rule everywhere else)", () => {
+    const body = buildEditPatchBody(values, { linehaul_cents: true }, OCID, "too short");
+    expect("override_reason" in body).toBe(false);
+  });
+});

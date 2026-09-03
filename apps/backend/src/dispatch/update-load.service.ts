@@ -23,7 +23,12 @@ import {
 // later delivery-adjacent status transition did, so a load edited post-delivery (a real workflow: POD
 // arrives, dispatcher fills in actual miles) could never mint or re-record its driver bill. Converge
 // on the SAME canonical re-entrant idempotent path book-load / mdata create / delivery already use.
-import { ensureDriverBillArtifactsForLoad, type DriverBillMintOutcome } from "./book-load.service.js";
+import {
+  canOwnerOverrideQualification,
+  ensureDriverBillArtifactsForLoad,
+  type DriverBillMintOutcome,
+} from "./book-load.service.js";
+import { enqueueOverrideNotice } from "../outbox/enqueue-override-notice.js";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -125,6 +130,12 @@ export type UpdateDispatchLoadInput = {
   requestingUserUuid: string;
   /** Owner may override money/evidence edit locks (audit-trail recorded). */
   requestingUserRole?: string;
+  /** GO-23 per-blocker Override: Owner-only, >=10 chars, unlocks assertDriverQualifiedForLoad's
+   * CDL/DOT-medical/hazmat gate on this PATCH the same way book-load.service.ts's create path
+   * already does (BT-3-DISPATCH-AUTH-GATES). Before this field existed, editing an existing load's
+   * driver assignment had NO override path at all — an absolute 422, even for an Owner attesting a
+   * stale/unreadable credential. */
+  override_reason?: string;
   fields: UpdateDispatchLoadFields;
   charges?: UpdateLoadCharge[];
   stops?: UpdateLoadStopInput[];
@@ -593,13 +604,84 @@ export async function updateDispatchLoad(
     const driverIdsToGate: string[] = [];
     if (primaryChanged && primaryDriverId) driverIdsToGate.push(String(primaryDriverId));
     if (secondaryChanged && secondaryDriverId) driverIdsToGate.push(String(secondaryDriverId));
+    // GO-23 per-blocker Override — mirrors book-load.service.ts's OWNER-ALWAYS-OVERRIDE
+    // (owner ruling 2026-08-02) for the SAME driver-qualification gate. That override only ever
+    // existed on the CREATE path; PATCH /dispatch/loads/:id (Edit Load reassigning a driver) had
+    // an absolute 422 with no way out, even for an Owner attesting a stale/unreadable credential.
+    const ownerOverridingQualification =
+      canOwnerOverrideQualification(input.requestingUserRole ?? "") &&
+      typeof input.override_reason === "string" &&
+      input.override_reason.trim().length >= 10;
     for (const driverId of driverIdsToGate) {
       const block = await assertDriverQualifiedForLoad(client, {
         driverId,
         operatingCompanyId,
         isHazmat,
       });
-      if (block) throw new DriverNotQualifiedError(block);
+      if (!block) continue;
+      if (ownerOverridingQualification) {
+        await appendCrudAudit(
+          client,
+          requestingUserUuid,
+          "dispatch.driver_qualification_overridden_by_owner",
+          {
+            operating_company_id: operatingCompanyId,
+            load_id: loadId,
+            driver_id: block.driverId,
+            driver_name: block.driverName,
+            block_code: "E_DRIVER_NOT_QUALIFIED",
+            overridden_reasons: block.reasons,
+            cdl_expires_at: block.cdlExpiresAt,
+            medical_expiry_date: block.medicalExpiryDate,
+            hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
+            override_reason: input.override_reason,
+            role: input.requestingUserRole,
+            override_class: "DOT_QUALIFICATION",
+            load_context: {
+              load_id: loadId,
+              load_number: old.live_load_number ?? null,
+              customer_id: old.customer_id ?? null,
+              assigned_unit_id: old.assigned_unit_id ?? null,
+            },
+            attestation_scope: "single_dispatch",
+            severity_label: "critical",
+            edit_patch: true,
+          },
+          "warning",
+          "BT-3-DISPATCH-AUTH-GATES"
+        );
+        await enqueueOverrideNotice(client, block.driverId, {
+          override_type: "driver_qualification",
+          notify_channels: ["email", "sms"],
+          operating_company_id: operatingCompanyId,
+          overridden_reasons: block.reasons,
+          override_reason: input.override_reason,
+          override_by_user_id: requestingUserUuid,
+          override_class: "DOT_QUALIFICATION",
+          load_context: { load_id: loadId, load_number: old.live_load_number ?? null },
+        });
+        continue; // Owner attested — this driver passes; every other driver is still gated.
+      }
+      await appendCrudAudit(
+        client,
+        requestingUserUuid,
+        "dispatch.load_edit_blocked_by_driver_qualification",
+        {
+          operating_company_id: operatingCompanyId,
+          load_id: loadId,
+          driver_id: block.driverId,
+          block_code: "E_DRIVER_NOT_QUALIFIED",
+          reasons: block.reasons,
+          cdl_expires_at: block.cdlExpiresAt,
+          medical_expiry_date: block.medicalExpiryDate,
+          hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
+          override_available_to: "Owner",
+          override_attempted: Boolean(input.override_reason),
+        },
+        "warning",
+        "BT-3-DISPATCH-AUTH-GATES"
+      );
+      throw new DriverNotQualifiedError(block);
     }
   }
   const setParts: string[] = [];

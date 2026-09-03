@@ -215,9 +215,20 @@ const ASSIGNMENT_KEYS = ["assignment_mode", "assigned_primary_driver_id", "assig
  * other field is included ONLY if the user changed it (dirty), so untouched fields are never sent and
  * therefore never overwritten. Returns the body for PATCH /api/v1/dispatch/loads/:id.
  */
-export function buildEditPatchBody(values: AnyValues, dirty: Dirty, operatingCompanyId: string): AnyValues {
+export function buildEditPatchBody(
+  values: AnyValues,
+  dirty: Dirty,
+  operatingCompanyId: string,
+  // GO-23 per-blocker Override: NOT a form field, so it can't be tracked by dirtyFields — sent only
+  // when the Owner actually clicked "Override & dispatch" on the pre-dispatch panel. Mirrors Book
+  // Load's create path (createDispatchLoad's own override_reason), which Edit never had.
+  overrideReason?: string
+): AnyValues {
   const body: AnyValues = { operating_company_id: operatingCompanyId };
   const isDirty = (k: string) => Boolean((dirty as Record<string, unknown>)[k]);
+  if (overrideReason && overrideReason.trim().length >= 10) {
+    body.override_reason = overrideReason.trim();
+  }
 
   for (const [formKey, patchKey, transform] of SCALAR_FIELDS) {
     if (isDirty(formKey)) body[patchKey] = transform(values);

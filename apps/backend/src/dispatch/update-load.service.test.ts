@@ -5,12 +5,22 @@ import {
   LoadNotFoundError,
   isLiveLoadNumberOnlyPatch,
 } from "./update-load.service.js";
+import { DriverNotQualifiedError } from "./driver-qualification.service.js";
 
 // ACCT-F289 mint-if-empty path calls buildInvoiceFromLoad when no draft/proforma lines match.
 // Unit tests mock SQL only — keep mint a no-op so rate-resync SQL assertions stay the subject.
 vi.mock("../accounting/from-load.js", () => ({
   buildInvoiceFromLoad: vi.fn(async () => ({ idempotent: true, invoice: { id: "inv-mock" } })),
 }));
+
+// GO-23 per-blocker Override tests mock the qualification CHECK itself (assertDriverQualifiedForLoad)
+// so the override BRANCH in update-load.service.ts is what's under test, not driver-qualification's
+// own SQL. DriverNotQualifiedError stays the real class (update-load.service.ts throws it directly).
+const mockAssertDriverQualifiedForLoad = vi.fn();
+vi.mock("./driver-qualification.service.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./driver-qualification.service.js")>();
+  return { ...actual, assertDriverQualifiedForLoad: (...args: unknown[]) => mockAssertDriverQualifiedForLoad(...args) };
+});
 
 const LOAD_ID = "11111111-1111-1111-1111-111111111111";
 const OCI = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
@@ -177,6 +187,102 @@ describe("updateDispatchLoad — money/evidence guards", () => {
 
     expect(sqls.some((s) => /FROM driver_finance\.driver_settlements/.test(s))).toBe(false);
     expect(sqls.some((s) => /live_load_number/.test(s))).toBe(true);
+  });
+});
+
+// GO-23 per-blocker Override — PATCH /dispatch/loads/:id (Edit Load reassigning a driver) had NO
+// override path for assertDriverQualifiedForLoad's CDL/DOT-medical/hazmat gate: an absolute 422 even
+// for the Owner. Mirrors book-load.service.ts's create-path OWNER-ALWAYS-OVERRIDE (2026-08-02).
+describe("updateDispatchLoad — GO-23 per-blocker Override (driver-qualification gate on Edit)", () => {
+  const BLOCK = {
+    driverId: "drv-new",
+    driverName: "Angel Ramirez",
+    reasons: ["cdl_missing"],
+    cdlExpiresAt: null,
+    medicalExpiryDate: null,
+    hazmatEndorsementExpiresAt: null,
+    drugAlcoholViolationAt: null,
+    drugAlcoholViolationSource: null,
+  };
+  const hazmatCheck = { match: /quicksave_pending_fields->>'hazmat'/, rows: [{ is_hazmat: false }] };
+
+  it("throws DriverNotQualifiedError for a non-Owner even with an override_reason typed", async () => {
+    mockAssertDriverQualifiedForLoad.mockResolvedValue(BLOCK);
+    const { client } = makeClient([loadExists, noSettlement, noInvoice, noBill, hazmatCheck]);
+    await expect(
+      updateDispatchLoad(client, {
+        loadId: LOAD_ID,
+        operatingCompanyId: OCI,
+        requestingUserUuid: USER,
+        requestingUserRole: "Dispatcher",
+        override_reason: "Angel's CDL is current per FMCSA, system record is stale",
+        fields: { assigned_primary_driver_id: "drv-new" },
+      })
+    ).rejects.toBeInstanceOf(DriverNotQualifiedError);
+  });
+
+  it("throws DriverNotQualifiedError for an Owner with NO override_reason (blocker stands by default)", async () => {
+    mockAssertDriverQualifiedForLoad.mockResolvedValue(BLOCK);
+    const { client } = makeClient([loadExists, noSettlement, noInvoice, noBill, hazmatCheck]);
+    await expect(
+      updateDispatchLoad(client, {
+        loadId: LOAD_ID,
+        operatingCompanyId: OCI,
+        requestingUserUuid: USER,
+        requestingUserRole: "Owner",
+        fields: { assigned_primary_driver_id: "drv-new" },
+      })
+    ).rejects.toBeInstanceOf(DriverNotQualifiedError);
+  });
+
+  it("Owner + >=10 char override_reason passes the gate and writes the DOT_QUALIFICATION audit event", async () => {
+    mockAssertDriverQualifiedForLoad.mockResolvedValue(BLOCK);
+    const auditPayloads: Record<string, unknown>[] = [];
+    const { client } = makeClient([
+      loadExists,
+      noSettlement,
+      noInvoice,
+      noBill,
+      hazmatCheck,
+      { match: /UPDATE mdata\.loads SET/, rows: [{ id: LOAD_ID }] },
+      { match: /SELECT \* FROM mdata\.loads WHERE id/, rows: [{ id: LOAD_ID, rate_total_cents: 100000 }] },
+      { match: /SELECT \* FROM mdata\.load_stops WHERE load_id/, rows: [] },
+      driverBillReentryNoDriver,
+    ]);
+    const origQuery = client.query.bind(client);
+    client.query = async (sql: string, values?: unknown[]) => {
+      if (/audit\.append_event/.test(sql)) auditPayloads.push(JSON.parse(String(values?.[2] ?? "{}")) as Record<string, unknown>);
+      return origQuery(sql, values);
+    };
+
+    await updateDispatchLoad(client, {
+      loadId: LOAD_ID,
+      operatingCompanyId: OCI,
+      requestingUserUuid: USER,
+      requestingUserRole: "Owner",
+      override_reason: "Angel's CDL is current per FMCSA, system record is stale",
+      fields: { assigned_primary_driver_id: "drv-new" },
+    });
+
+    const overrideEvent = auditPayloads.find((p) => p.block_code === "E_DRIVER_NOT_QUALIFIED" && p.override_class === "DOT_QUALIFICATION");
+    expect(overrideEvent).toBeTruthy();
+    expect(overrideEvent?.load_id).toBe(LOAD_ID);
+    expect(overrideEvent?.driver_id).toBe("drv-new");
+  });
+
+  it("a reason under 10 characters does NOT unlock the gate for an Owner", async () => {
+    mockAssertDriverQualifiedForLoad.mockResolvedValue(BLOCK);
+    const { client } = makeClient([loadExists, noSettlement, noInvoice, noBill, hazmatCheck]);
+    await expect(
+      updateDispatchLoad(client, {
+        loadId: LOAD_ID,
+        operatingCompanyId: OCI,
+        requestingUserUuid: USER,
+        requestingUserRole: "Owner",
+        override_reason: "too short",
+        fields: { assigned_primary_driver_id: "drv-new" },
+      })
+    ).rejects.toBeInstanceOf(DriverNotQualifiedError);
   });
 });
 
