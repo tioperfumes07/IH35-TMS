@@ -18,6 +18,7 @@ import { patchUnit } from "../api/mdata";
 import { patchTrailer } from "../api/fleet-trailers";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatOosDate, formatOosDays } from "../lib/oos-display";
+import { useColumnReorder } from "./lists/ListView/hooks/useColumnReorder";
 
 export type FleetRow = {
   id: string;
@@ -459,6 +460,49 @@ export function FleetTable({
   }, [selectedRows, reactivateMutation, operatingCompanyId]);
 
   const isVisible = (key: string) => table.isColumnVisible(key);
+  const persistedOrder = table.columnOrder.length ? table.columnOrder : columns.map((column) => column.key);
+  const { order: columnOrder, setOrder: setColumnOrder, dragHandleProps, dragOverId } = useColumnReorder(persistedOrder);
+
+  useEffect(() => {
+    const known = new Set(columns.map((column) => column.key));
+    const normalized = [
+      ...columnOrder.filter((key) => known.has(key)),
+      ...columns.map((column) => column.key).filter((key) => !columnOrder.includes(key)),
+    ];
+    if (normalized.join("|") !== columnOrder.join("|")) setColumnOrder(normalized);
+  }, [columns, columnOrder, setColumnOrder]);
+
+  useEffect(() => {
+    if (columnOrder.length) table.setColumnOrder(columnOrder);
+  }, [columnOrder, table.setColumnOrder]);
+
+  const orderedVisibleColumns = useMemo(() => {
+    const byKey = new Map(columns.map((column) => [column.key, column]));
+    return columnOrder.map((key) => byKey.get(key)).filter((column): column is TableColumn => Boolean(column) && isVisible(column.key));
+  }, [columns, columnOrder, table.hidden]);
+
+  const renderFleetCell = (row: FleetRow, key: string) => {
+    switch (key) {
+      case "unit_number":
+        return <td key={key} className="px-2 py-1" onClick={(e) => e.stopPropagation()}>{showMaintenanceColumns ? <Link to={fleetProfilePath(row)} className="font-semibold text-slate-700 hover:underline">{entityLabel(row.unit_number, row.id, "Unit")}</Link> : <EntityLink kind={row.kind === "trailer" ? "trailer" : "unit"} id={row.id} label={entityLabel(row.unit_number, row.id, row.kind === "trailer" ? "Trailer" : "Unit")} className="font-semibold text-slate-700 hover:underline" />}</td>;
+      case "vin": return <td key={key} className="truncate px-2 py-1">{String(row.vin ?? "—")}</td>;
+      case "type": return <td key={key} className="truncate px-2 py-1">{displayType(row)}</td>;
+      case "make_model": return <td key={key} className="truncate px-2 py-1">{`${String(row.make ?? "—")} ${String(row.model ?? "")}`.trim()}</td>;
+      case "year": return <td key={key} className="px-2 py-1">{String(row.year ?? "—")}</td>;
+      case "status": return <td key={key} className="px-2 py-1">{row.status ? humanizeEnumLabel(row.status) : "—"}</td>;
+      case "oos_reason": return <td key={key} className="truncate px-2 py-1">{row.oos_reason || "—"}</td>;
+      case "oos_since": return <td key={key} className="px-2 py-1 tabular-nums">{formatOosDate(row.oos_since)}</td>;
+      case "days_oos": return <td key={key} className="px-2 py-1 tabular-nums">{row.days_oos == null ? "—" : formatOosDays(row.days_oos)}</td>;
+      case "estimated_completion_date": return <td key={key} className="px-2 py-1 tabular-nums">{formatOosDate(row.estimated_completion_date)}</td>;
+      case "work_order_id": return <td key={key} className="px-2 py-1" onClick={(e) => e.stopPropagation()}>{row.work_order_id ? <EntityLink kind="work_order" id={row.work_order_id} label={entityLabel(row.work_order_display_id, row.work_order_id, "Work order")} /> : "—"}</td>;
+      case "location": return <td key={key} className="truncate px-2 py-1 text-xs text-slate-700">{fleetLocationText(row) || row.oos_location || "—"}</td>;
+      case "odometer": return <td key={key} className="px-2 py-1 tabular-nums">{fmtMiles(row.odometer_mi)}</td>;
+      case "next_pm": return <td key={key} className="px-2 py-1 tabular-nums">{fmtMiles(row.next_due_odometer)}</td>;
+      case "open_wo": return <td key={key} className="px-2 py-1 tabular-nums">{row.open_wo_count != null && row.open_wo_count > 0 ? <span className="font-semibold text-slate-800">{row.open_wo_count}</span> : <span className="text-gray-400">{row.kind === "trailer" ? "—" : "0"}</span>}</td>;
+      case "dot_oo": return <td key={key} className="px-2 py-1">{row.kind === "trailer" ? "—" : row.is_oos ? "Yes" : "No"}</td>;
+      default: return null;
+    }
+  };
 
   // Universal-list CSV export: the full filtered+sorted set, visible columns only (exportFilename=fleet-table).
   const exportCsv = useCallback(() => {
@@ -621,7 +665,7 @@ export function FleetTable({
                       ariaLabel={`Select all ${matchingRowIds.length} matching units`}
                     />
                   </th>
-                  {columns.filter((c) => isVisible(c.key)).map((c) => (
+                  {orderedVisibleColumns.map((c) => (
                     <TableHeaderCell
                       key={c.key}
                       columnKey={c.key}
@@ -631,6 +675,9 @@ export function FleetTable({
                       onToggleSort={table.toggleSort}
                       width={table.widths[c.key]}
                       onResize={table.setColumnWidth}
+                      draggable
+                      dragHandleProps={dragHandleProps(c.key)}
+                      dragOver={dragOverId === c.key}
                     />
                   ))}
                   <th className="w-14 px-2 py-1">Edit</th>
@@ -651,7 +698,10 @@ export function FleetTable({
                         onChange={() => selectCtx.toggle(row.id)}
                       />
                     </td>
-                    {showMaintenanceColumns ? (
+                    {orderedVisibleColumns.map((column) => renderFleetCell(row, column.key))}
+                    {/* Persisted order owns both headers and cells. The fixed legacy cells remain
+                        disabled below as source history until the next cleanup sweep. */}
+                    {false && (<>{showMaintenanceColumns ? (
                       <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                         <Link to={fleetProfilePath(row)} className="font-semibold text-slate-700 hover:underline">
                           {entityLabel(row.unit_number, row.id, "Unit")}
@@ -705,7 +755,7 @@ export function FleetTable({
                     ) : null}
                     {isVisible("dot_oo") ? (
                       <td className="px-2 py-1">{row.kind === "trailer" ? "—" : row.is_oos ? "Yes" : "No"}</td>
-                    ) : null}
+                    ) : null}</>)}
                     <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <button
                         type="button"

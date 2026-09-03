@@ -56,6 +56,15 @@ export function collectProblems(stripSrc, routesSrc, unifiedSrc = "", tableSrc =
   if (!/kind=["']work_order["']/.test(tableSrc)) {
     problems.push("main Fleet registry must drill its OOS work order to the canonical work-order route");
   }
+  if (!/columnOrder/.test(tableSrc) || !/setColumnOrder/.test(tableSrc)) {
+    problems.push("main Fleet registry must persist its operator column order");
+  }
+  if (!/dragHandleProps/.test(tableSrc) || !/draggable/.test(tableSrc)) {
+    problems.push("main Fleet registry headers must expose drag reorder controls");
+  }
+  if (!/orderedVisibleColumns\.map/.test(tableSrc) || !/renderFleetCell/.test(tableSrc)) {
+    problems.push("main Fleet registry header and body must render the same ordered columns");
+  }
   return problems;
 }
 
@@ -70,7 +79,7 @@ function selftest() {
   const goodStrip = `data-testid="fleet-oos-since" data-testid="fleet-oos-days" data-testid="fleet-oos-location"`;
   const goodRoutes = `SELECT id, unit_number, vin, status, oos_since, oos_location FROM mdata.units WHERE 1=1`;
   const goodUnified = `oos_since days_oos oos_reason oos_location estimated_completion_date work_order_id work_order_display_id`;
-  const goodTable = `key: "oos_reason" key: "oos_since" key: "days_oos" key: "estimated_completion_date" key: "work_order_id" kind="work_order"`;
+  const goodTable = `key: "oos_reason" key: "oos_since" key: "days_oos" key: "estimated_completion_date" key: "work_order_id" kind="work_order" columnOrder setColumnOrder dragHandleProps draggable orderedVisibleColumns.map renderFleetCell`;
   const goodPage = `tone="in-shop" tone="oos"`;
   if (collectProblems(goodStrip, goodRoutes, goodUnified, goodTable, goodPage).length) {
     throw new Error("selftest good fixture must pass");
@@ -92,6 +101,9 @@ function selftest() {
     [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('key: "estimated_completion_date"', ""), goodPage), "estimated_completion_date"],
     [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('kind="work_order"', ""), goodPage), "canonical work-order route"],
     [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable, goodPage.replace('tone="oos"', "")), "distinct visual tones"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace("setColumnOrder", ""), goodPage), "persist its operator column order"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace("dragHandleProps", ""), goodPage), "drag reorder controls"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace("renderFleetCell", ""), goodPage), "same ordered columns"],
   ];
   for (const [run, expected] of mutations) {
     const problems = run();
