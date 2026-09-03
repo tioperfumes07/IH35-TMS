@@ -119,6 +119,11 @@ function assert(files) {
   if (!/reply\.code\(503\)\.send\(\{[\s\S]{0,180}lane_mileage_lookup_failed/.test(routes)) {
     problems.push(`${ROUTES}: lookup failure must 503 so Book can say Could not load lane miles`);
   }
+  const milesIdx = modal.indexOf("<MilesStrip");
+  const stopsIdx = modal.indexOf("<BookLoadStopsSection");
+  if (milesIdx < 0 || stopsIdx < 0 || milesIdx > stopsIdx) {
+    problems.push(`${MODAL}: MilesStrip must render ABOVE the two stop cards`);
+  }
   if (/uppercase/.test(strip) || /PC\*MILER/.test(strip) || /fuel and ETA/i.test(strip)) {
     problems.push(`${STRIP}: operator strip still teaches ALL CAPS, PC*MILER, or fuel/ETA — GO-16 Rev B forbids that.`);
   }

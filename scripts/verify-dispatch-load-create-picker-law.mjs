@@ -16,7 +16,10 @@ function audit(s) {
   if (!/<ReferenceSelect[\s\S]{0,700}createKind="customer"/.test(s.form)) failures.push("customer_id ReferenceSelect createKind=customer missing");
   if (!/customer_id.*required:\s*"Select a customer/.test(s.form)) failures.push("customer_id is not required-validated");
   if (!/<EntityPicker[\s\S]{0,200}kind="vendor"[\s\S]{0,200}allowCreate/.test(s.form)) failures.push("factoring company vendor EntityPicker allowCreate missing");
-  if (!/<LoadTemplatePicker[\s>]/.test(s.form)) failures.push("LoadTemplatePicker missing");
+  if (/<LoadTemplatePicker[\s>]/.test(s.form)) failures.push("LoadTemplatePicker must not render on Book Load (owner 2026-09-03)");
+  if (/T120-SMITH/.test(s.form)) failures.push("Book Load must not hardcode Class T120-SMITH");
+  if (/Every load must be classified NB/.test(s.form)) failures.push("Book Load must not show the classification banner");
+  if (/Legacy load reference/.test(s.form)) failures.push("Book Load must not show Legacy load reference");
   if (!/<BookLoadEquipmentSection[\s>]/.test(s.form)) failures.push("BookLoadEquipmentSection not rendered from the load-create form");
   if (!/<EntityPicker[\s\S]{0,60}kind="unit"/.test(s.equipment)) failures.push("unit EntityPicker missing from equipment section");
   if (!/<DriverPickerWithCreate[\s>]/.test(s.equipment)) failures.push("DriverPickerWithCreate missing from equipment section");
@@ -41,7 +44,7 @@ if (process.argv.includes("--selftest")) {
     ["customer-required", "form", /required:\s*"Select a customer from the list"/g, "false"],
     ["factoring-kind", "form", /<EntityPicker([\s\S]{0,200})kind="vendor"/, "<EntityPicker$1kind=\"driver\""],
     ["factoring-allowCreate", "form", /(kind="vendor"[\s\S]{0,200})allowCreate/, "$1"],
-    ["template-picker", "form", /<LoadTemplatePicker/g, "<LoadTemplatePickerRemoved"],
+    ["template-picker", "form", /<BookLoadEquipmentSection/g, "<LoadTemplatePicker"],
     ["equipment-section", "form", /<BookLoadEquipmentSection/g, "<BookLoadEquipmentSectionRemoved"],
     ["unit-picker", "equipment", /kind="unit"/g, 'kind="trailer"'],
     ["driver-picker", "equipment", /<DriverPickerWithCreate/g, "<DriverPickerWithCreateRemoved"],
