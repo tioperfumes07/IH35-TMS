@@ -1991,6 +1991,7 @@
       "categorization_unit_id",
       "categorization_vendor_id",
       "categorized_at",
+      "categorized_by_user_id",
       "category",
       "category_kind",
       "check_number",
