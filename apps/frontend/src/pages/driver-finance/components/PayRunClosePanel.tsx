@@ -5,6 +5,7 @@ import {
   closeSettlementPayRun,
   PAYRUN_COA_ERROR_CODES,
   previewSettlementPayRun,
+  type NetPayFloorBreachDetails,
   type OutstandingLoanDecisionDetails,
   type SettlementPayRunResult,
 } from "../../../api/driverFinance";
@@ -15,6 +16,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { useToast } from "../../../components/Toast";
+import { FloorOverrideDecisionModal } from "./FloorOverrideDecisionModal";
 import { LoanRecoveryDecisionModal } from "./LoanRecoveryDecisionModal";
 
 const COA_ROLES_HREF = "/accounting/settings/coa-roles";
@@ -85,6 +87,15 @@ export function PayRunClosePanel({
   // OUTSTANDING_LOAN_DECISION_REQUIRED) with no decision attached; this holds the modal's details
   // between that refusal and the operator's Accept/Edit-amount choice, then retries the close once.
   const [loanDecisionDetails, setLoanDecisionDetails] = useState<OutstandingLoanDecisionDetails | null>(null);
+  // 25-task #10 (9.2) — same shape, the SIBLING refusal: net dips below the resolved floor after
+  // escrow/advance/chargeback withholding. Held between the 409 and the operator's typed reason,
+  // then retried once with override_floor attached (never auto-submits).
+  const [floorBreachDetails, setFloorBreachDetails] = useState<NetPayFloorBreachDetails | null>(null);
+  // Carried across a sequential retry (loan decision resolved, THEN floor breach fires) so the
+  // floor-override modal's confirm doesn't silently drop an already-made loan decision.
+  const [pendingLoanDecision, setPendingLoanDecision] = useState<
+    { mode: "full" | "partial"; partial_cents: number | null; reason: string | null } | null
+  >(null);
 
   const canAct = AUTHORITY_ROLES.has(String(userRole ?? ""));
   const postable = ["locked", "final", "closed", "paid", "approved", "ready"].includes(settlementStatus);
@@ -157,7 +168,8 @@ export function PayRunClosePanel({
   }
 
   async function runClose(
-    loanDecision?: { mode: "full" | "partial"; partial_cents: number | null; reason: string | null } | null
+    loanDecision?: { mode: "full" | "partial"; partial_cents: number | null; reason: string | null } | null,
+    floorOverride?: { pct: number | null; cents: number | null; reason: string } | null
   ) {
     if (!companyId) return;
     setBusy("close");
@@ -168,8 +180,11 @@ export function PayRunClosePanel({
         payment_method_id: paymentMethodId || null,
         payment_reference: paymentReference.trim() || null,
         loan_recovery_decision: loanDecision ?? null,
+        override_floor: floorOverride ?? null,
       });
       setLoanDecisionDetails(null);
+      setFloorBreachDetails(null);
+      setPendingLoanDecision(null);
       setResult(data);
       if (data.result === "posted" && data.journal_entry_id) {
         pushToast("Pay-run closed — journal entry posted", "success");
@@ -193,6 +208,18 @@ export function PayRunClosePanel({
         const details = (error.data as { details?: OutstandingLoanDecisionDetails }).details;
         if (details && Array.isArray(details.recoverable_advances)) {
           setLoanDecisionDetails(details);
+          return;
+        }
+      }
+      // 25-task #10 (9.2) — sibling refusal: net dips below the resolved floor after
+      // escrow/advance/chargeback withholding. Same pattern as the loan pop-up above — open the
+      // Override control instead of the raw error banner, and remember the loan decision (if this
+      // retry already carried one) so confirming the override doesn't lose it.
+      if (parsed.code === "NET_PAY_FLOOR_BREACH" && error instanceof ApiError && error.data && typeof error.data === "object") {
+        const details = (error.data as { details?: NetPayFloorBreachDetails }).details;
+        if (details && typeof details.floor_cents === "number") {
+          setFloorBreachDetails(details);
+          setPendingLoanDecision(loanDecision ?? null);
           return;
         }
       }
@@ -394,6 +421,15 @@ export function PayRunClosePanel({
         details={loanDecisionDetails}
         onClose={() => setLoanDecisionDetails(null)}
         onDecide={(decision) => void runClose(decision)}
+      />
+      <FloorOverrideDecisionModal
+        open={floorBreachDetails !== null}
+        details={floorBreachDetails}
+        onClose={() => {
+          setFloorBreachDetails(null);
+          setPendingLoanDecision(null);
+        }}
+        onDecide={(override) => void runClose(pendingLoanDecision, override)}
       />
     </div>
   );
