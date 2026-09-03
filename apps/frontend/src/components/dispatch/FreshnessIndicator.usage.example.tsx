@@ -23,7 +23,7 @@ export function FreshnessIndicatorUsageExample() {
     <div className="space-y-2 p-4">
       <h3 className="text-sm font-semibold text-slate-900">Samsara freshness pill — tiers &amp; colors</h3>
       <div className="overflow-x-auto">
-        <table className="text-[13px]">
+        <table className="text-xs">
           <tbody>
             {EXAMPLES.map((ex) => (
               <tr key={ex.label} className="align-middle">

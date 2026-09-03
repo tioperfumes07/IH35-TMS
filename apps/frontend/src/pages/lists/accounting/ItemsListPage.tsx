@@ -135,8 +135,8 @@ export function ItemsListPage() {
       sortValue: (r) => (r.is_active ? 1 : 0),
       render: (r) => (
         <span className={r.is_active
-          ? "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
-          : "rounded-sm bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-500"}>
+          ? "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
+          : "rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500"}>
           {r.is_active ? "Active" : "Inactive"}
         </span>
       ),

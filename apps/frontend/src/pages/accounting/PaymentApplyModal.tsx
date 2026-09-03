@@ -46,7 +46,7 @@ export function PaymentApplyModal({ open, loading = false, unappliedCents, invoi
       >
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Search
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search invoice #" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search invoice #" className="h-9 rounded-sm border border-gray-300 px-2 text-xs" />
         </label>
 
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -61,7 +61,7 @@ export function PaymentApplyModal({ open, loading = false, unappliedCents, invoi
               const defaultApply = Math.min(Number(unappliedCents ?? 0), Number(invoice.amount_open_cents ?? 0));
               setApplyAmountDollars(defaultApply > 0 ? defaultApply / 100 : null);
             }}
-            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
           >
             <option value="">Select invoice</option>
             {filteredInvoices.map((invoice) => (

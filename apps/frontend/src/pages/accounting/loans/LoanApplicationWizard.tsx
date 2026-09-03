@@ -27,6 +27,7 @@ import {
   type LoanTargetType,
 } from "../../../api/related-party-loans";
 import { FORM_INPUT_CLASS, FORM_SELECT_CLASS, FORM_TEXTAREA_CLASS } from "../../../components/forms/inputClass";
+import { colors, typography } from "../../../design/tokens";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { PARITY_MODAL_WIDTH } from "../../../components/parity/sizing";
@@ -208,7 +209,15 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-6">
       <div className={`${PARITY_MODAL_WIDTH} rounded-sm border border-slate-200 bg-white shadow-lg`}>
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-          <h2 className="text-[15px] font-semibold text-slate-900">Loan / Advance application</h2>
+          {/* GLOBAL-TYPE-SIZE-BASELINE.md (locked): column/section headers are 11px/700/UPPERCASE/
+              #4B5563 -- same locked-header treatment already applied to ParityDrawer.tsx's title,
+              transcribed here, not invented. */}
+          <h2
+            className="uppercase"
+            style={{ fontSize: typography.panelHeader, color: colors.columnHeader, letterSpacing: typography.tightUpper, fontWeight: 700 }}
+          >
+            Loan / Advance application
+          </h2>
           <button type="button" onClick={onClose} className="text-[12px] text-slate-500 hover:text-slate-900">
             Close
           </button>

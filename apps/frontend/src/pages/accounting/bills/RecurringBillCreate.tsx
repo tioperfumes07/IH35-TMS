@@ -227,7 +227,7 @@ export function RecurringBillCreate() {
             <SelectCombobox
               value={frequency}
               onChange={(event) => setFrequency(event.target.value as RecurringBillFrequency)}
-              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-[13px]"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             >
               {FREQUENCIES.map((f) => (
                 <option key={f.value} value={f.value}>

@@ -255,7 +255,7 @@ export function TransactionRegisterPage() {
                 setSearch(event.target.value);
               }}
               placeholder="Description or customer / vendor / driver"
-              className="min-h-12 h-12 w-72 rounded-sm border border-slate-300 px-2 text-[13px]"
+              className="min-h-12 h-12 w-72 rounded-sm border border-slate-300 px-2 text-xs"
               aria-label="Search transactions"
             />
           }
@@ -296,7 +296,7 @@ export function TransactionRegisterPage() {
                 value={staged.draft.status}
                 onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value })}
                 placeholder="e.g. paid, uncategorized"
-                className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]"
+                className="h-9 rounded-sm border border-slate-300 px-2 text-xs"
               />
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">

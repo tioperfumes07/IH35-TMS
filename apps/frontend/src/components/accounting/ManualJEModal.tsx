@@ -239,7 +239,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
               ) : null}
             </div>
             <div className="space-y-1">
-              <div className="grid grid-cols-5 gap-1 px-1.5 text-[10px] font-semibold uppercase text-gray-500">
+              <div className="grid grid-cols-5 gap-1 px-1.5 text-[11px] font-semibold uppercase text-gray-500">
                 <span>Account</span>
                 <span>Class</span>
                 <span>Debit</span>
