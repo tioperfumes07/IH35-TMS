@@ -145,10 +145,10 @@ export function FraudAlertsListPage() {
         label: "Severity",
         sortable: true,
         render: (row) => (
-          <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${severityClass(row.severity)}`}>{row.severity}</span>
+          <span className={`rounded-sm px-1.5 py-0.5 text-xs font-semibold ${severityClass(row.severity)}`}>{row.severity}</span>
         ),
       },
-      { key: "rule_id", label: "Rule", sortable: true, cellClass: "font-mono text-[10px]", render: (row) => row.rule_id },
+      { key: "rule_id", label: "Rule", sortable: true, cellClass: "font-mono text-xs", render: (row) => row.rule_id },
       {
         key: "location_city",
         label: "Location",

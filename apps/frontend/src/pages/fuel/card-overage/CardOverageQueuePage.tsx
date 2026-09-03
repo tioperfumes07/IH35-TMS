@@ -178,7 +178,7 @@ export function CardOverageQueuePage() {
         key: "overage_rule",
         label: "Rule",
         sortable: true,
-        cellClass: "font-mono text-[10px]",
+        cellClass: "font-mono text-xs",
         render: (row) => row.overage_rule,
       },
       {
@@ -214,7 +214,7 @@ export function CardOverageQueuePage() {
                 className="text-xs font-semibold text-slate-700 hover:underline"
               />
             ) : (
-              <span className="text-[10px] text-gray-500">—</span>
+              <span className="text-xs text-gray-500">—</span>
             )}
           </div>
         ),

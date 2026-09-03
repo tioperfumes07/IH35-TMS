@@ -182,7 +182,7 @@ export function TruckPlanner() {
               idle: row.status === "available",
               name: <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />,
               secondary: (
-                <span className={`rounded-sm px-1 text-[9px] ${truckStatusClass(row.status)}`}>
+                <span className={`rounded-sm px-1 text-xs ${truckStatusClass(row.status)}`}>
                   {truckStatusLabel(row.status)}
                 </span>
               ),
@@ -214,7 +214,7 @@ export function TruckPlanner() {
                 idle: true,
                 name: <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />,
                 secondary: (
-                  <span className={`rounded-sm px-1 text-[9px] ${truckStatusClass(row.status)}`}>
+                  <span className={`rounded-sm px-1 text-xs ${truckStatusClass(row.status)}`}>
                     {truckStatusLabel(row.status)}
                   </span>
                 ),

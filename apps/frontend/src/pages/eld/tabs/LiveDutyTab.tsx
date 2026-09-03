@@ -98,7 +98,7 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div className="text-sm font-semibold text-slate-800">Live Duty Status</div>
         <div className="text-[11px] text-slate-500">
-          Canonical roster from <code className="text-[10px]">GET /api/v1/telematics/hos/daily-roster</code> · duty day{" "}
+          Canonical roster from <code className="text-xs">GET /api/v1/telematics/hos/daily-roster</code> · duty day{" "}
           {date} (America/Chicago). Refreshes every 60s.
         </div>
       </div>
@@ -115,7 +115,7 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
             ] as const
           ).map(([label, value]) => (
             <div key={label} className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
-              <div className="text-[10px] uppercase text-slate-700">{label}</div>
+              <div className="text-[11px] uppercase text-slate-700">{label}</div>
               <div className="text-xl font-semibold tabular-nums text-slate-900">{value}</div>
             </div>
           ))}

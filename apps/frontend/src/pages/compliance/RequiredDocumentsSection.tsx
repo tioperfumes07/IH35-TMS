@@ -74,7 +74,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
         render: (row) => (
           <>
             <div className="font-medium text-slate-900">{row.label}</div>
-            <div className="text-[10px] text-slate-400">{row.code}</div>
+            <div className="text-xs text-slate-400">{row.code}</div>
           </>
         ),
       },
@@ -103,7 +103,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
     <section data-testid="compliance-section-required-documents" className="mt-4">
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <h2 className="text-[13px] font-semibold text-[#1f2a44]">Required Documents</h2>
+          <h2 className="text-xs font-semibold text-[#1f2a44]">Required Documents</h2>
           <p className="text-[11px] text-slate-500">
             Which documents are required per record. Warn-first; promote any to a hard block. Seeded from FMCSA/IRS defaults.
           </p>

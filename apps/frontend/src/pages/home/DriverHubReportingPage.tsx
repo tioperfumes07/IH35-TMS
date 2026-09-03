@@ -282,7 +282,7 @@ export function DriverHubReportingPage() {
                 >
                   <div className="flex flex-wrap items-end gap-3">
                     <div className="space-y-1">
-                      <label className="block text-[9px] font-semibold uppercase tracking-wide text-[#8A92AB]">From</label>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wide text-[#8A92AB]">From</label>
                       <DatePicker
                         className={inputCls}
                         value={stagedRange.draft.from}
@@ -291,7 +291,7 @@ export function DriverHubReportingPage() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="block text-[9px] font-semibold uppercase tracking-wide text-[#8A92AB]">To</label>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wide text-[#8A92AB]">To</label>
                       <DatePicker
                         className={inputCls}
                         value={stagedRange.draft.to}

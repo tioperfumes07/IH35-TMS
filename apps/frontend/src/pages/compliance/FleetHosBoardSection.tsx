@@ -148,7 +148,7 @@ const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
       <span className={`whitespace-nowrap ${row.stale ? "font-semibold text-slate-700" : ""}`}>
         {row.captured_at_local ?? "—"}
         {row.minutes_since_fix != null ? (
-          <span className="ml-1 text-[10px] text-slate-400">({row.minutes_since_fix} min ago)</span>
+          <span className="ml-1 text-xs text-slate-400">({row.minutes_since_fix} min ago)</span>
         ) : null}
       </span>
     ),
@@ -238,7 +238,7 @@ const OFFLINE_FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
       <span className="whitespace-nowrap">
         {row.captured_at_local ?? "Never reported"}
         {row.minutes_since_fix != null ? (
-          <span className="ml-1 text-[10px] font-normal text-slate-400">({row.minutes_since_fix} min ago)</span>
+          <span className="ml-1 text-xs font-normal text-slate-400">({row.minutes_since_fix} min ago)</span>
         ) : null}
       </span>
     ),
