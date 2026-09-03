@@ -7253,5 +7253,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1044
+  "total_claimed": 1045,
+  "10242": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-driver-pay-rate-override-reason-wired (GO-21 B5: driver_pay_rate_override_reason must stay wired end-to-end from CREATE schema through the INSERT/in-memory patch to the frontend send, or a typed per-load override rate is silently discarded again)"
+  }
 }

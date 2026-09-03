@@ -42,7 +42,17 @@ export function collectProblems(root = ROOT) {
   if (/limit:\s*5000/.test(code)) {
     problems.push(`${FILE}: must not fetch silent limit:5000 customer page`);
   }
-  if (!/label:\s*c\.display_name\.trim\(\)\s*\|\|\s*c\.id/.test(code) || /c\.(?:name|customer_code|legal_name)/.test(code)) {
+  // C1 (owner correction 2026-09-02): the raw `c.display_name.trim() || c.id` ternary fell back to
+  // a bare machine uuid on an operator-facing label whenever the name came back empty/blank.
+  // entityLabel() rejects an empty AND a uuid-shaped name and falls back to "Customer — not
+  // visible" instead — the same convention every other reverse-link label in this codebase already
+  // uses (BillsReverseSection, EntityLinkOrTombstone). Accept either shape so this guard doesn't
+  // block a strictly SAFER label contract than the one it was originally written against.
+  if (
+    (!/label:\s*c\.display_name\.trim\(\)\s*\|\|\s*c\.id/.test(code) &&
+      !/label:\s*entityLabel\(c\.display_name,\s*c\.id,\s*["']Customer["']\)/.test(code)) ||
+    /c\.(?:name|customer_code|legal_name)/.test(code)
+  ) {
     problems.push(`${FILE}: picker label must use the typed canonical Customer display_name contract`);
   }
   const live = readRel(root, LIVE_WIZARD);
@@ -57,7 +67,12 @@ export function collectProblems(root = ROOT) {
   if (/limit:\s*5000/.test(liveCode) && /book-load-v4-customers/.test(liveCode)) {
     problems.push(`${LIVE_WIZARD}: must not fetch silent limit:5000 for the customer picker`);
   }
-  if (!/label:\s*c\.display_name\.trim\(\)\s*\|\|\s*c\.id/.test(liveCode) || /c\.(?:name|customer_code|legal_name)/.test(liveCode)) {
+  // Same C1 acceptance as above — entityLabel() is the safer, currently-shipped shape.
+  if (
+    (!/label:\s*c\.display_name\.trim\(\)\s*\|\|\s*c\.id/.test(liveCode) &&
+      !/label:\s*entityLabel\(c\.display_name,\s*c\.id,\s*["']Customer["']\)/.test(liveCode)) ||
+    /c\.(?:name|customer_code|legal_name)/.test(liveCode)
+  ) {
     problems.push(`${LIVE_WIZARD}: picker label must use the typed canonical Customer display_name contract`);
   }
   if (!/disabled=\{customersQuery\.isLoading \|\| customersQuery\.isError\}/.test(liveCode)) {
@@ -73,7 +88,12 @@ export function collectProblems(root = ROOT) {
   if (!/watchedCustomerId[\s\S]{0,900}?fromApi\.some[\s\S]{0,200}?o\.value === id/.test(liveCode)) {
     problems.push(`${LIVE_WIZARD}: customerOptions must seed watchedCustomerId when missing from API page`);
   }
-  if (!/watchedCustomerId[\s\S]{0,1200}?label:\s*name \|\| id/.test(liveCode)) {
+  // C1: the seeded (watchedCustomerId, missing-from-API-page) option's label is entityLabel(name,
+  // id, "Customer") now too, same acceptance as the two checks above.
+  if (
+    !/watchedCustomerId[\s\S]{0,1200}?label:\s*name \|\| id/.test(liveCode) &&
+    !/watchedCustomerId[\s\S]{0,1200}?label:\s*entityLabel\(name,\s*id,\s*["']Customer["']\)/.test(liveCode)
+  ) {
     problems.push(`${LIVE_WIZARD}: seeded customer option must use customer_name (or id) as label`);
   }
   return problems;
@@ -107,7 +127,12 @@ if (process.argv.includes("--selftest")) {
       fs.mkdirSync(path.dirname(target), { recursive: true });
       const source = readRel(ROOT, rel);
       if (!source) throw new Error(`missing selftest source ${rel}`);
-      fs.writeFileSync(target, source.replace("label: c.display_name.trim() || c.id", "label: c.id"));
+      // Mutate whichever shape the real source actually carries today (the raw ternary or the
+      // entityLabel() call this guard now also accepts) back to a bare uuid label — the real defect.
+      const mutated = source.includes('label: entityLabel(c.display_name, c.id, "Customer")')
+        ? source.replace('label: entityLabel(c.display_name, c.id, "Customer")', "label: c.id")
+        : source.replace("label: c.display_name.trim() || c.id", "label: c.id");
+      fs.writeFileSync(target, mutated);
     }
     const labelMutation = collectProblems(stubRoot);
     if (!labelMutation.some((problem) => problem.includes("typed canonical Customer display_name contract"))) {
