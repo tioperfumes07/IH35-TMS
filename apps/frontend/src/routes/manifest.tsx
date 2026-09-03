@@ -3988,6 +3988,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/accounting/proof-trail"
+          element={
+            <ProtectedRoute>
+              <MoneyProofTrailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/accounting/proof-trail/:documentType/:id"
           element={
             <ProtectedRoute>
