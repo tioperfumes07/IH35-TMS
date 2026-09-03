@@ -40,11 +40,12 @@ function parseViewMode(raw: string | null, loadsRoute: boolean): ViewMode {
   if (raw === "overview" && !loadsRoute) return "overview";
   return loadsRoute ? "list" : "overview";
 }
-type DispatchSubTabId = "load_board" | "book_load" | "assignments" | "settlements" | "pre_settlements";
+type DispatchSubTabId = "load_board" | "book_load" | "load_costs" | "assignments" | "settlements" | "pre_settlements";
 
 const DISPATCH_SUB_TABS: Array<{ id: DispatchSubTabId; label: string }> = [
   { id: "load_board", label: "Load board" },
   { id: "book_load", label: "Book load" },
+  { id: "load_costs", label: "Load costs" },
   { id: "assignments", label: "Assignments" },
   { id: "settlements", label: "Settlements" },
   { id: "pre_settlements", label: "Pre-settlements" },

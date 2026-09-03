@@ -51,4 +51,10 @@ describe("DispatchSubnav planner reachability + click-nav (Task 1)", () => {
     fireEvent.click(chevron);
     expect(screen.queryByRole("menuitem", { name: "Driver Planner" })).not.toBeInTheDocument();
   });
+
+  it("exposes Load costs as a clickable dispatch menu leaf to /accounting/load-costs", () => {
+    renderNav();
+    const link = screen.getByRole("menuitem", { name: "Load costs" });
+    expect(link).toHaveAttribute("href", "/accounting/load-costs");
+  });
 });

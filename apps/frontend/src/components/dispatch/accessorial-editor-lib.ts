@@ -42,13 +42,30 @@ export function seedAccessorialRow(
     additional_charge_id: "",
     code: defaults.code,
     description: opts?.description ?? defaults.description,
-    amount_cents: Math.max(0, Number(opts?.amount_cents ?? 0)),
+    amount_cents: Number(opts?.amount_cents ?? 0),
     taxable: false,
   };
 }
 
 export function sumAccessorialCents(rows: AccessorialRow[]): number {
-  return rows.reduce((sum, row) => sum + Math.max(0, Number(row.amount_cents || 0)), 0);
+  return rows.reduce((sum, row) => sum + Number(row.amount_cents || 0), 0);
+}
+
+export const LINEHAUL_NEGATIVE_ERROR =
+  "Linehaul cannot be negative. Use an accessorial adjustment for a reduction.";
+export const FUEL_SURCHARGE_NEGATIVE_ERROR =
+  "Fuel surcharge cannot be negative. Use an accessorial adjustment for a reduction.";
+
+export function linehaulFuelError(field: "linehaul" | "fuel_surcharge", cents: number): string | null {
+  if (Number(cents || 0) < 0) {
+    return field === "linehaul" ? LINEHAUL_NEGATIVE_ERROR : FUEL_SURCHARGE_NEGATIVE_ERROR;
+  }
+  return null;
+}
+
+function nonNegativeOrZeroWithError(cents: number): number {
+  const n = Number(cents || 0);
+  return n < 0 ? 0 : n;
 }
 
 export function computeBookLoadSectionTotalCents(
@@ -57,8 +74,8 @@ export function computeBookLoadSectionTotalCents(
   accessorialRows: AccessorialRow[]
 ): number {
   return (
-    Math.max(0, Number(linehaulCents || 0)) +
-    Math.max(0, Number(fuelSurchargeCents || 0)) +
+    nonNegativeOrZeroWithError(linehaulCents) +
+    nonNegativeOrZeroWithError(fuelSurchargeCents) +
     sumAccessorialCents(accessorialRows)
   );
 }
@@ -71,12 +88,12 @@ export function buildBookLoadChargeLines(input: {
   accessorial_rows: AccessorialRow[];
 }): BookLoadChargeLine[] {
   const lines: BookLoadChargeLine[] = [
-    { code: "linehaul", amount_cents: Math.max(0, Number(input.linehaul_cents || 0)) },
-    { code: "fuel_surcharge", amount_cents: Math.max(0, Number(input.fuel_surcharge_cents || 0)) },
+    { code: "linehaul", amount_cents: nonNegativeOrZeroWithError(input.linehaul_cents) },
+    { code: "fuel_surcharge", amount_cents: nonNegativeOrZeroWithError(input.fuel_surcharge_cents) },
   ];
   for (const row of input.accessorial_rows) {
-    const amount = Math.max(0, Number(row.amount_cents || 0));
-    if (amount <= 0) continue;
+    const amount = Number(row.amount_cents || 0);
+    if (amount === 0) continue;
     const code = String(row.code || "accessorial").trim() || "accessorial";
     lines.push({
       code: code.toLowerCase(),

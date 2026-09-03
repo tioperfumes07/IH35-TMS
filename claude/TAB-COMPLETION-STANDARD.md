@@ -69,6 +69,13 @@ Empty is a question. Name the entity, filter, and range.
 
 Chrome screenshot, not assertion.
 
+## L. Menu path — or it is unfinished
+
+A route with no nav entry, or a panel below the fold with no menu item pointing at it, is unreachable
+and therefore unfinished. "Built" means an operator can click it from the menu they already use,
+without typing a URL and without scrolling past other work. When you report a surface built, say
+which menu path reaches it.
+
 ---
 
 ## Scorecard (paste filled in)
@@ -85,4 +92,5 @@ H  header colour ........ #14314F / #FFFFFF, 11px/700/UPPERCASE
 I  plain English ........ no underscores, machine names, ALLCAPS data
 J  empty state .......... names the filter
 K  Chrome proof ......... screenshot attached
+L  menu path ............ named click path, not a URL
 ```

@@ -147,7 +147,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
         render: (row) => (
           <MoneyInput
             valueCents={row.amount_cents}
-            onChangeCents={(c) => onRowsChange(updateRow(rows, row.id, { amount_cents: Math.max(0, c ?? 0) }))}
+            onChangeCents={(c) => onRowsChange(updateRow(rows, row.id, { amount_cents: c ?? 0 }))}
             className="ml-auto w-24"
             ariaLabel="Accessorial amount"
           />

@@ -72,6 +72,7 @@ import {
   buildBookLoadChargeLines,
   computeBookLoadSectionTotalCents,
   computeDetentionAccrualCents,
+  linehaulFuelError,
   rowFromLegacyAccessorialCents,
   sumAccessorialCents,
   type AccessorialRow,
@@ -970,6 +971,19 @@ export function BookLoadModalV4({
       return;
     }
     const seatedDriver = Boolean(values.assigned_primary_driver_id?.trim?.() || values.assigned_primary_driver_id);
+    const linehaulNeg = linehaulFuelError("linehaul", Number(values.linehaul_cents || 0));
+    if (linehaulNeg) {
+      form.setError("linehaul_cents", { type: "validate", message: linehaulNeg });
+      pushToast(linehaulNeg, "error");
+      return;
+    }
+    const fuelNeg = linehaulFuelError("fuel_surcharge", Number(values.fuel_surcharge_cents || 0));
+    if (fuelNeg) {
+      form.setError("fuel_surcharge_cents", { type: "validate", message: fuelNeg });
+      pushToast(fuelNeg, "error");
+      return;
+    }
+
     if (saveMode === "book_dispatch") {
       if (!(Number(values.miles_practical) > 0)) {
         form.setError("miles_practical", {
@@ -1435,11 +1449,11 @@ export function BookLoadModalV4({
                       form.setValue("trip_type", code, { shouldDirty: true });
                       form.clearErrors("trip_type");
                     }}
-                    className="flex h-[46px] flex-1 flex-col justify-center rounded-sm border px-2.5 text-left transition-colors"
+                    className="flex h-7 flex-1 items-center rounded-sm border px-2.5 text-left transition-colors"
+                    title={desc}
                     style={active ? { backgroundColor: color, borderColor: color, color: "white" } : { borderColor: "#cbd5e1", color: "#1f2733" }}
                   >
-                    <span className="text-xs font-bold leading-tight">{icon} {code} · {label}</span>
-                    <span className={`text-xs leading-tight ${active ? "text-white/80" : "text-gray-500"}`}>{desc}</span>
+                    <span className="truncate text-xs font-bold leading-tight">{icon} {code} · {label}</span>
                   </button>
                 );
               })}
@@ -1550,7 +1564,15 @@ export function BookLoadModalV4({
                 <div className="blw-sec-hd">
                   <span className="blw-sec-chip">A</span>
                   <span className="blw-sec-name">Customer · Invoice · Charges</span>
-                  <span className="blw-sec-meta">Section total <b>{money.format(sectionTotal / 100)}</b></span>
+                  <span className="blw-sec-meta">
+                    Invoice total <b>{money.format(customerInvoiceTotal / 100)}</b>
+                    {extraRatesCents !== 0 ? (
+                      <>
+                        {" "}
+                        · Charges {money.format(sectionTotal / 100)} · Stop extras {money.format(extraRatesCents / 100)}
+                      </>
+                    ) : null}
+                  </span>
                 </div>
                 <div className="space-y-2 p-3">
                   {/* §A rate-con upload — RESTORED per owner 2026-07-04 as the BUTTON variant (click → file
@@ -1760,13 +1782,19 @@ export function BookLoadModalV4({
                         <tr className="border-b border-gray-100">
                           <td className="px-2 py-1.5">Linehaul</td>
                           <td className="px-2 py-1.5 text-right">
-                            <MoneyInput valueCents={form.watch("linehaul_cents")} onChangeCents={(c) => form.setValue("linehaul_cents", c ?? 0, { shouldDirty: true })} className="ml-auto w-28" ariaLabel="Linehaul" />
+                            <MoneyInput valueCents={form.watch("linehaul_cents")} onChangeCents={(c) => { form.setValue("linehaul_cents", c ?? 0, { shouldDirty: true }); form.clearErrors("linehaul_cents"); }} className="ml-auto w-28" ariaLabel="Linehaul" />
+                            {form.formState.errors.linehaul_cents ? (
+                              <p className="mt-1 text-xs text-red-600">{String(form.formState.errors.linehaul_cents.message)}</p>
+                            ) : null}
                           </td>
                         </tr>
                         <tr className="border-b border-gray-100">
                           <td className="px-2 py-1.5">Fuel surcharge</td>
                           <td className="px-2 py-1.5 text-right">
-                            <MoneyInput valueCents={form.watch("fuel_surcharge_cents")} onChangeCents={(c) => form.setValue("fuel_surcharge_cents", c ?? 0, { shouldDirty: true })} className="ml-auto w-28" ariaLabel="Fuel surcharge" />
+                            <MoneyInput valueCents={form.watch("fuel_surcharge_cents")} onChangeCents={(c) => { form.setValue("fuel_surcharge_cents", c ?? 0, { shouldDirty: true }); form.clearErrors("fuel_surcharge_cents"); }} className="ml-auto w-28" ariaLabel="Fuel surcharge" />
+                            {form.formState.errors.fuel_surcharge_cents ? (
+                              <p className="mt-1 text-xs text-red-600">{String(form.formState.errors.fuel_surcharge_cents.message)}</p>
+                            ) : null}
                           </td>
                         </tr>
                         <tr className="border-b border-gray-100">
@@ -1775,7 +1803,7 @@ export function BookLoadModalV4({
                             {money.format(sumAccessorialCents(accessorialRows ?? []) / 100)}
                           </td>
                         </tr>
-                        {extraRatesCents > 0 ? (
+                        {extraRatesCents !== 0 ? (
                           <tr className="border-b border-gray-100">
                             <td className="px-2 py-1.5">Per-stop extra rates</td>
                             <td className="px-2 py-1.5 text-right font-mono text-gray-800">{money.format(extraRatesCents / 100)}</td>

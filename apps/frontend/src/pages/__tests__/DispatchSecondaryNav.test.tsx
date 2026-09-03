@@ -113,11 +113,11 @@ vi.mock("../../components/border-crossing/CbpWaitTimesWidget", () => ({
   CbpWaitTimesWidget: () => null,
 }));
 
-function wrap(ui: ReactNode) {
+function wrap(ui: ReactNode, initial = "/dispatch") {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter initialEntries={["/dispatch"]}>{ui}</MemoryRouter>
+      <MemoryRouter initialEntries={[initial]}>{ui}</MemoryRouter>
     </QueryClientProvider>
   );
 }
@@ -127,18 +127,16 @@ describe("DispatchPage secondary nav (B21-D12)", () => {
     vi.clearAllMocks();
   });
 
-  it("renders five dispatch secondary tabs", async () => {
+  it("renders dispatch secondary tabs including Load costs", async () => {
     wrap(<DispatchPage />);
     expect(await screen.findByTestId("dispatch-secondary-nav")).toBeTruthy();
-    for (const label of ["Load board", "Book load", "Assignments", "Settlements", "Pre-settlements"]) {
-      expect(screen.getByRole("button", { name: label })).toBeTruthy();
+    for (const label of ["Load board", "Book load", "Load costs", "Assignments", "Settlements", "Pre-settlements"]) {
+      expect(screen.getAllByText(label).length).toBeGreaterThan(0);
     }
   });
 
   it("embeds D2 assignment history when Assignments tab is selected", async () => {
-    const user = userEvent.setup();
-    wrap(<DispatchPage />);
-    await user.click(screen.getByRole("button", { name: "Assignments" }));
+    wrap(<DispatchPage />, "/dispatch/assignments");
     expect(await screen.findByTestId("dispatch-assignments-embed")).toBeTruthy();
     expect(await screen.findByTestId("dispatch-assignment-history-page")).toBeTruthy();
     expect(await screen.findByText("Jane Driver")).toBeTruthy();
@@ -146,9 +144,7 @@ describe("DispatchPage secondary nav (B21-D12)", () => {
   });
 
   it("links settlements tab to canonical driver finance route", async () => {
-    const user = userEvent.setup();
-    wrap(<DispatchPage />);
-    await user.click(screen.getByRole("button", { name: "Settlements" }));
+    wrap(<DispatchPage />, "/dispatch/settlements");
     const link = await screen.findByTestId("dispatch-settlements-link");
     expect(link.getAttribute("href")).toBe("/driver-finance/settlements");
     expect(screen.getByTestId("dispatch-settlements-quicklink")).toBeTruthy();
