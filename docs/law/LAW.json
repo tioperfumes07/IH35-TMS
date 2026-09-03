@@ -852,5 +852,12 @@
     "source_file": "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
     "guard": "scripts/verify-dispatch-board-column-reorder.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-09-03-ROUND-TRIPS-TIMELINE-RESTORED",
+    "title": "Round Trips Timeline view is restored to the original inline grid design (commit 67faa3dcd), not delegated back to PlannerGrid, with locked NB/SB/TR colors, 7rem + minmax(2.5rem, 1fr) grid, and the 7-day long-leg flag",
+    "source_file": "apps/frontend/src/pages/dispatch/RoundTripsTimeline.tsx",
+    "guard": "scripts/verify-roundtrips-timeline-restored.mjs",
+    "type": "enforced"
   }
 ]
