@@ -677,5 +677,10 @@
       "claimed_at": "2026-09-03",
       "purpose": "25-task #6 (owner instructions 2026-09-02, owner-corrected 2026-09-03): bind accounting.chart_of_accounts_roles role='fixed_asset_default' for USMCA to the EXISTING account 1500 'Trucks & Tractors' (Asset/Vehicles, live, postable) -- owner ruling: do not create a new account, do not rename 1500. Closes the 409 CoaRoleResolutionError repairs >= $7,000 hit at maint/wo-ap-posting.service.ts (capitalize-threshold.ts CAPITALIZE_REPAIR_THRESHOLD_CENTS=700000) via maintenance-posting/poster.service.ts's resolveRoleAccount(..., 'fixed_asset_default')"
     }
+  },
+  "202613590001": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "GO-19-2b Section 2: catalogs.lane_mileage CHECK constraint (short_miles IS NULL OR short_miles <= practical_miles) -- short_miles stays NULL until a trustworthy source exists, this constraint enforces the one invariant when a value IS present"
   }
 }
