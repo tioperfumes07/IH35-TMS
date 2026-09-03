@@ -59,7 +59,10 @@ export function ListViewFooter<T>({
   });
 
   const rowHeight = density === "compact" ? "h-[28px]" : "h-9";
-  const textSize = density === "compact" ? "text-[10px]" : "text-[11px]";
+  // GLOBAL-TYPE-SIZE-BASELINE.md (locked): column/section headers are 11px, no smaller
+  // "compact" variant. Compact density still reads as compact via rowHeight above (28px vs
+  // h-9) -- that alone delivers the density difference; text no longer needs to shrink too.
+  const textSize = "text-[11px]";
 
   return (
     <tfoot>

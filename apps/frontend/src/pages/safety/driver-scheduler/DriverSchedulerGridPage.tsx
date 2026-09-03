@@ -295,7 +295,7 @@ export function DriverSchedulerGridPage() {
 
       {query.data ? (
         <div className="max-w-[calc(100vw-48px)] overflow-auto rounded-sm border border-gray-200 bg-white">
-          <table className="min-w-max border-collapse text-[10px]">
+          <table className="min-w-max border-collapse text-xs">
             <thead>
               <tr>
                 <th className="sticky left-0 z-10 border-b border-r bg-gray-50 px-2 py-1 text-left">Driver</th>
@@ -340,7 +340,7 @@ export function DriverSchedulerGridPage() {
                       const label = lt ? String(lt).slice(0, 3) : "";
                       return (
                         <td key={d} className={`border-l border-gray-50 px-0 py-0 text-center ${bg}`} title={lt ? humanizeEnumLabel(lt) : ""}>
-                          <span className="text-[9px] text-gray-700">{label}</span>
+                          <span className="text-xs text-gray-700">{label}</span>
                         </td>
                       );
                     })}

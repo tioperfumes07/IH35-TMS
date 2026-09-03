@@ -115,7 +115,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
   return (
     <div className="overflow-hidden rounded-sm border border-[#e5e7eb] bg-[#f8f8f4]">
       <div className="px-[18px] pt-[14px] pb-[10px]">
-        <span className="text-[20px] font-semibold text-[#1A1F36]">Inbox</span>
+        <span className="text-[22px] font-semibold text-[#1A1F36]">Inbox</span>
         <span className="ml-[10px] text-[12px] text-[#8A92AB]">Driver Hub · requests from the driver app</span>
       </div>
 
@@ -160,8 +160,8 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                   </span>
                   <span className="flex-1">
                     <span className="block">
-                      <EntityLink kind="driver" id={String(row.driver_id ?? "")} label={name} className="text-[13px] font-semibold text-[#1A1F36] hover:underline" />{" "}
-                      <span className="rounded-xs bg-[#fef3e2] px-[6px] py-[2px] text-[9px] font-semibold uppercase tracking-[0.25px] text-[#854f0b]">Cash advance</span>{" "}
+                      <EntityLink kind="driver" id={String(row.driver_id ?? "")} label={name} className="text-xs font-semibold text-[#1A1F36] hover:underline" />{" "}
+                      <span className="rounded-xs bg-[#fef3e2] px-[6px] py-[2px] text-[11px] font-semibold uppercase tracking-[0.25px] text-[#854f0b]">Cash advance</span>{" "}
                       <span className="text-[11px] text-[#8A92AB]">
                         {String(row.submitted_at ?? "").replace("T", " ").slice(0, 16)}
                         {timeline?.viewed_at ? " · viewed" : ""}
@@ -169,12 +169,12 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                     </span>
                     <span className="mt-1 block text-[12px] text-[#4A5170]">"{String(row.reason ?? "")}"</span>
                   </span>
-                  <span className="text-[16px] font-semibold whitespace-nowrap text-[#1A1F36]">{usd(row.requested_amount_cents)}</span>
+                  <span className="text-xs font-semibold whitespace-nowrap text-[#1A1F36]">{usd(row.requested_amount_cents)}</span>
                 </button>
 
                 {open ? (
                   <div className="mt-[10px] rounded-sm border border-[#e5e7eb] bg-[#f8f8f4] px-[11px] py-[9px]">
-                    <div className="mb-[7px] text-[9px] font-semibold uppercase tracking-[0.25px] text-[#6B7280]">
+                    <div className="mb-[7px] text-[11px] font-semibold uppercase tracking-[0.25px] text-[#6B7280]">
                       Linkage — what posts on approve
                     </div>
                     {detailQuery.isError ? <ListErrorBanner message="Could not record or load request detail." onRetry={() => void detailQuery.refetch()} /> : null}
