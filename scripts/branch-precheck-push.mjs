@@ -15,6 +15,7 @@ import {
 } from "./vlci-lifecycle.mjs";
 import { ciRunGuardSet, runStatic, STATIC_RESULT_CATEGORIES } from "./verify-static.mjs";
 import { ensureFreshGateStepMap } from "./generate-gate-step-map.mjs";
+import { ensureVerifyStaticOnce } from "./static-sweep-proof.mjs";
 
 const MODULE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -658,19 +659,22 @@ export function runPrecheckPush(options = {}) {
   }
   // block-ready owns verify:static in-process. If it was capability-skipped, run static once here
   // so push still has static coverage — never duplicate when block-ready already ran.
+  // Use ensureVerifyStaticOnce so IH35_GATE_DIFF_FILES is computed and verify-static scopes to the
+  // current push's changed files (GATE-LIVELOCK-01). A raw `node scripts/verify-static.mjs` fallback
+  // would run the full unscoped sweep (~4,780 guards) and livelock the local gate.
   if (!blockReadyRan && steps.some((s) => s.label === "block-ready")) {
-    const staticResult = runStep("node scripts/verify-static.mjs", "verify-static-fallback", root, env);
-    if (!staticResult.ok) {
-      console.error(
-        `branch:precheck-push FAIL category=${staticResult.category} at step: verify-static-fallback`
-      );
-      if (staticResult.tail) console.error(staticResult.tail);
+    try {
+      ensureVerifyStaticOnce({ root });
+    } catch (error) {
+      console.error("branch:precheck-push FAIL at step: verify-static-fallback");
+      const detail = error?.result?.detail || error?.message || String(error);
+      if (detail) console.error(detail);
       return {
         ok: false,
-        category: staticResult.category,
+        category: GATE_RESULT_CATEGORIES.CAPABILITY,
         reason: "verify-static-fallback failed (block-ready was capability-skipped)",
         step: "verify-static-fallback",
-        tail: staticResult.tail,
+        tail: detail.slice(-500),
       };
     }
   }
