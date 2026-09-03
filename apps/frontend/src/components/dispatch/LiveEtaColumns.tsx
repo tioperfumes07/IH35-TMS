@@ -72,10 +72,10 @@ export function DriverStatusColumn({ load }: { load: DispatchLoadRow }) {
 
   return (
     <div className="flex flex-col items-start gap-0.5" data-testid="driver-status-column">
-      <span className="rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+      <span className="rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
         {LIFECYCLE_LABEL[lifecycle] ?? lifecycle.replaceAll("_", " ")}
       </span>
-      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${pwaPingClass(load.driver_pwa_last_ping_at ?? null)}`}>
+      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${pwaPingClass(load.driver_pwa_last_ping_at ?? null)}`}>
         {pingLabel}
       </span>
     </div>
@@ -103,7 +103,7 @@ export function SamsaraEtaColumn({ load }: { load: DispatchLoadRow }) {
 export function OnTimePredictionColumn({ load }: { load: DispatchLoadRow }) {
   return (
     <span
-      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${onTimeClass(load.on_time_prediction ?? null)}`}
+      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${onTimeClass(load.on_time_prediction ?? null)}`}
       data-testid="on-time-prediction-column"
     >
       {onTimeLabel(load.on_time_prediction ?? null)}

@@ -17,10 +17,10 @@ export function LoadLivePositionCell({
   loadId: string;
   unavailable?: boolean;
 }) {
-  if (unavailable) return <span className="text-[10px] font-semibold text-amber-700">Unavailable</span>;
-  if (!position) return <span className="text-[10px] text-slate-400">No GPS</span>;
+  if (unavailable) return <span className="text-xs font-semibold text-amber-700">Unavailable</span>;
+  if (!position) return <span className="text-xs text-slate-400">No GPS</span>;
   return (
-    <div className="flex flex-col gap-0.5 text-[10px]" data-testid="load-live-gps-cell">
+    <div className="flex flex-col gap-0.5 text-xs" data-testid="load-live-gps-cell">
       <span className={position.stale ? "text-red-600 font-semibold" : "text-slate-700"}>
         {position.lat.toFixed(4)}, {position.lng.toFixed(4)}
         {position.stale ? " (stale)" : ""}

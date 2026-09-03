@@ -213,7 +213,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
                 <div className="truncate text-slate-700" title={row.proposed_reason}>
                   {row.proposed_reason}
                 </div>
-                <div className="text-[10px] text-slate-700">Proposed {formatDateTime(row.proposed_at)} · expires {formatDateTime(row.expires_at)}</div>
+                <div className="text-xs text-slate-700">Proposed {formatDateTime(row.proposed_at)} · expires {formatDateTime(row.expires_at)}</div>
               </div>
               {canReviewEscrow ? (
                 <Button
@@ -228,7 +228,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
                   Review
                 </Button>
               ) : (
-                <span className="text-[10px] font-medium uppercase text-slate-700">Pending</span>
+                <span className="text-[11px] font-medium uppercase text-slate-700">Pending</span>
               )}
             </div>
           ))}
@@ -252,7 +252,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
               <div key={policy.id} className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1.5 text-xs">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-gray-900">{formatMoney(remaining)} remaining</span>
-                  <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-700">{policy.status}</span>
+                  <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-slate-700">{policy.status}</span>
                 </div>
                 <div className="text-gray-600">
                   {formatMoney(deducted)} / {formatMoney(owed)} · max {formatMoney(policy.max_per_settlement_cents)} / settlement
