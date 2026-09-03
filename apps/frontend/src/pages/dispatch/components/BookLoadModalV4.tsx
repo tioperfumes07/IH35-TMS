@@ -2372,8 +2372,7 @@ export function BookLoadModalV4({
               <Button
                 type="submit"
                 disabled={
-                  form.formState.isSubmitting ||
-                  (isEditMode && !editLoad) ||
+                  form.formState.isSubmitting || (isEditMode && !editLoad) ||
                   repairBlockSubmitBlocked ||
                   preDispatch.hasUnackedInsScheduleConfirm ||
                   (!isEditMode && preDispatch.remainingBlockers > 0) ||
