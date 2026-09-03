@@ -1,0 +1,177 @@
+CURSOR | P0 · UNBLOCK LOAD CREATION | GO NOW
+OUTRANKS EVERYTHING. Including the ownership lock.
+REWRITTEN 2026-09-03 21:00 — the lane table changed at 20:48 while this
+was being written. Read the MILEAGE section carefully; the earlier
+version of this file said the catalog was unusable. IT IS NOT.
+
+======================================================================
+THE SITUATION
+======================================================================
+The owner has been trying to enter loads BY HAND for THREE DAYS and is
+blocked. He will create the first 10 loads manually; if those go clean
+the rest get bulk-uploaded. Nothing else matters until he can book.
+
+Do not start any other job. Do not refactor. Do not "improve while I am
+in here." Make load creation work, prove it live, stop.
+
+======================================================================
+1 · MILEAGE — THREE STATES, NOT TWO. Owner ruling.
+======================================================================
+OWNER'S WORDS: "the miles should load automatically or show history and
+I'll type by hand if I do not agree."
+
+LIVE STATE OF catalogs.lane_mileage, verified 2026-09-03 20:48Z
+(a seat rebuilt this table — the impossible lanes are GONE):
+
+  3,092 lanes · source='History' · short_miles NULL on EVERY row
+  short_miles > practical_miles:  0     (was 2,142 — fixed)
+
+  confidence   lanes   min runs  avg spread  max spread   autofill
+  High           472       3       2.3 mi      15.2 mi      ON
+  Check ZIP      404       2       2.7 mi      35.7 mi      ON
+  Thin         2,216       1       5.5 mi   1,095.2 mi      OFF
+
+BUILD THE FIELD AS THREE STATES:
+
+  STATE A — AUTOFILLED (876 lanes: High + Check ZIP)
+     practical_miles fills automatically.
+     Show the SOURCE inline: "1,065.8 mi · 9 runs · High confidence".
+     The owner can overwrite it. Overwriting is normal, not an error.
+
+  STATE B — HISTORY SHOWN, NOT FILLED (2,216 Thin lanes)
+     THIS IS THE STATE THAT UNBLOCKS HIM. Today the box is simply blank
+     and he has nothing to work from.
+     Show what the lane knows, with a ONE-CLICK ACCEPT:
+       "Seen 367 times · median 1,065.8 mi · spread 42.2 mi   [Use]"
+     He looks, clicks Use, or types his own. Never silently fill.
+
+  STATE C — BLANK (lane not in the table at all)
+     Empty box, he types. Say plainly that the lane is new.
+
+  IN ALL THREE STATES short_miles STAYS NULL AND STAYS EDITABLE.
+  There is no trustworthy shortest-miles source. Driver pay is loaded
+  miles plus a separate deadhead line — see the two-line rule below.
+
+*** REPORT THIS TO THE OWNER — the confidence rule is working against
+    him. His BUSIEST lanes are the ones that will NOT autofill, because
+    the rule uses ABSOLUTE spread and long lanes get punished for being
+    long:
+      PHENIX CITY AL -> LAREDO TX  367 runs  1,065.8 mi  spread 42.2  OFF
+      SIOUX CITY IA  -> LAREDO TX  162 runs  1,164.8 mi  spread 48.0  OFF
+      LAREDO TX -> CHICAGO IL      109 runs  1,353.7 mi  spread 61.5  OFF
+      WACO TX -> LAREDO TX          83 runs    340.8 mi  spread 12.3  OFF
+      LAREDO TX -> ATLANTA GA       81 runs  1,140.9 mi  spread 26.0  OFF
+    42 miles on a 1,066-mile lane is 4%. A lane with 367 runs is MORE
+    trustworthy than a 2-run Check-ZIP lane that fills silently today.
+    DO NOT CHANGE THE RULE YOURSELF — catalogs.lane_mileage is CC-1's
+    surface. FILE IT TO CC-1 and build State B so it does not block him
+    either way.
+
+*** practical_min and practical_max are NULL on every row. The history
+    display needs them to show a range. FILE THAT TO CC-1 TOO. Until
+    they exist, show runs + median + spread, which are populated.
+
+BLOCKING DEFECT YOU MUST FIX HERE:
+  BookLoadModalV4.tsx :396 :397 :398 — miles_practical, miles_shortest
+  and miles_deadhead DEFAULT TO 0, while validation at :992 refuses to
+  book unless miles_practical > 0, and :1000 refuses unless
+  miles_shortest > 0 with a driver seated.
+  A 0 that LOOKS FILLED BUT FAILS VALIDATION is a trap, and it is
+  probably part of what has had the owner stuck.
+  -> default to null · render EMPTY · accept a typed value
+  -> chain-deadhead.service.ts already states the law in its header:
+     "Never 0 ... blank is an honest unknown; 0 is a false statement
+     that pays the driver nothing for real empty miles."
+     The defaults contradict the service. Fix the defaults.
+  -> when a producer returns source:"blank", RENDER ITS REASON so he
+     can tell "not computed" from "no deadhead".
+
+======================================================================
+2 · OVERRIDE COLUMN — owner ruling, previously instructed, not built
+======================================================================
+Today the pre-dispatch panel lists blockers and offers ONE global
+"Override & dispatch" covering all of them. Wrong twice: he cannot
+clear them one at a time, and the audit trail records a blanket
+override instead of a decision per rule.
+
+BUILD: the blocker list becomes a TABLE with an OVERRIDE COLUMN.
+
+ | Rule code           | Subject       | What is missing     | Override  |
+ | WF-CDL-MISSING      | ANGEL SOSA    | No CDL expiry date  | [Override]|
+ | WF-MED-CARD-MISSING | ANGEL SOSA    | No DOT medical card | [Override]|
+ | GAP-14-FMCSA-NO-NUM | NCC Logistics | No MC#/DOT#         | [Override]|
+
+ · ONE override button PER ROW, in its OWN COLUMN. Not inline with the
+   text. Not one button for all of them.
+ · Clicking it clears THAT blocker only. The row then shows who
+   overrode it and when, in place.
+ · Book stays disabled until every blocking row is cleared or
+   overridden. The button says how many remain.
+ · Each override writes its OWN audit row: rule code, subject, reason,
+   user, timestamp. One blanket entry for six rules is not an audit
+   trail.
+ · Column standard: sortable ascending and descending, draggable,
+   adjustable width, header colour #14314F (design/tokens.ts:29).
+
+WHY IT FIRES ON EVERY LOAD — CC-3 owns the data fix, you own the override:
+  mdata.drivers  264 rows · cdl_number 160 · cdl_expires_at 9 ·
+                 dot_medical_expires_at 9
+  So the CDL and medical gates fire on ~255 of 264 drivers.
+  THE GATE IS CORRECT — these are FMCSA requirements to dispatch.
+  DO NOT WEAKEN IT. Give him a per-rule override so he can work while
+  CC-3 loads the data.
+
+======================================================================
+3 · EVERY OTHER BLOCKER ON THE CREATE PATH
+======================================================================
+Walk the create path end to end AS THE OWNER, in Chrome, on USMCA, and
+book a real load. Every place it stops you, fix it. Known:
+
+a) DRIVER / UNIT / CUSTOMER "not visible" in the bill preview.
+   The wizard resolves an id the preview query cannot scope to. Root
+   cause is duplicate driver rows — ANGEL ALFONSO SOSA returns 3,
+   Raul Esmeregildo Perez 3, Armando Perez 3, Ruben Pedro Perez
+   Garcia 2. CC-3 owns the dedupe.
+   YOUR JOB: the preview must DEGRADE HONESTLY AND NEVER BLOCK THE
+   BOOKING. Show what it can resolve, say plainly what it cannot, let
+   him continue.
+
+b) Anything else you hit. Fix it in this block. Do not defer it.
+
+======================================================================
+4 · THE TWO-LINE PAY RULE — do not break it while you are in here
+======================================================================
+Driver pay is ALWAYS two lines:
+   loaded miles   x rate_loaded
+   deadhead miles x rate_empty
+rate_empty_per_mile_cents is its own config value. It equals the loaded
+rate TODAY. NEVER hardcode that equality. One line is a defect.
+NEVER map AlwaysTrack "St. Miles" into miles_shortest — it is
+loaded + empty, and it pays deadhead twice.
+
+======================================================================
+5 · WHAT YOU MAY NOT DO IN THIS BLOCK
+======================================================================
+· Do NOT weaken a compliance gate. Override is a RECORDED DECISION, not
+  a removal.
+· Do NOT touch catalogs.lane_mileage. It is CC-1's surface. File
+  findings, do not fix.
+· Do NOT write test/sample/demo loads into USMCA. Not even to prove it
+  works. Book a REAL load the owner names, or use the edit path.
+· Do NOT start the layout work. That is 03-BOOK-LOAD-WIZARD.txt.
+
+======================================================================
+PROOF — paste all of it, then stop
+======================================================================
+· Chrome screenshot of the blocker table with the override column, one
+  row overridden and the others still blocking
+· the audit rows written — one per override, with rule code and reason
+· Chrome screenshot of a HIGH-confidence lane AUTOFILLING with its
+  source shown
+· Chrome screenshot of a THIN lane showing history with a [Use] button
+· Chrome screenshot of a NEW lane showing an empty box
+· a REAL USMCA load booked end to end, load number pasted
+· live SELECT of that load showing miles_practical, miles_shortest,
+  miles_deadhead and mileage_source as entered
+· the findings filed to CC-1 (confidence rule, practical_min/max NULL)
+  and to CC-3 (duplicate drivers)

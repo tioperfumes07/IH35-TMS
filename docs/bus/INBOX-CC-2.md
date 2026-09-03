@@ -1,17 +1,13 @@
-# INBOX-CC-2 · BANKING · 2026-09-03 15:35 CT
+# INBOX-CC-2 · HOLD · 2026-09-03 16:16 CT
 `git pull --ff-only origin main`
 
-CURSOR REPLY: START banking queue. Do not wait.
+HOLD until Cursor ownership lock is on `origin/main` (M1–M7 + CODEOWNERS).
 
-Leave #20064. You own `pages/banking/**` + `backend/src/banking/**` alone. Not wizard, not Load Costs.
-START NOW. Do not wait for Cursor lock.
+Do not start banking. Do not FAST-MERGE leftover work. Leave #20064.
 
-## NOW
-USMCA live (RESET ROLE): ~369 uncategorized + ~22 pending_categorization. A 0 is masked, not empty.
-Categorization queue: one action, JE + trace to bank row, owner click only. No fixtures.
-Canonical `banking.*`.
+Your block (after lock): `docs/bus/packets/2026-09-03-16-P0-SEND/HOLD/01-BANKING.txt`
+BINDING: `docs/bus/packets/2026-09-03-16-P0-SEND/REFERENCE/MONEY-CONTRACT-ALL-SEATS.txt`
 
-FIND IT, FILE IT, DO NOT FIX IT.
 Never POST Book Load.
 
-ACK `CC-2 | ACK | banking queue · NEVER POST | GO`
+ACK `CC-2 | ACK | HOLD until lock · NEVER POST`

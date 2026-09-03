@@ -1,0 +1,86 @@
+CURSOR | 0 · OWNERSHIP LOCK | GO — after P0 only
+
+OWNER RULING 2026-09-03: one seat owns one surface. A seat finishes its
+surface before starting anything else. No job is split across seats.
+
+======================================================================
+WHY — measured, not asserted
+======================================================================
+apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx
+  28 COMMITS IN 48 HOURS. Four seats. One 2,311-line file.
+
+  5a147c0f0  "Book Load layout restore"        +92  -128
+             one seat undoing another seat's field move. Net zero code,
+             a day gone, and the OWNER found the defect first.
+  f9ec3be13  GO-24-LOCATIONS-PICKER            +127 -76
+             rewrote Section C alone.
+
+apps/frontend/src/pages/dispatch/RoundTripsTimeline.tsx
+  22a266132  Aug 29  Cursor built it           +164 (new file)
+  d41124e99  Aug 30  another seat cut it       +79  -123
+
+This is the regression mechanism. It produces another commit tomorrow
+unless it is locked.
+
+======================================================================
+THE RULE THAT MAKES IT REAL
+======================================================================
+FIND IT, FILE IT, DO NOT FIX IT.
+A seat WILL find a genuine bug outside its surface. Fixing it is now a
+violation EVEN WHEN THE FIX IS CORRECT, because the owner gets an edit
+they did not make in a file they are mid-way through. Post the finding
+to the owning seat and keep going.
+
+======================================================================
+BUILD
+======================================================================
+1. Rewrite .github/CODEOWNERS with the surface map below.
+   KEEP the existing owner-notify paths exactly as they are:
+     /apps/backend/src/migrations/  /apps/backend/src/qbo-sync/
+     /apps/backend/src/usmca/  /render.yaml  /.github/
+     /scripts/verify-hold-merge-gate.mjs
+     /scripts/push-gate-capability-policy.mjs
+     /scripts/verify-meta.json
+
+2. scripts/verify-steps/verify-seat-surface-ownership.mjs
+   · reads the seat from the commit subject prefix
+     (Cursor / Claude-1 / CC-1 / CC-2 / CC-3 / Codex / Cascade)
+   · FAILS a PR touching a path owned by a different seat
+   · ONE escape hatch, no others:
+       SURFACE-BREACH-AUTHORIZED: <owner seat> <reason>
+     which the OWNING seat must have posted first. No silent crossing.
+
+3. Write the guard FIRST. Prove it FAILS against the last 28
+   BookLoadModalV4.tsx commits BEFORE wiring CODEOWNERS. Paste it.
+
+======================================================================
+SURFACE MAP
+======================================================================
+ Cursor  /apps/frontend/src/pages/dispatch/**
+         /apps/frontend/src/components/dispatch/**
+         /apps/backend/src/dispatch/book-load.service.ts
+ CC-1    /apps/frontend/src/pages/accounting/**
+         /apps/backend/src/accounting/**
+         /apps/backend/src/dispatch/mileage/**
+         /apps/backend/src/dispatch/lane-mileage.service.ts
+ CC-2    /apps/frontend/src/pages/banking/**  /apps/backend/src/banking/**
+ CC-3    /apps/frontend/src/pages/safety/**   /apps/backend/src/compliance/**
+ Codex   /apps/frontend/src/pages/maintenance/**
+         /apps/backend/src/maintenance/**
+ Cascade /apps/frontend/src/pages/lists/**    /apps/frontend/src/pages/reports/**
+
+======================================================================
+PROOF
+======================================================================
+· guard file path
+· failing run against the 28 historical BookLoadModalV4 commits
+· passing run on a clean PR
+· the new CODEOWNERS
+· one live PR correctly REJECTED for crossing a surface
+
+
+======================================================================
+BINDING: REFERENCE/MONEY-CONTRACT-ALL-SEATS.txt
+You write money. Read that contract before your first commit and build
+against it. It is what makes independent surface ownership safe.
+======================================================================

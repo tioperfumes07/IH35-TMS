@@ -1,18 +1,14 @@
-# INBOX-CC-3 · SAFETY + COMPLIANCE · 2026-09-03 15:35 CT
+# INBOX-CC-3 · DRIVER COMPLIANCE DATA · 2026-09-03 16:16 CT
 `git pull --ff-only origin main`
 
-CURSOR REPLY: START CDL/med intake. Do not wait.
-
 NO MONEY. No Book Load. No Load Costs. No banking.
-START NOW. Do not wait for Cursor lock.
 
-## NOW
-Live: 264 drivers, 9 CDL expiry, 9 DOT medical. Gate is correct; data is missing.
-1. Counts of dispatchable drivers missing CDL/med per company (`bypass_rls`).
-2. Duplicate names/ids — report only, do not merge/delete.
-3. Prove or refute aggregate RLS masking on `mdata.drivers`.
-4. Intake so CDL expiry + medical can be entered and warned before lapse.
+## NOW — one job
+`docs/bus/packets/2026-09-03-16-P0-SEND/CC-3/01-DRIVER-COMPLIANCE.txt`
 
-FIND IT, FILE IT, DO NOT FIX IT.
+This shrinks Cursor P0: CDL/med dates on file so the owner stops overriding every load. Gate stays. Do not merge/delete duplicate drivers.
 
-ACK `CC-3 | ACK | safety CDL intake · NEVER POST | GO`
+FIND IT, FILE IT, DO NOT FIX IT (wizard → Cursor).
+Never POST Book Load.
+
+ACK `CC-3 | ACK | driver compliance data · NEVER POST | GO`

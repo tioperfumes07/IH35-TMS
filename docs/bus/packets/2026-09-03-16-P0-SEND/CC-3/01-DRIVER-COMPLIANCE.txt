@@ -1,0 +1,76 @@
+CC-3 | 1d · DRIVER COMPLIANCE DATA | GO
+Blocked by: Cursor P0, then ownership lock
+
+YOU OWN SAFETY AND COMPLIANCE ALONE. NO MONEY. You do not commit to
+Book Load, Load Costs, banking, or any accounting path.
+
+SCOPE: /apps/frontend/src/pages/safety/**
+       /apps/backend/src/compliance/**
+USMCA ONLY. TRANSPORTATION and TRUCKING are FROZEN.
+
+======================================================================
+THE PROBLEM — IT IS BLOCKING THE OWNER TODAY
+======================================================================
+LIVE (bypass_rls):
+  mdata.drivers            264 rows
+     cdl_number populated          160
+     cdl_expires_at populated        9
+     dot_medical_expires_at          9
+
+WF-CDL-MISSING and WF-MED-CARD-MISSING therefore fire on ~255 of 264
+drivers, forcing an override on ESSENTIALLY EVERY DISPATCH. An override
+required every single time is not a control — the audit trail fills with
+255 identical entries and stops meaning anything.
+
+THE GATE IS CORRECT. CDL expiry and a DOT medical card ARE FMCSA
+requirements to dispatch. DO NOT WEAKEN THE GATE. The DATA is missing.
+
+Cursor is building a per-blocker override column (P0) so the owner can
+work while you load the data. That is a stopgap. YOU are the fix.
+
+======================================================================
+BUILD
+======================================================================
+1. Report exact counts of ACTIVE DISPATCHABLE drivers missing each
+   field, per operating company, under bypass_rls.
+
+2. DUPLICATE DRIVER RECORDS — report the full set with ids and
+   operating company. DO NOT MERGE OR DELETE ANYTHING.
+   Live evidence:
+     ANGEL ALFONSO SOSA        3 rows
+     Raul Esmeregildo Perez    3 rows
+     Armando Perez             3 rows
+     Ruben Pedro Perez Garcia  2 rows
+   This is ALSO why "Driver — not visible" renders in the Book Load
+   bill preview: the wizard resolves a driver id the preview query
+   cannot scope to. Report that linkage to Cursor as a finding.
+
+3. *** HIGHEST VALUE ITEM IN THIS BLOCK ***
+   RLS MASKING ON AGGREGATES. Two aggregate-only queries on mdata.drivers
+   returned 0 while row queries returned data seconds later.
+   CONFIRM OR REFUTE that aggregates over mdata.drivers are masked, and
+   PASTE THE QUERIES THAT PROVE IT.
+   This decides whether ANY count in ANY report in this system can be
+   trusted. It is worth more than the rest of the block.
+
+4. Build the intake screen so CDL expiry and the medical card can
+   actually be entered and tracked, with warnings BEFORE they lapse —
+   not after.
+
+======================================================================
+STANDARD
+======================================================================
+Columns sortable ASCENDING and DESCENDING · draggable · adjustable ·
+filter combobox · ALWAYS a dates column · back arrow ·
+header colour #14314F · visible column dividers.
+Full 1-12 linkage, declared.
+
+======================================================================
+PROOF
+======================================================================
+· the live counts per company under bypass_rls
+· the full duplicate set with ids
+· the RLS masking verdict WITH the queries that prove it
+· the intake screen live, with an expiry warning firing
+
+FIND IT, FILE IT, DO NOT FIX IT.

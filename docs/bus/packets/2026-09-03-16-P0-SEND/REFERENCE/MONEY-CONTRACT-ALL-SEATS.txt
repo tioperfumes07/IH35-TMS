@@ -1,0 +1,205 @@
+IH35-TMS · THE MONEY CONTRACT
+Binding on every seat that writes a dollar: CURSOR · CC-1 · CC-2
+Issued 2026-09-03 · owner: Jorge Pablo Munoz
+
+CC-3, CODEX and CASCADE write NO money. If a block on their surface
+starts touching a dollar, that is a finding — file it, do not build it.
+
+======================================================================
+WHY THIS EXISTS
+======================================================================
+Ownership by surface is correct: each seat builds its own block end to
+end, design through money wiring, and nobody hands off a half-built
+feature. But MONEY CROSSES SURFACES.
+
+  Cursor's wizard writes the charges
+     -> that becomes CC-1's settlement revenue
+        -> which posts to the same GL CC-2's categorizations hit.
+
+Measured 2026-09-03:
+  files writing accounting.journal_entries               81
+  of those, importing the shared journal-entries.service 26
+  of those, raw INSERT INTO accounting.journal_entries   13
+
+Three seats can each build CORRECT money inside their own surface and
+still produce a ledger that does not balance. Three correct
+implementations of three different money models is one broken set of
+books.
+
+This document is the rulebook all three build against. It is not a
+seat's job — it is the shared contract that makes independent ownership
+safe.
+
+======================================================================
+1 · INTEGER CENTS. NEVER FLOAT.
+======================================================================
+Every monetary value is a bigint of cents. No float, no double, no
+numeric-with-decimals for money in application code.
+Column names end in _cents. If a column holds money and does not, that
+is a finding.
+Rounding happens ONCE, at the boundary where a rate meets a quantity,
+and the rule is stated in the code at that point. Never round twice.
+
+======================================================================
+2 · EVERY GL WRITE GOES THROUGH THE SHARED SERVICE
+======================================================================
+  apps/backend/src/accounting/journal-entries.service.ts
+    createJournalEntry · createJournalEntryOnClient ·
+    reverseJournalEntryNoFlip · voidJournalEntry ·
+    enqueueJournalEntrySideEffects · listJournalEntries ·
+    getJournalEntrySourceLinks
+
+NO NEW RAW `INSERT INTO accounting.journal_entries`. Not in a service,
+not in a worker, not in a migration that runs application logic.
+
+Thirteen files do it today. They are grandfathered ONLY until touched:
+  driver-finance/settlement-contract-terms.service.ts
+  accounting/journal-entry-type-resolver.ts
+  accounting/settlement-posting/settlement-posting.service.ts
+  accounting/journal-entries.service.ts          (the service itself — allowed)
+  accounting/period-close-retained-earnings.service.ts
+  accounting/void.service.ts
+  accounting/fuel-posting/poster.service.ts
+  accounting/amortization-posting/amortization-posting.service.ts
+  accounting/recurring.worker.ts
+  accounting/lease-asc842/lease-posting.service.ts
+  accounting/posting-engine.service.ts
+  accounting/bank-recon/match.service.ts
+  banking/manual-je.routes.deprecated.ts
+
+RULE: if your block edits one of those files for any reason, you
+convert it to the shared service in the same PR. You do not get to
+leave a raw INSERT behind you.
+
+======================================================================
+3 · DOUBLE ENTRY OR IT DOES NOT POST
+======================================================================
+apps/backend/src/accounting/journal-double-entry.test.ts already proves
+the invariant. PROMOTE IT TO A GUARD in scripts/verify-steps/ so it
+runs on every PR, not only in the unit suite.
+Debits equal credits, per entry, in cents, exactly. No tolerance. No
+"off by one from rounding" — see rule 1.
+
+======================================================================
+4 · DRIVER PAY IS ALWAYS TWO LINES
+======================================================================
+    loaded miles   x rate_loaded
+    deadhead miles x rate_empty
+
+rate_empty_per_mile_cents is its OWN config value. It equals the loaded
+rate TODAY. NEVER hardcode that equality — the day it changes, one
+hardcoded assumption silently underpays or overpays every driver.
+
+ONE LINE IS A DEFECT.
+
+NEVER map AlwaysTrack "St. Miles" into miles_shortest. It is
+loaded + empty (identity verified on 10,400 of 12,393 reference loads),
+and using it pays deadhead twice — once inside the load line at the
+loaded rate, once again on the deadhead line.
+
+Deadhead attribution is SETTLED: it belongs to the load that PICKS UP.
+Scored against the owner's own Empty Mi column — pickup-side matched
+58/117, delivering-side 9/113. Do not re-litigate.
+
+======================================================================
+5 · COST ATTRIBUTION — USE THE HIGHEST RUNG A COST CAN REACH
+======================================================================
+RUNG 1  DIRECT TRACE — fuel, tolls, scales, repairs, lumper, permits.
+        One truck, one place, one date. Nothing to split.
+RUNG 2  TRACE TO THE LEG; the leg carries the truck — driver pay and
+        revenue. Each leg has its own linehaul and its own miles.
+RUNG 3  ALLOCATE — only for costs that genuinely belong to the whole
+        trip. Basis is MILES.
+
+FIXED MONTHLY COSTS — insurance, plates, the truck note — DO NOT BELONG
+ON A TRIP. They are PERIOD costs on the UNIT. Forcing them into a
+settlement makes trip margin meaningless.
+
+NEVER SKIP TO ALLOCATION BECAUSE IT IS EASIER.
+
+THE TEST: could you point a CPA at a DOCUMENT, or only at a formula you
+chose? Point at a document.
+
+======================================================================
+6 · EVERY MONEY ROW TRACES TO A SOURCE DOCUMENT
+======================================================================
+If a user cannot CLICK from the number to the document behind it, it
+must not post. getJournalEntrySourceLinks() exists — use it.
+An expense with no unit_id cannot be costed.
+A settlement line with no leg cannot be defended.
+A categorization that does not reach the ledger did not happen.
+
+======================================================================
+7 · NO SILENT FAILURES, NO SILENT ZEROS
+======================================================================
+A producer that cannot compute returns NULL WITH A REASON, and the UI
+renders the reason. NEVER 0.
+chain-deadhead.service.ts states it already: "Never 0, never a lane
+average, never a guess -- blank is an honest unknown; 0 is a false
+statement that pays the driver nothing for real empty miles."
+A 0 in a money or mileage field is a claim that the value IS zero.
+
+======================================================================
+8 · RLS — A COUNT WITHOUT THE BYPASS IS NOT EVIDENCE
+======================================================================
+  WITH b AS (SELECT set_config('app.bypass_rls','lucia',false))
+  SELECT ... FROM b, <table> ...
+Aggregates return counts while row SELECTs return [] on
+catalogs.lane_mileage, accounting.expenses, mdata.drivers and the
+settlement tables.
+EMPTY IS A QUESTION, NOT AN ANSWER. Check the entity, the filter, the
+bypass, the join and the spelling before reporting something missing.
+
+======================================================================
+9 · SCOPE
+======================================================================
+USMCA ONLY — 5c854333-6ea5-4faa-af31-67cb272fef80.
+TRANSPORTATION (91e0bf0a-...) and TRUCKING (b49a737b-...) are FROZEN.
+Every USMCA record is REAL unless is_sample_data = true.
+NEVER write test, sample or demo money into USMCA — including for proof.
+
+CANONICAL TABLES — write left, never right:
+  driver_finance.*  not payroll.* / settlement.*
+  mdata.qbo_*       not accounting.qbo_*
+  banking.*         not bank.*
+  mdata.vendors     not mdata.qbo_vendors
+  mdata.loads is the canonical hub.
+
+======================================================================
+10 · CROSS-SURFACE MONEY — WHO OWNS WHAT
+======================================================================
+CURSOR  writes  linehaul · fuel surcharge · accessorials ·
+                driver_pay_rate_per_mile · the charges table
+        owns    the numbers as ENTERED
+CC-1    reads   those charges as settlement REVENUE
+        writes  expenses · bills · mileage · tours · settlements · margin
+        owns    the numbers as ACCUMULATED and CLOSED
+CC-2    writes  bank categorizations · their journal entries ·
+                reconciliation
+        owns    the numbers as SETTLED AGAINST THE BANK
+
+WHERE THEY MEET, THE DOWNSTREAM SEAT DOES NOT RE-DERIVE — IT READS.
+CC-1 does not recompute what Cursor's wizard wrote. CC-2 does not
+recompute what CC-1 posted. If a downstream seat believes an upstream
+number is wrong, that is a FINDING to the owning seat, not a local fix.
+FIND IT, FILE IT, DO NOT FIX IT.
+
+======================================================================
+11 · GUARDS THAT ENFORCE THIS CONTRACT
+======================================================================
+Cursor builds these as part of the ownership lock:
+  M1 no new raw INSERT INTO accounting.journal_entries
+  M2 double-entry invariant runs as a verify-step, not only a unit test
+  M3 no money column may be float/double in application code
+  M4 no code path writes AlwaysTrack "St. Miles" into any column
+  M5 driver settlement must carry TWO pay lines when deadhead > 0
+  M6 no mileage or money field may default to 0 in a form
+  M7 every guard query uses the bypass_rls wrapper
+
+Each guard is WRITTEN FIRST and PROVEN FAILING against current prod
+before the fix lands. Paste the failing output.
+
+======================================================================
+IF SPEED AND TRUST CONFLICT, CHOOSE TRUST.
+IF EASY AND CORRECT CONFLICT, CHOOSE CORRECT.
+IF GUESSING AND VERIFYING CONFLICT, VERIFY.

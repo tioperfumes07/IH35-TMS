@@ -1,0 +1,126 @@
+CC-1 | 1b · EXPENSE ATTRIBUTION — THE SPINE | GO
+Blocked by: Cursor P0, then ownership lock
+
+THIS BLOCKS EVERY COST, MARGIN AND SETTLEMENT NUMBER IN THE SYSTEM.
+Do it before anything else on your surface.
+
+======================================================================
+SCOPE
+======================================================================
+USMCA ONLY — 5c854333-6ea5-4faa-af31-67cb272fef80.
+TRANSPORTATION and TRUCKING are FROZEN. Do not read, write or report
+on them.
+
+======================================================================
+RLS — read this before your first query
+======================================================================
+accounting.expenses is MASKED. Aggregates return counts while row
+SELECTs return []. Wrap EVERY read:
+
+  WITH b AS (SELECT set_config('app.bypass_rls','lucia',false))
+  SELECT ... FROM b, accounting.expenses e ...
+
+A count taken without the bypass is NOT EVIDENCE.
+EMPTY IS A QUESTION, NOT AN ANSWER.
+
+======================================================================
+LIVE, VERIFIED 2026-09-03
+======================================================================
+  accounting.expenses   27,070 rows · 2017-10-06 -> 2026-07-31
+                        all rows carry amounts
+     unit_id populated        0
+     load_id populated        0
+     driver_uuid populated    0
+  accounting.bills      16,247 rows
+
+ALL THREE COLUMNS EXIST. Not one is filled, on any row, in nine years.
+
+That is why the Load Costs board renders empty — it queries
+listExpenses(companyId, { load_id }) and no expense has a load_id.
+
+======================================================================
+THE ATTRIBUTION METHOD — owner ruling 2026-09-03
+======================================================================
+Use the HIGHEST RUNG a cost can reach. Never skip to allocation because
+it is easier.
+
+RUNG 1 — DIRECT TRACE. Use for almost everything.
+  Fuel, tolls, scales, repairs, lumper, permits.
+  Each was incurred by ONE truck at ONE place on ONE date. Nothing to
+  split. A diesel purchase on 08/07 at Palestine AR belongs to whichever
+  truck was in Palestine AR on 08/07 — that is a FACT, not an allocation.
+  This is also the only version that survives an audit or an IFTA
+  review. An allocated fuel cost cannot; a traced one is a receipt.
+
+RUNG 2 — TRACE TO THE LEG; the leg carries the truck.
+  Driver pay and revenue. Each leg has its own linehaul and its own
+  miles, so both attribute by leg with no judgment.
+  If T156 ran the NB and T163 ran the SB, the NB's revenue and driver
+  pay belong to T156 and the SB's to T163. BOTH TRUCKS PARTIALLY
+  ASSIGNED — and it comes out of the data, not out of a percentage.
+
+RUNG 3 — ALLOCATE. Only for costs that genuinely belong to the whole
+  trip. There are very few. Basis is MILES, because miles are what the
+  cost actually varies with in trucking.
+  FIXED MONTHLY COSTS — insurance, plates, the truck note — DO NOT
+  BELONG ON A TRIP AT ALL. They are PERIOD costs on the UNIT. Forcing
+  them into a settlement makes trip margin meaningless.
+
+THE TEST FOR ANY ATTRIBUTION RULE:
+  Could you point a CPA at a document, or only at a formula you chose?
+  POINT AT A DOCUMENT.
+
+======================================================================
+BUILD
+======================================================================
+1. ATTRIBUTE unit_id ON EXISTING USMCA EXPENSES.
+   TWO INDEPENDENT SOURCES — use both and compare:
+     a) fuel card transactions carry a unit number
+     b) telematics.vehicle_locations — 633,670 pings · 82 units ·
+        captured_at · lat/lng · formatted_location · odometer_mi.
+        A purchase matches the truck at that place at that time.
+
+   HONEST LIMIT: dense telemetry starts 2026-06 only.
+     2026-06  175,408 pings   2026-07  232,340   2026-08  200,028
+     everything 2019 -> 2026-05: about 180 pings TOTAL.
+   Expenses older than June 2026 match on the fuel card only, or not at
+   all. REPORT THE SPLIT BY PERIOD. Do not imply GPS coverage that does
+   not exist.
+
+   WHERE THE TWO SOURCES DISAGREE, DO NOT PICK ONE. Flag the row,
+   report the count.
+   REPORT THE MATCH RATE TO THE OWNER BEFORE WRITING ANYTHING.
+   No writes to USMCA without the owner seeing the numbers first.
+
+2. load_id WHERE IT GENUINELY APPLIES.
+   Lumper, detention, permits are LOAD-level.
+   Fuel is TRUCK-level and reaches the load through the leg, NEVER
+   directly. Do not force a load_id onto fuel.
+
+3. MAKE unit_id MANDATORY ON NEW EXPENSES.
+   An expense with no truck cannot be costed.
+
+4. GUARDS FIRST — prove each FAILS on prod, paste it, then fix:
+   G1 no new expense may be written with unit_id NULL
+   G2 no expense may carry a load_id whose load has a different unit_id
+   G3 fixed-cost categories (insurance, plates, note) may never carry
+      a load_id
+   Every guard query uses the bypass_rls wrapper.
+
+======================================================================
+PROOF
+======================================================================
+· pre-count and post-count under bypass_rls, USMCA only
+· match rate per source, and the by-period split
+· the count of rows where the two sources disagree
+· guards failing then passing
+· the Load Costs board rendering REAL numbers for one real USMCA load
+
+FIND IT, FILE IT, DO NOT FIX IT. Book Load defects go to Cursor.
+
+
+======================================================================
+BINDING: REFERENCE/MONEY-CONTRACT-ALL-SEATS.txt
+You write money. Read that contract before your first commit and build
+against it. It is what makes independent surface ownership safe.
+======================================================================
