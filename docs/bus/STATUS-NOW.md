@@ -1,2 +1,2 @@
-# STATUS-NOW · LEAD CENSUS · 2026-09-02 23:02 CT
-Tip `781efac02017`. All seats ACTIVE. Render deploying tip (no stack). Never POST Book Load.
+# STATUS-NOW · LEAD CENSUS · 2026-09-02 23:03 CT
+Tip `a1494c2516`. All seats ACTIVE. #20001 findings on main. Combobox Tab = CC-2. Never POST Book Load.
