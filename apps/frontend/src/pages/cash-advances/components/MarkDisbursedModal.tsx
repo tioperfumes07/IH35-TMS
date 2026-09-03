@@ -34,6 +34,7 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advanc
   const [bankTxnId, setBankTxnId] = useState<string | null>(null);
   const [bankSearch, setBankSearch] = useState("");
   const [comdataTxnId, setComdataTxnId] = useState("");
+  const [comchekTxnId, setComchekTxnId] = useState("");
   const [checkNumber, setCheckNumber] = useState("");
   const [wireRef, setWireRef] = useState("");
 
@@ -71,6 +72,7 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advanc
         disbursement_method: method,
         bank_txn_id: bankTxnId || undefined,
         comdata_txn_id: comdataTxnId || undefined,
+        comchek_txn_id: comchekTxnId || undefined,
         check_number: checkNumber || undefined,
         wire_confirmation_ref: wireRef || undefined,
       }),
@@ -115,6 +117,7 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advanc
               <option value="direct_bank_transfer">Direct bank transfer</option>
               <option value="wire">Wire</option>
               <option value="comdata">Comdata / EFS</option>
+              <option value="comchek">Comchek</option>
               <option value="in_person_check">In-person check</option>
             </SelectCombobox>
           </label>
@@ -149,6 +152,12 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advanc
             <label className="space-y-1">
               <span>Comdata transaction ID</span>
               <input className="w-full rounded-sm border border-gray-300 px-2 py-1" value={comdataTxnId} onChange={(e) => setComdataTxnId(e.target.value)} />
+            </label>
+          ) : null}
+          {method === "comchek" ? (
+            <label className="space-y-1">
+              <span>Comchek transaction ID</span>
+              <input className="w-full rounded-sm border border-gray-300 px-2 py-1" value={comchekTxnId} onChange={(e) => setComchekTxnId(e.target.value)} />
             </label>
           ) : null}
           {method === "in_person_check" ? (

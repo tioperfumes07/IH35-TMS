@@ -11,7 +11,7 @@ export type CashAdvancePurpose =
   | "vendor_payment"
   | "lumper"
   | "other";
-export type CashAdvanceMethod = "direct_bank_transfer" | "wire" | "comdata" | "in_person_check";
+export type CashAdvanceMethod = "direct_bank_transfer" | "wire" | "comdata" | "comchek" | "in_person_check";
 export type CashAdvanceRecoveryMode = "full" | "amortize";
 export type CashAdvanceEconomicRouting = "driver_settlement" | "load_expense";
 
@@ -74,6 +74,7 @@ export function markCashAdvanceDisbursed(
     disbursement_method?: CashAdvanceMethod;
     bank_txn_id?: string;
     comdata_txn_id?: string;
+    comchek_txn_id?: string;
     check_number?: string;
     wire_confirmation_ref?: string;
   }

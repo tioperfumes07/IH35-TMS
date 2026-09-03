@@ -68,6 +68,7 @@ const METHOD_OPTIONS: Array<{ value: CashAdvanceMethod; label: string }> = [
   { value: "direct_bank_transfer", label: "Direct bank transfer" },
   { value: "wire", label: "Wire (3rd party)" },
   { value: "comdata", label: "Comdata / EFS card load" },
+  { value: "comchek", label: "Comchek card load" },
   { value: "in_person_check", label: "In-person check" },
 ];
 
