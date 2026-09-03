@@ -69,7 +69,12 @@ export async function listDriverBillsForSettlementPeriod(
             2 AS src_rank,
             ab.id::text AS id,
             l.load_number,
-            ('B-' || regexp_replace(l.load_number, '^[Ll]-', '')) AS bill_number,
+            -- GO-19 slice 03 — driver bill number EQUALS the load number, no 'B-' prefix (matches
+            -- driver-bill-number.ts's driverBillNumberFromLoadNumber contract). This legacy-bridge
+            -- branch (accounting.bills rows never mirrored into driver_finance.driver_bills) used to
+            -- fabricate a distinct 'B-'-prefixed display id here; now it renders the same load number
+            -- a dispatcher already sees, matching the canonical (non-legacy) branch above.
+            l.load_number AS bill_number,
             LEAST(GREATEST(COALESCE(ab.amount_cents, 0), -2147483648::bigint), 2147483647::bigint)::integer AS gross_amount_cents,
             CASE
               WHEN COALESCE(l.miles_shortest, 0) > 0 THEN l.miles_shortest

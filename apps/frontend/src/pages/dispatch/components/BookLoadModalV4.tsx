@@ -865,9 +865,12 @@ export function BookLoadModalV4({
     ],
     []
   );
+  // GO-19 slice 03 — driver bill number EQUALS the load number, no 'B-' prefix, no transformation
+  // (driver-bill-number.ts's driverBillNumberFromLoadNumber contract). This preview used to strip a
+  // leading "L-" and re-prefix "B-" — the exact legacy shape that function's own doc comment says was
+  // struck; this was a duplicate of that removed logic living on in the frontend preview.
   const billNumberPreview = useMemo(() => {
-    if (!reservedLoadNumber) return "B-—";
-    return reservedLoadNumber.startsWith("L-") ? reservedLoadNumber.replace(/^L-/, "B-") : `B-${reservedLoadNumber}`;
+    return reservedLoadNumber || "—";
   }, [reservedLoadNumber]);
 
   const canOverrideHardBlock = auth.user?.role === "Owner";
