@@ -76,6 +76,17 @@ describe("POST /cash-advances create schema — wizard depth", () => {
     expect(good.success).toBe(true);
   });
 
+  it("accepts comchek as a disbursement method (card network, same shape as comdata)", () => {
+    const parsed = schema.safeParse({
+      driver_id: DRIVER,
+      amount: 200,
+      purpose: "family_emergency",
+      disbursement_method: "comchek",
+      recovery_mode: "full",
+    });
+    expect(parsed.success).toBe(true);
+  });
+
   it("includes load_id + recovery_mode on payload", () => {
     const parsed = schema.safeParse({
       driver_id: DRIVER,

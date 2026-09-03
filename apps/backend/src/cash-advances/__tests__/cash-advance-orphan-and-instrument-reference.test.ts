@@ -81,6 +81,15 @@ describe("createDriverCashAdvanceCore — orphan refusal (no payment account, no
     });
     expect(res.ok).toBe(true);
   });
+
+  it("comchek never requires a bank account (external card network, same shape as comdata)", async () => {
+    const res = await createDriverCashAdvanceCore(makeClient(), ACTOR, OPCO, {
+      ...baseBody,
+      disbursement_method: "comchek",
+      recipient_info: { recipient_type: "driver", bank_reference: "COMCHEK-9001" },
+    });
+    expect(res.ok).toBe(true);
+  });
 });
 
 describe("createDriverCashAdvanceCore — instrument reference required", () => {
@@ -99,6 +108,16 @@ describe("createDriverCashAdvanceCore — instrument reference required", () => 
     const res = await createDriverCashAdvanceCore(makeClient(), ACTOR, OPCO, {
       ...baseBody,
       disbursement_method: "comdata",
+      recipient_info: { recipient_type: "driver", bank_reference: "   " },
+    });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toBe("cash_advance_instrument_reference_required");
+  });
+
+  it("refuses comchek with an empty/whitespace-only bank_reference", async () => {
+    const res = await createDriverCashAdvanceCore(makeClient(), ACTOR, OPCO, {
+      ...baseBody,
+      disbursement_method: "comchek",
       recipient_info: { recipient_type: "driver", bank_reference: "   " },
     });
     expect(res.ok).toBe(false);

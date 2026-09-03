@@ -35,7 +35,7 @@ const createAdvanceBodySchema = z
     driver_id: z.string().uuid(),
     amount: z.number().positive(),
     purpose: z.enum(["fuel_deposit", "border_fee", "family_emergency", "vendor_payment", "lumper", "other"]),
-    disbursement_method: z.enum(["direct_bank_transfer", "wire", "comdata", "in_person_check"]),
+    disbursement_method: z.enum(["direct_bank_transfer", "wire", "comdata", "comchek", "in_person_check"]),
     recipient_info: z
       .object({
         recipient_type: z.enum(["driver", "vendor", "third_party"]).default("driver"),
@@ -86,9 +86,10 @@ const createAdvanceBodySchema = z
 export const createCashAdvanceBodySchemaForTests = createAdvanceBodySchema;
 
 const markDisbursedBodySchema = z.object({
-  disbursement_method: z.enum(["direct_bank_transfer", "wire", "comdata", "in_person_check"]).optional(),
+  disbursement_method: z.enum(["direct_bank_transfer", "wire", "comdata", "comchek", "in_person_check"]).optional(),
   bank_txn_id: z.string().uuid().optional(),
   comdata_txn_id: z.string().trim().min(1).max(120).optional(),
+  comchek_txn_id: z.string().trim().min(1).max(120).optional(),
   check_number: z.string().trim().min(1).max(50).optional(),
   wire_confirmation_ref: z.string().trim().min(1).max(120).optional(),
 });
@@ -457,7 +458,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
           method || null,
           body.data.bank_txn_id ?? null,
           linkedBillPaymentId,
-          body.data.comdata_txn_id ?? body.data.check_number ?? body.data.wire_confirmation_ref ?? null,
+          body.data.comdata_txn_id ?? body.data.comchek_txn_id ?? body.data.check_number ?? body.data.wire_confirmation_ref ?? null,
         ]
       );
 
