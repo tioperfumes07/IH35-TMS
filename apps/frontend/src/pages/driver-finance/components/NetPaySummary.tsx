@@ -1,19 +1,23 @@
 type Props = {
   earnings: number;
+  // 25-task #12 — deadhead pay is its OWN row, labeled "Empty Miles", never folded into
+  // "Earnings" (which is the loaded-mile figure).
+  deadheadPay: number;
   extraPay: number;
   reimbursements: number;
   deductions: number;
   pendingAckDeductions: number;
 };
 
-export function NetPaySummary({ earnings, extraPay, reimbursements, deductions, pendingAckDeductions }: Props) {
-  const gross = earnings + extraPay + reimbursements;
+export function NetPaySummary({ earnings, deadheadPay, extraPay, reimbursements, deductions, pendingAckDeductions }: Props) {
+  const gross = earnings + deadheadPay + extraPay + reimbursements;
   const net = gross - deductions;
   return (
     <div className="rounded-sm border border-slate-300 bg-white p-3 text-xs">
       <div className="mb-1 text-sm font-semibold text-slate-700">Net Pay Summary</div>
       <div className="space-y-1">
         <Row label="Earnings" value={earnings} />
+        {deadheadPay ? <Row label="Empty Miles" value={deadheadPay} /> : null}
         <Row label="Extra pay" value={extraPay} />
         <Row label="Reimbursements" value={reimbursements} />
         <div className="border-t border-gray-200 pt-1" />

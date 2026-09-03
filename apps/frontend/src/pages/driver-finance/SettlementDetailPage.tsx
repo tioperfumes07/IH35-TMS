@@ -36,6 +36,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { previewTeamSettlementSplit } from "../../api/mdata";
 import { DebtBanner } from "./components/DebtBanner";
+import { DeadheadPaySection } from "./components/DeadheadPaySection";
 import { DeductionsSection, type DeductionRow } from "./components/DeductionsSection";
 import { EarningsSection } from "./components/EarningsSection";
 import { EscrowVisualizer } from "./components/EscrowVisualizer";
@@ -272,6 +273,25 @@ export function SettlementDetailPage() {
     rate: Number(line.rate ?? 0),
     amount: Number(line.amount ?? 0),
   }));
+  // 25-task #12 — deadhead_pay is its own settlement_lines row (MILES SPEC), rendered as its own
+  // "Empty Miles" section, never folded into Earnings (which is the loaded-mile row).
+  const deadhead = lines.filter((line) => String(line.line_type) === "deadhead_pay").map((line) => ({
+    id: String(line.id),
+    load_id: typeof line.load_id === "string" ? line.load_id : null,
+    load_number: typeof line.load_number === "string" ? line.load_number : null,
+    source_driver_bill_id:
+      typeof line.source_driver_bill_id === "string" ? line.source_driver_bill_id : null,
+    source_label:
+      typeof line.source_driver_bill_number === "string" && line.source_driver_bill_number
+        ? line.source_driver_bill_number
+        : typeof line.source_table === "string" && line.source_table
+          ? line.source_table.replace(/^driver_finance\./, "")
+          : null,
+    description: String(line.description ?? ""),
+    miles: Number(line.miles ?? 0),
+    rate: Number(line.rate ?? 0),
+    amount: Number(line.amount ?? 0),
+  }));
   const extra = lines.filter((line) => String(line.line_type) === "extra_pay").map((line) => ({
     id: String(line.id),
     code: String(line.code ?? "EXTRA"),
@@ -289,6 +309,7 @@ export function SettlementDetailPage() {
 
   const summary = useMemo(() => {
     const earningsTotal = earnings.reduce((sum, row) => sum + row.amount, 0);
+    const deadheadTotal = deadhead.reduce((sum, row) => sum + row.amount, 0);
     const extraTotal = extra.reduce((sum, row) => sum + row.amount, 0);
     const reimbTotal = reimbursements.reduce((sum, row) => sum + row.amount, 0);
     // DD2 / NO-WINDOW — this excluded any pending_ack deduction from the total, so a real deduction the
@@ -299,8 +320,8 @@ export function SettlementDetailPage() {
     // subtotal below), which is the company-user sign-off control MUST 3.4.2(d)(e) actually requires.
     const deductionTotal = deductions.reduce((sum, row) => sum + row.this_period_amount, 0);
     const pendingAckTotal = deductions.reduce((sum, row) => sum + (row.pending_ack ? row.this_period_amount : 0), 0);
-    return { earningsTotal, extraTotal, reimbTotal, deductionTotal, pendingAckTotal };
-  }, [deductions, earnings, extra, reimbursements]);
+    return { earningsTotal, deadheadTotal, extraTotal, reimbTotal, deductionTotal, pendingAckTotal };
+  }, [deadhead, deductions, earnings, extra, reimbursements]);
 
   if (!settlementId) {
     return (
@@ -555,6 +576,7 @@ export function SettlementDetailPage() {
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1.5fr_1fr]">
         <div className="space-y-2">
           <EarningsSection lines={earnings} />
+          <DeadheadPaySection lines={deadhead} />
           <ExtraPaySection lines={extra} />
           <ReimbursementsSection lines={reimbursements} />
           <DeductionsSection
@@ -597,6 +619,7 @@ export function SettlementDetailPage() {
         <div className="space-y-2">
           <NetPaySummary
             earnings={summary.earningsTotal}
+            deadheadPay={summary.deadheadTotal}
             extraPay={summary.extraTotal}
             reimbursements={summary.reimbTotal}
             deductions={summary.deductionTotal}
