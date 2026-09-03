@@ -63,75 +63,59 @@ export async function registerWoCostContextRoutes(app: FastifyInstance) {
         [oc]
       );
 
-      // LV-WO-COST-CONTEXT-SILENTLY-MISSING-SOURCES: every to_regclass false-branch MUST set a
-      // response flag. Empty arrays mean "zero rows"; sources.*.status="unavailable" means the
-      // catalog relation is not provisioned (distinct from empty).
+      // GO-20 SLICE F/G (owner spec, docs/lockdown/GO-20-EIGHT-FEATURES.txt): inventory.parts and
+      // maintenance.labor_rates were phantom tables — never applied (inventory.parts' migration
+      // sat unapplied under apps/backend/prisma/migrations, not db/migrations), yet this route
+      // checked for them FIRST and treated the real, live tables (maintenance.parts_inventory /
+      // catalogs.labor_rates) as a "fallback" — backwards. Read the canonical tables directly;
+      // status is "available" because they ARE the source, not a fallback from one that doesn't
+      // exist. sources.*.status stays in the response shape (LV-WO-COST-CONTEXT-SILENTLY-MISSING-
+      // SOURCES is still real — a relation genuinely missing from an older DB must still latch
+      // "unavailable", never a silent empty array) — only the phantom-table branch is gone.
       let parts: unknown[] = [];
       let partsStatus: WoCostSourceStatus = "unavailable";
       let partsRelation: string | null = null;
-      const invParts = await client.query(`SELECT to_regclass('inventory.parts') IS NOT NULL AS ok`);
-      if (invParts.rows[0]?.ok) {
+      const mip = await client.query(`SELECT to_regclass('maintenance.parts_inventory') IS NOT NULL AS ok`);
+      if (mip.rows[0]?.ok) {
         const pr = await client.query(
-          `SELECT * FROM inventory.parts WHERE operating_company_id = $1::uuid ORDER BY updated_at DESC NULLS LAST, id ASC`,
+          `
+            SELECT id, part_description, on_hand_qty, location, last_purchase_amount, operating_company_id, updated_at
+            FROM maintenance.parts_inventory
+            WHERE operating_company_id = $1::uuid
+            ORDER BY updated_at DESC, id ASC
+          `,
           [oc]
         );
         parts = pr.rows;
         partsStatus = "available";
-        partsRelation = "inventory.parts";
+        partsRelation = "maintenance.parts_inventory";
       } else {
-        const mip = await client.query(`SELECT to_regclass('maintenance.parts_inventory') IS NOT NULL AS ok`);
-        if (mip.rows[0]?.ok) {
-          const pr = await client.query(
-            `
-              SELECT id, part_description, on_hand_qty, location, last_purchase_amount, operating_company_id, updated_at
-              FROM maintenance.parts_inventory
-              WHERE operating_company_id = $1::uuid
-              ORDER BY updated_at DESC, id ASC
-            `,
-            [oc]
-          );
-          parts = pr.rows;
-          partsStatus = "fallback";
-          partsRelation = "maintenance.parts_inventory";
-        } else {
-          // CLS-LATCH: both relations absent — signal unavailable (not empty).
-          partsStatus = "unavailable";
-          partsRelation = null;
-        }
+        // CLS-LATCH: the canonical relation is absent (older DB) — signal unavailable, not empty.
+        partsStatus = "unavailable";
+        partsRelation = null;
       }
 
       let labor_rates: unknown[] = [];
       let laborStatus: WoCostSourceStatus = "unavailable";
       let laborRelation: string | null = null;
-      const mlr = await client.query(`SELECT to_regclass('maintenance.labor_rates') IS NOT NULL AS ok`);
-      if (mlr.rows[0]?.ok) {
+      const clr = await client.query(`SELECT to_regclass('catalogs.labor_rates') IS NOT NULL AS ok`);
+      if (clr.rows[0]?.ok) {
         const lr = await client.query(
-          `SELECT * FROM maintenance.labor_rates WHERE operating_company_id = $1::uuid ORDER BY rate_name ASC NULLS LAST, id ASC`,
+          `
+            SELECT id, rate_code, rate_name, rate_per_hour, is_internal, is_active, operating_company_id
+            FROM catalogs.labor_rates
+            WHERE operating_company_id = $1::uuid AND is_active = true
+            ORDER BY rate_name ASC, id ASC
+          `,
           [oc]
         );
         labor_rates = lr.rows;
         laborStatus = "available";
-        laborRelation = "maintenance.labor_rates";
+        laborRelation = "catalogs.labor_rates";
       } else {
-        const clr = await client.query(`SELECT to_regclass('catalogs.labor_rates') IS NOT NULL AS ok`);
-        if (clr.rows[0]?.ok) {
-          const lr = await client.query(
-            `
-              SELECT id, rate_code, rate_name, rate_per_hour, is_internal, is_active, operating_company_id
-              FROM catalogs.labor_rates
-              WHERE operating_company_id = $1::uuid AND is_active = true
-              ORDER BY rate_name ASC, id ASC
-            `,
-            [oc]
-          );
-          labor_rates = lr.rows;
-          laborStatus = "fallback";
-          laborRelation = "catalogs.labor_rates";
-        } else {
-          // CLS-LATCH: both relations absent — signal unavailable (not empty).
-          laborStatus = "unavailable";
-          laborRelation = null;
-        }
+        // CLS-LATCH: the canonical relation is absent (older DB) — signal unavailable, not empty.
+        laborStatus = "unavailable";
+        laborRelation = null;
       }
 
       return {
