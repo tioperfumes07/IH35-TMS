@@ -1472,11 +1472,13 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           id: string;
           load_number: string;
           status: string;
+          driver_id: string | null;
           driver_name: string | null;
           is_sample_data: boolean;
         }>(
           `
             SELECT l.id::text, l.load_number, l.status::text,
+                   d.id::text AS driver_id,
                    NULLIF(TRIM(CONCAT(d.first_name, ' ', d.last_name)), '') AS driver_name,
                    COALESCE(l.is_sample_data, false) AS is_sample_data
               FROM mdata.loads l

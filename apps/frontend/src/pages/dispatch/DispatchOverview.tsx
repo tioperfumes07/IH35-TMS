@@ -462,7 +462,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
                 <PanelRow
                   key={load.id}
                   unit={<EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />}
-                  driver={load.driver_name ?? "— unassigned —"}
+                  driver={<EntityLinkOrTombstone kind="driver" id={load.driver_id} name={load.driver_name} noun="Driver" />}
                   loadCustomer={load.status.replace(/_/g, " ")}
                 />
               ))
