@@ -1,6 +1,13 @@
-# INBOX-CURSOR · STOP · 2026-09-03 14:54 CT
+# INBOX-CURSOR · OWNERSHIP LOCK · WIZARD HELD · 2026-09-03
 `git pull --ff-only origin main`
 
-**STOP all seats.** Owner: one job, one seat. Do not dispatch parallel rows.
 Leave #20064. Never POST Book Load.
-Wait for Jorge's next instruction, then assign **exactly one** seat.
+
+## NOW (only this)
+Seat ownership lock: CODEOWNERS + `verify-seat-surface-ownership` (EVEN claim-before-write, then author).
+Prove guard FAILS on the 28 BookLoadModalV4 commits, then wire.
+
+## HELD
+Book Load STEP 1–4 (last-good commit, T120-SMITH, templates, sizing, rate-con). Wait for Jorge’s Claude redesign paste.
+
+FIND IT, FILE IT, DO NOT FIX IT outside BookLoad* / book-load.service.ts.

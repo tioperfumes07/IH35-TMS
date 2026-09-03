@@ -1,7 +1,15 @@
-# INBOX-CC-1 · STOP · 2026-09-03 14:54 CT
+# INBOX-CC-1 · LOAD COSTS + MILEAGE · 2026-09-03
 `git pull --ff-only origin main`
 
-**STOP.** Do not ship B- drop. Do not purge. Do not open a PR.
-Owner: one job, one seat. Wait for the next INBOX.
+STOP Book Load. STOP dispatch wizard. You own Load Costs + mileage **alone** (design + money).
 
-ACK `CC-1 | STOP | wait Jorge · one job one seat | GO`
+## NOW
+After ownership lock is on main (or in parallel only on YOUR paths):
+1. Guards G1–G5 with `bypass_rls` — prove FAIL on prod, then rebuild `catalogs.lane_mileage` from `~/Downloads/lane-mileage-reimport-source.csv` → `db/seeds/…`. TRUNCATE-reload. `short_miles` NULL. Never derive short from practical+empty.
+2. Load Costs board + **in-tab** stacked rows (not a link-out). KPI buttons, expand, back arrow, columns per block.
+3. Report load **13508** shortest > practical. Do not delete the load.
+
+FIND IT, FILE IT, DO NOT FIX IT (wizard → Cursor).
+Never POST Book Load. No fixtures.
+
+ACK `CC-1 | ACK | Load Costs + mileage · NEVER POST | GO`
