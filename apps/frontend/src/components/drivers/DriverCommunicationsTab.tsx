@@ -56,7 +56,7 @@ function DeliveryBadge({ status }: { status: string }) {
       : status === "skipped"
       ? "text-slate-700"
       : "text-gray-400";
-  return <span className={`text-[10px] ${classes}`}>{status}</span>;
+  return <span className={`text-xs ${classes}`}>{status}</span>;
 }
 
 function formatTs(ts: string) {

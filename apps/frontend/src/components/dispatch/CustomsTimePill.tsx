@@ -25,7 +25,7 @@ export function CustomsTimePill({ operatingCompanyId, crossingPoint, direction }
       <button
         type="button"
         data-customs-time-retry
-        className="rounded-sm border border-slate-200 bg-slate-100 px-1 text-[10px] font-medium text-slate-700"
+        className="rounded-sm border border-slate-200 bg-slate-100 px-1 text-xs font-medium text-slate-700"
         title="Customs wait time unavailable — retry"
         onClick={(event) => {
           event.stopPropagation();

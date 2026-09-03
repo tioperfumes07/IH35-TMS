@@ -16,7 +16,7 @@ export function BackArrowHeader({ backTo, breadcrumb, title, countBadge, actions
 
   return (
     <div className="border-b border-(--border-default) px-6 pb-2 pt-3.5">
-      <div className="mb-1 text-[10px] tracking-[0.2px] text-(--text-muted)">
+      <div className="mb-1 text-xs tracking-[0.2px] text-(--text-muted)">
         {breadcrumb.map((item, index) => (
           <Fragment key={`${item}-${index}`}>
             <span>{item}</span>

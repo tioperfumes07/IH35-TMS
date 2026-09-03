@@ -159,7 +159,7 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
             <div key={bill.id} className="flex items-center justify-between rounded-sm border border-gray-100 p-2 text-sm">
               <div className="flex min-w-0 flex-col gap-0.5">
                 <div className="flex flex-wrap items-center gap-1">
-                  <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${statusBadge(bill.status)}`}>
+                  <span className={`rounded-sm px-1.5 py-0.5 text-xs font-semibold ${statusBadge(bill.status)}`}>
                     {statusLabel(bill.status)}
                   </span>
                   <span

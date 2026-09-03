@@ -88,7 +88,7 @@ const COLUMNS: Array<ParityColumn<EventWithPayload>> = [
         kind="audit_event"
         id={row.id}
         label={row.event_type}
-        className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${
+        className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
           row.severity === "error"
             ? "bg-red-100 text-red-700"
             : row.severity === "warn"

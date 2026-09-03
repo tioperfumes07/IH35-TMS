@@ -59,7 +59,7 @@ export function CarrierSwitcher() {
         title={`Current company: ${selectedLabel}`}
         data-testid="carrier-switcher-trigger"
       >
-        <span className="shrink-0 text-[10px] text-gray-300">Current:</span>
+        <span className="shrink-0 text-xs text-gray-300">Current:</span>
         <span className="min-w-0 flex-1 truncate text-left">{selectedLabel}</span>
         <ChevronDown className="h-3 w-3 shrink-0" />
       </button>
