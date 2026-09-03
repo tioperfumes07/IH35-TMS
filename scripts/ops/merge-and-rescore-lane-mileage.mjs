@@ -80,29 +80,43 @@ function parseCsv(text) {
   });
 }
 
-/** Builds a per-state variant(UPPER) -> canonical(UPPER) map from the reviewed alias CSV. */
-export function buildAliasMap(csvText) {
-  const rows = parseCsv(csvText).filter((r) => r.Decision === "MERGE");
-  const map = new Map(); // key: `${state}|${variantUpper}` -> canonicalUpper
-  for (const r of rows) {
-    const state = r.State.trim().toUpperCase();
-    const canonical = r.Canonical.trim().toUpperCase();
-    for (const variant of [r["Variant A"], r["Variant B"]]) {
-      const key = `${state}|${variant.trim().toUpperCase()}`;
-      map.set(key, canonical);
-    }
-  }
-  return map;
-}
-
 /** Strips a trailing ", <STATE>" suffix that duplicates the row's own state column. */
 export function stripStateSuffix(city, state) {
   const re = new RegExp(`,\\s*${state}$`, "i");
   return city.trim().replace(re, "").trim();
 }
 
+/** Owner queue item 1: "upper, strip punctuation, collapse whitespace, split trailing state."
+ * Also folds SAINT -> ST (matching the alias-review.csv's own established convention: its one
+ * ST/SAINT decision, MO ST LOUIS / ST. LOUIS, chose the abbreviated "St Louis" as canonical). */
+export function stripPunctuationAndWhitespace(city) {
+  return city
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^SAINT\b/, "ST");
+}
+
+/** Builds a per-state variant(normalized) -> canonical(normalized) map from the reviewed alias
+ * CSV. Both sides run through the SAME stripPunctuationAndWhitespace as the live-row lookup, or
+ * a punctuated variant/canonical (e.g. "MT. PLEASANT") would never match the stripped lookup key. */
+export function buildAliasMap(csvText) {
+  const rows = parseCsv(csvText).filter((r) => r.Decision === "MERGE");
+  const map = new Map(); // key: `${state}|${normalizedVariant}` -> normalizedCanonical
+  for (const r of rows) {
+    const state = r.State.trim().toUpperCase();
+    const canonical = stripPunctuationAndWhitespace(r.Canonical);
+    for (const variant of [r["Variant A"], r["Variant B"]]) {
+      const key = `${state}|${stripPunctuationAndWhitespace(variant)}`;
+      map.set(key, canonical);
+    }
+  }
+  return map;
+}
+
 export function normalizeCity(city, state, aliasMap) {
-  const stripped = stripStateSuffix(city, state).toUpperCase();
+  const stripped = stripPunctuationAndWhitespace(stripStateSuffix(city, state));
   const aliased = aliasMap.get(`${state.toUpperCase()}|${stripped}`);
   return aliased ?? stripped;
 }
@@ -175,6 +189,29 @@ if (process.argv.includes("--selftest")) {
   const merged = mergeGroups(fixture, aliasMap);
   if (merged.length !== 2) {
     console.error(`merge-and-rescore-lane-mileage SELFTEST FAIL — expected 2 merged groups, got ${merged.length}`);
+    process.exit(1);
+  }
+  // (1b) generic punctuation/whitespace/SAINT-ST variants (owner queue item 1's exact spec) also
+  // collapse, independent of the curated alias CSV.
+  const punctFixture = [
+    { origin_city: "BEARDSTOWN", origin_state: "IL", dest_city: "LAREDO", dest_state: "TX", practical_miles: "800.0", practical_spread: "5.0", n_practical: 30, first_seen: "2024-01-01", last_seen: "2024-06-01" },
+    { origin_city: "BEARDSTOWN,", origin_state: "IL", dest_city: "LAREDO", dest_state: "TX", practical_miles: "800.0", practical_spread: "5.0", n_practical: 8, first_seen: "2024-02-01", last_seen: "2024-03-01" },
+    { origin_city: "SAINT JOSEPH", origin_state: "MO", dest_city: "PHARR", dest_state: "TX", practical_miles: "700.0", practical_spread: "3.0", n_practical: 3, first_seen: "2024-01-01", last_seen: "2024-01-01" },
+    { origin_city: "ST JOSEPH", origin_state: "MO", dest_city: "(PHARR", dest_state: "TX", practical_miles: "700.0", practical_spread: "2.0", n_practical: 2, first_seen: "2024-02-01", last_seen: "2024-02-01" },
+  ];
+  const punctMerged = mergeGroups(punctFixture, aliasMap);
+  if (punctMerged.length !== 2) {
+    console.error(`merge-and-rescore-lane-mileage SELFTEST FAIL — expected 2 punctuation-merged groups, got ${punctMerged.length}: ${JSON.stringify(punctMerged.map((m) => [m.origin_city, m.dest_city]))}`);
+    process.exit(1);
+  }
+  const beardstown = punctMerged.find((m) => m.origin_city === "BEARDSTOWN");
+  if (!beardstown || beardstown.n_practical !== 38) {
+    console.error("merge-and-rescore-lane-mileage SELFTEST FAIL — trailing-comma punctuation variant did not merge");
+    process.exit(1);
+  }
+  const stJoseph = punctMerged.find((m) => m.origin_city === "ST JOSEPH");
+  if (!stJoseph || stJoseph.n_practical !== 5 || stJoseph.dest_city !== "PHARR") {
+    console.error("merge-and-rescore-lane-mileage SELFTEST FAIL — SAINT->ST fold or stray-paren strip did not merge");
     process.exit(1);
   }
   const sioux = merged.find((m) => m.origin_city === "SIOUX CITY");

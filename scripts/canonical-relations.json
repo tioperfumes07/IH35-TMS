@@ -217,6 +217,7 @@
     "catalogs.payment_terms",
     "catalogs.pickup_time_types",
     "catalogs.pm_intervals",
+    "catalogs.point_mileage",
     "catalogs.posting_templates",
     "catalogs.qbo_categories",
     "catalogs.relay_accounts",
