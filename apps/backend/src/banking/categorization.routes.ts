@@ -405,6 +405,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             skip_reason = NULL,
             investigate_note = NULL,
             categorized_at = now(),
+            categorized_by_user_id = $25::uuid,
             updated_at = now()
           WHERE id = $1
             AND operating_company_id = $12::uuid
@@ -434,6 +435,10 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           body.data.location ?? null,
           body.data.is_billable ?? null,
           body.data.tags ?? null,
+          // GO-23 (owner FINISH LAW 2026-09-03, "record who and when") -- categorized_by_user_id
+          // landed live by CC-1; this is the single-tx categorize route's own actor, already in
+          // scope via currentAuthUser above.
+          user.uuid,
         ]
       );
 
@@ -780,6 +785,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
                 categorization_gl_account_id = COALESCE($3, categorization_gl_account_id),
                 coa_account_id = COALESCE($3, coa_account_id),
                 categorized_at = now(),
+                categorized_by_user_id = $5::uuid,
                 updated_at = now(),
                 skip_reason = NULL,
                 investigate_note = NULL
@@ -788,7 +794,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
                 AND (status = 'pending_categorization' OR status = 'uncategorized')
               RETURNING id
             `,
-            [id, body.data.category_kind, body.data.gl_account_id ?? null, body.data.operating_company_id]
+            [id, body.data.category_kind, body.data.gl_account_id ?? null, body.data.operating_company_id, user.uuid]
           );
           if (!res.rows[0]) {
             errors.push({ transaction_id: id, error: "not_pending_or_missing" });

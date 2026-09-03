@@ -564,6 +564,11 @@ export async function autoCategorize(
           categorization_gl_account_id = $2::uuid,
           coa_account_id = $2::uuid,
           categorized_at = COALESCE(categorized_at, now()),
+          // GO-23 (owner FINISH LAW 2026-09-03, "record who and when") -- opts.actorUserUuid is
+          // the human who clicked "Apply to Historical Transactions" (apply-historical route,
+          // dry_run=false); NULL here is honest, not a bug, for any future fully-automatic caller
+          // with no human in the loop -- COALESCE never overwrites an already-attributed row.
+          categorized_by_user_id = COALESCE(categorized_by_user_id, $4::uuid),
           skip_reason = NULL,
           investigate_note = NULL,
           updated_at = now()
@@ -573,7 +578,7 @@ export async function autoCategorize(
           AND categorization_gl_account_id IS NULL
           AND COALESCE(status, 'pending_categorization') IN ('pending_categorization', 'uncategorized')
       `,
-      [transaction.id, matched.coa_account_id, transaction.operating_company_id]
+      [transaction.id, matched.coa_account_id, transaction.operating_company_id, opts?.actorUserUuid ?? null]
     );
     applied = (updated.rowCount ?? 0) > 0;
     if (!applied) return;
