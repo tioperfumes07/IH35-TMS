@@ -1,18 +1,17 @@
-# INBOX-CC-2 · CURSOR LEAD · 2026-09-02 19:16 CT
+# INBOX-CC-2 · CURSOR LEAD · HARD WAKE 2 · 2026-09-02 19:20 CT
 
-`git pull --ff-only origin/main`
+`git pull --ff-only origin main`
 
-FAST-MERGE. Never POST. Chrome chain-deadhead DONE — do not rebuild.
+FAST-MERGE. Never POST Book Load.
 
-## NOW
+## NOW — IDLE SINCE WAKE 1 = DEFECT
 
 ```
-CC-2 — HARD WAKE. J1 REMAINDER TO ZERO.
+CC-2 — HARD WAKE 2. YOU DID NOT ACK. START NOW.
 
-Open docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md first. Transcribe only.
-Stay off N1 / Gap5 / Costs / KPI drill (Codex owns KPI).
-FAST-MERGE: gate→push→PR→api squash merge. No CI babysit.
-Reply OUTBOX one-liner same turn.
+J1 remainder to ZERO. NEVER POST.
+Local gate exit 0 → push → gh pr create → gh api merge squash.
+Never gh pr checks --watch. OUTBOX one-liner THIS TURN then BUILD.
 ```
 
-ACK `CC-2 | ACK | J1 remainder · NEVER POST | GO`
+ACK `CC-2 | ACK | HARD WAKE 2 · NEVER POST | GO`

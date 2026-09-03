@@ -1,18 +1,17 @@
-# INBOX-CURSOR · LEAD · 2026-09-02 19:16 CT
+# INBOX-CURSOR · CURSOR LEAD · HARD WAKE 2 · 2026-09-02 19:20 CT
 
-`git pull --ff-only origin/main`
+`git pull --ff-only origin main`
 
-FAST-MERGE. Never POST.
+FAST-MERGE. Never POST Book Load.
 
-## NOW
+## NOW — IDLE SINCE WAKE 1 = DEFECT
 
 ```
-CURSOR — HARD WAKE LEAD.
+CURSOR — HARD WAKE 2. YOU DID NOT ACK. START NOW.
 
-Gap 5 CLOSED (7/7). Deploy tip to Render (in flight).
-Dependabot security: #19685 #19351 #19686 #19688 — merge when green/auto.
-Hard-wake all seats; 5m lead census loop; never idle.
-Stay off N1/C1/J1/KPI (owned).
+Lead census + deploy watch. NEVER POST.
+Local gate exit 0 → push → gh pr create → gh api merge squash.
+Never gh pr checks --watch. OUTBOX one-liner THIS TURN then BUILD.
 ```
 
-ACK `CURSOR | ACK | deploy+hard-wake · NEVER POST | GO`
+ACK `CURSOR | ACK | HARD WAKE 2 · NEVER POST | GO`
