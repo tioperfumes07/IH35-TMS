@@ -144,7 +144,7 @@ export function VoidReasonModal({
               id="void-reason-code"
               value={reasonId}
               onChange={(event) => setReasonId(event.target.value)}
-              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               autoFocus
             >
               <option value="">Select a reason…</option>
@@ -174,7 +174,7 @@ export function VoidReasonModal({
             rows={3}
             value={memo}
             onChange={(event) => setMemo(event.target.value)}
-            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
             placeholder={
               catalogAvailable
                 ? needsMemo

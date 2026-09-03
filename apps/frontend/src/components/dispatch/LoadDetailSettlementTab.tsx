@@ -60,7 +60,7 @@ function LegRow({ label, leg, isCurrent }: { label: string; leg: SettlementLeg |
       <span className={`w-5 text-xs font-bold ${isCurrent ? "text-slate-700" : "text-gray-500"}`}>{label}</span>
       <EntityLinkOrTombstone kind="load" id={leg.load_id} name={leg.load_number} noun="Load" className={`font-mono text-xs ${isCurrent ? "font-bold text-slate-700" : "text-gray-700"}`} />
       {isCurrent && (
-        <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
+        <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">
           this load
         </span>
       )}
@@ -124,7 +124,7 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
         <div className="flex flex-col items-end gap-1">
           {statusBadge(settlement.status)}
           {settlement.is_open && (
-            <span className="text-[10px] text-slate-700">Awaiting southbound return to close</span>
+            <span className="text-xs text-slate-700">Awaiting southbound return to close</span>
           )}
         </div>
       </div>

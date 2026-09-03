@@ -181,7 +181,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
               </button>
               {expanded ? (
                 <pre
-                  className="mt-2 max-h-48 overflow-auto rounded-sm bg-gray-50 p-2 text-[10px]"
+                  className="mt-2 max-h-48 overflow-auto rounded-sm bg-gray-50 p-2 text-xs"
                   data-testid={`driver-audit-diff-${row.id}`}
                 >
                   {payloadDiff(row.payload)}
@@ -320,7 +320,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
               hidePager
               renderExpanded={(row) => (
                 <pre
-                  className="max-h-48 overflow-auto rounded-sm bg-gray-50 p-2 text-[10px]"
+                  className="max-h-48 overflow-auto rounded-sm bg-gray-50 p-2 text-xs"
                   data-testid={`driver-audit-diff-expanded-${row.id}`}
                 >
                   {payloadDiff(row.payload)}

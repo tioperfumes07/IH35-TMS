@@ -167,7 +167,7 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
     <div className="space-y-6" data-testid="driver-load-history-tab">
       <section className="space-y-3" data-testid="driver-assigned-loads">
         <div>
-          <h3 className="text-[14px] font-semibold text-slate-800">Assigned loads</h3>
+          <h3 className="text-xs font-semibold text-slate-800">Assigned loads</h3>
           <p className="text-[12px] text-slate-600">Loads where this driver is primary or co-driver (canonical reverse).</p>
         </div>
         {assignedQ.isError ? (
@@ -217,7 +217,7 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
 
       <section className="space-y-3" data-testid="driver-assignment-change-log">
         <div>
-          <h3 className="text-[14px] font-semibold text-slate-800">Assignment change log</h3>
+          <h3 className="text-xs font-semibold text-slate-800">Assignment change log</h3>
           <p className="text-[12px] text-slate-600">Dispatch reassignment events (who was moved on/off a load).</p>
         </div>
         {historyQ.isError ? (

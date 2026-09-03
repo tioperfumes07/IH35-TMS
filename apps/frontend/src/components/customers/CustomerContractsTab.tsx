@@ -262,7 +262,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
               <select
                 value={meta.contract_type}
                 onChange={(e) => setMeta((m) => ({ ...m, contract_type: e.target.value as CustomerContract["contract_type"] }))}
-                className="h-9 w-full rounded-sm border border-gray-300 px-2 text-[13px]"
+                className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
                 required
               >
                 {Object.entries(CONTRACT_TYPE_LABELS).map(([val, label]) => (
@@ -301,7 +301,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
                 onChange={(e) => setMeta((m) => ({ ...m, notes: e.target.value }))}
                 rows={2}
                 maxLength={2000}
-                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               />
             </label>
             <div className="flex justify-end gap-2">
