@@ -180,7 +180,7 @@ export function FuelReconciliationPage() {
         render: (r) => (
           <div className="flex flex-wrap gap-1">
             {(r.flags ?? []).map((f) => (
-              <span key={f} className="rounded-sm border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] font-semibold text-slate-700" title={FLAG_META[f].label}>
+              <span key={f} className="rounded-sm border border-slate-300 bg-slate-100 px-1 py-0.5 text-xs font-semibold text-slate-700" title={FLAG_META[f].label}>
                 {FLAG_META[f].label}
               </span>
             ))}
@@ -201,7 +201,7 @@ export function FuelReconciliationPage() {
         render: (row) => (
           <div>
             <div>{row.merchant_name ?? row.description ?? "—"}</div>
-            <div className="mt-0.5 text-[10px]">
+            <div className="mt-0.5 text-xs">
               {row.gps_match_confidence === "high" ? (
                 <span className="rounded-sm bg-emerald-100 px-1 text-emerald-700">GPS match: high</span>
               ) : row.gps_match_confidence === "medium" ? (

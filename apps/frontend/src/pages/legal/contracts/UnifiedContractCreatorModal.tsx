@@ -313,7 +313,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
               {selectedTemplate?.display_name_en} · v{selectedTemplate?.version}
             </div>
             {Object.keys(fields).length === 0 ? (
-              <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-[13px] text-slate-600">
+              <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-600">
                 This template has no fill-in fields. Continue to the party step.
               </div>
             ) : (
@@ -371,7 +371,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                         />
                         <span>
                           {u.unit_number} · {u.year ?? ""} {u.make ?? ""} {u.model ?? ""}
-                          <span className="ml-1 font-mono text-[10px] text-slate-400">{u.vin}</span>
+                          <span className="ml-1 font-mono text-xs text-slate-400">{u.vin}</span>
                         </span>
                       </label>
                     ))

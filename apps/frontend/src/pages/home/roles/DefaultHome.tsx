@@ -293,7 +293,7 @@ export function DefaultHome({ auth }: Props) {
                       className="single-line-name"
                     />
                   </span>
-                  <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-700">Above policy</span>
+                  <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">Above policy</span>
                 </li>
               ))}
             </ul>
@@ -478,7 +478,7 @@ export function DefaultHome({ auth }: Props) {
                     : "border-slate-200"
               }`}
             >
-              <div className="text-[10px] font-semibold uppercase tracking-[0.04em] text-slate-500">{item.label}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">{item.label}</div>
               <div
                 className={`text-base font-semibold ${
                   item.alert === "crit"

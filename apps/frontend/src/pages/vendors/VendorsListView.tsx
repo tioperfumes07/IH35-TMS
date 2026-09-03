@@ -273,7 +273,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
             sortable: true,
             render: (row) => {
               const q = vendorQualityLabel(row.notes);
-              return <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${q.className}`}>{q.label}</span>;
+              return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${q.className}`}>{q.label}</span>;
             },
           },
           { key: "fmcsa_label", label: "FMCSA Authority", sortable: true, render: (row) => row.fmcsa_label },
@@ -304,7 +304,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
             sortable: true,
             render: (row) => (
               <span
-                className={`inline-flex rounded-sm px-2 py-0.5 text-[10px] font-semibold ${
+                className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${
                   row.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-slate-100 text-slate-700"
                 }`}
               >
