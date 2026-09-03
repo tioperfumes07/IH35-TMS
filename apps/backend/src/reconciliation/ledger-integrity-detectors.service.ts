@@ -978,12 +978,21 @@ export async function checkSampleDataFlagExplicitForCompany(client: DbClient, op
 // owner's real chart is the worst instance of this class) plus mdata.drivers/customers/vendors/
 // units, since the same F-BAND sweep found 20/20/47/23 test-named records respectively across
 // those tables — accounts alone was a fraction of the real contamination surface.
+// LEDGER-CRON-DOWN-2026-09-03 — mdata.units has NO operating_company_id column (owner_company_id /
+// currently_leased_to_company_id instead, same fact CLAUDE.md §Repo Structure and loads.routes.ts
+// already encode). The uniform `WHERE operating_company_id = $1::uuid` below threw
+// `column "operating_company_id" does not exist` for the mdata.units branch on every run since
+// 2026-09-03, taking down checkTestNamedAccountForCompany — and therefore the whole
+// ledger.integrity_cron tick, since one throwing detector aborts the loop over ALL 15 detectors for
+// EVERY company — live-confirmed via _system.background_jobs (last_successful_run_at 2026-09-01,
+// last_failed_run_at 2026-09-03, that exact error message). companyColExpr lets each target say how
+// IT scopes to an entity; every other target already uses operating_company_id directly.
 const F2_TARGETS = [
-  { table: "catalogs.accounts", idCol: "id", nameExpr: "account_name", numberCol: "account_number", label: "account" },
-  { table: "mdata.drivers", idCol: "id", nameExpr: "first_name || ' ' || last_name", numberCol: null, label: "driver" },
-  { table: "mdata.customers", idCol: "id", nameExpr: "customer_name", numberCol: null, label: "customer" },
-  { table: "mdata.vendors", idCol: "id", nameExpr: "vendor_name", numberCol: null, label: "vendor" },
-  { table: "mdata.units", idCol: "id", nameExpr: "unit_number", numberCol: null, label: "unit" },
+  { table: "catalogs.accounts", idCol: "id", nameExpr: "account_name", numberCol: "account_number", label: "account", companyColExpr: "operating_company_id" },
+  { table: "mdata.drivers", idCol: "id", nameExpr: "first_name || ' ' || last_name", numberCol: null, label: "driver", companyColExpr: "operating_company_id" },
+  { table: "mdata.customers", idCol: "id", nameExpr: "customer_name", numberCol: null, label: "customer", companyColExpr: "operating_company_id" },
+  { table: "mdata.vendors", idCol: "id", nameExpr: "vendor_name", numberCol: null, label: "vendor", companyColExpr: "operating_company_id" },
+  { table: "mdata.units", idCol: "id", nameExpr: "unit_number", numberCol: null, label: "unit", companyColExpr: "COALESCE(currently_leased_to_company_id, owner_company_id)" },
 ] as const;
 
 export async function checkTestNamedAccountForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
@@ -993,7 +1002,7 @@ export async function checkTestNamedAccountForCompany(client: DbClient, operatin
       `
         SELECT ${target.idCol}::text AS id, ${numberSelect} ${target.nameExpr} AS name_val
         FROM ${target.table}
-        WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL
+        WHERE ${target.companyColExpr} = $1::uuid AND deactivated_at IS NULL
       `,
       [operatingCompanyId]
     );
