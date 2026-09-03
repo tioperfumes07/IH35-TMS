@@ -8053,9 +8053,9 @@ Source: remeasure at 5e94f941c7 (origin/main). These 77 guards are newly failing
 | verify-canonical-load-nav.mjs | CURSOR | OPEN |
 | verify-cash-advance-load-trailer-entity-picker.mjs | CURSOR | OPEN |
 | verify-compliance-notification-rule-visible-errors.mjs | CC-1 | OPEN |
-| verify-customers-list-master-detail.mjs | CC-3 | OPEN |
-| verify-customers-load-column-remainder.mjs | CC-3 | OPEN |
-| verify-customers-vendors-list-segment-tabs.mjs | CC-3 | OPEN |
+| verify-customers-list-master-detail.mjs | CC-3 | **CLOSED (CC-3, DISP-F9997) · not rot — `onChange` regex re-anchored to `NavyPageSubNav`'s real `onTabChange` prop + a `\s+` gap for JSX's real multi-line attribute layout; the actual detail-tab wiring was already correct** |
+| verify-customers-load-column-remainder.mjs | CC-3 | **CLOSED (CC-3, DISP-F9996) · not rot — `{0,900}` char-gap cap went stale as `loads.routes.ts`'s SELECT list grew (now ~1390 chars between the two anchors); widened to `{0,2000}`, the archived-customer-safe `get_customer_same_company` LATERAL join was never broken** |
+| verify-customers-vendors-list-segment-tabs.mjs | CC-3 | **CLOSED (CC-3, DISP-F9998) · not rot — both pages were migrated from `SecondaryNavTabs` onto the shared `NavyPageSubNav` after this guard was written; re-anchored to the component actually wired, By Category/Preferred/Watch/Inactive labels were all present the whole time** |
 | verify-datepicker-label-clickthrough-reopen.mjs | CURSOR | OPEN |
 | verify-deactivated-counterparty-resolver-coverage.mjs | CC-1 | OPEN |
 | verify-disp-wire-08-settlement-ping.mjs | CODEX | FIXED (PR pending) — product normal PASS; selftest now proves distinct primary/secondary open calls |

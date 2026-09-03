@@ -12,19 +12,24 @@ import { fileURLToPath } from "node:url";
 const LABEL = "verify-customers-vendors-list-segment-tabs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
+// DISP-F9998 -- both pages were migrated from the standalone SecondaryNavTabs component onto the
+// shared NavyPageSubNav (apps/frontend/src/components/layout/NavyPageSubNav.tsx) at some point after
+// this guard was written; SecondaryNavTabs.tsx still exists and is used elsewhere (Users.tsx,
+// VendorDetail.tsx), it just isn't what renders these two list segment-tab rows anymore. Re-anchored
+// to the component actually wired here, not to the one that used to be.
 function assertVendors(src) {
   const problems = [];
   if (!/by-category/.test(src)) problems.push("Vendors.tsx missing by-category list segment");
   if (!/By Category/.test(src)) problems.push("Vendors.tsx missing By Category tab label");
-  if (!/SecondaryNavTabs/.test(src)) problems.push("Vendors.tsx missing SecondaryNavTabs");
+  if (!/NavyPageSubNav/.test(src)) problems.push("Vendors.tsx missing NavyPageSubNav");
   if (!/VENDOR_LIST_TAB_IDS/.test(src)) problems.push("Vendors.tsx missing VENDOR_LIST_TAB_IDS");
   return problems;
 }
 
 function assertCustomers(src) {
   const problems = [];
-  // Customers restore may already be present — require SecondaryNavTabs + at least Preferred/Watch/Inactive
-  if (!/SecondaryNavTabs/.test(src)) problems.push("Customers.tsx missing SecondaryNavTabs");
+  // Customers restore may already be present — require NavyPageSubNav + at least Preferred/Watch/Inactive
+  if (!/NavyPageSubNav/.test(src)) problems.push("Customers.tsx missing NavyPageSubNav");
   const need = [/Preferred/i, /Watch/i, /Inactive/i];
   for (const re of need) {
     if (!re.test(src)) problems.push(`Customers.tsx missing segment label matching ${re}`);
