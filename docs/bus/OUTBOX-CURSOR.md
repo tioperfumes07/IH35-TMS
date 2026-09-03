@@ -1,6 +1,6 @@
-# OUTBOX-CURSOR · CENSUS · 2026-09-02 19:25 CT
+# OUTBOX-CURSOR · FINISH-ALL · 2026-09-02 19:41 CT
 
-FORCE NOW | READ INBOX-CURSOR | HARD WAKE · NEVER IDLE · NEVER POST | FAST-MERGE | GO
+FORCE NOW | LEAD | NEVER IDLE · NEVER POST | FAST-MERGE | GO
 
 ---
-CURSOR | CENSUS | tip 82fda7c907 live-was f01f8e124dc3 · deploy retriggered · CC1/2/3 ACK · CODEX+CASCADE IDLE re-woke · Dependabot auto keep (checks red) | GO
+CURSOR | FINISH-ALL | tip 8e1b5814bf · deploy triggered · CC1/2/3 turbo · Codex/Cascade parked · Gap5 done · Dependabot left auto (red) | GO
