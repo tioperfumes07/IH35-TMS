@@ -1,6 +1,6 @@
 {
   "generated_note": "Prod relation snapshot (read-only) \u2014 canonical set for the phantom-relation CI guard. Regenerate via scripts/gen-canonical-relations.mjs after schema changes. GATED prod access (CLAUDE.md \u00a71.5).",
-  "count": 806,
+  "count": 808,
   "relations": [
     "_system._schema_migrations",
     "_system.admin_jobs",
@@ -21,6 +21,8 @@
     "accounting.chart_of_accounts_roles",
     "accounting.civil_fine_postings",
     "accounting.coa_account",
+    "accounting.company_settlement_driver_settlements",
+    "accounting.company_settlements",
     "accounting.credit_memo_applications",
     "accounting.credit_memos",
     "accounting.customer_classifications",

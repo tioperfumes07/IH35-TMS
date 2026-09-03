@@ -339,6 +339,28 @@
       "type",
       "updated_at"
     ],
+    "accounting.company_settlement_driver_settlements": [
+      "company_settlement_id",
+      "created_at",
+      "driver_settlement_id",
+      "id"
+    ],
+    "accounting.company_settlements": [
+      "closed_at",
+      "closed_by_user_id",
+      "created_at",
+      "created_by_user_id",
+      "display_id",
+      "id",
+      "operating_company_id",
+      "period_end",
+      "period_start",
+      "status",
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
+    ],
     "accounting.credit_memo_applications": [
       "applied_at",
       "applied_by_user_id",
