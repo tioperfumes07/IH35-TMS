@@ -152,7 +152,7 @@ export function QBOSyncStatusDashboardPage() {
         label: "Status",
         sortable: true,
         render: (r) => (
-          <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold ${statusPill(r.status)}`}>{r.status}</span>
+          <span className={`rounded-sm border px-2 py-0.5 text-xs font-semibold ${statusPill(r.status)}`}>{r.status}</span>
         ),
       },
       {
@@ -242,7 +242,7 @@ export function QBOSyncStatusDashboardPage() {
           <div className="flex items-center gap-2 text-[11px] font-semibold uppercase text-red-900">
             Dead letter
             {kpis.dead > 0 ? (
-              <span className="rounded-sm bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">needs attention</span>
+              <span className="rounded-sm bg-red-600 px-1.5 py-0.5 text-xs font-bold text-white">needs attention</span>
             ) : null}
           </div>
           <div className="text-2xl font-semibold text-red-900">{kpis.dead}</div>
@@ -362,7 +362,7 @@ export function QBOSyncStatusDashboardPage() {
                 <li key={a.id} className="rounded-sm border border-amber-100 bg-amber-50/60 p-2">
                   <div className="font-semibold text-amber-950">{a.severity}</div>
                   <div className="text-gray-800">{a.message ?? "—"}</div>
-                  <div className="text-[10px] text-gray-500">{formatDateTimeUS(a.created_at)}</div>
+                  <div className="text-xs text-gray-500">{formatDateTimeUS(a.created_at)}</div>
                   <Button className="mt-1" size="sm" onClick={() => ackMut.mutate(a.id)}>
                     Acknowledge
                   </Button>

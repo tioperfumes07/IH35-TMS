@@ -14,6 +14,14 @@
  * '_POSTING_ENABLED' pattern -> isPostingFlag() auto-recognizes it as per-entity-only). Flag OFF
  * means this function is never called (the caller checks first) — today's behaviour (charge
  * captured, never billed) is exactly preserved until the owner flips it on for an entity.
+ *
+ * C6-MONEY-JE-EXEMPT: builds the invoice DOCUMENT (header+line, status='draft') only — same shape
+ * as accounting/from-load.ts's buildInvoiceFromLoad, which carries the identical exemption. The
+ * balanced JE posts later, once, via accounting/invoice-gl.service.ts's postInvoiceGlIfEnabled,
+ * called generically by accounting/invoice-send.service.ts by invoiceId (no invoice_type filter —
+ * verified 2026-09-02, GO-23 C6) — the SAME send-triggered posting path every other invoice,
+ * including freight invoices from from-load.ts, already uses. Creating this draft invoice is not
+ * itself a money-posting event.
  */
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { nextInvoiceDisplayId } from "../accounting/display-id.js";

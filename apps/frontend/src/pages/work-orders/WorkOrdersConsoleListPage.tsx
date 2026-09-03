@@ -75,7 +75,7 @@ function WoKanbanColumnSortControls({
     return (
       <button
         type="button"
-        className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[10px] font-semibold normal-case tracking-normal ${
+        className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-xs font-semibold normal-case tracking-normal ${
           active ? "bg-slate-200 text-slate-900" : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
         }`}
         onClick={() => onToggleSort(columnKey, sortKey)}
@@ -357,7 +357,7 @@ export function WorkOrdersConsoleListPage() {
         value={search}
         onChange={(event) => setSearch(event.target.value)}
         placeholder="Search WO #, unit, vendor, driver…"
-        className="h-8 min-w-[240px] flex-1 rounded-sm border border-gray-300 px-2 text-[13px]"
+        className="h-8 min-w-[240px] flex-1 rounded-sm border border-gray-300 px-2 text-xs"
       />
     </div>
   );
@@ -470,7 +470,7 @@ export function WorkOrdersConsoleListPage() {
                             label={entityLabel(row.display_id, row.id, "Work order")}
                             className="font-mono font-semibold text-slate-800"
                           />
-                          <div className="mt-0.5 font-mono text-[10px] text-slate-500">{String(row.unit_number ?? "—")}</div>
+                          <div className="mt-0.5 font-mono text-xs text-slate-500">{String(row.unit_number ?? "—")}</div>
                           <div className="mt-0.5 text-[11px] capitalize text-slate-600">{String(row.status ?? "")}</div>
                         </li>
                       ))}

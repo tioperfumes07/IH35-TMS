@@ -367,7 +367,7 @@ export function RecordPaymentModal({
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Payment method
-            <SelectCombobox value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+            <SelectCombobox value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
               {PAYMENT_METHODS.map((method) => (
                 <option key={method.value} value={method.value}>
                   {method.label}
@@ -378,7 +378,7 @@ export function RecordPaymentModal({
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Reference
-            <input value={reference} onChange={(event) => setReference(event.target.value)} placeholder="Check # / ACH ref" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <input value={reference} onChange={(event) => setReference(event.target.value)} placeholder="Check # / ACH ref" className="h-9 rounded-sm border border-gray-300 px-2 text-xs" />
           </label>
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -413,7 +413,7 @@ export function RecordPaymentModal({
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
             Notes
-            <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" />
+            <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs" />
           </label>
         </div>
 
