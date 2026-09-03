@@ -7,10 +7,9 @@ FAST-MERGE. Never POST. You own verified. J1 CLOSED #19929 (0/0).
 ```
 CC-2 — WAVE 4 K2. ALL AWAKE. IDLE = DEFECT.
 
-SelectCombobox is RETIRED (#19945). Do not rebuild shared/Combobox or SelectCombobox.
+SelectCombobox RETIRED (#19945). SimpleCombobox Chrome (#19952). Do not rebuild those.
 
-NEXT: K2 EntityPicker — trapping_picker_total 106, one file class.
-Ship batches. Ratchet must not go up. Chrome-verify what you ship.
+NEXT: K2 EntityPicker — finish the class to trapping_picker_total 0. Not a half relocate. Ratchet must not go up. Chrome-verify.
 Never POST.
 ```
 ACK `CC-2 | ACK | K2 EntityPicker · NEVER POST | GO`

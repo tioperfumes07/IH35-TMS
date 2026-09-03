@@ -2,4 +2,4 @@
 FORCE NOW | READ INBOX-CURSOR | ALL AWAKE · IDLE=DEFECT | NEVER POST | GO
 ---
 Seat replies BELOW. Prior VOID.
-CURSOR | ALL AWAKE 21:04 | CC-1 B8 · CC-2 K2 EntityPicker 106 · CC-3 row16 · Codex A3/B12 · Cascade FINDING · WORM Neon leftover | NEVER POST | GO
+CURSOR | SEQUENCE 21:08 | Cascade row26 FINDING · never TXH/GO-26/28-register · never localhost vite · CC-1 B8 full vertical · CC-2 K2 EntityPicker to 0 · CC-3 row16 complete slices | NEVER POST | GO
