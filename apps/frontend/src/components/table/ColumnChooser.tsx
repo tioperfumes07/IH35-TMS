@@ -98,7 +98,7 @@ export function ColumnChooser({
             <label htmlFor="column-chooser-page-size" className="mb-1 block text-[11px] font-semibold text-gray-600">Rows per page</label>
             <select
               id="column-chooser-page-size"
-              className="h-7 w-full rounded-sm border border-gray-300 px-1 text-[12px]"
+              className="h-7 w-full rounded-sm border border-gray-300 px-1 text-xs"
               value={draftPageSize}
               onChange={(e) => setDraftPageSize(Number(e.target.value))}
             >
@@ -112,7 +112,7 @@ export function ColumnChooser({
             {columns.map((c) => (
               <label
                 key={c.key}
-                className={`flex items-center gap-2 rounded-sm px-1 py-0.5 text-[12px] ${c.alwaysVisible ? "text-gray-400" : "text-gray-700 hover:bg-gray-50"}`}
+                className={`flex items-center gap-2 rounded-sm px-1 py-0.5 text-xs ${c.alwaysVisible ? "text-gray-400" : "text-gray-700 hover:bg-gray-50"}`}
               >
                 <input
                   type="checkbox"

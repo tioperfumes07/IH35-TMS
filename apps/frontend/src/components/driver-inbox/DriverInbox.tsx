@@ -107,8 +107,8 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
     },
   });
 
-  if (!canReview) return <p className="text-[12px] text-[#8A92AB]">Reviewing requests requires a Manager, Accountant, or Owner role.</p>;
-  if (!companyId) return <p className="text-[12px] text-[#8A92AB]">Select an operating company to view the inbox.</p>;
+  if (!canReview) return <p className="text-xs text-[#8A92AB]">Reviewing requests requires a Manager, Accountant, or Owner role.</p>;
+  if (!companyId) return <p className="text-xs text-[#8A92AB]">Select an operating company to view the inbox.</p>;
 
   const showCash = tab === "all" || tab === "cash_advance";
 
@@ -116,7 +116,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
     <div className="overflow-hidden rounded-sm border border-[#e5e7eb] bg-[#f8f8f4]">
       <div className="px-[18px] pt-[14px] pb-[10px]">
         <span className="text-[22px] font-semibold text-[#1A1F36]">Inbox</span>
-        <span className="ml-[10px] text-[12px] text-[#8A92AB]">Driver Hub · requests from the driver app</span>
+        <span className="ml-[10px] text-xs text-[#8A92AB]">Driver Hub · requests from the driver app</span>
       </div>
 
       {/* Navy filter strip — NavyPageSubNav locked tokens, as client-side filter buttons with counts */}
@@ -128,7 +128,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
-              className={`whitespace-nowrap px-3 py-[10px] text-[12px] ${active ? "border-b-2 border-white font-semibold text-white" : "text-[#c7ccd9]"}`}
+              className={`whitespace-nowrap px-3 py-[10px] text-xs ${active ? "border-b-2 border-white font-semibold text-white" : "text-[#c7ccd9]"}`}
             >
               {t.label} {counts[t.key]}
             </button>
@@ -138,7 +138,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
 
       <div className="px-[18px] py-[14px]">
         {pendingQuery.isLoading ? (
-          <p className="text-[12px] text-[#8A92AB]">Loading…</p>
+          <p className="text-xs text-[#8A92AB]">Loading…</p>
         ) : pendingQuery.isError ? (
           <ListErrorBanner
             message="Could not load cash-advance requests for this operating company."
@@ -167,7 +167,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                         {timeline?.viewed_at ? " · viewed" : ""}
                       </span>
                     </span>
-                    <span className="mt-1 block text-[12px] text-[#4A5170]">"{String(row.reason ?? "")}"</span>
+                    <span className="mt-1 block text-xs text-[#4A5170]">"{String(row.reason ?? "")}"</span>
                   </span>
                   <span className="text-xs font-semibold whitespace-nowrap text-[#1A1F36]">{usd(row.requested_amount_cents)}</span>
                 </button>
@@ -185,7 +185,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                     ) : previewQuery.isLoading ? (
                       <p className="text-[11px] text-[#8A92AB]">Computing…</p>
                     ) : preview ? (
-                      <div className="grid grid-cols-[auto_1fr] gap-x-[12px] gap-y-[5px] text-[12px]">
+                      <div className="grid grid-cols-[auto_1fr] gap-x-[12px] gap-y-[5px] text-xs">
                         <span className="text-[#8A92AB]">Linked to</span>
                         <span className="text-[#1A1F36]">
                           {preview.branch === "load_bill" ? (
@@ -249,7 +249,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
             );
           })
         ) : (
-          <p className="text-[12px] text-[#8A92AB]">
+          <p className="text-xs text-[#8A92AB]">
             {tab === "all" || tab === "cash_advance" ? "No pending cash-advance requests." : "No requests of this type yet."}
           </p>
         )}
@@ -259,7 +259,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
         <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/40 p-4">
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-4 shadow-lg">
             <h2 className="text-base font-semibold text-[#1A1F36]">Deny request</h2>
-            <p className="mt-1 text-[12px] text-[#8A92AB]">Reason is recorded to the audit trail and shared with the driver.</p>
+            <p className="mt-1 text-xs text-[#8A92AB]">Reason is recorded to the audit trail and shared with the driver.</p>
             <textarea
               className="mt-3 w-full rounded-sm border border-[#e5e7eb] p-2 text-sm"
               rows={4}

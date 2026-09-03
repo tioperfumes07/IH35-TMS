@@ -255,12 +255,12 @@ export function UniversalListToolbar({
               </div>
             ) : rangeColumns.length === 0 ? (
               // Honest empty: only when inference found zero rangeable columns.
-              <p className="text-[12px] text-gray-500">This list has no date or amount column to range-filter.</p>
+              <p className="text-xs text-gray-500">This list has no date or amount column to range-filter.</p>
             ) : (
               // LV-RANGE-PANEL-FALSE-EMPTY-BEFORE-FIELD: do NOT claim "no column" when
               // SOL/hearing (or any inferred field) is already in the select — user just
               // has not chosen a field yet (Apply stays disabled until draft.key).
-              <p className="text-[12px] text-gray-500">Choose a field above to set From/To.</p>
+              <p className="text-xs text-gray-500">Choose a field above to set From/To.</p>
             )}
             <div className="flex items-center justify-end gap-2 border-t border-gray-200 pt-3">
               <Button type="button" variant="tertiary" size="sm" onClick={reset}>Reset</Button>

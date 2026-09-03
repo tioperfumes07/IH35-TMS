@@ -110,7 +110,7 @@ function Card({ title, pill, sub, children, footer, full }: {
 
 function Row({ label, children }: { label: ReactNode; children: ReactNode }) {
   return (
-    <div className="flex items-center justify-between border-t border-gray-200 py-[7px] text-[12px] first:border-t-0">
+    <div className="flex items-center justify-between border-t border-gray-200 py-[7px] text-xs first:border-t-0">
       <span className="text-slate-600">{label}</span>
       <span className="text-slate-500">{children}</span>
     </div>
@@ -131,7 +131,7 @@ function GhostButton({ onClick, children }: { onClick: () => void; children: Rea
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-[12px] font-semibold text-[#1f2a44] hover:bg-gray-50"
+      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-[#1f2a44] hover:bg-gray-50"
     >
       {children}
     </button>
@@ -342,7 +342,7 @@ function OverviewTab({ data, onOpen, qboAvailable }: { data: SystemData; onOpen:
       {/* Claude Coder */}
       <Card title="Claude Coder" pill={<Pill tone="neutral">OWNER ONLY</Pill>} sub="Launch Claude Code on your machine (no terminal runs inside this app) plus a read-only activity view." full
         footer={<GhostButton onClick={() => onOpen("claude-coder")}>Open Claude Coder</GhostButton>}>
-        <div className="text-[12px] text-slate-500">
+        <div className="text-xs text-slate-500">
           Safe launcher + read-only build/agent mirror. No command execution occurs inside the production app (auditor/DOT-safe).
         </div>
       </Card>
@@ -381,7 +381,7 @@ function QboReconTab({ data }: { data: SystemData }) {
         pill={<Pill tone="neutral">TMS ↔ QBO</Pill>}
         sub="Daily tie-out of what the TMS posted against QuickBooks (system-of-record). This is not bank reconciliation — bank statement matching stays in Banking; the two are never combined in one table."
         footer={
-          <Link to="/banking" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1f2a44] px-3 py-2 text-[12px] font-semibold text-white hover:bg-[#0f1729]">
+          <Link to="/banking" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0f1729]">
             Open bank reconciliation
           </Link>
         }
@@ -473,7 +473,7 @@ function LedgerHealthTab({ data }: { data: SystemData }) {
 
       <Card title="By integration" sub="Last successful reconciliation tick per integration.">
         {(lh?.by_integration ?? []).length === 0 ? (
-          <div className="text-[12px] text-slate-500">{ledgerHealth.isLoading ? "Loading…" : "No integration state recorded yet."}</div>
+          <div className="text-xs text-slate-500">{ledgerHealth.isLoading ? "Loading…" : "No integration state recorded yet."}</div>
         ) : (
           (lh?.by_integration ?? []).map((row) => (
             <Row
@@ -685,12 +685,12 @@ function TransactionHealthTab() {
             Entity filter is ON ({selectedEntityIds.length} company). Newest rows are for those companies only — not a stale API.
           </p>
         ) : null}
-        <label className="flex items-center gap-2 border-t border-gray-200 py-[7px] text-[12px] first:border-t-0">
+        <label className="flex items-center gap-2 border-t border-gray-200 py-[7px] text-xs first:border-t-0">
           <input type="checkbox" checked={issuesOnly} onChange={(e) => setIssuesOnly(e.target.checked)} />
           <span className="text-slate-600">Show only issues (WARN/FAIL)</span>
         </label>
         {entities.length > 0 ? (
-          <div className="flex flex-wrap gap-3 border-t border-gray-200 py-[7px] text-[12px]">
+          <div className="flex flex-wrap gap-3 border-t border-gray-200 py-[7px] text-xs">
             {entities.map((e) => (
               <label key={e.id} className="flex items-center gap-1.5 text-slate-600">
                 <input
@@ -713,13 +713,13 @@ function TransactionHealthTab() {
           sub={selected ? `${selected.doc_type.replace(/_/g, " ")} · ${selected.entity_code} · ${ctDateTime(selected.event_at)}` : "Select a document from the list."}
         >
           {query.isError ? (
-            <p className="text-[12px] font-semibold text-red-700" role="alert">
+            <p className="text-xs font-semibold text-red-700" role="alert">
               Transaction health unavailable.
             </p>
           ) : query.isLoading && rows.length === 0 ? (
-            <p className="text-[12px] text-slate-500">Loading documents…</p>
+            <p className="text-xs text-slate-500">Loading documents…</p>
           ) : !selected ? (
-            <p className="text-[12px] text-slate-500">{issuesOnly ? "No open issues — every document checked is OK." : "No documents found."}</p>
+            <p className="text-xs text-slate-500">{issuesOnly ? "No open issues — every document checked is OK." : "No documents found."}</p>
           ) : (
             <div className="space-y-3">
               <pre data-token="TXH_LEDGER_PRE" className="overflow-x-auto rounded-lg border border-gray-200 bg-slate-50 p-3 font-mono text-[11px] leading-5 text-slate-800">
@@ -768,7 +768,7 @@ function TransactionHealthTab() {
                   <button
                     type="button"
                     onClick={() => setSelectedKey(key)}
-                    className={`flex w-full items-center justify-between gap-2 px-1 py-2 text-left text-[12px] ${active ? "bg-slate-100" : "hover:bg-slate-50"}`}
+                    className={`flex w-full items-center justify-between gap-2 px-1 py-2 text-left text-xs ${active ? "bg-slate-100" : "hover:bg-slate-50"}`}
                   >
                     <span className="min-w-0">
                       <span className="block truncate font-semibold text-[#1f2a44]">{row.display_label}</span>
@@ -813,7 +813,7 @@ function QboSyncTab({ data }: { data: SystemData }) {
         sub="IH 35 Transportation · pull-only, no write-back."
       >
         {syncHealth.isError ? (
-          <p className="mb-2 text-[12px] font-semibold text-red-700" role="alert">Could not load QuickBooks sync health.</p>
+          <p className="mb-2 text-xs font-semibold text-red-700" role="alert">Could not load QuickBooks sync health.</p>
         ) : null}
         <Kpi n={fmtUsd(apObj?.balance?.qbo_cents)} u={`QBO A/P${apAging.data ? ` · ${apAging.data.vendors.length} vendors` : ""}`} />
         <Row label="Last successful sync">{ctDateTime(syncHealth.data?.last_successful_sync_at)}</Row>
@@ -832,7 +832,7 @@ function QboSyncTab({ data }: { data: SystemData }) {
       </Card>
 
       <Card title="Notes" sub="How this connection behaves.">
-        <div className="space-y-2 text-[12px] text-slate-600">
+        <div className="space-y-2 text-xs text-slate-600">
           <p>QuickBooks is the system-of-record. The TMS pulls A/P (into <span className="font-mono">accounting.bills</span>) and never writes back to QuickBooks — write-back is OFF by design.</p>
           <p>The QBO A/P figure and vendor count above are read live via the QBO reconciliation + A/P aging endpoints. If a value shows "—", the relevant pull/flag is not yet enabled for this entity.</p>
           <p className="text-slate-500">Realm identifier and the A/P daily-pull flag state are owner/admin settings surfaced under Users → QBO Vendor Linkage and the feature-flags admin — not duplicated here.</p>
@@ -874,7 +874,7 @@ function ProgramTab({ data }: { data: SystemData }) {
         title="Program Tracker"
         sub="Live build status — derived from merges + deploys, not a static field. Full board opens in the Program Tracker module."
         footer={
-          <Link to="/program/matrix" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1f2a44] px-3 py-2 text-[12px] font-semibold text-white hover:bg-[#0f1729]">
+          <Link to="/program/matrix" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0f1729]">
             Open Program Matrix
           </Link>
         }
@@ -1050,7 +1050,7 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
           <button
             type="button"
             onClick={() => copy("launch")}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#1f2a44] px-3 py-2 text-[12px] font-semibold text-white hover:bg-[#0f1729]"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0f1729]"
           >
             Launch Claude Code on my machine
           </button>

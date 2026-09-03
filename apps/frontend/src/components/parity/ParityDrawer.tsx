@@ -181,7 +181,7 @@ export function ParityDrawer({
               >
                 {title}
               </h2>
-              {subtitle ? <p className="truncate text-[12px] text-gray-500">{subtitle}</p> : null}
+              {subtitle ? <p className="truncate text-xs text-gray-500">{subtitle}</p> : null}
             </div>
           </div>
           <button
