@@ -24,14 +24,16 @@ export function RetentionDashboard() {
     queryKey: ["drivers", "retention-scores", companyId],
     queryFn: () =>
       apiRequest<{ rows: RetentionRow[] }>(
-        `/api/v1/drivers/retention-scores?operating_company_id=${encodeURIComponent(companyId)}&tier=at_risk`
+        `/api/v1/drivers/retention-scores?operating_company_id=${encodeURIComponent(companyId)}`
       ),
     enabled: Boolean(companyId),
   });
 
   // DRIVER-F6460: React Query retains prior data after a failed refetch. Do not
   // leave stale risk cards actionable underneath the explicit error state.
-  const rows = scoresQ.isError ? [] : scoresQ.data?.rows ?? [];
+  const rows = scoresQ.isError
+    ? []
+    : (scoresQ.data?.rows ?? []).filter((row) => row.retention_tier === "at_risk" || row.retention_tier === "critical");
 
   return (
     <div className="space-y-4 p-4" data-testid="driver-retention-dashboard">
@@ -56,6 +58,7 @@ export function RetentionDashboard() {
       ) : null}
       <div className="grid gap-3 md:grid-cols-2">
         {rows.map((row) => {
+          const lateArrivalRate = row.contributing_factors?.late_arrival_rate_30d;
           const factors = Object.entries(row.contributing_factors ?? {})
             .filter(([, v]) => v != null)
             .map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`);
@@ -69,6 +72,9 @@ export function RetentionDashboard() {
                 tier={row.retention_tier}
                 topFactors={factors}
               />
+              <p className="text-xs text-slate-700" data-testid="driver-retention-late-arrival-rate">
+                Late arrival rate (30d): {lateArrivalRate == null ? "Unavailable" : `${(lateArrivalRate * 100).toFixed(1)}%`}
+              </p>
               {row.features_missing.length > 0 ? <p className="text-xs text-slate-700">Score missing: {row.features_missing.map((key) => key.replace(/_/g, " ")).join(", ")}</p> : null}
             </div>
           );
