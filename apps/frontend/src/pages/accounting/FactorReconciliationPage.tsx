@@ -74,6 +74,13 @@ export function FactorReconciliationPage() {
   const itemColumns = useMemo<Array<ParityColumn<FactorReconciliationItem>>>(
     () => [
       {
+        key: "created_at",
+        label: "Date",
+        sortable: true,
+        sortValue: (item) => item.created_at ?? "",
+        render: (item) => <span className="text-gray-700">{formatDateUS(item.created_at)}</span>,
+      },
+      {
         key: "statement_invoice_number",
         label: "Statement invoice",
         sortable: true,
