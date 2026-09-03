@@ -2889,6 +2889,19 @@
       "updated_at",
       "updated_by_user_id"
     ],
+    "catalogs.point_mileage": [
+      "computed_at",
+      "created_at",
+      "dest_lat",
+      "dest_lng",
+      "engine",
+      "engine_version",
+      "id",
+      "origin_lat",
+      "origin_lng",
+      "practical_miles",
+      "shortest_miles"
+    ],
     "catalogs.posting_templates": [
       "created_at",
       "created_by_user_id",
