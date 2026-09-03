@@ -69,7 +69,9 @@ describe("BookLoadStopsSection — owner stop row order 2026-09-03", () => {
     // Row 1: Location · Address · City · State · Zip
     const locrow = screen.getByTestId("stop-locrow-0");
     for (const label of ["Location", "Address", "City", "State", "Zip"]) {
-      expect(within(locrow).getByText(label)).toBeInTheDocument();
+      expect(
+        within(locrow).getByText((_, el) => el?.tagName === "LABEL" && el.textContent === label),
+      ).toBeInTheDocument();
     }
     expect(within(locrow).queryByText("Date")).not.toBeInTheDocument();
     expect(within(locrow).queryByText("Appointment date")).not.toBeInTheDocument();

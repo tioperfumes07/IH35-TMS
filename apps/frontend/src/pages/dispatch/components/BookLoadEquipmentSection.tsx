@@ -67,8 +67,28 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   // AUTHGATE-PANEL-MISSING-ENTITY-LABELS: lift the resolved labels up so BookLoadModalV4's separate
   // <AuthGatePanel> can pass real names instead of leaving EntityLinkOrTombstone id-only.
   useEffect(() => {
-    onOptionsResolved?.({ unit: unitOption, trailer: trailerOption, primaryDriver: primaryDriverOption });
-  }, [unitOption, trailerOption, primaryDriverOption, onOptionsResolved]);
+    const trailerForGate =
+      trailerSource === "interchange" && interchangeTrailerOption
+        ? {
+            value: interchangeTrailerOption.id,
+            label: [interchangeTrailerOption.trailer_number, interchangeTrailerOption.counterparty_name]
+              .filter((part) => Boolean(part && String(part).trim()))
+              .join(" · "),
+          }
+        : trailerOption;
+    onOptionsResolved?.({
+      unit: unitOption,
+      trailer: trailerForGate,
+      primaryDriver: primaryDriverOption,
+    });
+  }, [
+    interchangeTrailerOption,
+    onOptionsResolved,
+    primaryDriverOption,
+    trailerOption,
+    trailerSource,
+    unitOption,
+  ]);
   const reservationUuid = watch ? String(watch("reservation_uuid") ?? "") : "";
   const trailerType = watch ? String(watch("trailer_type") ?? "") : "";
   const temperatureType = watch ? String(watch("temperature_type") ?? "") : ""; // W-FIX-1 Frozen/Fresh segmented
@@ -126,7 +146,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
 
   return (
     <section className="space-y-2">
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+      <div className="grid grid-cols-1 items-end gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.35fr)]">
         {/* render-v6 §B labels: Reefer / Flatbed / Dry Van (/ Lowboy — needs a trailer_type enum value via a
             gated migration; flagged). power_only_* kept — real data; removing them would break power-only loads. */}
         <Field label="Trailer type" input={
@@ -169,33 +189,37 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
         <Field
           label="Trailer"
           input={
-            <div className="space-y-1">
+            <div className="flex min-w-0 items-stretch gap-1">
               {/* GO-23 A1: our trailer XOR an interchange trailer — never both. Switching source
-                  clears the other field so exactly one FK can ever be set. */}
-              <div className="inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-xs" data-testid="trailer-source-toggle">
+                  clears the other field so exactly one FK can ever be set. Toggle + picker stay
+                  ONE h-7 row (locked form scale) so this cell does not wrap under type/unit. */}
+              <div className="inline-flex h-7 shrink-0 overflow-hidden whitespace-nowrap rounded-sm border border-gray-300 bg-white text-xs font-semibold leading-none" data-testid="trailer-source-toggle">
                 <button
                   type="button"
+                  title="Our trailer"
                   onClick={() => {
                     setValue?.("trailer_source", "owned", { shouldDirty: true });
                     setValue?.("interchange_trailer_id", "", { shouldDirty: true });
                     setInterchangeTrailerOption(null);
                   }}
-                  className={`px-2 ${trailerSource === "owned" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+                  className={`px-1.5 ${trailerSource === "owned" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
                 >
-                  Our trailer
+                  Ours
                 </button>
                 <button
                   type="button"
+                  title="Interchange trailer"
                   onClick={() => {
                     setValue?.("trailer_source", "interchange", { shouldDirty: true });
                     setTrailerOption(null);
                     setValue?.("assigned_trailer_unit_id", "", { shouldDirty: true });
                   }}
-                  className={`border-l border-gray-300 px-2 ${trailerSource === "interchange" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+                  className={`border-l border-gray-300 px-1.5 ${trailerSource === "interchange" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
                 >
-                  Interchange trailer
+                  Interchange
                 </button>
               </div>
+              <div className="min-w-0 flex-1">
               {trailerSource === "owned" ? (
                 <EntityPicker
                   size="sm"
@@ -224,6 +248,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                   disabled={!operatingCompanyId}
                 />
               )}
+              </div>
             </div>
           }
         />
@@ -547,8 +572,8 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
 
 function Field({ label, input, hint }: { label: string; input: JSX.Element; hint?: string }) {
   return (
-    <div className="space-y-1">
-      <label className="text-[11px] font-semibold text-gray-600">{label}</label>
+    <div className="min-w-0 space-y-0.5">
+      <label className="block whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">{label}</label>
       {input}
       {hint ? <p className="mt-1 text-xs text-gray-600">{hint}</p> : null}
     </div>

@@ -127,7 +127,7 @@ export function BookLoadStopsSection({
                 {/* Row 1 — address details */}
                 <div
                   data-testid={`stop-locrow-${index}`}
-                  className="grid grid-cols-1 items-end gap-2 md:grid-cols-[minmax(9rem,1.1fr)_minmax(14rem,2.2fr)_minmax(7rem,1fr)_4.75rem_5.5rem]"
+                  className="grid grid-cols-1 items-end gap-2 overflow-x-auto md:grid-cols-[minmax(8rem,1.1fr)_minmax(11rem,2fr)_minmax(6.5rem,1fr)_3.75rem_4.5rem]"
                 >
                   <Field
                     label="Location"
@@ -224,7 +224,7 @@ export function BookLoadStopsSection({
                 {/* Row 2 — appointment + site */}
                 <div
                   data-testid={`stop-siterow-${index}`}
-                  className="grid grid-cols-1 items-end gap-2 md:grid-cols-[7rem_5rem_minmax(8rem,1.25fr)_minmax(5.5rem,0.7fr)_minmax(4.5rem,0.55fr)]"
+                  className="grid grid-cols-1 items-end gap-2 overflow-x-auto md:grid-cols-[minmax(7.25rem,0.9fr)_4.75rem_minmax(7.5rem,1.2fr)_minmax(6.5rem,0.8fr)_minmax(4.25rem,0.55fr)]"
                 >
                   <Controller
                     control={control}
@@ -248,7 +248,7 @@ export function BookLoadStopsSection({
                 </div>
 
                 {/* Row 3 — time window (smaller) + remaining stop economics */}
-                <div data-testid={`stop-timewindow-${index}`} className="grid grid-cols-1 items-end gap-2 md:grid-cols-[minmax(9rem,11rem)_minmax(9rem,1fr)_minmax(6rem,0.8fr)_minmax(7rem,0.9fr)]">
+                <div data-testid={`stop-timewindow-${index}`} className="grid grid-cols-1 items-end gap-2 overflow-x-auto md:grid-cols-[minmax(9rem,1fr)_minmax(8.5rem,1fr)_minmax(6.5rem,0.85fr)_minmax(7rem,0.9fr)]">
                   <Field
                     label="Time window"
                     input={<TimeWindowDropdown register={register} name={`stops.${index}.time_window_type`} />}
@@ -262,6 +262,7 @@ export function BookLoadStopsSection({
                           label="Pickup type"
                           input={(
                             <ReferenceSelect
+                              size="sm"
                               value={pickupField.value || null}
                               onChange={(value) => pickupField.onChange(value ?? "")}
                               options={pickupTimeTypeOptions}
@@ -331,8 +332,8 @@ export function BookLoadStopsSection({
 
 function Field({ label, input }: { label: string; input: JSX.Element }) {
   return (
-    <div className="space-y-1">
-      <label className="text-[11px] font-semibold text-gray-600">{label}</label>
+    <div className="min-w-0 space-y-0.5">
+      <label className="block whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">{label}</label>
       {input}
     </div>
   );
