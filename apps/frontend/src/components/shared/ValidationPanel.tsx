@@ -181,7 +181,7 @@ export function ValidationPanel({
         <div className="overflow-x-auto" data-testid="pre-dispatch-blocker-override-table">
           <table className="w-full border-collapse text-xs">
             <thead>
-              <tr className="h-[26px] bg-[#14314F] text-[10px] font-bold uppercase tracking-[0.5px] text-white">
+              <tr className="h-[26px] bg-[#14314F] text-xs font-bold uppercase tracking-[0.5px] text-white">
                 <th className="border-r border-[#1f3f63] px-2 text-center">
                   <button type="button" className="w-full font-bold uppercase" onClick={() => toggleSort("rule")}>
                     Rule code
@@ -229,7 +229,7 @@ export function ValidationPanel({
                             data-testid={`blocker-override-${item.rule_id}`}
                             disabled={reason.trim().length < 10 || !onOverrideBlocker}
                             onClick={() => onOverrideBlocker?.(item.rule_id)}
-                            className="rounded-sm border border-red-300 bg-white px-2 py-1 text-[11px] font-semibold text-red-800 disabled:opacity-40 hover:bg-red-100"
+                            className="rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 disabled:opacity-40 hover:bg-red-100"
                           >
                             Override
                           </button>

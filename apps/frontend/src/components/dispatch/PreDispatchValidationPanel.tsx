@@ -307,7 +307,7 @@ export function PreDispatchValidationPanel({
             <button
               type="button"
               onClick={() => onOwnerOverride?.()}
-              className="rounded-sm border border-red-300 bg-white px-2 py-1 text-[11px] font-semibold text-red-800 hover:bg-red-100"
+              className="rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 hover:bg-red-100"
             >
               Override &amp; dispatch
             </button>

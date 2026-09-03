@@ -173,7 +173,7 @@ export function MilesStrip({
               type="button"
               data-testid="book-load-lane-history-use"
               onClick={onUseHistoryMiles}
-              className="ml-2 rounded-sm border border-slate-400 bg-white px-2 py-0.5 text-[11px] font-semibold"
+              className="ml-2 rounded-sm border border-slate-400 bg-white px-2 py-0.5 text-xs font-semibold"
             >
               Use
             </button>
