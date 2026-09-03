@@ -3,11 +3,13 @@
  * verify-session-law-autoload.mjs
  *
  * Ensures the always-apply Cursor session-law files are PRESENT in git and
- * marked alwaysApply: true — so every clone/worktree/session loads the
- * Operating Constitution companions (00–07, 10–15), Rule #0, and Law of the Land.
+ * marked alwaysApply: true.
  *
- * Regression this catches: `.gitignore` once ignored all of `.cursor/rules/`,
- * so quality/constitution rules existed only on one machine's disk.
+ * OWNER LAW 2026-09-02 (00-IH35-LAW.mdc + AGENTS.md): the ONLY always-apply
+ * project rules are 00-IH35-LAW.mdc and 03-display-ids.mdc. Older companions
+ * stay in git (never-delete) with alwaysApply: false + SUPERSEDED banners.
+ * This guard previously required every companion true and went red the minute
+ * the owner narrowed always-apply — update tracks the live law, not the archive.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -17,11 +19,14 @@ import { execSync } from "node:child_process";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const RULES_DIR = path.join(ROOT, ".cursor", "rules");
 
-const REQUIRED = [
+/** Live always-apply set (owner 2026-09-02). */
+const REQUIRED_ALWAYS_APPLY = ["00-IH35-LAW.mdc", "03-display-ids.mdc"];
+
+/** Kept in git, must exist, must NOT claim alwaysApply:true (superseded). */
+const SUPERSEDED_COMPANIONS = [
   "00-always-read-first.mdc",
   "01-spec-sources.mdc",
   "02-respond-before-code.mdc",
-  "03-display-ids.mdc",
   "04-locked-invariants.mdc",
   "05-architectural-design-is-law.mdc",
   "06-quality-hardline-and-law.mdc",
@@ -54,27 +59,7 @@ function hasAlwaysApply(body) {
   return /^---[\s\S]*?alwaysApply:\s*true[\s\S]*?---/m.test(body);
 }
 
-if (process.argv.includes("--selftest")) {
-  const valid = "---\nalwaysApply: true\n---\n# Session law\n";
-  const plantedDefect = valid.replace("alwaysApply: true", "alwaysApply: false");
-  if (!hasAlwaysApply(valid) || hasAlwaysApply(plantedDefect)) {
-    console.error("verify-session-law-autoload SELFTEST FAIL — planted alwaysApply defect escaped");
-    process.exit(1);
-  }
-  console.log("verify-session-law-autoload SELFTEST PASS — planted alwaysApply defect rejected");
-  process.exit(0);
-}
-
-for (const name of REQUIRED) {
-  const filePath = path.join(RULES_DIR, name);
-  if (!fs.existsSync(filePath)) {
-    failures.push(`MISSING file: .cursor/rules/${name}`);
-    continue;
-  }
-  const body = fs.readFileSync(filePath, "utf8");
-  if (!hasAlwaysApply(body)) {
-    failures.push(`alwaysApply: true missing in .cursor/rules/${name}`);
-  }
+function assertTracked(name) {
   try {
     const tracked = execSync(`git -C "${ROOT}" ls-files --error-unmatch -- ".cursor/rules/${name}"`, {
       stdio: ["ignore", "pipe", "pipe"],
@@ -87,6 +72,39 @@ for (const name of REQUIRED) {
       `NOT git-tracked: .cursor/rules/${name} (session law must be in git — check .gitignore negations)`
     );
   }
+}
+
+if (process.argv.includes("--selftest")) {
+  const valid = "---\nalwaysApply: true\n---\n# Session law\n";
+  const plantedDefect = valid.replace("alwaysApply: true", "alwaysApply: false");
+  if (!hasAlwaysApply(valid) || hasAlwaysApply(plantedDefect)) {
+    console.error("verify-session-law-autoload SELFTEST FAIL — planted alwaysApply defect escaped");
+    process.exit(1);
+  }
+  console.log("verify-session-law-autoload SELFTEST PASS — planted alwaysApply defect rejected");
+  process.exit(0);
+}
+
+for (const name of REQUIRED_ALWAYS_APPLY) {
+  const filePath = path.join(RULES_DIR, name);
+  if (!fs.existsSync(filePath)) {
+    failures.push(`MISSING file: .cursor/rules/${name}`);
+    continue;
+  }
+  const body = fs.readFileSync(filePath, "utf8");
+  if (!hasAlwaysApply(body)) {
+    failures.push(`alwaysApply: true missing in .cursor/rules/${name}`);
+  }
+  assertTracked(name);
+}
+
+for (const name of SUPERSEDED_COMPANIONS) {
+  const filePath = path.join(RULES_DIR, name);
+  if (!fs.existsSync(filePath)) {
+    failures.push(`MISSING superseded companion (never-delete): .cursor/rules/${name}`);
+    continue;
+  }
+  assertTracked(name);
 }
 
 for (const rel of REQUIRED_DOCS) {
@@ -110,5 +128,5 @@ if (failures.length) {
 }
 
 console.log(
-  `verify-session-law-autoload PASS — ${REQUIRED.length} alwaysApply rules tracked + constitution / Rule #0 / Law of the Land present.`
+  `verify-session-law-autoload PASS — ${REQUIRED_ALWAYS_APPLY.length} alwaysApply rules + ${SUPERSEDED_COMPANIONS.length} superseded companions tracked + constitution present.`
 );
