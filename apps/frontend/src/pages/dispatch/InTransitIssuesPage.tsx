@@ -363,7 +363,7 @@ export function InTransitIssuesPage() {
               value={category}
               disabled={createMutation.isPending}
               onChange={(event) => setCategory(event.target.value)}
-              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-xs"
             >
               <option value="mechanical">Mechanical</option>
               <option value="safety">Safety</option>
@@ -377,7 +377,7 @@ export function InTransitIssuesPage() {
               value={severity}
               disabled={createMutation.isPending}
               onChange={(event) => setSeverity(event.target.value as typeof severity)}
-              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+              className="rounded-sm border border-gray-300 h-9 px-2 text-xs"
             >
               <option value="info">Info</option>
               <option value="warning">Warning</option>
@@ -390,7 +390,7 @@ export function InTransitIssuesPage() {
               value={description}
               disabled={createMutation.isPending}
               onChange={(event) => setDescription(event.target.value)}
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               rows={4}
             />
           </div>

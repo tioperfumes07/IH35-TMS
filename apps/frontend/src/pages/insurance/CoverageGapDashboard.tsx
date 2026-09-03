@@ -48,13 +48,13 @@ function CoverageChip({ status }: { status: CoverageCell }) {
   }
   if (status === "missing") {
     return (
-      <span className="inline-flex rounded-sm border border-red-300 bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-red-800" data-coverage-cell="missing">
+      <span className="inline-flex rounded-sm border border-red-300 bg-red-50 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-red-800" data-coverage-cell="missing">
         Missing
       </span>
     );
   }
   return (
-    <span className="inline-flex rounded-sm border border-gray-400 bg-white px-1.5 py-0.5 text-[10px] font-semibold uppercase text-gray-800" data-coverage-cell="covered">
+    <span className="inline-flex rounded-sm border border-gray-400 bg-white px-1.5 py-0.5 text-[11px] font-semibold uppercase text-gray-800" data-coverage-cell="covered">
       Covered
     </span>
   );
@@ -253,7 +253,7 @@ export function CoverageGapDashboard() {
         <h3 className="text-sm font-semibold text-slate-900">Coverage by type</h3>
         <div className="mt-2 flex flex-wrap gap-2">
           {catalogCodes.map((code) => (
-            <label key={code} className="text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+            <label key={code} className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">
               {insuranceTypeLabel(code, typeNameByCode.get(code))}
               <select
                 className="ml-1 h-7 rounded-sm border border-gray-300 bg-white px-1 text-[11px] font-normal normal-case"
