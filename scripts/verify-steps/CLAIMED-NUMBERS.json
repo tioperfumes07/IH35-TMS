@@ -7293,5 +7293,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-03",
     "purpose": "verify-settlement-floor-override-modal-wired (25-task #10, CC-1-INSTRUCTIONS-09-02-2026.txt: NET_PAY_FLOOR_BREACH termination-override modal wired into PayRunClosePanel)"
+  },
+  "10253": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-expense-unit-id-mandatory (GO-19-1b: G1/G2/G3 unit_id mandatory on new accounting.expenses rows)"
   }
 }
