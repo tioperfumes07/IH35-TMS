@@ -17,7 +17,7 @@ import {
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ActionButton } from "../../components/shared/ActionButton";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";

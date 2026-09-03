@@ -79,7 +79,7 @@ vi.mock("../../components/parity/ReferenceSelect", () => ({
   ),
 }));
 
-vi.mock("../../components/parity/EntityPicker", () => ({
+vi.mock("../../components/EntityPicker", () => ({
   EntityPicker: ({
     value,
     onChange,

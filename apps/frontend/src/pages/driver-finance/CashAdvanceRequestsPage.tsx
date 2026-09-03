@@ -7,7 +7,7 @@ import { Button } from "../../components/Button";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useStagedListFilters } from "../../components/table";

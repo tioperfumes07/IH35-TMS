@@ -17,7 +17,7 @@ import { listLoads } from "../../../api/loads";
 import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { ReferenceSelect, type ReferenceOption } from "../../../components/parity/ReferenceSelect";
 import { useStagedListFilters } from "../../../components/table";
 import { formatDateUS } from "../../../lib/formatDate";

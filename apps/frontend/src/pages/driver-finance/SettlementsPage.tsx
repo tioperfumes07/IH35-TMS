@@ -14,7 +14,7 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { DataTable, type DataTableColumn } from "../../components/DataTable";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { SelectCombobox } from "../../components/Combobox";

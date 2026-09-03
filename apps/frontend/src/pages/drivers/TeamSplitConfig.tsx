@@ -7,7 +7,7 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { useTeamSplits } from "../../hooks/useTeamSplits";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { useStagedListFilters } from "../../components/table";
 import { Link, useSearchParams } from "react-router-dom";
 

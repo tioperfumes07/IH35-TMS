@@ -24,7 +24,7 @@ import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { customerTypesCatalogClient } from "../../api/catalogs-customers";
 import type { CustomerType, MilesBasis } from "../../types/api";
 import { MoneyInput } from "../forms/MoneyInput";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 import { ListErrorState } from "../ListErrorState";
 import { properPersonOrPlaceName } from "../../lib/properDisplayText";
 

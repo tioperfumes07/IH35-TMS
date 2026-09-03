@@ -30,7 +30,7 @@ import { companyToday } from "../../../lib/businessDate";
 import { BILL_TERMS_OPTIONS } from "../../../lib/billTermsLabel";
 import { Button } from "../../../components/Button";
 import { SimpleCombobox as Combobox } from "../../../components/Combobox";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { ParityTable } from "../../../components/parity/ParityTable";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";

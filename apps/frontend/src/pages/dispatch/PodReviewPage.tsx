@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getPodDocuments, reviewPodDocument, type PodDocumentSummary } from "../../api/dispatch";
 import { LoadBolPanel } from "../../components/dispatch/LoadBolPanel";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { SelectCombobox } from "../../components/Combobox";

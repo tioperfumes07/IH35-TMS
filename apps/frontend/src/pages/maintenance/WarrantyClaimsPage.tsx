@@ -14,7 +14,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useSearchParams } from "react-router-dom";

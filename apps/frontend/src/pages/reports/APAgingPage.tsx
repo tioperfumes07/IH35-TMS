@@ -20,7 +20,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useExportAction } from "../../hooks/useExportAction";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 function money(cents: number) {

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { setDriverDefaultTruck } from "../../api/mdata";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {

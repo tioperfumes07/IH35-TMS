@@ -14,7 +14,7 @@ import {
   startReconciliationSession,
 } from "../../api/banking";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";

@@ -15,7 +15,7 @@ import {
 } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../../components/table";
 import { useToast } from "../../../components/Toast";

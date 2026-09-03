@@ -15,7 +15,7 @@ import {
 import { getSafetyDvirDetail, getSafetyDvirSubmissions } from "../../../api/safety";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";

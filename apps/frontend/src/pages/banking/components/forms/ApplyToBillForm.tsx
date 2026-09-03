@@ -13,7 +13,7 @@ import {
 } from "../../../../components/forms/shared/CostBreakdownBox";
 import { DatePicker } from "../../../../components/forms/DatePicker";
 import { DriverPickerWithCreate } from "../../../../components/drivers/DriverPickerWithCreate";
-import { EntityPicker } from "../../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../../components/EntityPicker";
 import { ReferenceSelect } from "../../../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../../../components/parity/referenceOptionLabels";
 import { SelectCombobox } from "../../../../components/Combobox";

@@ -7,7 +7,7 @@ import {
   getEscrowDriverTimeline,
   type EscrowDriverTimelineRow,
 } from "../../../api/banking";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../../components/shared/EntityLink";

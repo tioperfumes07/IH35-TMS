@@ -15,7 +15,7 @@ import { useToast } from "../../../components/Toast";
 import { entityLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { Combobox } from "../../../components/Combobox";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { getCustomerDetail } from "../../../api/mdata";
 
 type Props = {

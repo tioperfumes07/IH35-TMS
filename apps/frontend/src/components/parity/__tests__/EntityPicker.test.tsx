@@ -18,7 +18,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
-import { EntityPicker } from "../EntityPicker";
+import { EntityPicker } from "../../EntityPicker";
 
 const listDrivers = vi.fn();
 const listLoads = vi.fn();

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { patchAssignUnit } from "../../api/dispatch";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { optimisticPatch } from "../../lib/optimisticPatch";
 

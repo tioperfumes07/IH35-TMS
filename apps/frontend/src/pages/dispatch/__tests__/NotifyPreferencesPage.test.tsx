@@ -16,7 +16,7 @@ vi.mock("../../../api/mdata", () => ({
   })),
 }));
 
-vi.mock("../../../components/parity/EntityPicker", () => ({
+vi.mock("../../../components/EntityPicker", () => ({
   EntityPicker: ({ value }: { value: string | null }) => <div data-testid="mock-notify-customer-picker">{value ?? "none"}</div>,
 }));
 

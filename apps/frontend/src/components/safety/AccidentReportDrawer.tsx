@@ -21,7 +21,7 @@ import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
 import { TotalsStack } from "../forms/shared/TotalsStack";
 import { SimpleCombobox as Combobox } from "../Combobox";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { useToast } from "../Toast";
 import { companyToday } from "../../lib/businessDate";

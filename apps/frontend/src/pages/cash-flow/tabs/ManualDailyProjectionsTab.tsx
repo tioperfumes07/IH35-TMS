@@ -18,7 +18,7 @@ import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { SelectCombobox } from "../../../components/Combobox";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { Link, useSearchParams } from "react-router-dom";
 import { getBankingTiles } from "../../../api/banking";
 import { listBills, listBillPayments, listExpenses, listInvoices } from "../../../api/accounting";

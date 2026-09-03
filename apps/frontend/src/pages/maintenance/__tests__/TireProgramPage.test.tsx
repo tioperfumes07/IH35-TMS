@@ -28,7 +28,7 @@ vi.mock("../../../api/maintenance", () => ({
   auditMaintenanceTireTread: (...args: unknown[]) => auditMaintenanceTireTread(...args),
 }));
 
-vi.mock("../../../components/parity/EntityPicker", () => ({
+vi.mock("../../../components/EntityPicker", () => ({
   EntityPicker: ({
     kind,
     value,

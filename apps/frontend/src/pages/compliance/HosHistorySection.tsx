@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { getHosDailyRoster, getHosEvents, DUTY_LABEL, DUTY_COLOR } from "../../api/hosTracker";

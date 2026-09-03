@@ -7,7 +7,7 @@ import {
   type PmScheduleRow,
 } from "../../../api/maintenance";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";

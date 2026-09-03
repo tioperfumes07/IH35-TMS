@@ -5,7 +5,7 @@ import { listSettlementDeductions } from "../../api/driverFinance";
 import { Button } from "../../components/Button";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
 import { StatusBadge } from "../../components/StatusBadge";

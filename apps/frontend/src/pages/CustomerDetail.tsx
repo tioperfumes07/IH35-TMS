@@ -55,7 +55,7 @@ import {
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
-import { EntityPicker } from "../components/parity/EntityPicker";
+import { EntityPicker } from "../components/EntityPicker";
 import { ReferenceSelect } from "../components/parity/ReferenceSelect";
 import { CustomerEditModal, type CustomerEditFormValues } from "../components/customers/CustomerEditModal";
 import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificationModal";

@@ -7,7 +7,7 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/Combobox";
 import { userFacingApiError } from "../../../lib/api-error-message";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { getCustomerDetail, getVendor } from "../../../api/mdata";
 
 type Props = {

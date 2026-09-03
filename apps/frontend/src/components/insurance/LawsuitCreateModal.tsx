@@ -7,7 +7,7 @@ import {
   type InsuranceLawsuitStatus,
 } from "../../api/insurance";
 import { ParityDrawer } from "../parity/ParityDrawer";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 

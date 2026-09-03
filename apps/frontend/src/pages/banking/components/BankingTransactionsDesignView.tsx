@@ -39,7 +39,7 @@ import { useToast } from "../../../components/Toast";
 import { formatUsdCents } from "../../../lib/money";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { listVendors, listCustomers } from "../../../api/mdata";
 import { classesCatalogClient, itemsCatalogClient, type AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import { BankTransactionSplitModal } from "./BankTransactionSplitModal";

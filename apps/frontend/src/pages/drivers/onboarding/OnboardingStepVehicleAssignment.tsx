@@ -1,4 +1,4 @@
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 
 type VehicleAssignmentStepProps = {

@@ -24,7 +24,7 @@ import { CCPaymentModal } from "./bill-payments/CCPaymentModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 // BANKREC-LISTSTATUS-01: read-only badge derived from bank.reconciliation_matches (server-side).

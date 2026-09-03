@@ -7,7 +7,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { SelectCombobox } from "../../../components/Combobox";
 import { useToast } from "../../../components/Toast";

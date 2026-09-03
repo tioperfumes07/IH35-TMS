@@ -11,7 +11,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { entityLabel } from "../../../lib/entity-label";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";

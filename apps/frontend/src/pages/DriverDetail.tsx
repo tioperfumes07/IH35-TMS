@@ -44,7 +44,7 @@ import { legalMattersApi } from "../api/legal-matters";
 import { InsuranceClaimsReverseSection } from "../components/insurance/InsuranceClaimsReverseSection";
 import { DriverSafetyReverseSection } from "../components/safety/DriverSafetyReverseSection";
 import { DriverWorkOrdersReverseSection } from "../components/maintenance/DriverWorkOrdersReverseSection";
-import { EntityPicker } from "../components/parity/EntityPicker";
+import { EntityPicker } from "../components/EntityPicker";
 import { DriverReportsReverseSection } from "../components/maintenance/DriverReportsReverseSection";
 import { DriverTempCoverReverseSection } from "../components/safety/DriverTempCoverReverseSection";
 import { DriverEquipmentTransfersReverseSection } from "../components/dispatch/DriverEquipmentTransfersReverseSection";

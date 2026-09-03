@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { patchAssignTrailer } from "../../api/dispatch";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { optimisticPatch } from "../../lib/optimisticPatch";
 

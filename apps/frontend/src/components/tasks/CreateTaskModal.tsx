@@ -15,7 +15,7 @@ import {
 } from "../../api/tasks";
 import { listAssignableUsers } from "../../api/identity";
 import { Combobox } from "../Combobox";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 import type { IdentityUser } from "../../types/api";
 import { companyToday } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";

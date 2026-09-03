@@ -14,7 +14,7 @@ import {
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { SelectCombobox } from "../../components/Combobox";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {

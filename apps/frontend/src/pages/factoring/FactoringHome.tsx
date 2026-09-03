@@ -16,7 +16,7 @@ import {
   type FactoringMonthlyFeeSummary,
   type FactoringSettingsRow,
 } from "../../api/factoring";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { useStagedListFilters } from "../../components/table";
 import {
   createDriverVendorMerge,

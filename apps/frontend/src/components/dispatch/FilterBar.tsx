@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listAllCustomers, listCustomers } from "../../api/mdata";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { EntityPicker } from "../parity/EntityPicker";
+import { EntityPicker } from "../EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { CollapsedListFilters, TableSearch, ColumnChooser, useStagedListFilters, type TableColumn } from "../../components/table";
 import { Button } from "../Button";

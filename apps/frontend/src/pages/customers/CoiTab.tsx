@@ -17,7 +17,7 @@ import { Modal } from "../../components/Modal";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { formatDateTimeUS } from "../../lib/formatDate";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 

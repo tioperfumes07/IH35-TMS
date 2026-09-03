@@ -29,7 +29,7 @@ import { Button } from "../../../components/Button";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { Combobox } from "../../../components/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 

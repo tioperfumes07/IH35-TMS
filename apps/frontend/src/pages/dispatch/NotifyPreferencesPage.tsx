@@ -10,7 +10,7 @@ import {
   type CustomerNotifyPreferences,
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";

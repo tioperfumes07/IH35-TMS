@@ -9,7 +9,7 @@ import {
 import { useToast } from "../../../components/Toast";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { ListErrorState } from "../../../components/ListErrorState";
 
 type Props = {

@@ -33,19 +33,19 @@
  */
 import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { CappedListNotice } from "../CappedListNotice";
-import { Combobox } from "../Combobox";
-import { CreateDriverModal } from "../drivers/CreateDriverModal";
-import { CreateTrailerModal } from "../fleet/CreateTrailerModal";
-import { InlineCreateDrawer } from "./InlineCreateDrawer";
-import { mergePickerOptionsByValue } from "./mergePickerOptionsByValue";
-import { CreateUnitModal } from "../fleet/CreateUnitModal";
-import { PolicyCreateModal } from "../insurance/PolicyCreateModal";
-import { ClaimCreateModal } from "../insurance/ClaimCreateModal";
-import { LawsuitCreateModal } from "../insurance/LawsuitCreateModal";
+import { CappedListNotice } from "./CappedListNotice";
+import { Combobox } from "./Combobox";
+import { CreateDriverModal } from "./drivers/CreateDriverModal";
+import { CreateTrailerModal } from "./fleet/CreateTrailerModal";
+import { InlineCreateDrawer } from "./parity/InlineCreateDrawer";
+import { mergePickerOptionsByValue } from "./parity/mergePickerOptionsByValue";
+import { CreateUnitModal } from "./fleet/CreateUnitModal";
+import { PolicyCreateModal } from "./insurance/PolicyCreateModal";
+import { ClaimCreateModal } from "./insurance/ClaimCreateModal";
+import { LawsuitCreateModal } from "./insurance/LawsuitCreateModal";
 // Lazy: BookLoadModalV4 imports EntityPicker — avoid init-time circular module cycle.
 const BookLoadModalV4 = lazy(() =>
-  import("../../pages/dispatch/components/BookLoadModalV4").then((m) => ({ default: m.BookLoadModalV4 })),
+  import("../pages/dispatch/components/BookLoadModalV4").then((m) => ({ default: m.BookLoadModalV4 })),
 );
 import {
   entityAddNewLabel,
@@ -53,8 +53,8 @@ import {
   getEntityPickerConfig,
   type EntityPickerKind,
   type EntityPickerOption,
-} from "./entityPickerRegistry";
-import { lookupUnitByVin } from "../../api/mdata";
+} from "./parity/entityPickerRegistry";
+import { lookupUnitByVin } from "../api/mdata";
 
 /** MOD-05 — compact VIN-like query (11–17 alnum) for cross-entity existence probe. */
 function compactVinLikeQuery(raw: string): string {

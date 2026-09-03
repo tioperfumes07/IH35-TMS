@@ -9,7 +9,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { companyNow } from "../../lib/businessDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityPicker } from "../../components/parity/EntityPicker";
+import { EntityPicker } from "../../components/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useStagedListFilters } from "../../components/table";
