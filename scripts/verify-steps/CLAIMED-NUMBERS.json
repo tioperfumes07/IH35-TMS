@@ -7303,5 +7303,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-03",
     "purpose": "verify-lane-mileage-merge-and-rescore (GO-19-2b Section 0: merge duplicate lane-key variants before run-count+relative-spread confidence rescore, practical_min/max stay literal NULL)"
+  },
+  "10261": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-mileage-g1-g5-live (GO-19-2b Section 8: G1-G5 live guards on catalogs.lane_mileage/mdata.loads short-miles/mileage_source/St.Miles invariants)"
   }
 }
