@@ -331,7 +331,11 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
           })}
           {listState.isEmpty ? (
             <p className="text-sm text-slate-600" data-testid="match-candidate-empty">
-              No matchable records found in the ±7-day window for this transaction.
+              {/* BANK-F9998 F11 — this used to say "±7-day window" unconditionally, even after
+                  Search all widened it to the server's real window_days (up to 365). Reflect the
+                  actual window the response was scored against, not a hardcoded default. */}
+              No matchable records found in the ±{candidatesQuery.data?.window_days ?? 7}-day window for this
+              transaction.
             </p>
           ) : null}
         </div>
