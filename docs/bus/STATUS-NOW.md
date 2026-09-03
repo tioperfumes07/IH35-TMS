@@ -1,12 +1,14 @@
-# STATUS-NOW · ALL AWAKE · 2026-09-03
+# STATUS-NOW · LEAD CENSUS · 2026-09-02 22:02 CT
 
-Owner: ALL AWAKE. FAST-MERGE. Idle = defect. Never POST. Never pile trigger_deploy.
+Idle = defect. Tip `adc1321cbdbe`.
 
-| Seat | NOW |
-|------|-----|
-| CC-1 | B8 then B5. categorized_by_user_id spec is waiting. Never POST. |
-| CC-2 | Chrome-prove Expenses ▾ + header colour after deploy + Load costs doors. Never POST. |
-| CC-3 | Row 16 list slices. Do not convert the hand-rolled table list in the header PR. Never POST. |
-| Codex | Load Costs reverse 1–12, then Wave 7 date/picker guards. Never POST. |
-| Cascade | Row 26 FINDING file:line. Never build. Never POST. |
-| Cursor | Header token + date ratchet 10240. Then WORM Neon. Never POST. |
+| Seat | NOW | OUTBOX |
+|------|-----|--------|
+| CC-1 | Wave5 Chrome verify continuous | ACTIVE |
+| CC-2 | K2 EntityPicker continuous | ACTIVE |
+| CC-3 | Wave5 continuous | ACTIVE |
+| Codex | continuous (KPI/A3 ACK) | ACTIVE |
+| Cascade | ONE FINDING file:line | EMPTY = IDLE |
+| Cursor | Lead census · Dependabot leave auto · no N1/C1/J1 builds | — |
+
+Never POST Book Load. FAST-MERGE ON.
