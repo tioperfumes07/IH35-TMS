@@ -156,44 +156,43 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
       ) : null}
       {!query.isLoading && !query.isError && rows.length > 0 ? (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse">
-            <thead>
-              <tr className="border-b border-[#E5E7EB] bg-[#F7F8FA]">
-                <th className="px-[7px] py-[7px]">{headerBtn("load", "Load")}</th>
-                <th className="px-[7px] py-[7px]">{headerBtn("revenue", "Revenue")}</th>
-                <th className="px-[7px] py-[7px]">{headerBtn("costs", "Costs so far")}</th>
-                <th className="px-[7px] py-[7px]">{headerBtn("driver", "Driver pay so far")}</th>
-                <th className="px-[7px] py-[7px]">{headerBtn("margin", "Approximate margin")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.load.id} className="border-b border-[#E5E7EB] last:border-b-0">
-                  <td className="px-[7px] py-[7px]" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219" }}>
-                    <EntityLink kind="load" id={row.load.id} label={entityLabel(row.load.load_number, row.load.id, "Load")} />
-                    <Link
-                      className="ml-2 text-[#16A34A] underline-offset-2 hover:underline"
-                      to={`/dispatch/loads/${encodeURIComponent(row.load.id)}?tab=Costs`}
-                    >
-                      Costs
-                    </Link>
-                  </td>
-                  <td className="px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219" }}>
-                    {formatMoney(row.revenue)}
-                  </td>
-                  <td className="px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219" }}>
-                    {formatMoney(row.costSoFar)}
-                  </td>
-                  <td className="px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219" }}>
-                    {formatMoney(row.driverPay)}
-                  </td>
-                  <td className="px-[7px] py-[7px] text-center tabular-nums font-semibold" style={{ fontSize: typography.bodyTextSmall, color: "#16A34A" }}>
-                    {formatMoney(row.margin)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="min-w-[640px]">
+            <div className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1.2fr] border-b border-[#E5E7EB] bg-[#F7F8FA]">
+              <div className="px-[7px] py-[7px]">{headerBtn("load", "Load")}</div>
+              <div className="px-[7px] py-[7px]">{headerBtn("revenue", "Revenue")}</div>
+              <div className="px-[7px] py-[7px]">{headerBtn("costs", "Costs so far")}</div>
+              <div className="px-[7px] py-[7px]">{headerBtn("driver", "Driver pay so far")}</div>
+              <div className="px-[7px] py-[7px]">{headerBtn("margin", "Approximate margin")}</div>
+            </div>
+            {rows.map((row) => (
+              <div
+                key={row.load.id}
+                className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1.2fr] border-b border-[#E5E7EB] last:border-b-0"
+              >
+                <div className="px-[7px] py-[7px]" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219" }}>
+                  <EntityLink kind="load" id={row.load.id} label={entityLabel(row.load.load_number, row.load.id, "Load")} />
+                  <Link
+                    className="ml-2 text-[#16A34A] underline-offset-2 hover:underline"
+                    to={`/dispatch/loads/${encodeURIComponent(row.load.id)}?tab=Costs`}
+                  >
+                    Costs
+                  </Link>
+                </div>
+                <div className="px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219" }}>
+                  {formatMoney(row.revenue)}
+                </div>
+                <div className="px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219" }}>
+                  {formatMoney(row.costSoFar)}
+                </div>
+                <div className="px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219" }}>
+                  {formatMoney(row.driverPay)}
+                </div>
+                <div className="px-[7px] py-[7px] text-center tabular-nums font-semibold" style={{ fontSize: typography.bodyTextSmall, color: "#16A34A" }}>
+                  {formatMoney(row.margin)}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : null}
     </section>
