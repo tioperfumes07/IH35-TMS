@@ -1,4 +1,5 @@
-# OUTBOX-CURSOR · 2026-09-03
+# OUTBOX-CURSOR · 2026-09-03 12:09 CT
 FORCE NOW | READ INBOX | NEVER POST | GO
 ---
-CURSOR | Book Load layout restore PR cursor/bookload-layout-restore-1638-c89b | §A Broker/Direct+Commodity+Weight restored | Equipment/load type removed | MoneyInput minus fix | CC-2 Chrome 13508 | GO
+CURSOR | #20073 MERGED eed441fee8 via gh api PUT (not draft, not CI-wait) | freeze causes closed: draft PRs + CI babysit + 53min pre-push | GATE-LIVELOCK #20068 + FAST-MERGE-4MIN-LAW on main | preflight=scripts/ops/cursor-ship-preflight.mjs | GO
+---
