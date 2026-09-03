@@ -26,6 +26,7 @@ import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistory
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 import { FuelTransactionsReverseSection } from "../../components/fuel/FuelTransactionsReverseSection";
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
+import { BillsReverseSection } from "../../components/accounting/BillsReverseSection";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { TrailerTiresReverseSection } from "../../components/maintenance/TrailerTiresReverseSection";
 import { EquipmentTransfersReverseSection } from "../../components/dispatch/EquipmentTransfersReverseSection";
@@ -254,6 +255,14 @@ export function TrailerProfilePage() {
           filter={{ trailer_id: id }}
           contextLabel="this trailer"
           data-testid="trailer-profile-expenses"
+        />
+      </div>
+      <div data-testid="tp-section-6f-bills">
+        <BillsReverseSection
+          operatingCompanyId={companyId}
+          filter={{ trailer_id: id }}
+          contextLabel="this trailer"
+          data-testid="trailer-profile-bills"
         />
       </div>
       <div data-testid="tp-section-7-documents">

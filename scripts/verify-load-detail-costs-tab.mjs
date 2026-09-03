@@ -16,6 +16,28 @@ const PANEL = "apps/frontend/src/components/dispatch/DispatchLoadCostsPanel.tsx"
 const SUBNAV = "apps/frontend/src/pages/accounting/subnav-manifest.ts";
 const DNAV = "apps/frontend/src/components/dispatch/DispatchSubnav.tsx";
 const DPAGE = "apps/frontend/src/pages/Dispatch.tsx";
+const BILLS_REVERSE = "apps/frontend/src/components/accounting/BillsReverseSection.tsx";
+const DRIVER_PROFILE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
+const TRAILER_PROFILE = "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx";
+
+function reverseViolations(billsReverse, driverProfile, trailerProfile) {
+  const errors = [];
+  if (!billsReverse.includes("driver_id: string") || !billsReverse.includes("trailer_id: string")) {
+    errors.push("canonical Bills reverse reader does not accept driver_id and trailer_id");
+  }
+  if (!driverProfile.includes('filter={{ driver_id: id }}') || !driverProfile.includes('data-testid="driver-profile-bills-reverse"')) {
+    errors.push("driver profile cannot find bills born from its loads");
+  }
+  if (!trailerProfile.includes('filter={{ trailer_id: id }}') || !trailerProfile.includes('data-testid="trailer-profile-bills"')) {
+    errors.push("trailer profile cannot find bills born from its loads");
+  }
+  return errors;
+}
+
+function checkReverse(...args) {
+  const errors = reverseViolations(...args);
+  if (errors.length) throw new Error(errors.join("; "));
+}
 
 function violations(drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage) {
   const errors = [];
@@ -69,6 +91,9 @@ const panel = fs.readFileSync(PANEL, "utf8");
 const subnav = fs.readFileSync(SUBNAV, "utf8");
 const dnav = fs.readFileSync(DNAV, "utf8");
 const dpage = fs.readFileSync(DPAGE, "utf8");
+const billsReverse = fs.readFileSync(BILLS_REVERSE, "utf8");
+const driverProfile = fs.readFileSync(DRIVER_PROFILE, "utf8");
+const trailerProfile = fs.readFileSync(TRAILER_PROFILE, "utf8");
 
 if (process.argv.includes("--selftest")) {
   const base = [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage];
@@ -95,10 +120,24 @@ if (process.argv.includes("--selftest")) {
     throw new Error(`selftest good files failed: ${error instanceof Error ? error.message : String(error)}`);
   }
   if (caught !== mutations.length) throw new Error(`selftest caught ${caught}/${mutations.length} planted regressions`);
+  const reverseMutations = [
+    [billsReverse.replace("driver_id: string", "driver_uuid: string"), driverProfile, trailerProfile],
+    [billsReverse, driverProfile.replace('data-testid="driver-profile-bills-reverse"', 'data-testid="driver-profile-bills-missing"'), trailerProfile],
+    [billsReverse, driverProfile, trailerProfile.replace('data-testid="trailer-profile-bills"', 'data-testid="trailer-profile-bills-missing"')],
+  ];
+  let reverseCaught = 0;
+  for (const args of reverseMutations) {
+    try { checkReverse(...args); } catch { reverseCaught += 1; continue; }
+    throw new Error(`reverse-link selftest mutation ${reverseCaught + 1} escaped detection`);
+  }
+  checkReverse(billsReverse, driverProfile, trailerProfile);
+  if (reverseCaught !== reverseMutations.length) throw new Error(`reverse-link selftest caught ${reverseCaught}/${reverseMutations.length} planted regressions`);
+  console.log(`PASS load-cost reverse-link selftest (${reverseCaught}/${reverseMutations.length})`);
   console.log(`PASS verify-load-detail-costs-tab --selftest (${caught}/${mutations.length})`);
   runBookLoadGuard();
 } else {
   check(drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage);
+  checkReverse(billsReverse, driverProfile, trailerProfile);
   console.log("PASS verify-load-detail-costs-tab");
   runBookLoadGuard();
 }

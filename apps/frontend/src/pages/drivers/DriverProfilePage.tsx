@@ -35,6 +35,7 @@ import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistory
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 import { InsuranceClaimsReverseSection } from "../../components/insurance/InsuranceClaimsReverseSection";
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
+import { BillsReverseSection } from "../../components/accounting/BillsReverseSection";
 import { FuelTransactionsReverseSection } from "../../components/fuel/FuelTransactionsReverseSection";
 import { DriverFinesReverseSection } from "../../components/safety/DriverFinesReverseSection";
 import { DriverSafetyReverseSection } from "../../components/safety/DriverSafetyReverseSection";
@@ -655,6 +656,14 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           filter={{ driver_id: id }}
           contextLabel="this driver"
           data-testid="driver-profile-expenses-reverse"
+        />
+      </div>
+      <div data-testid="dp-section-bills-reverse">
+        <BillsReverseSection
+          operatingCompanyId={companyId}
+          filter={{ driver_id: id }}
+          contextLabel="this driver"
+          data-testid="driver-profile-bills-reverse"
         />
       </div>
       <div data-testid="dp-section-fuel-reverse">
