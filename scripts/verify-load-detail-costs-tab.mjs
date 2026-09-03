@@ -47,11 +47,11 @@ function violations(drawer, costs, board, routes, backend, finance, sidebar, dis
   if (!costs.includes('type CostChoice = "expense" | "bill" | null') || !costs.includes("Choose a cost type to continue.")) errors.push("Expense-or-Bill choice no longer starts with no default");
   if (costs.includes('method: "POST"') || costs.includes("dispatch.load_costs")) errors.push("Costs tab introduced a writer or parallel ledger");
   if (!costs.includes("Approximate · before settlement") || !costs.includes("No costs on this load yet.")) errors.push("honest margin or empty-state copy is missing");
-  if (!board.includes('title="Load costs"') || !board.includes('to={`/dispatch/loads/${encodeURIComponent(row.load.id)}?tab=Costs`}')) errors.push("Accounting Costs board or canonical Costs-tab drill is missing");
-  if (!board.includes("listAllLoads") || !board.includes("/api/v1/accounting/load-costs-board")) errors.push("Costs board is not composed from canonical load/accounting readers");
-  if (!board.includes("Incurred") || !board.includes("formatDateUS(row.load.created_at)")) errors.push("Load costs board missing visible incurred date");
+  if (!board.includes('data-testid="load-costs-title"') || !board.includes('?tab=Costs`')) errors.push("Accounting Costs board or canonical Costs-tab drill is missing");
+  if (!board.includes("/api/v1/accounting/load-costs-board")) errors.push("Costs board is not composed from canonical load/accounting reader");
+  if (!board.includes("Pickup date") || !board.includes("Projected delivery") || !board.includes("Delivered")) errors.push("Load costs board missing the locked three-date columns");
   if (!routes.includes('path="/accounting/load-costs"') || !drawer.includes('initialTab?: DrawerTab')) errors.push("Costs board route or drawer deep-link contract is missing");
-  if (!backend.includes("FULL OUTER JOIN bill_costs") || !backend.includes("SUM(ROUND(bl.amount * 100))") || !backend.includes("e.load_id IS NOT NULL")) errors.push("per-load expense/bill allocation is not enforced");
+  if (!backend.includes("LEFT JOIN bill_costs") || !backend.includes("SUM(ROUND(bl.amount * 100))") || !backend.includes("e.load_id IS NOT NULL")) errors.push("per-load expense/bill allocation is not enforced");
   if (!backend.includes("LOAD_COSTS_HUB_LINKAGE") || !backend.includes("org.companies") || !backend.includes("maintenance.work_orders")) errors.push("Load costs board is missing the twelve-hub declaration");
   if (backend.includes("INSERT INTO") || backend.includes("UPDATE accounting") || backend.includes("DELETE FROM")) errors.push("Costs board backend introduced a writer");
   if (!backend.includes('"Dispatcher"')) errors.push("load-costs-board GET must stay readable while dispatching");
@@ -74,6 +74,13 @@ function check(...args) {
 
 function runBookLoadGuard() {
   const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "verify-book-load-money-and-controls.mjs");
+  const args = process.argv.includes("--selftest") ? [script, "--selftest"] : [script];
+  const result = spawnSync(process.execPath, args, { stdio: "inherit" });
+  if (result.status !== 0) process.exit(result.status ?? 1);
+}
+
+function runBoardManifestGuard() {
+  const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "verify-load-costs-board-manifest.mjs");
   const args = process.argv.includes("--selftest") ? [script, "--selftest"] : [script];
   const result = spawnSync(process.execPath, args, { stdio: "inherit" });
   if (result.status !== 0) process.exit(result.status ?? 1);
@@ -102,7 +109,7 @@ if (process.argv.includes("--selftest")) {
     [drawer, costs.replace('data-cost-driver-column="driver_id"', 'data-cost-driver-column="driver_uuid"'), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs.replace('type CostChoice = "expense" | "bill" | null', 'type CostChoice = "expense" | "bill"'), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs.replaceAll("No costs on this load yet.", "No rows."), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
-    [drawer, costs, board.replaceAll("listAllLoads", "listRecentLoads"), routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
+    [drawer, costs, board.replaceAll("/api/v1/accounting/load-costs-board", "/api/v1/accounting/parallel-costs"), routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs, board, routes.replace('path="/accounting/load-costs"', 'path="/accounting/costs"'), backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs, board, routes, backend, finance.replaceAll("/accounting/load-costs", "/finance/load-costs"), sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs, board, routes, backend, finance, sidebar.replaceAll("Load costs", "Load P&L"), dispatch, panel, subnav, dnav, dpage],
@@ -134,10 +141,12 @@ if (process.argv.includes("--selftest")) {
   if (reverseCaught !== reverseMutations.length) throw new Error(`reverse-link selftest caught ${reverseCaught}/${reverseMutations.length} planted regressions`);
   console.log(`PASS load-cost reverse-link selftest (${reverseCaught}/${reverseMutations.length})`);
   console.log(`PASS verify-load-detail-costs-tab --selftest (${caught}/${mutations.length})`);
+  runBoardManifestGuard();
   runBookLoadGuard();
 } else {
   check(drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage);
   checkReverse(billsReverse, driverProfile, trailerProfile);
   console.log("PASS verify-load-detail-costs-tab");
+  runBoardManifestGuard();
   runBookLoadGuard();
 }

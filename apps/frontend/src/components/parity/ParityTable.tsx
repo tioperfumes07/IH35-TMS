@@ -35,6 +35,8 @@ export type ParityDensity = "regular" | "compact" | "ultra";
 export type ParityColumn<T> = {
   key: keyof T | string;
   label: string;
+  /** Stable element-manifest hook for this header cell. */
+  testId?: string;
   /** Default true (owner 2026-09-03). Set false only when a column must not sort. */
   sortable?: boolean;
   render?: (row: T) => ReactNode;
@@ -1187,6 +1189,7 @@ export function ParityTable<T>({
               return (
                 <th
                   key={key}
+                  data-testid={column.testId}
                   // REORDER — draggable on the whole <th>, not a separate handle: the sort button
                   // (a click, no movement) and the resize grip (its own onMouseDown + stopPropagation)
                   // both already coexist fine with a draggable ancestor; a real drag gesture bubbles
