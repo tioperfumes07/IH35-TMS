@@ -155,7 +155,7 @@ export function CustomerListSidebar({
                       {openBalancesAvailable ? fmtMoney(openByCustomerId.get(customer.id) ?? 0) : "Unavailable"}
                     </td>
                     <td style={{ width: widths.status }} className="px-2 py-1.5">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${rating.className}`}>{rating.label}</span>
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${rating.className}`}>{rating.label}</span>
                     </td>
                   </tr>
                 );

@@ -49,7 +49,7 @@ const COLUMNS: Array<ParityColumn<AuditViewerEvent>> = [
     sortable: true,
     render: (row) => (
       <span
-        className={`inline-block rounded-sm px-1.5 py-0.5 text-[10px] font-bold ${SEVERITY_BADGE[row.severity] ?? "bg-gray-100 text-gray-700"}`}
+        className={`inline-block rounded-sm px-1.5 py-0.5 text-xs font-bold ${SEVERITY_BADGE[row.severity] ?? "bg-gray-100 text-gray-700"}`}
       >
         {row.severity}
       </span>

@@ -296,7 +296,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
   return (
     <div className="space-y-3" data-testid="dispatch-overview-page">
       <section className="space-y-1">
-        <h2 className="text-[10px] font-semibold uppercase tracking-wide text-gray-600">Loads — live board</h2>
+        <h2 className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Loads — live board</h2>
         <p className="text-[11px] text-gray-500">
           Tile value must equal the drill table row count. At-risk / late counts each load once (union, not a sum).
         </p>

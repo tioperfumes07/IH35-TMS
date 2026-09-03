@@ -193,7 +193,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
         key: "status",
         label: "Status",
         render: (row) => (
-          <span className={`rounded-sm px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(row.status)}`}>{row.status}</span>
+          <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(row.status)}`}>{row.status}</span>
         ),
       },
       {

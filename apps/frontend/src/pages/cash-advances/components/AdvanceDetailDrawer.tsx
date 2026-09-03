@@ -149,7 +149,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
         <div className="mt-2 rounded-sm border border-gray-200 p-2">
           <div className="mb-1 font-semibold">Settlement Deductions Applied</div>
           {advance.settlement_history_is_driver_level ? (
-            <div className="mb-1 text-[10px] text-gray-500">
+            <div className="mb-1 text-xs text-gray-500">
               Driver-level cash-advance repayment deductions (exact per-advance attribution is a HOLD — see
               REMAINING in the PR).
             </div>

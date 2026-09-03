@@ -456,7 +456,7 @@ export function SettlementCloseArrivalPage() {
                   exportFilename="settlement-close-draft-je"
                   tableTestId="settlement-close-draft-je-table"
                 />
-                <p className="mt-1 text-[10px] text-gray-500">
+                <p className="mt-1 text-xs text-gray-500">
                   Preview only — computed client-side from this settlement&apos;s lines for review before Close. Actual GL
                   posting reuses the existing settlement posting path (behind SETTLEMENT_GL_POSTING_ENABLED).
                 </p>

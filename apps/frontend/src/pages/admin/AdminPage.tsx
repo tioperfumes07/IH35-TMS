@@ -49,7 +49,7 @@ export function AdminPage() {
           >
             <div className="flex items-center justify-between gap-2 text-sm font-semibold text-gray-800">
               <span>{tile.label}</span>
-              {tile.disabled ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">Unavailable</span> : null}
+              {tile.disabled ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">Unavailable</span> : null}
             </div>
             <div className="mt-1 text-xs text-gray-500">{tile.description}</div>
           </button>

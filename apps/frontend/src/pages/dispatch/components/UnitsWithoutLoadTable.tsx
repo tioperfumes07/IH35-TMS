@@ -29,7 +29,7 @@ function LocationCell({ loc }: { loc: UnitLiveLocation | null }) {
     <span title={loc.formatted ?? undefined}>
       {loc.stale ? <span className="mr-1 text-slate-700" title={`stale · last fix ${loc.captured_at_ct}`}>●</span> : null}
       {place}
-      <span className="ml-1 text-[10px] text-gray-400">· as of {loc.captured_at_ct}</span>
+      <span className="ml-1 text-xs text-gray-400">· as of {loc.captured_at_ct}</span>
     </span>
   );
 }

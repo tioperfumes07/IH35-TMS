@@ -31,7 +31,7 @@ function StatusPill({ status }: { status: string | null }) {
       : status === "recourse_returned" || status === "disputed"
         ? "bg-red-100 text-red-700"
         : "bg-slate-100 text-slate-600";
-  return <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${colorClass}`}>{label}</span>;
+  return <span className={`rounded-sm px-1.5 py-0.5 text-xs font-semibold ${colorClass}`}>{label}</span>;
 }
 
 function RecourseRisk({ item }: { item: WorkqueueItem }) {
