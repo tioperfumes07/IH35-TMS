@@ -283,7 +283,14 @@ export function runStatic({
       return 0;
     })
     .map((f) => path.join(dir, f));
-  return files.map((f) => {
+  // Pre-push runs this under husky with stdout fully buffered (not a TTY). With ~1,100 guards
+  // and no progress, the process looks hung for minutes. stderr is line-buffered even when piped.
+  const total = files.length;
+  return files.map((f, i) => {
+    const n = i + 1;
+    if (n === 1 || n === total || n % 25 === 0) {
+      process.stderr.write(`[verify-static] ${n}/${total} ${path.basename(f)}\n`);
+    }
     const r = classify(f, sharedClassifyOptions);
     r.gated = set.has(r.name);
     return r;
