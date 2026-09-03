@@ -9,11 +9,19 @@ vi.mock("../../../driver-finance/settlements-load-bookended.service.js", () => (
   stampTripClosedForBookendedSettlement: vi.fn(),
 }));
 
+// 25-TASK #4: closeTourForDriver now also closes the company settlement alongside the driver
+// settlement. Mocked at the module boundary (same pattern as settlements-load-bookended above) —
+// its own real SQL is proven separately in company-settlement-close.service.test.ts.
+vi.mock("../../../accounting/company-settlement-close.service.js", () => ({
+  closeCompanySettlementAlongsideDriverSettlement: vi.fn(),
+}));
+
 import { closeTourForDriver, resolveTourCloseEligibility, TourCloseError } from "../tour-close.service.js";
 import {
   getActiveSettlementForDriver,
   stampTripClosedForBookendedSettlement,
 } from "../../../driver-finance/settlements-load-bookended.service.js";
+import { closeCompanySettlementAlongsideDriverSettlement } from "../../../accounting/company-settlement-close.service.js";
 
 const OPCO = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const DRIVER_ID = "22222222-2222-2222-2222-222222222222";
@@ -170,14 +178,23 @@ describe("closeTourForDriver — re-validates server-side, never trusts a client
     const result = await closeTourForDriver(client as never, { operatingCompanyId: OPCO, driverId: DRIVER_ID, actorUserId: "u1" });
     expect(result.closed).toBe(false);
     expect(result.settlement_id).toBeNull();
+    expect(result.company_settlement_id).toBeNull();
+    // 25-TASK #4: nothing to close alongside — the company settlement close must never fire.
+    expect(closeCompanySettlementAlongsideDriverSettlement).not.toHaveBeenCalled();
   });
 
-  it("eligible, open settlement exists — stamps trip closed and reports closed:true", async () => {
+  it("eligible, open settlement exists — stamps trip closed, closes the company settlement alongside it, reports closed:true", async () => {
     vi.mocked(getActiveSettlementForDriver).mockResolvedValueOnce({ settlementId: "s1", settlementNumber: "S-13500" });
     vi.mocked(stampTripClosedForBookendedSettlement).mockResolvedValueOnce({
       stamped: true,
       trip_closed_at: "2026-09-02T22:00:00.000Z",
       anchor_load_id: "load-1",
+    });
+    vi.mocked(closeCompanySettlementAlongsideDriverSettlement).mockResolvedValueOnce({
+      company_settlement_id: "cs1",
+      display_id: "CS-2026-0001",
+      status: "closed",
+      already_closed: false,
     });
     const client = makeClient({
       activeLoadNumbers: [],
@@ -189,9 +206,17 @@ describe("closeTourForDriver — re-validates server-side, never trusts a client
     expect(result.closed).toBe(true);
     expect(result.settlement_id).toBe("s1");
     expect(result.settlement_number).toBe("S-13500");
+    expect(result.company_settlement_id).toBe("cs1");
+    expect(result.company_settlement_number).toBe("CS-2026-0001");
     expect(stampTripClosedForBookendedSettlement).toHaveBeenCalledWith(
       client,
       expect.objectContaining({ settlementId: "s1", operatingCompanyId: OPCO, actorUserId: "u1" })
+    );
+    // 25-TASK #4: "one close, two settlements" — same client (same transaction), the driver
+    // settlement id passed straight through as driverSettlementId.
+    expect(closeCompanySettlementAlongsideDriverSettlement).toHaveBeenCalledWith(
+      client,
+      expect.objectContaining({ operatingCompanyId: OPCO, driverSettlementId: "s1", actorUserId: "u1" })
     );
   });
 });
