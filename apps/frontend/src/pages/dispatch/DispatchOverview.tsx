@@ -340,7 +340,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
           label="Units available"
           value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : unitsAvailable}
           hint="idle, no active load"
-          to="/dispatch?view=loads"
+          to="/dispatch#unassigned-units"
         />
         <KpiCard
           label="Units needing return"
@@ -369,7 +369,11 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
             ) : returnUnits.length === 0 ? (
               PanelEmpty("No delivered units are waiting for a return load.")
             ) : (
-              returnUnits.slice(0, PANEL_ROW_LIMIT).map((unit) => (
+              // Tile-value law (this file, above): the "Units needing return" KPI drills straight to
+              // THIS panel (no separate list page exists for a fleet-bounded dataset), so the panel
+              // must render every row the tile counted -- a PANEL_ROW_LIMIT slice here would silently
+              // hide units past the 6th once the fleet has more than that many, breaking the promise.
+              returnUnits.map((unit) => (
                 <PanelRow
                   key={unit.id}
                   unit={<EntityLinkOrTombstone kind="unit" id={unit.id} name={unit.unit_number} noun="Unit" />}
@@ -380,28 +384,33 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
             )}
           </DataPanel>
         </div>
-        <DataPanel title="Unassigned units" viewAllHref="/dispatch?view=loads" accentColor={colors.dispatch.strong}>
-          {unitsWithoutLoadQ.isLoading ? (
-            <PanelLoading />
-          ) : unitsWithoutLoadQ.isError ? (
-            PanelError("Couldn't load unassigned units.", () => void unitsWithoutLoadQ.refetch())
-          ) : unitsWithoutLoad.length === 0 ? (
-            PanelEmpty("All units currently have active loads.")
-          ) : (
-            unitsWithoutLoad.slice(0, PANEL_ROW_LIMIT).map((unit: UnitsWithoutLoad) => (
-              // driver uses `||`, not `??`. CONCAT_WS never returns NULL — with all args NULL it returns
-              // the EMPTY STRING — so a driverless unit arrived as "" and ?? let it straight through,
-              // rendering "T171 · · Need load". The API now sends NULL, but `||` also absorbs "" if any
-              // other producer regresses.
-              <PanelRow
-                key={unit.id}
-                unit={<EntityLinkOrTombstone kind="unit" id={unit.id} name={unit.unit_number} noun="Unit" />}
-                driver={<EntityLinkOrTombstone kind="driver" id={unit.driver_id} name={unit.driver_name} noun="Driver" />}
-                loadCustomer="Need load"
-              />
-            ))
-          )}
-        </DataPanel>
+        <div id="unassigned-units" data-testid="dispatch-unassigned-units-panel">
+          <DataPanel title="Unassigned units" viewAllHref="/dispatch?view=loads" accentColor={colors.dispatch.strong}>
+            {unitsWithoutLoadQ.isLoading ? (
+              <PanelLoading />
+            ) : unitsWithoutLoadQ.isError ? (
+              PanelError("Couldn't load unassigned units.", () => void unitsWithoutLoadQ.refetch())
+            ) : unitsWithoutLoad.length === 0 ? (
+              PanelEmpty("All units currently have active loads.")
+            ) : (
+              // Tile-value law: the "Units available" KPI (unitsAvailable = unitsWithoutLoad.length)
+              // now drills straight to THIS panel via #unassigned-units, so every counted unit must
+              // render here -- see the matching comment on "Units needing return" above.
+              unitsWithoutLoad.map((unit: UnitsWithoutLoad) => (
+                // driver uses `||`, not `??`. CONCAT_WS never returns NULL — with all args NULL it returns
+                // the EMPTY STRING — so a driverless unit arrived as "" and ?? let it straight through,
+                // rendering "T171 · · Need load". The API now sends NULL, but `||` also absorbs "" if any
+                // other producer regresses.
+                <PanelRow
+                  key={unit.id}
+                  unit={<EntityLinkOrTombstone kind="unit" id={unit.id} name={unit.unit_number} noun="Unit" />}
+                  driver={<EntityLinkOrTombstone kind="driver" id={unit.driver_id} name={unit.driver_name} noun="Driver" />}
+                  loadCustomer="Need load"
+                />
+              ))
+            )}
+          </DataPanel>
+        </div>
 
         <DataPanel title="Round-trip exposure" viewAllHref="/dispatch?view=loads" accentColor={colors.dispatch.strong}>
           {exposureLoadsQ.isLoading ? (
