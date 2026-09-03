@@ -21,7 +21,7 @@ export function HomeKpiCard({ label, number, accent, isLoading, isError, error, 
   if (isLoading) {
     return (
       <div className="flex min-h-[118px] flex-col rounded-sm border border-slate-200 bg-white p-3 shadow-xs">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.04em] text-slate-500">{label}</div>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">{label}</div>
         <div className="mt-2 flex flex-1 flex-col justify-center space-y-2">
           <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
           <div className="h-3 w-2/3 animate-pulse rounded-sm bg-slate-100" />
@@ -33,7 +33,7 @@ export function HomeKpiCard({ label, number, accent, isLoading, isError, error, 
   if (isError) {
     return (
       <div className="flex min-h-[118px] flex-col rounded-sm border border-slate-200 bg-white p-3 shadow-xs">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.04em] text-slate-500">{label}</div>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">{label}</div>
         <div className="mt-1 flex-1 overflow-hidden">
           {(() => {
             const { status, message } = formatQueryErrorDetail(error);

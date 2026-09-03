@@ -106,7 +106,7 @@ export function PayRunClosePanel({
         key: "account_id",
         label: "Account",
         render: (leg) => (
-          <span className="text-[10px]">
+          <span className="text-xs">
             <EntityLink kind="account" id={leg.account_id} label={entityLabel(null, leg.account_id, "Account")} />
           </span>
         ),
@@ -212,7 +212,7 @@ export function PayRunClosePanel({
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Pay-run GL close</p>
         {!postable ? (
-          <span className="text-[10px] text-slate-600">Finalize/lock settlement before close</span>
+          <span className="text-xs text-slate-600">Finalize/lock settlement before close</span>
         ) : null}
       </div>
       <p className="mb-2 text-xs text-gray-700" data-testid="payrun-settlement-link">
