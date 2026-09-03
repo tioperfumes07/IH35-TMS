@@ -293,7 +293,6 @@ export function DispatchPage({
     <div className="space-y-3">
       <PageHeader
         title="Dispatch"
-        subtitle="Loads, stops, assignments, geofencing"
         actions={
           <div className="flex min-w-0 gap-2 overflow-x-auto">
             <Button

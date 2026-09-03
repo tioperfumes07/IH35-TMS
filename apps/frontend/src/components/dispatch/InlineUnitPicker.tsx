@@ -18,6 +18,11 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const startEdit = () => {
+    setOpen(true);
+    setError(null);
+  };
+
   if (!open) {
     return (
       <div className="flex min-w-0 items-center gap-1" onClick={(event) => event.stopPropagation()}>
@@ -27,23 +32,32 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
             id={unitId}
             name={displayLabel}
             noun="Unit"
-            className="code-cell min-w-0 flex-1 font-medium text-gray-800 hover:underline"
-            data-testid={`inline-unit-link-${loadId}`}
+            className="code-cell min-w-0 flex-1 cursor-pointer font-medium text-gray-800 hover:underline"
+            data-testid={`inline-unit-picker-${loadId}`}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              startEdit();
+            }}
           />
         ) : (
-          <span className="code-cell min-w-0 flex-1 text-slate-500">—</span>
+          <span
+            role="button"
+            tabIndex={0}
+            aria-label={`Assign unit for load ${loadId}`}
+            className="code-cell min-w-0 flex-1 cursor-pointer text-slate-500 hover:underline"
+            data-testid={`inline-unit-picker-${loadId}`}
+            onClick={startEdit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                startEdit();
+              }
+            }}
+          >
+            —
+          </span>
         )}
-        <button
-          type="button"
-          className="shrink-0 rounded-sm px-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-          data-testid={`inline-unit-picker-${loadId}`}
-          onClick={() => {
-            setOpen(true);
-            setError(null);
-          }}
-        >
-          {unitId ? "Change" : "Assign"}
-        </button>
         {error ? <span className="rounded-sm bg-red-100 px-1 text-xs text-red-700">{error}</span> : null}
       </div>
     );
@@ -82,7 +96,7 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
                   unit_uuid: next,
                 });
               } catch (err) {
-                throw new Error(assignUnitErrorMessage(err));
+                throw new Error(assignUnitErrorMessage(err), { cause: err });
               }
             },
             onError: (message) => setError(message.slice(0, 80)),
