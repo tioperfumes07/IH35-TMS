@@ -661,6 +661,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-03",
       "purpose": "bank_categorization_who_column (BANK-CATEGORIZATION-WHO-SPEC-2026-09-03, CC-3 handoff via docs/specs/BANK-CATEGORIZATION-WHO-SPEC-2026-09-03.md, owner FINISH LAW: banking.bank_transactions.categorized_by_user_id uuid NULL REFERENCES identity.users(id) -- closes the record-who half of the bank-categorization assignment; all 3 categorize write paths already have the actor uuid in scope, just had no column to write it to)"
+    },
+    "202613560001": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-03",
+      "purpose": "company_settlements header table (25-task instructions 2026-09-02 #2-4, owner GO-19 decision CLOSED 2026-09-01: design=Downloads/Company_Settlement_5753.pdf, per-PERIOD grain mirroring driver settlement, 8 sections computed at read-time from a real junction to driver_finance.driver_settlements -- no duplicated financial data -- so company + driver settlements close together at tour-close)"
     }
   }
 }
