@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
+import { colors } from "../../design/tokens";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
@@ -1066,7 +1067,7 @@ export function DispatchBoard({
     };
 
     return (
-      <section className="space-y-2">
+      <section className="space-y-6">
         {triSignalsQuery.isError ? (
           <ListErrorState
             title="Couldn't load status signals"
@@ -1121,19 +1122,20 @@ export function DispatchBoard({
                 ? inShopUnitsQuery.isLoading
                 : loading;
           return (
-            <div key={section.key} className="space-y-1">
+            <div key={section.key} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
               <div
-                className="flex items-center justify-between gap-3 rounded-sm border-b border-gray-200 bg-gray-100 px-3 py-1.5"
+                className="flex items-center justify-between gap-3 rounded-t-sm border border-gray-200 border-b-0 bg-[#14314F] px-3 py-1.5"
                 data-testid={`dispatch-board-section-${section.key}`}
+                style={{ backgroundColor: colors.tableHeaderBg }}
               >
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-white">
                   {section.title}
                   <span className="ml-2 rounded-full bg-white px-1.5 text-xs font-bold text-gray-500">
                     {rows.length}{rows.length === allRows.length ? "" : ` of ${allRows.length}`}
                   </span>
                 </div>
                 {!isHistoryBoard ? (
-                  <label className="flex items-center gap-2 text-xs font-medium normal-case tracking-normal text-gray-600">
+                  <label className="flex items-center gap-2 text-xs font-medium normal-case tracking-normal text-white">
                     Filter {section.title}
                     <input
                       type="search"

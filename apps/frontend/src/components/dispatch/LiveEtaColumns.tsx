@@ -71,7 +71,7 @@ export function DriverStatusColumn({ load }: { load: DispatchLoadRow }) {
   const pingLabel = pwaPingLabel(load.driver_pwa_last_ping_at ?? null);
 
   return (
-    <div className="flex flex-col items-start gap-0.5" data-testid="driver-status-column">
+    <div className="inline-flex flex-wrap items-center gap-1" data-testid="driver-status-column">
       <span className="rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
         {LIFECYCLE_LABEL[lifecycle] ?? lifecycle.replaceAll("_", " ")}
       </span>
