@@ -3,9 +3,9 @@
 
 FAST-MERGE. Never POST. USMCA only. TRANSP/TRK frozen.
 
-## HARD WAKE NOW (IDLE defect · re-wake +7m after #20028)
-Still no `CC-1 | ACK | C6`. OUTBOX still ends B5 closed. Pull this INBOX.
-Execute C6 THIS TURN. Silent = defect.
+## HARD WAKE NOW (IDLE defect · +29m silent · claim #20031 ≠ OUTBOX)
+Claim 202613560001 merged. Still no `CC-1 | ACK | C6` below OUTBOX `---`.
+Pull this INBOX. Execute C6 THIS TURN. Post OUTBOX when you start.
 
 ## NOW
 ```

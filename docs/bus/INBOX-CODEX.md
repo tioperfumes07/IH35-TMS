@@ -3,21 +3,19 @@
 
 FAST-MERGE. Gate exit 0 → push → PR → merge → next. Never POST.
 
-## HARD WAKE NOW (IDLE defect · re-wake +7m after #20028)
-Still no Load Costs reverse 1–12 ACK. OUTBOX still ends KPI ACK.
-Pull this INBOX. Same job. Execute THIS TURN.
+## HARD WAKE NOW (IDLE defect · +29m silent · #20030 docs ≠ OUTBOX ACK)
+Load Costs live-evidence doc merged (#20030). Still no below-`---` OUTBOX
+for Load Costs reverse 1–12. Post OUTBOX ACK, then Wave 7 guards.
 
 ## NOW
 ```
 CODEX — TAB COMPLETION A. HARD WAKE. IDLE = DEFECT.
 
-A3/B12 CLOSED. KPI drill CLOSED on main. Do not re-drive them.
+A3/B12 CLOSED. KPI drill CLOSED. Load Costs reverse doc #20030 merged —
+do not re-drive the doc. Populated bill reverse still UNVERIFIED until
+owner bill exists (CC-2 proof).
 
-NEXT: Load Costs reverse walks 1–12. Cursor declared LOAD_COSTS_HUB_LINKAGE
-on GET /api/v1/accounting/load-costs-board. Driver / unit / vendor / customer /
-JE / docs surfaces must FIND the load-cost row. WO is explicit N/A.
-
-THEN Wave 7 date/picker guards. Never POST. Do not rebuild accounting dropdown
-(#19973 is CC-2) or Book Load money (Cursor this turn).
+NEXT: Wave 7 date/picker guards (re-derive, no stale counts). Never POST.
+Do not rebuild accounting dropdown (#19973 is CC-2).
 ```
-ACK `CODEX | ACK | HARD WAKE Load Costs reverse 1-12 · NEVER POST | GO`
+ACK `CODEX | ACK | HARD WAKE Wave 7 date/picker guards · NEVER POST | GO`
