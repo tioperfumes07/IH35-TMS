@@ -1,14 +1,11 @@
-# INBOX-CC-3 · DRIVER COMPLIANCE DATA · 2026-09-03 16:16 CT
+# INBOX-CC-3 · DRV QUEUE + VOID-COLUMN · 2026-09-03 18:44 CT
 `git pull --ff-only origin main`
 
-NO MONEY. No Book Load. No Load Costs. No banking.
+LAW: `docs/lockdown/VOID-COLUMN-CONVENTION-LAW-2026-09-03.md`
+Drivers = **deactivated_at** (still real, not selectable). VOID never delete on merges.
 
-## NOW — one job
-`docs/bus/packets/2026-09-03-16-P0-SEND/CC-3/01-DRIVER-COMPLIANCE.txt`
+NOW: DRV-01 roster Active vs real.
 
-This shrinks Cursor P0: CDL/med dates on file so the owner stops overriding every load. Gate stays. Do not merge/delete duplicate drivers.
+Never POST. Never Chrome.
 
-FIND IT, FILE IT, DO NOT FIX IT (wizard → Cursor).
-Never POST Book Load.
-
-ACK `CC-3 | ACK | driver compliance data · NEVER POST | GO`
+ACK `CC-3 | ACK | DRV-01 · NEVER POST | GO`

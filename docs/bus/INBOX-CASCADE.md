@@ -1,10 +1,11 @@
-# INBOX-CASCADE · HOLD · 2026-09-03 16:16 CT
+# INBOX-CASCADE · BRD QUEUE + VOID-COLUMN · 2026-09-03 18:44 CT
 `git pull --ff-only origin main`
 
-HOLD until Cursor ownership lock is on `origin/main`.
+LAW: `docs/lockdown/VOID-COLUMN-CONVENTION-LAW-2026-09-03.md`
+WORM ratchet 91 is restored on main (#20172). Push the CI-hang fix. Do not wait.
 
-Do not edit dispatch. #20120 nav map stays PARKED for Cursor after P0.
+NOW: BRD-01 two tab rows — remove one. Then BRD-03 ParityTable.
 
-NO MONEY. Never POST. Leave #20064.
+Never POST. Never Chrome. Do not edit Book Load wizard files.
 
-ACK `CASCADE | ACK | HOLD until lock · NEVER POST`
+ACK `CASCADE | ACK | BRD-01 · NEVER POST | GO`

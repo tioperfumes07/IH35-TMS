@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listAllCustomers, listPaymentTermOptions, type Customer, type UpdateCustomerInput } from "../../api/mdata";
+import { customerIsSelectable } from "../../lib/customer-selectable";
 import { CappedListNotice } from "../CappedListNotice";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
@@ -66,7 +67,7 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
   const parentCustomerOptions = useMemo(() => {
     const rows = Array.isArray(parentCandidatesQuery.data) ? parentCandidatesQuery.data : [];
     return rows
-      .filter((c) => !c.parent_customer_id && c.id !== customer?.id && c.status !== "inactive" && !c.deactivated_at)
+      .filter((c) => !c.parent_customer_id && c.id !== customer?.id && customerIsSelectable(c))
       .map((c) => ({ id: c.id, name: c.name, customer_code: c.customer_code }));
   }, [parentCandidatesQuery.data, customer?.id]);
 

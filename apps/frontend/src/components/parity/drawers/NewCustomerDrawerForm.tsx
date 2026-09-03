@@ -18,6 +18,7 @@ import { ListErrorState } from "../../ListErrorState";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { customerIsSelectable } from "../../../lib/customer-selectable";
 
 type Props = {
   operatingCompanyId: string;
@@ -50,7 +51,7 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose, 
   const parentCustomerOptions = useMemo(
     () =>
       (customersQuery.data?.customers ?? [])
-        .filter((c) => !c.parent_customer_id && c.status !== "inactive" && !c.deactivated_at)
+        .filter((c) => !c.parent_customer_id && customerIsSelectable(c))
         .map((c) => ({ id: c.id, name: c.name, customer_code: c.customer_code })),
     [customersQuery.data?.customers]
   );

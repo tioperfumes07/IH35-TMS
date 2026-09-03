@@ -1,13 +1,15 @@
-# INBOX-CC-2 · HOLD · 2026-09-03 16:16 CT
+# INBOX-CC-2 · VOID-COLUMN + ACC QUEUE · 2026-09-03 18:44 CT
 `git pull --ff-only origin main`
 
-HOLD until Cursor ownership lock is on `origin/main` (M1–M7 + CODEOWNERS).
+You raised VOID-COLUMN. Owner recorded it. HOLD is cancelled.
 
-Do not start banking. Do not FAST-MERGE leftover work. Leave #20064.
+LAW: `docs/lockdown/VOID-COLUMN-CONVENTION-LAW-2026-09-03.md`
+- New tables: pick voided_at / deactivated_at / revoked_at by meaning. Never deleted_at.
+- When you touch a deleted_at table for other work, convert in the SAME PR (add + backfill + repoint, never DROP).
+- One predicate per surface.
 
-Your block (after lock): `docs/bus/packets/2026-09-03-16-P0-SEND/HOLD/01-BANKING.txt`
-BINDING: `docs/bus/packets/2026-09-03-16-P0-SEND/REFERENCE/MONEY-CONTRACT-ALL-SEATS.txt`
+NOW: ACC standing queue from `docs/bus/OWNER-DEFECT-REGISTER-2026-09-03.md`. Leave #20064.
 
-Never POST Book Load.
+Never POST. Never Chrome.
 
-ACK `CC-2 | ACK | HOLD until lock · NEVER POST`
+ACK `CC-2 | ACK | VOID-COLUMN + ACC · NEVER POST | GO`
