@@ -219,6 +219,14 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
         // the operator is actively typing into (Description/Amount), not a dataset to search. Same
         // shape as the already-documented LV-WORK-ORDERS-CONSOLE-DUPLICATE-SEARCH fix.
         suppressToolbarSearch
+        // K5 (GO-23 wave5 row15, 2026-09-02): same shape as K3 above -- the built-in "Per page" /
+        // "Page 1 of 1" pager chrome was rendering under a load's own handful of charge lines. A
+        // single load never carries enough accessorial lines to paginate (initialPageSize=50 above
+        // already fits every real case in one page), so the pager can only ever show "Page 1 of 1" --
+        // controls that can never do anything, on a table the operator is actively editing, not
+        // paging through. hidePager (ParityTable's own documented suppression flag, Phase A3) keeps
+        // internal slicing at initialPageSize=50 (every row still renders) and only hides the chrome.
+        hidePager
         rowActions={(row) => (
           <button type="button" className="text-xs text-red-700 hover:underline" onClick={() => handleRemove(row.id)}>
             Remove
