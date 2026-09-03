@@ -435,7 +435,11 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
         const status = String(matter.status ?? "").trim();
         return {
           value: id,
-          label: number || id,
+          // C1 (owner correction 2026-09-02): was `number || id` -- a raw uuid on an operator-
+          // facing picker label the moment a matter's number is missing. Every other kind in this
+          // registry (driver/trailer/unit/work_order, above) already composes entityLabel() for
+          // exactly this fallback; legal_matter was the one outlier still forking its own.
+          label: entityLabel(number, id, "Matter"),
           sublabel: status || undefined,
         };
       }).filter((o) => o.value);

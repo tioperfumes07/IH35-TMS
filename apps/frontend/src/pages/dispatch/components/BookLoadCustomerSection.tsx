@@ -75,13 +75,14 @@ export function BookLoadCustomerSection({
   // ACCT-F10158 companion: seed the committed customer when the capped/search page omits it
   // (same FE-COMBOBOX-STALE-LABEL class as BookLoadModalV4 Edit hydrate).
   const customerOptions = useMemo(() => {
-    const fromApi = (customersQuery.data ?? [])
-      .map((c) => ({ value: c.id, label: c.display_name.trim() || c.id }))
-      .filter((o) => o.label);
+    // C1 (owner correction 2026-09-02): kept in sync with the live picker's identical fix
+    // (BookLoadModalV4.tsx, PR #19812) -- both fallbacks used to fall to the raw uuid whenever a
+    // name came back empty/blank.
+    const fromApi = (customersQuery.data ?? []).map((c) => ({ value: c.id, label: entityLabel(c.display_name, c.id, "Customer") }));
     const id = String(watchedCustomerId || "").trim();
     const name = String(watchedCustomerName || "").trim();
     if (id && !fromApi.some((o) => o.value === id)) {
-      return [{ value: id, label: name || id }, ...fromApi];
+      return [{ value: id, label: entityLabel(name, id, "Customer") }, ...fromApi];
     }
     return fromApi;
   }, [customersQuery.data, watchedCustomerId, watchedCustomerName]);

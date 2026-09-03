@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { DispatchLoadRow } from "../../api/loads";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
+import { entityLabel } from "../../lib/entity-label";
 import {
   dwellLabelFromMs,
   PlannerGrid,
@@ -97,7 +98,9 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
           const longFlag = (kind === "NB" || kind === "SB") && end - start >= 7 * 24 * 60 * 60 * 1000;
           return {
             id: load.id,
-            label: load.load_number || load.id,
+            // C1 (owner correction 2026-09-02): was `load.load_number || load.id` -- a raw uuid on
+            // the timeline bar label the moment load_number is missing/blank.
+            label: entityLabel(load.load_number, load.id, "Load"),
             startYmd: ymdFromMs(start),
             endYmd: ymdFromMs(end),
             kind: kindCss(kind),
