@@ -17,8 +17,9 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
-const STATUS_OPTIONS: Array<{ value: "all" | FactoringAdvance["status"]; label: string }> = [
-  { value: "all", label: "All" },
+const STATUS_OPTIONS: Array<{ value: "all" | "active" | FactoringAdvance["status"]; label: string }> = [
+  { value: "active", label: "Active (hide voided)" },
+  { value: "all", label: "All (include voided)" },
   { value: "submitted", label: "Submitted" },
   { value: "advanced", label: "Advanced" },
   { value: "reserve_held", label: "Reserve Held" },
@@ -63,14 +64,16 @@ export function FactoringListPage() {
   }
   // BANK-SORT-ROLLOUT-ACCT: ?sort=&dir= URL persistence (same as Bills/Expenses).
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
-  const [status, setStatus] = useState<"all" | FactoringAdvance["status"]>("all");
+  // GO-23 row16 (owner FINISH LAW 2026-09-03): voided hidden by default, same convention as
+  // Bills/Expenses/Invoices/Payments lists (all default status="active").
+  const [status, setStatus] = useState<"all" | "active" | FactoringAdvance["status"]>("active");
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const loadId = deepLinkLoadId ?? "";
   const staged = useStagedListFilters({
     applied: { status, fromDate, toDate, loadId },
-    empty: { status: "all" as const, fromDate: "", toDate: "", loadId: "" },
+    empty: { status: "active" as const, fromDate: "", toDate: "", loadId: "" },
     onApply: (next) => {
       setStatus(next.status);
       setFromDate(next.fromDate);

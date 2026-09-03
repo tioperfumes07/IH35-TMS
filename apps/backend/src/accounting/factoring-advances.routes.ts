@@ -24,8 +24,14 @@ const idParamsSchema = z.object({
 });
 
 const listQuerySchema = companyQuerySchema.extend({
+  // GO-23 row16 (owner FINISH LAW 2026-09-03, "voided hidden by default"): "active" is a
+  // pseudo-status meaning "any status except voided" -- same convention as
+  // payments.routes.ts's status=active -> voided_at IS NULL. Default stays "all" (unchanged) so
+  // no other existing caller of this endpoint (e.g. entityPickerRegistry.ts's factoring-advance
+  // picker) silently changes behavior; FactoringListPage.tsx is the only caller updated to send
+  // "active" explicitly.
   status: z
-    .enum(["submitted", "advanced", "reserve_held", "collected", "released", "recourse_returned", "voided", "all"])
+    .enum(["active", "submitted", "advanced", "reserve_held", "collected", "released", "recourse_returned", "voided", "all"])
     .optional()
     .default("all"),
   factoring_company_vendor_id: z.string().uuid().optional(),
@@ -235,7 +241,9 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     const rows = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
       const where: string[] = ["fa.operating_company_id = $1::uuid"];
       const values: unknown[] = [q.operating_company_id];
-      if (q.status && q.status !== "all") {
+      if (q.status === "active") {
+        where.push(`fa.status <> 'voided'`);
+      } else if (q.status && q.status !== "all") {
         values.push(q.status);
         where.push(`fa.status = $${values.length}`);
       }
