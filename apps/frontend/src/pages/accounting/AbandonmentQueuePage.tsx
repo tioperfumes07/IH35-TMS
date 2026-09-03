@@ -11,6 +11,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatDateUS } from "../../lib/formatDate";
 
 export function AbandonmentQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -41,6 +42,17 @@ export function AbandonmentQueuePage() {
 
   const columns = useMemo<ParityColumn<AbandonmentChargebackRow>[]>(
     () => [
+      {
+        // GO-23 row16 (owner FINISH LAW 2026-09-03): driver_finance.abandonment_chargebacks
+        // carries abandonment_event_at (the actual incurred date, distinct from created_at/
+        // approved_at) -- already returned by `SELECT ac.*` in abandonment.routes.ts, never
+        // rendered anywhere on this queue.
+        key: "abandonment_event_at",
+        label: "Abandoned",
+        sortable: true,
+        className: "whitespace-nowrap",
+        render: (row) => formatDateUS(row.abandonment_event_at),
+      },
       {
         key: "load_id",
         label: "Load",
