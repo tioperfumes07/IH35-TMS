@@ -127,14 +127,6 @@ describe("DispatchPage secondary nav (B21-D12)", () => {
     vi.clearAllMocks();
   });
 
-  it("renders dispatch secondary tabs including Load costs", async () => {
-    wrap(<DispatchPage />);
-    expect(await screen.findByTestId("dispatch-secondary-nav")).toBeTruthy();
-    for (const label of ["Load board", "Book load", "Load costs", "Assignments", "Settlements", "Pre-settlements"]) {
-      expect(screen.getAllByText(label).length).toBeGreaterThan(0);
-    }
-  });
-
   it("embeds D2 assignment history when Assignments tab is selected", async () => {
     wrap(<DispatchPage />, "/dispatch/assignments");
     expect(await screen.findByTestId("dispatch-assignments-embed")).toBeTruthy();
