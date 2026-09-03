@@ -658,7 +658,7 @@
       "purpose": "go18_gap5_worm_expenses_factoring_advances \u2014 trg_worm_refuse_delete on accounting.expenses + accounting.factoring_advances (display-id MAX+1); COMMENT ON COLUMN driver twin; Cursor HH=23 band"
     },
     "202613550001": {
-      "claimed_by": "cc-1",
+      "claimed_by": "claude",
       "claimed_at": "2026-09-03",
       "purpose": "bank_categorization_who_column (BANK-CATEGORIZATION-WHO-SPEC-2026-09-03, CC-3 handoff via docs/specs/BANK-CATEGORIZATION-WHO-SPEC-2026-09-03.md, owner FINISH LAW: banking.bank_transactions.categorized_by_user_id uuid NULL REFERENCES identity.users(id) -- closes the record-who half of the bank-categorization assignment; all 3 categorize write paths already have the actor uuid in scope, just had no column to write it to)"
     }
