@@ -104,7 +104,7 @@ export function FilterPopover({ filter, activeValues, onChange, rows }: Props) {
       >
         {filter.label}
         {isActive && (
-          <span className="bg-slate-1000 text-white text-[10px] font-semibold rounded-full px-1.5 py-0.5 leading-none">
+          <span className="bg-slate-1000 text-white text-xs font-semibold rounded-full px-1.5 py-0.5 leading-none">
             {appliedCount}
           </span>
         )}

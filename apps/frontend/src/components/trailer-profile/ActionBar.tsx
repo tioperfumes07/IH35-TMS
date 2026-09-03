@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { resolveApiUrl } from "../../api/client";
 
 const linkClass =
-  "inline-flex h-8 items-center justify-center rounded-sm border border-gray-300 bg-white px-3 text-[13px] font-medium text-gray-800";
+  "inline-flex h-8 items-center justify-center rounded-sm border border-gray-300 bg-white px-3 text-xs font-medium text-gray-800";
 
 export function ActionBar({
   equipmentId,

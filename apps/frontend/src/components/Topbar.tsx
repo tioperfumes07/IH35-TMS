@@ -216,7 +216,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
           <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
           {office && legalNameChip ? (
             <span
-              className={`max-w-[min(280px,42vw)] truncate rounded-sm px-2 py-0.5 text-[10px] font-semibold normal-case leading-tight ${chipClass}`}
+              className={`max-w-[min(280px,42vw)] truncate rounded-sm px-2 py-0.5 text-xs font-semibold normal-case leading-tight ${chipClass}`}
               title={legalNameChip}
             >
               {legalNameChip}

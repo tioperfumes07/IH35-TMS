@@ -115,7 +115,7 @@ export function DriverAssignmentSection({
             currentDriver?.hos_cycle_remaining_min != null ? (
               <>
                 <span
-                  className={`mr-1 rounded-sm px-1 text-[9px] font-semibold uppercase tracking-[0.3px] ${
+                  className={`mr-1 rounded-sm px-1 text-[11px] font-semibold uppercase tracking-[0.3px] ${
                     currentDriver?.hos_violation
                       ? "bg-red-100 text-red-700"
                       : "bg-emerald-100 text-emerald-700"

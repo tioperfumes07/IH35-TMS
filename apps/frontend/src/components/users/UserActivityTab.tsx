@@ -147,7 +147,7 @@ export function UserActivityTab({ operatingCompanyId, userId }: UserActivityTabP
         sortable: true,
         render: (row) => (
           <span
-            className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${
+            className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
               row.severity === "error"
                 ? "bg-red-100 text-red-700"
                 : row.severity === "warn"

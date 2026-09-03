@@ -20,7 +20,7 @@ export function NotificationBell() {
         <Bell className="h-4 w-4" />
         {unreadCount > 0 ? (
           <span
-            className="absolute -right-1 -top-1 min-w-[16px] rounded-full bg-red-500 px-1 text-center text-[10px] font-semibold leading-4 text-white"
+            className="absolute -right-1 -top-1 min-w-[16px] rounded-full bg-red-500 px-1 text-center text-xs font-semibold leading-4 text-white"
             data-testid="notification-unread-badge"
           >
             {unreadCount > 99 ? "99+" : unreadCount}
