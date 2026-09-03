@@ -516,6 +516,7 @@ export function quickAssignDispatchLoad(
     override_repair_block?: boolean;
     assignment_method?: "quicksave" | "drag_drop";
     acknowledged_warnings?: string[];
+    reason_code?: string;
   }
 ) {
   return apiRequest<Record<string, unknown>>(`/api/v1/dispatch/loads/${id}/quick-assign`, {

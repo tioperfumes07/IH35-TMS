@@ -17,6 +17,7 @@ type QuickAssignInput = {
   trailer_id?: string;
   assignment_method?: "quicksave" | "drag_drop";
   acknowledged_warnings?: string[];
+  reason_code?: string;
 };
 
 function isOwner(role: string) {
@@ -70,6 +71,25 @@ export async function quickAssignLoad(
       );
       const load = loadRes.rows[0];
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
+
+      const isVehicleSwap = Boolean(
+        load.assigned_unit_id && input.unit_id && load.assigned_unit_id !== input.unit_id,
+      );
+      if (isVehicleSwap && !input.reason_code?.trim()) {
+        throw new Error("E_VEHICLE_SWAP_REASON_REQUIRED");
+      }
+      if (isVehicleSwap) {
+        const reason = await client.query<{ reason_code: string }>(
+          `SELECT reason_code
+             FROM catalogs.load_cancellation_reasons
+            WHERE operating_company_id = $1::uuid
+              AND reason_code = $2
+              AND is_active = true
+            LIMIT 1`,
+          [input.operating_company_id, input.reason_code],
+        );
+        if (!reason.rows[0]) throw new Error("E_VEHICLE_SWAP_REASON_INVALID");
+      }
 
       // Shared driver-qualification gate (G9-C1 + D3-1): deactivated / archived / expired-CDL /
       // expired-medical are DOT hard-stops, plus the hazmat H-endorsement on a hazmat load. This
@@ -262,9 +282,9 @@ export async function quickAssignLoad(
             previous_driver_id, new_driver_id,
             previous_unit_id, new_unit_id,
             previous_trailer_id, new_trailer_id,
-            assigned_by_user_id, warnings_acknowledged
+            assigned_by_user_id, warnings_acknowledged, reason_code
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12)
           RETURNING id::text
         `,
         [
@@ -279,6 +299,7 @@ export async function quickAssignLoad(
           input.trailer_id ?? null,
           userId,
           JSON.stringify([...acknowledged]),
+          isVehicleSwap ? input.reason_code : null,
         ],
       );
       if (!assignmentHistoryInsert.rows[0]?.id) throw new Error("E_ASSIGNMENT_HISTORY_CREATE_FAILED");
@@ -294,6 +315,10 @@ export async function quickAssignLoad(
           assignment_method: input.assignment_method ?? "quicksave",
           warnings,
           pending_fields: pendingFields,
+          vehicle_swap: isVehicleSwap,
+          previous_unit_id: load.assigned_unit_id ?? null,
+          new_unit_id: input.unit_id ?? load.assigned_unit_id ?? null,
+          reason_code: isVehicleSwap ? input.reason_code : null,
         },
         "info",
         "P5-F3-QUICKSAVE",
@@ -311,6 +336,8 @@ export async function quickAssignLoad(
           driver_id: input.driver_id,
           unit_id: input.unit_id ?? null,
           trailer_id: input.trailer_id ?? null,
+          previous_unit_id: load.assigned_unit_id ?? null,
+          reason_code: isVehicleSwap ? input.reason_code : null,
         },
       });
 

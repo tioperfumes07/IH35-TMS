@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
@@ -7,12 +8,16 @@ import type { EntityPickerOption } from "../../../components/parity/entityPicker
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../../lib/entity-label";
+import { listDispatchCancellationReasons } from "../../../api/dispatch";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 type Props = {
   open: boolean;
   operatingCompanyId: string;
   loadId: string;
   loadNumber: string;
+  currentUnitId?: string | null;
   hardWarnings: string[];
   onClose: () => void;
   onSubmit: (payload: {
@@ -20,10 +25,11 @@ type Props = {
     unit_id?: string;
     trailer_id?: string;
     acknowledged_warnings: string[];
+    reason_code?: string;
   }) => Promise<void>;
 };
 
-export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber, hardWarnings, onClose, onSubmit }: Props) {
+export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber, currentUnitId, hardWarnings, onClose, onSubmit }: Props) {
   const [driverId, setDriverId] = useState("");
   const [driverOption, setDriverOption] = useState<EntityPickerOption | null>(null);
   const [unitId, setUnitId] = useState("");
@@ -31,6 +37,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
   const [trailerId, setTrailerId] = useState("");
   const [trailerOption, setTrailerOption] = useState<EntityPickerOption | null>(null);
   const [ackAll, setAckAll] = useState(false);
+  const [reasonCode, setReasonCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const scopeGenerationRef = useRef(0);
 
@@ -42,6 +49,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
     setTrailerId("");
     setTrailerOption(null);
     setAckAll(false);
+    setReasonCode(null);
   }, []);
 
   useEffect(() => {
@@ -57,6 +65,12 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
   }, [loading, onClose, resetDraft]);
 
   const hasSelected = Boolean(driverId || unitId || trailerId);
+  const isVehicleSwap = Boolean(currentUnitId && unitId && currentUnitId !== unitId);
+  const reasonsQuery = useQuery({
+    queryKey: ["dispatch", "vehicle-swap-reasons", operatingCompanyId],
+    queryFn: () => listDispatchCancellationReasons(operatingCompanyId).then((value) => value.reasons),
+    enabled: open && isVehicleSwap && Boolean(operatingCompanyId),
+  });
 
   return (
     <Modal open={open} onClose={handleClose} title={`Quick Assign · ${loadNumber}`}>
@@ -72,6 +86,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
             unit_id: unitId || undefined,
             trailer_id: trailerId || undefined,
             acknowledged_warnings: ackAll ? [...hardWarnings] : [],
+            reason_code: isVehicleSwap ? reasonCode ?? undefined : undefined,
           };
           setLoading(true);
           try {
@@ -107,6 +122,28 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
             />
           </div>
         </label>
+        {isVehicleSwap ? (
+          <div className="space-y-1" data-testid="vehicle-swap-reason">
+            <label className="block text-xs font-semibold text-gray-600">Vehicle swap reason</label>
+            <ReferenceSelect
+              value={reasonCode}
+              onChange={setReasonCode}
+              options={(reasonsQuery.data ?? []).map((reason) => ({
+                value: String(reason.reason_code),
+                label: String(reason.reason_label ?? reason.display_name ?? reason.reason_code),
+                type: String(reason.reason_code),
+              }))}
+              createKind="load_cancellation_reason"
+              operatingCompanyId={operatingCompanyId}
+              placeholder="Select reason…"
+              loading={reasonsQuery.isLoading}
+              disabled={loading || reasonsQuery.isLoading || reasonsQuery.isError}
+            />
+            {reasonsQuery.isError ? (
+              <ListErrorState status={0} message="Vehicle swap reasons unavailable." onRetry={() => void reasonsQuery.refetch()} />
+            ) : null}
+          </div>
+        ) : null}
         <label className="block text-xs font-semibold text-gray-600">
           Unit
           <div className="mt-0.5" data-testid="quick-assign-unit">
@@ -179,7 +216,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
           <Button type="button" size="sm" variant="secondary" onClick={handleClose} disabled={loading}>
             Close
           </Button>
-          <Button type="submit" size="sm" loading={loading} disabled={!driverId}>
+          <Button type="submit" size="sm" loading={loading} disabled={!driverId || (isVehicleSwap && !reasonCode)}>
             Assign
           </Button>
         </div>

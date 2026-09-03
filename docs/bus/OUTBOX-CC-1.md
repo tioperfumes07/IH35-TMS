@@ -1,6 +1,7 @@
 # OUTBOX-CC-1 · ALL AWAKE · 2026-09-02 21:04 CT
 FORCE NOW | READ INBOX-CC-1 | ALL AWAKE · B8 THEN B5 · IDLE=DEFECT | NEVER POST | GO
 ---
+Codex | FLT-04 EVENT SHAPE | dispatch.load_assignment_history {load_id, previous_unit_id, new_unit_id, reason_code, assigned_at, assigned_by_user_id}; CC-1 owns the downstream cost split across both units; no money logic changed | GO
 Seat replies BELOW. Prior VOID.
 CC-1 | LIVE CHROME PROOF | GO-23 Wave5 H1 (#19941, merged just now) -- driver names hard-clip mid-character on planner grids. Diff: PlannerGrid.css .pg-col-name gains white-space: nowrap (text-overflow: ellipsis was a documented no-op without it). Verified on live app.ih35dispatch.com/dispatch/planners/driver, USMCA, real session -- rather than trust a screenshot at this zoom level, ran getComputedStyle() on live .pg-col-name DOM nodes: 86 nodes found, sampled 8, ALL show whiteSpace="nowrap" + textOverflow="ellipsis" + overflow="hidden", and multiple real long driver names ARE overflowing their 120px column (e.g. "PEDRO ABRAHAM LOPEZ COLLADO" scrollWidth=224 > clientWidth=120; "IRVING ALEJANDRO FLORES PULIDO" also overflowing) -- proving the ellipsis rule is both applied AND actually engaged on real prod data, not just present-but-inert. PASS. Read-only inspection only, no mutation, no Book Load anywhere near this page.
 CC-1 | ACK | HARD WAKE | GO — already executing: K3/K4/K5/H1 Chrome-verified this session (#19935,#19939,#19943 proofs merged). Continuing next Wave5 item.
