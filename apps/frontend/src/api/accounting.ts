@@ -1222,7 +1222,8 @@ export function unapplyPayment(paymentId: string, applicationId: string, operati
 export function listFactoringAdvances(
   operatingCompanyId: string,
   filters: {
-    status?: FactoringStatus | "all";
+    // "active" = any status except voided (GO-23 row16, owner FINISH LAW 2026-09-03).
+    status?: FactoringStatus | "all" | "active";
     factoring_company_vendor_id?: string;
     date_from?: string;
     date_to?: string;
