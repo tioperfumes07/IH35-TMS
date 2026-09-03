@@ -21,13 +21,29 @@
 
 -- CANONICAL-CHECK: money-event WORM attach; no new money concept; no duplicate ledger.
 
+-- ACCT-F5684-CLASS FIX (2026-09-03): this filename is numerically BEHIND 202612220000
+-- (ACCT-F141, which defines refuse_financial_row_delete()) even though on PROD it applied
+-- AFTER it (incremental apply order != filename order once a low-numbered file merges late).
+-- A fresh CI replay applies strictly in filename order and always hits this file first, so the
+-- original RAISE EXCEPTION here unconditionally aborted every fresh-DB migration run -- the
+-- exact "Never RAISE on absent runtime/synced data" landmine the migration-authoring skill warns
+-- about. Fixed the same way ACCT-F5684/5685 fixed the identical class of bug for
+-- 202608180900/chart_of_accounts_roles: fail SOFT here (skip, don't abort) when the function
+-- isn't there yet; a later, idempotent deferred-bind migration
+-- (202613570001_acct_f5684_class_go18_gap5_deferred_worm_bind.sql) completes the two triggers
+-- once the function is guaranteed to exist. Checksum-overridden in
+-- scripts/lib/migration-checksum-overrides.json — this content differs from what's recorded as
+-- applied on prod, but prod already has both triggers live (verified), so this file is a no-op
+-- there either way.
+
 BEGIN;
 
 DO $$
 BEGIN
   IF to_regprocedure('accounting.refuse_financial_row_delete()') IS NULL THEN
-    RAISE EXCEPTION
-      'GO18-GAP5: accounting.refuse_financial_row_delete() absent — ACCT-F141 (202612220000) must be applied first';
+    RAISE NOTICE
+      'GO18-GAP5: accounting.refuse_financial_row_delete() not yet present (ACCT-F141 / 202612220000 applies later in this run) — skipping trigger attach here; 202613570001 completes it once the function exists.';
+    RETURN;
   END IF;
 
   IF EXISTS (
@@ -66,10 +82,32 @@ BEGIN
 END
 $$;
 
-COMMENT ON COLUMN accounting.bills.driver_id IS
-  'Driver FK twin of accounting.expenses.driver_uuid. Same hub, two names — historical only. Do not rename; expenses side keeps driver_uuid this pass (owner 2026-09-02 comments-only).';
-
-COMMENT ON COLUMN accounting.expenses.driver_uuid IS
-  'Driver FK twin of accounting.bills.driver_id. Naming differs for historical reasons only. Owner 2026-09-02: leave column name; do not rename in this pass.';
+-- accounting.bills.driver_id doesn't exist yet at this filename's numeric position either (it's
+-- added by the later-numbered 202613360001_go18_bill_driver_trailer_load_required.sql) -- same
+-- fresh-replay ordering class as the trigger fix above. Comment only when both columns already
+-- exist; 202613570001 sets both unconditionally once they're guaranteed to.
+DO $$
+BEGIN
+  IF to_regprocedure('accounting.refuse_financial_row_delete()') IS NULL THEN
+    RETURN;
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'accounting' AND table_name = 'bills' AND column_name = 'driver_id'
+  ) THEN
+    EXECUTE 'COMMENT ON COLUMN accounting.bills.driver_id IS ' || quote_literal(
+      'Driver FK twin of accounting.expenses.driver_uuid. Same hub, two names — historical only. Do not rename; expenses side keeps driver_uuid this pass (owner 2026-09-02 comments-only).'
+    );
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'accounting' AND table_name = 'expenses' AND column_name = 'driver_uuid'
+  ) THEN
+    EXECUTE 'COMMENT ON COLUMN accounting.expenses.driver_uuid IS ' || quote_literal(
+      'Driver FK twin of accounting.bills.driver_id. Naming differs for historical reasons only. Owner 2026-09-02: leave column name; do not rename in this pass.'
+    );
+  END IF;
+END
+$$;
 
 COMMIT;

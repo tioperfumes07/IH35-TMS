@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-accident-drawer-unit-entity-picker";
 const FILE = "apps/frontend/src/components/safety/AccidentReportDrawer.tsx";
-const ENTITY_PICKER = "apps/frontend/src/components/parity/EntityPicker.tsx";
+const ENTITY_PICKER = "apps/frontend/src/components/EntityPicker.tsx";
 
 function readRel(root, rel) {
   const p = path.join(root, rel);

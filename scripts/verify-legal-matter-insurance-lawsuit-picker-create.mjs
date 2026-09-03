@@ -15,7 +15,7 @@ const LABEL = "verify-legal-matter-insurance-lawsuit-picker-create";
 const FILES = {
   form: "apps/frontend/src/pages/legal/matters/LegalMatterFormFields.tsx",
   registry: "apps/frontend/src/components/parity/entityPickerRegistry.ts",
-  picker: "apps/frontend/src/components/parity/EntityPicker.tsx",
+  picker: "apps/frontend/src/components/EntityPicker.tsx",
   modal: "apps/frontend/src/components/insurance/LawsuitCreateModal.tsx",
 };
 

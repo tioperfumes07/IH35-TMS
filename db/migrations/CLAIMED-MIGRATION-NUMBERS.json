@@ -666,6 +666,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-03",
       "purpose": "company_settlements header table (25-task instructions 2026-09-02 #2-4, owner GO-19 decision CLOSED 2026-09-01: design=Downloads/Company_Settlement_5753.pdf, per-PERIOD grain mirroring driver settlement, 8 sections computed at read-time from a real junction to driver_finance.driver_settlements -- no duplicated financial data -- so company + driver settlements close together at tour-close)"
+    },
+    "202613570001": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-03",
+      "purpose": "ACCT-F5684-class deferred WORM bind (fresh-DB CI fix): 202609022351 numerically precedes its own dependency 202612220000/ACCT-F141 (refuse_financial_row_delete()) so a fresh sequential replay always RAISE EXCEPTIONed there, red-lining security-audit-heavy for every PR. 202609022351 now fails soft (checksum-overridden -- prod already has both triggers live, verified); this migration idempotently completes the two trg_worm_refuse_delete attaches on accounting.expenses + accounting.factoring_advances once the function exists later in the same replay"
     }
   }
 }

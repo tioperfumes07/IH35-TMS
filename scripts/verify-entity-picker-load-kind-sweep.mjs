@@ -85,7 +85,7 @@ export function collectProblems(root = ROOT) {
     }
   }
 
-  const entityPicker = readRel(root, "apps/frontend/src/components/parity/EntityPicker.tsx");
+  const entityPicker = readRel(root, "apps/frontend/src/components/EntityPicker.tsx");
   if (!entityPicker) {
     problems.push("missing EntityPicker.tsx");
   } else {

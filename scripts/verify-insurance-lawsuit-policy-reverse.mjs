@@ -9,7 +9,7 @@ const files = {
   api: "apps/frontend/src/api/insurance.ts",
   creator: "apps/frontend/src/components/insurance/LawsuitCreateModal.tsx",
   claimCreator: "apps/frontend/src/components/insurance/ClaimCreateModal.tsx",
-  picker: "apps/frontend/src/components/parity/EntityPicker.tsx",
+  picker: "apps/frontend/src/components/EntityPicker.tsx",
   registry: "apps/frontend/src/components/parity/entityPickerRegistry.ts",
   policy: "apps/frontend/src/pages/insurance/PolicyDetail.tsx",
   link: "apps/frontend/src/components/shared/EntityLink.tsx",

@@ -2,7 +2,7 @@
 import fs from "node:fs";
 
 const registry = fs.readFileSync("apps/frontend/src/components/parity/entityPickerRegistry.ts", "utf8");
-const picker = fs.readFileSync("apps/frontend/src/components/parity/EntityPicker.tsx", "utf8");
+const picker = fs.readFileSync("apps/frontend/src/components/EntityPicker.tsx", "utf8");
 const creator = fs.readFileSync("apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx", "utf8");
 const cashFlow = fs.readFileSync("apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx", "utf8");
 

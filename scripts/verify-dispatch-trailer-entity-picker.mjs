@@ -19,7 +19,7 @@ const SURFACES = [
 ];
 
 const REGISTRY = "apps/frontend/src/components/parity/entityPickerRegistry.ts";
-const PICKER = "apps/frontend/src/components/parity/EntityPicker.tsx";
+const PICKER = "apps/frontend/src/components/EntityPicker.tsx";
 const MDATA_API = "apps/frontend/src/api/mdata.ts";
 
 function readRel(root, rel) {
