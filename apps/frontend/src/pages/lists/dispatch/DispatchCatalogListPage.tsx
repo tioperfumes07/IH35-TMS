@@ -187,11 +187,11 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Search
           {/* LST-F3510: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
-          <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+          <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-xs" />
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Show
-          <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+          <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
             <option value="all">All</option>
