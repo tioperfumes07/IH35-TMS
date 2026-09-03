@@ -7,9 +7,9 @@
 | Seat | NOW — work this minute |
 |------|------------------------|
 | **CC-1** | **B8** full vertical (table + rule + endpoint + screen + guard + Chrome). Then **B5**. Not TRK. Not N1. |
-| **CC-2** | **K2 EntityPicker** to zero trapping. Chrome-verify. SimpleCombobox already `#19952`. Not J1. |
+| **CC-2** | Chrome-prove Expenses ▾, header colour after deploy, Load costs doors. Not a K2 rebuild. |
 | **CC-3** | Wave 5 **row 16** — complete each list slice (ParityTable gear, not a new GUARD register). Not H1. |
-| **Codex** | **A3/B12** `#19571` Chrome complete. Then date/picker guards. |
+| **Codex** | Load Costs reverse 1–12. Then date/picker guards. |
 | **Cascade** | GO-23 **row 26** unique FINDING file:line. Chrome only on live app, never local vite, never POST. |
-| **Cursor** | Lead. WORM Neon `202609022351`. Stay off seat rows. |
+| **Cursor** | Header token + date ratchet **10240**. Then WORM Neon `202609022351`. |
 | **Devin-A** | RETIRED. |

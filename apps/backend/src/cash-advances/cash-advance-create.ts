@@ -33,7 +33,7 @@ export type CreateDriverCashAdvanceCoreInput = {
   driver_id: string;
   amount: number;
   purpose: CashAdvancePurpose;
-  disbursement_method: "direct_bank_transfer" | "wire" | "comdata" | "in_person_check";
+  disbursement_method: "direct_bank_transfer" | "wire" | "comdata" | "comchek" | "in_person_check";
   recipient_info: {
     recipient_type: "driver" | "vendor" | "third_party";
     recipient_name?: string | null;

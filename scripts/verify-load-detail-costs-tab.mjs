@@ -18,12 +18,14 @@ function violations(drawer, costs, board, routes, backend, finance, sidebar, dis
   if (!costs.includes("listExpenses(opco, { load_id: load.id") || !costs.includes("listBills(opco, { load_id: load.id")) errors.push("existing load-scoped expense/bill reads are missing");
   if (!costs.includes('data-cost-driver-column="driver_uuid"') || !costs.includes('data-cost-driver-column="driver_id"')) errors.push("expense.driver_uuid and bill.driver_id identities are not explicit");
   if (!costs.includes('type CostChoice = "expense" | "bill" | null') || !costs.includes("Choose a cost type to continue.")) errors.push("Expense-or-Bill choice no longer starts with no default");
-  if (!costs.includes("Approximate · before settlement") || !costs.includes("No costs on this load yet.")) errors.push("honest margin or empty-state copy is missing");
   if (costs.includes('method: "POST"') || costs.includes("dispatch.load_costs")) errors.push("Costs tab introduced a writer or parallel ledger");
+  if (!costs.includes("Approximate · before settlement") || !costs.includes("No costs on this load yet.")) errors.push("honest margin or empty-state copy is missing");
   if (!board.includes('title="Load costs"') || !board.includes('to={`/dispatch/loads/${encodeURIComponent(row.load.id)}?tab=Costs`}')) errors.push("Accounting Costs board or canonical Costs-tab drill is missing");
   if (!board.includes("listAllLoads") || !board.includes("/api/v1/accounting/load-costs-board")) errors.push("Costs board is not composed from canonical load/accounting readers");
+  if (!board.includes("Incurred") || !board.includes("formatDateUS(row.load.created_at)")) errors.push("Load costs board missing visible incurred date");
   if (!routes.includes('path="/accounting/load-costs"') || !drawer.includes('initialTab?: DrawerTab')) errors.push("Costs board route or drawer deep-link contract is missing");
   if (!backend.includes("FULL OUTER JOIN bill_costs") || !backend.includes("SUM(ROUND(bl.amount * 100))") || !backend.includes("e.load_id IS NOT NULL")) errors.push("per-load expense/bill allocation is not enforced");
+  if (!backend.includes("LOAD_COSTS_HUB_LINKAGE") || !backend.includes("org.companies") || !backend.includes("maintenance.work_orders")) errors.push("Load costs board is missing the twelve-hub declaration");
   if (backend.includes("INSERT INTO") || backend.includes("UPDATE accounting") || backend.includes("DELETE FROM")) errors.push("Costs board backend introduced a writer");
   if (!backend.includes('"Dispatcher"')) errors.push("load-costs-board GET must stay readable while dispatching");
   if (!finance.includes('to: "/accounting/load-costs"') || !finance.includes('label: "Load costs"')) errors.push("Finance hub door to the same Load costs page is missing");

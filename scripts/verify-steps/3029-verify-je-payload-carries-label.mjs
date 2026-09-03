@@ -21,6 +21,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const LABEL = "3029-verify-je-payload-carries-label";
@@ -228,3 +229,6 @@ if (process.argv.includes("--selftest")) {
   }
   console.log(`[${LABEL}] PASS — ${scanned} JE payload query(s) join journal_entries and all carry the memo label`);
 }
+
+const proofGuard = spawnSync(process.execPath, [path.join(ROOT, "scripts/verify-money-proof-trail-click-to-ledger.mjs"), ...(process.argv.includes("--selftest") ? ["--selftest"] : [])], { stdio: "inherit" });
+if (proofGuard.status !== 0) fail("money proof-trail click-to-ledger guard failed");

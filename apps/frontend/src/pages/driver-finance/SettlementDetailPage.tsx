@@ -54,6 +54,7 @@ import { CloseTripPanel } from "./components/CloseTripPanel";
 import { SelectCombobox } from "../../components/Combobox";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ConfirmModal } from "../../components/shared/ConfirmModal";
+import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 
 function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] {
   return lines
@@ -433,6 +434,7 @@ export function SettlementDetailPage() {
         loadIds={settlementLoadIds}
         onRefresh={() => void debt.refresh()}
       />
+      <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="settlement" documentId={settlementId} />
       {settlementIsCancelled ? (
         <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">
           <span className="font-semibold uppercase tracking-wide">Reversed</span>{" "}

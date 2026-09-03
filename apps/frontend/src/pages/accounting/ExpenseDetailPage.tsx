@@ -11,6 +11,7 @@ import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
@@ -388,6 +389,7 @@ export function ExpenseDetailPage() {
           storageKey="expense-detail-lines"
         />
       </DataPanel>
+      <MoneyProofTrailPanel operatingCompanyId={selectedCompanyId!} documentType="expense" documentId={id} />
     </AccountingSubNavWrapper>
   );
 }
