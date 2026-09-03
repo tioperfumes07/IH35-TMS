@@ -279,7 +279,7 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
                           <button
                             key={status}
                             type="button"
-                            className="rounded-sm border border-gray-300 px-1.5 py-0.5 text-[10px] hover:bg-gray-50 disabled:opacity-50"
+                            className="rounded-sm border border-gray-300 px-1.5 py-0.5 text-xs hover:bg-gray-50 disabled:opacity-50"
                             disabled={patchMutation.isPending || item.status === status}
                             onClick={() =>
                               patchMutation.mutate({

@@ -158,7 +158,7 @@ function ExpandedEventDetail({ row }: { row: SpineEvent }) {
   return (
     <div className="grid gap-3 text-xs md:grid-cols-2">
       <div>
-        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Payload</div>
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Payload</div>
         <pre className="max-h-48 overflow-auto rounded-sm border border-gray-100 bg-white p-2 text-[11px] leading-tight">
           {JSON.stringify(row.payload, null, 2)}
         </pre>

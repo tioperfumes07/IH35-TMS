@@ -50,7 +50,7 @@ function ApplicantCard({
           <button
             key={col.key}
             type="button"
-            className="rounded-sm border px-2 py-0.5 text-[10px] hover:bg-gray-50"
+            className="rounded-sm border px-2 py-0.5 text-xs hover:bg-gray-50"
             disabled={busy}
             onClick={() => onMove(col.key)}
           >

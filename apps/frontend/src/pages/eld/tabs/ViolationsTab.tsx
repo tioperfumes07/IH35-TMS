@@ -85,7 +85,7 @@ export function ViolationsTab({ operatingCompanyId }: Props) {
         <div>
           <div className="text-sm font-semibold text-slate-800">HOS Violations</div>
           <div className="text-[11px] text-slate-500">
-            Read-only from <code className="text-[10px]">GET /api/v1/safety/hos-violations</code>. Create / void on
+            Read-only from <code className="text-xs">GET /api/v1/safety/hos-violations</code>. Create / void on
             Safety.
           </div>
         </div>

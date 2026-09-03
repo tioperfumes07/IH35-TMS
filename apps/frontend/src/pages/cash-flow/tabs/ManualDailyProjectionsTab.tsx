@@ -195,7 +195,7 @@ function ProjectionPanel({
       ) : (
         <div className="divide-y divide-gray-50">
           {/* Column headers (per-direction). */}
-          <div className="flex items-center gap-2 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+          <div className="flex items-center gap-2 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
             {columns.map((c) => (
               <span key={c.key} className={`${c.w} shrink-0 truncate`}>{c.label}</span>
             ))}

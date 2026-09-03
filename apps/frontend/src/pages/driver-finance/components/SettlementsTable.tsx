@@ -169,7 +169,7 @@ export function SettlementsTable({
                   kind="liability"
                   id={id}
                   label={(row.liability_ids?.length ?? 0) > 1 ? `#${idx + 1}` : "view →"}
-                  className="text-[10px] text-red-600 hover:underline"
+                  className="text-xs text-red-600 hover:underline"
                 />
               ))}
             </span>

@@ -189,7 +189,7 @@ render: (row) => {
           <input
             value={draft.reason}
             onChange={(event) => setDraft((d) => ({ ...d, reason: event.target.value }))}
-            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
           />
         </div>
         <div className="md:col-span-4 flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-3">

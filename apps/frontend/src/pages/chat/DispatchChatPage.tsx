@@ -140,7 +140,7 @@ export function DispatchChatPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{threadLabel(t)}</span>
                       {t.has_unacknowledged_confirmation ? (
-                        <span className="rounded-sm bg-red-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-600">
+                        <span className="rounded-sm bg-red-50 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-red-600">
                           Unacknowledged
                         </span>
                       ) : null}

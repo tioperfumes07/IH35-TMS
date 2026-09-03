@@ -1030,7 +1030,7 @@ export function CustomersPage() {
                       <p className="text-sm text-gray-500">{selectedCustomer.customer_code || "Customer"} — {selectedCustomer.customer_type ?? "Type not set"}</p>
                       <div className="mt-1 flex items-center gap-2">
                         <span
-                          className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
                             customerQualityRating(selectedCustomer.quality_payment_score, selectedCustomer.quality_overall_flag).className
                           }`}
                         >

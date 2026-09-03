@@ -120,7 +120,7 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
         </div>
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Notes (optional)</label>
-          <textarea value={notes} disabled={mut.isPending} onChange={(e) => setNotes(e.target.value)} rows={3} className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" />
+          <textarea value={notes} disabled={mut.isPending} onChange={(e) => setNotes(e.target.value)} rows={3} className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs" />
         </div>
         {driverId ? (
           <AuthGatePanel
