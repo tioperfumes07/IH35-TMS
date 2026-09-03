@@ -9,7 +9,7 @@ const LABEL = "verify-policy-create-unit-server-search";
 const FILES = {
   wizard: "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx",
   modal: "apps/frontend/src/components/insurance/PolicyCreateModal.tsx",
-  picker: "apps/frontend/src/components/parity/EntityPicker.tsx",
+  picker: "apps/frontend/src/components/EntityPicker.tsx",
   registry: "apps/frontend/src/components/parity/entityPickerRegistry.ts",
 };
 
