@@ -58,6 +58,20 @@ describe("BillsReverseSection", () => {
     );
   });
 
+  it.each([
+    ["driver_id", "driver-1", "this driver"],
+    ["trailer_id", "trailer-1", "this trailer"],
+  ] as const)("keeps the %s reverse filter on the canonical Bills list", async (filterKey, filterValue, contextLabel) => {
+    const filter = filterKey === "driver_id" ? { driver_id: filterValue } : { trailer_id: filterValue };
+    renderSection({ operatingCompanyId: "usmca", filter, contextLabel });
+    expect(await screen.findByRole("link", { name: "Open Bills" })).toHaveAttribute(
+      "href",
+      `/accounting/bills?${filterKey}=${filterValue}`,
+    );
+    expect(listBills).toHaveBeenCalledWith("usmca", expect.objectContaining({ [filterKey]: filterValue }));
+    expect(screen.queryByTestId("bills-reverse-add-bill")).not.toBeInTheDocument();
+  });
+
   describe("GO-23 N1 remainder (owner direct instruction 2026-09-02) — bill-payment from a load", () => {
     const OPEN_BILL = {
       id: "bill-open-1",

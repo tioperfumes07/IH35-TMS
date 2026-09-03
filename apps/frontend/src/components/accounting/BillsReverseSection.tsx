@@ -30,9 +30,11 @@ function billRemainingCents(bill: VendorBill) {
 }
 
 type Filter =
-  | { insurance_claim_id: string; unit_id?: never; load_id?: never }
-  | { unit_id: string; insurance_claim_id?: never; load_id?: never }
-  | { load_id: string; insurance_claim_id?: never; unit_id?: never };
+  | { insurance_claim_id: string; unit_id?: never; load_id?: never; driver_id?: never; trailer_id?: never }
+  | { unit_id: string; insurance_claim_id?: never; load_id?: never; driver_id?: never; trailer_id?: never }
+  | { load_id: string; insurance_claim_id?: never; unit_id?: never; driver_id?: never; trailer_id?: never }
+  | { driver_id: string; insurance_claim_id?: never; unit_id?: never; load_id?: never; trailer_id?: never }
+  | { trailer_id: string; insurance_claim_id?: never; unit_id?: never; load_id?: never; driver_id?: never };
 
 type Props = {
   operatingCompanyId: string;
