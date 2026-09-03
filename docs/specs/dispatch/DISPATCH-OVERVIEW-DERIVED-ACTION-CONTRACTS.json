@@ -5,7 +5,7 @@
       "id": "active-loads",
       "label": "Active loads",
       "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
-      "required_tokens": ["dashboardQ.data?.active_loads", "to=\"/dispatch/loads\""]
+      "required_tokens": ["dashboardQ.data?.active_loads", "ACTIVE_LOAD_DRILL_HREF", "to={ACTIVE_LOAD_DRILL_HREF}"]
     },
     {
       "id": "at-risk-late",
