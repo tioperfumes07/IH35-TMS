@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { listInsuranceLawsuits, type InsuranceLawsuit, type InsuranceLawsuitStatus } from "../../api/insurance";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { entityLabel } from "../../lib/entity-label";
 import { Button } from "../../components/Button";
 import { LawsuitCreateModal } from "../../components/insurance/LawsuitCreateModal";

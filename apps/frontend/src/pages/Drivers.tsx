@@ -40,7 +40,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { colors } from "../design/tokens";
-import { SelectCombobox } from "../components/shared/SelectCombobox";
+import { SelectCombobox } from "../components/Combobox";
 import { CreateDriverModal } from "../components/drivers/CreateDriverModal";
 import { DriverPickerWithCreate } from "../components/drivers/DriverPickerWithCreate";
 import { DriversListPage } from "./drivers/DriversListPage";

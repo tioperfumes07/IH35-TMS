@@ -32,7 +32,10 @@ vi.mock("../../../components/shared/EntityLink", () => ({
   EntityLink: ({ label }: { label: string }) => <span>{label}</span>,
 }));
 
-vi.mock("../../../components/shared/SelectCombobox", () => ({
+vi.mock("../../../components/Combobox", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../components/Combobox")>();
+  return {
+    ...actual,
   SelectCombobox: ({
     value,
     onChange,
@@ -52,7 +55,8 @@ vi.mock("../../../components/shared/SelectCombobox", () => ({
       {children}
     </select>
   ),
-}));
+  };
+});
 
 function LocationProbe() {
   const loc = useLocation();

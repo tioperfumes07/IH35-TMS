@@ -76,7 +76,7 @@ import {
   sumAccessorialCents,
   type AccessorialRow,
 } from "../../../components/dispatch/accessorial-editor-lib";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { NumberInput } from "../../../components/forms/NumberInput";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";

@@ -12,7 +12,7 @@ import { Button } from "../../components/Button";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { useToast } from "../../components/Toast";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { companyToday } from "../../lib/businessDate";

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { EntityPicker } from "../../components/parity/EntityPicker";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { useRoadServiceTickets, type RoadServiceType } from "../../hooks/useRoadServiceTickets";
 import { userFacingApiError } from "../../lib/api-error-message";
 

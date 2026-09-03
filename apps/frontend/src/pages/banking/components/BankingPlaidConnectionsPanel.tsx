@@ -22,7 +22,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { filterPlaidBankAccountsForCompany } from "../../../lib/banking-company-filter";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { Link } from "react-router-dom";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatUsdCents } from "../../../lib/money";

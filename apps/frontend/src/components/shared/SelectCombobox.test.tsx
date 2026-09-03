@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { SelectCombobox } from "./SelectCombobox";
+import { SelectCombobox } from "../Combobox";
 
 // FLT-01-COMBOBOX-SWEEP-ARIA-TESTID-GAP: this adapter's Props type is
 // `Omit<SelectHTMLAttributes, ...>`, so TypeScript silently accepts `aria-label` / `data-testid`

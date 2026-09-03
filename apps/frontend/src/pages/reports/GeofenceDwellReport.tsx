@@ -11,7 +11,7 @@ import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Combobox } from "../../components/Combobox";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 
 function minutesToClock(value: number | null) {

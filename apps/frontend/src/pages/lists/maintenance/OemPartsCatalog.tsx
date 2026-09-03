@@ -14,7 +14,7 @@ import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { ListsSubNav } from "../ListsSubNav";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { useCompanyContext } from "../../../contexts/CompanyContext";

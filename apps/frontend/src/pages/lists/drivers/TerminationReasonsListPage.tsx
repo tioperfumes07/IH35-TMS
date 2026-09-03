@@ -17,7 +17,7 @@ import { Button } from "../../../components/Button";
 import { DataTable } from "../../../components/DataTable";
 import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 

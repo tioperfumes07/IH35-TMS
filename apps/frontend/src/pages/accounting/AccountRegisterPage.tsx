@@ -6,7 +6,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { listCoaAccountsForJe, listAccountingAuditTrail, type AccountingAuditTrailEvent } from "../../api/accounting";

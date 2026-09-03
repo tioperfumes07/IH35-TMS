@@ -16,7 +16,7 @@ import { DriverPickerWithCreate } from "../../../../components/drivers/DriverPic
 import { EntityPicker } from "../../../../components/parity/EntityPicker";
 import { ReferenceSelect } from "../../../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../../../components/parity/referenceOptionLabels";
-import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../../components/Combobox";
 
 type Props = {
   value: Record<string, unknown>;

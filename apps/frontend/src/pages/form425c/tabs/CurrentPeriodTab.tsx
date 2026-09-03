@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { MONTHS, QUESTIONNAIRE, YEARS } from "../lib/constants";
 import type { CompanyKey, CompanyProfiles, CurrentFormState } from "../types";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 
 type ExhibitRow = Record<string, unknown> & { line_number?: number; explanation?: string };
 

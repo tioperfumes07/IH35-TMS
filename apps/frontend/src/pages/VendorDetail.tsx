@@ -34,7 +34,7 @@ import { MissingRequiredChip } from "../components/compliance/MissingRequiredChi
 import { VendorCategoryChip } from "../components/vendors/VendorCategoryChip";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { VENDOR_CATEGORY_VALUES, type VendorCategoryValue } from "../lib/vendorCategories";
-import { SelectCombobox } from "../components/shared/SelectCombobox";
+import { SelectCombobox } from "../components/Combobox";
 import { ReferenceSelect } from "../components/parity/ReferenceSelect";
 import { useCatalogQuery } from "../hooks/useCatalogQuery";
 import {

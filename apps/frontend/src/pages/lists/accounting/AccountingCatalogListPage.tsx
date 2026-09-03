@@ -12,7 +12,7 @@ import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingCatalogModal, type AccountingCatalogClient, type AccountingMetadataField } from "./AccountingCatalogModal";
 import { AccountingCatalogProfileDrawer } from "./AccountingCatalogProfileDrawer";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 
 type Props = {
   client: AccountingCatalogClient & {

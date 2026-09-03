@@ -8,7 +8,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../lib/tableError";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";

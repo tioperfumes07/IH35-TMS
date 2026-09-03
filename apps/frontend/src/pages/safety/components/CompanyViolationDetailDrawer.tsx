@@ -8,7 +8,7 @@ import {
 } from "../../../api/safety";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { CompanyViolationCorrectiveActionForm } from "./CompanyViolationCorrectiveActionForm";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";

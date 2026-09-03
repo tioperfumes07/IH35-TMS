@@ -1,4 +1,4 @@
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 
 type Props = {

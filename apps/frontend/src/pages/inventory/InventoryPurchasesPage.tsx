@@ -13,7 +13,7 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useQueryClient } from "@tanstack/react-query";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { invalidatePartsStockQueries } from "./partsStockQueryKeys";
 
 function formatMoneyCents(cents: number | null | undefined) {

@@ -17,7 +17,7 @@ import { DataTable, type DataTableColumn } from "../../components/DataTable";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { BulkProgressDialog } from "../../components/bulk/BulkProgressDialog";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";

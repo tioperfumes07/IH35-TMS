@@ -17,7 +17,7 @@ import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTo
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { formatDateUS, formatDateTimeUS } from "../../../lib/formatDate";
 import { companyWallClockToIso } from "../../../lib/businessDate";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";

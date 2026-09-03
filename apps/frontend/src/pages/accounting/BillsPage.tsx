@@ -10,7 +10,7 @@ import { listVendors } from "../../api/mdata";
 import { BillAllocationPanel } from "../../components/allocation";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
 import { vendorFilterReferenceOptions } from "../../components/parity/referenceOptionLabels";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";

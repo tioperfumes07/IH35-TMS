@@ -32,7 +32,7 @@ import { SaveDropdown } from "../components/forms/SaveDropdown";
 import { useBulkSelection } from "../hooks/useBulkSelection";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
-import { SelectCombobox } from "../components/shared/SelectCombobox";
+import { SelectCombobox } from "../components/Combobox";
 import { CollapsedListFilters, useStagedListFilters } from "../components/table";
 import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
 import { evaluatePasswordStrength, OFFICE_PASSWORD_HINT } from "../auth/office-password-ui";

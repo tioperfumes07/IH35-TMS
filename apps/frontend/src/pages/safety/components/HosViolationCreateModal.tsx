@@ -7,7 +7,7 @@ import { Button } from "../../../components/Button";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { Modal } from "../../../components/Modal";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";

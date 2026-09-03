@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import type { HistoryReportRow } from "../types";
 
 type Props = {

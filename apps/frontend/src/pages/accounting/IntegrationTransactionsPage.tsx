@@ -10,7 +10,7 @@ import { getIntegrationTransactions, type IntegrationTxnItem } from "../../api/i
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { CollapsedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));

@@ -8,7 +8,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ManualJEModal } from "./ManualJEModal";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";

@@ -17,7 +17,7 @@ import {
   useUpdateMaintenanceService,
   type MaintenanceService,
 } from "../../hooks/useMaintenanceServicesCatalog";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 
 const APPLIES_TO = ["", "truck", "trailer", "reefer", "all"];
 const PAGE_SIZE = 50;

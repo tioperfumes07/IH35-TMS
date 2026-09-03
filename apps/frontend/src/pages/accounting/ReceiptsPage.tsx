@@ -11,7 +11,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));

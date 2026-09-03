@@ -10,7 +10,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { DriverCatalogModal, type DriverCatalogClient } from "./DriverCatalogModal";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 
 /** Catalog policy flags the owner may edit from Lists (driver_deduction_types). */
 type OptionalBooleanField = { key: "may_draw_escrow" | "survives_separation"; label: string };

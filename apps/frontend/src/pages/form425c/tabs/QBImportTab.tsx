@@ -4,7 +4,7 @@ import { MONTHS, YEARS } from "../lib/constants";
 import { parseQBText, qbDateInPeriod } from "../lib/parseQBText";
 import type { CompanyKey, CompanyProfiles, QBParsedLine } from "../types";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { useToast } from "../../../components/Toast";
 
 type Props = {

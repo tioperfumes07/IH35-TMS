@@ -10,7 +10,7 @@ import { Button } from "../../components/Button";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { useToast } from "../../components/Toast";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 
 export type UiStopType = "pickup" | "dropoff" | "fuel" | "rest" | "customs";
 

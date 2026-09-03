@@ -4,7 +4,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { resolveApiUrl } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";

@@ -13,7 +13,7 @@ import {
 } from "../../api/safety";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
 

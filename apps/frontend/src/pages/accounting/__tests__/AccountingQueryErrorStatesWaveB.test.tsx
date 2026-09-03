@@ -43,9 +43,13 @@ vi.mock("../../../components/parity/ParityTable", () => ({
 }));
 vi.mock("../../../components/parity/ReferenceSelect", () => ({ ReferenceSelect: () => <div data-testid="reference-select" /> }));
 vi.mock("../../../components/shared/EntityLink", () => ({ EntityLink: ({ label }: { label?: string }) => <span>{label}</span> }));
-vi.mock("../../../components/shared/SelectCombobox", () => ({
+vi.mock("../../../components/Combobox", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../components/Combobox")>();
+  return {
+    ...actual,
   SelectCombobox: ({ children }: { children: ReactNode }) => <select>{children}</select>,
-}));
+  };
+});
 vi.mock("../../../components/Button", () => ({
   Button: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => <button onClick={onClick}>{children}</button>,
 }));

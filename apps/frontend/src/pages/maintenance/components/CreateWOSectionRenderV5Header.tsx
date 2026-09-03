@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { listAssignableUsers } from "../../../api/identity";
 import { DatePicker } from "../../../components/forms/DatePicker";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 

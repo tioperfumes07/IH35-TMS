@@ -10,7 +10,7 @@ import {
 } from "../../../api/catalogs-safety";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 
 type Props = {
   open: boolean;

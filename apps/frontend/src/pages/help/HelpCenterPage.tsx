@@ -3,7 +3,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { getAllHelpArticles, helpArticlesByCategory, searchHelpArticles, type HelpCategory } from "../../help/helpCenterContent";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 
 const CATEGORY_ORDER: HelpCategory[] = [
   "Getting Started",

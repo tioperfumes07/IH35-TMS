@@ -8,7 +8,7 @@ import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { useToast } from "../../../components/Toast";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { userFacingApiError } from "../../../lib/api-error-message";

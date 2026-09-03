@@ -20,7 +20,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { formatDateUS } from "../../../lib/formatDate";
 import { isUnresolvedEntityTombstone } from "../../../lib/entity-label";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { DriverTeamModal } from "./DriverTeamModal";

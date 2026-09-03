@@ -18,7 +18,7 @@ import { ManualInvoiceModal } from "./modals/ManualInvoiceModal";
 import { VendorChargebackModal } from "./modals/VendorChargebackModal";
 import { InvoiceCreateModal } from "./InvoiceCreateModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
 import { customerFilterReferenceOptions } from "../../components/parity/referenceOptionLabels";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";

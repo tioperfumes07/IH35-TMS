@@ -6,7 +6,7 @@ import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { EntityPicker } from "../../components/parity/EntityPicker";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { useStagedListFilters } from "../../components/table";
 import { useSearchParams } from "react-router-dom";
 import { ListErrorState } from "../../components/ListErrorState";

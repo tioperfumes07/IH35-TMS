@@ -6,7 +6,7 @@ import { listBills } from "../../../../api/accounting";
 import { getAllAccounts } from "../../../../api/banking";
 import { DatePicker } from "../../../../components/forms/DatePicker";
 import { ParityTable } from "../../../../components/parity/ParityTable";
-import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../../components/Combobox";
 import { entityLabel, visibleDocumentLabel } from "../../../../lib/entity-label";
 
 type Props = {

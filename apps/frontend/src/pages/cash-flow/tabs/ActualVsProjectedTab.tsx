@@ -6,7 +6,7 @@ import { TrendingUp, TrendingDown } from "lucide-react";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { getActualVsProjected, type ActualVsProjectedResult, type AvpLineItem } from "../../../api/cashFlow";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";

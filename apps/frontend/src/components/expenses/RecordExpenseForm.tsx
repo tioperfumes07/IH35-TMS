@@ -17,7 +17,7 @@ import { MoneyInput } from "../forms/MoneyInput";
 import { EntityPicker } from "../parity/EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../parity/referenceOptionLabels";
-import { SelectCombobox } from "../shared/SelectCombobox";
+import { SelectCombobox } from "../Combobox";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { UploadZone } from "../UploadZone";

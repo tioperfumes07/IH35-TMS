@@ -9,7 +9,7 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { companyToday } from "../../../lib/businessDate";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { suggestExpenseLoad } from "../../../api/maintenance";

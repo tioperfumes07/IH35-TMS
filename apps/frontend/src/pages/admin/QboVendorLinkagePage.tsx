@@ -18,7 +18,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { VendorLinkageModal } from "../../components/qbo/VendorLinkageModal";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { entityLabel } from "../../lib/entity-label";
 
 type TabKey = "drivers" | "assets";

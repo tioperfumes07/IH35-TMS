@@ -8,7 +8,7 @@ import {
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
-import { SelectCombobox } from "../shared/SelectCombobox";
+import { SelectCombobox } from "../Combobox";
 
 // B6 — Driver Inbox (inside Driver Hub Home). Built to APPROVED-PREVIEW-driver-inbox.html.
 // Locked tokens: navy banner #1A1F36, white active-tab underline; cards #fff / #e5e7eb 4px;

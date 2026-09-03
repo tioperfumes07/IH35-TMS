@@ -4,7 +4,7 @@ import { Button } from "../../../components/Button";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { getLiabilitiesByDriver } from "../../../api/liabilities";
 import { driverDeductionTypesCatalogClient } from "../../../api/catalogs-driver";

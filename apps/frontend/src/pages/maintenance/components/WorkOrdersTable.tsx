@@ -2,7 +2,7 @@ import type { WorkOrder } from "../../../api/maintenance";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../../lib/entity-label";
 import { Button } from "../../../components/Button";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useToast } from "../../../components/Toast";
