@@ -14,8 +14,17 @@ const ruleIdParamsSchema = z.object({
   id: z.string().uuid(),
 });
 
+// GO-23 (owner FINISH LAW 2026-09-03, CC-3 assignment): "remember a merchant decision" -- the
+// scoring function (autoCategorize/scoreRuleMatch, plaid.service.ts) already treats
+// description_pattern as a merchant-text match that OUTRANKS plaid_category_pattern (Tier 3 --
+// "the only signal that can correct a WRONG Plaid label"), and the column already exists on
+// banking.transaction_categories (nullable). It was never reachable through this CRUD API --
+// create/patch only ever accepted plaid_category_pattern. No migration needed; wiring-only.
+const descriptionPatternSchema = z.string().trim().min(1).max(160).nullable().optional();
+
 const createBodySchema = z.object({
   plaid_category_pattern: z.string().trim().min(1).max(120),
+  description_pattern: descriptionPatternSchema,
   coa_account_id: z.string().uuid().nullable().optional(),
   priority: z.coerce.number().int().min(1).max(9999).default(100),
 });
@@ -23,6 +32,7 @@ const createBodySchema = z.object({
 const patchBodySchema = z
   .object({
     plaid_category_pattern: z.string().trim().min(1).max(120).optional(),
+    description_pattern: descriptionPatternSchema,
     coa_account_id: z.string().uuid().nullable().optional(),
     priority: z.coerce.number().int().min(1).max(9999).optional(),
     is_active: z.boolean().optional(),
@@ -69,7 +79,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
     const rules = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          SELECT id, operating_company_id, plaid_category_pattern, coa_account_id, priority, is_active, created_at, updated_at
+          SELECT id, operating_company_id, plaid_category_pattern, description_pattern, coa_account_id, priority, is_active, created_at, updated_at
           FROM banking.transaction_categories
           WHERE operating_company_id = $1::uuid
             AND is_active = true
@@ -164,12 +174,18 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
       const res = await client.query<{ id: string }>(
         `
           INSERT INTO banking.transaction_categories (
-            operating_company_id, plaid_category_pattern, coa_account_id, priority, is_active, created_at, updated_at
+            operating_company_id, plaid_category_pattern, description_pattern, coa_account_id, priority, is_active, created_at, updated_at
           )
-          VALUES ($1,$2,$3,$4,true,now(),now())
+          VALUES ($1,$2,$3,$4,$5,true,now(),now())
           RETURNING id
         `,
-        [query.data.operating_company_id, body.data.plaid_category_pattern, body.data.coa_account_id ?? null, body.data.priority]
+        [
+          query.data.operating_company_id,
+          body.data.plaid_category_pattern,
+          body.data.description_pattern ?? null,
+          body.data.coa_account_id ?? null,
+          body.data.priority,
+        ]
       );
       if ((res.rowCount ?? 0) === 0 || !res.rows[0]?.id) {
         throw new Error("categorization_rule_insert_failed");
@@ -183,6 +199,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
           resource_id: res.rows[0].id,
           operating_company_id: query.data.operating_company_id,
           plaid_category_pattern: body.data.plaid_category_pattern,
+          description_pattern: body.data.description_pattern ?? null,
           coa_account_id: body.data.coa_account_id ?? null,
           priority: body.data.priority,
         },
@@ -211,6 +228,10 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
       if (body.data.plaid_category_pattern !== undefined) {
         values.push(body.data.plaid_category_pattern);
         updates.push(`plaid_category_pattern = $${values.length}`);
+      }
+      if (body.data.description_pattern !== undefined) {
+        values.push(body.data.description_pattern);
+        updates.push(`description_pattern = $${values.length}`);
       }
       if (body.data.coa_account_id !== undefined) {
         values.push(body.data.coa_account_id);

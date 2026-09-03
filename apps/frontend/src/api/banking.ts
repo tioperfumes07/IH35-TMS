@@ -278,6 +278,9 @@ export type CategorizationRule = {
   id: string;
   operating_company_id: string;
   plaid_category_pattern: string;
+  /** GO-23 (owner FINISH LAW 2026-09-03) — merchant-text match, scored ahead of
+   *  plaid_category_pattern by autoCategorize/scoreRuleMatch. Null = category-pattern-only rule. */
+  description_pattern: string | null;
   coa_account_id: string | null;
   priority: number;
   is_active: boolean;
@@ -1102,7 +1105,7 @@ export function getCategorizationPreview(operatingCompanyId: string) {
 
 export function createCategorizationRule(
   operatingCompanyId: string,
-  payload: { plaid_category_pattern: string; coa_account_id?: string | null; priority: number }
+  payload: { plaid_category_pattern: string; description_pattern?: string | null; coa_account_id?: string | null; priority: number }
 ) {
   return apiRequest<{ id: string }>(`/api/v1/banking/categorization-rules?${q(operatingCompanyId)}`, {
     method: "POST",
@@ -1113,7 +1116,13 @@ export function createCategorizationRule(
 export function updateCategorizationRule(
   id: string,
   operatingCompanyId: string,
-  payload: Partial<{ plaid_category_pattern: string; coa_account_id: string | null; priority: number; is_active: boolean }>
+  payload: Partial<{
+    plaid_category_pattern: string;
+    description_pattern: string | null;
+    coa_account_id: string | null;
+    priority: number;
+    is_active: boolean;
+  }>
 ) {
   return apiRequest<{ ok: true; id: string }>(`/api/v1/banking/categorization-rules/${id}?${q(operatingCompanyId)}`, {
     method: "PATCH",
