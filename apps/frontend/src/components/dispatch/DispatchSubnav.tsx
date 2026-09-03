@@ -39,6 +39,7 @@ const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
     href: "/dispatch?view=kanban",
     badgeKey: "load_board",
   },
+  { label: "Load costs", href: "/accounting/load-costs" },
   {
     label: "Assignments",
     href: "/dispatch/assignment-history",
@@ -116,6 +117,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   "/dispatch?view=kanban": "Load board",
   "/dispatch?view=list": "Load board",
   "/dispatch/loads": "Load board",
+  "/accounting/load-costs": "Load costs",
   "/dispatch/assignment-history": "Assignments",
   "/dispatch/at-risk": "At-Risk",
   "/dispatch/detention": "Detention",
@@ -199,6 +201,7 @@ export function dispatchSubNavActiveHref(
   if (pathname.startsWith("/dispatch/pod-review"))
     return "/dispatch/pod-review";
   if (pathname.startsWith("/dispatch/ocr-queue")) return "/dispatch/ocr-queue";
+  if (pathname.startsWith("/accounting/load-costs")) return "/accounting/load-costs";
   return pathname;
 }
 

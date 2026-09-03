@@ -1,10 +1,10 @@
 {
-  "healthzSha": "f01f8e1",
-  "generated_at": "2026-09-03T00:22:28.424Z",
+  "healthzSha": "753d4e3",
+  "generated_at": "2026-09-03T03:04:05.876Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "f01f8e1",
+    "deployedSha": "753d4e3",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 19885,
-      "title": "FINDING: BUS-HARD-WAKE-2-IDLE-DEFECT",
+      "number": 19983,
+      "title": "FINDING: N/A (docs only, bus announcement)",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 07:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19885",
-      "sha": "0d596591b3",
-      "committedAtIso": "2026-09-02T19:21:35-05:00"
+      "mergedAtCt": "09/02/2026, 09:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19983",
+      "sha": "adc1321cbd",
+      "committedAtIso": "2026-09-02T21:59:06-05:00"
     },
     {
-      "number": 19886,
-      "title": "FINDING: N/A -- CC-3 ACK C1 hard wake",
+      "number": 19981,
+      "title": "docs(bus): bank-categorization who-column handoff closed, returning to B5",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 07:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19886",
-      "sha": "81f9fdd48c",
-      "committedAtIso": "2026-09-02T19:21:32-05:00"
+      "mergedAtCt": "09/02/2026, 09:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19981",
+      "sha": "ac5dfefbb4",
+      "committedAtIso": "2026-09-02T21:57:14-05:00"
     },
     {
-      "number": 19884,
-      "title": "docs(bus): CC-1 ACK N1",
+      "number": 19982,
+      "title": "FINDING: ACCT-F9971 -- Factoring list is the one money list still showing voided rows by",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 07:20 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19884",
-      "sha": "48a0c9a17c",
-      "committedAtIso": "2026-09-02T19:20:35-05:00"
+      "mergedAtCt": "09/02/2026, 09:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19982",
+      "sha": "62e8347099",
+      "committedAtIso": "2026-09-02T21:56:53-05:00"
     },
     {
-      "number": 19883,
-      "title": "FINDING: BUS-HARD-WAKE-DEPLOY-1914",
+      "number": 19973,
+      "title": "CC-2-FINDING: ACCT-F19968 — accounting nav dropdown clipped by overflow-y (HoverDropdownNav portal fix)",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 07:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19883",
-      "sha": "98012a8603",
-      "committedAtIso": "2026-09-02T19:16:59-05:00"
+      "mergedAtCt": "09/02/2026, 09:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19973",
+      "sha": "a6e352bad1",
+      "committedAtIso": "2026-09-02T21:55:53-05:00"
     },
     {
-      "number": 19882,
-      "title": "FINDING: BUS-F1828",
+      "number": 19980,
+      "title": "GO-FINISH: bank_categorization_who_column (CC-3 handoff, BANK-CATEGORIZATION-WHO-SPEC-2026-09-03)",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 07:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19882",
-      "sha": "f01f8e124d",
-      "committedAtIso": "2026-09-02T19:09:59-05:00"
+      "mergedAtCt": "09/02/2026, 09:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19980",
+      "sha": "30195409b1",
+      "committedAtIso": "2026-09-02T21:55:21-05:00"
     },
     {
-      "number": 19881,
-      "title": "FINDING: GO-23-J1-BATCH-14-MIXED-NONMONEY",
+      "number": 19979,
+      "title": "CLAIM-RESERVE: fix claimed_by lane label for 202613550001 (cc-1 -> claude)",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 07:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19881",
-      "sha": "e1847c27ea",
-      "committedAtIso": "2026-09-02T19:08:16-05:00"
+      "mergedAtCt": "09/02/2026, 09:53 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19979",
+      "sha": "753d4e34b3",
+      "committedAtIso": "2026-09-02T21:53:24-05:00"
     },
     {
-      "number": 19880,
-      "title": "FINDING: GO-23-J1-BATCH-13-SHARED-INPUT-CONSTANT",
+      "number": 19978,
+      "title": "CLAIM-RESERVE: 202613550001 bank_categorization_who_column (CC-3 handoff)",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 07:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19880",
-      "sha": "2ce1562739",
-      "committedAtIso": "2026-09-02T19:04:51-05:00"
+      "mergedAtCt": "09/02/2026, 09:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19978",
+      "sha": "c2fd4b89ea",
+      "committedAtIso": "2026-09-02T21:51:34-05:00"
     },
     {
-      "number": 19879,
-      "title": "FINDING: BUS-F1827",
+      "number": 19977,
+      "title": "FINDING: ACCT-F19974 route exact post-deploy proof",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 07:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19879",
-      "sha": "22835e46af",
-      "committedAtIso": "2026-09-02T19:00:49-05:00"
+      "mergedAtCt": "09/02/2026, 09:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19977",
+      "sha": "7f68fb43a0",
+      "committedAtIso": "2026-09-02T21:50:51-05:00"
     },
     {
-      "number": 19878,
-      "title": "FINDING: GO18-GAP5-WORM-MISSING",
+      "number": 19976,
+      "title": "docs(bus): B8 comchek closed, deploy-blocked on final Chrome submit-proof",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 06:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19878",
-      "sha": "29c90c2c01",
-      "committedAtIso": "2026-09-02T18:58:38-05:00"
+      "mergedAtCt": "09/02/2026, 09:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19976",
+      "sha": "012528812d",
+      "committedAtIso": "2026-09-02T21:48:06-05:00"
     },
     {
-      "number": 19877,
-      "title": "FINDING: ACCT-F19876",
+      "number": 19975,
+      "title": "FINDING: ACCT-F19974 | money documents lacked a complete click-to-ledger proof trail",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 06:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19877",
-      "sha": "452c10b979",
-      "committedAtIso": "2026-09-02T18:58:07-05:00"
+      "mergedAtCt": "09/02/2026, 09:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19975",
+      "sha": "cb599ad500",
+      "committedAtIso": "2026-09-02T21:47:49-05:00"
     }
   ]
 }

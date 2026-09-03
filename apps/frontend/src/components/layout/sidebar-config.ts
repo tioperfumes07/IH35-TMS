@@ -222,6 +222,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
     case "dispatch":
       return [
         { label: "Dispatch Home", to: "/dispatch" },
+        { label: "Load costs", to: "/accounting/load-costs" },
         { label: "Loads", to: "/dispatch?view=loads" },
         { label: "Dispatch Chat", to: "/dispatch/chat" },
         { label: "At-Risk Queue", to: "/dispatch/at-risk" },

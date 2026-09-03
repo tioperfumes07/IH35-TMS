@@ -14,7 +14,6 @@ import {
   type SelectHTMLAttributes,
 } from "react";
 import { createPortal } from "react-dom";
-import { FILTER_CONTROL_SIZE_CLASS } from "../design/tokens";
 import { singleFrameLayoutClassName } from "../lib/single-frame-classname";
 
 export type ComboboxOption = {
@@ -416,7 +415,7 @@ export function Combobox({
             className="overflow-auto rounded-sm border border-gray-200 bg-white shadow-md"
           >
             {loading ? (
-              <div className="flex items-center gap-2 px-2 py-2 text-xs text-gray-600">
+              <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-gray-600">
                 <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-500" />
                 Loading...
               </div>
@@ -441,7 +440,7 @@ export function Combobox({
               </button>
             ) : null}
             {!loading && filteredOptions.length === 0 && !showAddNew ? (
-              <div className="px-2 py-2 text-xs text-gray-500">No matches</div>
+              <div className="px-2 py-1.5 text-xs text-gray-500">No matches</div>
             ) : null}
             {!loading && localBrowseTruncated ? (
               <div
@@ -488,7 +487,7 @@ export function Combobox({
         // FILTER LAW (COLUMN LAW 2026-09-01) — this is the ONE place the app's canonical filter/
         // combobox control height+font live; TableSearch.tsx now shares the same constant so a
         // filter and the search box sitting next to it in the same toolbar row never drift apart.
-        className={`flex ${FILTER_CONTROL_SIZE_CLASS} items-center gap-1 rounded border bg-white px-2 ${
+        className={`flex h-7 items-center gap-1 rounded border bg-white px-2 ${
           disabled
             ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
             : error

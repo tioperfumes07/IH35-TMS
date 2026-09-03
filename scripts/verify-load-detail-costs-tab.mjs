@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 const DRAWER = "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx";
 const COSTS = "apps/frontend/src/components/dispatch/LoadDetailCostsTab.tsx";
@@ -11,8 +14,10 @@ const SIDEBAR = "apps/frontend/src/components/layout/sidebar-config.ts";
 const DISPATCH = "apps/frontend/src/pages/dispatch/DispatchOverview.tsx";
 const PANEL = "apps/frontend/src/components/dispatch/DispatchLoadCostsPanel.tsx";
 const SUBNAV = "apps/frontend/src/pages/accounting/subnav-manifest.ts";
+const DNAV = "apps/frontend/src/components/dispatch/DispatchSubnav.tsx";
+const DPAGE = "apps/frontend/src/pages/Dispatch.tsx";
 
-function violations(drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav) {
+function violations(drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage) {
   const errors = [];
   if (!drawer.includes('"Costs",') || !drawer.includes('activeTab === "Costs"') || !drawer.includes("<LoadDetailCostsTab")) errors.push("13th Costs tab is not mounted");
   if (!costs.includes("listExpenses(opco, { load_id: load.id") || !costs.includes("listBills(opco, { load_id: load.id")) errors.push("existing load-scoped expense/bill reads are missing");
@@ -35,12 +40,21 @@ function violations(drawer, costs, board, routes, backend, finance, sidebar, dis
   if (!panel.includes("Approximate") || !panel.includes("data-testid=\"dispatch-load-costs-panel\"")) errors.push("Dispatch load-cost metrics dropped Approximate or the live proof hook");
   if (panel.includes('method: "POST"') || panel.includes("INSERT INTO")) errors.push("Dispatch load-cost panel writes");
   if (!subnav.includes('{ label: "Load costs", path: "/accounting/load-costs", section: "expenses" }')) errors.push("Expenses dropdown Load costs entry was removed");
+  if (!dnav.includes('{ label: "Load costs", href: "/accounting/load-costs" }')) errors.push("Dispatch menu has no Load costs entry — a buried panel is not a door");
+  if (!dpage.includes('{ id: "load_costs", label: "Load costs" }')) errors.push("Dispatch tab strip is missing Load costs next to the boards");
   return errors;
 }
 
-function check(drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav) {
-  const errors = violations(drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav);
+function check(...args) {
+  const errors = violations(...args);
   if (errors.length) throw new Error(errors.join("; "));
+}
+
+function runBookLoadGuard() {
+  const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "verify-book-load-money-and-controls.mjs");
+  const args = process.argv.includes("--selftest") ? [script, "--selftest"] : [script];
+  const result = spawnSync(process.execPath, args, { stdio: "inherit" });
+  if (result.status !== 0) process.exit(result.status ?? 1);
 }
 
 const drawer = fs.readFileSync(DRAWER, "utf8");
@@ -53,21 +67,24 @@ const sidebar = fs.readFileSync(SIDEBAR, "utf8");
 const dispatch = fs.readFileSync(DISPATCH, "utf8");
 const panel = fs.readFileSync(PANEL, "utf8");
 const subnav = fs.readFileSync(SUBNAV, "utf8");
+const dnav = fs.readFileSync(DNAV, "utf8");
+const dpage = fs.readFileSync(DPAGE, "utf8");
 
 if (process.argv.includes("--selftest")) {
-  const base = [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav];
+  const base = [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage];
   const mutations = [
-    [drawer.replace('"Costs",', '"Former costs",'), costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav],
-    [drawer, costs.replace('data-cost-driver-column="driver_id"', 'data-cost-driver-column="driver_uuid"'), board, routes, backend, finance, sidebar, dispatch, panel, subnav],
-    [drawer, costs.replace('type CostChoice = "expense" | "bill" | null', 'type CostChoice = "expense" | "bill"'), board, routes, backend, finance, sidebar, dispatch, panel, subnav],
-    [drawer, costs.replaceAll("No costs on this load yet.", "No rows."), board, routes, backend, finance, sidebar, dispatch, panel, subnav],
-    [drawer, costs, board.replaceAll("listAllLoads", "listRecentLoads"), routes, backend, finance, sidebar, dispatch, panel, subnav],
-    [drawer, costs, board, routes.replace('path="/accounting/load-costs"', 'path="/accounting/costs"'), backend, finance, sidebar, dispatch, panel, subnav],
-    [drawer, costs, board, routes, backend, finance.replaceAll("/accounting/load-costs", "/finance/load-costs"), sidebar, dispatch, panel, subnav],
-    [drawer, costs, board, routes, backend, finance, sidebar.replaceAll("Load costs", "Load P&L"), dispatch, panel, subnav],
-    [drawer, costs, board, routes, backend, finance, sidebar, dispatch.replace("<DispatchLoadCostsPanel", "<div"), panel, subnav],
-    [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel.replaceAll("Approximate", "Final"), subnav],
-    [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav.replace("Load costs", "Load spend")],
+    [drawer.replace('"Costs",', '"Former costs",'), costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
+    [drawer, costs.replace('data-cost-driver-column="driver_id"', 'data-cost-driver-column="driver_uuid"'), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
+    [drawer, costs.replace('type CostChoice = "expense" | "bill" | null', 'type CostChoice = "expense" | "bill"'), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
+    [drawer, costs.replaceAll("No costs on this load yet.", "No rows."), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
+    [drawer, costs, board.replaceAll("listAllLoads", "listRecentLoads"), routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
+    [drawer, costs, board, routes.replace('path="/accounting/load-costs"', 'path="/accounting/costs"'), backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
+    [drawer, costs, board, routes, backend, finance.replaceAll("/accounting/load-costs", "/finance/load-costs"), sidebar, dispatch, panel, subnav, dnav, dpage],
+    [drawer, costs, board, routes, backend, finance, sidebar.replaceAll("Load costs", "Load P&L"), dispatch, panel, subnav, dnav, dpage],
+    [drawer, costs, board, routes, backend, finance, sidebar, dispatch.replace("<DispatchLoadCostsPanel", "<div"), panel, subnav, dnav, dpage],
+    [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel.replaceAll("Approximate", "Final"), subnav, dnav, dpage],
+    [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav.replace("Load costs", "Load spend"), dnav, dpage],
+    [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav.replace("Load costs", "Load spend"), dpage],
   ];
   let caught = 0;
   for (const [index, args] of mutations.entries()) {
@@ -79,7 +96,9 @@ if (process.argv.includes("--selftest")) {
   }
   if (caught !== mutations.length) throw new Error(`selftest caught ${caught}/${mutations.length} planted regressions`);
   console.log(`PASS verify-load-detail-costs-tab --selftest (${caught}/${mutations.length})`);
+  runBookLoadGuard();
 } else {
-  check(drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav);
+  check(drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage);
   console.log("PASS verify-load-detail-costs-tab");
+  runBookLoadGuard();
 }

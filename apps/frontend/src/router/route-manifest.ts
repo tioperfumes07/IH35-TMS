@@ -180,6 +180,7 @@ export function factoringTabFromPath(pathname: string): string {
 export const DISPATCH_SECONDARY_TAB_PATH: Record<string, string> = {
   load_board: "/dispatch",
   book_load: "/dispatch/book-load",
+  load_costs: "/accounting/load-costs",
   assignments: "/dispatch/assignments",
   settlements: "/dispatch/settlements",
   pre_settlements: "/dispatch/pre-settlements",

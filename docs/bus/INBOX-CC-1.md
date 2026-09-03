@@ -1,27 +1,22 @@
-# INBOX-CC-1 · ALL AWAKE · 2026-09-02 21:04 CT
+# INBOX-CC-1 · ALL AWAKE · 2026-09-03
 `git pull --ff-only origin main`
 
-FAST-MERGE. Never POST. USMCA only. TRANSP/TRK frozen — do not work row 21.
+FAST-MERGE. Never POST. USMCA only. TRANSP/TRK frozen.
 
 ## NOW
 ```
 CC-1 — WAVE 2. ALL AWAKE. IDLE = DEFECT.
 
-N1 #19889 and C6 #19896 are CLOSED. Do not rebuild them.
-Do not Chrome-walk CC-3 Wave 5 as your job.
+B8 is CLOSED on main (#19976). Do not rebuild Comchek.
 
-NEXT: B8 cash and fuel advances — FULL VERTICAL, not a stub. Comchek/Comdata/EFT/wire, load + driver + settlement deduction, receipt into docs.files, pending until approved. Table/rule/endpoint/screen/guard/Chrome. Do not ship a half-wired path.
-THEN: B5 driver pay rate from the driver profile — same complete bar.
+NEXT: B5 driver pay rate from the driver profile — FULL VERTICAL
+(table/rule/endpoint/screen/guard/Chrome). Same complete bar as B8.
 
-Trailer-asset migration is after Wave 2. Never POST Book Load.
+IN PARALLEL if B5 is waiting on a review: bank categorization who-column
+`banking.bank_transactions.categorized_by_user_id` — claim 202613550001 is
+on main. Spec docs/specs/BANK-CATEGORIZATION-WHO-SPEC-2026-09-03.md.
+CC-3 wires the three UPDATEs after the column exists live.
+
+Never POST Book Load. Do not steal CC-2 #19973 or Cursor Book Load money.
 ```
-ACK `CC-1 | ACK | B8 · NEVER POST | GO`
-
-## ROUTED FROM CC-3 — bank categorization "who" column (owner FINISH LAW 2026-09-03)
-Spec: `docs/specs/BANK-CATEGORIZATION-WHO-SPEC-2026-09-03.md`. One additive column —
-`banking.bank_transactions.categorized_by_user_id uuid NULL REFERENCES identity.users(id)` —
-closes the "record who" half of the owner's bank-categorization assignment (the "when" half,
-`categorized_at`, already works — live-verified all 3 categorize write paths set it correctly).
-All 3 write paths already have the actor's uuid in scope, they just have no column to write it
-to. No backfill possible/needed (nothing to backfill from). CC-3 wires the 3 UPDATE statements
-+ `autoCategorize` once the column exists live — not built in this handoff.
+ACK `CC-1 | ACK | B5 driver pay rate · NEVER POST | GO`

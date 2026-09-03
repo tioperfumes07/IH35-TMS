@@ -47,6 +47,28 @@ describe("accessorial-editor-lib (B21-D3)", () => {
     expect(computeBookLoadSectionTotalCents(10000, 2000, rows)).toBe(13000);
   });
 
+  it("lets a negative accessorial deduct from the section total and reach charge lines", () => {
+    const rows = [
+      seedAccessorialRow("detention", { amount_cents: 50000 }),
+      seedAccessorialRow("misc_accessorial", { amount_cents: -25000, description: "Rate adjustment" }),
+    ];
+    expect(sumAccessorialCents(rows)).toBe(25000);
+    expect(computeBookLoadSectionTotalCents(0, 0, rows)).toBe(25000);
+    const lines = buildBookLoadChargeLines({
+      linehaul_cents: 0,
+      fuel_surcharge_cents: 0,
+      accessorial_rows: rows,
+    });
+    expect(lines.filter((line) => line.code !== "linehaul" && line.code !== "fuel_surcharge")).toEqual([
+      { code: "detention", description: "Detention", amount_cents: 50000 },
+      { code: "misc", description: "Rate adjustment", amount_cents: -25000 },
+    ]);
+  });
+
+  it("does not silently zero a negative linehaul — it still contributes 0 to the total", () => {
+    expect(computeBookLoadSectionTotalCents(-100, 0, [])).toBe(0);
+  });
+
   it("builds charge lines for book load payload", () => {
     const lines = buildBookLoadChargeLines({
       linehaul_cents: 50000,
