@@ -259,6 +259,13 @@ export function RecordExpenseForm({
       setError("Select operating company first");
       return;
     }
+    // GO-19-1b G1 — client-side mirror of the backend's hard reject: an expense with no truck
+    // cannot be costed. A picked load still satisfies this (Rung 2, backend-derived); only block
+    // when neither a unit nor a load is set.
+    if (!values.unitId && !values.loadId) {
+      setError("Truck/Unit is required (or pick a Load that already carries one). An expense with no truck cannot be costed.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -449,7 +456,10 @@ export function RecordExpenseForm({
 
       <div className="grid gap-3 md:grid-cols-2">
         <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("unit")}>
-          Truck/Unit (optional)
+          {/* GO-19-1b G1 (owner 2026-09-03) — "unit_id MANDATORY on every new expense. An expense
+              with no truck cannot be costed." Required unless a load is already picked (Rung 2 —
+              the backend derives unit_id from the load's own assigned unit in that case). */}
+          Truck/Unit {values.loadId ? "(from load)" : "*"}
           <div className="mt-1">
             <EntityPicker
               kind="unit"

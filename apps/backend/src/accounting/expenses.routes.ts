@@ -91,6 +91,13 @@ async function insertUnattributedAlert(client: any, operatingCompanyId: string, 
   );
 }
 
+// GO-19-1b G3 — fixed MONTHLY/PERIOD costs on the unit, never a trip cost. Owner's own examples were
+// insurance, plates, the truck note; only INSURANCE exists as a distinct catalogs.expense_categories
+// code today (verified live, USMCA catalog) — plates/truck-note are not yet split into their own
+// category codes, so this set is exactly the codes that exist and are unambiguously period-only, not
+// a guessed superset. Extend this set if/when a PLATES or TRUCK_NOTE (or similar) code is added.
+const FIXED_COST_CATEGORY_CODES = new Set(["INSURANCE"]);
+
 const createExpenseBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   // Draft id used by UploadZone for create-time receipts; reconciled onto the real expense id in the
@@ -757,6 +764,21 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           return { categoryNotInEntityCatalog: true as const };
         }
 
+        // GO-19-1b G3 (owner 2026-09-03) — "fixed-cost categories (insurance, plates, the truck note)
+        // may never carry a load_id." Rung 3: these are PERIOD costs on the UNIT, never trip costs;
+        // forcing one onto a load makes trip margin meaningless. Checked by category CODE, not name
+        // (catalogs.expense_categories.code is the stable identity; display_name is editable).
+        if (expenseCategoryId && body.load_id) {
+          const catCode = await client.query(
+            `SELECT code FROM catalogs.expense_categories WHERE id = $1::uuid LIMIT 1`,
+            [expenseCategoryId]
+          );
+          const code = String((catCode.rows[0] as { code?: string } | undefined)?.code ?? "").toUpperCase();
+          if (FIXED_COST_CATEGORY_CODES.has(code)) {
+            return { fixedCostCannotCarryLoadId: true as const, code };
+          }
+        }
+
         const columns: string[] = ["operating_company_id", "status", "transaction_date", "total_amount_cents"];
         const values: unknown[] = [body.operating_company_id, "posted", body.expense_date, body.amount_cents];
 
@@ -803,8 +825,37 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         }
 
         if (hasUnitId) {
+          // GO-19-1b (owner 2026-09-03, re-scoped FORWARD GUARANTEE — no backfill, no touching the
+          // frozen entities' 27,070 legacy rows): "unit_id MANDATORY on every new expense. An
+          // expense with no truck cannot be costed." Rung 1 (direct trace) wins when the caller
+          // already knows the truck; Rung 2 ("trace to the leg; the leg carries the truck") derives
+          // it from mdata.loads.assigned_unit_id when the caller only sent load_id (e.g.
+          // LoadDetailCostsTab's load-scoped cost entries never asked the operator to repick the
+          // unit the load already carries). G1 (below) rejects only when NEITHER source resolves one.
+          let resolvedUnitId = body.unit_id ?? null;
+          if (body.load_id) {
+            const loadUnit = await client.query(
+              `SELECT assigned_unit_id::text AS assigned_unit_id
+                 FROM mdata.loads
+                WHERE id = $1::uuid AND operating_company_id = $2::uuid
+                LIMIT 1`,
+              [body.load_id, body.operating_company_id]
+            );
+            const loadAssignedUnitId =
+              (loadUnit.rows[0] as { assigned_unit_id?: string | null } | undefined)?.assigned_unit_id ?? null;
+            // G2 — an expense may never carry a load_id whose load has a DIFFERENT unit_id. Only a
+            // real mismatch (both non-null, different) is rejected; a load with no unit assigned yet
+            // has nothing to conflict with, so an explicit unit_id still stands.
+            if (resolvedUnitId && loadAssignedUnitId && resolvedUnitId !== loadAssignedUnitId) {
+              return { unitLoadMismatch: true as const, unitId: resolvedUnitId, loadUnitId: loadAssignedUnitId };
+            }
+            if (!resolvedUnitId) resolvedUnitId = loadAssignedUnitId;
+          }
+          if (!resolvedUnitId) {
+            return { unitIdRequired: true as const };
+          }
           columns.push(`unit_id`);
-          values.push(body.unit_id ?? null);
+          values.push(resolvedUnitId);
         }
 
         if (hasTrailerId) {
@@ -1160,6 +1211,30 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       });
 
       if ("unavailable" in payload) return reply.code(501).send({ error: "accounting_expenses_schema_missing" });
+      // GO-19-1b G1 — "an expense with no truck cannot be costed." unit_id must be supplied directly
+      // or derivable from load_id's mdata.loads.assigned_unit_id; neither resolving is a hard reject,
+      // never a silent NULL write.
+      if ("unitIdRequired" in payload)
+        return reply.code(400).send({
+          error: "unit_id_required",
+          detail:
+            "An expense with no truck cannot be costed. Provide unit_id directly, or a load_id whose load already carries an assigned unit.",
+        });
+      // GO-19-1b G2 — an expense may not carry a load_id whose load has a DIFFERENT unit_id.
+      if ("unitLoadMismatch" in payload)
+        return reply.code(400).send({
+          error: "unit_load_mismatch",
+          detail: "The supplied unit_id does not match the load's own assigned unit.",
+          unit_id: (payload as { unitId?: string }).unitId ?? null,
+          load_unit_id: (payload as { loadUnitId?: string }).loadUnitId ?? null,
+        });
+      if ("fixedCostCannotCarryLoadId" in payload)
+        return reply.code(400).send({
+          error: "fixed_cost_cannot_carry_load_id",
+          detail:
+            "This is a fixed period cost on the unit (insurance/plates/note), not a trip cost. Remove the load_id -- forcing a period cost onto a load makes trip margin meaningless.",
+          category_code: (payload as { code?: string }).code ?? null,
+        });
       if ("categoryUnbridged" in payload)
         return reply.code(409).send({
           error: "category_not_in_ledger_chart",
