@@ -38,7 +38,12 @@ const WIRING = [
 
 const PRODUCER_WIRING = [
   /SELECT COUNT\(\*\)::int AS total_count[\s\S]{0,220}JOIN LATERAL mdata\.get_customer_same_company\(\s*l\.customer_id,\s*l\.operating_company_id\s*\) c ON true/,
-  /c\.customer_name AS customer_name[\s\S]{0,900}FROM mdata\.loads l\s+JOIN LATERAL mdata\.get_customer_same_company\(\s*l\.customer_id,\s*l\.operating_company_id\s*\) c ON true/,
+  // DISP-F9996 -- the {0,900} cap went stale as loads.routes.ts's SELECT list grew (trailer_id/
+  // trailer_number/flag_*/geofence_ready columns landed between customer_name and FROM after this
+  // guard was written); the real gap is ~1390 chars today. Widened with headroom, not shrunk to fit
+  // by trimming the SELECT -- the wiring itself (LATERAL mdata.get_customer_same_company, archived-
+  // customer-safe) was never broken, only this window was too tight to see it.
+  /c\.customer_name AS customer_name[\s\S]{0,2000}FROM mdata\.loads l\s+JOIN LATERAL mdata\.get_customer_same_company\(\s*l\.customer_id,\s*l\.operating_company_id\s*\) c ON true/,
 ];
 
 function read(rel) {

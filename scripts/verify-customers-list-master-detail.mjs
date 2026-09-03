@@ -92,7 +92,11 @@ export function audit(src) {
   if (!/params\.set\("tab", next\)/.test(src.customers)) {
     failures.push(`${FILES.customers}: secondary detail tabs must write their canonical tab id to the URL`);
   }
-  if (!/activeId=\{activeTab\} onChange=\{\(id\) => setActiveTab\(id as CustomerTabId\)\}/.test(src.customers)) {
+  // DISP-F9997 -- NavyPageSubNav's real prop is onTabChange (NavyPageSubNav.tsx:19), not onChange;
+  // this regex also required a literal single space between activeId={...} and the next prop, which
+  // JSX attribute formatting never produces (each prop is its own line). Both re-anchored to the
+  // actual, correct, working wiring rather than to a name/shape that component never had.
+  if (!/activeId=\{activeTab\}\s+onTabChange=\{\(id\) => setActiveTab\(id as CustomerTabId\)\}/.test(src.customers)) {
     failures.push(`${FILES.customers}: secondary detail tab controls must drive the canonical URL-backed active tab`);
   }
   if (!/qboAvailable\s*=\s*selectedCompany\?\.code\s*===\s*"TRANSP"/.test(src.customers)) {
@@ -197,7 +201,7 @@ if (process.argv.includes("--selftest")) {
     ["coi-read-customer-id", "coi", /(listInsuranceCoiRequests\(\{[\s\S]*?)customer_id: customerId/, "$1customer_id: undefined"],
     ["coi-create-customer-id", "coi", /(createInsuranceCoiRequest\(\{[\s\S]*?)customer_id: input\.customerId/, "$1customer_id: undefined"],
     ["detail-tab-url", "customers", /params\.set\("tab", next\)/, 'params.set("panel", next)'],
-    ["detail-tab-control", "customers", /activeId=\{activeTab\} onChange=\{\(id\) => setActiveTab\(id as CustomerTabId\)\}/, 'activeId={activeTab} onChange={() => undefined}'],
+    ["detail-tab-control", "customers", /onTabChange=\{\(id\) => setActiveTab\(id as CustomerTabId\)\}/, "onTabChange={() => undefined}"],
     ["qbo-capability", "customers", /qboAvailable\s*=\s*selectedCompany\?\.code\s*===\s*"TRANSP"/, "qboAvailable = true"],
     [
       "sync-panel-capability-gate",
