@@ -1,17 +1,15 @@
-# INBOX-CASCADE · CURSOR LEAD · HARD WAKE 2 · 2026-09-02 19:20 CT
+# INBOX-CASCADE · CURSOR LEAD · CENSUS HARD WAKE · 2026-09-02 19:25 CT
 
 `git pull --ff-only origin main`
 
-FAST-MERGE. Never POST Book Load.
+FINDINGS only. Never build. Never POST.
 
-## NOW — IDLE SINCE WAKE 1 = DEFECT
+## NOW — OUTBOX EMPTY = DEFECT
 
 ```
-CASCADE — HARD WAKE 2. YOU DID NOT ACK. START NOW.
-
-ONE unique FINDING file:line THIS TURN. NEVER BUILD.
-Local gate exit 0 → push → gh pr create → gh api merge squash.
-Never gh pr checks --watch. OUTBOX one-liner THIS TURN then BUILD.
+CASCADE — HARD WAKE. Write ONE unique FINDING with file:line THIS TURN.
+Do NOT rebuild Gap5 / Costs / N1 / mint / KPI.
+GO-23 next open FINDING row only.
 ```
 
-ACK `CASCADE | ACK | HARD WAKE 2 · NEVER POST | GO`
+ACK `CASCADE | ACK | FINDING this turn · NEVER BUILD | GO`
