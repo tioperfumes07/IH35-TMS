@@ -1,11 +1,5 @@
-# INBOX-CC-3 · CURSOR LEAD · FINISH-ALL · 2026-09-02 19:41 CT
-
+# INBOX-CC-3 · HARD WAKE · 2026-09-02 20:50 CT
 `git pull --ff-only origin main`
-
-FAST-MERGE. Never POST Book Load.
-
 ## NOW
-```
-CC-3 — TURBO FINISH-ALL. Next GO-23 CC-3 row after trailer-asset #19895. Never POST.
-ACK OUTBOX one-liner when you ship. Never idle.
-```
+CC-3 — HARD WAKE. Finish H1 planner name truncation, ship, next Wave5. Never idle. Never POST.
+ACK `CC-3 | ACK | HARD WAKE | GO`
