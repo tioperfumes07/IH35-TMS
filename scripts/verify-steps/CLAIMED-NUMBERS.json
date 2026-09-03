@@ -7298,5 +7298,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-03",
     "purpose": "verify-expense-unit-id-mandatory (GO-19-1b: G1/G2/G3 unit_id mandatory on new accounting.expenses rows)"
+  },
+  "10257": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-lane-mileage-merge-and-rescore (GO-19-2b Section 0: merge duplicate lane-key variants before run-count+relative-spread confidence rescore, practical_min/max stay literal NULL)"
   }
 }
