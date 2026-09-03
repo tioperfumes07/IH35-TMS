@@ -1,6 +1,6 @@
 {
   "healthzSha": "629f6c9",
-  "generated_at": "2026-09-03T23:27:32.046Z",
+  "generated_at": "2026-09-03T23:39:07.565Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
@@ -2123,6 +2123,42 @@
   },
   "recentActivity": [
     {
+      "number": 20170,
+      "title": "FINDING: unblock FleetTable production build",
+      "state": "merged",
+      "mergedAtCt": "09/03/2026, 06:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20170",
+      "sha": "a861529601",
+      "committedAtIso": "2026-09-03T18:37:11-05:00"
+    },
+    {
+      "number": 20167,
+      "title": "FINDING: BANK-F9998",
+      "state": "merged",
+      "mergedAtCt": "09/03/2026, 06:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20167",
+      "sha": "a223f82e4a",
+      "committedAtIso": "2026-09-03T18:35:34-05:00"
+    },
+    {
+      "number": 20169,
+      "title": "FINDING: N/A (docs only, derived-artifact regen)",
+      "state": "merged",
+      "mergedAtCt": "09/03/2026, 06:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20169",
+      "sha": "5cc7642505",
+      "committedAtIso": "2026-09-03T18:31:44-05:00"
+    },
+    {
+      "number": 20168,
+      "title": "FINDING: N/A (docs only) — owner 72h/96h inventory and defect register on main",
+      "state": "merged",
+      "mergedAtCt": "09/03/2026, 06:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20168",
+      "sha": "92d4d03bca",
+      "committedAtIso": "2026-09-03T18:30:45-05:00"
+    },
+    {
       "number": 20166,
       "title": "FINDING: SAFETY-CDL-INTAKE-STATUS-COLUMN-READY-CC1-MUST-AUTHOR",
       "state": "merged",
@@ -2175,42 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20161",
       "sha": "856c3be8f6",
       "committedAtIso": "2026-09-03T18:10:56-05:00"
-    },
-    {
-      "number": 20153,
-      "title": "FINDING: Fleet column order was fixed and not persisted",
-      "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20153",
-      "sha": "629f6c9f85",
-      "committedAtIso": "2026-09-03T18:08:23-05:00"
-    },
-    {
-      "number": 20157,
-      "title": "FINDING: LST-F20306 (GO-19-2b item 3: pre-settlement linking was opt-in and suggest-only, never auto-confirmed)",
-      "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20157",
-      "sha": "3b05ce8b1c",
-      "committedAtIso": "2026-09-03T18:04:34-05:00"
-    },
-    {
-      "number": 20156,
-      "title": "CC-2-FINDING: BANK-F9998 F3+F4 — Match drawer excludes reversed JEs and closes the multi-match hole",
-      "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20156",
-      "sha": "71d772e0dc",
-      "committedAtIso": "2026-09-03T18:02:37-05:00"
-    },
-    {
-      "number": 20160,
-      "title": "docs(bus): OUTBOX -- item 3 closed + phantom-relation-guard registry fix + entity-scope flag on cited gap figures",
-      "state": "merged",
-      "mergedAtCt": "09/03/2026, 05:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20160",
-      "sha": "f50bc9833f",
-      "committedAtIso": "2026-09-03T17:59:20-05:00"
     }
   ]
 }
