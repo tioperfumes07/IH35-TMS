@@ -588,7 +588,7 @@ export function FleetTable({
         {(selectCtx) => (
           <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="w-full table-fixed text-left text-xs">
-              <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
+              <thead className="bg-gray-50 text-[11px] uppercase text-gray-600">
                 <tr>
                   <th className="w-8 px-2 py-1">
                     <TableSelectionHeader
@@ -678,7 +678,7 @@ export function FleetTable({
                     <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <button
                         type="button"
-                        className="rounded-sm border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-700 hover:bg-gray-50"
+                        className="rounded-sm border border-gray-300 bg-white px-1.5 py-0.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
                         aria-label={
                           row.kind === "trailer"
                             ? `Edit trailer ${entityLabel(row.unit_number, row.id, "Trailer")}`

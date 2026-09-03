@@ -379,8 +379,8 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
                 }`}
               >
                 <div className="mb-1.5 flex items-start justify-between gap-2">
-                  <span className="min-w-0 truncate text-[13px] font-semibold text-slate-900">{card.displayName}</span>
-                  <span className="shrink-0 rounded-sm border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-500">
+                  <span className="min-w-0 truncate text-xs font-semibold text-slate-900">{card.displayName}</span>
+                  <span className="shrink-0 rounded-sm border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500">
                     {card.status || "—"}
                   </span>
                 </div>

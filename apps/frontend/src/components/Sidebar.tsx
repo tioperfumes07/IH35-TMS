@@ -89,13 +89,13 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
                       <div className="flex items-center justify-center">
                         <meta.Icon className="h-4 w-4" />
                         {showMaintBadge ? (
-                          <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white">
+                          <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-semibold leading-none text-white">
                             {severeBadgeCount}
                           </span>
                         ) : null}
                       </div>
                       <span
-                        className="mt-1 text-[10px] leading-none uppercase"
+                        className="mt-1 text-[11px] leading-none uppercase"
                         style={{
                           color: "white",
                           letterSpacing: "0.4px",

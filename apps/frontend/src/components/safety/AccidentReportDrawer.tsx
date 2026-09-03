@@ -812,7 +812,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
           </label>
         </div>
         {!canMutate ? (
-          <div className="mt-1 text-[10px] text-slate-500" data-testid="accident-photo-gate-note">
+          <div className="mt-1 text-xs text-slate-500" data-testid="accident-photo-gate-note">
             Save the report first to attach photos.
           </div>
         ) : null}
@@ -885,7 +885,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
 function Field({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
   return (
     <div className={`space-y-1 ${className ?? ""}`}>
-      <label className="text-[10px] font-semibold uppercase text-gray-600">{label}</label>
+      <label className="text-[11px] font-semibold uppercase text-gray-600">{label}</label>
       {children}
     </div>
   );

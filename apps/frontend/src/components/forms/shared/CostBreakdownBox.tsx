@@ -144,7 +144,7 @@ export function CostBreakdownBox({
       <div className="cost-box-header bg-[#1b2333] px-4 py-[9px] text-[11px] font-bold uppercase tracking-wide text-white">Cost Breakdown</div>
       <div className="cost-box-body">
         <div className="cost-sub border-b border-gray-200">
-          <div className="cost-sub-header bg-gray-50 px-[14px] py-[7px] text-[10px] font-bold uppercase tracking-wide text-slate-700">
+          <div className="cost-sub-header bg-gray-50 px-[14px] py-[7px] text-[11px] font-bold uppercase tracking-wide text-slate-700">
             Section A - Category lines
           </div>
           <div className="p-2">
@@ -337,7 +337,7 @@ export function CostBreakdownBox({
         </div>
 
         <div className="cost-sub">
-          <div className="cost-sub-header bg-gray-50 px-[14px] py-[7px] text-[10px] font-bold uppercase tracking-wide text-slate-700">
+          <div className="cost-sub-header bg-gray-50 px-[14px] py-[7px] text-[11px] font-bold uppercase tracking-wide text-slate-700">
             Section B - Item lines (service items / parts / labor)
           </div>
           <div className="space-y-2 p-2">
