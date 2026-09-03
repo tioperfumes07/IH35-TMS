@@ -83,7 +83,7 @@ export function DrillKpiCard({
     compact ? "px-2 py-1 text-[11px]" : "px-3 py-2",
   ].join(" ");
   const labelClass = compact
-    ? "text-[10px] uppercase tracking-wide text-gray-500"
+    ? "text-[11px] uppercase tracking-wide text-gray-500"
     : "text-[11px] uppercase tracking-wide text-gray-500";
   const valueClass = compact
     ? `font-semibold ${VALUE_TONE[valueTone]}`

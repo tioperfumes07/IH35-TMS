@@ -27,7 +27,7 @@ export function PhotoDiffViewer({ pre, post, angleLabel }: Props) {
             </div>
           )}
           {side.sha256 ? (
-            <p className="mt-2 break-all font-mono text-[10px] text-slate-500">{side.sha256.slice(0, 24)}…</p>
+            <p className="mt-2 break-all font-mono text-xs text-slate-500">{side.sha256.slice(0, 24)}…</p>
           ) : null}
         </div>
       ))}

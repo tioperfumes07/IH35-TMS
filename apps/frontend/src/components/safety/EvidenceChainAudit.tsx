@@ -17,7 +17,7 @@ export function EvidenceChainAudit({ events }: Props) {
           <span className="absolute left-[-9px] top-1 h-2 w-2 rounded-full bg-[#1f2a44]" />
           <div className="font-semibold capitalize">{event.event_kind}</div>
           <div className="text-slate-500">{new Date(event.occurred_at).toLocaleString()}</div>
-          <div className="font-mono text-[10px] text-slate-400">{event.sha256_at_event.slice(0, 16)}…</div>
+          <div className="font-mono text-xs text-slate-400">{event.sha256_at_event.slice(0, 16)}…</div>
         </li>
       ))}
       {events.length === 0 ? <li className="text-xs text-slate-500">No custody events yet.</li> : null}

@@ -18,7 +18,7 @@ function ReadyBadge({ label }: { label: string }) {
         ? { bg: "#e2e8f0", fg: "#334155" }
         : { bg: "#e2e8f0", fg: "#1f2a44" };
   return (
-    <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em]" style={{ background: palette.bg, color: palette.fg }}>
+    <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.04em]" style={{ background: palette.bg, color: palette.fg }}>
       {label}
     </span>
   );

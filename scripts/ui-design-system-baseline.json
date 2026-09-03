@@ -1,8 +1,8 @@
 {
-  "off_locked_scale_sizes": 131,
-  "files_off_locked_scale": 113,
-  "raw_font_sizes": 1487,
-  "files_with_raw_font_sizes": 455,
+  "off_locked_scale_sizes": 112,
+  "files_off_locked_scale": 94,
+  "raw_font_sizes": 1475,
+  "files_with_raw_font_sizes": 444,
   "trapping_picker_total": 268,
   "picker:components/parity/EntityPicker": 106,
   "picker:components/shared/SelectCombobox": 154,

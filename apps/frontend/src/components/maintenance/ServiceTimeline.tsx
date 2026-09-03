@@ -136,7 +136,7 @@ export function ServiceTimeline({ companyId, unitId, equipmentId, showUnitEventT
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-gray-900">{event.title}</span>
-                    <span className="text-[10px] uppercase tracking-wide text-gray-500">{event.event_type.replace(/_/g, " ")}</span>
+                    <span className="text-[11px] uppercase tracking-wide text-gray-500">{event.event_type.replace(/_/g, " ")}</span>
                   </div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-gray-600">
                     <span>{formatDateUS(event.occurred_at)}</span>

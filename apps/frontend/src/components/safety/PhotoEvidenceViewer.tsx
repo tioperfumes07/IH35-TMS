@@ -39,7 +39,7 @@ export function PhotoEvidenceViewer({ open, onClose, imageUrl, sha256, exif }: P
           <dl className="space-y-1 text-slate-600">
             <div>
               <dt className="font-semibold">SHA-256</dt>
-              <dd className="break-all font-mono text-[10px]">{sha256 ?? "—"}</dd>
+              <dd className="break-all font-mono text-xs">{sha256 ?? "—"}</dd>
             </div>
             <div>
               <dt className="font-semibold">Captured</dt>
