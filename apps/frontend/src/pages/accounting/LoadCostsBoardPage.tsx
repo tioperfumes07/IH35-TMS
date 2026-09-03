@@ -9,7 +9,6 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
-import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 type CostAggregate = {
   load_id: string;
@@ -23,7 +22,7 @@ type CostAggregate = {
 
 type BoardRow = CostAggregate & { load: DispatchLoadRow };
 type FilterPill = "in_motion" | "delivered_open" | "all_open" | "this_week";
-type SortKey = "load" | "revenue" | "costs" | "driver" | "margin";
+type SortKey = "load" | "incurred" | "revenue" | "costs" | "driver" | "margin";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const formatMoney = (cents: number) => money.format(cents / 100);
@@ -50,6 +49,15 @@ function statusLabel(status: LoadStatus): string {
   if (status === "delivered" || status === "delivered_pending_docs") return "Delivered";
   if (status === "assigned_not_dispatched") return "Assigned";
   return status.replaceAll("_", " ");
+}
+
+// Owner design (2026-09-03) named 3 explicit chip colors; every other status keeps a neutral
+// chip rather than inventing an unnamed color.
+function statusChipColors(status: LoadStatus): { bg: string; text: string } {
+  if (status === "in_transit") return { bg: "#E3ECE8", text: "#2B5F52" };
+  if (status === "delivered" || status === "delivered_pending_docs") return { bg: "#F5EEDA", text: "#8A6410" };
+  if (status === "at_pickup") return { bg: "#F4E7E0", text: "#8A4020" };
+  return { bg: "#F3F4F6", text: "#4B5563" };
 }
 
 function lane(load: DispatchLoadRow): string {
@@ -217,12 +225,14 @@ export function LoadCostsBoardPage() {
     return [...filtered].sort((a, b) => {
       const av =
         sortKey === "load" ? a.load.load_number :
+        sortKey === "incurred" ? Date.parse(a.load.created_at) :
         sortKey === "revenue" ? a.load.rate_total_cents :
         sortKey === "costs" ? costCents(a) :
         sortKey === "driver" ? driverPayCents(a) :
         marginCents(a);
       const bv =
         sortKey === "load" ? b.load.load_number :
+        sortKey === "incurred" ? Date.parse(b.load.created_at) :
         sortKey === "revenue" ? b.load.rate_total_cents :
         sortKey === "costs" ? costCents(b) :
         sortKey === "driver" ? driverPayCents(b) :
@@ -253,7 +263,7 @@ export function LoadCostsBoardPage() {
   const headerBtn = (key: SortKey, label: string) => (
     <button
       type="button"
-      className="text-center font-bold uppercase tracking-wide text-[#4B5563]"
+      className="text-center font-bold uppercase tracking-wide text-white"
       style={{ fontSize: 11 }}
       onClick={() => clickSort(key)}
     >
@@ -262,7 +272,13 @@ export function LoadCostsBoardPage() {
   );
 
   return (
-    <AccountingSubNavWrapper title="Load costs" subtitle="Live loads, costs on the incurred date, approximate margin. This board reads. It does not post.">
+    <div className="space-y-4">
+      <div>
+        <h1 className="font-semibold text-[#0F1219]" style={{ fontSize: 22 }}>Load costs</h1>
+        <p className="text-sm text-[#6B7280]">
+          Live loads, costs on the incurred date, approximate margin. This board reads. It does not post.
+        </p>
+      </div>
       {query.isError ? <ListErrorState title="Could not load the costs board." status={(query.error as { status?: number })?.status ?? 0} onRetry={() => void query.refetch()} /> : null}
       {query.isLoading ? <div className="rounded border border-[#E5E7EB] bg-white p-4 text-xs text-[#6B7280]">Loading load costs…</div> : null}
       {!query.isLoading && !query.isError ? (
@@ -280,7 +296,7 @@ export function LoadCostsBoardPage() {
                   key={id}
                   type="button"
                   onClick={() => setFilter(id)}
-                  className={`rounded-full border px-3 py-1 text-xs ${filter === id ? "border-[#16A34A] bg-[#16A34A] text-white" : "border-[#E5E7EB] text-[#6B7280]"}`}
+                  className={`rounded-full border px-3 py-1 text-xs ${filter === id ? "border-[#14314F] bg-[#14314F] text-white" : "border-[#E5E7EB] text-[#6B7280]"}`}
                 >
                   {label}
                 </button>
@@ -324,11 +340,10 @@ export function LoadCostsBoardPage() {
             </div>
           </div>
 
-          <div className="hidden grid-cols-[150px_88px_1fr_96px_96px_96px_104px_34px] gap-2.5 border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-2 md:grid">
+          <div className="hidden grid-cols-[150px_1fr_104px_96px_96px_96px_104px_34px] gap-2.5 border-b border-[#E5E7EB] bg-[#14314F] px-4 py-2 md:grid">
             {headerBtn("load", "Load")}
-            <div className="text-center font-bold uppercase tracking-wide text-[#4B5563]" style={{ fontSize: 11 }}>Incurred</div>
-            <div className="text-center font-bold uppercase tracking-wide text-[#4B5563]"
-      style={{ fontSize: 11 }}>Route and crew</div>
+            <div className="text-center font-bold uppercase tracking-wide text-white" style={{ fontSize: 11 }}>Route and crew</div>
+            {headerBtn("incurred", "Incurred")}
             {headerBtn("revenue", "Revenue")}
             {headerBtn("costs", "Costs")}
             {headerBtn("driver", "Driver")}
@@ -347,15 +362,19 @@ export function LoadCostsBoardPage() {
                 <button
                   type="button"
                   onClick={() => setOpenId(open ? null : row.load.id)}
-                  className={`grid w-full grid-cols-1 items-center gap-2 border-b border-[#E5E7EB] px-4 py-2.5 text-left text-xs md:grid-cols-[150px_88px_1fr_96px_96px_96px_104px_34px] ${open ? "bg-[#F0FDF4]" : "bg-white"}`}
+                  className={`grid w-full grid-cols-1 items-center gap-2 border-b border-[#E5E7EB] px-4 py-2.5 text-left text-xs md:grid-cols-[150px_1fr_104px_96px_96px_96px_104px_34px] ${open ? "bg-[#F0FDF4]" : "bg-white"}`}
                 >
                   <div>
                     <Link className="font-semibold text-slate-700 underline" to={`/dispatch/loads/${encodeURIComponent(row.load.id)}?tab=Costs`} onClick={(event) => event.stopPropagation()}>
                       {row.load.load_number}
                     </Link>
-                    <div className="mt-0.5 font-bold uppercase text-[#4B5563]" style={{ fontSize: 11 }}>{statusLabel(row.load.status)}</div>
+                    <div
+                      className="mt-0.5 inline-block rounded-sm px-1.5 py-0.5 font-bold uppercase"
+                      style={{ fontSize: 11, backgroundColor: statusChipColors(row.load.status).bg, color: statusChipColors(row.load.status).text }}
+                    >
+                      {statusLabel(row.load.status)}
+                    </div>
                   </div>
-                  <div className="text-center tabular-nums text-[#0F1219]">{formatDateUS(row.load.created_at)}</div>
                   <div>
                     <div>{lane(row.load)}</div>
                     <div className="text-xs text-[#6B7280]">
@@ -366,6 +385,7 @@ export function LoadCostsBoardPage() {
                       {row.load.assigned_unit_id ? <EntityLink kind="unit" id={row.load.assigned_unit_id} label={entityLabel(row.load.assigned_unit_number, row.load.assigned_unit_id, "Truck")} /> : "Not assigned"}
                     </div>
                   </div>
+                  <div className="text-center tabular-nums text-[#0F1219]">{formatDateUS(row.load.created_at)}</div>
                   <div className="text-right tabular-nums">{formatMoney(Number(row.load.rate_total_cents))}</div>
                   <div className="text-right tabular-nums">{formatMoney(costCents(row))}</div>
                   <div className="text-right tabular-nums">{formatMoney(driverPayCents(row))}</div>
@@ -380,6 +400,6 @@ export function LoadCostsBoardPage() {
           })}
         </div>
       ) : null}
-    </AccountingSubNavWrapper>
+    </div>
   );
 }
