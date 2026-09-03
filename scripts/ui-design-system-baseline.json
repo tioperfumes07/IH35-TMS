@@ -3,8 +3,8 @@
   "files_off_locked_scale": 0,
   "raw_font_sizes": 1391,
   "files_with_raw_font_sizes": 400,
-  "trapping_picker_total": 268,
+  "trapping_picker_total": 260,
   "picker:components/parity/EntityPicker": 106,
   "picker:components/shared/SelectCombobox": 154,
-  "picker:components/shared/Combobox": 8
+  "picker:components/shared/Combobox": 0
 }

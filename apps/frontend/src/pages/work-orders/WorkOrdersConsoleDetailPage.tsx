@@ -18,7 +18,7 @@ import {
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
-import { Combobox } from "../../components/shared/Combobox";
+import { SimpleCombobox as Combobox } from "../../components/Combobox";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";

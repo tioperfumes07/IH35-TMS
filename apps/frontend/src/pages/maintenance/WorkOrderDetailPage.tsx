@@ -16,7 +16,7 @@ import { Button } from "../../components/Button";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../components/forms/TwoSectionLineEditor";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { FlatFieldGrid } from "../../components/layout/FlatFieldGrid";
-import { Combobox } from "../../components/shared/Combobox";
+import { SimpleCombobox as Combobox } from "../../components/Combobox";
 import { UploadZone } from "../../components/UploadZone";
 import { LaborTracker } from "../../components/maintenance/LaborTracker";
 import { TasksTab } from "../../components/tasks/TasksTab";

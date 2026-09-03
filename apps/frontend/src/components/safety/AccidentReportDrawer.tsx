@@ -20,7 +20,7 @@ import { ParityDrawer } from "../parity/ParityDrawer";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
 import { TotalsStack } from "../forms/shared/TotalsStack";
-import { Combobox } from "../shared/Combobox";
+import { SimpleCombobox as Combobox } from "../Combobox";
 import { EntityPicker } from "../parity/EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { useToast } from "../Toast";

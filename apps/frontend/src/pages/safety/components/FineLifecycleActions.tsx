@@ -11,7 +11,7 @@ import {
 import { useAuth } from "../../../auth/useAuth";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { Combobox } from "../../../components/shared/Combobox";
+import { SimpleCombobox as Combobox } from "../../../components/Combobox";
 import { companyToday } from "../../../lib/businessDate";
 import { formatDateUS } from "../../../lib/formatDate";
 import { CappedListNotice } from "../../../components/CappedListNotice";
