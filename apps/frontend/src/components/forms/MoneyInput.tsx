@@ -104,12 +104,21 @@ export function MoneyInput({
           // W-3 (10× money bug): a zero/empty field must clear to "" on focus, NOT "0". Leaving a "0" let
           // the cursor land before it and typed digits prepend ("1500" + "0" = "15000" → parseToCents →
           // 1500000 = 10×). Empty-on-zero removes the leftover digit; a real value still shows for editing.
-          setText(rawValue ? String(rawValue) : "");
+          // Negatives are truthy — keep them editable (accessorial discounts / chargebacks).
+          setText(rawValue != null && rawValue !== 0 ? String(rawValue) : "");
         }}
         onChange={(e) => {
-          setText(e.target.value);
-          if (isDollars) onChangeDollars?.(parseToDollars(e.target.value));
-          else onChangeCents?.(parseToCents(e.target.value));
+          const next = e.target.value;
+          setText(next);
+          // Incomplete typed states ("-", "-.", ".") must NOT emit null — AccessorialEditor and
+          // most callers coerce null → 0, which made a -250 adjustment impossible (the minus key
+          // zeroed the field before digits arrived). Only emit when empty or a complete number.
+          const cleaned = next.replace(/[^0-9.-]/g, "");
+          if (cleaned === "-" || cleaned === "." || cleaned === "-." || cleaned === "-0.") {
+            return;
+          }
+          if (isDollars) onChangeDollars?.(parseToDollars(next));
+          else onChangeCents?.(parseToCents(next));
         }}
         onBlur={() => {
           setFocused(false);
