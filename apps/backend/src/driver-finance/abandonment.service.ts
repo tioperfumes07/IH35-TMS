@@ -5,6 +5,7 @@
 // JE at finalize via settlement-payrun-close.service.ts's closeSettlementPayRun (createJournalEntry) -- CORRECTED 2026-09-02: postSettlementToGl was RETIRED (SET-01, 2026-07-26), never live in prod (verified 2026-09-02, C6).
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveSettlementMinNet } from "./settlement-deduction-cap.service.js";
+import { forfeitDriverEscrowOnClient } from "./escrow-forfeit.service.js";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -317,6 +318,9 @@ export async function recordLoadAbandonmentChargeback(
 export type ApplyAbandonmentChargebacksResult = {
   appliedCount: number;
   appliedCents: number;
+  /** Resolved via an escrow forfeiture DRAW (SAF-F01) instead of a settlement_lines deduction. */
+  appliedViaEscrowCount: number;
+  appliedViaEscrowCents: number;
   deferredCount: number;
   deferredCents: number;
 };
@@ -338,20 +342,33 @@ export type ApplyAbandonmentChargebacksResult = {
  * flagged (this app-level chargeback AND the DB trigger's independent escrow proposal both firing
  * on the same event).
  *
- * The escrow-shortfall DRAW (posting a 'forfeiture' against the excess this function now defers) is
- * deliberately NOT wired here — driver_finance.escrow_balances/escrow_ledger and
- * accounting.escrow_accounts/escrow_postings are two live, populated-elsewhere escrow-balance
- * mechanisms in this codebase and both read empty on prod today, so there is no live evidence which
- * is authoritative for a settlement-close-time forfeiture. Deferring (rolling to the next
- * settlement, same shape settlement-deduction-cap.service.ts already uses for over-cap deductions)
- * is the honest, non-guessing choice until that is resolved — every deferral is audited, never
- * silently dropped.
+ * ESCROW-SHORTFALL DRAW — RESOLVED 2026-09-03 (was the open question above; kept for history).
+ * Live-verified on prod (bypass + n_live_tup completeness discriminator, same txn):
+ * accounting.escrow_accounts (22 rows) is the table subledger-gl-control-rec.service.ts actually
+ * sums for the "escrow_liability_default" GL-control reconciliation (sumEscrowSubledgerCents reads
+ * FROM accounting.escrow_accounts) — that is the one authoritative, GL-reconciled escrow subledger;
+ * driver_finance.escrow_balances/escrow_ledger (3 rows) is the driver-facing rollup kept in sync
+ * WITH it (escrow-forfeit.service.ts's ESC-FORFEIT-SPLIT already writes both in one transaction, so
+ * they never diverge). A DRAW here reuses that exact same, already-built, flag-gated
+ * forfeitDriverEscrowOnClient (SAF-F01) — no new GL math. When a chargeback is over the
+ * floor-protected settlement-pay room, this now tries a full-amount escrow forfeiture BEFORE
+ * deferring: if the driver's escrow can fully cover it (and DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED
+ * is on for the entity), the chargeback resolves immediately via escrow instead of rolling to the
+ * next settlement. If escrow can't cover it (over_draw) or the flag is off, behavior is UNCHANGED —
+ * falls through to the existing floor-protected defer, never partially drawn, never silently dropped.
  */
 export async function applyApprovedAbandonmentChargebacksToSettlement(
   client: DbClient,
   input: { settlementId: string; driverId: string; operatingCompanyId: string; actorUserId: string }
 ): Promise<ApplyAbandonmentChargebacksResult> {
-  const empty: ApplyAbandonmentChargebacksResult = { appliedCount: 0, appliedCents: 0, deferredCount: 0, deferredCents: 0 };
+  const empty: ApplyAbandonmentChargebacksResult = {
+    appliedCount: 0,
+    appliedCents: 0,
+    appliedViaEscrowCount: 0,
+    appliedViaEscrowCents: 0,
+    deferredCount: 0,
+    deferredCents: 0,
+  };
   const reg = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.settlement_lines') IS NOT NULL AS ok`);
   if (!reg.rows[0]?.ok) return empty;
 
@@ -392,8 +409,61 @@ export async function applyApprovedAbandonmentChargebacksToSettlement(
     if (cents <= 0) continue;
 
     if (cents > availableCents) {
-      // Over the floor-protected room — defer (roll to next settlement), never breach the floor,
-      // never silently drop it.
+      // Over the floor-protected settlement-pay room — try an escrow DRAW (SAF-F01 forfeiture,
+      // reused verbatim) before deferring. Full-amount only: a partial forfeiture would leave the
+      // chargeback in an ambiguous half-applied state this table has no column to represent, so
+      // anything the driver's escrow can't fully cover falls straight through to the existing defer.
+      const escrowAttempt = await forfeitDriverEscrowOnClient(
+        client,
+        {
+          operating_company_id: input.operatingCompanyId,
+          driver_uuid: input.driverId,
+          amount_cents: cents,
+          reason: `Abandonment chargeback — load ${row.load_id}`,
+        },
+        { userId: input.actorUserId, role: "system" }
+      );
+
+      if (escrowAttempt.result === "posted") {
+        await client.query(
+          `
+            UPDATE driver_finance.abandonment_chargebacks
+            SET status = 'applied',
+                applied_to_settlement_id = $2::uuid,
+                notes = COALESCE(notes || E'\\n', '') || $3,
+                updated_at = now()
+            WHERE id = $1::uuid
+          `,
+          [
+            row.id,
+            input.settlementId,
+            `Resolved via escrow forfeiture (SAF-F01) — journal_entry_id=${escrowAttempt.journal_entry_id}, escrow_posting_id=${escrowAttempt.escrow_posting_id}, amount_cents=${cents}. No settlement_lines row (pay stayed floor-protected).`,
+          ]
+        );
+        result.appliedViaEscrowCount += 1;
+        result.appliedViaEscrowCents += cents;
+        await appendCrudAudit(
+          client,
+          input.actorUserId,
+          "driver_finance.abandonment_chargeback.applied_via_escrow_draw",
+          {
+            resource_type: "driver_finance.abandonment_chargebacks",
+            resource_id: row.id,
+            operating_company_id: input.operatingCompanyId,
+            driver_id: input.driverId,
+            settlement_id: input.settlementId,
+            amount_cents: cents,
+            journal_entry_id: escrowAttempt.journal_entry_id,
+            escrow_posting_id: escrowAttempt.escrow_posting_id,
+          },
+          "warning",
+          "ACCT-9.3-PAY-FIRST"
+        );
+        continue;
+      }
+
+      // over_draw / flag_off — behavior UNCHANGED from before this DRAW existed: defer (roll to
+      // next settlement), never breach the floor, never silently drop it.
       result.deferredCount += 1;
       result.deferredCents += cents;
       await appendCrudAudit(
@@ -412,6 +482,7 @@ export async function applyApprovedAbandonmentChargebacksToSettlement(
           available_cents: availableCents,
           min_net_pct: minNet.pct,
           min_net_cents: minNet.cents,
+          escrow_draw_attempt: escrowAttempt.result,
         },
         "warning",
         "ACCT-9.3-PAY-FIRST"

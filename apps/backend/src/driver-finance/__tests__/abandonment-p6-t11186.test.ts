@@ -1,8 +1,23 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { applyApprovedAbandonmentChargebacksToSettlement, computeAbandonmentChargeback, FALLBACK_ABANDONMENT_DEFAULTS } from "../abandonment.service.js";
+
+// The escrow-shortfall DRAW (2026-09-03) delegates to forfeitDriverEscrowOnClient (SAF-F01,
+// escrow-forfeit.service.ts) — that function's own SQL is covered by its own service; here we
+// isolate abandonment.service.ts's OWN branching (call it, then apply-via-escrow on "posted" /
+// fall through to the pre-existing defer on anything else), same pattern escrow-forfeit.routes.test.ts
+// already uses to isolate its route layer from forfeitDriverEscrow's internals.
+const mockForfeitOnClient = vi.fn();
+vi.mock("../escrow-forfeit.service.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../escrow-forfeit.service.js")>();
+  return { ...actual, forfeitDriverEscrowOnClient: (...args: unknown[]) => mockForfeitOnClient(...args) };
+});
 
 describe("P6-T11186 abandonment chargeback computation", () => {
   const defaults = { ...FALLBACK_ABANDONMENT_DEFAULTS, require_approval_above_cents: 100000 };
+
+  beforeEach(() => {
+    mockForfeitOnClient.mockReset();
+  });
 
   it("auto-approves totals at or below the threshold", () => {
     const res = computeAbandonmentChargeback({
@@ -199,11 +214,12 @@ describe("P6-T11186 abandonment chargeback computation", () => {
     expect(inserts.every((c) => c.includes("'abandonment_chargeback'"))).toBe(true);
   });
 
-  it("00_LOCKED_DECISIONS 9.3 — defers (never breaches) a chargeback that would push the settlement below the net-pay floor", async () => {
+  it("00_LOCKED_DECISIONS 9.3 — defers (never breaches) a chargeback the settlement floor AND escrow can't cover", async () => {
     const calls: string[] = [];
-    // gross=1000c -> floor=50c (5%) -> available=950c. Chargeback of 12345c is WAY over — must defer,
-    // never apply, never breach the floor.
+    // gross=1000c -> floor=50c (5%) -> available=950c. Chargeback of 12345c is WAY over — must try
+    // the escrow DRAW first (SAF-F01), and only defer once THAT also can't cover it.
     const handlers = baseQueryHandlers(1000);
+    mockForfeitOnClient.mockResolvedValueOnce({ result: "over_draw", balance_cents: 0, requested_cents: 12345 });
 
     const client = {
       query: vi.fn(async (sql: string) => {
@@ -225,12 +241,58 @@ describe("P6-T11186 abandonment chargeback computation", () => {
       actorUserId: "actor-1",
     });
 
+    expect(mockForfeitOnClient).toHaveBeenCalledTimes(1);
     expect(applied.appliedCount).toBe(0);
+    expect(applied.appliedViaEscrowCount).toBe(0);
     expect(applied.deferredCount).toBe(1);
     expect(applied.deferredCents).toBe(12345);
     // Never inserted a settlement line for the deferred chargeback.
     expect(calls.some((c) => c.includes("INSERT INTO driver_finance.settlement_lines"))).toBe(false);
     // The deferral is audited, not silently dropped.
+    expect(calls.some((c) => c.includes("audit.append_event"))).toBe(true);
+  });
+
+  it("ESCROW-SHORTFALL DRAW (2026-09-03) — resolves a chargeback via escrow forfeiture instead of deferring when escrow can fully cover it", async () => {
+    const calls: string[] = [];
+    // Same over-floor shape as the defer test (gross=1000c -> available=950c, chargeback=12345c),
+    // but this time the driver's escrow CAN cover it.
+    const handlers = baseQueryHandlers(1000);
+    mockForfeitOnClient.mockResolvedValueOnce({
+      result: "posted",
+      journal_entry_id: "je-1",
+      escrow_posting_id: "post-1",
+      amount_cents: 12345,
+      linked_liability_decremented: false,
+    });
+
+    const client = {
+      query: vi.fn(async (sql: string) => {
+        calls.push(sql);
+        for (const [needle, fn] of Object.entries(handlers)) {
+          if (sql.includes(needle)) return fn();
+        }
+        if (sql.includes("FROM driver_finance.abandonment_chargebacks") && sql.includes("FOR UPDATE")) {
+          return { rows: [{ id: "cb-1", total_chargeback_cents: "12345", load_id: "load-1" }] };
+        }
+        throw new Error(`unexpected sql: ${sql}`);
+      }),
+    };
+
+    const applied = await applyApprovedAbandonmentChargebacksToSettlement(client as never, {
+      settlementId: "set-1",
+      driverId: "drv-1",
+      operatingCompanyId: "co-1",
+      actorUserId: "actor-1",
+    });
+
+    expect(mockForfeitOnClient).toHaveBeenCalledTimes(1);
+    expect(applied.appliedCount).toBe(0);
+    expect(applied.appliedViaEscrowCount).toBe(1);
+    expect(applied.appliedViaEscrowCents).toBe(12345);
+    expect(applied.deferredCount).toBe(0);
+    // Resolved via escrow, not a settlement pay deduction.
+    expect(calls.some((c) => c.includes("INSERT INTO driver_finance.settlement_lines"))).toBe(false);
+    expect(calls.some((c) => c.includes("UPDATE driver_finance.abandonment_chargebacks"))).toBe(true);
     expect(calls.some((c) => c.includes("audit.append_event"))).toBe(true);
   });
 
