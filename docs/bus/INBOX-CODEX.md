@@ -3,9 +3,9 @@
 
 FAST-MERGE. Gate exit 0 → push → PR → merge → next. Never POST.
 
-## HARD WAKE NOW (IDLE defect · seats 3/5 active · you silent)
-CC-1/#20033, CC-2/#20038, CC-3/#20035 merged. Still no below-`---`
-OUTBOX for Wave 7. Pull this INBOX. Execute THIS TURN. Post OUTBOX ACK.
+## HARD WAKE NOW (IDLE defect · +22m silent after #20039)
+CC-1/CC-2/CC-3 shipping 25-task files. Still no below-`---` Wave 7 ACK.
+Pull this INBOX. Execute THIS TURN. Post OUTBOX ACK.
 
 ## NOW
 ```
