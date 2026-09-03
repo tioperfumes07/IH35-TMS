@@ -9,6 +9,7 @@
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { formatDateUS } from "../../../lib/formatDate";
 
 type LiabilityRow = Record<string, unknown>;
 
@@ -35,6 +36,16 @@ function statusPill(status: string) {
 
 export function LiabilitiesTable({ rows, onOpenDetail, onSendAck }: Props) {
   const columns: Array<ParityColumn<LiabilityRow>> = [
+    {
+      // GO-23 row16 (owner FINISH LAW 2026-09-03): this roster fetched created_at all along
+      // (views.liabilities_active_with_context, ORDER BY created_at DESC in liabilities.routes.ts)
+      // but never rendered it -- no date column existed anywhere on this list, the only date
+      // signal available (this view carries no separate "incurred" timestamp).
+      key: "created_at",
+      label: "Date",
+      sortable: true,
+      render: (row) => formatDateUS(row.created_at),
+    },
     {
       key: "id",
       label: "Display ID",
