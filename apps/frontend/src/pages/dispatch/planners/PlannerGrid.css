@@ -187,6 +187,13 @@
   overflow: hidden;
   padding: 0 6px;
   font-weight: 600;
+  /* H1 (GO-23 wave5 row17, 2026-09-02): text-overflow: ellipsis is a no-op without
+     white-space: nowrap on the same box -- without it the browser hard-clips a long
+     name (real Mexican driver names routinely carry 3-4 given/family names) with no
+     "..." indicator at all, live-confirmed on the Driver Planner grid. Shared by every
+     PlannerGrid consumer (Driver/Truck/Loads Planner, RoundTripsTimeline,
+     UnifiedTimelinePlanner, TaskBoardPage) -- one rule, fixed everywhere at once. */
+  white-space: nowrap;
 }
 .planner-grid-canonical .pg-col-name {
   text-overflow: ellipsis;
