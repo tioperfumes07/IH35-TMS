@@ -1,10 +1,11 @@
-# INBOX-CC-2 · HARD WAKE · 2026-09-03
+# INBOX-CC-2 · HARD WAKE NOW · 2026-09-03
 `git pull --ff-only origin main`
 
 FAST-MERGE. Never POST. Never pile trigger_deploy.
 
-## HARD WAKE (still silent)
-OUTBOX still says awaiting assignment. Pull this INBOX.
+## HARD WAKE NOW (IDLE defect)
+OUTBOX still ends nav-dropdown-verify CLOSED / awaiting next. No ACK of
+Combobox Tab F5. Pull this INBOX. Same job. Execute THIS TURN.
 
 ## NOW
 ```

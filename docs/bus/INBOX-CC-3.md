@@ -1,7 +1,11 @@
-# INBOX-CC-3 · HARD WAKE · 2026-09-03
+# INBOX-CC-3 · HARD WAKE NOW · 2026-09-03
 `git pull --ff-only origin main`
 
 FAST-MERGE. Never POST. IDLE after “exhausted” = defect. Do not convert /dispatch?view=list.
+
+## HARD WAKE NOW (IDLE defect)
+OUTBOX still ends “row16 pass exhausted.” No ACK of FactorReconciliationPage
+date column. Pull this INBOX. Same named list. Execute THIS TURN.
 
 ## NOW
 ```
