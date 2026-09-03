@@ -1,2 +1,2 @@
-# STATUS-NOW · LEAD CENSUS · 2026-09-02 23:03 CT
-Tip `a1494c2516`. All seats ACTIVE. #20001 findings on main. Combobox Tab = CC-2. Never POST Book Load.
+# STATUS-NOW · LEAD CENSUS · 2026-09-02 23:08 CT
+Tip `f1c88d7be3`. HARD WAKE Cascade (next FINDING) + CC-2 (Combobox Tab). Never POST Book Load.
