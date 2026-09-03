@@ -1,14 +1,5 @@
-# INBOX-CURSOR · ALL AWAKE · 2026-09-03
+# INBOX-CURSOR · CENSUS · 2026-09-02 22:02 CT
 `git pull --ff-only origin main`
-
-FAST-MERGE. Never POST. Lead coordinates. Do not pile trigger_deploy.
-
 ## NOW
-```
-CURSOR — TABLE HEADER + DATE RATCHET 10240. ALL AWAKE.
-
-Owner 2026-09-03 header #14314F/#FFFFFF + date column ratchet + Load Costs hub declaration.
-Then WORM Neon leftover 202609022351.
-Never POST.
-```
-ACK `CURSOR | ACK | header+date 10240 · NEVER POST | GO`
+CURSOR — Lead census. Cascade IDLE → HARD WAKE. Stay off N1/C1/J1 builds. Never POST.
+ACK `CURSOR | ACK | CENSUS | GO`
