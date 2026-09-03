@@ -5,6 +5,7 @@ import { ListErrorState } from "../components/ListErrorState";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
 import { formatUsdCents } from "../lib/money";
+import { customerIsSelectable } from "../lib/customer-selectable";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { listAllInvoices, listAllPayments, type Invoice, type Payment } from "../api/accounting";
@@ -574,7 +575,7 @@ export function CustomersPage() {
   const parentCustomerOptions = useMemo(
     () =>
       customersRoster
-        .filter((c) => !c.parent_customer_id && c.status !== "inactive" && !c.deactivated_at)
+        .filter((c) => !c.parent_customer_id && customerIsSelectable(c))
         .map((c) => ({ id: c.id, name: c.name, customer_code: c.customer_code })),
     [customersRoster]
   );

@@ -1,18 +1,14 @@
-# INBOX-CURSOR · P0 ONLY · 2026-09-03 16:16 CT
+# INBOX-CURSOR · VOID-COLUMN + WIZ · 2026-09-03 18:44 CT
 `git pull --ff-only origin main`
 
-Leave #20064. Never POST Book Load. No seat fixtures.
+LAW: `docs/lockdown/VOID-COLUMN-CONVENTION-LAW-2026-09-03.md`
+REGISTER: `docs/bus/OWNER-DEFECT-REGISTER-2026-09-03.md`
+NEVER POST Book Load. NEVER Chrome. Leave #20064.
 
-## NOW — one job
-`docs/bus/packets/2026-09-03-16-P0-SEND/CURSOR/00-P0-UNBLOCK-LOAD-CREATION.txt`
+## NOW after this PR lands
+WIZ-28 first (false green on empty Book Load), then WIZ-23..WIZ-27, WIZ-29, WIZ-30.
+Packet: `~/Downloads/Claude Agent Instructions-09-03-26-Time-4 Pm/CURSOR/01-LIVE-CHROME-FINDINGS-2026-09-03.txt`
 
-Nothing else. Not the lock. Not the board. Not wizard layout.
+Customer selectable predicate is **deactivated_at IS NULL** (not status). Do not re-open that.
 
-Proof required: real USMCA load booked end to end, load number pasted. Until that line exists, P0 is not delivered.
-
-Money contract (lock job, not now): `docs/bus/packets/2026-09-03-16-P0-SEND/REFERENCE/MONEY-CONTRACT-ALL-SEATS.txt`
-
-## AFTER P0 (do not start)
-Ownership lock + M1–M7 guards: `CURSOR/01-OWNERSHIP-LOCK.txt` (BINDING on the contract).
-
-ACK `CURSOR | ACK | P0 unblock load creation · NEVER POST | GO`
+ACK `CURSOR | ACK | WIZ-28 next · NEVER POST | GO`

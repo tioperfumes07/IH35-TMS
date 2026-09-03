@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDateUS } from "../lib/formatDate";
 import { customerStatusLabel } from "../lib/customerStatusLabel";
+import { customerIsSelectable } from "../lib/customer-selectable";
 import { DatePicker } from "../components/forms/DatePicker";
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { ParityTable } from "../components/parity/ParityTable";
@@ -537,7 +538,7 @@ export function CustomerDetailPage() {
   const parentCustomerOptions = useMemo(() => {
     const rows = Array.isArray(parentCandidatesQuery.data) ? parentCandidatesQuery.data : [];
     return rows
-      .filter((c) => !c.parent_customer_id && c.id !== id && c.status !== "inactive" && !c.deactivated_at)
+      .filter((c) => !c.parent_customer_id && c.id !== id && customerIsSelectable(c))
       .map((c) => ({ value: c.id, label: c.customer_code ? `${c.name} (${c.customer_code})` : c.name }));
   }, [parentCandidatesQuery.data, id]);
   const paymentTermsQuery = useQuery({

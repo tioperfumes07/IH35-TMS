@@ -110,6 +110,22 @@ export function collectProblems(root = ROOT) {
   if (!/deactivated_at IS NULL/.test(auto) || /c\.status\s*=/.test(auto)) {
     problems.push("customer-autocomplete.shared.ts: active predicate must be deactivated_at IS NULL (not status)");
   }
+  const dual = /status\s*!==\s*["']inactive["']\s*&&\s*!c\.deactivated_at/;
+  for (const rel of [
+    "apps/frontend/src/pages/Customers.tsx",
+    "apps/frontend/src/pages/CustomerDetail.tsx",
+    "apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx",
+    "apps/frontend/src/components/customers/CustomerEditModal.tsx",
+  ]) {
+    const fe = readRel(root, rel) ?? "";
+    if (dual.test(fe)) {
+      problems.push(`${rel}: selectable parent filter must use deactivated_at only (VOID-COLUMN 2026-09-03)`);
+    }
+  }
+  const selectable = readRel(root, "apps/frontend/src/lib/customer-selectable.ts") ?? "";
+  if (!/deactivated_at == null/.test(selectable)) {
+    problems.push("customer-selectable.ts: customerIsSelectable must be deactivated_at == null");
+  }
   if (/\btrip_type\b/.test(auto)) {
     problems.push("customer-autocomplete.shared.ts: must not filter by trip_type");
   }
