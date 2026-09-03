@@ -1,4 +1,9 @@
 {
+  "10240": {
+    "claimed_at": "2026-09-03",
+    "claimed_by": "cursor",
+    "purpose": "verify-table-header-and-date-column (owner 2026-09-03: ParityTable thead #14314F/#FFFFFF; date column ratchet; zero-sortable call sites)"
+  },
   "10232": {
     "claimed_at": "2026-09-02",
     "claimed_by": "cursor",
