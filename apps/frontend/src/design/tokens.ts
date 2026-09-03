@@ -116,6 +116,17 @@ export const spacing = {
  * Tailwind's static class scanner still finds it; the underlying number is `spacing.filterControlHeight`. */
 export const FILTER_CONTROL_SIZE_CLASS = "h-9 text-xs";
 
+/** FORM FIELD LAW — a SEPARATE, deliberately shorter scale for a dense data-entry FORM (Book Load
+ * and any future wizard), where `Combobox`/`ReferenceSelect`/`EntityPicker` sit on the same grid
+ * row as plain `h-7` `<input>` fields, not next to a toolbar search box. FILTER_CONTROL_SIZE_CLASS
+ * (h-9) is correct for a list-page toolbar filter (COLUMN LAW 2026-09-01) but produces a visible
+ * baseline mismatch when the SAME shared picker is reused as a wizard field beside h-7 inputs —
+ * the exact "fields on the same row do not share a baseline" defect
+ * (CC-2-INSTRUCTIONS-09-02-2026.txt task 9). `Combobox`'s optional `size="sm"` prop opts into this
+ * scale; the default stays `size="md"` (FILTER_CONTROL_SIZE_CLASS), so every existing toolbar/list
+ * filter call site is unaffected. */
+export const FORM_FIELD_CONTROL_SIZE_CLASS = "h-7 text-xs";
+
 /** UI CONTROL LAW (owner ruling 2026-09-01, docs/bus/UI-CONTROL-LAW-SPEC-2026-09-01.md) — the
  * app's ONE button scale. "md" (the size used everywhere a page renders a real action button —
  * Create, Void, Clear, Export, gear) matches FILTER_CONTROL_SIZE_CLASS's own height/font so a

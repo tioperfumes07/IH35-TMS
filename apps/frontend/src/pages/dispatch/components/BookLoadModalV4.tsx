@@ -1654,6 +1654,7 @@ export function BookLoadModalV4({
                       <input type="hidden" {...form.register("customer_id", { required: "Select a customer from the list" })} />
                       <div className="mt-0.5">
                         <ReferenceSelect
+                          size="sm"
                           value={form.watch("customer_id") || null}
                           onChange={(next) => {
                             const match = customerOptions.find((o) => o.value === next);
@@ -1764,6 +1765,7 @@ export function BookLoadModalV4({
                           Historical import reason
                           <div className="mt-0.5">
                             <ReferenceSelect
+                              size="sm"
                               value={null}
                               onChange={(next) => {
                                 if (!next) return;
@@ -1933,6 +1935,7 @@ export function BookLoadModalV4({
                             <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                               Lumper provider
                               <ReferenceSelect
+                                size="sm"
                                 value={form.watch(`stops.${i}.lumper_provider_id`) || null}
                                 onChange={(value) => form.setValue(`stops.${i}.lumper_provider_id`, value ?? "", { shouldDirty: true })}
                                 options={lumperProviderOptions}
@@ -1970,6 +1973,7 @@ export function BookLoadModalV4({
                       */}
                       <div className="mt-0.5">
                         <EntityPicker
+                          size="sm"
                           kind="vendor"
                           allowCreate
                           operatingCompanyId={operatingCompanyId}

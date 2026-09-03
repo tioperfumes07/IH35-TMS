@@ -85,6 +85,9 @@ export type ReferenceSelectProps = {
    * therefore never committed — surfacing as the form's own "Category is required".
    */
   id?: string;
+  /** Pass-through to Combobox's size — "sm" (h-7) for a dense wizard/form row; default "md" (h-9)
+   * matches every existing list-toolbar-filter call site unchanged. See components/Combobox.tsx. */
+  size?: "md" | "sm";
 };
 
 export function ReferenceSelect({
@@ -103,6 +106,7 @@ export function ReferenceSelect({
   createdValueField = "id",
   createExtras,
   id,
+  size,
 }: ReferenceSelectProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [created, setCreated] = useState<ReferenceOption[]>([]);
@@ -156,6 +160,7 @@ export function ReferenceSelect({
         No external button — the Combobox allowAddNew now always-shows the row on open. */}
         <Combobox
           id={id}
+          size={size}
           options={comboOptions}
           onSearch={onSearch}
           value={scopedValue}

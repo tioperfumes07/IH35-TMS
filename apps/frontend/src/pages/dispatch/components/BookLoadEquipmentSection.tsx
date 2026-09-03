@@ -131,6 +131,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
             gated migration; flagged). power_only_* kept — real data; removing them would break power-only loads. */}
         <Field label="Trailer type" input={
           <ReferenceSelect
+            size="sm"
             value={watch ? String(watch("load_trailer_equipment_id") ?? "") || null : null}
             onChange={(next) => {
               const row = trailerEquipmentQuery.data?.rows?.find((item) => item.id === next);
@@ -149,6 +150,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           label="Truck unit"
           input={
             <EntityPicker
+              size="sm"
               kind="unit"
               operatingCompanyId={operatingCompanyId ?? ""}
               value={assignedUnitId || null}
@@ -196,6 +198,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
               </div>
               {trailerSource === "owned" ? (
                 <EntityPicker
+                  size="sm"
                   kind="trailer"
                   operatingCompanyId={operatingCompanyId ?? ""}
                   value={assignedTrailerUnitId || null}
@@ -211,6 +214,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                 />
               ) : (
                 <InterchangeTrailerPicker
+                  size="sm"
                   operatingCompanyId={operatingCompanyId ?? ""}
                   value={interchangeTrailerId || null}
                   onChange={(next, trailer) => {
@@ -277,6 +281,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           label="Driver"
           input={
             <DriverPickerWithCreate
+              size="sm"
               operatingCompanyId={operatingCompanyId ?? ""}
               value={primaryDriverId || null}
               onChange={(next, option) => {
@@ -297,6 +302,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           label="Team driver"
           input={
             <DriverPickerWithCreate
+              size="sm"
               operatingCompanyId={operatingCompanyId ?? ""}
               value={secondaryDriverId || null}
               onChange={(next, option) => {

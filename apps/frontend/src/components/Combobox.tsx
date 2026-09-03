@@ -15,7 +15,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { singleFrameLayoutClassName } from "../lib/single-frame-classname";
-import { FILTER_CONTROL_SIZE_CLASS } from "../design/tokens";
+import { FILTER_CONTROL_SIZE_CLASS, FORM_FIELD_CONTROL_SIZE_CLASS } from "../design/tokens";
 
 export type ComboboxOption = {
   value: string;
@@ -67,6 +67,14 @@ type ComboboxProps = {
    */
   id?: string;
   className?: string;
+  /**
+   * "md" (default) is FILTER_CONTROL_SIZE_CLASS (h-9) — the COLUMN LAW/FILTER LAW toolbar-filter
+   * scale (matches TableSearch in a list-page toolbar row). "sm" is FORM_FIELD_CONTROL_SIZE_CLASS
+   * (h-7) — for a picker embedded as a dense FORM field (e.g. Book Load) sitting on the same grid
+   * row as plain h-7 `<input>`s. Every existing call site defaults to "md" (zero behavior change);
+   * a wizard/form call site opts into "sm" explicitly. See design/tokens.ts.
+   */
+  size?: "md" | "sm";
   /**
    * ARIA-COMBOBOX-NO-NAME: a compact filter toolbar (no visible `<label>` beside any of its
    * controls, e.g. Legal Matters' unit filter, Fleet HOS Board's unit filter) has no way to give
@@ -165,7 +173,9 @@ export function Combobox({
   className,
   onSearch,
   ariaLabel,
+  size = "md",
 }: ComboboxProps) {
+  const controlSizeClass = size === "sm" ? FORM_FIELD_CONTROL_SIZE_CLASS : FILTER_CONTROL_SIZE_CLASS;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -502,7 +512,7 @@ export function Combobox({
         // FILTER LAW (COLUMN LAW 2026-09-01) — this is the ONE place the app's canonical filter/
         // combobox control height+font live; TableSearch.tsx now shares the same constant so a
         // filter and the search box sitting next to it in the same toolbar row never drift apart.
-        className={`flex ${FILTER_CONTROL_SIZE_CLASS} items-center gap-1 rounded border bg-white px-2 ${
+        className={`flex ${controlSizeClass} items-center gap-1 rounded border bg-white px-2 ${
           disabled
             ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
             : error
