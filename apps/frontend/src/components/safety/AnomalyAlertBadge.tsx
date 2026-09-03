@@ -27,7 +27,7 @@ export function AnomalyAlertBadge({ operatingCompanyId }: Props) {
         onClick={() => void q.refetch()}
       >
         <Bell size={18} />
-        <span className="absolute -right-1 -top-1 rounded-full bg-red-700 px-1 text-[10px] font-bold text-white">!</span>
+        <span className="absolute -right-1 -top-1 rounded-full bg-red-700 px-1 text-xs font-bold text-white">!</span>
       </button>
     );
   }
@@ -37,7 +37,7 @@ export function AnomalyAlertBadge({ operatingCompanyId }: Props) {
     <a href="/safety/anomaly-alerts" className="relative inline-flex items-center rounded-sm p-1 text-slate-600 hover:bg-gray-100" title="Anomaly alerts">
       <Bell size={18} />
       {count > 0 ? (
-        <span className="absolute -right-1 -top-1 rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">{count}</span>
+        <span className="absolute -right-1 -top-1 rounded-full bg-red-600 px-1 text-xs font-bold text-white">{count}</span>
       ) : null}
     </a>
   );
