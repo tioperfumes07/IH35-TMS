@@ -244,7 +244,7 @@ export function ReportsHomePage() {
                 >
                   <span className="flex items-center justify-between gap-2">
                     <span>{label}</span>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
                       {basisForReport(id)}
                     </span>
                   </span>
@@ -291,7 +291,7 @@ export function ReportsHomePage() {
                   <div className="text-xs font-semibold text-slate-800">
                     {label}
                   </div>
-                  <div className="mt-0.5 text-[10px] text-slate-500">{sub}</div>
+                  <div className="mt-0.5 text-xs text-slate-500">{sub}</div>
                 </button>
               ))}
             </div>

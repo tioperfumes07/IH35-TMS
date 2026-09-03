@@ -146,7 +146,7 @@ export function ProfitPerTruckPage() {
               const label = meta?.label ?? formatProfitPerTruckFlagLabel(f);
               const className = meta?.className ?? "border-slate-200 bg-slate-50 text-slate-800";
               return (
-                <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${className}`} title={label}>
+                <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-xs font-semibold ${className}`} title={label}>
                   {label}
                 </span>
               );
@@ -376,7 +376,7 @@ export function ProfitPerTruckPage() {
             ] as const
           ).map(([label, val]) => (
             <div key={label} className="rounded-sm border border-gray-200 bg-white px-2 py-2">
-              <div className="text-[10px] font-semibold uppercase text-gray-500">{label}</div>
+              <div className="text-[11px] font-semibold uppercase text-gray-500">{label}</div>
               <div className="text-sm font-semibold leading-tight">{val}</div>
             </div>
           ))}

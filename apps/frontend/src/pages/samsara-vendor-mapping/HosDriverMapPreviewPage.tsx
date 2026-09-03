@@ -15,12 +15,12 @@ function ConfidencePill({ confidence }: { confidence: DriverMapRow["confidence"]
       : confidence === "low"
         ? "bg-yellow-100 text-yellow-800"
         : "bg-slate-100 text-slate-500";
-  return <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${cls}`}>{confidence}</span>;
+  return <span className={`rounded px-2 py-0.5 text-[11px] font-semibold uppercase ${cls}`}>{confidence}</span>;
 }
 
 function BasisPill({ basis }: { basis: DriverMapRow["match_basis"] }) {
   if (!basis) return <span className="text-[11px] text-gray-400">—</span>;
-  return <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">{basis}</span>;
+  return <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">{basis}</span>;
 }
 
 const DRIVER_MAP_COLUMNS: Array<ParityColumn<DriverMapRow>> = [

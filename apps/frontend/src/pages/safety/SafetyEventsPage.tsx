@@ -668,7 +668,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
                   {(notesQuery.data ?? []).map((note) => (
                     <div key={note.id} className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
                       <div className="text-gray-700">{note.note}</div>
-                      <div className="mt-1 text-[10px] text-gray-500">
+                      <div className="mt-1 text-xs text-gray-500">
                         {String(note.created_at ?? "").slice(0, 19).replace("T", " ")} · {note.created_by_name ?? note.created_by}
                       </div>
                     </div>
@@ -689,7 +689,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         isDirty={logModalDirty}
       >
         <div className="grid gap-2 sm:grid-cols-2" data-testid="safety-event-log-modal">
-          <label className="flex flex-col gap-0.5 text-[10px] font-semibold uppercase text-gray-600 sm:col-span-2">
+          <label className="flex flex-col gap-0.5 text-[11px] font-semibold uppercase text-gray-600 sm:col-span-2">
             Time of occurrence
             <DateTimePicker
               aria-label="Time of occurrence"

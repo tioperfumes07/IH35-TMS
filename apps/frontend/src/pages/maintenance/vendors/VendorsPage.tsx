@@ -359,7 +359,7 @@ export function VendorsPage() {
             <label className="text-[11px] font-semibold text-gray-600">A/P vendor</label>
             {/* CLS-SILENT-CAP: say so when the picker is not showing every vendor. */}
             {apVendorCapNotice ? (
-              <p className="text-[10px] text-slate-700" data-testid="ap-vendor-cap-notice">
+              <p className="text-xs text-slate-700" data-testid="ap-vendor-cap-notice">
                 {apVendorCapNotice}
               </p>
             ) : null}
@@ -407,7 +407,7 @@ export function VendorsPage() {
               <label className="text-[11px] font-semibold text-gray-600">A/P vendor</label>
             {/* CLS-SILENT-CAP: say so when the picker is not showing every vendor. */}
             {apVendorCapNotice ? (
-              <p className="text-[10px] text-slate-700" data-testid="ap-vendor-cap-notice">
+              <p className="text-xs text-slate-700" data-testid="ap-vendor-cap-notice">
                 {apVendorCapNotice}
               </p>
             ) : null}

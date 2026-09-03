@@ -77,7 +77,7 @@ export function TasksMinePage() {
         label: "Status",
         sortable: true,
         render: (row) => (
-          <span className={`rounded-sm border px-1.5 py-0.5 text-[10px] ${TASK_STATUS_BADGE[row.status]}`}>{taskStatusLabel(row.status)}</span>
+          <span className={`rounded-sm border px-1.5 py-0.5 text-xs ${TASK_STATUS_BADGE[row.status]}`}>{taskStatusLabel(row.status)}</span>
         ),
       },
       { key: "progress_pct", label: "Progress", sortable: true, render: (row) => `${row.progress_pct}%`, cellClass: "text-slate-600" },
@@ -129,7 +129,7 @@ export function TasksMinePage() {
           <SelectCombobox
             value={staged.draft.statusFilter}
             onChange={(event) => staged.setDraft({ statusFilter: event.target.value as StatusFilter })}
-            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+            className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
           >
             <option value="all">All</option>
             <option value="open">Open</option>
