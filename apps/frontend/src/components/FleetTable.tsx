@@ -17,6 +17,7 @@ import { TableControls, Paginator, TableHeaderCell, useTableController, Collapse
 import { patchUnit } from "../api/mdata";
 import { patchTrailer } from "../api/fleet-trailers";
 import { useUrlSort } from "../hooks/useUrlSort";
+import { formatOosDate, formatOosDays } from "../lib/oos-display";
 
 export type FleetRow = {
   id: string;
@@ -38,6 +39,10 @@ export type FleetRow = {
   odometer_mi?: number | null;
   next_due_odometer?: number | null;
   open_wo_count?: number | null;
+  oos_since?: string | null;
+  days_oos?: number | null;
+  oos_reason?: string | null;
+  oos_location?: string | null;
 };
 
 export type SoftDeleteFilter = "active" | "inactive" | "all";
@@ -71,6 +76,8 @@ const FLEET_COLUMNS: TableColumn[] = [
   { key: "make_model", label: "Make/Model" },
   { key: "year", label: "Year" },
   { key: "status", label: "Status" },
+  { key: "oos_since", label: "Down Since" },
+  { key: "days_oos", label: "Days OOS" },
   { key: "location", label: "Location" },
   { key: "dot_oo", label: "DOT O/O" },
 ];
@@ -87,6 +94,8 @@ function fmtMiles(value: number | null | undefined): string {
   return `${Math.round(value).toLocaleString()} mi`;
 }
 
+// Same calendar-day presentation used by SevereRepairOosTab. Null means the unit was never
+// explicitly put OOS; never invent a date or derive one from status history.
 function fleetLocationText(row: FleetRow): string {
   return [row.city, row.state].filter(Boolean).join(", ");
 }
@@ -135,6 +144,8 @@ function fleetSortValue(row: FleetRow, key: string): string | number | null {
     // all 109 units on prod. humanizeEnumLabel keeps the value (it is often the only status recorded)
     // while making it readable: "InService" -> "In service", "OutOfService" -> "Out of service".
     case "status": return row.status ? humanizeEnumLabel(row.status) : null;
+    case "oos_since": return row.oos_since ? new Date(row.oos_since).getTime() : null;
+    case "days_oos": return row.days_oos ?? null;
     case "location": return fleetLocationText(row) || null;
     case "odometer": return row.odometer_mi ?? null;
     case "next_pm": return row.next_due_odometer ?? null;
@@ -660,6 +671,8 @@ export function FleetTable({
                     ) : null}
                     {isVisible("year") ? <td className="px-2 py-1">{String(row.year ?? "—")}</td> : null}
                     {isVisible("status") ? <td className="px-2 py-1">{String(row.status ?? "—")}</td> : null}
+                    {isVisible("oos_since") ? <td className="px-2 py-1 tabular-nums">{formatOosDate(row.oos_since)}</td> : null}
+                    {isVisible("days_oos") ? <td className="px-2 py-1 tabular-nums">{row.days_oos == null ? "—" : formatOosDays(row.days_oos)}</td> : null}
                     {isVisible("location") ? <td className="truncate px-2 py-1 text-xs text-slate-700">{fleetLocationText(row) || "—"}</td> : null}
                     {showMaintenanceColumns && isVisible("odometer") ? <td className="px-2 py-1 tabular-nums">{fmtMiles(row.odometer_mi)}</td> : null}
                     {showMaintenanceColumns && isVisible("next_pm") ? <td className="px-2 py-1 tabular-nums">{fmtMiles(row.next_due_odometer)}</td> : null}

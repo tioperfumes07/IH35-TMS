@@ -46,6 +46,10 @@ describe("units unified list", () => {
                 year: 2022,
                 status: "InService",
                 is_oos: false,
+                oos_since: "2026-09-01T12:00:00.000Z",
+                days_oos: "2.5",
+                oos_reason: "Engine repair",
+                oos_location: "Laredo shop",
                 vehicle_type: "Sleeper",
               },
             ],
@@ -76,6 +80,12 @@ describe("units unified list", () => {
     expect(queries.some((sql) => sql.includes("owner_company_id"))).toBe(true);
     expect(rows).toHaveLength(2);
     expect(rows.find((r) => r.id === "truck-1")?.kind).toBe("truck");
+    expect(rows.find((r) => r.id === "truck-1")).toMatchObject({
+      oos_since: "2026-09-01T12:00:00.000Z",
+      days_oos: 2.5,
+      oos_reason: "Engine repair",
+      oos_location: "Laredo shop",
+    });
     expect(rows.find((r) => r.id === "trailer-1")?.type).toBe("Reefer (2019 Thermo King)");
   });
 

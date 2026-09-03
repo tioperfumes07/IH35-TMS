@@ -23,10 +23,13 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-fleet-oos-columns-manifest";
 const STRIP_FILE = path.join(ROOT, "apps/frontend/src/components/dispatch/FleetOosStrip.tsx");
 const ROUTES_FILE = path.join(ROOT, "apps/backend/src/mdata/units.routes.ts");
+const UNIFIED_FILE = path.join(ROOT, "apps/backend/src/mdata/units-unified-list.service.ts");
+const TABLE_FILE = path.join(ROOT, "apps/frontend/src/components/FleetTable.tsx");
+const PAGE_FILE = path.join(ROOT, "apps/frontend/src/pages/maintenance/FleetTablePage.tsx");
 
 const REQUIRED_TESTIDS = ["fleet-oos-since", "fleet-oos-days", "fleet-oos-location"];
 
-export function collectProblems(stripSrc, routesSrc) {
+export function collectProblems(stripSrc, routesSrc, unifiedSrc = "", tableSrc = "", pageSrc = "") {
   const problems = [];
   for (const id of REQUIRED_TESTIDS) {
     if (!new RegExp(`data-testid=["']${id}["']`).test(stripSrc)) {
@@ -41,20 +44,32 @@ export function collectProblems(stripSrc, routesSrc) {
   const selectBlock = selectBlockMatch ? selectBlockMatch[0] : "";
   if (!/\boos_since\b/.test(selectBlock)) problems.push("units.routes.ts list SELECT must include oos_since");
   if (!/\boos_location\b/.test(selectBlock)) problems.push("units.routes.ts list SELECT must include oos_location");
+  for (const field of ["oos_since", "days_oos", "oos_reason", "oos_location"]) {
+    if (!new RegExp(`\\b${field}\\b`).test(unifiedSrc)) problems.push(`unified fleet rows must carry ${field}`);
+  }
+  for (const key of ["oos_since", "days_oos"]) {
+    if (!new RegExp(`key:\\s*["']${key}["']`).test(tableSrc)) problems.push(`main Fleet registry must expose ${key}`);
+  }
+  if (!/tone=["']in-shop["']/.test(pageSrc) || !/tone=["']oos["']/.test(pageSrc)) {
+    problems.push("In-Shop and OOS KPI controls must use distinct visual tones");
+  }
   return problems;
 }
 
 function check() {
   const stripSrc = fs.readFileSync(STRIP_FILE, "utf8");
   const routesSrc = fs.readFileSync(ROUTES_FILE, "utf8");
-  const problems = collectProblems(stripSrc, routesSrc);
+  const problems = collectProblems(stripSrc, routesSrc, fs.readFileSync(UNIFIED_FILE, "utf8"), fs.readFileSync(TABLE_FILE, "utf8"), fs.readFileSync(PAGE_FILE, "utf8"));
   if (problems.length) throw new Error(`${LABEL}: ${problems.join("; ")}`);
 }
 
 function selftest() {
   const goodStrip = `data-testid="fleet-oos-since" data-testid="fleet-oos-days" data-testid="fleet-oos-location"`;
   const goodRoutes = `SELECT id, unit_number, vin, status, oos_since, oos_location FROM mdata.units WHERE 1=1`;
-  if (collectProblems(goodStrip, goodRoutes).length) {
+  const goodUnified = `oos_since days_oos oos_reason oos_location`;
+  const goodTable = `key: "oos_since" key: "days_oos"`;
+  const goodPage = `tone="in-shop" tone="oos"`;
+  if (collectProblems(goodStrip, goodRoutes, goodUnified, goodTable, goodPage).length) {
     throw new Error("selftest good fixture must pass");
   }
 
@@ -64,6 +79,11 @@ function selftest() {
     [() => collectProblems(goodStrip.replace('data-testid="fleet-oos-location"', ""), goodRoutes), "fleet-oos-location"],
     [() => collectProblems(goodStrip, goodRoutes.replace("oos_since, ", "")), "oos_since"],
     [() => collectProblems(goodStrip, goodRoutes.replace("oos_location", "")), "oos_location"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified.replace("oos_reason", ""), goodTable, goodPage), "oos_reason"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified.replace("days_oos", ""), goodTable, goodPage), "days_oos"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('key: "oos_since"', ""), goodPage), "oos_since"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('key: "days_oos"', ""), goodPage), "days_oos"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable, goodPage.replace('tone="oos"', "")), "distinct visual tones"],
   ];
   for (const [run, expected] of mutations) {
     const problems = run();

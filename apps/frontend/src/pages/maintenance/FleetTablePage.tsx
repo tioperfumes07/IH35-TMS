@@ -87,6 +87,7 @@ function KpiCard({
   onClick,
   disabled,
   disabledReason,
+  tone = "default",
 }: {
   label: string;
   value: string | number;
@@ -94,10 +95,14 @@ function KpiCard({
   onClick?: () => void;
   disabled?: boolean;
   disabledReason?: string;
+  tone?: "default" | "in-shop" | "oos";
 }) {
-  const cls = `rounded border px-2 py-1 text-left text-[11px] ${
-    active ? "border-slate-500 bg-slate-50" : "border-gray-200 bg-white"
-  }`;
+  const toneClass = tone === "oos"
+    ? active ? "border-red-400 bg-red-100 text-red-900" : "border-red-200 bg-red-50 text-red-800"
+    : tone === "in-shop"
+      ? active ? "border-[#14314F] bg-[#14314F] text-white" : "border-slate-300 bg-slate-100 text-slate-700"
+      : active ? "border-slate-500 bg-slate-50" : "border-gray-200 bg-white";
+  const cls = `rounded border px-2 py-1 text-left text-[11px] ${toneClass}`;
   const inner = (
     <>
       <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
@@ -413,9 +418,10 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5">
         <KpiCard label="Total Units" value={counters.total} active={effectiveStatus === ""} onClick={() => setStatus("all")} />
         <KpiCard label="Active" value={counters.active} active={effectiveStatus === "InService"} onClick={() => setStatus("InService")} />
-        <KpiCard label="In-Shop" value={counters.inShop} active={effectiveStatus === "InMaintenance"} onClick={() => setStatus("InMaintenance")} />
+        <KpiCard label="In-Shop" tone="in-shop" value={counters.inShop} active={effectiveStatus === "InMaintenance"} onClick={() => setStatus("InMaintenance")} />
         <KpiCard
           label="Out-of-Service"
+          tone="oos"
           value={counters.outOfService}
           active={effectiveStatus === "OutOfService"}
           onClick={() => setStatus("OutOfService")}
