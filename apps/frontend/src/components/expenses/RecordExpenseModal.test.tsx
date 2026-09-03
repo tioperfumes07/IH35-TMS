@@ -155,6 +155,10 @@ describe("RecordExpenseModal", () => {
       expect(accountSelect.querySelector('option[value="acct-1"]')).toBeInTheDocument(),
     );
     await user.selectOptions(accountSelect, "acct-1");
+    // GO-19-1b G1 (owner 2026-09-03) — Truck/Unit is now required (or a Load, which the backend
+    // derives it from). The mocked unit EntityPicker below renders as a native <select> keyed off
+    // its placeholder prop.
+    await user.selectOptions(within(form).getByLabelText(/select unit/i), "unit-1");
     await user.click(within(form).getByRole("button", { name: /record expense/i }));
 
     await waitFor(() => expect(accountingApi.createExpense).toHaveBeenCalledTimes(1));
@@ -168,6 +172,7 @@ describe("RecordExpenseModal", () => {
         memo: expect.stringContaining("Expense capture"),
         attachment_draft_id: expect.any(String),
         expense_number: "EXP-2026-00001",
+        unit_id: "unit-1",
       })
     );
   });
