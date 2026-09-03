@@ -376,7 +376,9 @@ export function BankingTransactionsDesignView({
   }, [accounts, selectedAccountId]);
 
   const transactionsQuery = useQuery({
-    queryKey: ["banking", "transactions-design", companyId, selectedAccount?.id ?? "", descriptionFilter],
+    // DISP-F9994 (item 24) -- dateFrom/dateTo joined the key so a date-range edit re-queries the
+    // server instead of re-filtering the same already-fetched page in the useMemo below.
+    queryKey: ["banking", "transactions-design", companyId, selectedAccount?.id ?? "", descriptionFilter, dateFrom, dateTo],
     queryFn: async () => {
       const merged: PlaidBankTransaction[] = [];
       let offset = 0;
@@ -387,6 +389,8 @@ export function BankingTransactionsDesignView({
           bank_account_id: selectedAccount?.id ?? undefined,
           q: descriptionFilter.trim() || undefined,
           sort: "date_desc",
+          date_from: dateFrom || undefined,
+          date_to: dateTo || undefined,
         });
         const rows = page.transactions ?? [];
         merged.push(...rows);
@@ -546,19 +550,15 @@ export function BankingTransactionsDesignView({
 
   const tableRows = useMemo(() => {
     const source = reviewTabBuckets[activeReviewTab];
+    // DISP-F9994 (item 24) -- dateFrom/dateTo are no longer re-filtered here: transactionsQuery's
+    // queryKey already re-queries the server on every date-range edit (server-side date_from/date_to
+    // predicates in link.routes.ts), so `source` already reflects the range. Re-filtering the same
+    // already-fetched rows here would be exactly the theater item 24 names -- a control that LOOKS
+    // like it re-queries but silently falls back to a client-side filter.
     const filtered = source.filter((tx) => {
       const { spent, received } = spentReceived(tx);
-      const txDate = tx.transaction_date ? new Date(tx.transaction_date) : null;
       if (amountFilter === "spent" && spent <= 0) return false;
       if (amountFilter === "received" && received <= 0) return false;
-      if (dateFrom) {
-        const from = new Date(`${dateFrom}T00:00:00`);
-        if (!txDate || Number.isNaN(txDate.getTime()) || txDate < from) return false;
-      }
-      if (dateTo) {
-        const to = new Date(`${dateTo}T23:59:59`);
-        if (!txDate || Number.isNaN(txDate.getTime()) || txDate > to) return false;
-      }
       switch (selectedTransactionType) {
         case "money_in":
           return received > 0;
@@ -635,7 +635,7 @@ export function BankingTransactionsDesignView({
       if (va > vb) return 1 * sortDir;
       return 0;
     });
-  }, [activeReviewTab, amountFilter, dateFrom, dateTo, drafts, reviewTabBuckets, selectedTransactionType, sortBy]);
+  }, [activeReviewTab, amountFilter, drafts, reviewTabBuckets, selectedTransactionType, sortBy]);
 
   // CC-3 owner instructions 2026-09-02, item 9: "Empty state names the filter, never a blank
   // panel" -- names every active filter that could be why the list is empty, instead of one

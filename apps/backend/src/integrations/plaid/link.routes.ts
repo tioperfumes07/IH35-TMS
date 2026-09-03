@@ -56,6 +56,10 @@ const companyTransactionsQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
   q: z.string().trim().min(1).optional(),
   bank_account_id: z.string().uuid().optional(),
+  // DISP-F9994 (item 24 — server-side date range): mirrors the date_from/date_to convention already
+  // used by expenses.routes.ts / bills.routes.ts / receipts.routes.ts / integration-transactions.routes.ts.
+  date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   sort: z.enum(["date_desc", "date_asc", "amount_desc", "amount_asc"]).default("date_desc"),
   // GO-19-02 (docs/lockdown/GO-19-BUILD-QUEUE.md slice 02): owner-only reveal toggle, same as the
   // account register — default false keeps the 34 GO-11 fixture rows out of this list.
@@ -621,6 +625,14 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         predicates.push(`(bt.description ILIKE $${idx} OR bt.merchant_name ILIKE $${idx})`);
         values.push(`%${query.data.q}%`);
         idx++;
+      }
+      if (query.data.date_from) {
+        predicates.push(`bt.transaction_date >= $${idx++}::date`);
+        values.push(query.data.date_from);
+      }
+      if (query.data.date_to) {
+        predicates.push(`bt.transaction_date <= $${idx++}::date`);
+        values.push(query.data.date_to);
       }
       values.push(query.data.limit, query.data.offset);
       const limitIdx = values.length - 1;
