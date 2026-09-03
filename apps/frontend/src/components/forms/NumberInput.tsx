@@ -65,7 +65,7 @@ export function NumberInput({
         aria-label={ariaLabel}
         inputMode="decimal"
         disabled={disabled}
-        className={`h-7 w-full rounded-sm border border-gray-300 px-2 text-right text-xs ${unit ? "pr-9" : ""}`}
+        className={`h-7 w-full rounded-sm border border-gray-300 px-2 text-right text-xs tabular-nums ${unit ? "pr-9" : ""}`}
         placeholder={placeholder ?? "0"}
         value={text}
         onFocus={() => {
