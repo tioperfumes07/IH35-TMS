@@ -589,19 +589,19 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           ) : null}
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
             <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
-              <div className="text-[10px] uppercase tracking-wide text-gray-500">Total Parts</div>
+              <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Parts</div>
               <div className="font-semibold">
                 {partsInventoryKpisQuery.isError ? "—" : (partsInventoryKpisQuery.data?.total_parts ?? 0)}
               </div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
-              <div className="text-[10px] uppercase tracking-wide text-gray-500">Low Stock</div>
+              <div className="text-[11px] uppercase tracking-wide text-gray-500">Low Stock</div>
               <div className="font-semibold">
                 {partsInventoryKpisQuery.isError ? "—" : (partsInventoryKpisQuery.data?.low_stock_count ?? 0)}
               </div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
-              <div className="text-[10px] uppercase tracking-wide text-gray-500">Total Inventory Value</div>
+              <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Inventory Value</div>
               <div className="font-semibold">
                 {partsInventoryKpisQuery.isError
                   ? "—"

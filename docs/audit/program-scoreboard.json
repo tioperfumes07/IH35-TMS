@@ -1,10 +1,10 @@
 {
-  "healthzSha": "7fe443c",
-  "generated_at": "2026-09-02T21:13:45.696Z",
+  "healthzSha": "f01f8e1",
+  "generated_at": "2026-09-03T00:22:28.424Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "7fe443c",
+    "deployedSha": "f01f8e1",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 19799,
-      "title": "FINDING: N/A -- CC-2 J1 status batches 2-4, 997 -> 738, continuing to batch 5",
+      "number": 19885,
+      "title": "FINDING: BUS-HARD-WAKE-2-IDLE-DEFECT",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 04:12 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19799",
-      "sha": "7119780e2e",
-      "committedAtIso": "2026-09-02T16:12:37-05:00"
+      "mergedAtCt": "09/02/2026, 07:21 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19885",
+      "sha": "0d596591b3",
+      "committedAtIso": "2026-09-02T19:21:35-05:00"
     },
     {
-      "number": 19798,
-      "title": "FINDING: GO-23 seats idle or skipped waves after CC-1/CC-3 merge reports",
+      "number": 19886,
+      "title": "FINDING: N/A -- CC-3 ACK C1 hard wake",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 04:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19798",
-      "sha": "f6379dc823",
-      "committedAtIso": "2026-09-02T16:11:58-05:00"
+      "mergedAtCt": "09/02/2026, 07:21 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19886",
+      "sha": "81f9fdd48c",
+      "committedAtIso": "2026-09-02T19:21:32-05:00"
     },
     {
-      "number": 19797,
-      "title": "VERIFY: GO-26 done-gate HOLDS on current Neon",
+      "number": 19884,
+      "title": "docs(bus): CC-1 ACK N1",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 04:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19797",
-      "sha": "0bceb3672c",
-      "committedAtIso": "2026-09-02T16:10:46-05:00"
+      "mergedAtCt": "09/02/2026, 07:20 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19884",
+      "sha": "48a0c9a17c",
+      "committedAtIso": "2026-09-02T19:20:35-05:00"
     },
     {
-      "number": 19796,
-      "title": "FINDING: GO-23-J1-BATCH-4-MIXED-NONMONEY",
+      "number": 19883,
+      "title": "FINDING: BUS-HARD-WAKE-DEPLOY-1914",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 04:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19796",
-      "sha": "b2765cb2d6",
-      "committedAtIso": "2026-09-02T16:10:32-05:00"
+      "mergedAtCt": "09/02/2026, 07:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19883",
+      "sha": "98012a8603",
+      "committedAtIso": "2026-09-02T19:16:59-05:00"
     },
     {
-      "number": 19795,
-      "title": "FINDING: N/A -- CC-3 status: C7/B3 already done, K1/K3/K4 shipped, B9/E1 flagged",
+      "number": 19882,
+      "title": "FINDING: BUS-F1828",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 03:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19795",
-      "sha": "d6caff5d2c",
-      "committedAtIso": "2026-09-02T15:53:01-05:00"
+      "mergedAtCt": "09/02/2026, 07:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19882",
+      "sha": "f01f8e124d",
+      "committedAtIso": "2026-09-02T19:09:59-05:00"
     },
     {
-      "number": 19794,
-      "title": "FINDING: no 28-accounting-defects register exists on disk",
+      "number": 19881,
+      "title": "FINDING: GO-23-J1-BATCH-14-MIXED-NONMONEY",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 03:52 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19794",
-      "sha": "f709862f75",
-      "committedAtIso": "2026-09-02T15:52:11-05:00"
+      "mergedAtCt": "09/02/2026, 07:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19881",
+      "sha": "e1847c27ea",
+      "committedAtIso": "2026-09-02T19:08:16-05:00"
     },
     {
-      "number": 19793,
-      "title": "VERIFY: TXH A6 + B10 completed",
+      "number": 19880,
+      "title": "FINDING: GO-23-J1-BATCH-13-SHARED-INPUT-CONSTANT",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 03:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19793",
-      "sha": "e4bbcbbac0",
-      "committedAtIso": "2026-09-02T15:43:57-05:00"
+      "mergedAtCt": "09/02/2026, 07:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19880",
+      "sha": "2ce1562739",
+      "committedAtIso": "2026-09-02T19:04:51-05:00"
     },
     {
-      "number": 19792,
-      "title": "FINDING: N/A — GO-27 Gate 1.4: confirming, with live-mocked evidence, that the driver profile pay rate is the base case and a typed per-load override only wins when explicitly, accountably justified — not building new behavior, the priority already existed correctly",
+      "number": 19879,
+      "title": "FINDING: BUS-F1827",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 03:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19792",
-      "sha": "9277596c10",
-      "committedAtIso": "2026-09-02T15:40:41-05:00"
+      "mergedAtCt": "09/02/2026, 07:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19879",
+      "sha": "22835e46af",
+      "committedAtIso": "2026-09-02T19:00:49-05:00"
     },
     {
-      "number": 19790,
-      "title": "VERIFY: GO-26 final gate — trace counter fixed",
+      "number": 19878,
+      "title": "FINDING: GO18-GAP5-WORM-MISSING",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 03:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19790",
-      "sha": "7fe443c96c",
-      "committedAtIso": "2026-09-02T15:39:06-05:00"
+      "mergedAtCt": "09/02/2026, 06:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19878",
+      "sha": "29c90c2c01",
+      "committedAtIso": "2026-09-02T18:58:38-05:00"
     },
     {
-      "number": 19791,
-      "title": "FINDING: ACCT-F19790 — GO-27 Gate 0.3: driver bill numbers carried a B-prefix transformation of the load number instead of equaling it, splitting one document into two different-looking numbers",
+      "number": 19877,
+      "title": "FINDING: ACCT-F19876",
       "state": "merged",
-      "mergedAtCt": "09/02/2026, 03:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19791",
-      "sha": "4b10983a8d",
-      "committedAtIso": "2026-09-02T15:38:54-05:00"
+      "mergedAtCt": "09/02/2026, 06:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19877",
+      "sha": "452c10b979",
+      "committedAtIso": "2026-09-02T18:58:07-05:00"
     }
   ]
 }

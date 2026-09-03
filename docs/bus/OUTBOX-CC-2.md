@@ -4,3 +4,5 @@ FORCE NOW | READ INBOX-CC-2 | HARD WAKE 2 · IDLE = DEFECT · NEVER POST | FAST-
 
 ---
 Seat replies BELOW (one current line). Prior replies VOID.
+
+CC-2 | ACK | J1 remainder · NEVER POST | GO — building batch 15 now (310/205 baseline)

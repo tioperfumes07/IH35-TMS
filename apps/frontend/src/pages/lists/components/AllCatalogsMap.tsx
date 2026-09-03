@@ -404,13 +404,13 @@ export function DomainCatalogSection({ domain, onCatalogClick, onDomainClick }: 
             <Link
               to={buildDomainModulePath(domain.key)!}
               data-testid={`lists-domain-open-module-${domain.key}`}
-              className="text-[10px] font-semibold text-slate-600 underline hover:text-slate-900"
+              className="text-xs font-semibold text-slate-600 underline hover:text-slate-900"
             >
               Open {domain.label} module
             </Link>
           ) : null}
           {/* #P3 parity — live row count via the same useModuleCount source as the ribbon badge. */}
-          <DomainRowCountBadge domain={domain.key} className="rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600" />
+          <DomainRowCountBadge domain={domain.key} className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600" />
         </div>
       </div>
       <div className="grid gap-1.5 md:grid-cols-2">
@@ -422,7 +422,7 @@ export function DomainCatalogSection({ domain, onCatalogClick, onDomainClick }: 
               </button>
             ) : (
               <div className="font-semibold text-slate-500">
-                {catalog.name} <span className="text-[10px] uppercase tracking-wide">({CATALOG_IN_PREPARATION})</span>
+                {catalog.name} <span className="text-[11px] uppercase tracking-wide">({CATALOG_IN_PREPARATION})</span>
               </div>
             )}
             <div className="text-[11px] text-slate-500">{catalog.description}</div>

@@ -47,7 +47,7 @@ function PlannerLoadChip({ load, disabled }: { load: PlannerLoadEvent; disabled:
       title={`${entityLabel(load.load_number, load.id, "Load")} · ${entityLabel(load.customer_name, load.customer_id, "Customer")} · ${load.pickup_city ?? ""}${load.pickup_state ? `, ${load.pickup_state}` : ""} — click to open detail`}
     >
       <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} className="font-semibold" data-testid="planner-calendar-load-link" />
-      <span className="block truncate text-[10px] text-slate-700">
+      <span className="block truncate text-xs text-slate-700">
         <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" data-testid="planner-calendar-customer-link" />
       </span>
     </div>
@@ -88,7 +88,7 @@ function PlannerDayCell({
       {showHosOverlay && dayBlackouts.length > 0 ? (
         <div
           data-testid={`planner-hos-overlay-${driverId}-${day}`}
-          className="mb-1 rounded-sm bg-slate-200/80 px-1 py-0.5 text-[10px] text-slate-600"
+          className="mb-1 rounded-sm bg-slate-200/80 px-1 py-0.5 text-xs text-slate-600"
           title={dayBlackouts.map((slot) => `${slot.reason} ${slot.start_at}`).join(" · ")}
         >
           HOS rest
@@ -287,7 +287,7 @@ export function PlannerCalendarPage() {
                       <td className="sticky left-0 z-10 border-b bg-white px-3 py-2">
                         <div className="font-medium"><EntityLink kind="driver" id={driver.id} label={entityLabel(driver.name, driver.id, "Driver")} /></div>
                         <div className="text-xs text-slate-500"><EntityLinkOrTombstone kind="unit" id={driver.unit_id ?? null} name={driver.unit_number} noun="Unit" /></div>
-                        <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${hosClass(driver.hos_status)}`}>
+                        <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${hosClass(driver.hos_status)}`}>
                           {driver.hos_status === "violation" ? "HOS VIOL" : driver.hos_status === "ok" ? "HOS OK" : "HOS WARN"}
                         </span>
                       </td>

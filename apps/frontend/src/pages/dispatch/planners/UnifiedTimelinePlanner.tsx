@@ -83,7 +83,7 @@ function StatusPill({ status }: { status: "Available" | "On-load" | "On-leave" |
       : status === "On-load"
         ? "bg-slate-200 text-slate-800"
         : "bg-slate-100 text-slate-500";
-  return <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${cls}`}>{status}</span>;
+  return <span className={`rounded-sm px-1.5 py-0.5 text-xs font-semibold ${cls}`}>{status}</span>;
 }
 
 export function UnifiedTimelinePlanner() {
@@ -174,7 +174,7 @@ export function UnifiedTimelinePlanner() {
         secondary: (
           <>
             <StatusPill status={status} />
-            <span data-testid={`timeline-util-${driver.id}`} className="text-[8px] font-medium text-slate-600">
+            <span data-testid={`timeline-util-${driver.id}`} className="text-xs font-medium text-slate-600">
               {pct}%
             </span>
             {sorted[0] ? <LoadCustomerLink load={sorted[0]} /> : null}
@@ -189,7 +189,7 @@ export function UnifiedTimelinePlanner() {
               type="button"
               data-testid={`timeline-book-${driver.id}`}
               onClick={() => openBookForUnit(driver.unit_id)}
-              className="rounded-sm bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold text-white"
+              className="rounded-sm bg-slate-800 px-1.5 py-0.5 text-xs font-semibold text-white"
             >
               + Book
             </button>

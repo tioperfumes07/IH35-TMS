@@ -280,7 +280,7 @@ export function SettlementsPage() {
               onChange={(event) =>
                 staged.setDraft({ ...staged.draft, paymentState: event.target.value as PaymentStateFilter })
               }
-              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
             >
               <option value="">All</option>
               <option value="unpaid">Unpaid</option>
@@ -508,7 +508,7 @@ const openDriverBillColumns: DataTableColumn<OpenDriverBill>[] = [
       // drills to /accounting/bills/:id and live-404s for a driver_finance.driver_bills
       // row. "Open" bills here are not yet settled, so plain honest text.
       <span
-        className="text-[10px] text-gray-400"
+        className="text-xs text-gray-400"
         data-testid="settlements-open-driver-bill-number"
       >
         {visibleDocumentLabel(bill.bill_number, bill.id, "Driver bill")}
@@ -590,7 +590,7 @@ function KpiCard({
 }) {
   const content = (
     <>
-      <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
       <div className="font-semibold">{value}</div>
     </>
   );
