@@ -544,27 +544,34 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
       const advance = advanceRes.rows[0];
       if (!advance) return { code: 404 as const, error: "cash_advance_not_found" };
 
-      // HOLD (Law §9 2026-07-22 — NOT fixed in this PR): this WHERE liability_id = $1 filters
-      // driver_finance.settlement_lines, which has never had a liability_id column (same root cause
-      // documented on the GET /:id settlement_history query above) — the .catch always swallows a SQL
-      // error to rows=[], so cnt is always 0 and this write-path guard never actually blocks a reverse.
-      // Left untouched here on purpose: this gates a mutation (cash-advance reversal), and changing a
-      // live financial gate's query semantics without owner/CPA review is out of scope for a
-      // frontend-linkage PR (Rule 13 financial law). Tracked as REMAINING — needs an explicit backend
-      // fix (or the Phase-2 settlement_lines repoint) reviewed as a financial change, not bundled here.
-      // Filed on the board 2026-08-28 as CASH-ADV-F9930-REVERSE-GUARD-NEVER-BLOCKS (CC-1 money lane) —
-      // this comment predates the finding ID; see docs/audit/GUARD-WORKORDERS.md.
-      const settlementUseRes = await client
-        .query(
-          `
-            SELECT COUNT(*)::int AS cnt
-            FROM driver_finance.settlement_lines
-            WHERE liability_id = $1
-          `,
-          [advance.liability_id]
-        )
-        .catch(() => ({ rows: [{ cnt: 0 }] as Record<string, unknown>[] }));
-      if (Number(settlementUseRes.rows[0]?.cnt ?? 0) > 0) {
+      // CASH-ADV-F9930-REVERSE-GUARD-NEVER-BLOCKS (filed 2026-08-28, fixed here 2026-09-03): the old
+      // WHERE liability_id = $1 filtered driver_finance.settlement_lines, which has never had a
+      // liability_id column (same root cause already root-caused on the GET /:id settlement_history
+      // query above) — the .catch always swallowed the resulting SQL error to rows=[], so cnt was
+      // always 0 and this write-path guard never actually blocked a reversal, at any point, ever.
+      //
+      // That same prior fix established driver_finance.driver_settlement_deductions has NO column
+      // linking a row back to the SPECIFIC advance/liability it repays (driver_id only) — so exact
+      // per-advance settlement-usage attribution needs a real schema change (deduction-cap migration,
+      // tracked separately, not invented here). Rather than approximate with a driver-level join that
+      // could wrongly block or wrongly allow a reversal for the WRONG advance, this uses the signal
+      // that already exists, at the correct grain (this exact liability row, not the driver):
+      // driver_finance.driver_liabilities.paid_to_date. ANY non-zero paid_to_date means a real
+      // economic event has already been recorded against THIS liability — by a settlement deduction,
+      // by a manual mark-paid-off, or any other path — and reversing "no money moved" on top of that
+      // would misstate the ledger. This is the correct-grain block, not an approximation.
+      const liabilityBalanceRes = await client.query(
+        `
+          SELECT paid_to_date, current_balance, original_amount
+          FROM driver_finance.driver_liabilities
+          WHERE id = $1
+            AND operating_company_id = $2::uuid
+          LIMIT 1
+        `,
+        [advance.liability_id, companyId]
+      );
+      const liabilityBalance = liabilityBalanceRes.rows[0];
+      if (liabilityBalance && Number(liabilityBalance.paid_to_date ?? 0) > 0) {
         return { code: 400 as const, error: "cannot_reverse_after_settlement_deductions" };
       }
 
