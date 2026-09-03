@@ -4,6 +4,7 @@ import { getDispatchPlannerWeek, type PlannerLoadEvent } from "../../../api/disp
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { entityLabel } from "../../../lib/entity-label";
 import { addDaysIso } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
@@ -93,7 +94,9 @@ export function LoadsPlanner() {
               bars: [
                 {
                   id: `${load.id}-bar`,
-                  label: load.load_number || load.id,
+                  // C1 (owner correction 2026-09-02): was `load.load_number || load.id` -- a raw
+                  // uuid on the planner bar label the moment load_number is missing/blank.
+                  label: entityLabel(load.load_number, load.id, "Load"),
                   startYmd: start,
                   endYmd: end,
                   kind: "nb" as const,
