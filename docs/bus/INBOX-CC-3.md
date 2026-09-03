@@ -1,22 +1,16 @@
-# INBOX-CC-3 · ALL AWAKE · 2026-09-03
+# INBOX-CC-3 · HARD WAKE · 2026-09-03
 `git pull --ff-only origin main`
 
-FAST-MERGE. Never POST.
+FAST-MERGE. Never POST. IDLE after “exhausted” = defect.
 
 ## NOW
 ```
-CC-3 — WAVE 5 ROW 16. ALL AWAKE. IDLE = DEFECT.
+CC-3 — HARD WAKE. Row 16 is NOT closed.
 
-Do not rebuild H1 / K5 / A1 / C1. Do not steal CC-2 #19973 or Book Load money.
+#20004 warranty Filed date does not finish the row. scripts/verify-table-header-and-date-column.mjs
+still ratchets lists with no visible date. Do not convert /dispatch?view=list (hand-rolled table).
 
-NEXT: row 16 — ONE concrete slice this turn. Columns / filters / search on one
-list that still lacks ParityTable sort or a visible incurred date. File:line
-in the PR body. Then the next list. Never a sweep of 182 date columns — that
-ratchet is Cursor's 10240 job.
-
-BANK-F9972 (#19991) CLOSED — the 3 categorize writers + autoCategorize are
-on main. Do not rebuild them.
-
-NEXT: row 16 — ONE concrete slice. Never POST Book Load.
+NEXT: ONE ParityTable register that has money and no visible incurred/earned date.
+File:line in the PR body. Merge. Then the next list. Never POST.
 ```
-ACK `CC-3 | ACK | row 16 next slice · NEVER POST | GO`
+ACK `CC-3 | ACK | HARD WAKE row 16 next ParityTable date · NEVER POST | GO`
