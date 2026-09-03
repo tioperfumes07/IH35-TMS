@@ -1,4 +1,12 @@
-// [HOLD-FOR-JORGE — TIER 1] BLOCK-03 / CHAIN-05 — Bank-feed categorization → GL posting (GAP-CLOSURE).
+// BLOCK-03 / CHAIN-05 — Bank-feed categorization → GL posting (GAP-CLOSURE).
+//
+// LIVE-ARMED FOR USMCA (confirmed lib.feature_flag_overrides 2026-09-03: BANK_FEED_GL_POSTING_ENABLED
+// enabled=true for operating_company_id=5c854333-..., set 2026-08-16, no expiry). The old
+// [HOLD-FOR-JORGE — TIER 1] marker was stale — the file said held while the database said armed. As of
+// 2026-09-03 the USMCA bank queue is 343 real categorizable rows (400 total, 57 voided: 9 pre-existing +
+// 48 confirmed duplicate-Plaid-connection rows purged that day), 0 categorized, 0 posted — this path has
+// never actually fired for USMCA. The owner categorizes from here forward; treat the next real post as the
+// first live proof of this chain, not an assumption.
 //
 // GENERALIZES the built BLOCK-6 special case (bank-driver-advance.service.ts) to ALL categorized bank
 // transactions. When an operator categorizes a bank-feed line the route tags the row + mirrors to QBO, but
