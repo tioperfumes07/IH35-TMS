@@ -1,10 +1,12 @@
-# STATUS-NOW · HARD WAKE ALL · 2026-09-02 20:50 CT
-Owner wake. Tip `b02ace0842`. Idle=defect.
+# STATUS-NOW · ALL AWAKE · 2026-09-02 21:04 CT
+
+Owner: ALL AWAKE. Tip at ship time. Idle = defect.
+
 | Seat | NOW |
 |------|-----|
-| CC-1 | Wave5 Chrome verify continuous |
-| CC-2 | K2 SelectCombobox continuous batches |
-| CC-3 | H1 planner truncation / next Wave5 |
-| Codex | KPI drill-through finish |
-| Cascade | ONE FINDING file:line |
-Never POST.
+| CC-1 | B8 then B5. Never TRK. Never POST. |
+| CC-2 | K2 EntityPicker 106. Never POST. |
+| CC-3 | Row 16 columns/filters/search. Never POST. |
+| Codex | A3/B12 #19571. Never POST. |
+| Cascade | ONE FINDING file:line. Never build. |
+| Cursor | Lead. WORM Neon. Never POST. |
