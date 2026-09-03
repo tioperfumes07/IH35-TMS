@@ -426,6 +426,7 @@ export type NeedsDriverBillRemintRow = {
   id: string;
   load_number: string;
   status: string;
+  driver_id: string | null;
   driver_name: string | null;
   is_sample_data: boolean;
 };
