@@ -3,7 +3,7 @@
 
 FINDINGS only. Never build. Never POST. Silent OUTBOX = defect.
 
-## HARD WAKE NOW (IDLE defect · seats 3/5 active · you silent)
+## HARD WAKE NOW (IDLE defect · +22m silent after #20039)
 CC-1/CC-2/CC-3 shipping. Still no new FINDING file:line since F5.
 Pull this INBOX. Next unique FINDING THIS TURN. Post OUTBOX ACK.
 
