@@ -21,7 +21,7 @@ import { toMdataStatus, type DispatchStatus } from "./load-state-machine.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.js";
 import { buildLoadSaveProof } from "./load-save-proof.js";
-import { suggestPresettlementLink } from "./presettlement-link.service.js";
+import { confirmPresettlementLink, suggestPresettlementLink } from "./presettlement-link.service.js";
 
 type BookLoadStop = {
   stop_type: "pickup" | "delivery";
@@ -2337,20 +2337,32 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       );
     }
 
-    if (input.addToOpenPresettlement) {
-      // GO-22 — the presettlement query service now exists (dispatch/presettlement-link.service.ts).
-      // This SUGGESTS only — "a load never joins a settlement silently" — it never sets
-      // presettlement_link_id directly. A human confirms via POST .../presettlement-suggestions/:id/confirm,
-      // which is the only place that writes the link. The deferred-log line this replaced was honest
-      // while nothing existed; leaving it after this shipped would be a lie.
+    {
+      // GO-19 LOAD-COSTS (owner ruling 2026-09-03, settled, do not re-litigate): "The instant a
+      // load is CREATED it joins a pre-settlement. Not at delivery. Not at invoice. At creation."
+      // and "Assignment is automatic. Closing is human-confirmed." This SUPERSEDES the earlier
+      // GO-22 "recommend, never auto-commit" design below -- linking is no longer opt-in
+      // (input.addToOpenPresettlement is now ignored; every load with a driver+trip_type links)
+      // and no longer waits on a human confirm call. suggestPresettlementLink still runs FIRST
+      // (unchanged) so the SAME resolution logic (NB opens new, TR/SB joins the open tour
+      // settlement) decides the target; confirmPresettlementLink then runs immediately after,
+      // in the SAME transaction as the booking itself, so a load can never exist without already
+      // being linked. Closing a settlement (trip_closed_at) remains a separate, human-confirmed
+      // step this does not touch.
       if (input.assigned_primary_driver_id && input.trip_type) {
-        await suggestPresettlementLink(client, {
+        const suggestion = await suggestPresettlementLink(client, {
           operating_company_id: input.operating_company_id,
           load_id: String(load.id),
           driver_id: input.assigned_primary_driver_id,
           unit_id: input.assigned_unit_id ?? null,
           trip_type: input.trip_type,
           tour_id: input.tour_id ?? null,
+          actor_user_id: input.requestingUserUuid,
+        });
+        await confirmPresettlementLink(client, {
+          operating_company_id: input.operating_company_id,
+          suggestion_id: suggestion.suggestion_id,
+          action: suggestion.suggested_settlement_id ? "link_existing" : "create_new",
           actor_user_id: input.requestingUserUuid,
         });
       } else {
