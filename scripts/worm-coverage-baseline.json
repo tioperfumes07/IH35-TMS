@@ -11,6 +11,8 @@
     "accounting.bill_payments",
     "accounting.bill_unit_allocation",
     "accounting.bills",
+    "accounting.company_settlement_driver_settlements",
+    "accounting.company_settlements",
     "accounting.credit_memos",
     "accounting.escrow_postings",
     "accounting.expense_lines",
