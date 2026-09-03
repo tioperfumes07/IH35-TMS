@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
+import { z } from "zod";
 import { countUncategorizedTransactions } from "../banking/pending-categorization.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 
@@ -26,10 +27,15 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
     if (!["Owner", "Administrator", "Accountant", "Dispatcher", "SuperAdmin"].includes(String(user.role ?? ""))) {
       return reply.code(403).send({ error: "forbidden" });
     }
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    const parsed = companyQuerySchema.extend({
+      load_costs_sort: z.enum(["load", "status", "pickup_date", "projected_delivery", "delivered", "route_crew", "revenue", "costs", "driver", "margin"]).default("load"),
+      sort_direction: z.enum(["asc", "desc"]).default("desc"),
+    }).safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
     return withCompanyScope(String(user.uuid), parsed.data.operating_company_id, async (client) => {
+      const sortColumns = { load:"l.load_number", status:"l.status", pickup_date:"pickup.scheduled_arrival_at", projected_delivery:"delivery.scheduled_arrival_at", delivered:"delivery.actual_arrival_at", route_crew:"pickup.city", revenue:"l.rate_total_cents", costs:"(COALESCE(ec.expense_cents,0)+COALESCE(bc.bill_cents,0))", driver:"COALESCE(dp.driver_pay_cents,0)", margin:"(l.rate_total_cents-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dp.driver_pay_cents,0))" } as const;
+      const sortSql = `${sortColumns[parsed.data.load_costs_sort]} ${parsed.data.sort_direction.toUpperCase()} NULLS LAST, l.load_number ASC`;
       const result = await client.query(
         `WITH expense_costs AS (
            SELECT e.load_id,
@@ -62,16 +68,26 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
               AND db.status <> 'void'
             GROUP BY db.load_id
          )
-         SELECT COALESCE(ec.load_id, bc.load_id, dp.load_id)::text AS load_id,
+         SELECT l.id::text AS load_id, l.load_number, l.status::text, COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id,l.operating_company_id)) AS customer_name,
+                mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id,l.operating_company_id) AS driver_name,
+                u.unit_number, tr.equipment_number AS trailer_number, pickup.city AS pickup_city, delivery.city AS delivery_city,
+                pickup.scheduled_arrival_at::text AS pickup_date, delivery.scheduled_arrival_at::text AS scheduled_delivery_at,
+                delivery.actual_arrival_at::text AS actual_delivery_at, l.created_at::text, l.rate_total_cents::text AS revenue_cents,
                 COALESCE(ec.expense_cents, 0)::text AS expense_cents,
                 COALESCE(bc.bill_cents, 0)::text AS bill_cents,
                 COALESCE(dp.driver_pay_cents, 0)::text AS driver_pay_cents,
                 COALESCE(ec.expense_count, 0)::int AS expense_count,
                 COALESCE(bc.bill_count, 0)::int AS bill_count,
                 COALESCE(bc.unpaid_bill_count, 0)::int AS unpaid_bill_count
-           FROM expense_costs ec
-           FULL OUTER JOIN bill_costs bc ON bc.load_id = ec.load_id
-           FULL OUTER JOIN driver_pay dp ON dp.load_id = COALESCE(ec.load_id, bc.load_id)`,
+           FROM views.dispatch_load_with_driver_status l
+           LEFT JOIN expense_costs ec ON ec.load_id=l.id LEFT JOIN bill_costs bc ON bc.load_id=l.id LEFT JOIN driver_pay dp ON dp.load_id=l.id
+           LEFT JOIN mdata.customers c ON c.id=l.customer_id AND c.operating_company_id=l.operating_company_id
+           LEFT JOIN mdata.units u ON u.id=l.assigned_unit_id AND u.operating_company_id=l.operating_company_id
+           LEFT JOIN mdata.equipment tr ON tr.id=l.trailer_id AND tr.operating_company_id=l.operating_company_id
+           LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='pickup' AND soft_deleted_at IS NULL ORDER BY sequence_number ASC LIMIT 1) pickup ON true
+           LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at,actual_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='delivery' AND soft_deleted_at IS NULL ORDER BY sequence_number DESC LIMIT 1) delivery ON true
+          WHERE l.operating_company_id=$1::uuid AND l.soft_deleted_at IS NULL
+          ORDER BY ${sortSql}`,
         [parsed.data.operating_company_id]
       );
       const unmatchedBank = await countUncategorizedTransactions(client, parsed.data.operating_company_id);
