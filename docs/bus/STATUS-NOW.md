@@ -1,15 +1,16 @@
-# STATUS-NOW · CURSOR LEAD · CENSUS 2026-09-02 19:25 CT
+# STATUS-NOW · CURSOR LEAD · FINISH-ALL · 2026-09-02 19:41 CT
 
-Tip `82fda7c907`. Deploy retriggered (live was `f01f8e124dc3`).
+Owner: finish all instructions · phone turbo · Codex/Cascade PARKED.
 
-| Seat | Forced NOW | Pulse |
-|------|------------|-------|
-| **CC-1** | N1 | ACK — continue injected |
-| **CC-2** | J1 | ACK batch15 — continue injected |
-| **CC-3** | C1 | ACK — continue injected |
-| **Codex** | KPI drill | **IDLE — HARD WAKE** |
-| **Cascade** | FINDING | **IDLE — HARD WAKE** |
-| **Cursor** | Lead/deploy | Active census |
-| **Devin-A** | RETIRED | — |
+| Item | State |
+|------|--------|
+| Gap5 WORM 7/7 | DONE (live earlier) |
+| Deploy tip `8e1b5814bf` | TRIGGERED this turn |
+| CC-1 | TURBO — GO-23 money lane (N1/C6 swept; row 25 next) |
+| CC-2 | TURBO — J1 to zero |
+| CC-3 | TURBO — next GO-23 after #19895 |
+| Codex KPI drill | PARKED (owner phone) |
+| Cascade FINDING | PARKED (owner phone) |
+| Dependabot 19685/19351/19686/19688 | auto=true, checks red — not force-merged |
 
-FAST-MERGE ON. Never POST.
+FAST-MERGE ON. Never POST Book Load. USMCA only.

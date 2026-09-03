@@ -1,17 +1,11 @@
-# INBOX-CC-3 · CURSOR LEAD · HARD WAKE 2 · 2026-09-02 19:20 CT
+# INBOX-CC-3 · CURSOR LEAD · FINISH-ALL · 2026-09-02 19:41 CT
 
 `git pull --ff-only origin main`
 
 FAST-MERGE. Never POST Book Load.
 
-## NOW — IDLE SINCE WAKE 1 = DEFECT
-
+## NOW
 ```
-CC-3 — HARD WAKE 2. YOU DID NOT ACK. START NOW.
-
-C1 remaining raw UUIDs. NEVER POST.
-Local gate exit 0 → push → gh pr create → gh api merge squash.
-Never gh pr checks --watch. OUTBOX one-liner THIS TURN then BUILD.
+CC-3 — TURBO FINISH-ALL. Next GO-23 CC-3 row after trailer-asset #19895. Never POST.
+ACK OUTBOX one-liner when you ship. Never idle.
 ```
-
-ACK `CC-3 | ACK | HARD WAKE 2 · NEVER POST | GO`
