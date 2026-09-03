@@ -1,4 +1,7 @@
 // GAP-14: Reusable ValidationPanel — used by pre-dispatch, pre-settlement (GAP-15), pre-accounting (GAP-16).
+// P0 2026-09-03: blockers render as a table with an Override column (one button per row).
+
+import { useMemo, useState } from "react";
 
 export type ValidationSeverity = "block" | "warn" | "info";
 
@@ -16,11 +19,23 @@ export type ValidationResult = {
   can_dispatch: boolean;
 };
 
+export type BlockOverrideRecord = {
+  reason: string;
+  at: string;
+};
+
 type Props = {
   result: ValidationResult;
   loading?: boolean;
   acknowledgedRules?: Set<string>;
   onAck?: (ruleId: string) => void;
+  /** Owner P0 — one Override control per blocker row. */
+  allowBlockOverride?: boolean;
+  canOwnerOverride?: boolean;
+  blockOverrides?: Record<string, BlockOverrideRecord>;
+  rowReasons?: Record<string, string>;
+  onRowReasonChange?: (ruleId: string, reason: string) => void;
+  onOverrideBlocker?: (ruleId: string) => void;
 };
 
 const SEVERITY_STYLES: Record<ValidationSeverity, { bg: string; border: string; icon: string; iconBg: string; label: string }> = {
@@ -42,10 +57,25 @@ const SEVERITY_STYLES: Record<ValidationSeverity, { bg: string; border: string; 
     bg: "bg-slate-100",
     border: "border-slate-300",
     icon: "i",
-    iconBg: "bg-slate-1000",
+    iconBg: "bg-slate-500",
     label: "Info",
   },
 };
+
+function subjectFromItem(item: ValidationItem): string {
+  const ev = item.evidence ?? {};
+  if (typeof ev.driver_name === "string" && ev.driver_name.trim()) return ev.driver_name;
+  const msg = item.message;
+  const colon = msg.indexOf(":");
+  if (colon > 0 && colon < 80) return msg.slice(0, colon).trim();
+  return "—";
+}
+
+function missingFromItem(item: ValidationItem): string {
+  const colon = item.message.indexOf(":");
+  if (colon > 0) return item.message.slice(colon + 1).trim();
+  return item.message;
+}
 
 function ValidationRow({
   item,
@@ -68,7 +98,7 @@ function ValidationRow({
         {acknowledged ? "✓" : styles.icon}
       </span>
       <span className="flex-1 leading-snug">
-        <span className="font-mono text-xs text-gray-400 mr-1">[{item.rule_id}]</span>
+        <span className="mr-1 font-mono text-xs text-gray-400">[{item.rule_id}]</span>
         {item.message}
       </span>
       {item.severity === "warn" && onAck && !acknowledged && (
@@ -84,7 +114,40 @@ function ValidationRow({
   );
 }
 
-export function ValidationPanel({ result, loading, acknowledgedRules, onAck }: Props) {
+export function ValidationPanel({
+  result,
+  loading,
+  acknowledgedRules,
+  onAck,
+  allowBlockOverride = false,
+  canOwnerOverride = false,
+  blockOverrides = {},
+  rowReasons = {},
+  onRowReasonChange,
+  onOverrideBlocker,
+}: Props) {
+  const [sortKey, setSortKey] = useState<"rule" | "subject" | "missing">("rule");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const sortedBlockers = useMemo(() => {
+    const rows = result.blockers.map((item) => ({
+      item,
+      rule: item.rule_id,
+      subject: subjectFromItem(item),
+      missing: missingFromItem(item),
+    }));
+    const dir = sortDir === "asc" ? 1 : -1;
+    rows.sort((a, b) => a[sortKey].localeCompare(b[sortKey]) * dir);
+    return rows.map((r) => r.item);
+  }, [result.blockers, sortDir, sortKey]);
+
+  function toggleSort(key: "rule" | "subject" | "missing") {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center gap-2 rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-500">
@@ -97,11 +160,7 @@ export function ValidationPanel({ result, loading, acknowledgedRules, onAck }: P
     );
   }
 
-  const allItems = [
-    ...result.blockers,
-    ...result.warnings,
-    ...result.info,
-  ];
+  const allItems = [...result.blockers, ...result.warnings, ...result.info];
 
   if (allItems.length === 0) {
     return (
@@ -114,14 +173,83 @@ export function ValidationPanel({ result, loading, acknowledgedRules, onAck }: P
 
   return (
     <div className="space-y-1.5">
-      {result.blockers.map((item) => (
-        <ValidationRow
-          key={item.rule_id}
-          item={item}
-          acknowledged={acknowledgedRules?.has(item.rule_id) ?? false}
-          onAck={onAck}
-        />
-      ))}
+      {allowBlockOverride && result.blockers.length > 0 ? (
+        <div className="overflow-x-auto" data-testid="pre-dispatch-blocker-override-table">
+          <table className="w-full border-collapse text-xs">
+            <thead>
+              <tr className="h-[26px] bg-[#14314F] text-[10px] font-bold uppercase tracking-[0.5px] text-white">
+                <th className="border-r border-[#1f3f63] px-2 text-center">
+                  <button type="button" className="w-full font-bold uppercase" onClick={() => toggleSort("rule")}>
+                    Rule code
+                  </button>
+                </th>
+                <th className="border-r border-[#1f3f63] px-2 text-center">
+                  <button type="button" className="w-full font-bold uppercase" onClick={() => toggleSort("subject")}>
+                    Subject
+                  </button>
+                </th>
+                <th className="border-r border-[#1f3f63] px-2 text-center">
+                  <button type="button" className="w-full font-bold uppercase" onClick={() => toggleSort("missing")}>
+                    What is missing
+                  </button>
+                </th>
+                <th className="px-2 text-center">Override</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedBlockers.map((item) => {
+                const rec = blockOverrides[item.rule_id];
+                const reason = rowReasons[item.rule_id] ?? "";
+                return (
+                  <tr key={item.rule_id} className="h-[30px] border-b border-gray-200 even:bg-slate-50">
+                    <td className="border-r border-gray-200 px-2 font-mono">{item.rule_id}</td>
+                    <td className="border-r border-gray-200 px-2">{subjectFromItem(item)}</td>
+                    <td className="border-r border-gray-200 px-2">{missingFromItem(item)}</td>
+                    <td className="px-2 py-1">
+                      {rec ? (
+                        <span data-testid={`blocker-overridden-${item.rule_id}`}>
+                          Overridden {new Date(rec.at).toLocaleString()} — {rec.reason.slice(0, 48)}
+                          {rec.reason.length > 48 ? "…" : ""}
+                        </span>
+                      ) : canOwnerOverride ? (
+                        <div className="flex min-w-[14rem] flex-col gap-1">
+                          <input
+                            data-testid={`blocker-override-reason-${item.rule_id}`}
+                            value={reason}
+                            onChange={(e) => onRowReasonChange?.(item.rule_id, e.target.value)}
+                            placeholder="Reason (min 10 chars)"
+                            className="h-7 w-full rounded-sm border border-red-300 px-1 text-xs"
+                          />
+                          <button
+                            type="button"
+                            data-testid={`blocker-override-${item.rule_id}`}
+                            disabled={reason.trim().length < 10 || !onOverrideBlocker}
+                            onClick={() => onOverrideBlocker?.(item.rule_id)}
+                            className="rounded-sm border border-red-300 bg-white px-2 py-1 text-[11px] font-semibold text-red-800 disabled:opacity-40 hover:bg-red-100"
+                          >
+                            Override
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-red-600">Owner only</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        result.blockers.map((item) => (
+          <ValidationRow
+            key={item.rule_id}
+            item={item}
+            acknowledged={acknowledgedRules?.has(item.rule_id) ?? false}
+            onAck={onAck}
+          />
+        ))
+      )}
       {result.warnings.map((item) => (
         <ValidationRow
           key={item.rule_id}

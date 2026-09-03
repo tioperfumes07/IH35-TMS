@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { ConfirmModal } from "../shared/ConfirmModal";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
-import { ValidationPanel, type ValidationResult } from "../shared/ValidationPanel";
+import { ValidationPanel, type BlockOverrideRecord, type ValidationResult } from "../shared/ValidationPanel";
 
 // INS-SCHEDULE: Owner ruling 2026-08-31 — confirming the insurance schedule warning MUST log to
 // the backend (who, when, driver, load, truck). The confirm cannot be bypassed.
@@ -40,6 +40,9 @@ type Props = {
   canOwnerOverride?: boolean;
   /** Submits the booking with override=true. Present only when canOwnerOverride. */
   onOwnerOverride?: () => void;
+  /** P0 — remaining blockers after per-row Override (Book stays disabled until 0). */
+  onRemainingBlockersChange?: (remaining: number) => void;
+  onBlockOverridesChange?: (rows: Record<string, BlockOverrideRecord>) => void;
 };
 
 const EMPTY_RESULT: ValidationResult = {
@@ -77,11 +80,15 @@ export function PreDispatchValidationPanel({
   onOverrideReasonChange,
   canOwnerOverride = false,
   onOwnerOverride,
+  onRemainingBlockersChange,
+  onBlockOverridesChange,
 }: Props) {
   const [result, setResult] = useState<ValidationResult>(EMPTY_RESULT);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [acknowledgedRules, setAcknowledgedRules] = useState<Set<string>>(new Set());
+  const [blockOverrides, setBlockOverrides] = useState<Record<string, BlockOverrideRecord>>({});
+  const [rowReasons, setRowReasons] = useState<Record<string, string>>({});
   const [pendingInsScheduleConfirm, setPendingInsScheduleConfirm] = useState<{ ruleId: string; message: string } | null>(null);
   const [retryGeneration, setRetryGeneration] = useState(0);
 
@@ -110,6 +117,10 @@ export function PreDispatchValidationPanel({
     setLoading(false);
     setError(null);
     setAcknowledgedRules(new Set());
+    setBlockOverrides({});
+    setRowReasons({});
+    onBlockOverridesChange?.({});
+    onRemainingBlockersChange?.(0);
     // Only run if there's something to validate.
     if (!driverUuid && !unitUuid && !customerId) {
       setResult(EMPTY_RESULT);
@@ -204,8 +215,14 @@ export function PreDispatchValidationPanel({
     }
   }, [logInsScheduleConfirmation, pendingInsScheduleConfirm]);
 
-  const hasBlockers = result.blockers.length > 0;
-  const hasUnackedBlockers = result.blockers.some((b) => !acknowledgedRules.has(b.rule_id));
+  const remainingBlockers = result.blockers.filter((b) => !blockOverrides[b.rule_id]).length;
+  const hasBlockers = remainingBlockers > 0;
+  const hasUnackedBlockers = remainingBlockers > 0;
+
+  useEffect(() => {
+    onRemainingBlockersChange?.(remainingBlockers);
+    onBlockOverridesChange?.(blockOverrides);
+  }, [blockOverrides, remainingBlockers, onBlockOverridesChange, onRemainingBlockersChange]);
 
   return (
     <div className="space-y-2" data-testid="pre-dispatch-validation-panel">
@@ -260,50 +277,46 @@ export function PreDispatchValidationPanel({
           loading={loading}
           acknowledgedRules={acknowledgedRules}
           onAck={handleAck}
+          allowBlockOverride
+          canOwnerOverride={canOwnerOverride}
+          blockOverrides={blockOverrides}
+          rowReasons={rowReasons}
+          onRowReasonChange={(ruleId, reason) => {
+            setRowReasons((prev) => ({ ...prev, [ruleId]: reason }));
+            onOverrideReasonChange?.(reason);
+          }}
+          onOverrideBlocker={(ruleId) => {
+            const reason = (rowReasons[ruleId] ?? "").trim();
+            if (reason.length < 10) return;
+            setBlockOverrides((prev) => ({
+              ...prev,
+              [ruleId]: { reason, at: new Date().toISOString() },
+            }));
+          }}
         />
       )}
 
-      {hasBlockers && !loading && (
+      {result.blockers.length > 0 && !loading && (
         <div className="rounded-sm border border-red-200 bg-red-50 p-2.5 text-xs">
           <div className="mb-1.5 font-semibold text-red-800">
-            Override required to dispatch with active blocker(s).
+            {remainingBlockers > 0
+              ? `Book stays disabled — ${remainingBlockers} blocker(s) remain. Override each row.`
+              : "Every blocker is overridden for this booking. Book + dispatch will record one audit row per rule."}
           </div>
-          <textarea
-            value={overrideReason ?? ""}
-            onChange={(e) => onOverrideReasonChange?.(e.target.value)}
-            className="w-full rounded-sm border border-red-300 px-2 py-1 text-xs"
-            rows={2}
-            placeholder="Override reason (min 10 chars) — this creates an audit log entry"
-          />
-          {/* OWNER-ALWAYS-OVERRIDE (owner ruling 2026-08-02): the Owner is never told to contact an
-              owner. Previously this line rendered for EVERY role, so the Owner — the only role that
-              can authorize — was sent to find themselves, with a textarea that could not be typed in.
-              The blocker may be WRONG (credential valid in reality but stale/missing/unreadable in the
-              system); the Owner carries that liability and attests on the record. The reason is
-              required at >=10 chars here AND re-enforced server-side, where the override is written to
-              the append-only audit trail with who/when/why/which-reasons. */}
-          {canOwnerOverride ? (
-            <div className="mt-2 flex items-center justify-between gap-2">
-              <span className="text-xs text-red-700">
-                Owner override — this is recorded to the audit trail with your name, the time, and the
-                exact blockers overridden.
-              </span>
-              <button
-                type="button"
-                disabled={(overrideReason ?? "").trim().length < 10 || !onOwnerOverride}
-                onClick={() => onOwnerOverride?.()}
-                className="shrink-0 rounded-sm border border-red-300 bg-white px-2 py-1 text-[11px] font-semibold text-red-800 disabled:opacity-40 hover:bg-red-100"
-              >
-                Override &amp; dispatch
-              </button>
+          {canOwnerOverride && remainingBlockers === 0 && onOwnerOverride ? (
+            <button
+              type="button"
+              onClick={() => onOwnerOverride?.()}
+              className="rounded-sm border border-red-300 bg-white px-2 py-1 text-[11px] font-semibold text-red-800 hover:bg-red-100"
+            >
+              Override &amp; dispatch
+            </button>
+          ) : null}
+          {!canOwnerOverride && hasUnackedBlockers ? (
+            <div className="mt-1 text-xs text-red-600">
+              Dispatcher-level override requires owner approval. Contact your owner to proceed.
             </div>
-          ) : (
-            hasUnackedBlockers && (
-              <div className="mt-1 text-xs text-red-600">
-                Dispatcher-level override requires owner approval. Contact your owner to proceed.
-              </div>
-            )
-          )}
+          ) : null}
         </div>
       )}
 

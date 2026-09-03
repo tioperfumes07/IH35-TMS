@@ -222,6 +222,7 @@ export type DispatchBookLoadPayload = {
   save_mode: "draft" | "book_dispatch";
   override_token?: string;
   override_reason?: string;
+  override_rules?: Array<{ rule_code: string; reason: string; subject?: string }>;
   anticipated_chargeback_cents?: number;
   anticipated_chargeback_reason?: string;
   detention_expected_y_n?: boolean;
@@ -235,9 +236,9 @@ export type DispatchBookLoadPayload = {
   ocr_source_pdf_r2_key?: string;
   /** Completed docs.files row to link atomically to the newly booked load. */
   rate_confirmation_file_id?: string;
-  miles_practical?: number;
-  miles_shortest?: number;
-  miles_deadhead?: number;
+  miles_practical?: number | null;
+  miles_shortest?: number | null;
+  miles_deadhead?: number | null;
   mileage_source?:
     | "History"
     | "History — verify"
@@ -1496,7 +1497,7 @@ export type LaneMileageLookupResult = {
   short_runs: number | null;
   practical_spread: number | null;
   confidence: string | null;
-  /** Audit-only. Wizard fills on `fills` (GO-16 Rev C). */
+  /** Audit-only on the lane row. Wizard fills only when this is true (P0 State A). */
   autofill_allowed: boolean;
   /** True when practical_miles exists — Thin / High / Check ZIP / reverse all fill. */
   fills: boolean;

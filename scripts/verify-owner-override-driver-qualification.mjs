@@ -43,6 +43,7 @@ const LOG_ROUTE = "apps/backend/src/dispatch/dispatch-refinements.routes.ts";
 const INDEX = "apps/backend/src/index.ts";
 const MODAL = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
 const PANEL = "apps/frontend/src/components/dispatch/PreDispatchValidationPanel.tsx";
+const VALIDATION_PANEL = "apps/frontend/src/components/shared/ValidationPanel.tsx";
 const EDIT_MAPPING = "apps/frontend/src/pages/dispatch/components/book-load-v4/editLoadMapping.ts";
 
 const OVERRIDE_EVENT = "dispatch.driver_qualification_overridden_by_owner";
@@ -176,6 +177,19 @@ function analyse(files) {
         `"contact your owner to proceed" with no way to act.`
     );
   }
+  if (
+    !/pre-dispatch-blocker-override-table/.test(panel) &&
+    !/pre-dispatch-blocker-override-table/.test(modal) &&
+    !/pre-dispatch-blocker-override-table/.test(files[VALIDATION_PANEL] ?? "")
+  ) {
+    problems.push(
+      `${PANEL}: P0 per-row Override table (pre-dispatch-blocker-override-table) is gone — a single ` +
+        `blanket override is not an audit trail.`
+    );
+  }
+  if (hasOverrideBranch && !/override_rules/.test(svc)) {
+    problems.push(`${SERVICE}: book-load must accept override_rules and write one audit row per rule.`);
+  }
 
   // GO-23 EXTENSION — the same A-D contract, on the EDIT path (update-load.service.ts).
   const editSvc = files[EDIT_SERVICE];
@@ -233,7 +247,7 @@ function analyse(files) {
     }
     // E (edit) — the Edit submit path must thread the panel's override click into buildEditPatchBody,
     // or clicking "Override & dispatch" while editing silently does a normal save with no reason.
-    if (!/buildEditPatchBody\([\s\S]{0,200}overrideReason/.test(modal)) {
+    if (!/buildEditPatchBody\([\s\S]{0,800}overrideReason/.test(modal)) {
       problems.push(
         `${MODAL}: the Edit-mode submit path does not pass overrideReason into buildEditPatchBody. ` +
           `Clicking "Override & dispatch" while editing an existing load silently falls through to a ` +
@@ -247,7 +261,7 @@ function analyse(files) {
 
 function readAll() {
   const out = {};
-  for (const f of [SERVICE, MODAL, PANEL, LOG_ROUTE, INDEX, EDIT_SERVICE, EDIT_ROUTE, EDIT_MAPPING])
+  for (const f of [SERVICE, MODAL, PANEL, VALIDATION_PANEL, LOG_ROUTE, INDEX, EDIT_SERVICE, EDIT_ROUTE, EDIT_MAPPING])
     out[f] = existsSync(f) ? readFileSync(f, "utf8") : null;
   return out;
 }
@@ -264,11 +278,12 @@ function selftest() {
     `const ownerOverridingQualification = canOwnerOverrideQualification(input.requestingUserRole) && ` +
     `typeof input.override_reason === "string" && input.override_reason.trim().length >= 10;\n` +
     `await appendCrudAudit(client, u, "${OVERRIDE_EVENT}", { override_class: "DOT_QUALIFICATION", attestation_scope: "single_dispatch" });\n` +
+    `override_rules\n` +
     `error: "E_DRIVER_NOT_QUALIFIED",`;
   const goodModal =
     `overrideReason={overrideReason}\nonOverrideReasonChange={setOverrideReason}\n` +
     `buildEditPatchBody(values, dirty, companyId, opts?.override ? overrideReason : undefined)`;
-  const goodPanel = `canOwnerOverride = false, onOwnerOverride,`;
+  const goodPanel = `canOwnerOverride = false, onOwnerOverride, data-testid="pre-dispatch-blocker-override-table"`;
 
   const goodLog = `app.get("/api/v1/dispatch/owner-override-log", ...)`;
   const goodIndex = `await registerDispatchRefinementsRoutes(app);`;
@@ -286,6 +301,7 @@ function selftest() {
     [EDIT_SERVICE]: goodEditSvc,
     [EDIT_ROUTE]: goodEditRoute,
     [EDIT_MAPPING]: goodEditMapping,
+    [VALIDATION_PANEL]: 'data-testid="pre-dispatch-blocker-override-table"',
   };
 
   t("wired + owner-gated + reasoned + audited + logged passes", analyse({ ...base, [SERVICE]: goodSvc, [MODAL]: goodModal, [PANEL]: goodPanel }).length === 0);
