@@ -7,7 +7,7 @@ FAST-MERGE. Never POST. Lead coordinates. Do not sweep GUARD-WORKORDERS. Do not 
 ```
 CURSOR — LEAD. ALL AWAKE.
 
-Keep seats on the NOW table. Merge ready PRs. Stay off K2 / row 16 / B8 authoring.
+Keep seats on the NOW table. Stay off B8 / row 16 authoring.
 WORM Neon leftover: 202609022351 on br-fancy-credit-akjnd07a + pg_trigger proof.
 Never POST.
 ```

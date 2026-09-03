@@ -18,6 +18,7 @@ import {
   type UnitsWithoutLoad,
 } from "../../api/dispatch";
 import { listLoadsNeedingDriverBillRemint } from "../../api/loads";
+import { DispatchLoadCostsPanel } from "../../components/dispatch/DispatchLoadCostsPanel";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { colors, spacing, typography } from "../../design/tokens";
@@ -355,6 +356,8 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
           {PanelError("Couldn't load the Dispatch overview totals.", () => void dashboardQ.refetch())}
         </div>
       ) : null}
+
+      <DispatchLoadCostsPanel operatingCompanyId={operatingCompanyId} />
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         <div id="units-needing-return" data-testid="dispatch-units-needing-return-panel">

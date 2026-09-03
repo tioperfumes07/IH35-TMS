@@ -181,7 +181,13 @@ function DropdownColumn({
             id={menuId}
             role="menu"
             className="nav-dropdown"
-            data-testid={item.label === "Bills" ? "bills-dropdown-menu" : undefined}
+            data-testid={
+              item.label === "Bills"
+                ? "bills-dropdown-menu"
+                : item.label === "Expenses"
+                  ? "expenses-dropdown-menu"
+                  : undefined
+            }
             onKeyDown={onMenuKeyDown}
             tabIndex={-1}
           >

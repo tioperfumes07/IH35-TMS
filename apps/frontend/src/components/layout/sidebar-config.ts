@@ -309,6 +309,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Loan Wizard", to: "/finance/loan-wizard" },
         { label: "Calculator", to: "/finance/calculator" },
         { label: "Amortization", to: "/finance/amortization" },
+        { label: "Load costs", to: "/accounting/load-costs" },
       ];
     case "inventory":
       return [

@@ -6,8 +6,13 @@ const COSTS = "apps/frontend/src/components/dispatch/LoadDetailCostsTab.tsx";
 const BOARD = "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx";
 const ROUTES = "apps/frontend/src/routes/manifest.tsx";
 const BACKEND = "apps/backend/src/accounting/load-costs-board.routes.ts";
+const FINANCE = "apps/frontend/src/pages/finance/FinanceModuleTabs.tsx";
+const SIDEBAR = "apps/frontend/src/components/layout/sidebar-config.ts";
+const DISPATCH = "apps/frontend/src/pages/dispatch/DispatchOverview.tsx";
+const PANEL = "apps/frontend/src/components/dispatch/DispatchLoadCostsPanel.tsx";
+const SUBNAV = "apps/frontend/src/pages/accounting/subnav-manifest.ts";
 
-function violations(drawer, costs, board, routes, backend) {
+function violations(drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav) {
   const errors = [];
   if (!drawer.includes('"Costs",') || !drawer.includes('activeTab === "Costs"') || !drawer.includes("<LoadDetailCostsTab")) errors.push("13th Costs tab is not mounted");
   if (!costs.includes("listExpenses(opco, { load_id: load.id") || !costs.includes("listBills(opco, { load_id: load.id")) errors.push("existing load-scoped expense/bill reads are missing");
@@ -20,11 +25,19 @@ function violations(drawer, costs, board, routes, backend) {
   if (!routes.includes('path="/accounting/load-costs"') || !drawer.includes('initialTab?: DrawerTab')) errors.push("Costs board route or drawer deep-link contract is missing");
   if (!backend.includes("FULL OUTER JOIN bill_costs") || !backend.includes("SUM(ROUND(bl.amount * 100))") || !backend.includes("e.load_id IS NOT NULL")) errors.push("per-load expense/bill allocation is not enforced");
   if (backend.includes("INSERT INTO") || backend.includes("UPDATE accounting") || backend.includes("DELETE FROM")) errors.push("Costs board backend introduced a writer");
+  if (!backend.includes('"Dispatcher"')) errors.push("load-costs-board GET must stay readable while dispatching");
+  if (!finance.includes('to: "/accounting/load-costs"') || !finance.includes('label: "Load costs"')) errors.push("Finance hub door to the same Load costs page is missing");
+  if (finance.includes("LoadCostsBoardPage")) errors.push("Finance hub forked Load costs instead of linking the one page");
+  if (!sidebar.includes('{ label: "Load costs", to: "/accounting/load-costs" }')) errors.push("Finance flyout door to Load costs is missing");
+  if (!dispatch.includes("<DispatchLoadCostsPanel") || !panel.includes("/api/v1/accounting/load-costs-board") || !panel.includes("listAllLoads")) errors.push("Dispatch does not reuse the load-costs-board read model");
+  if (!panel.includes("Approximate") || !panel.includes("data-testid=\"dispatch-load-costs-panel\"")) errors.push("Dispatch load-cost metrics dropped Approximate or the live proof hook");
+  if (panel.includes('method: "POST"') || panel.includes("INSERT INTO")) errors.push("Dispatch load-cost panel writes");
+  if (!subnav.includes('{ label: "Load costs", path: "/accounting/load-costs", section: "expenses" }')) errors.push("Expenses dropdown Load costs entry was removed");
   return errors;
 }
 
-function check(drawer, costs, board, routes, backend) {
-  const errors = violations(drawer, costs, board, routes, backend);
+function check(drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav) {
+  const errors = violations(drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav);
   if (errors.length) throw new Error(errors.join("; "));
 }
 
@@ -33,24 +46,38 @@ const costs = fs.readFileSync(COSTS, "utf8");
 const board = fs.readFileSync(BOARD, "utf8");
 const routes = fs.readFileSync(ROUTES, "utf8");
 const backend = fs.readFileSync(BACKEND, "utf8");
+const finance = fs.readFileSync(FINANCE, "utf8");
+const sidebar = fs.readFileSync(SIDEBAR, "utf8");
+const dispatch = fs.readFileSync(DISPATCH, "utf8");
+const panel = fs.readFileSync(PANEL, "utf8");
+const subnav = fs.readFileSync(SUBNAV, "utf8");
 
 if (process.argv.includes("--selftest")) {
+  const base = [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav];
   const mutations = [
-    [drawer.replace('"Costs",', '"Former costs",'), costs, board, routes, backend],
-    [drawer, costs.replace('data-cost-driver-column="driver_id"', 'data-cost-driver-column="driver_uuid"'), board, routes, backend],
-    [drawer, costs.replace('type CostChoice = "expense" | "bill" | null', 'type CostChoice = "expense" | "bill"'), board, routes, backend],
-    [drawer, costs.replaceAll("No costs on this load yet.", "No rows."), board, routes, backend],
-    [drawer, costs, board.replaceAll("listAllLoads", "listRecentLoads"), routes, backend],
-    [drawer, costs, board, routes.replace('path="/accounting/load-costs"', 'path="/accounting/costs"'), backend],
+    [drawer.replace('"Costs",', '"Former costs",'), costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav],
+    [drawer, costs.replace('data-cost-driver-column="driver_id"', 'data-cost-driver-column="driver_uuid"'), board, routes, backend, finance, sidebar, dispatch, panel, subnav],
+    [drawer, costs.replace('type CostChoice = "expense" | "bill" | null', 'type CostChoice = "expense" | "bill"'), board, routes, backend, finance, sidebar, dispatch, panel, subnav],
+    [drawer, costs.replaceAll("No costs on this load yet.", "No rows."), board, routes, backend, finance, sidebar, dispatch, panel, subnav],
+    [drawer, costs, board.replaceAll("listAllLoads", "listRecentLoads"), routes, backend, finance, sidebar, dispatch, panel, subnav],
+    [drawer, costs, board, routes.replace('path="/accounting/load-costs"', 'path="/accounting/costs"'), backend, finance, sidebar, dispatch, panel, subnav],
+    [drawer, costs, board, routes, backend, finance.replaceAll("/accounting/load-costs", "/finance/load-costs"), sidebar, dispatch, panel, subnav],
+    [drawer, costs, board, routes, backend, finance, sidebar.replaceAll("Load costs", "Load P&L"), dispatch, panel, subnav],
+    [drawer, costs, board, routes, backend, finance, sidebar, dispatch.replace("<DispatchLoadCostsPanel", "<div"), panel, subnav],
+    [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel.replaceAll("Approximate", "Final"), subnav],
+    [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav.replace("Load costs", "Load spend")],
   ];
   let caught = 0;
-  for (const [index, [mutatedDrawer, mutatedCosts, mutatedBoard, mutatedRoutes, mutatedBackend]] of mutations.entries()) {
-    try { check(mutatedDrawer, mutatedCosts, mutatedBoard, mutatedRoutes, mutatedBackend); } catch { caught += 1; continue; }
+  for (const [index, args] of mutations.entries()) {
+    try { check(...args); } catch { caught += 1; continue; }
     throw new Error(`selftest mutation ${index + 1} escaped detection`);
+  }
+  try { check(...base); } catch (error) {
+    throw new Error(`selftest good files failed: ${error instanceof Error ? error.message : String(error)}`);
   }
   if (caught !== mutations.length) throw new Error(`selftest caught ${caught}/${mutations.length} planted regressions`);
   console.log(`PASS verify-load-detail-costs-tab --selftest (${caught}/${mutations.length})`);
 } else {
-  check(drawer, costs, board, routes, backend);
+  check(drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav);
   console.log("PASS verify-load-detail-costs-tab");
 }
