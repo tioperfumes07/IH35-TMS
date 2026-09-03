@@ -18,10 +18,9 @@
  *   4. imports of components/DataTable
  *   5. imports of components/shared/ResizableTable
  *   6. imports of components/shared/MobileOptimizedTable
- *   7. raw <table> outside the 6 infrastructure files that legitimately implement one
- *      (components/DataTable.tsx, components/FleetTable.tsx, components/lists/ListView/
- *      ListView.tsx, components/parity/ParityTable.tsx, components/shared/
- *      MobileOptimizedTable.tsx, components/shared/ResizableTable.tsx)
+ *   7. raw <table> outside the infrastructure files that legitimately implement one
+ *      (DataTable, FleetTable, ListView, ParityTable, MobileOptimizedTable, ResizableTable,
+ *      ValidationPanel — P0 per-row Override table)
  *   8. raw text-[Npx] off the locked scale (11 / 12 / 22) — same measure as
  *      verify-ui-design-system-ratchet.mjs, folded in here per the owner's consolidation
  *      ruling so one guard covers the whole sprawl class, not two overlapping ones.
@@ -61,6 +60,9 @@ const TABLE_INFRA_FILES = new Set(
     "components/parity/ParityTable.tsx",
     "components/shared/MobileOptimizedTable.tsx",
     "components/shared/ResizableTable.tsx",
+    // P0 2026-09-03 — per-row Override column (owner table, not a register). Counted as infra so
+    // the blocker table does not raise raw_table_outside_infra sprawl.
+    "components/shared/ValidationPanel.tsx",
   ].map((p) => path.join(SRC, p))
 );
 
