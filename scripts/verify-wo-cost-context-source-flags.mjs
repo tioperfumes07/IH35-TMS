@@ -3,11 +3,20 @@
  * LV-WO-COST-CONTEXT-SILENTLY-MISSING-SOURCES + CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE (instance):
  * wo-cost-context must never treat a missing to_regclass latch as an empty catalog.
  *
+ * GO-20 SLICE F/G (2026-09-02): inventory.parts and maintenance.labor_rates are PHANTOM tables —
+ * never applied, never real (docs/lockdown/GO-20-EIGHT-FEATURES.txt). The route used to probe them
+ * FIRST and treat the real, live tables (maintenance.parts_inventory / catalogs.labor_rates) as a
+ * "fallback" — backwards, and it meant status was NEVER "available" on a live database. This guard
+ * now asserts the CORRECTED shape: the canonical tables are read directly and marked "available";
+ * the phantom tables are never probed at all.
+ *
  * Guard asserts:
  *  1) route returns `sources.inventory_parts` + `sources.labor_rates` with status ∈
- *     available|fallback|unavailable
+ *     available|unavailable (no "fallback" — there is no second-tier source once the phantom
+ *     tables are gone)
  *  2) every to_regclass false-path for parts/labor sets status (no bare skip)
- *  3) FE surfaces "not provisioned" when status === unavailable
+ *  3) the route does NOT probe the phantom inventory.parts / maintenance.labor_rates relations
+ *  4) FE surfaces "not provisioned" when status === unavailable
  *
  * --selftest strips sources from the route and expects FAIL.
  */
@@ -33,15 +42,21 @@ function check(root = ROOT) {
   if (!/partsStatus[\s\S]{0,40}=\s*"unavailable"/.test(route) || !/laborStatus[\s\S]{0,40}=\s*"unavailable"/.test(route)) {
     errors.push(`${ROUTE}: default status must be unavailable when no relation is present`);
   }
-  if (!/partsStatus\s*=\s*"fallback"/.test(route) || !/laborStatus\s*=\s*"fallback"/.test(route)) {
-    errors.push(`${ROUTE}: fallback path must set status=fallback (not silent empty)`);
+  if (!/partsStatus\s*=\s*"available"/.test(route) || !/laborStatus\s*=\s*"available"/.test(route)) {
+    errors.push(`${ROUTE}: the canonical-table path must set status=available (not a phantom-table fallback)`);
   }
-  // Both primary tables must still be probed (finding named these two).
-  if (!/to_regclass\('inventory\.parts'\)/.test(route)) {
-    errors.push(`${ROUTE}: must probe inventory.parts`);
+  // GO-20 SLICE F/G: the phantom tables must NEVER be probed — only the real, canonical ones.
+  if (/to_regclass\('inventory\.parts'\)/.test(route)) {
+    errors.push(`${ROUTE}: must NOT probe the phantom inventory.parts relation (GO-20 Slice F)`);
   }
-  if (!/to_regclass\('maintenance\.labor_rates'\)/.test(route)) {
-    errors.push(`${ROUTE}: must probe maintenance.labor_rates`);
+  if (/to_regclass\('maintenance\.labor_rates'\)/.test(route)) {
+    errors.push(`${ROUTE}: must NOT probe the phantom maintenance.labor_rates relation (GO-20 Slice G)`);
+  }
+  if (!/to_regclass\('maintenance\.parts_inventory'\)/.test(route)) {
+    errors.push(`${ROUTE}: must probe the canonical maintenance.parts_inventory`);
+  }
+  if (!/to_regclass\('catalogs\.labor_rates'\)/.test(route)) {
+    errors.push(`${ROUTE}: must probe the canonical catalogs.labor_rates`);
   }
 
   const api = fs.readFileSync(path.join(root, FE_API), "utf8");
