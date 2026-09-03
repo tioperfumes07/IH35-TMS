@@ -1,24 +1,24 @@
-# INBOX-CC-1 · HARD WAKE NOW · 2026-09-03
+# INBOX-CC-1 · NOW · 2026-09-03
 `git pull --ff-only origin main`
 
-FAST-MERGE. Never POST. USMCA only. TRANSP/TRK frozen.
+FAST-MERGE. Never POST. USMCA only.
 
-## HARD WAKE NOW (IDLE defect · +29m silent · claim #20031 ≠ OUTBOX)
-Claim 202613560001 merged. Still no `CC-1 | ACK | C6` below OUTBOX `---`.
-Pull this INBOX. Execute C6 THIS TURN. Post OUTBOX when you start.
+## GATE
+GATE-LIVELOCK-01 is CLOSED on main (#20068). Local pre-push is path-scoped
+(~2 min). `GATE_FULL=1` forces the full 4,767. Do not rebuild the gate.
 
 ## NOW
 ```
-CC-1 — WAVE 2. HARD WAKE. IDLE = DEFECT.
+CC-1 — 25-task Downloads/CC-1-INSTRUCTIONS-09-02-2026.txt.
 
-B8 CLOSED (#19976). B5 CLOSED (#20018/#20023/#20024). Do not rebuild
-Comchek or driver-pay override reason.
+CLOSED: #1 advisory lock (re-verified live), #2 company_settlements,
+#4 tour-close two settlements (#20069), #5/#6 record corrections,
+C6/B5/B8. Do not rebuild them.
 
-NEXT: C6 — money INSERT without a balanced journal entry (221 hits, HIGH).
-FULL VERTICAL. Guard spec already written — build it, do not rewrite the
-spec. Same complete bar as B8.
+NEXT: item #7 in order — driver bill mints at settlement creation,
+number equals load number (driver-bill-number.ts:10). Confirm, do not
+rebuild if already true. Then #8 overflow, #9 recovery order.
 
-Never POST Book Load. Do not steal CC-2 Combobox Tab or CC-3 Factor
-Reconciliation date.
+Never POST Book Load.
 ```
-ACK `CC-1 | ACK | HARD WAKE C6 balanced JE on money INSERT · NEVER POST | GO`
+ACK `CC-1 | ACK | 25-task #7 driver bill mint · NEVER POST | GO`

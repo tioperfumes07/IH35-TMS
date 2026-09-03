@@ -1,4 +1,4 @@
-# OUTBOX-CURSOR · CENSUS · 2026-09-03 09:31 CT
-FORCE NOW | READ INBOX-CURSOR | IDLE=DEFECT | NEVER POST | GO
+# OUTBOX-CURSOR · 2026-09-03 11:20 CT
+FORCE NOW | READ INBOX | NEVER POST | GO
 ---
-CURSOR | CENSUS | tip 6239d6ddc2b1 | CC-1/2/3 ACTIVE 25-task | re-HARD WAKE Codex+Cascade +22m silent | Render LIVE 8af2ec13a715 no redeploy | Dependabot leave auto | GO
+CURSOR | GATE-LIVELOCK-01 already on main #20068 | census ticks OFF | INBOX rewrite Codex Wave 7 + Cascade FINDING + CC-1 #7 | GO
