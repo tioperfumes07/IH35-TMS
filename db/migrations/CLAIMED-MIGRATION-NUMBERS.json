@@ -682,5 +682,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-03",
     "purpose": "GO-19-2b Section 2: catalogs.lane_mileage CHECK constraint (short_miles IS NULL OR short_miles <= practical_miles) -- short_miles stays NULL until a trustworthy source exists, this constraint enforces the one invariant when a value IS present"
+  },
+  "202613600001": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "GO-19-2b Section 5: catalogs.point_mileage table (coordinate-keyed reference mileage, entity-neutral like lane_mileage -- computed once by the self-hosted OSM routing engine, reused forever)"
   }
 }
