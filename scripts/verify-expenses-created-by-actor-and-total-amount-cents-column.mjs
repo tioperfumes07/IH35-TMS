@@ -80,7 +80,11 @@ const lumperSrc = readFileSync(lumperPath, "utf8");
 if (!/INSERT INTO accounting\.expenses[\s\S]{0,200}?created_by_user_id/.test(lumperSrc)) {
   failures.push(`${lumperPath}: lumper-expense leg's INSERT into accounting.expenses no longer includes created_by_user_id`);
 }
-if (!/actorUserUuid\],\s*\n\s*\);/.test(lumperSrc) && !/loadSample\.rows\[0\]\?\.is_sample_data === true, actorUserUuid\]/.test(lumperSrc)) {
+// GO-06 (2026-09-02) added a trailing expense_number param after actorUserUuid in this same call
+// (numbered.number) -- the old check anchored actorUserUuid as the LAST array element, which broke
+// on that legitimate additive change even though actorUserUuid is still bound. Anchor on its stable
+// neighbor (immediately after the is_sample_data expression) instead of on array position.
+if (!/loadSample\.rows\[0\]\?\.is_sample_data === true,\s*actorUserUuid\b/.test(lumperSrc)) {
   failures.push(`${lumperPath}: lumper-expense leg's INSERT no longer passes actorUserUuid as a value`);
 }
 
