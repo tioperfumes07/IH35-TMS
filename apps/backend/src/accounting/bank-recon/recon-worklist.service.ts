@@ -1,4 +1,5 @@
 import { withLuciaBypass } from "../../auth/db.js";
+import { reverseJournalEntryNoFlip } from "../journal-entries.service.js";
 import { acceptMatchWithResolveDifference, previewMatchVariance, type LedgerEntryKind } from "./match.service.js";
 
 const ZERO_VARIANCE_ACCOUNT_ID = "00000000-0000-4000-8000-000000000000";
@@ -241,6 +242,109 @@ export async function rejectReconMatch(input: {
         input.actor_user_uuid,
       ]
     );
+    return { ok: true };
+  });
+}
+
+// BANK-F9998 F5 — the reconciliation.routes.ts unmatch endpoint requires an active reconciliation
+// session covering the transaction's date. MatchDrawer's own accept-match flow (this file) needs
+// no session at all, so a bare MatchDrawer confirm had no direct undo without first standing up a
+// session for that period. This mirrors that session-scoped handler's release logic (all 6
+// matched_*_id columns, 'rejected' reconciliation_matches rows, JE reversal — same as F6) without
+// the session/date-range gate, reachable from wherever an ad-hoc accept-match was made.
+export async function unmatchBankTransaction(input: {
+  operating_company_id: string;
+  bank_transaction_id: string;
+  actor_user_uuid: string;
+}): Promise<{ ok: boolean }> {
+  return withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+
+    // Same CTE-captures-pre-update-values shape reconciliation.routes.ts's session-scoped unmatch
+    // already uses — Postgres UPDATE...RETURNING reflects the NEW row, so the ids to reverse/reject
+    // have to come from a snapshot taken before the UPDATE, not the UPDATE's own output.
+    const res = await client.query<{
+      id: string;
+      prev_expense_id: string | null;
+      prev_transfer_id: string | null;
+      prev_journal_entry_id: string | null;
+      prev_load_id: string | null;
+      prev_bill_id: string | null;
+      prev_settlement_id: string | null;
+    }>(
+      `
+        WITH prior AS (
+          SELECT id, matched_expense_id, matched_transfer_id, matched_journal_entry_id,
+                 matched_load_id, matched_bill_id, matched_settlement_id
+          FROM banking.bank_transactions
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid
+        )
+        UPDATE banking.bank_transactions bt
+        SET matched_expense_id = NULL,
+            matched_transfer_id = NULL,
+            matched_journal_entry_id = NULL,
+            matched_load_id = NULL,
+            matched_bill_id = NULL,
+            matched_settlement_id = NULL,
+            -- 'unmatched' is not a legal review_state (CHECK: for_review|categorized|excluded|matched|
+            -- transfer) — 'for_review' is the correct "back in the queue" state, and unlike the
+            -- session-scoped unmatch (reconciliation.routes.ts, which leaves review_state untouched at
+            -- 'matched' with no matched_*_id pointers — a pre-existing orphaned-state gap, out of
+            -- scope here) this one gets it right.
+            review_state = 'for_review',
+            updated_at = now()
+        FROM prior
+        WHERE bt.id = prior.id
+        RETURNING
+          bt.id,
+          prior.matched_expense_id::text AS prev_expense_id,
+          prior.matched_transfer_id::text AS prev_transfer_id,
+          prior.matched_journal_entry_id::text AS prev_journal_entry_id,
+          prior.matched_load_id::text AS prev_load_id,
+          prior.matched_bill_id::text AS prev_bill_id,
+          prior.matched_settlement_id::text AS prev_settlement_id
+      `,
+      [input.bank_transaction_id, input.operating_company_id]
+    );
+    const row = res.rows[0];
+    if (!row) throw new Error("bank_transaction_not_found");
+
+    if (row.prev_journal_entry_id) {
+      await reverseJournalEntryNoFlip(client, {
+        operatingCompanyId: input.operating_company_id,
+        journalEntryId: row.prev_journal_entry_id,
+        reason: "bank_transaction_unmatched",
+        actorUserId: input.actor_user_uuid,
+      });
+    }
+
+    const rejectedKinds: Array<{ kind: LedgerEntryKind; id: string }> = [];
+    if (row.prev_expense_id) rejectedKinds.push({ kind: "expense", id: row.prev_expense_id });
+    if (row.prev_transfer_id) rejectedKinds.push({ kind: "transfer", id: row.prev_transfer_id });
+    if (row.prev_journal_entry_id) rejectedKinds.push({ kind: "je", id: row.prev_journal_entry_id });
+    if (row.prev_bill_id) rejectedKinds.push({ kind: "bill", id: row.prev_bill_id });
+    // load/settlement are not LedgerEntryKind members in this module's own type (that widened CHECK
+    // is reconciliation.routes.ts's own session-scoped kind set) — rejected as 'bill'-shaped rows
+    // would be wrong; skip them here since acceptReconMatch/MatchDrawer never write those two kinds.
+    for (const { kind, id } of rejectedKinds) {
+      await client.query(
+        `
+          INSERT INTO banking.reconciliation_matches (
+            operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id,
+            match_score, match_state, matched_at, matched_by_user_uuid
+          )
+          VALUES ($1::uuid, $2::uuid, $3::text, $4::uuid, 0, 'rejected', now(), $5::uuid)
+          ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id)
+          DO UPDATE SET
+            match_score = 0,
+            match_state = 'rejected',
+            matched_at = now(),
+            matched_by_user_uuid = EXCLUDED.matched_by_user_uuid
+        `,
+        [input.operating_company_id, input.bank_transaction_id, kind, id, input.actor_user_uuid]
+      );
+    }
+
     return { ok: true };
   });
 }

@@ -5,7 +5,7 @@ import { companyQuerySchema, currentAuthUser, validationError } from "../shared.
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { ReconciledSessionLockedError } from "../../banking/closed-session-immutability.js";
 import { type LedgerEntryKind } from "./match.service.js";
-import { acceptReconMatch, closeReconPeriod, getReconWorklist, rejectReconMatch } from "./recon-worklist.service.js";
+import { acceptReconMatch, closeReconPeriod, getReconWorklist, rejectReconMatch, unmatchBankTransaction } from "./recon-worklist.service.js";
 
 const worklistQuerySchema = companyQuerySchema.extend({
   account_id: z.string().uuid(),
@@ -26,6 +26,11 @@ const rejectBodySchema = z.object({
   bank_transaction_id: z.string().uuid(),
   ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je", "expense"]),
   ledger_entry_id: z.string().uuid(),
+});
+
+const unmatchBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  bank_transaction_id: z.string().uuid(),
 });
 
 const manualBodySchema = z.object({
@@ -120,6 +125,32 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
       ledger_entry_id: body.data.ledger_entry_id,
     });
     return { ok: true };
+  });
+
+  // BANK-F9998 F5 — MatchDrawer's own accept-match (above) needs no reconciliation session; unmatch
+  // used to be reachable ONLY through reconciliation.routes.ts's session-scoped endpoint, so a bare
+  // MatchDrawer confirm had no direct undo without first standing up a session for that period.
+  app.post("/api/v1/bank-recon/unmatch", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const body = unmatchBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+    try {
+      const result = await unmatchBankTransaction({
+        operating_company_id: body.data.operating_company_id,
+        bank_transaction_id: body.data.bank_transaction_id,
+        actor_user_uuid: user.uuid,
+      });
+      return result;
+    } catch (error) {
+      const message = String((error as Error).message ?? "");
+      if (message === "bank_transaction_not_found") {
+        return reply.code(404).send({ error: message });
+      }
+      throw error;
+    }
   });
 
   app.post("/api/v1/bank-recon/manual-match", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
