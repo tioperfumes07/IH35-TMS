@@ -671,6 +671,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-03",
       "purpose": "ACCT-F5684-class deferred WORM bind (fresh-DB CI fix): 202609022351 numerically precedes its own dependency 202612220000/ACCT-F141 (refuse_financial_row_delete()) so a fresh sequential replay always RAISE EXCEPTIONed there, red-lining security-audit-heavy for every PR. 202609022351 now fails soft (checksum-overridden -- prod already has both triggers live, verified); this migration idempotently completes the two trg_worm_refuse_delete attaches on accounting.expenses + accounting.factoring_advances once the function exists later in the same replay"
+    },
+    "202613580001": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-03",
+      "purpose": "25-task #6 (owner instructions 2026-09-02, owner-corrected 2026-09-03): bind accounting.chart_of_accounts_roles role='fixed_asset_default' for USMCA to the EXISTING account 1500 'Trucks & Tractors' (Asset/Vehicles, live, postable) -- owner ruling: do not create a new account, do not rename 1500. Closes the 409 CoaRoleResolutionError repairs >= $7,000 hit at maint/wo-ap-posting.service.ts (capitalize-threshold.ts CAPITALIZE_REPAIR_THRESHOLD_CENTS=700000) via maintenance-posting/poster.service.ts's resolveRoleAccount(..., 'fixed_asset_default')"
     }
   }
 }
