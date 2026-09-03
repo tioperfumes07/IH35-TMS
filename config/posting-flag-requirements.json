@@ -22,7 +22,8 @@
     "SAFETY_FINE_GL_POSTING_ENABLED": ["civil_fines_expense", "cash_clearing"],
     "INSURANCE_CLAIM_RECOVERY_GL_POSTING_ENABLED": ["insurance_recovery", "cash_clearing"],
     "FUEL_CARD_OVERAGE_GL_POSTING_ENABLED": ["fuel_overage_receivable"],
-    "REVENUE_RECOGNITION_POST_ENABLED": ["unbilled_revenue", "revenue_default", "ar_control"]
+    "REVENUE_RECOGNITION_POST_ENABLED": ["unbilled_revenue", "revenue_default", "ar_control"],
+    "DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED": ["damage_recovery"]
   },
   "labels": {
     "QBO_AR_PAYMENTS_PROJECTION_ENABLED": "A/R payment projection",
@@ -35,6 +36,7 @@
     "SAFETY_FINE_GL_POSTING_ENABLED": "Safety fine GL posting",
     "INSURANCE_CLAIM_RECOVERY_GL_POSTING_ENABLED": "Insurance claim recovery posting",
     "FUEL_CARD_OVERAGE_GL_POSTING_ENABLED": "Fuel card overage GL posting",
-    "REVENUE_RECOGNITION_POST_ENABLED": "Revenue recognition posting"
+    "REVENUE_RECOGNITION_POST_ENABLED": "Revenue recognition posting",
+    "DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED": "Driver escrow forfeiture GL posting"
   }
 }
