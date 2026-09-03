@@ -43,6 +43,9 @@ export type FleetRow = {
   days_oos?: number | null;
   oos_reason?: string | null;
   oos_location?: string | null;
+  estimated_completion_date?: string | null;
+  work_order_id?: string | null;
+  work_order_display_id?: string | null;
 };
 
 export type SoftDeleteFilter = "active" | "inactive" | "all";
@@ -76,8 +79,11 @@ const FLEET_COLUMNS: TableColumn[] = [
   { key: "make_model", label: "Make/Model" },
   { key: "year", label: "Year" },
   { key: "status", label: "Status" },
+  { key: "oos_reason", label: "OOS Reason" },
   { key: "oos_since", label: "Down Since" },
   { key: "days_oos", label: "Days OOS" },
+  { key: "estimated_completion_date", label: "Expected Return" },
+  { key: "work_order_id", label: "Work Order" },
   { key: "location", label: "Location" },
   { key: "dot_oo", label: "DOT O/O" },
 ];
@@ -144,8 +150,11 @@ function fleetSortValue(row: FleetRow, key: string): string | number | null {
     // all 109 units on prod. humanizeEnumLabel keeps the value (it is often the only status recorded)
     // while making it readable: "InService" -> "In service", "OutOfService" -> "Out of service".
     case "status": return row.status ? humanizeEnumLabel(row.status) : null;
+    case "oos_reason": return row.oos_reason ?? null;
     case "oos_since": return row.oos_since ? new Date(row.oos_since).getTime() : null;
     case "days_oos": return row.days_oos ?? null;
+    case "estimated_completion_date": return row.estimated_completion_date ? new Date(row.estimated_completion_date).getTime() : null;
+    case "work_order_id": return row.work_order_display_id ?? row.work_order_id ?? null;
     case "location": return fleetLocationText(row) || null;
     case "odometer": return row.odometer_mi ?? null;
     case "next_pm": return row.next_due_odometer ?? null;
@@ -671,8 +680,17 @@ export function FleetTable({
                     ) : null}
                     {isVisible("year") ? <td className="px-2 py-1">{String(row.year ?? "—")}</td> : null}
                     {isVisible("status") ? <td className="px-2 py-1">{String(row.status ?? "—")}</td> : null}
+                    {isVisible("oos_reason") ? <td className="truncate px-2 py-1">{row.oos_reason || "—"}</td> : null}
                     {isVisible("oos_since") ? <td className="px-2 py-1 tabular-nums">{formatOosDate(row.oos_since)}</td> : null}
                     {isVisible("days_oos") ? <td className="px-2 py-1 tabular-nums">{row.days_oos == null ? "—" : formatOosDays(row.days_oos)}</td> : null}
+                    {isVisible("estimated_completion_date") ? <td className="px-2 py-1 tabular-nums">{formatOosDate(row.estimated_completion_date)}</td> : null}
+                    {isVisible("work_order_id") ? (
+                      <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+                        {row.work_order_id ? (
+                          <EntityLink kind="work_order" id={row.work_order_id} label={entityLabel(row.work_order_display_id, row.work_order_id, "Work order")} />
+                        ) : "—"}
+                      </td>
+                    ) : null}
                     {isVisible("location") ? <td className="truncate px-2 py-1 text-xs text-slate-700">{fleetLocationText(row) || "—"}</td> : null}
                     {showMaintenanceColumns && isVisible("odometer") ? <td className="px-2 py-1 tabular-nums">{fmtMiles(row.odometer_mi)}</td> : null}
                     {showMaintenanceColumns && isVisible("next_pm") ? <td className="px-2 py-1 tabular-nums">{fmtMiles(row.next_due_odometer)}</td> : null}
