@@ -14,7 +14,7 @@ import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingCatalogProfileDrawer } from "./AccountingCatalogProfileDrawer";
 import { PostingTemplateModal } from "./PostingTemplateModal";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 
 function statusPillClass(isActive: boolean) {
   return isActive

@@ -1,5 +1,5 @@
 import type { UseFormRegister } from "react-hook-form";
-import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../../components/Combobox";
 
 type Props = {
   register: UseFormRegister<Record<string, unknown>>;

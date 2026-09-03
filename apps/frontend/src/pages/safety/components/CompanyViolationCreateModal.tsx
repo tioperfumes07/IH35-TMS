@@ -5,7 +5,7 @@ import { createCompanyViolation } from "../../../api/safety";
 import { Button } from "../../../components/Button";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { Modal } from "../../../components/Modal";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { listCompanyViolationTypes } from "../../../api/catalogs-safety";
 import { companyToday } from "../../../lib/businessDate";

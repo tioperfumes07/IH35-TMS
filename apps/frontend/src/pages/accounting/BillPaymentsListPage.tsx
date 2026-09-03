@@ -15,7 +15,7 @@ import { billPaymentBulkRowLabel, bulkRowLabelsFromRows } from "../../components
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { BillDetailPanel } from "./BillDetailPanel";

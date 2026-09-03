@@ -10,7 +10,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";

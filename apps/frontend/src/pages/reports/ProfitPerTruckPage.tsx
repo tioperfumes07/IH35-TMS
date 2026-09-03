@@ -13,7 +13,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { useListState } from "../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import {
   formatProfitPerTruckFlagLabel,

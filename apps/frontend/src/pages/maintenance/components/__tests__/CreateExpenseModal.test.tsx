@@ -59,13 +59,17 @@ vi.mock("../../../../components/parity/ParityDrawer", () => ({
     open ? <div data-testid="parity-drawer">{children}</div> : null,
 }));
 vi.mock("../../../../components/UploadZone", () => ({ UploadZone: () => <div /> }));
-vi.mock("../../../../components/shared/SelectCombobox", () => ({
+vi.mock("../../../../components/Combobox", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../../components/Combobox")>();
+  return {
+    ...actual,
   SelectCombobox: ({ id, value, onChange, children, className }: any) => (
     <select id={id} className={className} value={value} onChange={onChange}>
       {children}
     </select>
   ),
-}));
+  };
+});
 vi.mock("../../../../components/parity/ReferenceSelect", () => ({
   ReferenceSelect: ({
     value,

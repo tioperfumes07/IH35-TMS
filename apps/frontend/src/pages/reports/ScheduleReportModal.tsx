@@ -7,7 +7,7 @@ import { Button } from "../../components/Button";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { SCHEDULABLE_REPORT_IDS, SCHEDULED_REPORT_LABELS } from "../../lib/scheduled-report-catalog";
 
 type Props = {

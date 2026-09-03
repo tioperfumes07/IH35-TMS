@@ -1,5 +1,5 @@
 import { useFieldArray, Controller, type Control, type UseFormRegister } from "react-hook-form";
-import { SelectCombobox } from "../shared/SelectCombobox";
+import { SelectCombobox } from "../Combobox";
 import { MoneyInput } from "../forms/MoneyInput";
 
 type Props = {

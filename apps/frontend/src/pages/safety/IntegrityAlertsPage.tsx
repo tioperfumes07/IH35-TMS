@@ -10,7 +10,7 @@ import {
   updateIntegrityAlertRule,
 } from "../../api/safety";
 import { IntegrityAlertDetailDrawer } from "./components/IntegrityAlertDetailDrawer";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityPicker } from "../../components/parity/EntityPicker";

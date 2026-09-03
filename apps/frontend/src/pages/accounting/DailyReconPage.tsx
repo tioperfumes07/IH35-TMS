@@ -11,7 +11,7 @@ import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { companyToday, addDaysIso } from "../../lib/businessDate";
 
 const ENTITY_TYPE_OPTIONS = [

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "../Button";
 import { TimePicker } from "../forms/TimePicker";
-import { SelectCombobox } from "../shared/SelectCombobox";
+import { SelectCombobox } from "../Combobox";
 
 export type SubscriptionFormValues = {
   report_slug: string;

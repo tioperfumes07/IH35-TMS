@@ -11,7 +11,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import {
   getRevenueContracts, getRevenueContractDetail, getRevenueLeakage,
   type RevenueContractListItem, type RevenueContractDetail, type RevenueObligation,

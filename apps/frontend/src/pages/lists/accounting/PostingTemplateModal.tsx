@@ -18,7 +18,7 @@ import { Button } from "../../../components/Button";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { Modal } from "../../../components/Modal";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 
 /** Codes consumers stamp via source_template_code — must match resolvePostingTemplateId lookup. */
 export const POSTING_TEMPLATE_SOURCE_CODES = [

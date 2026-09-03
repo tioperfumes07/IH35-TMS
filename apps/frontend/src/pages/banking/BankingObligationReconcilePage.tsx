@@ -16,7 +16,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { ReconMatchSuggestions } from "./ReconMatchSuggestions";
 import { formatDateUS } from "../../lib/formatDate";

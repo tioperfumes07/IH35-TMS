@@ -13,7 +13,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useListState } from "../../../components/list-state";

@@ -9,7 +9,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { LegalTemplateNewModal } from "./LegalTemplateNewModal";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../../components/table";
 
 const STATUS_OPTIONS = ["draft", "pending_review", "approved", "active", "retired"] as const;

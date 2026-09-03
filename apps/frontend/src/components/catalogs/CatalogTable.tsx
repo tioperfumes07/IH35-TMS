@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { CatalogColumnConfig, CatalogRow, CatalogSortConfig } from "../../hooks/useCatalogQuery";
 import { Button } from "../Button";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
-import { SelectCombobox } from "../shared/SelectCombobox";
+import { SelectCombobox } from "../Combobox";
 
 const SELECTION_CAP = 200;
 

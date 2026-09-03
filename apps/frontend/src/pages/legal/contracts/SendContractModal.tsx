@@ -5,7 +5,7 @@ import { legalTemplatesApi, type LegalTemplateSummary } from "../../../api/legal
 import { Button } from "../../../components/Button";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { getCustomerDetail, getVendor } from "../../../api/mdata";

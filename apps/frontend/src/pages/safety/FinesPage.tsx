@@ -6,7 +6,7 @@ import { convertFineToLiability, getSafetyFines } from "../../api/safety";
 import { CompanyViolationsPage } from "./CompanyViolationsPage";
 import { FineCreateModal } from "./components/FineCreateModal";
 import { FineDetailDrawer } from "./components/FineDetailDrawer";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";

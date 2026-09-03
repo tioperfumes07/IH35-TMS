@@ -4,7 +4,7 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { Button } from "../../../components/Button";
 import { Combobox } from "../../../components/Combobox";
 import { DatePicker } from "../../../components/forms/DatePicker";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { useToast } from "../../../components/Toast";
 import { legalContractsApi, type LegalContractLanguage, type LegalSignerType } from "../../../api/legal-contracts";
 import { legalTemplatesApi, type LegalTemplateSummary } from "../../../api/legal-templates";

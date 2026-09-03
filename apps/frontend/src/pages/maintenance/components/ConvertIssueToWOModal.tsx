@@ -7,7 +7,7 @@ import { Button } from "../../../components/Button";
 import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {

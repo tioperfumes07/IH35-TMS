@@ -4,7 +4,7 @@ import { ApiError } from "../../../api/client";
 import type { AccountingCatalogCreateBody, AccountingCatalogRow, AccountingCatalogUpdateBody } from "../../../api/catalogs-accounting";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 
 export type AccountingCatalogClient = {
   create: (operating_company_id: string, body: AccountingCatalogCreateBody) => Promise<{ id: string }>;

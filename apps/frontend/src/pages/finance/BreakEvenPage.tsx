@@ -5,7 +5,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";

@@ -23,7 +23,7 @@ import {
 import { Button } from "../components/Button";
 import { ActionButton } from "../components/shared/ActionButton";
 import { ToolbarSegmentControl } from "../components/layout/ToolbarSegmentControl";
-import { SelectCombobox } from "../components/shared/SelectCombobox";
+import { SelectCombobox } from "../components/Combobox";
 import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { PageHeader } from "../components/layout/PageHeader";
 import { CollapsedListFilters, useStagedListFilters } from "../components/table";

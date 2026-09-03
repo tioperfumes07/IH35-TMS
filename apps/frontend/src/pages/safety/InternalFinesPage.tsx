@@ -10,7 +10,7 @@ import { createInternalFine, disputeInternalFine, getInternalFines, voidInternal
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { listInternalFineReasons } from "../../api/catalogs-safety";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { companyToday } from "../../lib/businessDate";

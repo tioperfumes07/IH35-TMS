@@ -7,7 +7,7 @@ import { Button } from "../../components/Button";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { UploadZone } from "../../components/UploadZone";
 import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { QboDocumentNumberField } from "../../components/forms/QboDocumentNumberField";
 import { MoneyInput } from "../../components/forms/MoneyInput";

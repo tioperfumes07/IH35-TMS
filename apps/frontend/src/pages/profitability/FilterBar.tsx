@@ -1,6 +1,6 @@
 import { DatePicker } from "../../components/forms/DatePicker";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { Button } from "../../components/Button";
 
 interface FilterBarProps {

@@ -4,7 +4,7 @@ import { vendorQualityKind, vendorQualityClass } from "../../lib/quality-badge";
 import { ResizableTable } from "../../components/shared/ResizableTable";
 import { CardLink } from "../../components/shared/CardLink";
 import { SidebarPagination } from "../../components/shared/SidebarPagination";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 

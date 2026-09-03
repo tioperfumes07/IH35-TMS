@@ -3,7 +3,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { Modal } from "../Modal";
 import { MoneyInput } from "../forms/MoneyInput";
 import { Button } from "../Button";
-import { SelectCombobox } from "../shared/SelectCombobox";
+import { SelectCombobox } from "../Combobox";
 import { patchUnit } from "../../api/mdata";
 import { ApiError } from "../../api/client";
 import { companyToday } from "../../lib/businessDate";

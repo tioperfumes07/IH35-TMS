@@ -9,7 +9,7 @@ import {
 import { ApiError } from "../../api/client";
 import { helpUrlFromRel } from "../../config/help-links";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 
 type EntitySlug = "drivers" | "units" | "customers" | "vendors" | "bank-accounts" | "loads" | "bank-transactions";
 

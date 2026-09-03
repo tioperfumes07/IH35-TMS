@@ -51,7 +51,7 @@ import { SettlementHeader } from "./components/SettlementHeader";
 import { useLiveDebt } from "./hooks/useLiveDebt";
 import { PayRunClosePanel } from "./components/PayRunClosePanel";
 import { CloseTripPanel } from "./components/CloseTripPanel";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ConfirmModal } from "../../components/shared/ConfirmModal";
 

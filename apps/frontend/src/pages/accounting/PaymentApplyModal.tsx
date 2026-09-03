@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "../../components/Button";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import type { Invoice } from "../../api/accounting";
 import { entityLabel } from "../../lib/entity-label";

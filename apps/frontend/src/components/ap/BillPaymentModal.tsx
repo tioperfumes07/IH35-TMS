@@ -9,7 +9,7 @@ import { Combobox } from "../Combobox";
 import { PlaidLink } from "../banking/PlaidLink";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { ParityTable } from "../parity/ParityTable";
-import { SelectCombobox } from "../shared/SelectCombobox";
+import { SelectCombobox } from "../Combobox";
 import { TaskLinkPicker } from "../tasks/TaskLinkPicker";
 import { EntityLink } from "../shared/EntityLink";
 import { useToast } from "../Toast";

@@ -17,7 +17,7 @@ import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useToast } from "../Toast";
 import { useAuth } from "../../auth/useAuth";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
-import { SelectCombobox } from "../shared/SelectCombobox";
+import { SelectCombobox } from "../Combobox";
 import { Modal } from "../Modal";
 import { MoneyInput } from "../forms/MoneyInput";
 

@@ -3,7 +3,7 @@ import { properEnumOrFilterLabel } from "../../lib/properDisplayText";
 import { QuickAvailabilityToggle } from "./QuickAvailabilityToggle";
 import { PlatesTable } from "./PlatesTable";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
-import { SelectCombobox } from "../shared/SelectCombobox";
+import { SelectCombobox } from "../Combobox";
 import { useToast } from "../Toast";
 import type { UnitLifecycleStatus } from "./StatusChangeModal";
 

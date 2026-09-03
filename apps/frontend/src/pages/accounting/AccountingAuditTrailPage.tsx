@@ -20,7 +20,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { KNOWN_ACCOUNTING_SOURCE_TRANSACTION_TYPES } from "../../lib/accounting-source-transaction-types";
 import { formatUsdCents } from "../../lib/money";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 
 function fmtMoneyCents(value: number) {
   return formatUsdCents(value);

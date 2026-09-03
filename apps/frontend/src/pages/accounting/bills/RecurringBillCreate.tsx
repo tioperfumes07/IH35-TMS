@@ -11,7 +11,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ReferenceSelect, type ReferenceOption } from "../../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { companyToday } from "../../../lib/businessDate";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { CappedListNotice } from "../../../components/CappedListNotice";

@@ -18,7 +18,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 
 type Props = {
   workOrderId: string;

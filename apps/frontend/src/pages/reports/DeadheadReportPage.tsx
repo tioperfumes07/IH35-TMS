@@ -11,7 +11,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 
 type DeadheadPeriod = "last_4_weeks" | "last_12_weeks" | "YTD";
 

@@ -9,7 +9,7 @@ import { useState } from "react";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { useCreateMaintPart } from "../../hooks/useMaintenancePartsCatalog";
 
 const CATEGORIES = [

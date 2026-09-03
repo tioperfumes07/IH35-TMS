@@ -14,7 +14,7 @@ import { QboCombobox } from "../../components/forms/QboCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { ConfirmModal } from "../../components/shared/ConfirmModal";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { MaintenanceAlertsBanner } from "../../components/vehicle-profile/MaintenanceAlertsBanner";
 import { IdentityStatusHeader } from "../../components/vehicle-profile/IdentityStatusHeader";
 import { MissingRequiredChip } from "../../components/compliance/MissingRequiredChip";

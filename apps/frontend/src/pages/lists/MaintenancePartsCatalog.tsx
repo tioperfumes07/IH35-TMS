@@ -9,7 +9,7 @@ import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useMaintenancePartsCatalog, type MaintPartRow } from "../../hooks/useMaintenancePartsCatalog";
 import { properEnumOrFilterLabel } from "../../lib/properDisplayText";

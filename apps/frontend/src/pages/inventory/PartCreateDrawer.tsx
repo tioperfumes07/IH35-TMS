@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { Button } from "../../components/Button";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityPicker } from "../../components/parity/EntityPicker";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { invalidatePartsStockQueries } from "./partsStockQueryKeys";

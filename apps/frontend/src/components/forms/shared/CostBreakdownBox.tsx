@@ -1,4 +1,4 @@
-import { SelectCombobox } from "../../shared/SelectCombobox";
+import { SelectCombobox } from "../../Combobox";
 import { MoneyInput } from "../MoneyInput";
 import { ParityTable } from "../../parity/ParityTable";
 import { ReferenceSelect } from "../../parity/ReferenceSelect";

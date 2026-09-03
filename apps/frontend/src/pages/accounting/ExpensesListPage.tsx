@@ -15,7 +15,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { RecordExpenseModal } from "../../components/expenses/RecordExpenseModal";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { Button } from "../../components/Button";

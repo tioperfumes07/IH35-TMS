@@ -9,7 +9,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ListErrorState } from "../../../components/ListErrorState";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { useToast } from "../../../components/Toast";
 import { companyToday } from "../../../lib/businessDate";
 import { userFacingApiError } from "../../../lib/api-error-message";

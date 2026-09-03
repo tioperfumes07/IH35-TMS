@@ -14,7 +14,7 @@ import { LeaseToOwnCreatorModal } from "./LeaseToOwnCreatorModal";
 import { TruckLeaseCreatorModal } from "./TruckLeaseCreatorModal";
 import { UnifiedContractCreatorModal } from "./UnifiedContractCreatorModal";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../../components/table";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";

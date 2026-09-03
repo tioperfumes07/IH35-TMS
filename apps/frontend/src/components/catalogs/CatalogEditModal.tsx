@@ -6,7 +6,7 @@ import { Button } from "../Button";
 import { Combobox, type ComboboxOption } from "../Combobox";
 import { DatePicker } from "../forms/DatePicker";
 import { Modal } from "../Modal";
-import { SelectCombobox } from "../shared/SelectCombobox";
+import { SelectCombobox } from "../Combobox";
 
 type Props = {
   open: boolean;

@@ -24,7 +24,7 @@ import { useToast } from "../../components/Toast";
 import { StatementUpload } from "../../components/banking/StatementUpload";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { PrintOrientationDialog } from "./components/PrintOrientationDialog";

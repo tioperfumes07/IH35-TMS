@@ -22,7 +22,7 @@ import { useFieldArray, Controller, type Control, type UseFormRegister, type Use
 import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 
 type Props = {
   control: Control<CreateWOFormValues>;

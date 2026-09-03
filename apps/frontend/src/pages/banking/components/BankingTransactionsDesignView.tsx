@@ -34,7 +34,7 @@ import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { Button } from "../../../components/Button";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { useBulkSelection } from "../../../hooks/useBulkSelection";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { useToast } from "../../../components/Toast";
 import { formatUsdCents } from "../../../lib/money";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";

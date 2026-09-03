@@ -4,7 +4,7 @@ import { sendLiabilityAckRequest } from "../../../api/liabilities";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 
 type Props = {
   open: boolean;

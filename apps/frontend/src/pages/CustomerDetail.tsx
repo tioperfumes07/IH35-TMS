@@ -91,7 +91,7 @@ import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/forms/shared/PageHeader";
 import { StatusBadge } from "../components/layout/StatusBadge";
 import { MissingRequiredChip } from "../components/compliance/MissingRequiredChip";
-import { SelectCombobox } from "../components/shared/SelectCombobox";
+import { SelectCombobox } from "../components/Combobox";
 import { scrubQboArchiveProjectionNotes } from "../lib/qboArchiveNotes";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { useCompanyContext } from "../contexts/CompanyContext";

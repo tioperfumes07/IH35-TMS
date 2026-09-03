@@ -11,7 +11,7 @@ import {
 } from "../api/attachments";
 import { userFacingApiError } from "../lib/api-error-message";
 import { Button } from "./Button";
-import { SelectCombobox } from "./shared/SelectCombobox";
+import { SelectCombobox } from "./Combobox";
 
 const CATEGORY_OPTIONS: AttachmentCategory[] = [
   "rate_confirmation",

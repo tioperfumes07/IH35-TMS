@@ -6,7 +6,7 @@ import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal"
 import { listDotViolationTypes } from "../../../api/catalogs-safety";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";

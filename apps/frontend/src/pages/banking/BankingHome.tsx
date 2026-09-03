@@ -40,7 +40,7 @@ import { TransferModal } from "./TransferModal";
 import { RecordTransferModal } from "./RecordTransferModal";
 import { RecordCCPaymentModal } from "./RecordCCPaymentModal";
 import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { DriverEscrowTabContent } from "./components/DriverEscrowTabContent";
 import { BankingReportsTabContent } from "./components/BankingReportsTabContent";
 import { BankingTransactionsDesignView } from "./components/BankingTransactionsDesignView";

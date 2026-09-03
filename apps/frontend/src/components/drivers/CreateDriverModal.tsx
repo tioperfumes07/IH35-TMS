@@ -23,7 +23,7 @@ import { Modal } from "../Modal";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { EntityPicker } from "../parity/EntityPicker";
 import { ConfirmModal } from "../shared/ConfirmModal";
-import { SelectCombobox } from "../shared/SelectCombobox";
+import { SelectCombobox } from "../Combobox";
 import { StatusBadge } from "../StatusBadge";
 import { useToast } from "../Toast";
 import { DatePicker } from "../forms/DatePicker";

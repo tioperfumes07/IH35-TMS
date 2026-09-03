@@ -5,7 +5,7 @@ import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { AssignDriverDropdown, REASSIGN_REASON_CODES, type AssignDriverDropdownProps } from "./AssignDriverDropdown";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 import { OptimalDriversPanel } from "../../components/dispatch/OptimalDriversPanel";
 import { AuthGatePanel } from "../../components/dispatch/AuthGatePanel";
 import { userFacingApiError } from "../../lib/api-error-message";

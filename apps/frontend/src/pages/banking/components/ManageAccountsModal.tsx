@@ -4,7 +4,7 @@ import { saveAccountVisibility } from "../../../api/banking";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
 type AccountRow = {

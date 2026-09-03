@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createDotInspection, listDotInspections, uploadDotInspectionPdf, voidDotInspection } from "../../../api/safetyV64";
 import { followUpDotInspectionEvent, listDotInspectionEvents } from "../../../api/safety";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../../components/Combobox";
 import { companyToday } from "../../../lib/businessDate";
 import { Button } from "../../../components/Button";
 import { useListState } from "../../../components/list-state";

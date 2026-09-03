@@ -60,13 +60,17 @@ vi.mock("../UploadZone", () => ({
 }));
 
 // Render the custom typeahead as a native <select> so the test can drive it deterministically.
-vi.mock("../shared/SelectCombobox", () => ({
+vi.mock("../Combobox", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../Combobox")>();
+  return {
+    ...actual,
   SelectCombobox: ({ id, value, onChange, children }: { id?: string; value?: string; onChange?: (e: unknown) => void; children?: React.ReactNode }) => (
     <select id={id} value={value} onChange={onChange}>
       {children}
     </select>
   ),
-}));
+  };
+});
 
 // Doc-19-B: Category is now the shared ReferenceSelect (inline "+ Add new category"). Render it as a
 // native <select> so the test drives the existing-category select path deterministically; onChange takes

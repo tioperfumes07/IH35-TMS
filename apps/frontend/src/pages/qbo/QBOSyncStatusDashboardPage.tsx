@@ -20,7 +20,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../components/Combobox";
 // ConflictsTab removed (qbo-sync-detail/ConflictsTab.tsx deleted in orphan-triage batch 11)
 
 function withinHours(iso: string, hours: number) {
