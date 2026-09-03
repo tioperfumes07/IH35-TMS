@@ -605,14 +605,13 @@ export async function postSettlementBillPayment(
         {
           operatingCompanyId: opco,
           vendorId: driverVendorId,
-          // AP-BILL-NUMBER-IS-THE-LOAD-NUMBER — bill_number is the AP screen's "Bill #" column and is a
-          // DIFFERENT identity series from a load number; a driver-pay bill previously took the bare
-          // load number as its own bill_number (e.g. USMCA bill L-20260810-0003 shown as "Bill #
-          // L-20260810-0003"), reading as though the load number itself were an AP document id. Prefixed
-          // deterministically from the same load_number/load_id this dedupe already keys on (see the
-          // LV-AP-DUP note below — a per-load unique bill_number is load-touched by this exact call
-          // being idempotent), so per-load uniqueness and retry/dedupe behavior are unchanged.
-          billNumber: `B-${b.load_number ?? b.load_id}`,
+          // GO-19 slice 03 (owner reversal of the prior AP-BILL-NUMBER-IS-THE-LOAD-NUMBER rationale
+          // below) — driver bill number EQUALS the load number, no 'B-' prefix, matching
+          // driver-bill-number.ts's driverBillNumberFromLoadNumber contract everywhere else a driver
+          // bill number is minted. Per-load uniqueness is unchanged (uq_bills_tms_native_vendor_bill_number
+          // scopes on operating_company_id + mdata_vendor_id + bill_number, and load_number is already
+          // unique per load) so dedupe/idempotency behavior this same call relies on is unaffected.
+          billNumber: String(b.load_number ?? b.load_id),
           billDate,
           amountCents: b.gross_amount_cents,
           memo: `${label} — driver pay, load ${b.load_number ?? b.load_id}`,
