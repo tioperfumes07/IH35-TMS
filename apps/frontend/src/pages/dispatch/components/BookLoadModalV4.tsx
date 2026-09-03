@@ -935,10 +935,14 @@ export function BookLoadModalV4({
     // Trip-type is not editable here, so the create-only trip_type gate below does not apply.
     if (isEditMode && editLoadId) {
       try {
+        // GO-23 per-blocker Override: `opts?.override` used to be dropped on the Edit path (this
+        // branch returned before the create-only override plumbing below ever ran) — Override &
+        // dispatch on an Edit did a normal save with no reason, so the backend still 422'd.
         const body = buildEditPatchBody(
           values as unknown as Record<string, unknown>,
           form.formState.dirtyFields as unknown as Record<string, unknown>,
-          operatingCompanyId
+          operatingCompanyId,
+          opts?.override ? overrideReason : undefined
         );
         // DRV-BILL-SKIP-PATHS — Edit Load calls ensureDriverBillArtifactsForLoad (#5408); surface mint skips
         // the same way Book does (LV-DISPATCH-TOAST-LIES companion: report server outcome, never invent pay).
@@ -959,6 +963,17 @@ export function BookLoadModalV4({
             "This load is locked — it's behind an open settlement, an issued invoice, or a driver bill, so it can't be edited."
           );
           pushToast("Load locked — can't edit", "error");
+        } else if (error instanceof ApiError && error.status === 422 && String(data.error ?? "") === "E_DRIVER_NOT_QUALIFIED") {
+          // GO-23 per-blocker Override: same gate as Book Load's create path (CDL / DOT medical /
+          // hazmat) — point the user at the pre-dispatch panel's "Override & dispatch" control
+          // (canOwnerOverride) instead of a dead-end error, since that control now actually reaches
+          // this PATCH's override_reason.
+          setSubmitErrorMessage(
+            canOverrideHardBlock
+              ? "Driver not qualified (CDL/medical/hazmat) — enter an override reason above and click \"Override & dispatch\" to attest and save anyway."
+              : "Driver not qualified (CDL/medical/hazmat). Only the Owner can override this to save."
+          );
+          pushToast("Blocked — driver not qualified", "error");
         } else {
           setSubmitErrorMessage(String(data.message ?? "Failed to update the load."));
           pushToast("Failed to update load", "error");

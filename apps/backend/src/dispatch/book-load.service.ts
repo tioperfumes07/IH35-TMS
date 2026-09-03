@@ -203,7 +203,7 @@ function canOverrideUnitBlock(role: string) {
  * non-Owner walked past a federal driver-qualification stop. Different risk class, own gate.
  * Pinned to Owner by scripts/verify-owner-override-driver-qualification.mjs.
  */
-function canOwnerOverrideQualification(role: string) {
+export function canOwnerOverrideQualification(role: string) {
   return role === "Owner";
 }
 
