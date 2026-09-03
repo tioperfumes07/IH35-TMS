@@ -92,6 +92,7 @@ export function LocationPicker({ operatingCompanyId, value, onChange, disabled, 
         allowClear
         allowAddNew={{ label: "+ Add new location", onAdd: () => setShowCreate(true) }}
         dataTestId={dataTestId}
+        size="sm"
       />
       {locationsQuery.isError ? <p className="text-xs text-red-600">Could not load locations.</p> : null}
       {showCreate ? (

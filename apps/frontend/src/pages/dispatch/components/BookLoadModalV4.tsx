@@ -1648,8 +1648,8 @@ export function BookLoadModalV4({
                   {/* RATECON-2: the rate-con intake (drop OR click → real extraction) is the single OcrDropZone
                       block in §E (Documents). The duplicate button-panel affordance was removed here. */}
 
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Customer
                       <input type="hidden" {...form.register("customer_id", { required: "Select a customer from the list" })} />
                       <div className="mt-0.5">
@@ -1691,7 +1691,7 @@ export function BookLoadModalV4({
                       </div>
                       {form.formState.errors.customer_id?.message ? <span className="mt-0.5 block normal-case tracking-normal text-red-600">{form.formState.errors.customer_id.message}</span> : null}
                     </label>
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Customer WO #
                       <input {...form.register("customer_wo_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
@@ -1700,7 +1700,7 @@ export function BookLoadModalV4({
                         (Plain English Law). Reworded; live_load_number field, testid, and the
                         race-overwrite guard (verify-bookload-alwaystrack-field-race-overwrite.mjs,
                         which asserts on the testid/field, not this label string) are unchanged. */}
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Legacy load reference #
                       <input
                         {...form.register("live_load_number", {
@@ -1715,13 +1715,16 @@ export function BookLoadModalV4({
                         data-testid="book-load-live-load-number"
                       />
                     </label>
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Pickup #
                       <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
                     {/* Customer type + freight identity — belong in §A with the customer/charges.
-                        Restored 2026-09-03 after an unauthorized move into §B. */}
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                        Restored 2026-09-03 after an unauthorized move into §B. Pieces is on this
+                        same row as Weight (v4 mockup + owner 2026-09-03). */}
+                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Broker / Direct
                       <div className="mt-0.5 inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
                         <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
@@ -1734,11 +1737,11 @@ export function BookLoadModalV4({
                         </label>
                       </div>
                     </label>
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Commodity
                       <input {...form.register("commodity")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Weight (lbs)
                       <NumberInput
                         value={form.watch("weight_lbs")}
@@ -1748,6 +1751,15 @@ export function BookLoadModalV4({
                         className="mt-0.5 w-full"
                       />
                     </label>
+                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+                      Pieces
+                      <input
+                        {...form.register("pieces")}
+                        data-testid="book-load-pieces"
+                        className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                      />
+                    </label>
+                  </div>
                     {/* Historical driver import — past loads whose driver has left. Must NOT render on
                         the normal create path (owner 2026-09-03). Gate: editLoadId only. */}
                     {editLoadId ? (
@@ -1810,7 +1822,6 @@ export function BookLoadModalV4({
                     {/* catalog_load_type_id kept in form state for edit hydrate of legacy rows only —
                         no operator control (duplicates Trailer type). Never written from create. */}
                     <input type="hidden" {...form.register("catalog_load_type_id")} />
-                  </div>
 
                   <div className="overflow-x-auto rounded-sm border border-gray-200">
                     <table className="w-full border-collapse text-xs">
@@ -2018,15 +2029,8 @@ export function BookLoadModalV4({
                     <span className="blw-sec-meta">Class <b>T120-SMITH</b></span>
                   </div>
                   <div className="space-y-2 p-3">
-                    {/* Pieces stayed in §B when Commodity/Weight/Broker·Direct returned to §A
-                        (owner 2026-09-03 — do not move Pieces without an explicit order).
+                    {/* Pieces lives in §A with Commodity/Weight (v4 mockup + owner 2026-09-03).
                         catalog_load_type_id control removed — duplicated Trailer type. */}
-                    <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
-                      <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                        Pieces
-                        <input {...form.register("pieces")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
-                      </label>
-                    </div>
                     <BookLoadEquipmentSection
                       register={form.register}
                       watch={form.watch}
@@ -2151,9 +2155,15 @@ export function BookLoadModalV4({
                   operatingCompanyId={operatingCompanyId}
                   driverUuid={assignedPrimaryDriverId || null}
                   unitUuid={assignedUnitId || null}
-                  trailerUuid={assignedTrailerUnitId || null}
+                  trailerUuid={assignedTrailerUnitId || form.watch("interchange_trailer_id") || null}
                   customerId={watchedCustomerId || null}
-                  customerLabel={watchedCustomerName || null}
+                  driverLabel={equipmentOptions.primaryDriver?.label ?? null}
+                  unitLabel={equipmentOptions.unit?.label ?? null}
+                  trailerLabel={equipmentOptions.trailer?.label ?? null}
+                  customerLabel={
+                    customerOptions.find((o) => o.value === String(watchedCustomerId || "").trim())?.label ??
+                    (watchedCustomerName || null)
+                  }
                   onValidationChange={(canDispatch, hasBlockers, hasWarnings, hasUnackedInsScheduleConfirm) =>
                     setPreDispatch({ canDispatch, hasBlockers, hasWarnings, hasUnackedInsScheduleConfirm })
                   }
@@ -2185,7 +2195,7 @@ export function BookLoadModalV4({
                   loadLabel={editLoad?.load_number ?? null}
                   unitUuid={assignedUnitId || undefined}
                   driverUuid={assignedPrimaryDriverId || undefined}
-                  trailerUuid={assignedTrailerUnitId || undefined}
+                  trailerUuid={assignedTrailerUnitId || form.watch("interchange_trailer_id") || undefined}
                   unitLabel={equipmentOptions.unit?.label ?? null}
                   driverLabel={equipmentOptions.primaryDriver?.label ?? null}
                   trailerLabel={equipmentOptions.trailer?.label ?? null}
