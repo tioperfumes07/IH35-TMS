@@ -228,7 +228,7 @@ function CountBadge({
   const noun = count === 1 ? "item" : "items";
   return (
     <span
-      className={`ml-1 inline-flex min-w-[1.1rem] items-center justify-center rounded px-1 text-[10px] font-semibold leading-none ${
+      className={`ml-1 inline-flex min-w-[1.1rem] items-center justify-center rounded px-1 text-xs font-semibold leading-none ${
         alert ? "bg-red-100 text-red-700" : "bg-slate-200 text-slate-600"
       }`}
       aria-label={`${count} ${noun}`}

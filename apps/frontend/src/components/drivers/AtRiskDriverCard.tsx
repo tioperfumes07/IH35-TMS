@@ -22,7 +22,7 @@ export function AtRiskDriverCard({ driverUuid, driverName, operatingCompanyId, r
         <h3 className="text-sm font-semibold text-gray-900">
           <EntityLink kind="driver" id={driverUuid} label={driverName} data-testid={`at-risk-driver-link-${driverUuid}`} />
         </h3>
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${tierClass(tier)}`}>{tier}</span>
+        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase ${tierClass(tier)}`}>{tier}</span>
       </div>
       <p className="mt-1 text-xs text-gray-600">Risk score: {riskScore.toFixed(1)}</p>
       {topFactors.length > 0 ? (

@@ -95,7 +95,7 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Net Profit</span>
           {d.data_completeness === "partial" && (
-            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700" title={`Estimate — missing: ${d.missing_sources.join(", ")}`}>
+            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700" title={`Estimate — missing: ${d.missing_sources.join(", ")}`}>
               Estimate
             </span>
           )}

@@ -16,7 +16,7 @@ export function AssetSummaryCards({ summary }: Props) {
     <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
       {CARD_META.map((card) => (
         <article key={card.key} className={`rounded-sm border border-gray-200 bg-white px-3 py-2 ${card.tone} border-l-4`}>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{card.label}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{card.label}</p>
           <p className="text-lg font-semibold text-gray-900">{summary[card.key]}</p>
         </article>
       ))}

@@ -158,7 +158,7 @@ export function TerminateConfirmModal({
           <textarea
             value={summary}
             onChange={(event) => setSummary(event.target.value)}
-            className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+            className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
             rows={3}
             data-testid="terminate-summary"
           />

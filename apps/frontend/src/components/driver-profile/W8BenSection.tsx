@@ -98,7 +98,7 @@ export function W8BenSection({
 function Field({ label, value }: { label: string; value: unknown }) {
   return (
     <div className="rounded-sm border border-gray-100 p-3">
-      <div className="text-[10px] uppercase text-gray-500">{label}</div>
+      <div className="text-[11px] uppercase text-gray-500">{label}</div>
       <div className="text-sm font-medium text-gray-900">{fmt(value)}</div>
     </div>
   );

@@ -64,7 +64,7 @@ function renderSettlementLinks(settlement: SettlementListRow) {
               kind="liability"
               id={id}
               label={(settlement.liability_ids?.length ?? 0) > 1 ? `debt #${index + 1}` : "debt →"}
-              className="text-[10px] text-red-600 hover:underline"
+              className="text-xs text-red-600 hover:underline"
             />
           ))}
         </span>

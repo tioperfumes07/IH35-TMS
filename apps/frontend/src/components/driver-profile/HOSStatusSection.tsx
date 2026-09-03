@@ -41,7 +41,7 @@ export function HOSStatusSection({ hos, unavailable = false }: { hos: Record<str
       <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-900">
         HOS status
         {eld ? (
-          <span className="rounded-sm bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.3px] text-emerald-700">
+          <span className="rounded-sm bg-emerald-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.3px] text-emerald-700">
             Certified ELD
           </span>
         ) : null}
