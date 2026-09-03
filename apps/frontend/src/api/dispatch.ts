@@ -156,6 +156,8 @@ export type DispatchBookLoadPayload = {
   /** Optional — omit blank; API/service defaults DRY_VAN for the opco (P44). */
   load_trailer_equipment_id?: string;
   driver_pay_rate_per_mile?: number;
+  /** GO-21 B5 — required (>= 10 chars) for driver_pay_rate_per_mile to be honored as a real override. */
+  driver_pay_rate_override_reason?: string;
   factoring_company_vendor_id?: string;
   tarp_type?: string;
   // render-v6 §B reefer/tarp detail (migration 202606231400).

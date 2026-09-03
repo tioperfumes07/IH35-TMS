@@ -105,6 +105,11 @@ type FormValues = BookLoadFormValues & {
   assigned_secondary_driver_id: string;
   temp_fahrenheit: number;
   driver_pay_rate_per_mile: number;
+  // GO-21 B5 — required (>= 10 chars) whenever driver_pay_rate_per_mile is a genuine override of
+  // the driver's profile rate card. book-load.service.ts's resolveDriverBasePayCents silently
+  // ignores a typed rate with no reason (falls back to the driver's profile card) — this field is
+  // what makes the override actually take effect instead of being a dead input.
+  driver_pay_rate_override_reason: string;
   reefer_setpoint: string;
   requires_reefer_fuel: boolean;
   requires_pulp_probe: boolean;
@@ -350,6 +355,7 @@ export function BookLoadModalV4({
       assigned_secondary_driver_id: "",
       temp_fahrenheit: 0,
       driver_pay_rate_per_mile: 0,
+      driver_pay_rate_override_reason: "",
       reefer_setpoint: "",
       requires_reefer_fuel: false,
       requires_pulp_probe: false,
@@ -558,6 +564,7 @@ export function BookLoadModalV4({
   const stops = form.watch("stops");
   const loadType = form.watch("load_type");
   const driverPayRatePerMile = form.watch("driver_pay_rate_per_mile");
+  const driverPayRateOverrideReason = form.watch("driver_pay_rate_override_reason");
   const milesShortest = form.watch("miles_shortest");
   const milesPractical = form.watch("miles_practical");
   const milesDeadhead = form.watch("miles_deadhead");
@@ -820,18 +827,24 @@ export function BookLoadModalV4({
   // This local preview covers only an explicit per-load override. Submit-time pricing may instead
   // use the driver's active rate card, so a missing local preview must never claim that no bill
   // will be created. Dispatch is never blocked from booking.
+  // GO-21 B5 — a typed rate with no reason is never honored server-side (falls back to the
+  // driver's profile card), so the preview must require the same reason the backend requires —
+  // showing a confident $ figure for a rate that will actually be silently discarded is exactly
+  // the "wrong side of the ledger" defect class this preview already exists to avoid.
   const driverBillPreview = useMemo<number | null>(() => {
     const miles = Number(milesShortest || 0);
     const rate = Number(driverPayRatePerMile || 0);
-    if (miles > 0 && rate > 0) return Math.round(miles * rate * 100);
+    const reasonOk = String(driverPayRateOverrideReason ?? "").trim().length >= 10;
+    if (miles > 0 && rate > 0 && reasonOk) return Math.round(miles * rate * 100);
     return null;
-  }, [driverPayRatePerMile, milesShortest]);
+  }, [driverPayRatePerMile, driverPayRateOverrideReason, milesShortest]);
   const driverBillMissing = useMemo(() => {
     const missing: string[] = [];
     if (!(Number(milesShortest || 0) > 0)) missing.push("short miles");
     if (!(Number(driverPayRatePerMile || 0) > 0)) missing.push("driver pay rate / mile");
+    else if (String(driverPayRateOverrideReason ?? "").trim().length < 10) missing.push("override reason (10+ chars)");
     return missing;
-  }, [milesShortest, driverPayRatePerMile]);
+  }, [milesShortest, driverPayRatePerMile, driverPayRateOverrideReason]);
   const ratePerMile = useMemo(() => {
     const miles = Number(milesPractical || 0);
     if (miles <= 0) return 0;
@@ -1032,6 +1045,12 @@ export function BookLoadModalV4({
         driver_pay_rate_per_mile:
           Number.isFinite(values.driver_pay_rate_per_mile) && values.driver_pay_rate_per_mile > 0
             ? values.driver_pay_rate_per_mile
+            : undefined,
+        // GO-21 B5 — only sent when a rate is actually typed; book-load.service.ts's resolver
+        // ignores it (and the rate) with no reason, matching the FE gate above requiring one.
+        driver_pay_rate_override_reason:
+          Number.isFinite(values.driver_pay_rate_per_mile) && values.driver_pay_rate_per_mile > 0
+            ? values.driver_pay_rate_override_reason?.trim() || undefined
             : undefined,
         factoring_company_vendor_id: values.factoring_company_vendor_id || undefined,
         tarp_type: values.tarp_type || undefined,

@@ -99,6 +99,12 @@ export type BookLoadInput = {
   load_type?: "broker" | "direct";
   catalog_load_type_id?: string;
   driver_pay_rate_per_mile?: number;
+  // GO-21 B5 — required whenever driver_pay_rate_per_mile is a genuine override of the driver's
+  // profile rate card; resolveDriverBasePayCents ignores a typed rate with no reason (or a reason
+  // under 10 chars). See writeC9HoldFieldsIfPresent for the write, and the in-memory patch below
+  // the same UPDATE (ACCT-F10159 class — resolveDriverBasePayCents reads the in-memory `load`
+  // object, not a fresh SELECT).
+  driver_pay_rate_override_reason?: string;
   // uuid (preferred, what the FE now sends) or a vendor display name (compatibility path).
   factoring_company_vendor_id?: string;
   lumper_amount_cents?: number;
@@ -352,11 +358,12 @@ async function writeC9HoldFieldsIfPresent(
         requires_straps = $5,
         load_type = $6,
         driver_pay_rate_per_mile = $7,
-        factoring_company_vendor_id = $8::uuid,
-        catalog_load_type_id = $9::uuid,
-        load_trailer_equipment_id = $10::uuid,
+        driver_pay_rate_override_reason = $8,
+        factoring_company_vendor_id = $9::uuid,
+        catalog_load_type_id = $10::uuid,
+        load_trailer_equipment_id = $11::uuid,
         updated_at = now()
-      WHERE id = $11::uuid
+      WHERE id = $12::uuid
     `,
     [
       Boolean(input.requires_reefer_fuel),
@@ -366,6 +373,7 @@ async function writeC9HoldFieldsIfPresent(
       Boolean(input.requires_straps),
       input.load_type ?? null,
       input.driver_pay_rate_per_mile ?? null,
+      input.driver_pay_rate_override_reason?.trim() || null,
       resolvedFactoringVendorId,
       input.catalog_load_type_id ?? null,
       loadTrailerEquipmentId,
@@ -2042,6 +2050,10 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     // actually reads, matching exactly what the UPDATE above wrote — the safest fix that keeps
     // `load`'s shape otherwise unchanged for every other downstream consumer.
     load.driver_pay_rate_per_mile = input.driver_pay_rate_per_mile ?? null;
+    // Same ACCT-F10159 class — resolveDriverBasePayCents reads load.driver_pay_rate_override_reason
+    // (below) off this same in-memory object, not a fresh SELECT; keep it in lockstep with the
+    // UPDATE above or a genuine override silently falls through to the profile card again.
+    load.driver_pay_rate_override_reason = input.driver_pay_rate_override_reason?.trim() || null;
 
     // W-FIX-3b persist (post-insert, same pattern): record the selected trailer (mdata.equipment id) on the
     // REAL link dispatch.load_assignment_history.new_trailer_id — the only real sink (mdata.loads has no

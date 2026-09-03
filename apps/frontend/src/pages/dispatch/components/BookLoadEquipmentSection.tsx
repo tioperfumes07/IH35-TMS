@@ -51,6 +51,10 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   const hosOperatingCompanyId = operatingCompanyId?.trim() || undefined;
   const assignedUnitId = watch ? String(watch("assigned_unit_id") ?? "") : "";
   const assignedTrailerUnitId = watch ? String(watch("assigned_trailer_unit_id") ?? "") : "";
+  // GO-21 B5 — a typed driver_pay_rate_per_mile does nothing unless paired with a real reason;
+  // only show the (required) reason field once the operator has actually typed a rate, so the
+  // common case (no rate typed, driver's profile card prices the load) stays uncluttered.
+  const driverPayRatePerMileTyped = watch ? Number(watch("driver_pay_rate_per_mile") ?? 0) : 0;
   const [primaryDriverOption, setPrimaryDriverOption] = useState<EntityPickerOption | null>(null);
   const [secondaryDriverOption, setSecondaryDriverOption] = useState<EntityPickerOption | null>(null);
   const [unitOption, setUnitOption] = useState<EntityPickerOption | null>(null);
@@ -377,6 +381,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <Field
           label="Driver pay rate / mi"
+          hint="Leave blank — pay resolves automatically from the driver's profile rate card."
           input={
             <input
               type="number"
@@ -387,6 +392,23 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
             />
           }
         />
+        {driverPayRatePerMileTyped > 0 ? (
+          <Field
+            label="Override reason (required)"
+            hint="GO-21 B5 — a typed rate with no reason is never used; the driver's profile card prices the load instead."
+            input={
+              <input
+                type="text"
+                minLength={10}
+                maxLength={1000}
+                placeholder="Why does this load override the driver's card rate?"
+                data-testid="driver-pay-rate-override-reason"
+                {...register("driver_pay_rate_override_reason")}
+                className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs"
+              />
+            }
+          />
+        ) : null}
       </div>
       {/* RENDER-A-v2 §B REEFER PANEL (amber, "Refrigerated") — reefer trailer only. "Temperature type"
           (Frozen/Fresh) is asked FIRST, THEN "Reefer temperature (°F)" (the single setpoint reefer_temp_f).
@@ -509,11 +531,12 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   );
 }
 
-function Field({ label, input }: { label: string; input: JSX.Element }) {
+function Field({ label, input, hint }: { label: string; input: JSX.Element; hint?: string }) {
   return (
     <div className="space-y-1">
       <label className="text-[11px] font-semibold text-gray-600">{label}</label>
       {input}
+      {hint ? <p className="text-[10px] text-gray-500">{hint}</p> : null}
     </div>
   );
 }

@@ -222,6 +222,11 @@ const createDispatchLoadBodySchema = z.object({
   load_type: z.enum(["broker", "direct"]).optional(),
   catalog_load_type_id: z.string().uuid().optional(),
   driver_pay_rate_per_mile: z.number().min(0).optional(),
+  // GO-21 B5 — required for a typed driver_pay_rate_per_mile to ever be honored as a real override
+  // of the driver's profile rate card (book-load.service.ts's resolveDriverBasePayCents requires
+  // >= 10 chars; matches the min(10) here so a request that would be silently ignored server-side
+  // is rejected up front instead).
+  driver_pay_rate_override_reason: z.string().trim().min(10).max(1000).optional(),
   factoring_company_vendor_id: z.string().trim().min(1).max(200).optional(),
   lumper_amount_cents: z.number().int().min(0).default(0),
   customer_chargeback_requested: z.boolean().default(false),
