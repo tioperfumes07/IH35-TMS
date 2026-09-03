@@ -7313,5 +7313,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-03",
     "purpose": "verify-mileage-service-null-not-zero (GO-19-2b Section 6: mileage.service.ts provider-miss returns NULL+reason, never 0, never fabricates a point_mileage row)"
+  },
+  "10267": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-bank-recon-loadtransaction-excludes-voided (BANK-F9998 F2 BLOCKER: accounting/bank-recon/match.service.ts's loadTransaction never filtered bt.voided_at -- a voided/duplicate bank_transactions row was still matchable/postable through the Match drawer)"
   }
 }

@@ -286,6 +286,12 @@ async function loadTransaction(
   // BANK-ACCOUNT-HIDE: a transaction on an account hidden for THIS entity must be unreachable by the
   // categorization/matching flow (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
   const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
+  // BANK-F9998 F2 — this was the ONLY row-loader both findCandidates() (Match drawer candidate
+  // fetch) and acceptMatchWithResolveDifference() (Match drawer Confirm) use, and it never excluded
+  // a voided row. A bank transaction voided as a confirmed duplicate (BANK-F9997, PR #20142 — 48
+  // rows) stayed fully reachable: it would still return live match candidates and could still be
+  // matched/posted through, silently undoing the void. Excluding it here closes both call sites at
+  // once — this is the single choke point, not two separate fixes.
   const txn = await client.query<BankTxn>(
     `
       SELECT
@@ -302,6 +308,7 @@ async function loadTransaction(
       FROM banking.bank_transactions bt
       WHERE bt.id = $1::uuid
         AND bt.operating_company_id = $2::uuid
+        AND bt.voided_at IS NULL
         ${bankTransactionHiddenFilterSql(hideOn, "bt")}
       LIMIT 1
       ${forUpdate ? "FOR UPDATE" : ""}
