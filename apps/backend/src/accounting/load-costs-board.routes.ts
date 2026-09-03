@@ -7,7 +7,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
   app.get("/api/v1/accounting/load-costs-board", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    if (!["Owner", "Administrator", "Accountant"].includes(String(user.role ?? ""))) {
+    if (!["Owner", "Administrator", "Accountant", "Dispatcher", "SuperAdmin"].includes(String(user.role ?? ""))) {
       return reply.code(403).send({ error: "forbidden" });
     }
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
