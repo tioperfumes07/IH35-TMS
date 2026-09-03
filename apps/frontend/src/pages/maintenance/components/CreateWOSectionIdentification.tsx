@@ -8,7 +8,7 @@ import { DriverPickerWithCreate } from "../../../components/drivers/DriverPicker
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";
-import { Combobox } from "../../../components/shared/Combobox";
+import { SimpleCombobox as Combobox } from "../../../components/Combobox";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 

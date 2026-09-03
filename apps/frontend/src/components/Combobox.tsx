@@ -540,3 +540,79 @@ export function Combobox({
     </div>
   );
 }
+
+// K2 (GO-23 Wave 4, 2026-09-02): SimpleCombobox was components/shared/Combobox.tsx, a thin
+// friendlier-prop-shape adapter (allowAddNew as a boolean + separate onAddNew callback, instead of
+// the base Combobox's single {label,onAdd} object) that already delegated to the Combobox above --
+// it was never actually "trapping" (outside-click dismiss always ran through the engine here).
+// Relocated into this file per the owner's K2 ruling (KEEP components/Combobox.tsx; retire the
+// three adapters) so every importer converges on ONE module. Logic is verbatim unchanged.
+export type SimpleComboboxOption = {
+  value: string;
+  label: string;
+};
+
+type SimpleComboboxProps = {
+  options: SimpleComboboxOption[];
+  value: string | null | undefined;
+  onChange: (value: string | null) => void;
+  placeholder?: string;
+  allowAddNew?: boolean;
+  onAddNew?: (typedText: string) => void;
+  disabled?: boolean;
+  required?: boolean;
+  className?: string;
+  /** Engine loading spinner. FuelPlannerHome passes loading=; omitting it is SPA TS2322. */
+  loading?: boolean;
+  /** SAF-F31 — pass-through for server-side type-ahead (see Combobox above). */
+  onSearch?: (query: string) => void;
+  /** C1-A11Y — forwarded to the input so `<label htmlFor>` actually binds. See Combobox above. */
+  id?: string;
+  ariaLabel?: string;
+  dataTestId?: string;
+};
+
+export function SimpleCombobox({
+  options,
+  value,
+  onChange,
+  placeholder,
+  allowAddNew = false,
+  onAddNew,
+  disabled = false,
+  className,
+  onSearch,
+  id,
+  loading,
+  ariaLabel,
+  dataTestId,
+}: SimpleComboboxProps) {
+  const mapped: ComboboxOption[] = options.map((option) => ({
+    value: option.value,
+    label: option.label,
+  }));
+
+  return (
+    <Combobox
+      options={mapped}
+      value={value ?? null}
+      onChange={onChange}
+      placeholder={placeholder}
+      disabled={disabled}
+      className={className}
+      onSearch={onSearch}
+      id={id}
+      loading={loading}
+      ariaLabel={ariaLabel}
+      dataTestId={dataTestId}
+      allowAddNew={
+        allowAddNew && onAddNew
+          ? {
+              label: "+ Add new",
+              onAdd: onAddNew,
+            }
+          : undefined
+      }
+    />
+  );
+}

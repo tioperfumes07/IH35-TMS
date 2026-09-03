@@ -29,7 +29,7 @@ import { properPersonOrPlaceName } from "../../../lib/properDisplayText";
 import { companyToday } from "../../../lib/businessDate";
 import { BILL_TERMS_OPTIONS } from "../../../lib/billTermsLabel";
 import { Button } from "../../../components/Button";
-import { Combobox } from "../../../components/shared/Combobox";
+import { SimpleCombobox as Combobox } from "../../../components/Combobox";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ParityTable } from "../../../components/parity/ParityTable";
 import { MoneyInput } from "../../../components/forms/MoneyInput";

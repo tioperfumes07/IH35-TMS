@@ -1,7 +1,7 @@
 {
   "import_select_combobox": 154,
   "import_entity_picker": 106,
-  "import_shared_combobox": 8,
+  "import_shared_combobox": 0,
   "import_data_table": 20,
   "import_resizable_table": 2,
   "import_mobile_optimized_table": 3,
@@ -272,16 +272,7 @@
       "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx",
       "apps/frontend/src/pages/safety/tabs/HOSViolationsTab.tsx"
     ],
-    "components/shared/Combobox": [
-      "apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx",
-      "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
-      "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
-      "apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx",
-      "apps/frontend/src/pages/maintenance/components/CreateWOSectionPaymentTiming.tsx",
-      "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx",
-      "apps/frontend/src/pages/safety/components/FineLifecycleActions.tsx",
-      "apps/frontend/src/pages/work-orders/WorkOrdersConsoleDetailPage.tsx"
-    ],
+    "components/shared/Combobox": [],
     "components/DataTable": [
       "apps/frontend/src/pages/Documents.tsx",
       "apps/frontend/src/pages/Drivers.tsx",

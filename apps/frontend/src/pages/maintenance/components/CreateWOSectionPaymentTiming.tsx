@@ -1,5 +1,5 @@
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
-import { Combobox } from "../../../components/shared/Combobox";
+import { SimpleCombobox as Combobox } from "../../../components/Combobox";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 

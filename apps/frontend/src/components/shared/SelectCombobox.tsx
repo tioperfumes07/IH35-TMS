@@ -1,5 +1,5 @@
 import { Children, isValidElement, useMemo, useState, type ChangeEvent, type FocusEvent, type ReactNode, type SelectHTMLAttributes } from "react";
-import { Combobox } from "./Combobox";
+import { SimpleCombobox as Combobox } from "../Combobox";
 import { singleFrameLayoutClassName } from "../../lib/single-frame-classname";
 
 type Props = Omit<SelectHTMLAttributes<HTMLSelectElement>, "onChange" | "value" | "defaultValue"> & {

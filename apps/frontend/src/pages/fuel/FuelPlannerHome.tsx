@@ -42,7 +42,7 @@ import { FuelHomePage } from "./FuelHome";
 import { FuelTransactionsTable } from "./FuelTransactionsTable";
 import { ExpensiveStatesMultiselect } from "./components/ExpensiveStatesMultiselect";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { Combobox } from "../../components/shared/Combobox";
+import { SimpleCombobox as Combobox } from "../../components/Combobox";
 
 export type { FuelTabId } from "./FUEL_TABS_CONFIG";
 

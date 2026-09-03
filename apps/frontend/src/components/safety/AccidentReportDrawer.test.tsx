@@ -57,31 +57,39 @@ vi.mock("../../api/dispatch", () => ({
 }));
 
 // Render the picker as a native <select> so selection is deterministic; the stored VALUE is the uuid.
-vi.mock("../shared/Combobox", () => ({
-  Combobox: ({
-    options,
-    value,
-    onChange,
-    placeholder,
-  }: {
-    options: Array<{ value: string; label: string }>;
-    value: string | null;
-    onChange: (v: string | null) => void;
-    placeholder?: string;
-  }) => (
-    <select aria-label={placeholder ?? "combobox"} value={value ?? ""} onChange={(e) => onChange(e.target.value || null)}>
-      <option value="">--</option>
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
-  ),
-}));
+// K2 (2026-09-02): shared/Combobox.tsx's SimpleCombobox relocated into components/Combobox.tsx
+// (owner K2 ruling -- converge every picker importer on the one canonical module). Mock only that
+// named export; importOriginal preserves the real Combobox engine export for anything else in the
+// render tree that imports it directly from the same module.
+vi.mock("../Combobox", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../Combobox")>();
+  return {
+    ...actual,
+    SimpleCombobox: ({
+      options,
+      value,
+      onChange,
+      placeholder,
+    }: {
+      options: Array<{ value: string; label: string }>;
+      value: string | null;
+      onChange: (v: string | null) => void;
+      placeholder?: string;
+    }) => (
+      <select aria-label={placeholder ?? "combobox"} value={value ?? ""} onChange={(e) => onChange(e.target.value || null)}>
+        <option value="">--</option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    ),
+  };
+});
 
 // Repair Vendor migrated to the shared ReferenceSelect (+ Create vendor). Render as a native
-// <select> too, matching the shared/Combobox mock above, so the existing selectOptions-driven
+// <select> too, matching the SimpleCombobox mock above, so the existing selectOptions-driven
 // assertions stay deterministic without asserting on the +Create inline-create chrome here.
 vi.mock("../parity/ReferenceSelect", () => ({
   ReferenceSelect: ({
@@ -164,7 +172,7 @@ describe("AccidentReportDrawer catalogs (SC1)", () => {
     // <select> any more. The unit picker migrated to `EntityPicker kind="unit"`
     // (AccidentReportDrawer.tsx:282), and vendor migrated to `EntityPicker kind="vendor"`
     // (AccidentReportDrawer.tsx:367 — SAF-F31, superseding the old Combobox+vendorSearch shape). This
-    // file does NOT stub EntityPicker — it stubs shared/Combobox and parity/ReferenceSelect, so every
+    // file does NOT stub EntityPicker — it stubs SimpleCombobox (components/Combobox.tsx) and parity/ReferenceSelect, so every
     // EntityPicker-backed field renders a real `input role="combobox"` whose options exist only while
     // the listbox is OPEN. `user.selectOptions` against a real `<select>` no longer applies to any of
     // these four fields; use `pickCombo` (focus+click to open, click the option by visible text) for
