@@ -183,7 +183,7 @@ export function DispatchList({
               render: (load) =>
                 hasVisibleFlag(load.flag_code) ? (
                   <span
-                    className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold text-white"
+                    className="inline-flex h-4 w-4 items-center justify-center rounded-full text-xs font-bold text-white"
                     style={{ backgroundColor: flagDotColor(load.flag_code) }}
                     title={flagDotLabel(load.flag_code)}
                   >
@@ -410,7 +410,7 @@ export function DispatchList({
                 <div>
                   {hasVisibleFlag(load.flag_code) ? (
                     <span
-                      className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold text-white"
+                      className="inline-flex h-4 w-4 items-center justify-center rounded-full text-xs font-bold text-white"
                       style={{ backgroundColor: flagDotColor(load.flag_code) }}
                       title={flagDotLabel(load.flag_code)}
                     >
