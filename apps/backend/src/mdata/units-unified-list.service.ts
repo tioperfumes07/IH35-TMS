@@ -24,6 +24,10 @@ export type UnifiedFleetRow = {
   vehicle_type?: string | null;
   equipment_type?: string | null;
   deactivated_at?: string | null;
+  oos_since?: string | null;
+  days_oos?: number | null;
+  oos_reason?: string | null;
+  oos_location?: string | null;
 };
 
 export function buildReeferSummary(row: Record<string, unknown>): string | null {
@@ -126,6 +130,13 @@ export async function fetchUnifiedFleetList(
         year,
         status,
         is_oos,
+        oos_since,
+        CASE
+          WHEN oos_since IS NULL THEN NULL
+          ELSE GREATEST(0, EXTRACT(EPOCH FROM (NOW() - oos_since)) / 86400)
+        END AS days_oos,
+        oos_reason,
+        oos_location,
         vehicle_type,
         owner_company_id,
         currently_leased_to_company_id,
@@ -176,6 +187,10 @@ export async function fetchUnifiedFleetList(
     is_oos: Boolean(row.is_oos),
     vehicle_type: row.vehicle_type != null ? String(row.vehicle_type) : null,
     deactivated_at: row.deactivated_at != null ? String(row.deactivated_at) : null,
+    oos_since: row.oos_since != null ? String(row.oos_since) : null,
+    days_oos: row.days_oos != null ? Number(row.days_oos) : null,
+    oos_reason: row.oos_reason != null ? String(row.oos_reason) : null,
+    oos_location: row.oos_location != null ? String(row.oos_location) : null,
   }));
 
   const trailers: UnifiedFleetRow[] = trailerRes.rows.map((row) => ({

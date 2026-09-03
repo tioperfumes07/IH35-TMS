@@ -19,6 +19,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { formatOosDate, formatOosDays } from "../../../lib/oos-display";
 
 type Props = {
   operatingCompanyId: string;
@@ -26,17 +27,6 @@ type Props = {
 
 function money(cents: number) {
   return `$${(Number(cents || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-function asDays(value: number | null | undefined) {
-  if (!value || !Number.isFinite(value)) return "0";
-  return String(Math.max(0, Math.round(value)));
-}
-
-function asDate(value: string | null | undefined) {
-  if (!value) return "—";
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
 }
 
 function severityBadgeClass(severity: string) {
@@ -228,9 +218,9 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
     { key: "estimated_outside_service_cents", label: "Outside", sortable: true, render: (row) => money(row.estimated_outside_service_cents) },
     { key: "estimated_total_cents", label: "Cost", sortable: true, render: (row) => <span className="font-semibold">{money(row.estimated_total_cents)}</span> },
     // Design parity (severe-repairs.html): Down Since (oos_since), Est. Return (estimated_completion_date).
-    { key: "oos_since", label: "Down Since", sortable: true, render: (row) => asDate(row.oos_since) },
-    { key: "estimated_completion_date", label: "Est. Return", sortable: true, render: (row) => asDate(row.estimated_completion_date) },
-    { key: "days_oos", label: "Days OOS", sortable: true, render: (row) => asDays(row.days_oos) },
+    { key: "oos_since", label: "Down Since", sortable: true, render: (row) => formatOosDate(row.oos_since) },
+    { key: "estimated_completion_date", label: "Est. Return", sortable: true, render: (row) => formatOosDate(row.estimated_completion_date) },
+    { key: "days_oos", label: "Days OOS", sortable: true, render: (row) => formatOosDays(row.days_oos) },
     { key: "estimate_status", label: "Status", sortable: true },
   ];
 
@@ -293,7 +283,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="text-xs uppercase tracking-wide text-gray-500">Average days OOS</div>
-            <div className="text-lg font-semibold">{rollupQuery.isError ? "—" : asDays(rollup.avg_days_oos)}</div>
+            <div className="text-lg font-semibold">{rollupQuery.isError ? "—" : formatOosDays(rollup.avg_days_oos)}</div>
           </div>
         </div>
         <div className="ml-3">
