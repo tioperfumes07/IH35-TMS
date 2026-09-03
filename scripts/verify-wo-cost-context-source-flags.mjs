@@ -96,6 +96,12 @@ function check(root = ROOT) {
   if (!/laborRatesCatalogStatus === "unavailable"/.test(box)) {
     errors.push(`${FE_BOX}: must branch labor picker on laborRatesCatalogStatus unavailable`);
   }
+  if (!/Parts catalog not provisioned for this operating company\./.test(box)) {
+    errors.push(`${FE_BOX}: parts unavailable state must name the canonical catalog and say it is not provisioned`);
+  }
+  if (!/Labor rates catalog not provisioned for this operating company\./.test(box)) {
+    errors.push(`${FE_BOX}: labor unavailable state must name the canonical catalog and say it is not provisioned`);
+  }
 
   if (fs.existsSync(path.join(root, PHANTOM_PRISMA))) {
     errors.push(`${PHANTOM_PRISMA}: GO-20 F forbids inventory.parts phantom Prisma migration — delete it`);
@@ -127,12 +133,29 @@ function selftest() {
     route = route.replace(/sources:\s*\{[\s\S]*?\},?\n/, "");
     route = route.replace(/partsStatus\s*=\s*"unavailable"/g, 'partsStatus = "available"');
     fs.writeFileSync(path.join(tmp, ROUTE), route);
-    const errs = check(tmp);
+    let errs = check(tmp);
     if (errs.length === 0) {
       console.error(`${LABEL} selftest FAIL — stripped sources did not redden`);
       process.exit(1);
     }
-    console.log(`${LABEL} selftest PASS — ${errs.length} error(s) on mutated silent-skip`);
+    fs.copyFileSync(path.join(ROOT, ROUTE), path.join(tmp, ROUTE));
+
+    const wordingMutations = [
+      ["Parts catalog not provisioned for this operating company.", "Parts are unavailable."],
+      ["Labor rates catalog not provisioned for this operating company.", "Labor rates are unavailable."],
+    ];
+    for (const [expected, replacement] of wordingMutations) {
+      fs.copyFileSync(path.join(ROOT, FE_BOX), path.join(tmp, FE_BOX));
+      let box = fs.readFileSync(path.join(tmp, FE_BOX), "utf8");
+      box = box.replace(expected, replacement);
+      fs.writeFileSync(path.join(tmp, FE_BOX), box);
+      errs = check(tmp);
+      if (errs.length === 0) {
+        console.error(`${LABEL} selftest FAIL — removing \"${expected}\" did not redden`);
+        process.exit(1);
+      }
+    }
+    console.log(`${LABEL} selftest PASS — silent-skip and 2/2 named catalog notice mutations reddened`);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
