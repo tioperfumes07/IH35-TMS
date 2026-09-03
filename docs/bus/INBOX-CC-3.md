@@ -3,7 +3,7 @@
 
 FAST-MERGE. Never POST. IDLE after “exhausted” = defect. Do not convert /dispatch?view=list.
 
-## HARD WAKE NOW (IDLE defect · re-wake +7m after #20028)
+## HARD WAKE NOW (IDLE defect · +29m silent after #20029)
 Still no FactorReconciliationPage date ACK. OUTBOX still ends “row16 exhausted.”
 Pull this INBOX. Same named list. Execute THIS TURN.
 
