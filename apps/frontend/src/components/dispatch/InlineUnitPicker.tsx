@@ -35,7 +35,7 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
         )}
         <button
           type="button"
-          className="shrink-0 rounded-sm px-1 text-[10px] font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          className="shrink-0 rounded-sm px-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900"
           data-testid={`inline-unit-picker-${loadId}`}
           onClick={() => {
             setOpen(true);
@@ -44,7 +44,7 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
         >
           {unitId ? "Change" : "Assign"}
         </button>
-        {error ? <span className="rounded-sm bg-red-100 px-1 text-[10px] text-red-700">{error}</span> : null}
+        {error ? <span className="rounded-sm bg-red-100 px-1 text-xs text-red-700">{error}</span> : null}
       </div>
     );
   }
@@ -56,7 +56,7 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
           the picker stays open for retry — meaning any assignment failure was completely silent to
           the operator. Surfacing it here too so a rejected pick (OOS, dispatch-blocked, or any other
           server error) is actually visible while the picker is still open. */}
-      {error ? <p className="mb-1 rounded-sm bg-red-100 px-1 py-0.5 text-[10px] text-red-700">{error}</p> : null}
+      {error ? <p className="mb-1 rounded-sm bg-red-100 px-1 py-0.5 text-xs text-red-700">{error}</p> : null}
       <EntityPicker
         kind="unit"
         operatingCompanyId={operatingCompanyId}

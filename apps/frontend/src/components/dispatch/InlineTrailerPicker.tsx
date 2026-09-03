@@ -34,7 +34,7 @@ export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, dis
         )}
         <button
           type="button"
-          className="shrink-0 rounded-sm px-1 text-[10px] font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          className="shrink-0 rounded-sm px-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900"
           data-testid={`inline-trailer-picker-${loadId}`}
           onClick={() => {
             setOpen(true);
@@ -43,7 +43,7 @@ export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, dis
         >
           {trailerId ? "Change" : "Assign"}
         </button>
-        {error ? <span className="rounded-sm bg-red-100 px-1 text-[10px] text-red-700">{error}</span> : null}
+        {error ? <span className="rounded-sm bg-red-100 px-1 text-xs text-red-700">{error}</span> : null}
       </div>
     );
   }
@@ -53,7 +53,7 @@ export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, dis
       {/* DISPATCH-F-QUICKSAVE-ASSIGN-500 (2026-08-21): see InlineUnitPicker's twin comment — `error`
           was only ever rendered in the !open branch above, but a failed onChange leaves `open` true,
           so a rejected pick was completely silent. Surfacing it here too. */}
-      {error ? <p className="mb-1 rounded-sm bg-red-100 px-1 py-0.5 text-[10px] text-red-700">{error}</p> : null}
+      {error ? <p className="mb-1 rounded-sm bg-red-100 px-1 py-0.5 text-xs text-red-700">{error}</p> : null}
       <EntityPicker
         kind="trailer"
         operatingCompanyId={operatingCompanyId}
