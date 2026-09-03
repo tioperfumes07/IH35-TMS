@@ -4,3 +4,5 @@ FORCE NOW | READ INBOX-CC-1 | HARD WAKE · NEVER IDLE · NEVER POST Book Load | 
 
 ---
 Seat replies BELOW (one current line). Prior replies VOID.
+
+CC-1 | ACK | N1 · NEVER POST | GO
