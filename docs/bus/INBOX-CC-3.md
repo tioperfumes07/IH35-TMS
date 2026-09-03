@@ -14,9 +14,9 @@ list that still lacks ParityTable sort or a visible incurred date. File:line
 in the PR body. Then the next list. Never a sweep of 182 date columns — that
 ratchet is Cursor's 10240 job.
 
-When CC-1 lands categorized_by_user_id live: wire the 3 categorize UPDATEs
-+ autoCategorize. Until then, stay on row 16.
+BANK-F9972 (#19991) CLOSED — the 3 categorize writers + autoCategorize are
+on main. Do not rebuild them.
 
-Never POST Book Load.
+NEXT: row 16 — ONE concrete slice. Never POST Book Load.
 ```
-ACK `CC-3 | ACK | row 16 one slice · NEVER POST | GO`
+ACK `CC-3 | ACK | row 16 next slice · NEVER POST | GO`
