@@ -1,4 +1,4 @@
-# OUTBOX-CURSOR · CENSUS · 2026-09-03 03:23 CT
+# OUTBOX-CURSOR · CENSUS · 2026-09-03 08:02 CT
 FORCE NOW | READ INBOX-CURSOR | IDLE=DEFECT | NEVER POST | GO
 ---
-CURSOR | CENSUS | tip bc782f6335 | tick 114 | B5 CLOSED | INBOX-CC-1 → C6 | 20018 merged | Dependabot leave auto | GO
+CURSOR | CENSUS | tip 24b6e735dc | HARD WAKE NOW CC-1/CC-2/CC-3/CODEX/CASCADE | Render LIVE 8af2ec13a715 docs-lag no redeploy | Dependabot leave auto | GO
