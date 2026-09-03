@@ -318,6 +318,12 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
             id, unit_number, vin, make, model, year, license_plate, license_state, status,
             assigned_driver_id, owner_company_id, currently_leased_to_company_id, acquired_date, disposed_date, notes,
             qbo_vendor_id, qbo_class_id,
+            -- PACKET-C (Fleet OOS/in-shop columns, 2026-09-03): is_oos/oos_reason/oos_since/oos_location
+            -- were never selected here, so every consumer of this endpoint (FleetOosStrip's "Fleet OOS
+            -- / In shop" panel included) that reads them always got undefined -- the panel's own
+            -- "Reason" column was already coded to read unit.oos_reason and rendered "--" for every row
+            -- that wasn't also a severe-repair estimate. Real columns, not computed.
+            is_oos, oos_reason, oos_since, oos_location,
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.units
           ${whereClause}

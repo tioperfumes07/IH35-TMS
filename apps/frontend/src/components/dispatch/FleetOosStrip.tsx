@@ -22,6 +22,11 @@ type OosUnitRow = {
   reason: string;
   etaBack: string;
   statusLabel: string;
+  // PACKET-C (Fleet OOS/in-shop columns, 2026-09-03): oosSince/daysOos/location. Null oos_since means
+  // "never recorded" -- rendered as an em dash, never invented (owner directive on this same packet).
+  oosSince: string | null;
+  daysOos: number | null;
+  location: string | null;
 };
 
 type UnitRecord = {
@@ -30,6 +35,8 @@ type UnitRecord = {
   status?: string;
   is_oos?: boolean;
   oos_reason?: string | null;
+  oos_since?: string | null;
+  oos_location?: string | null;
   has_open_pm_due_wo?: boolean;
   is_dispatch_blocked?: boolean;
 };
@@ -41,6 +48,20 @@ function formatEta(value: string | null | undefined): string {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return "TBD";
   return parsed.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function formatOosSince(value: string | null | undefined): string {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? "—" : parsed.toLocaleDateString();
+}
+
+/** Whole days between oos_since and now. Null input (or unparseable) stays null -- never a guessed 0. */
+function daysOosFrom(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const since = new Date(value).getTime();
+  if (Number.isNaN(since)) return null;
+  return Math.max(0, Math.floor((Date.now() - since) / 86_400_000));
 }
 
 function statusLabelForUnit(unit: UnitRecord): string {
@@ -87,7 +108,36 @@ const oosColumns: ParityColumn<OosUnitRow>[] = [
     sortable: true,
     sortValue: (row) => row.reason || "—",
     cellClass: "text-gray-700",
-    render: (row) => row.reason || "—",
+    render: (row) => (
+      <span data-testid="fleet-oos-reason">{row.reason || "—"}</span>
+    ),
+  },
+  {
+    // PACKET-C (Fleet OOS/in-shop columns, 2026-09-03): date the unit went OOS. Null stays an em
+    // dash (never invented) -- sortValue pushes never-recorded rows last, same null-last rule the
+    // ETA column already relies on.
+    key: "oos_since",
+    label: "OOS since",
+    sortable: true,
+    sortValue: (row) => row.oosSince,
+    cellClass: "text-gray-700",
+    render: (row) => <span data-testid="fleet-oos-since">{formatOosSince(row.oosSince)}</span>,
+  },
+  {
+    key: "days_oos",
+    label: "Days OOS",
+    sortable: true,
+    sortValue: (row) => row.daysOos,
+    cellClass: "text-gray-700",
+    render: (row) => <span data-testid="fleet-oos-days">{row.daysOos == null ? "—" : String(row.daysOos)}</span>,
+  },
+  {
+    key: "location",
+    label: "Location",
+    sortable: true,
+    sortValue: (row) => row.location || "—",
+    cellClass: "text-gray-700",
+    render: (row) => <span data-testid="fleet-oos-location">{row.location || "—"}</span>,
   },
   {
     key: "eta_back",
@@ -162,6 +212,9 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
         reason: String(unit.oos_reason ?? "").trim(),
         etaBack: "TBD",
         statusLabel: statusLabelForUnit(unit),
+        oosSince: unit.oos_since ?? null,
+        daysOos: daysOosFrom(unit.oos_since),
+        location: unit.oos_location?.trim() || null,
       });
     }
 
@@ -170,12 +223,18 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
       const existing = byUnitId.get(estimate.unit_id);
       const reason = estimate.description?.trim() || existing?.reason || "Severe repair — out of service";
       const etaBack = formatEta(estimate.estimated_completion_date);
+      // The severe-repair estimate already computes oos_since/days_oos server-side (same fields
+      // SevereRepairOosTab reads as "Down Since"/"Days OOS") -- prefer them over the unit row's own,
+      // since the estimate is the more specific record for this exact OOS event.
       byUnitId.set(estimate.unit_id, {
         unitId: estimate.unit_id,
         unitNumber: entityLabel(estimate.unit_number, estimate.unit_id, "Unit") ?? existing?.unitNumber,
         reason,
         etaBack,
         statusLabel: existing?.statusLabel ?? "Out of service",
+        oosSince: estimate.oos_since ?? existing?.oosSince ?? null,
+        daysOos: estimate.oos_since ? estimate.days_oos : existing?.daysOos ?? null,
+        location: estimate.estimate_location?.trim() || existing?.location || null,
       });
     }
 
