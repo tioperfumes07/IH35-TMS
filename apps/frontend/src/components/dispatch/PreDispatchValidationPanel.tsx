@@ -76,7 +76,6 @@ export function PreDispatchValidationPanel({
   trailerLabel,
   customerLabel,
   onValidationChange,
-  overrideReason,
   onOverrideReasonChange,
   canOwnerOverride = false,
   onOwnerOverride,
@@ -216,7 +215,6 @@ export function PreDispatchValidationPanel({
   }, [logInsScheduleConfirmation, pendingInsScheduleConfirm]);
 
   const remainingBlockers = result.blockers.filter((b) => !blockOverrides[b.rule_id]).length;
-  const hasBlockers = remainingBlockers > 0;
   const hasUnackedBlockers = remainingBlockers > 0;
 
   useEffect(() => {

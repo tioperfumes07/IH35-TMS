@@ -48,9 +48,9 @@ export type MinimalBookForm = {
   linehaul_cents: number;
   fuel_surcharge_cents: number;
   accessorial_cents: number;
-  miles_practical: number;
-  miles_shortest: number;
-  miles_deadhead: number;
+  miles_practical: number | null;
+  miles_shortest: number | null;
+  miles_deadhead: number | null;
   notes: string;
   is_sample_data: boolean;
   stops: BookStop[];
