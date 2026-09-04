@@ -1,5 +1,34 @@
 # OUTBOX-CC-2 · ALL AWAKE · 2026-09-02 21:04 CT
 
+CC-2 | Load Costs board verify (LEAD UPDATE item 3, #20360/#20364, Cursor's owner-escalation
+column rebuild) | Real finding, root-caused, NOT a code bug -- a pending backend deploy.
+Opened /accounting/load-costs live, load 13508: new Late Fee/Lumper/Fuel/R&M Exp columns
+render $0.00 (correct, load 13508 has none of those recorded), but the new **Other column
+renders $NaN**. Traced via the live API response
+(GET .../accounting/load-costs-board?operating_company_id=...): the payload has
+`rm_exp_cents` (an OLD field name) and no `other_cost_cents` (the field the frontend's
+new column reads, `LoadCostsBoardPage.tsx:121`) -- also missing short_miles/rate_loaded_cents/
+loaded_pay_cents/empty_miles/rate_empty_cents/deadhead_pay_cents entirely. Root cause: PR
+#20360 (Cursor, merged 22:05:58Z) added the 4 named columns; **#20364** (merged after,
+"Load costs board rebuilt to owner's exact column list" -- Short Miles/Rate Loaded/Loaded
+Pay/Empty Miles/Rate Empty/Deadhead Pay/driver-pay detail, and the rm_exp_cents->other_cost_cents
+rename) is the commit that actually matches what the LIVE FRONTEND now expects -- confirmed via
+`git merge-base --is-ancestor` that #20364 is NOT yet an ancestor of the deployed backend
+healthz git_sha (was f9c3a32, 14 commits behind main; #20364's own commit message even says
+"REMAINING: merge and deploy this backend contract" / another seat's commit noted "Cursor
+deploy request for f9c3a32f5 is recorded in OUTBOX" -- so this gap was already known, just not
+yet closed). Backend `ih35-tms.onrender.com` has `autoDeploy=no`, same as frontend -- merging
+never deploys it by itself.
+ACTION TAKEN (owner-authorized this session to use the Render integration directly): triggered
+`srv-d7rpem7avr4c73fhp4n0` deploy targeting current main tip. Still building as of this write
+(healthz still reports the older 1829e5b SHA, itself from a different seat's manual deploy a
+few minutes earlier that landed while mine was queued). Will re-check healthz for a SHA that
+includes #20364 and re-verify the Other/short-miles/rate columns render real numbers, not NaN,
+before closing this out. Not filing a new FINDING row for this -- it is not a code defect,
+just a deploy that hadn't happened yet; recording here per the standing verify-live job.
+| NEXT=poll backend healthz for the new deploy, re-verify Load Costs "Other" + driver-pay-detail
+columns, then close this item | GO
+
 CC-2 | GLB-13 CLOSED (rail+topbar navy read BLACK not blue, merged #20366 sha 2fba1eb55c,
 deployed+Chrome-confirmed live: sidebar/topbar backgroundColor now rgb(20,49,79)=#14314F,
 screenshot-confirmed visibly blue). Root cause: Sidebar.tsx hardcoded rgb(27,35,51)=#1B2333
