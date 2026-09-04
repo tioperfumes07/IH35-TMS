@@ -1,5 +1,6 @@
 export type BookLoadValidationIssue = {
   path: string;
+  ruleCode: string;
   description: string;
 };
 
@@ -39,6 +40,12 @@ function fieldLabel(field: string): string {
   return FIELD_LABELS[field] ?? field.replace(/_/g, " ");
 }
 
+function ruleCode(error: Record<string, unknown>): string {
+  return typeof error.type === "string" && error.type.trim()
+    ? error.type.trim()
+    : "validation";
+}
+
 export function describeBookLoadValidationErrors(
   errors: unknown,
   stops: Array<{ stop_type?: string }> = []
@@ -52,15 +59,21 @@ export function describeBookLoadValidationErrors(
       const fullPath = path.join(".");
       const stopIndex = path[0] === "stops" && /^\d+$/.test(path[1] ?? "") ? Number(path[1]) : null;
       const field = path.at(-1) ?? fullPath;
+      const failedRule = ruleCode(record);
       if (stopIndex !== null) {
         const kind = String(stops[stopIndex]?.stop_type ?? (stopIndex % 2 === 0 ? "pickup" : "delivery"));
         const stopKind = kind === "pickup" ? "Pickup" : kind === "delivery" ? "Delivery" : "Stop";
         issues.push({
           path: fullPath,
-          description: `Stop ${stopIndex + 1} (${stopKind}) — ${fieldLabel(field)}: ${issueReason(record)}`,
+          ruleCode: failedRule,
+          description: `Stop ${stopIndex + 1} (${stopKind}) — ${fieldLabel(field)}: ${issueReason(record)} [rule: ${failedRule}]`,
         });
       } else {
-        issues.push({ path: fullPath, description: `${fieldLabel(field)}: ${issueReason(record)}` });
+        issues.push({
+          path: fullPath,
+          ruleCode: failedRule,
+          description: `${fieldLabel(field)}: ${issueReason(record)} [rule: ${failedRule}]`,
+        });
       }
       return;
     }
