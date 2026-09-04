@@ -190,7 +190,7 @@ export function ValidationPanel({
       {allowBlockOverride && result.blockers.length > 0 ? (
         <div className="overflow-x-auto" data-testid="pre-dispatch-blocker-override-table">
           <table className="w-full border-collapse text-xs">
-            <thead>
+            <thead data-table-header="locked">
               <tr className="h-[26px] bg-[#14314F] text-xs font-bold uppercase tracking-[0.5px] text-white">
                 <th className="border-r border-[#1f3f63] px-2 text-center">
                   <button type="button" className="w-full font-bold uppercase" onClick={() => toggleSort("rule")}>

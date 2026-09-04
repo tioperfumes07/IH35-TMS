@@ -2,6 +2,7 @@ import { useCallback, useRef, type DragEvent, type MouseEvent as ReactMouseEvent
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { SortDir } from "./useTableController";
 import { resolveAlign } from "../DataTable";
+import { colors, typography } from "../../design/tokens";
 
 // GLOBAL-TABLE-CONTROLS — shared sortable + resizable <th>. Click to sort (asc→desc→off),
 // drag the right edge to resize. Width persists per-user via the controller/useTablePref.
@@ -72,10 +73,19 @@ export function TableHeaderCell({
 
   return (
     <th
+      data-table-header-cell="locked"
       ref={thRef}
       {...(draggable && dragHandleProps ? dragHandleProps : {})}
       className={`relative px-2 py-1 ${a.textClass} ${a.numeric ? "tabular-nums" : ""} ${dragOver ? "bg-slate-100 border-l-2 border-slate-300" : ""} ${className}`}
-      style={width ? { width } : undefined}
+      style={{
+        ...(width ? { width } : {}),
+        backgroundColor: colors.tableHeaderBg,
+        color: colors.tableHeaderText,
+        fontSize: typography.panelHeader,
+        fontWeight: 700,
+        letterSpacing: typography.tightUpper,
+        textTransform: "uppercase",
+      }}
       aria-sort={active ? (sortDir === "asc" ? "ascending" : "descending") : undefined}
     >
       <span
