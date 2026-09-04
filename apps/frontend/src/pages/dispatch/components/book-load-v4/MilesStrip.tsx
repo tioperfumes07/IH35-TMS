@@ -83,8 +83,24 @@ export function MilesStrip({
   // fillConfidence drives chrome; provenance is the operator sentence.
   const cell = "flex flex-1 flex-col items-center justify-center border-r border-slate-200 px-2 py-2 text-center last:border-r-0";
   const editable = Boolean(onPracticalChange && onShortestChange);
+  const laneState = newLane ? "new" : historyOffer ? "thin" : fillConfidence && fillConfidence !== "operator" ? "high" : null;
   return (
     <div className="rounded-sm border border-slate-200 bg-white" data-testid="book-load-miles-strip">
+      {laneState === "high" ? (
+        <p className="border-b border-slate-200 px-2 py-1 text-xs text-slate-800" data-testid="book-load-miles-state-high">
+          High — filled from history. Source shown under the boxes. You can still type over it.
+        </p>
+      ) : null}
+      {laneState === "thin" ? (
+        <p className="border-b border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-800" data-testid="book-load-miles-state-thin">
+          Thin — boxes stay empty. History (runs / median / spread) is below. Use only if you accept it.
+        </p>
+      ) : null}
+      {laneState === "new" ? (
+        <p className="border-b border-slate-200 px-2 py-1 text-xs text-slate-800" data-testid="book-load-miles-state-new">
+          New — no history. Type practical miles. Nothing is filled.
+        </p>
+      ) : null}
       <div className="flex text-xs font-semibold tracking-wide text-slate-700">
         <div className={cell}>
           <label className="text-slate-600" htmlFor="book-miles-practical">
