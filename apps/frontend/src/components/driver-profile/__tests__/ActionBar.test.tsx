@@ -120,4 +120,19 @@ describe("ActionBar", () => {
     expect(screen.queryByTestId("dp-action-suspend")).toBeNull();
     expect(screen.queryByTestId("dp-action-terminate")).toBeNull();
   });
+
+  // DRV-11: "action row ... is out of proportion" -- the View on Map / Export PDF anchors must
+  // render the SAME height/padding/radius as the row's Button-based actions, not a second,
+  // independently-hardcoded className that can drift from Button's own size="sm" tokens.
+  it("renders View on Map / Export PDF at the same height and radius as the row's buttons", () => {
+    renderBar();
+    const mapLink = screen.getByTestId("dp-action-view-map");
+    const pdfLink = screen.getByTestId("dp-export-pdf");
+    for (const link of [mapLink, pdfLink]) {
+      expect(link.className).toContain("h-8");
+      expect(link.className).not.toContain("px-3");
+      expect(link.className).toContain("px-2");
+      expect(link.style.borderRadius).toBe("4px");
+    }
+  });
 });

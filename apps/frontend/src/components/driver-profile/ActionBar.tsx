@@ -5,9 +5,15 @@ import { SuspendConfirmModal } from "../drivers/SuspendConfirmModal";
 import { TerminateConfirmModal } from "../drivers/TerminateConfirmModal";
 import { Button } from "../Button";
 import { resolveApiUrl } from "../../api/client";
+import { spacing, BUTTON_ICON_SM_SIZE_CLASS } from "../../design/tokens";
 
-const linkClass =
-  "inline-flex h-8 items-center justify-center rounded-sm border border-gray-300 bg-white px-3 text-xs font-medium text-gray-800";
+// DRV-11: "action row ... is out of proportion" -- this className previously hardcoded its own
+// h-8/px-3/rounded-sm/text-gray-800, drifting from Button's size="sm" variant="secondary" (which
+// renders h-8/px-2/text-[#0F1219] with an inline radiusButton). Two anchors and five buttons in
+// the SAME row rendering with different padding/radius/text-color is exactly the "not all one
+// size" defect GLB-10 exists to catch -- reuse Button's own tokens instead of a second literal.
+const linkClass = `inline-flex ${BUTTON_ICON_SM_SIZE_CLASS} items-center justify-center border border-gray-300 bg-white px-2 text-[#0F1219] hover:bg-gray-50`;
+const linkStyle = { borderRadius: spacing.radiusButton };
 
 export function ActionBar({
   driverId,
@@ -56,10 +62,10 @@ export function ActionBar({
         <Button size="sm" variant="secondary" onClick={() => setMessageOpen(true)} data-testid="dp-action-send-message">
           Send Message
         </Button>
-        <a className={linkClass} href={`/dispatch/map?driver=${encodeURIComponent(driverId)}`} data-testid="dp-action-view-map">
+        <a className={linkClass} style={linkStyle} href={`/dispatch/map?driver=${encodeURIComponent(driverId)}`} data-testid="dp-action-view-map">
           View on Map
         </a>
-        <a className={linkClass} href={pdfUrl} download data-testid="dp-export-pdf">
+        <a className={linkClass} style={linkStyle} href={pdfUrl} download data-testid="dp-export-pdf">
           Export PDF
         </a>
         {!isTerminated ? (
