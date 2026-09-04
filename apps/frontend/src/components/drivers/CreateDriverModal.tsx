@@ -9,6 +9,8 @@ import { ApiError } from "../../api/client";
 import { licenseClassesCatalogClient } from "../../api/lists-drivers-catalogs";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { confirmUpload, listFileCategories, requestUploadUrlFromFile, uploadFileToR2 } from "../../api/docs";
+import { listRequiredDocumentTypes } from "../../api/requiredDocuments";
+import { createClearinghouseQuery, createSafetyMedicalCard } from "../../api/safety";
 import {
   checkReturningDriver,
   createDriver,
@@ -73,7 +75,28 @@ const DRIVER_CREATE_DOC_CATEGORY_CODES = {
   passport: "passport",
   cdl: "cdl",
   medical: "medical_card",
+  // DRV-03 — closes the w9 required_document_types code: missing-required.service.ts satisfies driver
+  // w9 with EITHER a safety.driver_w8ben record OR a docs.files upload tagged catalogs.file_categories
+  // code='tax_form'. This carrier's drivers are Mexican B1 (W-8BEN, not W-9) — the category is generic
+  // "Tax Form" either way (see resolver comment, missing-required.service.ts:15).
+  tax_form: "tax_form",
 } as const;
+
+/**
+ * DRV-03 — the DQF codes this wizard can resolve TODAY at create time with a REAL record the same
+ * resolver (missing-required.service.ts) checks — not a scalar field that looks satisfied but isn't.
+ * cdl: mdata.drivers.cdl_number/cdl_expires_at (already written by the create payload).
+ * med_cert: a real safety.medical_cards row (createSafetyMedicalCard, existing endpoint, reused).
+ * clearinghouse: a real safety.clearinghouse_query row (createClearinghouseQuery — the backend route
+ *   already existed with ZERO frontend callers anywhere in the app; this is the first one).
+ * w9: the tax_form docs.files upload (existing R2 upload mechanism, one more category).
+ * A code absent from this set (mvr, driver_application, and the newer mvr_hire/road_test/
+ * annual_review_note/spe_certificate/national_registry_verification codes) has no capture UI in this
+ * wizard at all — several have no capture UI anywhere in the app yet (confirmed zero frontend callers
+ * of their backend routes/none exist) — those render "Missing — complete on the driver's DQF profile
+ * after creation": honest, never a false-present.
+ */
+const DRIVER_CREATE_DQF_RESOLVABLE_CODES = new Set(["cdl", "med_cert", "clearinghouse", "w9"]);
 
 type PendingDriverDocKey = keyof typeof DRIVER_CREATE_DOC_CATEGORY_CODES;
 
@@ -263,6 +286,47 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     linked_user_event_type: "existing_user" | "new_user_created";
   } | null>(null);
   const [form, setForm] = useState<Record<string, string>>(() => ({ ...DRIVER_CREATE_FORM_INITIAL }));
+
+  // DRV-03 — DQF checklist, live-catalog-driven (never a second hardcoded copy of
+  // compliance.required_document_types). Sequence = the catalog's own sort_order.
+  const requiredDocTypesQuery = useQuery({
+    queryKey: ["required-document-types", "driver", companyId],
+    queryFn: () => listRequiredDocumentTypes(companyId ?? "", "driver"),
+    enabled: open && Boolean(companyId),
+  });
+  // GET /api/v1/compliance/required-document-types already filters `is_active = true` server-side and
+  // does not select the column -- no client-side is_active re-filter needed (or possible: the field
+  // does not exist on RequiredDocumentType).
+  const driverDqfChecklist = useMemo(
+    () => [...(requiredDocTypesQuery.data ?? [])].sort((a, b) => a.sort_order - b.sort_order),
+    [requiredDocTypesQuery.data]
+  );
+  const [medicalCardNumber, setMedicalCardNumber] = useState("");
+  const [medicalCardIssuedDate, setMedicalCardIssuedDate] = useState("");
+  const [clearinghouseStatus, setClearinghouseStatus] = useState<"" | "clear" | "record_found" | "pending" | "error">("");
+  const [clearinghouseQueriedAt, setClearinghouseQueriedAt] = useState("");
+  const [clearinghouseConsent, setClearinghouseConsent] = useState(false);
+  /** Item-by-item DQF status, mirroring what missing-required.service.ts would report once this
+      driver row + its child records exist — computed here from staged wizard state, never claiming
+      "present" for a code this wizard has no real record for. */
+  const dqfItemCaptured = useCallback(
+    (code: string): boolean => {
+      if (code === "cdl") return Boolean(form.cdl_number && form.cdl_expires_at);
+      if (code === "med_cert") return Boolean(medicalCardNumber && medicalCardIssuedDate && form.dot_medical_expires_at);
+      if (code === "clearinghouse") return Boolean(clearinghouseStatus);
+      if (code === "w9") return Boolean(pendingDocs.tax_form);
+      return false;
+    },
+    [form.cdl_number, form.cdl_expires_at, form.dot_medical_expires_at, medicalCardNumber, medicalCardIssuedDate, clearinghouseStatus, pendingDocs.tax_form]
+  );
+  /** Real, data-driven gate: an ACTIVE catalog item currently configured enforcement='hard_block' that
+      this driver would not satisfy. Every seeded code is 'warn' today (verified live, 2026-09-04) — this
+      is dormant until the owner promotes one via PATCH /required-document-types, at which point it takes
+      effect with zero further code changes. Never a hardcoded "these 4 are required" guess. */
+  const unsatisfiedHardBlockDqfItems = driverDqfChecklist.filter(
+    (item) => item.enforcement === "hard_block" && !dqfItemCaptured(item.code)
+  );
+
   // The canonical API requires first name, last name, and an E.164 phone. Keep those requirements
   // on the identity step instead of letting an incomplete draft reach step 4 and fail as a generic
   // backend "Invalid input" with the actual field errors hidden three steps behind the operator.
@@ -459,6 +523,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             ? "Returning-driver identity check failed. Retry it before saving this driver."
           : returningCheckLoading
             ? "Checking for a matching returning-driver record…"
+          : unsatisfiedHardBlockDqfItems.length > 0
+            ? `Required DQF item${unsatisfiedHardBlockDqfItems.length > 1 ? "s" : ""} not on file: ${unsatisfiedHardBlockDqfItems.map((item) => item.label).join(", ")}.`
             : undefined;
 
   const createMutation = useMutation({
@@ -468,6 +534,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       pendingDocs: Array<[PendingDriverDocKey, File]>;
       categoryIds: Record<string, string>;
       saveMode: "default" | "add_another";
+      medicalCard: { cardNumber: string; issuedDate: string; expiryDate: string } | null;
+      clearinghouse: { status: "clear" | "record_found" | "pending" | "error"; queriedAt: string; consent: boolean } | null;
     }) => createDriver(input.payload),
     onSuccess: async (created, input) => {
       const displayName = [input.payload.first_name, input.payload.last_name].filter(Boolean).join(" ").trim() || "Driver unavailable";
@@ -490,6 +558,39 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         } catch (err) {
           if (input.generation === companyGenerationRef.current) {
             pushToast(userFacingApiError(err, `Driver created; could not upload ${key} document`), "error");
+          }
+        }
+      }
+
+      // DRV-03 — DQF checklist real records: write the SAME structured rows
+      // missing-required.service.ts checks (safety.medical_cards / safety.clearinghouse_query), not
+      // just the mdata.drivers scalar fields that field alone does not satisfy compliance.
+      if (input.medicalCard) {
+        try {
+          await createSafetyMedicalCard(opco, {
+            driver_id: created.id,
+            card_number: input.medicalCard.cardNumber,
+            issued_date: input.medicalCard.issuedDate,
+            expiry_date: input.medicalCard.expiryDate,
+          });
+        } catch (err) {
+          if (input.generation === companyGenerationRef.current) {
+            pushToast(userFacingApiError(err, "Driver created; could not save the DOT medical card record"), "error");
+          }
+        }
+      }
+      if (input.clearinghouse) {
+        try {
+          await createClearinghouseQuery(opco, {
+            driver_id: created.id,
+            query_status: input.clearinghouse.status,
+            queried_at: input.clearinghouse.queriedAt || undefined,
+            consent_on_file: input.clearinghouse.consent,
+            query_type: "pre_employment_full",
+          });
+        } catch (err) {
+          if (input.generation === companyGenerationRef.current) {
+            pushToast(userFacingApiError(err, "Driver created; could not save the Clearinghouse query record"), "error");
           }
         }
       }
@@ -632,6 +733,13 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           pendingDocs: [...pendingDocEntries],
           categoryIds: Object.fromEntries(categoryIdByCode),
           saveMode: saveModeRef.current,
+          medicalCard:
+            medicalCardNumber && medicalCardIssuedDate && form.dot_medical_expires_at
+              ? { cardNumber: medicalCardNumber, issuedDate: medicalCardIssuedDate, expiryDate: form.dot_medical_expires_at }
+              : null,
+          clearinghouse: clearinghouseStatus
+            ? { status: clearinghouseStatus, queriedAt: clearinghouseQueriedAt, consent: clearinghouseConsent }
+            : null,
         });
       } catch (error) {
         if (generation !== companyGenerationRef.current) return;
@@ -1191,11 +1299,182 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
 
           {wizardStep === 4 ? (
           <div className="col-span-full space-y-3 rounded-md border border-slate-200 p-3" data-testid="driver-create-dq-step">
-            <div className="text-xs font-semibold text-slate-800">DQ documents & drug screen</div>
+            {/* DRV-03 — DQF CHECKLIST, live-catalog-driven (compliance.required_document_types,
+                entity_kind='driver'), rendered in the catalog's own sort_order. Never a second
+                hardcoded copy of this list — a code added/reordered/promoted to hard_block in the
+                catalog appears/blocks here automatically. */}
+            <div className="text-xs font-semibold text-slate-800">Driver Qualification File checklist</div>
             <p className="text-xs text-slate-600">
-              Stage the required hiring documents here. They upload to the saved driver record after Save.
-              Pre-employment drug screen must be acknowledged before create.
+              In hire order. Items this wizard can record now write the SAME record the driver's
+              compliance chip reads — not just a form field. A row this wizard cannot capture yet is
+              honestly shown as open, to complete on the driver's DQF profile right after Save.
             </p>
+            {requiredDocTypesQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load the DQF checklist"
+                status={requiredDocTypesQuery.error instanceof ApiError ? requiredDocTypesQuery.error.status : 0}
+                message={userFacingApiError(requiredDocTypesQuery.error, "Required document types are unavailable")}
+                onRetry={() => void requiredDocTypesQuery.refetch()}
+                className="rounded-sm border border-slate-200 bg-slate-50 py-4"
+              />
+            ) : null}
+            {requiredDocTypesQuery.isPending ? (
+              <p className="rounded-sm border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700" role="status">
+                Loading the DQF checklist…
+              </p>
+            ) : null}
+            <div className="space-y-2">
+              {driverDqfChecklist.map((item) => {
+                const captured = dqfItemCaptured(item.code);
+                // §7 locked palette: bg-slate-100 / text-slate-600|700 / border-slate-200 only —
+                // status is carried by the LABEL TEXT, not a color, on this non-financial surface.
+                const statusPill = captured
+                  ? { text: "Will be on file", cls: "bg-slate-100 text-slate-700 border-slate-200" }
+                  : item.enforcement === "hard_block"
+                    ? { text: "Required — missing", cls: "bg-slate-100 text-slate-700 border-slate-200 font-bold" }
+                    : { text: "Open — complete after Save", cls: "bg-slate-100 text-slate-600 border-slate-200" };
+                return (
+                  <div key={item.id} className="rounded-sm border border-gray-200 p-2" data-testid={`driver-create-dqf-item-${item.code}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <span className="text-xs font-semibold text-gray-800">{item.label}</span>
+                        {item.authority ? <span className="ml-1 text-xs text-gray-500">({item.authority})</span> : null}
+                      </div>
+                      <span className={`rounded-sm border px-1.5 py-0.5 text-xs font-semibold ${statusPill.cls}`}>
+                        {statusPill.text}
+                      </span>
+                    </div>
+                    {item.code === "cdl" ? (
+                      <p className="mt-1 text-xs text-gray-600">Uses the CDL # / expiry entered on the Licenses step.</p>
+                    ) : null}
+                    {item.code === "med_cert" ? (
+                      <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+                        <div className="flex flex-col gap-1">
+                          <label htmlFor="dqf-medical-card-number" className="text-xs font-semibold text-gray-600">Card #</label>
+                          <input
+                            id="dqf-medical-card-number"
+                            data-testid="driver-create-medical-card-number"
+                            type="text"
+                            value={medicalCardNumber}
+                            onChange={(event) => setMedicalCardNumber(event.target.value)}
+                            className="rounded-sm border h-8 px-2 text-xs"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label htmlFor="dqf-medical-card-issued" className="text-xs font-semibold text-gray-600">Issued</label>
+                          <DatePicker
+                            id="dqf-medical-card-issued"
+                            data-testid="driver-create-medical-card-issued"
+                            value={medicalCardIssuedDate}
+                            onChange={(value) => setMedicalCardIssuedDate(value)}
+                            className="rounded-sm border h-8 px-2 text-xs"
+                          />
+                        </div>
+                        <p className="col-span-full text-xs text-gray-600">
+                          Expiry = the "DOT Medical Expires" date entered on Step 1.
+                        </p>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs font-semibold text-gray-600">DOT medical card scan</label>
+                          <input
+                            type="file"
+                            data-testid="driver-create-doc-medical"
+                            onChange={(event) => {
+                              const file = event.target.files?.[0];
+                              setPendingDocs((current) => {
+                                const next = { ...current };
+                                if (file) next.medical = file;
+                                else delete next.medical;
+                                return next;
+                              });
+                            }}
+                            className="rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-xs"
+                          />
+                          {pendingDocs.medical ? <span className="text-xs text-slate-600">{pendingDocs.medical.name}</span> : null}
+                        </div>
+                      </div>
+                    ) : null}
+                    {item.code === "clearinghouse" ? (
+                      <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+                        <div className="flex flex-col gap-1">
+                          <label htmlFor="dqf-clearinghouse-status" className="text-xs font-semibold text-gray-600">
+                            Pre-employment full query result
+                          </label>
+                          <Combobox
+                            id="dqf-clearinghouse-status"
+                            dataTestId="driver-create-clearinghouse-status"
+                            options={[
+                              { value: "clear", label: "Clear" },
+                              { value: "record_found", label: "Record found" },
+                              { value: "pending", label: "Pending" },
+                              { value: "error", label: "Error" },
+                            ]}
+                            value={clearinghouseStatus || null}
+                            onChange={(value) => setClearinghouseStatus((value as typeof clearinghouseStatus) ?? "")}
+                            placeholder="Not queried yet"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label htmlFor="dqf-clearinghouse-queried" className="text-xs font-semibold text-gray-600">Queried on</label>
+                          <DatePicker
+                            id="dqf-clearinghouse-queried"
+                            data-testid="driver-create-clearinghouse-queried-at"
+                            value={clearinghouseQueriedAt}
+                            onChange={(value) => setClearinghouseQueriedAt(value)}
+                            className="rounded-sm border h-8 px-2 text-xs"
+                          />
+                        </div>
+                        <label className="col-span-full flex items-center gap-2 text-xs text-gray-700">
+                          <input
+                            type="checkbox"
+                            data-testid="driver-create-clearinghouse-consent"
+                            checked={clearinghouseConsent}
+                            onChange={(event) => setClearinghouseConsent(event.target.checked)}
+                          />
+                          Driver consent on file (§382.701)
+                        </label>
+                      </div>
+                    ) : null}
+                    {item.code === "w9" ? (
+                      <div className="mt-2 flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-gray-600">Tax form (W-8BEN for foreign drivers)</label>
+                        <input
+                          type="file"
+                          data-testid="driver-create-doc-tax_form"
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            setPendingDocs((current) => {
+                              const next = { ...current };
+                              if (file) next.tax_form = file;
+                              else delete next.tax_form;
+                              return next;
+                            });
+                          }}
+                          className="rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-xs"
+                        />
+                        {pendingDocs.tax_form ? <span className="text-xs text-slate-600">{pendingDocs.tax_form.name}</span> : null}
+                      </div>
+                    ) : null}
+                    {!DRIVER_CREATE_DQF_RESOLVABLE_CODES.has(item.code) ? (
+                      <p className="mt-1 text-xs text-gray-600">
+                        No capture step exists in this wizard yet — record it on the driver's DQF profile right after Save.
+                      </p>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+            <label className="flex items-start gap-2 text-xs text-slate-800">
+              {/* C9-SUBMISSION-GATE: this transient acknowledgement gates Save and its value drives
+                  the rendered saveDisabledReason; it is not represented as a stored driver fact. */}
+              <input
+                type="checkbox"
+                data-testid="driver-create-drug-screen-ack"
+                checked={drugScreenAcknowledged}
+                onChange={(event) => setDrugScreenAcknowledged(event.target.checked)}
+                className="mt-0.5"
+              />
+              <span>Pre-employment drug screen ordered / result on file (or scheduled before first dispatch).</span>
+            </label>
             {hasPendingDocs && fileCategoriesQuery.isError ? (
               <ListErrorState
                 title="Couldn't load document categories"
@@ -1219,25 +1498,13 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 className="rounded-sm border border-slate-200 bg-slate-50 py-4"
               />
             ) : null}
-            <label className="flex items-start gap-2 text-xs text-slate-800">
-              {/* C9-SUBMISSION-GATE: this transient acknowledgement gates Save and its value drives
-                  the rendered saveDisabledReason; it is not represented as a stored driver fact. */}
-              <input
-                type="checkbox"
-                data-testid="driver-create-drug-screen-ack"
-                checked={drugScreenAcknowledged}
-                onChange={(event) => setDrugScreenAcknowledged(event.target.checked)}
-                className="mt-0.5"
-              />
-              <span>Pre-employment drug screen ordered / result on file (or scheduled before first dispatch).</span>
-            </label>
+            <div className="text-xs font-semibold text-slate-800 pt-1">Other documents (not part of the DQF catalog)</div>
             {(
               [
                 ["identity", "INE / voter ID"],
                 ["mexican_federal_license", "Licencia Federal (MX)"],
                 ["passport", "Passport"],
                 ["cdl", "US CDL scan"],
-                ["medical", "DOT medical card"],
               ] as const
             ).map(([key, label]) => (
               <div key={key} className="flex flex-col gap-1">
@@ -1380,7 +1647,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                       !selectedPriorDriverId) ||
                     pendingDocCategoriesUnavailable ||
                     Boolean(returningCheckError) ||
-                    returningCheckLoading
+                    returningCheckLoading ||
+                    unsatisfiedHardBlockDqfItems.length > 0
                   }
                   title={saveDisabledReason}
                   loading={createMutation.isPending}
