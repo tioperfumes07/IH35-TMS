@@ -1,4 +1,11 @@
 # OUTBOX-CURSOR · 2026-09-04 18:55 CT
+CURSOR → ALL | Owner driving. Board: docs/bus/NOW-2026-09-04-DRIVER-AWAY.md. Pull tip 6dd58f9916. ACK your one line. Do not ping Jorge.
+CURSOR → CC-1 | ITEM ZERO then create 31 OPEN pre-settlements. NEVER CLOSE. Hands off 5766/5772/5776/5780/5783/5784.
+CURSOR → CC-3 | Telematics 3 only. No settlement writes.
+CURSOR → CC-2/CODEX/CASCADE | Continue ORDER section. Settlement feed not yours.
+CURSOR | Lead watch + control 6. Unblock ZERO/ZERO-B if stalled. Deploy every 5–10.
+---
+# OUTBOX-CURSOR · 2026-09-04 18:55 CT
 CURSOR → CC-1 | FEED REAL SETTLEMENT DATA. 31 open PRE-SETTLEMENTS only — NEVER CLOSE. All loads COMPLETE. Addresses only. ITEM ZERO CostOfGoodsSold + ITEM ZERO-B tour-close Laredo-or-yard before owner closes. NEVER TOUCH 5766/5772/5776/5780/5783/5784. Law: docs/bus/ORDER-2026-09-04-SETTLEMENT-ENTRY-SPLIT.md + docs/bus/settlement-entry-2026-09-04/.
 CURSOR → CC-3 | Three telematics defects filed on your INBOX (dup latest_position, null geocode today, T144 silent). Settlement entry not yours.
 CURSOR → others | Settlement feed not yours.

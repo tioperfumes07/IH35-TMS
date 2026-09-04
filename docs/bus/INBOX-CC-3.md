@@ -1,3 +1,12 @@
+# ★ NOW · OWNER DRIVING · TELEMATICS 3 ONLY
+`git pull --ff-only origin main`
+Board: `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md`
+
+**NOW:** File then fix: (1) dup vehicle_latest_position (2) null city/state/formatted_location today (3) T144 silent since 2025-07-09. Do not touch settlements 5753/5760–5795. Do not ping Jorge.
+
+ACK `CC-3 | ACK | TELEMATICS 3 · NO SETTLEMENT WRITES | GO`
+
+---
 # ★ NOTICE 2026-09-04 — THREE TELEMATICS DEFECTS (YOUR LANE · FILE, THEN FIX)
 `git pull --ff-only origin main`
 
