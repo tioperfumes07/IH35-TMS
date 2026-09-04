@@ -8,6 +8,21 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202613730001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-04",
+      "purpose": "REVERSAL of 202613690001 (owner order 2026-09-04, verbatim: 'REVERSE THE DEACTIVATION. ORCH ERROR, NOT YOURS.'). driver-subaccount-provision.service.ts auto-creates a per-driver ASSET sub-account under Driver Cash Advance on every driver creation; the parent carries live advance_recovery + driver_payroll_clearing roles in accounting.chart_of_accounts_roles -- these are operating chart accounts, needed because a cash advance with NO load automatically creates a LOAN TO DRIVER (owner's own GO-23 pre-settlement ruling, same session), landing in this exact sub-account as a receivable. Reactivates (is_active=true) the same 12 USMCA driver_finance.driver_advance_accounts rows 202613690001 deactivated. UPDATE only, idempotent (WHERE is_active=false), never a delete -- register keeps both state changes."
+    },
+    "202613720001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-04",
+      "purpose": "LOAD-COSTS-COMPLETE items (1)/(2) TIMING correction (owner order 2026-09-04, QBO/NetSuite customer-deposit pattern researched first): creates catalogs.accounts 2250 'Customer Deposits (Broker Advances)' (Liability, USMCA-only -- no such account exists live today, verified). Adds bank_account_id/receipt_journal_entry_id/reclass_journal_entry_id to accounting.broker_advances so item (1)'s receipt posts a real balanced JE (DR bank / CR 1100 AR if an invoice already exists, else CR 2250) and buildInvoiceFromLoad's existing unapplied-advance claim loop can post the DR 2250 / CR 1100 reclass JE when it later claims a pre-invoice advance -- one claim path, not a second one."
+    },
+    "202613710001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-04",
+      "purpose": "MILEAGE-INVARIANT-SYSTEMWIDE (owner order 2026-09-04): shortest<=practical CHECK exists on catalogs.lane_mileage (lane_mileage_short_miles_not_over_practical) and catalogs.point_mileage (point_mileage_shortest_not_over_practical) but NOT on mdata.loads -- the table that pays the driver (root cause of the driver-bill-13508 overpay, ACCT-F25011). Live sweep confirms exactly 3 tables in the schema carry both a shortest-type and a practical-type mileage column; 0 existing violations on mdata.loads (miles_shortest > miles_practical, both non-null) before this CHECK lands. Adds loads_miles_shortest_not_over_practical, byte-identical in form to the two existing constraints. CREATE-only, never DROP, idempotent (IF NOT EXISTS guard)."
+    },
     "202613700001": {
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-04",

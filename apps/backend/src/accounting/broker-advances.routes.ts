@@ -28,6 +28,10 @@ const createBrokerAdvanceBodySchema = z.object({
   amount_cents: z.number().int().positive(),
   received_at: z.string().min(1),
   notes: z.string().trim().optional().nullable(),
+  // Required for diesel/repair/other (cash always lands in our bank); optional for driver_pay
+  // ONLY, when the broker paid the driver directly and our bank never held it -- see the service's
+  // own type comment. The service enforces the category rule, not this schema.
+  bank_account_id: z.string().uuid().optional().nullable(),
 });
 
 export async function registerBrokerAdvancesRoutes(app: FastifyInstance) {
@@ -50,15 +54,18 @@ export async function registerBrokerAdvancesRoutes(app: FastifyInstance) {
           receivedAt: body.data.received_at,
           notes: body.data.notes ?? null,
           actorUserId: user.uuid,
+          bankAccountId: body.data.bank_account_id ?? null,
         })
       );
       return reply.code(201).send({
         broker_advance_id: result.brokerAdvanceId,
         applied_to_invoice_id: result.appliedToInvoiceId,
+        journal_entry_id: result.journalEntryId,
       });
     } catch (err) {
       if (err instanceof BrokerAdvanceError) {
-        return reply.code(err.code === "load_not_found" || err.code === "customer_not_found" ? 404 : 400).send({ error: err.code, message: err.message });
+        const notFound = err.code === "load_not_found" || err.code === "customer_not_found" || err.code === "bank_account_not_found";
+        return reply.code(notFound ? 404 : 400).send({ error: err.code, message: err.message });
       }
       throw err;
     }

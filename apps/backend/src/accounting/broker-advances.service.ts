@@ -18,11 +18,18 @@
 // -- a driver_bills row already exists from booking; this only reduces how much of it is still
 // owed, it never creates a new liability or a settlement deduction.
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
 import { createJournalEntryOnClient } from "./journal-entries.service.js";
 import { findConflictingInvoiceForLoad } from "./from-load.js";
 
 const DRIVER_SETTLEMENTS_PAYABLE_ACCOUNT_NUMBER = "2200";
 const ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER = "1100";
+// LOAD-COSTS-COMPLETE items (1)/(2) TIMING correction (owner order 2026-09-04, QBO/NetSuite
+// customer-deposit pattern researched first, migration 202613720001): a broker advance received
+// or disbursed BEFORE an invoice exists for its load has nothing real to credit/debit against
+// Accounts Receivable -- there is no receivable yet. It credits this liability instead and
+// reclassifies to 1100 the moment buildInvoiceFromLoad mints the invoice and claims the row.
+const CUSTOMER_DEPOSITS_ACCOUNT_NUMBER = "2250";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -53,11 +60,22 @@ export type RecordBrokerAdvanceInput = {
   receivedAt: string;
   notes?: string | null;
   actorUserId: string;
+  /**
+   * banking.bank_accounts row this instrument was deposited into. Required for diesel/repair/
+   * other -- cash always lands in OUR bank for those. OPTIONAL for driver_pay ONLY: the owner's
+   * two driver_pay fact patterns are different cash movements, not two labels for one movement --
+   * "the broker might send the driver money [directly]" (no bank of ours ever holds it; omit this)
+   * vs. broker cash that lands in our bank earmarked for the driver (provide it, same as any other
+   * category). Which one happened is a fact about THIS instrument, never inferred from category.
+   */
+  bankAccountId?: string | null;
 };
 
 export type RecordBrokerAdvanceResult = {
   brokerAdvanceId: string;
   appliedToInvoiceId: string | null;
+  /** NULL when no bank account was given (item 1's own receipt moved no cash) -- item (2)'s disbursement JE, if this row is later disbursed, is the only ledger entry such a row ever gets. */
+  journalEntryId: string | null;
 };
 
 /**
@@ -69,6 +87,13 @@ export type RecordBrokerAdvanceResult = {
  * unapplied (applied_to_invoice_id NULL, an honest "received before first pickup" state);
  * buildInvoiceFromLoad (from-load.ts) claims every unapplied row for a load the moment an invoice
  * is first minted for it, so this is never silently lost regardless of arrival order.
+ *
+ * Posts a real, balanced JE ONLY when cash actually reached one of our bank accounts (board row
+ * C6: real cash, no ledger, is the defect this closes) -- DR the receiving bank's GL account / CR
+ * 1100 Accounts Receivable if a live invoice already exists at receipt time, else CR 2250 Customer
+ * Deposits. When bankAccountId is omitted (driver_pay only -- the broker paid the driver directly,
+ * our bank never held it), this function posts NO JE; item (2)'s disbursement is that row's only
+ * ledger entry.
  */
 export async function recordBrokerAdvanceInClientTx(
   client: Queryable,
@@ -89,6 +114,35 @@ export async function recordBrokerAdvanceInClientTx(
   if (!Number.isFinite(input.amountCents) || input.amountCents <= 0) {
     throw new BrokerAdvanceError("amount_must_be_positive", "amountCents must be a positive integer");
   }
+  if (!input.bankAccountId && input.category !== "driver_pay") {
+    throw new BrokerAdvanceError(
+      "bank_account_required",
+      `bankAccountId is required for category '${input.category}' -- cash for diesel/repair/other always lands in one of our bank accounts`
+    );
+  }
+
+  // Real cash needs a real bank -- resolved and validated up front so the receipt row is never
+  // created only to fail on the JE a moment later. Omitted entirely for a driver_pay advance the
+  // broker paid straight to the driver (our bank never held it) -- see the type's own comment.
+  let bankLedgerAccountId: string | null = null;
+  if (input.bankAccountId) {
+    const bankRes = await client.query<{ id: string; ledger_account_id: string | null }>(
+      `SELECT id::text AS id, ledger_account_id::text AS ledger_account_id
+         FROM banking.bank_accounts
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid
+        LIMIT 1`,
+      [input.bankAccountId, input.operatingCompanyId]
+    );
+    const bankRow = bankRes.rows[0];
+    if (!bankRow) throw new BrokerAdvanceError("bank_account_not_found");
+    if (!(await assertBankAccountUsable(client as never, input.bankAccountId, input.operatingCompanyId))) {
+      throw new BrokerAdvanceError("bank_account_not_found", "this bank account is hidden for this entity and cannot receive a new deposit");
+    }
+    if (!bankRow.ledger_account_id) {
+      throw new BrokerAdvanceError("bank_account_missing_ledger_gl", "this bank account has no linked GL account");
+    }
+    bankLedgerAccountId = bankRow.ledger_account_id;
+  }
 
   const loadRes = await client.query<{ id: string }>(
     `SELECT id FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL LIMIT 1`,
@@ -106,8 +160,8 @@ export async function recordBrokerAdvanceInClientTx(
     `
       INSERT INTO accounting.broker_advances (
         operating_company_id, load_id, customer_id, category, instrument_type,
-        instrument_reference, amount_cents, received_at, notes, created_by_user_id
-      ) VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5, $6, $7, $8, $9, $10::uuid)
+        instrument_reference, amount_cents, received_at, notes, created_by_user_id, bank_account_id
+      ) VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5, $6, $7, $8, $9, $10::uuid, $11::uuid)
       RETURNING id
     `,
     [
@@ -121,6 +175,7 @@ export async function recordBrokerAdvanceInClientTx(
       input.receivedAt,
       input.notes?.trim() || null,
       input.actorUserId,
+      input.bankAccountId ?? null,
     ]
   );
   const brokerAdvanceId = insertRes.rows[0]!.id;
@@ -142,6 +197,51 @@ export async function recordBrokerAdvanceInClientTx(
     );
   }
 
+  // TIMING (owner order 2026-09-04): CR 1100 AR only when a live invoice already exists to apply
+  // against; otherwise CR 2250 Customer Deposits -- there is no receivable yet to credit. Skipped
+  // entirely when no cash reached our bank (bankLedgerAccountId null -- driver_pay paid straight
+  // to the driver; item (2)'s disbursement is that row's only JE).
+  let journalEntryId: string | null = null;
+  if (bankLedgerAccountId) {
+    const creditAccountNumber = appliedToInvoiceId ? ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER : CUSTOMER_DEPOSITS_ACCOUNT_NUMBER;
+    const creditAccountId = await resolveAccountId(client, input.operatingCompanyId, creditAccountNumber);
+    const je = await createJournalEntryOnClient(
+      client as never,
+      {
+        operating_company_id: input.operatingCompanyId,
+        entry_date: input.receivedAt,
+        memo: appliedToInvoiceId
+          ? `Broker advance ${input.instrumentReference.trim()} received, applied to invoice`
+          : `Broker advance ${input.instrumentReference.trim()} received, no invoice yet -- customer deposit`,
+        source: "manual",
+        postings: [
+          {
+            account_id: bankLedgerAccountId,
+            debit_or_credit: "debit",
+            amount_cents: input.amountCents,
+            entity_uuid: input.customerId,
+            entity_type: "customer",
+            description: "Broker advance received",
+          },
+          {
+            account_id: creditAccountId,
+            debit_or_credit: "credit",
+            amount_cents: input.amountCents,
+            entity_uuid: input.customerId,
+            entity_type: "customer",
+            description: appliedToInvoiceId ? "Receivable reduced by broker advance" : "Customer deposit -- no invoice yet",
+          },
+        ],
+      },
+      { userId: input.actorUserId, role: "system" }
+    );
+    journalEntryId = String(je.id);
+    await client.query(`UPDATE accounting.broker_advances SET receipt_journal_entry_id = $2::uuid, updated_at = now() WHERE id = $1`, [
+      brokerAdvanceId,
+      journalEntryId,
+    ]);
+  }
+
   await appendCrudAudit(
     client as never,
     input.actorUserId,
@@ -155,12 +255,14 @@ export async function recordBrokerAdvanceInClientTx(
       category: input.category,
       amount_cents: input.amountCents,
       applied_to_invoice_id: appliedToInvoiceId,
+      journal_entry_id: journalEntryId,
+      no_je_reason: journalEntryId ? null : "no bank account -- broker paid the driver directly, our bank never held this cash",
     },
     "info",
     "SET-24"
   );
 
-  return { brokerAdvanceId, appliedToInvoiceId };
+  return { brokerAdvanceId, appliedToInvoiceId, journalEntryId };
 }
 
 export type DisburseBrokerAdvanceToDriverBillInput = {
@@ -232,8 +334,9 @@ export async function applyBrokerAdvanceToDriverBillInClientTx(
     load_id: string;
     instrument_reference: string;
     received_at: string;
+    applied_to_invoice_id: string | null;
   }>(
-    `SELECT category, amount_cents::text, disbursed_amount_cents::text, voided_at::text, load_id::text, instrument_reference, received_at::date::text AS received_at
+    `SELECT category, amount_cents::text, disbursed_amount_cents::text, voided_at::text, load_id::text, instrument_reference, received_at::date::text AS received_at, applied_to_invoice_id::text
        FROM accounting.broker_advances
       WHERE id = $1::uuid AND operating_company_id = $2::uuid
       LIMIT 1`,
@@ -286,8 +389,12 @@ export async function applyBrokerAdvanceToDriverBillInClientTx(
     );
   }
 
+  // TIMING (owner order 2026-09-04, same rule as item (1)'s receipt): CR 1100 AR only when this
+  // advance is already applied to a live invoice; otherwise CR 2250 Customer Deposits -- there is
+  // no receivable yet for a pre-invoice advance to reduce.
   const payableAccountId = await resolveAccountId(client, input.operatingCompanyId, DRIVER_SETTLEMENTS_PAYABLE_ACCOUNT_NUMBER);
-  const receivableAccountId = await resolveAccountId(client, input.operatingCompanyId, ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER);
+  const creditAccountNumber = advance.applied_to_invoice_id ? ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER : CUSTOMER_DEPOSITS_ACCOUNT_NUMBER;
+  const creditAccountId = await resolveAccountId(client, input.operatingCompanyId, creditAccountNumber);
 
   const je = await createJournalEntryOnClient(
     client as never,
@@ -306,10 +413,12 @@ export async function applyBrokerAdvanceToDriverBillInClientTx(
           description: "Driver bill settled by broker's direct advance to the driver",
         },
         {
-          account_id: receivableAccountId,
+          account_id: creditAccountId,
           debit_or_credit: "credit",
           amount_cents: disbursedAmountCents,
-          description: "Receivable reduced -- broker prepaid this portion directly to the driver",
+          description: advance.applied_to_invoice_id
+            ? "Receivable reduced -- broker prepaid this portion directly to the driver"
+            : "Customer deposit reduced -- no invoice exists yet for this load",
         },
       ],
     },
@@ -338,6 +447,7 @@ export async function applyBrokerAdvanceToDriverBillInClientTx(
       driver_id: bill.driver_id,
       disbursed_amount_cents: disbursedAmountCents,
       journal_entry_id: je.id,
+      credit_account_number: creditAccountNumber,
     },
     "info",
     "LOAD-COSTS-COMPLETE-item-2"
