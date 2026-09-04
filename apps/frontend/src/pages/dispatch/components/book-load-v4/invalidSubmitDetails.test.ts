@@ -14,20 +14,21 @@ describe("describeBookLoadValidationErrors", () => {
     );
 
     expect(issues).toEqual([
-      { path: "stops.0.city", description: "Stop 1 (Pickup) — City: City is required" },
-      { path: "stops.1.scheduled_arrival_at", description: "Stop 2 (Delivery) — Date and time: Date and time are required" },
+      { path: "stops.0.city", ruleCode: "required", description: "Stop 1 (Pickup) — City: City is required [rule: required]" },
+      { path: "stops.1.scheduled_arrival_at", ruleCode: "required", description: "Stop 2 (Delivery) — Date and time: Date and time are required [rule: required]" },
     ]);
   });
 
   it("keeps non-stop failures specific and supplies an honest rule fallback", () => {
     expect(describeBookLoadValidationErrors({ customer_id: { type: "required" } })).toEqual([
-      { path: "customer_id", description: "Customer: This field is required" },
+      { path: "customer_id", ruleCode: "required", description: "Customer: This field is required [rule: required]" },
     ]);
   });
 
   it("fails closed instead of turning a parent stop group into a false explanation", () => {
     const issues = describeBookLoadValidationErrors({ stops: [{ city: { type: "required" } }] });
     expect(issues[0]?.description).toContain("Stop 1 (Pickup) — City");
+    expect(issues[0]?.ruleCode).toBe("required");
     expect(issues[0]?.description).not.toBe("Stops");
   });
 });
