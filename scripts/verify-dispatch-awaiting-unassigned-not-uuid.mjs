@@ -1,26 +1,55 @@
 import { readFileSync } from "node:fs";
 
-const SRC = "apps/frontend/src/pages/dispatch/DispatchBoard.tsx";
-const source = readFileSync(SRC, "utf8");
+const BOARD = "apps/frontend/src/pages/dispatch/DispatchBoard.tsx";
+const ROUTES = "apps/backend/src/dispatch/loads.routes.ts";
 
-const fail = [];
+function problems(board, routes) {
+  const failures = [];
+  const unitRow = board.match(/function unitToBoardRow\(unit: UnitsWithoutLoad\)[\s\S]*?\n\}/)?.[0] ?? "";
+  const boardColumns = board.match(/const boardColumns:[\s\S]*?\n\s*\];/)?.[0] ?? "";
+  const visibleKeys = board.match(/const DEFAULT_VISIBLE_BOARD_KEYS = new Set\(\[[\s\S]*?\]\);/)?.[0] ?? "";
+  const loadCell = board.match(/function renderLoadNumberCell\([\s\S]*?\n\}/)?.[0] ?? "";
+  const awaitingQuery = routes.match(/app\.get\("\/api\/v1\/dispatch\/units-without-load"[\s\S]*?\n\s*\}\);/)?.[0] ?? "";
 
-if (!source.includes('load.id.startsWith("unit:")')) {
-  fail.push(`${SRC}: renderLoadNumberCell must reject synthetic "unit:" keys before calling entityLabel`);
+  if (!/u\.unit_number/.test(awaitingQuery) || !/unit_number:\s*row\.unit_number/.test(awaitingQuery)) failures.push("API must return unit_number");
+  if (!/assigned_unit_number:\s*unit\.unit_number/.test(unitRow)) failures.push("row must map unit_number");
+  if (!/\{\s*key:\s*"unit",\s*header:\s*"Unit",\s*cell:\s*\(load\)\s*=>\s*renderUnitCell\(load\)\s*\}/.test(boardColumns)) failures.push("board must render Unit cell");
+  if (!/"unit"/.test(visibleKeys)) failures.push("Unit must be visible by default");
+  if (!/load\.id\.startsWith\("unit:"\)/.test(loadCell) || !/>Unassigned<\/span>/.test(loadCell)) failures.push("Load # must render Unassigned");
+  return failures;
 }
 
-if (!source.includes("<span className={className}>Unassigned</span>")) {
-  fail.push(`${SRC}: awaiting-assignment rows must render "Unassigned", not an EntityLink`);
+function assertClean(board, routes, label = "source") {
+  const failures = problems(board, routes);
+  if (failures.length) throw new Error(`${label}: ${failures.join("; ")}`);
 }
 
-// Ensure the synthetic-key handling is inside renderLoadNumberCell, not somewhere else.
-const fnMatch = source.match(/function renderLoadNumberCell\([\s\S]*?\n\}/);
-if (!fnMatch || !fnMatch[0].includes('load.id.startsWith("unit:")')) {
-  fail.push(`${SRC}: synthetic-key guard must live inside renderLoadNumberCell`);
+function selftest(board, routes) {
+  const plants = [
+    ["API return", board, routes.replace("unit_number: row.unit_number", "unit_number: null")],
+    ["row mapping", board.replace("assigned_unit_number: unit.unit_number", "assigned_unit_number: null"), routes],
+    ["Unit cell", board.replace('{ key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },', '{ key: "unit", header: "Unit", cell: () => null },'), routes],
+    ["default visibility", board.replace('    "unit",\n', ""), routes],
+    ["synthetic load guard", board.replace('load.id.startsWith("unit:")', 'load.id.startsWith("never:")'), routes],
+  ];
+  let caught = 0;
+  for (const [label, plantedBoard, plantedRoutes] of plants) {
+    if (problems(plantedBoard, plantedRoutes).length > 0) caught += 1;
+    else throw new Error(`selftest did not catch planted ${label} defect`);
+  }
+  assertClean(board, routes);
+  console.log(`PASS verify-dispatch-awaiting-unit-number SELFTEST — ${caught}/${plants.length} planted defects caught`);
 }
 
-if (fail.length > 0) {
-  for (const msg of fail) console.error(`FAIL: ${msg}`);
+const board = readFileSync(BOARD, "utf8");
+const routes = readFileSync(ROUTES, "utf8");
+try {
+  if (process.argv.includes("--selftest")) selftest(board, routes);
+  else {
+    assertClean(board, routes);
+    console.log("PASS: awaiting-assignment rows show the canonical vehicle number and never a synthetic UUID");
+  }
+} catch (error) {
+  console.error(`FAIL verify-dispatch-awaiting-unit-number: ${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
 }
-console.log("PASS: awaiting-assignment Load # renders Unassigned, never a synthetic unit: UUID");
