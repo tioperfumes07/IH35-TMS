@@ -4,7 +4,7 @@ import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
-import { DuplicateDocumentNumberError, nextInvoiceDisplayId, resolveInvoiceDisplayId } from "./display-id.js";
+import { DuplicateDocumentNumberError, InvalidDisplayIdShapeError, nextInvoiceDisplayId, resolveInvoiceDisplayId } from "./display-id.js";
 import { duplicateDocumentNumberBody, parseOperatorDocumentNumber, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 import { buildInvoiceFromLoad, findConflictingInvoiceForLoad } from "./from-load.js";
 import { sendDraftInvoice } from "./invoice-send.service.js";
@@ -700,6 +700,17 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       if ((error as { code?: string }).code === "load_not_found") return reply.code(404).send({ error: "load_not_found" });
       if (error instanceof DuplicateDocumentNumberError) {
         return reply.code(409).send(duplicateDocumentNumberBody(error));
+      }
+      // SET-25 -- the DB constraint must be the SECOND line of defense, never the first: this
+      // catches the typed error resolveInvoiceDisplayId now throws BEFORE the INSERT would have
+      // hit a raw, unhandled Postgres constraint-violation error.
+      if (error instanceof InvalidDisplayIdShapeError) {
+        return reply.code(400).send({
+          error: "invalid_display_id_shape",
+          document_type: error.docType,
+          value: error.value,
+          message: `"${error.value}" is not a valid ${error.docType} number shape.`,
+        });
       }
       // ACCT-F289 — ACCT-F267 made buildInvoiceFromLoad throw `load_has_no_rate` rather than mint a
       // permanently $0 invoice, but no caller translated it, so the user's own "create invoice from
