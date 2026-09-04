@@ -1,3 +1,29 @@
+# ★★ OWNER ORDER 2026-09-04 — FEED REAL SETTLEMENT DATA (YOUR 31 · OPEN PRE-SETTLE)
+`git pull --ff-only origin main`
+
+**Full law (supersedes all earlier settlement-entry lines):** `docs/bus/ORDER-2026-09-04-SETTLEMENT-ENTRY-SPLIT.md`  
+**Packets:** `docs/bus/settlement-entry-2026-09-04/` (feed md + split md + TIE-OUT + ENGINE-vs-PCMILER)
+
+**YOU CREATE 31 / 66 through the real UI.** Entity **USMCA**. `is_sample_data=false`.  
+**CREATE:** `5753, 5760–5765, 5767–5771, 5773–5775, 5777–5779, 5781–5782, 5785–5795`  
+**DO NOT TOUCH:** `5766, 5772, 5776, 5780, 5783, 5784`
+
+**Owner rulings that bind:**
+1. **NEVER CLOSE.** Create open **pre-settlements** only. Owner closes one by one. Report must show **31 OPEN · 0 closed · 0 close JEs**.
+2. **All 81 loads COMPLETE** (settlements-only download — no live loads in this set).
+3. **Addresses only** for miles — engine routes; paste into ENGINE workbook yellow columns.
+4. **5789** / load **13557** / LOVES invoice **99462408** (146.879 gal @ $5.719 = $840.00) at 10465LONESOME PINE TRAIL M,TN, TN: printed `2026-09-29` → load as **`2026-08-29`** + visible memo.
+
+**ITEM ZERO (blocks diesel):** fix `LoadDetailCostsTab` `CostOfGoodsSold` type match + bind fuel account by ROLE before any expense row.  
+**ITEM ZERO-B (before owner closes):** widen tour-close to **Laredo delivery OR yard geofence**; preserve type-A paid deadhead vs type-B none; guard `verify-tour-closes-on-laredo-delivery-or-yard`.
+
+Creation order: masters → loads/stops → customer invoices → expenses/bills (diesel+DEF paired) → driver bills → add-pay/reimburse/deduct → **pre-settlement STOP**. Payments only if document shows one.
+
+File telematics defects for CC-3 (do not fix): duplicate `vehicle_latest_position`, null city/state today, T144 silent since 2025-07-09.
+
+ACK `CC-1 | ACK | FEED-REAL-DATA 31 OPEN PRE-SETTLE · NEVER CLOSE · NEVER TOUCH 6 | GO`
+
+---
 # ORCHESTRATOR FAST-MERGE WAKE · 2026-09-04 18:32 CT
 `git pull --ff-only origin main`
 

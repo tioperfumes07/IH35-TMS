@@ -1,3 +1,11 @@
+# ★ NOTICE 2026-09-04 — SETTLEMENT FEED IS CC-1 + CURSOR ONLY
+`git pull --ff-only origin main`
+
+Do **not** create/edit/void settlements `5753` / `5760`–`5795`. Continue your ORDER-2026-09-04 section under FAST-MERGE. Law: `docs/bus/ORDER-2026-09-04-SETTLEMENT-ENTRY-SPLIT.md`.
+
+ACK `SEAT | ACK | SETTLEMENT-ENTRY NOT MINE · CONTINUE ORDER | GO`
+
+---
 # ORCHESTRATOR FAST-MERGE WAKE · 2026-09-04 18:32 CT
 `git pull --ff-only origin main`
 

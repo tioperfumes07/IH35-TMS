@@ -1,5 +1,3 @@
-# STATUS-NOW · 2026-09-04 18:32 CT
-Tip `526e392d74` (#20401 Dispatch PART 1). FAST-MERGE 4min ON. ORDER-2026-09-04 binds all seats.
-DEPLOY: FE `dep-dadl9ppt0dsc73f1qqtg` + API `dep-dadl9q0n74is73ahs060` kicked to tip (4 undeployed → batch). Prove version.json / healthz when live.
-ACTIVE: CC-1 Load Costs blockers · CC-2 tokens/Chrome · CC-3 DRV-03 · Codex In-Shop · Cascade planners · Cursor Dispatch continue.
-Never POST Book Load.
+# STATUS-NOW · 2026-09-04 18:55 CT
+OWNER SETTLEMENT FEED: CC-1 creates 31/66 as OPEN pre-settlements (never closes). Control 6 = Cursor/owner. All loads COMPLETE. Engine miles only. ITEM ZERO CostOfGoodsSold + ITEM ZERO-B tour-close Laredo-or-yard required. CC-3 owns 3 telematics defects. FAST-MERGE ON. USMCA only. Never POST Book Load as a probe.
+ACTIVE: CC-1 feed-real-data · Cursor control/watch · CC-3 telematics file · CC-2/Codex/Cascade continue ORDER.
