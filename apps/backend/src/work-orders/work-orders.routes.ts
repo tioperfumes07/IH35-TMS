@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { processMaintenanceWorkOrderClose } from "../accounting/maintenance-posting/poster.service.js";
+import { assertWorkOrderCostFinancialLink } from "../maintenance/work-order-financial-link.js";
 import { companyQuerySchema, resolvePrintOperatingCompanyId, validationError, withCompanyScope } from "../accounting/shared.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { autoCreateBillFromWO } from "../maintenance/two-section-service.js";
@@ -1060,6 +1061,9 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       const prior = currentRes.rows[0];
       if (!prior) return { kind: "missing" as const };
 
+      const financialLink = await assertWorkOrderCostFinancialLink(client, query.data.operating_company_id, params.data.id);
+      if (!financialLink.ok) return { kind: "financial_link_required" as const, ...financialLink };
+
       const res = await client.query(
         `
           UPDATE maintenance.work_orders
@@ -1114,6 +1118,12 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     if (row.kind === "unavailable") return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if (row.kind === "missing") return reply.code(404).send({ error: "work_order_not_found" });
     if (row.kind === "blocked") return reply.code(409).send({ error: "work_order_not_completable" });
+    if (row.kind === "financial_link_required") return reply.code(422).send({
+      error: "WORK_ORDER_COST_FINANCIAL_LINK_REQUIRED",
+      reason: row.reason,
+      cost_cents: row.cost_cents,
+      message: "Add a linked bill or expense with the same unit and vendor before closing this cost-bearing work order.",
+    });
     await processMaintenanceWorkOrderClose({
       operating_company_id: query.data.operating_company_id,
       work_order_id: params.data.id,
