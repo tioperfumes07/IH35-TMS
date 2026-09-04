@@ -8,7 +8,7 @@ export function DisputesPage() {
 
   return (
     <div className="space-y-2">
-      <h2 className="text-base font-semibold">{t("driver.disputes_title")}</h2>
+      <h2 className="text-xs font-semibold">{t("driver.disputes_title")}</h2>
       <p className="text-xs text-slate-700">{t("driver.disputes_blurb")}</p>
       {selectedCompany ? (
         <p className="text-[11px] text-slate-500">

@@ -36,7 +36,7 @@ const ROWS: CustomerProfitabilityRow[] = [];
 export function ByCustomerView({ filters }: ByCustomerViewProps) {
   return (
     <div className="rounded-sm border border-gray-200 bg-white p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">By Customer</h3>
+      <h3 className="text-page-title font-semibold text-gray-900 mb-4">By Customer</h3>
       <p className="text-xs text-gray-500">
         Customer profitability view for {filters.dateFrom} to {filters.dateTo}.
       </p>

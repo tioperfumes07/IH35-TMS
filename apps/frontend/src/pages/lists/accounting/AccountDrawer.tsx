@@ -355,7 +355,7 @@ export function AccountDrawer({
         {!embedded ? (
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-gray-900">
+            <h2 className="text-xs font-semibold text-gray-900">
               {mode === "create" ? "New Account" : "Edit Account"}
             </h2>
             {isLocked ? (
@@ -399,7 +399,7 @@ export function AccountDrawer({
                 disabled={readOnly}
                 onChange={(e) => setField("account_name", e.target.value)}
                 placeholder="e.g. Fuel & Tolls"
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-xs focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               />
               <FieldError msg={errors.account_name} />
             </FieldLabel>
@@ -413,7 +413,7 @@ export function AccountDrawer({
                 disabled={readOnly}
                 onChange={(e) => setField("account_number", e.target.value)}
                 placeholder="e.g. 6000"
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-xs focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               />
               <FieldError msg={errors.account_number} />
             </FieldLabel>
@@ -431,7 +431,7 @@ export function AccountDrawer({
                   // A parent must share the new account_type group, so clear any stale selection.
                   setField("parent_account_id", "");
                 }}
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-sm focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2.5 text-xs focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               >
                 <option value="">Select type…</option>
                 {accountTypePickerGroups.map((group) => (
@@ -595,7 +595,7 @@ export function AccountDrawer({
                 onChange={(e) => setField("notes", e.target.value)}
                 placeholder="Optional notes about this account…"
                 rows={3}
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-2 text-sm focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-2 text-xs focus:border-slate-300 focus:outline-hidden focus:ring-1 focus:ring-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
               />
             </FieldLabel>
 

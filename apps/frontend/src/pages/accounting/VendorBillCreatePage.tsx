@@ -36,8 +36,8 @@ export function VendorBillCreatePage() {
 
   return (
     <AccountingSubNavWrapper title="Bills" subtitle="Create vendor bill">
-      {!companyId ? <div className="text-sm text-red-600">Select an operating company in the shell header.</div> : null}
-      <p className="text-sm text-gray-600">
+      {!companyId ? <div className="text-xs text-red-600">Select an operating company in the shell header.</div> : null}
+      <p className="text-xs text-gray-600">
         Creating a vendor bill in the side panel.{" "}
         <button type="button" className="text-slate-700 underline" onClick={() => navigate("/accounting/bills")}>
           Open bills list
@@ -118,7 +118,7 @@ export function VendorBillCreatePage() {
             ) : null}
           </div>
         ) : (
-          <div className="text-sm text-red-600">Select an operating company in the shell header.</div>
+          <div className="text-xs text-red-600">Select an operating company in the shell header.</div>
         )}
       </ParityDrawer>
     </AccountingSubNavWrapper>

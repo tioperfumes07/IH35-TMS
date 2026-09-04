@@ -85,7 +85,7 @@ export function CustomerLateArrivalCard({ operatingCompanyId, customerId }: Prop
       className={`rounded-sm border p-3 ${data.chronic_offender ? "border-slate-300 bg-slate-50" : "border-slate-200 bg-white"}`}
     >
       <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Late arrival rate (30d)</div>
-      <div className="mt-1 text-2xl font-semibold text-slate-900">{pct(data.late_rate)}</div>
+      <div className="mt-1 text-page-title font-semibold text-slate-900">{pct(data.late_rate)}</div>
       <div className="mt-1 text-xs text-slate-600">
         {data.late_count} late of {data.total_count} stops · {data.grace_minutes}m grace
       </div>

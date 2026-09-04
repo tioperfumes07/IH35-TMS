@@ -206,7 +206,7 @@ export function DriverReportsQueuePage({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Driver Reports Queue</h2>
+        <h2 className="text-page-title font-semibold text-gray-900">Driver Reports Queue</h2>
       </div>
 
       {q.isError ? (

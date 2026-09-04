@@ -288,7 +288,7 @@ export function VendorsPage() {
     <div className="space-y-3" data-testid="maint-vendors-page">
       <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white p-3">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Maintenance Vendors</h2>
+          <h2 className="text-xs font-semibold text-gray-900">Maintenance Vendors</h2>
           <p className="text-xs text-gray-600">
             Canonical vendor master linked to{" "}
             <Link className="text-slate-600 underline" to="/lists/maintenance/vendors">

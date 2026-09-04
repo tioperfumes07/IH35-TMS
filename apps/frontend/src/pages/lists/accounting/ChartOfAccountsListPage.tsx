@@ -414,7 +414,7 @@ export function ChartOfAccountsListPage() {
       <CoaAsymmetryReportPanel enabled={showCoaAsymmetry} />
 
       {driftOnly ? (
-        <p className="text-sm text-slate-700">
+        <p className="text-xs text-slate-700">
           Showing drift filter active — reconcile or sync to heal unmatched CoA rows.
         </p>
       ) : null}
@@ -423,7 +423,7 @@ export function ChartOfAccountsListPage() {
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-sm border border-gray-200 bg-white">
         {isLoading ? (
-          <div className="px-4 py-8 text-sm text-gray-500">Loading chart of accounts…</div>
+          <div className="px-4 py-8 text-xs text-gray-500">Loading chart of accounts…</div>
         ) : (
           <ListView
             columns={columns}

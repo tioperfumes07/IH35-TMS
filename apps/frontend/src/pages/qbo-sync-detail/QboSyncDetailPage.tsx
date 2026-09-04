@@ -120,7 +120,7 @@ export function QboSyncDetailPage() {
         subtitle="Read-only tenant-scoped observability across runs, alerts, and outbox events"
       />
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {eventLogQuery.isError ? <ReportBlockVPendingBanner error={eventLogQuery.error} onRetry={() => void eventLogQuery.refetch()} /> : null}
 
       <div className="rounded-sm border border-slate-200 bg-white p-3">

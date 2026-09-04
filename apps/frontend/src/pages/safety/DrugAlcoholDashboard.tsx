@@ -154,11 +154,11 @@ export function DrugAlcoholDashboard() {
       <div className="grid gap-3 md:grid-cols-4">
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-slate-500">Pool size</div>
-          <div className="mt-1 text-lg font-semibold">{rateQ.isError || poolQ.isError ? "—" : poolSize}</div>
+          <div className="mt-1 text-page-title font-semibold">{rateQ.isError || poolQ.isError ? "—" : poolSize}</div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-slate-500">Drug rate</div>
-          <div className="mt-1 text-lg font-semibold">
+          <div className="mt-1 text-page-title font-semibold">
             {rateQ.isError ? "—" : `${rate?.drug_rate_pct ?? 0}%`}{" "}
             {!rateQ.isError ? (
               <span className={rate?.drug_on_track ? "text-slate-700" : "text-slate-700"}>
@@ -169,7 +169,7 @@ export function DrugAlcoholDashboard() {
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-slate-500">Alcohol rate</div>
-          <div className="mt-1 text-lg font-semibold">
+          <div className="mt-1 text-page-title font-semibold">
             {rateQ.isError ? "—" : `${rate?.alcohol_rate_pct ?? 0}%`}{" "}
             {!rateQ.isError ? (
               <span className={rate?.alcohol_on_track ? "text-slate-700" : "text-slate-700"}>
@@ -180,7 +180,7 @@ export function DrugAlcoholDashboard() {
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-slate-500">Open RTD processes</div>
-          <div className="mt-1 text-lg font-semibold">{rtdQ.isError ? "—" : openRtd}</div>
+          <div className="mt-1 text-page-title font-semibold">{rtdQ.isError ? "—" : openRtd}</div>
         </div>
       </div>
     </section>

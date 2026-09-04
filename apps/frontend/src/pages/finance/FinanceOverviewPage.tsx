@@ -45,7 +45,7 @@ export function FinanceOverviewPage() {
 
   const header = (
     <div className="mb-4">
-      <h1 className="text-lg font-semibold text-slate-800">Finance Overview</h1>
+      <h1 className="text-page-title font-semibold text-slate-800">Finance Overview</h1>
       <p className="text-xs text-slate-500">Rollup of the company's currently active forecast scenario.</p>
     </div>
   );
@@ -117,7 +117,7 @@ export function FinanceOverviewPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white p-4">
             <div>
-              <h2 className="text-base font-semibold text-slate-800">{summary.scenario.name}</h2>
+              <h2 className="text-xs font-semibold text-slate-800">{summary.scenario.name}</h2>
               <p className="text-xs text-slate-500">
                 {summary.scenario.period_basis} · {summary.scenario.period_count} periods starting{" "}
                 {summary.scenario.period_start}

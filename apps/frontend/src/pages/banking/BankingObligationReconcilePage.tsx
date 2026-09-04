@@ -115,7 +115,7 @@ export function BankingObligationReconcilePage() {
   );
 
   if (!["Owner", "Administrator", "Accountant"].includes(auth.user?.role ?? "")) {
-    return <div className="p-4 text-sm text-gray-600">You need accounting access to use obligation reconciliation.</div>;
+    return <div className="p-4 text-xs text-gray-600">You need accounting access to use obligation reconciliation.</div>;
   }
 
   return (
@@ -225,8 +225,8 @@ export function BankingObligationReconcilePage() {
 
       <div className="grid gap-3 lg:grid-cols-2">
         <section className="rounded-sm border border-slate-200 bg-white p-2">
-          <h2 className="mb-2 text-sm font-semibold">Unmatched bank transactions</h2>
-          <div className="max-h-[480px] space-y-1 overflow-y-auto text-sm">
+          <h2 className="mb-2 text-xs font-semibold">Unmatched bank transactions</h2>
+          <div className="max-h-[480px] space-y-1 overflow-y-auto text-xs">
             {transactions.map((row: UnmatchedBankTxnRow) => (
               <article
                 key={row.id}
@@ -270,8 +270,8 @@ export function BankingObligationReconcilePage() {
         </section>
 
         <section className="rounded-sm border border-slate-200 bg-white p-2">
-          <h2 className="mb-2 text-sm font-semibold">Unmatched obligations</h2>
-          <div className="max-h-[480px] space-y-1 overflow-y-auto text-sm">
+          <h2 className="mb-2 text-xs font-semibold">Unmatched obligations</h2>
+          <div className="max-h-[480px] space-y-1 overflow-y-auto text-xs">
             {obligations.map((o) => (
               <div
                 key={`${o.obligation_type}-${o.obligation_id}`}

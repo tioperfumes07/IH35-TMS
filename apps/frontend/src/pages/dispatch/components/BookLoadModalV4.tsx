@@ -1465,7 +1465,7 @@ export function BookLoadModalV4({
             {/* Two literal headings (not a ternary string) so the locked-ui-surface guard still sees the
                 ">Book load<" text node for the create wizard while Edit shows the load number. */}
             {isEditMode ? (
-              <div className="flex items-center gap-1.5 text-[22px] font-bold">
+              <div className="flex items-center gap-1.5 text-page-title font-bold">
                 <span>Edit load</span>
                 {editLoad?.id ? (
                   <EntityLink
@@ -1478,7 +1478,7 @@ export function BookLoadModalV4({
                 ) : null}
               </div>
             ) : (
-              <div className="text-[22px] font-bold">Book load</div>
+              <div className="text-page-title font-bold">Book load</div>
             )}
           </div>
           <div className="flex items-center gap-3 text-[11px]" style={{ color: "#9aa6ba" }}>

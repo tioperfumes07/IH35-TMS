@@ -239,7 +239,7 @@ export function LegalSignPage() {
 
       {!verificationPassed && (
         <div className="mt-4 rounded-sm border border-slate-200 bg-slate-50 p-4">
-          <h2 className="text-lg font-semibold text-slate-800">Identity Verification</h2>
+          <h2 className="text-page-title font-semibold text-slate-800">Identity Verification</h2>
           <p className="mt-1 text-xs text-slate-700">
             A verification code is required before signing.
           </p>
@@ -271,7 +271,7 @@ export function LegalSignPage() {
       )}
 
       <div className="mt-4 rounded-sm border border-gray-200 bg-white p-4 md:p-6">
-        <h2 className="text-lg font-semibold text-gray-900">Sign electronically</h2>
+        <h2 className="text-page-title font-semibold text-gray-900">Sign electronically</h2>
         <div className="mt-3 grid gap-3">
           <label className="text-xs text-gray-700">
             Legal name

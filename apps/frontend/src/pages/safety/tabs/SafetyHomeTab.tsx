@@ -54,7 +54,7 @@ function KpiTile({
       ) : isLoading ? (
         <div className="text-xs text-slate-400">Loading…</div>
       ) : (
-        <div className="text-xl font-semibold text-slate-900">{value}</div>
+        <div className="text-page-title font-semibold text-slate-900">{value}</div>
       )}
     </>
   );
@@ -278,7 +278,7 @@ export function SafetyHomeTab() {
             <div className="text-xs text-slate-400">Loading…</div>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="text-xl font-semibold text-slate-900">
+              <span className="text-page-title font-semibold text-slate-900">
                 {activeDriversQuery.data?.active_driver_uuids?.length ?? 0}
               </span>
               <span className="text-xs text-slate-500">

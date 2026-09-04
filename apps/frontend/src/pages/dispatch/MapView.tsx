@@ -86,7 +86,7 @@ export function MapView() {
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-700">
             <MapPin className="h-6 w-6" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-900">Map provider not configured</h2>
+          <h2 className="text-page-title font-semibold text-gray-900">Map provider not configured</h2>
           <p className="mt-1 text-xs text-gray-600">
             Live GPS from Samsara is available for active loads, but geographic map rendering is not wired yet.
             Contact the owner or administrator to configure a map provider (Mapbox) before this view can plot

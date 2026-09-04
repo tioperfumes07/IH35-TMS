@@ -36,7 +36,7 @@ export function Step1Company({ value, disabled, onChange }: Props) {
 
   return (
     <div className="space-y-3" data-testid="onboarding-step-company">
-      <h2 className="text-base font-semibold text-gray-900">Company information</h2>
+      <h2 className="text-xs font-semibold text-gray-900">Company information</h2>
       <p className="text-xs text-gray-600">Tell us about your carrier so we can configure dispatch, billing, and compliance defaults.</p>
 
       <label className="block text-xs">

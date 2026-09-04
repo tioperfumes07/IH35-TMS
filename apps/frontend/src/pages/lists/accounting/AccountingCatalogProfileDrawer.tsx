@@ -65,7 +65,7 @@ export function AccountingCatalogProfileDrawer({
         </div>
       }
     >
-      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+      <dl className="grid gap-3 text-xs sm:grid-cols-2">
         <div>
           <dt className="text-xs font-semibold text-slate-500">{codeLabel}</dt>
           <dd className="mt-1 break-words text-slate-900">{row.code || "—"}</dd>
@@ -99,7 +99,7 @@ export function AccountingCatalogProfileDrawer({
       <section className="mt-5 border-t border-slate-200 pt-4" aria-label="Metadata">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Metadata</h3>
         {metadataEntries.length ? (
-          <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+          <dl className="mt-3 grid gap-3 text-xs sm:grid-cols-2">
             {metadataEntries.map(([key, value]) => (
               <div key={key}>
                 <dt className="text-xs font-semibold text-slate-500">{metadataLabel(key)}</dt>
@@ -108,7 +108,7 @@ export function AccountingCatalogProfileDrawer({
             ))}
           </dl>
         ) : (
-          <p className="mt-2 text-sm text-slate-500">No metadata.</p>
+          <p className="mt-2 text-xs text-slate-500">No metadata.</p>
         )}
       </section>
     </ParityDrawer>

@@ -211,7 +211,7 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
         </div>
       }
     >
-      <div className="space-y-3 text-sm">
+      <div className="space-y-3 text-xs">
         {/* LINK-F5190: linkBankTransactionId is the real bank-feed row for the outgoing leg
             (already used functionally in markBankTransactionTransfer below) -- was never rendered. */}
         {linkBankTransactionId ? (

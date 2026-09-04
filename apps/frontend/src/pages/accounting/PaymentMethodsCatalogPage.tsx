@@ -209,7 +209,7 @@ export function PaymentMethodsCatalogPage() {
       />
 
       <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Add new payment method">
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           {accountsQuery.isError ? (
             <ListErrorBanner
               message={`Failed to load GL accounts: ${(accountsQuery.error as Error)?.message ?? "Request failed"}`}
@@ -268,7 +268,7 @@ export function PaymentMethodsCatalogPage() {
       </Modal>
 
       <Modal open={Boolean(editId)} onClose={() => setEditId(null)} title="Edit payment method">
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           {accountsQuery.isError ? (
             <ListErrorBanner
               message={`Failed to load GL accounts: ${(accountsQuery.error as Error)?.message ?? "Request failed"}`}

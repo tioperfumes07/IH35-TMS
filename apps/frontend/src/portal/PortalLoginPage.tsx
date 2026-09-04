@@ -34,7 +34,7 @@ export function PortalLoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
       <form onSubmit={onSubmit} className="w-full max-w-md rounded-sm border border-slate-200 bg-white p-6 shadow-xs">
-        <h1 className="text-xl font-semibold text-slate-900">Shipper portal sign in</h1>
+        <h1 className="text-page-title font-semibold text-slate-900">Shipper portal sign in</h1>
         <p className="mt-1 text-xs text-slate-600">Track your loads in real time.</p>
         <label className="mt-4 block text-xs">
           <span className="font-medium text-slate-700">Email</span>

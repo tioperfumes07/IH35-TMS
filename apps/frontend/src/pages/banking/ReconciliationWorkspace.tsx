@@ -324,17 +324,17 @@ export function ReconciliationWorkspacePage() {
         >
           <div>
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Beginning balance</div>
-            <div className="text-sm font-semibold text-gray-900">{money(balanceHeader.beginningCents)}</div>
+            <div className="text-xs font-semibold text-gray-900">{money(balanceHeader.beginningCents)}</div>
           </div>
           <div>
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Ending balance</div>
-            <div className="text-sm font-semibold text-gray-900">
+            <div className="text-xs font-semibold text-gray-900">
               {balanceHeader.endingCents != null ? money(balanceHeader.endingCents) : "—"}
             </div>
           </div>
           <div>
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Last reconciled</div>
-            <div className="text-sm font-semibold text-gray-900">
+            <div className="text-xs font-semibold text-gray-900">
               {formatReconciledDate(balanceHeader.lastReconciledAt)}
             </div>
           </div>
@@ -408,7 +408,7 @@ export function ReconciliationWorkspacePage() {
 
       {!sessionId ? (
         <div className="bg-white p-4">
-          <p className="mb-2 text-sm font-semibold text-gray-900">Start reconciliation</p>
+          <p className="mb-2 text-xs font-semibold text-gray-900">Start reconciliation</p>
           <div className="mb-2 flex flex-wrap gap-1">
             {(
               [
@@ -442,7 +442,7 @@ export function ReconciliationWorkspacePage() {
             <SelectCombobox
               value={effectiveBankAccountId}
               onChange={(event) => setPickedBankAccountId(event.target.value)}
-              className="text-sm"
+              className="text-xs"
               data-testid="banking-recon-workspace-account"
             >
               <option value="">Select bank account</option>
@@ -468,7 +468,7 @@ export function ReconciliationWorkspacePage() {
               onChangeDollars={setStatementBalanceInput}
               ariaLabel="Statement balance (USD)"
               placeholder="Statement balance (USD)"
-              className="text-sm"
+              className="text-xs"
             />
             <ActionButton
               disabled={!companyId || !effectiveBankAccountId || !periodStart || !periodEnd || statementBalanceInput == null || startLoading}
@@ -502,7 +502,7 @@ export function ReconciliationWorkspacePage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-10">
           <div className="bg-white p-3 lg:col-span-4">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-gray-900">Bank transactions</p>
+              <p className="text-xs font-semibold text-gray-900">Bank transactions</p>
               <div className="flex items-center gap-2">
                 <div className="inline-flex overflow-hidden rounded-sm border border-gray-300 text-xs">
                   {(
@@ -553,8 +553,8 @@ export function ReconciliationWorkspacePage() {
                         <span>{formatDateUS(tx.transaction_date)}</span>
                         <span className={matched ? "text-slate-700" : "text-gray-500"}>{matched ? "Matched" : "Unmatched"}</span>
                       </span>
-                      <span className="block truncate text-sm font-medium text-gray-900">{tx.description || "Bank transaction"}</span>
-                      <span className="block text-sm text-gray-700">{money(Number(tx.amount_cents))}</span>
+                      <span className="block truncate text-xs font-medium text-gray-900">{tx.description || "Bank transaction"}</span>
+                      <span className="block text-xs text-gray-700">{money(Number(tx.amount_cents))}</span>
                     </button>
                     {matched ? (
                       <div className="mt-1 flex flex-wrap gap-2 text-xs">
@@ -612,7 +612,7 @@ export function ReconciliationWorkspacePage() {
 
           <div className="border-l border-gray-200 bg-white p-3 lg:col-span-4">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-sm font-semibold text-gray-900">TMS candidate events</p>
+              <p className="text-xs font-semibold text-gray-900">TMS candidate events</p>
               <SelectCombobox
                 value={eventFilter}
                 onChange={(event) => setEventFilter(event.target.value as "all" | "load" | "bill" | "settlement")}
@@ -635,7 +635,7 @@ export function ReconciliationWorkspacePage() {
                   }`}
                 >
                   <div className="text-xs uppercase tracking-wide text-gray-500">{event.event_type}</div>
-                  <div className="truncate text-sm font-medium text-gray-900">
+                  <div className="truncate text-xs font-medium text-gray-900">
                     <EntityLink
                       kind={candidateEntityKind(event.event_type)}
                       id={event.id}
@@ -706,8 +706,8 @@ export function ReconciliationWorkspacePage() {
 
           <div className="space-y-3 lg:col-span-2">
             <div className="rounded-sm border border-gray-200 bg-white p-3">
-              <p className="text-sm font-semibold text-gray-900">Variance summary</p>
-              <div className="mt-2 space-y-1 text-sm">
+              <p className="text-xs font-semibold text-gray-900">Variance summary</p>
+              <div className="mt-2 space-y-1 text-xs">
                 <div className="flex justify-between"><span>Statement</span><span>{money(Number(workspaceQuery.data.summary.statement_balance_cents))}</span></div>
                 <div className="flex justify-between"><span>Matched credits</span><span>{money(summary.matchedCreditsCents)}</span></div>
                 <div className="flex justify-between"><span>Matched debits</span><span>{money(summary.matchedDebitsCents)}</span></div>

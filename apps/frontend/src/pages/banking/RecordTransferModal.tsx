@@ -284,7 +284,7 @@ export function RecordTransferModal({
         </div>
       }
     >
-      <div className="space-y-3 text-sm">
+      <div className="space-y-3 text-xs">
         {/* LINK-F5190: linkBankTransactionId is the real originating banking.bank_transactions id
             (already used functionally in categorizeBankTransaction/markBankTransactionTransfer
             below) -- was never rendered. */}

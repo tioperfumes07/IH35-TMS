@@ -324,7 +324,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     <ParityDrawer open={open} onClose={onClose} title={title} size="wide">
       {createdInvoice ? (
         <div
-          className="flex flex-col items-start gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm"
+          className="flex flex-col items-start gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs"
           data-testid="invoice-type-modal-confirmation"
         >
           <p className="text-gray-700">
@@ -541,7 +541,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
             Line description
             <input
               data-field="line_description"
-              className={fieldErrorClassname(Boolean(invoiceFieldErrors.line_description), "mt-1 h-9 w-full rounded-sm border px-2 text-sm")}
+              className={fieldErrorClassname(Boolean(invoiceFieldErrors.line_description), "mt-1 h-9 w-full rounded-sm border px-2 text-xs")}
               value={lineDescription}
               placeholder="e.g. Linehaul · Load L-12047"
               onChange={(event) => {
@@ -568,7 +568,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
             Notes
             <textarea
               data-field="notes"
-              className={fieldErrorClassname(Boolean(invoiceFieldErrors.notes), "mt-1 min-h-24 w-full rounded-sm border px-2 py-1 text-sm")}
+              className={fieldErrorClassname(Boolean(invoiceFieldErrors.notes), "mt-1 min-h-24 w-full rounded-sm border px-2 py-1 text-xs")}
               value={notes}
               aria-describedby={invoiceFieldErrors.notes ? "notes-error" : undefined}
               onChange={(event) => {

@@ -285,10 +285,10 @@ export function BankTxCategorizationPage() {
   return (
     <div className="space-y-3">
       <PageHeader title="Bank transaction categorization" subtitle="Uncategorized Plaid activity · daily ops" />
-      {!companyId ? <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm text-slate-700">Select an operating company.</div> : null}
+      {!companyId ? <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs text-slate-700">Select an operating company.</div> : null}
 
       {backendPending ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-slate-300 bg-slate-100 p-3 text-sm text-slate-700">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-slate-300 bg-slate-100 p-3 text-xs text-slate-700">
           <span>
             Backend pending — file <strong>P6-T11204</strong> ticket. Uncategorized transaction endpoints are not available yet.
           </span>
@@ -301,7 +301,7 @@ export function BankTxCategorizationPage() {
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
           <div className="text-[11px] font-semibold uppercase text-gray-500">Uncategorized</div>
-          <div className={`text-lg font-semibold ${Number(kpiUncCount ?? 0) > 0 ? "text-red-600" : "text-gray-900"}`}>
+          <div className={`text-page-title font-semibold ${Number(kpiUncCount ?? 0) > 0 ? "text-red-600" : "text-gray-900"}`}>
             {uncCountDisplay}
             {Number(kpiUncCount ?? 0) > 0 ? (
               <span className="ml-2 rounded-sm bg-red-600 px-1.5 py-0.5 text-xs font-semibold text-white">Action</span>
@@ -310,19 +310,19 @@ export function BankTxCategorizationPage() {
         </div>
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
           <div className="text-[11px] font-semibold uppercase text-gray-500">Total uncategorized amount</div>
-          <div className="text-lg font-semibold text-gray-900">
+          <div className="text-page-title font-semibold text-gray-900">
             {formatMoneyCents(mergedMeta.total_uncategorized_amount_cents)}
           </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
           <div className="text-[11px] font-semibold uppercase text-gray-500">Processed this week</div>
-          <div className="text-lg font-semibold text-gray-900">
+          <div className="text-page-title font-semibold text-gray-900">
             {mergedMeta.processed_this_week_count != null ? mergedMeta.processed_this_week_count : "—"}
           </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
           <div className="text-[11px] font-semibold uppercase text-gray-500">Auto-categorize hit rate</div>
-          <div className="text-lg font-semibold text-gray-900">
+          <div className="text-page-title font-semibold text-gray-900">
             {mergedMeta.auto_categorize_hit_rate_pct != null && mergedMeta.auto_categorize_hit_rate_pct !== undefined
               ? `${Number(mergedMeta.auto_categorize_hit_rate_pct).toFixed(1)}%`
               : "—"}
@@ -383,7 +383,7 @@ export function BankTxCategorizationPage() {
 
         <main className="min-w-0 flex-1 space-y-2">
           {uncQuery.isError && !backendPending ? (
-            <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-800">Could not load uncategorized transactions.</div>
+            <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-xs text-red-800">Could not load uncategorized transactions.</div>
           ) : null}
           {bulkIds.length > 0 ? (
             <div className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 p-2 text-xs">

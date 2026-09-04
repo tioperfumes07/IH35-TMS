@@ -140,7 +140,7 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
             } ${key === "overdue" && counts.overdue > 0 ? "bg-red-50" : "bg-white"}`}
             data-testid={`filings-tile-${key}`}
           >
-            <div className={`text-2xl font-semibold ${key === "overdue" ? "text-red-700" : "text-[#1f2a44]"}`}>
+            <div className={`text-page-title font-semibold ${key === "overdue" ? "text-red-700" : "text-[#1f2a44]"}`}>
               {counts[key]}
             </div>
             <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>

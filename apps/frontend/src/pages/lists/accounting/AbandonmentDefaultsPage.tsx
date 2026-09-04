@@ -56,10 +56,10 @@ export function AbandonmentDefaultsPage() {
     <div className="mx-auto max-w-3xl space-y-3 px-3 py-3">
       <PageHeader title="Abandonment defaults" subtitle="Company thresholds for auto-computed abandonment chargebacks." />
 
-      {!companyId ? <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm">Select a company.</div> : null}
-      {!allowed ? <div className="rounded-sm border border-rose-200 bg-rose-50 p-3 text-sm">Owner/Administrator only.</div> : null}
+      {!companyId ? <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs">Select a company.</div> : null}
+      {!allowed ? <div className="rounded-sm border border-rose-200 bg-rose-50 p-3 text-xs">Owner/Administrator only.</div> : null}
 
-      <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4 text-sm">
+      <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4 text-xs">
         <label className="block text-xs font-semibold text-slate-600">
           Default towing (¢)
           <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={towing} onChange={(e) => setTowing(e.target.value.replace(/[^\d]/g, ""))} />

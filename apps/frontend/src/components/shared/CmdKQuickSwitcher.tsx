@@ -121,7 +121,7 @@ export function CmdKQuickSwitcher() {
           <input
             ref={inputRef}
             data-testid="cmd-k-input"
-            className="w-full border-0 text-base outline-hidden"
+            className="w-full border-0 text-xs outline-hidden"
             placeholder="Search loads, drivers, customers…"
             value={query}
             onChange={(event) => setQuery(event.target.value)}

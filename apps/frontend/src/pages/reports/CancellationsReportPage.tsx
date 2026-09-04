@@ -199,15 +199,15 @@ export function CancellationsReportPage() {
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
             <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
               <div className="text-[11px] uppercase tracking-wide text-gray-500">Cancellations</div>
-              <div className="text-lg font-semibold">{total.count}</div>
+              <div className="text-page-title font-semibold">{total.count}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
               <div className="text-[11px] uppercase tracking-wide text-gray-500">Billable to customer</div>
-              <div className="text-lg font-semibold">{total.billable_count}</div>
+              <div className="text-page-title font-semibold">{total.billable_count}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
               <div className="text-[11px] uppercase tracking-wide text-gray-500">Total charges</div>
-              <div className="text-lg font-semibold">{money(total.total_charge_cents)}</div>
+              <div className="text-page-title font-semibold">{money(total.total_charge_cents)}</div>
             </div>
           </div>
 

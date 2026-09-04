@@ -44,7 +44,7 @@ export function DriverLoadDetailPage() {
           {t("driver.report_issue")}
         </button>
       </div>
-      <h2 className="text-base font-semibold">
+      <h2 className="text-xs font-semibold">
         <EntityLink kind="load" id={load.id} label={entityLabel(load.display_id, load.id, "Load")} /> — {t("driver.load_detail")}
       </h2>
       <p className="text-xs text-slate-600">

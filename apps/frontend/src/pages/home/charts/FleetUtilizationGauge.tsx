@@ -73,7 +73,7 @@ export function FleetUtilizationGauge({ operatingCompanyId }: Props) {
         </PieChart>
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pt-7 text-center">
-        <div className="text-2xl font-bold tabular-nums text-slate-900">{pct.toFixed(1)}%</div>
+        <div className="text-page-title font-bold tabular-nums text-slate-900">{pct.toFixed(1)}%</div>
         <div className="text-xs text-slate-600">
           {d.active_units} / {d.total_units} units
         </div>

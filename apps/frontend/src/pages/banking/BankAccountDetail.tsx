@@ -332,11 +332,11 @@ export function BankAccountDetailPage() {
       <div className="grid grid-cols-1 gap-3 rounded-sm border border-gray-200 bg-white p-4 md:grid-cols-3">
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500">Current balance</p>
-          <p className="text-xl font-semibold text-gray-900">{formatUsdCents(account?.current_balance_cents ?? 0)}</p>
+          <p className="text-page-title font-semibold text-gray-900">{formatUsdCents(account?.current_balance_cents ?? 0)}</p>
         </div>
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500">Available balance</p>
-          <p className="text-xl font-semibold text-gray-900">{formatUsdCents(account?.available_balance_cents ?? 0)}</p>
+          <p className="text-page-title font-semibold text-gray-900">{formatUsdCents(account?.available_balance_cents ?? 0)}</p>
         </div>
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500">Sync status</p>
@@ -354,7 +354,7 @@ export function BankAccountDetailPage() {
       trip to /banking/transfers with the filter set by hand. */}
       {transfers.length > 0 ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4" data-testid="bank-account-detail-transfers">
-          <h3 className="mb-2 text-sm font-semibold text-gray-800">Transfers ({transfers.length})</h3>
+          <h3 className="mb-2 text-xs font-semibold text-gray-800">Transfers ({transfers.length})</h3>
           <ParityTable<Transfer>
             columns={transferColumns}
             rows={transfers}
@@ -371,7 +371,7 @@ export function BankAccountDetailPage() {
       shown here before; only reachable via a manual trip to the company-wide reconciliation tab. */}
       {reconciliationSessions.length > 0 ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4" data-testid="bank-account-detail-reconciliation-sessions">
-          <h3 className="mb-2 text-sm font-semibold text-gray-800">Reconciliation sessions ({reconciliationSessions.length})</h3>
+          <h3 className="mb-2 text-xs font-semibold text-gray-800">Reconciliation sessions ({reconciliationSessions.length})</h3>
           <ParityTable<ReconciliationSession>
             columns={reconciliationColumns}
             rows={reconciliationSessions}

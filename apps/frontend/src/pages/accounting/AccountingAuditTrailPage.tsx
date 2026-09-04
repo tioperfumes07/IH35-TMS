@@ -349,7 +349,7 @@ export function AccountingAuditTrailPage() {
         <label className="text-xs text-slate-600">
           Source type
           <input
-            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
             value={staged.draft.sourceType}
             onChange={(e) => staged.setDraft({ ...staged.draft, sourceType: e.target.value })}
             placeholder="e.g. customer_payment, bill, invoice"
@@ -364,7 +364,7 @@ export function AccountingAuditTrailPage() {
         <label className="text-xs text-slate-600">
           Source id
           <input
-            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
             value={staged.draft.sourceId}
             onChange={(e) => staged.setDraft({ ...staged.draft, sourceId: e.target.value })}
             placeholder="uuid or display id"
@@ -373,7 +373,7 @@ export function AccountingAuditTrailPage() {
         <label className="text-xs text-slate-600">
           Account
           <SelectCombobox
-            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
             value={staged.draft.accountId}
             onChange={(e) => staged.setDraft({ ...staged.draft, accountId: e.target.value })}
           >
@@ -392,7 +392,7 @@ export function AccountingAuditTrailPage() {
   return (
     <AccountingSubNavWrapper title="Audit Trail" subtitle="Immutable posting events with tenant-scoped source lineage lookup">
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {eventQuery.isError ? <ReportBlockVPendingBanner error={eventQuery.error} onRetry={() => void eventQuery.refetch()} /> : null}
 
       <ParityTable
@@ -433,7 +433,7 @@ export function AccountingAuditTrailPage() {
 
       {lineageKey ? (
         <div className="rounded-sm border border-slate-200 bg-white p-3">
-          <div className="mb-2 text-sm font-semibold">
+          <div className="mb-2 text-xs font-semibold">
             Source lineage: {lineageKey.source_transaction_type} /{" "}
             <PostingEntityLink
               type={lineageKey.source_transaction_type}

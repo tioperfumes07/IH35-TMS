@@ -175,7 +175,7 @@ export function NotificationPreferencesPage() {
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-lg font-semibold text-slate-900">Notifications</h1>
+            <h1 className="text-page-title font-semibold text-slate-900">Notifications</h1>
             <p className="text-xs text-slate-600">Choose channels and quiet hours. Owner timezone applies to quiet hours.</p>
           </div>
           <button type="button" aria-label="Back" onClick={goBack} className="border-0 bg-transparent p-0 text-xs text-slate-700 hover:underline">
@@ -200,7 +200,7 @@ export function NotificationPreferencesPage() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-slate-900">Notifications</h1>
+          <h1 className="text-page-title font-semibold text-slate-900">Notifications</h1>
           <p className="text-xs text-slate-600">Choose channels and quiet hours. Owner timezone applies to quiet hours.</p>
         </div>
         <button type="button" aria-label="Back" onClick={goBack} className="border-0 bg-transparent p-0 text-xs text-slate-700 hover:underline">

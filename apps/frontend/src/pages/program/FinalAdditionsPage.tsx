@@ -101,7 +101,7 @@ function ProgressBar({ done, total }: { done: number; total: number }) {
 function CountChip({ label, value, bg, fg }: { label: string; value: number; bg: string; fg: string }) {
   return (
     <div className="rounded-sm border border-gray-200 px-3 py-1.5">
-      <div className="text-lg font-semibold tabular-nums" style={{ color: fg }}>
+      <div className="text-page-title font-semibold tabular-nums" style={{ color: fg }}>
         {value}
       </div>
       <div className="text-[11px] uppercase tracking-wide" style={{ color: fg, opacity: 0.85, backgroundColor: "transparent" }}>

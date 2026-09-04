@@ -83,7 +83,7 @@ export function PortalLoadDetailPage() {
         <>
           <div className="rounded-sm border border-slate-200 bg-white p-4">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-xl font-semibold">Load {detail.load.load_number}</h1>
+              <h1 className="text-page-title font-semibold">Load {detail.load.load_number}</h1>
               <StatusBadge variant="neutral">{detail.load.status.replace(/_/g, " ")}</StatusBadge>
               <StatusBadge variant="info">{detail.load.progress_status ?? "unknown"}</StatusBadge>
             </div>

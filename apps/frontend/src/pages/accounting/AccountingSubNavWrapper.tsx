@@ -99,8 +99,8 @@ export function AccountingSubNavWrapper({
             <span>Back</span>
           </button>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
-            {subtitle ? <p className="text-sm text-gray-600">{subtitle}</p> : null}
+            <h1 className="text-page-title font-semibold text-gray-900">{title}</h1>
+            {subtitle ? <p className="text-xs text-gray-600">{subtitle}</p> : null}
           </div>
         </div>
         {/*

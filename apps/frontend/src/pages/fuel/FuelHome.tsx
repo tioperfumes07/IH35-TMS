@@ -41,7 +41,7 @@ export function FuelFraudAlertsKpiCard() {
         Open Fraud Alerts
         <FuelFraudBadge hasOpenCritical={openCritical > 0} />
       </div>
-      <div className={`text-lg font-semibold ${openCritical > 0 ? "text-red-700" : "text-gray-900"}`}>
+      <div className={`text-page-title font-semibold ${openCritical > 0 ? "text-red-700" : "text-gray-900"}`}>
         {/* GO-0027-HOME-F: a failed fetch must never render as "0 Open Fraud Alerts" -- matches
             the sibling FuelCardOverageKpiCard's own isError ? "—" : value contract. */}
         {summaryQuery.isError ? "—" : summaryLoaded ? openCritical : "…"}
@@ -96,7 +96,7 @@ export function FuelCardOverageKpiCard() {
       data-testid="fuel-card-overage-kpi"
     >
       <div className="text-[11px] uppercase text-gray-500">Card overage queue</div>
-      <div className={`text-lg font-semibold ${pending > 0 ? "text-slate-800" : "text-gray-900"}`}>
+      <div className={`text-page-title font-semibold ${pending > 0 ? "text-slate-800" : "text-gray-900"}`}>
         {pendingQuery.isError ? "—" : pendingLoaded ? pending : "…"}
       </div>
       <div className="text-xs text-gray-600">

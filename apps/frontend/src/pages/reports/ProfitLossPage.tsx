@@ -233,15 +233,15 @@ export function ProfitLossPage() {
         <div className="grid gap-2 md:grid-cols-3">
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
             <div className="text-[11px] font-semibold uppercase text-gray-500">Revenue total</div>
-            <div className="text-lg font-semibold">{money(query.data.revenue.total)}</div>
+            <div className="text-page-title font-semibold">{money(query.data.revenue.total)}</div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
             <div className="text-[11px] font-semibold uppercase text-gray-500">Gross profit</div>
-            <div className="text-lg font-semibold">{money(query.data.gross_profit)}</div>
+            <div className="text-page-title font-semibold">{money(query.data.gross_profit)}</div>
           </div>
           <div className={`rounded-sm border bg-white px-3 py-2 ${query.data.net_income < 0 ? "border-rose-300" : "border-emerald-200"}`}>
             <div className="text-[11px] font-semibold uppercase text-gray-500">Net income</div>
-            <div className={`text-lg font-semibold ${query.data.net_income < 0 ? "text-rose-700" : "text-emerald-700"}`}>{money(query.data.net_income)}</div>
+            <div className={`text-page-title font-semibold ${query.data.net_income < 0 ? "text-rose-700" : "text-emerald-700"}`}>{money(query.data.net_income)}</div>
           </div>
         </div>
       ) : null}

@@ -572,7 +572,7 @@ export function ExpensesListPage() {
         }}
       />
       <div className="space-y-3">
-        {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+        {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
         {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
         {companyId && dupQuery.data && dupQuery.data.group_count > 0 ? (
           <div
@@ -621,7 +621,7 @@ export function ExpensesListPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search # · vendor · amount · date · status · load · memo · category"
-          className="w-full max-w-xl rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          className="w-full max-w-xl rounded-sm border border-gray-300 px-2 py-1 text-xs"
         />
       </div>
       <ParityTable

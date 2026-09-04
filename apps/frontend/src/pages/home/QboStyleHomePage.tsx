@@ -162,7 +162,7 @@ export function QboStyleHomePage({ auth }: Props) {
       {/* ── Header ── */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Welcome, {displayName}!</h1>
+          <h1 className="text-page-title font-semibold text-gray-900">Welcome, {displayName}!</h1>
           <p className="mt-0.5 text-xs text-gray-500">Here's what's happening with your business today.</p>
         </div>
         <div className="flex gap-2 text-xs text-gray-400">
@@ -275,7 +275,7 @@ export function QboStyleHomePage({ auth }: Props) {
               </div>
             ) : (
               <>
-                <p className="text-2xl font-semibold text-gray-900">{fmt$(totalBankBalance * 100)}</p>
+                <p className="text-page-title font-semibold text-gray-900">{fmt$(totalBankBalance * 100)}</p>
                 <p className="mb-3 text-xs text-slate-600">Total bank balance</p>
                 <div className="space-y-2">
                   {tiles.slice(0, 5).map((tile) => (
@@ -335,7 +335,7 @@ export function QboStyleHomePage({ auth }: Props) {
               </div>
             ) : revenueDisplay.kind === "unverifiable" ? (
               <div data-testid="qbo-revenue-unverifiable">
-                <p className="text-2xl font-semibold text-gray-900">{revenueDisplay.text}</p>
+                <p className="text-page-title font-semibold text-gray-900">{revenueDisplay.text}</p>
                 <p className="mt-1 text-xs text-slate-600">
                   Invoice↔GL linkage unverifiable
                   {revenueQuery.data?.unverifiable_reason
@@ -346,7 +346,7 @@ export function QboStyleHomePage({ auth }: Props) {
             ) : (
               <>
                 <div className="flex items-end gap-2" data-testid="qbo-revenue-ok">
-                  <p className="text-2xl font-semibold text-gray-900">{revenueDisplay.text}</p>
+                  <p className="text-page-title font-semibold text-gray-900">{revenueDisplay.text}</p>
                   {deltaVsYesterday != null && (
                     <span className={`mb-1 flex items-center gap-0.5 text-xs font-semibold ${deltaVsYesterday >= 0 ? "text-slate-600" : "text-red-600"}`}>
                       {deltaVsYesterday >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
@@ -397,7 +397,7 @@ export function QboStyleHomePage({ auth }: Props) {
               </div>
             ) : (
               <>
-                <p className="text-2xl font-semibold text-gray-900">{fmt$(apTotal)}</p>
+                <p className="text-page-title font-semibold text-gray-900">{fmt$(apTotal)}</p>
                 <p className="text-xs text-slate-600">Outstanding A/P</p>
                 <p className="mt-3 text-xs text-slate-400">Category breakdown not yet available</p>
               </>
@@ -432,7 +432,7 @@ export function QboStyleHomePage({ auth }: Props) {
               </div>
             ) : (
               <>
-                <p className="text-2xl font-semibold text-gray-900">{fmt$(arTotal)}</p>
+                <p className="text-page-title font-semibold text-gray-900">{fmt$(arTotal)}</p>
                 <p className="text-xs text-slate-600">Unpaid (last 365 days)</p>
                 <div className="mt-3 space-y-1">
                   <div className="flex justify-between text-xs">
@@ -461,15 +461,15 @@ export function QboStyleHomePage({ auth }: Props) {
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center">
-                <p className="text-xl font-semibold text-gray-900">{integrationTotal}</p>
+                <p className="text-page-title font-semibold text-gray-900">{integrationTotal}</p>
                 <p className="text-xs text-slate-500">Total</p>
               </div>
               <div className="text-center">
-                <p className="text-xl font-semibold text-slate-700">{integrationConnected}</p>
+                <p className="text-page-title font-semibold text-slate-700">{integrationConnected}</p>
                 <p className="text-xs text-slate-500">Connected</p>
               </div>
               <div className="text-center">
-                <p className={`text-xl font-semibold ${integrationIssues > 0 ? "text-red-600" : "text-gray-400"}`}>{integrationIssues}</p>
+                <p className={`text-page-title font-semibold ${integrationIssues > 0 ? "text-red-600" : "text-gray-400"}`}>{integrationIssues}</p>
                 <p className="text-xs text-slate-500">Issues</p>
               </div>
             </div>

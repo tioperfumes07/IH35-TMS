@@ -49,6 +49,14 @@ body {
   overflow-x: hidden;
 }
 
+/* GLB-01 locked type scale: use this named utility for the only approved page/KPI
+   display size. Body text remains Tailwind text-xs (12px); section/table headers
+   use the locked 11px contract. A named utility avoids hundreds of arbitrary-value
+   classes while keeping the owner-approved 22px size explicit and reusable. */
+.text-page-title {
+  font-size: 22px;
+}
+
 .code-cell {
   /* Codes like WO-{UNIT}-{TYPE}-{MM-DD-YYYY}-{NNNN}-{V5} must render on one line and never break or
      auto-hyphenate at their internal hyphens (the cleanup-hyphen defect). */

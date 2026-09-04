@@ -58,7 +58,7 @@ export function PortalProfilePage() {
 
   return (
     <div className="max-w-lg space-y-4">
-      <h1 className="text-xl font-semibold text-slate-900">Profile & notifications</h1>
+      <h1 className="text-page-title font-semibold text-slate-900">Profile & notifications</h1>
       {profileQuery.isLoading ? <p className="text-xs text-slate-600">Loading…</p> : null}
       {profileQuery.isError ? (
         <p className="text-xs text-red-700">Failed to load profile. <button type="button" className="font-semibold underline" onClick={() => void profileQuery.refetch()}>Retry</button></p>

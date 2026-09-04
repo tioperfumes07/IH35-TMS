@@ -88,7 +88,7 @@ function AdjustmentCell({
       onKeyDown={(e) => {
         if (e.key === "Enter") commitDraft();
       }}
-      className={`w-32 rounded-sm border px-2 py-1 text-right text-sm tabular-nums disabled:bg-gray-50 ${
+      className={`w-32 rounded-sm border px-2 py-1 text-right text-xs tabular-nums disabled:bg-gray-50 ${
         invalid ? "border-red-400 bg-red-50" : "border-gray-300"
       }`}
     />
@@ -299,7 +299,7 @@ export function OpeningBalanceRegisterPage() {
       ].map((kpi) => (
         <div key={kpi.label} className="rounded-sm border border-gray-200 bg-white px-3 py-2">
           <p className="text-xs text-gray-500">{kpi.label}</p>
-          <p className="text-sm font-semibold tabular-nums text-gray-900">{kpi.value}</p>
+          <p className="text-xs font-semibold tabular-nums text-gray-900">{kpi.value}</p>
         </div>
       ))}
     </div>
@@ -322,7 +322,7 @@ export function OpeningBalanceRegisterPage() {
               disabled={cloneAsIs.isPending || !operatingCompanyId}
               onClick={() => cloneAsIs.mutate()}
               title="Import the QBO/fixture snapshot AND commit it now, Adjustment 0 — no maker/checker pair required"
-              className="rounded-sm border border-slate-700 bg-slate-700 px-3 py-1 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
+              className="rounded-sm border border-slate-700 bg-slate-700 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
             >
               {cloneAsIs.isPending ? "Cloning…" : "Clone-as-is import + commit"}
             </button>
@@ -333,7 +333,7 @@ export function OpeningBalanceRegisterPage() {
               disabled={importFromFixture.isPending || !operatingCompanyId}
               onClick={() => importFromFixture.mutate()}
               title="Refresh the QBO Snapshot column from the owner-provided fixture — Adjustments are preserved"
-              className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-40"
+              className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-40"
             >
               {importFromFixture.isPending ? "Importing…" : "Refresh Snapshot from fixture"}
             </button>
@@ -343,7 +343,7 @@ export function OpeningBalanceRegisterPage() {
             disabled={!canImport || importFromQbo.isPending || !operatingCompanyId}
             onClick={() => importFromQbo.mutate()}
             title={canImport ? "Refresh the QBO Snapshot column — Adjustments are preserved" : "This entity has no QuickBooks connection — enter balances by hand"}
-            className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-40"
+            className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-40"
           >
             {importFromQbo.isPending ? "Importing…" : "Refresh Snapshot from QBO"}
           </button>
@@ -351,7 +351,7 @@ export function OpeningBalanceRegisterPage() {
             type="button"
             disabled={commit.isPending || !operatingCompanyId}
             onClick={() => commit.mutate()}
-            className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1 text-sm font-semibold text-white hover:bg-[#0f1729] disabled:opacity-40"
+            className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-40"
           >
             {commit.isPending ? "Committing…" : "Commit opening balances"}
           </button>
@@ -360,7 +360,7 @@ export function OpeningBalanceRegisterPage() {
     >
       {banner ? (
         <p
-          className={`rounded-sm border px-3 py-2 text-sm ${
+          className={`rounded-sm border px-3 py-2 text-xs ${
             banner.tone === "ok" ? "border-slate-200 bg-slate-100 text-slate-700" : "border-red-200 bg-red-50 text-red-700"
           }`}
         >
@@ -369,20 +369,20 @@ export function OpeningBalanceRegisterPage() {
       ) : null}
 
       {registerQuery.isError ? (
-        <p className="py-2 text-center text-sm text-red-600">Failed to load the opening balance register.</p>
+        <p className="py-2 text-center text-xs text-red-600">Failed to load the opening balance register.</p>
       ) : null}
 
       {view ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-xs font-semibold text-gray-900">
                 Source period cleanup{" "}
                 <span className="ml-1 rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs font-normal text-gray-500">
                   advisory only — does not block commit
                 </span>
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs text-gray-600">
                 {view.finality.is_final
                   ? `Marked final${view.finality.set_by_name ? ` by ${view.finality.set_by_name}` : ""}${
                       view.finality.set_at ? ` on ${formatDateUS(view.finality.set_at)}` : ""
@@ -394,20 +394,20 @@ export function OpeningBalanceRegisterPage() {
               type="button"
               disabled={setFinality.isPending || !operatingCompanyId}
               onClick={() => setFinality.mutate(!view.finality.is_final)}
-              className="rounded-sm border border-gray-300 px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-40"
+              className="rounded-sm border border-gray-300 px-3 py-1 text-xs font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-40"
             >
               {view.finality.is_final ? "Mark not final" : "Mark source final"}
             </button>
           </div>
 
           {blockers.length > 0 ? (
-            <ul className="mt-3 space-y-1 border-t border-gray-100 pt-3 text-sm font-medium text-slate-700">
+            <ul className="mt-3 space-y-1 border-t border-gray-100 pt-3 text-xs font-medium text-slate-700">
               {blockers.map((b) => (
                 <li key={b}>· {BLOCKER_COPY[b]}</li>
               ))}
             </ul>
           ) : (
-            <p className="mt-3 border-t border-gray-100 pt-3 text-sm text-slate-600">
+            <p className="mt-3 border-t border-gray-100 pt-3 text-xs text-slate-600">
               Nothing is blocking the commit. It will write {view.totals.staged_line_count} account
               {view.totals.staged_line_count === 1 ? "" : "s"} as of {view.as_of_date}.
             </p>
@@ -432,11 +432,11 @@ export function OpeningBalanceRegisterPage() {
       />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <p className="text-sm font-semibold text-gray-900">Audit trail</p>
+        <p className="text-xs font-semibold text-gray-900">Audit trail</p>
         <p className="text-xs text-gray-500">
           Every import, edit, finality change, refused commit and commit is recorded and cannot be altered or deleted.
         </p>
-        <ul className="mt-2 space-y-1 text-sm text-gray-700">
+        <ul className="mt-2 space-y-1 text-xs text-gray-700">
           {(auditQuery.data?.events ?? []).slice(0, 25).map((event) => (
             <li key={event.id} className="border-b border-gray-100 pb-1 last:border-b-0">
               <span className="font-medium">{event.event_type}</span>

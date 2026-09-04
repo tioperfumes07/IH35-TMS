@@ -268,7 +268,7 @@ export function PostingLineagePage() {
   return (
     <AccountingSubNavWrapper title="Posting Lineage" subtitle="Trace source transaction → posting rows → linked objects">
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {lineageQuery.isError ? <ReportBlockVPendingBanner error={lineageQuery.error} onRetry={() => void lineageQuery.reset()} /> : null}
 
       <form
@@ -290,7 +290,7 @@ export function PostingLineagePage() {
         <label className="text-xs text-slate-600">
           Source type
           <input
-            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
             value={sourceType}
             onChange={(e) => setSourceType(e.target.value)}
             placeholder="e.g. customer_payment, bill, invoice"
@@ -305,7 +305,7 @@ export function PostingLineagePage() {
         <label className="text-xs text-slate-600">
           Source transaction id
           <input
-            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
             value={sourceId}
             onChange={(e) => setSourceId(e.target.value)}
             placeholder="source_transaction_id"
@@ -332,7 +332,7 @@ export function PostingLineagePage() {
 
       {submitted ? (
         <div className="rounded-sm border border-slate-200 bg-white p-3">
-          <div className="text-sm font-semibold text-slate-800">
+          <div className="text-xs font-semibold text-slate-800">
             Source: {submitted.sourceType} /{" "}
             <PostingEntityLink
               type={submitted.sourceType}

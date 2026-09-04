@@ -201,7 +201,7 @@ export function ReportsRunnerPage() {
         <ReportsSubNav />
         <PageHeader title={`Reports / ${reportMeta.name}`} actions={<button type="button" className="rounded-sm border px-3 py-1.5 text-xs" onClick={() => navigate("/reports")}>Back</button>} />
         <section className="rounded-sm border border-slate-200 bg-slate-50 p-4">
-          <h2 className="text-lg font-semibold text-slate-900">Report unavailable in this phase</h2>
+          <h2 className="text-page-title font-semibold text-slate-900">Report unavailable in this phase</h2>
           <p className="mt-1 text-xs text-slate-800">
             {reportMeta.description} This runner ships with {STUB_PHASE[reportMeta.id] ?? "a later phase"}.
           </p>

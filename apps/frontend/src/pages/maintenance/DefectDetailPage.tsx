@@ -124,7 +124,7 @@ export function DefectDetailPage() {
       {defect ? (
         <>
           <header className="rounded-sm border border-gray-200 bg-white p-4">
-            <h1 className="text-lg font-semibold text-gray-900">
+            <h1 className="text-page-title font-semibold text-gray-900">
               {defect.item_key} · {defect.severity}
             </h1>
             <p className="mt-1 text-xs text-gray-600">

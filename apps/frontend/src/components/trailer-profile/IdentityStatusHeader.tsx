@@ -19,7 +19,7 @@ export function IdentityStatusHeader({
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-lg font-semibold text-gray-900">{String(equipment.equipment_number ?? "Trailer")}</h2>
+        <h2 className="text-page-title font-semibold text-gray-900">{String(equipment.equipment_number ?? "Trailer")}</h2>
         <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium">{String(equipment.equipment_type ?? "—")}</span>
         <label className="text-xs text-gray-600">
           Status

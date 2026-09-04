@@ -93,7 +93,7 @@ function ThreadPane({
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-page-title font-semibold text-gray-900">
             <EntityLinkOrTombstone kind="driver" id={driverId} name={driverName} noun="Driver" data-testid="messages-inbox-thread-driver" />
           </h2>
           <EntityLink

@@ -309,7 +309,7 @@ export function TransfersListPage() {
             >
               + Record Transfer
             </ActionButton>
-            <Link to="/banking" className="text-sm text-slate-700 hover:underline">
+            <Link to="/banking" className="text-xs text-slate-700 hover:underline">
               Back to Banking Home
             </Link>
           </div>
@@ -410,7 +410,7 @@ export function TransfersListPage() {
           </label>
           <label className="text-xs text-gray-600">
             Type
-            <SelectCombobox value={staged.draft.type} onChange={(e) => staged.setDraft({ ...staged.draft, type: e.target.value as TransferType | "" })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
+            <SelectCombobox value={staged.draft.type} onChange={(e) => staged.setDraft({ ...staged.draft, type: e.target.value as TransferType | "" })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs">
               <option value="">All</option>
               <option value="bank_to_bank">Bank-to-Bank</option>
               <option value="cc_payment">CC Payment</option>
@@ -421,7 +421,7 @@ export function TransfersListPage() {
           </label>
           <label className="text-xs text-gray-600">
             Account
-            <SelectCombobox value={staged.draft.accountId} onChange={(e) => staged.setDraft({ ...staged.draft, accountId: e.target.value })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
+            <SelectCombobox value={staged.draft.accountId} onChange={(e) => staged.setDraft({ ...staged.draft, accountId: e.target.value })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs">
               <option value="">All</option>
               {(bankAccountsQuery.data?.accounts ?? []).map((account) => (
                 <option key={account.id} value={account.id}>
@@ -432,7 +432,7 @@ export function TransfersListPage() {
           </label>
           <label className="text-xs text-gray-600">
             Status
-            <SelectCombobox value={staged.draft.status} onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value as "active" | "revoked" | "" })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
+            <SelectCombobox value={staged.draft.status} onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value as "active" | "revoked" | "" })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs">
               <option value="">All</option>
               <option value="active">Active</option>
               <option value="revoked">Revoked</option>

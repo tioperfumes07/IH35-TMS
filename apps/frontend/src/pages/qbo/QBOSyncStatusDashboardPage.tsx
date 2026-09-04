@@ -222,21 +222,21 @@ export function QBOSyncStatusDashboardPage() {
     <div className="space-y-4 p-4">
       <PageHeader title="QBO sync status" subtitle="Operational console · sync runs and alerts" />
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {runsQuery.isError ? <ReportBlockVPendingBanner error={runsQuery.error} onRetry={() => void runsQuery.refetch()} /> : null}
 
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-3">
           <div className="text-[11px] font-semibold uppercase text-emerald-800">Healthy (24h)</div>
-          <div className="text-2xl font-semibold text-emerald-900">{kpis.healthy}</div>
+          <div className="text-page-title font-semibold text-emerald-900">{kpis.healthy}</div>
         </div>
         <div className="rounded-sm border border-amber-200 bg-amber-50 p-3">
           <div className="text-[11px] font-semibold uppercase text-amber-900">Pending</div>
-          <div className="text-2xl font-semibold text-amber-950">{kpis.pending}</div>
+          <div className="text-page-title font-semibold text-amber-950">{kpis.pending}</div>
         </div>
         <div className="rounded-sm border border-amber-200 bg-amber-50 p-3">
           <div className="text-[11px] font-semibold uppercase text-amber-900">Failed (retrying)</div>
-          <div className="text-2xl font-semibold text-amber-950">{kpis.failedRetry}</div>
+          <div className="text-page-title font-semibold text-amber-950">{kpis.failedRetry}</div>
         </div>
         <div className="rounded-sm border border-red-200 bg-red-50 p-3">
           <div className="flex items-center gap-2 text-[11px] font-semibold uppercase text-red-900">
@@ -245,7 +245,7 @@ export function QBOSyncStatusDashboardPage() {
               <span className="rounded-sm bg-red-600 px-1.5 py-0.5 text-xs font-bold text-white">needs attention</span>
             ) : null}
           </div>
-          <div className="text-2xl font-semibold text-red-900">{kpis.dead}</div>
+          <div className="text-page-title font-semibold text-red-900">{kpis.dead}</div>
         </div>
       </div>
 
@@ -278,7 +278,7 @@ export function QBOSyncStatusDashboardPage() {
         <label className="text-xs text-gray-600">
           Status
           <SelectCombobox
-            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2 text-xs"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
@@ -294,7 +294,7 @@ export function QBOSyncStatusDashboardPage() {
         <label className="text-xs text-gray-600">
           Kind
           <input
-            className="mt-1 block h-9 w-40 rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 block h-9 w-40 rounded-sm border border-gray-300 px-2 text-xs"
             value={kind}
             onChange={(e) => setKind(e.target.value)}
             placeholder="customer_sync…"
@@ -303,7 +303,7 @@ export function QBOSyncStatusDashboardPage() {
         <label className="text-xs text-gray-600">
           Time range
           <SelectCombobox
-            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2 text-xs"
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value as typeof timeRange)}
           >
@@ -316,7 +316,7 @@ export function QBOSyncStatusDashboardPage() {
         <label className="text-xs text-gray-600">
           Search
           <input
-            className="mt-1 block h-9 w-48 rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 block h-9 w-48 rounded-sm border border-gray-300 px-2 text-xs"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="error text…"
@@ -353,7 +353,7 @@ export function QBOSyncStatusDashboardPage() {
         />
 
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
-          <div className="text-sm font-semibold">Recent alerts (24h)</div>
+          <div className="text-xs font-semibold">Recent alerts (24h)</div>
           {alertsQuery.isError ? (
             <ReportBlockVPendingBanner error={alertsQuery.error} onRetry={() => void alertsQuery.refetch()} />
           ) : (

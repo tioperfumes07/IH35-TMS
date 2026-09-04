@@ -33,7 +33,7 @@ function ObligationBlock({ ob }: { ob: RevenueObligation }) {
   return (
     <div className="rounded-sm border border-gray-200">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2">
-        <div className="text-sm font-medium text-gray-800">
+        <div className="text-xs font-medium text-gray-800">
           #{ob.obligation_number} · {ob.description}
           <span className="ml-2 text-xs text-gray-500">({titleize(ob.recognition_method)})</span>
         </div>
@@ -90,15 +90,15 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[88vh] flex flex-col" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">{detail.description}</h2>
+            <h2 className="text-xs font-semibold text-gray-900">{detail.description}</h2>
             <p className="text-xs text-gray-500 mt-0.5">
               {detail.contract_number ? `#${detail.contract_number} · ` : ""}{titleize(detail.source_type)} · {fmtDate(detail.contract_date)}
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none ml-4">×</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-page-title leading-none ml-4">×</button>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 mb-3 text-sm">
+        <div className="grid grid-cols-3 gap-3 mb-3 text-xs">
           <div><div className="text-xs text-gray-500">Transaction price</div><div className="tabular-nums">{fmtCents(detail.transaction_price_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Recognized to date</div><div className="tabular-nums text-slate-700">{fmtCents(detail.recognized_to_date_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Deferred balance</div><div className="tabular-nums font-semibold">{fmtCents(detail.deferred_balance_cents)}</div></div>
@@ -146,7 +146,7 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
 
         <div className="overflow-y-auto flex-1 space-y-3">
           {detail.obligations.length === 0 ? (
-            <p className="py-4 text-center text-sm text-gray-400">No performance obligations on this contract.</p>
+            <p className="py-4 text-center text-xs text-gray-400">No performance obligations on this contract.</p>
           ) : detail.obligations.map((ob) => <ObligationBlock key={ob.id} ob={ob} />)}
         </div>
       </div>
@@ -219,7 +219,7 @@ function LeakagePanel({ operatingCompanyId }: { operatingCompanyId: string }) {
   return (
     <div className="mb-4 space-y-2" data-testid="revenue-leakage-panel">
       <div>
-        <h3 className="text-sm font-semibold text-gray-900">ASC 606 leakage / unbilled</h3>
+        <h3 className="text-xs font-semibold text-gray-900">ASC 606 leakage / unbilled</h3>
         <p className="text-xs text-gray-500">
           Delivered (or later) loads missing the earn latch, or earn posted without the bill event. Read-only — no GL posts from this surface.
         </p>
@@ -237,19 +237,19 @@ function LeakagePanel({ operatingCompanyId }: { operatingCompanyId: string }) {
             <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4" data-testid="revenue-leakage-kpis">
               <div>
                 <div className="text-gray-500">Delivered+</div>
-                <div className="text-base font-semibold tabular-nums">{s.delivered_like_count}</div>
+                <div className="text-xs font-semibold tabular-nums">{s.delivered_like_count}</div>
               </div>
               <div>
                 <div className="text-gray-500">Missing earn</div>
-                <div className="text-base font-semibold tabular-nums text-slate-700">{s.missing_earn_count}</div>
+                <div className="text-xs font-semibold tabular-nums text-slate-700">{s.missing_earn_count}</div>
               </div>
               <div>
                 <div className="text-gray-500">Earn w/o bill</div>
-                <div className="text-base font-semibold tabular-nums text-slate-700">{s.earn_missing_bill_count}</div>
+                <div className="text-xs font-semibold tabular-nums text-slate-700">{s.earn_missing_bill_count}</div>
               </div>
               <div>
                 <div className="text-gray-500">Unbilled open</div>
-                <div className="text-base font-semibold tabular-nums">{fmtCents(s.unbilled_open_cents)}</div>
+                <div className="text-xs font-semibold tabular-nums">{fmtCents(s.unbilled_open_cents)}</div>
               </div>
             </div>
           ) : null}
@@ -397,7 +397,7 @@ export function RevenueRecognitionPage() {
     return (
       <AccountingSubNavWrapper title="Revenue Recognition" subtitle="Deferred revenue schedules and recognition rules">
         {operatingCompanyId ? <LeakagePanel operatingCompanyId={operatingCompanyId} /> : null}
-        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-xs text-gray-500">
           Revenue recognition contract schedules are not yet enabled for this account.
           <p className="mt-1 text-xs text-gray-400">Contract schedules are turned on per operating company and aren’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable them. Leakage / unbilled tracking above stays available.</p>
         </div>
@@ -434,7 +434,7 @@ export function RevenueRecognitionPage() {
       )}
 
       {total > limit && (
-        <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
+        <div className="flex items-center justify-between mt-3 text-xs text-gray-600">
           <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0}
             className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
           <span>{offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}</span>

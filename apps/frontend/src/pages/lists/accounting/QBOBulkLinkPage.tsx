@@ -167,15 +167,15 @@ export function QBOBulkLinkPage() {
   return (
     <div className="space-y-4">
       <BackArrowHeader backTo="/lists" breadcrumb={["Lists", "Accounting", "QBO bulk-link"]} title="QBO vendor / class bulk-link" />
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {companyId && !qboAvailable ? (
-        <p className="rounded-sm border border-slate-200 bg-white p-4 text-sm text-slate-600" data-testid="qbo-bulk-link-transp-only">
+        <p className="rounded-sm border border-slate-200 bg-white p-4 text-xs text-slate-600" data-testid="qbo-bulk-link-transp-only">
           QBO bulk-link is available for TRANSP only. USMCA and Trucking are TMS-native and do not use a QuickBooks vendor/class mirror.
         </p>
       ) : null}
 
       {qboAvailable && step === 1 ? (
-        <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4 text-sm">
+        <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4 text-xs">
           <p className="text-gray-600">Link drivers and fleet assets to existing QuickBooks Online vendors and classes (snapshot archive).</p>
           <div className="space-y-2">
             <label className="flex items-center gap-2">
@@ -204,7 +204,7 @@ export function QBOBulkLinkPage() {
 
       {qboAvailable && step === 2 ? (
         <div className="space-y-3">
-          {unlinkedQuery.isLoading ? <p className="text-sm text-gray-500">Loading suggestions…</p> : null}
+          {unlinkedQuery.isLoading ? <p className="text-xs text-gray-500">Loading suggestions…</p> : null}
           {unlinkedQuery.isError ? (
             <ListErrorState
               title="Could not load unlinked entities."
@@ -270,7 +270,7 @@ export function QBOBulkLinkPage() {
       ) : null}
 
       {qboAvailable && step === 3 ? (
-        <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4 text-sm">
+        <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4 text-xs">
           <div>
             Summary: <strong>{rows.filter((r) => r.accept && r.entity_kind === "driver").length}</strong> drivers,{" "}
             <strong>{rows.filter((r) => r.accept && r.entity_kind !== "driver").length}</strong> fleet rows accepted for link.

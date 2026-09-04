@@ -245,7 +245,7 @@ export function LaneProfitabilityPage() {
             <div className="grid md:grid-cols-3 md:divide-x md:divide-slate-100">
               <div className="border-t border-slate-100 px-4 py-3 first:border-t-0 md:border-t-0">
                 <div className="text-xs uppercase text-slate-500">Total loads</div>
-                <div className="text-2xl font-semibold text-slate-900">{query.data.totals.load_count}</div>
+                <div className="text-page-title font-semibold text-slate-900">{query.data.totals.load_count}</div>
               </div>
               <div className="border-t border-slate-100 bg-emerald-50 px-4 py-3 md:border-t-0">
                 <div className="text-xs uppercase text-emerald-800">Most profitable lane</div>

@@ -79,7 +79,7 @@ export function ChartOfAccountsSyncPanel({ operatingCompanyId, showDriftFilter, 
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/30 px-4 py-3 text-sm">
+    <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/30 px-4 py-3 text-xs">
       <div className="font-medium">QBO Chart of Accounts</div>
       {statusQuery.isLoading ? (
         <span className="text-muted-foreground">Loading sync status…</span>

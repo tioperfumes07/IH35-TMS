@@ -219,15 +219,15 @@ export function BalanceSheetPage() {
         <div className="grid gap-2 md:grid-cols-3">
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
             <div className="text-[11px] font-semibold uppercase text-gray-500">Assets</div>
-            <div className="text-lg font-semibold">{money(query.data.assets.total)}</div>
+            <div className="text-page-title font-semibold">{money(query.data.assets.total)}</div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
             <div className="text-[11px] font-semibold uppercase text-gray-500">Liabilities + equity</div>
-            <div className="text-lg font-semibold">{money(query.data.total_liabilities_and_equity)}</div>
+            <div className="text-page-title font-semibold">{money(query.data.total_liabilities_and_equity)}</div>
           </div>
           <div className={`rounded-sm border bg-white px-3 py-2 ${query.data.balanced ? "border-gray-200" : "border-2 border-[#dc2626]"}`}>
             <div className="text-[11px] font-semibold uppercase text-gray-500">Balance check</div>
-            <div className={`text-lg font-semibold ${query.data.balanced ? "text-[#1f2a44]" : "text-[#dc2626]"}`}>
+            <div className={`text-page-title font-semibold ${query.data.balanced ? "text-[#1f2a44]" : "text-[#dc2626]"}`}>
               {query.data.balanced ? "Balanced" : "Out of balance"}
             </div>
           </div>

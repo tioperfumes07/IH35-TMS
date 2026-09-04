@@ -170,7 +170,7 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
         ) : null}
         <div className="col-span-2 border-t border-gray-200 pt-2">
           <div className="text-xs font-semibold text-gray-500">Net pay</div>
-          <div className={`text-base font-bold ${settlement.net_pay >= 0 ? "text-green-700" : "text-red-700"}`}>
+          <div className={`text-xs font-bold ${settlement.net_pay >= 0 ? "text-green-700" : "text-red-700"}`}>
             {formatMoneyDollars(settlement.net_pay, currencyCode)}
           </div>
         </div>

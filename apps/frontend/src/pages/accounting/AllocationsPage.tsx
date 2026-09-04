@@ -41,8 +41,8 @@ function ReallocatePanel({
         onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-start justify-between">
-          <h2 className="text-base font-semibold text-gray-900">Re-allocate bill</h2>
-          <button onClick={onClose} className="text-xl leading-none text-gray-400 hover:text-gray-600">
+          <h2 className="text-xs font-semibold text-gray-900">Re-allocate bill</h2>
+          <button onClick={onClose} className="text-page-title leading-none text-gray-400 hover:text-gray-600">
             ×
           </button>
         </div>
@@ -58,7 +58,7 @@ function ReallocatePanel({
               onSaved();
               onClose();
             }}
-            className="rounded-sm border border-gray-300 px-4 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+            className="rounded-sm border border-gray-300 px-4 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
           >
             Done
           </button>
@@ -245,7 +245,7 @@ export function AllocationsPage() {
         />
       ) : null}
 
-      {isError ? <p className="py-2 text-center text-sm text-red-600">Failed to load allocations.</p> : null}
+      {isError ? <p className="py-2 text-center text-xs text-red-600">Failed to load allocations.</p> : null}
 
       <ParityTable
         columns={columns}
@@ -262,7 +262,7 @@ export function AllocationsPage() {
       />
 
       {total > limit && (
-        <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
+        <div className="mt-3 flex items-center justify-between text-xs text-gray-600">
           <button
             onClick={() => setOffset(Math.max(0, offset - limit))}
             disabled={offset === 0}

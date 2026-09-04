@@ -480,7 +480,7 @@ export function DefaultHome({ auth }: Props) {
             >
               <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">{item.label}</div>
               <div
-                className={`text-base font-semibold ${
+                className={`text-xs font-semibold ${
                   item.alert === "crit"
                     ? "text-crit"
                     : item.alert === "warn"

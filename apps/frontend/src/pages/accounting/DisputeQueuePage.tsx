@@ -116,7 +116,7 @@ function DecideModal({
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true">
       <div className="w-full max-w-lg space-y-3 rounded-sm border border-gray-200 bg-white p-4 shadow-lg">
-        <h2 className="text-base font-semibold text-gray-900">Decide dispute</h2>
+        <h2 className="text-xs font-semibold text-gray-900">Decide dispute</h2>
         <p className="text-xs text-gray-600">
           <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> ·{" "}
           <EntityLink kind="settlement" id={row.settlement_id} label={entityLabel(row.settlement_display_id, row.settlement_id, "Settlement")} /> · claimed{" "}
@@ -153,7 +153,7 @@ function DecideModal({
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
         </label>
-        {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
+        {formError ? <p className="text-xs text-red-600">{formError}</p> : null}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={mutation.isPending}>
             Cancel
@@ -301,7 +301,7 @@ export function DisputeQueuePage() {
   if (!companyId) {
     return (
       <AccountingSubNavWrapper title="Settlement dispute queue" subtitle="Office workflows for P6 settlement disputes">
-        <p className="text-sm text-red-600">Select operating company.</p>
+        <p className="text-xs text-red-600">Select operating company.</p>
       </AccountingSubNavWrapper>
     );
   }
@@ -354,7 +354,7 @@ export function DisputeQueuePage() {
         ) : null}
       </div>
 
-      {actionError ? <p className="text-sm text-red-600">{actionError}</p> : null}
+      {actionError ? <p className="text-xs text-red-600">{actionError}</p> : null}
 
       <ParityTable
         columns={columns}

@@ -56,16 +56,16 @@ function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId:
   return (
     <ParityDrawer open title="Receipt detail" subtitle="Linked expense or bill" onClose={onClose} size="wide">
         {isLoading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-xs text-gray-500">Loading…</p>
         ) : isError ? (
           <ListErrorBanner
             message="Failed to load receipt."
             onRetry={() => void detailQuery.refetch()}
           />
         ) : !data ? (
-          <p className="text-sm text-red-600">Failed to load receipt.</p>
+          <p className="text-xs text-red-600">Failed to load receipt.</p>
         ) : (
-          <div className="space-y-3 text-sm">
+          <div className="space-y-3 text-xs">
             <div className="flex gap-2"><span className="text-gray-500 w-28 shrink-0">Filename</span><span className="font-medium truncate">{data.filename}</span></div>
             <div className="flex gap-2"><span className="text-gray-500 w-28 shrink-0">Type</span><span>{data.content_type}</span></div>
             <div className="flex gap-2"><span className="text-gray-500 w-28 shrink-0">Size</span><span>{fmtBytes(data.size_bytes)}</span></div>
@@ -84,7 +84,7 @@ function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId:
             <div className="flex gap-2"><span className="text-gray-500 w-28 shrink-0">Date</span><span>{fmtDate(data.source.date)}</span></div>
             <hr />
             <a href={data.download_url} target="_blank" rel="noreferrer"
-              className="inline-block rounded-sm bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+              className="inline-block rounded-sm bg-slate-700 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800">
               Download Receipt ↗
             </a>
           </div>
@@ -201,7 +201,7 @@ export function ReceiptsPage() {
               setSearch(e.target.value);
               setOffset(0);
             }}
-            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-3 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-3 text-xs focus:outline-hidden focus:ring-1 focus:ring-slate-500"
           />
         }
       >
@@ -251,7 +251,7 @@ export function ReceiptsPage() {
       ) : null}
 
       {!isError && total > limit && (
-        <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
+        <div className="flex items-center justify-between mt-3 text-xs text-gray-600">
           <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0}
             className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
           <span>{offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}</span>

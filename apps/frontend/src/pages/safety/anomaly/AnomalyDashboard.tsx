@@ -87,7 +87,7 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
   return (
     <div className="space-y-3 p-3" data-testid="anomaly-dashboard">
       <div className="flex items-center gap-2">
-        <h1 className="text-lg font-semibold">Anomaly Alerts</h1>
+        <h1 className="text-page-title font-semibold">Anomaly Alerts</h1>
         <label htmlFor="anomaly-severity-filter" className="sr-only">Severity</label>
         <Combobox
           id="anomaly-severity-filter"

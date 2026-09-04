@@ -285,7 +285,7 @@ export function JournalEntryDetailPage() {
   // nav, then loaded correctly on reload). isPending is the version-correct check: true whenever there
   // is no data yet, whether disabled-and-never-fetched or actively fetching — do not revert to isLoading.
   if (detailQuery.isPending) {
-    return <div className="text-sm text-gray-500">Loading journal entry...</div>;
+    return <div className="text-xs text-gray-500">Loading journal entry...</div>;
   }
   if (detailQuery.isError) {
     return (
@@ -298,7 +298,7 @@ export function JournalEntryDetailPage() {
     );
   }
   if (!detailQuery.data) {
-    return <div className="text-sm text-red-600">Journal entry not found.</div>;
+    return <div className="text-xs text-red-600">Journal entry not found.</div>;
   }
 
   const entry = detailQuery.data;
@@ -350,11 +350,11 @@ export function JournalEntryDetailPage() {
       <DataPanel title="Entry Header">
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Date</span>
-          <span className="text-sm text-gray-900">{formatDateUS(entry.entry_date)}</span>
+          <span className="text-xs text-gray-900">{formatDateUS(entry.entry_date)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Journal entry type</span>
-          <span className="text-sm text-gray-900">
+          <span className="text-xs text-gray-900">
             {entry.journal_entry_type_name || entry.journal_entry_type_code ? (
               <Link
                 to="/lists/accounting/journal-entry-types"
@@ -373,24 +373,24 @@ export function JournalEntryDetailPage() {
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Source</span>
-          <span className="text-sm text-gray-900">{entry.source}</span>
+          <span className="text-xs text-gray-900">{entry.source}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Status</span>
-          <span className="text-sm text-gray-900">{entry.status}</span>
+          <span className="text-xs text-gray-900">{entry.status}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Memo</span>
-          <span className="text-sm text-gray-900">{humanMemo(entry.memo)}</span>
+          <span className="text-xs text-gray-900">{humanMemo(entry.memo)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">QBO Link</span>
-          <span className="text-sm text-gray-900">{entry.qbo_journal_entry_id || "Not linked"}</span>
+          <span className="text-xs text-gray-900">{entry.qbo_journal_entry_id || "Not linked"}</span>
         </DataPanelRow>
         {entry.matched_bank_transaction_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Bank transaction</span>
-            <span className="text-sm text-gray-900" data-testid="journal-entry-matched-bank">
+            <span className="text-xs text-gray-900" data-testid="journal-entry-matched-bank">
               <EntityLink
                 kind="bank_transaction"
                 id={entry.matched_bank_transaction_id}
@@ -403,11 +403,11 @@ export function JournalEntryDetailPage() {
 
       <DataPanel title="Source links">
         {sourceLinksQuery.isError ? (
-          <p className="text-sm text-red-600">Could not load source links.</p>
+          <p className="text-xs text-red-600">Could not load source links.</p>
         ) : sourceRows.length === 0 ? (
-          <p className="text-sm text-gray-500">No source transactions linked to this journal entry.</p>
+          <p className="text-xs text-gray-500">No source transactions linked to this journal entry.</p>
         ) : (
-          <ul className="space-y-1 text-sm text-gray-900" data-testid="journal-entry-source-links">
+          <ul className="space-y-1 text-xs text-gray-900" data-testid="journal-entry-source-links">
             {sourceRows.map((row) => (
               <li key={row.key} className="flex items-center gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{row.type}</span>

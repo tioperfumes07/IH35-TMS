@@ -30,7 +30,7 @@ export function FinanceProjectionsPage() {
 
   const header = (
     <div className="mb-4">
-      <h1 className="text-lg font-semibold text-slate-800">Projections</h1>
+      <h1 className="text-page-title font-semibold text-slate-800">Projections</h1>
       <p className="text-xs text-slate-500">
         Period-by-period estimate vs. actual for the company's currently active scenario.
       </p>
@@ -114,7 +114,7 @@ export function FinanceProjectionsPage() {
           <div className="rounded-sm border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-semibold text-slate-800">{detailQuery.data.scenario.name}</h2>
+                <h2 className="text-xs font-semibold text-slate-800">{detailQuery.data.scenario.name}</h2>
                 <p className="text-xs text-slate-500">
                   {detailQuery.data.scenario.period_basis} · {detailQuery.data.scenario.period_count} periods
                 </p>

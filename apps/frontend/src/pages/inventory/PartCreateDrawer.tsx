@@ -103,7 +103,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative flex h-full w-full max-w-lg flex-col bg-white shadow-xl overflow-y-auto">
         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-          <h2 className="text-lg font-semibold">+ Create part</h2>
+          <h2 className="text-page-title font-semibold">+ Create part</h2>
           <button onClick={onClose} className="rounded-sm p-1 hover:bg-gray-100">
             <X className="h-5 w-5" />
           </button>

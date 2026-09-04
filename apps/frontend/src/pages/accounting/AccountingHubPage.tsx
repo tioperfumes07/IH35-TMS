@@ -137,7 +137,7 @@ function kpiCard(label: string, value: string, sublabel: string, tone: "neutral"
   return (
     <div className={`rounded-sm border border-gray-200 bg-white px-3 py-2 ${toneClass}`}>
       <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
-      <p className="text-lg font-semibold text-gray-900">{value}</p>
+      <p className="text-page-title font-semibold text-gray-900">{value}</p>
       <p className="text-xs text-gray-500">{sublabel}</p>
     </div>
   );
@@ -157,7 +157,7 @@ function homePanel(title: string, rows: AmountRow[], empty: string, actionHref?:
       {rows.length ? (
         <ul>
           {rows.map((row) => (
-            <li key={row.key} className="flex items-start justify-between border-b border-gray-100 px-3 py-1.5 text-sm last:border-b-0">
+            <li key={row.key} className="flex items-start justify-between border-b border-gray-100 px-3 py-1.5 text-xs last:border-b-0">
               <span className="truncate text-gray-800">{row.left}</span>
               <span className="text-right">
                 <span className={`tabular-nums ${row.muted ? "text-gray-500" : "text-gray-900"}`}>{row.right}</span>
@@ -167,7 +167,7 @@ function homePanel(title: string, rows: AmountRow[], empty: string, actionHref?:
           ))}
         </ul>
       ) : (
-        <p className="px-3 py-4 text-sm text-gray-500">{empty}</p>
+        <p className="px-3 py-4 text-xs text-gray-500">{empty}</p>
       )}
     </section>
   );
@@ -445,7 +445,7 @@ export function AccountingHubPage() {
         </Button>
       }
     >
-      {!companyId ? <p className="text-sm text-slate-700">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-slate-700">Select an operating company.</p> : null}
       <div className="grid gap-2 lg:grid-cols-3">
         {homePanel("Settlements", settlementsRows, settlementsQ.isLoading ? "Loading…" : "No settlements found.", "/driver-finance/settlements", "View all")}
         {homePanel(

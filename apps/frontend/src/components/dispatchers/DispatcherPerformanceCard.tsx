@@ -41,19 +41,19 @@ export function DispatcherPerformanceCard({ dispatcherId, operatingCompanyId }: 
       <h3 className="text-xs font-medium text-gray-700 mb-3">Booking Gap (Last 30 Days)</h3>
       <div className="grid grid-cols-3 gap-3">
         <div className="text-center">
-          <div className="text-2xl font-bold text-gray-900">
+          <div className="text-page-title font-bold text-gray-900">
             {data.avg_gap_hours?.toFixed(1) ?? "—"}
           </div>
           <div className="text-xs text-gray-500">Avg hours</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-gray-900">
+          <div className="text-page-title font-bold text-gray-900">
             {data.p50_gap_hours?.toFixed(1) ?? "—"}
           </div>
           <div className="text-xs text-gray-500">P50 hours</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-gray-900">#{data.rank ?? "—"}</div>
+          <div className="text-page-title font-bold text-gray-900">#{data.rank ?? "—"}</div>
           <div className="text-xs text-gray-500">Rank</div>
         </div>
       </div>

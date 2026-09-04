@@ -30,7 +30,7 @@ export function FlatFieldGrid({ fields, columns = 3, className = "" }: Props) {
           }
         >
           <div className="text-xs uppercase tracking-wide text-gray-500">{field.label}</div>
-          <div className="text-base font-medium text-gray-900">{field.value ?? "—"}</div>
+          <div className="text-xs font-medium text-gray-900">{field.value ?? "—"}</div>
         </div>
       ))}
     </div>

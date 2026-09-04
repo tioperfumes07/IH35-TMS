@@ -206,7 +206,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
                 ["Total rows", s.total, "text-slate-900"],
               ] as const).map(([label, n, cls]) => (
                 <div key={label} className="rounded-sm border border-gray-200 p-2">
-                  <div className={`text-lg font-semibold ${cls}`}>{n}</div>
+                  <div className={`text-page-title font-semibold ${cls}`}>{n}</div>
                   <div className="text-[11px] text-slate-500">{label}</div>
                 </div>
               ))}

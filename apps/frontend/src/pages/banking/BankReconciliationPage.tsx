@@ -281,17 +281,17 @@ export function BankReconciliationPage() {
         >
           <div>
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Beginning balance</div>
-            <div className="text-sm font-semibold text-gray-900">{money(balanceHeader.beginningCents)}</div>
+            <div className="text-xs font-semibold text-gray-900">{money(balanceHeader.beginningCents)}</div>
           </div>
           <div>
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Ending balance</div>
-            <div className="text-sm font-semibold text-gray-900">
+            <div className="text-xs font-semibold text-gray-900">
               {balanceHeader.endingCents != null ? money(balanceHeader.endingCents) : "—"}
             </div>
           </div>
           <div>
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Last reconciled</div>
-            <div className="text-sm font-semibold text-gray-900">
+            <div className="text-xs font-semibold text-gray-900">
               {formatReconciledDate(balanceHeader.lastReconciledAt)}
             </div>
           </div>
@@ -299,7 +299,7 @@ export function BankReconciliationPage() {
       ) : null}
 
       <div className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-6">
-        <SelectCombobox value={accountId} onChange={(event) => setAccountId(event.target.value)} className="text-sm">
+        <SelectCombobox value={accountId} onChange={(event) => setAccountId(event.target.value)} className="text-xs">
           <option value="">Select bank account</option>
           {(reconAccountOptions).map((account) => (
             <option key={account.id} value={account.id}>
@@ -335,7 +335,7 @@ export function BankReconciliationPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <div className="mb-2 text-sm font-semibold text-gray-900">Bank transactions worklist</div>
+          <div className="mb-2 text-xs font-semibold text-gray-900">Bank transactions worklist</div>
           {accountId ? (
             <div className="mb-3">
               <StatementUpload
@@ -399,7 +399,7 @@ export function BankReconciliationPage() {
 
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-semibold text-gray-900">Selected transaction actions</div>
+            <div className="mb-2 text-xs font-semibold text-gray-900">Selected transaction actions</div>
             {!selectedRow ? <div className="text-xs text-gray-500">Select a transaction from the worklist.</div> : null}
             {selectedRow ? (
               <div className="space-y-2">
@@ -452,7 +452,7 @@ export function BankReconciliationPage() {
                       setManualLedgerKind(event.target.value as typeof manualLedgerKind);
                       setManualLedgerId("");
                     }}
-                    className="text-sm"
+                    className="text-xs"
                   >
                     <option value="payment">payment</option>
                     <option value="bill_payment">bill_payment</option>
@@ -495,7 +495,7 @@ export function BankReconciliationPage() {
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-semibold text-gray-900">Variance-resolved entries (Q8)</div>
+            <div className="mb-2 text-xs font-semibold text-gray-900">Variance-resolved entries (Q8)</div>
             <div className="max-h-[180px] space-y-1 overflow-auto">
               {(worklistQuery.data?.variance_resolved_entries ?? []).map((entry) => (
                 <div key={entry.journal_entry_id} className="rounded-sm border border-gray-100 px-2 py-1 text-xs text-gray-700">

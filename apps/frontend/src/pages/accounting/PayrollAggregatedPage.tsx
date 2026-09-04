@@ -87,7 +87,7 @@ export function PayrollAggregatedPage() {
     <AccountingSubNavWrapper title="Payroll (aggregated)" subtitle="Option B — driver settlements in TMS + W-2 runs mirrored from QBO Payroll">
       <div data-testid="payroll-aggregated-page" className="contents">
       {aggregatedQuery.isError ? <ListErrorBanner message="Failed to load aggregated payroll view." /> : null}
-      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-3 text-sm">
+      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <span>
           Sync state: <strong>{data?.sync_state ?? "—"}</strong>
         </span>
@@ -101,7 +101,7 @@ export function PayrollAggregatedPage() {
 
       <div className="grid gap-3 lg:grid-cols-2">
         <section className="rounded-sm border border-gray-200 bg-white p-3">
-          <h2 className="mb-2 text-sm font-semibold text-gray-900">Driver settlements (TMS)</h2>
+          <h2 className="mb-2 text-xs font-semibold text-gray-900">Driver settlements (TMS)</h2>
           <ParityTable<AggregatedDriverSettlement>
             columns={SETTLEMENT_COLUMNS}
             rows={data?.driver_settlements ?? []}
@@ -114,7 +114,7 @@ export function PayrollAggregatedPage() {
         </section>
 
         <section className="rounded-sm border border-gray-200 bg-white p-3">
-          <h2 className="mb-2 text-sm font-semibold text-gray-900">QBO Payroll W-2 runs</h2>
+          <h2 className="mb-2 text-xs font-semibold text-gray-900">QBO Payroll W-2 runs</h2>
           <ParityTable<AggregatedQboW2Run>
             columns={W2_RUN_COLUMNS}
             rows={data?.qbo_w2_runs ?? []}

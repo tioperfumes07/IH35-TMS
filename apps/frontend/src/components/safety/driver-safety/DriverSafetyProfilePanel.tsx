@@ -22,7 +22,7 @@ export function DriverSafetyProfilePanel({
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-4">
       <header className="mb-3">
-        <h2 className="text-lg font-semibold text-gray-900">Driver Safety Profile</h2>
+        <h2 className="text-page-title font-semibold text-gray-900">Driver Safety Profile</h2>
         <p className="text-xs text-gray-500">
           <EntityLink kind="driver" id={driverId} label={driverName} /> ({driverCredentialLabel})
         </p>

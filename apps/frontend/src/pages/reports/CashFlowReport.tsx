@@ -78,11 +78,11 @@ export function CashFlowReport() {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-sm border bg-white p-4">
             <div className="text-xs text-slate-600">Operating balance</div>
-            <div className="text-2xl font-semibold">{money(summary.operating_balance_cents)}</div>
+            <div className="text-page-title font-semibold">{money(summary.operating_balance_cents)}</div>
           </div>
           <div className="rounded-sm border bg-white p-4">
             <div className="text-xs text-slate-600">Scoped loads (OCI)</div>
-            <div className="text-2xl font-semibold">{summary.scoped_load_count}</div>
+            <div className="text-page-title font-semibold">{summary.scoped_load_count}</div>
             <div className="text-xs text-slate-500">Company: {selectedCompany?.legal_name ?? "—"}</div>
           </div>
         </div>

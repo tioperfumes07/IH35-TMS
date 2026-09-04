@@ -81,7 +81,7 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F7F8FA] p-4">
       <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-6 shadow-xs">
-        <h1 style={{ fontFamily: typography.fontSerif }} className="text-[22px] font-semibold text-gray-900">
+        <h1 style={{ fontFamily: typography.fontSerif }} className="text-page-title font-semibold text-gray-900">
           IH 35 Office Login
         </h1>
         <p className="mt-2 text-xs text-gray-700">Use your Google account or email and password.</p>

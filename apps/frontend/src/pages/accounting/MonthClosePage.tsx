@@ -153,7 +153,7 @@ export function MonthClosePage() {
       label: "Action",
       render: (row) => (
         <div className="flex flex-wrap items-center gap-2">
-          <Link to={row.href} className="text-sm font-medium text-slate-700 hover:underline">
+          <Link to={row.href} className="text-xs font-medium text-slate-700 hover:underline">
             Open
           </Link>
           {row.canAcknowledge && row.ackItem ? (
@@ -175,10 +175,10 @@ export function MonthClosePage() {
     <AccountingSubNavWrapper title="Month close wizard" subtitle="Review month-end checklist and lock the period only when all required checks are green.">
 
       {!companyId ? (
-        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">Select an operating company before running month close.</p>
+        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">Select an operating company before running month close.</p>
       ) : null}
 
-      <div className="mb-3 flex flex-wrap items-center gap-3 text-sm">
+      <div className="mb-3 flex flex-wrap items-center gap-3 text-xs">
         <Link to="/reports/audit/period-close-history" className="font-medium text-slate-700 hover:underline">
           Period close history
         </Link>
@@ -189,7 +189,7 @@ export function MonthClosePage() {
       <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         <label className="text-xs text-gray-600">
           Period
-          <input type="month" value={period} onChange={(event) => setPeriod(event.target.value)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+          <input type="month" value={period} onChange={(event) => setPeriod(event.target.value)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
         </label>
         <label className="text-xs text-gray-600 md:col-span-2">
           Closing notes (optional)
@@ -197,13 +197,13 @@ export function MonthClosePage() {
             value={closingNotes}
             onChange={(event) => setClosingNotes(event.target.value)}
             placeholder="e.g. month-end review complete, CFO sign-off"
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
         </label>
       </div>
 
       {statusQuery.isError ? (
-        <p className="rounded-sm border border-gray-200 bg-white px-3 py-4 text-sm text-red-600">Failed to load month-close checklist.</p>
+        <p className="rounded-sm border border-gray-200 bg-white px-3 py-4 text-xs text-red-600">Failed to load month-close checklist.</p>
       ) : (
         <ParityTable
           columns={columns}
@@ -216,7 +216,7 @@ export function MonthClosePage() {
       )}
 
       <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white px-3 py-3">
-        <div className="text-sm text-gray-700">
+        <div className="text-xs text-gray-700">
           {statusQuery.data?.period_status
             ? `Period status: ${statusQuery.data.period_status}`
             : "No accounting period found for this month. Create/open the period before locking."}

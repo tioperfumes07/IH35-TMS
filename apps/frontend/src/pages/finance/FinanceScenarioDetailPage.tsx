@@ -62,7 +62,7 @@ export function FinanceScenarioDetailPage() {
           <div className="rounded-sm border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-semibold text-slate-800">{detailQuery.data.scenario.name}</h2>
+                <h2 className="text-xs font-semibold text-slate-800">{detailQuery.data.scenario.name}</h2>
                 <p className="text-xs text-slate-500">
                   {detailQuery.data.scenario.period_basis} · {detailQuery.data.scenario.period_count} periods · starts{" "}
                   {detailQuery.data.scenario.period_start}

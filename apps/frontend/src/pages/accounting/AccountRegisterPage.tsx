@@ -129,7 +129,7 @@ function kpiCard(label: string, value: string, sublabel: string) {
   return (
     <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 border-l-4 border-l-slate-300">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
-      <p className="text-lg font-semibold text-gray-900">{value}</p>
+      <p className="text-page-title font-semibold text-gray-900">{value}</p>
       <p className="text-xs text-gray-500">{sublabel}</p>
     </div>
   );
@@ -573,7 +573,7 @@ export function AccountRegisterPage() {
       </div>
 
       {!accountId ? (
-        <p className="rounded-sm border border-gray-200 bg-white px-3 py-6 text-center text-sm text-gray-500">
+        <p className="rounded-sm border border-gray-200 bg-white px-3 py-6 text-center text-xs text-gray-500">
           Select an account to view its register.
         </p>
       ) : view === "register" && registerQuery.isError ? (

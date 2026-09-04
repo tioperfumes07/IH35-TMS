@@ -275,13 +275,13 @@ export function ItemEditorModal({
   if (!open) return null;
 
   const formChrome = (
-      <div className={`flex flex-col gap-3 text-sm ${embedded ? "" : "max-h-[80vh] overflow-y-auto"}`}>
+      <div className={`flex flex-col gap-3 text-xs ${embedded ? "" : "max-h-[80vh] overflow-y-auto"}`}>
         {/* Basic fields */}
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="text-xs font-semibold text-gray-600">Name *</span>
             <input
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={form.displayName}
               onChange={(e) => set("displayName", e.target.value)}
               autoFocus
@@ -291,7 +291,7 @@ export function ItemEditorModal({
           <label className="block">
             <span className="text-xs font-semibold text-gray-600">SKU / Code *</span>
             <input
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={form.code}
               onChange={(e) => set("code", e.target.value.toUpperCase())}
             />
@@ -303,7 +303,7 @@ export function ItemEditorModal({
           <label className="block">
             <span className="text-xs font-semibold text-gray-600">Item type</span>
             <select
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={form.itemType}
               onChange={(e) => set("itemType", e.target.value)}
             >
@@ -353,7 +353,7 @@ export function ItemEditorModal({
               <label className="block md:col-span-2">
                 <span className="text-xs font-semibold text-gray-600">Description</span>
                 <textarea
-                  className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                  className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                   rows={2}
                   value={form.description}
                   onChange={(e) => set("description", e.target.value)}
@@ -410,7 +410,7 @@ export function ItemEditorModal({
                 <span className="text-xs font-semibold text-gray-600">Purchase description</span>
                 <span className="ml-1 font-normal text-gray-400">(shows on POs / bills / checks)</span>
                 <textarea
-                  className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                  className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                   rows={2}
                   value={form.purchaseDescription}
                   onChange={(e) => set("purchaseDescription", e.target.value)}

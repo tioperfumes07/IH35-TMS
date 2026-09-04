@@ -62,10 +62,10 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
       </p>
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
       {splitQuery.isError ? <ListErrorBanner onRetry={() => void splitQuery.refetch()} /> : null}
-      {query.isLoading || splitQuery.isLoading ? <p className="text-sm text-gray-500">Loading linked bank transactions…</p> : null}
+      {query.isLoading || splitQuery.isLoading ? <p className="text-xs text-gray-500">Loading linked bank transactions…</p> : null}
       {/* Absence only after a successful response — never from a failed/pending fetch. */}
       {query.isSuccess && splitQuery.isSuccess && rows.length === 0 && splitRows.length === 0 ? (
-        <p className="text-sm text-gray-500" data-testid="linked-bank-transactions-empty">
+        <p className="text-xs text-gray-500" data-testid="linked-bank-transactions-empty">
           No bank transactions tagged to this {linkage.kind.replace("_id", "")} yet. Tagging happens on Banking →
           Transactions → Categorize (persisted links only).
         </p>
@@ -78,7 +78,7 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
             return (
               <li
                 key={row.bank_transaction_id}
-                className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"
+                className="flex flex-wrap items-center justify-between gap-2 py-2 text-xs"
               >
                 <div className="min-w-0">
                   <EntityLink
@@ -128,7 +128,7 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
           <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Tagged split lines</p>
           <ul className="divide-y divide-gray-100">
             {splitRows.map((row) => (
-              <li key={row.split_line_id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+              <li key={row.split_line_id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-xs">
                 <div className="min-w-0">
                   <EntityLink
                     kind="bank_transaction"

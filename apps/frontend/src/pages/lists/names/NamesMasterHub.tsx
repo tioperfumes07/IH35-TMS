@@ -215,11 +215,11 @@ export function NamesMasterHub() {
 
       {counts ? (
         <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Customers</div><div className="text-xl font-semibold">{counts.customers}</div></div>
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Vendors</div><div className="text-xl font-semibold">{counts.vendors}</div></div>
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Drivers</div><div className="text-xl font-semibold">{counts.drivers}</div></div>
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Contacts</div><div className="text-xl font-semibold">{counts.contacts}</div></div>
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Total</div><div className="text-xl font-semibold">{counts.total}</div></div>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Customers</div><div className="text-page-title font-semibold">{counts.customers}</div></div>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Vendors</div><div className="text-page-title font-semibold">{counts.vendors}</div></div>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Drivers</div><div className="text-page-title font-semibold">{counts.drivers}</div></div>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Contacts</div><div className="text-page-title font-semibold">{counts.contacts}</div></div>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Total</div><div className="text-page-title font-semibold">{counts.total}</div></div>
         </div>
       ) : null}
 

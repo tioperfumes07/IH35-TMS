@@ -194,7 +194,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
             value={form.code}
             disabled={mode === "edit"}
             onChange={(event) => setForm((v) => ({ ...v, code: event.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
           >
             <option value="">Select source type…</option>
             {POSTING_TEMPLATE_SOURCE_CODES.map((opt) => (
@@ -212,7 +212,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
             data-testid="posting-template-name-input"
             value={form.displayName}
             onChange={(event) => setForm((v) => ({ ...v, displayName: event.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
           {errors.displayName ? <div className="mt-1 text-[11px] text-red-700">{errors.displayName}</div> : null}
         </label>
@@ -222,7 +222,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
           <input
             value={form.description}
             onChange={(event) => setForm((v) => ({ ...v, description: event.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
         </label>
 
@@ -287,7 +287,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
           <input
             value={form.defaultMemo}
             onChange={(event) => setForm((v) => ({ ...v, defaultMemo: event.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
         </label>
 

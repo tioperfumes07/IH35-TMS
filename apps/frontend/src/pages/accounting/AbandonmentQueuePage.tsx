@@ -102,7 +102,7 @@ export function AbandonmentQueuePage() {
     <div className="mx-auto max-w-6xl space-y-3 px-3 py-3">
       <PageHeader title="Abandonment chargebacks" subtitle={subtitle} />
 
-      {!companyId ? <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm">Select a company.</div> : null}
+      {!companyId ? <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs">Select a company.</div> : null}
 
       {!listQuery.isLoading && listQuery.isError ? (
         <ListErrorState

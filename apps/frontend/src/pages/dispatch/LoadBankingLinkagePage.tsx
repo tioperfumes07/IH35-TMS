@@ -29,8 +29,8 @@ export function LoadBankingLinkagePage() {
   if (!id) {
     return (
       <div className="p-4">
-        <p className="text-sm text-gray-600">Missing load id.</p>
-        <Link to="/dispatch?view=loads" className="text-sm text-slate-700 underline">
+        <p className="text-xs text-gray-600">Missing load id.</p>
+        <Link to="/dispatch?view=loads" className="text-xs text-slate-700 underline">
           Open Dispatch loads
         </Link>
       </div>
@@ -67,7 +67,7 @@ export function LoadBankingLinkagePage() {
       {companyId ? (
         <LinkedBankTransactionsPanel companyId={companyId} linkage={{ kind: "load_id", id }} />
       ) : (
-        <p className="text-sm text-gray-500">Select an operating company to load linked bank transactions.</p>
+        <p className="text-xs text-gray-500">Select an operating company to load linked bank transactions.</p>
       )}
     </div>
   );

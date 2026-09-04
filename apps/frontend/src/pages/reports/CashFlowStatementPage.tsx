@@ -224,15 +224,15 @@ export function CashFlowStatementPage() {
         <div className="grid gap-2 md:grid-cols-4">
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
             <div className="text-[11px] font-semibold uppercase text-gray-500">Net cash change</div>
-            <div className="text-lg font-semibold">{money(query.data.net_cash_change)}</div>
+            <div className="text-page-title font-semibold">{money(query.data.net_cash_change)}</div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
             <div className="text-[11px] font-semibold uppercase text-gray-500">Cash at start</div>
-            <div className="text-lg font-semibold">{money(query.data.cash_at_start)}</div>
+            <div className="text-page-title font-semibold">{money(query.data.cash_at_start)}</div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
             <div className="text-[11px] font-semibold uppercase text-gray-500">Cash at end</div>
-            <div className="text-lg font-semibold">{money(query.data.cash_at_end)}</div>
+            <div className="text-page-title font-semibold">{money(query.data.cash_at_end)}</div>
           </div>
           <div
             className={`rounded-sm border bg-white px-3 py-2 ${
@@ -241,7 +241,7 @@ export function CashFlowStatementPage() {
           >
             <div className="text-[11px] font-semibold uppercase text-gray-500">Reconciliation</div>
             <div
-              className={`text-lg font-semibold ${
+              className={`text-page-title font-semibold ${
                 query.data.reconciled && query.data.unclassified_leg_count === 0 ? "text-emerald-700" : "text-amber-700"
               }`}
             >

@@ -71,7 +71,7 @@ export function NotificationRulesPanel({ rules, onCreate, onArchive }: Props) {
   return (
     <div className="space-y-3" data-testid="compliance-rules-panel">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Notification Rules</h3>
+        <h3 className="text-page-title font-semibold">Notification Rules</h3>
         <button type="button" className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs text-white" onClick={onCreate}>
           Create Rule
         </button>

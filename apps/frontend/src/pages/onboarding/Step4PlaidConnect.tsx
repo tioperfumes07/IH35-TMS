@@ -30,7 +30,7 @@ export function Step4PlaidConnect({ companyId, value, disabled, onChange }: Prop
 
   return (
     <div className="space-y-3" data-testid="onboarding-step-plaid">
-      <h2 className="text-base font-semibold text-gray-900">Connect your bank (Plaid)</h2>
+      <h2 className="text-xs font-semibold text-gray-900">Connect your bank (Plaid)</h2>
       <p className="text-xs text-gray-600">
         Link at least one bank account so transactions flow into banking, reconciliation, and cash-flow reports.
       </p>

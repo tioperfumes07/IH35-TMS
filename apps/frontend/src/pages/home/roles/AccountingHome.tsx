@@ -33,10 +33,10 @@ function AgingBucketCard({ title, buckets, accent }: { title: string; buckets: A
 
   return (
     <section className="rounded-sm border border-slate-200 bg-white shadow-xs">
-      <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold" style={{ color: accent }}>
+      <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold" style={{ color: accent }}>
         {title}
       </div>
-      <ul className="divide-y divide-slate-100 text-sm">
+      <ul className="divide-y divide-slate-100 text-xs">
         {rows.map((row) => (
           <li key={row.label} className="flex items-center justify-between px-3 py-2">
             <span className="text-slate-600">{row.label}</span>
@@ -128,7 +128,7 @@ export function AccountingHome({ auth }: Props) {
         subtitle={`AR/AP snapshot and period-close status (${displayName})`}
         actions={
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <button type="button" className="text-sm font-medium text-slate-700 hover:underline" onClick={printLetter}>
+            <button type="button" className="text-xs font-medium text-slate-700 hover:underline" onClick={printLetter}>
               Print this page
             </button>
             <Button variant="secondary" onClick={refresh}>
@@ -139,11 +139,11 @@ export function AccountingHome({ auth }: Props) {
       />
 
       {!companyId ? (
-        <section className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-3 text-sm text-slate-700">
+        <section className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-3 text-xs text-slate-700">
           Select an operating company to load accounting home metrics.
         </section>
       ) : homeQuery.isError ? (
-        <section className="rounded-sm border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-900">
+        <section className="rounded-sm border border-red-200 bg-red-50 px-3 py-3 text-xs text-red-900">
           Failed to load accounting home data. Try refreshing.
         </section>
       ) : null}

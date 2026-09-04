@@ -247,7 +247,7 @@ export function CashFlowOverviewPage() {
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Operating balance</div>
-              <div className="text-xl font-semibold">{money(query.data.current_state.operating_balance_cents)}</div>
+              <div className="text-page-title font-semibold">{money(query.data.current_state.operating_balance_cents)}</div>
               <div className="text-[11px] text-gray-500">Kind = operating (excl. payroll/DIP buckets)</div>
               <MiniSparkline values={kpiSpark} />
             </div>
@@ -255,19 +255,19 @@ export function CashFlowOverviewPage() {
               className={`rounded-sm border bg-white p-3 ${query.data.current_state.dip_balance_cents > 0 && query.data.current_state.dip_balance_cents < DIP_ATTENTION_CENTS ? "border-2 border-[#C9A55F]" : "border-gray-200"}`}
             >
               <div className="text-[11px] font-semibold uppercase text-gray-500">DIP balance</div>
-              <div className="text-xl font-semibold">{money(query.data.current_state.dip_balance_cents)}</div>
+              <div className="text-page-title font-semibold">{money(query.data.current_state.dip_balance_cents)}</div>
               <div className="text-[11px] text-gray-500">Gold border when DIP balance is low</div>
             </div>
             <div
               className={`rounded-sm border bg-white p-3 ${query.data.current_state.payroll_balance_cents < PAYROLL_ALERT_CENTS ? "border-2 border-[#DC3545]" : "border-gray-200"}`}
             >
               <div className="text-[11px] font-semibold uppercase text-gray-500">Payroll balance</div>
-              <div className="text-xl font-semibold">{money(query.data.current_state.payroll_balance_cents)}</div>
+              <div className="text-page-title font-semibold">{money(query.data.current_state.payroll_balance_cents)}</div>
               <div className="text-[11px] text-gray-500">Alert when below {money(PAYROLL_ALERT_CENTS)}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Factoring reserves held</div>
-              <div className="text-xl font-semibold">{money(query.data.current_state.factoring_reserves_held_cents)}</div>
+              <div className="text-page-title font-semibold">{money(query.data.current_state.factoring_reserves_held_cents)}</div>
               <div className="text-[11px] text-gray-500">
                 Funded MTD: {money(query.data.current_state.factoring_advances_funded_mtd_cents)}
               </div>
@@ -333,11 +333,11 @@ export function CashFlowOverviewPage() {
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
                   <div className="text-gray-500">Avg daily inflow</div>
-                  <div className="text-lg font-semibold">{money(query.data.historical.last_30_days_avg_daily_inflow_cents)}</div>
+                  <div className="text-page-title font-semibold">{money(query.data.historical.last_30_days_avg_daily_inflow_cents)}</div>
                 </div>
                 <div>
                   <div className="text-gray-500">Avg daily outflow</div>
-                  <div className="text-lg font-semibold">{money(query.data.historical.last_30_days_avg_daily_outflow_cents)}</div>
+                  <div className="text-page-title font-semibold">{money(query.data.historical.last_30_days_avg_daily_outflow_cents)}</div>
                 </div>
               </div>
             </div>

@@ -164,7 +164,7 @@ export function VoidCancelReasonsListPage() {
         }
       />
 
-      <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-600">
+      <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">
         Controlled reasons for FINANCIAL void/cancel actions (invoices, bills, payments, journal entries,
         settlements, work-order voids). Per entity. A reason marked "Note Required" forces a note when chosen.
       </div>

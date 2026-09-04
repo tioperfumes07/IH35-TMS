@@ -23,7 +23,7 @@ export function SummaryCards({ summary, activeSeverity, onSelect }: Props) {
           className={`rounded-lg border-2 p-4 text-left ${card.className} ${activeSeverity === card.key ? "ring-2 ring-slate-400" : ""}`}
           onClick={() => onSelect(activeSeverity === card.key ? null : card.key)}
         >
-          <div className="text-3xl font-semibold">{card.count}</div>
+          <div className="text-page-title font-semibold">{card.count}</div>
           <div className="text-xs font-medium">{card.label}</div>
         </button>
       ))}

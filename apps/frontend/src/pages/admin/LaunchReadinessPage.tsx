@@ -80,15 +80,15 @@ export function LaunchReadinessPage() {
               <div className="grid gap-2 sm:grid-cols-3">
                 <div>
                   <div className="text-xs uppercase text-gray-500">Applied</div>
-                  <div className="text-lg font-semibold text-gray-900">{data.migrations.applied_count}</div>
+                  <div className="text-page-title font-semibold text-gray-900">{data.migrations.applied_count}</div>
                 </div>
                 <div>
                   <div className="text-xs uppercase text-gray-500">Pending files</div>
-                  <div className="text-lg font-semibold text-gray-900">{data.migrations.pending_count}</div>
+                  <div className="text-page-title font-semibold text-gray-900">{data.migrations.pending_count}</div>
                 </div>
                 <div>
                   <div className="text-xs uppercase text-gray-500">Checksum mismatches</div>
-                  <div className="text-lg font-semibold text-gray-900">{data.migrations.checksum_mismatch_count}</div>
+                  <div className="text-page-title font-semibold text-gray-900">{data.migrations.checksum_mismatch_count}</div>
                 </div>
               </div>
               {data.migrations.pending_filenames.length ? (
@@ -115,7 +115,7 @@ export function LaunchReadinessPage() {
               ).map(([label, value]) => (
                 <div key={label} className="rounded-sm border border-gray-100 bg-white px-3 py-2">
                   <div className="text-xs uppercase text-gray-500">{label}</div>
-                  <div className="text-lg font-semibold text-gray-900">{value}</div>
+                  <div className="text-page-title font-semibold text-gray-900">{value}</div>
                 </div>
               ))}
             </div>

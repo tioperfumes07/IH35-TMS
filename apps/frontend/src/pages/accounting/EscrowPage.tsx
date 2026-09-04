@@ -255,7 +255,7 @@ export function EscrowPage() {
 
       {viewTab === "accounts" ? (
         <>
-          {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+          {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
 
           {accountsQuery.isError ? (
             <div className="rounded-sm border border-slate-200 bg-white">

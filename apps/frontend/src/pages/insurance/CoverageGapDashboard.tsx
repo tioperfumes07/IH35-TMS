@@ -239,15 +239,15 @@ export function CoverageGapDashboard() {
       <section className="grid gap-3 md:grid-cols-3">
         <article className="rounded-sm border border-gray-200 bg-white p-4">
           <p className="text-xs uppercase tracking-wide text-slate-500">Policies expiring in 30 days</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">{summary.expiring30.length}</p>
+          <p className="mt-2 text-page-title font-semibold text-slate-900">{summary.expiring30.length}</p>
         </article>
         <article className="rounded-sm border border-gray-200 bg-white p-4">
           <p className="text-xs uppercase tracking-wide text-slate-500">Policies expiring in 60 days</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">{summary.expiring60.length}</p>
+          <p className="mt-2 text-page-title font-semibold text-slate-900">{summary.expiring60.length}</p>
         </article>
         <article className="rounded-sm border border-gray-200 bg-white p-4">
           <p className="text-xs uppercase tracking-wide text-slate-500">Policies expiring in 90 days</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">{summary.expiring90.length}</p>
+          <p className="mt-2 text-page-title font-semibold text-slate-900">{summary.expiring90.length}</p>
         </article>
       </section>
 

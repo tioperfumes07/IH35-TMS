@@ -57,7 +57,7 @@ export function Step3SamsaraConnect({ companyId, value, disabled, onChange }: Pr
 
   return (
     <div className="space-y-3" data-testid="onboarding-step-samsara">
-      <h2 className="text-base font-semibold text-gray-900">Connect Samsara</h2>
+      <h2 className="text-xs font-semibold text-gray-900">Connect Samsara</h2>
       <p className="text-xs text-gray-600">
         Enter your Samsara API key to pull your initial fleet inventory and enable live telematics.
       </p>

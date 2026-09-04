@@ -300,21 +300,21 @@ export function ARAgingPage() {
       <div className="grid gap-2 md:grid-cols-4">
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
           <div className="text-[11px] font-semibold uppercase text-gray-500">Total open</div>
-          <div className="text-lg font-semibold">{money(kpis.total)}</div>
+          <div className="text-page-title font-semibold">{money(kpis.total)}</div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
           <div className="text-[11px] font-semibold uppercase text-gray-500">0–30 days</div>
-          <div className="text-lg font-semibold">{money(kpis.day0_30)}</div>
+          <div className="text-page-title font-semibold">{money(kpis.day0_30)}</div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
           <div className="text-[11px] font-semibold uppercase text-gray-500">31–60 days</div>
-          <div className="text-lg font-semibold">{money(kpis.day31_60)}</div>
+          <div className="text-page-title font-semibold">{money(kpis.day31_60)}</div>
         </div>
         <div
           className={`rounded-sm border bg-white px-3 py-2 ${kpis.day61p > 1_000_000 ? "border-2 border-[#dc2626]" : "border border-gray-200"}`}
         >
           <div className="text-[11px] font-semibold uppercase text-gray-500">61+ days</div>
-          <div className="text-lg font-semibold">{money(kpis.day61p)}</div>
+          <div className="text-page-title font-semibold">{money(kpis.day61p)}</div>
         </div>
       </div>
 

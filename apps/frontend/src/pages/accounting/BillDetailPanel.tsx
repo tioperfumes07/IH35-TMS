@@ -28,7 +28,7 @@ type Props = {
 
 export function BillDetailPanel({ bill }: Props) {
   if (!bill) {
-    return <p className="text-sm text-gray-500">Select a bill to view details.</p>;
+    return <p className="text-xs text-gray-500">Select a bill to view details.</p>;
   }
 
   const amount = Number(bill.amount_cents ?? 0) / 100;
@@ -36,7 +36,7 @@ export function BillDetailPanel({ bill }: Props) {
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-bill-detail-panel>
-      <h3 className="mb-3 text-sm font-semibold text-gray-900">Bill details</h3>
+      <h3 className="mb-3 text-xs font-semibold text-gray-900">Bill details</h3>
       <FlatFieldGrid
         columns={3}
         fields={[

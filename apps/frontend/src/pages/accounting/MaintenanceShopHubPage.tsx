@@ -155,13 +155,13 @@ export function MaintenanceShopHubPage() {
       actions={
         <Link
           to="/maintenance"
-          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-800 hover:bg-gray-50"
         >
           Open Maintenance module
         </Link>
       }
     >
-      {isError ? <p className="py-2 text-center text-sm text-red-600">Failed to load maintenance shop links.</p> : null}
+      {isError ? <p className="py-2 text-center text-xs text-red-600">Failed to load maintenance shop links.</p> : null}
 
       <ParityTable
         columns={columns}
@@ -178,7 +178,7 @@ export function MaintenanceShopHubPage() {
       />
 
       {total > limit ? (
-        <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
+        <div className="mt-3 flex items-center justify-between text-xs text-gray-600">
           <button
             onClick={() => setOffset(Math.max(0, offset - limit))}
             disabled={offset === 0}

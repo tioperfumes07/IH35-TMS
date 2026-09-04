@@ -122,13 +122,13 @@ export function MultiEntityAccountingPage() {
     <AccountingSubNavWrapper title="Multi-entity accounting" subtitle="Consolidated accounting summary across selected operating companies.">
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="mb-2 text-sm font-semibold text-gray-900">Scope</div>
+        <div className="mb-2 text-xs font-semibold text-gray-900">Scope</div>
         <div className="grid gap-3 md:grid-cols-4">
           <div className="md:col-span-2 space-y-1">
             {sortedCompanies.map((company) => {
               const checked = selectedCompanyIds.includes(company.id);
               return (
-                <label key={company.id} className="flex items-center gap-2 text-sm text-gray-700">
+                <label key={company.id} className="flex items-center gap-2 text-xs text-gray-700">
                   <input
                     type="checkbox"
                     checked={checked}
@@ -176,15 +176,15 @@ export function MultiEntityAccountingPage() {
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs text-gray-500">Revenue</div>
-              <div className="mt-1 text-lg font-semibold text-gray-900">{money(summaryQuery.data.consolidated.revenue_cents)}</div>
+              <div className="mt-1 text-page-title font-semibold text-gray-900">{money(summaryQuery.data.consolidated.revenue_cents)}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs text-gray-500">Expense</div>
-              <div className="mt-1 text-lg font-semibold text-gray-900">{money(summaryQuery.data.consolidated.expense_cents)}</div>
+              <div className="mt-1 text-page-title font-semibold text-gray-900">{money(summaryQuery.data.consolidated.expense_cents)}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs text-gray-500">Net income</div>
-              <div className="mt-1 text-lg font-semibold text-gray-900">{money(summaryQuery.data.consolidated.net_income_cents)}</div>
+              <div className="mt-1 text-page-title font-semibold text-gray-900">{money(summaryQuery.data.consolidated.net_income_cents)}</div>
             </div>
           </div>
 

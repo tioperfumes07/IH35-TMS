@@ -120,7 +120,7 @@ function Row({ label, children }: { label: ReactNode; children: ReactNode }) {
 function Kpi({ n, u }: { n: ReactNode; u: string }) {
   return (
     <div className="my-0.5 flex items-baseline gap-2">
-      <span className="text-[22px] font-bold text-[#1f2a44] tabular-nums">{n}</span>
+      <span className="text-page-title font-bold text-[#1f2a44] tabular-nums">{n}</span>
       <span className="text-xs text-slate-500">{u}</span>
     </div>
   );

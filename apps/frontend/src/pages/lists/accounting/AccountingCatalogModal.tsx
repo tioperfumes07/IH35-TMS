@@ -171,7 +171,7 @@ export function AccountingCatalogModal({
           value={form.code}
           disabled={readOnly || mode === "edit"}
           onChange={(event) => setForm((value) => ({ ...value, code: event.target.value.toUpperCase() }))}
-          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
+          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
         />
         {mode === "edit" ? (
           <span className="mt-1 block text-xs font-normal text-slate-400">Stable identifier — immutable after create.</span>
@@ -186,7 +186,7 @@ export function AccountingCatalogModal({
           value={form.display_name}
           disabled={readOnly}
           onChange={(event) => setForm((value) => ({ ...value, display_name: event.target.value }))}
-          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
+          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
         />
         {errors.display_name ? <div className="mt-1 text-[11px] text-red-700">{errors.display_name}</div> : null}
       </label>
@@ -201,7 +201,7 @@ export function AccountingCatalogModal({
                 value={String(value ?? "")}
                 disabled={readOnly}
                 onChange={(event) => setForm((current) => ({ ...current, metadata: { ...current.metadata, [field.key]: event.target.value } }))}
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
+                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
               >
                 <option value="">Select...</option>
                 {(field.options ?? []).map((option) => (
@@ -230,7 +230,7 @@ export function AccountingCatalogModal({
                   },
                 }))
               }
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
             />
             {errors[`metadata.${field.key}`] ? <div className="mt-1 text-[11px] text-red-700">{errors[`metadata.${field.key}`]}</div> : null}
           </label>
@@ -244,7 +244,7 @@ export function AccountingCatalogModal({
           disabled={readOnly}
           onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))}
           rows={3}
-          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:bg-slate-100"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:bg-slate-100"
         />
       </label>
 
@@ -255,7 +255,7 @@ export function AccountingCatalogModal({
           value={form.sort_order}
           disabled={readOnly}
           onChange={(event) => setForm((value) => ({ ...value, sort_order: Number(event.target.value || 0) }))}
-          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:bg-slate-100"
+          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
         />
         <span className="mt-1 block text-xs font-normal text-slate-400">Dropdown display order (lower = earlier). Defaults to next available.</span>
       </label>

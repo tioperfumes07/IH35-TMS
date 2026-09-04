@@ -40,7 +40,7 @@ export function AccountTile({ tile, selected, onSelect, onView, onInspect }: Pro
           <span className="text-xs text-gray-500">{tile.tile_kind}</span>
         </div>
         <div className="truncate text-xs font-semibold text-gray-900">{tile.display_name}</div>
-        <div className="mt-1 text-sm font-bold tabular-nums text-gray-900">${Number(tile.current_balance ?? 0).toFixed(2)}</div>
+        <div className="mt-1 text-xs font-bold tabular-nums text-gray-900">${Number(tile.current_balance ?? 0).toFixed(2)}</div>
         <div className="mt-1 text-[11px] text-slate-700">Uncat: {Number(tile.uncategorized_count ?? 0)}</div>
       </button>
       <div className="mt-1 flex gap-2 border-t border-gray-100 pt-1">

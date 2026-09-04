@@ -86,7 +86,7 @@ export function CategorizationRulesPage() {
 
   if (!canAccess(auth.user?.role)) {
     return (
-      <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm text-slate-700">
+      <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs text-slate-700">
         Auto-categorization rules are available to Owner/Admin/Accountant roles.
       </div>
     );
@@ -257,7 +257,7 @@ export function CategorizationRulesPage() {
                 </p>
               </div>
             ))}
-            {rules.length === 0 && !rulesQuery.isLoading ? <p className="text-sm text-gray-500">No active rules yet.</p> : null}
+            {rules.length === 0 && !rulesQuery.isLoading ? <p className="text-xs text-gray-500">No active rules yet.</p> : null}
           </div>
         </div>
 
@@ -271,7 +271,7 @@ export function CategorizationRulesPage() {
                 setPattern(event.target.value);
               }}
               placeholder="Pattern (e.g. FOOD_* or TRANSPORTATION.GAS) — required, use * if matching by merchant text only"
-              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
             />
             <div>
               <input
@@ -281,7 +281,7 @@ export function CategorizationRulesPage() {
                   setDescriptionPattern(event.target.value);
                 }}
                 placeholder="Merchant text (optional) — e.g. LOVE'S TRAVEL — beats a wrong Plaid category"
-                className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               />
               <p className="mt-0.5 text-xs text-gray-500">
                 Matches the bank's own description text. Takes priority over the pattern above — set
@@ -294,7 +294,7 @@ export function CategorizationRulesPage() {
               onChange={(event) => setPriority(event.target.value)}
               type="number"
               min={1}
-              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
             />
             <ReferenceSelect
               value={coaAccountId || null}
@@ -347,7 +347,7 @@ export function CategorizationRulesPage() {
               </div>
             ))}
             {(previewQuery.data?.transactions ?? []).length === 0 && !previewQuery.isLoading ? (
-              <p className="text-sm text-gray-500">No transactions available for preview.</p>
+              <p className="text-xs text-gray-500">No transactions available for preview.</p>
             ) : null}
           </div>
         </div>

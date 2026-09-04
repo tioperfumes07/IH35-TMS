@@ -1102,7 +1102,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
               className="rounded border border-gray-200 p-2 text-center"
               style={t.accent ? { borderColor: t.accent } : undefined}
             >
-              <div className="text-lg font-semibold tabular-nums" style={{ color: t.accent ?? "#1F2A44" }}>
+              <div className="text-page-title font-semibold tabular-nums" style={{ color: t.accent ?? "#1F2A44" }}>
                 {t.value}
               </div>
               <div className="text-[11px] uppercase tracking-wide text-slate-500">{t.label}</div>

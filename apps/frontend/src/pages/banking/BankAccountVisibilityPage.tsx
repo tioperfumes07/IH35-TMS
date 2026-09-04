@@ -161,7 +161,7 @@ export function BankAccountVisibilityPage() {
     return (
       <div className="space-y-3">
         <BackArrowHeader backTo="/banking" breadcrumb={["Banking", "Account Visibility"]} title="Bank Account Visibility" />
-        <div className="px-3 py-6 text-sm text-gray-500">Loading…</div>
+        <div className="px-3 py-6 text-xs text-gray-500">Loading…</div>
       </div>
     );
   }
@@ -170,7 +170,7 @@ export function BankAccountVisibilityPage() {
     return (
       <div className="space-y-3">
         <BackArrowHeader backTo="/banking" breadcrumb={["Banking", "Account Visibility"]} title="Bank Account Visibility" />
-        <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-4 text-sm text-slate-700">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-4 text-xs text-slate-700">
           Bank Account Visibility is not yet enabled for this company. (Feature flag{" "}
           <code>{BANK_ACCOUNT_HIDE_FLAG_KEY}</code> is off.)
         </div>
@@ -191,7 +191,7 @@ export function BankAccountVisibilityPage() {
         reversible and audited — the account is never deleted.
       </p>
       {!canManage ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-700">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
           Read-only: only an Owner or Administrator can hide or unhide a bank account.
         </div>
       ) : null}

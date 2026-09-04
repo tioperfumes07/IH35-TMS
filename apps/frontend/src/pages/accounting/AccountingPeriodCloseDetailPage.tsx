@@ -24,9 +24,9 @@ export function AccountingPeriodCloseDetailPage() {
   const companyId = selectedCompanyId ?? "";
   const query = useQuery({ queryKey: ["accounting", "period-close", companyId, fiscalYearId], queryFn: () => getAccountingPeriodClose(fiscalYearId, companyId), enabled: Boolean(companyId && fiscalYearId), retry: false });
   return <AccountingSubNavWrapper title={query.data ? `Fiscal year ${query.data.fiscal_year} close` : "Fiscal-year close"} subtitle="Retained-earnings closing entries linked to this fiscal year">
-    {!companyId ? <p className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm">Select an operating company to view this close.</p> : null}
+    {!companyId ? <p className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs">Select an operating company to view this close.</p> : null}
     {query.isError ? <ListErrorState title="Couldn't load fiscal-year close" status={0} message={query.error instanceof Error ? query.error.message : undefined} onRetry={() => void query.refetch()} /> : null}
-    {query.isPending && companyId ? <p className="text-sm text-slate-500">Loading fiscal-year close…</p> : null}
+    {query.isPending && companyId ? <p className="text-xs text-slate-500">Loading fiscal-year close…</p> : null}
     {query.data ? <ParityTable columns={columns} rows={query.data.entries} rowKey={(row) => row.journal_entry_id} storageKey="accounting-period-close-entries" tableTestId="accounting-period-close-entries-table" emptyText="No closing entries linked to this fiscal year." /> : null}
   </AccountingSubNavWrapper>;
 }

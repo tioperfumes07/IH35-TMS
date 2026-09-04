@@ -235,7 +235,7 @@ export function ReserveDashboard() {
             <div className="text-xs uppercase tracking-wide text-gray-500">
               <EntityLink kind="factor" id={balance.factor_id} label={entityLabel(factorNameById.get(balance.factor_id), balance.factor_id, "Factor")} />
             </div>
-            <div className="mt-1 text-lg font-semibold text-gray-900">{asMoney(balance.balance_cents)}</div>
+            <div className="mt-1 text-page-title font-semibold text-gray-900">{asMoney(balance.balance_cents)}</div>
             <div className="mt-1 text-xs text-gray-600">Last movement: {asDateTime(balance.last_movement_at)}</div>
             <div className="text-xs text-gray-600">Total movements: {balance.movement_count}</div>
           </div>

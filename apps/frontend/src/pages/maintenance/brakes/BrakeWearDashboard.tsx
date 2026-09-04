@@ -91,7 +91,7 @@ export function BrakeWearDashboard() {
     <div className="space-y-4 p-4" data-testid="brake-wear-dashboard">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-gray-900">Brake Wear Predictive Maintenance</h1>
+          <h1 className="text-page-title font-semibold text-gray-900">Brake Wear Predictive Maintenance</h1>
           <p className="text-xs text-gray-600">
             CAP-13 lining projections · DOT minimums 6.4 mm steer · 3.2 mm drive (§393.47)
           </p>

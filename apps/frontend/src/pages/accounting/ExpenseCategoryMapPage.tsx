@@ -208,7 +208,7 @@ export function ExpenseCategoryMapPage() {
       {showAddModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-xl rounded-sm border border-gray-200 bg-white p-4 shadow-lg">
-            <h2 className="text-base font-semibold text-gray-900">Add Expense Category Mapping</h2>
+            <h2 className="text-xs font-semibold text-gray-900">Add Expense Category Mapping</h2>
             {accountsQuery.isError ? (
               <div className="mt-3">
                 <ListErrorBanner
@@ -221,7 +221,7 @@ export function ExpenseCategoryMapPage() {
               <label className="text-xs font-semibold text-gray-600">
                 Category kind
                 <select
-                  className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
                   value={form.category_kind}
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, category_kind: event.target.value as ExpenseCategoryMapKind }))
@@ -238,7 +238,7 @@ export function ExpenseCategoryMapPage() {
               <label className="text-xs font-semibold text-gray-600">
                 Category code
                 <input
-                  className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
                   value={form.category_code}
                   onChange={(event) => setForm((prev) => ({ ...prev, category_code: event.target.value }))}
                   placeholder="ex: DIESEL"

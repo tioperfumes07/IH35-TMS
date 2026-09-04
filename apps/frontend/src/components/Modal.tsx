@@ -267,7 +267,7 @@ export function Modal({
                   aria-label="Back to previous surface"
                   data-testid="modal-drawer-back"
                   onClick={onBack ?? attemptClose}
-                  className="min-h-11 shrink-0 rounded-sm px-2 text-lg text-gray-600 hover:bg-gray-100 sm:min-h-0"
+                  className="min-h-11 shrink-0 rounded-sm px-2 text-page-title text-gray-600 hover:bg-gray-100 sm:min-h-0"
                 >
                   ←
                 </button>

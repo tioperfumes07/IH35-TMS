@@ -356,19 +356,19 @@ export function CustomerProfitabilityPage() {
           <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Revenue</div>
-              <div className="text-lg font-semibold">{money(query.data.totals.revenue_cents)}</div>
+              <div className="text-page-title font-semibold">{money(query.data.totals.revenue_cents)}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Direct cost</div>
-              <div className="text-lg font-semibold">{money(query.data.totals.direct_cost_cents)}</div>
+              <div className="text-page-title font-semibold">{money(query.data.totals.direct_cost_cents)}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Gross margin</div>
-              <div className="text-lg font-semibold">{money(query.data.totals.gross_margin_cents)}</div>
+              <div className="text-page-title font-semibold">{money(query.data.totals.gross_margin_cents)}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Margin %</div>
-              <div className="text-lg font-semibold">{pct(query.data.totals.gross_margin_pct)}</div>
+              <div className="text-page-title font-semibold">{pct(query.data.totals.gross_margin_pct)}</div>
             </div>
           </div>
 

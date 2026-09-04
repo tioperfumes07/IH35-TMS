@@ -35,7 +35,7 @@ export function UndepositedFundsPage() {
   if (rolesQuery.isPending) {
     return (
       <AccountingSubNavWrapper title="Undeposited Funds" subtitle="Customer payments awaiting bank deposit">
-        <p className="text-sm text-gray-600">Loading undeposited funds account…</p>
+        <p className="text-xs text-gray-600">Loading undeposited funds account…</p>
       </AccountingSubNavWrapper>
     );
   }
@@ -47,7 +47,7 @@ export function UndepositedFundsPage() {
   return (
     <AccountingSubNavWrapper title="Undeposited Funds" subtitle="Customer payments awaiting bank deposit">
       {/* §7 palette: no yellow/amber bands in financial UI — slate tokens only. */}
-      <div className="rounded-sm border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-700">
+      <div className="rounded-sm border border-slate-200 bg-slate-100 px-4 py-3 text-xs text-slate-700">
         No undeposited funds account is designated for this entity. Map the{" "}
         <strong>undeposited_funds</strong> role under Accounting → More → CoA roles, then return here.
       </div>

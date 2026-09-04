@@ -211,7 +211,7 @@ export function InvoiceDetailPage() {
   // isFetching, so a disabled query (selectedCompanyId not yet resolved on cold nav) reports
   // isLoading=false and falls through to "not found" for a real record. isPending is correct here —
   // see JournalEntryDetailPage.tsx for the full live-repro writeup. Do not revert to isLoading.
-  if (detailQuery.isPending) return <div className="text-sm text-gray-500">Loading invoice...</div>;
+  if (detailQuery.isPending) return <div className="text-xs text-gray-500">Loading invoice...</div>;
   if (detailQuery.isError)
     return (
       <ListErrorState
@@ -221,7 +221,7 @@ export function InvoiceDetailPage() {
         onRetry={() => void detailQuery.refetch()}
       />
     );
-  if (!invoice) return <div className="text-sm text-red-600">Invoice not found.</div>;
+  if (!invoice) return <div className="text-xs text-red-600">Invoice not found.</div>;
 
   // QBO-parity grid — columns, order, and the inline draft edit/delete actions preserved verbatim
   // from the former hand-rolled table.
@@ -387,7 +387,7 @@ export function InvoiceDetailPage() {
         <DataPanel title="Header">
           <DataPanelRow>
             <span className="text-xs text-gray-600">Customer</span>
-            <span className="text-sm text-gray-900">
+            <span className="text-xs text-gray-900">
               <EntityLink
                 kind="customer"
                 id={invoice.customer_id}
@@ -398,13 +398,13 @@ export function InvoiceDetailPage() {
           {invoice.invoice_type ? (
             <DataPanelRow>
               <span className="text-xs text-gray-600">Invoice type</span>
-              <span className="text-sm text-gray-900">{invoice.invoice_type.replaceAll("_", " ")}</span>
+              <span className="text-xs text-gray-900">{invoice.invoice_type.replaceAll("_", " ")}</span>
             </DataPanelRow>
           ) : null}
           {invoice.bill_to_entity_type && invoice.bill_to_entity_id ? (
             <DataPanelRow>
               <span className="text-xs text-gray-600">Bill-to</span>
-              <span className="text-sm text-gray-900" data-testid="invoice-bill-to-link">
+              <span className="text-xs text-gray-900" data-testid="invoice-bill-to-link">
                 {invoice.bill_to_entity_type === "driver" ? (
                   <EntityLink
                     kind="driver"
@@ -435,19 +435,19 @@ export function InvoiceDetailPage() {
           ) : null}
           <DataPanelRow>
             <span className="text-xs text-gray-600">Status</span>
-            <span className="text-sm font-semibold text-gray-900">{invoice.status}</span>
+            <span className="text-xs font-semibold text-gray-900">{invoice.status}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Issue Date</span>
-            <span className="text-sm text-gray-900">{formatDateUS(invoice.issue_date)}</span>
+            <span className="text-xs text-gray-900">{formatDateUS(invoice.issue_date)}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Due Date</span>
-            <span className="text-sm text-gray-900">{formatDateUS(invoice.due_date)}</span>
+            <span className="text-xs text-gray-900">{formatDateUS(invoice.due_date)}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Source Load</span>
-            <span className="text-sm text-gray-900">
+            <span className="text-xs text-gray-900">
               <EntityLink
                 kind="load"
                 id={invoice.source_load_id ?? undefined}
@@ -463,7 +463,7 @@ export function InvoiceDetailPage() {
             <>
               <DataPanelRow>
                 <span className="text-xs text-gray-600">Load driver</span>
-                <span className="text-sm text-gray-900" data-testid="invoice-source-load-driver">
+                <span className="text-xs text-gray-900" data-testid="invoice-source-load-driver">
                   {sourceLoadQuery.isError ? (
                     <span className="text-red-600">Could not load driver</span>
                   ) : sourceLoadQuery.data?.assigned_primary_driver_id ? (
@@ -483,7 +483,7 @@ export function InvoiceDetailPage() {
               </DataPanelRow>
               <DataPanelRow>
                 <span className="text-xs text-gray-600">Load unit</span>
-                <span className="text-sm text-gray-900" data-testid="invoice-source-load-unit">
+                <span className="text-xs text-gray-900" data-testid="invoice-source-load-unit">
                   {sourceLoadQuery.isError ? (
                     <span className="text-red-600">Could not load unit</span>
                   ) : sourceLoadQuery.data?.assigned_unit_id ? (
@@ -505,7 +505,7 @@ export function InvoiceDetailPage() {
           ) : null}
           <DataPanelRow>
             <span className="text-xs text-gray-600">Journal Entry</span>
-            <span className="text-sm text-gray-900" data-testid="invoice-journal-entry-links">
+            <span className="text-xs text-gray-900" data-testid="invoice-journal-entry-links">
               {lineageQuery.isError ? (
                 <span className="text-red-600">Could not load JE links</span>
               ) : journalEntries.length === 0 ? (
@@ -524,24 +524,24 @@ export function InvoiceDetailPage() {
         <DataPanel title="Totals">
           <DataPanelRow>
             <span className="text-xs text-gray-600">Subtotal</span>
-            <span className="text-sm text-gray-900">{totals.subtotal}</span>
+            <span className="text-xs text-gray-900">{totals.subtotal}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Tax</span>
-            <span className="text-sm text-gray-900">{totals.tax}</span>
+            <span className="text-xs text-gray-900">{totals.tax}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Total</span>
-            <span className="text-sm font-semibold text-gray-900">{totals.total}</span>
+            <span className="text-xs font-semibold text-gray-900">{totals.total}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Open</span>
-            <span className="text-sm text-gray-900">{totals.open}</span>
+            <span className="text-xs text-gray-900">{totals.open}</span>
           </DataPanelRow>
         </DataPanel>
 
         <DataPanel title="Notes">
-          <div className="space-y-2 text-sm text-gray-700">
+          <div className="space-y-2 text-xs text-gray-700">
             <div>
               <div className="text-xs font-semibold text-gray-500">Internal notes</div>
               <div>{invoice.internal_notes || "-"}</div>
@@ -567,7 +567,7 @@ export function InvoiceDetailPage() {
 
       <DataPanel title="GL / Journal entries">
         {(invoice.journal_entries ?? []).length === 0 ? (
-          <div className="text-sm text-gray-600" data-testid="invoice-journal-entries-empty">
+          <div className="text-xs text-gray-600" data-testid="invoice-journal-entries-empty">
             No journal entries linked yet (unposted or posting reversed).
           </div>
         ) : (
@@ -590,7 +590,7 @@ export function InvoiceDetailPage() {
                     label={entityLabel(je.memo, je.journal_entry_id, "Journal entry")}
                   />
                 </span>
-                <span className="text-sm text-gray-900">
+                <span className="text-xs text-gray-900">
                   {je.entry_date ? formatDateUS(je.entry_date) : "—"}
                   {je.status ? ` · ${je.status}` : ""}
                 </span>
@@ -602,7 +602,7 @@ export function InvoiceDetailPage() {
 
       {invoice.factoring_advance_id ? (
         <DataPanel title="Factoring">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="text-gray-700">
               This invoice is part of <EntityLink kind="factoring_advance" id={invoice.factoring_advance_id ?? undefined} label={entityLabel(invoice.factoring_display_id, invoice.factoring_advance_id, "Factoring batch")} />.
               {invoice.factoring_status ? (
@@ -676,7 +676,7 @@ export function InvoiceDetailPage() {
           ) : null}
         </div>
         {lineCount === 0 ? (
-          <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700" data-testid="invoice-lines-honest-empty">
+          <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700" data-testid="invoice-lines-honest-empty">
             <p>{INVOICE_LINES_HONEST_EMPTY}</p>
             {isDraft ? (
               <p className="mt-1 text-xs text-gray-600">Use + Create Line above to add the first line item on this draft invoice.</p>
@@ -700,13 +700,13 @@ export function InvoiceDetailPage() {
 
       <DataPanel title="Payment Applications">
         {(invoice.payment_applications ?? []).length === 0 ? (
-          <div className="text-sm text-gray-600">No payments applied yet.</div>
+          <div className="text-xs text-gray-600">No payments applied yet.</div>
         ) : (
           <div className="space-y-2">
             {(invoice.payment_applications ?? []).map((application) => (
               <DataPanelRow key={application.id}>
                 <span className="text-xs text-gray-600"><EntityLink kind="payment" id={application.payment_id ?? undefined} label={entityLabel(application.payment_display_id, application.payment_id, "Payment")} /></span>
-                <span className="text-sm text-gray-900">
+                <span className="text-xs text-gray-900">
                   {money(application.amount_cents)} · {new Date(application.applied_at).toLocaleString()}
                 </span>
               </DataPanelRow>

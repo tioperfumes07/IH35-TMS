@@ -207,7 +207,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
         {(["company", "unclassified", "canceled"] as RelayDepositClassification[]).map((cls) => (
           <div key={cls} className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="text-xs font-semibold text-gray-600">{CLASS_LABEL[cls]}</div>
-            <div className="mt-1 text-lg font-semibold text-gray-900">{cls === "canceled" ? "—" : usd(settledFor(cls))}</div>
+            <div className="mt-1 text-page-title font-semibold text-gray-900">{cls === "canceled" ? "—" : usd(settledFor(cls))}</div>
             <div className="text-xs text-gray-500">{countFor(cls)} deposit(s)</div>
           </div>
         ))}

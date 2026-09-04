@@ -36,7 +36,7 @@ export function Step5InviteTeam({ value, disabled, onChange }: Props) {
 
   return (
     <div className="space-y-3" data-testid="onboarding-step-team">
-      <h2 className="text-base font-semibold text-gray-900">Invite your team</h2>
+      <h2 className="text-xs font-semibold text-gray-900">Invite your team</h2>
       <p className="text-xs text-gray-600">
         Add teammates by email and assign a role. Invitations are emailed when you save this step.
       </p>

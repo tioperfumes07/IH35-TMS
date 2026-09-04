@@ -22,7 +22,7 @@ export function DriverHosPage() {
   const snap = q.data;
   return (
     <div className="space-y-2">
-      <h2 className="text-base font-semibold">{t("driver.hos_title")}</h2>
+      <h2 className="text-xs font-semibold">{t("driver.hos_title")}</h2>
       <p className="text-xs text-slate-600">
         {t("driver.hos_synced")}: {formatDateTimeUS(snap.last_synced_at)} CT
       </p>

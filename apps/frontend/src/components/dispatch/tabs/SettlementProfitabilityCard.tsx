@@ -100,7 +100,7 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
             </span>
           )}
         </div>
-        <div className={`mt-1 text-2xl font-bold ${variantText[variant]}`}>
+        <div className={`mt-1 text-page-title font-bold ${variantText[variant]}`}>
           {netLabel}
         </div>
         <div className="mt-0.5 text-xs text-gray-500">

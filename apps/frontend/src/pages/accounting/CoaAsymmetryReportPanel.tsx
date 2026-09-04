@@ -25,7 +25,7 @@ export function CoaAsymmetryReportPanel({ enabled }: Props) {
       data-testid="coa-asymmetry-report-panel"
     >
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold text-slate-900">Entity CoA asymmetry (read-only)</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Entity CoA asymmetry (read-only)</h2>
         <span className="text-xs font-medium uppercase tracking-wide text-slate-700">Owner-eyes · change nothing</span>
       </div>
       <p className="mb-3 text-xs text-slate-700">
@@ -34,10 +34,10 @@ export function CoaAsymmetryReportPanel({ enabled }: Props) {
       </p>
 
       {isError ? <ListErrorBanner onRetry={() => refetch()} /> : null}
-      {isLoading ? <p className="text-sm text-slate-600">Loading grouped diff…</p> : null}
+      {isLoading ? <p className="text-xs text-slate-600">Loading grouped diff…</p> : null}
 
       {data ? (
-        <div className="space-y-4 text-sm text-slate-800">
+        <div className="space-y-4 text-xs text-slate-800">
           {/* ACCT-F3574: ParityTable owns Search+Range+gear on postable-by-entity summary leaf. */}
           <ParityTable<(typeof data.postable_by_entity)[number]>
             rows={data.postable_by_entity}

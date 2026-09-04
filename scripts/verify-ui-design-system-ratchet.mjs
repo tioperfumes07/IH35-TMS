@@ -25,6 +25,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-ui-design-system-ratchet";
 const BASELINE = path.join(ROOT, "scripts", "ui-design-system-baseline.json");
 const SRC = path.join(ROOT, "apps", "frontend", "src");
+const INDEX_CSS = path.join(SRC, "index.css");
 
 /** The one picker that dismisses on outside mousedown. Everything else traps the user. */
 const GOOD_PICKER = "components/Combobox";
@@ -143,6 +144,11 @@ function selftest() {
   if (!fs.existsSync(SRC)) { console.error(`${LABEL}: SELFTEST FAIL — ${SRC} missing`); process.exit(1); }
   if (SEMANTIC_SIZE_PX.sm !== "14" || LOCKED_SIZES_PX.has("14")) {
     console.error(`${LABEL}: SELFTEST FAIL — text-sm (14px) must map off the locked 11/12/22 scale`);
+    process.exit(1);
+  }
+  const css = fs.readFileSync(INDEX_CSS, "utf8");
+  if (!/\.text-page-title\s*\{[\s\S]*?font-size:\s*22px\s*;?[\s\S]*?\}/.test(css)) {
+    console.error(`${LABEL}: SELFTEST FAIL — text-page-title must remain locked to 22px`);
     process.exit(1);
   }
   console.log(`${LABEL}: SELFTEST PASS`);

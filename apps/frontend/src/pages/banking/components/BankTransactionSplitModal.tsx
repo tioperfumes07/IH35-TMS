@@ -420,7 +420,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                     <div className="md:col-span-8">
                       <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Description</span>
                       <input
-                        className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                        className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                         value={line.memo ?? ""}
                         onChange={(e) => patchLine(line._key, { memo: e.target.value })}
                         placeholder="Description"

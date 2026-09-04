@@ -164,12 +164,12 @@ export function BankingPlaidConnectionsPanel({
     <div className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">Plaid connections</div>
       {plaidQuery.isError ? <ListErrorBanner onRetry={() => void plaidQuery.refetch()} /> : null}
-      {plaidQuery.isLoading ? <p className="text-sm text-gray-600">Loading connections…</p> : null}
+      {plaidQuery.isLoading ? <p className="text-xs text-gray-600">Loading connections…</p> : null}
       {!plaidQuery.isLoading && groups.length > 0 && visibleGroups.length === 0 ? (
-        <p className="text-sm text-gray-600">No active Plaid connections for this company filter. Enable history below.</p>
+        <p className="text-xs text-gray-600">No active Plaid connections for this company filter. Enable history below.</p>
       ) : null}
       {plaidListState.isEmpty ? (
-        <p className="text-sm text-gray-600">No bank accounts connected yet. Use <span className="font-medium">Connect Bank</span> above.</p>
+        <p className="text-xs text-gray-600">No bank accounts connected yet. Use <span className="font-medium">Connect Bank</span> above.</p>
       ) : null}
       <div className="space-y-3">
         {visibleGroups.map((g) => {
@@ -376,13 +376,13 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search description"
           aria-label="Filter transactions by description"
-          className="min-w-48 flex-1 rounded-sm border border-gray-300 px-2 py-1 text-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+          className="min-w-48 flex-1 rounded-sm border border-gray-300 px-2 py-1 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
         />
         <SelectCombobox
           value={accountFilter}
           onChange={(e) => setAccountFilter(e.target.value)}
           aria-label="Filter by account"
-          className="rounded-sm border border-gray-300 px-2 py-1 text-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+          className="rounded-sm border border-gray-300 px-2 py-1 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
         >
           <option value="">All accounts</option>
           {accounts.map((a: PlaidBankAccount) => (
@@ -392,7 +392,7 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
           ))}
         </SelectCombobox>
       </div>
-      {txQuery.isError ? <p className="text-sm text-red-600">Unable to load transactions.</p> : null}
+      {txQuery.isError ? <p className="text-xs text-red-600">Unable to load transactions.</p> : null}
       <ParityTable<PlaidBankTransaction>
         columns={txColumns}
         rows={rows}
