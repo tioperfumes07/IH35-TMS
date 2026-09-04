@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import "./PlannerGrid.css";
 import {
   formatPlannerDwell,
@@ -145,15 +145,24 @@ function TrackOverlays({ days, today, dayPx }: { days: string[]; today: string; 
   );
 }
 
+function CellOrDash({ children }: { children: ReactNode }) {
+  if (children == null || children === false || children === "") {
+    return <span className="text-slate-400">—</span>;
+  }
+  return <>{children}</>;
+}
+
 function FrozenName({ row, hasActionColumn }: { row: PlannerGridRow; hasActionColumn: boolean }) {
   return (
     <div className={`pg-name pg-name-cols${hasActionColumn ? " has-action" : ""}`}>
       <div className="pg-col-name" title={typeof row.name === "string" ? row.name : undefined}>
-        {row.name}
+        <CellOrDash>{row.name}</CellOrDash>
       </div>
-      {row.secondary != null ? <div className="pg-col-sec">{row.secondary}</div> : <div className="pg-col-sec" />}
-      {row.unit != null ? <div className="pg-col-unit">{row.unit}</div> : <div className="pg-col-unit" />}
-      {hasActionColumn ? <div className="pg-col-action">{row.action}</div> : null}
+      <div className="pg-col-sec"><CellOrDash>{row.secondary}</CellOrDash></div>
+      <div className="pg-col-unit"><CellOrDash>{row.unit}</CellOrDash></div>
+      {hasActionColumn ? (
+        <div className="pg-col-action"><CellOrDash>{row.action}</CellOrDash></div>
+      ) : null}
     </div>
   );
 }
@@ -171,13 +180,21 @@ export function PlannerGrid({
 }: Props) {
   const today = todayYmdAmericaChicago();
   const bands = plannerMonthBands(days);
-  const dayPx = PLANNER_DAY_PX;
-  const trackW = days.length * dayPx;
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [measuredWidth, setMeasuredWidth] = useState(0);
   const [edge, setEdge] = useState({ left: false, right: false });
+  const [drag, setDrag] = useState<{ active: boolean; startX: number; startScroll: number } | null>(null);
   const rangeStart = days[0];
   const rangeEnd = days[days.length - 1];
   const hasActionColumn = actionLabel != null || rows.some((row) => row.action !== undefined);
+
+  const dayPx = useMemo(() => {
+    if (!measuredWidth || days.length === 0) return PLANNER_DAY_PX;
+    const available = Math.max(0, measuredWidth - frozenPx);
+    if (available <= 0) return PLANNER_DAY_PX;
+    return Math.max(44, Math.min(120, Math.floor(available / days.length)));
+  }, [measuredWidth, frozenPx, days.length]);
+  const trackW = days.length * dayPx;
 
   const outside = useMemo(() => {
     let n = 0;
@@ -192,6 +209,13 @@ export function PlannerGrid({
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || days.length === 0) return;
+    setMeasuredWidth(el.clientWidth);
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver((entries) => {
+      const cr = entries[0]?.contentRect;
+      if (cr) setMeasuredWidth(cr.width);
+    }) : null;
+    if (ro) ro.observe(el);
+
     const idx = Math.max(0, days.indexOf(today));
     const target = Math.max(0, idx * dayPx - el.clientWidth * 0.25);
     el.scrollLeft = target;
@@ -201,8 +225,36 @@ export function PlannerGrid({
     };
     onScroll();
     el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [days, today, dayPx, rows.length]);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      if (ro) ro.disconnect();
+    };
+  }, [days, today, dayPx, rows.length, frozenPx]);
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      el.scrollLeft -= dayPx;
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      el.scrollLeft += dayPx;
+    }
+  };
+
+  const onMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setDrag({ active: true, startX: e.clientX, startScroll: el.scrollLeft });
+  };
+  const onMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+    if (!drag?.active) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollLeft = drag.startScroll - (e.clientX - drag.startX);
+  };
+  const onMouseUp = () => setDrag(null);
 
   const vars = {
     ["--frozen" as string]: `${frozenPx}px`,
@@ -225,7 +277,19 @@ export function PlannerGrid({
           {outside} load{outside === 1 ? "" : "s"} outside this range →
         </button>
       ) : null}
-      <div className={`pg-scroll${edge.left ? " fade-l" : ""}${edge.right ? " fade-r" : ""}`} ref={scrollRef}>
+      <div
+        className={`pg-scroll${edge.left ? " fade-l" : ""}${edge.right ? " fade-r" : ""}`}
+        ref={scrollRef}
+        tabIndex={0}
+        role="region"
+        aria-label="planner timeline"
+        onKeyDown={onKeyDown}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+        style={{ cursor: drag?.active ? "grabbing" : "grab" }}
+      >
         <div className="pg-grid">
           <div className="pg-axis" data-testid="planner-time-axis">
             <div className="pg-arow" data-testid="planner-axis-month-row">

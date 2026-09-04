@@ -24,20 +24,6 @@ type TruckStatus = "assigned" | "available" | "reserved-hold" | "in-shop";
 const IN_SHOP_UNIT_STATUSES = new Set(["InMaintenance", "OutOfService", "Damaged"]);
 const PLANNER_UNIT_STATUSES = new Set(["InService", "InMaintenance", "OutOfService"]);
 
-function truckStatusClass(status: TruckStatus): string {
-  if (status === "assigned") return "bg-slate-100 text-slate-700";
-  if (status === "available") return "bg-slate-100 text-slate-700";
-  if (status === "reserved-hold") return "bg-slate-100 text-slate-700";
-  return "bg-red-100 text-red-800";
-}
-
-function truckStatusLabel(status: TruckStatus): string {
-  if (status === "assigned") return "asg";
-  if (status === "available") return "avl";
-  if (status === "reserved-hold") return "rsv";
-  return "shop";
-}
-
 type TruckRow = {
   unitId: string;
   unitNumber: string;
@@ -190,11 +176,6 @@ export function TruckPlanner() {
               id: row.unitId,
               idle: row.status === "available",
               name: <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />,
-              secondary: (
-                <span className={`rounded-sm px-1 text-xs ${truckStatusClass(row.status)}`}>
-                  {truckStatusLabel(row.status)}
-                </span>
-              ),
               unit: row.driverName ? (
                 <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
               ) : null,
@@ -222,11 +203,6 @@ export function TruckPlanner() {
                 id: `shop-${row.unitId}`,
                 idle: true,
                 name: <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />,
-                secondary: (
-                  <span className={`rounded-sm px-1 text-xs ${truckStatusClass(row.status)}`}>
-                    {truckStatusLabel(row.status)}
-                  </span>
-                ),
                 unit: row.driverName ? (
                   <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
                 ) : null,
