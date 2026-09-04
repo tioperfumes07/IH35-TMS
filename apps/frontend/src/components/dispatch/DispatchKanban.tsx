@@ -336,7 +336,7 @@ function DeliveredProfitBadge({ load }: { load: KanbanLoad }) {
     return (
       <button
         type="button"
-        className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
+        className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
         title="Load profitability unavailable — retry"
         aria-label="Retry load profitability"
         onClick={(event) => {
@@ -352,7 +352,7 @@ function DeliveredProfitBadge({ load }: { load: KanbanLoad }) {
   if (netCents == null) {
     if (profitabilityQuery.isLoading) {
       return (
-        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${profitBadgeClassName("loading")}`}>Profit…</span>
+        <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${profitBadgeClassName("loading")}`}>Profit…</span>
       );
     }
     return null;
@@ -360,7 +360,7 @@ function DeliveredProfitBadge({ load }: { load: KanbanLoad }) {
 
   const variant = classifyProfit(netCents, marginPct ?? 0);
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${profitBadgeClassName(variant)}`} title={`Net profit (${marginPct ?? 0}% margin)`}>
+    <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${profitBadgeClassName(variant)}`} title={`Net profit (${marginPct ?? 0}% margin)`}>
       {formatProfitCents(netCents)}
     </span>
   );
@@ -430,7 +430,7 @@ function KanbanDispatchCard({
         )}
         {hasVisibleFlag(load.flag_code) ? (
           <span
-            className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+            className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm text-xs font-bold text-white"
             style={{ backgroundColor: flagDotColor(load.flag_code) }}
             title={flagDotLabel(load.flag_code)}
           >
@@ -477,7 +477,7 @@ function KanbanDispatchCard({
       ) : null}
 
       <div className="mt-2 flex flex-wrap items-center gap-1">
-        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${onTimeChipClass(load)}`}>{onTimeChipLabel(load)}</span>
+        <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${onTimeChipClass(load)}`}>{onTimeChipLabel(load)}</span>
         {isBreakdown(load) ? (
           <span className="rounded-sm bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-800">Breakdown</span>
         ) : null}
@@ -657,7 +657,7 @@ function KanbanStandardCard({
         {isBreakdown(load) ? <span className="shrink-0 text-red-600" title="Breakdown">▲</span> : null}
         {hasVisibleFlag(load.flag_code) ? (
           <span
-            className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+            className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm text-xs font-bold text-white"
             style={{ backgroundColor: flagDotColor(load.flag_code) }}
             title={flagDotLabel(load.flag_code)}
           >
@@ -917,7 +917,7 @@ function KanbanDispatchColumn({
             <ChevronRight className="h-3.5 w-3.5" aria-hidden />
           </button>
           <div className="text-center">{headerLink}</div>
-          <span className="justify-self-end rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
+          <span className="justify-self-end rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
         </header>
         <KanbanColumnSortControls columnKey={column.key} sort={columnSort} onToggleSort={onToggleColumnSort} />
       </section>
@@ -964,7 +964,7 @@ function KanbanDispatchColumn({
               </span>
             ) : null}
           </div>
-          <span className="justify-self-end rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
+          <span className="justify-self-end rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
         </div>
         <KanbanColumnSortControls columnKey={column.key} sort={columnSort} onToggleSort={onToggleColumnSort} />
       </header>
@@ -1309,7 +1309,7 @@ export function DispatchKanban({
                 onToggleSort={toggleKanbanColumnSort}
               />
             </div>
-            <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-slate-700">{outOfServiceLoads.length}</span>
+            <span className="rounded-sm bg-white px-2 py-0.5 text-xs font-bold text-slate-700">{outOfServiceLoads.length}</span>
           </header>
           {outOfServiceLoads.length === 0 ? (
             <p className="mt-1 text-[11px] italic text-slate-700">
