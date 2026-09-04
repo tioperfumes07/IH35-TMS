@@ -13,8 +13,12 @@ import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label
 import { formatDateUS } from "../../lib/formatDate";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
+import { formatUsdCents } from "../../lib/money";
+
+// GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
+// local currency formatter (same shape lib/money.ts already covers).
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 const BUCKET_SECTIONS = [
