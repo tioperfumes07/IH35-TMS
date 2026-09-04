@@ -7364,6 +7364,16 @@
     "claimed_at": "2026-09-03",
     "purpose": "verify-health-financial-checks (ACC-18: adds --selftest + CI wiring to a guard that already existed but never ran; also covers the new ObservabilityPage healthz-checks UI section)"
   },
+  "10289": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "RESTORED 2026-09-04 -- this entry was correctly claimed and merged (#20205/#20206) but its registry row was silently dropped from CLAIMED-NUMBERS.json by a later concurrent merge, discovered while claiming 10293. verify-cc3-ddl-handoff-retention-leave-safety (CC-3 DDL handoff: drivers.retention_scores had only SELECT/INSERT for ih35_app, no UPDATE/DELETE; catalogs.driver_leave_balances and safety.driver_safety_scores had no way to void a duplicate row -- migration 202613620001 grants the full CRUD set and adds deactivated_at per the VOID-COLUMN CONVENTION law). The guard file itself (scripts/verify-cc3-ddl-handoff-retention-leave-safety.mjs) was never lost -- only this tracking row was."
+  },
+  "10293": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-driver-bill-linked-to-settlement-at-creation (SET-02: a driver bill minted at booking was never linked into its settlement's settlement_lines at creation -- appendSettlementLineFromDriverBillIfMissing was only ever called lazily later, from the pre-settlement view route, the bookended-settlement service, or payrun close)"
+  },
   "10291": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-04",
