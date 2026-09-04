@@ -959,6 +959,12 @@ export async function buildUnitAggregate(
         status: p.status,
       })),
       linked_policies_unavailable: linkedPolicyRead.unavailable,
+      // FLT-08: coverage and documentary evidence are separate facts. Policies use the
+      // canonical asset -> policy_unit chain above; signed COIs/policies are canonical
+      // docs.files rows linked directly to this unit. Never infer evidence from a policy row.
+      insurance_document_count: documentsRes.rows.filter(
+        (row) => String(row.category) === "insurance_policy",
+      ).length,
     },
     total_ownership_cost: {
       purchase_price_cents,

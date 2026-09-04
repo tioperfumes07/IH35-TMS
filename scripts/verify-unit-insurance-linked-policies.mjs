@@ -59,6 +59,9 @@ function checkBackend(src) {
   if (!src.includes("linked_policies_unavailable: linkedPolicyRead.unavailable")) {
     fail(`${BACKEND_FILE}: linked-policy SQL failure no longer remains distinct from an empty relationship.`);
   }
+  if (!/insurance_document_count:\s*documentsRes\.rows\.filter\([\s\S]{0,160}category\)\s*===\s*"insurance_policy"/.test(src)) {
+    fail(`${BACKEND_FILE}: insurance_summary must count canonical unit-linked Insurance Policy documents.`);
+  }
 }
 
 function checkFrontend(src) {
@@ -82,6 +85,15 @@ function checkFrontend(src) {
   }
   if (!/<EntityLink[\s\S]{0,100}kind="insurance_coverage_gaps"[\s\S]{0,100}id=\{unitId\}/.test(src)) {
     fail(`${FRONTEND_FILE}: insurance summary must drill to unit-scoped coverage gaps.`);
+  }
+  if (!src.includes("insurance_document_count?: number") || !src.includes('data-testid="vp-insurance-document-evidence"')) {
+    fail(`${FRONTEND_FILE}: insurance summary must render the unit's canonical insurance-document evidence count.`);
+  }
+  if (!src.includes("NOT EVIDENCED") || !src.includes("EVIDENCED (")) {
+    fail(`${FRONTEND_FILE}: insurance evidence must distinguish a policy claim from attached documentary evidence.`);
+  }
+  for (const token of ['auto_liability: "AL"', 'physical_damage: "APD"', 'cargo: "MTC"']) {
+    if (!src.includes(token)) fail(`${FRONTEND_FILE}: missing fleet coverage status mapping ${token}.`);
   }
 }
 
@@ -165,6 +177,9 @@ function selftest() {
     ["failure-copy", originalFrontend.replace("Linked insurance policies could not be loaded.", "No policy." )],
     ["failure-branch", originalFrontend.replace("linkedUnavailable ? (", "false ? (")],
     ["failure-retry", originalFrontend.replace("onClick={onRetry}", "onClick={() => undefined}")],
+    ["document-evidence", originalFrontend.replace('data-testid="vp-insurance-document-evidence"', 'data-testid="vp-insurance-document-evidence-missing"')],
+    ["not-evidenced", originalFrontend.replace("NOT EVIDENCED", "UNKNOWN")],
+    ["al-status", originalFrontend.replace('auto_liability: "AL"', 'auto_liability: "AUTO"')],
   ]) {
     let caught = false;
     try {
@@ -212,6 +227,26 @@ function selftest() {
     }
     if (mutated === originalBackend || !caught) {
       console.error("SELFTEST INERT: linked-policy failure marker mutation was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
+  {
+    const mutated = originalBackend.replace(
+      'String(row.category) === "insurance_policy"',
+      'String(row.category) === "other"',
+    );
+    let caught = false;
+    try {
+      checkBackend(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+    }
+    if (mutated === originalBackend || !caught) {
+      console.error("SELFTEST INERT: insurance document category mutation was not caught.");
       process.exitCode = 1;
       return;
     }
