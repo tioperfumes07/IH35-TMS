@@ -71,4 +71,40 @@ describe("SaveDropdown", () => {
     await user.click(sendItem);
     expect(onSave).not.toHaveBeenCalled();
   });
+
+  it("renders caret menu items with per-usage menuLabels (Book Load owner words)", async () => {
+    const onSave = vi.fn();
+    const onSaveAndClose = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <SaveDropdown
+        storageKey="sd-test-menu-labels"
+        primaryLabel="Book + dispatch"
+        onSave={onSave}
+        onSaveAndClose={onSaveAndClose}
+        onSaveAndPrint={vi.fn()}
+        saveAndSendDisabledReason="Pending owner ruling (WIZ-49d)."
+        menuLabels={{
+          save: "Book and dispatch",
+          save_and_close: "Book and save",
+          save_and_print: "Book and print",
+          save_and_send: "Book and send",
+        }}
+      />
+    );
+
+    // Primary button keeps primaryLabel ("Book + dispatch"), menu uses the owner's words.
+    expect(screen.getByRole("button", { name: /book \+ dispatch/i })).toBeTruthy();
+
+    const chevrons = screen.getAllByRole("button", { expanded: false });
+    await user.click(chevrons[chevrons.length - 1]);
+
+    expect(await screen.findByRole("menuitem", { name: /^book and dispatch$/i })).toBeTruthy();
+    expect(await screen.findByRole("menuitem", { name: /^book and print$/i })).toBeTruthy();
+    const sendItem = await screen.findByRole("menuitem", { name: /^book and send/i });
+    expect((sendItem as HTMLButtonElement).disabled).toBe(true);
+
+    await user.click(await screen.findByRole("menuitem", { name: /^book and save$/i }));
+    expect(onSaveAndClose).toHaveBeenCalledTimes(1);
+  });
 });

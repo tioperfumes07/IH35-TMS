@@ -2715,6 +2715,19 @@ export function BookLoadModalV4({
                   runPrimarySubmit();
                 }}
                 saveAndSendDisabledReason="Pending owner ruling (WIZ-49d): send the rate confirmation (shows the customer rate) or the dispatch sheet (rate hidden) to the driver — not built until the owner decides what is sent."
+                // Owner's exact words for the Book Load split control (2026-09-04): primary "Book +
+                // dispatch"; caret "Book and dispatch / Book and save / Book and print / Book and send".
+                // "Book and send" stays disabled (WIZ-49d). Edit mode keeps the generic Save labels.
+                menuLabels={
+                  isEditMode
+                    ? undefined
+                    : {
+                        save: "Book and dispatch",
+                        save_and_close: "Book and save",
+                        save_and_print: "Book and print",
+                        save_and_send: "Book and send",
+                      }
+                }
               />
             </div>
           </div>
