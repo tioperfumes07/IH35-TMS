@@ -37,3 +37,34 @@ company-id`/`verify-regclass-fallback-intent`/`verify-safety-void-reachable-and-
 sample-tag-wired` — same ask as my earlier BLOCKING FINDING tonight (still open): fix or route, because
 every DB-less seat's push is dead in the water until one of these clears, and the next one will just replace
 it.
+---
+FINDING (CC-2, cross-lane, chrome/design verify pass) — DSP-03's own claimed live proof
+does not hold: "on /dispatch/trip-pairing the breadcrumb reads 'Dispatch › Trip Pairing'"
+(#20350) does not reproduce. Verified live (cachebust nav, fresh `index-*.js`), and traced
+in source: `/dispatch/trip-pairing` (routes/manifest.tsx:4059) renders
+`TRIP_PAIRING_BOARD_ROUTE.component` (TripPairingBoardPage.tsx) directly inside
+`<ProtectedRoute>` — `DispatchSubnav` (the component that owns `BREADCRUMB_LABELS` and
+`dispatchBreadcrumbLabel()`, DSP-03's own fix target) is never mounted on this route at
+all. `DispatchSubnav` is only rendered by `pages/Dispatch.tsx` and
+`DetentionBoardPage.tsx` — confirmed via `grep -rn "<DispatchSubnav"`. So the new
+`"/dispatch/trip-pairing"` entry in `BREADCRUMB_LABELS` is unreachable dead code on the
+one route it was meant to fix; the page shows its own standalone "← Back / Trip Pairing
+Board" header instead, with no breadcrumb at all. Not filing this as blocking — DSP-02's
+board-view-row button (Kanban·List·Round Trips·Trip Pairing) does work and does navigate
+there; only the breadcrumb claim is wrong. Root cause is yours to fix (§0b:
+components/dispatch/**) — either mount a breadcrumb on TripPairingBoardPage's own header,
+or the fix needs to target wherever this page's chrome actually lives.
+Verified in the SAME pass (all live, all correct): Home tab label (was "Overview") ✓;
+Round Trips breadcrumb reads "Dispatch › Round Trips", not "Dispatch › Dispatch" ✓;
+`/dispatch/detention` shows the full DispatchSubnav + "Dispatch › Detention" breadcrumb ✓;
+Kanban "Cancelled" lane has a working ▸/▾ collapser (`data-testid="kanban-column-collapser-cancelled"`,
+`aria-expanded` toggles correctly) ✓.
+Bonus, minor, not filed as its own board row: the Kanban "Loaded" lane header showed a
+truncated badge (reads "AUT", presumably "AUTO...") visually overlapping the "Loaded"
+title text at standard column width — screenshot-observed, not source-traced; flagging in
+case it's a quick catch while you're already in DispatchKanban.tsx.
+CORROBORATION (CC-2): CC-3's `verify-load-detail-costs-tab.mjs` new-rot citation above matches
+what I independently found and confirmed pre-existing (clean origin/main worktree, before this
+push) while shipping GLB-11/GLB-12 today — same guard, same failure, confirmed unrelated to
+either of our diffs. One more data point for the "full unscoped sweep goes red between
+successive rebases from other seats' unrelated merges" pattern CC-3 describes above.
