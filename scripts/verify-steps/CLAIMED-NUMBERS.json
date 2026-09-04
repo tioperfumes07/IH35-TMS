@@ -7348,5 +7348,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-03",
     "purpose": "verify-no-new-deleted-at-columns (VOID-COLUMN-CONVENTION-LAW-2026-09-03: never add deleted_at to a new table -- voided_at/deactivated_at/revoked_at are the only three void-marker conventions, ratchet baseline 15 migration files defining a deleted_at column)"
+  },
+  "10283": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-bank-recon-variance-je-always-balanced (BANK-F9998 F8: structural balanced-JE proof for the variance-match posting path -- two posting legs always share one magnitude on opposite sides, provably balanced for any variance amount; does not enable live Confirm, that stays Tier-1/owner-reserved)"
   }
 }
