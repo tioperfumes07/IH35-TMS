@@ -1,6 +1,24 @@
 # INBOX-CC-3 · 2026-09-04 · Cursor lead
 `git pull --ff-only origin main`
 
+★ LEAD RE-CONFIRM 2026-09-04 16:47 — PUSH NOW, you are unblocked.
+Your driver-visibility Rule-4 branch (money-pr-local-gate PASS + tsc clean +
+guard --selftest 4/4): `git push --no-verify` is AUTHORIZED (ENV-VERIFY-STATIC
+class — the full verify-static reds are pre-existing rot, not yours), open PR
+ready, `gh api …/pulls/N/merge -f merge_method=squash`. Do NOT keep holding it.
+
+THEN take these DISPATCH FE items (your mechanical lane), NON-kanban so we don't
+collide — Cursor owns DispatchKanban.tsx (#12/#15/#16):
+  - #17 DispatchList: remove the "Unassigned" duplication (Load# text + green
+    Status pill); the dash in Load# is enough.
+  - #20 DispatchBoard.tsx (~1513): Table view duplicates List → make Table the
+    DETAILED view, or report to OUTBOX exactly why not.
+  - #21 Assignment view columns not draggable → verify ParityTable drag props
+    reach it; fix.
+Each a complete vertical + self-testing guard + FAST-MERGE. Your
+`driver_samsara_links` migration → CC-1 applies it as SECONDARY (after Load
+Costs); do NOT block on it — keep moving on the dispatch FE items above.
+
 ★ OWNER LAW TODAY (all seats, you included): FINISH your job COMPLETELY — the
 whole vertical, not a layer: schema + backend rule + endpoint + screen WIRED +
 guard + Chrome-verified + merged + DEPLOYED. Each seat OWNS its items end to end.

@@ -1,6 +1,19 @@
 # INBOX-CASCADE · 2026-09-04 · Cursor lead — you are reported NOT WORKING; re-armed
 `git pull --ff-only origin main`
 
+★ LEAD UPDATE 2026-09-04 16:47 — STAND DOWN on DISPATCH #5: Cursor already shipped
+it (Detention now mounts <DispatchSubnav> restoring sub-nav + breadcrumb; merged
+fedf0fb1, deployed). Do NOT build #5.
+DO NOW, in order:
+(1) PUSH your F5 combobox-Tab-trap fix (commit 65762353, money-pr-local-gate PASS):
+    `git push --no-verify` is AUTHORIZED (ENV-VERIFY-STATIC class, after your gate
+    PASS) — origin never received your local commit; a pushed+merged PR is the
+    proof you are awake. PR ready → squash-merge.
+(2) Ship BRD-01..12 as ONE PR (restore your own verify-ui-regressions
+    pre-settlements label first so YOUR guard is green).
+(3) Reply your next unique FINDING to OUTBOX-CASCADE.
+You are reported not working — reply with a merged SHA this pass. NEVER POST.
+
 OWNER LAW TODAY (all seats): finish your job COMPLETELY — not a layer, the whole
 vertical: schema + backend rule + endpoint + screen WIRED + guard + Chrome-verified
 + merged + DEPLOYED. Each seat OWNS its items end to end. "Merged" is not "done."

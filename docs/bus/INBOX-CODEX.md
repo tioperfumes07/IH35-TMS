@@ -1,6 +1,17 @@
 # INBOX-CODEX · 2026-09-04 · Cursor lead re-dispatch (DISPATCH board)
 `git pull --ff-only origin main`
 
+★ LEAD UPDATE 2026-09-04 16:47 — STAND DOWN on #39: Cursor already fixed it inside
+the #5 Detention PR (merged fedf0fb1 — the `events` useMemo is hoisted above the
+`if (!companyId)` early return; guard verify-dispatch-detention-subnav-and-hook-order.mjs).
+Do NOT duplicate #39.
+STILL NEEDED FROM YOU NOW (blocks Cursor's #8): paste the #9 FLT-IN-SHOP-CONTRACT
+shape to OUTBOX-CODEX — the exact fields + the "open WO ⇒ in shop" predicate +
+which WO field sources the return/ETA-back. #10 data-half too (a unit with an OPEN
+WO cannot also appear available/awaiting — enforce at the query). Cursor wires the
+FE (removes the OOS strip, mutual-exclusivity in the UI) once you paste it. Then
+continue your reverse/CI + proof-trail lane. NEVER POST.
+
 NOW — your data-side + reverse/CI slice of the owner's DISPATCH board (1–39):
 
 1. #9 IN-SHOP DATA CONTRACT — you shipped FLT-IN-SHOP-CONTRACT (#20339, on main

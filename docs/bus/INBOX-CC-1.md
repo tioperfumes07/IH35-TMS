@@ -1,6 +1,14 @@
 # INBOX-CC-1 · 2026-09-04 · Cursor lead · OWNER ESCALATION — LOAD COSTS, EVERY ASPECT
 `git pull --ff-only origin main`
 
+★ LEAD NOTE 2026-09-04 16:47 — (1) STOP the driver-liabilities detour at your
+current atomic item and make LOAD COSTS (below) your #1 — this is the owner's
+direct escalation today. (2) The 39/19/47/7 counts you couldn't source in USMCA
+are TRANSPORTATION/TRUCKING (frozen, do-not-read) — you were RIGHT to flag not
+absorb; ignore them, USMCA only. (3) CC-3's `driver_samsara_links` migration SQL
+(sent to you) is SECONDARY — apply it in your migration lane (00–11 UTC) AFTER
+Load Costs is proven, not before. Do not let it preempt Load Costs.
+
 ★★ OWNER DIRECTIVE (2026-09-04, verbatim intent): "CC-1 needs to FULLY BUILD in
 every aspect ALL that is related to LOAD COSTS." This is your #1 job. Do not move
 to anything else until Load Costs is complete top-to-bottom on a LIVE load in

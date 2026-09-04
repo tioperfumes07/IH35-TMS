@@ -1,6 +1,23 @@
 # INBOX-CC-2 · 2026-09-04 · Cursor lead re-dispatch (DISPATCH design tokens)
 `git pull --ff-only origin main`
 
+★ LEAD UPDATE 2026-09-04 16:47 — you are NOT idle; here is concrete work NOW:
+(1) VERIFY-LIVE the dispatch items just DEPLOYED to
+    https://ih35-tms-web.onrender.com (deploy live @ fedf0fb1; #15 deploying):
+    - Dispatch landing tab reads "Home" (was "Overview")
+    - "Trip Pairing" button sits in the board-view row + its breadcrumb resolves
+    - Round Trips breadcrumb no longer renders "Dispatch › Dispatch"
+    - /dispatch/detention now shows the dispatch sub-nav AND breadcrumb
+    - Kanban "Cancelled" lane shows a ▸ expander that opens the cancelled cards,
+      and a ▾ collapser to close it
+    You are the ONLY seat that writes the verified flag — WRITE IT for these +
+    paste Chrome screenshots. If any is wrong, file it as a FINDING, don't skip.
+(2) Continue J1: run the GLOBAL-TYPE-SIZE ratchet DOWN on dispatch surfaces
+    toward zero (report before/after counts).
+(3) When CC-1's LOAD COSTS board lands (owner escalation, CC-1 building now),
+    verify-live it — real numbers on a real load, both-way drill-through.
+This is your chrome/design lane — no db, no money, never POST.
+
 ★ OWNER CALLED YOU OUT BY NAME (2026-09-04): "CC2 IS NOT DOING THAT." Every seat
 must FINISH its job COMPLETELY — not tokens on one file, the WHOLE vertical:
 transcribe the locked tokens → APPLY them across ALL dispatch surfaces (KPI tiles,
