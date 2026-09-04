@@ -385,7 +385,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
           </DataPanel>
         </div>
         <div id="unassigned-units" data-testid="dispatch-unassigned-units-panel">
-          <DataPanel title="Unassigned units" viewAllHref="/dispatch?view=loads" accentColor={colors.dispatch.strong}>
+          <DataPanel title="Unassigned units" viewAllHref="/dispatch?view=list" accentColor={colors.dispatch.strong}>
             {unitsWithoutLoadQ.isLoading ? (
               <PanelLoading />
             ) : unitsWithoutLoadQ.isError ? (
@@ -412,7 +412,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
           </DataPanel>
         </div>
 
-        <DataPanel title="Round-trip exposure" viewAllHref="/dispatch?view=loads" accentColor={colors.dispatch.strong}>
+        <DataPanel title="Round-trip exposure" viewAllHref="/dispatch?view=list" accentColor={colors.dispatch.strong}>
           {exposureLoadsQ.isLoading ? (
             <PanelLoading />
           ) : exposureLoadsQ.isError ? (
