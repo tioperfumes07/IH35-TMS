@@ -117,7 +117,10 @@ function parityTableSortHitTargetOk(src) {
   if (body == null) {
     return { ok: false, reason: `${PARITY_TABLE_PATH} missing` };
   }
-  const m = body.match(/column\.sortable \? \(\s*<button[\s\S]{0,1200}?onClick=\{\(\) => toggleSort\(key\)\}/);
+  // Matches both `column.sortable ? (` and the later `column.sortable !== false ? (` shape (SORT-01,
+  // landed via a parallel branch 2026-08-31) — the guard's invariant is the button's own h-full w-full
+  // hit target, not the exact spelling of the sortable condition.
+  const m = body.match(/column\.sortable[^?\n]*\?\s*\(\s*<button[\s\S]{0,1200}?onClick=\{\(\) => toggleSort\(key\)\}/);
   if (!m) return { ok: false, reason: "could not locate sortable header <button>" };
   const block = m[0];
   if (!/\bw-full\b/.test(block) || !/\bh-full\b/.test(block)) {
