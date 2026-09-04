@@ -1,6 +1,6 @@
 {
   "healthzSha": "b66fec7",
-  "generated_at": "2026-09-04T06:06:23.373Z",
+  "generated_at": "2026-09-04T06:15:03.539Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 20271,
+      "title": "FINDING: GLB-08 -- planner day-column headers now render AUG-21/SEP-01, not the locale \"Aug 16\"",
+      "state": "merged",
+      "mergedAtCt": "09/04/2026, 01:13 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20271",
+      "sha": "3bf90a4c76",
+      "committedAtIso": "2026-09-04T01:13:32-05:00"
+    },
+    {
+      "number": 20269,
+      "title": "FINDING: ACCT-F25001 (SET-25: owner could not mint his first real invoice -- invoices_display_id_check rejected the load's own plain-digit load_number)",
+      "state": "merged",
+      "mergedAtCt": "09/04/2026, 01:08 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20269",
+      "sha": "49c67f9e77",
+      "committedAtIso": "2026-09-04T01:08:44-05:00"
+    },
+    {
       "number": 20268,
       "title": "FINDING: GLB-04",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20258",
       "sha": "6c7a41a20d",
       "committedAtIso": "2026-09-04T00:45:12-05:00"
-    },
-    {
-      "number": 20257,
-      "title": "FINDING: WIZ-44 follow-up -- GET /api/v1/mdata/drivers now filters deactivated_at IS NULL by default, closing the API-layer half of the merged-driver-selectable hole",
-      "state": "merged",
-      "mergedAtCt": "09/04/2026, 12:44 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20257",
-      "sha": "20f8adf756",
-      "committedAtIso": "2026-09-04T00:44:29-05:00"
-    },
-    {
-      "number": 20256,
-      "title": "FINDING: GLB-01",
-      "state": "merged",
-      "mergedAtCt": "09/04/2026, 12:43 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20256",
-      "sha": "00d964b629",
-      "committedAtIso": "2026-09-04T00:43:48-05:00"
     }
   ]
 }

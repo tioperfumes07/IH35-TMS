@@ -7,8 +7,12 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { titleize } from "../../lib/titleize";
 
+import { formatUsdCents } from "../../lib/money";
+
+// GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
+// local currency formatter (same shape lib/money.ts already covers).
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 // Display-only ParityTable migration: column order (Customer / Current reserve / Accrued /
