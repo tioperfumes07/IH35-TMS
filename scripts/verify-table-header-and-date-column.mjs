@@ -13,6 +13,8 @@ const BASELINE = path.join(ROOT, "scripts", "table-header-and-date-column-baseli
 const SRC = path.join(ROOT, "apps", "frontend", "src");
 const PARITY = path.join(SRC, "components/parity/ParityTable.tsx");
 const TOKENS = path.join(SRC, "design/tokens.ts");
+const INDEX_CSS = path.join(SRC, "index.css");
+const TABLE_HEADER_CELL = path.join(SRC, "components/table/TableHeaderCell.tsx");
 const BASELINE_DOC = path.join(ROOT, "docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md");
 const DATE_RE = /date|incurred|earned|due\b|paid|cleared|created|posted|occurred|as of|period/i;
 const RAW_TABLE = /<table[\s>]/i;
@@ -23,6 +25,7 @@ const TABLE_INFRA = new Set([
   "components/parity/ParityTable.tsx",
   "components/shared/MobileOptimizedTable.tsx",
   "components/shared/ResizableTable.tsx",
+  "components/shared/ValidationPanel.tsx",
 ].map((p) => path.join(SRC, p)));
 
 function walk(dir, out = []) {
@@ -47,6 +50,8 @@ export function measure() {
   const parity = fs.readFileSync(PARITY, "utf8");
   const tokens = fs.readFileSync(TOKENS, "utf8");
   const spec = fs.readFileSync(BASELINE_DOC, "utf8");
+  const css = fs.readFileSync(INDEX_CSS, "utf8");
+  const tableHeaderCell = fs.readFileSync(TABLE_HEADER_CELL, "utf8");
   const files = walk(SRC);
   const callSites = [];
   const missingDate = [];
@@ -75,6 +80,10 @@ export function measure() {
       tokens.includes('tableHeaderBg: "#14314F"') &&
       tokens.includes('tableHeaderText: "#FFFFFF"') &&
       parity.includes("colors.tableHeaderBg") &&
+      /thead\s*\{[\s\S]*?background-color:\s*#14314f\s*!important;[\s\S]*?color:\s*#ffffff\s*!important;[\s\S]*?font-size:\s*11px\s*!important;[\s\S]*?font-weight:\s*700\s*!important;/.test(css) &&
+      tableHeaderCell.includes('data-table-header-cell="locked"') &&
+      tableHeaderCell.includes("colors.tableHeaderBg") &&
+      tableHeaderCell.includes("colors.tableHeaderText") &&
       parity.includes("column.sortable !== false") &&
       spec.includes("#14314F"),
     call_sites: callSites.length,
@@ -89,7 +98,7 @@ export function measure() {
 
 function check(current, baseline) {
   const errors = [];
-  if (!current.header_ok) errors.push("ParityTable/token/spec missing locked header pair #14314F/#FFFFFF or sortable default");
+  if (!current.header_ok) errors.push("global thead/DataTable/ParityTable/TableHeaderCell missing locked 11px/700 #14314F/#FFFFFF header contract or sortable default");
   if (current.zero_sortable_explicit_count > 0) {
     errors.push(`ParityTable call sites with every column sortable:false: ${current.zero_sortable_explicit.join(", ")}`);
   }
