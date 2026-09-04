@@ -251,7 +251,10 @@ export function DataTable<T>({
               <tr
                 key={rowKey(row)}
                 data-testid={rowTestId?.(row)}
-                className={`border-t border-gray-100 ${onRowClick ? "cursor-pointer hover:bg-gray-50" : ""}`}
+                // GLB-06 (owner 2026-09-03): "columns and rows need a real divider" -- gray-100 is
+                // a near-invisible hairline next to every other border this table already uses
+                // (its own outer frame/toolbar/pager are all gray-200). One border weight.
+                className={`border-t border-gray-200 ${onRowClick ? "cursor-pointer hover:bg-gray-50" : ""}`}
                 style={{ height: spacing.tableRowHeight }}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
               >

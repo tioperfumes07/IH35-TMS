@@ -936,7 +936,10 @@ export function ParityTable<T>({
       <Fragment key={id}>
       <tr
         data-testid={rowTestId ? rowTestId(row) : undefined}
-        className={`border-t border-gray-100 ${
+        // GLB-06 (owner 2026-09-03): "columns and rows need a real divider" -- gray-100 is a
+        // near-invisible hairline next to every other border in this app (gray-200, the same
+        // weight the table's own outer frame/toolbar/pager already use). One border weight.
+        className={`border-t border-gray-200 ${
           onRowClick ? "cursor-pointer hover:bg-gray-50" : ""
         } ${rowClassName ? rowClassName(row) : ""}`}
         style={{ height: d.rowH, ...(selected.has(id) ? { backgroundColor: colors.accentTint } : {}) }}
