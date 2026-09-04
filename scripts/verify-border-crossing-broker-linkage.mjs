@@ -24,7 +24,8 @@ function audit(s) {
   if (!/<InlineCreateDrawer[\s\S]{0,240}kind="vendor"[\s\S]{0,240}operatingCompanyId=\{operatingCompanyId\}/.test(s.picker)) failures.push("broker picker must open canonical company-scoped vendor creator");
   if (!/customs_broker_id:\s*input\.form\.customsBrokerId \|\| undefined/.test(s.submit)) failures.push("wizard submit must forward broker vendor FK from the immutable submit snapshot");
   if (!/SELECT id::text, vendor_name AS name, vendor_category[\s\S]{0,240}ORDER BY vendor_name/.test(s.writer)) failures.push("broker picker must read the canonical vendor_name column and preserve its name API contract");
-  if (!/v\.vendor_name AS customs_broker_name/.test(s.writer)) failures.push("wizard result must resolve the canonical broker vendor_name");
+  const wizardBrokerNameProjections = s.writer.match(/v\.vendor_name AS customs_broker_name/g) ?? [];
+  if (wizardBrokerNameProjections.length !== 2) failures.push("wizard persistence and PDF-download paths must both resolve the canonical broker vendor_name");
   if (!/SELECT ubc\.\*[\s\S]{0,240}v\.vendor_name AS customs_broker_name/.test(s.historyRoute)) failures.push("history detail must resolve the canonical broker vendor_name");
   if (!/FROM mdata\.vendors[\s\S]{0,260}operating_company_id = \$2::uuid[\s\S]{0,100}deactivated_at IS NULL[\s\S]{0,100}vendor_category = 'customs_broker'/.test(s.writer)) failures.push("writer active tenant customs-broker validation missing");
   if (!/customs_broker_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.historyRoute) || !/filters\.push\(`ubc\.customs_broker_id = \$\$\{values\.length\}::uuid`\)/.test(s.historyRoute)) failures.push("exact broker history filter missing");
