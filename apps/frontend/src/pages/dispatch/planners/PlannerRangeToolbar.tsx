@@ -14,7 +14,7 @@ export function PlannerRangeToolbar() {
         <button
           key={d}
           type="button"
-          className={`rounded-sm px-2 py-1 ${windowDays === d ? "bg-slate-800 text-white" : "bg-gray-100 text-gray-700"}`}
+          className={`flex h-7 items-center rounded-sm px-2 text-xs font-medium ${windowDays === d ? "bg-[#14314F] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
           onClick={() => setWindowDays(d)}
         >
           {d}d

@@ -146,7 +146,7 @@ export function UnifiedTimelinePlanner() {
             type="button"
             data-testid={`timeline-book-${driver.id}`}
             onClick={() => openBookForUnit(driver.unit_id)}
-            className="rounded-sm bg-slate-800 px-1.5 py-0.5 text-xs font-semibold text-white"
+            className="flex h-7 items-center rounded-sm bg-[#14314F] px-2 text-xs font-semibold text-white"
           >
             + Book
           </button>

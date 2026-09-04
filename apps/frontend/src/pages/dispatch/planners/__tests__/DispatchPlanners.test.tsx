@@ -55,7 +55,7 @@ describe("Dispatch planners (DISP-PLANNERS)", () => {
     expect(await screen.findByTestId("dispatch-planners-layout")).toBeTruthy();
     expect(await screen.findByTestId("dispatch-driver-planner-page")).toBeTruthy();
     expect(screen.getByTestId("dispatch-planner-range-toolbar")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "30d" }).className).toContain("bg-slate-800");
+    expect(screen.getByRole("button", { name: "30d" }).className).toContain("bg-[#14314F]");
   });
 
   it("switches shared range to 7d", async () => {
@@ -63,7 +63,7 @@ describe("Dispatch planners (DISP-PLANNERS)", () => {
     await screen.findByTestId("dispatch-driver-planner-grid");
     const bar = screen.getByTestId("dispatch-planner-range-toolbar");
     await userEvent.click(within(bar).getByRole("button", { name: "7d" }));
-    expect(within(bar).getByRole("button", { name: "7d" }).className).toContain("bg-slate-800");
+    expect(within(bar).getByRole("button", { name: "7d" }).className).toContain("bg-[#14314F]");
     expect(driverSchedulerApi.driverSchedulerOfficeApi.getGrid).toHaveBeenCalled();
   });
 });

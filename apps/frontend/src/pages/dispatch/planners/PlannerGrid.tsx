@@ -147,7 +147,7 @@ function TrackOverlays({ days, today, dayPx }: { days: string[]; today: string; 
 
 function CellOrDash({ children }: { children: ReactNode }) {
   if (children == null || children === false || children === "") {
-    return <span className="text-slate-400">—</span>;
+    return <span className="text-gray-500">—</span>;
   }
   return <>{children}</>;
 }
@@ -264,7 +264,7 @@ export function PlannerGrid({
   } as CSSProperties;
 
   return (
-    <div className="planner-grid-canonical overflow-hidden rounded-sm border border-slate-300 bg-white" data-testid={testId} style={vars}>
+    <div className="planner-grid-canonical overflow-hidden rounded-sm border border-gray-200 bg-white" data-testid={testId} style={vars}>
       {outside > 0 ? (
         <button
           type="button"
