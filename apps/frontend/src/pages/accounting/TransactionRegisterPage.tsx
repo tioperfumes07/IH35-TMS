@@ -199,7 +199,7 @@ export function TransactionRegisterPage() {
             <button
               type="button"
               onClick={() => navigate(r.detail_path!)}
-              className="inline-flex items-center gap-1 text-[12px] text-slate-600 hover:text-[#1f2a44]"
+              className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-[#1f2a44]"
               aria-label="Open source record"
             >
               Open <ArrowRightCircle className="h-3.5 w-3.5" />
@@ -268,7 +268,7 @@ export function TransactionRegisterPage() {
                   key={opt.value}
                   type="button"
                   onClick={() => staged.setDraft({ ...staged.draft, sources: active ? staged.draft.sources.filter((source) => source !== opt.value) : [...staged.draft.sources, opt.value] })}
-                  className={`rounded-full border px-3 py-0.5 text-[12px] ${
+                  className={`rounded-full border px-3 py-0.5 text-xs ${
                     active ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-slate-300 bg-white text-slate-600"
                   }`}
                 >
