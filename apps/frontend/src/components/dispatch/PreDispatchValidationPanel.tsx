@@ -43,6 +43,11 @@ type Props = {
   /** P0 — remaining blockers after per-row Override (Book stays disabled until 0). */
   onRemainingBlockersChange?: (remaining: number) => void;
   onBlockOverridesChange?: (rows: Record<string, BlockOverrideRecord>) => void;
+  /** WIZ-47 — another gate (e.g. the unit-repair work-order block) still disables submit even when
+   *  THIS panel's own blockers are all overridden. When true, this panel must not claim the booking
+   *  is "cleared to dispatch" — that was the contradiction the owner hit (header said blocked, body
+   *  said cleared, button said Book + dispatch, all at once). */
+  externallyBlocked?: boolean;
 };
 
 const EMPTY_RESULT: ValidationResult = {
@@ -81,6 +86,7 @@ export function PreDispatchValidationPanel({
   onOwnerOverride: _onOwnerOverride,
   onRemainingBlockersChange,
   onBlockOverridesChange,
+  externallyBlocked = false,
 }: Props) {
   const [result, setResult] = useState<ValidationResult>(EMPTY_RESULT);
   const [loading, setLoading] = useState(false);
@@ -314,11 +320,19 @@ export function PreDispatchValidationPanel({
           ) : null}
         </div>
       ) : null}
-      {result.blockers.length > 0 && !loading && remainingBlockers === 0 ? (
+      {result.blockers.length > 0 && !loading && remainingBlockers === 0 && !externallyBlocked ? (
         <div className="rounded-sm border border-slate-300 bg-slate-50 p-2.5 text-xs" data-testid="pre-dispatch-overrides-cleared">
           <div className="font-semibold text-slate-800">
             Booking is cleared to dispatch with {Object.keys(blockOverrides).length} override
             {Object.keys(blockOverrides).length === 1 ? "" : "s"} recorded.
+          </div>
+        </div>
+      ) : null}
+      {result.blockers.length > 0 && !loading && remainingBlockers === 0 && externallyBlocked ? (
+        <div className="rounded-sm border border-red-200 bg-red-50 p-2.5 text-xs" data-testid="pre-dispatch-overrides-recorded-still-blocked">
+          <div className="font-semibold text-red-800">
+            {Object.keys(blockOverrides).length} override{Object.keys(blockOverrides).length === 1 ? "" : "s"} recorded here —
+            but another gate below still blocks booking. Resolve it to dispatch.
           </div>
         </div>
       ) : null}
