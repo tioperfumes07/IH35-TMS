@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202613660001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-04",
+      "purpose": "DRV-BILL-MILES-INTEGER (owner order 2026-09-04, LIVE-BLOCKING -- owner stopped on his first real booking): driver_finance.driver_bills.miles_basis is integer but holds the miles QUANTITY (proven live: settlement-contract-terms.service.ts:222 SUM(db.miles_basis)); mdata.loads.miles_shortest/miles_practical are numeric(10,1) and the API already publishes z.number().multipleOf(0.1), so book-load.service.ts's insert of load.miles_shortest=1478.1 into miles_basis threw 'invalid input syntax for type integer'. Widen to numeric(10,1) to match mdata.loads' mileage columns and the sibling miles_deadhead column on the same table -- never round, rounding would silently change driver pay.)"
+    },
     "202613650001": {
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-04",
