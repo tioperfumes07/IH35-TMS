@@ -406,6 +406,39 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
   }
 
   await recomputeInvoiceTotals(client, String(invoice.id));
+
+  // SET-24 (owner order 2026-09-04): a broker advance received before this invoice existed sits on
+  // accounting.broker_advances with applied_to_invoice_id NULL -- an honest "received but not yet
+  // applied" state, not an error. The first invoice minted for this load claims every unapplied
+  // row (there should be at most one live invoice per load per findConflictingInvoiceForLoad's own
+  // uniqueness guarantee, so no double-claim risk across invoices). Additive only: this NEVER
+  // touches rate_total_cents / the invoice face, only the separate broker_advance_applied_cents
+  // tracking column -- the receivable amount the factor will eventually purchase is reduced by
+  // this, the invoice's own face amount never is.
+  const unappliedAdvances = await client.query<{ id: string; amount_cents: string }>(
+    `
+      SELECT id, amount_cents::text
+      FROM accounting.broker_advances
+      WHERE load_id = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND applied_to_invoice_id IS NULL
+        AND voided_at IS NULL
+      FOR UPDATE
+    `,
+    [input.loadId, input.operatingCompanyId]
+  );
+  if (unappliedAdvances.rows.length > 0) {
+    const totalUnappliedCents = unappliedAdvances.rows.reduce((sum, row) => sum + Number(row.amount_cents), 0);
+    await client.query(
+      `UPDATE accounting.invoices SET broker_advance_applied_cents = COALESCE(broker_advance_applied_cents, 0) + $2 WHERE id = $1`,
+      [invoice.id, totalUnappliedCents]
+    );
+    await client.query(
+      `UPDATE accounting.broker_advances SET applied_to_invoice_id = $1::uuid, applied_at = now(), updated_at = now() WHERE id = ANY($2::uuid[])`,
+      [invoice.id, unappliedAdvances.rows.map((r) => r.id)]
+    );
+  }
+
   const refreshedInvoiceRes = await client.query(`SELECT * FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [invoice.id, input.operatingCompanyId]);
   const refreshedInvoice = refreshedInvoiceRes.rows[0] ?? invoice;
 
