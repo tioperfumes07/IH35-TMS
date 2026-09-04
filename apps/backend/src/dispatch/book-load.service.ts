@@ -494,6 +494,20 @@ async function resolveDriverBasePayCents(
     } else {
       // per_mile_pay — SHORTEST miles by default, because the approved Load Wizard prototype states
       // shortest miles are what a driver is paid on; practical miles drive fuel and ETA, not pay.
+      //
+      // OWNER RULING 2026-09-04 (LANE-MILEAGE-IMPORT-DROPPED-COLUMNS, encoded here): invoice/revenue
+      // reporting uses practical miles; driver pay uses shortest miles loaded + deadhead miles empty
+      // (see the two-line MILES SPEC comment above resolveDriverBasePayCents). The line immediately
+      // below -- falling through to practical_miles whenever miles_shortest is missing or the
+      // driver's rate card is explicitly configured practical_miles -- is THE ONLY correct
+      // loaded-pay path today, because catalogs.lane_mileage's short_miles column has no
+      // trustworthy source for most lanes (see LANE-MILEAGE-LIVE-CONSTRAINTS-BLOCK-OWNER-RULING,
+      // GUARD-WORKORDERS.md) and the wizard never autofills miles_shortest from that catalog value
+      // (verify-miles-shortest-never-autofilled-from-catalog.mjs locks that). DO NOT replace this
+      // fallback with a formula that derives short miles from practical miles -- the owner
+      // explicitly ruled that out ("Any formula would fabricate driver pay") because short and
+      // practical are independent measures in the real data, not a shorter/longer pair. Locked by
+      // scripts/verify-driver-pay-practical-fallback-locked.mjs.
       const miles =
         rate.miles_basis === "practical_miles" || !(Number(load.miles_shortest ?? 0) > 0)
           ? Number(load.miles_practical ?? Number.NaN)
