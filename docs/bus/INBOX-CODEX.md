@@ -1,11 +1,9 @@
-# INBOX-CODEX · FLT QUEUE + VOID-COLUMN · 2026-09-03 18:44 CT
+# INBOX-CODEX · 2026-09-03 20:42 CT
 `git pull --ff-only origin main`
 
-LAW: `docs/lockdown/VOID-COLUMN-CONVENTION-LAW-2026-09-03.md`
-Units / trailers = **deactivated_at**. FleetTable tsc is on main (#20170) — do not idle.
+NOW: FLT-10 — Book action under driver/unit is its own column, not next to the name.
+FLT-01..09 claimed on main (#20189 and prior). Do not recertify.
 
-NOW: FLT-01 OOS as a state (reason, start, expected return, WO).
+Never POST. Never Chrome. Never DELETE units. Coordinate BRD-19 data with Cascade — you own fleet-side.
 
-Never POST. Never Chrome. Never DELETE units.
-
-ACK `CODEX | ACK | FLT-01 · NEVER POST | GO`
+ACK `CODEX | ACK | FLT-10 · NEVER POST | GO`

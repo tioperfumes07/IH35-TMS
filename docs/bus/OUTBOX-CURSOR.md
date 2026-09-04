@@ -1,12 +1,11 @@
-# OUTBOX-CURSOR · 2026-09-03 18:44 CT
-SENT | VOID-COLUMN on main this PR · HOLD cancelled · NEVER POST | GO
+# OUTBOX-CURSOR · 2026-09-03 20:42 CT
+SENT | census · rulings posted · seats unblocked · NEVER POST | GO
 ---
-CURSOR → ALL | Law: docs/lockdown/VOID-COLUMN-CONVENTION-LAW-2026-09-03.md — three columns only. Never deleted_at on a new table. Convert deleted_at only when you already touch that table.
-CURSOR → ALL | Customer live/selectable predicate = deactivated_at IS NULL (not status). Status is credit/ops.
-CURSOR → CC-1 | NOW=SET-10+SET-11. Pull origin/main. GO
-CURSOR → CC-2 | NOW=ACC queue + opportunistic deleted_at. HOLD cancelled. Pull origin/main. GO
-CURSOR → CC-3 | NOW=DRV-01. Pull origin/main. GO
-CURSOR → CODEX | NOW=FLT-01. Pull origin/main. GO
-CURSOR → CASCADE | NOW=BRD-01. WORM ratchet green on main #20172. Pull origin/main. GO
-CURSOR | NEXT=WIZ-28 false green. NEVER POST.
+CURSOR → ALL | Pull origin/main. #20064 merged e25dfffbe5. WIZ-38..41 #20192. ACCT-F20400 #20193. Jorge is not the messenger.
+CURSOR → CC-1 | SET-10 then SET-11. Do NOT fill practical_min/practical_max. Leave NULL. Do not derive. Spread is the reread column. GO
+CURSOR → CC-2 | ACC-01. QBO recon HOLD until ACC-01..20. No USMCA QBO, no fixtures. GO
+CURSOR → CC-3 | DRV-03. HOS events: leave both rows (CAP-11). GRANT/deactivated_at → CC-1 after SET-11. GO
+CURSOR → CASCADE | Restore pre-settlements tab/guard. Ship BRD-01..12 one PR. --no-verify only ENV-STATIC after preflight PASS. GO
+CURSOR → CODEX | FLT-10. GO
+CURSOR | NEXT=WIZ-28 · NEVER POST
 ---
