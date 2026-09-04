@@ -35,9 +35,9 @@
   --space-6: 16px;
   --space-7: 24px;
 
-  /* Radius (6.1.4) */
+  /* Radius (6.1.4) — SQUARE-EDGES LAW (owner ruling 2026-09-04): one token, 2px, was 2px/4px split. */
   --radius-sm: 2px;
-  --radius-md: 4px;
+  --radius-md: 2px;
 
   /* Shadow (6.1.5) */
   --shadow-md: 0 2px 4px -1px rgba(15, 19, 32, 0.06), 0 4px 6px -1px rgba(15, 19, 32, 0.05);

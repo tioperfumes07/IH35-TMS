@@ -38,6 +38,10 @@ function formatNow(now: Date): string {
   });
 }
 
+/** Owner ruling 2026-09-04, item 1 of the system-wide design pass: remove Tasks + Program Board
+ *  from the shared banner. Archived (flag), never deleted — Rule 07 / additive-only law. */
+const TASKS_PROGRAM_BANNER_ARCHIVED = true;
+
 export function Topbar({ auth, onOpenMobileNav }: Props) {
   const navigate = useNavigate();
   const [now, setNow] = useState(() => new Date());
@@ -287,7 +291,12 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
             ) : null}
           </div>
         ) : null}
-        {office ? (
+        {/* ARCHIVED, NOT DELETED (owner ruling 2026-09-04, item 1 of the system-wide design pass +
+            standing additive-only law — Rule 07: "remove" from the owner never means delete code).
+            Gated off by TASKS_PROGRAM_BANNER_ARCHIVED so the banner no longer renders them; both
+            routes (/tasks, /program) remain reachable by URL either way. Flip the flag to restore
+            if the owner ever asks for them back in shared chrome. */}
+        {office && !TASKS_PROGRAM_BANNER_ARCHIVED ? (
           <button
             type="button"
             aria-label={t("topbar.tasks", "Tasks")}
@@ -299,7 +308,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
             {t("topbar.tasks", "Tasks")}
           </button>
         ) : null}
-        {office ? (
+        {office && !TASKS_PROGRAM_BANNER_ARCHIVED ? (
           <button
             type="button"
             aria-label={t("topbar.program", "Program Board")}

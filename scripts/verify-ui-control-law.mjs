@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /**
- * GUARD: UI CONTROL LAW (owner ruling 2026-09-01, docs/bus/UI-CONTROL-LAW-SPEC-2026-09-01.md).
+ * GUARD: UI CONTROL LAW (owner ruling 2026-09-01, docs/bus/UI-CONTROL-LAW-SPEC-2026-09-01.md;
+ * button height corrected again 2026-09-04, CLICKABLE-BOX-SIZE LAW, ORCH-measured — the two-tier
+ * md=h-9/icon-sm=h-8 scale below collapsed onto one clickable-box target, h-7 (28px), for both).
  *
  * Owner-observed, live: Create/Go to Vendors/Create in the accounting toolbar rendered at three
  * different box sizes and three different text sizes; Void/Clear/Export in a bulk-action bar
@@ -51,9 +53,12 @@ const BUTTON_PATH = "apps/frontend/src/components/Button.tsx";
 const PARITY_TABLE_PATH = "apps/frontend/src/components/parity/ParityTable.tsx";
 
 export function tokensExportButtonScale(src) {
+  // CLICKABLE-BOX-SIZE LAW (owner ruling 2026-09-04, ORCH-measured) collapsed the 2026-09-01
+  // md=h-9/icon-sm=h-8 two-tier scale onto one clickable-box target, h-7 (28px) for both --
+  // updated here in the same pass that changed tokens.ts, not a separate follow-up.
   return (
-    /export const BUTTON_MD_SIZE_CLASS\s*=\s*"[^"]*h-9[^"]*"/.test(src) &&
-    /export const BUTTON_ICON_SM_SIZE_CLASS\s*=\s*"[^"]*h-8[^"]*"/.test(src) &&
+    /export const BUTTON_MD_SIZE_CLASS\s*=\s*"[^"]*h-7[^"]*"/.test(src) &&
+    /export const BUTTON_ICON_SM_SIZE_CLASS\s*=\s*"[^"]*h-7[^"]*"/.test(src) &&
     /export const TOOLBAR_ICON_SIZE_CLASS\s*=\s*"[^"]*h-4[^"]*w-4[^"]*"/.test(src) &&
     /export const MIN_HIT_TARGET_CLASS\s*=\s*"[^"]*min-h-6[^"]*min-w-6[^"]*"/.test(src)
   );
@@ -144,8 +149,8 @@ if (SELFTEST) {
       name: "tokens.ts exporting the real scale constants passes",
       fn: () =>
         tokensExportButtonScale(
-          'export const BUTTON_MD_SIZE_CLASS = "h-9 px-3 text-[13px] font-medium";\n' +
-            'export const BUTTON_ICON_SM_SIZE_CLASS = "h-8 text-[13px] font-medium";\n' +
+          'export const BUTTON_MD_SIZE_CLASS = "h-7 px-2 text-[13px] font-medium";\n' +
+            'export const BUTTON_ICON_SM_SIZE_CLASS = "h-7 text-[13px] font-medium";\n' +
             'export const TOOLBAR_ICON_SIZE_CLASS = "h-4 w-4";\n' +
             'export const MIN_HIT_TARGET_CLASS = "flex min-h-6 min-w-6 items-center justify-center";',
         ) === true,
@@ -154,7 +159,7 @@ if (SELFTEST) {
       name: "tokens.ts with a downgraded icon size fails",
       fn: () =>
         tokensExportButtonScale(
-          'export const BUTTON_MD_SIZE_CLASS = "h-9 px-3 text-[13px] font-medium";\n' +
+          'export const BUTTON_MD_SIZE_CLASS = "h-7 px-2 text-[13px] font-medium";\n' +
             'export const BUTTON_ICON_SM_SIZE_CLASS = "h-6 text-[13px] font-medium";\n' +
             'export const TOOLBAR_ICON_SIZE_CLASS = "h-4 w-4";\n' +
             'export const MIN_HIT_TARGET_CLASS = "flex min-h-6 min-w-6 items-center justify-center";',

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { spacing } from "../../design/tokens";
 
 /**
  * C8 — the shared KPI/stat card. Two rules live here so no call site can forget either one.
@@ -78,10 +79,16 @@ export function DrillKpiCard({
 }: DrillKpiCardProps) {
   const compact = size === "sm";
   const shell = [
-    "block h-full w-full min-w-0 rounded-sm border bg-white text-left",
+    // CENTER-EVERYTHING + KPI-TILE-SIZE LAW (owner ruling 2026-09-04, ORCH-measured): centered,
+    // not left; padding 4px 8px (py-1 px-2) for every size, not a compact/md split — ORCH's spec
+    // names one KPI-tile target, not two. h-full still fills a naturally-sized row, but maxHeight
+    // below (inline style) is the hard ceiling — Safety's own "Total Safety Events" tile — so no
+    // KPI tile system-wide can grow past it.
+    "block h-full w-full min-w-0 rounded-sm border bg-white px-2 py-1 text-center",
     active ? "border-slate-400" : "border-gray-200",
-    compact ? "px-2 py-1 text-[11px]" : "px-3 py-2",
+    compact ? "text-[11px]" : "",
   ].join(" ");
+  const maxHeightStyle = { maxHeight: spacing.kpiTileMaxHeight };
   const labelClass = compact
     ? "text-[11px] uppercase tracking-wide text-gray-500"
     : "text-[11px] uppercase tracking-wide text-gray-500";
@@ -96,7 +103,7 @@ export function DrillKpiCard({
       {hint ? <div className="mt-0.5 text-[11px] leading-snug text-gray-500">{hint}</div> : null}
     </>
   );
-  const style = accent ? { borderLeft: `3px solid ${accent}` } : undefined;
+  const style = accent ? { ...maxHeightStyle, borderLeft: `3px solid ${accent}` } : maxHeightStyle;
 
   if (unavailable) {
     return (
