@@ -116,6 +116,9 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   "/dispatch?view=overview": "Home",
   "/dispatch?view=kanban": "Load board",
   "/dispatch?view=list": "Load board",
+  "/dispatch?view=units": "Round Trips",
+  "/dispatch/round-trips": "Round Trips",
+  "/dispatch/trip-pairing": "Trip Pairing",
   "/dispatch/loads": "Load board",
   "/accounting/load-costs": "Load costs",
   "/dispatch/assignment-history": "Assignments",
@@ -163,12 +166,20 @@ export function dispatchSubNavActiveHref(
       ? "/dispatch/book-load?book_load=1"
       : "/dispatch/book-load";
   }
+  // Round Trips deep-link route shares the same active href as the ?view=units board
+  // view, so the breadcrumb reads "Round Trips" (not the "Dispatch › Dispatch" the
+  // bare pathname fallback produced) and the board-view button highlights.
+  if (pathname === "/dispatch/round-trips") return "/dispatch?view=units";
+  // Trip Pairing was missing from this map entirely, so it never highlighted and its
+  // breadcrumb fell through to "Dispatch". Give it its own active href.
+  if (pathname.startsWith("/dispatch/trip-pairing")) return "/dispatch/trip-pairing";
   if (pathname === "/dispatch" || pathname === "/dispatch/loads") {
     if (view === "overview" && panel === "unassigned")
       return "/dispatch?view=overview&panel=unassigned";
     if (view === "overview") return "/dispatch?view=overview";
     if (pathname === "/dispatch/loads" || view === "list")
       return "/dispatch?view=list";
+    if (view === "units") return "/dispatch?view=units";
     return "/dispatch?view=kanban";
   }
   if (pathname.startsWith("/dispatch/planners/truck"))
