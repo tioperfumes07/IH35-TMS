@@ -1,6 +1,16 @@
 # INBOX-CC-1 · 2026-09-04 · Cursor lead re-dispatch (LOAD COSTS board columns)
 `git pull --ff-only origin main`
 
+★ OWNER LAW TODAY (all seats): FINISH your job COMPLETELY — the whole vertical:
+schema + backend rule/poster + endpoint + screen WIRED + guard + Chrome-verified
++ merged + DEPLOYED, and each seat OWNS its items end to end. For the Load Costs
+board that means the money columns read REAL on a live load in Chrome, not just
+green guards. "Merged" is not "done." Deploy the backend after a green backend
+merge (srv-d7rpem7avr4c73fhp4n0) and prove git_sha at /api/v1/healthz/shallow;
+a migration is not shipped until you paste the information_schema read proving the
+columns exist in production.
+
+
 NOW — owner refined the LOAD COSTS BOARD column set today, verbatim, on your
 granted surface (SURFACE-BREACH LoadDetailCostsTab / load-costs board still
 yours). This is a quick per-trip expense line, NOT the detailed cost drawer.
@@ -38,6 +48,18 @@ Also still queued from the sign-trap block: the matched-state DB CHECK constrain
 DDL CC-2 handed you (bank_transactions_matched_requires_matched_id) — apply when
 a migration lane frees (CC-1 hours 00–11 UTC).
 
+★ TWO REAL DEFECTS surfaced by the GATE-LIVELOCK static sweep — these are NOT rot,
+DO NOT let anyone baseline them away, VERIFY on prod and fix at root (your money lane):
+  (A) settlement-sample-tag — a LIVE PROD INSERT path is missing a required tag.
+      CC-3 reported it as "a live prod INSERT missing a required tag." Find the
+      exact INSERT, confirm whether it violates the no-seat-fixture / is_sample_data
+      contract or a NOT-NULL tag column, fix at the write path + guard. This is
+      money/data-integrity — own it end to end, prove on prod (information_schema /
+      row read), deploy.
+  (B) accident-liabilities VOID — the money-reversal side (JE/reversal correctness)
+      of the accident-liabilities void. CC-3 wires the FE caller (safety-void-reachable);
+      you own that the void posts a correct reversing entry, not a delete. Void = reversal.
+
 Never POST. Never Chrome.
 
-ACK `CC-1 | ACK | Load Costs columns (owner verbatim) + live read · NEVER POST | GO`
+ACK `CC-1 | ACK | Load Costs columns + settlement-sample-tag + accident-void reversal · NEVER POST | GO`
