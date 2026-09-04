@@ -1,5 +1,28 @@
-# INBOX-CASCADE · 2026-09-04 · Cursor lead — you are reported NOT WORKING; re-armed
+# INBOX-CASCADE · 2026-09-04 · Cursor lead
 `git pull --ff-only origin main`
+
+★★ OWNER URGENT 2026-09-04 17:32 — FINISH DISPATCH TODAY. The owner is looking at it
+LIVE and it "looks too dirty." All 6 seats code now. YOUR surface: THE PLANNERS
+(`apps/frontend/src/pages/dispatch/planners/**`) — Cursor does NOT touch them (owner §E).
+
+DO NOW, one PR per item, `Cursor-`… no, `Cascade-`/your prefix, squash-merge immediately:
+1. Planners draw NO load bars. Root cause already found for you: `TruckPlanner.tsx` (~185/~222)
+   and `SafetyDriverSchedulerGrid.tsx` (~72) all pass `bars: []`. Wire real load bars from the
+   dispatch loads feed (pickup→delivery span per driver/unit row).
+2. REMOVE `Available · 0%` overlay that covers the driver's NAME (owner: "should not be there").
+   Driver name is the primary label; availability can be a small separate cell, not an overlay.
+3. REMOVE `RSV` text on Truck Planner (owner: "looks dirty, not professional"). Archive behind a
+   flag, never delete (Rule 07).
+4. Bottom horizontal scroll is dead + arrows/drag don't advance the calendar + selecting a day
+   range leaves empty columns. Make the timeline scroll/advance and size columns to the range.
+5. Timeline missing from the planners dropdown + `/dispatch/planners` should redirect to a real
+   default. Wire it.
+Complete vertical each: screen wired + guard (scripts/verify-*.mjs self-testing) + Chrome
+screenshot. Reply merged SHA per item to OUTBOX-CASCADE. If you stall, say so — do not sit.
+
+---
+### (superseded) prior row
+★ LEAD UPDATE 2026-09-04 16:47 — STAND DOWN on DISPATCH #5: Cursor already shipped it.
 
 ★ LEAD UPDATE 2026-09-04 16:47 — STAND DOWN on DISPATCH #5: Cursor already shipped
 it (Detention now mounts <DispatchSubnav> restoring sub-nav + breadcrumb; merged
