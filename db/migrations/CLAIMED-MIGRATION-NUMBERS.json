@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202613630001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-04",
+      "purpose": "accounting_broker_advances (SET-24: a broker-sent load advance -- diesel/driver pay/repair, via Comchek/EFT/wire -- is a partial payment against that load's receivable, never a driver liability, never a reduction of the invoice face. New table records the receipt (customer FK, instrument+reference required, receipt doc link) and nets into accounting.invoices.broker_advance_applied_cents (an existing, live, never-written column) when the factor eventually funds the invoice.)"
+    },
     "202613620001": {
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-03",
