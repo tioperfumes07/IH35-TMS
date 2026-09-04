@@ -550,12 +550,12 @@ export function VendorDetailPage() {
     [user?.role]
   );
 
-  if (vendorQuery.isLoading) return <div className="text-sm text-gray-500">Loading vendor...</div>;
+  if (vendorQuery.isLoading) return <div className="text-xs text-gray-500">Loading vendor...</div>;
   if (vendorQuery.isError) {
     if (vendorQuery.error instanceof ApiError && vendorQuery.error.status === 404) {
       return (
         <div className="space-y-3">
-          <div className="text-sm text-slate-700" role="alert">
+          <div className="text-xs text-slate-700" role="alert">
             This vendor is archived or is not available in the selected company. Historical transactions remain preserved.
           </div>
           <Button variant="secondary" onClick={() => navigate("/vendors")}>
@@ -569,7 +569,7 @@ export function VendorDetailPage() {
   if (!vendorQuery.data) {
     return (
       <div className="space-y-3">
-        <div className="text-sm text-red-600">Vendor not found.</div>
+        <div className="text-xs text-red-600">Vendor not found.</div>
         <Button variant="secondary" onClick={() => navigate("/vendors")}>
           Back to Vendors
         </Button>
@@ -667,7 +667,7 @@ export function VendorDetailPage() {
             forecast, equipment loans, merges, A/P aging, payment methods, bank transactions) each
             silently render nothing when companyId is empty -- same honest-message convention
             already used on the A/P tab below. */}
-        {!companyId ? <p className="text-sm text-red-600">Select an operating company to view linked records.</p> : null}
+        {!companyId ? <p className="text-xs text-red-600">Select an operating company to view linked records.</p> : null}
         <DataPanel title="Vendor Profile">
           {/* FAIL-AP1 — Vendor → Driver reverse when mdata.vendors.driver_id is set.
               Distinct from QBO Mapping. */}
@@ -677,7 +677,7 @@ export function VendorDetailPage() {
               data-testid="vendor-linked-driver"
             >
               <div className="text-[11px] uppercase text-slate-600">Linked driver (A/P payee)</div>
-              <div className="mt-1 text-sm font-semibold text-gray-900">
+              <div className="mt-1 text-xs font-semibold text-gray-900">
                 <EntityLinkOrTombstone
                   kind="driver"
                   id={vendor.driver_id}
@@ -729,7 +729,7 @@ export function VendorDetailPage() {
               value={profileForm.name}
               onChange={(event) => setProfileForm((current) => ({ ...current, name: event.target.value }))}
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -754,7 +754,7 @@ export function VendorDetailPage() {
               value={profileForm.vendorCode}
               onChange={(event) => setProfileForm((current) => ({ ...current, vendorCode: event.target.value }))}
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -763,7 +763,7 @@ export function VendorDetailPage() {
               value={profileForm.taxId}
               onChange={(event) => setProfileForm((current) => ({ ...current, taxId: event.target.value }))}
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           {/* VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD) */}
@@ -773,7 +773,7 @@ export function VendorDetailPage() {
               value={profileForm.website}
               onChange={(event) => setProfileForm((current) => ({ ...current, website: event.target.value }))}
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -783,12 +783,12 @@ export function VendorDetailPage() {
               onChange={(event) => setProfileForm((current) => ({ ...current, printOnCheckName: event.target.value }))}
               disabled={!profileEditMode}
               placeholder="Leave blank to use vendor display name"
-              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">1099 tracking</span>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-xs text-gray-700">
               <input
                 type="checkbox"
                 checked={profileForm.eligible1099}
@@ -874,12 +874,12 @@ export function VendorDetailPage() {
             <span className="text-xs font-semibold text-gray-600">Accounting category</span>
             {/* Single flat row (no nested box-in-box): current chip + inline editor. */}
             {!companyId ? (
-              <div className="flex items-center gap-2 text-sm text-gray-900">
+              <div className="flex items-center gap-2 text-xs text-gray-900">
                 <VendorCategoryChip code={vendor.vendor_category} />
                 <span className="text-xs text-slate-600">Select operating company to edit.</span>
               </div>
             ) : (
-              <div className="flex flex-wrap items-center gap-2 text-sm text-gray-900">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-900">
                 <VendorCategoryChip code={vendor.vendor_category} />
                 <SelectCombobox
                   className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
@@ -913,7 +913,7 @@ export function VendorDetailPage() {
               value={profileForm.telephone}
               onChange={(event) => setProfileForm((current) => ({ ...current, telephone: event.target.value }))}
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -922,25 +922,25 @@ export function VendorDetailPage() {
               value={profileForm.address}
               onChange={(event) => setProfileForm((current) => ({ ...current, address: event.target.value }))}
               disabled={!profileEditMode}
-              className="w-full max-w-2xl rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-2xl rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Primary contact</span>
             <div className="grid w-full max-w-2xl grid-cols-1 gap-2 md:grid-cols-2">
-              <input value={profileForm.primaryContactName} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactName: event.target.value }))} disabled={!profileEditMode} placeholder="Name" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
-              <input value={profileForm.primaryContactTitle} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactTitle: event.target.value }))} disabled={!profileEditMode} placeholder="Title" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
-              <input value={profileForm.primaryContactPhone} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactPhone: event.target.value }))} disabled={!profileEditMode} placeholder="Phone" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
-              <input value={profileForm.primaryContactEmail} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactEmail: event.target.value }))} disabled={!profileEditMode} placeholder="Email" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.primaryContactName} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactName: event.target.value }))} disabled={!profileEditMode} placeholder="Name" className="rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.primaryContactTitle} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactTitle: event.target.value }))} disabled={!profileEditMode} placeholder="Title" className="rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.primaryContactPhone} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactPhone: event.target.value }))} disabled={!profileEditMode} placeholder="Phone" className="rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.primaryContactEmail} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactEmail: event.target.value }))} disabled={!profileEditMode} placeholder="Email" className="rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent" />
             </div>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Secondary contact</span>
             <div className="grid w-full max-w-2xl grid-cols-1 gap-2 md:grid-cols-2">
-              <input value={profileForm.secondaryContactName} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactName: event.target.value }))} disabled={!profileEditMode} placeholder="Name" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
-              <input value={profileForm.secondaryContactTitle} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactTitle: event.target.value }))} disabled={!profileEditMode} placeholder="Title" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
-              <input value={profileForm.secondaryContactPhone} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactPhone: event.target.value }))} disabled={!profileEditMode} placeholder="Phone" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
-              <input value={profileForm.secondaryContactEmail} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactEmail: event.target.value }))} disabled={!profileEditMode} placeholder="Email" className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.secondaryContactName} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactName: event.target.value }))} disabled={!profileEditMode} placeholder="Name" className="rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.secondaryContactTitle} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactTitle: event.target.value }))} disabled={!profileEditMode} placeholder="Title" className="rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.secondaryContactPhone} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactPhone: event.target.value }))} disabled={!profileEditMode} placeholder="Phone" className="rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.secondaryContactEmail} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactEmail: event.target.value }))} disabled={!profileEditMode} placeholder="Email" className="rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent" />
             </div>
           </DataPanelRow>
           <DataPanelRow>
@@ -949,7 +949,7 @@ export function VendorDetailPage() {
               value={profileForm.generalEmail}
               onChange={(event) => setProfileForm((current) => ({ ...current, generalEmail: event.target.value }))}
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -958,7 +958,7 @@ export function VendorDetailPage() {
               value={profileForm.accountingContact}
               onChange={(event) => setProfileForm((current) => ({ ...current, accountingContact: event.target.value }))}
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
@@ -967,12 +967,12 @@ export function VendorDetailPage() {
               value={profileForm.disputesContact}
               onChange={(event) => setProfileForm((current) => ({ ...current, disputesContact: event.target.value }))}
               disabled={!profileEditMode}
-              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Factor rate schedule</span>
-            <p className="max-w-2xl text-sm text-gray-700" data-testid="vendor-factor-schedule-relocated">
+            <p className="max-w-2xl text-xs text-gray-700" data-testid="vendor-factor-schedule-relocated">
               Advance / fee / reserve rates are edited on{" "}
               <Link to="/factoring" className="font-medium text-slate-900 underline">
                 Factoring → active factor profile
@@ -987,7 +987,7 @@ export function VendorDetailPage() {
               onChange={(event) => setProfileForm((current) => ({ ...current, notes: event.target.value }))}
               disabled={!profileEditMode}
               rows={3}
-              className="w-full max-w-2xl rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              className="w-full max-w-2xl rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
           {/* Edit/Save/Cancel moved to the top of the panel (discoverable). */}
@@ -1023,11 +1023,11 @@ export function VendorDetailPage() {
 
       {activeTab === "A/P" ? (
         <div className="space-y-2">
-          {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+          {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
           <div className="rounded-sm border border-gray-200 bg-white">
             <button
               type="button"
-              className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-semibold text-gray-900 hover:bg-gray-50"
+              className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold text-gray-900 hover:bg-gray-50"
               onClick={() => setBillPayOpen((o) => !o)}
             >
               <span>Record Bill Payment</span>
@@ -1180,9 +1180,9 @@ export function VendorDetailPage() {
             ) : null}
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-semibold text-gray-900">Recent bill payments</div>
+            <div className="mb-2 text-xs font-semibold text-gray-900">Recent bill payments</div>
             {vendorPaymentsQuery.isError ? (
-              <p className="text-sm text-red-600">
+              <p className="text-xs text-red-600">
                 Failed to load bill payments — {(vendorPaymentsQuery.error as Error)?.message ?? "unknown error"}.{" "}
                 <button type="button" className="font-semibold text-red-700 underline" onClick={() => void vendorPaymentsQuery.refetch()}>
                   Retry
@@ -1259,7 +1259,7 @@ export function VendorDetailPage() {
             />
           ) : null}
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-semibold text-gray-900">Expenses</div>
+            <div className="mb-2 text-xs font-semibold text-gray-900">Expenses</div>
             {vendorExpensesQuery.isError ? <ListErrorBanner message="Could not load expenses." onRetry={() => void vendorExpensesQuery.refetch()} /> : null}
             {!vendorExpensesQuery.isError ? (
               <ParityTable<ExpenseListRow>
@@ -1303,7 +1303,7 @@ export function VendorDetailPage() {
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-sm font-semibold text-gray-900">Vendor credits</div>
+              <div className="text-xs font-semibold text-gray-900">Vendor credits</div>
               <Link to={`/accounting/vendor-credits?vendor_id=${encodeURIComponent(id)}`} className="text-xs text-slate-700 hover:underline">
                 View all credits
               </Link>
@@ -1378,7 +1378,7 @@ export function VendorDetailPage() {
           />
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">W-9 on file</span>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-700">
               {/* CUST-01 C6: real check against docs.files -- there is no dedicated w9 category
                   (tax_form covers W-9/1099/IFTA alike, 0028_docs_schema.sql), so this honestly
                   reports "tax-form document(s) attached", never a bare unverified "on file" claim. */}

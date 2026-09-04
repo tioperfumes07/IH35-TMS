@@ -67,13 +67,13 @@ export function BrokersListPage() {
         actions={<Button onClick={() => setCreateOpen(true)}>+ Create broker</Button>}
       />
 
-      <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-600">
+      <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">
         Brokers are customers with the <strong>Broker</strong> type — a role on the customer record, not a
         separate master. This is a filtered directory; create or edit a broker from its customer record.
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by name, code, MC# or DOT#" className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by name, code, MC# or DOT#" className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
       </div>
 
       {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search filter above feeds

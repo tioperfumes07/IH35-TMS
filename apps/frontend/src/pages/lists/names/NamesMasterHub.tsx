@@ -184,13 +184,13 @@ export function NamesMasterHub() {
         <label className="flex min-w-[240px] flex-1 flex-col gap-1 text-xs font-medium text-slate-600">
           Search
           <input
-            className="rounded-sm border border-slate-300 px-2 py-1.5 text-sm"
+            className="rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Name, email, phone, CDL…"
           />
         </label>
-        <button type="submit" className="rounded-sm bg-[#1F2A44] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1F2A44]">
+        <button type="submit" className="rounded-sm bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#1F2A44]">
           Search
         </button>
       </form>
@@ -215,11 +215,11 @@ export function NamesMasterHub() {
 
       {counts ? (
         <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm"><div className="text-slate-500">Customers</div><div className="text-xl font-semibold">{counts.customers}</div></div>
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm"><div className="text-slate-500">Vendors</div><div className="text-xl font-semibold">{counts.vendors}</div></div>
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm"><div className="text-slate-500">Drivers</div><div className="text-xl font-semibold">{counts.drivers}</div></div>
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm"><div className="text-slate-500">Contacts</div><div className="text-xl font-semibold">{counts.contacts}</div></div>
-          <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm"><div className="text-slate-500">Total</div><div className="text-xl font-semibold">{counts.total}</div></div>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Customers</div><div className="text-xl font-semibold">{counts.customers}</div></div>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Vendors</div><div className="text-xl font-semibold">{counts.vendors}</div></div>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Drivers</div><div className="text-xl font-semibold">{counts.drivers}</div></div>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Contacts</div><div className="text-xl font-semibold">{counts.contacts}</div></div>
+          <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs"><div className="text-slate-500">Total</div><div className="text-xl font-semibold">{counts.total}</div></div>
         </div>
       ) : null}
 
@@ -253,7 +253,7 @@ export function NamesMasterHub() {
         />
       )}
 
-      <div className="flex items-center justify-between text-sm text-slate-600">
+      <div className="flex items-center justify-between text-xs text-slate-600">
         <span>
           Page {page + 1} of {pageCount} · {total} result{total === 1 ? "" : "s"}
         </span>

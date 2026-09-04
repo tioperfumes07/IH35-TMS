@@ -20,7 +20,7 @@ export function WizardStep6({ form, ports, result, pdfUrl }: Props) {
 
   return (
     <section data-testid="border-wizard-step-6" className="space-y-3">
-      <h3 className="text-sm font-semibold">Step 6 — Review & generate eManifest</h3>
+      <h3 className="text-xs font-semibold">Step 6 — Review & generate eManifest</h3>
       {/* Exact Leaves border_crossing_wizard review — form held UUIDs with no EntityLinks */}
       {hasIds ? (
         <div
@@ -73,7 +73,7 @@ export function WizardStep6({ form, ports, result, pdfUrl }: Props) {
           ) : null}
         </div>
       ) : null}
-      <dl className="grid gap-2 text-sm sm:grid-cols-2">
+      <dl className="grid gap-2 text-xs sm:grid-cols-2">
         <div>
           <dt className="text-gray-500">Direction</dt>
           <dd>{form.direction || "—"}</dd>
@@ -100,7 +100,7 @@ export function WizardStep6({ form, ports, result, pdfUrl }: Props) {
         </div>
       </dl>
       {result?.emanifestReference ? (
-        <div className="rounded-sm border border-green-300 bg-green-50 p-3 text-sm">
+        <div className="rounded-sm border border-green-300 bg-green-50 p-3 text-xs">
           <p>
             Crossing logged · eManifest ref <strong>{result.emanifestReference}</strong>
           </p>

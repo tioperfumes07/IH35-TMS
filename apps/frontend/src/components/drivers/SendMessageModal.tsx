@@ -120,7 +120,7 @@ export function SendMessageModal({ open, driverId, companyId, driverName, onClos
             maxLength={4000}
           />
         </div>
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {error ? <p className="text-xs text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={attemptClose} disabled={pending}>
             Cancel

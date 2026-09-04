@@ -70,7 +70,7 @@ export function DriverLoginPage() {
         <>
           <label className="text-xs font-medium text-slate-600">{t("driver.phone_label")}</label>
           <input
-            className="rounded-sm border border-slate-300 px-3 py-2 text-sm"
+            className="rounded-sm border border-slate-300 px-3 py-2 text-xs"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder={t("driver.phone_placeholder")}
@@ -79,7 +79,7 @@ export function DriverLoginPage() {
           />
           <button
             type="button"
-            className="rounded-sm bg-slate-900 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-sm bg-slate-900 py-2 text-xs font-semibold text-white disabled:opacity-50"
             disabled={busy || !phone.startsWith("+")}
             onClick={() => void start()}
           >
@@ -90,7 +90,7 @@ export function DriverLoginPage() {
         <>
           <label className="text-xs font-medium text-slate-600">{t("driver.otp_label")}</label>
           <input
-            className="rounded-sm border border-slate-300 px-3 py-2 text-sm tracking-widest"
+            className="rounded-sm border border-slate-300 px-3 py-2 text-xs tracking-widest"
             value={code}
             onChange={(e) => setCode(e.target.value)}
             inputMode="numeric"
@@ -98,7 +98,7 @@ export function DriverLoginPage() {
           />
           <button
             type="button"
-            className="rounded-sm bg-slate-900 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-sm bg-slate-900 py-2 text-xs font-semibold text-white disabled:opacity-50"
             disabled={busy || code.length < 4}
             onClick={() => void verify()}
           >

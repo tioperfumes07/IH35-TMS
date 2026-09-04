@@ -21,7 +21,7 @@ export function OnboardingStepSignatures({
 }: SignaturesStepProps) {
   return (
     <div data-testid="onboarding-step-signatures" className="space-y-4">
-      <label className="flex items-start gap-2 text-sm">
+      <label className="flex items-start gap-2 text-xs">
         <input
           type="checkbox"
           checked={acknowledged}

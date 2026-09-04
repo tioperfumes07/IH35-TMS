@@ -229,7 +229,7 @@ export function TrialBalancePage() {
         }
       />
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
       {exportAction.error ? (
         <p role="alert" className="no-print text-xs text-red-700">

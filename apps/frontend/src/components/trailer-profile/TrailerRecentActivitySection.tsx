@@ -52,7 +52,7 @@ export function TrailerRecentActivitySection({ equipmentId, companyId }: Props) 
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="tp-section-9-activity">
-      <h2 className="text-sm font-semibold text-gray-800">Recent activity</h2>
+      <h2 className="text-xs font-semibold text-gray-800">Recent activity</h2>
       <div className="mt-3 grid gap-4 md:grid-cols-3">
         <div>
           <h3 className="text-xs font-medium text-gray-600">Equipment log</h3>

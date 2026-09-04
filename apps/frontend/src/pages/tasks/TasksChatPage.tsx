@@ -197,7 +197,7 @@ export function TasksChatPage() {
       <div className="space-y-4 p-4" data-testid="tasks-chat-page">
         <PageHeader title="Team Chat" subtitle="Task-scoped comments, @mentions, and activity" />
         <TasksModuleTabs />
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
           Select an operating company to view team chat.
         </div>
       </div>
@@ -251,14 +251,14 @@ export function TasksChatPage() {
         {/* Thread + composer + activity */}
         <div className="space-y-4">
           {!activeTaskId ? (
-            <div className="rounded-sm border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+            <div className="rounded-sm border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">
               Select a task to view its conversation.
             </div>
           ) : (
             <>
               <div className="rounded-sm border border-slate-200 bg-white">
                 <div className="border-b border-slate-200 px-4 py-2">
-                  <div className="text-sm font-semibold text-[#1f2a44]">{selectedTask?.title ?? "Task"}</div>
+                  <div className="text-xs font-semibold text-[#1f2a44]">{selectedTask?.title ?? "Task"}</div>
                   {selectedTask ? (
                     <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-slate-500">
                       <span>{formatDateUS(selectedTask.scheduled_date)} · {taskStatusLabel(selectedTask.status)}</span>

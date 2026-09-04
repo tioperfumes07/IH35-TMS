@@ -71,11 +71,11 @@ export function SettlementDisputeList() {
       </div>
 
       {isError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+        <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-xs text-red-700">
           Could not load settlement disputes. <button type="button" className="font-semibold underline" onClick={() => void refetch()}>Retry</button>
         </div>
       ) : null}
-      {isSuccess && rows.length === 0 ? <p className="text-sm text-gray-500">No settlement disputes found.</p> : null}
+      {isSuccess && rows.length === 0 ? <p className="text-xs text-gray-500">No settlement disputes found.</p> : null}
       {!isError ? <DataTable
         rows={rows}
         loading={isLoading}

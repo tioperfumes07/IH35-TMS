@@ -19,7 +19,7 @@ export function OnboardingDocUploadField({
 }: DocUploadStepProps) {
   return (
     <div data-testid={testId} className="space-y-2">
-      <label className="block text-sm font-medium text-slate-700">{label}</label>
+      <label className="block text-xs font-medium text-slate-700">{label}</label>
       <input
         type="file"
         accept="application/pdf,image/*"
@@ -28,7 +28,7 @@ export function OnboardingDocUploadField({
           const file = e.target.files?.[0];
           if (file) await onPick(file);
         }}
-        className="block w-full text-sm"
+        className="block w-full text-xs"
       />
       {uploading ? <p className="text-xs text-slate-500">Uploading via docs module…</p> : null}
       {fileId ? (

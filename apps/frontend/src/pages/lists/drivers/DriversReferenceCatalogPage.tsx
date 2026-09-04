@@ -128,11 +128,11 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         {/* LST-F3514: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
-        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by code or label" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
+        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by code or label" className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
         <SelectCombobox
           value={archiveFilter}
           onChange={(event) => setArchiveFilter(event.target.value as ArchiveFilter)}
-          className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
         >
           <option value="active">Active</option>
           <option value="archived">Archived</option>

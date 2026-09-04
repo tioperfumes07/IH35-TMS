@@ -39,7 +39,7 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
     return m;
   }, [query.data?.leave_day_cells]);
 
-  if (query.isLoading) return <div className="text-sm text-gray-500">Loading grid…</div>;
+  if (query.isLoading) return <div className="text-xs text-gray-500">Loading grid…</div>;
   if (query.isError) {
     return (
       <ListErrorBanner

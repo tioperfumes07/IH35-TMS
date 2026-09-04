@@ -268,7 +268,7 @@ export function DriverSchedulerGridPage() {
         }
       />
 
-      {!operatingCompanyId ? <div className="text-sm text-gray-500">Select an operating company to view the driver schedule.</div> : null}
+      {!operatingCompanyId ? <div className="text-xs text-gray-500">Select an operating company to view the driver schedule.</div> : null}
 
       <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-2 text-xs">
         <span className="font-semibold text-gray-600">Range</span>
@@ -284,7 +284,7 @@ export function DriverSchedulerGridPage() {
         ))}
       </div>
 
-      {query.isLoading ? <div className="text-sm text-gray-500">Loading grid…</div> : null}
+      {query.isLoading ? <div className="text-xs text-gray-500">Loading grid…</div> : null}
       {query.isError ? (
         <ListErrorState
           title="Couldn't load scheduler grid"
@@ -353,7 +353,7 @@ export function DriverSchedulerGridPage() {
       ) : null}
 
       {query.data && (query.data.drivers ?? []).length === 0 ? (
-        <div className="text-sm text-gray-500">No drivers are available for this operating company.</div>
+        <div className="text-xs text-gray-500">No drivers are available for this operating company.</div>
       ) : null}
 
       {query.data?.pending_requests?.length ? (
@@ -370,7 +370,7 @@ export function DriverSchedulerGridPage() {
       ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-scheduler-temp-cover-section">
-        <h3 className="mb-2 text-sm font-semibold text-gray-800">Temp cover assignments</h3>
+        <h3 className="mb-2 text-xs font-semibold text-gray-800">Temp cover assignments</h3>
         {tempAssignmentsQuery.isLoading ? <div className="text-xs text-gray-500">Loading…</div> : null}
         {tempAssignmentsQuery.isError ? (
           <ListErrorState
@@ -431,7 +431,7 @@ export function DriverSchedulerGridPage() {
         isDirty={isAssignDirty}
         onRegisterAttemptClose={(next) => setAssignAttemptClose(() => next)}
       >
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           <label className="block text-xs font-semibold uppercase text-gray-600">
             Unit
             <div className="mt-1">
@@ -492,7 +492,7 @@ export function DriverSchedulerGridPage() {
           <label className="block text-xs font-semibold uppercase text-gray-600">
             Notes (optional)
             <textarea
-              className="mt-1 min-h-16 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="mt-1 min-h-16 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={tempCoverForm.notes}
               onChange={(e) => setTempCoverForm((f) => ({ ...f, notes: e.target.value }))}
             />
@@ -525,7 +525,7 @@ export function DriverSchedulerGridPage() {
         onRegisterAttemptClose={(next) => setCancelAttemptClose(() => next)}
       >
         {cancelTarget ? (
-          <div className="space-y-3 text-sm">
+          <div className="space-y-3 text-xs">
             <p className="text-xs text-gray-600">
               Cancel the cover assignment for{" "}
               <EntityLink kind="driver" id={cancelTarget.cover_driver_id} label={entityLabel(cancelTarget.cover_driver_name, cancelTarget.cover_driver_id, "Driver")} /> on{" "}
@@ -534,7 +534,7 @@ export function DriverSchedulerGridPage() {
             <label className="block text-xs font-semibold uppercase text-gray-600">
               Reason
               <textarea
-                className="mt-1 min-h-16 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                className="mt-1 min-h-16 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 placeholder="Why is this assignment being cancelled?"

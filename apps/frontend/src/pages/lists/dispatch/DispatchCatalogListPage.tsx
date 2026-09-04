@@ -181,7 +181,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
         }
       />
 
-      <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-600">{description}</div>
+      <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">{description}</div>
 
       <div className="grid gap-2 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-[1fr_180px]">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">

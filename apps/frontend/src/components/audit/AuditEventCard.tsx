@@ -48,7 +48,7 @@ export function AuditEventCard({ event, onClose }: Props) {
       <div className="flex items-start justify-between border-b border-gray-100 px-4 py-3">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-sm font-semibold text-gray-900">{event.event_class}</span>
+            <span className="font-mono text-xs font-semibold text-gray-900">{event.event_class}</span>
             <span
               className={`inline-block rounded-sm px-1.5 py-0.5 text-xs font-bold ${SEVERITY_COLORS[event.severity] ?? "bg-gray-100 text-gray-700"}`}
             >

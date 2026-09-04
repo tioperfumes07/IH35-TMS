@@ -20,7 +20,7 @@ export function WarrantyClaimsReverseSection({ operatingCompanyId, filter, conte
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
-      <h2 className="text-sm font-semibold text-slate-900">Warranty claims</h2>
+      <h2 className="text-xs font-semibold text-slate-900">Warranty claims</h2>
       {query.isError ? <ListErrorBanner message={`Couldn't load warranty claims for ${contextLabel}.`} onRetry={() => void query.refetch()} /> : null}
       {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-xs text-gray-500">No warranty claims linked to {contextLabel}.</p> : null}

@@ -20,7 +20,7 @@ export function HomeFleetRestoreCard({ operatingCompanyId }: Props) {
   const data = query.data?.data;
   if (query.isLoading) {
     return (
-      <section className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700" data-testid="home-fleet-restore-card">
+      <section className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-700" data-testid="home-fleet-restore-card">
         Loading fleet restore cost…
       </section>
     );
@@ -28,7 +28,7 @@ export function HomeFleetRestoreCard({ operatingCompanyId }: Props) {
   if (query.isError) {
     return (
       <section
-        className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700"
+        className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-700"
         data-testid="home-fleet-restore-card"
         data-fleet-restore-read-error
         role="alert"
@@ -49,7 +49,7 @@ export function HomeFleetRestoreCard({ operatingCompanyId }: Props) {
 
   return (
     <section
-      className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700"
+      className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-700"
       data-testid="home-fleet-restore-card"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">

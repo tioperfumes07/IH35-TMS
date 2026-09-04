@@ -20,7 +20,7 @@ export function VendorMergesReverseSection({ operatingCompanyId, vendorId }: { o
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="vendor-merges-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-slate-900">Driver vendor merges</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Driver vendor merges</h2>
         <EntityLink
           kind="factoring_vendor_merges_vendor"
           id={vendorId}

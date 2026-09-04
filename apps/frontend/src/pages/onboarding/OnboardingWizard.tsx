@@ -152,13 +152,13 @@ export function OnboardingWizard() {
   }
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company to begin onboarding.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs">Select an operating company to begin onboarding.</div>;
   }
   if (stateQuery.isLoading) {
-    return <div className="rounded-sm border bg-white p-4 text-sm">Loading onboarding…</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs">Loading onboarding…</div>;
   }
   if (stateQuery.isError) {
-    return <div className="rounded-sm border bg-white p-4 text-sm text-red-700">Could not load onboarding state.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs text-red-700">Could not load onboarding state.</div>;
   }
 
   const progressPct = Math.round(((activeIndex + (completed ? 1 : 0)) / ONBOARDING_STEP_ORDER.length) * 100);
@@ -172,7 +172,7 @@ export function OnboardingWizard() {
       </div>
 
       {completed ? (
-        <div className="rounded-sm border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+        <div className="rounded-sm border border-green-200 bg-green-50 p-4 text-xs text-green-800">
           Onboarding complete. You can revisit any step from settings.
         </div>
       ) : null}
@@ -191,7 +191,7 @@ export function OnboardingWizard() {
           ))}
         </div>
 
-        {error ? <p className="mb-3 text-sm text-red-600">{error}</p> : null}
+        {error ? <p className="mb-3 text-xs text-red-600">{error}</p> : null}
 
         {activeStep === "company" ? (
           <Step1Company
@@ -245,7 +245,7 @@ export function OnboardingWizard() {
             {activeIndex < ONBOARDING_STEP_ORDER.length - 1 ? (
               <button
                 type="button"
-                className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+                className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
                 disabled={!canAdvance || patchMut.isPending}
                 onClick={() => void saveAndAdvance()}
               >
@@ -254,7 +254,7 @@ export function OnboardingWizard() {
             ) : (
               <button
                 type="button"
-                className="rounded-sm border border-green-600 px-3 py-1.5 text-sm font-semibold text-green-700 disabled:opacity-50"
+                className="rounded-sm border border-green-600 px-3 py-1.5 text-xs font-semibold text-green-700 disabled:opacity-50"
                 disabled={patchMut.isPending}
                 onClick={() => void completeOnboarding()}
               >
@@ -264,7 +264,7 @@ export function OnboardingWizard() {
             {activeIndex > 0 ? (
               <button
                 type="button"
-                className="rounded-sm border px-3 py-1.5 text-sm text-gray-700"
+                className="rounded-sm border px-3 py-1.5 text-xs text-gray-700"
                 onClick={() => setActiveIndex((i) => Math.max(0, i - 1))}
               >
                 Back

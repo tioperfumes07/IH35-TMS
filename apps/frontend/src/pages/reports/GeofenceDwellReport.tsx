@@ -168,7 +168,7 @@ export function GeofenceDwellReport() {
           <label className="text-xs text-slate-700">
             Kind
             <SelectCombobox
-              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
               value={staged.draft.locationKind}
               onChange={(event) => staged.setDraft((p) => ({ ...p, locationKind: event.target.value as GeofenceLocationKind | "" }))}
             >

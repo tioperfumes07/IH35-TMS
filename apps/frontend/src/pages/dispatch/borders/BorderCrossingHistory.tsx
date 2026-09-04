@@ -108,7 +108,7 @@ export function BorderCrossingHistory() {
     >
       <div className="relative flex flex-wrap items-center gap-4">
         <div>
-          <label htmlFor="border-crossing-from" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="border-crossing-from" className="block text-xs font-medium text-gray-700 mb-1">
             From
           </label>
           <DatePicker
@@ -119,7 +119,7 @@ export function BorderCrossingHistory() {
           />
         </div>
         <div>
-          <label htmlFor="border-crossing-to" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="border-crossing-to" className="block text-xs font-medium text-gray-700 mb-1">
             To
           </label>
           <DatePicker

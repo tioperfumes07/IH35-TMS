@@ -144,7 +144,7 @@ export function OcrQueuePage() {
   });
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
   }
 
   const items = queueQ.data?.items ?? [];
@@ -218,7 +218,7 @@ export function OcrQueuePage() {
         title="OCR queue"
         subtitle="Email-forwarded rate cons · async OCR · review · convert to Book Load"
         actions={
-          <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-sm">
+          <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-xs">
             Dispatch home
           </Link>
         }

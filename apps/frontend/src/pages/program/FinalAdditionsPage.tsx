@@ -151,9 +151,9 @@ export function FinalAdditionsPage() {
         subtitle="The launch punch-list — every remaining block, flipped to Done as it ships. Nothing is removed; shipped work stays, labelled Done."
       />
 
-      {isLoading ? <div className="py-8 text-center text-sm text-slate-500">Loading punch-list…</div> : null}
+      {isLoading ? <div className="py-8 text-center text-xs text-slate-500">Loading punch-list…</div> : null}
       {isError ? (
-        <div className="py-8 text-center text-sm text-red-600">Failed to load: {userFacingApiError(error, "error")}</div>
+        <div className="py-8 text-center text-xs text-red-600">Failed to load: {userFacingApiError(error, "error")}</div>
       ) : null}
 
       {data ? (
@@ -186,7 +186,7 @@ export function FinalAdditionsPage() {
               </span>
             </div>
             {remaining.length === 0 ? (
-              <div className="px-3 py-6 text-center text-sm text-slate-500">Nothing left — all blocks shipped.</div>
+              <div className="px-3 py-6 text-center text-xs text-slate-500">Nothing left — all blocks shipped.</div>
             ) : (
               remaining.map((b) => <BlockRow key={b.id} b={b} />)
             )}

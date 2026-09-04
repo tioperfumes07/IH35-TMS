@@ -155,7 +155,7 @@ export function DetentionBoardPage() {
     queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-board", submittedCompanyId] });
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
   }
 
   const events = useMemo(
@@ -255,13 +255,13 @@ export function DetentionBoardPage() {
           <>
             <button
               type="button"
-              className="rounded-sm border px-3 py-1.5 text-sm"
+              className="rounded-sm border px-3 py-1.5 text-xs"
               disabled={syncM.isPending}
               onClick={() => syncM.mutate(companyId)}
             >
               Sync from arrivals
             </button>
-            <Link to="/dispatch/alerts" className="rounded-sm border px-3 py-1.5 text-sm">
+            <Link to="/dispatch/alerts" className="rounded-sm border px-3 py-1.5 text-xs">
               Dispatch alerts
             </Link>
           </>

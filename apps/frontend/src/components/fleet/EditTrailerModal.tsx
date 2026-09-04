@@ -174,7 +174,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
         attemptCloseRef.current = attemptClose;
       }}
     >
-      <div className="max-h-[70vh] space-y-3 overflow-y-auto text-sm" data-testid="tp-edit-trailer-modal">
+      <div className="max-h-[70vh] space-y-3 overflow-y-auto text-xs" data-testid="tp-edit-trailer-modal">
         {profileQuery.isLoading ? <p>Loading…</p> : null}
         {profileQuery.isError ? (
           <ListErrorState

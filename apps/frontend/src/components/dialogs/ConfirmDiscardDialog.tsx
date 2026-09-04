@@ -36,7 +36,7 @@ export function ConfirmDiscardDialog({ open, onCancel, onDiscard }: Props) {
         aria-modal="true"
         aria-labelledby="confirm-discard-title"
       >
-        <h3 id="confirm-discard-title" className="text-sm font-semibold text-gray-900">
+        <h3 id="confirm-discard-title" className="text-xs font-semibold text-gray-900">
           Discard unsaved changes?
         </h3>
         <p className="mt-2 text-xs text-gray-600">Your edits will be lost.</p>

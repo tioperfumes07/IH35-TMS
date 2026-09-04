@@ -123,7 +123,7 @@ export function CatalogTable({
             <SelectCombobox
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value as "true" | "false" | "all")}
-              className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-1"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-1"
             >
               <option value="true">Active</option>
               <option value="false">Inactive</option>

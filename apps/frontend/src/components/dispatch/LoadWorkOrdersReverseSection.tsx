@@ -58,7 +58,7 @@ export function LoadWorkOrdersReverseSection({
         data-testid="load-reverse-work-orders"
       >
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-slate-900">
+          <h3 className="text-xs font-semibold text-slate-900">
             Work Orders
             {rows.length > 0 ? (
               <span className="ml-2 text-xs font-normal text-gray-600">
@@ -74,13 +74,13 @@ export function LoadWorkOrdersReverseSection({
           />
         </div>
         {query.isLoading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-xs text-gray-500">Loading…</p>
         ) : null}
         {query.isError ? (
           <ListErrorState status={0} message="Could not load work orders for this load." onRetry={() => void query.refetch()} />
         ) : null}
         {!query.isLoading && !query.isError && rows.length === 0 ? (
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-gray-500">
             No work orders linked to this load.
           </p>
         ) : null}
@@ -89,7 +89,7 @@ export function LoadWorkOrdersReverseSection({
             {rows.map((row) => (
               <li
                 key={row.id}
-                className="text-sm text-slate-700"
+                className="text-xs text-slate-700"
                 data-testid={`load-work-order-${row.id}`}
               >
                 {/* The WO display_id is the human label (WO-{UNIT}-{TYPE}-{DATE}-{NNNN}-{V5}); fall

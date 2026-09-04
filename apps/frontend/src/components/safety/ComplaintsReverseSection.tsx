@@ -39,7 +39,7 @@ export function ComplaintsReverseSection({
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
-      <h2 className="text-sm font-semibold text-slate-900">Complaints{total ? ` (${total})` : ""}</h2>
+      <h2 className="text-xs font-semibold text-slate-900">Complaints{total ? ` (${total})` : ""}</h2>
       {query.isError ? (
         <ListErrorBanner message={`Couldn't load complaints for ${contextLabel}.`} onRetry={() => void query.refetch()} />
       ) : null}

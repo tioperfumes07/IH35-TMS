@@ -115,7 +115,7 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
   );
 
   if (!operatingCompanyId) {
-    return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs">Select an operating company.</div>;
   }
 
   return (
@@ -174,9 +174,9 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
                 placeholder="Filter by program, entity, detail…"
                 value={staged.draft.filterText}
                 onChange={(e) => staged.setDraft({ ...staged.draft, filterText: e.target.value })}
-                className="h-8 w-full max-w-md rounded-sm border px-2 text-sm"
+                className="h-8 w-full max-w-md rounded-sm border px-2 text-xs"
               />
-              <label className="text-sm">
+              <label className="text-xs">
                 Program{" "}
                 <SelectCombobox
                   className="ml-1"

@@ -225,7 +225,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
     <div className="space-y-3" data-testid="accidents-page">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
-          <div className="text-sm font-semibold text-slate-800">Accidents & Incidents</div>
+          <div className="text-xs font-semibold text-slate-800">Accidents & Incidents</div>
           <div className="text-[11px] text-slate-500">Live accident reports with damage details, photos, and maintenance WO spawn.</div>
         </div>
         <Button

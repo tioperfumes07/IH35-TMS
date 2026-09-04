@@ -360,7 +360,7 @@ export function ComplaintsTab() {
     return (
       <div className="rounded-sm border border-slate-200 bg-slate-50 p-6 text-center">
         <Lock className="mx-auto h-5 w-5 text-slate-700" />
-        <p className="mt-2 text-sm font-semibold text-slate-700">This area is restricted to Owner / Admin / Safety roles. Contact your administrator if you need access.</p>
+        <p className="mt-2 text-xs font-semibold text-slate-700">This area is restricted to Owner / Admin / Safety roles. Contact your administrator if you need access.</p>
       </div>
     );
   }

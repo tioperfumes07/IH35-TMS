@@ -188,7 +188,7 @@ export function ProfitLossPage() {
         }
       />
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
       {exportAction.error ? (
         <p role="alert" className="no-print text-xs text-red-700">
@@ -246,7 +246,7 @@ export function ProfitLossPage() {
         </div>
       ) : null}
 
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
 
       {query.data ? (
         <div className="space-y-3">
@@ -256,7 +256,7 @@ export function ProfitLossPage() {
             { key: "expenses", title: "Operating expenses", lines: expenseLines, total: query.data.operating_expenses.total },
           ].map((section) => (
             <div key={section.key} className="overflow-auto rounded-sm border border-gray-200 bg-white">
-              <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold">{section.title}</div>
+              <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold">{section.title}</div>
               <table className="min-w-full text-left text-xs">
                 <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                   <tr>
@@ -305,7 +305,7 @@ export function ProfitLossPage() {
             </div>
           ))}
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-            <div className="flex items-center justify-between text-sm font-semibold">
+            <div className="flex items-center justify-between text-xs font-semibold">
               <span>Net income</span>
               <span className={query.data.net_income < 0 ? "text-rose-700" : "text-emerald-700"}>{money(query.data.net_income)}</span>
             </div>

@@ -117,7 +117,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
     // z-index reasoning below still holds.
     <>
       <Modal open={open} onClose={onClose} title="Submit settlement dispute">
-        <div className="space-y-3 text-sm" data-testid="settlement-dispute-modal">
+        <div className="space-y-3 text-xs" data-testid="settlement-dispute-modal">
           <label className="block space-y-1">
             <span className="font-medium">Driver</span>
             <DriverPickerWithCreate

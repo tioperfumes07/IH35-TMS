@@ -95,7 +95,7 @@ function SortableRow({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="rounded-sm border border-gray-200 bg-white p-2 text-sm shadow-xs">
+    <div ref={setNodeRef} style={style} className="rounded-sm border border-gray-200 bg-white p-2 text-xs shadow-xs">
       <div className="flex items-start gap-2">
         <button
           type="button"
@@ -355,10 +355,10 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
     ]);
   };
 
-  if (q.isLoading) return <div className="text-sm text-gray-500">Loading stops…</div>;
+  if (q.isLoading) return <div className="text-xs text-gray-500">Loading stops…</div>;
   if (q.isError) {
     return (
-      <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700" role="alert" data-load-stops-read-error>
+      <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700" role="alert" data-load-stops-read-error>
         <div>Could not load stops.</div>
         <Button type="button" size="sm" variant="secondary" onClick={() => void q.refetch()}>
           Retry stops

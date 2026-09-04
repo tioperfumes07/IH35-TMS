@@ -99,7 +99,7 @@ export function ErrorMonitorPage() {
     return (
       <div className="space-y-3">
         <PageHeader title="Error monitor" subtitle="Buffered client + server errors (last window)" />
-        <p className="text-sm text-gray-600">Owner access is required.</p>
+        <p className="text-xs text-gray-600">Owner access is required.</p>
       </div>
     );
   }

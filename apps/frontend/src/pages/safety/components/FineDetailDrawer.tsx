@@ -89,7 +89,7 @@ export function FineDetailDrawer({
           the single surface (Law §3). The panel ref stays for the existing focus behaviour. */}
       <ParityDrawer open onClose={handleClose} title={DRAWER_TITLE}>
         <div ref={panelRef as React.RefObject<HTMLDivElement>} data-testid="fine-detail-drawer">
-        <div className="mt-3 space-y-2 text-sm">
+        <div className="mt-3 space-y-2 text-xs">
           <div><strong>Status:</strong> {String(fine.status ?? "open")}</div>
           <div><strong>Subject:</strong> {String(fine.subject_type ?? "—")}</div>
           {fine.subject_driver_id ? (

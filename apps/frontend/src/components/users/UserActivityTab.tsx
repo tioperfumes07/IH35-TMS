@@ -197,7 +197,7 @@ export function UserActivityTab({ operatingCompanyId, userId }: UserActivityTabP
         <label className="text-xs text-gray-600">
           Event type
           <select
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={eventTypeFilter}
             onChange={(e) => setEventTypeFilter(e.target.value)}
           >
@@ -212,7 +212,7 @@ export function UserActivityTab({ operatingCompanyId, userId }: UserActivityTabP
         <label className="text-xs text-gray-600">
           Source
           <select
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value)}
           >

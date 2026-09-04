@@ -19,13 +19,13 @@ type Props<T> = {
 
 export function MobileOptimizedTable<T>({ rows, columns, rowKey, emptyMessage = "No rows", rowActions }: Props<T>) {
   if (rows.length === 0) {
-    return <p className="text-sm text-gray-500">{emptyMessage}</p>;
+    return <p className="text-xs text-gray-500">{emptyMessage}</p>;
   }
 
   return (
     <div className="mobile-table-fallback w-full" data-testid="mobile-optimized-table">
       <div className="hidden overflow-x-auto sm:block">
-        <table className="min-w-full text-sm">
+        <table className="min-w-full text-xs">
           <thead>
             <tr>
               {columns.map((col) => (
@@ -57,7 +57,7 @@ export function MobileOptimizedTable<T>({ rows, columns, rowKey, emptyMessage = 
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                     {col.cardLabel ?? col.header}
                   </p>
-                  <div className="text-sm text-gray-900">{col.render(row)}</div>
+                  <div className="text-xs text-gray-900">{col.render(row)}</div>
                 </div>
               ))}
             </article>

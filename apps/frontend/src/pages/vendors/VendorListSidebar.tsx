@@ -110,12 +110,12 @@ export function VendorListSidebar({
         onChange={(event) => onSearchChange(event.target.value)}
         aria-label="Search vendors by name or details"
         placeholder="Search by name or details"
-        className="mb-2 mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+        className="mb-2 mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
       />
       <SelectCombobox
         value={sortByName}
         onChange={(event) => onSortChange(event.target.value as "name_asc" | "name_desc" | "balance_asc" | "balance_desc")}
-        className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+        className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
       >
         <option value="name_asc">Sort by name</option>
         <option value="name_desc">Sort by name (Z-A)</option>
@@ -144,7 +144,7 @@ export function VendorListSidebar({
                   >
                     <td style={{ width: widths.name }} className="max-w-0 truncate px-2 py-1.5">
                       {/* Anchor navigation (cmd-click / keyboard) via CardLink; also selects the master-detail row. */}
-                      <CardLink href={`/vendors/${vendor.id}`} onNavigate={() => onSelectVendor(vendor.id)} className="block truncate text-sm font-medium text-gray-900 hover:underline">
+                      <CardLink href={`/vendors/${vendor.id}`} onNavigate={() => onSelectVendor(vendor.id)} className="block truncate text-xs font-medium text-gray-900 hover:underline">
                         {/* invariant #23 (§7 owner-locked): the canonical `single-line-name` token, plus the
                             title so the full name is still readable once ellipsised. The surrounding
                             `truncate` already prevented wrapping here — this page never rendered the name

@@ -284,7 +284,7 @@ export function DocsHomePage() {
           <input
             value={staged.draft.typeFilter}
             onChange={(event) => staged.setDraft({ ...staged.draft, typeFilter: event.target.value })}
-            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm font-normal"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs font-normal"
             placeholder="Category code, label, mime type"
           />
         </label>
@@ -333,7 +333,7 @@ export function DocsHomePage() {
       />
 
       {!companyId ? (
-        <p className="text-sm text-gray-500" data-testid="docs-home-need-company">
+        <p className="text-xs text-gray-500" data-testid="docs-home-need-company">
           Select an operating company to view documents and upload attachments.
         </p>
       ) : null}

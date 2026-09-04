@@ -190,7 +190,7 @@ export function LegalMattersListPage() {
       />
       <LegalModuleTabs />
       {!companyId ? (
-        <p className="text-sm text-gray-600">Select an operating company.</p>
+        <p className="text-xs text-gray-600">Select an operating company.</p>
       ) : listQuery.isError ? (
         <ListErrorBanner
           message={userFacingApiError(listQuery.error, "Could not load legal matters. No empty result was assumed.")}
@@ -265,7 +265,7 @@ export function LegalMattersListPage() {
                   />
                 </div>
                 <SelectCombobox
-                  className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
+                  className="rounded-sm border border-gray-200 px-2 py-1 text-xs"
                   value={staged.draft.status}
                   onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value })}
                 >
@@ -277,7 +277,7 @@ export function LegalMattersListPage() {
                   ))}
                 </SelectCombobox>
                 <SelectCombobox
-                  className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
+                  className="rounded-sm border border-gray-200 px-2 py-1 text-xs"
                   value={staged.draft.severity}
                   onChange={(e) => staged.setDraft({ ...staged.draft, severity: e.target.value })}
                 >
@@ -288,7 +288,7 @@ export function LegalMattersListPage() {
                     </option>
                   ))}
                 </SelectCombobox>
-                <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-sm" value={staged.draft.type} onChange={(e) => staged.setDraft({ ...staged.draft, type: e.target.value })}>
+                <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-xs" value={staged.draft.type} onChange={(e) => staged.setDraft({ ...staged.draft, type: e.target.value })}>
                   <option value="">All types</option>
                   {["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((s) => (
                     <option key={s} value={s}>

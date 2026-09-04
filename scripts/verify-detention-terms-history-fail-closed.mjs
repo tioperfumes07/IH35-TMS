@@ -39,7 +39,7 @@ export function check(src) {
 
   // Anchor on the element that follows each gate (not the first `.data` match in the file, which
   // could be a decoy) so a reordering or an unrelated `.data` reference elsewhere can't false-pass.
-  const termsFormIdx = source.indexOf('className="space-y-2 text-sm"');
+  const termsFormIdx = source.indexOf('className="space-y-2 text-xs"');
   if (termsFormIdx < 0) {
     failures.push(`${TARGET_FILE}: terms editor form <div> not found -- extractor may be stale`);
   } else {
@@ -73,7 +73,7 @@ export { check as run };
 if (process.argv.includes("--selftest")) {
   const good = `
     {!termsQuery.isError && termsQuery.data ? (
-      <div className="space-y-2 text-sm">terms form</div>
+      <div className="space-y-2 text-xs">terms form</div>
     ) : null}
     {!historyQuery.isError && historyQuery.data ? (
       <ParityTable rows={historyQuery.data} />
@@ -81,7 +81,7 @@ if (process.argv.includes("--selftest")) {
   `;
   const regressedTerms = `
     {termsQuery.data ? (
-      <div className="space-y-2 text-sm">terms form</div>
+      <div className="space-y-2 text-xs">terms form</div>
     ) : null}
     {!historyQuery.isError && historyQuery.data ? (
       <ParityTable rows={historyQuery.data} />
@@ -89,7 +89,7 @@ if (process.argv.includes("--selftest")) {
   `;
   const regressedHistory = `
     {!termsQuery.isError && termsQuery.data ? (
-      <div className="space-y-2 text-sm">terms form</div>
+      <div className="space-y-2 text-xs">terms form</div>
     ) : null}
     {historyQuery.data ? (
       <ParityTable rows={historyQuery.data} />

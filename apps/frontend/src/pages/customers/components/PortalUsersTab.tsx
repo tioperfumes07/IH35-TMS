@@ -81,7 +81,7 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Portal users</h2>
-          <p className="text-sm text-gray-600">Shipper logins scoped to this customer&apos;s loads only.</p>
+          <p className="text-xs text-gray-600">Shipper logins scoped to this customer&apos;s loads only.</p>
         </div>
         <Button onClick={() => setOpen(true)} disabled={!operatingCompanyId} title={operatingCompanyId ? undefined : "Select an operating company first"}>
           Create portal login
@@ -93,7 +93,7 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
             above) and the table below silently rendered "No portal users yet." -- indistinguishable
             from a customer that genuinely has zero portal users. Say why instead of guessing. */}
         {!operatingCompanyId ? (
-          <p className="py-4 text-center text-sm text-gray-500">Select an operating company to view portal users.</p>
+          <p className="py-4 text-center text-xs text-gray-500">Select an operating company to view portal users.</p>
         ) : usersQuery.isError ? (
           <ListErrorState
             title="Couldn't load portal users"
@@ -134,15 +134,15 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
             createMutation.mutate();
           }}
         >
-          <label className="block text-sm">
+          <label className="block text-xs">
             Email
             <input className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </label>
-          <label className="block text-sm">
+          <label className="block text-xs">
             Temporary password
             <input className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </label>
-          <label className="block text-sm">
+          <label className="block text-xs">
             Full name
             <input className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2" value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </label>

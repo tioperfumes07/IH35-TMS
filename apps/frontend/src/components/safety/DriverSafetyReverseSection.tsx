@@ -84,7 +84,7 @@ function SectionShell({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-slate-900">
           {title}
           {count > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({count})</span> : null}
         </h3>
@@ -95,9 +95,9 @@ function SectionShell({
           className="text-xs font-semibold text-slate-700 underline"
         />
       </div>
-      {isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
       {isError ? <ListErrorState status={0} message={errorText} onRetry={onRetry} /> : null}
-      {!isLoading && !isError && count === 0 ? <p className="text-sm text-gray-500">{emptyText}</p> : null}
+      {!isLoading && !isError && count === 0 ? <p className="text-xs text-gray-500">{emptyText}</p> : null}
       {count > 0 ? <ul className="space-y-2">{children}</ul> : null}
     </div>
   );
@@ -240,7 +240,7 @@ export function DriverSafetyReverseSection({
   return (
     <div className="space-y-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-gray-900">Safety records linked to this driver</h2>
+        <h2 className="text-xs font-semibold text-gray-900">Safety records linked to this driver</h2>
         {/* SAF-F22: /safety/driver-profiles/:driverId was MOUNTED with zero inbound links — reachable
             only by typing the URL. It is per-driver and parameterized, so it cannot be a nav entry
             like the other five orphans; the driver's own page is its natural entry point. */}
@@ -275,7 +275,7 @@ export function DriverSafetyReverseSection({
         count={trainingTotal}
       >
         {trainingRecords.map((record) => (
-          <li key={s(record.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+          <li key={s(record.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
             <EntityLink
               kind="training_record"
               id={s(record.id)}
@@ -308,7 +308,7 @@ export function DriverSafetyReverseSection({
         count={accidentTotal}
       >
         {accidents.map((accident) => (
-          <li key={s(accident.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+          <li key={s(accident.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
             <EntityLink kind="accident" id={s(accident.id)} label={entityLabel(accident.description, accident.id, "Accident")} className="font-semibold" />
             {accident.load_id ? <span className="ml-2"><EntityLinkOrTombstone kind="load" id={s(accident.load_id)} name={accident.load_number} noun="Load" /></span> : null}
             {accident.unit_id ? <span className="ml-2"><EntityLinkOrTombstone kind="unit" id={s(accident.unit_id)} name={accident.unit_number} noun="Unit" /></span> : null}
@@ -339,7 +339,7 @@ export function DriverSafetyReverseSection({
         count={hosViolationTotal}
       >
         {hosViolations.map((violation) => (
-          <li key={s(violation.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+          <li key={s(violation.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
             <EntityLink
               kind="hos_violation"
               id={s(violation.id) || null}
@@ -376,7 +376,7 @@ export function DriverSafetyReverseSection({
         count={dotInspectionTotal}
       >
         {dotInspections.map((inspection) => (
-          <li key={s(inspection.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+          <li key={s(inspection.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
             <EntityLink
               kind="dot_inspection"
               id={s(inspection.id) || null}
@@ -413,7 +413,7 @@ export function DriverSafetyReverseSection({
         count={civilFineTotal}
       >
         {civilFines.map((fine) => (
-          <li key={s(fine.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+          <li key={s(fine.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
             <EntityLink
               kind="safety_fine"
               id={s(fine.id) || null}
@@ -450,7 +450,7 @@ export function DriverSafetyReverseSection({
         count={internalFineTotal}
       >
         {internalFines.map((fine) => (
-          <li key={s(fine.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+          <li key={s(fine.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
             <EntityLink
               kind="internal_fine"
               id={s(fine.id) || null}
@@ -504,7 +504,7 @@ export function DriverSafetyReverseSection({
             const isRespondent = s(complaint.respondent_driver_id) === driverId;
             const sideLabel = isRespondent ? "Filed against this driver" : "Filed by this driver";
             return (
-              <li key={s(complaint.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+              <li key={s(complaint.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
                 <EntityLink
                   kind="complaint"
                   id={s(complaint.id) || null}
@@ -540,7 +540,7 @@ export function DriverSafetyReverseSection({
         count={tests.length}
       >
         {tests.map((test) => (
-          <li key={s(test.uuid)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+          <li key={s(test.uuid)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
             <span className="font-semibold text-slate-700">
               {s(test.test_type).replace(/_/g, " ") || "test"} · {s(test.test_kind) || "drug"}
             </span>

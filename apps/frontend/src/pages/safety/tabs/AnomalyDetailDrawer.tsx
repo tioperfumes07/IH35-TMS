@@ -151,7 +151,7 @@ export function AnomalyDetailDrawer({
             Loading anomaly details...
           </div>
         ) : (
-          <div className="mt-3 space-y-3 text-sm">
+          <div className="mt-3 space-y-3 text-xs">
             <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs">
               <div>
                 <span className="font-semibold">Type:</span> {anomaly.anomaly_type}

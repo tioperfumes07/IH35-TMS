@@ -92,7 +92,7 @@ export function LoadsSection({ driverId, operatingCompanyId }: Props) {
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="dp-section-loads">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-gray-800">Loads</h2>
+        <h2 className="text-xs font-semibold text-gray-800">Loads</h2>
         <EntityLink kind="loads_driver_filter" id={driverId} label="Full load history" className="text-xs text-slate-700 underline" />
       </div>
       {query.isError ? (

@@ -11,7 +11,7 @@ export function TaskBoardPage() {
     return (
       <div className="flex h-full flex-col overflow-hidden p-4">
         <PageHeader title="Task Board" />
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
           Select an operating company to view the task board.
         </div>
       </div>

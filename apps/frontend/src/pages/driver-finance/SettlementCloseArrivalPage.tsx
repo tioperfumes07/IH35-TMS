@@ -236,7 +236,7 @@ export function SettlementCloseArrivalPage() {
       />
 
       {!companyId ? (
-        <p className="text-sm text-gray-600">Select an operating company first.</p>
+        <p className="text-xs text-gray-600">Select an operating company first.</p>
       ) : (
         <>
           <label className="block max-w-xl">
@@ -261,14 +261,14 @@ export function SettlementCloseArrivalPage() {
             </p>
           </label>
 
-          {selectedDriverId && detailQuery.isLoading ? <p className="text-sm text-gray-600">Loading settlement…</p> : null}
-          {selectedDriverId && detailQuery.isError ? <p className="text-sm text-red-600">No active pre-settlement found for this driver.</p> : null}
+          {selectedDriverId && detailQuery.isLoading ? <p className="text-xs text-gray-600">Loading settlement…</p> : null}
+          {selectedDriverId && detailQuery.isError ? <p className="text-xs text-red-600">No active pre-settlement found for this driver.</p> : null}
 
           {settlement ? (
             <div className="space-y-4 border-t border-gray-200 pt-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <div className="text-sm font-semibold text-gray-900">
+                  <div className="text-xs font-semibold text-gray-900">
                     <EntityLink
                       kind="driver"
                       id={settlement.driver_id}
@@ -312,7 +312,7 @@ export function SettlementCloseArrivalPage() {
 
               {/* Gross / earnings */}
               <div className="border-t border-gray-100 pt-2">
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-gray-900">Gross pay</span>
                   <span className="font-semibold text-gray-900">{formatUsd(gross || earnings)}</span>
                 </div>
@@ -325,7 +325,7 @@ export function SettlementCloseArrivalPage() {
                   <p className="text-xs text-gray-500">No deductions on this settlement.</p>
                 ) : (
                   otherDeductions.map((l) => (
-                    <div key={l.id} className="flex items-center justify-between text-sm text-gray-700">
+                    <div key={l.id} className="flex items-center justify-between text-xs text-gray-700">
                       <span>{l.description}</span>
                       <span>-{formatUsd(Math.abs(l.amount))}</span>
                     </div>
@@ -347,7 +347,7 @@ export function SettlementCloseArrivalPage() {
                   <p className="text-xs text-gray-500">No escrow contribution on this settlement.</p>
                 ) : (
                   escrowLines.map((l) => (
-                    <div key={l.id} className="flex items-center justify-between text-sm text-gray-700">
+                    <div key={l.id} className="flex items-center justify-between text-xs text-gray-700">
                       <span>{l.description}</span>
                       <span>-{formatUsd(Math.abs(l.amount))}</span>
                     </div>
@@ -398,7 +398,7 @@ export function SettlementCloseArrivalPage() {
                   <p className="text-xs text-gray-500">No advance recovery on this settlement.</p>
                 ) : (
                   advanceRecoveryLines.map((l) => (
-                    <div key={l.id} className="flex items-center justify-between text-sm text-gray-700">
+                    <div key={l.id} className="flex items-center justify-between text-xs text-gray-700">
                       <span>{l.description}</span>
                       <span>-{formatUsd(Math.abs(l.amount))}</span>
                     </div>
@@ -413,7 +413,7 @@ export function SettlementCloseArrivalPage() {
               {/* Reimbursements */}
               {reimbursements !== 0 ? (
                 <div className="border-t border-gray-100 pt-2">
-                  <div className="flex items-center justify-between text-sm text-gray-700">
+                  <div className="flex items-center justify-between text-xs text-gray-700">
                     <span>Reimbursements</span>
                     <span>{formatUsd(reimbursements)}</span>
                   </div>

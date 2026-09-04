@@ -110,7 +110,7 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
 
   return (
     <Modal open={open} title="Change trailer status" onClose={onClose}>
-      <div className="space-y-2 text-sm" data-testid="tp-status-change-modal">
+      <div className="space-y-2 text-xs" data-testid="tp-status-change-modal">
         <p className="text-xs text-gray-500">Current status: {currentStatus}</p>
         <label className="block">
           New status *

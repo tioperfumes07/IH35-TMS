@@ -347,7 +347,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   return (
     <div className="space-y-3">
       <section className="space-y-2" data-testid="internal-fines-create">
-        <h3 className="text-sm font-semibold text-slate-900">+ Create Internal Fine</h3>
+        <h3 className="text-xs font-semibold text-slate-900">+ Create Internal Fine</h3>
         <div className="grid gap-2 md:grid-cols-6">
           <DriverPickerWithCreate
             operatingCompanyId={operatingCompanyId}

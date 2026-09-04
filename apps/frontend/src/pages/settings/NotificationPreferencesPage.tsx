@@ -176,9 +176,9 @@ export function NotificationPreferencesPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-lg font-semibold text-slate-900">Notifications</h1>
-            <p className="text-sm text-slate-600">Choose channels and quiet hours. Owner timezone applies to quiet hours.</p>
+            <p className="text-xs text-slate-600">Choose channels and quiet hours. Owner timezone applies to quiet hours.</p>
           </div>
-          <button type="button" aria-label="Back" onClick={goBack} className="border-0 bg-transparent p-0 text-sm text-slate-700 hover:underline">
+          <button type="button" aria-label="Back" onClick={goBack} className="border-0 bg-transparent p-0 text-xs text-slate-700 hover:underline">
             ← Back to profile
           </button>
         </div>
@@ -193,7 +193,7 @@ export function NotificationPreferencesPage() {
   }
 
   if (prefsQuery.isLoading || !channels || !matrix) {
-    return <div className="text-sm text-gray-600">Loading notification preferences…</div>;
+    return <div className="text-xs text-gray-600">Loading notification preferences…</div>;
   }
 
   return (
@@ -201,19 +201,19 @@ export function NotificationPreferencesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold text-slate-900">Notifications</h1>
-          <p className="text-sm text-slate-600">Choose channels and quiet hours. Owner timezone applies to quiet hours.</p>
+          <p className="text-xs text-slate-600">Choose channels and quiet hours. Owner timezone applies to quiet hours.</p>
         </div>
-        <button type="button" aria-label="Back" onClick={goBack} className="border-0 bg-transparent p-0 text-sm text-slate-700 hover:underline">
+        <button type="button" aria-label="Back" onClick={goBack} className="border-0 bg-transparent p-0 text-xs text-slate-700 hover:underline">
           ← Back to profile
         </button>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6">
         <section className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
-          <h2 className="text-sm font-semibold text-slate-800">Channels</h2>
+          <h2 className="text-xs font-semibold text-slate-800">Channels</h2>
           <div className="mt-3 flex flex-wrap gap-4">
             {CHANNELS.map((ch) => (
-              <label key={ch} className="flex items-center gap-2 text-sm text-slate-800">
+              <label key={ch} className="flex items-center gap-2 text-xs text-slate-800">
                 <input
                   type="checkbox"
                   checked={channels[ch]}
@@ -227,7 +227,7 @@ export function NotificationPreferencesPage() {
         </section>
 
         <section className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
-          <h2 className="text-sm font-semibold text-slate-800">By event type</h2>
+          <h2 className="text-xs font-semibold text-slate-800">By event type</h2>
           <div className="mt-3">
             <ParityTable
               rows={eventRows}
@@ -241,7 +241,7 @@ export function NotificationPreferencesPage() {
         </section>
 
         <section className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
-          <h2 className="text-sm font-semibold text-slate-800">Quiet hours</h2>
+          <h2 className="text-xs font-semibold text-slate-800">Quiet hours</h2>
           <p className="mt-1 text-xs text-slate-600">External channels (email, SMS, WhatsApp) pause during this window in your timezone.</p>
           <div className="mt-3 flex flex-wrap items-end gap-3">
             <label className="text-xs text-slate-700">
@@ -255,7 +255,7 @@ export function NotificationPreferencesPage() {
             <label className="min-w-48 text-xs text-slate-700">
               <div className="mb-1 font-medium">Timezone (IANA)</div>
               <input
-                className="w-full rounded-sm border border-slate-300 px-2 py-1 text-sm"
+                className="w-full rounded-sm border border-slate-300 px-2 py-1 text-xs"
                 placeholder="America/Chicago"
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}

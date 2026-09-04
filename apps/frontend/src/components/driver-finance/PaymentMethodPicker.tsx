@@ -69,7 +69,7 @@ export function PaymentMethodPicker({ operatingCompanyId, value, onChange, disab
       />
 
       <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Add new payment method">
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           <label className="block">
             <span className="text-xs font-medium text-gray-600">Name *</span>
             <input

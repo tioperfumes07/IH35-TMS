@@ -569,7 +569,7 @@ export function RecordExpenseForm({
           <textarea
             id={fieldId("load-exemption-reason")}
             data-testid={fieldId("load-exemption-reason")}
-            className="mt-1 min-h-[60px] w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 min-h-[60px] w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={values.loadExemptionReason}
             onChange={(event) => setValues((prev) => ({ ...prev, loadExemptionReason: event.target.value }))}
             placeholder="Why this diesel/toll/lumper/etc. expense has no trip — e.g. a bulk fuel purchase, a yard/shop toll, an office-paid lumper fee…"
@@ -581,7 +581,7 @@ export function RecordExpenseForm({
         Description
         <input
           id={fieldId("description")}
-          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+          className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           value={values.description}
           onChange={(event) => setValues((prev) => ({ ...prev, description: event.target.value }))}
         />
@@ -606,7 +606,7 @@ export function RecordExpenseForm({
         <div className="mt-1">
           <SelectCombobox
             id={fieldId("payment-method")}
-            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={values.paymentMethod}
             onChange={(event) =>
               setValues((prev) => ({
@@ -660,7 +660,7 @@ export function RecordExpenseForm({
         />
       </div>
 
-      {error ? <div className="text-sm text-red-600">{error}</div> : null}
+      {error ? <div className="text-xs text-red-600">{error}</div> : null}
 
       {showSubmitButton ? (
         <div className="flex justify-end">

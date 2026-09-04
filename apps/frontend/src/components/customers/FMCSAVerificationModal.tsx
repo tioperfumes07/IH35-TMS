@@ -100,7 +100,7 @@ export function FMCSAVerificationModal({
       <div className="space-y-4" data-testid="fmcsa-verify-flat">
         <section className="space-y-2">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Lookup</h3>
-          <div className="flex gap-3 text-sm">
+          <div className="flex gap-3 text-xs">
             <label className="flex items-center gap-2">
               <input
                 type="radio"
@@ -153,7 +153,7 @@ export function FMCSAVerificationModal({
               <StatusBadge variant={authorityVariant(result.authority_status)}>{`Authority: ${result.authority_status}`}</StatusBadge>
               {result.cached ? <StatusBadge variant="info">Cached</StatusBadge> : null}
             </div>
-            <div className="grid gap-1 text-sm">
+            <div className="grid gap-1 text-xs">
               <div><strong>Legal Name:</strong> {result.legal_name ?? "-"}</div>
               <div><strong>DBA:</strong> {result.dba_name ?? "-"}</div>
               <div><strong>USDOT:</strong> {result.usdot_number ?? "-"}</div>

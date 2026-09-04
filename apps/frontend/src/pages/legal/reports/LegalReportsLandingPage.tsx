@@ -60,9 +60,9 @@ export function LegalReportsLandingPage() {
       <PageHeader breadcrumb={["Legal", "Reports"]} title="Legal reports" subtitle="Exposure and deadline rollups" />
       <LegalModuleTabs />
       {!companyId ? (
-        <p className="text-sm text-gray-600">Select an operating company.</p>
+        <p className="text-xs text-gray-600">Select an operating company.</p>
       ) : q.isLoading ? (
-        <p className="text-sm text-gray-600">Loading…</p>
+        <p className="text-xs text-gray-600">Loading…</p>
       ) : q.isError ? (
         <ListErrorState
           status={0}

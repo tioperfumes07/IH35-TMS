@@ -56,7 +56,7 @@ export function LoadsPlanner() {
     return (
       <div
         data-testid="dispatch-loads-planner-need-company"
-        className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+        className="rounded-sm border bg-white p-4 text-xs text-slate-600"
       >
         Select an operating company to load the loads planner.
       </div>
@@ -65,7 +65,7 @@ export function LoadsPlanner() {
 
   return (
     <div data-testid="dispatch-loads-planner-page" className="space-y-2">
-      {loadsQuery.isLoading ? <div className="text-sm text-gray-500">Loading loads timeline…</div> : null}
+      {loadsQuery.isLoading ? <div className="text-xs text-gray-500">Loading loads timeline…</div> : null}
       {loadsQuery.isError ? (
         <ListErrorBanner
           message={userFacingApiError(loadsQuery.error, "Could not load loads planner")}

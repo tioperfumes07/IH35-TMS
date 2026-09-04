@@ -99,7 +99,7 @@ export function TestSchedulingPanel({ companyId }: Props) {
 
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-4">
-      <h2 className="mb-3 text-sm font-semibold text-slate-900">Schedule Test</h2>
+      <h2 className="mb-3 text-xs font-semibold text-slate-900">Schedule Test</h2>
       <p className="mb-3 text-xs text-slate-500">
         FMCSA Part 382 — schedule a drug or alcohol test for an enrolled driver.
       </p>

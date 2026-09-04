@@ -126,7 +126,7 @@ const STAGE_COLORS: Record<FactoringStage, string> = {
 
 function CheckItem({ label, ok, note }: { label: string; ok: boolean; note?: ReactNode }) {
   return (
-    <div className="flex items-start gap-2 text-sm">
+    <div className="flex items-start gap-2 text-xs">
       <span className={`mt-0.5 text-base leading-none ${ok ? "text-slate-700" : "text-gray-300"}`}>
         {ok ? "✓" : "○"}
       </span>
@@ -338,16 +338,16 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
   // ── loading guard ──────────────────────────────────────────────────────────
 
   if (loadQ.isLoading) {
-    return <div className="p-4 text-sm text-gray-500">Loading factoring data…</div>;
+    return <div className="p-4 text-xs text-gray-500">Loading factoring data…</div>;
   }
   if (!load) {
-    return <div className="rounded-sm border border-gray-200 p-4 text-sm text-gray-500">Load not found.</div>;
+    return <div className="rounded-sm border border-gray-200 p-4 text-xs text-gray-500">Load not found.</div>;
   }
 
   // ── render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-4 text-sm">
+    <div className="space-y-4 text-xs">
       {/* Exact Leaves load.drawer.factoring:customer — customer_id was used for invoice queries only. */}
       {load.customer_id ? (
         <div className="text-xs text-slate-600" data-testid="factoring-tab-customer-entitylink">
@@ -623,7 +623,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
       {showAddFactorModal ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
-            <div className="mb-3 text-sm font-semibold text-gray-900">Add Factor</div>
+            <div className="mb-3 text-xs font-semibold text-gray-900">Add Factor</div>
             <div className="space-y-2 text-xs">
               <label className="block">
                 <div className="mb-1">Name</div>

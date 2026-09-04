@@ -34,7 +34,7 @@ export function RuleEditor({ operatingCompanyId, isOwner }: Props) {
     setSeedError(null);
     seed.reset();
   }, [operatingCompanyId]); // Company transitions own a fresh seed lifecycle.
-  if (!isOwner) return <p className="p-3 text-sm text-gray-600">Owner access required to edit rules.</p>;
+  if (!isOwner) return <p className="p-3 text-xs text-gray-600">Owner access required to edit rules.</p>;
   return (
     <div className="space-y-3 p-3" data-testid="anomaly-rule-editor">
       <div className="flex items-center justify-between">
@@ -53,7 +53,7 @@ export function RuleEditor({ operatingCompanyId, isOwner }: Props) {
       ) : (
       <ul className="divide-y rounded-sm border">
         {(q.data?.rules ?? []).map((rule) => (
-          <li key={String(rule.uuid)} className="p-2 text-sm">
+          <li key={String(rule.uuid)} className="p-2 text-xs">
             <span className="font-medium">{String(rule.rule_name)}</span>
             <span className="ml-2 text-gray-500">({String(rule.rule_slug)}) — {String(rule.severity)}</span>
           </li>

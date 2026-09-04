@@ -43,15 +43,15 @@ export function RetentionDashboard() {
         breadcrumb={["Drivers", "Retention Risk"]}
         backHref="/drivers"
       />
-      {!companyId ? <p className="text-sm text-gray-500">Select operating company.</p> : null}
-      {scoresQ.isLoading ? <p className="text-sm text-gray-500">Loading retention scores…</p> : null}
+      {!companyId ? <p className="text-xs text-gray-500">Select operating company.</p> : null}
+      {scoresQ.isLoading ? <p className="text-xs text-gray-500">Loading retention scores…</p> : null}
       {scoresQ.isError ? (
         <ListErrorState title="Couldn't load retention scores" status={0} message={(scoresQ.error as Error)?.message} onRetry={() => void scoresQ.refetch()} />
       ) : null}
       {scoresQ.isSuccess && rows.length === 0 ? (
         <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center" data-testid="driver-retention-empty-state">
           <p className="font-medium text-gray-900">No at-risk drivers</p>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-xs text-gray-500">
             No current retention scores are in the at-risk or critical tiers for this operating company.
           </p>
         </div>

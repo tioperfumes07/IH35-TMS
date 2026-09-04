@@ -326,7 +326,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
           <div className="relative z-10 h-full w-[380px] max-w-[90vw] overflow-y-auto bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
               <div>
-                <div className="text-sm font-semibold text-slate-900">
+                <div className="text-xs font-semibold text-slate-900">
                   <EntityLinkOrTombstone kind="driver" id={selectedDriver.driver_id} name={selectedDriver.driver_name} noun="Driver" />
                 </div>
                 <div className="text-[11px] text-slate-500">
@@ -338,7 +338,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
               <button type="button" onClick={() => setSelectedDriver(null)} className="rounded-sm px-2 py-1 text-slate-500 hover:bg-slate-100" aria-label="Close">✕</button>
             </div>
             {!selectedDriver.available || !selectedDriver.clocks ? (
-              <div className="px-4 py-10 text-center text-sm text-slate-500">HOS unavailable for this driver on {selectedDate}.</div>
+              <div className="px-4 py-10 text-center text-xs text-slate-500">HOS unavailable for this driver on {selectedDate}.</div>
             ) : (
               <div className="space-y-4 px-4 py-4">
                 <div>

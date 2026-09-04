@@ -107,7 +107,7 @@ export function EditMetadataModal({ file, entityType, onClose, onSaveSuccess }: 
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             rows={3}
-            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
           />
         </div>
 

@@ -100,13 +100,13 @@ export function AuthGatePanel(props: AuthGatePanelProps) {
         </div>
       ) : null}
       {blockers.map((b, i) => (
-        <div key={`b-${i}`} className="rounded-sm bg-red-50 px-2 py-1 text-sm text-red-800">{b.workflow}: {b.message}</div>
+        <div key={`b-${i}`} className="rounded-sm bg-red-50 px-2 py-1 text-xs text-red-800">{b.workflow}: {b.message}</div>
       ))}
       {warnings.map((w, i) => (
-        <div key={`w-${i}`} className="rounded-sm bg-slate-100 px-2 py-1 text-sm text-slate-700">{w.workflow}: {w.message}</div>
+        <div key={`w-${i}`} className="rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-700">{w.workflow}: {w.message}</div>
       ))}
       {info.map((inf, i) => (
-        <div key={`i-${i}`} className="rounded-sm bg-slate-100 px-2 py-1 text-sm text-slate-700">{inf.message}</div>
+        <div key={`i-${i}`} className="rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-700">{inf.message}</div>
       ))}
       {q.isLoading ? <p className="text-xs text-gray-500">Checking dispatch authorization gates…</p> : null}
     </div>

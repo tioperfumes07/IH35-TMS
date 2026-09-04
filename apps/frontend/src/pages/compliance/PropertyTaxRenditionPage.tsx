@@ -230,7 +230,7 @@ function RenditionListView({
       <section className="rounded-sm border border-slate-200 bg-white p-3">
         <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-700">+ Create Rendition</h2>
         <div className="flex flex-wrap items-end gap-3">
-          <label className="text-sm">
+          <label className="text-xs">
             Tax Year
             <input
               type="number"
@@ -241,7 +241,7 @@ function RenditionListView({
               className="ml-1 w-24 rounded-sm border px-2 py-1"
             />
           </label>
-          <div className="min-w-64 text-sm">
+          <div className="min-w-64 text-xs">
             <label htmlFor="property-tax-district-picker">Appraisal District</label>
             <Combobox
               id="property-tax-district-picker"
@@ -267,7 +267,7 @@ function RenditionListView({
               if (!districtId) setDistrictId(chosen);
               createM.mutate(chosen);
             }}
-            className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+            className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
             data-testid="property-tax-create"
           >
             + Create
@@ -276,11 +276,11 @@ function RenditionListView({
 
         {showAddDistrict ? (
           <div className="mt-3 flex flex-wrap items-end gap-2 rounded-sm border border-slate-200 bg-slate-50 p-2">
-            <label className="text-sm">
+            <label className="text-xs">
               County
               <input value={newCounty} onChange={(e) => setNewCounty(e.target.value)} className="ml-1 rounded-sm border px-2 py-1" />
             </label>
-            <label className="text-sm">
+            <label className="text-xs">
               CAD Name
               <input value={newCadName} onChange={(e) => setNewCadName(e.target.value)} className="ml-1 rounded-sm border px-2 py-1" />
             </label>
@@ -288,11 +288,11 @@ function RenditionListView({
               type="button"
               disabled={!newCounty.trim() || !newCadName.trim() || addDistrictM.isPending}
               onClick={() => addDistrictM.mutate()}
-              className="rounded-sm bg-[#1f2a44] px-2 py-1 text-sm font-semibold text-white disabled:opacity-40"
+              className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
             >
               Save
             </button>
-            <button type="button" onClick={() => setShowAddDistrict(false)} className="px-2 py-1 text-sm text-slate-600">
+            <button type="button" onClick={() => setShowAddDistrict(false)} className="px-2 py-1 text-xs text-slate-600">
               Cancel
             </button>
           </div>
@@ -404,9 +404,9 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
     );
   }
 
-  if (detailQ.isLoading) return <div className="p-4 text-sm text-slate-500">Loading…</div>;
+  if (detailQ.isLoading) return <div className="p-4 text-xs text-slate-500">Loading…</div>;
   const detail = detailQ.data;
-  if (!detail) return <div className="p-4 text-sm">Rendition not found.</div>;
+  if (!detail) return <div className="p-4 text-xs">Rendition not found.</div>;
 
   const { rendition, lines } = detail;
   const assets = assetsQ.data?.assets ?? [];
@@ -453,7 +453,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
           <select
             value={rendition.status}
             onChange={(e) => statusM.mutate(e.target.value as RenditionStatus)}
-            className="mt-1 rounded-sm border px-2 py-1 text-sm"
+            className="mt-1 rounded-sm border px-2 py-1 text-xs"
           >
             {(["draft", "filed", "appealed", "settled"] as RenditionStatus[]).map((s) => (
               <option key={s} value={s}>
@@ -469,14 +469,14 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
               valueDollars={assessedInput}
               onChangeDollars={setAssessedInput}
               placeholder={rendition.assessed_tax_cents != null ? (rendition.assessed_tax_cents / 100).toFixed(2) : "0.00"}
-              className={`${FILTER_CONTROL_SIZE_CLASS} w-32 rounded-sm border px-2 text-sm`}
+              className={`${FILTER_CONTROL_SIZE_CLASS} w-32 rounded-sm border px-2 text-xs`}
               ariaLabel="CAD-assessed tax"
             />
             <button
               type="button"
               disabled={assessedInput == null || assessedM.isPending}
               onClick={() => assessedM.mutate(Math.round((assessedInput ?? 0) * 100))}
-              className="rounded-sm bg-[#1f2a44] px-2 py-1 text-sm font-semibold text-white disabled:opacity-40"
+              className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
             >
               Save
             </button>
@@ -485,7 +485,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
         </div>
         <div>
           <div className="text-[11px] uppercase tracking-wide text-slate-500">Extension</div>
-          <label className="mt-1 flex items-center gap-2 text-sm">
+          <label className="mt-1 flex items-center gap-2 text-xs">
             <input
               type="checkbox"
               checked={rendition.extension_requested}
@@ -502,7 +502,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
         <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-700">Taxable Assets Rendered</h2>
         <div className="space-y-3">
           <div className="flex flex-wrap items-end gap-2">
-            <div className="min-w-64 text-sm">
+            <div className="min-w-64 text-xs">
               <label htmlFor="property-tax-asset-picker">Assets (owned fleet)</label>
               <Combobox
                 id="property-tax-asset-picker"
@@ -518,30 +518,30 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
                 dataTestId="property-tax-rendition-asset-picker"
               />
             </div>
-            <label className="text-sm">
+            <label className="text-xs">
               Acquisition date
               <DatePicker
                 id="property-tax-acquisition-date"
-                className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-40 rounded-sm border px-2 text-sm`}
+                className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-40 rounded-sm border px-2 text-xs`}
                 value={acquisitionDate}
                 onChange={setAcquisitionDate}
               />
             </label>
-            <label className="text-sm">
+            <label className="text-xs">
               Acquisition cost
               <MoneyInput
                 valueDollars={costDollars}
                 onChangeDollars={setCostDollars}
-                className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-36 rounded-sm border px-2 text-sm`}
+                className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-36 rounded-sm border px-2 text-xs`}
                 ariaLabel="Acquisition cost"
               />
             </label>
-            <label className="text-sm">
+            <label className="text-xs">
               Rendered value
               <MoneyInput
                 valueDollars={renderedDollars}
                 onChangeDollars={setRenderedDollars}
-                className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-36 rounded-sm border px-2 text-sm`}
+                className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-36 rounded-sm border px-2 text-xs`}
                 ariaLabel="Rendered value"
               />
             </label>
@@ -549,7 +549,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
               type="button"
               disabled={selectedAssets.length === 0 || addLineM.isPending}
               onClick={() => addLineM.mutate(selectedAssets)}
-              className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+              className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
               data-testid="property-tax-rendition-create-lines"
             >
               + Create Line{selectedAssets.length === 1 ? "" : "s"}
@@ -675,7 +675,7 @@ export function PropertyTaxRenditionPage() {
   const effectiveUnitId = applied.unitId.trim() || undefined;
 
   const content = useMemo(() => {
-    if (!companyId) return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
+    if (!companyId) return <div className="rounded-sm border bg-white p-4 text-xs">Select an operating company.</div>;
     return id ? (
       <RenditionDetailView companyId={companyId} renditionId={id} />
     ) : (

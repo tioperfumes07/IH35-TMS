@@ -295,7 +295,7 @@ export function VendorMappingResolutionPage() {
   return (
     <div className="space-y-4 p-4">
       <PageHeader title="Samsara Vendor Mapping Resolution" subtitle="Resolve unmapped, duplicate, and drifted driver-to-vendor mappings" />
-      {!companyId ? <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">Select an operating company.</div> : null}
+      {!companyId ? <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700">Select an operating company.</div> : null}
 
       {integrityQuery.isError ? (
         <ListErrorState
@@ -309,7 +309,7 @@ export function VendorMappingResolutionPage() {
           <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">{totalsText(payload)}</div>
 
           <section className="rounded-sm border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Unmapped drivers</div>
+            <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Unmapped drivers</div>
             <div className="overflow-x-auto p-2">
               <ParityTable<UnmappedRow>
                 columns={unmappedColumns}
@@ -325,7 +325,7 @@ export function VendorMappingResolutionPage() {
           </section>
 
           <section className="rounded-sm border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Duplicate mappings</div>
+            <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Duplicate mappings</div>
             <div className="overflow-x-auto p-2">
               <ParityTable<DuplicateRow>
                 columns={duplicateColumns}
@@ -341,7 +341,7 @@ export function VendorMappingResolutionPage() {
           </section>
 
           <section className="rounded-sm border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Name mismatch</div>
+            <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Name mismatch</div>
             <div className="overflow-x-auto p-2">
               <ParityTable<MismatchRow>
                 columns={mismatchColumns}
@@ -361,7 +361,7 @@ export function VendorMappingResolutionPage() {
       {draft ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-2xl rounded-sm border border-slate-200 bg-white p-4 shadow-xl">
-            <div className="mb-3 text-sm font-semibold text-slate-900">{draft.label}</div>
+            <div className="mb-3 text-xs font-semibold text-slate-900">{draft.label}</div>
 
             {draft.type === "link" ? (
               <div className="mb-3 text-xs text-slate-700">
@@ -399,7 +399,7 @@ export function VendorMappingResolutionPage() {
                   <input
                     value={draft.deprecated_qbo_vendor_ids_csv}
                     onChange={(e) => setDraft({ ...draft, deprecated_qbo_vendor_ids_csv: e.target.value })}
-                    className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 text-sm"
+                    className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 text-xs"
                     placeholder="id-1,id-2"
                   />
                 </label>
@@ -412,7 +412,7 @@ export function VendorMappingResolutionPage() {
                 {/* Read-only: this is the system-detected candidate the operator is confirming, not a
                     freeform field — editing it here would defeat the point of "confirm this match"
                     and (pre-fix) let a hand-typed mirror id slip past the picker law unnoticed. */}
-                <div className="mt-1 bg-slate-50 px-2 py-1 text-sm text-slate-900">
+                <div className="mt-1 bg-slate-50 px-2 py-1 text-xs text-slate-900">
                   {draft.qbo_vendor_name}
                 </div>
               </div>

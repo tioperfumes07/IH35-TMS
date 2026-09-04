@@ -76,7 +76,7 @@ export function PhotoComparisonPage() {
     <div className="space-y-3 p-4">
       <PageHeader backHref="/safety" breadcrumb={["Safety", "Photo Comparison"]} title="Photo Comparison" subtitle="AI pre/post-trip damage detection" />
 
-      {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select operating company.</p> : null}
 
       {query.isError ? (
         <ListErrorState

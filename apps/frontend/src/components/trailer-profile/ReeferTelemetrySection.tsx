@@ -10,7 +10,7 @@ export function ReeferTelemetrySection({
   if (!reefer) return null;
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-gray-800">Reefer telemetry</h2>
+      <h2 className="text-xs font-semibold text-gray-800">Reefer telemetry</h2>
       {unavailable ? <p className="mt-2 text-xs font-medium text-red-700">Samsara telemetry could not be loaded.</p> : null}
       <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
         <div>Setpoint °F: {String(reefer.reefer_setpoint_temp_f ?? "—")}</div>

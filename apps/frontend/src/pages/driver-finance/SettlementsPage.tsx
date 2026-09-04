@@ -183,7 +183,7 @@ export function SettlementsPage() {
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-semibold text-gray-700">Detail View</div>
+          <div className="text-xs font-semibold text-gray-700">Detail View</div>
           <Button
             size="sm"
             variant="secondary"

@@ -358,7 +358,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
       description="Selected drivers will become inactive and leave active rosters. Existing history is retained."
       payloadFields={
         <div className="space-y-1">
-          <label htmlFor="driver-bulk-deactivate-reason" className="text-sm font-medium text-gray-800">Employment status reason</label>
+          <label htmlFor="driver-bulk-deactivate-reason" className="text-xs font-medium text-gray-800">Employment status reason</label>
           <Combobox
             id="driver-bulk-deactivate-reason"
             options={inactiveReasons}
@@ -424,7 +424,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
             </button>
           </div>
           <div>
-            <label htmlFor="driver-bulk-tag-picker" className="text-sm font-medium text-gray-800">Tag</label>
+            <label htmlFor="driver-bulk-tag-picker" className="text-xs font-medium text-gray-800">Tag</label>
             <Combobox
               id="driver-bulk-tag-picker"
               options={driverTagOptions}

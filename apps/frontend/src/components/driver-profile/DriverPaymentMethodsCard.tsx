@@ -145,7 +145,7 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-gray-800">Payment Methods</h2>
+        <h2 className="text-xs font-semibold text-gray-800">Payment Methods</h2>
         {manage ? (
           <button
             type="button"

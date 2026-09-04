@@ -163,7 +163,7 @@ export function LoanWizardPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <p className="text-sm text-slate-500">Loading…</p>
+        <p className="text-xs text-slate-500">Loading…</p>
       </div>
     );
   }
@@ -173,7 +173,7 @@ export function LoanWizardPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
           The Loan Wizard is not yet enabled for this company. (Feature flag{" "}
           <code>{FINANCE_HUB_LOAN_WIZARD_FLAG}</code> is off.)
         </div>
@@ -189,7 +189,7 @@ export function LoanWizardPage() {
         value={form[key]}
         onChange={set(key)}
         placeholder={placeholder}
-        className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm"
+        className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
       />
     </label>
   );
@@ -220,7 +220,7 @@ export function LoanWizardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 lg:divide-x lg:divide-slate-100">
           {/* Inputs */}
           <div>
-            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700">
               Loan &amp; asset
             </div>
             <div className="px-4 py-3">
@@ -248,24 +248,24 @@ export function LoanWizardPage() {
                 onClick={onPreview}
                 disabled={busy || !previewReady}
                 title={!previewReady ? "Enter asset name, purchase price, rate, term, first payment date, and lender before preview." : undefined}
-                className="mt-4 rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                className="mt-4 rounded-sm bg-[#1f2a44] px-4 py-2 text-xs font-medium text-white disabled:opacity-50"
               >
                 {busy ? "Computing…" : "Preview"}
               </button>
-              {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+              {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
             </div>
           </div>
 
           {/* Preview pane */}
           <div>
-            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700">
               Will auto-create (preview)
             </div>
             <div className="px-4 py-3">
               {!preview ? (
-                <p className="text-sm text-slate-500">Enter loan details and Preview to see every generated entry.</p>
+                <p className="text-xs text-slate-500">Enter loan details and Preview to see every generated entry.</p>
               ) : (
-                <div className="space-y-4 text-sm">
+                <div className="space-y-4 text-xs">
                   <div className="flex items-center gap-2">
                     <span className={preview.balanced ? "rounded-sm bg-slate-100 px-2 py-0.5 text-slate-700" : "rounded-sm bg-red-100 px-2 py-0.5 text-red-700"}>
                       {preview.balanced ? "Opening JE balanced ✓" : "Opening JE does NOT balance"}

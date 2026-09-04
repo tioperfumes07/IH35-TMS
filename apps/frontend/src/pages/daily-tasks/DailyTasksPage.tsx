@@ -389,7 +389,7 @@ export function DailyTasksPage() {
       </div>
 
       {!companyId ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm text-slate-700">Select an operating company first.</div>
+        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs text-slate-700">Select an operating company first.</div>
       ) : null}
 
       {activeQuery?.isError ? (
@@ -569,17 +569,17 @@ function TaskDetailDrawer({
       <button type="button" aria-label="Close detail drawer" className="absolute inset-0 bg-black/30" onClick={onClose} />
       <aside className="absolute right-0 top-0 h-full w-full max-w-[520px] overflow-y-auto border-l border-slate-200 bg-white p-4 shadow-2xl">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Task Detail</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Task Detail</h2>
           <Button size="sm" variant="secondary" onClick={onClose}>
             Close
           </Button>
         </div>
         {!task ? (
-          <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">Loading task details…</div>
+          <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">Loading task details…</div>
         ) : (
           <div className="space-y-3 text-xs">
             <div className="rounded-sm border border-slate-200 bg-slate-50 p-3">
-              <div className="text-sm font-semibold text-slate-900">{task.title}</div>
+              <div className="text-xs font-semibold text-slate-900">{task.title}</div>
               {task.description ? <p className="mt-1 text-slate-700">{task.description}</p> : null}
               <div className="mt-2 grid grid-cols-1 gap-1 text-slate-700">
                 <div>Status: {task.status}</div>

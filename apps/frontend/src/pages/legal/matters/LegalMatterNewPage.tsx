@@ -30,7 +30,7 @@ export function LegalMatterNewPage() {
       <PageHeader breadcrumb={["Legal", "Matters"]} title="Create legal matter" subtitle="Create a matter record" />
       <LegalModuleTabs />
       {!companyId ? (
-        <p className="text-sm text-gray-600">Select an operating company.</p>
+        <p className="text-xs text-gray-600">Select an operating company.</p>
       ) : (
         <div className="mx-auto max-w-3xl space-y-3 rounded-sm border border-gray-200 bg-white p-4">
           <LegalMatterFormFields form={form} setForm={setForm} mode="create" operatingCompanyId={companyId} />
@@ -46,7 +46,7 @@ export function LegalMatterNewPage() {
             </Button>
           </div>
           {createMut.isError ? (
-            <p className="text-sm text-red-600">
+            <p className="text-xs text-red-600">
               {userFacingApiError(createMut.error, "Could not create matter.")}
             </p>
           ) : null}

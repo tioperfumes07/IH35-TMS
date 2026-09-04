@@ -114,7 +114,7 @@ export function DispatchAlertsPage() {
   return (
     <div className="space-y-4" data-testid="dispatch-alerts-page">
       <PageHeader title="Dispatch alerts" subtitle="Live counts where endpoints exist · placeholders show —" />
-      {!companyId ? <p className="text-sm text-slate-700">Select an operating company to load counts.</p> : null}
+      {!companyId ? <p className="text-xs text-slate-700">Select an operating company to load counts.</p> : null}
       {anyQueryError ? (
         <ListErrorBanner
           message="Failed to load one or more dispatch alert counts. Retry or switch operating company."
@@ -127,7 +127,7 @@ export function DispatchAlertsPage() {
         />
       ) : null}
       {allCountsKnownZero ? (
-        <p className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700" data-testid="dispatch-alerts-honest-empty">
+        <p className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700" data-testid="dispatch-alerts-honest-empty">
           No open dispatch alerts for this company. Cards stay at 0 until open accidents, pending cash-advance
           requests, late arrivals, or in-transit triage issues exist for the active entity.
         </p>

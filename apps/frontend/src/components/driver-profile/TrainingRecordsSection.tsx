@@ -47,7 +47,7 @@ export function TrainingRecordsSection({
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-800">Training records</h2>
+        <h2 className="text-xs font-semibold text-gray-800">Training records</h2>
         <button
           type="button"
           className="text-xs text-slate-700 underline disabled:cursor-not-allowed disabled:text-gray-400"

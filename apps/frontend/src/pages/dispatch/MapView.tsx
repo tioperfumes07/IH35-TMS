@@ -58,7 +58,7 @@ export function MapView() {
       <PageHeader title="Active Load Map" breadcrumb={[{ label: "Dispatch" }, { label: "Map" }]} backHref="/dispatch" />
       {!companyId ? (
         <p
-          className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700"
+          className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700"
           data-testid="dispatch-map-need-company"
         >
           Select an operating company to load entity-scoped GPS positions for active loads.
@@ -87,19 +87,19 @@ export function MapView() {
             <MapPin className="h-6 w-6" />
           </div>
           <h2 className="text-lg font-semibold text-gray-900">Map provider not configured</h2>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-xs text-gray-600">
             Live GPS from Samsara is available for active loads, but geographic map rendering is not wired yet.
             Contact the owner or administrator to configure a map provider (Mapbox) before this view can plot
             vehicle positions.
           </p>
           {!query.isError && positions.length > 0 ? (
-            <p className="mt-3 text-sm text-slate-600">
+            <p className="mt-3 text-xs text-slate-600">
               {positions.length} active load{positions.length === 1 ? "" : "s"} with GPS — positions are not shown here
               until map rendering is enabled (no fake map pins).
             </p>
           ) : null}
           {!query.isError && !query.isLoading && positions.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-700" data-testid="dispatch-map-positions-honest-empty">
+            <p className="mt-3 text-xs text-slate-700" data-testid="dispatch-map-positions-honest-empty">
               No in-transit loads with GPS for this company right now. Positions appear when Samsara reports an active
               load with coordinates.
             </p>

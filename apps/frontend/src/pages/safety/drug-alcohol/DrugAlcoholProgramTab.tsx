@@ -152,7 +152,7 @@ export function DrugAlcoholProgramTab() {
     <div className="space-y-6">
       {/* ── Consortium Enrollment Roster ─────────────────────────────────── */}
       <section className="rounded-lg border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 text-sm font-semibold text-slate-900">
+        <h2 className="mb-3 text-xs font-semibold text-slate-900">
           Consortium Enrollments
           {enrollmentRows.length > 0 ? (
             <span className="ml-2 rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-normal text-slate-600">
@@ -183,7 +183,7 @@ export function DrugAlcoholProgramTab() {
 
       {/* ── Positive Results Queue ────────────────────────────────────────── */}
       <section className="rounded-lg border border-red-100 bg-red-50 p-4">
-        <h2 className="mb-3 text-sm font-semibold text-red-900">
+        <h2 className="mb-3 text-xs font-semibold text-red-900">
           Positive Results — SAP Referral Queue
           {positiveRows.length > 0 ? (
             <span className="ml-2 rounded-sm bg-red-100 px-1.5 py-0.5 text-[11px] font-normal text-red-800">

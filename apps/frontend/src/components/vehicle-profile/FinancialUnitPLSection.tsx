@@ -83,7 +83,7 @@ export function FinancialUnitPLSection({
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-gray-800">Financial unit P&amp;L</h2>
+        <h2 className="text-xs font-semibold text-gray-800">Financial unit P&amp;L</h2>
         <select
           className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           value={period}
@@ -168,7 +168,7 @@ function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-sm border border-gray-100 p-2">
       <div className="text-xs text-gray-500">{label}</div>
-      <div className="text-sm font-semibold">{value}</div>
+      <div className="text-xs font-semibold">{value}</div>
     </div>
   );
 }

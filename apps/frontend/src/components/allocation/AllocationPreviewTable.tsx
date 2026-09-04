@@ -18,7 +18,7 @@ export function AllocationPreviewTable({ rows, totalCents, isLoading }: Props) {
   return (
     <section className="rounded-sm border border-gray-200 bg-white">
       <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2">
-        <h3 className="text-sm font-semibold text-gray-900">Allocation preview</h3>
+        <h3 className="text-xs font-semibold text-gray-900">Allocation preview</h3>
         <span className={`text-xs font-medium ${balanced ? "text-green-700" : "text-amber-700"}`}>
           {isLoading ? "Calculating…" : balanced ? "Penny-exact" : `Delta ${money(totalCents - allocated)}`}
         </span>

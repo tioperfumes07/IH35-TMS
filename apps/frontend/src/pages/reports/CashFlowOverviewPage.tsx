@@ -217,7 +217,7 @@ export function CashFlowOverviewPage() {
         }
       />
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
 
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
@@ -240,7 +240,7 @@ export function CashFlowOverviewPage() {
         </label>
       </CollapsedListFilters>
 
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
 
       {query.data ? (
         <>
@@ -275,7 +275,7 @@ export function CashFlowOverviewPage() {
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-semibold">30-day projected combined balance</div>
+            <div className="mb-2 text-xs font-semibold">30-day projected combined balance</div>
             <div className="text-xs text-gray-500 mb-2">
               Straight-line blend of net projected change (±10% shaded band). Tooltip shows cumulative AR/AP/settlement
               portions by day.
@@ -315,7 +315,7 @@ export function CashFlowOverviewPage() {
 
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-sm border border-gray-200 bg-white p-3">
-              <div className="mb-2 text-sm font-semibold">Last 7 days — inflows vs outflows</div>
+              <div className="mb-2 text-xs font-semibold">Last 7 days — inflows vs outflows</div>
               <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={bar7}>
@@ -329,8 +329,8 @@ export function CashFlowOverviewPage() {
               </div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-3">
-              <div className="mb-2 text-sm font-semibold">Last 30 days — avg daily flow</div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="mb-2 text-xs font-semibold">Last 30 days — avg daily flow</div>
+              <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
                   <div className="text-gray-500">Avg daily inflow</div>
                   <div className="text-lg font-semibold">{money(query.data.historical.last_30_days_avg_daily_inflow_cents)}</div>
@@ -344,8 +344,8 @@ export function CashFlowOverviewPage() {
           </div>
 
           <details className="no-print rounded-sm border border-gray-200 bg-white p-3">
-            <summary className="cursor-pointer text-sm font-semibold">Alerts & follow-ups</summary>
-            <ul className="mt-2 list-inside list-disc space-y-2 text-sm text-gray-700">
+            <summary className="cursor-pointer text-xs font-semibold">Alerts & follow-ups</summary>
+            <ul className="mt-2 list-inside list-disc space-y-2 text-xs text-gray-700">
               <li>
                 Uncategorized transactions:{" "}
                 <strong>{query.data.current_state.uncategorized_transactions_count}</strong> —{" "}

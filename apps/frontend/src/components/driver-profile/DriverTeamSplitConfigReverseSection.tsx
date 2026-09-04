@@ -20,7 +20,7 @@ export function DriverTeamSplitConfigReverseSection({
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-team-split-config-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-slate-900">Team split configurations</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Team split configurations</h2>
         <EntityLink kind="driver_team_splits_filter" id={driverId} label="Open team splits" className="text-xs font-semibold text-slate-700 hover:underline" />
       </div>
       {query.isError ? (

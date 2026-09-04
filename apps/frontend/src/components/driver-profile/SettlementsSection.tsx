@@ -103,7 +103,7 @@ export function SettlementsSection({
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-gray-800">Settlements</h2>
+        <h2 className="text-xs font-semibold text-gray-800">Settlements</h2>
         <label className="flex items-center gap-2 text-xs text-gray-700">
           <input type="checkbox" checked={autoPayEnabled} disabled={!onAutoPayChange || autoPaySaving} onChange={(e) => onAutoPayChange?.(e.target.checked)} />
           Auto-pay on payday

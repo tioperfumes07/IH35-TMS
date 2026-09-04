@@ -24,7 +24,7 @@ export function FuelCardOverageReverseSection({ operatingCompanyId, filter }: Pr
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="fuel-card-overage-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-slate-900">Fuel card overages</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Fuel card overages</h2>
         {"driver_id" in filter ? (
           <EntityLink kind="fuel_card_overage_driver" id={filter.driver_id} label="Open queue" className="text-xs font-semibold text-slate-700 hover:underline" />
         ) : (

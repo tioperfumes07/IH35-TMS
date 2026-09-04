@@ -126,7 +126,7 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
           fix had to be made twice and this copy drifted. ParityDrawer is the single surface. The
           panel ref and data-testid are retained so existing focus behaviour and selectors hold. */}
       <ParityDrawer open onClose={handleClose} title={DRAWER_TITLE} size="wide">
-        <div ref={panelRef} data-testid="integrity-alert-detail-drawer" className="space-y-2 text-sm">
+        <div ref={panelRef} data-testid="integrity-alert-detail-drawer" className="space-y-2 text-xs">
           <div><strong>Category:</strong> {String(alert.alert_category ?? "—")}</div>
           <div><strong>Severity:</strong> {String(alert.severity ?? "—")}</div>
           <div><strong>Subject:</strong> {String(alert.subject_type ?? "—")}</div>

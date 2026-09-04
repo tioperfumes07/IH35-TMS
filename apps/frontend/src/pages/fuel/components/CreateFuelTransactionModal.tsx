@@ -309,7 +309,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
           <label className="block font-semibold text-gray-700">
             Load exemption reason * (G18 — required when no trip)
             <input
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={loadExemptionReason}
               onChange={(e) => setLoadExemptionReason(e.target.value)}
               placeholder="e.g. Yard fuel — no active trip"
@@ -323,7 +323,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
             Fuel type
             <div className="mt-1">
               <SelectCombobox
-                className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+                className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
                 value={fuelType}
                 onChange={(e) => setFuelType(e.target.value as FuelType)}
               >
@@ -338,7 +338,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
           <label className="block font-semibold text-gray-700">
             Gallons
             <input
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               inputMode="decimal"
               value={gallons}
               onChange={(e) => setGallons(e.target.value)}
@@ -348,7 +348,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
           <label className="block font-semibold text-gray-700">
             $/gal
             <input
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               inputMode="decimal"
               value={pricePerGallon}
               onChange={(e) => setPricePerGallon(e.target.value)}
@@ -371,7 +371,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
           <label className="block font-semibold text-gray-700">
             City
             <input
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={locationCity}
               onChange={(e) => setLocationCity(e.target.value)}
             />
@@ -379,7 +379,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
           <label className="block font-semibold text-gray-700">
             State
             <input
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={locationState}
               onChange={(e) => setLocationState(e.target.value)}
               maxLength={10}
@@ -390,7 +390,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
         <label className="block font-semibold text-gray-700">
           Notes
           <input
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />

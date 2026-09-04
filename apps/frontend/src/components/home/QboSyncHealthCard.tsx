@@ -67,7 +67,7 @@ export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, account
   if (isLoading) {
     return (
       <section className="rounded-sm border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">QBO Sync Health</div>
+        <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">QBO Sync Health</div>
         <div className="space-y-2 p-3">
           <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
           <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
@@ -80,8 +80,8 @@ export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, account
   if (isError) {
     return (
       <section className="rounded-sm border border-red-200 bg-red-50">
-        <div className="border-b border-red-200 px-3 py-2 text-sm font-semibold text-red-900">QBO Sync Health</div>
-        <div className="flex items-center justify-between px-3 py-3 text-sm text-red-800">
+        <div className="border-b border-red-200 px-3 py-2 text-xs font-semibold text-red-900">QBO Sync Health</div>
+        <div className="flex items-center justify-between px-3 py-3 text-xs text-red-800">
           <span>Failed to load QBO sync health.</span>
           <Button variant="secondary" onClick={onRetry}>
             Refresh
@@ -96,7 +96,7 @@ export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, account
   return (
     <section className="rounded-sm border border-slate-200 bg-white">
       <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
-        <div className="text-sm font-semibold text-slate-900">QBO Sync Health</div>
+        <div className="text-xs font-semibold text-slate-900">QBO Sync Health</div>
         <span className={`inline-flex rounded-sm border px-2 py-0.5 text-[11px] font-semibold ${pillClass(pill.tone)}`}>{pill.label}</span>
       </div>
       <div className="space-y-1 px-3 py-2">

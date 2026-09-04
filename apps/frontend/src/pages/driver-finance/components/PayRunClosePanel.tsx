@@ -233,7 +233,7 @@ export function PayRunClosePanel({
 
   return (
     <div
-      className="rounded-sm border border-slate-300 bg-white p-3 text-sm"
+      className="rounded-sm border border-slate-300 bg-white p-3 text-xs"
       data-testid="payrun-close-panel"
     >
       <div className="mb-2 flex items-center justify-between gap-2">

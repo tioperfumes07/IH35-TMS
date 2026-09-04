@@ -37,7 +37,7 @@ function KpiCard({ kpi, to }: { kpi: FinanceHubKpi; to: string }) {
         <div className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{kpiDisplay(kpi)}</div>
         {kpi.secondary ? <div className="mt-1 text-xs text-slate-500">{kpi.secondary}</div> : null}
       </div>
-      <div className="mt-4 text-sm font-medium text-slate-700 underline-offset-2">{kpi.drill_label} →</div>
+      <div className="mt-4 text-xs font-medium text-slate-700 underline-offset-2">{kpi.drill_label} →</div>
     </Link>
   );
 }
@@ -69,7 +69,7 @@ export function FinanceHubPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <p className="text-sm text-slate-500">Loading…</p>
+        <p className="text-xs text-slate-500">Loading…</p>
       </div>
     );
   }
@@ -86,7 +86,7 @@ export function FinanceHubPage() {
         {header}
         <div
           data-testid="finance-hub-disabled"
-          className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"
+          className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700"
         >
           <p className="font-medium text-slate-900">Finance Hub is not enabled for this entity.</p>
           <p className="mt-1 text-slate-600">
@@ -109,9 +109,9 @@ export function FinanceHubPage() {
       <FinanceModuleTabs />
       {header}
 
-      {!companyId ? <p className="mb-3 text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="mb-3 text-xs text-red-600">Select an operating company.</p> : null}
 
-      {overviewQuery.isLoading ? <p className="text-sm text-slate-500">Loading…</p> : null}
+      {overviewQuery.isLoading ? <p className="text-xs text-slate-500">Loading…</p> : null}
       {overviewQuery.isError ? (
         <ListErrorState
           title="Couldn't load Finance Hub overview"

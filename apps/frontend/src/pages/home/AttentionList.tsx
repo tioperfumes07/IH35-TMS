@@ -53,7 +53,7 @@ export function AttentionList({ operatingCompanyId, maxVisibleWhenCollapsed = nu
   });
 
   if (!companyId) {
-    return <div className="py-3 text-sm text-slate-500">Select an operating company to load attention items.</div>;
+    return <div className="py-3 text-xs text-slate-500">Select an operating company to load attention items.</div>;
   }
 
   if (query.isLoading) {
@@ -82,7 +82,7 @@ export function AttentionList({ operatingCompanyId, maxVisibleWhenCollapsed = nu
   const visible = (query.data?.items ?? []).filter((item) => item.count > 0);
 
   if (visible.length === 0) {
-    return <div className="py-3 text-sm text-slate-500">No attention items</div>;
+    return <div className="py-3 text-xs text-slate-500">No attention items</div>;
   }
 
   const shouldCollapse = maxVisibleWhenCollapsed != null && !isLg && !expanded;
@@ -104,7 +104,7 @@ export function AttentionList({ operatingCompanyId, maxVisibleWhenCollapsed = nu
               >
                 <Icon className={`h-5 w-5 shrink-0 ${className}`} aria-hidden />
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-slate-900">{item.title}</div>
+                  <div className="text-xs font-medium text-slate-900">{item.title}</div>
                   <div className="mt-0.5 text-xs text-slate-600">
                     Count {item.count}
                     {item.action_label ? <span className="text-slate-500"> — {item.action_label}</span> : null}

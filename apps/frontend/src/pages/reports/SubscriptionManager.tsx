@@ -226,10 +226,10 @@ export function SubscriptionManager() {
       />
 
       {!companyId ? (
-        <p className="text-sm text-red-600">Select an operating company.</p>
+        <p className="text-xs text-red-600">Select an operating company.</p>
       ) : null}
       {subsQuery.isLoading ? (
-        <p className="text-sm text-gray-500">Loading subscriptions…</p>
+        <p className="text-xs text-gray-500">Loading subscriptions…</p>
       ) : null}
 
       {/*
@@ -250,7 +250,7 @@ export function SubscriptionManager() {
         real worker + 6 report generators, tracked in GUARD-WORKORDERS.md), but it stops the deception now.
       */}
       <div
-        className="rounded-sm border border-slate-200 bg-slate-100 p-4 text-sm"
+        className="rounded-sm border border-slate-200 bg-slate-100 p-4 text-xs"
         data-testid="q8-subscriptions-delivery-not-implemented"
       >
         <p className="font-semibold text-slate-700">Email delivery is not implemented yet</p>
@@ -359,7 +359,7 @@ export function SubscriptionManager() {
       </div>
 
       <section className="space-y-2">
-        <h3 className="text-sm font-semibold text-slate-800">
+        <h3 className="text-xs font-semibold text-slate-800">
           Delivery history
         </h3>
         <div className="rounded-sm border border-gray-200 bg-white p-2">

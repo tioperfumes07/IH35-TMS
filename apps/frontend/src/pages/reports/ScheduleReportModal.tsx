@@ -184,7 +184,7 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
 
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title={isEdit ? "Edit scheduled report" : "Schedule a report"}>
-      <div className="max-h-[70vh] space-y-3 overflow-auto pr-1 text-sm">
+      <div className="max-h-[70vh] space-y-3 overflow-auto pr-1 text-xs">
         <label className="block text-xs text-gray-600">
           Report
           <SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={reportId} onChange={(e) => setReportId(e.target.value)}>

@@ -373,7 +373,7 @@ export function FactorAdmin() {
       />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-sm font-semibold text-gray-900">Factor Administration</div>
+          <div className="text-xs font-semibold text-gray-900">Factor Administration</div>
           <div className="text-xs text-gray-600">Manage factors, assign customers, and review assignment/batch history.</div>
         </div>
         <div className="flex items-center gap-2">
@@ -411,7 +411,7 @@ export function FactorAdmin() {
       {selectedFactor ? (
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
           <div className="flex items-center justify-between gap-2">
-            <div className="text-sm font-semibold text-gray-900">{selectedFactor.name} details</div>
+            <div className="text-xs font-semibold text-gray-900">{selectedFactor.name} details</div>
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
@@ -548,7 +548,7 @@ export function FactorAdmin() {
       {showAddFactorModal ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
           <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
-            <div className="mb-3 text-sm font-semibold text-gray-900">Add Factor</div>
+            <div className="mb-3 text-xs font-semibold text-gray-900">Add Factor</div>
             <div className="space-y-2 text-xs">
               <label className="block">
                 <div className="mb-1">Name</div>
@@ -616,7 +616,7 @@ export function FactorAdmin() {
       {showAssignCustomerModal ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
           <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
-            <div className="mb-3 text-sm font-semibold text-gray-900">Assign Customer to Factor</div>
+            <div className="mb-3 text-xs font-semibold text-gray-900">Assign Customer to Factor</div>
             <div className="space-y-2 text-xs">
               <label className="block">
                 <div className="mb-1">Customer</div>
@@ -681,7 +681,7 @@ export function FactorAdmin() {
       {showNoaModal && selectedFactor ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
           <div className="w-full max-w-lg rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
-            <div className="mb-3 text-sm font-semibold text-gray-900">NOA Config — {selectedFactor.name}</div>
+            <div className="mb-3 text-xs font-semibold text-gray-900">NOA Config — {selectedFactor.name}</div>
             <div className="space-y-2 text-xs">
               <label className="block">
                 <div className="mb-1 font-medium">NOA Stamp Text (printed on invoice)</div>
@@ -740,7 +740,7 @@ export function FactorAdmin() {
       {showLorModal && selectedFactor ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
           <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
-            <div className="mb-1 text-sm font-semibold text-gray-900">Letter of Release — {selectedFactor.name}</div>
+            <div className="mb-1 text-xs font-semibold text-gray-900">Letter of Release — {selectedFactor.name}</div>
             <div className="mb-3 text-xs text-gray-600">Records that this factor has released its security interest. Required before deactivating a factor with active customer assignments.</div>
             <div className="space-y-2 text-xs">
               <label className="block">

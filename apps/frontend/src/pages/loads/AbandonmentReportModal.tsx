@@ -73,7 +73,7 @@ export function AbandonmentReportModal({
           </span>
         ) : null}
       </div>
-      <div className="space-y-3 text-sm">
+      <div className="space-y-3 text-xs">
         <label className="block text-xs font-semibold text-slate-600">
           Driver
           <DriverPickerWithCreate

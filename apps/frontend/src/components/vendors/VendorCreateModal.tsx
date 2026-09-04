@@ -50,7 +50,7 @@ type FieldProps = {
 
 function Field({ label, value, onChange, placeholder, required, dataField, errorId, error }: FieldProps) {
   return (
-    <label className="block text-sm">
+    <label className="block text-xs">
       <span className="mb-1 block text-xs font-semibold text-gray-600">
         {label}
         {required ? " *" : ""}
@@ -318,7 +318,7 @@ export function VendorCreateModal({
               errorId="vendor_name-error"
               error={fieldErrors.name}
             />
-            <label className="block text-sm">
+            <label className="block text-xs">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Vendor type</span>
               <ReferenceSelect
                 value={vendorType}
@@ -369,7 +369,7 @@ export function VendorCreateModal({
             />
             <Field label="Website" value={website} onChange={setWebsite} />
             <Field label="Print on check as" value={printOnCheckName} onChange={setPrintOnCheckName} placeholder="Leave blank to use vendor display name" />
-            <label className="flex items-center gap-2 text-sm text-gray-700 md:col-span-2">
+            <label className="flex items-center gap-2 text-xs text-gray-700 md:col-span-2">
               <input type="checkbox" checked={eligible1099} onChange={(event) => setEligible1099(event.target.checked)} />
               Track 1099? (Form 1099-NEC)
             </label>
@@ -379,7 +379,7 @@ export function VendorCreateModal({
         {/* VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD) */}
         <Section title="Terms & default expense account">
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            <label className="block text-sm">
+            <label className="block text-xs">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Payment terms</span>
               <ReferenceSelect
                 value={paymentTermsId}
@@ -392,7 +392,7 @@ export function VendorCreateModal({
                 onOptionCreated={() => void paymentTermsQuery.refetch()}
               />
             </label>
-            <label className="block text-sm" data-testid="vendor-create-default-expense-account">
+            <label className="block text-xs" data-testid="vendor-create-default-expense-account">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Default expense account</span>
               <ReferenceSelect
                 value={defaultExpenseAccountId}
@@ -420,7 +420,7 @@ export function VendorCreateModal({
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             rows={3}
-            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
           />
         </Section>
 

@@ -187,7 +187,7 @@ export default function SafetyReportsPage() {
       />
 
       {!enabled ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-slate-700">
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-700">
           Select an operating company to load its safety reports.
         </div>
       ) : null}
@@ -231,7 +231,7 @@ export default function SafetyReportsPage() {
       </div>
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-slate-900">CSA Period History</h2>
+        <h2 className="text-xs font-semibold text-slate-900">CSA Period History</h2>
         {currentCsaQuery.isError ? (
           <ListErrorState
             title="Couldn't load the current CSA period"
@@ -274,7 +274,7 @@ export default function SafetyReportsPage() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-slate-900">Recorded Safety Activity</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Recorded Safety Activity</h2>
         {rollupQuery.isError ? (
           <ListErrorState
             title="Couldn't load the safety activity rollup"

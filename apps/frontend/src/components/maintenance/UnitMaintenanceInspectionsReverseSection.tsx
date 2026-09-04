@@ -22,12 +22,12 @@ export function UnitMaintenanceInspectionsReverseSection({
   const rows = query.isError ? [] : (query.data?.rows ?? []);
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
-      <h2 className="text-sm font-semibold text-slate-900">Maintenance inspections{rows.length ? ` (${rows.length})` : ""}</h2>
+      <h2 className="text-xs font-semibold text-slate-900">Maintenance inspections{rows.length ? ` (${rows.length})` : ""}</h2>
       {query.isError ? <ListErrorBanner message="Couldn't load maintenance inspections for this unit." onRetry={() => void query.refetch()} /> : null}
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No maintenance inspections linked to this unit.</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
+      {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-xs text-gray-500">No maintenance inspections linked to this unit.</p> : null}
       {rows.map((row) => (
-        <div key={row.id} className="px-2 py-1.5 text-sm">
+        <div key={row.id} className="px-2 py-1.5 text-xs">
           <EntityLink kind="maintenance_inspection" id={row.id} label={humanizeEnumLabel(row.inspection_type_label ?? row.inspection_type)} />
           <span className="ml-2 text-xs text-gray-600">{formatDateUS(row.inspection_date ?? row.scheduled_date)} · {row.status}</span>
         </div>

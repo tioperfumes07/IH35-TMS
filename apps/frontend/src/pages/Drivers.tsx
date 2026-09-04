@@ -764,7 +764,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <div data-testid="drivers-settlements-canonical-redirect-hint">
               <DataPanel title="Settlements">
                 <DataPanelRow>
-                  <span className="text-sm text-gray-700">Settlement runs, acknowledgements, and payouts live in Driver Finance.</span>
+                  <span className="text-xs text-gray-700">Settlement runs, acknowledgements, and payouts live in Driver Finance.</span>
                   <Link
                     to="/driver-finance/settlements"
                     className="text-xs text-slate-700 underline"
@@ -1191,7 +1191,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             </div>
           </div>
         ) : (
-          <div className="text-sm text-gray-500">Loading team detail...</div>
+          <div className="text-xs text-gray-500">Loading team detail...</div>
         )}
       </Modal>
 

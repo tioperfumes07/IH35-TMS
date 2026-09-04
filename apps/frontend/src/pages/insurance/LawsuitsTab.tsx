@@ -141,7 +141,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
         Select an operating company to view lawsuits.
       </div>
     );

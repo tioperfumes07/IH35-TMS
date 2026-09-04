@@ -420,7 +420,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
       title="Add bank account"
       size="regular"
     >
-      <div className="space-y-3 text-sm text-gray-700" data-testid="bill-payment-modal-add-bank-drawer">
+      <div className="space-y-3 text-xs text-gray-700" data-testid="bill-payment-modal-add-bank-drawer">
         <p>
           Connect a bank account for this company. After Plaid succeeds, the new account appears in{" "}
           <strong>From bank account</strong> and can be selected for this payment.

@@ -148,7 +148,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
           <ChevronLeft className="h-4 w-4 text-gray-600" />
         </button>
         <div className="flex flex-col items-center gap-0.5">
-          <span className="text-sm font-semibold text-gray-900">{fmtDate(date)}</span>
+          <span className="text-xs font-semibold text-gray-900">{fmtDate(date)}</span>
           {date !== todayIso() && (
             <button
               type="button"
@@ -205,7 +205,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
 
       {/* Opening / Closing Balance */}
       {!isLoading && data && (data.opening_cash_cents !== null || data.projected_closing_cash_cents !== null) && (
-        <div className="flex gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm">
+        <div className="flex gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs">
           <span className="text-gray-600">
             Opening cash:{" "}
             <strong className="text-gray-900">
@@ -223,7 +223,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       )}
 
       {isError && (
-        <div className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
           Failed to load prediction. Check your connection and try again.
         </div>
       )}
@@ -232,8 +232,8 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         {/* Income Panel */}
         <div className="rounded-lg border border-gray-200 bg-white">
           <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-            <h3 className="text-sm font-semibold text-gray-900">Expected Income</h3>
-            <span className="text-sm font-bold text-gray-700">
+            <h3 className="text-xs font-semibold text-gray-900">Expected Income</h3>
+            <span className="text-xs font-bold text-gray-700">
               {isLoading ? "—" : formatCents(data?.income_subtotal_cents ?? 0)}
             </span>
           </div>
@@ -246,7 +246,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
           ) : data?.income_items.length === 0 ? (
             <div className="flex flex-col items-center py-8 text-center">
               <BarChart2 className="mb-2 size-8 text-gray-300" />
-              <p className="text-sm text-gray-500">No deliveries scheduled for this day.</p>
+              <p className="text-xs text-gray-500">No deliveries scheduled for this day.</p>
             </div>
           ) : (
             <div className="divide-y divide-gray-50">
@@ -262,7 +262,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") navigate(`/dispatch/loads/${item.load_id}`);
                   }}
-                  className="flex cursor-pointer items-start justify-between px-4 py-2.5 text-sm hover:bg-gray-50"
+                  className="flex cursor-pointer items-start justify-between px-4 py-2.5 text-xs hover:bg-gray-50"
                 >
                   <div className="min-w-0 flex-1">
                     <EntityLinkOrTombstone
@@ -308,8 +308,8 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         {/* Expenses Panel */}
         <div className="rounded-lg border border-gray-200 bg-white">
           <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-            <h3 className="text-sm font-semibold text-gray-900">Expected Expenses</h3>
-            <span className="text-sm font-bold text-gray-700">
+            <h3 className="text-xs font-semibold text-gray-900">Expected Expenses</h3>
+            <span className="text-xs font-bold text-gray-700">
               {isLoading ? "—" : formatCents(data?.expense_subtotal_cents ?? 0)}
             </span>
           </div>
@@ -324,13 +324,13 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
               {data?.expense_items.length === 0 && (
                 <div className="flex flex-col items-center py-6 text-center">
                   <Minus className="mb-2 size-8 text-gray-300" />
-                  <p className="text-sm text-gray-500">No expenses for this day yet.</p>
+                  <p className="text-xs text-gray-500">No expenses for this day yet.</p>
                 </div>
               )}
               {(data?.expense_items.length ?? 0) > 0 && (
                 <div className="divide-y divide-gray-50">
                   {data?.expense_items.map((item, idx) => (
-                    <div key={item.adjustment_id ?? item.load_id ?? idx} className="flex items-start justify-between px-4 py-2.5 text-sm">
+                    <div key={item.adjustment_id ?? item.load_id ?? idx} className="flex items-start justify-between px-4 py-2.5 text-xs">
                       <div className="min-w-0 flex-1">
                         {/* PUNCHLIST #70: 'Bill Due' pill recolored off-palette orange -> slate. */}
                         <span className={`inline-flex rounded-full px-1.5 py-0.5 text-xs font-medium mr-2 ${
@@ -418,7 +418,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                     placeholder="Label (e.g. Fuel surcharge)"
                     value={addLabel}
                     onChange={(e) => setAddLabel(e.target.value)}
-                    className="flex-1 rounded-sm border border-gray-200 px-2 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
+                    className="flex-1 rounded-sm border border-gray-200 px-2 py-1.5 text-xs focus:border-slate-300 focus:outline-hidden"
                   />
                   {/* M-1: dollars-mode; seam Math.round(parseFloat(addAmount...)*100)=amount_cents byte-for-byte. */}
                   <MoneyInput
@@ -451,7 +451,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       {/* Predicted Net Bar — PUNCHLIST #71: neutral background, sign-color kept on the amount text only. */}
       {!isLoading && data && (
         <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-5 py-4">
-          <span className="text-sm font-semibold text-gray-700">Predicted net cash flow for {fmtDate(date)}</span>
+          <span className="text-xs font-semibold text-gray-700">Predicted net cash flow for {fmtDate(date)}</span>
           <span className={`text-2xl font-bold ${netPositive ? "text-slate-700" : "text-red-700"}`}>
             {formatCents(net, { sign: true })}
           </span>

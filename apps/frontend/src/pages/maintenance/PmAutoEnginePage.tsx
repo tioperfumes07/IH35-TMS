@@ -112,7 +112,7 @@ export function PmAutoEnginePage() {
         }
       />
 
-      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="mb-2 text-xs text-gray-600">
           Status: {dashboardQ.isError ? "Unavailable" : isPaused ? "Paused" : "Active"} · Lookahead {dashboardQ.isError ? "—" : (dashboardQ.data?.lookahead_miles ?? "—")} mi
         </div>
@@ -138,7 +138,7 @@ export function PmAutoEnginePage() {
         )}
       </div>
 
-      {!dashboardQ.isError ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+      {!dashboardQ.isError ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <h3 className="mb-2 text-xs font-semibold uppercase text-gray-600">Action log</h3>
         <ul className="space-y-1 text-xs">
           {recentLog.map((entry) => (

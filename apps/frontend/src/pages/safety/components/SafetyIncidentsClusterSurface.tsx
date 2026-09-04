@@ -572,7 +572,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     <div className="space-y-3" data-testid={config.pageTestId}>
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
-          <div className="text-sm font-semibold text-slate-800">{config.title}</div>
+          <div className="text-xs font-semibold text-slate-800">{config.title}</div>
           <div className="text-[11px] text-slate-500">{config.subtitle}</div>
         </div>
         <Button
@@ -711,7 +711,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
       {drawerOpen ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`${config.pageTestId}-drawer`}>
           <div className="mb-2 flex items-center justify-between gap-2">
-            <div className="text-sm font-semibold text-slate-800">
+            <div className="text-xs font-semibold text-slate-800">
               {createMode ? config.createLabel : editMode ? `Edit ${config.detailLabel}` : config.detailLabel}
             </div>
             <div className="flex flex-wrap items-center gap-2">

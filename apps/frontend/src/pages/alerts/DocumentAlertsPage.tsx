@@ -61,7 +61,7 @@ function RuleEditor({
           <p className="font-semibold text-slate-900">{rule.rule_name}</p>
           <p className="text-xs text-slate-500">{rule.document_type}</p>
         </div>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-xs">
           <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
           Enabled
         </label>
@@ -69,7 +69,7 @@ function RuleEditor({
       <label className="mt-2 block text-xs font-medium text-slate-600">
         Days before expiry (comma-separated)
         <input
-          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
           value={daysText}
           onChange={(e) => setDaysText(e.target.value)}
           aria-label={`Thresholds for ${rule.rule_name}`}
@@ -196,7 +196,7 @@ export function DocumentAlertsPage() {
   }, [inboxPage, inboxTotalPages]);
 
   if (!companyId) {
-    return <p className="p-6 text-sm text-gray-500">Select an operating company to view document expiry alerts.</p>;
+    return <p className="p-6 text-xs text-gray-500">Select an operating company to view document expiry alerts.</p>;
   }
 
   return (
@@ -222,14 +222,14 @@ export function DocumentAlertsPage() {
       <div className="mb-4 flex gap-2 border-b border-gray-200">
         <button
           type="button"
-          className={`px-3 py-2 text-sm font-medium ${tab === "inbox" ? "border-b-2 border-slate-300 text-slate-700" : "text-gray-600"}`}
+          className={`px-3 py-2 text-xs font-medium ${tab === "inbox" ? "border-b-2 border-slate-300 text-slate-700" : "text-gray-600"}`}
           onClick={() => setTab("inbox")}
         >
           Inbox ({pendingCount})
         </button>
         <button
           type="button"
-          className={`px-3 py-2 text-sm font-medium ${tab === "rules" ? "border-b-2 border-slate-300 text-slate-700" : "text-gray-600"}`}
+          className={`px-3 py-2 text-xs font-medium ${tab === "rules" ? "border-b-2 border-slate-300 text-slate-700" : "text-gray-600"}`}
           onClick={() => setTab("rules")}
         >
           Rules
@@ -246,9 +246,9 @@ export function DocumentAlertsPage() {
               onRetry={() => void inboxQuery.refetch()}
             />
           ) : null}
-          {inboxQuery.isLoading ? <p className="text-sm text-gray-500">Loading alerts…</p> : null}
+          {inboxQuery.isLoading ? <p className="text-xs text-gray-500">Loading alerts…</p> : null}
           {sortedEvents.length === 0 && !inboxQuery.isLoading && !inboxQuery.isError ? (
-            <p className="text-sm text-gray-500" data-testid="alerts-empty">
+            <p className="text-xs text-gray-500" data-testid="alerts-empty">
               No pending document expiry alerts.
             </p>
           ) : null}
@@ -265,7 +265,7 @@ export function DocumentAlertsPage() {
             ))}
           </ul>
           {pendingCount > 0 ? (
-            <div className="mt-4 flex items-center justify-between gap-3 text-sm" data-testid="document-alerts-server-pager">
+            <div className="mt-4 flex items-center justify-between gap-3 text-xs" data-testid="document-alerts-server-pager">
               <span>
                 {Math.min((inboxPage - 1) * inboxPageSize + 1, pendingCount)}–{Math.min(inboxPage * inboxPageSize, pendingCount)} of {pendingCount}
               </span>

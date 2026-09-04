@@ -26,26 +26,26 @@ function ErrorFallback({ error, onReload }: { error: Error; onReload: () => void
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-950 px-4 py-10 text-slate-50">
       <div className="w-full max-w-xl rounded-lg border border-white/10 bg-slate-900 p-6 shadow-xl">
         <h1 className="text-xl font-semibold text-white">Something went wrong</h1>
-        <p className="mt-2 text-sm text-slate-300">
+        <p className="mt-2 text-xs text-slate-300">
           The page hit an unexpected error. You can reload to try again, or email support with the prefilled details below.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded-md bg-[#1f2a44] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0f1729]"
+            className="rounded-md bg-[#1f2a44] px-4 py-2 text-xs font-semibold text-white hover:bg-[#0f1729]"
             onClick={onReload}
           >
             Reload
           </button>
           <a
             href={mailto}
-            className="rounded-md border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/5"
+            className="rounded-md border border-white/20 px-4 py-2 text-xs font-semibold text-white hover:bg-white/5"
           >
             Report issue
           </a>
         </div>
         <details className="mt-6 rounded-md border border-white/10 bg-black/30 p-3 text-xs text-slate-200">
-          <summary className="cursor-pointer select-none text-sm font-semibold text-white">Technical details</summary>
+          <summary className="cursor-pointer select-none text-xs font-semibold text-white">Technical details</summary>
           <pre className="mt-3 max-h-[320px] overflow-auto whitespace-pre-wrap wrap-break-word text-[11px] text-slate-200">
             {error.stack ?? error.message}
           </pre>

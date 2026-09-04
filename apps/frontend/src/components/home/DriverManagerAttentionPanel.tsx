@@ -59,11 +59,11 @@ export function DriverManagerAttentionPanel({ items, loading, coolingDriverCount
         {isError ? (
           // GO-0027-HOME-F: a FAILED fetch must never render as "looks current" -- matches the
           // same fix applied to SafetyAlertsPanel, this component's near-identical sibling.
-          <p className="text-sm font-medium text-red-700" role="alert">
+          <p className="text-xs font-medium text-red-700" role="alert">
             Unable to load driver manager attention items. Retry or check back — this is not an all-clear.
           </p>
         ) : items.length === 0 ? (
-          <p className="text-sm text-slate-500">No driver manager actions right now — fleet operations look current.</p>
+          <p className="text-xs text-slate-500">No driver manager actions right now — fleet operations look current.</p>
         ) : (
           items.map((item) => (
             <article
@@ -72,7 +72,7 @@ export function DriverManagerAttentionPanel({ items, loading, coolingDriverCount
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="text-sm font-semibold">{item.title}</h3>
+                  <h3 className="text-xs font-semibold">{item.title}</h3>
                   <p className="mt-0.5 text-xs opacity-90">{item.body}</p>
                 </div>
                 <span className="shrink-0 rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-bold uppercase">

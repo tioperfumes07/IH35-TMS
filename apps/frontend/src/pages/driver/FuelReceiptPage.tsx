@@ -115,7 +115,7 @@ export function FuelReceiptPage() {
   };
 
   return (
-    <div className="space-y-3 text-sm">
+    <div className="space-y-3 text-xs">
       <h1 className="text-base font-semibold">Fuel receipt</h1>
       {message ? <p className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs">{message}</p> : null}
 

@@ -130,7 +130,7 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
   const detail = detailQuery.data;
 
   if (detailQuery.isLoading) {
-    return <div className="text-sm text-gray-500">Loading submitted batch detail...</div>;
+    return <div className="text-xs text-gray-500">Loading submitted batch detail...</div>;
   }
   if (detailQuery.isError) {
     return (
@@ -143,12 +143,12 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
     );
   }
   if (!detail) {
-    return <div className="text-sm text-gray-500">Batch detail unavailable.</div>;
+    return <div className="text-xs text-gray-500">Batch detail unavailable.</div>;
   }
 
   return (
     <div className="space-y-3">
-      <div className="rounded-sm border border-gray-200 p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 p-3 text-xs">
         <div className="font-semibold text-gray-900">{detail.batch.batch_number}</div>
         <div className="text-gray-700">
           Status: {titleize(detail.batch.status)} · Face: {asMoney(detail.batch.total_face_cents)} · Advance: {asMoney(detail.batch.expected_advance_cents)} · Fee:{" "}
@@ -163,7 +163,7 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
       </div>
 
       <div className="rounded-sm border border-gray-200 p-3">
-        <div className="mb-2 text-sm font-medium text-gray-900">Batch Invoices</div>
+        <div className="mb-2 text-xs font-medium text-gray-900">Batch Invoices</div>
         <ParityTable
           columns={INVOICE_COLUMNS}
           rows={detail.invoices}
@@ -175,7 +175,7 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
       </div>
 
       <div className="rounded-sm border border-gray-200 p-3">
-        <div className="mb-2 text-sm font-medium text-gray-900">Reserve Movements</div>
+        <div className="mb-2 text-xs font-medium text-gray-900">Reserve Movements</div>
         {reserveMovementsQuery.isError ? (
           <ListErrorState
             title="Couldn't load reserve movements"

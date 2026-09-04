@@ -6,7 +6,7 @@ export function MaintenanceSnapshotSection({ maintenance }: { maintenance: Recor
   >;
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-gray-800">Maintenance snapshot</h2>
+      <h2 className="text-xs font-semibold text-gray-800">Maintenance snapshot</h2>
       <p className="mt-2 text-xs text-gray-700">Open work orders: {String(maintenance.open_wo_count ?? 0)}</p>
       {workOrders.length > 0 ? (
         <ul className="mt-1 space-y-0.5">

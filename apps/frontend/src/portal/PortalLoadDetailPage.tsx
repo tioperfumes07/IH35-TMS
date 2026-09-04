@@ -76,8 +76,8 @@ export function PortalLoadDetailPage() {
 
   return (
     <div className="space-y-6">
-      {detailQuery.isLoading ? <p className="text-sm text-slate-600">Loading load…</p> : null}
-      {detailQuery.error ? <p className="text-sm text-red-600">Load not found.</p> : null}
+      {detailQuery.isLoading ? <p className="text-xs text-slate-600">Loading load…</p> : null}
+      {detailQuery.error ? <p className="text-xs text-red-600">Load not found.</p> : null}
 
       {detail ? (
         <>
@@ -88,17 +88,17 @@ export function PortalLoadDetailPage() {
               <StatusBadge variant="info">{detail.load.progress_status ?? "unknown"}</StatusBadge>
             </div>
             {detail.load.progress_eta_delta_minutes != null ? (
-              <p className="mt-2 text-sm text-slate-600">ETA delta vs schedule: {detail.load.progress_eta_delta_minutes} min</p>
+              <p className="mt-2 text-xs text-slate-600">ETA delta vs schedule: {detail.load.progress_eta_delta_minutes} min</p>
             ) : null}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-sm border border-slate-200 bg-white p-4 text-sm">
+            <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs">
               <h2 className="font-semibold text-slate-900">Pickup</h2>
               <p className="mt-2 text-slate-700">{pickup?.address_line1}</p>
               <p className="text-slate-700">{[pickup?.city, pickup?.state].filter(Boolean).join(", ")}</p>
             </div>
-            <div className="rounded-sm border border-slate-200 bg-white p-4 text-sm">
+            <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs">
               <h2 className="font-semibold text-slate-900">Delivery</h2>
               <p className="mt-2 text-slate-700">{delivery?.address_line1}</p>
               <p className="text-slate-700">{[delivery?.city, delivery?.state].filter(Boolean).join(", ")}</p>
@@ -108,11 +108,11 @@ export function PortalLoadDetailPage() {
           <div className="rounded-sm border border-slate-200 bg-white p-4">
             <h2 className="font-semibold text-slate-900">Live location</h2>
             {detail.tracking ? (
-              <p className="mt-2 text-sm text-slate-700">
+              <p className="mt-2 text-xs text-slate-700">
                 {detail.tracking.location_text} · {detail.tracking.last_update_text}
               </p>
             ) : (
-              <p className="mt-2 text-sm text-slate-600">Location unavailable — truck not assigned or GPS pending.</p>
+              <p className="mt-2 text-xs text-slate-600">Location unavailable — truck not assigned or GPS pending.</p>
             )}
           </div>
 
@@ -126,13 +126,13 @@ export function PortalLoadDetailPage() {
                   <p className="text-xs text-slate-500">{new Date(m.occurred_at).toLocaleString()}</p>
                 </li>
               ))}
-              {detail.milestones.length === 0 ? <li className="text-sm text-slate-600">No milestones recorded yet.</li> : null}
+              {detail.milestones.length === 0 ? <li className="text-xs text-slate-600">No milestones recorded yet.</li> : null}
             </ol>
           </div>
 
           <div className="rounded-sm border border-slate-200 bg-white p-4">
             <h2 className="mb-3 font-semibold text-slate-900">Documents</h2>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2 text-xs">
               {(docsQuery.data ?? []).map((doc) => (
                 <li key={doc.id} className="flex items-center justify-between gap-3">
                   <span className="uppercase text-slate-700">

@@ -14,7 +14,7 @@ export function NetPaySummary({ earnings, deadheadPay, extraPay, reimbursements,
   const net = gross - deductions;
   return (
     <div className="rounded-sm border border-slate-300 bg-white p-3 text-xs">
-      <div className="mb-1 text-sm font-semibold text-slate-700">Net Pay Summary</div>
+      <div className="mb-1 text-xs font-semibold text-slate-700">Net Pay Summary</div>
       <div className="space-y-1">
         <Row label="Earnings" value={earnings} />
         {deadheadPay ? <Row label="Empty Miles" value={deadheadPay} /> : null}

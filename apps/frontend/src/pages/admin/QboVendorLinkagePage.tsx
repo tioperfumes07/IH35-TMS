@@ -243,7 +243,7 @@ export function QboVendorLinkagePage() {
   }
 
   if (auth.user?.role !== "Owner" && auth.user?.role !== "Administrator") {
-    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-600">Owner/Admin only.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-600">Owner/Admin only.</div>;
   }
 
   return (

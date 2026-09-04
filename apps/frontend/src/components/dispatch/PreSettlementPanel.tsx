@@ -42,7 +42,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
   });
 
   if (query.isLoading) {
-    return <div className="p-4 text-sm text-gray-500">Loading pre-settlement…</div>;
+    return <div className="p-4 text-xs text-gray-500">Loading pre-settlement…</div>;
   }
 
   if (query.isError) {
@@ -58,7 +58,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
 
   if (!query.data?.settlement) {
     return (
-      <div className="rounded-sm border border-gray-200 p-4 text-sm text-gray-500">
+      <div className="rounded-sm border border-gray-200 p-4 text-xs text-gray-500">
         No active pre-settlement found for this driver.
       </div>
     );
@@ -78,7 +78,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
     Boolean(settlement.trip_closed_at);
 
   return (
-    <div className="space-y-3 text-sm">
+    <div className="space-y-3 text-xs">
       {/* Header */}
       <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-gray-50 p-3">
         <div>
@@ -201,7 +201,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
       )}
 
       {/* Totals */}
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs">
         <div className="flex justify-between py-0.5">
           <span className="text-gray-600">Gross pay</span>
           <span className="font-semibold text-gray-900">${Number(settlement.gross_pay).toFixed(2)}</span>

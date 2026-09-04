@@ -57,7 +57,7 @@ export function InsuranceLanding() {
   });
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view insurance metrics.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">Select an operating company to view insurance metrics.</div>;
   }
 
   // C8 · HONEST UI: a failed/absent summary must not render six confident zeroes ("0 open
@@ -71,11 +71,11 @@ export function InsuranceLanding() {
   return (
     <div className="min-w-0 space-y-4 overflow-x-hidden">
       <header className="min-w-0 rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Insurance Dashboard</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Insurance Dashboard</h2>
         <p className="mt-1 text-xs text-slate-600">Operational snapshot across policies, COI requests, claims, and lawsuits.</p>
       </header>
 
-      {summaryQuery.isLoading ? <div className="text-sm text-slate-500">Loading insurance dashboard...</div> : null}
+      {summaryQuery.isLoading ? <div className="text-xs text-slate-500">Loading insurance dashboard...</div> : null}
 
       {summaryQuery.isError ? (
         <ListErrorState

@@ -183,7 +183,7 @@ export function DriverCatalogModal({
             onChange={(event) =>
               setForm((value) => ({ ...value, code: event.target.value.toUpperCase() }))
             }
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             placeholder="EXAMPLE-CODE"
           />
           {errors.code ? <div className="mt-1 text-[11px] text-red-700">{errors.code}</div> : null}
@@ -194,7 +194,7 @@ export function DriverCatalogModal({
           <input
             value={form.display_name}
             onChange={(event) => setForm((value) => ({ ...value, display_name: event.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
           {errors.display_name ? (
             <div className="mt-1 text-[11px] text-red-700">{errors.display_name}</div>
@@ -207,7 +207,7 @@ export function DriverCatalogModal({
             value={form.description}
             onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))}
             rows={3}
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
         </label>
 
@@ -221,7 +221,7 @@ export function DriverCatalogModal({
             onChange={(event) =>
               setForm((value) => ({ ...value, sort_order: Number(event.target.value || 0) }))
             }
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
           {errors.sort_order ? (
             <div className="mt-1 text-[11px] text-red-700">{errors.sort_order}</div>

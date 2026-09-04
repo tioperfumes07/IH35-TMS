@@ -207,7 +207,7 @@ export function PmSchedulePage() {
           </Button>
         }
       />
-      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="mb-2 text-xs text-gray-500">Due-soon threshold is company-configurable (days/miles/hours).</div>
         {listQ.isError ? (
           <ListErrorState
@@ -239,7 +239,7 @@ export function PmSchedulePage() {
           setFormError(null);
         }}
       >
-        <div className="space-y-3 text-sm" data-testid="pm-schedule-create-form">
+        <div className="space-y-3 text-xs" data-testid="pm-schedule-create-form">
           <label className="block">
             <span className="text-xs text-gray-600">Unit</span>
             <EntityPicker

@@ -508,7 +508,7 @@ export function RouteFallback() {
       role="status"
       aria-live="polite"
       aria-busy="true"
-      className="flex min-h-[40vh] w-full items-center justify-center text-sm text-gray-500"
+      className="flex min-h-[40vh] w-full items-center justify-center text-xs text-gray-500"
     >
       Loading…
     </div>
@@ -517,11 +517,11 @@ export function RouteFallback() {
 
 function SessionCheckRetry({ refetch }: { refetch: () => unknown }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center text-sm text-gray-700">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center text-xs text-gray-700">
       <p role="alert">Session check timed out. The API hung — you may still be signed in.</p>
       <button
         type="button"
-        className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900"
+        className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900"
         onClick={() => void refetch()}
       >
         Retry session
@@ -532,7 +532,7 @@ function SessionCheckRetry({ refetch }: { refetch: () => unknown }) {
 
 function sessionGate(auth: ReturnType<typeof useAuth>) {
   if (auth.isLoading) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">Checking session...</div>;
+    return <div className="flex min-h-screen items-center justify-center text-xs text-gray-500">Checking session...</div>;
   }
   if (auth.isUnauthenticated) return <Navigate to="/login" replace />;
   if (!auth.user && auth.isError) return <SessionCheckRetry refetch={auth.refetch} />;
@@ -696,7 +696,7 @@ function FactoringBatchDetailRoute() {
   const { selectedCompanyId } = useCompanyContext();
 
   if (!id || !selectedCompanyId) {
-    return <div className="text-sm text-gray-500">Batch detail unavailable.</div>;
+    return <div className="text-xs text-gray-500">Batch detail unavailable.</div>;
   }
 
   return <BatchDetail batchId={id} companyId={selectedCompanyId} />;

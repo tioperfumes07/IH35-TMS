@@ -36,7 +36,7 @@ export function CsaFleetScoreCard({ value }: Props) {
           Not an FMCSA percentile
         </span>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
         <div className="rounded-sm border border-slate-200 p-2">
           <div className="text-slate-500">Inspections</div>
           <div className="font-semibold text-slate-900">{totalInspections == null ? "—" : totalInspections.toLocaleString()}</div>

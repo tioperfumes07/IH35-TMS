@@ -22,7 +22,7 @@ export function PortalRouteGuard({ children }: { children: React.ReactNode }) {
   }, []);
 
   if (state === "loading") {
-    return <p className="text-sm text-slate-600">Checking session…</p>;
+    return <p className="text-xs text-slate-600">Checking session…</p>;
   }
   if (state === "denied") {
     return <Navigate to="/portal/login" replace />;

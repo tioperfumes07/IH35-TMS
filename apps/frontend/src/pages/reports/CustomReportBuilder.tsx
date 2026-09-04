@@ -101,11 +101,11 @@ export function CustomReportBuilder() {
         breadcrumb={["Reports", "Custom Report Builder"]}
       />
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
 
       <div className="grid gap-3 lg:grid-cols-2">
         <section className="rounded-sm border border-slate-200 bg-white p-3">
-          <h3 className="text-sm font-semibold text-slate-900">Available fields</h3>
+          <h3 className="text-xs font-semibold text-slate-900">Available fields</h3>
           <ul className="mt-2 space-y-1">
             {unselected.map((field) => (
               <li key={field.id}>
@@ -133,15 +133,15 @@ export function CustomReportBuilder() {
             if (field) addField(field);
           }}
         >
-          <h3 className="text-sm font-semibold text-slate-900">Report layout</h3>
+          <h3 className="text-xs font-semibold text-slate-900">Report layout</h3>
           <input
-            className="mt-2 w-full rounded-sm border border-slate-300 px-2 py-1 text-sm"
+            className="mt-2 w-full rounded-sm border border-slate-300 px-2 py-1 text-xs"
             placeholder="Report name"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <input
-            className="mt-2 w-full rounded-sm border border-slate-300 px-2 py-1 text-sm"
+            className="mt-2 w-full rounded-sm border border-slate-300 px-2 py-1 text-xs"
             placeholder="Filter: report_id (optional)"
             value={filterReportId}
             onChange={(e) => setFilterReportId(e.target.value)}
@@ -173,7 +173,7 @@ export function CustomReportBuilder() {
       </div>
 
       <section className="rounded-sm border border-slate-200 bg-white p-3">
-        <h3 className="text-sm font-semibold text-slate-900">Saved custom reports</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Saved custom reports</h3>
         <div className="mt-2 space-y-2">
           {savedQuery.isError ? (
             // GO-0028: a failed fetch must never render the same "No saved reports yet." text as

@@ -47,7 +47,7 @@ export function AdminPage() {
             aria-disabled={tile.disabled}
             className="rounded-sm border border-gray-200 bg-white p-4 text-left shadow-xs enabled:hover:border-slate-300 enabled:hover:shadow-sm disabled:cursor-not-allowed disabled:bg-slate-50"
           >
-            <div className="flex items-center justify-between gap-2 text-sm font-semibold text-gray-800">
+            <div className="flex items-center justify-between gap-2 text-xs font-semibold text-gray-800">
               <span>{tile.label}</span>
               {tile.disabled ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">Unavailable</span> : null}
             </div>

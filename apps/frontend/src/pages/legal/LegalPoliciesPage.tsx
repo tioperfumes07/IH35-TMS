@@ -50,7 +50,7 @@ export function LegalPoliciesPage() {
       <PageHeader breadcrumb={["Legal", "Policies"]} title="Legal Policies" subtitle="Policy acknowledgments and governance" />
       <LegalModuleTabs />
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="mb-2 text-sm font-semibold text-gray-900">Policy Templates</div>
+        <div className="mb-2 text-xs font-semibold text-gray-900">Policy Templates</div>
         {query.isError ? (
           <ListErrorState
             title="Couldn't load policy templates"

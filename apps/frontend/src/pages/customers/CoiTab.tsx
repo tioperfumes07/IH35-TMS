@@ -219,7 +219,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
 
   if (!operatingCompanyId) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
         Select an operating company to manage COI requests.
       </div>
     );
@@ -263,7 +263,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
           Insurer Email
           <input
             type="email"
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={insurerEmail}
             onChange={(event) => setInsurerEmail(event.target.value)}
             placeholder="insurer@example.com"
@@ -285,8 +285,8 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
           rows={isFullPage ? 3 : 2}
           className={
             isFullPage
-              ? "mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-              : "mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              ? "mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              : "mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
           }
           value={requestNotes}
           onChange={(event) => setRequestNotes(event.target.value)}
@@ -479,7 +479,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
           <label className="block text-xs">
             Status
             <select
-              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={editStatus}
               onChange={(event) => setEditStatus(event.target.value as CoiRequestStatus)}
             >
@@ -501,7 +501,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
           <label className="block text-xs md:col-span-2">
             Document URL
             <input
-              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={editDocumentUrl}
               onChange={(event) => setEditDocumentUrl(event.target.value)}
               placeholder="https://..."
@@ -511,7 +511,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
             Notes
             <textarea
               rows={2}
-              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={editNotes}
               onChange={(event) => setEditNotes(event.target.value)}
             />

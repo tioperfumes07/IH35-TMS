@@ -48,8 +48,8 @@ export function StatusSuggestionPrompt() {
   return (
     <div className="fixed inset-0 z-61 flex items-end justify-center bg-black/35 p-3">
       <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-4 shadow-xl">
-        <p className="text-sm font-semibold text-slate-900">Status suggestion</p>
-        <p className="mt-1 text-sm text-slate-700">
+        <p className="text-xs font-semibold text-slate-900">Status suggestion</p>
+        <p className="mt-1 text-xs text-slate-700">
           Looks like you’re underway on load{" "}
           <EntityLink
             kind="driver_app_load"

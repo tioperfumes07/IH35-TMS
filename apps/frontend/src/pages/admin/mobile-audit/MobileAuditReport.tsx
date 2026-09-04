@@ -35,27 +35,27 @@ export function MobileAuditReport() {
         <dl className="grid gap-3 sm:grid-cols-4">
           <div>
             <dt className="text-xs uppercase text-gray-500">Viewport</dt>
-            <dd className="text-sm font-medium">
+            <dd className="text-xs font-medium">
               {report.viewport.width}×{report.viewport.height}
             </dd>
           </div>
           <div>
             <dt className="text-xs uppercase text-gray-500">Files scanned</dt>
-            <dd className="text-sm font-medium">{report.scanned_file_count}</dd>
+            <dd className="text-xs font-medium">{report.scanned_file_count}</dd>
           </div>
           <div>
             <dt className="text-xs uppercase text-gray-500">Open issues</dt>
-            <dd className="text-sm font-medium">{report.issue_count}</dd>
+            <dd className="text-xs font-medium">{report.issue_count}</dd>
           </div>
           <div>
             <dt className="text-xs uppercase text-gray-500">Last run</dt>
-            <dd className="text-sm font-medium">{formatDateTimeUS(report.generated_at) || "Not yet generated in CI"}</dd>
+            <dd className="text-xs font-medium">{formatDateTimeUS(report.generated_at) || "Not yet generated in CI"}</dd>
           </div>
         </dl>
       </section>
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 text-sm font-semibold text-gray-800">Flagged issues</h2>
+        <h2 className="mb-3 text-xs font-semibold text-gray-800">Flagged issues</h2>
         <MobileOptimizedTable
           rows={report.issues}
           rowKey={(row) => row.id}

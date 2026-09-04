@@ -5,7 +5,7 @@ export function IntegrityAdminPage() {
   return (
     <div className="space-y-4">
       <PageHeader title="Integrity checks" subtitle="Admin · data consistency (Wave 2+)" />
-      <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+      <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-950">
         <p className="font-semibold">Backend endpoint not yet shipped</p>
         <p className="mt-1 text-xs">
           Planned: <code className="rounded-sm bg-amber-100/80 px-1">GET /api/v1/admin/integrity/checks</code> with run history and

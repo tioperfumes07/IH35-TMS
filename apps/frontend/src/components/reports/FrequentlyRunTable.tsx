@@ -58,7 +58,7 @@ export function FrequentlyRunTable({ rows, onRun }: Props) {
   return (
     <section className="rounded-sm border border-slate-200 bg-white">
       <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
-        <h3 className="text-sm font-semibold text-slate-900">Frequently run</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Frequently run</h3>
         {/* Removed dead "View all" href="#" link — this table already lives on the reports
             landing; there is no separate all-reports destination (QA-sweep). */}
       </div>

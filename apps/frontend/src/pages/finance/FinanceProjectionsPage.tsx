@@ -31,7 +31,7 @@ export function FinanceProjectionsPage() {
   const header = (
     <div className="mb-4">
       <h1 className="text-lg font-semibold text-slate-800">Projections</h1>
-      <p className="text-sm text-slate-500">
+      <p className="text-xs text-slate-500">
         Period-by-period estimate vs. actual for the company's currently active scenario.
       </p>
     </div>
@@ -42,7 +42,7 @@ export function FinanceProjectionsPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         <PageHeader title="Projections" />
-        <p className="text-sm text-slate-500">Loading…</p>
+        <p className="text-xs text-slate-500">Loading…</p>
       </div>
     );
   }
@@ -52,7 +52,7 @@ export function FinanceProjectionsPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
           Financial projections are not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_SCENARIOS_FLAG}</code>{" "}
           is off.)
         </div>
@@ -82,7 +82,7 @@ export function FinanceProjectionsPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
           No active scenario yet.{" "}
           <Link to="/finance/scenarios" className="font-medium text-slate-800 underline">
             Create and activate one in Scenarios
@@ -98,7 +98,7 @@ export function FinanceProjectionsPage() {
       <FinanceModuleTabs />
       {header}
       {summaryQuery.isLoading || detailQuery.isLoading ? (
-        <p className="text-sm text-slate-500">Loading…</p>
+        <p className="text-xs text-slate-500">Loading…</p>
       ) : detailQuery.isError ? (
         // GO-0038: same class as GO-0028 above (summaryQuery), on the second query this page
         // fetches -- a failed detail fetch must never silently fall through to a blank content

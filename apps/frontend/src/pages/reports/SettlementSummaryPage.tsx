@@ -215,7 +215,7 @@ export function SettlementSummaryPage() {
         }
       />
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
       <CollapsedListFilters
@@ -247,7 +247,7 @@ export function SettlementSummaryPage() {
         </div>
       </CollapsedListFilters>
 
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
 
       {query.data ? (
         <>
@@ -294,7 +294,7 @@ export function SettlementSummaryPage() {
             />
 
             <div className="rounded-sm border border-gray-200 bg-white p-3">
-              <div className="mb-2 text-sm font-semibold">Deductions by type</div>
+              <div className="mb-2 text-xs font-semibold">Deductions by type</div>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>

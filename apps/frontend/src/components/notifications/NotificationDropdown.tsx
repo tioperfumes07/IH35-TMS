@@ -35,7 +35,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onDis
       data-testid="notification-dropdown"
     >
       <div className="flex items-center justify-between border-b px-3 py-2">
-        <span className="text-sm font-semibold text-gray-900">Notifications</span>
+        <span className="text-xs font-semibold text-gray-900">Notifications</span>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -51,7 +51,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onDis
       </div>
       <ul className="max-h-96 overflow-y-auto">
         {notifications.length === 0 ? (
-          <li className="px-3 py-6 text-center text-sm text-gray-500">No notifications</li>
+          <li className="px-3 py-6 text-center text-xs text-gray-500">No notifications</li>
         ) : (
           notifications.slice(0, 20).map((item) => (
             <li
@@ -63,7 +63,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onDis
                 <SeverityIcon severity={item.severity} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium text-gray-900">{item.title}</p>
+                    <p className="text-xs font-medium text-gray-900">{item.title}</p>
                     <span className="shrink-0 text-[11px] text-gray-500">{relativeTime(item.created_at)}</span>
                   </div>
                   {item.body ? <p className="mt-0.5 line-clamp-2 text-xs text-gray-600">{item.body}</p> : null}

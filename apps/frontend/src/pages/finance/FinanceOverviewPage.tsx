@@ -43,7 +43,7 @@ export function FinanceOverviewPage() {
   const header = (
     <div className="mb-4">
       <h1 className="text-lg font-semibold text-slate-800">Finance Overview</h1>
-      <p className="text-sm text-slate-500">Rollup of the company's currently active forecast scenario.</p>
+      <p className="text-xs text-slate-500">Rollup of the company's currently active forecast scenario.</p>
     </div>
   );
 
@@ -52,7 +52,7 @@ export function FinanceOverviewPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         <PageHeader title="Finance Overview" />
-        <p className="text-sm text-slate-500">Loading…</p>
+        <p className="text-xs text-slate-500">Loading…</p>
       </div>
     );
   }
@@ -62,7 +62,7 @@ export function FinanceOverviewPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
           Financial planning is not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_SCENARIOS_FLAG}</code> is
           off.)
         </div>
@@ -93,7 +93,7 @@ export function FinanceOverviewPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
           No active scenario yet.{" "}
           <Link to="/finance/scenarios" className="font-medium text-slate-800 underline">
             Create and activate one in Scenarios
@@ -109,7 +109,7 @@ export function FinanceOverviewPage() {
       <FinanceModuleTabs />
       {header}
       {summaryQuery.isLoading ? (
-        <p className="text-sm text-slate-500">Loading…</p>
+        <p className="text-xs text-slate-500">Loading…</p>
       ) : summary ? (
         <div className="space-y-4">
           <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white p-4">

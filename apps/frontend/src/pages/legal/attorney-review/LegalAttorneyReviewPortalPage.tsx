@@ -115,7 +115,7 @@ export function LegalAttorneyReviewPortalPage() {
     return (
       <div className="mx-auto max-w-4xl p-4">
         <PageHeader breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
-        <p className="text-sm text-gray-600">Loading review…</p>
+        <p className="text-xs text-gray-600">Loading review…</p>
       </div>
     );
   }
@@ -124,7 +124,7 @@ export function LegalAttorneyReviewPortalPage() {
     return (
       <div className="mx-auto max-w-lg p-6">
         <PageHeader breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
-        <p className="mt-2 text-sm text-red-700">This review link is invalid, expired, or already used ({error}).</p>
+        <p className="mt-2 text-xs text-red-700">This review link is invalid, expired, or already used ({error}).</p>
       </div>
     );
   }
@@ -135,7 +135,7 @@ export function LegalAttorneyReviewPortalPage() {
     return (
       <div className="mx-auto max-w-lg p-6">
         <PageHeader breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
-        <p className="mt-3 text-sm text-gray-800">{doneMessage}</p>
+        <p className="mt-3 text-xs text-gray-800">{doneMessage}</p>
       </div>
     );
   }
@@ -169,12 +169,12 @@ export function LegalAttorneyReviewPortalPage() {
       </section>
 
       <section className="space-y-3 rounded-sm border border-gray-200 bg-slate-50 p-4">
-        <h2 className="text-sm font-semibold text-gray-900">Your attestation</h2>
+        <h2 className="text-xs font-semibold text-gray-900">Your attestation</h2>
         <div className="grid gap-3 md:grid-cols-2">
           <label className="block text-xs font-medium text-gray-700">
             Attorney name
             <input
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               value={attorneyName}
               onChange={(e) => setAttorneyName(e.target.value)}
               autoComplete="name"
@@ -183,7 +183,7 @@ export function LegalAttorneyReviewPortalPage() {
           <label className="block text-xs font-medium text-gray-700">
             Bar number
             <input
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               value={barNumber}
               onChange={(e) => setBarNumber(e.target.value)}
               autoComplete="off"
@@ -193,7 +193,7 @@ export function LegalAttorneyReviewPortalPage() {
         <label className="block text-xs font-medium text-gray-700">
           Notes (optional, approve only)
           <textarea
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -202,7 +202,7 @@ export function LegalAttorneyReviewPortalPage() {
         <label className="block text-xs font-medium text-gray-700">
           Comments for request changes / reject
           <textarea
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
             rows={4}
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
@@ -210,7 +210,7 @@ export function LegalAttorneyReviewPortalPage() {
           />
         </label>
 
-        {error ? <div className="text-sm text-red-700">{error}</div> : null}
+        {error ? <div className="text-xs text-red-700">{error}</div> : null}
 
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => void onApprove()} disabled={busy !== null}>

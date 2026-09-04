@@ -113,7 +113,7 @@ export function UnitTollTagsTab({ unitId, companyId }: UnitTollTagsTabProps) {
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-toll-tags-tab">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-gray-900">Toll Tags</h3>
+        <h3 className="text-xs font-semibold text-gray-900">Toll Tags</h3>
         <span className="text-xs text-gray-500">TxTAG · EZ-Pass · I-Pass</span>
       </div>
       {tagsQuery.isError ? (

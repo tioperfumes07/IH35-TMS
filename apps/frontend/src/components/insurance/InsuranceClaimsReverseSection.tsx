@@ -169,13 +169,13 @@ export function InsuranceClaimsReverseSection({
       data-testid={testId}
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">Insurance Claims</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Insurance Claims</h3>
         <EntityLink kind={openKind} id={openId} label="Open Claims" className="text-xs font-semibold text-slate-700 underline" />
       </div>
-      <p className="text-sm text-gray-600">
+      <p className="text-xs text-gray-600">
         Insurance claims linked to {contextLabel} (Owner/Admin).
       </p>
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
       {query.isError ? (
         <ListErrorState
           title="Couldn't load linked insurance claims"
@@ -185,12 +185,12 @@ export function InsuranceClaimsReverseSection({
         />
       ) : null}
       {!query.isLoading && !query.isError && claims.length === 0 ? (
-        <p className="text-sm text-gray-500">No linked claims.</p>
+        <p className="text-xs text-gray-500">No linked claims.</p>
       ) : null}
       {claims.length > 0 ? (
         <ul className="space-y-2">
           {claims.map((claim) => (
-            <li key={claim.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+            <li key={claim.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
               <EntityLinkOrTombstone
                 kind="claim"
                 id={claim.id}

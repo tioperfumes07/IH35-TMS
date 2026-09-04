@@ -120,7 +120,7 @@ export function GeofenceReconciliationReport() {
         className="mb-6"
       >
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Report Date</label>
+          <label className="mb-1 block text-xs font-medium text-gray-700">Report Date</label>
           <DatePicker value={staged.draft.reportDate} onChange={(next) => staged.setDraft({ reportDate: next })} max={today} className="" />
         </div>
       </CollapsedListFilters>

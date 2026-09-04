@@ -109,7 +109,7 @@ export function ActivityLogPage() {
     return (
       <div className="space-y-3">
         <PageHeader title="Activity log" subtitle="Owner / SuperAdmin tooling" />
-        <p className="text-sm text-gray-600">You need Owner or SuperAdmin access to view the audit activity stream.</p>
+        <p className="text-xs text-gray-600">You need Owner or SuperAdmin access to view the audit activity stream.</p>
       </div>
     );
   }
@@ -120,12 +120,12 @@ export function ActivityLogPage() {
     <div className="space-y-4">
       <PageHeader title="Activity log" subtitle="Latest audit.append_event rows (newest first)" />
 
-      <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-800" data-testid="activity-log-filters">
+      <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-800" data-testid="activity-log-filters">
         <div className="grid gap-3 md:grid-cols-5">
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Actor user id
             <input
-              className="rounded-sm border border-gray-300 px-2 py-1 text-sm normal-case"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs normal-case"
               value={draft.actorUserId}
               onChange={(e) => staged.setDraft((d) => ({ ...d, actorUserId: e.target.value }))}
               placeholder="UUID"
@@ -134,7 +134,7 @@ export function ActivityLogPage() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Action contains
             <input
-              className="rounded-sm border border-gray-300 px-2 py-1 text-sm normal-case"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs normal-case"
               value={draft.action}
               onChange={(e) => staged.setDraft((d) => ({ ...d, action: e.target.value }))}
               placeholder="event_class substring"
@@ -143,7 +143,7 @@ export function ActivityLogPage() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Entity type contains
             <input
-              className="rounded-sm border border-gray-300 px-2 py-1 text-sm normal-case"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs normal-case"
               value={draft.entityType}
               onChange={(e) => staged.setDraft((d) => ({ ...d, entityType: e.target.value }))}
               placeholder="payload.entity_type"
@@ -152,7 +152,7 @@ export function ActivityLogPage() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Entity id equals
             <input
-              className="rounded-sm border border-gray-300 px-2 py-1 text-sm normal-case"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs normal-case"
               value={draft.entityId}
               onChange={(e) => staged.setDraft((d) => ({ ...d, entityId: e.target.value }))}
               placeholder="payload.entity_id (exact)"

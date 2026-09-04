@@ -52,7 +52,7 @@ export function SoftDeleteModal({ file, onClose, onDeleteSuccess }: SoftDeleteMo
           deleteMutation.mutate();
         }}
       >
-        <p className="text-sm text-gray-700">
+        <p className="text-xs text-gray-700">
           Archive <strong>{file.original_filename}</strong>? This soft-archives the file (recoverable) — the
           record is retained for audit for 90 days. It is not permanently deleted.
         </p>
@@ -63,7 +63,7 @@ export function SoftDeleteModal({ file, onClose, onDeleteSuccess }: SoftDeleteMo
             onChange={(event) => setReason(event.target.value)}
             rows={4}
             minLength={10}
-            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
           />
         </div>
         {errorMessage ? <div className="rounded-sm border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">{errorMessage}</div> : null}

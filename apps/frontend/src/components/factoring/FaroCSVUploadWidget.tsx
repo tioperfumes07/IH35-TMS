@@ -88,7 +88,7 @@ export function FaroCSVUploadWidget({
           onCsvTextChange(await file.text(), file.name);
         }}
       >
-        <p className="text-sm font-medium text-gray-800">Drag & drop Faro CSV here</p>
+        <p className="text-xs font-medium text-gray-800">Drag & drop Faro CSV here</p>
         <p className="mt-1 text-xs text-gray-600">or click to browse</p>
         <input
           type="file"

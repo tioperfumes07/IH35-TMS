@@ -2,7 +2,7 @@ export function PerformanceScorecardSection({ scorecard, unavailable = false }: 
   if (!scorecard) {
     return (
       <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-gray-800">Performance scorecard</h2>
+        <h2 className="text-xs font-semibold text-gray-800">Performance scorecard</h2>
         <p className={`mt-2 text-xs ${unavailable ? "text-red-700" : "text-gray-500"}`}>
           {unavailable ? "Performance data could not be loaded." : "No Samsara safety data for the last 30 days."}
         </p>
@@ -19,7 +19,7 @@ export function PerformanceScorecardSection({ scorecard, unavailable = false }: 
   ];
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-gray-800">Performance scorecard (30 days)</h2>
+      <h2 className="text-xs font-semibold text-gray-800">Performance scorecard (30 days)</h2>
       <p className="text-xs text-gray-500">Fleet avg score: {String(scorecard.fleet_avg_score ?? "—")}</p>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         {cards.map(([label, value]) => (

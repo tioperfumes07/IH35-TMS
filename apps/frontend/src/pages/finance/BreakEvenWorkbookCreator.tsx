@@ -113,7 +113,7 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
 
   if (!enabled) {
     return (
-      <section className="mt-6 rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600" data-testid="break-even-workbook-flag-off">
+      <section className="mt-6 rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600" data-testid="break-even-workbook-flag-off">
         Break-even creator saves through Finance Scenarios. Enable flag <code>{FINANCE_HUB_SCENARIOS_FLAG}</code>, then return here to input expenses, notes, and assets from the 2025 workbook.
       </section>
     );
@@ -123,7 +123,7 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
     <section className="mt-6 rounded-sm border border-slate-200 bg-white p-4" data-testid="break-even-workbook-creator">
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900">+ Create break-even analysis</h2>
+          <h2 className="text-xs font-semibold text-slate-900">+ Create break-even analysis</h2>
           <p className="text-xs text-slate-500">
             Input the 2025 workbook shape: per-lender notes/leases, vehicle clusters (T139–T146, CCG reefers), plus operating costs. Use + Add vehicle for another unit. Saves as a Finance Scenario.
           </p>
@@ -149,7 +149,7 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
       <div className="mb-3 grid gap-3 sm:grid-cols-3">
         <label className="text-xs font-medium text-slate-600">
           Name
-          <input className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-sm" value={name} onChange={(e) => setName(e.target.value)} />
+          <input className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-xs" value={name} onChange={(e) => setName(e.target.value)} />
         </label>
         <label className="text-xs font-medium text-slate-600">
           Period starts
@@ -157,7 +157,7 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
         </label>
         <label className="text-xs font-medium text-slate-600">
           Miles (month)
-          <input type="number" min={0} className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-sm" value={miles} onChange={(e) => setMiles(e.target.value)} />
+          <input type="number" min={0} className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-xs" value={miles} onChange={(e) => setMiles(e.target.value)} />
         </label>
       </div>
       <div className="space-y-2">
@@ -179,7 +179,7 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
         <label className="text-xs font-medium text-slate-600">
           Add vehicle / unit
           <input
-            className="mt-1 h-8 w-48 rounded-sm border border-slate-300 px-2 text-sm"
+            className="mt-1 h-8 w-48 rounded-sm border border-slate-300 px-2 text-xs"
             value={newVehicle}
             onChange={(e) => setNewVehicle(e.target.value)}
             placeholder="T147"

@@ -42,10 +42,10 @@ export function LoginResetRequestPage() {
         <h1 style={{ fontFamily: typography.fontSerif }} className="text-[22px] font-semibold text-gray-900">
           Reset password
         </h1>
-        <p className="mt-2 text-sm text-gray-700">We will email you a link to choose a new password.</p>
+        <p className="mt-2 text-xs text-gray-700">We will email you a link to choose a new password.</p>
         <form onSubmit={onSubmit} className="mt-4 space-y-3" noValidate>
           <div>
-            <label htmlFor="reset-email" className="block text-sm font-medium text-gray-800">
+            <label htmlFor="reset-email" className="block text-xs font-medium text-gray-800">
               Email
             </label>
             <input
@@ -57,7 +57,7 @@ export function LoginResetRequestPage() {
               onChange={(ev) => setEmail(ev.target.value)}
               aria-invalid={emailInvalid}
               aria-describedby={emailInvalid ? "reset-email-err" : undefined}
-              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             />
             {emailInvalid ? (
               <p id="reset-email-err" className="mt-1 text-xs text-red-700">
@@ -66,12 +66,12 @@ export function LoginResetRequestPage() {
             ) : null}
           </div>
           {message ? (
-            <p className="text-sm text-green-800" role="status">
+            <p className="text-xs text-green-800" role="status">
               {message}
             </p>
           ) : null}
           {error ? (
-            <p className="text-sm text-red-700" role="alert">
+            <p className="text-xs text-red-700" role="alert">
               {error}
             </p>
           ) : null}
@@ -79,7 +79,7 @@ export function LoginResetRequestPage() {
             {pending ? "Sending…" : "Send reset link"}
           </Button>
         </form>
-        <p className="mt-4 text-center text-sm">
+        <p className="mt-4 text-center text-xs">
           <Link to="/login" className="text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400">
             Back to sign in
           </Link>

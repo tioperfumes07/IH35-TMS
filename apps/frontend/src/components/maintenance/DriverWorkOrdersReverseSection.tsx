@@ -31,7 +31,7 @@ export function DriverWorkOrdersReverseSection({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">Work orders</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Work orders</h3>
         <EntityLink
           kind="active_wos_driver"
           id={driverId}
@@ -39,9 +39,9 @@ export function DriverWorkOrdersReverseSection({
           className="text-xs font-semibold text-slate-700 underline"
         />
       </div>
-      <p className="text-sm text-gray-600">Repair / tire / accident work orders linked to this driver.</p>
+      <p className="text-xs text-gray-600">Repair / tire / accident work orders linked to this driver.</p>
 
-      {q.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {q.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
       {q.isError ? (
         <ListErrorState
           title="Couldn't load work orders"
@@ -51,7 +51,7 @@ export function DriverWorkOrdersReverseSection({
         />
       ) : null}
       {!q.isLoading && !q.isError && rows.length === 0 ? (
-        <p className="text-sm text-gray-500">No work orders linked to this driver.</p>
+        <p className="text-xs text-gray-500">No work orders linked to this driver.</p>
       ) : null}
 
       {rows.length > 0 ? (
@@ -59,7 +59,7 @@ export function DriverWorkOrdersReverseSection({
           {rows.map((wo) => {
             const id = String(wo.id ?? "");
             return (
-              <li key={id} className="flex flex-wrap items-center gap-2 text-sm">
+              <li key={id} className="flex flex-wrap items-center gap-2 text-xs">
                 <EntityLinkOrTombstone
                   kind="work_order"
                   id={id || null}

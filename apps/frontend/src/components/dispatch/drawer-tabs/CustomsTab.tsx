@@ -33,8 +33,8 @@ export function CustomsTab({ loadId, operatingCompanyId }: Props) {
   const rows = query.isError ? [] : (query.data?.crossings ?? []);
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="load-detail-border-crossings">
-      <h3 className="text-sm font-semibold text-slate-900">Customs &amp; border crossings{rows.length ? ` (${rows.length})` : ""}</h3>
-      <div className="max-w-xs text-sm" data-testid="load-detail-customs-broker-filter">
+      <h3 className="text-xs font-semibold text-slate-900">Customs &amp; border crossings{rows.length ? ` (${rows.length})` : ""}</h3>
+      <div className="max-w-xs text-xs" data-testid="load-detail-customs-broker-filter">
         <label htmlFor="load-detail-customs-broker-filter-input" className="text-xs text-gray-500">
           Filter by customs broker
         </label>
@@ -57,10 +57,10 @@ export function CustomsTab({ loadId, operatingCompanyId }: Props) {
         />
       ) : null}
       {query.isError ? <ListErrorBanner message="Couldn't load border crossings for this load." onRetry={() => void query.refetch()} /> : null}
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No completed border crossings linked to this load.</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
+      {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-xs text-gray-500">No completed border crossings linked to this load.</p> : null}
       {rows.map((row) => (
-        <div key={row.id} className="px-2 py-1.5 text-sm">
+        <div key={row.id} className="px-2 py-1.5 text-xs">
           <EntityLink
             kind="border_crossing"
             id={row.id}

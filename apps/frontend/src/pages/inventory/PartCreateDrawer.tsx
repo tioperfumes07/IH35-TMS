@@ -119,7 +119,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
         >
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium">Name *</label>
+              <label className="block text-xs font-medium">Name *</label>
               <input
                 required
                 className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
@@ -128,7 +128,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
               />
             </div>
             <div>
-              <label className="block text-sm font-medium">SKU</label>
+              <label className="block text-xs font-medium">SKU</label>
               <input
                 className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
                 value={formData.sku}
@@ -140,7 +140,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
             {/* INV-CAT-01: real SelectCombobox — not free-text with a picker-shaped placeholder.
                 Options = PART_INVENTORY_CATEGORIES (maintenance.parts_inventory.category taxonomy).
                 Do not seed/read deprecated catalogs.parts. */}
-            <label className="block text-sm font-medium" htmlFor="inv-part-category">
+            <label className="block text-xs font-medium" htmlFor="inv-part-category">
               Category *
             </label>
             <SelectCombobox
@@ -160,7 +160,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
             </SelectCombobox>
           </div>
           <div>
-            <label className="block text-sm font-medium">Preferred vendor</label>
+            <label className="block text-xs font-medium">Preferred vendor</label>
             <div className="mt-1" data-testid="inv-part-create-vendor-picker">
               {/* CLS-SILENT-CAP: EntityPicker server-search — no 200-row listVendors page. */}
               <EntityPicker
@@ -178,7 +178,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium">On-hand qty</label>
+              <label className="block text-xs font-medium">On-hand qty</label>
               <input
                 type="number"
                 className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
@@ -187,7 +187,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
               />
             </div>
             <div>
-              <label className="block text-sm font-medium">Reorder point</label>
+              <label className="block text-xs font-medium">Reorder point</label>
               <input
                 type="number"
                 className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
@@ -196,7 +196,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
               />
             </div>
             <div>
-              <label className="block text-sm font-medium">Unit cost</label>
+              <label className="block text-xs font-medium">Unit cost</label>
               {/* M-1: dollars-mode QBO money entry; backend /maintenance/parts unit_cost = numeric(10,2) DOLLARS.
                   Bridged over the all-strings formData so submit Number(data.unit_cost) is byte-for-byte. */}
               <MoneyInput
@@ -208,7 +208,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium">Location/Bin</label>
+            <label className="block text-xs font-medium">Location/Bin</label>
             <input
               className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
               value={formData.location}
@@ -216,7 +216,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
             />
           </div>
           <div>
-            <label className="block text-sm font-medium">Notes</label>
+            <label className="block text-xs font-medium">Notes</label>
             <textarea
               rows={3}
               className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"

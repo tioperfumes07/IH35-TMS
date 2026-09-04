@@ -163,7 +163,7 @@ export function QboStyleHomePage({ auth }: Props) {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Welcome, {displayName}!</h1>
-          <p className="mt-0.5 text-sm text-gray-500">Here's what's happening with your business today.</p>
+          <p className="mt-0.5 text-xs text-gray-500">Here's what's happening with your business today.</p>
         </div>
         <div className="flex gap-2 text-xs text-gray-400">
           <button
@@ -208,7 +208,7 @@ export function QboStyleHomePage({ auth }: Props) {
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
-                <p className="pr-5 text-sm font-medium text-gray-800">{card.title}</p>
+                <p className="pr-5 text-xs font-medium text-gray-800">{card.title}</p>
                 <p className="mt-1 text-xs text-gray-500">{card.body}</p>
                 <Link to={card.to} className="mt-2 inline-block text-xs font-semibold text-slate-700 hover:underline">
                   {card.cta} →
@@ -234,7 +234,7 @@ export function QboStyleHomePage({ auth }: Props) {
                 }
                 navigate(a.to);
               }}
-              className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-xs hover:bg-gray-50 hover:border-gray-300"
+              className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 shadow-xs hover:bg-gray-50 hover:border-gray-300"
             >
               {a.label}
             </button>
@@ -259,7 +259,7 @@ export function QboStyleHomePage({ auth }: Props) {
               // GO-0027-HOME-F: a failed bank-tiles fetch must never render as "$0 total balance,
               // no accounts" -- that reads as a genuinely empty/closed set of bank accounts.
               <div className="space-y-2" data-testid="qbo-bank-tiles-error">
-                <p className="flex items-center gap-1.5 text-sm font-medium text-red-700">
+                <p className="flex items-center gap-1.5 text-xs font-medium text-red-700">
                   <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
                   Unable to load bank accounts
                 </p>
@@ -279,7 +279,7 @@ export function QboStyleHomePage({ auth }: Props) {
                 <p className="mb-3 text-xs text-slate-600">Total bank balance</p>
                 <div className="space-y-2">
                   {tiles.slice(0, 5).map((tile) => (
-                    <div key={tile.id} className="flex items-center justify-between text-sm">
+                    <div key={tile.id} className="flex items-center justify-between text-xs">
                       <span className="truncate text-gray-700">{tile.display_name}</span>
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-gray-900">{fmt$(tile.current_balance * 100)}</span>
@@ -318,7 +318,7 @@ export function QboStyleHomePage({ auth }: Props) {
               <div className="h-20 animate-pulse rounded-sm bg-gray-100" data-testid="qbo-revenue-loading" />
             ) : revenueDisplay.kind === "error" ? (
               <div className="space-y-2" data-testid="qbo-revenue-error">
-                <p className="flex items-center gap-1.5 text-sm font-medium text-red-700">
+                <p className="flex items-center gap-1.5 text-xs font-medium text-red-700">
                   <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
                   {revenueDisplay.text}
                 </p>
@@ -356,11 +356,11 @@ export function QboStyleHomePage({ auth }: Props) {
                 </div>
                 <p className="text-xs text-slate-600">{revenueKpiLabel(kpiRange)} (invoice basis, pre-tax)</p>
                 <div className="mt-3 space-y-1">
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-xs">
                     <span className="text-gray-600">Income</span>
                     <span className="font-medium text-gray-900">{revenueDisplay.text}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-xs">
                     <span className="text-gray-600">A/R outstanding</span>
                     <span className="font-medium text-gray-900">{fmt$(arTotal)}</span>
                   </div>
@@ -381,7 +381,7 @@ export function QboStyleHomePage({ auth }: Props) {
               // GO-0027-HOME-F: a failed accounting-role-home fetch must never render as "$0
               // outstanding A/P" -- that reads as genuinely nothing owed.
               <div className="space-y-2" data-testid="qbo-expenses-error">
-                <p className="flex items-center gap-1.5 text-sm font-medium text-red-700">
+                <p className="flex items-center gap-1.5 text-xs font-medium text-red-700">
                   <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
                   Unable to load expenses
                 </p>
@@ -416,7 +416,7 @@ export function QboStyleHomePage({ auth }: Props) {
               // GO-0027-HOME-F: a failed accounting-role-home fetch must never render as "$0
               // unpaid" -- that reads as genuinely nothing outstanding.
               <div className="space-y-2" data-testid="qbo-invoices-error">
-                <p className="flex items-center gap-1.5 text-sm font-medium text-red-700">
+                <p className="flex items-center gap-1.5 text-xs font-medium text-red-700">
                   <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
                   Unable to load invoices
                 </p>
@@ -435,11 +435,11 @@ export function QboStyleHomePage({ auth }: Props) {
                 <p className="text-2xl font-semibold text-gray-900">{fmt$(arTotal)}</p>
                 <p className="text-xs text-slate-600">Unpaid (last 365 days)</p>
                 <div className="mt-3 space-y-1">
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-xs">
                     <span className="text-gray-600">Current (0–30 days)</span>
                     <span className="font-medium text-gray-900">{fmt$(acct?.ar_aging.current_cents ?? 0)}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-xs">
                     <span className="text-red-600">Overdue (31+ days)</span>
                     <span className="font-medium text-red-700">
                       {fmt$((acct?.ar_aging.d31_60_cents ?? 0) + (acct?.ar_aging.d61_90_cents ?? 0) + (acct?.ar_aging.d90_plus_cents ?? 0))}

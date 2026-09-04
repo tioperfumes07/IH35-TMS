@@ -58,7 +58,7 @@ export function AssignmentHistoryPage() {
   });
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
   }
 
   const rows = historyQ.data?.rows ?? [];
@@ -137,7 +137,7 @@ render: (row) => {
         title="Assignment History"
         subtitle="Load driver and unit reassignment audit trail"
         actions={
-          <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-sm">
+          <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-xs">
             Dispatch Home
           </Link>
         }

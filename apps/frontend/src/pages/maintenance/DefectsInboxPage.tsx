@@ -143,7 +143,7 @@ export function DefectsInboxPage() {
           <label className="space-y-1 text-xs text-gray-600">
             <span>Triage status</span>
             <SelectCombobox
-              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={staged.draft.statusFilter}
               onChange={(event) => staged.setDraft({ statusFilter: event.target.value as typeof statusFilter })}
               aria-label="Triage status filter"

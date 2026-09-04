@@ -103,7 +103,7 @@ function StopCard({ stop }: { stop: GeofenceStop }) {
 
   return (
     <div
-      className={`relative rounded-sm border p-3 text-sm ${stop.is_layover ? "border-slate-200 bg-slate-100" : "border-gray-200 bg-white"}`}
+      className={`relative rounded-sm border p-3 text-xs ${stop.is_layover ? "border-slate-200 bg-slate-100" : "border-gray-200 bg-white"}`}
     >
       {stop.is_layover && (
         <div className="mb-1 text-[11px] font-bold uppercase tracking-widest text-slate-700">
@@ -174,12 +174,12 @@ export function LoadDetailGeofenceTimelineTab({ loadId, operatingCompanyId }: Pr
   });
 
   if (query.isLoading) {
-    return <div className="py-8 text-center text-sm text-gray-500">Loading geofence timeline…</div>;
+    return <div className="py-8 text-center text-xs text-gray-500">Loading geofence timeline…</div>;
   }
 
   if (query.error) {
     return (
-      <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700" role="alert" data-geofence-timeline-read-error>
+      <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700" role="alert" data-geofence-timeline-read-error>
         <div>Failed to load geofence timeline.</div>
         <Button type="button" size="sm" variant="secondary" onClick={() => void query.refetch()}>
           Retry timeline
@@ -192,7 +192,7 @@ export function LoadDetailGeofenceTimelineTab({ loadId, operatingCompanyId }: Pr
 
   if (stops.length === 0) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-500">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-center text-xs text-gray-500">
         No pickup or delivery stops found.
         <div className="mt-1 text-xs text-gray-400">
           Timeline data populates as the driver arrives at and departs each stop.

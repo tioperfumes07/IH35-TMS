@@ -397,7 +397,7 @@ function TextField({
 }) {
   const fieldName = dataField ?? label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
   return (
-    <label className="block text-sm">
+    <label className="block text-xs">
       <span className="mb-1 block text-xs font-semibold text-gray-600">
         {label}
         {required ? " *" : ""}
@@ -435,7 +435,7 @@ function MoneyField({
 }) {
   const fieldName = dataField ?? label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
   return (
-    <label className="block text-sm" data-field={dataField}>
+    <label className="block text-xs" data-field={dataField}>
       <span className="mb-1 block text-xs font-semibold text-gray-600">{label}</span>
       <MoneyInput
         id={fieldName}
@@ -466,7 +466,7 @@ function SelectField({
   disabled?: boolean;
 }) {
   return (
-    <label className="block text-sm">
+    <label className="block text-xs">
       <span className="mb-1 block text-xs font-semibold text-gray-600">
         {label}
         {required ? " *" : ""}
@@ -591,7 +591,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               { value: "direct_shipper", label: "Direct shipper" },
             ]}
           />
-          <div className="block text-sm">
+          <div className="block text-xs">
             <span className="mb-1 block text-xs font-semibold text-gray-600">Customer category</span>
             {customerTypeCatalogQuery.isError ? (
               <ListErrorState
@@ -625,7 +625,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
       <section className="border-t border-gray-200 pt-3">
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Sub-customer</h3>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-          <div className="block text-sm md:col-span-2" data-testid="customer-parent-select">
+          <div className="block text-xs md:col-span-2" data-testid="customer-parent-select">
             <span className="mb-1 block text-xs font-semibold text-gray-600">Parent customer</span>
             {!incomeAccountsQuery.isError ? <ReferenceSelect
               value={values.parent_customer_id || null}
@@ -655,7 +655,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
 
       {/* Billing address */}
       <Section title="Billing address">
-        <label className="block text-sm md:col-span-2">
+        <label className="block text-xs md:col-span-2">
           <span className="mb-1 block text-xs font-semibold text-gray-600">Billing address</span>
           <textarea
             value={values.billing_address}
@@ -673,7 +673,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
       <section className="border-t border-gray-200 pt-3">
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Terms &amp; credit</h3>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-          <div className="block text-sm">
+          <div className="block text-xs">
             <span className="mb-1 block text-xs font-semibold text-gray-600">Payment terms</span>
             <ReferenceSelect
               value={values.payment_terms_id || null}
@@ -703,7 +703,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               { value: "rmis_future", label: "RMIS (future)" },
             ]}
           />
-          <div className="block text-sm md:col-span-2" data-testid="customer-default-income-account">
+          <div className="block text-xs md:col-span-2" data-testid="customer-default-income-account">
             <span className="mb-1 block text-xs font-semibold text-gray-600">Default income account</span>
             {incomeAccountsQuery.isError ? (
               <ListErrorState
@@ -756,7 +756,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
       {/* Shipping address */}
       <section className="border-t border-gray-200 pt-3">
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Shipping address</h3>
-        <label className="mb-2 flex items-center gap-2 text-sm text-gray-700">
+        <label className="mb-2 flex items-center gap-2 text-xs text-gray-700">
           <input
             name="shipping_same_as_billing"
             type="checkbox"
@@ -767,7 +767,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
         </label>
         {!values.shipping_same_as_billing ? (
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            <label className="block text-sm md:col-span-2">
+            <label className="block text-xs md:col-span-2">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Shipping street</span>
               <input
                 value={values.shipping_address_line1}
@@ -823,7 +823,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
       {/* Tax */}
       <section className="border-t border-gray-200 pt-3">
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Tax</h3>
-        <label className="mb-2 flex items-center gap-2 text-sm text-gray-700">
+        <label className="mb-2 flex items-center gap-2 text-xs text-gray-700">
           <input
             name="tax_exempt"
             type="checkbox"
@@ -861,7 +861,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
       {/* Factoring */}
       <section className="border-t border-gray-200 pt-3">
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Factoring</h3>
-        <label className="mb-2 flex items-center gap-2 text-sm text-gray-700">
+        <label className="mb-2 flex items-center gap-2 text-xs text-gray-700">
           <input
             name="factoring_eligible"
             type="checkbox"
@@ -871,7 +871,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
           Factoring eligible
         </label>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-          <label className="block text-sm md:col-span-2">
+          <label className="block text-xs md:col-span-2">
             <span className="mb-1 block text-xs font-semibold text-gray-600">Factoring company</span>
             <EntityPicker
               kind="vendor"
@@ -895,7 +895,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
           />
           <TextField label="Advance rate override (%)" type="number" value={values.factoring_advance_rate_override} onChange={(factoring_advance_rate_override) => onPatch({ factoring_advance_rate_override })} />
           <TextField label="Reserve % override" type="number" value={values.factoring_reserve_pct_override} onChange={(factoring_reserve_pct_override) => onPatch({ factoring_reserve_pct_override })} />
-          <label className="block text-sm md:col-span-2">
+          <label className="block text-xs md:col-span-2">
             <span className="mb-1 block text-xs font-semibold text-gray-600">Factoring notes</span>
             <textarea
               value={values.factoring_notes}

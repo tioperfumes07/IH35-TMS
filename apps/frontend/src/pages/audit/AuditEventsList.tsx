@@ -115,7 +115,7 @@ export function AuditEventsList() {
     return (
       <div className="space-y-3">
         <PageHeader title="Audit events" subtitle="Bulk operation forensic review" />
-        <p className="text-sm text-gray-600">You need Owner, Manager, or Accountant access to view audit events.</p>
+        <p className="text-xs text-gray-600">You need Owner, Manager, or Accountant access to view audit events.</p>
       </div>
     );
   }
@@ -129,7 +129,7 @@ export function AuditEventsList() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Bulk call ID
             <input
-              className="min-w-[16rem] rounded-sm border border-gray-300 px-2 py-1 text-sm normal-case"
+              className="min-w-[16rem] rounded-sm border border-gray-300 px-2 py-1 text-xs normal-case"
               value={bulkCallId}
               onChange={(e) => setBulkCallId(e.target.value)}
               placeholder="Paste bulk_call_id from BulkProgressDialog"

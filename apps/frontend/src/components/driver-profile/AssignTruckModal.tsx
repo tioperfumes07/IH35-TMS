@@ -68,7 +68,7 @@ export function AssignTruckModal({ open, driverId, companyId, driverName, onClos
           dataField="assign-truck-unit"
           dataTestId="assign-truck-unit"
         />
-        {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
+        {error ? <p role="alert" className="text-xs text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
           <Button type="button" size="sm" variant="secondary" onClick={handleClose}>
             Cancel

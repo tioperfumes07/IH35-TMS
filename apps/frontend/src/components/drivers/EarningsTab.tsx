@@ -268,7 +268,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
 
   if (!enabled) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
         Select an operating company to view earnings and debt.
       </div>
     );
@@ -278,7 +278,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
     <div className="space-y-3" data-testid="driver-earnings-debt-tab">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-3">
         <div>
-          <h2 className="text-sm font-semibold text-gray-900">Live debt summary</h2>
+          <h2 className="text-xs font-semibold text-gray-900">Live debt summary</h2>
           <div className="text-xs text-gray-500">
             Recomputed at {computedAt ? new Date(computedAt).toLocaleString() : "—"}
           </div>
@@ -340,7 +340,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
           hidden when the driver has no escrow clause, per driver-profile reverse-link scope. */}
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-1 flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-gray-900">Escrow</h3>
+          <h3 className="text-xs font-semibold text-gray-900">Escrow</h3>
           {onOpenOperationsView ? (
             <button
               type="button"
@@ -372,7 +372,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
           Distinct from Profile → QBO Mapping (qbo_vendor_id). */}
       <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-earnings-ap-vendor">
         <div className="mb-1 flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-gray-900">A/P vendor (driver payee)</h3>
+          <h3 className="text-xs font-semibold text-gray-900">A/P vendor (driver payee)</h3>
           {apVendorId ? (
             <EntityLinkOrTombstone
               kind="vendor"
@@ -402,7 +402,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
           <div className="grid gap-2 md:grid-cols-2">
             <div>
               <div className="text-[11px] uppercase text-gray-500">Vendor</div>
-              <div className="text-sm font-semibold text-gray-900" data-testid="driver-earnings-ap-vendor-link">
+              <div className="text-xs font-semibold text-gray-900" data-testid="driver-earnings-ap-vendor-link">
                 <EntityLink
                   kind="vendor"
                   id={apVendorQuery.data.vendor.id}
@@ -505,7 +505,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-gray-900">Last 4 settlements</h3>
+          <h3 className="text-xs font-semibold text-gray-900">Last 4 settlements</h3>
           <Link
             to={`/driver-finance/settlements?driver_id=${encodeURIComponent(driverId)}`}
             className="text-xs text-slate-700 underline"
@@ -538,7 +538,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-gray-900">Active liabilities</h3>
+          <h3 className="text-xs font-semibold text-gray-900">Active liabilities</h3>
           <Link
             to={`/liabilities?driver_id=${encodeURIComponent(driverId)}`}
             className="text-xs text-slate-700 underline"
@@ -572,7 +572,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
       {/* LAW OF THE LAND §9 (2026-07-22): active deductions / auto-deduction policies reverse-link. */}
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-gray-900">Active deductions</h3>
+          <h3 className="text-xs font-semibold text-gray-900">Active deductions</h3>
           <EntityLink
             kind="driver_deductions_filter"
             id={driverId}
@@ -619,7 +619,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Pay rates</h3>
+              <h3 className="text-xs font-semibold text-gray-900">Pay rates</h3>
               <p className="text-[11px] text-gray-500">
                 Per-load and per-mile rates live on the driver's equipment qualifications, not a shared template.
               </p>

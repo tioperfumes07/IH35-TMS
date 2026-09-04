@@ -279,7 +279,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
   // has to run after every hook. Hooks are unconditional above; only the RENDER is conditional.
   if (!companyId) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
         Select an operating company to view claims.
       </div>
     );
@@ -311,7 +311,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
           </p>
           {graphQuery.isLoading ? <p>Loading reverse links…</p> : null}
           {graphQuery.isError ? (
-            <div className="bg-red-50 p-2 text-sm text-red-700">
+            <div className="bg-red-50 p-2 text-xs text-red-700">
               Failed to load claim graph.
             </div>
           ) : null}

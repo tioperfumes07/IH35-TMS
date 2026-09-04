@@ -261,7 +261,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
             <h2 className="text-base font-semibold text-[#1A1F36]">Deny request</h2>
             <p className="mt-1 text-xs text-[#8A92AB]">Reason is recorded to the audit trail and shared with the driver.</p>
             <textarea
-              className="mt-3 w-full rounded-sm border border-[#e5e7eb] p-2 text-sm"
+              className="mt-3 w-full rounded-sm border border-[#e5e7eb] p-2 text-xs"
               rows={4}
               value={denyReason}
               onChange={(e) => setDenyReason(e.target.value)}

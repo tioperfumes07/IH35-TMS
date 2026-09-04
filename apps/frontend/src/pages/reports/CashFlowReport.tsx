@@ -60,7 +60,7 @@ export function CashFlowReport() {
         testIdPrefix="reports-cash-flow"
         className="flex flex-wrap items-end gap-3 rounded-sm border bg-white p-4"
       >
-        <label className="text-sm">
+        <label className="text-xs">
           As of
           <DatePicker className="ml-2" value={staged.draft.asOfDate} onChange={(next) => staged.setDraft({ asOfDate: next })} />
         </label>
@@ -77,11 +77,11 @@ export function CashFlowReport() {
       {summary ? (
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-sm border bg-white p-4">
-            <div className="text-sm text-slate-600">Operating balance</div>
+            <div className="text-xs text-slate-600">Operating balance</div>
             <div className="text-2xl font-semibold">{money(summary.operating_balance_cents)}</div>
           </div>
           <div className="rounded-sm border bg-white p-4">
-            <div className="text-sm text-slate-600">Scoped loads (OCI)</div>
+            <div className="text-xs text-slate-600">Scoped loads (OCI)</div>
             <div className="text-2xl font-semibold">{summary.scoped_load_count}</div>
             <div className="text-xs text-slate-500">Company: {selectedCompany?.legal_name ?? "—"}</div>
           </div>

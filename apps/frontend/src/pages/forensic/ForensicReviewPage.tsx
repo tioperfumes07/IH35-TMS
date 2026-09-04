@@ -155,7 +155,7 @@ export function ForensicReviewPage() {
   }, [batchesQuery.data?.batches, queryClient]);
 
   if (auth.user?.role !== "Owner") {
-    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700">Owner role required.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700">Owner role required.</div>;
   }
 
   return (
@@ -199,7 +199,7 @@ export function ForensicReviewPage() {
       ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <p className="text-sm font-semibold text-gray-900">Runner Status</p>
+        <p className="text-xs font-semibold text-gray-900">Runner Status</p>
         {runnerStatusQuery.data ? (
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
             <span className={`rounded-sm px-2 py-0.5 ${runnerPillClass(runnerStatusQuery.data.forensic_runner.initialized, runnerStatusQuery.data.forensic_runner.error, runnerStatusQuery.data.forensic_runner.last_tick_at)}`}>
@@ -219,7 +219,7 @@ export function ForensicReviewPage() {
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <p className="text-sm font-semibold text-gray-900">QBO Authorization</p>
+        <p className="text-xs font-semibold text-gray-900">QBO Authorization</p>
         <div className="mt-2 space-y-2">
           {forensicCompanies.map((company) => {
             const status = qboStatusQuery.data?.[company.id];
@@ -279,7 +279,7 @@ export function ForensicReviewPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <p className="text-sm font-semibold text-gray-900">Import batches</p>
+          <p className="text-xs font-semibold text-gray-900">Import batches</p>
           <div className="mt-2 space-y-2">
             {(batchesQuery.data?.batches ?? []).map((batch) => (
               <div key={batch.id} className="rounded-sm border border-gray-100 p-2 text-xs">
@@ -386,7 +386,7 @@ export function ForensicReviewPage() {
         </div>
 
         <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <p className="text-sm font-semibold text-gray-900">Anomaly review queue</p>
+          <p className="text-xs font-semibold text-gray-900">Anomaly review queue</p>
           <div className="mt-2 max-h-[520px] space-y-2 overflow-auto">
             {(anomaliesQuery.data?.anomalies ?? []).map((anomaly) => (
               <button

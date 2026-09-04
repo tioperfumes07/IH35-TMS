@@ -15,17 +15,17 @@ export function DriverReportsReverseSection({ operatingCompanyId, driverId }: { 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-reports-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">Driver Reports{totalCount ? ` (${totalCount})` : ""}</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Driver Reports{totalCount ? ` (${totalCount})` : ""}</h3>
         <EntityLink kind="driver_reports_driver" id={driverId} label="Open report queue" className="text-xs font-semibold text-slate-700 underline" />
       </div>
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading driver reports…</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-500">Loading driver reports…</p> : null}
       {query.isError ? <ListErrorState status={0} message="Could not load reports for this driver." onRetry={() => void query.refetch()} /> : null}
-      {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No reports submitted by this driver.</p> : null}
+      {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-xs text-gray-500">No reports submitted by this driver.</p> : null}
       {totalCount > rows.length ? <p className="text-xs text-slate-500">Showing {rows.length} of {totalCount}. Open report queue to view all.</p> : null}
       {rows.length > 0 ? (
         <ul className="space-y-2">
           {rows.map((row) => (
-            <li key={row.id} className="rounded-sm border border-gray-200 px-2 py-1.5 text-sm">
+            <li key={row.id} className="rounded-sm border border-gray-200 px-2 py-1.5 text-xs">
               <EntityLink
                 kind="driver_report"
                 id={row.id}

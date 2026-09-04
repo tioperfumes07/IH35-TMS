@@ -66,7 +66,7 @@ export function CloseTripPanel({
   if (tripClosedAt) {
     return (
       <div
-        className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm"
+        className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs"
         data-testid="close-trip-panel-recheck"
       >
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Trip closed</p>
@@ -92,7 +92,7 @@ export function CloseTripPanel({
 
   return (
     <div
-      className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm"
+      className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs"
       data-testid="close-trip-panel"
     >
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Trip not closed</p>

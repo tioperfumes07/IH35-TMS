@@ -122,7 +122,7 @@ export function TrailerReeferSection({
     const err = snapshotQ.error as { status?: number; message?: string } | null;
     return (
       <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="tp-reefer-a19-slot">
-        <h2 className="text-sm font-semibold text-gray-800">Reefer hours tracking</h2>
+        <h2 className="text-xs font-semibold text-gray-800">Reefer hours tracking</h2>
         <ListErrorState
           title="Couldn't load reefer hours"
           status={typeof err?.status === "number" ? err.status : 0}
@@ -151,7 +151,7 @@ export function TrailerReeferSection({
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="tp-reefer-a19-slot">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-gray-800">Reefer hours tracking</h2>
+        <h2 className="text-xs font-semibold text-gray-800">Reefer hours tracking</h2>
         {specs?.pm_status === "due" ? (
           <span className="rounded-sm bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800" data-testid="reefer-pm-due">
             PM due
@@ -183,7 +183,7 @@ export function TrailerReeferSection({
               type="number"
               min={0}
               step="0.1"
-              className="mt-1 block w-28 rounded-sm border px-2 py-1 text-sm"
+              className="mt-1 block w-28 rounded-sm border px-2 py-1 text-xs"
               value={hoursInput}
               onChange={(e) => setHoursInput(e.target.value)}
               data-testid="reefer-hours-input"
@@ -193,7 +193,7 @@ export function TrailerReeferSection({
             Notes
             <input
               type="text"
-              className="mt-1 block w-48 rounded-sm border px-2 py-1 text-sm"
+              className="mt-1 block w-48 rounded-sm border px-2 py-1 text-xs"
               value={notesInput}
               onChange={(e) => setNotesInput(e.target.value)}
             />
@@ -260,7 +260,7 @@ function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-sm border border-gray-100 p-2">
       <div className="text-xs text-gray-500">{label}</div>
-      <div className="text-sm font-medium text-gray-900">{value}</div>
+      <div className="text-xs font-medium text-gray-900">{value}</div>
     </div>
   );
 }

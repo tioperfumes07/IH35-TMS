@@ -19,7 +19,7 @@ export function CustomerFactoringSubmitQueueReverseSection({ operatingCompanyId,
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-submit-queue-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-slate-900">Factoring submission queue</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Factoring submission queue</h2>
         <EntityLink
           kind="factoring_submit_queue_customer"
           id={customerId}

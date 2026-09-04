@@ -148,7 +148,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
     <div className="space-y-3" data-testid="safety-meetings-page">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
-          <div className="text-sm font-semibold text-slate-800">Safety Meetings</div>
+          <div className="text-xs font-semibold text-slate-800">Safety Meetings</div>
           <div className="text-[11px] text-slate-500">Schedule meetings, track required attendees, and sync attendance to safety events.</div>
         </div>
         <Button size="sm" data-testid="safety-meetings-create-btn" onClick={() => setCreateOpen(true)}>

@@ -112,7 +112,7 @@ export function CustomersSyncPanel({ operatingCompanyId }: Props) {
   const busy = pullMutation.isPending || reconcileMutation.isPending;
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/30 px-4 py-3 text-sm">
+    <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/30 px-4 py-3 text-xs">
       <div className="font-medium">QBO Customers</div>
       {!operatingCompanyId || statusQuery.isLoading ? (
         <span className="text-muted-foreground">Loading sync status…</span>

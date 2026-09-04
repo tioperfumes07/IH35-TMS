@@ -119,7 +119,7 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
       onClose={handleClose}
       title={row ? `Escrow Forfeit — ${entityLabel(row.driver_name, row.id, "Driver")}` : "Escrow Forfeit"}
     >
-      <div className="space-y-3 text-sm text-gray-700" data-testid="escrow-forfeit-modal">
+      <div className="space-y-3 text-xs text-gray-700" data-testid="escrow-forfeit-modal">
         <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-slate-700">
           Current escrow balance: <span className="font-semibold">{formatUsd(balance)}</span>
         </div>
@@ -199,7 +199,7 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
               roster page pattern.
             */}
             <SelectCombobox
-              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={linkedLiabilityId ?? ""}
               onChange={(e) => setLinkedLiabilityId(e.target.value || null)}
               disabled={liabilitiesQuery.isLoading}

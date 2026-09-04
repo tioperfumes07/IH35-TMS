@@ -260,7 +260,7 @@ export function UserDetailPage() {
     onError: (err) => pushToast(userFacingApiError(err, "Could not update the event"), "error"),
   });
 
-  if (userDetailQuery.isLoading) return <div className="p-4 text-sm text-gray-500">Loading user...</div>;
+  if (userDetailQuery.isLoading) return <div className="p-4 text-xs text-gray-500">Loading user...</div>;
   if (userDetailQuery.isError) {
     return (
       <ListErrorState
@@ -271,7 +271,7 @@ export function UserDetailPage() {
       />
     );
   }
-  if (!targetUser) return <div className="p-4 text-sm text-gray-500">User not found.</div>;
+  if (!targetUser) return <div className="p-4 text-xs text-gray-500">User not found.</div>;
 
   return (
     <div className="space-y-3">
@@ -311,7 +311,7 @@ export function UserDetailPage() {
 
       {tab === "profile" ? (
         <DataPanel title="Profile">
-          <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
             <div><span className="text-xs text-gray-500">Email</span><div>{targetUser.email ?? "—"}</div></div>
             <div><span className="text-xs text-gray-500">Role</span><div>{targetUser.role}</div></div>
             <div><span className="text-xs text-gray-500">Status</span><div>{userStatus(targetUser)}</div></div>
@@ -324,7 +324,7 @@ export function UserDetailPage() {
 
       {tab === "companies" ? (
         <DataPanel title="Company Access">
-          <div className="space-y-2 text-sm">
+          <div className="space-y-2 text-xs">
             {(userDetailQuery.data?.accessible_companies ?? []).map((company) => (
               <div key={company.id} className="rounded-sm border border-gray-200 px-2 py-1.5">
                 <div className="font-medium">{company.short_name ?? company.code}</div>
@@ -345,7 +345,7 @@ export function UserDetailPage() {
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-gray-200 bg-white p-3">
             <div>
-              <h2 className="text-sm font-semibold">Dispatcher Safety File</h2>
+              <h2 className="text-xs font-semibold">Dispatcher Safety File</h2>
               <p className="text-xs text-gray-500">Permanent accountability record for operational events.</p>
             </div>
             <div className="flex items-center gap-2">
@@ -371,23 +371,23 @@ export function UserDetailPage() {
           <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-white p-3 text-xs md:grid-cols-5">
             <div>
               <div className="text-gray-500">Total events</div>
-              <div className="text-sm font-semibold">{costSummary.totalEvents}</div>
+              <div className="text-xs font-semibold">{costSummary.totalEvents}</div>
             </div>
             <div>
               <div className="text-gray-500">Severe</div>
-              <div className="text-sm font-semibold">{costSummary.severeCount}</div>
+              <div className="text-xs font-semibold">{costSummary.severeCount}</div>
             </div>
             <div>
               <div className="text-gray-500">Total cost</div>
-              <div className="text-sm font-semibold">{money(costSummary.totalCost)}</div>
+              <div className="text-xs font-semibold">{money(costSummary.totalCost)}</div>
             </div>
             <div>
               <div className="text-gray-500">Recovered</div>
-              <div className="text-sm font-semibold">{money(costSummary.recovered)}</div>
+              <div className="text-xs font-semibold">{money(costSummary.recovered)}</div>
             </div>
             <div>
               <div className="text-gray-500">Pending recovery</div>
-              <div className="text-sm font-semibold">{money(costSummary.pending)}</div>
+              <div className="text-xs font-semibold">{money(costSummary.pending)}</div>
             </div>
           </div>
 
@@ -405,7 +405,7 @@ export function UserDetailPage() {
                   </div>
                   <div className="font-semibold">{money(event.cost_amount)}</div>
                 </div>
-                <div className={`mt-1 text-sm ${event.voided_at ? "line-through" : ""}`}>{event.summary}</div>
+                <div className={`mt-1 text-xs ${event.voided_at ? "line-through" : ""}`}>{event.summary}</div>
                 <div className="mt-1 text-xs text-gray-500">{event.error_reason_label ?? "No reason assigned"}</div>
                 <div className="mt-2 flex gap-2">
                   <button
@@ -464,7 +464,7 @@ export function UserDetailPage() {
       {tab === "activity" && selectedCompanyId ? (
         <UserActivityTab operatingCompanyId={selectedCompanyId} userId={userId} />
       ) : tab === "activity" ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">Select an operating company to view activity.</div>
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-500">Select an operating company to view activity.</div>
       ) : null}
 
       <Modal variant="drawer" open={addEventOpen} onClose={() => setAddEventOpen(false)} title="Create Dispatcher Safety Event">

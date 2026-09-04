@@ -232,7 +232,7 @@ export function MaintenanceCostPerUnitPage() {
           </div>
         }
       />
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockVPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
       <CollapsedListFilters
@@ -256,7 +256,7 @@ export function MaintenanceCostPerUnitPage() {
         </div>
       </CollapsedListFilters>
 
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
 
       {t ? (
         <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-6">

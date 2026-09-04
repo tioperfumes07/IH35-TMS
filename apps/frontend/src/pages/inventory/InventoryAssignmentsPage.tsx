@@ -150,7 +150,7 @@ export function InventoryAssignmentsPage() {
       <InventoryModuleTabs />
 
       {unitId ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
           Showing assignments for the selected unit.{" "}
           <Link className="underline" to="/inventory/assignments">
             View all units
@@ -158,7 +158,7 @@ export function InventoryAssignmentsPage() {
         </div>
       ) : null}
 
-      <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600">
+      <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
         Parts used on work orders appear in this assignment trail. Stock on-hand and purchase receipts stay on{" "}
         <Link className="text-slate-700 underline" to="/inventory">
           Parts &amp; Stock
@@ -171,7 +171,7 @@ export function InventoryAssignmentsPage() {
       </div>
 
       {assignmentsQuery.isLoading ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white p-8 text-center text-xs text-gray-500">
           Loading assignment trail...
         </div>
       ) : assignmentsQuery.isError ? (
@@ -182,7 +182,7 @@ export function InventoryAssignmentsPage() {
         />
       ) : (
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
-          <h3 className="text-sm font-semibold">Assignment trail</h3>
+          <h3 className="text-xs font-semibold">Assignment trail</h3>
           {totalCount ? <p className="text-xs text-slate-500" data-testid="inventory-assignments-range">{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount} assignments</p> : null}
           <ParityTable<PartsAssignmentRow>
             columns={columns}
@@ -204,8 +204,8 @@ export function InventoryAssignmentsPage() {
                 dataAttributes={{ "data-inventory-assignments-filter-toolbar": "collapsed" }}
               >
                 <div className="flex flex-wrap items-center gap-3">
-                  <label className="min-w-64 text-sm text-gray-700">Vendor<EntityPicker kind="vendor" operatingCompanyId={companyId} value={staged.draft.vendorId} onChange={(next) => staged.setDraft({ ...staged.draft, vendorId: next })} placeholder="All vendors" allowCreate={false} /></label>
-                  <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                  <label className="min-w-64 text-xs text-gray-700">Vendor<EntityPicker kind="vendor" operatingCompanyId={companyId} value={staged.draft.vendorId} onChange={(next) => staged.setDraft({ ...staged.draft, vendorId: next })} placeholder="All vendors" allowCreate={false} /></label>
+                  <label className="inline-flex items-center gap-2 text-xs text-gray-700">
                     <input
                       type="checkbox"
                       checked={staged.draft.unitLinkedOnly}

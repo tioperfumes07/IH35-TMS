@@ -35,8 +35,8 @@ export function PortalLoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
       <form onSubmit={onSubmit} className="w-full max-w-md rounded-sm border border-slate-200 bg-white p-6 shadow-xs">
         <h1 className="text-xl font-semibold text-slate-900">Shipper portal sign in</h1>
-        <p className="mt-1 text-sm text-slate-600">Track your loads in real time.</p>
-        <label className="mt-4 block text-sm">
+        <p className="mt-1 text-xs text-slate-600">Track your loads in real time.</p>
+        <label className="mt-4 block text-xs">
           <span className="font-medium text-slate-700">Email</span>
           <input
             type="email"
@@ -46,7 +46,7 @@ export function PortalLoginPage() {
             required
           />
         </label>
-        <label className="mt-3 block text-sm">
+        <label className="mt-3 block text-xs">
           <span className="font-medium text-slate-700">Password</span>
           <input
             type="password"
@@ -56,7 +56,7 @@ export function PortalLoginPage() {
             required
           />
         </label>
-        {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+        {error ? <p className="mt-3 text-xs text-red-600">{error}</p> : null}
         <Button type="submit" className="mt-4 w-full" disabled={busy}>
           {busy ? "Signing in…" : "Sign in"}
         </Button>

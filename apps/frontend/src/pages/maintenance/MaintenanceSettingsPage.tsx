@@ -111,7 +111,7 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
             <input
               id="maint-settings-pm-interval"
               data-testid="maintenance-settings-pm-interval"
-              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-sm text-slate-900"
+              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-xs text-slate-900"
               type="number"
               min={1}
               max={365}
@@ -124,7 +124,7 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">Vendor Defaults</h3>
             <label className="mt-2 block text-xs text-slate-600">Maintenance vendors available</label>
             <input
-              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-sm text-slate-900"
+              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-xs text-slate-900"
               value={String(settings?.maintenance_vendors ?? 0)}
               readOnly
             />
@@ -134,7 +134,7 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
             <input
               id="maint-settings-shop-location"
               data-testid="maintenance-settings-shop-location"
-              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-sm text-slate-900"
+              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-xs text-slate-900"
               value={defaultShopLocation}
               onChange={(event) => setDefaultShopLocation(event.target.value)}
             />
@@ -148,7 +148,7 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
             <input
               id="maint-settings-bay-policy"
               data-testid="maintenance-settings-bay-policy"
-              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-sm text-slate-900"
+              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-xs text-slate-900"
               value={bayAssignmentPolicy}
               onChange={(event) => setBayAssignmentPolicy(event.target.value)}
             />
@@ -167,7 +167,7 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
             </label>
             <label className="mt-2 block text-xs text-slate-600">PM schedules tracked</label>
             <input
-              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-sm text-slate-900"
+              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-xs text-slate-900"
               value={String(settings?.pm_schedules ?? 0)}
               readOnly
             />

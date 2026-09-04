@@ -187,7 +187,7 @@ export function DriverTeamsPage() {
 
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
       {!companyId ? (
-        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm text-slate-600">
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-slate-600">
           Select an operating company to view its driver teams.
         </div>
       ) : null}
@@ -196,7 +196,7 @@ export function DriverTeamsPage() {
         <SelectCombobox
           value={status}
           onChange={(event) => setStatus(event.target.value as StatusFilter)}
-          className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-1"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-1"
         >
           <option value="true">Active</option>
           <option value="false">Inactive</option>

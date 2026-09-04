@@ -297,13 +297,13 @@ export function TypeCatalogAdmin() {
   );
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to manage insurance type catalog.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">Select an operating company to manage insurance type catalog.</div>;
   }
 
   return (
     <div className="space-y-4">
       <header className="rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Type Catalog Admin</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Type Catalog Admin</h2>
         <p className="mt-1 text-xs text-slate-600">Create, edit, and deactivate entries from insurance type catalog.</p>
       </header>
 

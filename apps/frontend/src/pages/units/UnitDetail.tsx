@@ -64,7 +64,7 @@ export function UnitDetail() {
         title={unitLabel}
         subtitle="Permits, toll tags, and finance linkage"
       />
-      {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select operating company.</p> : null}
       {unitQuery.isError ? (
         <ListErrorState title="Couldn't load unit identity" status={0} message={(unitQuery.error as Error)?.message} onRetry={() => void unitQuery.refetch()} />
       ) : null}

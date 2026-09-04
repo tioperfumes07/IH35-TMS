@@ -138,9 +138,9 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
       size="wide"
     >
         {ensureQuery.isLoading ? (
-          <div className="px-1 py-8 text-center text-sm text-gray-500">Preparing template…</div>
+          <div className="px-1 py-8 text-center text-xs text-gray-500">Preparing template…</div>
         ) : ensureQuery.isError ? (
-          <div className="px-1 py-8 text-center text-sm text-red-600">Template unavailable. LEGAL_CONTRACTS_ENABLED may be off.</div>
+          <div className="px-1 py-8 text-center text-xs text-red-600">Template unavailable. LEGAL_CONTRACTS_ENABLED may be off.</div>
         ) : (
           <div className="space-y-5">
 
@@ -152,7 +152,7 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
                   <div key={k}>
                     <label className="block text-xs font-semibold text-gray-500 mb-0.5">{l}</label>
                     <input value={lessor[k]} onChange={(e) => setLessor((p) => ({ ...p, [k]: e.target.value }))}
-                      className="w-full h-10 rounded-sm border border-gray-300 px-2 text-sm" />
+                      className="w-full h-10 rounded-sm border border-gray-300 px-2 text-xs" />
                   </div>
                 ))}
               </div>
@@ -192,12 +192,12 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-0.5">Legal Name *</label>
                   <input value={lessee.legal_name} onChange={(e) => setLessee((p) => ({ ...p, legal_name: e.target.value }))}
-                    className="w-full h-10 rounded-sm border border-gray-300 px-2 text-sm" />
+                    className="w-full h-10 rounded-sm border border-gray-300 px-2 text-xs" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-0.5">Entity Type</label>
                   <select value={lessee.entity_type} onChange={(e) => setLessee((p) => ({ ...p, entity_type: e.target.value }))}
-                    className="w-full h-10 rounded-sm border border-gray-300 px-2 text-sm">
+                    className="w-full h-10 rounded-sm border border-gray-300 px-2 text-xs">
                     {["LLC","Inc.","Corp.","LP","LLLP","Sole Proprietor"].map((t) => <option key={t}>{t}</option>)}
                   </select>
                 </div>
@@ -205,7 +205,7 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
                   <div key={k}>
                     <label className="block text-xs font-semibold text-gray-500 mb-0.5">{l}</label>
                     <input value={lessee[k]} onChange={(e) => setLessee((p) => ({ ...p, [k]: e.target.value }))}
-                      className="w-full h-10 rounded-sm border border-gray-300 px-2 text-sm"
+                      className="w-full h-10 rounded-sm border border-gray-300 px-2 text-xs"
                       type={k === "signer_email" ? "email" : "text"} />
                   </div>
                 ))}
@@ -248,7 +248,7 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
                         type="text"
                         value={terms[k]}
                         onChange={(e) => setTerms((p) => ({ ...p, [k]: e.target.value }))}
-                        className="w-full h-10 rounded-sm border border-gray-300 px-2 text-sm"
+                        className="w-full h-10 rounded-sm border border-gray-300 px-2 text-xs"
                       />
                     )}
                   </div>
@@ -278,7 +278,7 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
                         <div key={k}>
                           <label className="block text-xs font-semibold text-gray-500 mb-0.5">{l}</label>
                           <input value={v[k]} onChange={(e) => updateVehicle(v.key, k, e.target.value)}
-                            className="w-full h-10 rounded-sm border border-gray-300 px-2 text-sm" />
+                            className="w-full h-10 rounded-sm border border-gray-300 px-2 text-xs" />
                         </div>
                       ))}
                     </div>

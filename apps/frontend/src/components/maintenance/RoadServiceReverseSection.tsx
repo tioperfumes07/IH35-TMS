@@ -24,7 +24,7 @@ export function RoadServiceReverseSection({
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-900">Road Service</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Road Service</h2>
         <span className="text-xs text-gray-500">{isLoading ? "Loading…" : tickets.length}</span>
       </div>
       {isError ? <ListErrorBanner message={`Couldn't load road-service tickets for ${contextLabel}.`} onRetry={() => void refetch()} /> : null}

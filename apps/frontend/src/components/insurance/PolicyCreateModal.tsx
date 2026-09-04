@@ -271,7 +271,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
   return (
     <ParityDrawer open={open} onClose={onClose} title="Create Policy" size="wide">
       <form
-        className="space-y-4 text-sm"
+        className="space-y-4 text-xs"
         onSubmit={(event) => {
           event.preventDefault();
           event.stopPropagation();

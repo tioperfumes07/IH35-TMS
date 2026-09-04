@@ -59,9 +59,9 @@ export function PortalProfilePage() {
   return (
     <div className="max-w-lg space-y-4">
       <h1 className="text-xl font-semibold text-slate-900">Profile & notifications</h1>
-      {profileQuery.isLoading ? <p className="text-sm text-slate-600">Loading…</p> : null}
+      {profileQuery.isLoading ? <p className="text-xs text-slate-600">Loading…</p> : null}
       {profileQuery.isError ? (
-        <p className="text-sm text-red-700">Failed to load profile. <button type="button" className="font-semibold underline" onClick={() => void profileQuery.refetch()}>Retry</button></p>
+        <p className="text-xs text-red-700">Failed to load profile. <button type="button" className="font-semibold underline" onClick={() => void profileQuery.refetch()}>Retry</button></p>
       ) : null}
       {profileQuery.data ? (
         <form
@@ -71,15 +71,15 @@ export function PortalProfilePage() {
             saveMutation.mutate();
           }}
         >
-          <label className="block text-sm">
+          <label className="block text-xs">
             <span className="font-medium text-slate-700">Email</span>
             <input className="mt-1 w-full rounded-sm border border-slate-200 bg-slate-50 px-3 py-2" value={profileQuery.data.email} readOnly />
           </label>
-          <label className="block text-sm">
+          <label className="block text-xs">
             <span className="font-medium text-slate-700">Full name</span>
             <input className="mt-1 w-full rounded-sm border border-slate-300 px-3 py-2" value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </label>
-          <fieldset className="space-y-2 text-sm">
+          <fieldset className="space-y-2 text-xs">
             <legend className="font-medium text-slate-700">Email notifications</legend>
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={notifyDispatch} onChange={(e) => setNotifyDispatch(e.target.checked)} />
@@ -101,8 +101,8 @@ export function PortalProfilePage() {
           <Button type="submit" disabled={saveMutation.isPending}>
             {saveMutation.isPending ? "Saving…" : "Save preferences"}
           </Button>
-          {saveMutation.isSuccess ? <p className="text-sm text-green-700">Saved.</p> : null}
-          <p id="portal-profile-error" className="text-sm text-red-700" />
+          {saveMutation.isSuccess ? <p className="text-xs text-green-700">Saved.</p> : null}
+          <p id="portal-profile-error" className="text-xs text-red-700" />
         </form>
       ) : null}
     </div>

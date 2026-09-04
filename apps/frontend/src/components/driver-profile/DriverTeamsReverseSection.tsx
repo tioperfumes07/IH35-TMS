@@ -16,7 +16,7 @@ export function DriverTeamsReverseSection({ driverId, operatingCompanyId }: { dr
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-profile-teams-reverse">
-      <h2 className="mb-2 text-sm font-semibold text-slate-900">Driver teams</h2>
+      <h2 className="mb-2 text-xs font-semibold text-slate-900">Driver teams</h2>
       {query.isError ? (
         <ListErrorState
           title="Couldn't load driver teams"

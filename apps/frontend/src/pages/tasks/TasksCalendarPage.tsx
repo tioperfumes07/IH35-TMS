@@ -60,7 +60,7 @@ export function TasksCalendarPage() {
       <div className="space-y-4 p-4">
         <PageHeader title="Calendar" subtitle="Scheduled tasks by day" />
         <TasksModuleTabs />
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
           Select an operating company to view the task calendar.
         </div>
       </div>
@@ -83,7 +83,7 @@ export function TasksCalendarPage() {
           <button type="button" onClick={() => shiftMonth(-1)} className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700">
             ← Prev
           </button>
-          <div className="text-sm font-semibold text-[#1f2a44]">{monthLabel(bounds.start)}</div>
+          <div className="text-xs font-semibold text-[#1f2a44]">{monthLabel(bounds.start)}</div>
           <div className="flex items-center gap-2">
             <button
               type="button"

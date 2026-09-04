@@ -188,14 +188,14 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
       <div className="mt-3">
         {!driverId ? (
           <div className="rounded-sm border border-slate-200 bg-white px-4 py-12 text-center">
-            <div className="text-sm font-semibold text-slate-700">HOS Viewer</div>
+            <div className="text-xs font-semibold text-slate-700">HOS Viewer</div>
             <div className="mt-1 text-xs text-slate-500">Pick a driver above to open their daily ELD log.</div>
           </div>
         ) : dailyQ.isLoading ? (
           <div className="space-y-1">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-[26px] animate-pulse rounded-sm bg-slate-100" />)}</div>
         ) : !daily || daily.available === false || (daily.segments?.length ?? 0) === 0 ? (
           <div className="rounded-sm border border-slate-200 bg-white px-4 py-12 text-center">
-            <div className="text-sm font-semibold text-slate-700">No ELD data</div>
+            <div className="text-xs font-semibold text-slate-700">No ELD data</div>
             <div className="mt-1 text-xs text-slate-500">No HOS / ELD records for {selectedName} on {selectedDate}.</div>
           </div>
         ) : (

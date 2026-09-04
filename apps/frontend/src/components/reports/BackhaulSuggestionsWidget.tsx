@@ -48,7 +48,7 @@ export function BackhaulSuggestionsWidget({
 
   return (
     <section className="rounded-sm border border-slate-300 bg-slate-100/40 p-4" data-testid="backhaul-suggestions-widget">
-      <h3 className="text-sm font-semibold text-slate-700">Profitable backhauls</h3>
+      <h3 className="text-xs font-semibold text-slate-700">Profitable backhauls</h3>
       <p className="mt-1 text-xs text-slate-700/80">
         Truck {unitNumber} is empty near {location}. Best lanes from lane-profitability cache:
       </p>
@@ -65,7 +65,7 @@ export function BackhaulSuggestionsWidget({
         <p className="mt-2 text-xs text-gray-600">No profitable lanes found originating near this location.</p>
       ) : null}
       {suggestions.length > 0 ? (
-        <ul className="mt-2 space-y-1 text-sm">
+        <ul className="mt-2 space-y-1 text-xs">
           {suggestions.map((lane) => (
             <li key={`${lane.origin_city}-${lane.destination_city}`} className="flex justify-between gap-2 rounded-sm bg-white/80 px-2 py-1">
               <span>

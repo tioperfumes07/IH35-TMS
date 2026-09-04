@@ -93,7 +93,7 @@ export function LaneDetailModal({ open, lane, loads, loading, onClose }: Props) 
 
   return (
     <Modal open={open} title="Lane drill-down" onClose={onClose}>
-      <p className="mb-3 text-sm text-gray-600">{corridor}</p>
+      <p className="mb-3 text-xs text-gray-600">{corridor}</p>
       <ParityTable
         storageKey="reports-lane-detail-loads"
         tableTestId="lane-detail-loads"

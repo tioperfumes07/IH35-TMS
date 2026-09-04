@@ -59,7 +59,7 @@ export function FuelGlMappingCoverage({ companyId }: { companyId: string }) {
       data-testid="fuel-gl-mapping-coverage"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-gray-900">Fuel to GL mapping coverage</h3>
+        <h3 className="text-xs font-semibold text-gray-900">Fuel to GL mapping coverage</h3>
         <span className="text-[11px] font-semibold text-slate-600" data-testid="fuel-gl-mapping-summary">
           {mappedCount} of {coverage.length} categories mapped
         </span>

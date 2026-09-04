@@ -74,7 +74,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
           <input
             value={form.template_code}
             onChange={(event) => setForm((prev) => ({ ...prev, template_code: event.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             placeholder="employee_nda"
           />
         </label>
@@ -84,7 +84,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
           <input
             value={form.display_name_en}
             onChange={(event) => setForm((prev) => ({ ...prev, display_name_en: event.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
         </label>
 
@@ -93,7 +93,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
           <input
             value={form.display_name_es}
             onChange={(event) => setForm((prev) => ({ ...prev, display_name_es: event.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
         </label>
 
@@ -102,7 +102,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
           <input
             value={form.category}
             onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
         </label>
 
@@ -121,7 +121,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
             value={form.content_html_en}
             onChange={(event) => setForm((prev) => ({ ...prev, content_html_en: event.target.value }))}
             rows={5}
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
         </label>
 
@@ -131,7 +131,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
             value={form.content_html_es}
             onChange={(event) => setForm((prev) => ({ ...prev, content_html_es: event.target.value }))}
             rows={5}
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
         </label>
 

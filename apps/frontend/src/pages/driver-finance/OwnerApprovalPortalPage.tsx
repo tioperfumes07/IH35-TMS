@@ -89,17 +89,17 @@ export function OwnerApprovalPortalPage() {
       <div className="mx-auto max-w-4xl space-y-4">
         <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
           <h1 className="text-lg font-semibold">Owner approval — cash advance request</h1>
-          <p className="mt-1 text-sm text-slate-600">Documented decision required (minimum 30 characters).</p>
+          <p className="mt-1 text-xs text-slate-600">Documented decision required (minimum 30 characters).</p>
         </div>
 
-        {loading ? <p className="text-sm text-slate-600">Loading…</p> : null}
-        {error && !done ? <p className="text-sm text-red-600">Could not open this approval ({error}).</p> : null}
-        {done ? <p className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900">{done}</p> : null}
+        {loading ? <p className="text-xs text-slate-600">Loading…</p> : null}
+        {error && !done ? <p className="text-xs text-red-600">Could not open this approval ({error}).</p> : null}
+        {done ? <p className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-900">{done}</p> : null}
 
         {data && !done ? (
           <>
             <div className="grid gap-3 md:grid-cols-2">
-              <div className="rounded-sm border border-slate-200 bg-white p-4 text-sm">
+              <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs">
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Request</div>
                 <p className="mt-2 font-mono text-xs">{entityLabel(String(req?.display_id ?? ""), String(req?.id ?? ""), "Request")}</p>
                 <p className="mt-2">
@@ -113,7 +113,7 @@ export function OwnerApprovalPortalPage() {
                 </p>
                 <p className="mt-2 text-xs text-slate-600">Submitted: {String(req?.submitted_at ?? "").replace("T", " ").slice(0, 19)}</p>
               </div>
-              <div className="rounded-sm border border-slate-200 bg-white p-4 text-sm">
+              <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs">
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Policy</div>
                 <p className="mt-2">
                   Standard threshold: <strong>{money(data.policy.threshold_dollars)}</strong>
@@ -131,7 +131,7 @@ export function OwnerApprovalPortalPage() {
             </div>
 
             <div className="rounded-sm border border-slate-200 bg-white p-4">
-              <h2 className="text-sm font-semibold text-slate-900">12-month driver history</h2>
+              <h2 className="text-xs font-semibold text-slate-900">12-month driver history</h2>
               <div className="mt-3 grid gap-4 md:grid-cols-2">
                 <div>
                   <div className="text-xs font-semibold uppercase text-slate-500">Cash advances</div>
@@ -173,9 +173,9 @@ export function OwnerApprovalPortalPage() {
             </div>
 
             <div className="rounded-sm border border-slate-200 bg-white p-4">
-              <label className="block text-sm font-semibold text-slate-900">Owner notes (required, 30+ characters)</label>
+              <label className="block text-xs font-semibold text-slate-900">Owner notes (required, 30+ characters)</label>
               <textarea
-                className="mt-2 w-full rounded-sm border border-slate-200 p-2 text-sm"
+                className="mt-2 w-full rounded-sm border border-slate-200 p-2 text-xs"
                 rows={5}
                 value={ownerNotes}
                 onChange={(e) => setOwnerNotes(e.target.value)}

@@ -99,10 +99,10 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
       <div className="text-xs font-semibold uppercase tracking-wide text-slate-700">WHERE &amp; HOW — DRIVES THE ACCOUNTING AUTO-POST</div>
 
       <div className="flex gap-2">
-        <button type="button" className="rounded-sm border px-3 py-1 text-sm" onClick={addCategoryLine}>
+        <button type="button" className="rounded-sm border px-3 py-1 text-xs" onClick={addCategoryLine}>
           + Category line (Section A)
         </button>
-        <button type="button" className="rounded-sm border px-3 py-1 text-sm" onClick={addItemLine}>
+        <button type="button" className="rounded-sm border px-3 py-1 text-xs" onClick={addItemLine}>
           + Item line (Section B)
         </button>
       </div>

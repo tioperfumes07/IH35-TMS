@@ -93,11 +93,11 @@ export function PerTruckCpmReport() {
         className="rounded-sm border bg-white p-4"
       >
         <div className="flex flex-wrap items-end gap-3">
-          <label className="text-sm">
+          <label className="text-xs">
             From
             <DatePicker className="ml-2" value={staged.draft.from} onChange={(next) => staged.setDraft((p) => ({ ...p, from: next }))} />
           </label>
-          <label className="text-sm">
+          <label className="text-xs">
             To
             <DatePicker className="ml-2" value={staged.draft.to} onChange={(next) => staged.setDraft((p) => ({ ...p, to: next }))} />
           </label>

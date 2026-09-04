@@ -58,11 +58,11 @@ export function Step3SamsaraConnect({ companyId, value, disabled, onChange }: Pr
   return (
     <div className="space-y-3" data-testid="onboarding-step-samsara">
       <h2 className="text-base font-semibold text-gray-900">Connect Samsara</h2>
-      <p className="text-sm text-gray-600">
+      <p className="text-xs text-gray-600">
         Enter your Samsara API key to pull your initial fleet inventory and enable live telematics.
       </p>
 
-      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="flex items-center gap-2">
           <span className={`inline-block h-2 w-2 rounded-full ${configured ? "bg-emerald-500" : "bg-gray-400"}`} />
           <span className="font-medium text-gray-900">{configured ? "Configured" : "Not configured"}</span>
@@ -70,46 +70,46 @@ export function Step3SamsaraConnect({ companyId, value, disabled, onChange }: Pr
         <div className="mt-1 text-xs text-gray-600">Last health status: {healthStatus ?? "—"}</div>
       </div>
 
-      <label className="block text-sm">
+      <label className="block text-xs">
         <span className="font-medium text-gray-700">API key</span>
         <input
           type="password"
           autoComplete="off"
-          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
           value={apiToken}
           disabled={disabled}
           onChange={(e) => setApiToken(e.target.value)}
         />
       </label>
-      <label className="block text-sm">
+      <label className="block text-xs">
         <span className="font-medium text-gray-700">Webhook secret</span>
         <input
           type="password"
           autoComplete="off"
-          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
           value={webhookSecret}
           disabled={disabled}
           onChange={(e) => setWebhookSecret(e.target.value)}
         />
       </label>
-      <label className="block text-sm">
+      <label className="block text-xs">
         <span className="font-medium text-gray-700">Samsara org id</span>
         <input
           type="text"
-          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
           value={orgId}
           disabled={disabled}
           onChange={(e) => setOrgId(e.target.value)}
         />
       </label>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? <p className="text-xs text-red-600">{error}</p> : null}
 
       <button
         type="button"
         disabled={disabled || !companyId || !apiToken || !webhookSecret || testMutation.isPending}
         onClick={() => testMutation.mutate()}
-        className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+        className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
       >
         Test connection &amp; pull fleet
       </button>

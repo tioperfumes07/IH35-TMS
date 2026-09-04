@@ -57,7 +57,7 @@ export function ProfitabilityPage() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={[
-                  "whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium",
+                  "whitespace-nowrap border-b-2 px-1 py-3 text-xs font-medium",
                   isActive
                     ? "border-green-600 text-green-700"
                     : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",

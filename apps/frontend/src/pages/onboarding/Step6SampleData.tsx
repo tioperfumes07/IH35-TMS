@@ -27,12 +27,12 @@ export function Step6SampleData({ value, disabled, seeding, onSeed }: Props) {
   return (
     <div className="space-y-3" data-testid="onboarding-step-samples">
       <h2 className="text-base font-semibold text-gray-900">Seed sample data (optional)</h2>
-      <p className="text-sm text-gray-600">
+      <p className="text-xs text-gray-600">
         Add one sample customer, vendor, driver, truck, and load so you can explore every module with realistic data.
         Sample rows are flagged and can be removed later from admin tools.
       </p>
 
-      <label className="flex items-center gap-2 text-sm">
+      <label className="flex items-center gap-2 text-xs">
         <input
           type="checkbox"
           checked={optIn}
@@ -43,7 +43,7 @@ export function Step6SampleData({ value, disabled, seeding, onSeed }: Props) {
       </label>
 
       {value.seeded ? (
-        <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+        <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
           Sample data seeded{value.last_seeded_at ? ` at ${value.last_seeded_at}` : ""}.
           {value.summary ? (
             <ul className="mt-1 list-disc pl-5 text-xs">
@@ -61,7 +61,7 @@ export function Step6SampleData({ value, disabled, seeding, onSeed }: Props) {
         type="button"
         disabled={disabled || !optIn || seeding}
         onClick={onSeed}
-        className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+        className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
       >
         {seeding ? "Seeding…" : value.seeded ? "Re-seed sample data" : "Seed sample data"}
       </button>

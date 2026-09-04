@@ -43,7 +43,7 @@ export function DriverShell() {
     navigate("/driver/login", { replace: true });
   };
 
-  if (!ready) return <div className="p-4 text-sm text-gray-600">Loading…</div>;
+  if (!ready) return <div className="p-4 text-xs text-gray-600">Loading…</div>;
 
   const tabClass = (path: string) =>
     location.pathname.startsWith(path) ? "font-semibold text-slate-900" : "text-slate-600";
@@ -55,7 +55,7 @@ export function DriverShell() {
       <StatusSuggestionPrompt />
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white px-3 py-2">
         <div className="mx-auto flex max-w-lg items-center justify-between gap-2">
-          <span className="text-sm font-semibold">{t("driver.app_title")}</span>
+          <span className="text-xs font-semibold">{t("driver.app_title")}</span>
           <div className="flex items-center gap-2 text-xs">
             <PageHelpLink className="h-7 w-7 border-slate-300 text-slate-600 hover:bg-slate-100" />
             <button

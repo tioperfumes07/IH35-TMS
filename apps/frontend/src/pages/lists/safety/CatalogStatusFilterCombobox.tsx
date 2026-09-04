@@ -18,7 +18,7 @@ export function CatalogStatusFilterCombobox({
       value={value}
       onChange={(next) => onChange((next ?? "true") as StatusFilter)}
       ariaLabel="Status filter"
-      className={`${FILTER_CONTROL_SIZE_CLASS} w-full rounded-sm border border-gray-300 px-2 text-sm ${className}`.trim()}
+      className={`${FILTER_CONTROL_SIZE_CLASS} w-full rounded-sm border border-gray-300 px-2 text-xs ${className}`.trim()}
     />
   );
 }

@@ -22,7 +22,7 @@ export function ReportCategoryPage({ categoryId }: { categoryId: string }) {
         backHref="/reports/hub"
         breadcrumb={["Reports", category?.label ?? categoryId]}
       />
-      {catalogQuery.isPending ? <p className="text-sm text-slate-500">Loading report category…</p> : null}
+      {catalogQuery.isPending ? <p className="text-xs text-slate-500">Loading report category…</p> : null}
       {catalogQuery.isError ? (
         <ListErrorState
           title="Couldn't load report category"

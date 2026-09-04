@@ -22,7 +22,7 @@ export function CustomerFactoringReverseSection({ operatingCompanyId, customerId
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-reverse">
-      <h2 className="text-sm font-semibold text-slate-900">Factoring</h2>
+      <h2 className="text-xs font-semibold text-slate-900">Factoring</h2>
       {query.isError ? (
         <ListErrorState status={0} message="Factoring assignment unavailable." onRetry={() => void query.refetch()} />
       ) : null}

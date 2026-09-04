@@ -380,7 +380,7 @@ export function DrugAlcoholTab() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
-          <h2 className="text-sm font-semibold text-slate-900">Record drug / alcohol test</h2>
+          <h2 className="text-xs font-semibold text-slate-900">Record drug / alcohol test</h2>
           <div className="grid gap-2 md:grid-cols-2">
             <div className="text-xs text-slate-600">
               <label htmlFor="record-test-type">Type</label>
@@ -443,7 +443,7 @@ export function DrugAlcoholTab() {
         </div>
 
         <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
-          <h2 className="text-sm font-semibold text-slate-900">Return-to-duty workflow</h2>
+          <h2 className="text-xs font-semibold text-slate-900">Return-to-duty workflow</h2>
           {!rtdCase ? (
             <>
               <button
@@ -510,7 +510,7 @@ export function DrugAlcoholTab() {
       </div>
 
       <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Random pool enrollment (FMCSA consortium)</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Random pool enrollment (FMCSA consortium)</h2>
         <p className="text-xs text-slate-600">
           The random-testing pool is built from consortium enrollment (49 CFR 382.305). An empty pool
           means no drivers are enrolled — bulk-enroll every active CDL driver below so the quarterly
@@ -521,7 +521,7 @@ export function DrugAlcoholTab() {
             Consortium / C-TPA name
             <input
               type="text"
-              className="mt-1 block min-w-[240px] rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="mt-1 block min-w-[240px] rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={consortiumName}
               onChange={(e) => setConsortiumName(e.target.value)}
               placeholder="e.g. IH35 Random Testing Consortium"
@@ -555,7 +555,7 @@ export function DrugAlcoholTab() {
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-sm font-semibold text-slate-900">Drug test history</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Drug test history</h2>
         <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="drug-alcohol-history-filters">
           <div className="w-40 text-xs text-slate-600">
             <label htmlFor="drug-history-type">Type</label>
@@ -645,7 +645,7 @@ export function DrugAlcoholTab() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
-          <h3 className="text-sm font-semibold text-slate-900">Random pool roster</h3>
+          <h3 className="text-xs font-semibold text-slate-900">Random pool roster</h3>
           {poolQ.isError ? (
             <div data-testid="drug-alcohol-pool-query-error"><ListErrorState status={0} message={userFacingApiError(poolQ.error, "Could not load the random pool roster.")} onRetry={() => void poolQ.refetch()} /></div>
           ) : (
@@ -676,7 +676,7 @@ export function DrugAlcoholTab() {
           ) : null}
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
-          <h3 className="text-sm font-semibold text-slate-900">Clearinghouse queries</h3>
+          <h3 className="text-xs font-semibold text-slate-900">Clearinghouse queries</h3>
           {clearinghouseQ.isError ? (
             <div data-testid="drug-alcohol-clearinghouse-query-error"><ListErrorState status={0} message={userFacingApiError(clearinghouseQ.error, "Could not load clearinghouse queries.")} onRetry={() => void clearinghouseQ.refetch()} /></div>
           ) : (
@@ -737,7 +737,7 @@ export function DrugAlcoholTab() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
-          <h3 className="text-sm font-semibold text-slate-900">FMCSA test types (reference)</h3>
+          <h3 className="text-xs font-semibold text-slate-900">FMCSA test types (reference)</h3>
           <p className="mt-1 text-slate-500">
             Fixed by 49 CFR Part 40 / Part 382 — not an editable catalog.
           </p>
@@ -751,7 +751,7 @@ export function DrugAlcoholTab() {
           </ul>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
-          <h3 className="text-sm font-semibold text-slate-900">FMCSA results (reference)</h3>
+          <h3 className="text-xs font-semibold text-slate-900">FMCSA results (reference)</h3>
           <p className="mt-1 text-slate-500">
             Fixed by 49 CFR Part 40 — the Clearinghouse expects these verbatim.
           </p>

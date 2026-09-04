@@ -202,7 +202,7 @@ export function LegalSignPage() {
     return (
       <div className="mx-auto max-w-4xl p-4 md:p-6">
         <PageHeader breadcrumb={["Legal", "Sign"]} title="Sign contract" />
-        <p className="text-sm text-gray-500">Loading contract...</p>
+        <p className="text-xs text-gray-500">Loading contract...</p>
       </div>
     );
   }
@@ -211,7 +211,7 @@ export function LegalSignPage() {
     return (
       <div className="mx-auto max-w-3xl p-6">
         <PageHeader breadcrumb={["Legal", "Sign"]} title="Signature recorded" />
-        <p className="mt-2 text-sm text-gray-700">Your electronic signature was captured successfully. You may close this page.</p>
+        <p className="mt-2 text-xs text-gray-700">Your electronic signature was captured successfully. You may close this page.</p>
       </div>
     );
   }
@@ -220,7 +220,7 @@ export function LegalSignPage() {
     return (
       <div className="mx-auto max-w-2xl p-6">
         <PageHeader breadcrumb={["Legal", "Sign"]} title="Link unavailable" />
-        <p className="mt-2 text-sm text-gray-700">{error ?? "This signing link is invalid or expired."}</p>
+        <p className="mt-2 text-xs text-gray-700">{error ?? "This signing link is invalid or expired."}</p>
       </div>
     );
   }
@@ -240,12 +240,12 @@ export function LegalSignPage() {
       {!verificationPassed && (
         <div className="mt-4 rounded-sm border border-slate-200 bg-slate-50 p-4">
           <h2 className="text-lg font-semibold text-slate-800">Identity Verification</h2>
-          <p className="mt-1 text-sm text-slate-700">
+          <p className="mt-1 text-xs text-slate-700">
             A verification code is required before signing.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
-              className="rounded-sm bg-[#334155] px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="rounded-sm bg-[#334155] px-3 py-2 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
               type="button"
               disabled={isStartingVerify}
               onClick={startVerification}
@@ -253,13 +253,13 @@ export function LegalSignPage() {
               {isStartingVerify ? "Sending..." : "Send Code"}
             </button>
             <input
-              className="rounded-sm border border-gray-300 px-3 py-2 text-sm"
+              className="rounded-sm border border-gray-300 px-3 py-2 text-xs"
               value={code}
               onChange={(event) => setCode(event.target.value)}
               placeholder="Enter 6-digit code"
             />
             <button
-              className="rounded-sm bg-gray-900 px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="rounded-sm bg-gray-900 px-3 py-2 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400"
               type="button"
               disabled={isConfirmingVerify || code.trim().length !== 6}
               onClick={confirmVerification}
@@ -273,7 +273,7 @@ export function LegalSignPage() {
       <div className="mt-4 rounded-sm border border-gray-200 bg-white p-4 md:p-6">
         <h2 className="text-lg font-semibold text-gray-900">Sign electronically</h2>
         <div className="mt-3 grid gap-3">
-          <label className="text-sm text-gray-700">
+          <label className="text-xs text-gray-700">
             Legal name
             <input
               className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
@@ -282,7 +282,7 @@ export function LegalSignPage() {
               disabled={!verificationPassed}
             />
           </label>
-          <label className="text-sm text-gray-700">
+          <label className="text-xs text-gray-700">
             Type your signature
             <input
               className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
@@ -292,7 +292,7 @@ export function LegalSignPage() {
             />
           </label>
           <div>
-            <p className="text-sm text-gray-700">Draw signature</p>
+            <p className="text-xs text-gray-700">Draw signature</p>
             <canvas
               ref={canvasRef}
               width={680}
@@ -307,7 +307,7 @@ export function LegalSignPage() {
               Clear signature
             </button>
           </div>
-          <label className="flex items-start gap-2 text-sm text-gray-700">
+          <label className="flex items-start gap-2 text-xs text-gray-700">
             <input
               type="checkbox"
               checked={acceptedTerms}
@@ -318,11 +318,11 @@ export function LegalSignPage() {
           </label>
         </div>
 
-        {error && <p className="mt-3 text-sm text-red-700">{error}</p>}
+        {error && <p className="mt-3 text-xs text-red-700">{error}</p>}
 
         <button
           type="button"
-          className="mt-4 rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="mt-4 rounded-sm bg-[#1f2a44] px-4 py-2 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
           disabled={!verificationPassed || isSubmitting}
           onClick={submitSignature}
         >

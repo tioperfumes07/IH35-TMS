@@ -40,7 +40,7 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
   // FUEL-1: with no stops the bare baseline reads as a broken chart. Show an explicit empty-state.
   if (stopPoints.length === 0) {
     return (
-      <div className="flex min-h-[120px] items-center justify-center rounded-sm border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+      <div className="flex min-h-[120px] items-center justify-center rounded-sm border border-dashed border-gray-200 bg-white p-6 text-center text-xs text-gray-500">
         {stops.length > 0
           ? "Recommended stops need route-mile data before they can be plotted."
           : "No recommended fuel stops yet — the route diagram is generated from an active dispatch load."}
@@ -50,7 +50,7 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
 
   if (totalMiles == null || totalMiles <= 0) {
     return (
-      <div className="flex min-h-[120px] items-center justify-center rounded-sm border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+      <div className="flex min-h-[120px] items-center justify-center rounded-sm border border-dashed border-gray-200 bg-white p-6 text-center text-xs text-gray-500">
         Route distance is unavailable — recommended stops cannot be positioned yet.
       </div>
     );

@@ -24,7 +24,7 @@ export function PhotoEvidenceViewer({ open, onClose, imageUrl, sha256, exif }: P
           {imageUrl ? (
             <img src={imageUrl} alt="Damage evidence" className="max-h-[70vh] w-full object-contain" />
           ) : (
-            <div className="flex h-64 items-center justify-center rounded-sm border border-dashed border-slate-300 text-sm text-slate-500">
+            <div className="flex h-64 items-center justify-center rounded-sm border border-dashed border-slate-300 text-xs text-slate-500">
               No preview URL
             </div>
           )}

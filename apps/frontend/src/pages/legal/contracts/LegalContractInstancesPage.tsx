@@ -339,7 +339,7 @@ export function LegalContractInstancesPage() {
               <SelectCombobox
                 value={staged.draft.statusFilter}
                 onChange={(event) => staged.setDraft({ ...staged.draft, statusFilter: event.target.value as "all" | LegalContractStatus })}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               >
                 {STATUS_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -350,7 +350,7 @@ export function LegalContractInstancesPage() {
               <SelectCombobox
                 value={staged.draft.templateFilter}
                 onChange={(event) => staged.setDraft({ ...staged.draft, templateFilter: event.target.value })}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               >
                 <option value="">All templates</option>
                 {templateOptions.map((code) => (
@@ -362,7 +362,7 @@ export function LegalContractInstancesPage() {
               <SelectCombobox
                 value={staged.draft.signerTypeFilter}
                 onChange={(event) => staged.setDraft({ ...staged.draft, signerTypeFilter: event.target.value })}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               >
                 <option value="all">All signer types</option>
                 <option value="driver">Driver</option>
@@ -384,7 +384,7 @@ export function LegalContractInstancesPage() {
       {activeDetailId ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 flex items-center justify-between">
-            <div className="text-sm font-semibold text-gray-900">Instance Detail</div>
+            <div className="text-xs font-semibold text-gray-900">Instance Detail</div>
             <Button size="sm" variant="secondary" onClick={() => {
               const next = new URLSearchParams(searchParams);
               next.delete("contract_id");
@@ -402,9 +402,9 @@ export function LegalContractInstancesPage() {
               onRetry={() => void detailQuery.refetch()}
             />
           ) : !detailQuery.data ? (
-            <div className="text-sm text-gray-500">Loading contract detail...</div>
+            <div className="text-xs text-gray-500">Loading contract detail...</div>
           ) : (
-            <div className="space-y-3 text-sm">
+            <div className="space-y-3 text-xs">
               <div className="grid gap-2 md:grid-cols-2">
                 <div><span className="font-semibold">Signer:</span>{" "}{signerKind(detailQuery.data.signer_type) ? (
                   <EntityLink kind={signerKind(detailQuery.data.signer_type)!} id={detailQuery.data.signer_entity_id} label={detailQuery.data.signer_name} />

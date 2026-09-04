@@ -78,7 +78,7 @@ export function DriverSchedulerRequestDetailPage() {
         </Link>
       </div>
 
-      {query.isLoading ? <div className="text-sm text-gray-500">Loading…</div> : null}
+      {query.isLoading ? <div className="text-xs text-gray-500">Loading…</div> : null}
       {query.isError ? (
         <ListErrorState
           title="Couldn't load leave request"
@@ -87,7 +87,7 @@ export function DriverSchedulerRequestDetailPage() {
           onRetry={() => void query.refetch()}
         />
       ) : null}
-      {!query.isLoading && !query.isError && !req ? <div className="text-sm text-red-700">Request not found.</div> : null}
+      {!query.isLoading && !query.isError && !req ? <div className="text-xs text-red-700">Request not found.</div> : null}
 
       {req ? (
         <div className="grid gap-3 md:grid-cols-2">

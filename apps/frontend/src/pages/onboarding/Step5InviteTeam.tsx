@@ -37,25 +37,25 @@ export function Step5InviteTeam({ value, disabled, onChange }: Props) {
   return (
     <div className="space-y-3" data-testid="onboarding-step-team">
       <h2 className="text-base font-semibold text-gray-900">Invite your team</h2>
-      <p className="text-sm text-gray-600">
+      <p className="text-xs text-gray-600">
         Add teammates by email and assign a role. Invitations are emailed when you save this step.
       </p>
 
       <div className="flex flex-wrap items-end gap-2">
-        <label className="block flex-1 text-sm">
+        <label className="block flex-1 text-xs">
           <span className="font-medium text-gray-700">Email</span>
           <input
             type="email"
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={email}
             disabled={disabled}
             onChange={(e) => setEmail(e.target.value)}
           />
         </label>
-        <label className="block text-sm">
+        <label className="block text-xs">
           <span className="font-medium text-gray-700">Role</span>
           <select
-            className="mt-1 rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={role}
             disabled={disabled}
             onChange={(e) => setRole(e.target.value as TeamInvite["role"])}
@@ -71,7 +71,7 @@ export function Step5InviteTeam({ value, disabled, onChange }: Props) {
           type="button"
           disabled={disabled}
           onClick={addInvite}
-          className="rounded-sm border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 disabled:opacity-50"
+          className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 disabled:opacity-50"
         >
           Add
         </button>
@@ -79,7 +79,7 @@ export function Step5InviteTeam({ value, disabled, onChange }: Props) {
 
       <ul className="space-y-1">
         {invites.map((invite) => (
-          <li key={invite.email} className="flex items-center justify-between rounded-sm border border-gray-200 px-2 py-1 text-sm">
+          <li key={invite.email} className="flex items-center justify-between rounded-sm border border-gray-200 px-2 py-1 text-xs">
             <span>
               {invite.email} <span className="ml-2 text-xs text-gray-500">{invite.role}</span>
             </span>
@@ -94,7 +94,7 @@ export function Step5InviteTeam({ value, disabled, onChange }: Props) {
             )}
           </li>
         ))}
-        {invites.length === 0 ? <li className="text-sm text-gray-500">No invites queued yet.</li> : null}
+        {invites.length === 0 ? <li className="text-xs text-gray-500">No invites queued yet.</li> : null}
       </ul>
     </div>
   );

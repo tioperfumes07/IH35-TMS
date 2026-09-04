@@ -57,8 +57,8 @@ export function ArrivalPrompt() {
   return (
     <div className="fixed inset-0 z-60 flex items-end justify-center bg-black/35 p-3">
       <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-4 shadow-xl">
-        <p className="text-sm font-semibold text-slate-900">Arrival check</p>
-        <p className="mt-1 text-sm text-slate-700">
+        <p className="text-xs font-semibold text-slate-900">Arrival check</p>
+        <p className="mt-1 text-xs text-slate-700">
           You appear to be at <span className="font-semibold">{activePrompt.stop_name ?? "the stop"}</span>. Are you arrived?
         </p>
         <p className="mt-1 text-xs text-slate-500">

@@ -192,7 +192,7 @@ export function PlannerCalendarPage() {
     return (
       <div
         data-testid="dispatch-planner-need-company"
-        className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+        className="rounded-sm border bg-white p-4 text-xs text-slate-600"
       >
         Select an operating company to load the planner calendar.
       </div>
@@ -210,19 +210,19 @@ export function PlannerCalendarPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="rounded-sm border px-3 py-1.5 text-sm"
+              className="rounded-sm border px-3 py-1.5 text-xs"
               onClick={() => setWeekStart(addDaysIso(weekStart, -7))}
             >
               Previous week
             </button>
             <button
               type="button"
-              className="rounded-sm border px-3 py-1.5 text-sm"
+              className="rounded-sm border px-3 py-1.5 text-xs"
               onClick={() => setWeekStart(addDaysIso(weekStart, 7))}
             >
               Next week
             </button>
-            <label className="flex items-center gap-2 rounded-sm border px-3 py-1.5 text-sm">
+            <label className="flex items-center gap-2 rounded-sm border px-3 py-1.5 text-xs">
               <input
                 type="checkbox"
                 checked={showHosOverlay}
@@ -232,12 +232,12 @@ export function PlannerCalendarPage() {
             </label>
             <button
               type="button"
-              className="rounded-sm border px-3 py-1.5 text-sm"
+              className="rounded-sm border px-3 py-1.5 text-xs"
               onClick={openTemplates}
             >
               Load Templates
             </button>
-            <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-sm">
+            <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-xs">
               Dispatch Home
             </Link>
           </div>
@@ -255,10 +255,10 @@ export function PlannerCalendarPage() {
 
       <section className="overflow-x-auto rounded-sm border bg-white">
         {weekQ.isLoading ? (
-          <div className="p-6 text-center text-sm text-slate-500">Loading planner week…</div>
+          <div className="p-6 text-center text-xs text-slate-500">Loading planner week…</div>
         ) : weekQ.isError ? null : (
           <DndContext onDragEnd={handleDragEnd}>
-            <table className="min-w-full text-sm">
+            <table className="min-w-full text-xs">
               <thead className="border-b bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2">Driver / Unit</th>

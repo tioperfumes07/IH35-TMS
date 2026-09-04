@@ -210,14 +210,14 @@ export function UnifiedTimelinePlanner() {
     return (
       <div
         data-testid="dispatch-timeline-need-company"
-        className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+        className="rounded-sm border bg-white p-4 text-xs text-slate-600"
       >
         Select an operating company to load the unified timeline planner.
       </div>
     );
   }
 
-  if (timelineQuery.isLoading) return <div className="text-sm text-gray-500">Loading timeline…</div>;
+  if (timelineQuery.isLoading) return <div className="text-xs text-gray-500">Loading timeline…</div>;
   if (timelineQuery.isError) {
     return (
       <ListErrorBanner

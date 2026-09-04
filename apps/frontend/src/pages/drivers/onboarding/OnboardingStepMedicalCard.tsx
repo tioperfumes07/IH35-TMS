@@ -22,7 +22,7 @@ export function OnboardingStepMedicalCard({
 }: MedicalCardStepProps) {
   return (
     <div data-testid="onboarding-step-medical-card" className="space-y-4">
-      <div className="block text-sm">
+      <div className="block text-xs">
         <label htmlFor="onboarding-medical-card-expiry" className="mb-1 block font-medium text-slate-700">Medical card expiry</label>
         <DatePicker
           id="onboarding-medical-card-expiry"

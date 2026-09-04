@@ -92,7 +92,7 @@ describe("TasksChatPage — deep link outside the picker window (GO-0044)", () =
     expect(await screen.findByText("Renew IFTA permit")).toBeInTheDocument();
     expect(fetchTask).toHaveBeenCalledWith("old-task-1", "91e0bf0a-133f-4ce8-a734-2586cfa66d96", expect.anything());
     // Never the silent fallback label once the real task resolves.
-    expect(screen.queryByText("Task", { selector: ".text-sm.font-semibold" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Task", { selector: ".text-xs.font-semibold" })).not.toBeInTheDocument();
   });
 
   it("skips the fallback fetch entirely when the task IS already in the picker window", async () => {
@@ -106,7 +106,7 @@ describe("TasksChatPage — deep link outside the picker window (GO-0044)", () =
     // "In-window task" appears twice (the picker sidebar list AND the selected header) -- scope
     // to the header specifically.
     await screen.findAllByText("In-window task");
-    expect(document.querySelector(".text-sm.font-semibold.text-\\[\\#1f2a44\\]")).toHaveTextContent("In-window task");
+    expect(document.querySelector(".text-xs.font-semibold.text-\\[\\#1f2a44\\]")).toHaveTextContent("In-window task");
     expect(fetchTask).not.toHaveBeenCalled();
   });
 });

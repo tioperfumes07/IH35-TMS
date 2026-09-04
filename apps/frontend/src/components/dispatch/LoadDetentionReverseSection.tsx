@@ -49,21 +49,21 @@ export function LoadDetentionReverseSection({
       <div className="text-xs font-semibold text-gray-600">Detention on this load</div>
 
       <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="load-reverse-detention">
-        <h3 className="text-sm font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-slate-900">
           Detention Events
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
-        {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+        {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
         {query.isError ? (
           <ListErrorState status={0} message="Could not load detention events for this load." onRetry={() => void query.refetch()} />
         ) : null}
         {!query.isLoading && !query.isError && rows.length === 0 ? (
-          <p className="text-sm text-gray-500">No detention events recorded on this load.</p>
+          <p className="text-xs text-gray-500">No detention events recorded on this load.</p>
         ) : null}
         {!query.isError && rows.length > 0 ? (
           <ul className="space-y-2">
             {rows.map((event) => (
-              <li key={event.id} className="text-sm text-slate-700" data-testid={`load-detention-event-${event.id}`}>
+              <li key={event.id} className="text-xs text-slate-700" data-testid={`load-detention-event-${event.id}`}>
                 <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-[11px]">{formatDateUS(event.started_at)}</span>{" "}
                 <StatusBadge variant={event.status === "billed" ? "positive" : event.status === "accruing" ? "warn" : "neutral"}>
                   {STATUS_LABEL[event.status] ?? event.status}

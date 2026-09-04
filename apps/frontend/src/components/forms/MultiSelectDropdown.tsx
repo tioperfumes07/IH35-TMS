@@ -49,7 +49,7 @@ export function MultiSelectDropdown({ label, options, selected, onChange, allLab
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="mt-1 flex items-center gap-1 rounded-sm border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 hover:bg-gray-50"
+        className="mt-1 flex items-center gap-1 rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900 hover:bg-gray-50"
         aria-haspopup="listbox"
         aria-expanded={open}
       >
@@ -64,7 +64,7 @@ export function MultiSelectDropdown({ label, options, selected, onChange, allLab
           <button
             type="button"
             onClick={() => onChange([])}
-            className="flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-sm hover:bg-gray-100"
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-xs hover:bg-gray-100"
           >
             <input type="checkbox" readOnly checked={selected.length === 0} className="pointer-events-none" />
             {allLabel}
@@ -74,7 +74,7 @@ export function MultiSelectDropdown({ label, options, selected, onChange, allLab
               key={opt.value}
               type="button"
               onClick={() => toggle(opt.value)}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-sm hover:bg-gray-100"
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-xs hover:bg-gray-100"
             >
               <input type="checkbox" readOnly checked={selected.includes(opt.value)} className="pointer-events-none" />
               {opt.label}

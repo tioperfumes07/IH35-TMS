@@ -554,15 +554,15 @@ export function WorkOrderDetailPage() {
   }, [wo]);
 
   if (!id) {
-    return <div className="p-4 text-sm text-red-600">Missing work order id.</div>;
+    return <div className="p-4 text-xs text-red-600">Missing work order id.</div>;
   }
 
   if (!companyId) {
-    return <div className="p-4 text-sm text-slate-700">Select an operating company.</div>;
+    return <div className="p-4 text-xs text-slate-700">Select an operating company.</div>;
   }
 
   if (woQ.isLoading) {
-    return <div className="p-4 text-sm text-gray-500">Loading work order…</div>;
+    return <div className="p-4 text-xs text-gray-500">Loading work order…</div>;
   }
 
   if (woQ.isError) {
@@ -578,7 +578,7 @@ export function WorkOrderDetailPage() {
   }
 
   if (!wo) {
-    return <div className="p-4 text-sm text-slate-700">Work order not found or unavailable for this operating company.</div>;
+    return <div className="p-4 text-xs text-slate-700">Work order not found or unavailable for this operating company.</div>;
   }
 
   return (
@@ -595,7 +595,7 @@ export function WorkOrderDetailPage() {
 
       {invoiceCents != null ? (
         <div
-          className={`rounded-sm border px-3 py-2 text-sm ${invoiceMismatch ? "border-red-300 bg-red-50 text-red-900" : "border-gray-200 bg-white text-gray-800"}`}
+          className={`rounded-sm border px-3 py-2 text-xs ${invoiceMismatch ? "border-red-300 bg-red-50 text-red-900" : "border-gray-200 bg-white text-gray-800"}`}
         >
           Invoice {money.format(invoiceCents / 100)} vs Line items {money.format(linesCents / 100)} · Δ{" "}
           {money.format((deltaCents ?? 0) / 100)}
@@ -614,7 +614,7 @@ export function WorkOrderDetailPage() {
       ) : null}
 
       {oosDowntimeEstimate ? (
-        <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-950">
+        <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-950">
           <div className="font-semibold">OOS severe — downtime cost estimate</div>
           <p className="mt-1 text-xs">
             {oosDowntimeEstimate.daysOos.toFixed(1)} days OOS × {money.format(oosDowntimeEstimate.dailyLossCents / 100)}/day ={" "}
@@ -705,7 +705,7 @@ export function WorkOrderDetailPage() {
       {reasonModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true">
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-4 shadow-xl">
-            <h2 className="text-sm font-semibold text-slate-900">
+            <h2 className="text-xs font-semibold text-slate-900">
               {reasonModal.kind === "cancel" ? "Cancel work order" : "Void work order"}
             </h2>
             <p className="mt-1 text-xs text-slate-600">
@@ -740,7 +740,7 @@ export function WorkOrderDetailPage() {
                 </label>
                 <textarea
                   id="wo-cancel-notes"
-                  className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-sm"
+                  className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-xs"
                   rows={2}
                   value={cancelNotes}
                   onChange={(event) => setCancelNotes(event.target.value)}
@@ -754,7 +754,7 @@ export function WorkOrderDetailPage() {
                 </label>
                 <textarea
                   id="wo-reason"
-                  className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-sm"
+                  className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-xs"
                   rows={3}
                   value={reasonText}
                   onChange={(event) => setReasonText(event.target.value)}
@@ -813,7 +813,7 @@ export function WorkOrderDetailPage() {
             />
           ) : null}
           <div
-            className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700"
+            className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700"
             data-testid="wo-detail-linkage-section"
           >
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Linkage (forward)</div>
@@ -872,7 +872,7 @@ export function WorkOrderDetailPage() {
             ) : null}
           </div>
 
-          <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700">
+          <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Status</div>
@@ -906,7 +906,7 @@ export function WorkOrderDetailPage() {
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-4">
-            <div className="mb-2 text-sm font-semibold text-gray-900">Parts Picker + Labor Lines (P&S)</div>
+            <div className="mb-2 text-xs font-semibold text-gray-900">Parts Picker + Labor Lines (P&S)</div>
             <div className="mb-2 text-xs text-gray-600">
               Section A uses P&S Category, Section B uses P&S Item, and sub-rows map parts/labor.
             </div>
@@ -931,7 +931,7 @@ export function WorkOrderDetailPage() {
             className="overflow-hidden rounded-sm border border-slate-200 bg-white"
             data-testid="wo-detail-posting-preview-section"
           >
-            <div className="border-b border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-900">
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-900">
               Posting Preview
             </div>
             {previewQ.isLoading ? (
@@ -987,7 +987,7 @@ export function WorkOrderDetailPage() {
       </div>
 
       <details className="rounded-sm border border-gray-200 bg-white">
-        <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-gray-900">WO cost context (live)</summary>
+        <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-gray-900">WO cost context (live)</summary>
         <div className="border-t border-gray-100 px-3 py-2 text-xs text-gray-700">
           {costQ.isLoading ? <p>Loading…</p> : null}
           {costQ.isError ? (
@@ -1028,7 +1028,7 @@ export function WorkOrderDetailPage() {
       </details>
 
       <details className="rounded-sm border border-gray-200 bg-white">
-        <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-gray-900">Line items (raw)</summary>
+        <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-gray-900">Line items (raw)</summary>
         <pre className="max-h-64 overflow-auto border-t border-gray-100 p-2 text-[11px]">
           {JSON.stringify(wo.line_items ?? [], null, 2)}
         </pre>
@@ -1039,7 +1039,7 @@ export function WorkOrderDetailPage() {
         data-testid="wo-linked-financials"
       >
         <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-sm font-semibold text-slate-900">Linked Bills / Expenses</div>
+          <div className="text-xs font-semibold text-slate-900">Linked Bills / Expenses</div>
         </div>
         {linkedFinancialsQ.isLoading ? (
           <div className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">Loading linked bills &amp; expenses…</div>
@@ -1082,7 +1082,7 @@ export function WorkOrderDetailPage() {
       </section>
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
-        <h3 className="mb-2 text-sm font-semibold text-slate-900">Audit History</h3>
+        <h3 className="mb-2 text-xs font-semibold text-slate-900">Audit History</h3>
         <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="work_order" entityId={id ?? ""} />
       </section>
 

@@ -105,7 +105,7 @@ export function ComplianceSection({ compliance }: { compliance: Record<string, u
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h3 className="text-sm font-semibold text-gray-800">Compliance</h3>
+      <h3 className="text-xs font-semibold text-gray-800">Compliance</h3>
       <div className="mt-2 grid gap-2 text-xs md:grid-cols-2">
         <InsuranceRow label="US insurance" insurance={us} />
         <InsuranceRow label="MX insurance" insurance={mx} />

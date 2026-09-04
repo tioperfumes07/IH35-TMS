@@ -161,7 +161,7 @@ export function AuditLogViewer() {
       <div className="space-y-3 p-4">
         <SuperAdminNav />
         <PageHeader title="Audit log" subtitle="Universal read-only viewer" />
-        <p className="text-sm text-gray-600">Access restricted to Owner and SuperAdmin.</p>
+        <p className="text-xs text-gray-600">Access restricted to Owner and SuperAdmin.</p>
       </div>
     );
   }
@@ -184,7 +184,7 @@ export function AuditLogViewer() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Entity type
             <input
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs normal-case font-normal"
               value={entityType}
               onChange={(e) => setEntityType(e.target.value)}
               placeholder="e.g. driver"
@@ -193,7 +193,7 @@ export function AuditLogViewer() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Entity UUID
             <input
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs normal-case font-normal font-mono"
               value={entityUuid}
               onChange={(e) => setEntityUuid(e.target.value)}
               placeholder="uuid"
@@ -202,7 +202,7 @@ export function AuditLogViewer() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             User UUID
             <input
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs normal-case font-normal font-mono"
               value={userUuid}
               onChange={(e) => setUserUuid(e.target.value)}
               placeholder="uuid"
@@ -211,7 +211,7 @@ export function AuditLogViewer() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Action / event class
             <input
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs normal-case font-normal"
               value={action}
               onChange={(e) => setAction(e.target.value)}
               placeholder="e.g. invoice.created"
@@ -220,7 +220,7 @@ export function AuditLogViewer() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Severity
             <select
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs normal-case font-normal"
               value={severity}
               onChange={(e) => setSeverity(e.target.value)}
             >
@@ -251,7 +251,7 @@ export function AuditLogViewer() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Search
             <input
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs normal-case font-normal"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               placeholder="event class or payload"
@@ -312,7 +312,7 @@ export function AuditLogViewer() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center gap-3 text-sm text-gray-600">
+        <div className="flex items-center gap-3 text-xs text-gray-600">
           <Button
             variant="secondary"
             size="sm"

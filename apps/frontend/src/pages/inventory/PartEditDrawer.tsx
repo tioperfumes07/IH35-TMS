@@ -97,7 +97,7 @@ export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDr
         >
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium">Name *</label>
+              <label className="block text-xs font-medium">Name *</label>
               <input
                 required
                 className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
@@ -106,7 +106,7 @@ export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDr
               />
             </div>
             <div>
-              <label className="block text-sm font-medium">SKU</label>
+              <label className="block text-xs font-medium">SKU</label>
               <input
                 className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
                 value={formData.sku}
@@ -115,7 +115,7 @@ export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDr
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium" htmlFor="inv-part-edit-category">
+            <label className="block text-xs font-medium" htmlFor="inv-part-edit-category">
               Category *
             </label>
             <SelectCombobox
@@ -135,7 +135,7 @@ export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDr
             </SelectCombobox>
           </div>
           <div>
-            <label className="block text-sm font-medium">Preferred vendor</label>
+            <label className="block text-xs font-medium">Preferred vendor</label>
             <div className="mt-1" data-testid="inv-part-edit-vendor-picker">
               {/* CLS-SILENT-CAP: EntityPicker server-search — no 200-row listVendors page. */}
               <EntityPicker
@@ -153,7 +153,7 @@ export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDr
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium">On-hand qty</label>
+              <label className="block text-xs font-medium">On-hand qty</label>
               <input
                 type="number"
                 className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
@@ -162,7 +162,7 @@ export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDr
               />
             </div>
             <div>
-              <label className="block text-sm font-medium">Reorder point</label>
+              <label className="block text-xs font-medium">Reorder point</label>
               <input
                 type="number"
                 className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
@@ -171,7 +171,7 @@ export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDr
               />
             </div>
             <div>
-              <label className="block text-sm font-medium">Unit cost</label>
+              <label className="block text-xs font-medium">Unit cost</label>
               <MoneyInput
                 valueDollars={formData.unit_cost ? Number(formData.unit_cost) : null}
                 onChangeDollars={(d) => setFormData({ ...formData, unit_cost: d == null ? "" : String(d) })}
@@ -181,7 +181,7 @@ export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDr
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium">Location/Bin</label>
+            <label className="block text-xs font-medium">Location/Bin</label>
             <input
               className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
               value={formData.location}
@@ -189,7 +189,7 @@ export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDr
             />
           </div>
           <div>
-            <label className="block text-sm font-medium">Notes</label>
+            <label className="block text-xs font-medium">Notes</label>
             <textarea
               rows={3}
               className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"

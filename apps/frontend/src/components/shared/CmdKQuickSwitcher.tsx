@@ -143,7 +143,7 @@ export function CmdKQuickSwitcher() {
           <p className="mt-1 text-xs text-gray-500">Cmd+K / Ctrl+K anywhere · ↑↓ navigate · Enter open</p>
         </div>
         <div className="max-h-80 overflow-y-auto py-2">
-          {loading ? <p className="px-4 py-2 text-sm text-gray-500">Searching…</p> : null}
+          {loading ? <p className="px-4 py-2 text-xs text-gray-500">Searching…</p> : null}
           {!loading && query.trim().length < 2 && recent.length > 0 ? (
             <div className="px-4 pb-2">
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Recent</p>
@@ -162,7 +162,7 @@ export function CmdKQuickSwitcher() {
             </div>
           ) : null}
           {!loading && results.length === 0 && query.trim().length >= 2 ? (
-            <p className="px-4 py-2 text-sm text-gray-500">No matches</p>
+            <p className="px-4 py-2 text-xs text-gray-500">No matches</p>
           ) : null}
           {results.map((result, index) => (
             <SearchResultItem

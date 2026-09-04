@@ -127,7 +127,7 @@ export function BorderCrossingHistoryPage() {
         title="Border Crossing History"
         subtitle="Past wizard completions with eManifest re-download"
         actions={
-          <Link to="/dispatch/border-crossing" className="rounded-sm border px-3 py-1.5 text-sm">
+          <Link to="/dispatch/border-crossing" className="rounded-sm border px-3 py-1.5 text-xs">
             New crossing
           </Link>
         }
@@ -136,7 +136,7 @@ export function BorderCrossingHistoryPage() {
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         {loadError ? (
           <div
-            className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
             data-testid="border-crossing-history-error"
             role="alert"
           >
@@ -164,7 +164,7 @@ export function BorderCrossingHistoryPage() {
         />
         )}
 
-        <aside className="rounded-sm border bg-white p-4 text-sm">
+        <aside className="rounded-sm border bg-white p-4 text-xs">
           {!selected ? (
             <p className="text-gray-500">Select a row for detail.</p>
           ) : (

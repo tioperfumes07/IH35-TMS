@@ -6,11 +6,11 @@ type IdentityStepProps = {
 
 export function OnboardingStepIdentity({ value, onChange, disabled }: IdentityStepProps) {
   const field = (key: string, label: string, type = "text") => (
-    <label className="block text-sm">
+    <label className="block text-xs">
       <span className="mb-1 block font-medium text-slate-700">{label}</span>
       <input
         type={type}
-        className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm"
+        className="w-full rounded-sm border border-gray-300 px-3 py-2 text-xs"
         value={value[key] ?? ""}
         disabled={disabled}
         onChange={(e) => onChange({ [key]: e.target.value })}

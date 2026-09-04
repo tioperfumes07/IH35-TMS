@@ -49,15 +49,15 @@ export function IdvrDetailPage() {
   ];
 
   if (!id) {
-    return <div className="p-4 text-sm text-red-600">DVIR id required.</div>;
+    return <div className="p-4 text-xs text-red-600">DVIR id required.</div>;
   }
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs">Select an operating company.</div>;
   }
 
   if (detailQ.isLoading) {
-    return <div className="p-4 text-sm text-slate-500" data-testid="idvr-detail-loading">Loading DVIR…</div>;
+    return <div className="p-4 text-xs text-slate-500" data-testid="idvr-detail-loading">Loading DVIR…</div>;
   }
 
   if (detailQ.isError || !submission) {
@@ -66,7 +66,7 @@ export function IdvrDetailPage() {
         <button type="button" aria-label="Back" onClick={goBack} className="border-0 bg-transparent p-0 text-xs font-semibold text-[#1f2a44] underline">
           ← Back to Vehicle Inspections
         </button>
-        <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
           DVIR submission not found.
         </div>
       </div>
@@ -88,7 +88,7 @@ export function IdvrDetailPage() {
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-        <div className="text-sm font-semibold text-slate-800">DVIR detail</div>
+        <div className="text-xs font-semibold text-slate-800">DVIR detail</div>
         <div className="text-[11px] text-slate-500">Office view of a driver PWA vehicle inspection submission.</div>
       </div>
 
@@ -152,7 +152,7 @@ export function IdvrDetailPage() {
 
       {corrections.length > 0 ? (
         <section className="space-y-2" data-testid="idvr-corrections-history">
-          <h2 className="text-sm font-semibold text-slate-800">Corrections</h2>
+          <h2 className="text-xs font-semibold text-slate-800">Corrections</h2>
           {corrections.map((correction) => (
             <EntityLink
               key={String(correction.id)}

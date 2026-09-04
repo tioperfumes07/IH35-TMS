@@ -57,7 +57,7 @@ export function LegalAttorneyReviewPage() {
       <LegalModuleTabs />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="mb-2 text-sm font-semibold text-gray-900">Review Queue</div>
+        <div className="mb-2 text-xs font-semibold text-gray-900">Review Queue</div>
         {query.isError ? (
           <ListErrorState
             title="Couldn't load attorney review queue"

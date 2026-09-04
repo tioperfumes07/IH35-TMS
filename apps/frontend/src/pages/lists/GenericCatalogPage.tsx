@@ -107,7 +107,7 @@ export function GenericCatalogPage({ catalogName: catalogNameProp }: Props) {
     return (
       <div className="space-y-3">
         <ListsSubNav />
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-4 text-sm text-slate-700">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 p-4 text-xs text-slate-700">
           Unknown or unsupported catalog route
           {params.domain && params.catalogKey ? `: ${params.domain}/${params.catalogKey}` : "."}
         </div>
@@ -146,12 +146,12 @@ export function GenericCatalogPage({ catalogName: catalogNameProp }: Props) {
 
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
       {query.isLoading && rows.length === 0 ? (
-        <div className="rounded-sm border border-slate-200 bg-white p-4 text-sm text-slate-500">
+        <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs text-slate-500">
           Loading {definition.displayName.toLowerCase()}…
         </div>
       ) : null}
       {!query.isLoading && rows.length === 0 && !query.isError ? (
-        <div className="rounded-sm border border-slate-200 bg-white p-4 text-sm text-slate-500">
+        <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs text-slate-500">
           No {definition.displayName.toLowerCase()} rows yet.
         </div>
       ) : null}

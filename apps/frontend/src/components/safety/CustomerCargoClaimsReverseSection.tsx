@@ -23,23 +23,23 @@ export function CustomerCargoClaimsReverseSection({
   const incidents = query.isError ? [] : (query.data?.incidents ?? []);
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3">
-      <h3 className="text-sm font-semibold text-gray-800">Cargo claims</h3>
+      <h3 className="text-xs font-semibold text-gray-800">Cargo claims</h3>
       {query.isError ? (
         <ListErrorState status={0} message="Cargo claims could not be loaded." onRetry={() => void query.refetch()} />
       ) : null}
       {query.isLoading ? (
-        <p className="mt-2 text-sm text-gray-500">Loading cargo claims…</p>
+        <p className="mt-2 text-xs text-gray-500">Loading cargo claims…</p>
       ) : null}
       {!query.isLoading &&
       !query.isError &&
       incidents.length === 0 ? (
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-xs text-gray-500">
           No cargo claims are linked to this customer.
         </p>
       ) : null}
       <div className="mt-2 space-y-2">
         {incidents.map((row) => (
-          <div key={String(row.id)} className="text-sm">
+          <div key={String(row.id)} className="text-xs">
             <EntityLinkOrTombstone
               kind="cargo_claim"
               id={row.id == null ? null : String(row.id)}

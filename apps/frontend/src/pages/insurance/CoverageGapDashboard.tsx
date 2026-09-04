@@ -175,7 +175,7 @@ export function CoverageGapDashboard() {
   }, [catalogCodes, typeNameByCode, requiredTypes]);
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view coverage gap dashboard.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">Select an operating company to view coverage gap dashboard.</div>;
   }
 
   const failedQuery = coverageGapsQuery.isError ? coverageGapsQuery : policiesQuery.isError ? policiesQuery : typesQuery.isError ? typesQuery : null;
@@ -198,7 +198,7 @@ export function CoverageGapDashboard() {
   return (
     <div className="space-y-4">
       <header className="rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Tractor Coverage Gap Dashboard</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Tractor Coverage Gap Dashboard</h2>
         <p className="mt-1 text-xs text-slate-600">
           Scoped to tractors (fleet units with a Samsara-tracked unit record) — trailers are tracked
           separately on Fleet Covered. One column per coverage type from the catalog. Gap count{" "}
@@ -233,7 +233,7 @@ export function CoverageGapDashboard() {
       </header>
 
       {coverageGapsQuery.isLoading || policiesQuery.isLoading || typesQuery.isLoading ? (
-        <div className="text-sm text-slate-500">Loading coverage gap dashboard...</div>
+        <div className="text-xs text-slate-500">Loading coverage gap dashboard...</div>
       ) : null}
 
       <section className="grid gap-3 md:grid-cols-3">
@@ -252,7 +252,7 @@ export function CoverageGapDashboard() {
       </section>
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-sm font-semibold text-slate-900">Coverage by type</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Coverage by type</h3>
         <div className="mt-2 flex flex-wrap gap-2">
           {catalogCodes.map((code) => (
             <label key={code} className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">

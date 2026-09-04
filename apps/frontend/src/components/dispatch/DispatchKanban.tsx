@@ -851,14 +851,14 @@ function KanbanDispatchColumn({
       <button
         type="button"
         onClick={() => onColumnHeaderClick(column.statuses)}
-        className="text-left text-sm font-semibold text-gray-700 hover:text-slate-900 hover:underline"
+        className="text-left text-xs font-semibold text-gray-700 hover:text-slate-900 hover:underline"
         data-testid={`kanban-column-header-link-${column.key}`}
         title={`View ${column.title} loads in the list`}
       >
         {column.title}
       </button>
     ) : (
-      <h3 className="text-sm font-semibold text-gray-700">{column.title}</h3>
+      <h3 className="text-xs font-semibold text-gray-700">{column.title}</h3>
     );
 
   if (column.collapsedByDefault) {
@@ -1112,7 +1112,7 @@ export function DispatchKanban({
   }
 
   if (loading) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading dispatch board...</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">Loading dispatch board...</div>;
   }
 
   return (

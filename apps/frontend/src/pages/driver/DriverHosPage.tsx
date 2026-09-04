@@ -7,7 +7,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 export function DriverHosPage() {
   const { t } = useTranslation();
   const q = useQuery({ queryKey: ["driver", "hos"], queryFn: getDriverHos });
-  if (q.isLoading) return <p className="text-sm text-gray-600">…</p>;
+  if (q.isLoading) return <p className="text-xs text-gray-600">…</p>;
   if (q.isError) {
     return (
       <ListErrorState
@@ -18,7 +18,7 @@ export function DriverHosPage() {
       />
     );
   }
-  if (!q.data) return <p className="text-sm text-gray-600">No HOS snapshot is available.</p>;
+  if (!q.data) return <p className="text-xs text-gray-600">No HOS snapshot is available.</p>;
   const snap = q.data;
   return (
     <div className="space-y-2">

@@ -544,7 +544,7 @@ export function DispatchPage({
       ) : subTab === "book_load" ? (
         <DataPanel title="Book load">
           <DataPanelRow>
-            <span className="text-sm text-gray-700">Use the Book Load flow to create a new dispatch load.</span>
+            <span className="text-xs text-gray-700">Use the Book Load flow to create a new dispatch load.</span>
             <button className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700" onClick={() => openBookLoadModal()} type="button">
               + Book Load
             </button>
@@ -559,7 +559,7 @@ export function DispatchPage({
         !defaultCompanyIds[0] ? (
           <div
             data-testid="dispatch-pre-settlements-need-company"
-            className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+            className="rounded-sm border bg-white p-4 text-xs text-slate-600"
           >
             Select an operating company to load pre-settlements for that entity.
           </div>
@@ -583,7 +583,7 @@ export function DispatchPage({
       ) : !defaultCompanyIds[0] ? (
         <div
           data-testid="dispatch-settlements-need-company"
-          className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+          className="rounded-sm border bg-white p-4 text-xs text-slate-600"
         >
           Select an operating company — settlement runs are entity-scoped in Driver Finance.
         </div>
@@ -593,7 +593,7 @@ export function DispatchPage({
           <DataPanel title="Settlements">
             <DataPanelRow>
               <span
-                className="text-sm text-gray-700"
+                className="text-xs text-gray-700"
                 data-testid="dispatch-settlements-honest-empty"
               >
                 No settlement list on this Dispatch tab — runs, acknowledgements, and payouts live in Driver

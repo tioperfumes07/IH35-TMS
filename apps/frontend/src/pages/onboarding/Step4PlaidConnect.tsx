@@ -31,11 +31,11 @@ export function Step4PlaidConnect({ companyId, value, disabled, onChange }: Prop
   return (
     <div className="space-y-3" data-testid="onboarding-step-plaid">
       <h2 className="text-base font-semibold text-gray-900">Connect your bank (Plaid)</h2>
-      <p className="text-sm text-gray-600">
+      <p className="text-xs text-gray-600">
         Link at least one bank account so transactions flow into banking, reconciliation, and cash-flow reports.
       </p>
 
-      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="flex items-center gap-2">
           <span className={`inline-block h-2 w-2 rounded-full ${linkedCount > 0 ? "bg-emerald-500" : "bg-gray-400"}`} />
           <span className="font-medium text-gray-900">

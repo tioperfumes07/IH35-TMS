@@ -120,7 +120,7 @@ export function DocumentsPage() {
   }, [files, categoryFilter, entityTypeFilter, uploaderFilter, search, dateFrom, dateTo, expiringDays]);
 
   if (!isOwnerOrAdmin) {
-    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Only Owner/Administrator can access company-wide documents.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">Only Owner/Administrator can access company-wide documents.</div>;
   }
 
   return (
@@ -219,7 +219,7 @@ export function DocumentsPage() {
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search filename"
             aria-label="Search filename"
-            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
         </div>
         {isOwner ? (

@@ -92,11 +92,11 @@ export function EdiSetupWizard() {
     <div data-testid="edi-setup-wizard">
       <PageHeader title="EDI Partner Setup" subtitle="Configure broker EDI exchange (204/214/210/990)" />
       <div className="max-w-2xl space-y-4 p-4">
-        <p className="text-sm text-gray-600">Step {step} of 3</p>
+        <p className="text-xs text-gray-600">Step {step} of 3</p>
 
         {step === 1 && (
           <div className="space-y-3">
-            <label className="block text-sm font-medium">Partner name</label>
+            <label className="block text-xs font-medium">Partner name</label>
             <input
               className="w-full rounded-sm border px-3 py-2"
               value={partnerName}
@@ -116,10 +116,10 @@ export function EdiSetupWizard() {
 
         {step === 2 && (
           <div className="space-y-3">
-            <label className="block text-sm font-medium">ISA / GS IDs</label>
+            <label className="block text-xs font-medium">ISA / GS IDs</label>
             <input className="w-full rounded-sm border px-3 py-2" value={isaId} onChange={(e) => setIsaId(e.target.value)} placeholder="ISA ID" />
             <input className="w-full rounded-sm border px-3 py-2" value={gsId} onChange={(e) => setGsId(e.target.value)} placeholder="GS ID" />
-            <label className="block text-sm font-medium">Connection type</label>
+            <label className="block text-xs font-medium">Connection type</label>
             <select
               className="w-full rounded-sm border px-3 py-2"
               value={connectionType}
@@ -154,7 +154,7 @@ export function EdiSetupWizard() {
 
         {step === 3 && (
           <div className="space-y-3">
-            <p className="text-sm text-green-700">Partner configured.</p>
+            <p className="text-xs text-green-700">Partner configured.</p>
             <button type="button" className="rounded-sm border px-4 py-2" onClick={() => setStep(1)}>
               Add another partner
             </button>
@@ -162,7 +162,7 @@ export function EdiSetupWizard() {
         )}
 
         <section aria-labelledby="configured-edi-partners" className="space-y-2 pt-4">
-          <h2 id="configured-edi-partners" className="text-sm font-semibold">Configured partners</h2>
+          <h2 id="configured-edi-partners" className="text-xs font-semibold">Configured partners</h2>
           {partnersQuery.isError ? (
             <ListErrorState
               title="Couldn't load configured partners"
@@ -171,11 +171,11 @@ export function EdiSetupWizard() {
               onRetry={() => void partnersQuery.refetch()}
             />
           ) : (partnersQuery.data ?? []).length === 0 ? (
-            <p className="text-sm text-gray-600">No EDI partners configured.</p>
+            <p className="text-xs text-gray-600">No EDI partners configured.</p>
           ) : (
             <ul className="divide-y rounded-sm border">
               {(partnersQuery.data ?? []).map((partner) => (
-                <li key={partner.uuid} className="flex items-center justify-between px-3 py-2 text-sm">
+                <li key={partner.uuid} className="flex items-center justify-between px-3 py-2 text-xs">
                   <span>{partner.partner_name} · {partner.connection_type.toUpperCase()}</span>
                   <button type="button" className="text-slate-700 underline" onClick={() => testMutation.mutate(partner.uuid)}>
                     Validate configuration

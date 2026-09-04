@@ -135,7 +135,7 @@ export function ComplianceTable({
         rowTestId={(row) => `compliance-credential-${row.credential_id}`}
         filterBar={
           <div className="flex flex-wrap items-center gap-3">
-            <label className="text-sm">
+            <label className="text-xs">
               Type{" "}
               <select className="ml-1 rounded-sm border px-2 py-1" value={typeFilter} onChange={(e) => onTypeFilter(e.target.value)}>
                 <option value="">All</option>
@@ -146,7 +146,7 @@ export function ComplianceTable({
                 ))}
               </select>
             </label>
-            <label className="text-sm">
+            <label className="text-xs">
               Owner{" "}
               <select
                 className="ml-1 rounded-sm border px-2 py-1"
@@ -161,7 +161,7 @@ export function ComplianceTable({
                 ))}
               </select>
             </label>
-            <button type="button" className="rounded-sm bg-slate-800 px-3 py-1 text-sm text-white" onClick={onExportCsv}>
+            <button type="button" className="rounded-sm bg-slate-800 px-3 py-1 text-xs text-white" onClick={onExportCsv}>
               Export CSV
             </button>
           </div>

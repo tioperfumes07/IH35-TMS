@@ -116,7 +116,7 @@ export function DrugAlcoholDashboard() {
   return (
     <section className="space-y-3" data-testid="drug-alcohol-dashboard">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-slate-900">FMCSA annual rate compliance ({year})</h2>
+        <h2 className="text-xs font-semibold text-slate-900">FMCSA annual rate compliance ({year})</h2>
         <button
           type="button"
           disabled={drawMutation.isPending}

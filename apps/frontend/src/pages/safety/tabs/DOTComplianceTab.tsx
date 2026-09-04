@@ -171,7 +171,7 @@ export function DOTComplianceTab() {
       <div className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900">Compliance Reminders Panel</h2>
+            <h2 className="text-xs font-semibold text-slate-900">Compliance Reminders Panel</h2>
             <p className="mt-1 text-xs text-slate-600">Open reminders generated from DQF, medical cards, and related compliance records.</p>
           </div>
           <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Open {orderedReminders.length}</span>
@@ -207,7 +207,7 @@ export function DOTComplianceTab() {
         {DOT_REFERENCE_CARDS.map((card) => (
           <article key={card.cfr} className="rounded-sm border border-gray-200 bg-white p-4">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="text-sm font-semibold text-slate-900">{card.title}</h3>
+              <h3 className="text-xs font-semibold text-slate-900">{card.title}</h3>
               <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">{card.cfr}</span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-slate-700">{card.summary}</p>

@@ -162,7 +162,7 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
       <div className="mt-3">
         {!driverId ? (
           <div className="rounded-sm border border-slate-200 bg-white px-4 py-12 text-center">
-            <div className="text-sm font-semibold text-slate-700">HOS History</div>
+            <div className="text-xs font-semibold text-slate-700">HOS History</div>
             <div className="mt-1 text-xs text-slate-500">Pick a driver above to view their duty-status event history.</div>
           </div>
         ) : (

@@ -75,7 +75,7 @@ export function ReturnToDuty() {
   return (
     <div className="space-y-4">
       <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
-        <h3 className="text-sm font-semibold text-slate-900">Open return-to-duty processes</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Open return-to-duty processes</h3>
         {rtdQ.isError ? (
           <div data-testid="rtd-processes-query-error"><ListErrorState status={0} message={userFacingApiError(rtdQ.error, "Could not load return-to-duty processes.")} onRetry={() => void rtdQ.refetch()} /></div>
         ) : (
@@ -99,7 +99,7 @@ export function ReturnToDuty() {
       </div>
 
       <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs">
-        <h3 className="text-sm font-semibold text-slate-700">FMCSA Clearinghouse — pending positive reports</h3>
+        <h3 className="text-xs font-semibold text-slate-700">FMCSA Clearinghouse — pending positive reports</h3>
         {resultsQ.isError ? (
           <div data-testid="rtd-results-query-error"><ListErrorState status={0} message={userFacingApiError(resultsQ.error, "Could not load drug/alcohol results.")} onRetry={() => void resultsQ.refetch()} /></div>
         ) : (

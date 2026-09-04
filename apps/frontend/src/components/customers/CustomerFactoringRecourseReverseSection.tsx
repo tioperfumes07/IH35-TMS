@@ -31,7 +31,7 @@ export function CustomerFactoringRecourseReverseSection({ operatingCompanyId, cu
   if (isLoading || isError || (recourseInvoices.length === 0 && chargebacks.length === 0)) {
     return (
       <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-recourse-reverse">
-        <h2 className="text-sm font-semibold text-slate-900">Recourse & chargebacks</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Recourse & chargebacks</h2>
         {isError ? (
           <ListErrorState
             status={0}
@@ -51,7 +51,7 @@ export function CustomerFactoringRecourseReverseSection({ operatingCompanyId, cu
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-recourse-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-slate-900">Recourse & chargebacks</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Recourse & chargebacks</h2>
         <EntityLink
           kind="factoring_recourse_customer"
           id={customerId}

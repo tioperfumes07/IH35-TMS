@@ -10,7 +10,7 @@ export function TypeSpecsSection({ specs }: { specs: Record<string, unknown> }) 
   ];
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-gray-800">Type &amp; specs</h2>
+      <h2 className="text-xs font-semibold text-gray-800">Type &amp; specs</h2>
       <dl className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
         {fields.map(([label, value]) => (
           <div key={String(label)}>

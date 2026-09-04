@@ -134,7 +134,7 @@ export function TasksReportPage() {
       <div className="space-y-4 p-4">
         <PageHeader title="Admin Report" subtitle="Task throughput and team productivity" />
         <TasksModuleTabs />
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
           Select an operating company to view the task report.
         </div>
       </div>
@@ -164,7 +164,7 @@ export function TasksReportPage() {
       </div>
 
       <div className="space-y-2">
-        <div className="text-sm font-semibold text-slate-900">By assignee</div>
+        <div className="text-xs font-semibold text-slate-900">By assignee</div>
         <ParityTable
           rows={byAssignee}
           columns={assigneeColumns}

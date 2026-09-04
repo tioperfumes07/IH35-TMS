@@ -49,7 +49,7 @@ export function DriverAssignmentSection({
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-gray-800">Driver assignment</h3>
+        <h3 className="text-xs font-semibold text-gray-800">Driver assignment</h3>
         {onQuickAssign ? (
           <Button size="sm" onClick={onQuickAssign} data-testid="quick-assign-truck">
             Quick assign
@@ -60,7 +60,7 @@ export function DriverAssignmentSection({
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         <div className="rounded-sm border border-gray-100 p-3">
           <div className="text-xs font-semibold text-gray-500">Default driver</div>
-          <div className="text-sm font-medium">
+          <div className="text-xs font-medium">
             {defaultDriver?.id ? (
               <EntityLinkOrTombstone kind="driver" id={String(defaultDriver.id)} name={defaultDriver.name} noun="Driver" className={DRIVER_LINK}
                 data-testid="vehicle-profile-default-driver-link" />
@@ -94,7 +94,7 @@ export function DriverAssignmentSection({
         </div>
         <div className="rounded-sm border border-gray-100 p-3">
           <div className="text-xs font-semibold text-gray-500">Currently driving</div>
-          <div className="text-sm font-medium">
+          <div className="text-xs font-medium">
             {currentDriver?.id ? (
               <EntityLinkOrTombstone kind="driver" id={String(currentDriver.id)} name={currentDriver.name} noun="Driver" className={DRIVER_LINK}
                 data-testid="vehicle-profile-current-driver-link" />

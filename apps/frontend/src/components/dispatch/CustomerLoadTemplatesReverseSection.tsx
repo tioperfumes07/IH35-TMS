@@ -15,7 +15,7 @@ export function CustomerLoadTemplatesReverseSection({ operatingCompanyId, custom
   const preview = templates.slice(0, 5);
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-load-templates-reverse">
-      <h2 className="text-sm font-semibold text-slate-900">Load templates</h2>
+      <h2 className="text-xs font-semibold text-slate-900">Load templates</h2>
       {query.isError ? <ListErrorState status={0} message="Load templates unavailable." onRetry={() => void query.refetch()} /> : null}
       {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && templates.length === 0 ? <p className="mt-2 text-xs text-gray-500">No load templates for this customer.</p> : null}

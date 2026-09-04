@@ -20,7 +20,7 @@ export function HOSStatusSection({ hos, unavailable = false }: { hos: Record<str
   if (!hos) {
     return (
       <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="mb-2 text-sm font-semibold text-slate-900">HOS status</h2>
+        <h2 className="mb-2 text-xs font-semibold text-slate-900">HOS status</h2>
         <p className={`text-xs ${unavailable ? "text-red-700" : "text-slate-500"}`}>
           {unavailable ? "ELD / HOS data could not be loaded." : "ELD / HOS data not available for this driver."}
         </p>
@@ -38,7 +38,7 @@ export function HOSStatusSection({ hos, unavailable = false }: { hos: Record<str
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-900">
+      <h2 className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-900">
         HOS status
         {eld ? (
           <span className="rounded-sm bg-emerald-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.3px] text-emerald-700">

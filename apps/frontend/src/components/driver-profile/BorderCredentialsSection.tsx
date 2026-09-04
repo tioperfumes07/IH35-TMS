@@ -168,7 +168,7 @@ export function BorderCredentialsSection({
     <>
       <section className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-800">Border ops credentials</h2>
+          <h2 className="text-xs font-semibold text-gray-800">Border ops credentials</h2>
           <button
             type="button"
             className="text-xs text-slate-700 underline disabled:cursor-not-allowed disabled:text-gray-400"
@@ -183,7 +183,7 @@ export function BorderCredentialsSection({
           {cards.map(([title, primary, exp]) => (
             <div key={title} className="rounded-sm border border-gray-100 p-3">
               <div className="text-[11px] uppercase text-gray-500">{title}</div>
-              <div className="text-sm font-medium text-gray-900">{fmt(primary)}</div>
+              <div className="text-xs font-medium text-gray-900">{fmt(primary)}</div>
               {exp ? <div className={`text-xs ${expClass(String(exp))}`}>Exp {String(exp)}</div> : null}
             </div>
           ))}
@@ -191,10 +191,10 @@ export function BorderCredentialsSection({
       </section>
 
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit border credentials">
-        <div className="space-y-4 text-sm">
+        <div className="space-y-4 text-xs">
           <FieldGroup label="FAST card number">
             <input
-              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               data-testid="border-creds-fast-number"
               value={form.fastCardNumber}
               onChange={(e) => setForm((prev) => ({ ...prev, fastCardNumber: e.target.value }))}
@@ -229,7 +229,7 @@ export function BorderCredentialsSection({
 
           <FieldGroup label="TWIC number">
             <input
-              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               data-testid="border-creds-twic-number"
               value={form.twicNumber}
               onChange={(e) => setForm((prev) => ({ ...prev, twicNumber: e.target.value }))}
@@ -245,7 +245,7 @@ export function BorderCredentialsSection({
 
           <FieldGroup label="Mexican license number">
             <input
-              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               data-testid="border-creds-mx-number"
               value={form.mexicanLicenseNumber}
               onChange={(e) => setForm((prev) => ({ ...prev, mexicanLicenseNumber: e.target.value }))}

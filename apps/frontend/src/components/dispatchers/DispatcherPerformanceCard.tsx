@@ -38,7 +38,7 @@ export function DispatcherPerformanceCard({ dispatcherId, operatingCompanyId }: 
 
   return (
     <div className="bg-white border rounded-lg p-4">
-      <h3 className="text-sm font-medium text-gray-700 mb-3">Booking Gap (Last 30 Days)</h3>
+      <h3 className="text-xs font-medium text-gray-700 mb-3">Booking Gap (Last 30 Days)</h3>
       <div className="grid grid-cols-3 gap-3">
         <div className="text-center">
           <div className="text-2xl font-bold text-gray-900">

@@ -31,7 +31,7 @@ export function InternalFineDetailDrawer({ open, fine, onClose }: Props) {
 
   return (
     <ParityDrawer open onClose={onClose} title="Internal Fine Detail" subtitle={displayId}>
-      <div className="space-y-2 text-sm" data-testid="internal-fine-detail-drawer">
+      <div className="space-y-2 text-xs" data-testid="internal-fine-detail-drawer">
         <div><strong>Fine #:</strong> {displayId}</div>
         <div><strong>Date:</strong> {formatDateUS(fine.imposed_date)}</div>
         <div>

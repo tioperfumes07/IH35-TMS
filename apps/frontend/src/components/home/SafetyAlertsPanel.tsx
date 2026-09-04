@@ -60,11 +60,11 @@ export function SafetyAlertsPanel({ alerts, loading, certDataStale, isError }: P
           // GO-0027-HOME-F: an absent payload from a FAILED fetch must never render as "looks
           // clear" — that is a false all-clear on a safety/compliance panel, the most dangerous
           // form of this bug class. Matches SafetyKpiBar's own "C8 HONEST UI" contract next to it.
-          <p className="text-sm font-medium text-red-700" role="alert">
+          <p className="text-xs font-medium text-red-700" role="alert">
             Unable to load safety alerts. This does NOT mean compliance is clear — retry or check back.
           </p>
         ) : alerts.length === 0 ? (
-          <p className="text-sm text-slate-500">No safety alerts right now — fleet compliance looks clear.</p>
+          <p className="text-xs text-slate-500">No safety alerts right now — fleet compliance looks clear.</p>
         ) : (
           alerts.map((alert) => (
             <article
@@ -73,7 +73,7 @@ export function SafetyAlertsPanel({ alerts, loading, certDataStale, isError }: P
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="text-sm font-semibold">{alert.title}</h3>
+                  <h3 className="text-xs font-semibold">{alert.title}</h3>
                   <p className="mt-0.5 text-xs opacity-90">{alert.body}</p>
                 </div>
                 <span className="shrink-0 rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-bold uppercase">

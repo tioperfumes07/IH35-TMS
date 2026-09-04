@@ -123,12 +123,12 @@ export function LegalTemplatesListPage() {
                 onChange={(event) => staged.setDraft({ ...staged.draft, category: event.target.value })}
                 placeholder="Category"
                 aria-label="Filter by category"
-                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               />
               <SelectCombobox
                 value={staged.draft.status}
                 onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as (typeof STATUS_OPTIONS)[number] | "all" })}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               >
                 <option value="all">All statuses</option>
                 {STATUS_OPTIONS.map((item) => (

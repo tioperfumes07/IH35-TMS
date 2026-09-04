@@ -90,7 +90,7 @@ export function AttentionItemCard({ item, rank, onAction, onDismiss, dismissing 
       {/* Content */}
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-semibold text-slate-900">{item.title}</span>
+          <span className="text-xs font-semibold text-slate-900">{item.title}</span>
           <span
             className="rounded-full px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide"
             style={{ backgroundColor: cfg.badge, color: cfg.badgeFg }}

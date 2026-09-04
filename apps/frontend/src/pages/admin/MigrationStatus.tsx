@@ -56,7 +56,7 @@ export function MigrationStatusPage() {
     return (
       <div className="space-y-3">
         <PageHeader title="Migration status" subtitle="Compare applied migrations with repo SQL files" />
-        <p className="text-sm text-gray-600">Owner access is required.</p>
+        <p className="text-xs text-gray-600">Owner access is required.</p>
       </div>
     );
   }
@@ -71,13 +71,13 @@ export function MigrationStatusPage() {
         subtitle="Expected migrations from db/migrations (+ backend migrations), compared with database ledger"
       />
 
-      {query.isLoading ? <p className="text-sm text-gray-600">Loading migration health…</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-600">Loading migration health…</p> : null}
       {query.isError ? (
-        <p className="text-sm text-red-700">Failed to load migration health ({String((query.error as Error)?.message ?? query.error)}).</p>
+        <p className="text-xs text-red-700">Failed to load migration health ({String((query.error as Error)?.message ?? query.error)}).</p>
       ) : null}
 
       {query.data ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-800">
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-800">
           <div className="flex flex-wrap items-center gap-3">
             <span
               className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${

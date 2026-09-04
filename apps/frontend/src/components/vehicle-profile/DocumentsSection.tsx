@@ -74,7 +74,7 @@ export function DocumentsSection({
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-800">Documents</h2>
+        <h2 className="text-xs font-semibold text-gray-800">Documents</h2>
         {/* DOCS-FIX: this used to be a static <a href="/docs?entity_id=..."> deep link, but
             DocsHomePage never reads entity_id from the query string (only entity TYPE), so the
             link landed on the unfiltered company-wide library with no way to upload scoped to

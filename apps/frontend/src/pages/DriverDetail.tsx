@@ -769,13 +769,13 @@ export function DriverDetailPage() {
   // Wait for company context before treating a missing company as not-found —
   // otherwise Compliance→/drivers/:id flashes "Driver not found" while companies hydrate.
   if (companyLoading && !companyId) {
-    return <div className="text-sm text-gray-500">Loading driver...</div>;
+    return <div className="text-xs text-gray-500">Loading driver...</div>;
   }
 
   if (!companyId) {
     return (
       <div className="space-y-3">
-        <div className="text-sm text-crit">Select an operating company to load this driver.</div>
+        <div className="text-xs text-crit">Select an operating company to load this driver.</div>
         <Button variant="secondary" onClick={() => navigate("/drivers")}>
           Back to Drivers
         </Button>
@@ -784,7 +784,7 @@ export function DriverDetailPage() {
   }
 
   if (driverQuery.isLoading || (driverQuery.isFetching && !driver && !driverQuery.isError)) {
-    return <div className="text-sm text-gray-500">Loading driver...</div>;
+    return <div className="text-xs text-gray-500">Loading driver...</div>;
   }
 
   if (driverQuery.isError) {
@@ -801,7 +801,7 @@ export function DriverDetailPage() {
   if (!driver) {
     return (
       <div className="space-y-3">
-        <div className="text-sm text-crit">Driver not found.</div>
+        <div className="text-xs text-crit">Driver not found.</div>
         <Button variant="secondary" onClick={() => navigate("/drivers")}>
           Back to Drivers
         </Button>
@@ -950,14 +950,14 @@ export function DriverDetailPage() {
             OPERATIONS_VIEW_BY_SLUG[operationsSubView as keyof typeof OPERATIONS_VIEW_BY_SLUG] ?? DebtHistoryView;
           return (
             <div className="space-y-3">
-              <p className="text-sm text-gray-600">
+              <p className="text-xs text-gray-600">
                 Full operational history for this driver across finance, compliance, safety and engagement.
               </p>
               <OperationsDepthNav activeSlug={operationsSubView} onChange={setOperationsSubView} />
               {operatingCompanyId ? (
                 <ActiveOperationsView driverId={driver.id} operatingCompanyId={operatingCompanyId} />
               ) : (
-                <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+                <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
                   This driver has no operating company assigned.
                 </div>
               )}
@@ -980,7 +980,7 @@ export function DriverDetailPage() {
             />
           </div>
           {driver.is_rehire ? (
-            <div className="md:col-span-2 flex flex-wrap items-center gap-2 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-800">
+            <div className="md:col-span-2 flex flex-wrap items-center gap-2 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-800">
               <span className="rounded-sm bg-slate-200 px-2 py-1 text-xs font-semibold">REHIRE (stint #{driver.rehire_count + 1})</span>
               {driver.prior_driver_id ? (
                 <EntityLinkOrTombstone
@@ -1023,7 +1023,7 @@ export function DriverDetailPage() {
           ))}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Hazmat Endorsement (H)</label>
-            <label className="flex h-9 items-center gap-2 rounded-sm border border-gray-300 px-2 text-sm disabled:bg-gray-100">
+            <label className="flex h-9 items-center gap-2 rounded-sm border border-gray-300 px-2 text-xs disabled:bg-gray-100">
               <input
                 type="checkbox"
                 checked={endorsementH ?? driver.endorsement_h ?? false}
@@ -1104,7 +1104,7 @@ export function DriverDetailPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Has phone login</label>
-            <div className="rounded-sm border border-gray-300 px-2 text-sm py-2">{hasPhoneLogin ? "Yes" : "No"}</div>
+            <div className="rounded-sm border border-gray-300 px-2 text-xs py-2">{hasPhoneLogin ? "Yes" : "No"}</div>
           </div>
           <div className="flex items-end">
             {!hasPhoneLogin ? (
@@ -1239,7 +1239,7 @@ export function DriverDetailPage() {
                   />
                 ) : driver.referred_by_driver_id ? (
                   <EntityLinkOrTombstone kind="driver" id={driver.referred_by_driver_id} name={driver.referred_by_driver_name} noun="Driver" />
-                ) : <span className="text-sm text-gray-500">Not recorded</span>}
+                ) : <span className="text-xs text-gray-500">Not recorded</span>}
               </div>
               <div className="flex flex-col gap-1">
                 <label htmlFor="referral_source" className="text-xs font-semibold text-gray-600">Referral source</label>
@@ -1255,15 +1255,15 @@ export function DriverDetailPage() {
             <div className="mt-3 border-t border-gray-200 pt-3">
               <div className="mb-2 text-xs font-semibold text-gray-600">Drivers referred by this driver</div>
               {referralsQuery.isError ? (
-                <button type="button" className="text-sm text-red-700 underline" onClick={() => void referralsQuery.refetch()}>Couldn't load referrals — Retry</button>
+                <button type="button" className="text-xs text-red-700 underline" onClick={() => void referralsQuery.refetch()}>Couldn't load referrals — Retry</button>
               ) : referralsQuery.isLoading ? (
-                <p className="text-sm text-gray-500">Loading referrals…</p>
+                <p className="text-xs text-gray-500">Loading referrals…</p>
               ) : (referralsQuery.data?.referrals.length ?? 0) === 0 ? (
-                <p className="text-sm text-gray-500">No referred drivers.</p>
+                <p className="text-xs text-gray-500">No referred drivers.</p>
               ) : (
                 <div className="space-y-2">
                   {referralsQuery.data?.referrals.map((referral) => (
-                    <div key={referral.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                    <div key={referral.id} className="flex flex-wrap items-center justify-between gap-2 text-xs">
                       <EntityLinkOrTombstone kind="driver" id={referral.id} name={referral.driver_name} noun="Driver" />
                       <span className="text-gray-500">{referral.referral_source || "Source not recorded"}{referral.referral_reward_paid_at ? " · Reward paid" : " · Reward pending"}</span>
                     </div>
@@ -1326,7 +1326,7 @@ export function DriverDetailPage() {
         <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-3">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-gray-900">QBO Vendor Linkage</h2>
+              <h2 className="text-xs font-semibold text-gray-900">QBO Vendor Linkage</h2>
               <p className="text-xs text-gray-600">
                 Status:{" "}
                 <span className={driver.qbo_vendor_id ? "font-semibold text-slate-700" : "font-semibold text-slate-700"}>
@@ -1380,12 +1380,12 @@ export function DriverDetailPage() {
 
       {activeTab === "Profile" ? (
         <div className="space-y-3 rounded-md border border-gray-200 p-3">
-          <p className="text-sm text-gray-700">Required for B1/Mexican drivers. Leave blank for non-Mexican drivers.</p>
+          <p className="text-xs text-gray-700">Required for B1/Mexican drivers. Leave blank for non-Mexican drivers.</p>
           <div className="grid gap-3 md:grid-cols-2">
             {driver.prior_driver_id ? (
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Prior driver record</label>
-                <div className="rounded-sm border border-gray-300 bg-gray-50 px-2 text-sm py-2">
+                <div className="rounded-sm border border-gray-300 bg-gray-50 px-2 text-xs py-2">
                   <EntityLinkOrTombstone
                     kind="driver"
                     id={driver.prior_driver_id}
@@ -1399,7 +1399,7 @@ export function DriverDetailPage() {
             {driver.rehire_count > 0 ? (
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Rehire count</label>
-                <div className="rounded-sm border border-gray-300 bg-gray-50 px-2 text-sm py-2">{driver.rehire_count}</div>
+                <div className="rounded-sm border border-gray-300 bg-gray-50 px-2 text-xs py-2">{driver.rehire_count}</div>
               </div>
             ) : null}
             <div className="flex flex-col gap-1">
@@ -1486,7 +1486,7 @@ export function DriverDetailPage() {
       {activeTab === "Equipment Assignments" ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-900">Qualifications</h2>
+            <h2 className="text-xs font-semibold text-gray-900">Qualifications</h2>
             <div className="flex items-center gap-2">
               {canManageRates ? (
                 <label className="flex items-center gap-2 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-600">
@@ -1648,13 +1648,13 @@ export function DriverDetailPage() {
       {activeTab === "Safety File" ? (
         <div className="space-y-3">
           {!canViewSafetyFile ? (
-            <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+            <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
               You do not have permission to view Safety File records.
             </div>
           ) : (
             <>
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold text-gray-900">Safety File</h2>
+                <h2 className="text-xs font-semibold text-gray-900">Safety File</h2>
                 <div className="flex items-center gap-2">
                   {isOwner ? (
                     <label className="flex items-center gap-2 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-600">
@@ -1671,7 +1671,7 @@ export function DriverDetailPage() {
               </div>
 
               <div className="space-y-2">
-                {safetyEventsQuery.isLoading ? <div className="text-sm text-gray-500">Loading safety events...</div> : null}
+                {safetyEventsQuery.isLoading ? <div className="text-xs text-gray-500">Loading safety events...</div> : null}
                 {safetyEventsQuery.isError ? (
                   <ListErrorState
                     title="Couldn't load driver safety events"
@@ -1705,11 +1705,11 @@ export function DriverDetailPage() {
                           <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold capitalize ${typePillClass}`}>{event.event_type}</span>
                           <StatusBadge status={event.severity} />
                         </div>
-                        <div className={`text-sm font-medium ${isVoided ? "line-through text-gray-500" : "text-gray-800"}`}>{event.summary}</div>
+                        <div className={`text-xs font-medium ${isVoided ? "line-through text-gray-500" : "text-gray-800"}`}>{event.summary}</div>
                       </button>
 
                       {expanded ? (
-                        <div className="mt-2 space-y-2 text-sm">
+                        <div className="mt-2 space-y-2 text-xs">
                           <div>{event.details || "No additional details provided."}</div>
                           <div className="text-xs text-gray-600">
                             Termination reason: {event.termination_reason_label || "N/A"} | Documents: {event.document_ids?.length ?? 0}
@@ -1737,7 +1737,7 @@ export function DriverDetailPage() {
                   );
                 })}
                 {!safetyEventsQuery.isError && safetyEventsListState.isEmpty ? (
-                  <div className="text-sm text-gray-500">No safety events recorded for this driver.</div>
+                  <div className="text-xs text-gray-500">No safety events recorded for this driver.</div>
                 ) : null}
               </div>
               {/* SAF-F16 — reverse linkage. The block above is only the internal safety-EVENT log;
@@ -1785,7 +1785,7 @@ export function DriverDetailPage() {
             <DocumentsTab entityType="driver" entityId={driver.id} entityName={`${driver.first_name} ${driver.last_name}`} operatingCompanyId={driver.operating_company_id ?? companyId} />
           </ErrorBoundary>
         ) : (
-          <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+          <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
             You do not have permission to view documents for this driver.
           </div>
         )
@@ -1794,9 +1794,9 @@ export function DriverDetailPage() {
       {activeTab === "Legal Matters" ? (
         <div className="space-y-4">
           <div className="space-y-2">
-            <p className="text-sm text-gray-600">Legal matters linked to this driver (Owner/Admin).</p>
+            <p className="text-xs text-gray-600">Legal matters linked to this driver (Owner/Admin).</p>
             {legalMattersForDriverQuery.isLoading ? (
-              <p className="text-sm text-gray-500">Loading…</p>
+              <p className="text-xs text-gray-500">Loading…</p>
             ) : legalMattersForDriverQuery.isError ? (
               <ListErrorState
                 title="Couldn't load linked legal matters"
@@ -1807,7 +1807,7 @@ export function DriverDetailPage() {
             ) : (
               <ul className="space-y-2">
                 {(legalMattersForDriverQuery.data?.matters ?? []).map((m: Record<string, unknown>) => (
-                  <li key={String(m.id ?? "")} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+                  <li key={String(m.id ?? "")} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
                     <EntityLink
                       kind="matter"
                       id={String(m.id ?? "")}
@@ -1821,7 +1821,7 @@ export function DriverDetailPage() {
               </ul>
             )}
             {!legalMattersForDriverQuery.isError && legalMattersListState.isEmpty ? (
-              <p className="text-sm text-gray-500">No linked matters.</p>
+              <p className="text-xs text-gray-500">No linked matters.</p>
             ) : null}
           </div>
           {driver?.operating_company_id ? (
@@ -1845,7 +1845,7 @@ export function DriverDetailPage() {
 
       {activeTab === "ELD Edits" && driverQuery.data?.operating_company_id ? (
         <div className="space-y-2">
-          <p className="text-sm text-gray-600">Read-only Samsara HOS log edit history for DOT audit review.</p>
+          <p className="text-xs text-gray-600">Read-only Samsara HOS log edit history for DOT audit review.</p>
           <EldEditHistoryTimeline driverUuid={id} operatingCompanyId={String(driverQuery.data.operating_company_id)} />
         </div>
       ) : null}
@@ -1872,7 +1872,7 @@ export function DriverDetailPage() {
             return (
               <div key={company.id} className="rounded-sm border border-gray-200 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-sm font-semibold text-gray-900">
+                  <div className="text-xs font-semibold text-gray-900">
                     {company.legal_name} <span className="rounded-sm bg-gray-100 px-2 py-1 text-xs">{company.code}</span>
                   </div>
                   <div className="text-xs text-gray-600">
@@ -1880,7 +1880,7 @@ export function DriverDetailPage() {
                   </div>
                 </div>
                 <div className="mt-2 grid gap-2 md:grid-cols-[auto_1fr_auto] md:items-center">
-                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <label className="flex items-center gap-2 text-xs text-gray-700">
                     <input
                       type="checkbox"
                       checked={existing?.is_authorized ?? false}
@@ -1933,7 +1933,7 @@ export function DriverDetailPage() {
               </div>
             );
           })}
-          {!companiesQuery.isError && !companyAuthQuery.isError && companiesListState.isEmpty ? <div className="text-sm text-gray-500">No accessible operating companies.</div> : null}
+          {!companiesQuery.isError && !companyAuthQuery.isError && companiesListState.isEmpty ? <div className="text-xs text-gray-500">No accessible operating companies.</div> : null}
         </div>
       ) : null}
 
@@ -2177,7 +2177,7 @@ export function DriverDetailPage() {
             voidSafetyEventMutation.mutate();
           }}
         >
-          <p className="text-sm text-gray-700">Voided records remain visible for institutional and legal traceability.</p>
+          <p className="text-xs text-gray-700">Voided records remain visible for institutional and legal traceability.</p>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Void reason</label>
             <textarea
@@ -2238,7 +2238,7 @@ export function DriverDetailPage() {
             });
           }}
         >
-          <div className="text-sm text-gray-700">
+          <div className="text-xs text-gray-700">
             Currently:{" "}
             {selectedRateFromCard?.amount
               ? `$${Number(selectedRateFromCard.amount).toFixed(2)} (since ${formatDate(selectedRateFromCard.effective_from)})`
@@ -2332,7 +2332,7 @@ export function DriverDetailPage() {
 
       <Modal open={enableModalOpen} onClose={() => setEnableModalOpen(false)} title="Enable phone login">
         <div className="space-y-4">
-          <p className="text-sm text-gray-700">Use phone {maskedPhone} from this driver's record?</p>
+          <p className="text-xs text-gray-700">Use phone {maskedPhone} from this driver's record?</p>
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setEnableModalOpen(false)}>
               Cancel
@@ -2346,7 +2346,7 @@ export function DriverDetailPage() {
 
       <Modal open={reactivateModalOpen} onClose={() => setReactivateModalOpen(false)} title="Reactivate qualification">
         <div className="space-y-4">
-          <p className="text-sm text-gray-700">
+          <p className="text-xs text-gray-700">
             Reactivate {reactivateTargetQualification?.name || "this qualification"}? The most recent rate per line item will be restored.
           </p>
           <div className="flex justify-end gap-2">

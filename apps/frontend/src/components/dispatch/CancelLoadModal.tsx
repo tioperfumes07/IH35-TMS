@@ -122,7 +122,7 @@ export function CancelLoadModal({
   return (
     <Modal open={open} onClose={guardedClose} title={modalTitle}>
       {batchN ? (
-        <p className="mb-2 text-sm text-slate-600" data-testid="cancel-load-modal-batch-note">
+        <p className="mb-2 text-xs text-slate-600" data-testid="cancel-load-modal-batch-note">
           Reason and note apply once to all {batchN} selected loads. Fail-stop: one blocked row rolls back the
           whole batch.
         </p>

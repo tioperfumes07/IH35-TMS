@@ -90,7 +90,7 @@ export function HoldDeductionModal({
               value={reason}
               onChange={(event) => setReason(event.target.value)}
               rows={3}
-              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
             />
           </div>
           <div>

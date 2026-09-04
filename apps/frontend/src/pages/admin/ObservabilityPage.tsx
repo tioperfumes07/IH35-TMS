@@ -63,7 +63,7 @@ export function ObservabilityPage() {
     return (
       <div className="p-6">
         <PageHeader title="Observability" />
-        <p className="text-sm text-red-600 mt-4">Access restricted to Owner or Administrator.</p>
+        <p className="text-xs text-red-600 mt-4">Access restricted to Owner or Administrator.</p>
       </div>
     );
   }
@@ -75,11 +75,11 @@ export function ObservabilityPage() {
       <PageHeader title="Observability" />
 
       {query.isLoading && (
-        <p className="mt-4 text-sm text-gray-500">Loading…</p>
+        <p className="mt-4 text-xs text-gray-500">Loading…</p>
       )}
 
       {query.isError && (
-        <p className="mt-4 text-sm text-red-600">
+        <p className="mt-4 text-xs text-red-600">
           Failed to load observability status.
         </p>
       )}
@@ -107,7 +107,7 @@ export function ObservabilityPage() {
                   href={data.sentry_org_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-slate-700 underline text-sm"
+                  className="text-slate-700 underline text-xs"
                 >
                   {data.sentry_org_url}
                 </a>
@@ -123,7 +123,7 @@ export function ObservabilityPage() {
                   href={data.recent_errors_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-slate-700 underline text-sm"
+                  className="text-slate-700 underline text-xs"
                 >
                   Open in Sentry →
                 </a>
@@ -138,7 +138,7 @@ export function ObservabilityPage() {
                 href={data.healthz_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-slate-700 underline text-sm"
+                className="text-slate-700 underline text-xs"
               >
                 {data.healthz_url}
               </a>
@@ -161,8 +161,8 @@ function StatusRow({
 }) {
   return (
     <div className="flex items-start gap-4">
-      <span className="w-40 shrink-0 text-sm text-gray-500">{label}</span>
-      <span className="text-sm">{value}</span>
+      <span className="w-40 shrink-0 text-xs text-gray-500">{label}</span>
+      <span className="text-xs">{value}</span>
     </div>
   );
 }
@@ -173,10 +173,10 @@ function StatusRow({
  * checks means nothing watches the books"). */
 function HealthzChecksSection({ query }: { query: UseQueryResult<HealthzPayload, Error> }) {
   if (query.isLoading) {
-    return <p className="mt-2 text-sm text-gray-500">Loading health checks…</p>;
+    return <p className="mt-2 text-xs text-gray-500">Loading health checks…</p>;
   }
   if (query.isError || !query.data) {
-    return <p className="mt-2 text-sm text-red-600">Failed to load /healthz checks.</p>;
+    return <p className="mt-2 text-xs text-red-600">Failed to load /healthz checks.</p>;
   }
   const checks = query.data.checks ?? [];
   const ledgerChecks = checks.filter((c) => c.name.startsWith(LEDGER_CHECK_PREFIX));

@@ -142,7 +142,7 @@ export function ApplicantsPipelinePage() {
   const applyPath = portalQ.data?.apply_path ?? "";
 
   if (!selectedCompanyId) {
-    return <div className="p-4 text-sm text-gray-600">Select an operating company to review applicants.</div>;
+    return <div className="p-4 text-xs text-gray-600">Select an operating company to review applicants.</div>;
   }
 
   return (
@@ -161,7 +161,7 @@ export function ApplicantsPipelinePage() {
         }
       />
 
-      {applicantsQ.isLoading ? <p className="text-sm text-gray-500">Loading applicants…</p> : null}
+      {applicantsQ.isLoading ? <p className="text-xs text-gray-500">Loading applicants…</p> : null}
       {portalQ.isError ? (
         <ListErrorState
           title="Couldn't load applicant portal link"
@@ -174,7 +174,7 @@ export function ApplicantsPipelinePage() {
         <ListErrorState title="Couldn't load applicants" status={0} message={(applicantsQ.error as Error)?.message} onRetry={() => void applicantsQ.refetch()} />
       ) : null}
       {mutationError ? (
-        <div role="alert" className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div role="alert" className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
           {mutationError}
         </div>
       ) : null}
@@ -182,7 +182,7 @@ export function ApplicantsPipelinePage() {
       <div className="grid gap-3 lg:grid-cols-5">
         {APPLICANT_PIPELINE_COLUMNS.map((col) => (
           <section key={col.key} className="rounded-sm bg-gray-50 p-2" data-testid={`pipeline-column-${col.key}`}>
-            <h2 className="mb-2 text-sm font-semibold text-gray-800">
+            <h2 className="mb-2 text-xs font-semibold text-gray-800">
               {col.label} ({grouped[col.key]?.length ?? 0})
             </h2>
             <div className="space-y-2">

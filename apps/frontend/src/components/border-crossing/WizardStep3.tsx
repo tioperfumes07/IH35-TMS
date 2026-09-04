@@ -9,8 +9,8 @@ type Props = {
 export function WizardStep3({ form, onChange }: Props) {
   return (
     <section data-testid="border-wizard-step-3" className="space-y-3">
-      <h3 className="text-sm font-semibold">Step 3 — Cargo details</h3>
-      <label className="block text-sm">
+      <h3 className="text-xs font-semibold">Step 3 — Cargo details</h3>
+      <label className="block text-xs">
         Commodity *
         <input
           className="mt-1 w-full rounded-sm border px-2 py-1.5"
@@ -19,7 +19,7 @@ export function WizardStep3({ form, onChange }: Props) {
         />
       </label>
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="block text-sm">
+        <label className="block text-xs">
           Weight (lbs)
           <input
             type="number"
@@ -29,7 +29,7 @@ export function WizardStep3({ form, onChange }: Props) {
             onChange={(e) => onChange({ weight: e.target.value })}
           />
         </label>
-        <label className="block text-sm">
+        <label className="block text-xs">
           Value (USD)
           {/* M-1: dollars-mode QBO money entry; parent sends commodity_value (dollars) → backend ×100. Byte-for-byte. */}
           <MoneyInput
@@ -40,7 +40,7 @@ export function WizardStep3({ form, onChange }: Props) {
           />
         </label>
       </div>
-      <label className="flex items-center gap-2 text-sm">
+      <label className="flex items-center gap-2 text-xs">
         <input type="checkbox" checked={form.hazmat} onChange={(e) => onChange({ hazmat: e.target.checked })} />
         Hazmat declared
       </label>

@@ -26,7 +26,7 @@ export function LoginPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-gray-700" role="status">
+      <div className="flex min-h-screen items-center justify-center text-xs text-gray-700" role="status">
         Checking session...
       </div>
     );
@@ -35,7 +35,7 @@ export function LoginPage() {
   // 401 is signed-out — show the login form. Only a real /auth/me hang (408/5xx) is this wall.
   if (!user && isError && !isUnauthenticated) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center text-sm text-gray-700">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center text-xs text-gray-700">
         <p role="alert">Session check timed out. The API hung — you may still be signed in.</p>
         <Button type="button" onClick={() => void refetch()}>
           Retry session
@@ -84,7 +84,7 @@ export function LoginPage() {
         <h1 style={{ fontFamily: typography.fontSerif }} className="text-[22px] font-semibold text-gray-900">
           IH 35 Office Login
         </h1>
-        <p className="mt-2 text-sm text-gray-700">Use your Google account or email and password.</p>
+        <p className="mt-2 text-xs text-gray-700">Use your Google account or email and password.</p>
 
         <div className="mt-5">
           <a href={loginHref} className="block rounded-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
@@ -103,7 +103,7 @@ export function LoginPage() {
 
         <form onSubmit={onSubmit} className="space-y-3" noValidate>
           <div>
-            <label htmlFor="office-email" className="block text-sm font-medium text-gray-800">
+            <label htmlFor="office-email" className="block text-xs font-medium text-gray-800">
               Email
             </label>
             <input
@@ -115,7 +115,7 @@ export function LoginPage() {
               onChange={(ev) => setEmail(ev.target.value)}
               aria-invalid={emailInvalid}
               aria-describedby={emailInvalid ? "office-email-err" : undefined}
-              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-xs text-gray-900 shadow-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             />
             {emailInvalid ? (
               <p id="office-email-err" className="mt-1 text-xs text-red-700">
@@ -124,7 +124,7 @@ export function LoginPage() {
             ) : null}
           </div>
           <div>
-            <label htmlFor="office-password" className="block text-sm font-medium text-gray-800">
+            <label htmlFor="office-password" className="block text-xs font-medium text-gray-800">
               Password
             </label>
             <input
@@ -135,7 +135,7 @@ export function LoginPage() {
               value={password}
               onChange={(ev) => setPassword(ev.target.value)}
               aria-describedby="password-strength-help"
-              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-xs text-gray-900 shadow-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             />
             <div id="password-strength-help" className="mt-2" aria-live="polite">
               <div
@@ -162,13 +162,13 @@ export function LoginPage() {
           <div className="flex justify-end">
             <Link
               to="/login/reset"
-              className="text-sm text-slate-700 underline-offset-2 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="text-xs text-slate-700 underline-offset-2 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             >
               Forgot password?
             </Link>
           </div>
           {formError ? (
-            <p className="text-sm text-red-700" role="alert">
+            <p className="text-xs text-red-700" role="alert">
               {formError}
             </p>
           ) : null}

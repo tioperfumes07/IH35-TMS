@@ -209,7 +209,7 @@ export function ReportsHomePage() {
           <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
             <div className="border-b border-slate-200 px-3 py-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold text-slate-900">
+                <h3 className="text-xs font-semibold text-slate-900">
                   Accounting + financial reports
                 </h3>
                 <BasisSelector value={basis} onChange={setBasis} />
@@ -254,7 +254,7 @@ export function ReportsHomePage() {
           </section>
           <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
             <div className="border-b border-slate-200 px-3 py-2">
-              <h3 className="text-sm font-semibold text-slate-900">
+              <h3 className="text-xs font-semibold text-slate-900">
                 Management reports
               </h3>
               <p className="text-xs text-slate-500">
@@ -306,7 +306,7 @@ export function ReportsHomePage() {
       {showCustomBuilder ? <CustomReportBuilder /> : null}
 
       {category === "saved" && !showCustomBuilder ? (
-        <section className="rounded-sm border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+        <section className="rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
           Open <strong>+ Custom report</strong> to build and save reports —
           saved definitions appear in the builder list.
         </section>

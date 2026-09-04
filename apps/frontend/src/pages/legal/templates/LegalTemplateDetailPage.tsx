@@ -213,7 +213,7 @@ export function LegalTemplateDetailPage() {
   });
 
   if (query.isLoading) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading template...</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">Loading template...</div>;
   }
   if (query.isError || !template) {
     return (
@@ -280,7 +280,7 @@ export function LegalTemplateDetailPage() {
                   value={editable.display_name_en}
                   onChange={(event) => setEditable((prev) => ({ ...prev, display_name_en: event.target.value }))}
                   disabled={!isDraft}
-                  className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
                 />
               </label>
               <label className="text-xs font-semibold text-slate-700">
@@ -289,7 +289,7 @@ export function LegalTemplateDetailPage() {
                   value={editable.display_name_es}
                   onChange={(event) => setEditable((prev) => ({ ...prev, display_name_es: event.target.value }))}
                   disabled={!isDraft}
-                  className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
                 />
               </label>
               <label className="text-xs font-semibold text-slate-700">
@@ -298,7 +298,7 @@ export function LegalTemplateDetailPage() {
                   value={editable.category}
                   onChange={(event) => setEditable((prev) => ({ ...prev, category: event.target.value }))}
                   disabled={!isDraft}
-                  className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
                 />
               </label>
               <label className="flex items-center gap-2 text-xs text-slate-700">
@@ -359,7 +359,7 @@ export function LegalTemplateDetailPage() {
                 <input
                   value={attorneyName}
                   onChange={(event) => setAttorneyName(event.target.value)}
-                  className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
                 />
               </label>
               <label className="block text-xs font-semibold text-slate-700">
@@ -367,7 +367,7 @@ export function LegalTemplateDetailPage() {
                 <input
                   value={attorneyBarNumber}
                   onChange={(event) => setAttorneyBarNumber(event.target.value)}
-                  className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
                 />
               </label>
               <label className="block text-xs font-semibold text-slate-700">
@@ -376,7 +376,7 @@ export function LegalTemplateDetailPage() {
                   value={attorneyNotes}
                   onChange={(event) => setAttorneyNotes(event.target.value)}
                   rows={3}
-                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 text-sm"
+                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 text-xs"
                 />
               </label>
               <Button

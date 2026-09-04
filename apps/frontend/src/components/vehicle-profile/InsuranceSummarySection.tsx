@@ -97,7 +97,7 @@ export function InsuranceSummarySection({ insuranceSummary, unitId, onRetry }: {
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="vp-insurance-summary">
-      <h3 className="text-sm font-semibold text-gray-800">Insurance summary</h3>
+      <h3 className="text-xs font-semibold text-gray-800">Insurance summary</h3>
       <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Unit insurance evidence status">
         {activeCoverageLabels.map((label) => (
           <span key={label} className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">

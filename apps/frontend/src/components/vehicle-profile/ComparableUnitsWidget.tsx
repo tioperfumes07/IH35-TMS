@@ -68,7 +68,7 @@ export function ComparableUnitsWidget({
           Above-fleet-avg maintenance — review recommended (+{dev}%).
         </div>
       ) : null}
-      <p className="text-sm text-gray-800">
+      <p className="text-xs text-gray-800">
         Truck{" "}
         <EntityLinkOrTombstone kind="unit" id={unitId} name={unitNumber} noun="Unit" className="font-medium text-slate-700 hover:underline" />{" "}
         is rank {comparable.rank_in_fleet ?? "—"} of {comparable.total_units_in_fleet ?? "—"} in fleet.

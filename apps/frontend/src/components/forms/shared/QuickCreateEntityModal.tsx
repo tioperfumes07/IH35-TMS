@@ -186,7 +186,7 @@ export function QuickCreateEntityModal({
   return (
     <ParityDrawer open={open} onClose={onClose} onBack={onClose} title={titleFor(kind)} stackAboveModal>
       <form
-        className="space-y-3 text-sm"
+        className="space-y-3 text-xs"
         onSubmit={(event) => {
           event.preventDefault();
           event.stopPropagation();

@@ -195,7 +195,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
   return (
     <div className="space-y-3">
       <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-600">
-        <h3 className="text-sm font-semibold text-gray-900">Relay deposit funding</h3>
+        <h3 className="text-xs font-semibold text-gray-900">Relay deposit funding</h3>
         <p className="mt-1">
           Money funded INTO the Relay wallet (separate from fuel pumped and from bank payments to Relay). Each deposit is
           classified by its funding card. Company-funded deposits reconcile to the bank; unclassified cards need you to identify
@@ -215,7 +215,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
 
       {/* FUEL-F3550: always mount ParityTable (Search+Range+gear) for owner review queue. */}
       <section className="space-y-2">
-        <h3 className="text-sm font-semibold text-gray-900">Owner review — unidentified funding cards</h3>
+        <h3 className="text-xs font-semibold text-gray-900">Owner review — unidentified funding cards</h3>
         <p className="text-xs text-gray-600">
           These cards funded Relay but are not in the company-card set. Identify each: if it is a company card, add it below (its
           deposits reclassify to company). If it is personal, it will be booked separately as a loan/capital contribution
@@ -234,7 +234,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
       </section>
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-sm font-semibold text-gray-900">Company card set</h3>
+        <h3 className="text-xs font-semibold text-gray-900">Company card set</h3>
         <p className="mt-1 text-xs text-gray-600">
           Cards confirmed to belong to the operating company. Deposits funded by these reconcile to the bank.
         </p>
@@ -299,7 +299,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
 
       {/* FUEL-F3550: always mount ParityTable for full deposit list. */}
       <section className="space-y-2">
-        <h3 className="text-sm font-semibold text-gray-900">All deposits</h3>
+        <h3 className="text-xs font-semibold text-gray-900">All deposits</h3>
         <ParityTable<RelayDepositRow>
           columns={depositColumns}
           rows={deposits}

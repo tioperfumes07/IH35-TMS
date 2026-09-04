@@ -50,7 +50,7 @@ export function GeofenceBreachesTab() {
     <div className="space-y-3">
       <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white p-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-slate-900">Geofence Alerts</h3>
+          <h3 className="text-xs font-semibold text-slate-900">Geofence Alerts</h3>
           <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
             {eventsQuery.isError ? "—" : `${activeCount} active`}
           </span>
@@ -83,7 +83,7 @@ export function GeofenceBreachesTab() {
                 <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${event.event_type === "entry" ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-700"}`}>
                   {event.event_type}
                 </span>
-                <span className="text-sm font-medium text-slate-900">Unit <EntityLink kind="unit" id={event.vehicle_id} label={entityLabel(event.unit_number, event.vehicle_id, "Unit")} /></span>
+                <span className="text-xs font-medium text-slate-900">Unit <EntityLink kind="unit" id={event.vehicle_id} label={entityLabel(event.unit_number, event.vehicle_id, "Unit")} /></span>
               </div>
               <span className="text-xs text-slate-500">{formatDateTimeUS(event.event_at)} CT</span>
             </div>

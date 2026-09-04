@@ -223,7 +223,7 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
                   <label className="text-xs text-gray-500">Module</label>
                   <input type="text" value={moduleFilter} placeholder="e.g. dispatch"
                     onChange={(e) => { setModuleFilter(e.target.value); setOffset(0); }}
-                    className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+                    className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
                 </div>
               )}
               {showDriverFilter && (
@@ -247,7 +247,7 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
         />
       )}
 
-      {query.isError && <div className="py-4 text-center text-sm text-red-500">Failed to load report.</div>}
+      {query.isError && <div className="py-4 text-center text-xs text-red-500">Failed to load report.</div>}
 
       {!query.isError && (
         <>

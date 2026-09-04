@@ -23,7 +23,7 @@ export function CustomerDrillModal({ open, customer, openBalanceCents = 0, overd
 
   return (
     <Modal open={open} onClose={onClose} title={`Customer · ${customer.name}`} modalKind="customer_drill" sizePreset="md">
-      <div className="space-y-3 text-sm">
+      <div className="space-y-3 text-xs">
         <p className="text-gray-600">
           {customer.customer_code || "Customer"} · {customer.customer_type ?? "Type not set"}
         </p>

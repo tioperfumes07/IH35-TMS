@@ -137,7 +137,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">PM Alerts</h3>
+        <h3 className="text-xs font-semibold text-gray-900">PM Alerts</h3>
         <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{openTotalCount} open</span>
       </div>
       {alerts.length === 0 ? (

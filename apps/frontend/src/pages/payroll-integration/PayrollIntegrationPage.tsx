@@ -62,7 +62,7 @@ export function PayrollIntegrationPage() {
             type="button"
             onClick={handleRefresh}
             disabled={refreshMutation.isPending}
-            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1F2A44] disabled:opacity-50"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1F2A44] disabled:opacity-50"
           >
             {refreshMutation.isPending ? "Refreshing…" : "Refresh from QBO"}
           </button>
@@ -71,7 +71,7 @@ export function PayrollIntegrationPage() {
 
       {/* Period selector */}
       <div className="flex items-center gap-3 rounded-sm border border-gray-200 bg-white p-3">
-        <label className="text-sm font-medium text-gray-700">Period:</label>
+        <label className="text-xs font-medium text-gray-700">Period:</label>
         <DatePicker
           value={period.start}
           onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
@@ -109,11 +109,11 @@ export function PayrollIntegrationPage() {
 
       {/* Person table */}
       <div>
-        <h3 className="mb-2 text-sm font-semibold text-gray-700">By Person</h3>
+        <h3 className="mb-2 text-xs font-semibold text-gray-700">By Person</h3>
         {data ? (
           <PayrollAggregateTable persons={data.by_person} />
         ) : aggregateQuery.isLoading ? (
-          <div className="py-8 text-center text-sm text-gray-400">Loading payroll data…</div>
+          <div className="py-8 text-center text-xs text-gray-400">Loading payroll data…</div>
         ) : null}
       </div>
 

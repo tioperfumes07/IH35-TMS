@@ -109,7 +109,7 @@ export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, d
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-driver-history-strip">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-xs font-semibold text-gray-900">{title}</h3>
         <span className="text-xs text-gray-500">Last {days} days</span>
       </div>
       {historyQuery.isError ? (
@@ -145,9 +145,9 @@ export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, d
         </div>
       )}
       <div className="mt-4" data-testid="vehicle-driver-overlaps">
-        <h3 className="mb-2 text-sm font-semibold text-gray-900">Assignment overlaps</h3>
+        <h3 className="mb-2 text-xs font-semibold text-gray-900">Assignment overlaps</h3>
         {resolveMutation.isError ? (
-          <p role="alert" className="mb-2 text-sm text-red-700">
+          <p role="alert" className="mb-2 text-xs text-red-700">
             {(resolveMutation.error as Error)?.message || "Couldn't resolve assignment overlap."}
           </p>
         ) : null}

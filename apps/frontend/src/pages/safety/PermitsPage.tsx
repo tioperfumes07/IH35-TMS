@@ -303,7 +303,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
       {createOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" data-testid="permits-create-modal">
           <div className="w-full max-w-lg rounded-sm border border-gray-200 bg-white p-4 shadow-lg">
-            <h3 className="mb-3 text-sm font-semibold text-slate-800">Create permit</h3>
+            <h3 className="mb-3 text-xs font-semibold text-slate-800">Create permit</h3>
             <div className="grid gap-2">
               <label className="text-xs">
                 Permit type

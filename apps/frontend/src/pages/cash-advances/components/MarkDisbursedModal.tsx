@@ -92,7 +92,7 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, advanc
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
       <div className="fixed inset-x-0 top-20 z-50 mx-auto w-full max-w-lg rounded-sm border border-gray-200 bg-white p-4 text-xs shadow-xl">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Mark Disbursed</h3>
+          <h3 className="text-xs font-semibold">Mark Disbursed</h3>
           <ModalCloseButton title="Mark Disbursed" onClose={onClose} />
         </div>
 

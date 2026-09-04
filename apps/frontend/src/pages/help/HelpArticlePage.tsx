@@ -57,7 +57,7 @@ export function HelpArticlePage() {
     return (
       <div className="space-y-3">
         <PageHeader breadcrumb={["Help"]} title="Article not found" />
-        <p className="text-sm text-gray-700">
+        <p className="text-xs text-gray-700">
           <Link to="/help" className="text-slate-700 hover:underline">
             Back to help home
           </Link>
@@ -73,11 +73,11 @@ export function HelpArticlePage() {
         <ReactMarkdown>{article.body}</ReactMarkdown>
       </article>
       <section aria-label="Feedback" className="rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-gray-900">Was this helpful?</h2>
+        <h2 className="text-xs font-semibold text-gray-900">Was this helpful?</h2>
         <div className="mt-2 flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded-sm border border-gray-300 px-3 py-1 text-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="rounded-sm border border-gray-300 px-3 py-1 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             onClick={() => chooseFeedback("up")}
             aria-pressed={feedback === "up"}
           >
@@ -85,7 +85,7 @@ export function HelpArticlePage() {
           </button>
           <button
             type="button"
-            className="rounded-sm border border-gray-300 px-3 py-1 text-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="rounded-sm border border-gray-300 px-3 py-1 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             onClick={() => chooseFeedback("down")}
             aria-pressed={feedback === "down"}
           >
@@ -93,16 +93,16 @@ export function HelpArticlePage() {
           </button>
         </div>
         {feedback ? (
-          <p className="mt-2 text-sm text-gray-600" role="status">
+          <p className="mt-2 text-xs text-gray-600" role="status">
             Thanks for the feedback.
           </p>
         ) : null}
         {feedbackError ? (
-          <p className="mt-2 text-sm text-red-700" role="alert">
+          <p className="mt-2 text-xs text-red-700" role="alert">
             {feedbackError}
           </p>
         ) : null}
-        <p className="mt-3 text-sm">
+        <p className="mt-3 text-xs">
           <Link to="/help" className="text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400">
             ← All articles
           </Link>

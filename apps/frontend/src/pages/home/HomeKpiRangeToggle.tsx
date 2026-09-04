@@ -28,7 +28,7 @@ type Props = {
 
 export function HomeKpiRangeToggle({ value, onChange }: Props) {
   return (
-    <div className="flex flex-wrap items-center gap-2 text-sm" data-testid="home-kpi-range-toggle">
+    <div className="flex flex-wrap items-center gap-2 text-xs" data-testid="home-kpi-range-toggle">
       <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Range:</span>
       {HOME_KPI_RANGES.map((range) => (
         <button

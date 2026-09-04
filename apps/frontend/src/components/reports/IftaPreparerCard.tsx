@@ -94,14 +94,14 @@ export function IftaPreparerCard({ status }: Props) {
       </div>
 
       <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} title="Confirm IFTA Filing">
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           <p>Are you sure? This finalizes the IFTA filing for {status.currentQuarter} {currentYear}. Owner-only action.</p>
           <label className="block">
             <span className="mb-1 block text-xs font-semibold text-slate-600">Type confirmation phrase</span>
             <input
               value={typedConfirm}
               onChange={(event) => setTypedConfirm(event.target.value)}
-              className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm"
+              className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
               placeholder={requiredPhrase}
             />
           </label>

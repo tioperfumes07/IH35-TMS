@@ -83,7 +83,7 @@ export function MaintenancePmCountdownCards({ rows, loading = false, compact = f
   return (
     <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
       <div className="flex items-center justify-between bg-gray-50 px-3 py-2">
-        <h3 className="text-sm font-semibold text-gray-900">PM Countdown</h3>
+        <h3 className="text-xs font-semibold text-gray-900">PM Countdown</h3>
         <span className="text-xs text-gray-500">oil / tires / DOT / brake</span>
       </div>
       {loading ? (

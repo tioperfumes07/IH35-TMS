@@ -69,7 +69,7 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
       <div className="fixed inset-x-0 top-20 z-50 mx-auto w-full max-w-xl rounded-sm border border-gray-200 bg-white p-4 text-xs shadow-xl">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Convert Issue to WO</h3>
+          <h3 className="text-xs font-semibold">Convert Issue to WO</h3>
           <ModalCloseButton title="Convert Issue to WO" onClose={onClose} />
         </div>
 
@@ -82,7 +82,7 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
           <label className="space-y-1">
             <span>WO Source Type</span>
             <SelectCombobox
-              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={sourceType}
               onChange={(e) => setSourceType(e.target.value as "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS")}
             >
@@ -96,7 +96,7 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
           <div className="text-[11px] text-gray-600">Suggested type: {suggested}</div>
           <label className="space-y-1">
             <span>Additional notes</span>
-            <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </label>
         </div>
 

@@ -20,7 +20,7 @@ export function BatchActionsBar({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="flex items-center gap-3 px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-sm">
+    <div className="flex items-center gap-3 px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-xs">
       <span className="font-medium text-slate-700">
         {selectAllPages ? `All ${totalRows} rows selected` : `${selectedCount} selected`}
       </span>

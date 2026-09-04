@@ -9,7 +9,7 @@ export function SessionDetailPage() {
   const companyId = selectedCompanyId ?? "";
 
   if (!sessionUuid) {
-    return <div className="p-4 text-sm text-red-600">Session UUID required.</div>;
+    return <div className="p-4 text-xs text-red-600">Session UUID required.</div>;
   }
 
   return (

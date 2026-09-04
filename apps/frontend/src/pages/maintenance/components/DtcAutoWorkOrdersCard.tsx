@@ -84,7 +84,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">DTC Auto Work Orders</h3>
+        <h3 className="text-xs font-semibold text-gray-900">DTC Auto Work Orders</h3>
         <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{totalCount}</span>
       </div>
       {rows.length === 0 ? (

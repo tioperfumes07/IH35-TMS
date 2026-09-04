@@ -172,7 +172,7 @@ export function PredictiveAlertsPage() {
           <label className="space-y-1 text-xs text-gray-600">
             <span>State</span>
             <SelectCombobox
-              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={staged.draft.stateFilter}
               onChange={(event) => staged.setDraft({ stateFilter: event.target.value as typeof stateFilter })}
               aria-label="Alert state filter"

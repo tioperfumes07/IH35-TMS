@@ -25,7 +25,7 @@ export function UnitPermitsReverseSection({
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-900">Permits</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Permits</h3>
         <span className="text-xs text-gray-500">{query.isLoading ? "Loading…" : permits.length}</span>
       </div>
       {query.isError ? (
