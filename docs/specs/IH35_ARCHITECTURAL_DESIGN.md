@@ -549,7 +549,7 @@ Active Customers · Open Loads · MTD Revenue · AR Total · Disputes Open
 >
 > The table below is the **pre-redesign** flat list and is kept as historical record (archive, never
 > delete — Rule 07). The current design is the additive **"Dispatch (2026-06-08 update)"** section later
-> in this document — Overview · Load Board · List · Table · Assignment · Round Trips · Queues · Planners ·
+> in this document — Home (was Overview) · Load Board · List · Table · Assignment · Round Trips · Queues · Planners ·
 > Settlements · Factoring — which the shipped grouped nav follows. The two were never reconciled when the
 > redesign landed; this note reconciles them without discarding either.
 >
@@ -1400,7 +1400,7 @@ Names Master (`/lists/names`) is a **read-only hub** that searches existing part
 ---
 
 ## Dispatch (2026-06-08 update — additive)
-Surfaces: Overview (default command center) · Load Board (true 7-state Kanban) · List (simple+risk) · Table (detailed) · Assignment (unassigned-on-top) · Round Trips (was Units) · Queues (At-Risk/Detention/Border/Late/Live Map) · Planners (Driver/Truck/Loads) · Settlements · Factoring.
+Surfaces: Home (default command center; renamed from "Overview" 2026-09-04 per owner — landing view value stays `?view=overview` for deep-link stability) · Load Board (true 7-state Kanban) · List (simple+risk) · Table (detailed) · Assignment (unassigned-on-top) · Round Trips (was Units) · Queues (At-Risk/Detention/Border/Late/Live Map) · Planners (Driver/Truck/Loads) · Settlements · Factoring.
 Cross-cutting: OOS units pinned bottom of every view; breadcrumb page-title; denser six-column layout; all column headers sortable.
 Load click anywhere → existing LoadDetailDrawer (?load_id=), edit-capable, additive tabs (Factoring, Customs, profitability in Settlement).
 Connectivity: Dispatch ↔ Settlements (pre-settlement NB→SB, deductions/fines, profitability) ↔ Factoring (FARO packet/reserve) ↔ Accounting/Cash Flow ↔ Safety (Driver Scheduler, geofence, compliance) ↔ Maintenance (OOS/in-shop) ↔ Banking (FARO).
