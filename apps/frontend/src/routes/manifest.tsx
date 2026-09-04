@@ -687,6 +687,10 @@ function DispatchSecondaryTabRoute({ subTab }: { subTab: DispatchSecondarySubTab
   return <DispatchPage initialSubTab={subTab} />;
 }
 
+function RoundTripsRoute() {
+  return <DispatchPage roundTripsDeepLink />;
+}
+
 function FactoringBatchDetailRoute() {
   const { id } = useParams<{ id: string }>();
   const { selectedCompanyId } = useCompanyContext();
@@ -1378,6 +1382,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DispatchSecondaryTabRoute subTab="pre_settlements" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/round-trips"
+          element={
+            <ProtectedRoute>
+              <RoundTripsRoute />
             </ProtectedRoute>
           }
         />

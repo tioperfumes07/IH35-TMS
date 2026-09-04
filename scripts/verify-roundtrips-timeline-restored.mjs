@@ -8,6 +8,10 @@ import { dirname, join } from "node:path";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const timelinePath = join(root, "apps/frontend/src/pages/dispatch/RoundTripsTimeline.tsx");
 const timeline = readFileSync(timelinePath, "utf-8");
+const routesPath = join(root, "apps/frontend/src/routes/manifest.tsx");
+const routes = readFileSync(routesPath, "utf-8");
+const manifestPath = join(root, "apps/frontend/src/router/route-manifest.ts");
+const manifest = readFileSync(manifestPath, "utf-8");
 const errors = [];
 
 if (!/const NB = "#1f2a44"/.test(timeline)) {
@@ -30,6 +34,16 @@ if (!/const longFlag = \(kind === "NB" \|\| kind === "SB"\) && end - start >= 7 
 
 if (/<PlannerGrid\b/.test(timeline)) {
   errors.push("RoundTripsTimeline.tsx must not delegate rendering to PlannerGrid; it must render its own inline grid.");
+}
+
+if (!/path: "\/dispatch\/round-trips"/.test(manifest)) {
+  errors.push("route-manifest.ts must register the canonical /dispatch/round-trips route.");
+}
+if (!/path="\/dispatch\/round-trips"/.test(routes)) {
+  errors.push("routes/manifest.tsx must expose the /dispatch/round-trips Route.");
+}
+if (!/roundTripsDeepLink/.test(routes)) {
+  errors.push("routes/manifest.tsx must mount DispatchPage with roundTripsDeepLink for /dispatch/round-trips.");
 }
 
 if (errors.length > 0) {
