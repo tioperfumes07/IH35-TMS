@@ -25,7 +25,7 @@ import {
   type ReactNode,
   type TouchEvent as ReactTouchEvent,
 } from "react";
-import { colors, typography, MIN_HIT_TARGET_CLASS, TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
+import { colors, spacing, typography, MIN_HIT_TARGET_CLASS, TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
 import { Button } from "../Button";
 import { Settings as GearIcon } from "lucide-react";
 import { UniversalListToolbar, applyUniversalListFilters, type UniversalRange } from "../table/UniversalListToolbar";
@@ -1228,6 +1228,10 @@ export function ParityTable<T>({
                     enableColumnReorder ? "cursor-grab active:cursor-grabbing" : ""
                   } ${dragOverKey === key ? "outline outline-2 -outline-offset-2" : ""} ${column.className ?? ""}`}
                   style={{
+                    // ONE-HEIGHT LAW (owner ruling 2026-09-04, ORCH-measured): 30px everywhere a
+                    // ParityTable header renders — was emergent from padding/line-height alone, so
+                    // two live instances (Dispatch 30px, Load Costs 34px) silently drifted apart.
+                    height: spacing.tableHeaderHeight,
                     fontSize: typography.panelHeader ?? 11,
                     fontWeight: 700,
                     letterSpacing: 0.3,
