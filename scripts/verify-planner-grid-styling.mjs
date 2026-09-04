@@ -27,9 +27,9 @@ const contracts = [
     "plannerCss",
     (source) =>
       source.includes(".pg-name-cols .pg-col-name,") &&
-      source.includes("border-right: 1px solid var(--rule-day);") &&
+      source.includes("border-right: 1px solid var(--th-border);") &&
       source.includes(".pg-name-cols .pg-col-action:last-child"),
-    (source) => source.replace("border-right: 1px solid var(--rule-day);", "border-right: 0;"),
+    (source) => source.replaceAll("border-right: 1px solid var(--th-border);", "border-right: 0;"),
   ],
   [
     "PlannerGrid supports keyboard and drag scrolling",

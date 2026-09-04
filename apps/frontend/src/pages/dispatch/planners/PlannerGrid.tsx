@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
+import "./planner-design-tokens.css";
 import "./PlannerGrid.css";
 import {
   formatPlannerDwell,

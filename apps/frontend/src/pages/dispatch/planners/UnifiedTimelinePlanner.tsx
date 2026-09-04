@@ -1,3 +1,4 @@
+import "./planner-design-tokens.css";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getDispatchPlannerWeek, type PlannerDriverRow, type PlannerLoadEvent } from "../../../api/dispatch";
@@ -146,7 +147,7 @@ export function UnifiedTimelinePlanner() {
             type="button"
             data-testid={`timeline-book-${driver.id}`}
             onClick={() => openBookForUnit(driver.unit_id)}
-            className="flex h-7 items-center rounded-sm bg-[#14314F] px-2 text-xs font-semibold text-white"
+            className="flex h-7 items-center rounded-sm bg-[var(--planner-active)] px-2 text-xs font-semibold text-white"
           >
             + Book
           </button>

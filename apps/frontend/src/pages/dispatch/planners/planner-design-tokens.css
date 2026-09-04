@@ -1,0 +1,11 @@
+/**
+ * Dispatch planner surface tokens per owner ruling 2026-09-04.
+ * These are scoped to the dispatch planners until CC-2 centralizes them in tokens.ts.
+ */
+:root {
+  --planner-active: #14314f;
+  --planner-th-bg: #eef2f6;
+  --planner-th-ink: #1f2937;
+  --planner-th-border: #c7d2dc;
+  --planner-grp-bg: #e4eaf1;
+}

@@ -1,16 +1,18 @@
 .planner-grid-canonical {
-  --ink: #0f1219;
-  --navy: #14314f;
+  --ink: var(--planner-th-ink, #1f2937);
+  --th-bg: var(--planner-th-bg, #eef2f6);
+  --th-border: var(--planner-th-border, #c7d2dc);
+  --grp-bg: var(--planner-grp-bg, #e4eaf1);
   --slate: #1f2a44;
   --mute: #6b7280;
-  --rule-day: #e5e7eb;
-  --rule-week: #d1d5db;
-  --rule-month: #9ca3af;
-  --row: #e5e7eb;
+  --rule-day: var(--planner-th-border, #c7d2dc);
+  --rule-week: var(--planner-th-border, #c7d2dc);
+  --rule-month: var(--planner-th-border, #c7d2dc);
+  --row: var(--planner-th-border, #c7d2dc);
   --zebra: #f7f8fa;
   --weekend: rgba(107, 114, 128, 0.09);
   --today: #16a34a;
-  --nb: #14314f;
+  --nb: var(--planner-active, #14314f);
   --sb: #1f2a44;
   --tr: #16a34a;
   --dwell: #e5e7eb;
@@ -40,13 +42,13 @@
   display: block;
   width: 100%;
   border: 0;
-  border-bottom: 1px solid #cbd5e1;
-  background: #f1f5f9;
-  color: #334155;
+  border-bottom: 1px solid var(--th-border);
+  background: var(--th-bg);
+  color: var(--ink);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 4px 10px;
-  text-align: left;
+  text-align: center;
   cursor: pointer;
 }
 .planner-grid-canonical .pg-grid {
@@ -56,8 +58,8 @@
   position: sticky;
   top: 0;
   z-index: 5;
-  background: #f1f5f9;
-  border-bottom: 2px solid var(--rule-week);
+  background: var(--th-bg);
+  border-bottom: 1px solid var(--th-border);
 }
 .planner-grid-canonical .pg-arow {
   display: flex;
@@ -68,14 +70,14 @@
   position: sticky;
   left: 0;
   z-index: 6;
-  background: #f1f5f9;
-  border-right: 2px solid var(--slate);
+  background: var(--th-bg);
+  border-right: 1px solid var(--th-border);
   padding: 3px 10px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #4b5563;
+  color: var(--ink);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -85,11 +87,15 @@
   grid-template-columns: minmax(0, 1fr) 72px;
   gap: 0;
   padding: 0 8px 0 10px;
+  align-items: center;
+}
+.planner-grid-canonical .pg-frz.pg-frz-cols > span {
+  text-align: center;
 }
 .planner-grid-canonical .pg-frz-action {
-  border-left: 1px solid var(--rule-day);
+  border-left: 1px solid var(--th-border);
   padding-left: 8px;
-  text-align: right;
+  text-align: center;
 }
 .planner-grid-canonical .pg-mon {
   flex: 0 0 auto;
@@ -97,37 +103,39 @@
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: #4b5563;
+  color: var(--ink);
+  background: var(--grp-bg);
   padding: 3px 7px;
-  border-left: 2px solid var(--rule-month);
+  border-left: 1px solid var(--th-border);
   white-space: nowrap;
-  border-bottom: 1px solid var(--rule-day);
+  border-bottom: 1px solid var(--th-border);
   text-align: center;
 }
 .planner-grid-canonical .pg-dh {
   flex: 0 0 var(--day);
   text-align: center;
   padding: 2px 0 3px;
-  border-left: 1px solid var(--rule-day);
+  border-left: 1px solid var(--th-border);
 }
 .planner-grid-canonical .pg-dh.wk {
-  border-left: 1px solid var(--rule-week);
+  border-left: 1px solid var(--th-border);
 }
 .planner-grid-canonical .pg-dh.mo {
-  border-left: 2px solid var(--rule-month);
+  border-left: 1px solid var(--th-border);
 }
 .planner-grid-canonical .pg-dh.we {
   background: var(--weekend);
 }
 .planner-grid-canonical .pg-dh.today {
-  background: var(--navy);
+  background: var(--th-bg);
+  box-shadow: inset 2px 0 0 0 var(--today);
 }
 .planner-grid-canonical .pg-dh .w {
   display: block;
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
-  color: #4b5563;
+  color: var(--ink);
   text-transform: uppercase;
 }
 .planner-grid-canonical .pg-dh .n {
@@ -135,14 +143,14 @@
   font-size: 12px;
   line-height: 1.15;
   font-weight: 600;
-  color: var(--slate);
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 .planner-grid-canonical .pg-dh.today .w {
-  color: #94a3b8;
+  color: var(--ink);
 }
 .planner-grid-canonical .pg-dh.today .n {
-  color: #fff;
+  color: var(--today);
 }
 .planner-grid-canonical .pg-r {
   display: flex;
@@ -161,7 +169,7 @@
   left: 0;
   z-index: 2;
   background: #fff;
-  border-right: 2px solid var(--slate);
+  border-right: 1px solid var(--th-border);
   padding: 0 8px;
   height: var(--rowh);
   display: flex;
@@ -206,13 +214,13 @@
 .planner-grid-canonical .pg-col-sec {
   font-weight: 500;
   gap: 4px;
-  font-size: 10px;
+  font-size: 12px;
 }
 .planner-grid-canonical .pg-col-unit {
   justify-content: flex-end;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  font-size: 11px;
+  font-size: 12px;
 }
 .planner-grid-canonical .pg-col-action {
   justify-content: flex-end;
@@ -222,7 +230,7 @@
 .planner-grid-canonical .pg-name-cols .pg-col-sec,
 .planner-grid-canonical .pg-name-cols .pg-col-unit,
 .planner-grid-canonical .pg-name-cols .pg-col-action {
-  border-right: 1px solid var(--rule-day);
+  border-right: 1px solid var(--th-border);
 }
 .planner-grid-canonical .pg-name-cols .pg-col-action:last-child {
   border-right: 0;
@@ -335,14 +343,14 @@
   gap: 15px;
   align-items: center;
   padding: 7px 12px;
-  border-top: 1px solid #cbd5e1;
-  background: #f1f5f9;
+  border-top: 1px solid var(--th-border);
+  background: var(--th-bg);
   font-size: 11px;
-  color: var(--slate);
+  color: var(--ink);
   flex-wrap: wrap;
 }
 .planner-grid-canonical .pg-empty {
   padding: 16px 12px;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--ink);
 }

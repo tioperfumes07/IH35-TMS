@@ -18,22 +18,22 @@ const original = Object.fromEntries(
 
 const contracts = [
   [
-    "DispatchPlannersLayout tabs use navy #14314F active fill and 28px height",
+    "DispatchPlannersLayout tabs use CSS variable active fill and 28px height",
     "layout",
-    (source) => source.includes("bg-[#14314F]") && source.includes("h-7") && source.includes("text-xs"),
-    (source) => source.replace("bg-[#14314F]", "bg-slate-800"),
+    (source) => source.includes("bg-[var(--planner-active)]") && source.includes("h-7") && source.includes("text-xs") && !source.includes("#14314F"),
+    (source) => source.replace("bg-[var(--planner-active)]", "bg-slate-800"),
   ],
   [
-    "PlannerRangeToolbar active range button uses navy #14314F and 28px height",
+    "PlannerRangeToolbar active range button uses CSS variable and 28px height",
     "toolbar",
-    (source) => source.includes("bg-[#14314F]") && source.includes("h-7") && source.includes("text-xs"),
-    (source) => source.replace("bg-[#14314F]", "bg-slate-800"),
+    (source) => source.includes("bg-[var(--planner-active)]") && source.includes("h-7") && source.includes("text-xs") && !source.includes("#14314F"),
+    (source) => source.replace("bg-[var(--planner-active)]", "bg-slate-800"),
   ],
   [
-    "UnifiedTimelinePlanner + Book button uses navy #14314F and 28px height",
+    "UnifiedTimelinePlanner + Book button uses CSS variable and 28px height",
     "unified",
-    (source) => source.includes("bg-[#14314F]") && source.includes("h-7") && source.includes("text-xs"),
-    (source) => source.replace("bg-[#14314F]", "bg-slate-800"),
+    (source) => source.includes("bg-[var(--planner-active)]") && source.includes("h-7") && source.includes("text-xs") && !source.includes("#14314F"),
+    (source) => source.replace("bg-[var(--planner-active)]", "bg-slate-800"),
   ],
   [
     "PlannerGrid card uses baseline border color (border-gray-200)",
@@ -42,12 +42,11 @@ const contracts = [
     (source) => source.replace("border-gray-200", "border-slate-300"),
   ],
   [
-    "PlannerGrid CSS uses baseline navy variable and 12px body",
+    "PlannerGrid CSS maps active colour through a CSS variable and keeps 12px body",
     "css",
     (source) =>
-      source.includes("--navy: #14314f;") &&
+      source.includes("--nb: var(--planner-active, #14314f);") &&
       source.includes("font-size: 12px;") &&
-      source.includes("#4b5563") &&
       source.includes("text-align: center;"),
     (source) => source.replaceAll("font-size: 12px;", "font-size: 13px;"),
   ],
