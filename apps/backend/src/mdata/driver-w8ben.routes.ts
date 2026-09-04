@@ -121,7 +121,67 @@ async function driverOnCompanyRoster(
   return Boolean(driver.rows[0]);
 }
 
+// Mirrors driver-aggregate.service.ts's inline w8ben shaping exactly (yearly renewal =
+// 1 year after signed_date; "expiring" inside the 60-day pre-renewal window). Kept as its
+// own small copy rather than a shared import so this canonical-page endpoint carries zero
+// risk to the existing, heavily-consumed driver-profile aggregate response shape.
+function daysUntil(dateStr: string | null | undefined): number | null {
+  if (!dateStr) return null;
+  const d = new Date(String(dateStr));
+  if (Number.isNaN(d.getTime())) return null;
+  return Math.ceil((d.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+}
+
+function shapeW8benSummary(row: Record<string, unknown> | null): Record<string, unknown> {
+  if (!row) return { status: "missing", on_file: false, color_status: "red" };
+  const signed = String(row.signed_date);
+  const renewalDue = signed ? `${Number(signed.slice(0, 4)) + 1}${signed.slice(4)}` : null;
+  const renewalDays = daysUntil(renewalDue);
+  const status = renewalDays !== null && renewalDays <= 60 ? "expiring" : "on_file";
+  return {
+    status,
+    on_file: true,
+    ...row,
+    renewal_due_date: renewalDue,
+    renewal_days_until: renewalDays,
+    color_status: renewalDays === null ? "gray" : renewalDays < 0 ? "red" : renewalDays <= 30 ? "yellow" : "green",
+  };
+}
+
 export async function registerDriverW8benRoutes(app: FastifyInstance) {
+  // W-8BEN summary for the CANONICAL driver page (DriverDetail.tsx, /drivers/:id) — the
+  // aggregate's w8ben/w8ben_unavailable shape, without paying for the whole driver-profile
+  // aggregate (license/medical/HOS/settlements/etc.) just to read this one section.
+  app.get("/api/v1/mdata/drivers/:id/w8ben-summary", RL_READ, async (req, reply) => {
+    const authUser = authed(req, reply);
+    if (!authUser) return reply;
+    const params = driverParamsSchema.safeParse(req.params ?? {});
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
+
+    const row = await withCurrentUser(authUser.uuid, async (client) => {
+      await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
+      if (!(await driverOnCompanyRoster(client, params.data.id, query.data.operating_company_id))) return undefined;
+      const res = await client.query<Record<string, unknown>>(
+        `
+          SELECT
+            id::text, full_legal_name, country_of_citizenship, foreign_tin, us_tin,
+            date_of_birth::text, certification_name, signed_date::text, irs_expiration_date::text
+          FROM safety.driver_w8ben
+          WHERE driver_id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND voided_at IS NULL
+          ORDER BY signed_date DESC, created_at DESC
+          LIMIT 1
+        `,
+        [params.data.id, query.data.operating_company_id]
+      );
+      return res.rows[0] ?? null;
+    });
+    if (row === undefined) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { w8ben: shapeW8benSummary(row), w8ben_unavailable: false };
+  });
+
   // List W-8BEN certificates for a driver (newest signing first).
   app.get("/api/v1/mdata/drivers/:id/w8ben", RL_READ, async (req, reply) => {
     const authUser = authed(req, reply);
