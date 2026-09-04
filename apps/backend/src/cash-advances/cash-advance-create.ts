@@ -644,3 +644,88 @@ export async function createEmployeeLoanCore(
     liability_type: "loan",
   });
 }
+
+/**
+ * Shared reversal core — "undo this advance, no money actually moved." Extracted from
+ * cash-advances.routes.ts's PATCH .../reverse (unchanged logic, same shape) so the load-cancellation
+ * cascade (item 3, owner 2026-09-03: cancelling a load must also reverse the ADVANCES/LIABILITIES
+ * it produced) can reuse the exact same primitive instead of re-inventing it inline.
+ *
+ * Caller's responsibility: gate on driver_finance.driver_liabilities.paid_to_date === 0 BEFORE
+ * calling this (CASH-ADV-F9930's correct-grain guard) — this function does not re-check it, so a
+ * caller that skips the check could reverse an already-recovered advance. Both current callers
+ * (the route, and the cancellation cascade) check first.
+ */
+export async function reverseDriverAdvanceInClientTx(
+  client: PgishClient,
+  actorUserUuid: string,
+  companyId: string,
+  input: { advanceId: string; liabilityId: string | null; linkedBillPaymentId?: string | null; linkedBillId?: string | null; reason: string }
+): Promise<void> {
+  await client.query(
+    `
+      UPDATE driver_finance.driver_advances
+      SET disbursement_status = 'reversed',
+          updated_at = now()
+      WHERE id = $1
+    `,
+    [input.advanceId]
+  );
+  if (input.liabilityId) {
+    await client.query(
+      `
+        UPDATE driver_finance.driver_liabilities
+        SET current_balance = 0,
+            paid_to_date = original_amount
+        WHERE id = $1
+      `,
+      [input.liabilityId]
+    );
+    await client.query(
+      `
+        UPDATE driver_finance.deduction_schedule
+        SET is_held = true,
+            hold_reason = $2,
+            updated_at = now()
+        WHERE liability_id = $1
+      `,
+      [input.liabilityId, input.reason]
+    );
+  }
+  if (input.linkedBillPaymentId) {
+    await client.query(
+      `
+        UPDATE accounting.bill_payments
+        SET status = 'void',
+            updated_at = now()
+        WHERE id = $1
+      `,
+      [input.linkedBillPaymentId]
+    );
+    if (input.linkedBillId) {
+      await client.query(
+        `
+          UPDATE accounting.bills
+          SET status = 'unpaid',
+              updated_at = now()
+          WHERE id = $1
+        `,
+        [input.linkedBillId]
+      );
+    }
+  }
+  await appendCrudAudit(
+    client as never,
+    actorUserUuid,
+    "cash_advance.reversed",
+    {
+      resource_type: "driver_finance.driver_advances",
+      resource_id: String(input.advanceId),
+      operating_company_id: companyId,
+      liability_id: String(input.liabilityId ?? ""),
+      reason: input.reason,
+    },
+    "warning",
+    "BT-3-CASH-ADVANCE-REBUILD"
+  );
+}
