@@ -1,3 +1,15 @@
+# ★★ OWNER ORDER 2026-09-04 — CONTROL GROUP STILL YOURS (6) + LEAD WATCH
+`git pull --ff-only origin main`
+
+**Law:** `docs/bus/ORDER-2026-09-04-SETTLEMENT-ENTRY-SPLIT.md`
+
+CC-1 feeds 31 as **open pre-settlements** (never closes). You keep control **5766 / 5772 / 5776 / 5780 / 5783 / 5784** for hand entry / break-finding. Owner closes pre-settlements one by one himself after CC-1 lands them open.
+
+Watch: ITEM ZERO (CostOfGoodsSold picker) + ITEM ZERO-B (tour-close Laredo delivery OR yard) must land before he starts closing. Telematics findings → CC-3.
+
+ACK `CURSOR | ACK | CONTROL 6 · LEAD WATCH PRE-SETTLE OPEN | GO`
+
+---
 # ORCHESTRATOR FAST-MERGE WAKE · 2026-09-04 18:32 CT
 `git pull --ff-only origin main`
 

@@ -1,3 +1,17 @@
+# ★ NOTICE 2026-09-04 — THREE TELEMATICS DEFECTS (YOUR LANE · FILE, THEN FIX)
+`git pull --ff-only origin main`
+
+Found while verifying settlement trucks. **Do not block CC-1 data entry.** File + fix in your telematics lane:
+
+1. `telematics.vehicle_latest_position` — **two rows per unit** for most units (should be one “latest”).
+2. `city` / `state` / `formatted_location` **NULL on every row captured 2026-09-04** — reverse geocode not populating; only stale rows have a place name.
+3. **T144** last report **2025-07-09** yet ran settlement **5760** in July 2026 — dead Samsara link or unit gone.
+
+Settlement entry itself is **CC-1 + Cursor only** — do not create/edit settlements `5753` / `5760`–`5795`.
+
+ACK `CC-3 | ACK | TELEMATICS 3 DEFECTS FILED · SETTLEMENT-ENTRY NOT MINE | GO`
+
+---
 # ORCHESTRATOR FAST-MERGE WAKE · 2026-09-04 18:32 CT
 `git pull --ff-only origin main`
 
