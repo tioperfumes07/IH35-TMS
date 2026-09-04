@@ -23,13 +23,14 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-money-text-component-adoption-ratchet";
 const SRC = path.join(ROOT, "apps/frontend/src");
 
-// Frozen 2026-09-04, live-measured with this exact guard's own walk()/regex, AFTER converting 6
-// files this session (EscrowPage, CalculatorPage, AmortizationPage, LoanWizardPage,
-// FinanceOverviewPage, ScenarioLinesTable) from a hand-rolled unpinned-locale formatter to the
-// canonical formatUsdCents — 113 occurrences across 109 files remain. The remaining files are
-// catalogued by lane in GUARD-WORKORDERS.md so each owning seat can convert their own surfaces.
-const BASELINE_OCCURRENCES = 113;
-const BASELINE_FILES = 109;
+// Frozen 2026-09-04, live-measured with this exact guard's own walk()/regex. Owner order: "every
+// money field in the app uses it" — converted 52 more files this pass (on top of the original 6
+// already shipped) from a hand-rolled currency formatter (some with an unpinned-locale bug, most
+// just a duplicate of formatUsdCents) to the canonical formatUsdCents. 61 occurrences across 58
+// files remain, catalogued by lane in GUARD-WORKORDERS.md so each owning seat can convert their
+// own surfaces. Ratchet only ever moves down from here.
+const BASELINE_OCCURRENCES = 61;
+const BASELINE_FILES = 58;
 
 const EXEMPT = new Set(["apps/frontend/src/lib/money.ts", "apps/frontend/src/components/MoneyText.tsx"]);
 

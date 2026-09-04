@@ -72,8 +72,12 @@ const PACKAGES: Record<PackageType, { label: string; description: string; sectio
   },
 };
 
+import { formatUsdCents } from "../../lib/money";
+
+// GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
+// local currency formatter (same shape lib/money.ts already covers).
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 // LINK-F5186 (report.management): same pattern already used by the standalone P&L/Balance Sheet

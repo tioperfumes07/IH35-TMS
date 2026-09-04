@@ -57,8 +57,12 @@ function centsToDollars(value: number): number | null {
   return v > 0 ? v / 100 : null;
 }
 
+import { formatUsdCents } from "../../lib/money";
+
+// GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
+// local currency formatter (same shape lib/money.ts already covers).
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 /** Build deposit options as catalogs.accounts UUIDs (posting engine debit). Never a free-text bank slug. */
