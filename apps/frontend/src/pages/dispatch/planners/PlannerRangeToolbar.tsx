@@ -1,4 +1,5 @@
 import { PLANNER_RANGE_OPTIONS } from "./planner-range";
+import "./planner-design-tokens.css";
 import { usePlannerRange } from "./PlannerRangeContext";
 
 export function PlannerRangeToolbar() {
@@ -14,7 +15,7 @@ export function PlannerRangeToolbar() {
         <button
           key={d}
           type="button"
-          className={`flex h-7 items-center rounded-sm px-2 text-xs font-medium ${windowDays === d ? "bg-[#14314F] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+          className={`flex h-7 items-center rounded-sm px-2 text-xs font-medium ${windowDays === d ? "bg-[var(--planner-active)] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
           onClick={() => setWindowDays(d)}
         >
           {d}d

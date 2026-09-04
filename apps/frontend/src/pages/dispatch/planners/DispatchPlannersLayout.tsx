@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import "./planner-design-tokens.css";
 import { PlannerRangeProvider } from "./PlannerRangeContext";
 import { PlannerRangeToolbar } from "./PlannerRangeToolbar";
 import { UniversalFilterBar, type FilterState } from "../../../components/planner/UniversalFilterBar";
@@ -56,7 +57,7 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
               key={tab.to}
               to={tab.to}
               className={({ isActive }: { isActive: boolean }) =>
-                `flex h-7 items-center rounded-sm px-3 text-xs font-medium ${isActive ? "bg-[#14314F] text-white" : "text-gray-700 hover:bg-gray-100"}`
+                `flex h-7 items-center rounded-sm px-3 text-xs font-medium ${isActive ? "bg-[var(--planner-active)] text-white" : "text-gray-700 hover:bg-gray-100"}`
               }
             >
               {tab.label}
