@@ -1,4 +1,5 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
+import type { PoolClient } from "pg";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
@@ -6,6 +7,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../reports/shared.js";
 import { getCachedCbpWaitTimes } from "./cbp-wait-times.service.js";
 import { renderEmanifestPdf } from "./emanifest-pdf-renderer.service.js";
+import { deleteObjectBytes, isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 
 const wizardBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -45,6 +47,111 @@ function parseFastCardWarning(fastCardExpiration: string | null | undefined) {
     return { verified: false, warning: "Driver FAST card is expired" };
   }
   return { verified: true, warning: null as string | null };
+}
+
+async function persistEmanifestForLoad(
+  client: PoolClient,
+  input: { crossingId: string; operatingCompanyId: string; loadId: string; userId: string }
+) {
+  const rowRes = await client.query(
+    `
+      SELECT ubc.*,
+             u.unit_number,
+             d.first_name || ' ' || d.last_name AS driver_name,
+             l.load_number,
+             v.vendor_name AS customs_broker_name
+      FROM mdata.unit_border_crossings ubc
+      JOIN mdata.loads l ON l.id = ubc.load_id
+                        AND l.operating_company_id = ubc.operating_company_id
+      LEFT JOIN mdata.units u ON u.id = ubc.unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ubc.operating_company_id
+      LEFT JOIN mdata.drivers d ON d.id = ubc.driver_id
+                               AND (
+                                 d.operating_company_id = ubc.operating_company_id
+                                 OR EXISTS (
+                                   SELECT 1
+                                   FROM mdata.driver_company_authorizations emanifest_dca
+                                   WHERE emanifest_dca.driver_id = d.id
+                                     AND emanifest_dca.company_id = ubc.operating_company_id
+                                     AND emanifest_dca.is_authorized = true
+                                     AND emanifest_dca.deactivated_at IS NULL
+                                 )
+                               )
+      LEFT JOIN mdata.vendors v ON v.id = ubc.customs_broker_id
+                               AND v.operating_company_id = ubc.operating_company_id
+      WHERE ubc.id = $1::uuid
+        AND ubc.load_id = $2::uuid
+        AND ubc.operating_company_id = $3::uuid
+      LIMIT 1
+    `,
+    [input.crossingId, input.loadId, input.operatingCompanyId]
+  );
+  const row = rowRes.rows[0];
+  if (!row) throw new Error("emanifest_crossing_load_not_found");
+
+  const pdf = await renderEmanifestPdf({
+    emanifestReference: String(row.emanifest_reference ?? row.ace_emanifest_ref ?? "DRAFT"),
+    direction: String(row.direction),
+    portOfEntry: String(row.port_of_entry),
+    plannedDate: String(row.planned_crossing_date ?? row.crossing_date),
+    commodity: String(row.commodity ?? ""),
+    cargoWeightLbs: row.cargo_weight_lbs as number | null,
+    commodityValueCents: row.commodity_value_cents as number | null,
+    hazmatDeclared: Boolean(row.hazmat_declared),
+    bondNumber: (row.bond_number as string | null) ?? null,
+    driverName: (row.driver_name as string | null) ?? null,
+    unitNumber: (row.unit_number as string | null) ?? null,
+    loadReference: (row.load_number as string | null) ?? null,
+    customsBrokerName: (row.customs_broker_name as string | null) ?? null,
+  });
+
+  if (!isR2Configured()) throw new Error("r2_not_configured");
+  const r2Key = `org/${input.operatingCompanyId}/dispatch/${input.loadId}/emanifest-${randomUUID()}.pdf`;
+  await putObjectBytes(r2Key, pdf.pdfBuffer, pdf.mimeType);
+  try {
+    const fileRes = await client.query<{ id: string }>(
+      `
+        INSERT INTO docs.files (
+          operating_company_id, original_filename, mime_type, size_bytes, sha256_hash,
+          r2_key, upload_completed_at, description, uploader_user_id, dispatch_load_id,
+          dispatch_generated_at
+        )
+        VALUES ($1::uuid, $2, $3, $4, $5, $6, now(), $7, $8::uuid, $9::uuid, now())
+        RETURNING id::text
+      `,
+      [
+        input.operatingCompanyId,
+        pdf.filename,
+        pdf.mimeType,
+        pdf.pdfBuffer.length,
+        createHash("sha256").update(pdf.pdfBuffer).digest("hex"),
+        r2Key,
+        `Generated border-crossing eManifest ${String(row.emanifest_reference ?? "")}`,
+        input.userId,
+        input.loadId,
+      ]
+    );
+    const fileId = fileRes.rows[0]?.id;
+    if (!fileId) throw new Error("emanifest_document_create_failed");
+    const linkRes = await client.query<{ id: string }>(
+      `
+        INSERT INTO docs.file_links (file_id, entity_type, entity_id, created_by_user_id)
+        VALUES ($1::uuid, 'load', $2::uuid, $3::uuid)
+        ON CONFLICT (file_id, entity_type, entity_id) WHERE deleted_at IS NULL DO NOTHING
+        RETURNING id::text
+      `,
+      [fileId, input.loadId, input.userId]
+    );
+    if (!linkRes.rows[0]?.id) throw new Error("emanifest_load_link_create_failed");
+    return { fileId, filename: pdf.filename };
+  } catch (error) {
+    try {
+      await deleteObjectBytes(r2Key);
+    } catch (cleanupError) {
+      throw new AggregateError([error, cleanupError], `emanifest_document_cleanup_failed:${r2Key}`);
+    }
+    throw error;
+  }
 }
 
 export async function registerBorderCrossingWizardRoutes(app: FastifyInstance) {
@@ -223,8 +330,18 @@ export async function registerBorderCrossingWizardRoutes(app: FastifyInstance) {
         ]
       );
 
+      const persistedManifest = data.load_id
+        ? await persistEmanifestForLoad(client, {
+            crossingId: String(insert.rows[0]?.id),
+            operatingCompanyId: data.operating_company_id,
+            loadId: data.load_id,
+            userId: user.uuid,
+          })
+        : null;
+
       return {
         crossing: insert.rows[0],
+        persisted_manifest: persistedManifest,
         fast_card_verified: fastVerified,
         fast_card_warning: fastCardWarning,
         port,
@@ -238,6 +355,7 @@ export async function registerBorderCrossingWizardRoutes(app: FastifyInstance) {
       wizard_completed_at: result.crossing.wizard_completed_at,
       fast_card_verified: result.fast_card_verified,
       fast_card_warning: result.fast_card_warning,
+      manifest_file_id: result.persisted_manifest?.fileId ?? null,
       summary: {
         direction: data.direction,
         port_of_entry: result.port.name,
