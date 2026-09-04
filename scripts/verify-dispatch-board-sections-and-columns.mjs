@@ -21,6 +21,11 @@ const fail = (msg) => {
   process.exit(1);
 };
 
+// Owner 2026-09-04: navy #14314F retired from dispatch section/table headers (light --th-bg only).
+if (/bg-\[#14314F\]/i.test(src) || /backgroundColor:\s*["']#14314F["']/i.test(src)) {
+  fail("DispatchBoard section headers still hard-code navy #14314F — use colors.tableHeaderBg");
+}
+
 function preSettlementReadIssues(content) {
   const issues = [];
   if (!/openPreSettlementsQuery\.isError[\s\S]{0,260}<ListErrorState/.test(content)) {

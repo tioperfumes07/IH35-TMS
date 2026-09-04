@@ -419,7 +419,7 @@ function DocComplianceCell({ load }: { load: DispatchLoadRow }) {
   const ready = load.geofence_ready;
   return (
     <span
-      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${ready ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-700"}`}
+      className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${ready ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-700"}`}
       title={ready ? "Pre-dispatch doc gate passed" : "Doc compliance pending"}
     >
       {ready ? "Ready" : "Pending"}
@@ -438,7 +438,7 @@ function RiskCell({ load }: { load: DispatchLoadRow }) {
   return (
     <div className="flex flex-col items-center gap-1">
       <span
-        className={`rounded-full px-2 py-0.5 text-xs font-semibold ${riskTierClass(load)}`}
+        className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${riskTierClass(load)}`}
         title={isAtRiskOfLate(load) ? "At risk of late delivery" : undefined}
       >
         {label}
@@ -912,7 +912,7 @@ export function DispatchBoard({
 
   const renderStatusCell = (load: DispatchLoadRow) => (
     <div className="flex items-center gap-1">
-      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>
+      <span className={`rounded-sm px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>
         {STATUS_LABEL[load.status]}
       </span>
       {load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id) ? (
@@ -1151,25 +1151,38 @@ export function DispatchBoard({
           return (
             <div key={section.key} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
               <div
-                className="flex items-center justify-between gap-3 rounded-t-sm border border-gray-200 border-b-0 bg-[#14314F] px-3 py-1.5"
+                className="flex items-center justify-between gap-3 rounded-t-sm border border-gray-200 border-b-0 px-3 py-1.5"
                 data-testid={`dispatch-board-section-${section.key}`}
-                style={{ backgroundColor: colors.tableHeaderBg }}
+                style={{
+                  backgroundColor: colors.tableHeaderBg,
+                  color: colors.tableHeaderText,
+                  borderColor: colors.tableColumnRule,
+                }}
               >
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-white">
+                <div
+                  className="text-center text-[11px] font-semibold uppercase tracking-wide"
+                  style={{ color: colors.tableHeaderText }}
+                >
                   {section.title}
-                  <span className="ml-2 rounded-full bg-white px-1.5 text-xs font-bold text-gray-500">
+                  <span
+                    className="ml-2 rounded-sm px-1.5 text-xs font-bold"
+                    style={{ backgroundColor: colors.cardBg, color: colors.mutedText, border: `1px solid ${colors.tableColumnRule}` }}
+                  >
                     {rows.length}{rows.length === allRows.length ? "" : ` of ${allRows.length}`}
                   </span>
                 </div>
                 {!isHistoryBoard ? (
-                  <label className="flex items-center gap-2 text-xs font-medium normal-case tracking-normal text-white">
+                  <label
+                    className="flex h-7 items-center gap-2 text-xs font-medium normal-case tracking-normal"
+                    style={{ color: colors.tableHeaderText }}
+                  >
                     Filter {section.title}
                     <input
                       type="search"
                       value={sectionFilters[section.key] ?? ""}
                       onChange={(event) => setSectionFilters((current) => ({ ...current, [section.key]: event.target.value }))}
                       placeholder={`Search ${section.title.toLocaleLowerCase()}`}
-                      className="w-48 rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-normal text-gray-900"
+                      className="h-7 w-48 rounded-sm border border-gray-300 bg-white px-2 text-xs font-normal text-gray-900"
                       data-testid={`dispatch-board-filter-${section.key}`}
                     />
                   </label>
