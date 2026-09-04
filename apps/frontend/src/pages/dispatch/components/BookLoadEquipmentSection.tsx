@@ -15,7 +15,7 @@ import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTo
 import { ListErrorState } from "../../../components/ListErrorState";
 import type { EntityPickerOption } from "../../../components/parity/entityPickerRegistry";
 import { InterchangeTrailerPicker } from "./book-load-v4/InterchangeTrailerPicker";
-import type { NonOwnedTrailer } from "../../../api/dispatch";
+import { getDriverPayCard, type NonOwnedTrailer } from "../../../api/dispatch";
 
 type Props = {
   register: UseFormRegister<any>;
@@ -97,6 +97,23 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
     queryFn: () => listDriverTeams(String(operatingCompanyId)),
     enabled: Boolean(operatingCompanyId),
   });
+  // WIZ-32 / WIZ-16 — resolve the selected driver's per-mile rate for the read-only "Driver pay rate
+  // / mi" display, from the SAME table settlement pays on (driver_finance.driver_pay_rates, via
+  // /dispatch/driver-pay-card). The load stores no override, so the caption "resolves automatically
+  // from the driver's profile rate card" is literally true. Only enabled once a driver is chosen.
+  const driverPayCardQuery = useQuery({
+    queryKey: ["book-load-driver-pay-card", operatingCompanyId, primaryDriverId],
+    queryFn: () => getDriverPayCard({ operating_company_id: String(operatingCompanyId), driver_id: primaryDriverId }),
+    enabled: Boolean(operatingCompanyId && primaryDriverId),
+    staleTime: 30_000,
+  });
+  const driverPayCard = driverPayCardQuery.data;
+  // Honest display: a per-mile RATE only exists for a per_mile_pay basis. A per_load_pay driver has
+  // no per-mile rate (blank, not 0); no rate row at all is also blank (unknown), never a fabricated 0.
+  const resolvedDriverRatePerMile =
+    driverPayCard && driverPayCard.has_rate && driverPayCard.basis_type === "per_mile_pay" && driverPayCard.rate_per_mile_cents && driverPayCard.rate_per_mile_cents > 0
+      ? (driverPayCard.rate_per_mile_cents / 100).toFixed(2)
+      : "";
   const trailerEquipmentQuery = useQuery({
     queryKey: ["book-load-trailer-equipment", operatingCompanyId],
     queryFn: async () => {
@@ -385,19 +402,22 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       {teamsQuery.isError ? (
         <ListErrorState status={0} message="Driver teams unavailable." onRetry={() => void teamsQuery.refetch()} />
       ) : null}
-      {/* WIZ-32: a 0 in this box is a claim that the rate is zero. The caption says leave blank
-          and resolve from the driver profile card (submit-time). The field is display-only. */}
+      {/* WIZ-32 / WIZ-16: a 0 in this box is a claim that the rate is zero. The field is display-only
+          and READ-ONLY: blank when no driver (or no per-mile rate card), and the driver's resolved
+          per-mile rate once one is selected — read from the same table settlement pays on. The load
+          stores no override (the submit omits a 0), so booking still resolves the rate live. */}
       <div className="flex flex-wrap items-end gap-3">
         <Field
           label="Driver pay rate / mi"
-          hint="Leave blank — pay resolves automatically from the driver's profile rate card."
+          hint="Resolves automatically from the driver's profile rate card — read-only."
           input={
             <>
               <input type="hidden" {...register("driver_pay_rate_per_mile", { valueAsNumber: true })} />
               <input
                 type="text"
                 readOnly
-                value=""
+                value={resolvedDriverRatePerMile}
+                placeholder={primaryDriverId && driverPayCardQuery.isLoading ? "…" : ""}
                 data-testid="driver-pay-rate-per-mile"
                 aria-readonly="true"
                 className="h-7 w-[5.5rem] rounded-sm border border-gray-300 bg-slate-50 px-2 text-right text-xs tabular-nums"

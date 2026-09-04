@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
@@ -10,6 +10,27 @@ vi.mock("../../../components/drivers/DriverPickerWithCreate", () => ({
     <div data-testid="driver-picker-stub">{placeholder ?? "driver"}</div>
   ),
 }));
+
+// EntityPicker (truck/trailer) fires its own catalog fetches once operatingCompanyId is set; stub it
+// so the WIZ-32 pay-rate assertions are not coupled to unrelated network in jsdom.
+vi.mock("../../../components/EntityPicker", () => ({
+  EntityPicker: ({ placeholder }: { placeholder?: string }) => <div data-testid="entity-picker-stub">{placeholder ?? "entity"}</div>,
+}));
+
+// WIZ-32 / WIZ-16 — the pay-rate box resolves from the driver's profile rate card. Mock only that one
+// read (keep the rest of the api/dispatch module real) so the DOM contract can be asserted with a
+// known per-mile rate. 55 cents => "0.55" on screen.
+const getDriverPayCardMock = vi.fn(async () => ({
+  has_rate: true,
+  basis_type: "per_mile_pay",
+  rate_per_mile_cents: 55,
+  rate_empty_per_mile_cents: 55,
+  flat_per_load_cents: null,
+}));
+vi.mock("../../../api/dispatch", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../api/dispatch")>();
+  return { ...actual, getDriverPayCard: (...args: unknown[]) => getDriverPayCardMock(...(args as [])) };
+});
 
 // GUARD render-guard (render-v6 §B): the reefer/flatbed detail panels are CONDITIONAL on trailer type.
 // Token-in-source is insufficient (the panels can exist but never reveal). These tests mount the section
@@ -54,5 +75,46 @@ describe("BookLoadEquipmentSection — render-v6 §B conditional panels", () => 
   it("HOS block (Driver HOS clocks) always renders in section B", () => {
     render(<Harness trailer="dry_van" />);
     expect(screen.getByText("Driver HOS (hours of service)")).toBeInTheDocument();
+  });
+});
+
+// WIZ-32 / WIZ-16 — DOM contract for the "Driver pay rate / mi" box. Owner law: 0 is a claim, blank
+// is an honest unknown. Reads the rendered input's value/readOnly, not a source string.
+function PayRateHarness({ driverId, companyId }: { driverId: string; companyId?: string }) {
+  const form = useForm({
+    defaultValues: { trailer_type: "dry_van", assigned_primary_driver_id: driverId } as Record<string, unknown>,
+  });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return (
+    <QueryClientProvider client={client}>
+      <ToastProvider>
+        <BookLoadEquipmentSection
+          register={form.register as never}
+          watch={form.watch as never}
+          setValue={form.setValue as never}
+          operatingCompanyId={companyId}
+        />
+      </ToastProvider>
+    </QueryClientProvider>
+  );
+}
+
+describe("BookLoadEquipmentSection — WIZ-32 driver pay rate contract", () => {
+  it("is blank AND read-only when no driver is selected (a 0 would be a false claim)", () => {
+    render(<PayRateHarness driverId="" companyId={undefined} />);
+    const input = screen.getByTestId("driver-pay-rate-per-mile") as HTMLInputElement;
+    expect(input.value).toBe("");
+    expect(input.readOnly).toBe(true);
+  });
+
+  it("shows the driver's resolved per-mile rate (read-only) once a driver is selected", async () => {
+    render(
+      <PayRateHarness driverId="11111111-1111-1111-1111-111111111111" companyId="00000000-0000-0000-0000-000000000000" />,
+    );
+    const input = screen.getByTestId("driver-pay-rate-per-mile") as HTMLInputElement;
+    expect(input.readOnly).toBe(true);
+    // Resolved from the driver pay card (55c => 0.55). Fails on pre-fix code where value is hardcoded "".
+    await waitFor(() => expect(input.value).toBe("0.55"));
+    expect(getDriverPayCardMock).toHaveBeenCalled();
   });
 });

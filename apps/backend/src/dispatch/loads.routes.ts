@@ -560,6 +560,67 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     }
   });
 
+  // WIZ-32 / WIZ-16 — the Book Load "Driver pay rate / mi" box is DISPLAY-ONLY. It must show the
+  // rate the driver will actually be paid, resolved from the SAME table settlement pays on
+  // (driver_finance.driver_pay_rates), so the caption "resolves automatically from the driver's
+  // profile rate card" is true instead of a contradiction. This is a pure READ: it posts nothing,
+  // overrides nothing, and the authoritative pay math stays in book-load.service.ts
+  // resolveDriverBasePayCents at booking time. Owner law: a 0 is a CLAIM the rate is zero; blank is
+  // an honest unknown — so no rate row (or a non-per-mile basis) returns has_rate/blank, never 0.
+  app.get("/api/v1/dispatch/driver-pay-card", { config: { rateLimit: { max: 240, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const query = z
+      .object({
+        operating_company_id: z.string().uuid(),
+        driver_id: z.string().uuid(),
+      })
+      .safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    try {
+      return await withCompanyScope(authUser.uuid, query.data.operating_company_id, async (client) => {
+        // Same active-row selection resolveDriverBasePayCents uses (book-load.service.ts): one row,
+        // most recent open effective range, scoped to this company + driver.
+        const res = await client.query<{
+          basis_type: string;
+          rate_per_mile_cents: string | null;
+          rate_empty_per_mile_cents: string | null;
+          flat_per_load_cents: string | null;
+        }>(
+          `
+            SELECT basis_type, rate_per_mile_cents::text, rate_empty_per_mile_cents::text, flat_per_load_cents::text
+              FROM driver_finance.driver_pay_rates
+             WHERE operating_company_id = $1::uuid
+               AND driver_id = $2::uuid
+               AND is_active
+               AND effective_to IS NULL
+             ORDER BY effective_from DESC
+             LIMIT 1
+          `,
+          [query.data.operating_company_id, query.data.driver_id]
+        );
+        const row = res.rows[0];
+        const toCents = (v: string | null | undefined) => (v == null || v === "" ? null : Number(v));
+        return {
+          has_rate: Boolean(row),
+          basis_type: row?.basis_type ?? null,
+          rate_per_mile_cents: row ? toCents(row.rate_per_mile_cents) : null,
+          rate_empty_per_mile_cents: row ? toCents(row.rate_empty_per_mile_cents) : null,
+          flat_per_load_cents: row ? toCents(row.flat_per_load_cents) : null,
+        };
+      });
+    } catch (err) {
+      req.log.warn({ err }, "driver_pay_card_lookup_failed");
+      return reply.code(503).send({
+        error: "driver_pay_card_lookup_failed",
+        message: "Could not load the driver's pay rate.",
+      });
+    }
+  });
+
   // GO-23 owner ruling 2026-09-02: deadhead is a TRIP property (this unit's actual last delivery
   // to this pickup), never a lane average. operating_company_id here is the NEW load's company,
   // used only for the membership check -- the historical search is deliberately cross-entity
