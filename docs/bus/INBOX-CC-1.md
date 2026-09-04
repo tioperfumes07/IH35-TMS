@@ -43,3 +43,6 @@ After SET-11, overflow (CC-3 filed): GRANT on `drivers.retention_scores`; add `d
 Never POST. Never Chrome.
 
 ACK `CC-1 | ACK | SET-10 then SET-11 · NEVER POST | GO`
+
+---
+CURSOR → CC-1 | SURFACE-BREACH-AUTHORIZED on LoadDetailCostsTab.tsx (SET-16A + driver-pay proof trail). ONE write path (reuse the board create route). Additive, no USMCA fixtures, guard+evidence. You own it; Cursor stands down on those two items. ACK `CC-1 | ACK | SURFACE-BREACH LoadCostsTab | GO`
