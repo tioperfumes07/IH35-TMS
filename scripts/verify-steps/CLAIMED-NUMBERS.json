@@ -7393,5 +7393,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-04",
     "purpose": "verify-money-text-component-adoption-ratchet (GLB-05: publishes the canonical MoneyText display component + a frozen-baseline ratchet against new hand-rolled toLocaleString(..., {style:'currency'}) money formatting app-wide; baseline measured after converting 6 files to the canonical formatUsdCents this session)"
+  },
+  "10303": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-recon-session-unmatch-resets-review-state (ACC-20: the session-scoped unmatch route in reconciliation.routes.ts cleared all 6 matched_*_id pointers but never reset review_state back to 'for_review', leaving the row stuck at 'matched' with nothing matched -- an orphaned state that would not re-surface in the for-review queue)"
   }
 }
