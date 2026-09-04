@@ -229,16 +229,44 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
     queryKey: ["maintenance", "fleet-table", "maint-status", operatingCompanyId],
     queryFn: () =>
       apiRequest<{
-        rows: Array<{ id: string; odometer_mi: number | null; next_due_odometer: number | null; open_wo_count: number }>;
+        rows: Array<{
+          id: string;
+          odometer_mi: number | null;
+          next_due_odometer: number | null;
+          open_wo_count: number;
+          work_order_id: string | null;
+          work_order_display_id: string | null;
+          in_shop_reason: string | null;
+          in_shop_since: string | null;
+          eta_back: string | null;
+        }>;
       }>(`/api/v1/maintenance/fleet-table/rows?operating_company_id=${encodeURIComponent(operatingCompanyId)}`),
     // Only fetch maintenance status when the columns are shown — /fleet never makes this call.
     enabled: Boolean(operatingCompanyId) && showMaintenanceColumns,
     staleTime: 60_000,
   });
   const maintByUnit = useMemo(() => {
-    const m: Record<string, { odometer_mi: number | null; next_due_odometer: number | null; open_wo_count: number }> = {};
+    const m: Record<string, {
+      odometer_mi: number | null;
+      next_due_odometer: number | null;
+      open_wo_count: number;
+      work_order_id: string | null;
+      work_order_display_id: string | null;
+      oos_reason: string | null;
+      oos_since: string | null;
+      estimated_completion_date: string | null;
+    }> = {};
     for (const r of maintStatusQuery.isError ? [] : maintStatusQuery.data?.rows ?? [])
-      m[r.id] = { odometer_mi: r.odometer_mi, next_due_odometer: r.next_due_odometer, open_wo_count: r.open_wo_count };
+      m[r.id] = {
+        odometer_mi: r.odometer_mi,
+        next_due_odometer: r.next_due_odometer,
+        open_wo_count: r.open_wo_count,
+        work_order_id: r.work_order_id,
+        work_order_display_id: r.work_order_display_id,
+        oos_reason: r.in_shop_reason,
+        oos_since: r.in_shop_since,
+        estimated_completion_date: r.eta_back,
+      };
     return m;
   }, [maintStatusQuery.data, maintStatusQuery.isError]);
 

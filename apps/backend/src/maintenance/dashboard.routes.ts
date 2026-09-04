@@ -427,10 +427,40 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         ? `(SELECT MIN(ps.next_due_odometer) FROM maintenance.pm_schedules ps
              WHERE ps.unit_id = u.id AND ps.is_active AND ps.next_due_odometer IS NOT NULL)`
         : `NULL::int`;
-      const woExpr = hasWo
-        ? `(SELECT COUNT(*) FROM maintenance.work_orders wo
-             WHERE wo.unit_id = u.id AND wo.voided_at IS NULL AND wo.status NOT IN ('complete', 'cancelled'))`
-        : `0`;
+      // FLT-IN-SHOP-CONTRACT — one authoritative condition row. A unit is in shop only when this
+      // entity has an OPEN work order for it. Reason/in-since/ETA and count are selected from that
+      // same work-order set; unit.status/is_oos are deliberately not competing sources of truth.
+      const woJoin = hasWo
+        ? `LEFT JOIN LATERAL (
+             SELECT
+               wo.id::text AS work_order_id,
+               wo.display_id AS work_order_display_id,
+               COALESCE(NULLIF(wo.repair_complaint, ''), NULLIF(wo.wo_title, ''), NULLIF(wo.description, '')) AS in_shop_reason,
+               COALESCE(wo.work_started_at, wo.opened_at, wo.created_at)::text AS in_shop_since,
+               estimate.estimated_completion_date::text AS eta_back,
+               COUNT(*) OVER ()::int AS open_wo_count
+             FROM maintenance.work_orders wo
+             LEFT JOIN LATERAL (
+               SELECT sre.estimated_completion_date
+               FROM maintenance.severe_repair_estimates sre
+               WHERE sre.trigger_wo_id = wo.id
+                 AND sre.operating_company_id = wo.operating_company_id
+                 AND sre.estimate_status IN ('open', 'awaiting_approval', 'approved')
+               ORDER BY sre.refreshed_at DESC NULLS LAST, sre.id
+               LIMIT 1
+             ) estimate ON TRUE
+             WHERE wo.unit_id = u.id
+               AND wo.operating_company_id = $1::uuid
+               AND wo.voided_at IS NULL
+               AND wo.status NOT IN ('complete', 'cancelled')
+             ORDER BY COALESCE(wo.work_started_at, wo.opened_at, wo.created_at) ASC, wo.id
+             LIMIT 1
+           ) in_shop ON TRUE`
+        : `LEFT JOIN LATERAL (
+             SELECT NULL::text AS work_order_id, NULL::text AS work_order_display_id,
+                    NULL::text AS in_shop_reason, NULL::text AS in_shop_since,
+                    NULL::text AS eta_back, 0::int AS open_wo_count
+           ) in_shop ON TRUE`;
       // §4 scope fix (same root cause as fleet-table/kpis above): scope by owner OR lessee, not
       // owner_company_id alone, so leased-in units' live maintenance status (odometer/next PM
       // due/open WO count) isn't silently dropped for TRANSP/USMCA.
@@ -451,8 +481,14 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
             u.samsara_vehicle_id,
             ${odoExpr} AS odometer_mi,
             ${pmExpr} AS next_due_odometer,
-            ${woExpr}::int AS open_wo_count
+            COALESCE(in_shop.open_wo_count, 0)::int AS open_wo_count,
+            in_shop.work_order_id,
+            in_shop.work_order_display_id,
+            in_shop.in_shop_reason,
+            in_shop.in_shop_since,
+            in_shop.eta_back
           FROM mdata.units u
+          ${woJoin}
           WHERE (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
             AND u.deactivated_at IS NULL
             AND ${excludeDemoPhantomSql("u.unit_number")}
