@@ -5347,6 +5347,11 @@
     "claimed_at": "2026-09-03",
     "purpose": "verify-cash-advance-reversal-guard-fires (CASH-ADV-F9930-REVERSE-GUARD-NEVER-BLOCKS, filed 2026-08-28: the reversal route's settlement-usage guard queried the nonexistent settlement_lines.liability_id column wrapped in a .catch swallowing to cnt=0 -- never blocked a reversal, ever; now blocks on driver_liabilities.paid_to_date > 0, the correct grain)"
   },
+  "10281": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-liability-balance-syncs-at-settlement-close (item 6/GO-22 B7: closeSettlementPayRun's advance-recovery loop only ever updated driver_advances.outstanding_balance -- the sibling driver_finance.driver_liabilities row was never synced, staying frozen forever and blinding CASH-ADV-F9930's paid_to_date-based reversal guard to the real recovery path)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
