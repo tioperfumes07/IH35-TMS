@@ -14,7 +14,7 @@ export function CreateWOSectionPaymentTiming({ register, watch, setValue }: Prop
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">Where &amp; How - drives the accounting auto-post</h3>
-      <div className="space-y-2 text-sm">
+      <div className="space-y-2 text-xs">
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <div className="space-y-1">
             <label className="text-[11px] font-semibold text-gray-600">Bill Terms</label>

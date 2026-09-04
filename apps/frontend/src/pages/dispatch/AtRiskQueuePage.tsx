@@ -196,7 +196,7 @@ export function AtRiskQueuePage() {
   );
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
   }
 
   return (
@@ -205,7 +205,7 @@ export function AtRiskQueuePage() {
         title="At-Risk / Late Queue"
         subtitle="Active dispatched, pickup, in-transit, or delivery loads with an at-risk or late ETA signal. Tile value equals this table's row count (union, not a sum)."
         actions={
-          <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-sm">
+          <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-xs">
             Dispatch Home
           </Link>
         }

@@ -110,7 +110,7 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="medical-cards-history-section">
       <div className="flex items-center justify-between gap-2">
-        <div><h2 className="text-sm font-semibold text-slate-900">DOT medical card history</h2><p className="mt-1 text-xs text-slate-600">Canonical active cards with company-scoped driver linkage.</p></div>
+        <div><h2 className="text-xs font-semibold text-slate-900">DOT medical card history</h2><p className="mt-1 text-xs text-slate-600">Canonical active cards with company-scoped driver linkage.</p></div>
         <Button size="sm" onClick={() => { setSelectedDriverId(driverId ?? ""); setOpen(true); }}>+ Add card</Button>
       </div>
       <div className="mt-3">

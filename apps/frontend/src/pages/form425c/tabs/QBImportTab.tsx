@@ -105,7 +105,7 @@ export function QBImportTab({
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
         <label className="text-xs font-semibold uppercase text-slate-600">
           Company
-          <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-sm normal-case" value={activeCompany} onChange={(e) => setActiveCompany(e.target.value as CompanyKey)}>
+          <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-xs normal-case" value={activeCompany} onChange={(e) => setActiveCompany(e.target.value as CompanyKey)}>
             {availableCompanies.map((k) => (
               <option key={k} value={k}>
                 {profiles[k].name || k}
@@ -115,7 +115,7 @@ export function QBImportTab({
         </label>
         <label className="text-xs font-semibold uppercase text-slate-600">
           Month
-          <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-sm normal-case" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
+          <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-xs normal-case" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
             {MONTHS.map((m, i) => (
               <option key={m} value={i}>
                 {m}
@@ -125,7 +125,7 @@ export function QBImportTab({
         </label>
         <label className="text-xs font-semibold uppercase text-slate-600">
           Year
-          <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-sm normal-case" value={year} onChange={(e) => setYear(Number(e.target.value))}>
+          <SelectCombobox className="mt-1 w-full rounded-sm border px-2 py-1.5 text-xs normal-case" value={year} onChange={(e) => setYear(Number(e.target.value))}>
             {YEARS.map((y) => (
               <option key={y} value={y}>
                 {y}
@@ -148,12 +148,12 @@ export function QBImportTab({
       />
 
       <div className="flex gap-2">
-        <button type="button" className="rounded-sm bg-slate-800 px-3 py-2 text-sm font-semibold text-white" onClick={parseIncomeDeposits}>
+        <button type="button" className="rounded-sm bg-slate-800 px-3 py-2 text-xs font-semibold text-white" onClick={parseIncomeDeposits}>
           Parse Income Deposits
         </button>
         <button
           type="button"
-          className="rounded-sm bg-slate-600 px-3 py-2 text-sm font-semibold text-white"
+          className="rounded-sm bg-slate-600 px-3 py-2 text-xs font-semibold text-white"
           onClick={() => {
             if (!parsed.length) {
               pushToast("Parse Income Deposits before applying to Line 20", "error");

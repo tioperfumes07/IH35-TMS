@@ -284,10 +284,10 @@ export function VehicleProfilePage() {
         {unit ? <MissingRequiredChip operatingCompanyId={companyId} entityKind="unit" entityId={id} /> : null}
       </div>
       {companyLoading && !companyId ? (
-        <p className="text-sm text-slate-500">Loading company context…</p>
+        <p className="text-xs text-slate-500">Loading company context…</p>
       ) : null}
       {!companyLoading && !companyId ? (
-        <p className="text-sm text-red-600">Select an operating company to load this unit.</p>
+        <p className="text-xs text-red-600">Select an operating company to load this unit.</p>
       ) : null}
       {profileQuery.isError ? (
         <ListErrorState
@@ -298,10 +298,10 @@ export function VehicleProfilePage() {
         />
       ) : null}
       {canFetchProfile && profileQuery.isPending && !profileQuery.isError ? (
-        <p className="text-sm text-slate-500">Loading unit profile…</p>
+        <p className="text-xs text-slate-500">Loading unit profile…</p>
       ) : null}
       {canFetchProfile && !profileQuery.isPending && !profileQuery.isError && !profile ? (
-        <p className="text-sm text-slate-500">Unit not found for the selected company.</p>
+        <p className="text-xs text-slate-500">Unit not found for the selected company.</p>
       ) : null}
 
       {profile ? (
@@ -535,7 +535,7 @@ export function VehicleProfilePage() {
           <div data-testid="vp-section-10m-tire-program">
             <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-linked-ops-report">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold text-slate-900">Unit operations report</h3>
+                <h3 className="text-xs font-semibold text-slate-900">Unit operations report</h3>
                 <button type="button" className="text-xs font-semibold text-slate-700 underline" onClick={() => window.print()}>
                   Print this report
                 </button>
@@ -567,7 +567,7 @@ export function VehicleProfilePage() {
               onArchive={handleArchive}
             />
             <div className="mt-3">
-              <EntityLink kind="unit_detail_finance" id={id} label="View Permits, Toll Tags, Tasks, Brakes, Tires, Finance Linkage" className="inline-block rounded-sm border px-3 py-1.5 text-sm" />
+              <EntityLink kind="unit_detail_finance" id={id} label="View Permits, Toll Tags, Tasks, Brakes, Tires, Finance Linkage" className="inline-block rounded-sm border px-3 py-1.5 text-xs" />
             </div>
           </div>
           <div data-testid="vp-section-11b-linked-bank-txns">
@@ -578,7 +578,7 @@ export function VehicleProfilePage() {
             />
           </div>
           <div data-testid="vp-section-12-audit-history" className="rounded-sm border border-gray-200 bg-white p-4">
-            <h3 className="mb-2 text-sm font-semibold text-slate-900">Audit History</h3>
+            <h3 className="mb-2 text-xs font-semibold text-slate-900">Audit History</h3>
             <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="unit" entityId={id} />
           </div>
         </>
@@ -611,7 +611,7 @@ export function VehicleProfilePage() {
         </label> : null}
         <label className="block text-xs text-gray-600">
           Class (TMS catalog)
-          <SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" value={qboClassTmsId} disabled={classesQuery.isError} onChange={(e) => setQboClassTmsId(e.target.value)}>
+          <SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" value={qboClassTmsId} disabled={classesQuery.isError} onChange={(e) => setQboClassTmsId(e.target.value)}>
             <option value="">None</option>
             {(classesQuery.data?.classes ?? []).map((c) => (
               <option key={c.id} value={c.id}>

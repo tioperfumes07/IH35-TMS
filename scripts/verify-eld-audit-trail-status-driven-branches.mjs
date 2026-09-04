@@ -16,7 +16,7 @@ const FILE = "apps/frontend/src/pages/safety/eld/EldAuditTrailViewer.tsx";
 function inspect(source) {
   const failures = [];
 
-  if (!/driverUuid && historyQuery\.isPending \? <p className="text-sm text-gray-500">Loading edit history…<\/p> : null/.test(source)) {
+  if (!/driverUuid && historyQuery\.isPending \? <p className="text-xs text-gray-500">Loading edit history…<\/p> : null/.test(source)) {
     failures.push("loading branch no longer gated on historyQuery.isPending");
   }
   if (!/driverUuid && historyQuery\.isSuccess \? \(/.test(source)) {
@@ -41,8 +41,8 @@ if (process.argv.includes("--selftest")) {
   }
   const mutated = real
     .replace(
-      '{driverUuid && historyQuery.isPending ? <p className="text-sm text-gray-500">Loading edit history…</p> : null}',
-      '{historyQuery.isLoading ? <p className="text-sm text-gray-500">Loading edit history…</p> : null}',
+      '{driverUuid && historyQuery.isPending ? <p className="text-xs text-gray-500">Loading edit history…</p> : null}',
+      '{historyQuery.isLoading ? <p className="text-xs text-gray-500">Loading edit history…</p> : null}',
     )
     .replace(
       "{driverUuid && historyQuery.isSuccess ? (",

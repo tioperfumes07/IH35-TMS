@@ -485,13 +485,13 @@ export function TireProgramPage() {
           </section>
         </div>
       ) : (
-        <div className="rounded-sm border border-dashed border-gray-300 p-6 text-sm text-gray-500">
+        <div className="rounded-sm border border-dashed border-gray-300 p-6 text-xs text-gray-500">
           Select a unit or trailer to view its tire layout and history.
         </div>
       )}
 
       <Modal variant="drawer" open={mountOpen} onClose={() => setMountOpen(false)} title="+ Create Tire Record">
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           <label className="block text-xs">
             Position
             <select
@@ -558,7 +558,7 @@ export function TireProgramPage() {
       </Modal>
 
       <Modal variant="drawer" open={brandOpen} onClose={() => setBrandOpen(false)} title="+ Create Brand">
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           <label className="block text-xs">
             Brand name
             <input
@@ -590,7 +590,7 @@ export function TireProgramPage() {
         title={action === "rotate" ? "Rotate tire" : action === "replace" ? "Replace tire" : "Tread depth audit"}
       >
         {action === "rotate" ? (
-          <div className="space-y-3 text-sm">
+          <div className="space-y-3 text-xs">
             <label className="block text-xs">
               To position
               <select
@@ -622,7 +622,7 @@ export function TireProgramPage() {
           </div>
         ) : null}
         {action === "replace" ? (
-          <div className="space-y-3 text-sm">
+          <div className="space-y-3 text-xs">
             <label className="block text-xs">
               New serial number
               <input
@@ -653,7 +653,7 @@ export function TireProgramPage() {
           </div>
         ) : null}
         {action === "tread" ? (
-          <div className="space-y-3 text-sm">
+          <div className="space-y-3 text-xs">
             <label className="block text-xs">
               Tread depth (32nds)
               <input

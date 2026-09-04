@@ -36,7 +36,7 @@ export function TasksModuleTabs() {
                 key={tab.id}
                 onClick={() => navigate(tab.to)}
                 className={[
-                  "whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium",
+                  "whitespace-nowrap border-b-2 px-1 py-3 text-xs font-medium",
                   isActive
                     ? "border-slate-800 text-slate-900"
                     : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
@@ -56,7 +56,7 @@ export function TasksModuleTabs() {
             }
             setCreateOpen(true);
           }}
-          className="mb-1 rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
+          className="mb-1 rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-800 hover:bg-gray-50"
         >
           + Create Task
         </button>

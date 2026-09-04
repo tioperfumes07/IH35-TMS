@@ -552,7 +552,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       {listState.isError ? (
         <ListErrorState status={0} message="The company fleet roster could not be loaded." onRetry={() => void rowsQuery.refetch()} />
       ) : listState.isEmpty ? (
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
           <div className="font-semibold">{hasActiveFilter ? "No fleet rows match this filter" : "No fleet rows yet"}</div>
           <div className="mt-1 text-xs">
             {kindFilter === "company"

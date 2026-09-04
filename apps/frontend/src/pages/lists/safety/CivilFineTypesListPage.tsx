@@ -70,7 +70,7 @@ export function CivilFineTypesListPage() {
       />
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
-        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
+        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
         <CatalogStatusFilterCombobox value={statusFilter} onChange={setStatusFilter} />
       </div>
 

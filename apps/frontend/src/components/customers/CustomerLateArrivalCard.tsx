@@ -51,7 +51,7 @@ export function CustomerLateArrivalCard({ operatingCompanyId, customerId }: Prop
 
   if (query.isLoading) {
     return (
-      <div data-testid="customer-late-arrival-card" className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-500">
+      <div data-testid="customer-late-arrival-card" className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-500">
         Loading late-arrival rate…
       </div>
     );
@@ -72,7 +72,7 @@ export function CustomerLateArrivalCard({ operatingCompanyId, customerId }: Prop
 
   if (!query.data) {
     return (
-      <div data-testid="customer-late-arrival-card" className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-500">
+      <div data-testid="customer-late-arrival-card" className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-500">
         No late-arrival data for this period.
       </div>
     );

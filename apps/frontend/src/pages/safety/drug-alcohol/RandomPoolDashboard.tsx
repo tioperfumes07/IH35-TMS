@@ -165,7 +165,7 @@ export function RandomPoolDashboard({ companyId }: Props) {
     <section className="rounded-lg border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900">Random Pool Draws</h2>
+          <h2 className="text-xs font-semibold text-slate-900">Random Pool Draws</h2>
           <p className="mt-0.5 text-[11px] text-slate-500">
             FMCSA §382.305 — 10% drug / 10% alcohol quarterly minimum
           </p>

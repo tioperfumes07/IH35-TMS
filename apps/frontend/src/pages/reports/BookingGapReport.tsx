@@ -162,7 +162,7 @@ export function BookingGapReport() {
         </label>
       </CollapsedListFilters>
 
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-xs text-gray-500 mb-4">
         Average time between load delivery and next truck assignment. Lower is better (driver stays
         productive). Excludes gaps &gt;24h (weekends/planned downtime).
       </p>

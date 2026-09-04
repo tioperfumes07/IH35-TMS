@@ -157,7 +157,7 @@ export function OperationsHistoryTable({ driverId, operatingCompanyId, subView, 
     <div className="space-y-2" data-testid={`driver-operations-${subView}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+          <h3 className="text-xs font-semibold text-gray-900">{title}</h3>
           {description ? <p className="text-xs text-gray-600">{description}</p> : null}
         </div>
         <span className="rounded-sm bg-gray-100 px-2 py-1 text-xs text-gray-600">{total} record(s)</span>

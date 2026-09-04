@@ -16,10 +16,10 @@ export default function DriverSafetyProfilePage() {
     enabled: Boolean(companyId && driverId),
   });
 
-  if (!companyId) return <p className="text-sm text-slate-600">Select an operating company to load this driver safety profile.</p>;
-  if (query.isLoading) return <p className="text-sm text-slate-600">Loading driver safety profile…</p>;
+  if (!companyId) return <p className="text-xs text-slate-600">Select an operating company to load this driver safety profile.</p>;
+  if (query.isLoading) return <p className="text-xs text-slate-600">Loading driver safety profile…</p>;
   if (query.isError) return <ListErrorState title="Couldn't load driver safety profile" status={query.error instanceof ApiError ? query.error.status : 0} message={(query.error as Error).message} onRetry={() => void query.refetch()} />;
-  if (!query.data) return <p className="text-sm text-slate-600">Driver safety profile not found.</p>;
+  if (!query.data) return <p className="text-xs text-slate-600">Driver safety profile not found.</p>;
 
   const { driver, medical_card: medical, training_records: training } = query.data;
   const dqMissingCount = [driver.cdl_number, driver.cdl_expires_at, medical.expiration].filter((value) => !value).length;

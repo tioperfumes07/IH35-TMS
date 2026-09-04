@@ -263,7 +263,7 @@ export function FuelReconciliationPage() {
           </div>
         }
       />
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockVPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
       <CollapsedListFilters
@@ -287,7 +287,7 @@ export function FuelReconciliationPage() {
         </div>
       </CollapsedListFilters>
 
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
 
       {query.data ? (
         <>
@@ -322,10 +322,10 @@ export function FuelReconciliationPage() {
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="no-print mb-2 flex gap-2 border-b border-gray-100 pb-2">
-              <button type="button" className={`text-sm font-semibold ${tab === "card" ? "text-slate-700" : "text-gray-500"}`} onClick={() => setTab("card")}>
+              <button type="button" className={`text-xs font-semibold ${tab === "card" ? "text-slate-700" : "text-gray-500"}`} onClick={() => setTab("card")}>
                 Unmatched Card Transactions
               </button>
-              <button type="button" className={`text-sm font-semibold ${tab === "wo" ? "text-slate-700" : "text-gray-500"}`} onClick={() => setTab("wo")}>
+              <button type="button" className={`text-xs font-semibold ${tab === "wo" ? "text-slate-700" : "text-gray-500"}`} onClick={() => setTab("wo")}>
                 Unmatched WO Entries
               </button>
             </div>
@@ -378,13 +378,13 @@ export function FuelReconciliationPage() {
       ) : null}
 
       <Modal open={matchOpen} onClose={() => setMatchOpen(false)} title="Manual match (link)">
-        <p className="text-sm text-gray-600">
+        <p className="text-xs text-gray-600">
           Pair a card line to a WO entry. Persistence ships with the Block V matcher service — saving is
           disabled until that POST exists (no fake success).
         </p>
         <label className="mt-2 block text-xs text-gray-600">
           Notes
-          <textarea className="mt-1 w-full rounded-sm border border-gray-300 p-2 text-sm" rows={3} value={matchNote} onChange={(e) => setMatchNote(e.target.value)} />
+          <textarea className="mt-1 w-full rounded-sm border border-gray-300 p-2 text-xs" rows={3} value={matchNote} onChange={(e) => setMatchNote(e.target.value)} />
         </label>
         <div className="mt-3 flex justify-end gap-2">
           <Button variant="secondary" onClick={() => setMatchOpen(false)}>

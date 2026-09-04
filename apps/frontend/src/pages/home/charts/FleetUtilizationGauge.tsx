@@ -25,7 +25,7 @@ export function FleetUtilizationGauge({ operatingCompanyId }: Props) {
   });
 
   if (!cid) {
-    return <div className="text-sm text-slate-500">Select a company to view fleet utilization.</div>;
+    return <div className="text-xs text-slate-500">Select a company to view fleet utilization.</div>;
   }
 
   if (query.isLoading) {
@@ -44,8 +44,8 @@ export function FleetUtilizationGauge({ operatingCompanyId }: Props) {
   if (Number(d.total_units) <= 0) {
     return (
       <div className="home-recharts-print w-full">
-        <h3 className="mb-2 text-sm font-semibold text-slate-900">Fleet utilization</h3>
-        <div className="flex h-[260px] items-center justify-center rounded-sm border border-dashed border-slate-200 text-sm text-slate-500">
+        <h3 className="mb-2 text-xs font-semibold text-slate-900">Fleet utilization</h3>
+        <div className="flex h-[260px] items-center justify-center rounded-sm border border-dashed border-slate-200 text-xs text-slate-500">
           No active units for this company.
         </div>
       </div>
@@ -62,7 +62,7 @@ export function FleetUtilizationGauge({ operatingCompanyId }: Props) {
 
   return (
     <div className="home-recharts-print relative w-full">
-      <h3 className="mb-2 text-sm font-semibold text-slate-900">Fleet utilization</h3>
+      <h3 className="mb-2 text-xs font-semibold text-slate-900">Fleet utilization</h3>
       <ResponsiveContainer width="100%" height={260}>
         <PieChart>
           <Pie data={pieData} dataKey="value" cx="50%" cy="50%" innerRadius={68} outerRadius={92} startAngle={90} endAngle={-270} stroke="none">

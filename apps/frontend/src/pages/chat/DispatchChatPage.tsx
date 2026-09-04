@@ -106,7 +106,7 @@ export function DispatchChatPage() {
     <div className="flex h-full flex-col" data-testid="dispatch-chat-page">
       <PageHeader title="Dispatch Chat" subtitle="Per-load driver ↔ office communication" />
       {!companyId ? (
-        <p className="p-4 text-sm text-slate-700" data-testid="dispatch-chat-need-company">
+        <p className="p-4 text-xs text-slate-700" data-testid="dispatch-chat-need-company">
           Select an operating company to load entity-scoped chat threads.
         </p>
       ) : (
@@ -121,9 +121,9 @@ export function DispatchChatPage() {
           {/* Thread list */}
           <aside className="flex w-72 flex-col overflow-y-auto rounded-sm border border-slate-200">
             {threadsQuery.isLoading ? (
-              <p className="p-3 text-sm text-slate-500">Loading…</p>
+              <p className="p-3 text-xs text-slate-500">Loading…</p>
             ) : threads.length === 0 && !threadsQuery.isError ? (
-              <p className="p-3 text-sm text-slate-700" data-testid="dispatch-chat-threads-honest-empty">
+              <p className="p-3 text-xs text-slate-700" data-testid="dispatch-chat-threads-honest-empty">
                 No chats for this company yet. Threads appear when you message a load&apos;s driver from dispatch (or a
                 driver opens a direct thread). Empty is expected until the first thread is created.
               </p>
@@ -135,7 +135,7 @@ export function DispatchChatPage() {
                     key={t.id}
                     type="button"
                     onClick={() => setActiveThreadId(t.id)}
-                    className={`border-b border-slate-100 px-3 py-2 text-left text-sm ${active ? "bg-slate-100 text-[#1f2a44]" : "text-slate-700 hover:bg-slate-50"}`}
+                    className={`border-b border-slate-100 px-3 py-2 text-left text-xs ${active ? "bg-slate-100 text-[#1f2a44]" : "text-slate-700 hover:bg-slate-50"}`}
                   >
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{threadLabel(t)}</span>
@@ -155,10 +155,10 @@ export function DispatchChatPage() {
           {/* Message pane */}
           <section className="flex min-w-0 flex-1 flex-col rounded-sm border border-slate-200">
             {!activeThread ? (
-              <div className="flex flex-1 items-center justify-center text-sm text-slate-400">Select a thread</div>
+              <div className="flex flex-1 items-center justify-center text-xs text-slate-400">Select a thread</div>
             ) : (
               <>
-                <div className="border-b border-slate-200 px-4 py-2 text-sm font-semibold text-[#1f2a44]">{threadLabel(activeThread)}</div>
+                <div className="border-b border-slate-200 px-4 py-2 text-xs font-semibold text-[#1f2a44]">{threadLabel(activeThread)}</div>
                 {archived ? (
                   <div className="bg-slate-50 px-4 py-1 text-xs text-slate-500">Archived — load closed, read-only</div>
                 ) : null}
@@ -172,7 +172,7 @@ export function DispatchChatPage() {
                   {messages.map((m) => {
                     const dollars = m.cash_advance_amount_cents != null ? `$${(m.cash_advance_amount_cents / 100).toFixed(2)}` : "";
                     return (
-                      <div key={m.id} className="text-sm">
+                      <div key={m.id} className="text-xs">
                         <span className="mr-2 text-xs text-slate-400">#{m.seq} · {fmtTime(m.server_ts)} · {m.sender_party_type}</span>
                         {m.status === "tombstoned" ? (
                           <span className="italic text-slate-400">message removed</span>
@@ -209,7 +209,7 @@ export function DispatchChatPage() {
                       </div>
                     );
                   })}
-                  {messages.length === 0 && !messagesQuery.isError ? <p className="text-sm text-slate-400">No messages yet.</p> : null}
+                  {messages.length === 0 && !messagesQuery.isError ? <p className="text-xs text-slate-400">No messages yet.</p> : null}
                 </div>
                 <div className="flex gap-2 border-t border-slate-200 p-3">
                   <textarea
@@ -217,7 +217,7 @@ export function DispatchChatPage() {
                     onChange={(e) => setDraft(e.target.value)}
                     rows={2}
                     placeholder="Message the driver…"
-                    className="flex-1 resize-none rounded-sm border border-slate-300 px-2 py-1 text-sm focus:border-[#1f2a44] focus:outline-hidden"
+                    className="flex-1 resize-none rounded-sm border border-slate-300 px-2 py-1 text-xs focus:border-[#1f2a44] focus:outline-hidden"
                   />
                   <div className="flex flex-col gap-1 self-end">
                     <input
@@ -237,7 +237,7 @@ export function DispatchChatPage() {
                       type="button"
                       disabled={composerBusy || archived}
                       onClick={() => fileInputRef.current?.click()}
-                      className="rounded-sm border border-slate-300 px-3 py-1.5 text-sm font-semibold text-[#1f2a44] disabled:opacity-40"
+                      className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-semibold text-[#1f2a44] disabled:opacity-40"
                     >
                       {attachMutation.isPending ? "Uploading…" : "Attach"}
                     </button>
@@ -245,7 +245,7 @@ export function DispatchChatPage() {
                       type="button"
                       disabled={!draft.trim() || composerBusy || archived}
                       onClick={() => sendMutation.mutate({ body: draft.trim() })}
-                      className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+                      className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
                     >
                       Send
                     </button>

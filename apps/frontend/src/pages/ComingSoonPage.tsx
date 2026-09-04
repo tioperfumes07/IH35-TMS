@@ -28,7 +28,7 @@ export function ComingSoonPage({ feature: featureProp, phase: phaseProp, eta: et
     <div className="space-y-4">
       <PageHeader title={feature} subtitle={subtitle} />
       <DataPanel title="Roadmap note">
-        <div className="text-sm text-gray-600">
+        <div className="text-xs text-gray-600">
           {roadmapText}
         </div>
       </DataPanel>

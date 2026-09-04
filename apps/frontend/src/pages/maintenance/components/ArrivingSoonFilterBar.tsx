@@ -47,7 +47,7 @@ export function ArrivingSoonFilterBar({
         <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
           <label className="space-y-1">
             <span className="text-gray-600">Within next</span>
-            <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" value={draft.withinHours} onChange={(e) => staged.setDraft({ ...draft, withinHours: Number(e.target.value) })}>
+            <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={draft.withinHours} onChange={(e) => staged.setDraft({ ...draft, withinHours: Number(e.target.value) })}>
               <option value={24}>24h</option>
               <option value={48}>48h</option>
               <option value={168}>7 days</option>
@@ -56,7 +56,7 @@ export function ArrivingSoonFilterBar({
           <label className="space-y-1">
             <span className="text-gray-600">Severity</span>
             <SelectCombobox
-              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={draft.severityMin}
               onChange={(e) => staged.setDraft({ ...draft, severityMin: e.target.value as "info" | "warning" | "severe" })}
             >
@@ -65,11 +65,11 @@ export function ArrivingSoonFilterBar({
               <option value="severe">Severe only</option>
             </SelectCombobox>
           </label>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-xs">
             <input type="checkbox" checked={draft.includeAlreadyArrived} onChange={(e) => staged.setDraft({ ...draft, includeAlreadyArrived: e.target.checked })} />
             Include already-arrived
           </label>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-xs">
             <input type="checkbox" checked={draft.includeNonYard} onChange={(e) => staged.setDraft({ ...draft, includeNonYard: e.target.checked })} />
             Include non-yard destinations
           </label>

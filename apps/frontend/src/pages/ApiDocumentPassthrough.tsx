@@ -12,5 +12,5 @@ export function ApiDocumentPassthrough() {
   useEffect(() => {
     window.location.replace(resolveApiUrl(`${loc.pathname}${loc.search}`));
   }, [loc.pathname, loc.search]);
-  return <p className="p-4 text-sm text-slate-600">Opening document…</p>;
+  return <p className="p-4 text-xs text-slate-600">Opening document…</p>;
 }

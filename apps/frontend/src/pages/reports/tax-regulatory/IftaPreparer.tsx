@@ -101,7 +101,7 @@ export function IftaPreparer() {
         breadcrumb={["Reports", "IFTA Quarterly Preparer"]}
       />
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
 
       <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
         Tax filing prep only — no ledger posting. Rates sourced from the IFTA tax matrix catalog (annual updates).

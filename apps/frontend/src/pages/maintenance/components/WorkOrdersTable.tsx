@@ -231,7 +231,7 @@ export function WorkOrdersTable({
             <label className="space-y-1 text-xs text-gray-600">
               <span>Source type</span>
               <SelectCombobox
-                className="min-h-12 w-full rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+                className="min-h-12 w-full rounded-sm border border-gray-300 px-2 text-xs sm:h-9 sm:min-h-0"
                 value={staged.draft.sourceTypeFilter}
                 onChange={(e) => staged.setDraft({ ...staged.draft, sourceTypeFilter: e.target.value })}
               >

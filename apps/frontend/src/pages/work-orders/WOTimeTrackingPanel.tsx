@@ -220,7 +220,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
   const entriesErr = entriesQuery.error as { status?: number; message?: string } | null;
 
   return (
-    <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm" data-testid="wo-time-tracking-panel">
+    <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs" data-testid="wo-time-tracking-panel">
       <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Labor time tracking</div>
       <p className="mt-1 text-xs text-slate-600">Start/stop timers or add manual ranges. Rates drive computed labor cost.</p>
 
@@ -336,7 +336,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
 
       {/* MAINT-MONEY-F6626 — canonical QBO money chrome, replaces the native window.prompt(). */}
       <Modal open={rateEdit != null} onClose={() => setRateEdit(null)} title="Edit labor rate">
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           <label className="block">
             Labor rate ($/hr)
             {/* cents-mode: user types dollars, labor_rate_cents_per_hour stored unchanged. */}

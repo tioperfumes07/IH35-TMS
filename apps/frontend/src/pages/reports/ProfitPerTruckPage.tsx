@@ -308,7 +308,7 @@ export function ProfitPerTruckPage() {
         }
       />
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
       <CollapsedListFilters
@@ -354,7 +354,7 @@ export function ProfitPerTruckPage() {
         </div>
       </CollapsedListFilters>
 
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
 
       {t ? (
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
@@ -377,7 +377,7 @@ export function ProfitPerTruckPage() {
           ).map(([label, val]) => (
             <div key={label} className="rounded-sm border border-gray-200 bg-white px-2 py-2">
               <div className="text-[11px] font-semibold uppercase text-gray-500">{label}</div>
-              <div className="text-sm font-semibold leading-tight">{val}</div>
+              <div className="text-xs font-semibold leading-tight">{val}</div>
             </div>
           ))}
         </div>
@@ -397,7 +397,7 @@ export function ProfitPerTruckPage() {
           />
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-semibold">Top 10 trucks by per-mile metrics</div>
+            <div className="mb-2 text-xs font-semibold">Top 10 trucks by per-mile metrics</div>
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={perMileChart} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>

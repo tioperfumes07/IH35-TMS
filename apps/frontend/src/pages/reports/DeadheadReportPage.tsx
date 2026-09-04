@@ -122,7 +122,7 @@ export function DeadheadReportPage() {
       />
       <ReportsSubNav />
 
-      {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select operating company.</p> : null}
 
       <CollapsedListFilters
         activeFilterCount={appliedPeriod !== "last_4_weeks" ? 1 : 0}
@@ -136,7 +136,7 @@ export function DeadheadReportPage() {
         <label className="text-xs text-gray-600">
           Period
           <SelectCombobox
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={staged.draft.period}
             onChange={(e) => staged.setDraft({ period: e.target.value as DeadheadPeriod })}
           >
@@ -171,10 +171,10 @@ export function DeadheadReportPage() {
 
           {best && worst && best.unit_id !== worst.unit_id ? (
             <div className="grid gap-3 md:grid-cols-2">
-              <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-3 text-sm">
+              <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-3 text-xs">
                 Best performer: <EntityLink kind="unit" id={best.unit_id} label={entityLabel(best.unit_number, best.unit_id, "Unit")} className="font-semibold" /> at {pct(best.deadhead_pct)} deadhead
               </div>
-              <div className="rounded-sm border border-rose-200 bg-rose-50 p-3 text-sm">
+              <div className="rounded-sm border border-rose-200 bg-rose-50 p-3 text-xs">
                 Needs attention: <EntityLink kind="unit" id={worst.unit_id} label={entityLabel(worst.unit_number, worst.unit_id, "Unit")} className="font-semibold" /> at {pct(worst.deadhead_pct)} deadhead
               </div>
             </div>
@@ -193,7 +193,7 @@ export function DeadheadReportPage() {
 
           {selectedUnitId && trend.length > 0 ? (
             <div className="rounded-sm border border-gray-200 bg-white p-4">
-              <h3 className="mb-2 text-sm font-semibold text-gray-800">Weekly deadhead trend</h3>
+              <h3 className="mb-2 text-xs font-semibold text-gray-800">Weekly deadhead trend</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={trend}>

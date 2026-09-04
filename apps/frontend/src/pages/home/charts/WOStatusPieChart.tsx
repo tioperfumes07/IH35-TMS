@@ -71,7 +71,7 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
   });
 
   if (!cid) {
-    return <div className="text-sm text-slate-500">Select a company to view work order status.</div>;
+    return <div className="text-xs text-slate-500">Select a company to view work order status.</div>;
   }
 
   if (query.isLoading) {
@@ -90,8 +90,8 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
   if (total === 0) {
     return (
       <div className="home-recharts-print w-full">
-        <h3 className="mb-2 text-sm font-semibold text-slate-900">Work orders by status</h3>
-        <div className="flex h-[260px] items-center justify-center rounded-sm border border-dashed border-slate-200 text-sm text-slate-500">
+        <h3 className="mb-2 text-xs font-semibold text-slate-900">Work orders by status</h3>
+        <div className="flex h-[260px] items-center justify-center rounded-sm border border-dashed border-slate-200 text-xs text-slate-500">
           No open work orders.
         </div>
         <LinkedEconomicsFooter linkedEconomics={linkedEconomics} />
@@ -108,7 +108,7 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
 
   return (
     <div className="home-recharts-print w-full">
-      <h3 className="mb-2 text-sm font-semibold text-slate-900">Work orders by status</h3>
+      <h3 className="mb-2 text-xs font-semibold text-slate-900">Work orders by status</h3>
       <ResponsiveContainer width="100%" height={260}>
         <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
           <Pie

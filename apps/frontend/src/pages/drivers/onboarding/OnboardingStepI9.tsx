@@ -21,7 +21,7 @@ export function OnboardingStepI9({
 }: I9StepProps) {
   return (
     <div data-testid="onboarding-step-i9" className="space-y-4">
-      <label className="flex items-start gap-2 text-sm">
+      <label className="flex items-start gap-2 text-xs">
         <input
           type="checkbox"
           checked={section1Completed}

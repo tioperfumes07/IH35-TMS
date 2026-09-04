@@ -297,17 +297,17 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
               <div key={card.label} className="rounded-lg border border-gray-200 bg-white px-4 py-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{card.label}</p>
                 <div className="mt-1 flex items-center justify-between">
-                  <span className="text-sm text-gray-600">
+                  <span className="text-xs text-gray-600">
                     Proj: <strong>{formatCents(card.projected)}</strong>
                   </span>
-                  <span className="text-sm text-gray-600">
+                  <span className="text-xs text-gray-600">
                     Act: <strong>{formatCents(card.actual)}</strong>
                   </span>
                 </div>
                 <div className={`mt-1 flex items-center gap-1 text-base font-bold ${pos ? "text-slate-700" : "text-red-700"}`}>
                   {pos ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                   {formatCents(varCents, { sign: true })}
-                  <span className="ml-1 text-sm font-medium">{formatPct(card.pct)}</span>
+                  <span className="ml-1 text-xs font-medium">{formatPct(card.pct)}</span>
                 </div>
               </div>
             );

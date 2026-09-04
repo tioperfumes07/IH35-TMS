@@ -111,7 +111,7 @@ function customerQualityRating(paymentScore: string | null | undefined, overallF
 
 function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-gray-100 py-1.5 text-sm last:border-b-0">
+    <div className="flex items-start justify-between gap-3 border-b border-gray-100 py-1.5 text-xs last:border-b-0">
       <span className="shrink-0 text-xs font-semibold text-gray-500">{label}</span>
       <span className="min-w-0 break-words text-right text-gray-800">{value ?? "—"}</span>
     </div>
@@ -133,7 +133,7 @@ function CustomerDetailsTab({
   return (
     <div className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">Customer details</h3>
+        <h3 className="text-xs font-semibold text-gray-900">Customer details</h3>
         {/* CUST-CHROME-02: same Button secondary chrome as list-header Edit (not ActionButton link). */}
         <Button type="button" variant="secondary" className="h-8" onClick={onEdit} data-testid="customer-details-edit">
           Edit
@@ -336,7 +336,7 @@ function CustomerNotesTab({ customer, onEdit }: { customer: Customer; onEdit: ()
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="customer-notes-tab">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">Customer notes</h3>
+          <h3 className="text-xs font-semibold text-gray-900">Customer notes</h3>
           <p className="text-xs text-gray-500">Notes saved on this customer profile.</p>
         </div>
         <Button type="button" variant="secondary" className="h-8" onClick={onEdit}>
@@ -344,9 +344,9 @@ function CustomerNotesTab({ customer, onEdit }: { customer: Customer; onEdit: ()
         </Button>
       </div>
       {notes ? (
-        <p className="whitespace-pre-wrap text-sm text-gray-800">{notes}</p>
+        <p className="whitespace-pre-wrap text-xs text-gray-800">{notes}</p>
       ) : (
-        <p className="text-sm text-gray-500">No notes recorded for this customer.</p>
+        <p className="text-xs text-gray-500">No notes recorded for this customer.</p>
       )}
     </section>
   );
@@ -361,7 +361,7 @@ const COMING_STATE_COPY: Partial<Record<CustomerTabId, string>> = {
 function CustomerTabComingState({ tab, label }: { tab: CustomerTabId; label: string }) {
   return (
     <div className="rounded-sm border border-dashed border-gray-300 bg-white p-6 text-center">
-      <p className="text-sm font-semibold text-gray-700">{label}</p>
+      <p className="text-xs font-semibold text-gray-700">{label}</p>
       <p className="mx-auto mt-1 max-w-md text-xs text-gray-500">
         {COMING_STATE_COPY[tab] ?? "No data source wired yet — flagged as a follow-up."}
       </p>
@@ -884,7 +884,7 @@ export function CustomersPage() {
   return (
     <div className="space-y-3">
       {viewModeSaveError && (
-        <div role="alert" data-view-mode-save-error="customers" className="flex items-center justify-between gap-3 rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+        <div role="alert" data-view-mode-save-error="customers" className="flex items-center justify-between gap-3 rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
           <span>{viewModeSaveError}</span>
           <button type="button" className="font-semibold underline" onClick={retryViewModeSave}>Retry save</button>
         </div>
@@ -1028,7 +1028,7 @@ export function CustomersPage() {
                   <div className="mb-2 flex items-center justify-between">
                     <div>
                       <h2 className="text-lg font-semibold text-gray-900">{selectedCustomer.name}</h2>
-                      <p className="text-sm text-gray-500">{selectedCustomer.customer_code || "Customer"} — {selectedCustomer.customer_type ?? "Type not set"}</p>
+                      <p className="text-xs text-gray-500">{selectedCustomer.customer_code || "Customer"} — {selectedCustomer.customer_type ?? "Type not set"}</p>
                       <div className="mt-1 flex items-center gap-2">
                         <span
                           className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
@@ -1065,7 +1065,7 @@ export function CustomersPage() {
                       </Button>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
                     <p><span className="font-semibold text-gray-600">Email:</span> {selectedCustomer.email ?? "—"}</p>
                     <p><span className="font-semibold text-gray-600">Phone:</span> {selectedCustomer.phone ?? "—"}</p>
                     <p><span className="font-semibold text-gray-600">Billing address:</span> {selectedCustomer.billing_address ?? "—"}</p>
@@ -1074,7 +1074,7 @@ export function CustomersPage() {
                   </div>
                 </section>
                 <section className="rounded-sm border border-gray-200 bg-white p-3">
-                  <h3 className="mb-2 text-sm font-semibold text-gray-900">Financial summary</h3>
+                  <h3 className="mb-2 text-xs font-semibold text-gray-900">Financial summary</h3>
                   {summaryQuery.isError ? (
                     <ListErrorState
                       title="Couldn't load customer financial summary"
@@ -1084,9 +1084,9 @@ export function CustomersPage() {
                     />
                   ) : (
                     <div data-testid="customer-financial-summary-values">
-                      <p className="text-sm text-gray-600">Open balance</p>
+                      <p className="text-xs text-gray-600">Open balance</p>
                       <p className="text-xl font-semibold text-gray-900">{fmtMoney(summaryQuery.data?.aging_buckets?.total_open ?? 0)}</p>
-                      <p className="mt-2 text-sm text-gray-600">Overdue payment</p>
+                      <p className="mt-2 text-xs text-gray-600">Overdue payment</p>
                       <p className="text-lg font-semibold text-red-700">{fmtMoney(overdue)}</p>
                     </div>
                   )}
@@ -1136,7 +1136,7 @@ export function CustomersPage() {
                         <SelectCombobox
                           value={txFilters.draft.typeFilter}
                           onChange={(event) => txFilters.setDraft({ ...txFilters.draft, typeFilter: event.target.value })}
-                          className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                          className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                         >
                           <option value="">Type: All</option>
                           <option value="from_load">from_load</option>
@@ -1150,7 +1150,7 @@ export function CustomersPage() {
                         <SelectCombobox
                           value={txFilters.draft.statusFilter}
                           onChange={(event) => txFilters.setDraft({ ...txFilters.draft, statusFilter: event.target.value })}
-                          className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                          className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                         >
                           <option value="">All</option>
                           <option value="draft">draft</option>
@@ -1189,7 +1189,7 @@ export function CustomersPage() {
                         <input
                           value={txFilters.draft.categoryFilter}
                           onChange={(event) => txFilters.setDraft({ ...txFilters.draft, categoryFilter: event.target.value })}
-                          className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                          className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                           placeholder="Category text"
                         />
                       </CollapsedListFilters>
@@ -1227,7 +1227,7 @@ export function CustomersPage() {
                 />
               ) : activeTab === "statements" ? (
                 <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs text-gray-600">
                     Statement is invoices and payments already on this customer for the selected date range.
                     Totals come from those rows only — this tab does not invent a customer ledger.
                   </p>
@@ -1266,7 +1266,7 @@ export function CustomersPage() {
                 </div>
               ) : activeTab === "recurring_transactions" ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs text-gray-600">
                     Recurring invoice templates already saved for this customer. Empty is expected until a
                     template exists.
                   </p>
@@ -1290,7 +1290,7 @@ export function CustomersPage() {
                 </div>
               ) : activeTab === "late_fees" ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs text-gray-600">
                     There is no customer late-fee rule table. This tab lists overdue open invoices (due date
                     before today, remaining open, not void). It does not invent a late-fee dollar amount.
                   </p>
@@ -1325,7 +1325,7 @@ export function CustomersPage() {
               )}
             </>
           ) : (
-            <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">No customer selected.</div>
+            <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">No customer selected.</div>
           )}
         </main>
       </div>

@@ -267,7 +267,7 @@ export function DriverReportsQueuePage({
                 <label className="space-y-1 text-xs text-gray-600">
                   <span>Status</span>
                   <SelectCombobox
-                    className="min-h-12 w-full rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+                    className="min-h-12 w-full rounded-sm border border-gray-300 px-2 text-xs sm:h-9 sm:min-h-0"
                     value={staged.draft.statusFilter}
                     onChange={(event) => staged.setDraft({ ...staged.draft, statusFilter: event.target.value as "" | DriverReportRow["status"] })}
                   >

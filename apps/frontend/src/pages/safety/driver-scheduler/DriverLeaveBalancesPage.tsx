@@ -97,7 +97,7 @@ export function DriverLeaveBalancesPage() {
           ← Driver Scheduler grid
         </Link>
       </div>
-      {policyQuery.isLoading ? <div className="text-sm text-gray-500">Loading policy…</div> : null}
+      {policyQuery.isLoading ? <div className="text-xs text-gray-500">Loading policy…</div> : null}
       {policyQuery.isError ? (
         <ListErrorState
           title="Couldn't load leave policy"
@@ -107,7 +107,7 @@ export function DriverLeaveBalancesPage() {
         />
       ) : null}
       {policyQuery.data ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="grid gap-2 md:grid-cols-2">
             <div>
               <span className="font-semibold">Vacation days / year:</span>{" "}
@@ -128,7 +128,7 @@ export function DriverLeaveBalancesPage() {
           </div>
         </div>
       ) : null}
-      {balancesQuery.isLoading ? <div className="text-sm text-gray-500">Loading driver balances…</div> : null}
+      {balancesQuery.isLoading ? <div className="text-xs text-gray-500">Loading driver balances…</div> : null}
       {balancesQuery.isError ? (
         <ListErrorState
           title="Couldn't load driver leave balances"
@@ -139,7 +139,7 @@ export function DriverLeaveBalancesPage() {
       ) : null}
       {!balancesQuery.isLoading && !balancesQuery.isError ? (
         rows.length === 0 ? (
-          <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-600">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-600">
             No active drivers (or no leave policy) for this company — balances seed from policy when
             drivers exist.
           </div>

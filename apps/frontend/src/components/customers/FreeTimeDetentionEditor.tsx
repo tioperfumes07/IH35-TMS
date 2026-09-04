@@ -157,7 +157,7 @@ export function FreeTimeDetentionEditor(props: {
             this money-bearing rate editor (and its Save button) fully live and editable on top of
             values the app had just told the user it could not confirm were current. */}
         {!termsQuery.isError && termsQuery.data ? (
-          <div className="space-y-2 text-sm">
+          <div className="space-y-2 text-xs">
             <label className="block">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Free Time (minutes)</span>
               <input
@@ -194,7 +194,7 @@ export function FreeTimeDetentionEditor(props: {
                 <option value="CAD">CAD</option>
               </select>
             </label>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-xs">
               <input
                 type="checkbox"
                 checked={detentionRequiresApproval}

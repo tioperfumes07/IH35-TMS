@@ -217,7 +217,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
         {step === 1 && (
           <div className="space-y-3">
             {noActiveTemplates ? (
-              <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+              <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
                 <div className="font-semibold text-slate-800">No active templates for this entity yet.</div>
                 <p className="mt-0.5 text-xs text-slate-600">
                   The standard contract library (lease &amp; NDA templates) has not been provisioned for this
@@ -234,7 +234,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                 </div>
               </div>
             ) : null}
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-xs">
               <span className="font-semibold text-slate-700">Document category</span>
               <SelectCombobox
                 value={category}
@@ -253,7 +253,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
               </SelectCombobox>
             </label>
 
-            <label className="flex flex-col gap-1 text-sm" data-testid="legal-contract-create-template-picker">
+            <label className="flex flex-col gap-1 text-xs" data-testid="legal-contract-create-template-picker">
               <span className="font-semibold text-slate-700">Template (active versions)</span>
               <Combobox
                 value={templateCode || null}
@@ -278,7 +278,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
               </div>
             ) : null}
 
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-xs">
               <span className="font-semibold text-slate-700">Language</span>
               <SelectCombobox
                 value={language}
@@ -319,7 +319,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
             ) : (
               <div className="grid gap-3 md:grid-cols-2">
                 {Object.entries(fields).map(([name, def]) => (
-                  <label key={name} className="flex flex-col gap-1 text-sm">
+                  <label key={name} className="flex flex-col gap-1 text-xs">
                     <span className="font-semibold text-slate-700">
                       {name.replace(/_/g, " ")}
                       {def.required ? <span className="text-crit"> *</span> : null}
@@ -427,7 +427,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
 
         {step === 3 && (
           <div className="space-y-3">
-            <label className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1 text-xs">
               <span className="font-semibold text-slate-700">Signer type</span>
               <SelectCombobox
                 value={signerType}
@@ -446,7 +446,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
             </label>
 
             {(signerType === "driver" || signerType === "customer" || signerType === "vendor") && (
-              <label className="flex flex-col gap-1 text-sm">
+              <label className="flex flex-col gap-1 text-xs">
                 <span className="font-semibold text-slate-700">
                   Select {signerType}
                   <span className="text-crit"> *</span>
@@ -548,7 +548,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
             )}
 
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="flex flex-col gap-1 text-sm">
+              <label className="flex flex-col gap-1 text-xs">
                 <span className="font-semibold text-slate-700">Signer name *</span>
                 <input
                   value={signerName}
@@ -556,7 +556,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                   className="rounded-sm border border-slate-300 px-2 py-1"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm">
+              <label className="flex flex-col gap-1 text-xs">
                 <span className="font-semibold text-slate-700">Signer email</span>
                 <input
                   type="email"
@@ -565,7 +565,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                   className="rounded-sm border border-slate-300 px-2 py-1"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm">
+              <label className="flex flex-col gap-1 text-xs">
                 <span className="font-semibold text-slate-700">Signer phone (+E.164)</span>
                 <input
                   value={signerPhone}

@@ -29,16 +29,16 @@ export function RunbooksIndex() {
                     href={runbookUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm font-semibold text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+                    className="text-xs font-semibold text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
                   >
                     {rb.title}
                   </a>
                 ) : (
-                  <span className="text-sm font-semibold text-gray-400">{rb.title} (file not found)</span>
+                  <span className="text-xs font-semibold text-gray-400">{rb.title} (file not found)</span>
                 )}
                 <span className="shrink-0 rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{rb.frequency}</span>
               </div>
-              <p className="mt-1 text-sm text-gray-600">{rb.description}</p>
+              <p className="mt-1 text-xs text-gray-600">{rb.description}</p>
             </li>
           );
         })}

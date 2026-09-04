@@ -498,7 +498,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       {tab === "in_transit_issues"
         ? triageTableQuery.isError
           ? (
-            <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-800">
               <div className="font-semibold">Failed to load in-transit issues</div>
               <button
                 type="button"
@@ -623,7 +623,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           />
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Parts Inventory Reorder Flags</h3>
+              <h3 className="text-xs font-semibold">Parts Inventory Reorder Flags</h3>
               <div className="text-xs text-gray-500">Source: Parts &amp; Stock</div>
             </div>
             {partsReorderQuery.isError ? (

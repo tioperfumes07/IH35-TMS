@@ -206,7 +206,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
       <div key={row.id} className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div className="text-sm font-semibold text-gray-900">
+            <div className="text-xs font-semibold text-gray-900">
               <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
             </div>
             <div className="text-xs text-gray-600">{typeLabel} · {money(deducted)} / {money(owed)}</div>

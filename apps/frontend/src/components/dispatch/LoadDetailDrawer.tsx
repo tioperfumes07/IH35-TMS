@@ -494,7 +494,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
         <div className="min-h-0 flex-1 overflow-y-auto p-4" data-testid="load-detail-drawer-scroll-body">
           {activeTab === "Overview" ? (
             load ? (
-              <div className="space-y-3 text-sm">
+              <div className="space-y-3 text-xs">
                 {/* §A — Customer · Invoice · Charges (charges = single total; line-item split is the gated
                     charge line-items block, NOT fabricated here). */}
                 <OverviewWizardSection title="Customer · Invoice · Charges" canEdit={canEdit} onEdit={() => setEditWizardOpen(true)}>
@@ -802,7 +802,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                   <div className="space-y-2 rounded-sm border border-gray-200 p-3">
                     <div>
                       <div className="text-xs text-gray-600">Notes</div>
-                      <div className="mt-1 text-sm text-gray-800">{packageState.visibleNotes || "-"}</div>
+                      <div className="mt-1 text-xs text-gray-800">{packageState.visibleNotes || "-"}</div>
                     </div>
                     <div className="flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
                       <div>
@@ -952,7 +952,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
               </div>
             ) : loadQueryIsError ? (
               // BUG 1: never hang silently — surface the error + a retry instead of an endless "Loading…".
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-xs">
                 <div className="text-red-700">Couldn't load this load’s overview.</div>
                 <div className="text-xs text-gray-500">{String(loadQueryError?.message ?? "Request failed")}</div>
                 <Button size="sm" variant="secondary" onClick={() => refetchLoad()}>
@@ -960,9 +960,9 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                 </Button>
               </div>
             ) : loadQueryIsLoading ? (
-              <div className="text-sm text-gray-500">Loading load overview...</div>
+              <div className="text-xs text-gray-500">Loading load overview...</div>
             ) : (
-              <div className="text-sm text-gray-500">Load not found.</div>
+              <div className="text-xs text-gray-500">Load not found.</div>
             )
           ) : null}
 
@@ -973,7 +973,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
               ) : (
                 <div className="space-y-2">
                   {load?.stops?.map((stop) => (
-                    <div key={stop.id} className="rounded-sm border border-gray-200 p-3 text-sm">
+                    <div key={stop.id} className="rounded-sm border border-gray-200 p-3 text-xs">
                       <div className="font-semibold text-gray-800">
                         #{stop.sequence_number} · {stop.stop_type}
                       </div>
@@ -985,11 +985,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                       </div>
                     </div>
                   ))}
-                  {load && load.stops.length === 0 ? <div className="text-sm text-gray-500">No stops found.</div> : null}
+                  {load && load.stops.length === 0 ? <div className="text-xs text-gray-500">No stops found.</div> : null}
                 </div>
               )
             ) : (
-              <div className="text-sm text-gray-500">Loading stops…</div>
+              <div className="text-xs text-gray-500">Loading stops…</div>
             )
           ) : null}
 
@@ -1001,7 +1001,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                 currencyCode={load.currency_code}
               />
             ) : (
-              <div className="text-sm text-gray-500">Loading…</div>
+              <div className="text-xs text-gray-500">Loading…</div>
             )
           ) : null}
 
@@ -1013,7 +1013,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                 currencyCode={load.currency_code}
               />
             ) : (
-              <div className="text-sm text-gray-500">Loading…</div>
+              <div className="text-xs text-gray-500">Loading…</div>
             )
           ) : null}
 
@@ -1024,7 +1024,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                 operatingCompanyId={load.operating_company_id}
               />
             ) : (
-              <div className="text-sm text-gray-500">Loading…</div>
+              <div className="text-xs text-gray-500">Loading…</div>
             )
           ) : null}
 
@@ -1121,7 +1121,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                 <DocumentsTab entityType="load" entityId={load.id} entityName={load.load_number} operatingCompanyId={load.operating_company_id} />
               </div>
             ) : (
-              <div className="text-sm text-gray-500">Loading...</div>
+              <div className="text-xs text-gray-500">Loading...</div>
             )
           ) : null}
 
@@ -1130,7 +1130,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           ) : null}
           {activeTab === "Assignment History" ? (
             <div className="space-y-3">
-              {assignmentHistoryQuery.isLoading ? <div className="text-sm text-gray-500">Loading assignment history…</div> : null}
+              {assignmentHistoryQuery.isLoading ? <div className="text-xs text-gray-500">Loading assignment history…</div> : null}
               {assignmentHistoryQuery.isError ? (
                 <ListErrorState
                   title="Couldn't load assignment history"
@@ -1159,7 +1159,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                   <div key={id || at + method} className="relative border-l-2 border-slate-300 pl-3">
                     <div className="absolute left-[-5px] top-1 h-2 w-2 rounded-full bg-slate-1000" />
                     <div className="text-xs text-gray-500">{at}</div>
-                    <div className="text-sm font-semibold text-gray-800">{method.replace(/_/g, " ")}</div>
+                    <div className="text-xs font-semibold text-gray-800">{method.replace(/_/g, " ")}</div>
                     <div className="text-xs text-gray-600" data-testid="load-drawer-assignment-history-driver-links">
                       Driver{" "}
                       {prevId ? (
@@ -1248,7 +1248,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                 );
               })}
               {!assignmentHistoryQuery.isLoading && !assignmentHistoryQuery.isError && (assignmentHistoryQuery.data?.rows ?? []).length === 0 ? (
-                <div className="text-sm text-gray-500">No assignment events yet.</div>
+                <div className="text-xs text-gray-500">No assignment events yet.</div>
               ) : null}
             </div>
           ) : null}
@@ -1261,7 +1261,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                 onSettled={() => refetchLoad()}
               />
             ) : (
-              <div className="text-sm text-gray-500">No driver assigned to this load.</div>
+              <div className="text-xs text-gray-500">No driver assigned to this load.</div>
             )
           ) : null}
 

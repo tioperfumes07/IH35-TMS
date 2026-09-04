@@ -135,14 +135,14 @@ export function BorderCrossingWizardPage() {
         title="Border Crossing Wizard"
         subtitle="Prepare northbound and southbound crossings with eManifest V1 and CBP wait times."
         actions={
-          <Link to="/dispatch/border-crossing/history" className="rounded-sm border px-3 py-1.5 text-sm">
+          <Link to="/dispatch/border-crossing/history" className="rounded-sm border px-3 py-1.5 text-xs">
             History
           </Link>
         }
       />
 
       {!selectedCompanyId ? (
-        <p className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700" data-testid="border-crossing-need-company">
+        <p className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700" data-testid="border-crossing-need-company">
           Select an operating company to load entity-scoped customs brokers and submit a crossing.
         </p>
       ) : null}
@@ -153,13 +153,13 @@ export function BorderCrossingWizardPage() {
         <ListErrorBanner message={brokersError} onRetry={() => window.location.reload()} />
       ) : null}
       {showPortsEmpty ? (
-        <p className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700" data-testid="border-crossing-ports-honest-empty">
+        <p className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700" data-testid="border-crossing-ports-honest-empty">
           No ports of entry are available yet. Ports populate from the border-crossing ports catalog; until then the
           Port step has nothing to select.
         </p>
       ) : null}
       {showBrokersEmpty ? (
-        <p className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700" data-testid="border-crossing-brokers-honest-empty">
+        <p className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700" data-testid="border-crossing-brokers-honest-empty">
           No customs brokers for this company. Brokers appear after they are created for the active entity (Broker
           step can stay empty until then).
         </p>
@@ -202,18 +202,18 @@ export function BorderCrossingWizardPage() {
           )}
           {step === 5 && <WizardStep6 form={form} ports={ports} result={result} pdfUrl={pdfUrl} />}
 
-          {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+          {error ? <p className="mt-3 text-xs text-red-600">{error}</p> : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
             {step > 0 ? (
-              <button type="button" className="rounded-sm border px-3 py-1.5 text-sm" disabled={submitting} onClick={() => setStep(step - 1)}>
+              <button type="button" className="rounded-sm border px-3 py-1.5 text-xs" disabled={submitting} onClick={() => setStep(step - 1)}>
                 Back
               </button>
             ) : null}
             {step < 4 ? (
               <button
                 type="button"
-                className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs text-white disabled:opacity-50"
                 disabled={submitting || !canNext}
                 onClick={() => setStep(step + 1)}
               >
@@ -223,7 +223,7 @@ export function BorderCrossingWizardPage() {
             {step === 4 ? (
               <button
                 type="button"
-                className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs text-white disabled:opacity-50"
                 disabled={submitting || !canNext}
                 onClick={() => void submitWizard()}
               >
@@ -231,7 +231,7 @@ export function BorderCrossingWizardPage() {
               </button>
             ) : null}
             {step === 5 && pdfUrl ? (
-              <a href={pdfUrl} className="rounded-sm border px-3 py-1.5 text-sm" target="_blank" rel="noreferrer">
+              <a href={pdfUrl} className="rounded-sm border px-3 py-1.5 text-xs" target="_blank" rel="noreferrer">
                 Print eManifest PDF
               </a>
             ) : null}

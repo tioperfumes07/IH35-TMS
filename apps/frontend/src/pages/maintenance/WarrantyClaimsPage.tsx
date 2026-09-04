@@ -244,7 +244,7 @@ export function WarrantyClaimsPage() {
       </section>
 
       <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="+ Create Claim">
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           <label className="block text-xs">
             Part description
             <input
@@ -310,7 +310,7 @@ export function WarrantyClaimsPage() {
         }}
         title="File claim"
       >
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           <p className="text-xs text-gray-600">File warranty claim for {fileTarget?.part_description}.</p>
           <div className="flex flex-wrap gap-3 text-xs text-slate-700">
             <span>Vendor: <EntityLinkOrTombstone kind="vendor" id={fileTarget?.vendor_id} name={fileTarget?.vendor_name} noun="Vendor" /></span>

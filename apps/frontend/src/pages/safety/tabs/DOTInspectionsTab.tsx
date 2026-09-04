@@ -303,7 +303,7 @@ export function DOTInspectionsTab() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-900">DOT Inspections</h2>
+        <h2 className="text-xs font-semibold text-slate-900">DOT Inspections</h2>
         <InspectionScoreBadge companyId={companyId} />
       </div>
       <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="dot-inspections-filters">

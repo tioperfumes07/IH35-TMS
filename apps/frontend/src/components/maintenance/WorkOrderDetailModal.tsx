@@ -100,7 +100,7 @@ export function WorkOrderDetailModal({ open, workOrder, loading, readError, onRe
         {readError ? (
           <ListErrorBanner message={readError} onRetry={onRetry} />
         ) : (
-          <div className="py-8 text-center text-sm text-slate-600" aria-live="polite">
+          <div className="py-8 text-center text-xs text-slate-600" aria-live="polite">
             {loading ? "Loading work order details…" : "Work order details are unavailable."}
           </div>
         )}

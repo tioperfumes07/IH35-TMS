@@ -50,7 +50,7 @@ export function BulkProgressDialog({
 
   return (
     <Modal open={open} onClose={onClose} title="Bulk update progress">
-      <div className="space-y-4 text-sm">
+      <div className="space-y-4 text-xs">
         <div className="h-2 overflow-hidden rounded-sm bg-gray-200">
           <div
             className="h-full bg-[#1F2A44] transition-all duration-300"
@@ -119,7 +119,7 @@ export function BulkProgressDialog({
           {!loading && failedCount > 0 && onRetryFailed ? (
             <button
               type="button"
-              className="rounded-sm border border-slate-300 px-3 py-1.5 text-sm text-slate-700"
+              className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs text-slate-700"
               onClick={onRetryFailed}
             >
               Retry failed
@@ -127,7 +127,7 @@ export function BulkProgressDialog({
           ) : null}
           <button
             type="button"
-            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white"
             onClick={onClose}
             disabled={loading}
           >

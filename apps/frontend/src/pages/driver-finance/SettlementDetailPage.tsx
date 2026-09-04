@@ -327,7 +327,7 @@ export function SettlementDetailPage() {
     return (
       <div className="space-y-3">
         <PageHeader title="Settlement Detail" subtitle="Select a settlement from list view" />
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-600">No settlement selected.</div>
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-600">No settlement selected.</div>
       </div>
     );
   }
@@ -685,7 +685,7 @@ export function SettlementDetailPage() {
             />
           ) : null}
           {isFinalSettlement ? (
-            <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+            <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Status</p>
                 <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{paymentState}</span>
@@ -1039,7 +1039,7 @@ function OpenDriverBillsSection({
       ) : (
         <div className="space-y-1">
           {items.map((bill) => (
-            <div key={bill.id} className="flex items-center justify-between text-sm">
+            <div key={bill.id} className="flex items-center justify-between text-xs">
               <EntityLink kind="load" id={bill.load_id ?? ""} label={entityLabel(bill.load_number, bill.load_id, "Load")} />
               <span className="font-semibold">{formatUsdCents(bill.gross_amount_cents)}</span>
             </div>

@@ -48,8 +48,8 @@ export function LoginResetConfirmPage() {
           <h1 style={{ fontFamily: typography.fontSerif }} className="text-[22px] font-semibold text-gray-900">
             Invalid link
           </h1>
-          <p className="mt-2 text-sm text-gray-700">Open the link from your email, or request a new reset.</p>
-          <Link to="/login/reset" className="mt-4 inline-block text-sm text-slate-700 hover:underline">
+          <p className="mt-2 text-xs text-gray-700">Open the link from your email, or request a new reset.</p>
+          <Link to="/login/reset" className="mt-4 inline-block text-xs text-slate-700 hover:underline">
             Request reset
           </Link>
         </div>
@@ -64,8 +64,8 @@ export function LoginResetConfirmPage() {
           <h1 style={{ fontFamily: typography.fontSerif }} className="text-[22px] font-semibold text-gray-900">
             Password updated
           </h1>
-          <p className="mt-2 text-sm text-gray-700">You can sign in with your new password.</p>
-          <Link to="/login" className="mt-4 inline-block text-sm font-medium text-slate-700 hover:underline">
+          <p className="mt-2 text-xs text-gray-700">You can sign in with your new password.</p>
+          <Link to="/login" className="mt-4 inline-block text-xs font-medium text-slate-700 hover:underline">
             Go to sign in
           </Link>
         </div>
@@ -81,7 +81,7 @@ export function LoginResetConfirmPage() {
         </h1>
         <form onSubmit={onSubmit} className="mt-4 space-y-3" noValidate>
           <div>
-            <label htmlFor="new-password" className="block text-sm font-medium text-gray-800">
+            <label htmlFor="new-password" className="block text-xs font-medium text-gray-800">
               New password
             </label>
             <input
@@ -92,7 +92,7 @@ export function LoginResetConfirmPage() {
               value={password}
               onChange={(ev) => setPassword(ev.target.value)}
               aria-describedby="new-password-meter"
-              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
             />
             <div id="new-password-meter" className="mt-2" aria-live="polite">
               <div
@@ -114,7 +114,7 @@ export function LoginResetConfirmPage() {
             </div>
           </div>
           {error ? (
-            <p className="text-sm text-red-700" role="alert">
+            <p className="text-xs text-red-700" role="alert">
               {error}
             </p>
           ) : null}
@@ -122,7 +122,7 @@ export function LoginResetConfirmPage() {
             {pending ? "Saving…" : "Save password"}
           </Button>
         </form>
-        <p className="mt-4 text-center text-sm">
+        <p className="mt-4 text-center text-xs">
           <Link to="/login" className="text-slate-700 hover:underline">
             Back to sign in
           </Link>

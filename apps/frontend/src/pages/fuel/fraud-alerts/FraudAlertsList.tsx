@@ -196,7 +196,7 @@ export function FraudAlertsListPage() {
     return (
       <div className="space-y-3 p-4">
         <PageHeader title="Fuel fraud alerts" subtitle="CAP-11 real-time fuel card fraud monitoring" />
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
           Select an operating company to view fraud alerts.
         </div>
       </div>
@@ -269,7 +269,7 @@ export function FraudAlertsListPage() {
               onChange={(event) => setDismissReason(event.target.value)}
               rows={3}
               autoFocus
-              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm font-normal"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs font-normal"
               placeholder="Explain why this alert is not fraud"
             />
           </label>

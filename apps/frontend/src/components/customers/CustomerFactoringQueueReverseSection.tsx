@@ -22,7 +22,7 @@ export function CustomerFactoringQueueReverseSection({ operatingCompanyId, custo
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-queue-reverse">
-      <h2 className="text-sm font-semibold text-slate-900">Dispatch factoring queue</h2>
+      <h2 className="text-xs font-semibold text-slate-900">Dispatch factoring queue</h2>
       {query.isError ? (
         <ListErrorState status={0} message="Factoring queue unavailable." onRetry={() => void query.refetch()} />
       ) : null}

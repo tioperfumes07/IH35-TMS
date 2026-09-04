@@ -61,7 +61,7 @@ export function RandomTestingPool() {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
-        <h3 className="text-sm font-semibold text-slate-900">Active pool ({members.length})</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Active pool ({members.length})</h3>
         {poolQ.isError ? (
           <div data-testid="random-testing-pool-error"><ListErrorState status={0} message={userFacingApiError(poolQ.error, "Could not load the random testing pool.")} onRetry={() => void poolQ.refetch()} /></div>
         ) : (
@@ -81,7 +81,7 @@ export function RandomTestingPool() {
         )}
       </div>
       <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
-        <h3 className="text-sm font-semibold text-slate-900">Recent draws & selections</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Recent draws & selections</h3>
         {drawsQ.isError ? (
           <div data-testid="random-testing-draws-error"><ListErrorState status={0} message={userFacingApiError(drawsQ.error, "Could not load random testing draws.")} onRetry={() => void drawsQ.refetch()} /></div>
         ) : (

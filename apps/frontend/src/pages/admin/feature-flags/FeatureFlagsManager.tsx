@@ -143,12 +143,12 @@ export function FeatureFlagsManager() {
     <div className="p-6 space-y-6" data-testid="feature-flags-manager">
       <PageHeader title="Feature Flags" subtitle="Read-only rollout and override status" />
 
-      <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800" data-testid="feature-flags-read-only">
+      <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800" data-testid="feature-flags-read-only">
         Display only. Flag changes are managed through the controlled release workflow.
       </div>
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 text-sm font-semibold text-gray-900">Flags</h2>
+        <h2 className="mb-3 text-xs font-semibold text-gray-900">Flags</h2>
         {query.isError ? (
           <ListErrorState
             title="Couldn't load feature flags"

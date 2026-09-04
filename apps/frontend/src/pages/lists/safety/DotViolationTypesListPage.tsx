@@ -92,7 +92,7 @@ export function DotViolationTypesListPage() {
         data-testid="dot-violation-types-list-frame"
       >
         <div className="grid gap-2 border-b border-gray-200 bg-gray-50 p-3 md:grid-cols-3">
-          <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by code or name" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
+          <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by code or name" className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
           <CatalogStatusFilterCombobox value={statusFilter} onChange={setStatusFilter} />
         </div>
 

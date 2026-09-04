@@ -20,7 +20,7 @@ export function HarshEventDetail({ harshEventId }: Props) {
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
-      <h3 className="text-sm font-semibold text-slate-900">Dashcam Clips</h3>
+      <h3 className="text-xs font-semibold text-slate-900">Dashcam Clips</h3>
       {clipsQuery.isError ? (
         <div data-testid="harsh-event-clips-query-error">
           <ListErrorState

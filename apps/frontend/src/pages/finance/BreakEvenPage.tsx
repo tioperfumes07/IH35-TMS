@@ -152,7 +152,7 @@ export function BreakEvenPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <p className="text-sm text-slate-500">Loading…</p>
+        <p className="text-xs text-slate-500">Loading…</p>
       </div>
     );
   }
@@ -162,7 +162,7 @@ export function BreakEvenPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
           Break-Even Analysis is not yet enabled for this company. (Feature flag <code>{FINANCE_BREAK_EVEN_UI_FLAG}</code> is off.)
         </div>
         <BreakEvenWorkbookCreator operatingCompanyId={companyId} liveMiles={0} liveRevenueCents={0} />
@@ -190,7 +190,7 @@ export function BreakEvenPage() {
       <FinanceModuleTabs />
       {header}
 
-      {!companyId ? <p className="mb-3 text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="mb-3 text-xs text-red-600">Select an operating company.</p> : null}
 
       <CollapsedListFilters
         activeFilterCount={activeFilterCount}
@@ -243,7 +243,7 @@ export function BreakEvenPage() {
               placeholder={data ? fmtInt(data.miles.total_miles) : "live"}
               value={staged.draft.milesOverride}
               onChange={(e) => staged.setDraft((p) => ({ ...p, milesOverride: e.target.value }))}
-              className="mt-1 w-32 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
+              className="mt-1 w-32 rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-900"
             />
           </label>
         </div>
@@ -252,13 +252,13 @@ export function BreakEvenPage() {
         </p>
       </CollapsedListFilters>
 
-      {inputsQuery.isLoading ? <p className="text-sm text-slate-500">Loading…</p> : null}
-      {inputsQuery.isError ? <p className="text-sm text-red-600">Could not load break-even inputs.</p> : null}
+      {inputsQuery.isLoading ? <p className="text-xs text-slate-500">Loading…</p> : null}
+      {inputsQuery.isError ? <p className="text-xs text-red-600">Could not load break-even inputs.</p> : null}
 
       {data && model ? (
         <>
           {model.miles <= 0 ? (
-            <p className="mb-4 border-l-4 border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+            <p className="mb-4 border-l-4 border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700">
               No miles recorded for this period ({data.miles.load_count} load{data.miles.load_count === 1 ? "" : "s"}). Per-mile
               figures require miles — enter a miles estimate above to model the break-even rate.
             </p>
@@ -362,7 +362,7 @@ export function BreakEvenPage() {
                 },
               ]}
             />
-            <div className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">
+            <div className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800">
               <div className="flex justify-between gap-4">
                 <span>Fixed cost</span>
                 <span className="tabular-nums">{fmtCents(model.fixed_cost_cents)}</span>

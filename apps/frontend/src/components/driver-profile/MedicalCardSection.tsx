@@ -8,7 +8,7 @@ export function MedicalCardSection({ medical, unavailable = false }: { medical: 
 
   return (
     <section className={`rounded-sm border p-4 ${colorClass}`}>
-      <h2 className="mb-2 text-sm font-semibold text-slate-900">Medical card (DOT)</h2>
+      <h2 className="mb-2 text-xs font-semibold text-slate-900">Medical card (DOT)</h2>
       {unavailable ? <p className="mb-2 text-xs font-medium text-red-700">Medical card data could not be loaded.</p> : null}
       <p className="text-xs text-slate-700">
         {/* LV-DRIVER-PROFILE-RAW-ISO-DATES-REOPEN — display chrome only; day counts stay raw. */}

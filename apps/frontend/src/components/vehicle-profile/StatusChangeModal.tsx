@@ -135,10 +135,10 @@ export function StatusChangeModal({
 
   return (
     <Modal open={open} title="Change unit status" onClose={onClose}>
-      <div className="space-y-2 text-sm" data-testid="vp-status-change-modal">
+      <div className="space-y-2 text-xs" data-testid="vp-status-change-modal">
         <p className="text-xs text-gray-500">Current status: {currentStatus}</p>
         <div>
-          <span className="block text-sm">New status *</span>
+          <span className="block text-xs">New status *</span>
           <SelectCombobox
             id="vp-status-target"
             className="mt-1 w-full"

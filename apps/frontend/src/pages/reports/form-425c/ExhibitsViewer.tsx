@@ -91,7 +91,7 @@ export function ExhibitsViewer() {
         breadcrumb={[{ label: "425C" }, { label: "Exhibits" }]}
         backHref="/425c"
         actions={
-          <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#1f2a44]">
+          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-[#1f2a44]">
             <Link to="/425c?tab=qb" className="hover:underline">Deposit Import</Link>
             <Link to="/425c?tab=merge" className="hover:underline">Merge & Export</Link>
             <Link to="/425c?tab=history" className="hover:underline">History</Link>
@@ -134,7 +134,7 @@ export function ExhibitsViewer() {
               }
               buildMut.mutate();
             }}
-            className="rounded-sm bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-sm bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
           >
             {buildMut.isPending ? "Building…" : "Build all exhibits"}
           </button>
@@ -161,7 +161,7 @@ export function ExhibitsViewer() {
               }
               pushToast("Opened exhibits A–F print window", "success");
             }}
-            className="rounded-sm border border-[#1f2a44] px-3 py-2 text-sm font-semibold text-[#1f2a44]"
+            className="rounded-sm border border-[#1f2a44] px-3 py-2 text-xs font-semibold text-[#1f2a44]"
           >
             Print / Save as PDF
           </button>
@@ -183,7 +183,7 @@ export function ExhibitsViewer() {
 
       <section className="rounded-sm border border-slate-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">Exhibit {activeLetter.toUpperCase()} preview</h2>
+          <h2 className="text-xs font-semibold text-slate-900">Exhibit {activeLetter.toUpperCase()} preview</h2>
           {built ? (
             <button
               type="button"
@@ -208,7 +208,7 @@ export function ExhibitsViewer() {
           ) : null}
         </div>
         {!built ? (
-          <p className="text-sm text-slate-500">Build exhibits to preview tab content.</p>
+          <p className="text-xs text-slate-500">Build exhibits to preview tab content.</p>
         ) : (
           <pre className="max-h-[420px] overflow-auto rounded-sm bg-slate-50 p-3 text-xs text-slate-800">
             {JSON.stringify(activeExhibit, null, 2)}

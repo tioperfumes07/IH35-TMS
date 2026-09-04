@@ -63,13 +63,13 @@ export function LegalMattersReverseSection({
       data-testid={testId}
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">Legal Matters</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Legal Matters</h3>
         <EntityLink kind={openKind} id={openId} label="Open Legal" className="text-xs font-semibold text-slate-700 underline" />
       </div>
-      <p className="text-sm text-gray-600">
+      <p className="text-xs text-gray-600">
         Legal matters linked to {contextLabel} (Owner/Admin).
       </p>
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
       {query.isError ? (
         <ListErrorState
           title="Couldn't load linked legal matters"
@@ -79,14 +79,14 @@ export function LegalMattersReverseSection({
         />
       ) : null}
       {!query.isLoading && !query.isError && matters.length === 0 ? (
-        <p className="text-sm text-gray-500">No linked matters.</p>
+        <p className="text-xs text-gray-500">No linked matters.</p>
       ) : null}
       {matters.length > 0 ? (
         <ul className="space-y-2">
           {matters.map((m: Record<string, unknown>, index) => {
             const id = m.id == null ? null : String(m.id);
             return (
-              <li key={id ?? `legal-matter-${index}`} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+              <li key={id ?? `legal-matter-${index}`} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
                 <EntityLinkOrTombstone
                   kind="matter"
                   id={id}

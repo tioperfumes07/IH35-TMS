@@ -42,7 +42,7 @@ export function FinanceScenarioDetailPage() {
       </Link>
 
       {detailQuery.isLoading ? (
-        <p className="mt-4 text-sm text-slate-500">Loading…</p>
+        <p className="mt-4 text-xs text-slate-500">Loading…</p>
       ) : detailQuery.isError ? (
         // GO-0028: "Scenario not found." on a genuine fetch failure is factually wrong -- the
         // scenario may exist and the fetch simply failed. Both branches render red text, so this
@@ -56,7 +56,7 @@ export function FinanceScenarioDetailPage() {
           />
         </div>
       ) : !detailQuery.data ? (
-        <p className="mt-4 text-sm text-red-600">Scenario not found.</p>
+        <p className="mt-4 text-xs text-red-600">Scenario not found.</p>
       ) : (
         <div className="mt-4 space-y-4">
           <div className="rounded-sm border border-slate-200 bg-white p-4">

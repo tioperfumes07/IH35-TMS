@@ -108,7 +108,7 @@ export function ListViewDemo() {
     <div className="h-screen flex flex-col bg-gray-50 p-4">
       <div className="mb-4">
         <h1 className="text-xl font-semibold text-gray-800">ListView Demo</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-xs text-gray-500 mt-1">
           200-row synthetic dataset · resize, reorder, sort, filter, gear, multi-select, totals, export
         </p>
       </div>

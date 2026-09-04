@@ -102,15 +102,15 @@ export function DispatchMarginPage() {
         className="rounded-sm border border-slate-200 bg-white p-3"
       >
         <div className="flex flex-wrap items-end gap-3">
-          <label className="text-sm">
+          <label className="text-xs">
             From
             <DatePicker className="ml-2" value={staged.draft.start} onChange={(next) => staged.setDraft((p) => ({ ...p, start: next }))} />
           </label>
-          <label className="text-sm">
+          <label className="text-xs">
             To
             <DatePicker className="ml-2" value={staged.draft.end} onChange={(next) => staged.setDraft((p) => ({ ...p, end: next }))} />
           </label>
-          <label className="text-sm">
+          <label className="text-xs">
             Basis
             <SelectCombobox
               className="ml-2 rounded-sm border px-2 py-1"
@@ -124,7 +124,7 @@ export function DispatchMarginPage() {
         </div>
       </CollapsedListFilters>
 
-      {query.isLoading ? <div className="rounded-sm border bg-white p-4 text-sm text-slate-500">Loading…</div> : null}
+      {query.isLoading ? <div className="rounded-sm border bg-white p-4 text-xs text-slate-500">Loading…</div> : null}
       {query.isError ? (
         <ListErrorState
           title="Couldn't load dispatch margin"

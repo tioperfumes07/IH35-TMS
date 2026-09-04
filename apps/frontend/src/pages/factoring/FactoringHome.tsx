@@ -446,7 +446,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
       <div className="space-y-3">
         <PageHeader title="Factoring" subtitle="Deep-dive workspace for recourse pipeline, chargebacks, fees, and settings" />
         <div
-          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700"
+          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700"
           data-testid="factoring-home-need-company"
         >
           Select an operating company to view factoring KPIs and the active factor profile.
@@ -509,19 +509,19 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
       <DuplicateVendorsBanner companyId={companyId} />
 
       <div className="grid gap-2 md:grid-cols-4" data-testid="factoring-home-kpi-row">
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-xs uppercase tracking-wide text-gray-500">Active Factor</div>
           <div className="mt-1 font-semibold text-gray-900">
             {summaryQuery.isError ? "—" : (summary?.active_factor_name ?? "Not configured")}
           </div>
         </div>
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-xs uppercase tracking-wide text-gray-500">Reserve Balance</div>
           <div className="mt-1 font-semibold text-gray-900">
             {summaryQuery.isError ? "—" : fmtCurrency(summary?.reserve_balance)}
           </div>
         </div>
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           {/* FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: this card read
               summary.chargeback_balance, which is actually Advance + Reserve still owed to the
               factor (outstanding_liability_signed_cents), not a real chargeback/recourse figure
@@ -531,7 +531,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             {summaryQuery.isError ? "—" : fmtCurrency(summary?.outstanding_liability_balance)}
           </div>
         </div>
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-xs uppercase tracking-wide text-gray-500">Recourse Days</div>
           <div className="mt-1 font-semibold text-gray-900">
             {summaryQuery.isError ? "—" : Number(summary?.recourse_days ?? 95)}
@@ -550,7 +550,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           />
           {profileEditForm && (
             <Modal open={profileEditOpen} onClose={() => { setProfileEditOpen(false); setProfileEditForm(null); }} title="Edit Factoring Profile">
-              <div className="flex flex-col gap-3 text-sm" data-testid="factoring-profile-edit-modal">
+              <div className="flex flex-col gap-3 text-xs" data-testid="factoring-profile-edit-modal">
                 <p className="text-xs text-gray-500">
                   Rates write to the factoring profile record (advance_rate / fee_rate / reserve_rate). Contacts → remittance_details. Not vendor notes.
                 </p>
@@ -570,7 +570,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                         type="number"
                         min="0"
                         step={key === "recourseDays" ? "1" : "0.01"}
-                        className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm"
+                        className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs"
                         value={profileEditForm[key]}
                         onChange={(e) => setProfileEditForm((f) => (f ? { ...f, [key]: e.target.value } : f))}
                       />
@@ -581,33 +581,33 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 <div className="grid grid-cols-2 gap-3">
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">Telephone</span>
-                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.telephone} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, telephone: e.target.value } : f))} />
+                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.telephone} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, telephone: e.target.value } : f))} />
                   </label>
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">General email</span>
-                    <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.generalEmail} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, generalEmail: e.target.value } : f))} />
+                    <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.generalEmail} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, generalEmail: e.target.value } : f))} />
                   </label>
                 </div>
                 <label className="block">
                   <span className="text-xs font-medium text-gray-700">Address</span>
-                  <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.address} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, address: e.target.value } : f))} />
+                  <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.address} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, address: e.target.value } : f))} />
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">Primary contact</span>
-                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.primaryContactName} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, primaryContactName: e.target.value } : f))} />
+                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.primaryContactName} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, primaryContactName: e.target.value } : f))} />
                   </label>
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">Primary contact email</span>
-                    <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.primaryContactEmail} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, primaryContactEmail: e.target.value } : f))} />
+                    <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.primaryContactEmail} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, primaryContactEmail: e.target.value } : f))} />
                   </label>
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">Accounting contact</span>
-                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.accountingContact} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, accountingContact: e.target.value } : f))} />
+                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.accountingContact} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, accountingContact: e.target.value } : f))} />
                   </label>
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">Disputes contact</span>
-                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.disputesContact} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, disputesContact: e.target.value } : f))} />
+                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.disputesContact} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, disputesContact: e.target.value } : f))} />
                   </label>
                 </div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mt-1">Optional extras / aged fee tiers (%)</p>
@@ -630,7 +630,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                         min="0"
                         max="100"
                         step="0.01"
-                        className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm"
+                        className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs"
                         value={profileEditForm[key]}
                         onChange={(e) => setProfileEditForm((f) => (f ? { ...f, [key]: e.target.value } : f))}
                       />
@@ -638,12 +638,12 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                   ))}
                 </div>
                 <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
-                  <button type="button" onClick={() => { setProfileEditOpen(false); setProfileEditForm(null); }} className="rounded-sm border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+                  <button type="button" onClick={() => { setProfileEditOpen(false); setProfileEditForm(null); }} className="rounded-sm border border-gray-300 px-4 py-2 text-xs text-gray-700 hover:bg-gray-50">Cancel</button>
                   <button
                     type="button"
                     disabled={savingFactorProfile}
                     data-testid="factoring-profile-save"
-                    className="rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 hover:bg-[#0f1729]"
+                    className="rounded-sm bg-[#1f2a44] px-4 py-2 text-xs font-semibold text-white disabled:opacity-50 hover:bg-[#0f1729]"
                     onClick={async () => {
                       if (!profileEditForm || !activeFactor) return;
                       try {
@@ -678,7 +678,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           )}
         </>
       ) : (
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500" data-testid="factoring-profile-empty">
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-xs text-gray-500" data-testid="factoring-profile-empty">
           {summary?.active_factor_profile_id || summary?.active_factor_name || summary?.active_factor_id
             ? "Active factor row is still loading…"
             : "No factor configured. Activate a factor to manage its profile."}
@@ -746,7 +746,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
               </Button>
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
             <span className="font-medium text-gray-900">Invoices inside recourse window (sorted by days until expiry)</span>
             <span className="text-gray-600">
               Advance {fmtCurrency(recourseTotals.advance)} · Reserve {fmtCurrency(recourseTotals.reserve)}
@@ -799,7 +799,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           </div>
         <div className="grid gap-3 lg:grid-cols-2">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-medium text-gray-900">Chargebacks + fee history</div>
+            <div className="mb-2 text-xs font-medium text-gray-900">Chargebacks + fee history</div>
             <div className="overflow-x-auto">
               <ChargebacksTable rows={feesQuery.data?.history ?? []} fmtCurrency={fmtCurrency} fmtDate={fmtDate} />
             </div>
@@ -811,7 +811,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             />
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-medium text-gray-900">Monthly fee summaries</div>
+            <div className="mb-2 text-xs font-medium text-gray-900">Monthly fee summaries</div>
             {feesQuery.isError ? (
               <ListErrorState
                 title="Couldn't load monthly fee summaries"
@@ -835,7 +835,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
 
       {tab === "statements_settings" ? (
         <div className="space-y-3">
-          <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <div className="font-medium text-gray-900">Single-factor invariant status</div>
             <div className="mt-1 text-gray-700">
               Active factors: {Number(settingsQuery.data?.current?.active_factor_count ?? 0)} · Status:{" "}
@@ -847,7 +847,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-medium text-gray-900">Statement history</div>
+            <div className="mb-2 text-xs font-medium text-gray-900">Statement history</div>
             {settingsQuery.isError ? (
               <ListErrorState
                 title="Couldn't load statement history"
@@ -866,7 +866,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             )}
           </div>
 
-          <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <div className="font-medium text-gray-900">Faro deactivation (Owner-only)</div>
             <p className="mt-1 text-gray-600">Disables the active factor for this operating company. Intended for controlled migration windows only.</p>
             <div className="mt-2">
@@ -909,7 +909,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
       {tab === "faro_imports" ? (
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-medium text-gray-900">Upsert Faro daily import batch</div>
+            <div className="mb-2 text-xs font-medium text-gray-900">Upsert Faro daily import batch</div>
             <div className="grid gap-2 md:grid-cols-3 mb-3">
               <DatePicker
                 className=""
@@ -917,7 +917,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 onChange={setFaroStatementDate}
               />
               <input
-                className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={faroStatementRef}
                 onChange={(event) => setFaroStatementRef(event.target.value)}
                 placeholder="statement reference"
@@ -983,7 +983,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             />
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-medium text-gray-900">Recent Faro imports</div>
+            <div className="mb-2 text-xs font-medium text-gray-900">Recent Faro imports</div>
             {faroImportsQuery.isError ? (
               <ListErrorState
                 title="Couldn't load Faro imports"
@@ -1007,7 +1007,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
       {tab === "equipment_loans" ? (
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-medium text-gray-900">Create equipment loan</div>
+            <div className="mb-2 text-xs font-medium text-gray-900">Create equipment loan</div>
             <div className="grid gap-2 md:grid-cols-5">
               <EntityPicker
                 kind="unit"
@@ -1114,7 +1114,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 </Button>
               </div>
             </div>
-            <div className="mb-2 text-sm font-medium text-gray-900">Loans + ledger actions</div>
+            <div className="mb-2 text-xs font-medium text-gray-900">Loans + ledger actions</div>
             <div className="space-y-2">
               {(equipmentLoansQuery.data?.rows ?? []).map((row) => (
                 <div key={row.id} className="rounded-sm border border-gray-200 p-2 text-xs">
@@ -1161,7 +1161,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                   </div>
                 </div>
               ))}
-              {(equipmentLoansQuery.data?.rows ?? []).length === 0 ? <p className="text-sm text-gray-500">No equipment loans yet.</p> : null}
+              {(equipmentLoansQuery.data?.rows ?? []).length === 0 ? <p className="text-xs text-gray-500">No equipment loans yet.</p> : null}
             </div>
           </div>
           {selectedLoanId ? (
@@ -1184,7 +1184,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
       {tab === "vendor_merges" ? (
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-medium text-gray-900">Merge duplicate QBO vendors for a driver</div>
+            <div className="mb-2 text-xs font-medium text-gray-900">Merge duplicate QBO vendors for a driver</div>
             <div className="grid gap-2 md:grid-cols-2">
               <DriverAutocomplete
                 companyId={companyId}
@@ -1311,7 +1311,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 </Button>
               </div>
             </div>
-            <div className="mb-2 text-sm font-medium text-gray-900">Recent merge history</div>
+            <div className="mb-2 text-xs font-medium text-gray-900">Recent merge history</div>
             {vendorMergesQuery.isError ? (
               <ListErrorState
                 title="Couldn't load merge history"
@@ -1338,7 +1338,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
         onClose={() => setLoanAction(null)}
         title={loanAction?.kind === "attribution" ? "Record loan attribution" : "Record loan payment"}
       >
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           {loanAction?.kind === "attribution" ? (
             <label className="block" data-testid="factoring-loan-attribution-load-picker">
               Load

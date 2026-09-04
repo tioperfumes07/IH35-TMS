@@ -606,7 +606,7 @@ export function ProgramBoardPage() {
         })}
       </div>
 
-      {isLoading ? <div className="py-8 text-center text-sm text-slate-500">Loading board…</div> : null}
+      {isLoading ? <div className="py-8 text-center text-xs text-slate-500">Loading board…</div> : null}
       {isError ? (
         <ListErrorBanner
           message={`Failed to load program board: ${userFacingApiError(error, "error")}`}
@@ -999,7 +999,7 @@ export function ProgramBoardPage() {
                   </span>
                   <span className="tabular-nums">{q.created_at_ct}</span>
                 </div>
-                <div className="text-sm text-slate-800">{q.body}</div>
+                <div className="text-xs text-slate-800">{q.body}</div>
                 <ThreadPanel
                   blockId={q.block_id ?? null}
                   questions={[]}
@@ -1034,7 +1034,7 @@ export function ProgramBoardPage() {
                 {n.block_id ? <span className="rounded bg-slate-100 px-1.5 py-0.5">{n.block_id}</span> : null}
                 <span className="tabular-nums">{n.created_at_ct}</span>
               </div>
-              <div className="text-sm text-slate-800">{n.body}</div>
+              <div className="text-xs text-slate-800">{n.body}</div>
             </div>
           ))}
         </div>
@@ -1076,7 +1076,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
   return (
     <div className="space-y-3 rounded border border-gray-200 bg-white p-3" style={{ borderLeft: "3px solid #1F2A44" }}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-slate-800">Audit Truth — 2026-07-10</h2>
+        <h2 className="text-xs font-semibold text-slate-800">Audit Truth — 2026-07-10</h2>
         <span className="text-xs text-slate-400">{audit.source}</span>
       </div>
       <p className="text-xs font-semibold text-slate-700">{audit.headline}</p>

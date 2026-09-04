@@ -117,7 +117,7 @@ export function AddPartsLinkDrawer({ open, workOrderId, operatingCompanyId, onCl
           <label className="block text-xs font-medium text-gray-700">Part description *</label>
           <input
             required
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
             value={partDescription}
             onChange={(e) => setPartDescription(e.target.value)}
           />
@@ -127,7 +127,7 @@ export function AddPartsLinkDrawer({ open, workOrderId, operatingCompanyId, onCl
             <label className="block text-xs font-medium text-gray-700">Vendor invoice # *</label>
             <input
               required
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               value={invoiceNumber}
               onChange={(e) => setInvoiceNumber(e.target.value)}
             />
@@ -137,7 +137,7 @@ export function AddPartsLinkDrawer({ open, workOrderId, operatingCompanyId, onCl
             <input
               type="number"
               min={1}
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               value={qty}
               onChange={(e) => setQty(e.target.value)}
             />

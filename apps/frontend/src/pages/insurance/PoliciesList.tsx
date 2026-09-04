@@ -113,7 +113,7 @@ export function PoliciesList() {
   ];
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view policies.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">Select an operating company to view policies.</div>;
   }
 
   return (
@@ -121,7 +121,7 @@ export function PoliciesList() {
       <header className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900">Policies</h2>
+            <h2 className="text-xs font-semibold text-slate-900">Policies</h2>
             <p className="mt-1 text-xs text-slate-600">Filter and review insurance policies. Click any row to open policy details.</p>
           </div>
           {canCreatePolicy ? (

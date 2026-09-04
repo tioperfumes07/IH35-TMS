@@ -20,7 +20,7 @@ export function DriverLoadDetailPage() {
   });
 
   if (!id) return null;
-  if (q.isLoading) return <p className="text-sm text-gray-600">…</p>;
+  if (q.isLoading) return <p className="text-xs text-gray-600">…</p>;
   if (q.isError) {
     return (
       <ListErrorState
@@ -31,7 +31,7 @@ export function DriverLoadDetailPage() {
       />
     );
   }
-  if (!q.data) return <p className="text-sm text-red-600">Load not found.</p>;
+  if (!q.data) return <p className="text-xs text-red-600">Load not found.</p>;
   const load = q.data;
 
   return (

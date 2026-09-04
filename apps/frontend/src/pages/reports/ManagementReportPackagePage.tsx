@@ -113,8 +113,8 @@ function PLSection({ companyId, fromDate, toDate, basis }: { companyId: string; 
     enabled: Boolean(companyId),
   });
 
-  if (query.isLoading) return <p className="py-4 text-sm text-gray-500">Loading Profit & Loss…</p>;
-  if (query.isError || !query.data) return <p className="py-4 text-sm text-red-600">Profit & Loss unavailable (no data posted for this period)</p>;
+  if (query.isLoading) return <p className="py-4 text-xs text-gray-500">Loading Profit & Loss…</p>;
+  if (query.isError || !query.data) return <p className="py-4 text-xs text-red-600">Profit & Loss unavailable (no data posted for this period)</p>;
 
   const { revenue, cogs, operating_expenses, gross_profit, net_income } = query.data;
 
@@ -155,12 +155,12 @@ function PLSection({ companyId, fromDate, toDate, basis }: { companyId: string; 
     <div className="mt-3 text-xs">
       {renderSection("Revenue", revenue.lines, revenue.total)}
       {renderSection("Cost of Goods Sold", cogs.lines, cogs.total)}
-      <div className="border-t border-slate-300 py-1 flex justify-between font-semibold text-sm">
+      <div className="border-t border-slate-300 py-1 flex justify-between font-semibold text-xs">
         <span>Gross Profit</span>
         <span className={gross_profit < 0 ? "text-rose-700" : "text-slate-900"}>{money(gross_profit)}</span>
       </div>
       {renderSection("Operating Expenses", operating_expenses.lines, operating_expenses.total)}
-      <div className="border-t-2 border-slate-800 py-1 flex justify-between font-bold text-sm">
+      <div className="border-t-2 border-slate-800 py-1 flex justify-between font-bold text-xs">
         <span>Net Income</span>
         <span className={net_income < 0 ? "text-rose-700" : "text-emerald-700"}>{money(net_income)}</span>
       </div>
@@ -175,8 +175,8 @@ function BSSection({ companyId, asOfDate, basis }: { companyId: string; asOfDate
     enabled: Boolean(companyId),
   });
 
-  if (query.isLoading) return <p className="py-4 text-sm text-gray-500">Loading Balance Sheet…</p>;
-  if (query.isError || !query.data) return <p className="py-4 text-sm text-red-600">Balance Sheet unavailable</p>;
+  if (query.isLoading) return <p className="py-4 text-xs text-gray-500">Loading Balance Sheet…</p>;
+  if (query.isError || !query.data) return <p className="py-4 text-xs text-red-600">Balance Sheet unavailable</p>;
 
   const { assets, liabilities, equity, total_liabilities_and_equity } = query.data;
 
@@ -212,7 +212,7 @@ function BSSection({ companyId, asOfDate, basis }: { companyId: string; asOfDate
       {renderLines(liabilities.lines, liabilities.total, "Total Liabilities")}
       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1 mt-3">Equity</div>
       {renderLines(equity.lines, equity.total, "Total Equity")}
-      <div className="flex justify-between font-bold text-sm border-t-2 border-slate-800 pt-1 mt-2">
+      <div className="flex justify-between font-bold text-xs border-t-2 border-slate-800 pt-1 mt-2">
         <span>Total Liabilities & Equity</span>
         <span>{money(total_liabilities_and_equity)}</span>
       </div>
@@ -227,11 +227,11 @@ function ARAgingSection({ companyId, asOfDate }: { companyId: string; asOfDate: 
     enabled: Boolean(companyId),
   });
 
-  if (query.isLoading) return <p className="py-4 text-sm text-gray-500">Loading A/R Aging…</p>;
-  if (query.isError || !query.data) return <p className="py-4 text-sm text-red-600">A/R Aging unavailable</p>;
+  if (query.isLoading) return <p className="py-4 text-xs text-gray-500">Loading A/R Aging…</p>;
+  if (query.isError || !query.data) return <p className="py-4 text-xs text-red-600">A/R Aging unavailable</p>;
 
   const rows = query.data.rows;
-  if (rows.length === 0) return <p className="py-4 text-sm text-slate-400">No open A/R as of {asOfDate}</p>;
+  if (rows.length === 0) return <p className="py-4 text-xs text-slate-400">No open A/R as of {asOfDate}</p>;
 
   return (
     <div className="mt-3 overflow-auto">
@@ -274,11 +274,11 @@ function APAgingSection({ companyId, asOfDate }: { companyId: string; asOfDate: 
     enabled: Boolean(companyId),
   });
 
-  if (query.isLoading) return <p className="py-4 text-sm text-gray-500">Loading A/P Aging…</p>;
-  if (query.isError || !query.data) return <p className="py-4 text-sm text-red-600">A/P Aging unavailable</p>;
+  if (query.isLoading) return <p className="py-4 text-xs text-gray-500">Loading A/P Aging…</p>;
+  if (query.isError || !query.data) return <p className="py-4 text-xs text-red-600">A/P Aging unavailable</p>;
 
   const rows = query.data.rows;
-  if (rows.length === 0) return <p className="py-4 text-sm text-slate-400">No open A/P as of {asOfDate}</p>;
+  if (rows.length === 0) return <p className="py-4 text-xs text-slate-400">No open A/P as of {asOfDate}</p>;
 
   return (
     <div className="mt-3 overflow-auto">
@@ -321,11 +321,11 @@ function CustomerSummarySection({ companyId, fromDate, toDate }: { companyId: st
     enabled: Boolean(companyId),
   });
 
-  if (query.isLoading) return <p className="py-4 text-sm text-gray-500">Loading customer summary…</p>;
-  if (query.isError || !query.data) return <p className="py-4 text-sm text-red-600">Customer summary unavailable</p>;
+  if (query.isLoading) return <p className="py-4 text-xs text-gray-500">Loading customer summary…</p>;
+  if (query.isError || !query.data) return <p className="py-4 text-xs text-red-600">Customer summary unavailable</p>;
 
   const rows = query.data.by_customer ?? [];
-  if (rows.length === 0) return <p className="py-4 text-sm text-slate-400">No customer revenue data for this period</p>;
+  if (rows.length === 0) return <p className="py-4 text-xs text-slate-400">No customer revenue data for this period</p>;
 
   const sorted = [...rows].sort((a, b) => b.revenue_cents - a.revenue_cents);
   return (
@@ -361,11 +361,11 @@ function VendorExpenseSummarySection({ companyId, fromDate, toDate }: { companyI
     enabled: Boolean(companyId),
   });
 
-  if (query.isLoading) return <p className="py-4 text-sm text-gray-500">Loading vendor summary…</p>;
-  if (query.isError || !query.data) return <p className="py-4 text-sm text-red-600">Vendor summary unavailable</p>;
+  if (query.isLoading) return <p className="py-4 text-xs text-gray-500">Loading vendor summary…</p>;
+  if (query.isError || !query.data) return <p className="py-4 text-xs text-red-600">Vendor summary unavailable</p>;
 
   const rows = query.data.rows;
-  if (rows.length === 0) return <p className="py-4 text-sm text-slate-400">No open vendor balances</p>;
+  if (rows.length === 0) return <p className="py-4 text-xs text-slate-400">No open vendor balances</p>;
 
   const sorted = [...rows].sort((a, b) => b.total_open_cents - a.total_open_cents);
   return (
@@ -477,7 +477,7 @@ export function ManagementReportPackagePage() {
         }
       />
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
@@ -518,7 +518,7 @@ export function ManagementReportPackagePage() {
           <div className="mb-8 border-b-2 border-slate-800 pb-6 print:pb-4">
             <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-2">Management Report Package</div>
             <h1 className="text-2xl font-bold text-slate-900 mb-1">{pkg.label}</h1>
-            <div className="text-slate-600 text-sm mb-4">{pkg.description}</div>
+            <div className="text-slate-600 text-xs mb-4">{pkg.description}</div>
             <div className="grid grid-cols-2 gap-4 text-xs text-slate-500 mt-6">
               <div><span className="font-semibold text-slate-700">Entity</span><br />{entityName}</div>
               <div><span className="font-semibold text-slate-700">Period</span><br />{applied.start} through {applied.end}</div>
@@ -533,7 +533,7 @@ export function ManagementReportPackagePage() {
           {/* Table of Contents */}
           <div className="mb-8">
             <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-2">Table of Contents</div>
-            <ol className="space-y-1 text-sm text-slate-700">
+            <ol className="space-y-1 text-xs text-slate-700">
               {pkg.sections.map((section, i) => (
                 <li key={section} className="flex items-baseline gap-2">
                   <span className="text-[11px] font-semibold text-slate-400 min-w-[1rem]">{i + 1}</span>

@@ -140,7 +140,7 @@ export function FaultRulesPage() {
         subtitle="Map Samsara / J1939 fault codes to severity and auto-WO behavior. Initial rule set is empty — build from operational experience."
       />
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex gap-2 text-sm">
+        <div className="flex gap-2 text-xs">
           <Link to="/maintenance" className="text-slate-700 underline">
             Maintenance home
           </Link>

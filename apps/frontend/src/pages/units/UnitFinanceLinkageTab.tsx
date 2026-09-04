@@ -35,7 +35,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
   }
 
   if (linkageQuery.isLoading) {
-    return <p className="text-sm text-gray-500">Loading loan, lease, and depreciation linkage…</p>;
+    return <p className="text-xs text-gray-500">Loading loan, lease, and depreciation linkage…</p>;
   }
 
   const data = linkageQuery.data;
@@ -56,13 +56,13 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
 
       <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-linked-financials">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-slate-900">Linked Bills / Expenses</h3>
+          <h3 className="text-xs font-semibold text-slate-900">Linked Bills / Expenses</h3>
           <Link to={`/accounting/bills?unit_id=${encodeURIComponent(unitId)}`} className="text-xs text-slate-700 hover:underline">
             Open Bills →
           </Link>
         </div>
         {linkedMoneyQuery.isLoading ? (
-          <p className="text-sm text-gray-500">Loading bills &amp; expenses for this unit…</p>
+          <p className="text-xs text-gray-500">Loading bills &amp; expenses for this unit…</p>
         ) : null}
         {linkedMoneyQuery.isError ? (
           <ListErrorBanner
@@ -71,14 +71,14 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
           />
         ) : null}
         {linkedMoneyQuery.data && linkedBills.length === 0 && linkedExpenses.length === 0 ? (
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-gray-500">
             No bills or expenses stamp <code className="text-xs">unit_id</code> on this unit yet (ACCT-LINK-03 density).
           </p>
         ) : null}
         {linkedBills.length > 0 ? (
           <ul className="mb-2 divide-y divide-gray-100">
             {linkedBills.map((b) => (
-              <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-sm">
+              <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-xs">
                 <EntityLink kind="bill" id={b.id} label={visibleDocumentLabel(b.bill_number, b.id, "Record")} />
                 <span className="flex items-center gap-2 text-xs tabular-nums text-gray-600">
                   {b.journal_entry_id ? <EntityLink kind="journal_entry" id={b.journal_entry_id} label={entityLabel(b.journal_entry_memo, b.journal_entry_id, "Journal entry")} /> : null}
@@ -91,7 +91,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
         {linkedExpenses.length > 0 ? (
           <ul className="divide-y divide-gray-100">
             {linkedExpenses.map((e) => (
-              <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-sm">
+              <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-xs">
                 <EntityLink
                   kind="expense"
                   id={e.id}
@@ -114,17 +114,17 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-slate-900">Fixed assets &amp; depreciation</h3>
+          <h3 className="text-xs font-semibold text-slate-900">Fixed assets &amp; depreciation</h3>
           <Link to="/accounting/fixed-assets" className="text-xs text-slate-700 hover:underline">
             Open Fixed Assets register →
           </Link>
         </div>
         {data.fixed_assets.length === 0 ? (
-          <p className="text-sm text-gray-500">No fixed-asset register rows linked to this unit.</p>
+          <p className="text-xs text-gray-500">No fixed-asset register rows linked to this unit.</p>
         ) : (
           <ul className="divide-y divide-gray-100">
             {data.fixed_assets.map((row) => (
-              <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+              <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-xs">
                 <div>
                   <EntityLink
                     kind="fixed_asset"
@@ -147,17 +147,17 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-slate-900">ASC 842 leases</h3>
+          <h3 className="text-xs font-semibold text-slate-900">ASC 842 leases</h3>
           <Link to="/finance/hub" className="text-xs text-slate-700 hover:underline">
             Open Finance Hub →
           </Link>
         </div>
         {data.leases.length === 0 ? (
-          <p className="text-sm text-gray-500">No lease contract asset lines linked to this unit.</p>
+          <p className="text-xs text-gray-500">No lease contract asset lines linked to this unit.</p>
         ) : (
           <ul className="divide-y divide-gray-100">
             {data.leases.map((row) => (
-              <li key={`${row.lease_contract_id}-${row.fixed_asset_id}`} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+              <li key={`${row.lease_contract_id}-${row.fixed_asset_id}`} className="flex flex-wrap items-center justify-between gap-2 py-2 text-xs">
                 <div>
                   <span className="font-medium">{entityLabel(row.display_id, row.lease_contract_id, "Contract")}</span>
                   <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs capitalize text-slate-700">{row.status}</span>
@@ -177,17 +177,17 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-slate-900">Equipment loans (CCG / factoring)</h3>
+          <h3 className="text-xs font-semibold text-slate-900">Equipment loans (CCG / factoring)</h3>
           <Link to="/factoring/equipment-loans" className="text-xs text-slate-700 hover:underline">
             Open Equipment Loans →
           </Link>
         </div>
         {data.equipment_loans.length === 0 ? (
-          <p className="text-sm text-gray-500">No equipment loans on trailers currently attached to this unit.</p>
+          <p className="text-xs text-gray-500">No equipment loans on trailers currently attached to this unit.</p>
         ) : (
           <ul className="divide-y divide-gray-100">
             {data.equipment_loans.map((row) => (
-              <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+              <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-xs">
                 <div>
                   <span className="font-medium">{entityLabel(row.equipment_number, row.equipment_id, "Equipment")}</span>
                   {row.lender_vendor_name ? <span className="text-gray-500"> · {row.lender_vendor_name}</span> : null}

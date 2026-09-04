@@ -137,7 +137,7 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white px-3 py-2">
-        <div className="text-sm font-semibold text-gray-900">Documents ({filteredFiles.length})</div>
+        <div className="text-xs font-semibold text-gray-900">Documents ({filteredFiles.length})</div>
         {canUpload ? (
           <EntityDocumentUpload
             entityType={entityType}
@@ -187,7 +187,7 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search filename"
-            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
         </div>
         {isOwner ? (
@@ -198,7 +198,7 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
         ) : null}
       </div>
 
-      {documentsError ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{documentsError}</div> : null}
+      {documentsError ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{documentsError}</div> : null}
 
       <DataTable
         rows={filteredFiles}

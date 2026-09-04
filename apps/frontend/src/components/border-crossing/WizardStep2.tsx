@@ -19,8 +19,8 @@ export function WizardStep2({ form, ports, onChange }: Props) {
   return (
     <section data-testid="border-wizard-step-2" className="grid gap-4 lg:grid-cols-[1fr_260px]">
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold">Step 2 — Port & planned date</h3>
-        <div className="block text-sm">
+        <h3 className="text-xs font-semibold">Step 2 — Port & planned date</h3>
+        <div className="block text-xs">
           <label htmlFor="border-crossing-port-picker">Port of entry *</label>
           <Combobox
             id="border-crossing-port-picker"
@@ -32,7 +32,7 @@ export function WizardStep2({ form, ports, onChange }: Props) {
             allowClear
           />
         </div>
-        <label className="block text-sm">
+        <label className="block text-xs">
           Planned crossing date *
           <DateTimePicker
             className="mt-1 w-full"

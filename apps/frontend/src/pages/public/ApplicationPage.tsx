@@ -66,7 +66,7 @@ export function ApplicationPage() {
 
   if (portalQ.isLoading) {
     return (
-      <div className="mx-auto max-w-lg p-6 text-sm text-gray-600" data-testid="application-page">
+      <div className="mx-auto max-w-lg p-6 text-xs text-gray-600" data-testid="application-page">
         Loading application form…
       </div>
     );
@@ -74,7 +74,7 @@ export function ApplicationPage() {
 
   if (portalError || !portalQ.data) {
     return (
-      <div className="mx-auto max-w-lg rounded-sm border border-red-200 bg-red-50 p-6 text-sm text-red-800" data-testid="application-page">
+      <div className="mx-auto max-w-lg rounded-sm border border-red-200 bg-red-50 p-6 text-xs text-red-800" data-testid="application-page">
         Application link is invalid or expired.
       </div>
     );
@@ -84,7 +84,7 @@ export function ApplicationPage() {
     return (
       <div className="mx-auto max-w-lg space-y-3 rounded-sm border bg-white p-6 shadow-xs" data-testid="application-page">
         <h1 className="text-xl font-semibold text-gray-900">Application received</h1>
-        <p className="text-sm text-gray-600">
+        <p className="text-xs text-gray-600">
           Thank you for applying to {portalQ.data.company_name}. Our recruiting team will review your submission.
         </p>
       </div>
@@ -95,7 +95,7 @@ export function ApplicationPage() {
     <div className="mx-auto max-w-lg space-y-4 rounded-sm border bg-white p-6 shadow-xs" data-testid="application-page">
       <header className="space-y-1">
         <h1 className="text-xl font-semibold text-gray-900">Driver application</h1>
-        <p className="text-sm text-gray-600">{portalQ.data.company_name}</p>
+        <p className="text-xs text-gray-600">{portalQ.data.company_name}</p>
       </header>
 
       <p className="rounded-sm bg-amber-50 p-3 text-xs text-amber-900" data-testid="application-fcra-notice">
@@ -114,7 +114,7 @@ export function ApplicationPage() {
           submitM.mutate();
         }}
       >
-        <label className="grid gap-1 text-sm">
+        <label className="grid gap-1 text-xs">
           <span>First name</span>
           <input
             className="rounded-sm border px-3 py-2"
@@ -124,7 +124,7 @@ export function ApplicationPage() {
             required
           />
         </label>
-        <label className="grid gap-1 text-sm">
+        <label className="grid gap-1 text-xs">
           <span>Last name</span>
           <input
             className="rounded-sm border px-3 py-2"
@@ -134,7 +134,7 @@ export function ApplicationPage() {
             required
           />
         </label>
-        <label className="grid gap-1 text-sm">
+        <label className="grid gap-1 text-xs">
           <span>Phone</span>
           <input
             className="rounded-sm border px-3 py-2"
@@ -144,7 +144,7 @@ export function ApplicationPage() {
             required
           />
         </label>
-        <label className="grid gap-1 text-sm">
+        <label className="grid gap-1 text-xs">
           <span>Email (optional)</span>
           <input
             type="email"
@@ -154,7 +154,7 @@ export function ApplicationPage() {
             onChange={(e) => setEmail(e.target.value)}
           />
         </label>
-        <label className="grid gap-1 text-sm">
+        <label className="grid gap-1 text-xs">
           <span>Date of birth</span>
           {/* required removed: DatePicker has no native required attr */}
           <DatePicker
@@ -165,11 +165,11 @@ export function ApplicationPage() {
           />
         </label>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="grid gap-1 text-sm">
+          <label className="grid gap-1 text-xs">
             <span>CDL number (optional)</span>
             <input className="rounded-sm border px-3 py-2" value={cdlNumber} onChange={(e) => setCdlNumber(e.target.value)} />
           </label>
-          <label className="grid gap-1 text-sm">
+          <label className="grid gap-1 text-xs">
             <span>CDL state</span>
             <input
               className="rounded-sm border px-3 py-2 uppercase"
@@ -179,7 +179,7 @@ export function ApplicationPage() {
             />
           </label>
         </div>
-        <label className="grid gap-1 text-sm">
+        <label className="grid gap-1 text-xs">
           <span>Years of experience</span>
           <input
             type="number"
@@ -190,7 +190,7 @@ export function ApplicationPage() {
             onChange={(e) => setYearsExperience(e.target.value)}
           />
         </label>
-        <label className="flex items-start gap-2 text-sm">
+        <label className="flex items-start gap-2 text-xs">
           <input
             type="checkbox"
             data-testid="application-fcra-consent"
@@ -199,7 +199,7 @@ export function ApplicationPage() {
           />
           <span>I authorize background screening under the FCRA.</span>
         </label>
-        {formError ? <p className="text-sm text-red-700">{formError.replaceAll("_", " ")}</p> : null}
+        {formError ? <p className="text-xs text-red-700">{formError.replaceAll("_", " ")}</p> : null}
         <Button type="submit" data-testid="application-submit" disabled={submitM.isPending}>
           Submit application
         </Button>

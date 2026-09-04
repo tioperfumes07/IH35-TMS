@@ -122,7 +122,7 @@ function SectionShell({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-slate-900">
           {title}
           {count > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({count})</span> : null}
         </h3>
@@ -133,9 +133,9 @@ function SectionShell({
           className="text-xs font-semibold text-slate-700 underline"
         />
       </div>
-      {isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
       {isError ? <ListErrorState title={errorText} status={0} onRetry={onRetry} /> : null}
-      {!isLoading && !isError && count === 0 ? <p className="text-sm text-gray-500">{emptyText}</p> : null}
+      {!isLoading && !isError && count === 0 ? <p className="text-xs text-gray-500">{emptyText}</p> : null}
       {count > 0 ? <ul className="space-y-2">{children}</ul> : null}
     </div>
   );
@@ -175,7 +175,7 @@ function IncidentsBlock({
       count={rows.length}
     >
       {rows.map((incident) => (
-        <li key={s(incident.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+        <li key={s(incident.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
           {/* SAF-B30: was plain text with the comment "no per-record detail surface to open". The
               surface exists — the cluster list now honours ?incident_id= — so this drills through. */}
           <EntityLinkOrTombstone
@@ -279,7 +279,7 @@ export function AssetSafetyReverseSection({
 
   return (
     <div className="space-y-3" data-testid={testId}>
-      <h2 className="text-sm font-semibold text-gray-900">Safety records linked to this {contextLabel}</h2>
+      <h2 className="text-xs font-semibold text-gray-900">Safety records linked to this {contextLabel}</h2>
 
       <SectionShell
         title="Accidents"
@@ -295,7 +295,7 @@ export function AssetSafetyReverseSection({
         count={accidentTotal}
       >
         {accidents.map((accident) => (
-          <li key={s(accident.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+          <li key={s(accident.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
             <EntityLinkOrTombstone
               kind="accident"
               id={s(accident.id) || null}
@@ -344,7 +344,7 @@ export function AssetSafetyReverseSection({
         count={inspectionTotal}
       >
         {inspections.map((inspection) => (
-          <li key={s(inspection.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+          <li key={s(inspection.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
             <EntityLinkOrTombstone
               kind="dot_inspection"
               id={s(inspection.id) || null}
@@ -382,7 +382,7 @@ export function AssetSafetyReverseSection({
         count={dvirTotal}
       >
         {dvirs.map((dvir) => (
-          <li key={s(dvir.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+          <li key={s(dvir.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
             <EntityLinkOrTombstone
               kind="dvir"
               id={s(dvir.id) || null}

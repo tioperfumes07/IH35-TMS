@@ -10,7 +10,7 @@ export function CurrentAssignmentSection({
   const driver = assignment.assigned_driver as Record<string, unknown> | null;
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-gray-800">
+      <h2 className="text-xs font-semibold text-gray-800">
         Current assignment
       </h2>
       <p className="mt-2 text-xs text-gray-700">

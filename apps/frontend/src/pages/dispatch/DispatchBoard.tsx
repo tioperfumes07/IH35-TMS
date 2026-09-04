@@ -1048,7 +1048,7 @@ export function DispatchBoard({
 
     if (!loading && boardSections.every((section) => section.rows.length === 0)) {
       return (
-        <div className="rounded-sm border border-gray-200 bg-white p-6 text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white p-6 text-xs text-gray-500">
           No loads match your filters.{" "}
           <button type="button" className="font-semibold text-slate-700 hover:underline" onClick={() => onPageChange(0)}>
             Go back to first page
@@ -1096,7 +1096,7 @@ export function DispatchBoard({
           />
         ) : null}
         <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-600">
+          <div className="text-xs text-gray-600">
             {loadCountSummary}
           </div>
           <div className="flex items-center gap-2">
@@ -1211,7 +1211,7 @@ export function DispatchBoard({
           );
         })}
 
-        <div className="flex items-center justify-between border-t border-gray-200 pt-2 text-sm">
+        <div className="flex items-center justify-between border-t border-gray-200 pt-2 text-xs">
           <Button type="button" variant="secondary" size="sm" disabled={!hasPrev} onClick={() => onPageChange(Math.max(0, offset - limit))}>
             Previous
           </Button>
@@ -1506,10 +1506,10 @@ export function DispatchBoard({
         requiresReason
         description="Apply a dispatch status transition to selected loads. Invalid transitions are reported per row. To void loads, use Void (real cancellation service)."
         payloadFields={
-          <label className="block text-sm text-gray-700">
+          <label className="block text-xs text-gray-700">
             Transition
             <select
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={pendingTransition}
               onChange={(event) => setPendingTransition(event.target.value)}
             >

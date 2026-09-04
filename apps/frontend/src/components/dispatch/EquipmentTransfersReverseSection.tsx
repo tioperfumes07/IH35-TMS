@@ -15,7 +15,7 @@ export function EquipmentTransfersReverseSection({ companyId, equipmentId }: { c
   const requests = query.isError ? [] : (query.data?.requests ?? []);
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h3 className="text-sm font-semibold text-gray-800">Equipment transfers</h3>
+      <h3 className="text-xs font-semibold text-gray-800">Equipment transfers</h3>
       {query.isError ? (
         <ListErrorState
           title="Couldn't load equipment transfers"
@@ -24,10 +24,10 @@ export function EquipmentTransfersReverseSection({ companyId, equipmentId }: { c
           onRetry={() => void query.refetch()}
         />
       ) : null}
-      {query.isLoading ? <p className="mt-2 text-sm text-gray-500">Loading equipment transfers…</p> : null}
-      {!query.isLoading && !query.isError && requests.length === 0 ? <p className="mt-2 text-sm text-gray-500">No equipment transfers are linked to this trailer.</p> : null}
+      {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading equipment transfers…</p> : null}
+      {!query.isLoading && !query.isError && requests.length === 0 ? <p className="mt-2 text-xs text-gray-500">No equipment transfers are linked to this trailer.</p> : null}
       <div className="mt-2 space-y-2">
-        {requests.map((transfer) => <div key={transfer.uuid} className="p-2 text-sm"><EntityLink kind="equipment_transfer" id={transfer.uuid} label={`Equipment transfer · ${transfer.status}`} className="font-medium text-slate-700 underline" /> · {transfer.transfer_location} · <EntityLinkOrTombstone kind="driver" id={transfer.from_driver_uuid} name={transfer.from_driver_name} noun="Driver" />{" → "}<EntityLinkOrTombstone kind="driver" id={transfer.to_driver_uuid} name={transfer.to_driver_name} noun="Driver" /></div>)}
+        {requests.map((transfer) => <div key={transfer.uuid} className="p-2 text-xs"><EntityLink kind="equipment_transfer" id={transfer.uuid} label={`Equipment transfer · ${transfer.status}`} className="font-medium text-slate-700 underline" /> · {transfer.transfer_location} · <EntityLinkOrTombstone kind="driver" id={transfer.from_driver_uuid} name={transfer.from_driver_name} noun="Driver" />{" → "}<EntityLinkOrTombstone kind="driver" id={transfer.to_driver_uuid} name={transfer.to_driver_name} noun="Driver" /></div>)}
       </div>
     </section>
   );

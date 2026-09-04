@@ -16,7 +16,7 @@ export function SafetyEventsReverseBlock({ companyId, subject, entityId }: { com
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={`${subject}-safety-events-reverse`}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-slate-900">
           Safety events{rows.length ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
         <EntityLink
@@ -26,7 +26,7 @@ export function SafetyEventsReverseBlock({ companyId, subject, entityId }: { com
           className="text-xs font-semibold text-slate-700 underline"
         />
       </div>
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
       {query.isError ? (
         <ListErrorState
           status={0}
@@ -34,11 +34,11 @@ export function SafetyEventsReverseBlock({ companyId, subject, entityId }: { com
           onRetry={() => void query.refetch()}
         />
       ) : null}
-      {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No safety events linked to this {subject}.</p> : null}
+      {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-xs text-gray-500">No safety events linked to this {subject}.</p> : null}
       {rows.length ? (
         <ul className="space-y-2">
           {rows.map((row) => (
-            <li key={row.id} className="text-sm text-slate-700">
+            <li key={row.id} className="text-xs text-slate-700">
               <EntityLink kind="safety_event" id={row.id} label={entityLabel(row.title, row.id, "Safety event")} />
               <span className="ml-2 text-xs text-gray-500">
                 {formatDateUS(row.occurred_at)} · {row.severity} · {row.status}

@@ -38,11 +38,11 @@ export function TransfersInProgressPage() {
         subtitle="Dual confirmation — pending until both drivers acknowledge."
       />
       {!companyId ? (
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
           Select an operating company to view transfers.
         </div>
       ) : query.isLoading ? (
-        <div className="rounded-sm border bg-white p-4 text-sm">Loading transfers…</div>
+        <div className="rounded-sm border bg-white p-4 text-xs">Loading transfers…</div>
       ) : query.isError ? (
         <ListErrorState
           title="Couldn't load equipment transfers"
@@ -51,12 +51,12 @@ export function TransfersInProgressPage() {
           onRetry={() => void query.refetch()}
         />
       ) : (query.data ?? []).length === 0 ? (
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
           No pending equipment transfers for this operating company.
         </div>
       ) : (
         (query.data ?? []).map((row) => (
-          <div key={row.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm space-y-1">
+          <div key={row.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs space-y-1">
             <div className="flex flex-wrap gap-x-3 gap-y-1">
               <span>
                 Trailer:{" "}

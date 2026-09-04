@@ -79,7 +79,7 @@ function KpiCard({
   if (disabled) {
     return (
       <div
-        className="cursor-not-allowed rounded-sm border border-gray-200 bg-white p-3 text-sm opacity-70"
+        className="cursor-not-allowed rounded-sm border border-gray-200 bg-white p-3 text-xs opacity-70"
         aria-disabled="true"
         title={disabledReason}
         data-kpi-disabled="true"
@@ -90,12 +90,12 @@ function KpiCard({
   }
   if (to) {
     return (
-      <Link to={to} className="block rounded-sm border border-gray-200 bg-white p-3 text-sm transition hover:shadow-xs">
+      <Link to={to} className="block rounded-sm border border-gray-200 bg-white p-3 text-xs transition hover:shadow-xs">
         {content}
       </Link>
     );
   }
-  return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">{content}</div>;
+  return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">{content}</div>;
 }
 
 // ─── ParityTable columns (display-only; order/format preserved 1:1) ──────────
@@ -337,7 +337,7 @@ export function ReserveTracker() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border bg-white p-4 text-sm text-gray-500">
+      <div className="rounded-sm border bg-white p-4 text-xs text-gray-500">
         Select an operating company to view the reserve tracker.
       </div>
     );
@@ -386,7 +386,7 @@ export function ReserveTracker() {
       {/* Release forecast */}
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div className="text-sm font-semibold text-gray-800">Estimated Reserve Release Schedule</div>
+          <div className="text-xs font-semibold text-gray-800">Estimated Reserve Release Schedule</div>
           <div className="min-w-[220px]" data-testid="reserve-tracker-factor-picker">
             {/* LST-F159: bare <select> had no + Add new — operators left Reserve Tracker to create a factor. */}
             <Combobox
@@ -442,7 +442,7 @@ export function ReserveTracker() {
           {(balancesQ.data ?? []).map((bal) => (
             <div
               key={bal.factor_id}
-              className={`cursor-pointer rounded border p-3 text-sm transition-colors ${
+              className={`cursor-pointer rounded border p-3 text-xs transition-colors ${
                 selectedFactorId === bal.factor_id
                   ? "border-slate-300 bg-slate-100"
                   : "border-gray-200 bg-white hover:border-slate-300"
@@ -475,7 +475,7 @@ export function ReserveTracker() {
       {/* Reserve balance history table */}
       {selectedFactorId ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <div className="mb-2 text-sm font-semibold text-gray-800">
+          <div className="mb-2 text-xs font-semibold text-gray-800">
             Reserve Movement History — {entityLabel(factorNameById.get(selectedFactorId), selectedFactorId, "Factor")}
           </div>
           {historyQ.isError ? (
@@ -530,7 +530,7 @@ export function ReserveTracker() {
       {/* Chargebacks pending detail */}
       {chargebacksQ.isError ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <div className="mb-2 text-sm font-semibold text-gray-800">Chargeback + Fee History</div>
+          <div className="mb-2 text-xs font-semibold text-gray-800">Chargeback + Fee History</div>
           <ListErrorState
             title="Couldn't load chargeback + fee history"
             status={0}
@@ -540,7 +540,7 @@ export function ReserveTracker() {
         </div>
       ) : (chargebacksQ.data?.history ?? []).length > 0 ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <div className="mb-2 text-sm font-semibold text-gray-800">Chargeback + Fee History</div>
+          <div className="mb-2 text-xs font-semibold text-gray-800">Chargeback + Fee History</div>
           <ParityTable<FactoringChargebackFeeRow>
             columns={CHARGEBACK_COLUMNS}
             rows={(chargebacksQ.data?.history ?? []).slice(0, 50)}

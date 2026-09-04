@@ -370,7 +370,7 @@ export function CashAdvanceRequestsPage() {
             <label className="block md:col-span-1">
               <span className="text-xs font-medium text-gray-600">Reason * (min 10 chars)</span>
               <input
-                className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-sm"
+                className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-xs"
                 value={newReason}
                 onChange={(e) => setNewReason(e.target.value)}
                 placeholder="e.g. Border crossing fee for load SB-1042"
@@ -387,9 +387,9 @@ export function CashAdvanceRequestsPage() {
       ) : null}
 
       {!companyId ? (
-        <p className="text-sm text-gray-600">Select an operating company to view requests.</p>
+        <p className="text-xs text-gray-600">Select an operating company to view requests.</p>
       ) : pendingQuery.isError ? (
-        <p className="text-sm text-red-600">Could not load requests.</p>
+        <p className="text-xs text-red-600">Could not load requests.</p>
       ) : (
         // ACCT-F3532: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar.
         <ParityTable<CashAdvanceRequestRow>
@@ -448,18 +448,18 @@ export function CashAdvanceRequestsPage() {
       )}
 
       {approveMut.isError ? (
-        <p className="text-sm text-red-600">Approve failed — check console or try again.</p>
+        <p className="text-xs text-red-600">Approve failed — check console or try again.</p>
       ) : null}
-      {denyMut.isError ? <p className="text-sm text-red-600">Deny failed.</p> : null}
-      {escalateMut.isError ? <p className="text-sm text-red-600">Escalate failed.</p> : null}
+      {denyMut.isError ? <p className="text-xs text-red-600">Deny failed.</p> : null}
+      {escalateMut.isError ? <p className="text-xs text-red-600">Escalate failed.</p> : null}
 
       {denyForId ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-lg bg-white p-4 shadow-lg">
             <h2 className="text-base font-semibold text-gray-900">Deny request</h2>
-            <p className="mt-1 text-sm text-gray-600">Reason is visible to audit and helps the driver understand the decision.</p>
+            <p className="mt-1 text-xs text-gray-600">Reason is visible to audit and helps the driver understand the decision.</p>
             <textarea
-              className="mt-3 w-full rounded-sm border border-gray-200 p-2 text-sm"
+              className="mt-3 w-full rounded-sm border border-gray-200 p-2 text-xs"
               rows={4}
               value={denyReason}
               onChange={(e) => setDenyReason(e.target.value)}

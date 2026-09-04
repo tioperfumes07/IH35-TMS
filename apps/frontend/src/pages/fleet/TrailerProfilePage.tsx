@@ -140,7 +140,7 @@ export function TrailerProfilePage() {
   }, [companyId, id]);
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs">Select an operating company.</div>;
   }
   if (profileQ.isError) {
     return (
@@ -153,10 +153,10 @@ export function TrailerProfilePage() {
     );
   }
   if (profileQ.isLoading) {
-    return <div className="rounded-sm border bg-white p-4 text-sm">Loading trailer profile…</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs">Loading trailer profile…</div>;
   }
   if (!profileQ.data) {
-    return <div className="rounded-sm border bg-white p-4 text-sm">Trailer not found.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs">Trailer not found.</div>;
   }
 
   const aggregate = profileQ.data;
@@ -182,7 +182,7 @@ export function TrailerProfilePage() {
         <CurrentAssignmentSection assignment={aggregate.current_assignment} />
       </div>
       <section data-testid="tp-section-3b-load-history" className="rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-gray-800">Loads</h2>
+        <h2 className="text-xs font-semibold text-gray-800">Loads</h2>
         <div className="mt-2 space-y-1 text-xs">
           {(aggregate.loads ?? []).map((load) => (
             <div key={String(load.load_id)} className="flex items-center justify-between gap-3">
@@ -295,7 +295,7 @@ export function TrailerProfilePage() {
         />
       </div>
       <section data-testid="tp-section-audit-history" className="rounded-sm border border-gray-200 bg-white p-3">
-        <h3 className="mb-2 text-sm font-semibold text-slate-900">Audit History</h3>
+        <h3 className="mb-2 text-xs font-semibold text-slate-900">Audit History</h3>
         <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="equipment" entityId={id} />
       </section>
       {/* DUALPATH-07 fix (2026-07-22): the old tp-section-9-activity TrailerRecentActivitySection

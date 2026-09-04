@@ -95,11 +95,11 @@ export function HosDriverMapPreviewPage() {
       />
 
       {!companyId ? (
-        <p className="text-sm text-gray-600">Select an operating company.</p>
+        <p className="text-xs text-gray-600">Select an operating company.</p>
       ) : q.isLoading ? (
-        <p className="text-sm text-gray-500">Loading preview from Samsara…</p>
+        <p className="text-xs text-gray-500">Loading preview from Samsara…</p>
       ) : q.isError ? (
-        <p className="text-sm text-red-600">Could not load preview.</p>
+        <p className="text-xs text-red-600">Could not load preview.</p>
       ) : d ? (
         <>
           {/* Summary stats */}
@@ -142,7 +142,7 @@ export function HosDriverMapPreviewPage() {
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">Last HOS pull</div>
                 {d.downstream.last_hos_clocks_pull ? (
                   <>
-                    <div className={`mt-0.5 text-sm font-semibold ${d.downstream.last_hos_clocks_pull.success ? "text-emerald-700" : "text-red-600"}`}>
+                    <div className={`mt-0.5 text-xs font-semibold ${d.downstream.last_hos_clocks_pull.success ? "text-emerald-700" : "text-red-600"}`}>
                       {d.downstream.last_hos_clocks_pull.success ? "Success" : "Failed"}
                     </div>
                     <div className="text-[11px] text-gray-500">{d.downstream.last_hos_clocks_pull.finished_at?.slice(0, 16)?.replace("T", " ")} UTC</div>
@@ -152,7 +152,7 @@ export function HosDriverMapPreviewPage() {
                     )}
                   </>
                 ) : (
-                  <div className="mt-0.5 text-sm text-gray-400">No pull on record</div>
+                  <div className="mt-0.5 text-xs text-gray-400">No pull on record</div>
                 )}
               </div>
             </div>

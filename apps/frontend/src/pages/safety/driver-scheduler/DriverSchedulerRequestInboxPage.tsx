@@ -69,7 +69,7 @@ export function DriverSchedulerRequestInboxPage({ embedded = false }: { embedded
   return (
     <div className="space-y-3">
       {!embedded ? <PageHeader title="Leave Requests" subtitle="Pending time-off requests awaiting review" /> : null}
-      {!operatingCompanyId ? <div className="text-sm text-gray-500">Select an operating company to view leave requests.</div> : null}
+      {!operatingCompanyId ? <div className="text-xs text-gray-500">Select an operating company to view leave requests.</div> : null}
       {!embedded ? (
         <div className="mb-2">
           <Link to="/safety/driver-scheduler" className="text-xs text-slate-700 hover:underline">

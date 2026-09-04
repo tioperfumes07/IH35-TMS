@@ -78,7 +78,7 @@ export function AssetListTable({ rows, isLoading }: Props) {
   return (
     <section className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
       <header className="border-b border-gray-200 px-3 py-2">
-        <h2 className="text-sm font-semibold text-gray-900">Asset register</h2>
+        <h2 className="text-xs font-semibold text-gray-900">Asset register</h2>
       </header>
       <div className="p-2">
         <ParityTable

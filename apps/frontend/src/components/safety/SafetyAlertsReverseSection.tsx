@@ -71,7 +71,7 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`safety-alerts-reverse-${subjectKind}`}>
-      <h3 className="text-sm font-semibold text-slate-900">Safety alerts and violations</h3>
+      <h3 className="text-xs font-semibold text-slate-900">Safety alerts and violations</h3>
       {failed ? (
         <ListErrorState
           status={0}

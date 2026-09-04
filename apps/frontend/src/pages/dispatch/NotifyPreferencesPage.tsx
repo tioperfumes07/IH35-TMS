@@ -30,7 +30,7 @@ function PrefToggle({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <label className="flex items-center gap-2 text-sm">
+    <label className="flex items-center gap-2 text-xs">
       <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
       {label}
     </label>
@@ -183,7 +183,7 @@ export function NotifyPreferencesPage() {
       />
 
       <div className="mt-4 flex flex-wrap items-end gap-3">
-        <label className="block text-sm">
+        <label className="block text-xs">
           Customer
           <div className="mt-1 w-80" data-testid="notify-customer-select">
             <EntityPicker
@@ -199,7 +199,7 @@ export function NotifyPreferencesPage() {
         </label>
         <button
           type="button"
-          className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm text-white disabled:opacity-50"
+          className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs text-white disabled:opacity-50"
           disabled={!companyId || syncM.isPending}
           onClick={() => syncM.mutate(companyId)}
           data-testid="notify-sync-button"
@@ -233,7 +233,7 @@ export function NotifyPreferencesPage() {
               <PrefToggle label="Delayed" checked={prefs.notify_on_delayed} disabled={saveM.isPending || !prefs.opt_in} onChange={(v) => saveM.mutate({ companyId, customerId, patch: { notify_on_delayed: v } })} />
             </div>
           </div>
-          <div className="rounded-sm border p-4 text-sm text-slate-600">
+          <div className="rounded-sm border p-4 text-xs text-slate-600">
             <p>Milestone events trigger template-based SMS (Twilio) and email (Resend) when opted in.</p>
             <p className="mt-2">Portal milestone templates are the starting point; near-arrival and delayed use dedicated templates.</p>
           </div>

@@ -11,7 +11,7 @@ export function EntityEmptyState({
 }) {
   const who = entityName?.trim() || "This entity";
   return (
-    <p className="px-3 py-3 text-sm text-gray-500">
+    <p className="px-3 py-3 text-xs text-gray-500">
       {who} has no {noun} yet. If you expected data here, switch entity from the top bar — another company may hold it.
     </p>
   );

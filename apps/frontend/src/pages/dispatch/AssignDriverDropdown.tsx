@@ -156,7 +156,7 @@ export function AssignDriverDropdown({
         />
       ) : null}
       <Combobox
-        className="h-9 w-full text-sm"
+        className="h-9 w-full text-xs"
         options={comboboxOptions}
         value={value || null}
         disabled={disabled || (!driversOverride && (activeQuery.isLoading || activeQuery.isError))}

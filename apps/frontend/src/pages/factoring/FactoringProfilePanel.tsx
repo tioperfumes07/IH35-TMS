@@ -20,7 +20,7 @@ export function FactoringProfilePanel({ factor, saving, onSave }: Props) {
   const reserveTiers = Array.isArray(factor.reserve_schedule) ? factor.reserve_schedule.length : 0;
 
   return (
-    <section className="rounded-sm border border-gray-200 bg-white p-3 text-sm" data-testid="factoring-profile-panel" data-factoring-profile-panel>
+    <section className="rounded-sm border border-gray-200 bg-white p-3 text-xs" data-testid="factoring-profile-panel" data-factoring-profile-panel>
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <h3 className="font-medium text-gray-900">Active factoring company profile</h3>

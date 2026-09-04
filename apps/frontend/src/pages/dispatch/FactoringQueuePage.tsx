@@ -295,7 +295,7 @@ export function FactoringQueuePage() {
 
   if (!companyId) {
     return (
-      <div className="mx-auto max-w-6xl p-4 text-sm text-gray-500">
+      <div className="mx-auto max-w-6xl p-4 text-xs text-gray-500">
         Select an operating company to view the factoring queue.
       </div>
     );
@@ -325,13 +325,13 @@ export function FactoringQueuePage() {
       {/* Summary strip */}
       {summaryQ.data ? (
         <div className="grid gap-2 sm:grid-cols-4">
-          <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Active Factor</div>
             <div className="mt-1 font-semibold text-gray-900">
               {summaryQ.data.active_factor_name || "Not configured"}
             </div>
           </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Reserve Balance</div>
             <div className="mt-1 font-semibold text-gray-900">
               {/* views.factoring_summary normalizes signed ledger cents to DOLLARS.
@@ -339,7 +339,7 @@ export function FactoringQueuePage() {
               {money.format(summaryQ.data.reserve_balance || 0)}
             </div>
           </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <div className="text-[11px] uppercase tracking-wide text-gray-500">MTD Advances</div>
             <div className="mt-1 font-semibold text-gray-900">
               {/* mtd_advanced_total is also DOLLARS (0124 sums factoring_advances.advance_amount — no _cents). */}
@@ -347,7 +347,7 @@ export function FactoringQueuePage() {
               <span className="text-xs text-gray-500">({summaryQ.data.mtd_advances_count} batch)</span>
             </div>
           </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Packet Queue</div>
             <div className="mt-1 font-semibold text-gray-900">
               {(countByStage["NOT_FACTORED"] ?? 0) + (countByStage["PACKET_READY"] ?? 0)} pending{" "}

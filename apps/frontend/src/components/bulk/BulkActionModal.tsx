@@ -59,7 +59,7 @@ export function BulkActionModal({
 
   return (
     <Modal open={open} onClose={onCancel} title={`Bulk ${actionLabel}`}>
-      <div className="space-y-4 text-sm">
+      <div className="space-y-4 text-xs">
         <p>
           You are about to <strong>{actionLabel.toLowerCase()}</strong> on{" "}
           <strong>{affectedCount}</strong> {affectedCount === 1 ? "item" : "items"}.
@@ -70,7 +70,7 @@ export function BulkActionModal({
           <label className="block space-y-1">
             <span className="font-medium text-gray-800">Reason (required)</span>
             <textarea
-              className="w-full rounded-sm border border-gray-300 p-2 text-sm"
+              className="w-full rounded-sm border border-gray-300 p-2 text-xs"
               rows={3}
               value={reason}
               onChange={(e) => {
@@ -94,7 +94,7 @@ export function BulkActionModal({
             <span className="font-medium text-gray-800">Type {requiresTypedConfirm} to confirm</span>
             <input
               type="text"
-              className="w-full rounded-sm border border-gray-300 p-2 text-sm"
+              className="w-full rounded-sm border border-gray-300 p-2 text-xs"
               value={typedConfirm}
               onChange={(e) => {
                 setTypedConfirm(e.target.value);
@@ -108,7 +108,7 @@ export function BulkActionModal({
         <div className="flex justify-end gap-2 pt-2">
           <button
             type="button"
-            className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm"
+            className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs"
             onClick={onCancel}
             disabled={confirming}
           >
@@ -116,7 +116,7 @@ export function BulkActionModal({
           </button>
           <button
             type="button"
-            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
             onClick={validateAndConfirm}
             disabled={confirming}
           >

@@ -283,9 +283,9 @@ export function LegalMatterDetailPage() {
       />
       <LegalModuleTabs />
       {!companyId || !id ? (
-        <p className="text-sm text-gray-600">Missing company or matter.</p>
+        <p className="text-xs text-gray-600">Missing company or matter.</p>
       ) : detailQuery.isLoading ? (
-        <p className="text-sm text-gray-600">Loading…</p>
+        <p className="text-xs text-gray-600">Loading…</p>
       ) : detailQuery.isError ? (
         <ListErrorState
           title="Couldn't load legal matter"
@@ -294,7 +294,7 @@ export function LegalMatterDetailPage() {
           onRetry={() => void detailQuery.refetch()}
         />
       ) : !detailQuery.data ? (
-        <p className="text-sm text-red-600">Matter not found or access denied.</p>
+        <p className="text-xs text-red-600">Matter not found or access denied.</p>
       ) : (
         <>
           <div className="flex flex-wrap gap-2">
@@ -302,7 +302,7 @@ export function LegalMatterDetailPage() {
               <button
                 key={t}
                 type="button"
-                className={`rounded-sm px-3 py-1 text-sm ${tab === t ? "bg-gray-900 text-white" : "border border-gray-200 bg-white"}`}
+                className={`rounded-sm px-3 py-1 text-xs ${tab === t ? "bg-gray-900 text-white" : "border border-gray-200 bg-white"}`}
                 onClick={() => setTab(t)}
               >
                 {t}
@@ -342,7 +342,7 @@ export function LegalMatterDetailPage() {
                 </Button>
               </div>
               {updateMut.isError ? (
-                <p className="text-sm text-red-600">
+                <p className="text-xs text-red-600">
                   Could not update matter. Check your entries and try again.
                 </p>
               ) : null}
@@ -350,7 +350,7 @@ export function LegalMatterDetailPage() {
           ) : null}
 
           {tab === "overview" && !isEditing ? (
-            <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-800">
+            <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-800">
               <p>
                 <strong>Status:</strong> {String(matter?.status ?? "")} · <strong>Severity:</strong>{" "}
                 {String(matter?.severity ?? "")} · <strong>Our role:</strong> {fieldOrDash(matter?.our_role)}
@@ -476,7 +476,7 @@ export function LegalMatterDetailPage() {
                 <div className="mt-4 border-t border-gray-100 pt-3">
                   <p className="text-xs font-semibold uppercase text-gray-500">Close matter</p>
                   <textarea
-                    className="mt-2 w-full rounded-sm border border-gray-200 p-2 text-sm"
+                    className="mt-2 w-full rounded-sm border border-gray-200 p-2 text-xs"
                     placeholder="Outcome documentation (required)"
                     value={closeNotes}
                     onChange={(e) => setCloseNotes(e.target.value)}
@@ -512,7 +512,7 @@ export function LegalMatterDetailPage() {
                 <div className="space-y-2 border-b border-gray-100 pb-3" data-testid="legal-matter-timeline-note-creator">
                   <p className="text-xs font-medium text-slate-600">Add note</p>
                   <textarea
-                    className="w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
+                    className="w-full rounded-sm border border-gray-200 px-2 py-1 text-xs"
                     placeholder="Note"
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
@@ -529,7 +529,7 @@ export function LegalMatterDetailPage() {
                   </Button>
                 </div>
               ) : null}
-              <ul className="space-y-2 text-sm" data-testid="legal-matter-timeline-list">
+              <ul className="space-y-2 text-xs" data-testid="legal-matter-timeline-list">
                 {(detailQuery.data.events ?? []).map((ev: LegalMatterEvent) => (
                   <li key={String(ev.id ?? Math.random())} className="rounded-sm bg-gray-50 px-2 py-1">
                     <span className="font-semibold">{String(ev.event_type ?? "")}</span>{" "}
@@ -547,12 +547,12 @@ export function LegalMatterDetailPage() {
                 <div className="space-y-2 border-b border-gray-100 pb-3">
                   <input type="file" onChange={(e) => setDocFile(e.target.files?.[0] ?? null)} />
                   <input
-                    className="w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
+                    className="w-full rounded-sm border border-gray-200 px-2 py-1 text-xs"
                     placeholder="Title"
                     value={docTitle}
                     onChange={(e) => setDocTitle(e.target.value)}
                   />
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex items-center gap-2 text-xs">
                     <input type="checkbox" checked={docPriv} onChange={(e) => setDocPriv(e.target.checked)} /> Privileged
                     (Owner/Admin only)
                   </label>
@@ -565,7 +565,7 @@ export function LegalMatterDetailPage() {
                 {(detailQuery.data.documents ?? []).map((d: LegalMatterDocument) => {
                   const privileged = Boolean(d.privileged_mask);
                   return (
-                    <li key={String(d.id ?? "")} className="flex items-center justify-between gap-2 text-sm">
+                    <li key={String(d.id ?? "")} className="flex items-center justify-between gap-2 text-xs">
                       <span>
                         {privileged ? "Privileged — Owner access only" : String(d.title ?? "")}
                         {d.is_privileged && !privileged ? " (privileged)" : ""}
@@ -586,7 +586,7 @@ export function LegalMatterDetailPage() {
             <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
               {admin ? (
                 <div className="grid gap-2 border-b border-gray-100 pb-3 md:grid-cols-2">
-                  <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-sm" value={dlType} onChange={(e) => setDlType(e.target.value)}>
+                  <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-xs" value={dlType} onChange={(e) => setDlType(e.target.value)}>
                     {["statute_of_limitations", "response", "hearing", "filing", "other"].map((t) => (
                       <option key={t} value={t}>
                         {properEnumOrFilterLabel(t)}
@@ -594,7 +594,7 @@ export function LegalMatterDetailPage() {
                     ))}
                   </SelectCombobox>
                   <input
-                    className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
+                    className="rounded-sm border border-gray-200 px-2 py-1 text-xs"
                     placeholder="Title"
                     value={dlTitle}
                     onChange={(e) => setDlTitle(e.target.value)}
@@ -605,7 +605,7 @@ export function LegalMatterDetailPage() {
                     onChange={setDlAt}
                   />
                   <input
-                    className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
+                    className="rounded-sm border border-gray-200 px-2 py-1 text-xs"
                     placeholder="reminder emails comma-separated"
                     value={dlEmails}
                     onChange={(e) => setDlEmails(e.target.value)}
@@ -615,7 +615,7 @@ export function LegalMatterDetailPage() {
                   </Button>
                 </div>
               ) : null}
-              <ul className="space-y-2 text-sm">
+              <ul className="space-y-2 text-xs">
                 {(detailQuery.data.deadlines ?? []).map((d: LegalMatterDeadline) => (
                   <li key={String(d.id ?? "")} className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-gray-50 px-2 py-2">
                     <div>
@@ -646,7 +646,7 @@ export function LegalMatterDetailPage() {
           ) : null}
 
           {tab === "notes" ? (
-            <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700 whitespace-pre-wrap">
+            <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700 whitespace-pre-wrap">
               {String(matter?.internal_notes ?? "") || "No internal notes."}
             </div>
           ) : null}

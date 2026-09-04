@@ -302,7 +302,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
 
   if (!enabled) {
     return (
-      <div className="rounded-sm border bg-white p-4 text-sm text-slate-600" data-testid="dispatch-overview-page">
+      <div className="rounded-sm border bg-white p-4 text-xs text-slate-600" data-testid="dispatch-overview-page">
         Select an operating company.
       </div>
     );

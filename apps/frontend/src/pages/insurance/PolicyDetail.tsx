@@ -214,15 +214,15 @@ export function PolicyDetail() {
   );
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view policy details.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">Select an operating company to view policy details.</div>;
   }
 
   if (!policyId) {
-    return <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">Missing policy ID.</div>;
+    return <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700">Missing policy ID.</div>;
   }
 
   if (policyQuery.isLoading) {
-    return <div className="text-sm text-slate-500">Loading policy details...</div>;
+    return <div className="text-xs text-slate-500">Loading policy details...</div>;
   }
 
   if (policyQuery.isError || !policyQuery.data) {
@@ -338,7 +338,7 @@ export function PolicyDetail() {
       ) : null}
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-sm font-semibold text-slate-900">Units Assigned</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Units Assigned</h3>
         <div className="mt-2">
           <ParityTable
             rows={policy.units}
@@ -355,7 +355,7 @@ export function PolicyDetail() {
       <PaymentScheduleTab operatingCompanyId={companyId} policyId={policyId} />
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-sm font-semibold text-slate-900">COI History (INS-04)</h3>
+        <h3 className="text-xs font-semibold text-slate-900">COI History (INS-04)</h3>
         <div className="mt-2">
           {coiQuery.isError ? (
             <ListErrorState
@@ -379,7 +379,7 @@ export function PolicyDetail() {
 
       <section className="grid gap-4 xl:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-4">
-          <h3 className="text-sm font-semibold text-slate-900">Claims (INS-06)</h3>
+          <h3 className="text-xs font-semibold text-slate-900">Claims (INS-06)</h3>
           <div className="mt-2">
             {claimsQuery.isError ? (
               <ListErrorState
@@ -402,7 +402,7 @@ export function PolicyDetail() {
         </div>
 
         <div className="rounded-sm border border-gray-200 bg-white p-4">
-          <h3 className="text-sm font-semibold text-slate-900">Lawsuits (INS-06)</h3>
+          <h3 className="text-xs font-semibold text-slate-900">Lawsuits (INS-06)</h3>
           <div className="mt-2">
             {lawsuitsQuery.isError ? (
               <ListErrorState

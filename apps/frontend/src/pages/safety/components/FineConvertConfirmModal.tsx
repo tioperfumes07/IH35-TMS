@@ -15,7 +15,7 @@ export function FineConvertConfirmModal({ open, amountCents, driverLabel, loadin
   const dismiss = () => closeUnlessPending(Boolean(loading), onClose);
   return (
     <Modal open={open} onClose={dismiss} title="Convert Fine to Driver Liability">
-      <div className="space-y-3 text-sm text-gray-700">
+      <div className="space-y-3 text-xs text-gray-700">
         <p>
           This will create a driver liability for <strong>${(amountCents / 100).toFixed(2)}</strong>. The fine will be locked and deducted
           from {driverLabel || "the driver"}'s next settlement.

@@ -109,7 +109,7 @@ export function DriverCommunicationsTab({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-gray-900">Communications Timeline</h2>
+        <h2 className="text-xs font-semibold text-gray-900">Communications Timeline</h2>
         <div className="flex items-center gap-2">
           <label htmlFor="driver-communications-channel" className="sr-only">Channel</label>
           <Combobox
@@ -136,11 +136,11 @@ export function DriverCommunicationsTab({
       </div>
 
       {query.isLoading ? (
-        <p className="text-sm text-gray-500">Loading communications...</p>
+        <p className="text-xs text-gray-500">Loading communications...</p>
       ) : query.isError ? (
-        <p className="text-sm text-red-500">Failed to load communications.</p>
+        <p className="text-xs text-red-500">Failed to load communications.</p>
       ) : entries.length === 0 ? (
-        <p className="text-sm text-gray-500">No communications recorded for this driver.</p>
+        <p className="text-xs text-gray-500">No communications recorded for this driver.</p>
       ) : (
         <>
           <div className="space-y-2">
@@ -167,7 +167,7 @@ export function DriverCommunicationsTab({
                     ) : null}
                     <DeliveryBadge status={entry.delivery_status} />
                   </div>
-                  <p className="wrap-break-word text-sm text-gray-900">{entry.message}</p>
+                  <p className="wrap-break-word text-xs text-gray-900">{entry.message}</p>
                   <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
                     <span>{formatTs(entry.created_at)}</span>
                     {entry.delivery_ref ? <span>ref: {entry.delivery_ref}</span> : null}

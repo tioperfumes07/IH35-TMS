@@ -35,7 +35,7 @@ export function SettlementHeader({
       {settlementId || settlementDisplayId ? (
         <div>
           <div className="text-[11px] uppercase text-gray-500">Settlement No</div>
-          <div className="text-sm font-semibold">
+          <div className="text-xs font-semibold">
             {settlementId ? (
               <EntityLink
                 kind="settlement"
@@ -51,7 +51,7 @@ export function SettlementHeader({
       ) : null}
       <div>
         <div className="text-[11px] uppercase text-gray-500">Driver</div>
-        <div className="text-sm font-semibold">
+        <div className="text-xs font-semibold">
           <EntityLink kind="driver" id={driverId} label={entityLabel(driverName, driverId, "Driver")} />
         </div>
       </div>
@@ -60,15 +60,15 @@ export function SettlementHeader({
           (components/dispatch/LoadDetailSettlementTab.tsx) -- split for consistency. */}
       <div>
         <div className="text-[11px] uppercase text-gray-500">Period Begin</div>
-        <div className="text-sm font-semibold">{formatDateUS(periodStart)}</div>
+        <div className="text-xs font-semibold">{formatDateUS(periodStart)}</div>
       </div>
       <div>
         <div className="text-[11px] uppercase text-gray-500">Period End</div>
-        <div className="text-sm font-semibold">{formatDateUS(periodEnd)}</div>
+        <div className="text-xs font-semibold">{formatDateUS(periodEnd)}</div>
       </div>
       <div>
         <div className="text-[11px] uppercase text-gray-500">Loads in cycle</div>
-        <div className="text-sm">
+        <div className="text-xs">
           {loadIds.length === 0 ? (
             "—"
           ) : (
@@ -89,7 +89,7 @@ export function SettlementHeader({
       </div>
       <div className="text-right">
         <div className="text-[11px] uppercase text-gray-500">Status</div>
-        <div className="text-sm font-semibold">{status}</div>
+        <div className="text-xs font-semibold">{status}</div>
         <div className="mt-1 text-xs text-gray-500">Recompute: {computedAt ? formatDateUS(computedAt) : "n/a"}</div>
         <button type="button" className="mt-1 text-xs text-slate-700 underline" onClick={onRefresh}>Refresh</button>
       </div>

@@ -90,7 +90,7 @@ export function QboCombobox({
   return (
     <div ref={rootRef} className="relative w-full">
       <input
-        className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+        className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
         placeholder={placeholder ?? "Type to search QuickBooks…"}
         value={draft}
         onFocus={() => setOpen(true)}

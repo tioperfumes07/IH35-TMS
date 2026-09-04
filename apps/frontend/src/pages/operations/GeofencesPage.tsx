@@ -196,13 +196,13 @@ export function GeofencesPage() {
     <div className="space-y-4">
       <PageHeader title="Geofences" subtitle="Polygon geofences for customer sites, yards, and vendor locations." />
       <section className="rounded-sm border border-slate-200 bg-white p-3">
-        <h3 className="text-sm font-semibold text-slate-900">Create geofence</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Create geofence</h3>
         <p className="mt-1 text-xs text-slate-600">Polygon editor: one `lng,lat` pair per line. Minimum 3 points.</p>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           <label className="text-xs text-slate-700">
             Label
             <input
-              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
               value={label}
               onChange={(event) => setLabel(event.target.value)}
             />
@@ -210,7 +210,7 @@ export function GeofencesPage() {
           <label className="text-xs text-slate-700">
             Location kind
             <select
-              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
               value={locationKind}
               onChange={(event) => setLocationKind(event.target.value as GeofenceLocationKind)}
             >
@@ -288,7 +288,7 @@ export function GeofencesPage() {
       </section>
 
       <section className="rounded-sm border border-slate-200 bg-white p-3">
-        <h3 className="text-sm font-semibold text-slate-900">Active geofences</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Active geofences</h3>
         {geofencesQuery.isError ? (
           <ListErrorState
             title="Couldn't load geofences"

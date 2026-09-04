@@ -206,7 +206,7 @@ export default function PositionHistoryPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900">Position History</h1>
-        <p className="text-sm text-gray-500">Track part installations, removals, and replacements</p>
+        <p className="text-xs text-gray-500">Track part installations, removals, and replacements</p>
       </div>
 
       <div
@@ -214,7 +214,7 @@ export default function PositionHistoryPage() {
         data-testid="position-history-filters"
       >
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-gray-700" htmlFor="position-history-unit-filter">
+          <label className="text-xs font-medium text-gray-700" htmlFor="position-history-unit-filter">
             Unit:
           </label>
           {/* SAF-F14 / picker law: never a raw unit UUID text box — EntityPicker (filter, no +Create). */}
@@ -232,7 +232,7 @@ export default function PositionHistoryPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-gray-700" htmlFor="position-history-action-filter">Action:</label>
+          <label className="text-xs font-medium text-gray-700" htmlFor="position-history-action-filter">Action:</label>
           <Combobox
             id="position-history-action-filter"
             dataTestId="position-history-action-filter"
@@ -281,7 +281,7 @@ export default function PositionHistoryPage() {
           Reset
         </Button>
 
-        <div className="ml-auto text-sm text-gray-500">
+        <div className="ml-auto text-xs text-gray-500">
           Showing {records.length} of {total} records
         </div>
       </div>
@@ -318,18 +318,18 @@ export default function PositionHistoryPage() {
             type="button"
             onClick={() => setOffset((o) => Math.max(0, o - limit))}
             disabled={offset === 0 || historyQuery.isLoading}
-            className="rounded-sm bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+            className="rounded-sm bg-white px-4 py-2 text-xs font-medium text-gray-700 shadow-xs ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
           >
             Previous
           </button>
-          <span className="text-sm text-gray-500">
+          <span className="text-xs text-gray-500">
             Page {Math.floor(offset / limit) + 1} of {Math.ceil(total / limit)}
           </span>
           <button
             type="button"
             onClick={() => setOffset((o) => Math.min(total - limit, o + limit))}
             disabled={offset + limit >= total || historyQuery.isLoading}
-            className="rounded-sm bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+            className="rounded-sm bg-white px-4 py-2 text-xs font-medium text-gray-700 shadow-xs ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
           >
             Next
           </button>

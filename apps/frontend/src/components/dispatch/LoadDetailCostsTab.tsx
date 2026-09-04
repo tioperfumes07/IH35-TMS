@@ -92,7 +92,7 @@ export function LoadDetailCostsTab({ load, canEdit }: { load: LoadDetail; canEdi
       {savedExpenses.map((row) => <div key={row.id} className="flex justify-between border-b border-gray-100 py-2" data-cost-driver-column="driver_uuid"><EntityLink kind="expense" id={row.id} label={row.expense_number ?? "Expense"} /><span>{formatMoneyCents(Number(row.total_amount_cents), currency)} · {row.matched_bank_transaction_id ? "saved · matched to bank" : "saved · waiting for the bank"}</span></div>)}
       {savedBills.map((row) => <div key={row.id} className="flex justify-between border-b border-gray-100 py-2" data-cost-driver-column="driver_id"><EntityLink kind="bill" id={row.id} label={row.bill_number ?? "Bill"} /><span>{formatMoneyCents(Number(row.amount_cents), currency)} · saved</span></div>)}
       <Link className="mt-2 inline-block font-semibold underline" to={`/accounting/expenses?load_id=${encodeURIComponent(load.id)}`}>Open saved costs</Link>
-    </section> : <div className="rounded-sm border border-gray-200 bg-white p-4 text-center text-sm text-gray-500">No costs on this load yet.</div>}
+    </section> : <div className="rounded-sm border border-gray-200 bg-white p-4 text-center text-xs text-gray-500">No costs on this load yet.</div>}
     <p className="text-xs text-gray-500">Approximate · before settlement</p>
   </div>;
 }

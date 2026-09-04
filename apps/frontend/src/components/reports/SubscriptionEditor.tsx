@@ -110,7 +110,7 @@ export function SubscriptionEditor({
         <h2 className="text-lg font-semibold text-slate-900">
           {mode === "edit" ? "Edit subscription" : "Add subscription"}
         </h2>
-        <div className="mt-4 space-y-3 text-sm">
+        <div className="mt-4 space-y-3 text-xs">
           <label className="block">
             <span className="font-medium text-slate-700">Report</span>
             <SelectCombobox

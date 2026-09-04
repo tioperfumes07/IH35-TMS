@@ -120,7 +120,7 @@ export function ListsHubPage() {
         }
       />
 
-      {inventoryQuery.isLoading ? <div className="rounded-sm border border-slate-200 bg-white p-4 text-sm text-slate-500">Loading lists inventory...</div> : null}
+      {inventoryQuery.isLoading ? <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs text-slate-500">Loading lists inventory...</div> : null}
       {!inventoryQuery.isLoading ? <DomainRibbon inventory={inventory} onCatalogClick={openCatalog} /> : null}
 
       <AllCatalogsMap onCatalogClick={openCatalog} onDomainClick={openDomainHub} />

@@ -25,9 +25,9 @@ export function ConfirmModal({ open, title, message, confirmLabel = "Confirm", d
   return (
     <Modal open={open} onClose={closeUnlessBusy} title={title}>
       <div className="space-y-4">
-        <p className="text-sm text-gray-700">{message}</p>
+        <p className="text-xs text-gray-700">{message}</p>
         {confirmError ? (
-          <p className="text-sm text-red-800" data-testid="confirm-modal-error" role="alert">
+          <p className="text-xs text-red-800" data-testid="confirm-modal-error" role="alert">
             {confirmError}
           </p>
         ) : null}

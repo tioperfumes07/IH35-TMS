@@ -113,7 +113,7 @@ export function EldAuditTrailViewer() {
   };
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-600">Select an operating company.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-600">Select an operating company.</div>;
   }
 
   return (
@@ -140,7 +140,7 @@ export function EldAuditTrailViewer() {
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="grid gap-3 md:grid-cols-3">
-          <label className="text-sm text-gray-700">
+          <label className="text-xs text-gray-700">
             Driver
             <div className="mt-1">
               <DriverPickerWithCreate
@@ -152,7 +152,7 @@ export function EldAuditTrailViewer() {
               />
             </div>
           </label>
-          <div className="text-sm text-gray-700">
+          <div className="text-xs text-gray-700">
             <label htmlFor="eld-audit-from">From</label>
             <DatePicker
               id="eld-audit-from"
@@ -161,7 +161,7 @@ export function EldAuditTrailViewer() {
               onChange={(next) => setFrom(next)}
             />
           </div>
-          <div className="text-sm text-gray-700">
+          <div className="text-xs text-gray-700">
             <label htmlFor="eld-audit-to">To</label>
             <DatePicker
               id="eld-audit-to"
@@ -184,7 +184,7 @@ export function EldAuditTrailViewer() {
             and the false-empty text showed every time. Driving the branches off the primitive `status`
             (isPending/isError/isSuccess) instead has no such gap: those three are mutually exclusive
             and exhaustive, with no "not loading, not errored, but also not actually successful" hole. */}
-        {driverUuid && historyQuery.isPending ? <p className="text-sm text-gray-500">Loading edit history…</p> : null}
+        {driverUuid && historyQuery.isPending ? <p className="text-xs text-gray-500">Loading edit history…</p> : null}
         {driverUuid && historyQuery.isError ? (
           <div data-testid="eld-audit-trail-query-error">
             <ListErrorState
@@ -205,10 +205,10 @@ export function EldAuditTrailViewer() {
               to={historyQuery.data.to}
             />
           ) : (
-            <p className="text-sm text-gray-600">No edits found for the selected driver and date range.</p>
+            <p className="text-xs text-gray-600">No edits found for the selected driver and date range.</p>
           )
         ) : null}
-        {!driverUuid ? <p className="text-sm text-gray-600">Choose a driver to view the audit trail.</p> : null}
+        {!driverUuid ? <p className="text-xs text-gray-600">Choose a driver to view the audit trail.</p> : null}
       </section>
     </div>
   );

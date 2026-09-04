@@ -73,18 +73,18 @@ export function PreviewModal({ file, canEditMetadata, onClose, onRequestEditMeta
         </div>
 
         <div className="rounded-sm border border-gray-200 bg-white p-2">
-          {isLoading ? <div className="text-sm text-gray-500">Loading preview...</div> : null}
-          {!isLoading && errorMessage ? <div className="text-sm text-red-600">{errorMessage}</div> : null}
+          {isLoading ? <div className="text-xs text-gray-500">Loading preview...</div> : null}
+          {!isLoading && errorMessage ? <div className="text-xs text-red-600">{errorMessage}</div> : null}
           {!isLoading && !errorMessage && downloadUrl && isImage(file.mime_type) ? (
             <img src={downloadUrl} alt={file.original_filename} className="max-h-[60vh] w-full rounded-sm object-contain" />
           ) : null}
           {!isLoading && !errorMessage && downloadUrl && isPdf(file.mime_type) ? (
             <object data={downloadUrl} type="application/pdf" className="h-[60vh] w-full rounded-sm">
-              <p className="p-3 text-sm text-gray-600">PDF preview unavailable in this browser. Use Download.</p>
+              <p className="p-3 text-xs text-gray-600">PDF preview unavailable in this browser. Use Download.</p>
             </object>
           ) : null}
           {!isLoading && !errorMessage && downloadUrl && !isImage(file.mime_type) && !isPdf(file.mime_type) ? (
-            <div className="p-3 text-sm text-gray-600">Preview not available for this file type. Download to view.</div>
+            <div className="p-3 text-xs text-gray-600">Preview not available for this file type. Download to view.</div>
           ) : null}
         </div>
 

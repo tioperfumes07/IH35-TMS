@@ -123,7 +123,7 @@ export function DriverHubOverview({ companyId, canReview }: { companyId: string;
     <div className="space-y-4" data-testid="driver-hub-overview">
       <section className="space-y-2" data-testid="driver-hub-request-alerts">
         <div>
-          <h2 className="text-sm font-semibold text-[#1A1F36]">Requests &amp; alerts</h2>
+          <h2 className="text-xs font-semibold text-[#1A1F36]">Requests &amp; alerts</h2>
           <p className="text-xs text-[#8A92AB]">Live counts from driver scheduler, finance, maintenance, and comms inboxes</p>
         </div>
         {anyQueryError ? (
@@ -163,7 +163,7 @@ export function DriverHubOverview({ companyId, canReview }: { companyId: string;
 
       <section className="space-y-2" data-testid="driver-hub-leave-preview">
         <div className="flex items-baseline justify-between gap-2">
-          <h2 className="text-sm font-semibold text-[#1A1F36]">Leave requests queue</h2>
+          <h2 className="text-xs font-semibold text-[#1A1F36]">Leave requests queue</h2>
           <Link to="/driver-hub?tab=leave_requests" className="text-xs text-slate-700 hover:underline">
             Open full queue →
           </Link>

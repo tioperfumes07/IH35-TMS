@@ -16,8 +16,8 @@ export function DispatcherPendingActionsPanel({
       data-testid="dispatcher-pending-actions-panel"
       className="overflow-hidden rounded-sm border border-slate-200 bg-white"
     >
-      <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Pending actions</div>
-      <ul className="divide-y divide-slate-100 text-sm">
+      <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Pending actions</div>
+      <ul className="divide-y divide-slate-100 text-xs">
         <li className="flex items-center justify-between gap-2 px-3 py-2">
           <div>
             <div className="font-semibold text-slate-900">Detention approvals</div>

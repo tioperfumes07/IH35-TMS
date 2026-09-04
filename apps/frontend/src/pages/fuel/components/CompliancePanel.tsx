@@ -9,7 +9,7 @@ type Props = {
 export function CompliancePanel({ sourceAvailable, sentToDriverAt, fleetPct, fleetTotalRecommendations, driverPct }: Props) {
   return (
     <div className="rounded-sm border border-slate-300 bg-white p-3 text-xs">
-      <div className="mb-2 text-sm font-semibold text-slate-700">Compliance Tracker</div>
+      <div className="mb-2 text-xs font-semibold text-slate-700">Compliance Tracker</div>
       <Row label="Sent to driver app" value={sentToDriverAt ? new Date(sentToDriverAt).toLocaleString() : "Not sent"} />
       <Row label="Recommendations followed YTD (driver)" value={!sourceAvailable || driverPct === null ? "Not available" : `${driverPct.toFixed(1)}%`} />
       <Row label="Recommendations followed YTD (fleet)" value={!sourceAvailable || fleetPct === null ? "Not available" : `${fleetPct.toFixed(1)}%`} />

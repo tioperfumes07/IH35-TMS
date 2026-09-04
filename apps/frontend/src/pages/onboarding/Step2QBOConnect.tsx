@@ -32,11 +32,11 @@ export function Step2QBOConnect({ companyId, value, disabled, onChange }: Props)
   return (
     <div className="space-y-3" data-testid="onboarding-step-qbo">
       <h2 className="text-base font-semibold text-gray-900">Connect QuickBooks Online</h2>
-      <p className="text-sm text-gray-600">
+      <p className="text-xs text-gray-600">
         Authorize QBO so invoices, bills, payments, and journal entries sync automatically. You can complete this later from Accounting settings.
       </p>
 
-      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="flex items-center gap-2">
           <span
             className={`inline-block h-2 w-2 rounded-full ${connected ? "bg-emerald-500" : "bg-gray-400"}`}
@@ -52,7 +52,7 @@ export function Step2QBOConnect({ companyId, value, disabled, onChange }: Props)
         type="button"
         disabled={disabled || !companyId}
         onClick={handleConnect}
-        className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+        className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
       >
         {connected ? "Reconnect QBO" : "Connect QBO"}
       </button>

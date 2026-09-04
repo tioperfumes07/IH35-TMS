@@ -43,6 +43,15 @@ const TRAPPING_PICKERS = [
 const LOCKED_SIZES_PX = new Set(["11", "12", "22"]);
 const RAW_SIZE = /\btext-\[([0-9.]+)px\]/g;
 
+// 2026-09-03 (GLB-01, CC-3): the raw-bracket scan above only ever saw arbitrary-value classes
+// (text-[Npx]) -- it was structurally blind to Tailwind's own semantic size utilities
+// (text-xs/sm/base/lg/xl/2xl/3xl), which is how off_locked_scale_sizes read 0 while text-sm
+// (14px, off the locked 11/12/22 scale) alone appeared 3,076 times across 812 files. Tailwind v4's
+// stock scale (no @theme font-size override exists in apps/frontend/src/index.css, confirmed by
+// reading it) is the ground truth for the px value each class resolves to.
+const SEMANTIC_SIZE = /\btext-(xs|sm|base|lg|xl|2xl|3xl)\b/g;
+const SEMANTIC_SIZE_PX = { xs: "12", sm: "14", base: "16", lg: "18", xl: "20", "2xl": "24", "3xl": "30" };
+
 function walk(dir, out = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
@@ -58,9 +67,12 @@ function measure() {
   const files = walk(SRC);
   let rawSizeCount = 0;
   let offScaleCount = 0;
+  let offScaleSemanticCount = 0;
   const rawSizeFiles = new Set();
   const offScaleFiles = new Set();
+  const offScaleSemanticFiles = new Set();
   const offPerFile = new Map();
+  const offSemanticPerFile = new Map();
   const trapping = Object.fromEntries(TRAPPING_PICKERS.map((p) => [p, 0]));
 
   for (const f of files) {
@@ -76,6 +88,14 @@ function measure() {
         offPerFile.set(f, (offPerFile.get(f) || 0) + 1);
       }
     }
+    SEMANTIC_SIZE.lastIndex = 0;
+    while ((mm = SEMANTIC_SIZE.exec(s)) !== null) {
+      if (!LOCKED_SIZES_PX.has(SEMANTIC_SIZE_PX[mm[1]])) {
+        offScaleSemanticCount += 1;
+        offScaleSemanticFiles.add(f);
+        offSemanticPerFile.set(f, (offSemanticPerFile.get(f) || 0) + 1);
+      }
+    }
     for (const p of TRAPPING_PICKERS) {
       // shared/Combobox must not swallow shared/SelectCombobox
       const re = new RegExp(`["'\`][^"'\`]*${p.replace(/\//g, "\\/")}["'\`]`);
@@ -85,11 +105,14 @@ function measure() {
   return {
     off_locked_scale_sizes: offScaleCount,
     files_off_locked_scale: offScaleFiles.size,
+    off_locked_scale_semantic_classes: offScaleSemanticCount,
+    files_off_locked_scale_semantic: offScaleSemanticFiles.size,
     raw_font_sizes: rawSizeCount,
     files_with_raw_font_sizes: rawSizeFiles.size,
     trapping_picker_importers: trapping,
     trapping_picker_total: Object.values(trapping).reduce((a, b) => a + b, 0),
     off_per_file: offPerFile,
+    off_semantic_per_file: offSemanticPerFile,
   };
 }
 
@@ -97,6 +120,8 @@ function flatten(o) {
   return {
     off_locked_scale_sizes: o.off_locked_scale_sizes,
     files_off_locked_scale: o.files_off_locked_scale,
+    off_locked_scale_semantic_classes: o.off_locked_scale_semantic_classes,
+    files_off_locked_scale_semantic: o.files_off_locked_scale_semantic,
     raw_font_sizes: o.raw_font_sizes,
     files_with_raw_font_sizes: o.files_with_raw_font_sizes,
     trapping_picker_total: o.trapping_picker_total,
@@ -108,12 +133,18 @@ function flatten(o) {
 
 function selftest() {
   const probe = { off_locked_scale_sizes: 3, files_off_locked_scale: 1,
+    off_locked_scale_semantic_classes: 4, files_off_locked_scale_semantic: 2,
     raw_font_sizes: 5, files_with_raw_font_sizes: 2,
     trapping_picker_importers: { a: 1, b: 2 }, trapping_picker_total: 3 };
   const f = flatten(probe);
-  const ok = f.raw_font_sizes === 5 && f.trapping_picker_total === 3 && f["picker:a"] === 1;
+  const ok = f.raw_font_sizes === 5 && f.trapping_picker_total === 3 && f["picker:a"] === 1
+    && f.off_locked_scale_semantic_classes === 4 && f.files_off_locked_scale_semantic === 2;
   if (!ok) { console.error(`${LABEL}: SELFTEST FAIL — flatten() wrong`); process.exit(1); }
   if (!fs.existsSync(SRC)) { console.error(`${LABEL}: SELFTEST FAIL — ${SRC} missing`); process.exit(1); }
+  if (SEMANTIC_SIZE_PX.sm !== "14" || LOCKED_SIZES_PX.has("14")) {
+    console.error(`${LABEL}: SELFTEST FAIL — text-sm (14px) must map off the locked 11/12/22 scale`);
+    process.exit(1);
+  }
   console.log(`${LABEL}: SELFTEST PASS`);
   process.exit(0);
 }
@@ -131,6 +162,15 @@ if (argv.includes("--worklist")) {
   console.log(`# source: docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md`);
   console.log(`# files=${rows.length} occurrences=${occ}`);
   for (const [n, f] of rows) console.log(`${String(n).padStart(4, " ")}  ${f}`);
+
+  const semRows = [...measured.off_semantic_per_file.entries()]
+    .map(([f, n]) => [n, path.relative(ROOT, f)])
+    .sort((a, b) => b[0] - a[0] || a[1].localeCompare(b[1]));
+  const semOcc = semRows.reduce((a, [n]) => a + n, 0);
+  console.log("");
+  console.log(`# GLB-01 worklist — off-scale SEMANTIC classes (text-sm/base/lg/xl/2xl/3xl)`);
+  console.log(`# files=${semRows.length} occurrences=${semOcc}`);
+  for (const [n, f] of semRows) console.log(`${String(n).padStart(4, " ")}  ${f}`);
   process.exit(0);
 }
 

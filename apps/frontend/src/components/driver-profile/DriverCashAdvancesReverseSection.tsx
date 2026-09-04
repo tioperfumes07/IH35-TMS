@@ -60,7 +60,7 @@ export function DriverCashAdvancesReverseSection({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">Cash advances</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Cash advances</h3>
         <Link
           to={`/driver-finance/cash-advance-requests?driver_id=${encodeURIComponent(driverId)}`}
           className="text-xs font-semibold text-slate-700 underline"
@@ -69,9 +69,9 @@ export function DriverCashAdvancesReverseSection({
           Open Pending Requests
         </Link>
       </div>
-      <p className="text-sm text-gray-600">Pending requests and disbursed cash advances for this driver.</p>
+      <p className="text-xs text-gray-600">Pending requests and disbursed cash advances for this driver.</p>
 
-      {isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
       {pendingFailed ? (
         <ListErrorBanner message="Failed to load pending requests." onRetry={() => void pendingQuery.refetch()} />
       ) : null}
@@ -79,7 +79,7 @@ export function DriverCashAdvancesReverseSection({
         <ListErrorBanner message="Failed to load cash advances." onRetry={() => void advancesQuery.refetch()} />
       ) : null}
       {!isLoading && !pendingFailed && !advancesFailed && total === 0 ? (
-        <p className="text-sm text-gray-500">No pending requests or cash advances for this driver.</p>
+        <p className="text-xs text-gray-500">No pending requests or cash advances for this driver.</p>
       ) : null}
 
       {pending.length > 0 ? (
@@ -89,7 +89,7 @@ export function DriverCashAdvancesReverseSection({
             {pending.map((r) => {
               const id = String((r as Record<string, unknown>).id ?? "");
               return (
-                <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+                <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
                   <EntityLink
                     kind="cash_advance_request"
                     id={id}
@@ -123,7 +123,7 @@ export function DriverCashAdvancesReverseSection({
               const id = String((a as Record<string, unknown>).id ?? "");
               const row = a as Record<string, unknown>;
               return (
-                <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+                <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
                   <EntityLink
                     kind="cash_advance"
                     id={id}

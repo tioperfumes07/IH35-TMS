@@ -48,11 +48,11 @@ function KpiTile({
     <>
       <div className="text-[11px] uppercase tracking-wide text-slate-500">{label}</div>
       {isError ? (
-        <div className="text-sm font-semibold text-red-600" data-testid="safety-home-kpi-error">
+        <div className="text-xs font-semibold text-red-600" data-testid="safety-home-kpi-error">
           Unavailable
         </div>
       ) : isLoading ? (
-        <div className="text-sm text-slate-400">Loading…</div>
+        <div className="text-xs text-slate-400">Loading…</div>
       ) : (
         <div className="text-xl font-semibold text-slate-900">{value}</div>
       )}
@@ -234,7 +234,7 @@ export function SafetyHomeTab() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-slate-600">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-slate-600">
         Select an operating company to view the Safety dashboard.
       </div>
     );
@@ -243,14 +243,14 @@ export function SafetyHomeTab() {
   return (
     <div className="space-y-4" data-testid="safety-home">
       <div className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-sm font-semibold text-slate-900">Safety Overview</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Safety Overview</h3>
         <p className="mt-1 text-xs text-slate-500">
           Company-wide aggregate across events, accidents, CSA, fines, and open liabilities. Tap a tile
           to open its list, or drill straight to a driver/unit below.
         </p>
         {dashboardHasError ? (
           <div className="mt-3 flex flex-wrap items-center gap-2" data-testid="safety-home-retry">
-            <span className="text-sm font-semibold text-red-600">Some Safety home numbers are unavailable.</span>
+            <span className="text-xs font-semibold text-red-600">Some Safety home numbers are unavailable.</span>
             <button
               type="button"
               className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
@@ -271,11 +271,11 @@ export function SafetyHomeTab() {
             Active Drivers (Samsara GPS activity)
           </div>
           {activeDriversQuery.isError ? (
-            <div className="text-sm font-semibold text-red-600" data-testid="safety-home-active-drivers-error">
+            <div className="text-xs font-semibold text-red-600" data-testid="safety-home-active-drivers-error">
               Unavailable
             </div>
           ) : activeDriversQuery.isPending ? (
-            <div className="text-sm text-slate-400">Loading…</div>
+            <div className="text-xs text-slate-400">Loading…</div>
           ) : (
             <div className="flex items-center gap-2">
               <span className="text-xl font-semibold text-slate-900">
@@ -388,7 +388,7 @@ export function SafetyHomeTab() {
         </p>
         {drillError ? (
           <div className="flex flex-wrap items-center gap-2" data-testid="safety-home-drill-error">
-            <span className="text-sm font-semibold text-red-600">Unavailable</span>
+            <span className="text-xs font-semibold text-red-600">Unavailable</span>
             <button
               type="button"
               className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
@@ -398,7 +398,7 @@ export function SafetyHomeTab() {
             </button>
           </div>
         ) : drillLoading ? (
-          <div className="text-sm text-slate-400">Loading…</div>
+          <div className="text-xs text-slate-400">Loading…</div>
         ) : drillRecords.length === 0 ? (
           <div className="text-xs text-slate-500">
             No open events or recent driver-/unit-linked accidents right now.

@@ -173,7 +173,7 @@ export function ComplianceDashboardPage() {
   const overviewQueriesFailed = summaryQ.isError || dashboardQ.isError || rulesQ.isError || logQ.isError;
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs">Select an operating company.</div>;
   }
 
   return (
@@ -348,7 +348,7 @@ export function ComplianceDashboardPage() {
           </label>
           <input
             id="compliance-rule-credential-type"
-            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
             value={credentialTypeDraft}
             onChange={(event) => setCredentialTypeDraft(event.target.value)}
             placeholder="cdl or us_insurance"

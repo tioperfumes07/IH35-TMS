@@ -605,7 +605,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
       {selectedEventId ? (
         <div className="fixed inset-y-0 right-0 z-40 w-full max-w-md border-l border-gray-200 bg-white p-4 shadow-xl">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-900">Safety Event Detail</h3>
+            <h3 className="text-xs font-semibold text-gray-900">Safety Event Detail</h3>
             <button type="button" className="text-xs text-gray-500" onClick={() => setSelectedEventId(null)}>
               Close
             </button>

@@ -166,7 +166,7 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="parts-inventory-table">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Parts Inventory</h3>
+        <h3 className="text-xs font-semibold">Parts Inventory</h3>
         <Button size="sm" onClick={() => setOpenPurchase(true)}>+ Record Purchase</Button>
       </div>
 
@@ -222,7 +222,7 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
       <Modal open={openPurchase} onClose={() => setOpenPurchase(false)} title="Record Purchase">
         <div className="space-y-2">
           <input
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             placeholder="Part description"
             value={form.part_description}
             onChange={(e) => setForm((v) => ({ ...v, part_description: e.target.value }))}
@@ -246,14 +246,14 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
           </label>
           <div className="grid grid-cols-2 gap-2">
             <input
-              className="h-8 rounded-sm border border-gray-300 px-2 text-sm"
+              className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
               type="number"
               min={1}
               value={form.qty_received}
               onChange={(e) => setForm((v) => ({ ...v, qty_received: Number(e.target.value || 1) }))}
             />
             <input
-              className="h-8 rounded-sm border border-gray-300 px-2 text-sm"
+              className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
               placeholder="Invoice #"
               value={form.vendor_invoice_number}
               onChange={(e) => setForm((v) => ({ ...v, vendor_invoice_number: e.target.value }))}
@@ -263,7 +263,7 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
             {/* M-1: dollars-mode QBO money entry; backend purchase_amount = numeric(10,2) DOLLARS, byte-for-byte. */}
             <MoneyInput valueDollars={form.purchase_amount} onChangeDollars={(d) => setForm((v) => ({ ...v, purchase_amount: d ?? 0 }))} ariaLabel="Purchase amount" />
             <input
-              className="h-8 rounded-sm border border-gray-300 px-2 text-sm"
+              className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
               placeholder="Location"
               value={form.location}
               onChange={(e) => setForm((v) => ({ ...v, location: e.target.value }))}
@@ -280,8 +280,8 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
 
       <Modal open={Boolean(adjustRow)} onClose={() => setAdjustRow(null)} title="Adjust Quantity">
         <div className="space-y-2">
-          <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" type="number" value={deltaQty} onChange={(e) => setDeltaQty(Number(e.target.value || 0))} />
-          <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" value={reason} onChange={(e) => setReason(e.target.value as typeof reason)}>
+          <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" type="number" value={deltaQty} onChange={(e) => setDeltaQty(Number(e.target.value || 0))} />
+          <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={reason} onChange={(e) => setReason(e.target.value as typeof reason)}>
             <option value="used">used</option>
             <option value="discarded">discarded</option>
             <option value="shrinkage">shrinkage</option>

@@ -119,11 +119,11 @@ export function MaintenancePartsCatalog() {
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
         {/* MAINT-F3516: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
-        <CatalogListSearchInput value={search} onChange={(v: string) => { setSearch(v); setPage(1); }} placeholder="Search by SKU, name, or UPC" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
-        <SelectCombobox value={manufacturer} onChange={(e) => { setManufacturer(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
+        <CatalogListSearchInput value={search} onChange={(v: string) => { setSearch(v); setPage(1); }} placeholder="Search by SKU, name, or UPC" className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
+        <SelectCombobox value={manufacturer} onChange={(e) => { setManufacturer(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
           {MANUFACTURERS.map((m) => <option key={m} value={m}>{m || "All manufacturers"}</option>)}
         </SelectCombobox>
-        <SelectCombobox value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
+        <SelectCombobox value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
           {CATEGORIES.map((c) => <option key={c} value={c}>{c ? properEnumOrFilterLabel(c) : "All categories"}</option>)}
         </SelectCombobox>
       </div>
@@ -151,7 +151,7 @@ export function MaintenancePartsCatalog() {
       )}
 
       {total > 50 && (
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-xs">
           <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="rounded-sm border px-2 py-1 disabled:opacity-40">← Prev</button>
           <span>Page {page} of {Math.ceil(total / 50)}</span>
           <button type="button" disabled={page >= Math.ceil(total / 50)} onClick={() => setPage((p) => p + 1)} className="rounded-sm border px-2 py-1 disabled:opacity-40">Next →</button>

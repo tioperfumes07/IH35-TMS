@@ -37,12 +37,12 @@ export function Step1Company({ value, disabled, onChange }: Props) {
   return (
     <div className="space-y-3" data-testid="onboarding-step-company">
       <h2 className="text-base font-semibold text-gray-900">Company information</h2>
-      <p className="text-sm text-gray-600">Tell us about your carrier so we can configure dispatch, billing, and compliance defaults.</p>
+      <p className="text-xs text-gray-600">Tell us about your carrier so we can configure dispatch, billing, and compliance defaults.</p>
 
-      <label className="block text-sm">
+      <label className="block text-xs">
         <span className="font-medium text-gray-700">Company name</span>
         <input
-          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
           value={value.company_name ?? ""}
           disabled={disabled}
           onChange={(e) => onChange({ ...value, company_name: e.target.value })}
@@ -50,20 +50,20 @@ export function Step1Company({ value, disabled, onChange }: Props) {
       </label>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label className="block text-sm">
+        <label className="block text-xs">
           <span className="font-medium text-gray-700">EIN</span>
           <input
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={value.ein ?? ""}
             disabled={disabled}
             placeholder="12-3456789"
             onChange={(e) => onChange({ ...value, ein: e.target.value })}
           />
         </label>
-        <label className="block text-sm">
+        <label className="block text-xs">
           <span className="font-medium text-gray-700">NAICS code</span>
           <input
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={value.naics_code ?? ""}
             disabled={disabled}
             placeholder="484121 (General Freight Trucking, Long-Distance)"
@@ -72,10 +72,10 @@ export function Step1Company({ value, disabled, onChange }: Props) {
         </label>
       </div>
 
-      <label className="block text-sm">
+      <label className="block text-xs">
         <span className="font-medium text-gray-700">Address</span>
         <input
-          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
           value={value.address ?? ""}
           disabled={disabled}
           onChange={(e) => onChange({ ...value, address: e.target.value })}
@@ -83,19 +83,19 @@ export function Step1Company({ value, disabled, onChange }: Props) {
       </label>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label className="block text-sm">
+        <label className="block text-xs">
           <span className="font-medium text-gray-700">MC #</span>
           <input
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={value.mc_number ?? ""}
             disabled={disabled}
             onChange={(e) => onChange({ ...value, mc_number: e.target.value })}
           />
         </label>
-        <label className="block text-sm">
+        <label className="block text-xs">
           <span className="font-medium text-gray-700">DOT #</span>
           <input
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={value.dot_number ?? ""}
             disabled={disabled}
             onChange={(e) => onChange({ ...value, dot_number: e.target.value })}
@@ -103,7 +103,7 @@ export function Step1Company({ value, disabled, onChange }: Props) {
         </label>
       </div>
 
-      <div className="text-sm">
+      <div className="text-xs">
         <span className="font-medium text-gray-700">Operating states</span>
         <div className="mt-1 flex flex-wrap gap-1">
           {US_STATES.map((code) => (

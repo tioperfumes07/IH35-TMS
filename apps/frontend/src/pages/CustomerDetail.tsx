@@ -313,7 +313,7 @@ function CustomerFinancialOverviewSection(props: {
         )}
       </DataPanel>
       <DataPanel title="AR aging (open invoices)">
-        <div className="space-y-1 text-sm">
+        <div className="space-y-1 text-xs">
           {props.summary.ar_aging_buckets.length === 0 ? <p className="text-xs text-gray-500">No open AR.</p> : null}
           {props.summary.ar_aging_buckets.map((b) => (
             <div key={b.bucket} className="flex justify-between">
@@ -1107,7 +1107,7 @@ export function CustomerDetailPage() {
   const customerLoads = customerLoadsQuery.data ?? [];
   const customerLoadsListState = useListState(customerLoadsQuery, customerLoads.length === 0);
 
-  if (detailQuery.isLoading) return <div className="text-sm text-gray-500">Loading customer...</div>;
+  if (detailQuery.isLoading) return <div className="text-xs text-gray-500">Loading customer...</div>;
   if (detailQuery.isError) {
     return (
       <ListErrorBanner
@@ -1119,7 +1119,7 @@ export function CustomerDetailPage() {
   if (!customer) {
     return (
       <div className="space-y-3">
-        <div className="text-sm text-red-600">Customer not found.</div>
+        <div className="text-xs text-red-600">Customer not found.</div>
         <Button variant="secondary" onClick={() => navigate("/customers")}>
           Back to Customers
         </Button>
@@ -1286,7 +1286,7 @@ export function CustomerDetailPage() {
         // CUST-01 C7: this whole block (dispatcher/safety events, complaints, ETA notifications,
         // cargo claims, safety alerts, cash forecast, load templates, 4 factoring sections) used
         // to vanish with no explanation when no operating company was selected.
-        <p className="text-sm text-red-600">Select an operating company to view linked records.</p>
+        <p className="text-xs text-red-600">Select an operating company to view linked records.</p>
       )}
 
       <CustomerFinancialOverviewSection summary={financialSummaryQuery.data} loading={financialSummaryQuery.isLoading} error={financialSummaryQuery.isError} onRetry={() => void financialSummaryQuery.refetch()} />
@@ -1364,11 +1364,11 @@ export function CustomerDetailPage() {
                   id={customer.parent_customer_id}
                   name={customer.parent_customer_name}
                   noun="Customer"
-                  className="self-start text-sm font-medium text-slate-700 underline underline-offset-2 hover:opacity-80"
+                  className="self-start text-xs font-medium text-slate-700 underline underline-offset-2 hover:opacity-80"
                   data-testid="customer-parent-record-link"
                 />
               ) : (
-                <span className="text-sm text-gray-500">Top-level customer (no parent)</span>
+                <span className="text-xs text-gray-500">Top-level customer (no parent)</span>
               )}
             </div>
             <div className="flex flex-col gap-1">
@@ -1384,14 +1384,14 @@ export function CustomerDetailPage() {
                         id={sub.id}
                         name={sub.customer_code ? `${sub.name} (${sub.customer_code})` : sub.name}
                         noun="Customer"
-                        className="text-left text-sm font-medium text-slate-700 underline underline-offset-2 hover:opacity-80"
+                        className="text-left text-xs font-medium text-slate-700 underline underline-offset-2 hover:opacity-80"
                         data-testid={`customer-sub-record-link-${sub.id}`}
                       />
                     </li>
                   ))}
                 </ul>
               ) : (
-                <span className="text-sm text-gray-500">No sub-customers linked.</span>
+                <span className="text-xs text-gray-500">No sub-customers linked.</span>
               )}
             </div>
           </DataPanel>
@@ -1470,7 +1470,7 @@ export function CustomerDetailPage() {
             </div>
             <div className="mb-2">
               <div className="text-xs font-semibold text-gray-600">Last Updated</div>
-              <p className="mt-1 text-sm text-gray-800">
+              <p className="mt-1 text-xs text-gray-800">
                 {hydratedForm.credit_limit_updated_at
                   ? new Date(hydratedForm.credit_limit_updated_at).toLocaleString()
                   : "Not set"}
@@ -1842,10 +1842,10 @@ export function CustomerDetailPage() {
                     <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-[11px]">{formatDateUS(event.event_date)}</span>
                     <StatusBadge variant={event.severity === "severe" ? "crit" : event.severity === "warning" ? "warn" : "info"}>{event.severity}</StatusBadge>
                     <span className="text-xs uppercase tracking-wide">{event.event_type.replaceAll("_", " ")}</span>
-                    {event.dollar_impact_amount != null ? <strong className="text-sm">${Number(event.dollar_impact_amount).toFixed(2)}</strong> : null}
+                    {event.dollar_impact_amount != null ? <strong className="text-xs">${Number(event.dollar_impact_amount).toFixed(2)}</strong> : null}
                     {typeof event.days_late === "number" ? <span className="text-xs">Days late: {event.days_late}</span> : null}
                   </div>
-                  <div className={event.voided_at ? "mt-1 text-sm line-through" : "mt-1 text-sm"}>{event.summary}</div>
+                  <div className={event.voided_at ? "mt-1 text-xs line-through" : "mt-1 text-xs"}>{event.summary}</div>
                   {event.reason_label ? <div className="text-xs text-gray-500">Reason: {event.reason_label}</div> : null}
                   {event.related_load_id ? (
                     <div className="mt-1 text-xs text-gray-600">
@@ -1891,7 +1891,7 @@ export function CustomerDetailPage() {
             <DocumentsTab entityType="customer" entityId={customer.id} entityName={customer.name} operatingCompanyId={operatingCompanyId ?? undefined} />
           </ErrorBoundary>
         ) : (
-          <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+          <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
             You do not have permission to view customer documents.
           </div>
         )
@@ -1917,7 +1917,7 @@ export function CustomerDetailPage() {
             </DataPanel>
           </ErrorBoundary>
         ) : (
-          <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+          <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
             {!canViewDocuments ? "You do not have permission to view customer contracts." : "Loading…"}
           </div>
         )
@@ -2057,7 +2057,7 @@ export function CustomerDetailPage() {
             ) : customerPnlQuery.isLoading ? (
               <div className="text-xs text-gray-500">Loading profitability…</div>
             ) : !customerPnlRow ? (
-              <div className="text-sm text-gray-600">No profitability data for this customer in the selected period.</div>
+              <div className="text-xs text-gray-600">No profitability data for this customer in the selected period.</div>
             ) : (
               <>
                 <FlatFieldGrid
@@ -2222,7 +2222,7 @@ export function CustomerDetailPage() {
           {!billingSummaryQuery.isError ? (
             <>
               <DataPanel title="Factoring Config">
-                <div className="space-y-1 text-sm text-gray-700">
+                <div className="space-y-1 text-xs text-gray-700">
                   <div>Eligible: {billingSummary?.factoring_eligible ? "Yes" : "No"}</div>
                   <div>Recourse: {billingSummary?.factoring_recourse_type ?? "Default"}</div>
                   <div>
@@ -2241,14 +2241,14 @@ export function CustomerDetailPage() {
                 </div>
               </DataPanel>
               <DataPanel title="Credit Terms">
-                <div className="space-y-1 text-sm text-gray-700">
+                <div className="space-y-1 text-xs text-gray-700">
                   <div>A/R Email: {billingSummary?.ar_email ?? "-"}</div>
                   <div>Terms (days): {billingSummary?.credit_terms_days ?? "-"}</div>
                   <div>Outstanding Balance: {billingSummary?.outstanding_balance_cents == null ? "-" : formatCurrencyCents(billingSummary.outstanding_balance_cents)}</div>
                 </div>
               </DataPanel>
               <DataPanel title="Detention + Layover Defaults">
-                <div className="space-y-1 text-sm text-gray-700">
+                <div className="space-y-1 text-xs text-gray-700">
                   <div>Detention/hr: {billingSummary?.default_detention_rate ?? "-"}</div>
                   <div>Free time hrs: {billingSummary?.default_free_time_hours ?? "-"}</div>
                   <div>Layover/day: {billingSummary?.layover_config?.layover_charge_per_day ?? "-"}</div>
@@ -2259,7 +2259,7 @@ export function CustomerDetailPage() {
           <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white">
             <button
               type="button"
-              className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-semibold text-gray-900 hover:bg-gray-50"
+              className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold text-gray-900 hover:bg-gray-50"
               onClick={() => setRecordPaymentOpen((o: boolean) => !o)}
             >
               <span>Record Payment</span>
@@ -2404,9 +2404,9 @@ export function CustomerDetailPage() {
             ) : null}
           </div>
           <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-semibold text-gray-900">Payment history</div>
+            <div className="mb-2 text-xs font-semibold text-gray-900">Payment history</div>
             {paymentsBackendPending ? (
-              <p className="text-sm text-slate-700">
+              <p className="text-xs text-slate-700">
                 Backend pending — payment history unavailable until backend ships (P6-T11204).
               </p>
             ) : customerPaymentsListState.isError ? (
@@ -2486,13 +2486,13 @@ export function CustomerDetailPage() {
             )}
           </div>
           <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-semibold text-gray-900">Receivables Aging</div>
+            <div className="mb-2 text-xs font-semibold text-gray-900">Receivables Aging</div>
             {/* CUST-MONEY-F6984 — same billingSummaryQuery-retained-on-error gate as the three cards
                 above; aging is the field the board finding named explicitly. */}
             {billingSummaryQuery.isError ? null : !hasOpenInvoices ? (
-              <div className="text-sm text-gray-600">No open invoices.</div>
+              <div className="text-xs text-gray-600">No open invoices.</div>
             ) : (
-              <div className="space-y-1 text-sm text-gray-700">
+              <div className="space-y-1 text-xs text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>Current</span>
                   <span className="font-medium text-gray-900">{formatCurrencyCents(aging?.current)}</span>
@@ -2535,7 +2535,7 @@ export function CustomerDetailPage() {
           </div>
           <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-900">Recent Invoices</h3>
+              <h3 className="text-xs font-semibold text-gray-900">Recent Invoices</h3>
               <button
                 type="button"
                 className="text-xs font-semibold text-slate-700 underline"
@@ -2609,7 +2609,7 @@ export function CustomerDetailPage() {
 
       {activeTab === "Lanes & Pricing" ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4">
-          <div className="mb-3 text-sm text-gray-600">Customer lane pricing definitions</div>
+          <div className="mb-3 text-xs text-gray-600">Customer lane pricing definitions</div>
           {lanesQuery.isError ? (
             <ListErrorState title="Couldn't load customer lanes" status={0} message={lanesQuery.error instanceof Error ? lanesQuery.error.message : undefined} onRetry={() => void lanesQuery.refetch()} />
           ) : (
@@ -3036,7 +3036,7 @@ export function CustomerDetailPage() {
 
       <Modal open={Boolean(voidingQualityEvent)} onClose={() => setVoidingQualityEvent(null)} title="Void Quality Event">
         <div className="space-y-3">
-          <p className="text-sm text-gray-700">Voiding keeps the historical record but marks this event as inactive.</p>
+          <p className="text-xs text-gray-700">Voiding keeps the historical record but marks this event as inactive.</p>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Void reason</label>
             <textarea
@@ -3126,11 +3126,11 @@ export function CustomerDetailPage() {
 
       <Modal open={fmcsaHistoryOpen} onClose={() => setFmcsaHistoryOpen(false)} title="FMCSA Verification History">
         <div className="space-y-2">
-          {fmcsaHistoryQuery.isLoading ? <div className="text-sm text-gray-500">Loading verification history...</div> : null}
+          {fmcsaHistoryQuery.isLoading ? <div className="text-xs text-gray-500">Loading verification history...</div> : null}
           {fmcsaHistoryQuery.isError ? (
             <ListErrorState title="Couldn't load FMCSA verification history" status={0} message={fmcsaHistoryQuery.error instanceof Error ? fmcsaHistoryQuery.error.message : undefined} onRetry={() => void fmcsaHistoryQuery.refetch()} />
           ) : (fmcsaHistoryQuery.data ?? []).map((lookup) => (
-            <div key={lookup.lookup_id} className="rounded-sm border border-gray-200 p-2 text-sm">
+            <div key={lookup.lookup_id} className="rounded-sm border border-gray-200 p-2 text-xs">
               <div className="flex items-center justify-between">
                 <strong>{lookup.legal_name ?? "Unknown carrier"}</strong>
                 <StatusBadge variant={lookup.authority_status === "ACTIVE" ? "positive" : "crit"}>{lookup.authority_status}</StatusBadge>
@@ -3141,7 +3141,7 @@ export function CustomerDetailPage() {
             </div>
           ))}
           {!fmcsaHistoryQuery.isError && fmcsaHistoryListState.isEmpty ? (
-            <div className="text-sm text-gray-500">No FMCSA verifications found for this company.</div>
+            <div className="text-xs text-gray-500">No FMCSA verifications found for this company.</div>
           ) : null}
         </div>
       </Modal>

@@ -216,7 +216,7 @@ export function SubmissionQueue() {
       <div className="space-y-3 p-4">
         <PageHeader title="Submit to Factor" subtitle="Eligible invoices ready for factor submission" />
         <div
-          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700"
+          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700"
           data-testid="factoring-submit-need-company"
         >
           Select an operating company to view the submission queue.

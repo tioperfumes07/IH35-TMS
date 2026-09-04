@@ -12,7 +12,7 @@ export function DriverPlanner() {
     return (
       <div
         data-testid="dispatch-driver-planner-need-company"
-        className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+        className="rounded-sm border bg-white p-4 text-xs text-slate-600"
       >
         Select an operating company to load the driver planner.
       </div>

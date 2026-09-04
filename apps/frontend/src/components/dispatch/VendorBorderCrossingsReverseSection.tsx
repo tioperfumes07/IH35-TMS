@@ -18,12 +18,12 @@ export function VendorBorderCrossingsReverseSection({ operatingCompanyId, vendor
   const rows = query.isError ? [] : (query.data?.crossings ?? []);
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="vendor-border-crossings-reverse">
-      <h2 className="text-sm font-semibold text-slate-900">Brokered border crossings{rows.length ? ` (${rows.length})` : ""}</h2>
+      <h2 className="text-xs font-semibold text-slate-900">Brokered border crossings{rows.length ? ` (${rows.length})` : ""}</h2>
       {query.isError ? <ListErrorBanner message="Couldn't load border crossings for this customs broker." onRetry={() => void query.refetch()} /> : null}
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No completed border crossings linked to this customs broker.</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
+      {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-xs text-gray-500">No completed border crossings linked to this customs broker.</p> : null}
       {rows.map((row) => (
-        <div key={row.id} className="px-2 py-1.5 text-sm">
+        <div key={row.id} className="px-2 py-1.5 text-xs">
           <EntityLink kind="border_crossing" id={row.id} label={row.port_of_entry} className="font-semibold text-slate-700 underline" />
           <span className="ml-2 text-xs text-gray-600">{row.direction} · {formatDateUS(row.planned_crossing_date ?? row.crossing_date)}</span>
         </div>

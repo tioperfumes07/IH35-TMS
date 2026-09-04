@@ -104,7 +104,7 @@ export function ReportIssueModal({ open, loadId, loadDisplayId, onClose, onSubmi
 
   return (
     <Modal open={open} onClose={handleClose} title={modalTitle}>
-      <div className="space-y-3 text-sm" data-testid="driver-report-issue-modal">
+      <div className="space-y-3 text-xs" data-testid="driver-report-issue-modal">
         {loadId ? (
           <p className="text-xs text-slate-600" data-testid="driver-report-issue-load-link">
             Load:{" "}
@@ -122,7 +122,7 @@ export function ReportIssueModal({ open, loadId, loadDisplayId, onClose, onSubmi
         )}
         <label className="block text-xs text-gray-600">{t("driver.report_type")}</label>
         <SelectCombobox
-          className="mb-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          className="mb-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
           value={reportType}
           onChange={(e) => setReportType(e.target.value as typeof reportType)}
         >
@@ -133,7 +133,7 @@ export function ReportIssueModal({ open, loadId, loadDisplayId, onClose, onSubmi
         </SelectCombobox>
         <label className="block text-xs text-gray-600">{t("driver.report_desc")}</label>
         <textarea
-          className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
           rows={4}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -158,7 +158,7 @@ export function ReportIssueModal({ open, loadId, loadDisplayId, onClose, onSubmi
         <div className="flex justify-end gap-2 pt-1">
           <button
             type="button"
-            className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm"
+            className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs"
             onClick={handleClose}
             disabled={busy}
           >
@@ -166,7 +166,7 @@ export function ReportIssueModal({ open, loadId, loadDisplayId, onClose, onSubmi
           </button>
           <button
             type="button"
-            className="rounded-sm bg-slate-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+            className="rounded-sm bg-slate-900 px-3 py-1.5 text-xs text-white disabled:opacity-50"
             onClick={() => void submit()}
             disabled={busy || description.trim().length < 3}
             data-testid="driver-report-issue-submit"

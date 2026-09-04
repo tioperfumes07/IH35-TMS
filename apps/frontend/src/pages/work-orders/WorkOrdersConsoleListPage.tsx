@@ -390,7 +390,7 @@ export function WorkOrdersConsoleListPage() {
       <PageHeader title="Work orders" subtitle="Operational console for vendor-ready work order PDFs" />
 
       {!companyId ? (
-        <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
           Select a company.
         </div>
       ) : null}
@@ -436,9 +436,9 @@ export function WorkOrdersConsoleListPage() {
         <div className="space-y-2" data-testid="work-orders-console-kanban">
           {filterBar}
           {listQuery.isLoading ? (
-            <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-slate-600">Loading work orders…</div>
+            <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-600">Loading work orders…</div>
           ) : sortedRows.length === 0 ? (
-            <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+            <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
               No work orders match the current filters.
             </div>
           ) : (

@@ -171,7 +171,7 @@ export function FaultDraftsPage() {
         title="Fault-Driven Drafts"
         subtitle="Auto-created draft work orders from high-severity Samsara fault codes — review, assign shop, and confirm."
       />
-      <div className="flex gap-2 text-sm">
+      <div className="flex gap-2 text-xs">
         <Link to="/maintenance" className="text-slate-700 underline">
           Maintenance home
         </Link>
@@ -264,8 +264,8 @@ export function FaultDraftsPage() {
                 noun="Work order"
               />
             </h3>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{selected.description}</p>
-            <div className="mt-3 text-sm text-slate-700">
+            <p className="mt-2 whitespace-pre-wrap text-xs text-gray-700">{selected.description}</p>
+            <div className="mt-3 text-xs text-slate-700">
               Unit: <EntityLinkOrTombstone kind="unit" id={selected.unit_id} name={selected.unit_number} noun="Unit" className="font-semibold" />
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -273,7 +273,7 @@ export function FaultDraftsPage() {
                 kind="work_order"
                 id={selected.id}
                 label="Open WO detail"
-                className="inline-flex items-center rounded-sm border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                className="inline-flex items-center rounded-sm border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50"
                 data-testid="fault-draft-open-wo-link"
               />
               <Button

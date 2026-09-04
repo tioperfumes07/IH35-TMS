@@ -261,7 +261,7 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
   }
 
   if (!enabled) {
-    return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
   }
 
   const isLoading = loading || preSettlementsQuery.isLoading || idleUnitsQuery.isLoading;
@@ -349,11 +349,11 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
       </div>
 
       {isLoading ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading round trips…</div>
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">Loading round trips…</div>
       ) : boardView === "timeline" ? (
         <RoundTripsTimeline loads={loads} rangeFrom={range.from} rangeTo={range.to} onLoadClick={onLoadClick} />
       ) : pairs.length === 0 ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">
           No active unit round trips. Book loads to see outbound + return pairing.
         </div>
       ) : (

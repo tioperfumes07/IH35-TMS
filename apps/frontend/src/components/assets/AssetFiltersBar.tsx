@@ -35,7 +35,7 @@ export function AssetFiltersBar({ lifecycle, onLifecycleChange }: Props) {
           <select
             value={staged.draft.lifecycle}
             onChange={(event) => staged.setDraft({ lifecycle: event.target.value as AssetLifecycle | "all" })}
-            className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm font-normal text-gray-900"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs font-normal text-gray-900"
           >
             {LIFECYCLE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>

@@ -12,7 +12,7 @@ export function DriverAppLandingPage() {
   return (
     <div className="mx-auto max-w-lg space-y-4">
       <PageHeader title="Driver PWA" subtitle="Separate deploy for drivers" />
-      <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700">
+      <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700">
         <p className="mb-3">
           The driver-facing app runs at{" "}
           <span className="font-mono text-xs text-gray-900">{DRIVER_PWA_URL}</span>. Drivers sign in there with

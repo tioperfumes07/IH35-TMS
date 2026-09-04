@@ -188,7 +188,7 @@ export function TripProfitability() {
     >
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1">
-          <label htmlFor="trip-profit-from" className="text-sm">
+          <label htmlFor="trip-profit-from" className="text-xs">
             From
           </label>
           <DatePicker
@@ -199,7 +199,7 @@ export function TripProfitability() {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label htmlFor="trip-profit-to" className="text-sm">
+          <label htmlFor="trip-profit-to" className="text-xs">
             To
           </label>
           <DatePicker
@@ -220,7 +220,7 @@ export function TripProfitability() {
 
       {/* State messages */}
       {query.isError && (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700">
           Failed to load trip profitability.{" "}
           <button type="button" className="underline" onClick={() => query.refetch()}>
             Retry

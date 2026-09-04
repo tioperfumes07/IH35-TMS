@@ -149,7 +149,7 @@ export function TruckPlanner() {
     return (
       <div
         data-testid="dispatch-truck-planner-need-company"
-        className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+        className="rounded-sm border bg-white p-4 text-xs text-slate-600"
       >
         Select an operating company to load the truck planner.
       </div>
@@ -158,7 +158,7 @@ export function TruckPlanner() {
 
   return (
     <div data-testid="dispatch-truck-planner-page" className="space-y-2">
-      {isLoading ? <div className="text-sm text-gray-500">Loading truck grid…</div> : null}
+      {isLoading ? <div className="text-xs text-gray-500">Loading truck grid…</div> : null}
       {isError ? (
         <ListErrorBanner
           message={userFacingApiError(firstError, "Could not load truck planner grid")}

@@ -199,7 +199,7 @@ export function ReserveDashboard() {
       />
       {!companyId ? (
         <div
-          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700"
+          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700"
           data-testid="factoring-reserves-need-company"
         >
           Select an operating company to view reserve balances (display only — no CoA reserve mutations).
@@ -229,7 +229,7 @@ export function ReserveDashboard() {
 
       <div className="grid gap-2 md:grid-cols-3" data-testid="factoring-reserves-kpi">
         {(balancesQuery.data ?? []).map((balance) => (
-          <div key={balance.factor_id} className="rounded-sm border border-gray-200 p-3 text-sm">
+          <div key={balance.factor_id} className="rounded-sm border border-gray-200 p-3 text-xs">
             {/* LINK reverse_link: factor_id was dead text — EntityLink kind="factor" resolves to
                 /factoring/factors?factor_id= (FactorAdmin, which now honors that param). */}
             <div className="text-xs uppercase tracking-wide text-gray-500">
@@ -242,7 +242,7 @@ export function ReserveDashboard() {
         ))}
         {balancesListState.isEmpty ? (
           <div
-            className="rounded-sm border border-dashed border-gray-300 p-3 text-sm text-gray-500"
+            className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500"
             data-testid="factoring-reserves-honest-empty"
           >
             No reserve balances found.
@@ -252,7 +252,7 @@ export function ReserveDashboard() {
 
       <div className="grid gap-3 md:grid-cols-2">
         <div className="rounded-sm border border-gray-200 p-3">
-          <div className="mb-2 text-sm font-medium text-gray-900">Reserve Balance Over Time</div>
+          <div className="mb-2 text-xs font-medium text-gray-900">Reserve Balance Over Time</div>
           {historyQuery.isError ? (
             <ListErrorState
               title="Couldn't load reserve balance history"
@@ -309,10 +309,10 @@ export function ReserveDashboard() {
         </div>
 
         <div className="rounded-sm border border-gray-200 p-3">
-          <div className="mb-2 text-sm font-medium text-gray-900">Forecast Releases (7/14/30/60)</div>
+          <div className="mb-2 text-xs font-medium text-gray-900">Forecast Releases (7/14/30/60)</div>
           <div className="grid gap-2 grid-cols-2">
             {LOOKAHEAD_WINDOWS.map((days) => (
-              <div key={days} className="rounded-sm border border-gray-200 p-2 text-sm">
+              <div key={days} className="rounded-sm border border-gray-200 p-2 text-xs">
                 <div className="text-xs uppercase tracking-wide text-gray-500">Next {days} days</div>
                 <div className="mt-1 font-semibold text-gray-900">{asMoney(forecastByWindow[days])}</div>
               </div>
@@ -345,7 +345,7 @@ export function ReserveDashboard() {
       </div>
 
       <div className="rounded-sm border border-gray-200 p-3">
-        <div className="mb-2 text-sm font-medium text-gray-900">Recent Movements</div>
+        <div className="mb-2 text-xs font-medium text-gray-900">Recent Movements</div>
         {historyQuery.isError ? (
           <ListErrorState
             title="Couldn't load recent reserve movements"

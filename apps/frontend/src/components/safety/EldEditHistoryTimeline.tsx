@@ -69,7 +69,7 @@ export function EldEditHistoryTimeline({
   const to = isControlled ? controlledTo : historyQuery.data?.to;
 
   if (isLoading) {
-    return <p className="text-sm text-gray-500">Loading ELD edit history…</p>;
+    return <p className="text-xs text-gray-500">Loading ELD edit history…</p>;
   }
 
   if (!isControlled && historyQuery.isError) {
@@ -85,7 +85,7 @@ export function EldEditHistoryTimeline({
 
   if (edits.length === 0) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
         No mirrored Samsara HOS log edits found for this driver {isControlled ? "in the selected date range" : "in the last 30 days"}.
       </div>
     );
@@ -100,7 +100,7 @@ export function EldEditHistoryTimeline({
       ) : null}
       <ol className="space-y-2 border-l-2 border-slate-300 pl-4">
         {edits.map((edit) => (
-          <li key={edit.id} className="relative rounded-sm border border-gray-200 bg-white p-3 text-sm">
+          <li key={edit.id} className="relative rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <span className="absolute left-[-1.15rem] top-4 h-2.5 w-2.5 rounded-full bg-slate-700" aria-hidden />
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="font-semibold text-gray-900">{edit.field_name}</span>

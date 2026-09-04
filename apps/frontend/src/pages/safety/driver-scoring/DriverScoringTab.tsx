@@ -97,7 +97,7 @@ export function DriverScoringTab() {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-3">
         <div>
-          <h3 className="text-sm font-semibold text-slate-900">Driver Safety Scoring</h3>
+          <h3 className="text-xs font-semibold text-slate-900">Driver Safety Scoring</h3>
           <p className="text-xs text-slate-500">
             Composite score from harsh events and telematics miles (min 500 mi to rank).
           </p>

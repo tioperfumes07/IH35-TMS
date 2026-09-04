@@ -35,7 +35,7 @@ function ConversationList({
   onSelect: (driverId: string) => void;
 }) {
   if (conversations.length === 0) {
-    return <p className="px-3 py-4 text-sm text-gray-500">No driver conversations yet.</p>;
+    return <p className="px-3 py-4 text-xs text-gray-500">No driver conversations yet.</p>;
   }
   return (
     <ul className="divide-y divide-gray-200">
@@ -109,7 +109,7 @@ function ThreadPane({
         </Button>
       </div>
       <div className="flex-1 space-y-2 overflow-y-auto p-4" data-testid="inbox-thread">
-        {threadQuery.isLoading ? <p className="text-sm text-gray-500">Loading thread…</p> : null}
+        {threadQuery.isLoading ? <p className="text-xs text-gray-500">Loading thread…</p> : null}
         {threadQuery.isError ? (
           <ListErrorState
             title="Couldn't load message thread"
@@ -121,7 +121,7 @@ function ThreadPane({
         {messages.map((msg: DriverInboxMessage) => (
           <div
             key={msg.id}
-            className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
+            className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${
               msg.sender_side === "office" ? "ml-auto bg-slate-100 text-slate-700" : "mr-auto bg-gray-100 text-gray-900"
             } ${!msg.read_at && msg.sender_side === "driver" ? "ring-2 ring-slate-400" : ""}`}
           >
@@ -140,7 +140,7 @@ function ThreadPane({
           </div>
         ))}
         {!threadQuery.isLoading && !threadQuery.isError && messages.length === 0 ? (
-          <p className="text-sm text-gray-500">No messages in this thread yet.</p>
+          <p className="text-xs text-gray-500">No messages in this thread yet.</p>
         ) : null}
       </div>
       <SendMessageModal
@@ -201,7 +201,7 @@ export function MessagesInboxPage() {
   });
 
   if (!operatingCompanyId) {
-    return <div className="p-6 text-sm text-gray-600">Select an operating company to view driver messages.</div>;
+    return <div className="p-6 text-xs text-gray-600">Select an operating company to view driver messages.</div>;
   }
 
   if (inboxQuery.isError) {
@@ -221,7 +221,7 @@ export function MessagesInboxPage() {
         backHref="/drivers"
       />
       {markReadError ? (
-        <div role="alert" className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div role="alert" className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
           {markReadError}
         </div>
       ) : null}
@@ -250,7 +250,7 @@ export function MessagesInboxPage() {
               })}
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-sm text-gray-500">Select a driver conversation</div>
+            <div className="flex h-full items-center justify-center text-xs text-gray-500">Select a driver conversation</div>
           )}
         </div>
       </div>

@@ -94,9 +94,9 @@ export function EdiTransactionLog() {
       <PageHeader title="EDI Transaction Log" subtitle="Inbound/outbound 204 · 214 · 210 · 990 messages" />
       <div className="space-y-4 p-4">
         <div className="flex flex-wrap items-center gap-3">
-          <label className="text-sm font-medium">Status</label>
+          <label className="text-xs font-medium">Status</label>
           <select
-            className="rounded-sm border px-3 py-2 text-sm"
+            className="rounded-sm border px-3 py-2 text-xs"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -135,7 +135,7 @@ export function EdiTransactionLog() {
             </div>
 
             <div className="rounded-sm border p-4">
-              <h3 className="mb-2 text-sm font-semibold">Raw EDI viewer</h3>
+              <h3 className="mb-2 text-xs font-semibold">Raw EDI viewer</h3>
               {selected ? (
                 <div className="space-y-2 text-xs">
                   <p>
@@ -157,7 +157,7 @@ export function EdiTransactionLog() {
                   </button>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">Select a message to inspect</p>
+                <p className="text-xs text-gray-500">Select a message to inspect</p>
               )}
             </div>
           </div>

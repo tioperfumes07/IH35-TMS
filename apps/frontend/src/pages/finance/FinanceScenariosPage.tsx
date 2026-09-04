@@ -190,7 +190,7 @@ export function FinanceScenariosPage() {
   const header = (
     <div className="mb-4">
       <h1 className="text-lg font-semibold text-slate-800">Scenarios</h1>
-      <p className="text-sm text-slate-500">
+      <p className="text-xs text-slate-500">
         Versioned forecast scenarios — activate one at a time to drive Overview and Projections. Nothing posts to the GL.
       </p>
     </div>
@@ -201,7 +201,7 @@ export function FinanceScenariosPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         <PageHeader title="Scenarios" />
-        <p className="text-sm text-slate-500">Loading…</p>
+        <p className="text-xs text-slate-500">Loading…</p>
       </div>
     );
   }
@@ -211,7 +211,7 @@ export function FinanceScenariosPage() {
       <div className="p-6" data-testid="finance-scenarios-page">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600" data-testid="finance-scenarios-not-available">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600" data-testid="finance-scenarios-not-available">
           Scenario planning is not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_SCENARIOS_FLAG}</code> is off.)
         </div>
       </div>
@@ -272,7 +272,7 @@ export function FinanceScenariosPage() {
         </CollapsedListFilters>
         <button
           onClick={() => setCreatorOpen((v) => !v)}
-          className="rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-medium text-white"
+          className="rounded-sm bg-[#1f2a44] px-4 py-2 text-xs font-medium text-white"
         >
           {creatorOpen ? "Cancel" : "+ Create Scenario"}
         </button>
@@ -280,7 +280,7 @@ export function FinanceScenariosPage() {
 
       {creatorOpen && (
         <section className="mb-6 overflow-hidden rounded-sm border border-slate-200 bg-white">
-          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700">
             New scenario
           </div>
           <div className="space-y-4 px-4 py-4">
@@ -291,7 +291,7 @@ export function FinanceScenariosPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="FY27 Base Case"
-                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm"
+                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
                 />
               </label>
               <label className="block">
@@ -299,7 +299,7 @@ export function FinanceScenariosPage() {
                 <select
                   value={periodBasis}
                   onChange={(e) => setPeriodBasis(e.target.value as PeriodBasis)}
-                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm"
+                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
                 >
                   <option value="monthly">Monthly</option>
                   <option value="quarterly">Quarterly</option>
@@ -319,7 +319,7 @@ export function FinanceScenariosPage() {
                   max={60}
                   value={periodCount}
                   onChange={(e) => setPeriodCount(e.target.value)}
-                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm"
+                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
                 />
               </label>
             </div>
@@ -329,7 +329,7 @@ export function FinanceScenariosPage() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
-                className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm"
+                className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
               />
             </label>
 
@@ -357,7 +357,7 @@ export function FinanceScenariosPage() {
                             ls.map((l, i) => (i === idx ? { ...l, category_kind: e.target.value as CategoryKind } : l))
                           )
                         }
-                        className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm"
+                        className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
                       >
                         <option value="revenue">Revenue</option>
                         <option value="expense">Expense</option>
@@ -371,7 +371,7 @@ export function FinanceScenariosPage() {
                           setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, category_label: e.target.value } : l)))
                         }
                         placeholder="Line-haul revenue"
-                        className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm"
+                        className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
                       />
                     </label>
                     <label className="block md:col-span-2">
@@ -382,7 +382,7 @@ export function FinanceScenariosPage() {
                           setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, assumption_note: e.target.value } : l)))
                         }
                         placeholder="5% growth over trailing 3mo avg"
-                        className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm"
+                        className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
                       />
                     </label>
                     <label className="block">
@@ -417,12 +417,12 @@ export function FinanceScenariosPage() {
               disabled={!canSubmit || createMutation.isPending}
               title={!canSubmit ? submitHint : undefined}
               aria-describedby={!canSubmit ? "finance-scenario-submit-hint" : undefined}
-              className="rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="rounded-sm bg-[#1f2a44] px-4 py-2 text-xs font-medium text-white disabled:opacity-50"
             >
               {createMutation.isPending ? "Creating…" : "Create scenario"}
             </button>
             {!canSubmit ? (
-              <p id="finance-scenario-submit-hint" className="text-sm text-slate-600">
+              <p id="finance-scenario-submit-hint" className="text-xs text-slate-600">
                 {submitHint}
               </p>
             ) : null}

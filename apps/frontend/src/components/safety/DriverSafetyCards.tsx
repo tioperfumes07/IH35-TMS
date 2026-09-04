@@ -300,7 +300,7 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
     <section className="mb-4" aria-label="Driver safety cards" data-testid="driver-safety-cards">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-slate-900">Driver Safety Cards</h3>
+          <h3 className="text-xs font-semibold text-slate-900">Driver Safety Cards</h3>
           <p className="text-[11px] text-slate-500">
             Credential standing at a glance — CDL, visa, DOT medical, open incidents, D&amp;A pool.
           </p>

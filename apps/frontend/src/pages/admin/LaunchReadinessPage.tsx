@@ -14,7 +14,7 @@ function TileRow({ label, tile }: { label: string; tile: LaunchTile }) {
     <div className="flex items-start gap-3 rounded-sm border border-gray-100 bg-white px-3 py-2">
       <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${dotClass(tile.status)}`} />
       <div className="min-w-0">
-        <div className="text-sm font-semibold text-gray-900">{label}</div>
+        <div className="text-xs font-semibold text-gray-900">{label}</div>
         <div className="text-xs text-gray-600">{tile.detail}</div>
       </div>
     </div>
@@ -32,7 +32,7 @@ export function LaunchReadinessPage() {
     return (
       <div className="space-y-3">
         <PageHeader title="Launch readiness" subtitle="Owner / Administrator" />
-        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-800">
           Could not load readiness data. Confirm you are signed in as Owner or Administrator.
         </div>
       </div>
@@ -49,7 +49,7 @@ export function LaunchReadinessPage() {
       />
 
       {q.isLoading || !data ? (
-        <div className="text-sm text-gray-500">Loading checks…</div>
+        <div className="text-xs text-gray-500">Loading checks…</div>
       ) : (
         <>
           {data.errors?.length ? (
@@ -59,7 +59,7 @@ export function LaunchReadinessPage() {
           ) : null}
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">System status</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">System status</h2>
             <div className="grid gap-2 md:grid-cols-2">
               <TileRow label="API healthcheck" tile={data.system_status.api_healthcheck} />
               <TileRow label="QBO sync worker" tile={data.system_status.qbo_sync_worker} />
@@ -72,9 +72,9 @@ export function LaunchReadinessPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Migrations</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Migrations</h2>
             <div
-              className="rounded-sm border border-gray-200 bg-white p-4 text-sm"
+              className="rounded-sm border border-gray-200 bg-white p-4 text-xs"
               style={{ borderColor: colors.sidebarBorder }}
             >
               <div className="grid gap-2 sm:grid-cols-3">
@@ -100,7 +100,7 @@ export function LaunchReadinessPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Master data counts</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Master data counts</h2>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {(
                 [
@@ -122,7 +122,7 @@ export function LaunchReadinessPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Critical workflows</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Critical workflows</h2>
             <div className="grid gap-2 md:grid-cols-2">
               <TileRow label={`Settlements (30d): ${data.critical_workflows.settlements_last_30_days}`} tile={data.critical_workflows.settlements_workflow} />
               <TileRow

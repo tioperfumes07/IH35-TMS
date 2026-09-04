@@ -48,7 +48,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="List settings"
-        className="p-1.5 rounded-sm border border-gray-300 hover:bg-gray-100 text-gray-600 text-sm"
+        className="p-1.5 rounded-sm border border-gray-300 hover:bg-gray-100 text-gray-600 text-xs"
       >
         ⚙
       </button>

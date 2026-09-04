@@ -174,7 +174,7 @@ export function CSAScorePage() {
       <PageHeader title="CSA / FMCSA Trend" breadcrumb={[{ label: "Safety" }, { label: "CSA / FMCSA Trend" }]} backHref="/safety" />
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="space-y-1">
-          <div className="text-sm font-semibold text-slate-800">FMCSA CSA source status</div>
+          <div className="text-xs font-semibold text-slate-800">FMCSA CSA source status</div>
           <div className="text-slate-600">
             Last successful public-source metric pull{" "}
             {currentQuery.data?.pulled_at ? new Date(currentQuery.data.pulled_at).toLocaleString() : "not available"}
@@ -225,11 +225,11 @@ export function CSAScorePage() {
                 <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-600">
                   <div>
                     <div>{tile.source.authoritative_for_percentile ? "SMS measure" : "Public-source measure"}</div>
-                    <div className="text-sm font-semibold text-slate-800">{formatScore(tile.latest_score)}</div>
+                    <div className="text-xs font-semibold text-slate-800">{formatScore(tile.latest_score)}</div>
                   </div>
                   <div>
                     <div>Percentile</div>
-                    <div className="text-sm font-semibold text-slate-800">{formatScore(tile.latest_percentile)}</div>
+                    <div className="text-xs font-semibold text-slate-800">{formatScore(tile.latest_percentile)}</div>
                   </div>
                   <div>
                     <div>Threshold</div>

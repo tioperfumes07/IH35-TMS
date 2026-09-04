@@ -108,7 +108,7 @@ export function DispatchList({
 
   if (!loading && loads.length === 0) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-white p-6 text-sm text-gray-500">
+      <div className="rounded-sm border border-gray-200 bg-white p-6 text-xs text-gray-500">
         No loads match your filters.{" "}
         <button type="button" className="font-semibold text-slate-700 hover:underline" onClick={() => onPageChange(0)}>
           Go back to first page
@@ -120,7 +120,7 @@ export function DispatchList({
   return (
     <section className="space-y-2">
       <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-600">Showing {from}-{to} of {totalCount}</div>
+        <div className="text-xs text-gray-600">Showing {from}-{to} of {totalCount}</div>
         <div className="flex items-center gap-2">
           {selectedCount > 0 && onExportSelectedCsv ? (
             <Button type="button" variant="secondary" size="sm" onClick={onExportSelectedCsv}>
@@ -396,7 +396,7 @@ export function DispatchList({
       </div>
 
       <div className="space-y-2 md:hidden">
-        {loading ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">Loading loads...</div> : null}
+        {loading ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-500">Loading loads...</div> : null}
         {!loading &&
           loads.map((load) => (
             <button
@@ -419,7 +419,7 @@ export function DispatchList({
                   ) : null}
                 </div>
               </div>
-              <div className="mt-1 min-w-0 text-sm text-gray-700">
+              <div className="mt-1 min-w-0 text-xs text-gray-700">
                 <span title={load.customer_name ?? undefined} className="single-line-name">
                   {entityLabel(load.customer_name, null, "Customer")}
                 </span>
@@ -460,7 +460,7 @@ export function DispatchList({
           ))}
       </div>
 
-      <div className="flex items-center justify-between border-t border-gray-200 pt-2 text-sm">
+      <div className="flex items-center justify-between border-t border-gray-200 pt-2 text-xs">
         <Button type="button" variant="secondary" size="sm" disabled={!hasPrev} onClick={() => onPageChange(Math.max(0, offset - limit))}>
           Previous
         </Button>

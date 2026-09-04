@@ -693,7 +693,7 @@ export function UsersPage() {
                 <label className="space-y-1 text-xs text-gray-600" data-testid="users-filter-role">
                   <span>Role</span>
                   <SelectCombobox
-                    className="min-h-12 w-full min-w-[12rem] rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
+                    className="min-h-12 w-full min-w-[12rem] rounded-sm border border-gray-300 px-2 text-xs sm:h-9 sm:min-h-0"
                     value={staged.draft.roleFilter}
                     onChange={(event) => staged.setDraft({ ...staged.draft, roleFilter: event.target.value })}
                   >
@@ -883,7 +883,7 @@ export function UsersPage() {
             }
           }}
         >
-          <div className="text-sm text-gray-600">
+          <div className="text-xs text-gray-600">
             Current role:{" "}
             {roleModalUser?.role
               ? (ROLE_LABEL[roleModalUser.role as UserRole] ?? roleModalUser.role)
@@ -935,7 +935,7 @@ export function UsersPage() {
       {isOwner ? (
         <section className="mt-6 overflow-hidden rounded-sm border border-slate-200 bg-white">
           <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
-            <h3 className="mb-1 text-sm font-semibold text-slate-700">Admin Tools</h3>
+            <h3 className="mb-1 text-xs font-semibold text-slate-700">Admin Tools</h3>
             <p className="text-xs text-slate-500">Owner-only maintenance actions.</p>
           </div>
           <div className="flex items-start justify-between gap-4 px-4 py-3">

@@ -29,7 +29,7 @@ export function MaintenanceSnapshotSection({
   );
   return (
     <section id="asset-maintenance" className="scroll-mt-4 rounded-sm border border-gray-200 bg-white p-4">
-      <h3 className="text-sm font-semibold text-gray-800">Maintenance snapshot</h3>
+      <h3 className="text-xs font-semibold text-gray-800">Maintenance snapshot</h3>
       <p className="mt-1 text-xs text-gray-600">
         Open WOs: in-house {openWoCount.in_house} · external {openWoCount.external} · roadside {openWoCount.roadside} (
         {openWoCount.total} total)

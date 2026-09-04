@@ -24,7 +24,7 @@ export function DebtBanner({
     <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="text-sm font-semibold text-red-700">
+          <div className="text-xs font-semibold text-red-700">
             ⚠ Driver has {isRefreshing ? "Refreshing..." : `$${Number(totalActiveDebt).toFixed(2)}`} in active debt
           </div>
           <div className="text-xs text-red-700">
@@ -36,7 +36,7 @@ export function DebtBanner({
             <span className="text-red-800 underline">Deduction history →</span>
           </div>
         </div>
-        <div className="text-sm font-bold text-red-700">
+        <div className="text-xs font-bold text-red-700">
           TOTAL ACTIVE DEBT {isRefreshing ? "Refreshing..." : `$${Number(totalActiveDebt).toFixed(2)}`}
         </div>
       </div>

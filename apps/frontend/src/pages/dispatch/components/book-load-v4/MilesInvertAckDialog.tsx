@@ -51,7 +51,7 @@ export function MilesInvertAckDialog({ open, onAcknowledge, columnInverted, reve
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="border-b border-slate-200 px-4 py-3">
-          <h2 id="miles-invert-ack-title" className="text-sm font-semibold uppercase tracking-wide text-slate-800">
+          <h2 id="miles-invert-ack-title" className="text-xs font-semibold uppercase tracking-wide text-slate-800">
             Check lane miles
           </h2>
         </div>

@@ -23,9 +23,9 @@ export function UserProfileSettingsPage() {
     onError: () => pushToast("Could not restart tour.", "error"),
   });
 
-  if (profileQuery.isLoading) return <div className="text-sm text-gray-600">Loading profile…</div>;
+  if (profileQuery.isLoading) return <div className="text-xs text-gray-600">Loading profile…</div>;
   if (profileQuery.isError || !profileQuery.data) {
-    return <div className="text-sm text-red-600">Could not load profile.</div>;
+    return <div className="text-xs text-red-600">Could not load profile.</div>;
   }
 
   const u = profileQuery.data;
@@ -36,7 +36,7 @@ export function UserProfileSettingsPage() {
       <PageHeader title="Your profile" subtitle={`Account preferences for ${u.email ?? "your account"}.`} backHref="/home" />
 
       <section className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
-        <h2 className="text-sm font-semibold text-slate-800">Guided tour</h2>
+        <h2 className="text-xs font-semibold text-slate-800">Guided tour</h2>
         <p className="mt-1 text-xs text-slate-600">
           The product tour runs automatically once. Use restart to see it again after refreshing the page.
         </p>
@@ -48,10 +48,10 @@ export function UserProfileSettingsPage() {
       </section>
 
       <section className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
-        <h2 className="text-sm font-semibold text-slate-800">Notifications</h2>
+        <h2 className="text-xs font-semibold text-slate-800">Notifications</h2>
         <p className="mt-1 text-xs text-slate-600">Control email, SMS, WhatsApp, in-app, and quiet hours.</p>
         <div className="mt-3">
-          <Link className="text-sm font-medium text-slate-700 hover:underline" to="/settings/notifications">
+          <Link className="text-xs font-medium text-slate-700 hover:underline" to="/settings/notifications">
             Open notification preferences →
           </Link>
         </div>

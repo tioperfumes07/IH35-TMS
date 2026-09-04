@@ -20,7 +20,7 @@ export function ComplianceSection({
   const mx = compliance.mx_insurance as Record<string, unknown> | undefined;
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-gray-800">Compliance</h2>
+      <h2 className="text-xs font-semibold text-gray-800">Compliance</h2>
       <div className="mt-2 grid gap-2 text-xs sm:grid-cols-3">
         <div>DOT next due: {fmtDate(dot?.next_due)}</div>
         <div>US insurance exp: {fmtDate(us?.expiration)}</div>

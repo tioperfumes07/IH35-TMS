@@ -77,13 +77,13 @@ export function UnidentifiedTab({ operatingCompanyId }: Props) {
   );
 
   if (!operatingCompanyId) {
-    return <p className="text-sm text-slate-600">Select an operating company to load unidentified driving.</p>;
+    return <p className="text-xs text-slate-600">Select an operating company to load unidentified driving.</p>;
   }
 
   return (
     <div className="space-y-3" data-testid="eld-unidentified-tab">
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-        <div className="text-sm font-semibold text-slate-800">Unidentified Driving</div>
+        <div className="text-xs font-semibold text-slate-800">Unidentified Driving</div>
         <div className="text-[11px] text-slate-500">
           Units from <code className="text-xs">GET /api/v1/telematics/fleet-location-hos</code> that are moving or
           engine-active with no Samsara-assigned driver. Not a separate FMCSA unidentified-event ingest — honest

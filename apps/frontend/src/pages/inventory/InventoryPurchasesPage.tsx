@@ -181,14 +181,14 @@ export function InventoryPurchasesPage() {
 
       <div className="flex justify-end">
         <Link
-          className="inline-flex min-h-11 items-center rounded-sm bg-slate-800 px-3 text-sm font-semibold text-white hover:bg-slate-700 sm:min-h-[32px]"
+          className="inline-flex min-h-11 items-center rounded-sm bg-slate-800 px-3 text-xs font-semibold text-white hover:bg-slate-700 sm:min-h-[32px]"
           to="/maintenance/parts-inventory?create=purchase"
         >
           + Record Purchase
         </Link>
       </div>
 
-      <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600">
+      <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
         Purchase receipts are preserved as an append-only history. Stock on-hand lives on{" "}
         <Link className="text-slate-700 underline" to="/maintenance/parts-inventory?create=purchase">
           Maintenance Parts Inventory
@@ -201,7 +201,7 @@ export function InventoryPurchasesPage() {
       </div>
 
       {purchasesQuery.isLoading ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white p-8 text-center text-xs text-gray-500">
           Loading purchase history...
         </div>
       ) : purchasesQuery.isError ? (
@@ -212,7 +212,7 @@ export function InventoryPurchasesPage() {
         />
       ) : (
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="inventory-purchases-list">
-          <h3 className="text-sm font-semibold">Purchase history ({activeRows.length})</h3>
+          <h3 className="text-xs font-semibold">Purchase history ({activeRows.length})</h3>
           <ParityTable<PartsPurchaseRow>
             columns={columns}
             rows={visibleRows}
@@ -263,7 +263,7 @@ export function InventoryPurchasesPage() {
                       <option value="voided">Voided</option>
                     </SelectCombobox>
                   </label>
-                  <label className="inline-flex items-center gap-2 self-end pb-2 text-sm text-gray-700">
+                  <label className="inline-flex items-center gap-2 self-end pb-2 text-xs text-gray-700">
                     <input
                       type="checkbox"
                       checked={stagedFilters.draft.workOrderLinkedOnly}

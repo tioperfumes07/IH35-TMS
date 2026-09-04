@@ -579,7 +579,7 @@ export function CargoClaimIntakeSurface({
     <div className="space-y-3" data-testid={pageTestId}>
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
-          <div className="text-sm font-semibold text-slate-800">{title}</div>
+          <div className="text-xs font-semibold text-slate-800">{title}</div>
           <div className="text-[11px] text-slate-500">{subtitle}</div>
         </div>
         {!creating ? (
@@ -601,7 +601,7 @@ export function CargoClaimIntakeSurface({
       {creating ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`${pageTestId}-create-form`}>
           <div className="mb-2 flex items-center justify-between">
-            <div className="text-sm font-semibold text-slate-800">{createLabel}</div>
+            <div className="text-xs font-semibold text-slate-800">{createLabel}</div>
             <button type="button" className="text-xs text-slate-500 underline" onClick={resetCreate}>
               Cancel
             </button>
@@ -945,7 +945,7 @@ export function CargoClaimIntakeSurface({
       {selectedId ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`${pageTestId}-detail`}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <div className="text-sm font-semibold text-slate-800">{detailLabel}</div>
+            <div className="text-xs font-semibold text-slate-800">{detailLabel}</div>
             <div className="flex items-center gap-2">
               {detail && !detail.voided_at && !editMode ? (
                 <button

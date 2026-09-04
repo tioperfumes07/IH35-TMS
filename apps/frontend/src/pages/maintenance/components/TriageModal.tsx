@@ -16,7 +16,7 @@ export function TriageModal({ open, issue, onClose, onConvertToWo, onConvertToDa
   return (
     <Modal open={open} onClose={onClose} title="In-Transit Issue Triage">
       {!issue ? null : (
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
             <div><span className="font-semibold">Unit:</span> <EntityLinkOrTombstone kind="unit" id={issue.unit_id} name={issue.unit_display_id} noun="Unit" /></div>
             <div><span className="font-semibold">Driver:</span> <EntityLinkOrTombstone kind="driver" id={issue.driver_id} name={issue.driver_full_name} noun="Driver" /></div>

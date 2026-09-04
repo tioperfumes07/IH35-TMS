@@ -194,7 +194,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
   return (
     <ParityDrawer open={open} onClose={closeModal} title="Create Lawsuit" size="wide">
       <form
-        className="space-y-4 text-sm"
+        className="space-y-4 text-xs"
         onSubmit={(event) => {
           event.preventDefault();
           event.stopPropagation();

@@ -167,7 +167,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
 
   if (loadQ.isLoading) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500 animate-pulse" data-testid="drawer-fines-deductions-card">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-xs text-gray-500 animate-pulse" data-testid="drawer-fines-deductions-card">
         Loading fines &amp; deductions…
       </div>
     );
@@ -175,7 +175,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
 
   if (!loadQ.data) {
     return (
-      <div className="rounded-sm border border-gray-200 p-4 text-sm text-gray-500" data-testid="drawer-fines-deductions-card">
+      <div className="rounded-sm border border-gray-200 p-4 text-xs text-gray-500" data-testid="drawer-fines-deductions-card">
         Load not found.
       </div>
     );
@@ -183,7 +183,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
 
   if (!driverId) {
     return (
-      <div className="rounded-sm border border-dashed border-gray-200 bg-gray-50 p-3 text-sm text-gray-600" data-testid="drawer-fines-deductions-card">
+      <div className="rounded-sm border border-dashed border-gray-200 bg-gray-50 p-3 text-xs text-gray-600" data-testid="drawer-fines-deductions-card">
         Assign a driver to this load to view fines and settlement deductions.
       </div>
     );
@@ -373,7 +373,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
         title="Confirm or defer deduction"
       >
         {selectedPending ? (
-          <div className="space-y-3 text-sm">
+          <div className="space-y-3 text-xs">
             <div className="rounded-sm border border-gray-200 bg-gray-50 p-3">
               <div>
                 <span className="font-semibold">Amount:</span> {formatMoney(selectedPending.proposed_amount_cents)}
@@ -389,7 +389,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
             <label className="block text-xs font-semibold uppercase text-gray-600">
               Review notes
               <textarea
-                className="mt-1 min-h-24 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                className="mt-1 min-h-24 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={reviewNotes}
                 onChange={(event) => setReviewNotes(event.target.value)}
                 placeholder="Required to defer (min 10 chars)…"

@@ -132,7 +132,7 @@ export function VendorPaymentMethodsSection({ operatingCompanyId, vendorId, canW
           <label className="block text-xs">
             Method
             <select
-              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={methodType}
               onChange={(event) => setMethodType(event.target.value as VendorPaymentMethod["method_type"])}
             >
@@ -146,7 +146,7 @@ export function VendorPaymentMethodsSection({ operatingCompanyId, vendorId, canW
           <label className="block text-xs">
             Bank name (optional)
             <input
-              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={bankName}
               onChange={(event) => setBankName(event.target.value)}
               placeholder="e.g. Chase"
@@ -155,7 +155,7 @@ export function VendorPaymentMethodsSection({ operatingCompanyId, vendorId, canW
           <label className="block text-xs">
             Last 4 digits (optional — never a full account number)
             <input
-              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={accountMask}
               maxLength={4}
               onChange={(event) => setAccountMask(event.target.value.replace(/[^0-9A-Za-z]/g, ""))}
@@ -170,7 +170,7 @@ export function VendorPaymentMethodsSection({ operatingCompanyId, vendorId, canW
             Notes (optional)
             <textarea
               rows={2}
-              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
             />

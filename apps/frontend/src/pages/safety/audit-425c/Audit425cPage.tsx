@@ -278,7 +278,7 @@ export default function Audit425cPage() {
       />
 
       {!enabled ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-slate-700">
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-700">
           Select an operating company to load its 425C audit trail.
         </div>
       ) : null}
@@ -312,7 +312,7 @@ export default function Audit425cPage() {
         <label className="text-xs text-slate-600">
           Actor
           <input
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={draft.actor}
             onChange={(event) => staged.setDraft((d) => ({ ...d, actor: event.target.value }))}
             placeholder="email or user id"

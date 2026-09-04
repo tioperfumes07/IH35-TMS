@@ -158,7 +158,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
     <div className="space-y-3 px-2" data-testid="team-split-config-panel">
       <div className="relative flex flex-wrap items-end justify-between gap-2" data-testid="team-split-config-filters">
         <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-gray-900">Team split configs</h2>
+          <h2 className="text-xs font-semibold text-gray-900">Team split configs</h2>
           <div className="flex flex-wrap items-end gap-2">
             <label className="block min-w-[240px] text-xs text-slate-600">
               Driver
@@ -228,7 +228,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
           <div key={row.id} className="rounded-sm border border-gray-200 bg-white p-3" data-team-split-config-id={row.id}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <div className="text-sm font-semibold text-gray-900">
+                <div className="text-xs font-semibold text-gray-900">
                   <EntityLink kind="driver" id={row.primary_driver_id} label={entityLabel(row.primary_driver_name, row.primary_driver_id, "Driver")} /> /{" "}
                   <EntityLink kind="driver" id={row.secondary_driver_id} label={entityLabel(row.secondary_driver_name, row.secondary_driver_id, "Driver")} />
                 </div>
@@ -299,7 +299,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
           </div>
           <label className="block text-xs font-medium text-gray-700">
             Memo
-            <textarea className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" value={memo} onChange={(e) => setMemo(e.target.value)} />
+            <textarea className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={memo} onChange={(e) => setMemo(e.target.value)} />
           </label>
           {error ? <p className="text-xs text-red-600">{error}</p> : null}
           <div className="flex justify-end gap-2">

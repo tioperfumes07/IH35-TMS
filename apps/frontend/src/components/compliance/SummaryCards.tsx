@@ -24,7 +24,7 @@ export function SummaryCards({ summary, activeSeverity, onSelect }: Props) {
           onClick={() => onSelect(activeSeverity === card.key ? null : card.key)}
         >
           <div className="text-3xl font-semibold">{card.count}</div>
-          <div className="text-sm font-medium">{card.label}</div>
+          <div className="text-xs font-medium">{card.label}</div>
         </button>
       ))}
     </div>

@@ -108,7 +108,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
           <input
             value={form.sku}
             onChange={(e) => setForm((v) => ({ ...v, sku: e.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
           {errors.sku ? <div className="mt-1 text-[11px] text-red-700">{errors.sku}</div> : null}
         </label>
@@ -118,7 +118,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
           <input
             value={form.part_name}
             onChange={(e) => setForm((v) => ({ ...v, part_name: e.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
           {errors.part_name ? <div className="mt-1 text-[11px] text-red-700">{errors.part_name}</div> : null}
         </label>
@@ -128,7 +128,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
           <input
             value={form.manufacturer}
             onChange={(e) => setForm((v) => ({ ...v, manufacturer: e.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             placeholder="e.g. Detroit Diesel"
           />
           {errors.manufacturer ? <div className="mt-1 text-[11px] text-red-700">{errors.manufacturer}</div> : null}
@@ -139,7 +139,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
           <SelectCombobox
             value={form.category}
             onChange={(e) => setForm((v) => ({ ...v, category: e.target.value as FormState["category"] }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           >
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -154,7 +154,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
           <input
             value={form.sub_category}
             onChange={(e) => setForm((v) => ({ ...v, sub_category: e.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
         </label>
 
@@ -163,7 +163,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
           <input
             value={form.model_compatibility}
             onChange={(e) => setForm((v) => ({ ...v, model_compatibility: e.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             placeholder="e.g. Cascadia, T680"
           />
         </label>
@@ -173,7 +173,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
           <input
             value={form.typical_unit_cost}
             onChange={(e) => setForm((v) => ({ ...v, typical_unit_cost: e.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             placeholder="0.00"
           />
           {errors.typical_unit_cost ? <div className="mt-1 text-[11px] text-red-700">{errors.typical_unit_cost}</div> : null}
@@ -184,7 +184,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
           <input
             value={form.barcode_upc}
             onChange={(e) => setForm((v) => ({ ...v, barcode_upc: e.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
         </label>
 

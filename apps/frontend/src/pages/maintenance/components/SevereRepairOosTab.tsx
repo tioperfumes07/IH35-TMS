@@ -330,7 +330,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-gray-600">Reason</label>
             <textarea
-              className="min-h-20 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="min-h-20 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={oosReason}
               onChange={(event) => setOosReason(event.target.value)}
             />
@@ -338,7 +338,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-gray-600">Location (optional)</label>
             <input
-              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={oosLocation}
               onChange={(event) => setOosLocation(event.target.value)}
             />
@@ -364,7 +364,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
 
       <Modal open={returnOpen} onClose={() => setReturnOpen(false)} title="Return Unit to Service">
         <div className="space-y-3">
-          <div className="text-sm text-gray-700">
+          <div className="text-xs text-gray-700">
             Unit:{" "}
             <EntityLinkOrTombstone kind="unit" id={returnEstimate?.unit_id} name={returnEstimate?.unit_number} noun="Unit" className="font-semibold" />
           </div>
@@ -374,7 +374,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-gray-600">Review Notes</label>
             <textarea
-              className="min-h-24 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="min-h-24 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={returnNotes}
               onChange={(event) => setReturnNotes(event.target.value)}
             />

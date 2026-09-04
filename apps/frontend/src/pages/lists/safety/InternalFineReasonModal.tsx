@@ -113,7 +113,7 @@ export function InternalFineReasonModal({ open, companyId, row, onClose, onSaved
           <input
             value={form.reason_code}
             onChange={(event) => setForm((v) => ({ ...v, reason_code: event.target.value.toUpperCase() }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             placeholder="LATE-DELIVERY"
           />
           {errors.reason_code ? <div className="mt-1 text-[11px] text-red-700">{errors.reason_code}</div> : null}
@@ -121,7 +121,7 @@ export function InternalFineReasonModal({ open, companyId, row, onClose, onSaved
 
         <label className="block text-xs font-semibold text-gray-600">
           Reason Name
-          <input value={form.reason_name} onChange={(event) => setForm((v) => ({ ...v, reason_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+          <input value={form.reason_name} onChange={(event) => setForm((v) => ({ ...v, reason_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
           {errors.reason_name ? <div className="mt-1 text-[11px] text-red-700">{errors.reason_name}</div> : null}
         </label>
 

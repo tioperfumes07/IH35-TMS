@@ -94,10 +94,10 @@ export function NotificationCenterPage() {
         subtitle="In-app alerts from compliance, maintenance, loads, and system events"
         actions={
           <div className="flex gap-2">
-            <button type="button" className="rounded-sm border px-3 py-1.5 text-sm" onClick={() => void refresh()}>
+            <button type="button" className="rounded-sm border px-3 py-1.5 text-xs" onClick={() => void refresh()}>
               Refresh
             </button>
-            <button type="button" className="rounded-sm border px-3 py-1.5 text-sm" onClick={() => void markAllRead()}>
+            <button type="button" className="rounded-sm border px-3 py-1.5 text-xs" onClick={() => void markAllRead()}>
               Mark all read
             </button>
           </div>
@@ -107,7 +107,7 @@ export function NotificationCenterPage() {
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <section className="rounded-sm border border-gray-200 bg-white p-4">
           <div className="mb-3 flex flex-wrap gap-2">
-            <select className="rounded-sm border px-2 py-1 text-sm" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+            <select className="rounded-sm border px-2 py-1 text-xs" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
               <option value="">All types</option>
               {TYPE_OPTIONS.map((t) => (
                 <option key={t} value={t}>
@@ -116,7 +116,7 @@ export function NotificationCenterPage() {
               ))}
             </select>
             <select
-              className="rounded-sm border px-2 py-1 text-sm"
+              className="rounded-sm border px-2 py-1 text-xs"
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
             >
@@ -128,7 +128,7 @@ export function NotificationCenterPage() {
               ))}
             </select>
             <select
-              className="rounded-sm border px-2 py-1 text-sm"
+              className="rounded-sm border px-2 py-1 text-xs"
               value={readFilter}
               onChange={(e) => setReadFilter(e.target.value as "all" | "unread" | "read")}
             >
@@ -138,7 +138,7 @@ export function NotificationCenterPage() {
             </select>
           </div>
 
-          {loading ? <p className="text-sm text-gray-500">Loading notifications…</p> : null}
+          {loading ? <p className="text-xs text-gray-500">Loading notifications…</p> : null}
           {isError ? (
             <ListErrorState
               status={(error as { status?: number } | null)?.status ?? 0}
@@ -146,14 +146,14 @@ export function NotificationCenterPage() {
               onRetry={() => void refresh()}
             />
           ) : null}
-          {!loading && !isError && filtered.length === 0 ? <p className="text-sm text-gray-500">No notifications match filters.</p> : null}
+          {!loading && !isError && filtered.length === 0 ? <p className="text-xs text-gray-500">No notifications match filters.</p> : null}
           <ul className="divide-y" aria-hidden={isError || undefined}>
             {paginated.map((item) => (
               <li key={item.id} className="py-3" data-testid="notification-center-item">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium text-gray-900">{item.title}</p>
-                    {item.body ? <p className="text-sm text-gray-600">{item.body}</p> : null}
+                    {item.body ? <p className="text-xs text-gray-600">{item.body}</p> : null}
                     <p className="mt-1 text-xs text-gray-500">
                       {item.type} · {item.severity} · {new Date(item.created_at).toLocaleString()}
                     </p>
@@ -204,7 +204,7 @@ export function NotificationCenterPage() {
         </section>
 
         <aside className="rounded-sm border border-gray-200 bg-white p-4" data-testid="notification-preferences-panel">
-          <h2 className="text-sm font-semibold text-gray-900">Preferences</h2>
+          <h2 className="text-xs font-semibold text-gray-900">Preferences</h2>
           {prefsError ? (
             <ListErrorState
               status={(prefsError as { status?: number } | null)?.status ?? 0}
@@ -212,7 +212,7 @@ export function NotificationCenterPage() {
               onRetry={() => void loadPreferences()}
             />
           ) : prefs ? (
-            <div className="mt-3 space-y-3 text-sm">
+            <div className="mt-3 space-y-3 text-xs">
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"

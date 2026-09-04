@@ -93,7 +93,7 @@ export function TasksTab({ operatingCompanyId, targetType, targetId, targetLabel
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700">Tasks</h3>
+        <h3 className="text-xs font-semibold text-slate-700">Tasks</h3>
         <button
           type="button"
           className="rounded-sm border border-slate-300 bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200"

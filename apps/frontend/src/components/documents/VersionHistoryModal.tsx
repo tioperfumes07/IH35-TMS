@@ -81,7 +81,7 @@ export function VersionHistoryModal({
       <Modal open onClose={onClose} title="Version History">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700">
+            <div className="text-xs text-gray-700">
               Linear chain: <strong>v1 → vN</strong>
             </div>
             {canUploadVersion ? (
@@ -91,14 +91,14 @@ export function VersionHistoryModal({
             ) : null}
           </div>
 
-          {versionQuery.isLoading ? <div className="text-sm text-gray-500">Loading versions...</div> : null}
-          {versionQuery.isError ? <div className="text-sm text-red-600">Unable to load version history.</div> : null}
+          {versionQuery.isLoading ? <div className="text-xs text-gray-500">Loading versions...</div> : null}
+          {versionQuery.isError ? <div className="text-xs text-red-600">Unable to load version history.</div> : null}
 
           <div className="space-y-2">
             {versions.map((version) => (
               <div key={version.id} className="rounded-sm border border-gray-200 bg-white p-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-sm font-semibold text-gray-900">
+                  <div className="text-xs font-semibold text-gray-900">
                     v{version.version_number} - {version.original_filename}
                   </div>
                   <div className="text-xs text-gray-600">
@@ -121,7 +121,7 @@ export function VersionHistoryModal({
                 </div>
               </div>
             ))}
-            {!versionQuery.isLoading && versions.length === 0 ? <div className="text-sm text-gray-500">No versions found.</div> : null}
+            {!versionQuery.isLoading && versions.length === 0 ? <div className="text-xs text-gray-500">No versions found.</div> : null}
           </div>
         </div>
       </Modal>

@@ -40,7 +40,7 @@ export function DeactivateFactorConfirmModal({ open, onClose, onConfirm, loading
 
   return (
     <Modal open={open} onClose={dismiss} title="Deactivate active factor">
-      <div className="space-y-3 text-sm" data-deactivate-factor-confirm-modal="true">
+      <div className="space-y-3 text-xs" data-deactivate-factor-confirm-modal="true">
         <p className="text-gray-700">This disables the active factor for this operating company. Use only during controlled migration windows.</p>
         <ul className="list-disc pl-5 text-xs text-gray-600">
           <li>Customer factor assignments may stop advancing new invoices.</li>

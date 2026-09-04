@@ -269,7 +269,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
       </div>
 
       {listState.isError ? (
-        <p className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
           Couldn't load disputes.{" "}
           <button type="button" className="underline" onClick={() => void disputesQuery.refetch()}>
             Retry
@@ -297,7 +297,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold">Dispute Detail</p>
+              <p className="text-xs font-semibold">Dispute Detail</p>
               <p className="text-xs text-gray-500">
                 <EntityLink kind="settlement" id={detail.settlement_id} label={entityLabel(detail.settlement_display_id, detail.settlement_id, "Settlement")} /> ·{" "}
                 <span

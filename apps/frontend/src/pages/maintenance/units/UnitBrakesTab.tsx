@@ -99,7 +99,7 @@ export function UnitBrakesTab({ unitId, companyId }: UnitBrakesTabProps) {
   return (
     <section className="space-y-4" data-testid="unit-brakes-tab">
       <div>
-        <h3 className="text-sm font-semibold text-gray-900">Brake Lining Wear</h3>
+        <h3 className="text-xs font-semibold text-gray-900">Brake Lining Wear</h3>
         <p className="text-xs text-gray-500">CAP-13 measurements · PM / DVIR / brake service</p>
       </div>
 

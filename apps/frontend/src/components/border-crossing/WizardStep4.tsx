@@ -24,8 +24,8 @@ export function WizardStep4({ form, brokers, operatingCompanyId, onChange }: Pro
 
   return (
     <section data-testid="border-wizard-step-4" className="space-y-3">
-      <h3 className="text-sm font-semibold">Step 4 — Customs broker & bond</h3>
-      <div className="block text-sm">
+      <h3 className="text-xs font-semibold">Step 4 — Customs broker & bond</h3>
+      <div className="block text-xs">
         <label htmlFor="border-crossing-broker-picker">Customs broker</label>
         <Combobox
           id="border-crossing-broker-picker"
@@ -58,7 +58,7 @@ export function WizardStep4({ form, brokers, operatingCompanyId, onChange }: Pro
           </span>
         </div>
       ) : null}
-      <label className="block text-sm">
+      <label className="block text-xs">
         Bond number
         <input
           className="mt-1 w-full rounded-sm border px-2 py-1.5"

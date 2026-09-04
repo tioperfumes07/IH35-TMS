@@ -45,7 +45,7 @@ export function CashFlowPage() {
         <PageHeader backHref="/home" title="Cash Flow" subtitle="Daily cash position — predicted income and expenses" />
         <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
           <TrendingUp className="mx-auto mb-3 h-10 w-10 text-gray-300" />
-          <p className="text-sm text-gray-500">Select a company to view cash flow.</p>
+          <p className="text-xs text-gray-500">Select a company to view cash flow.</p>
         </div>
       </div>
     );

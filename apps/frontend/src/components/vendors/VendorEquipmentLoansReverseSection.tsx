@@ -19,7 +19,7 @@ export function VendorEquipmentLoansReverseSection({ operatingCompanyId, vendorI
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="vendor-equipment-loans-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-slate-900">Equipment loans (CCG)</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Equipment loans (CCG)</h2>
         <EntityLink
           kind="equipment_loans_vendor"
           id={vendorId}

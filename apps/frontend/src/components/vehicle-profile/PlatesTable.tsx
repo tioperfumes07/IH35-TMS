@@ -142,7 +142,7 @@ export function PlatesTable({ unitId, companyId, plates }: { unitId: string; com
         </p>
       ) : null}
       <Modal variant="drawer" open={open} title="Add plate" onClose={() => setOpen(false)}>
-        <div className="space-y-2 text-sm">
+        <div className="space-y-2 text-xs">
           <select className="w-full border px-2 py-1" value={country} onChange={(e) => setCountry(e.target.value as "US" | "MX")}>
             <option value="US">US</option>
             <option value="MX">MX</option>

@@ -180,7 +180,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
         onRegisterAttemptClose={(next) => setAttemptClose(() => next)}
         footer={<button type="button" className="rounded-sm border border-slate-300 px-3 py-1 text-xs font-semibold" disabled={actionPending} onClick={attemptClose}>Close</button>}
       >
-        <div ref={panelRef} data-testid="company-violation-detail-drawer" className="space-y-2 text-sm">
+        <div ref={panelRef} data-testid="company-violation-detail-drawer" className="space-y-2 text-xs">
           <div><strong>Status:</strong> {String(violation.status ?? "open")}</div>
           <div><strong>Type:</strong> {String(violation.violation_type ?? "—")}</div>
           <div><strong>Severity:</strong> {String(violation.violation_severity ?? "—")}</div>

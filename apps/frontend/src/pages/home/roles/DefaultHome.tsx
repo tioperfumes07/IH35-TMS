@@ -248,7 +248,7 @@ export function DefaultHome({ auth }: Props) {
         subtitle={`Workspace snapshot for the last three days (${displayName})`}
         actions={
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <button type="button" className="text-sm font-medium text-slate-700 hover:underline" onClick={printLetter}>
+            <button type="button" className="text-xs font-medium text-slate-700 hover:underline" onClick={printLetter}>
               Print this page
             </button>
             <Button variant="secondary" onClick={refreshAll}>
@@ -259,7 +259,7 @@ export function DefaultHome({ auth }: Props) {
       />
 
       {auth.role === "Owner" && selectedCompanyId ? (
-        <section className="rounded-sm border border-slate-300 bg-slate-100/90 px-3 py-3 text-sm text-slate-700">
+        <section className="rounded-sm border border-slate-300 bg-slate-100/90 px-3 py-3 text-xs text-slate-700">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Pending Owner Approvals</div>
@@ -302,7 +302,7 @@ export function DefaultHome({ auth }: Props) {
       ) : null}
 
       <section className="attention-list order-1 rounded-sm border border-slate-200 bg-white lg:order-2">
-        <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Attention</div>
+        <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Attention</div>
         <div className="px-3 py-1">
           <AttentionList operatingCompanyId={selectedCompanyId} maxVisibleWhenCollapsed={5} />
         </div>
@@ -508,7 +508,7 @@ export function DefaultHome({ auth }: Props) {
         <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
           {fleetSnapshotQuery.isLoading ? (
             <section className="rounded-sm border border-slate-200 bg-white">
-              <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Fleet Snapshot</div>
+              <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Fleet Snapshot</div>
               <div className="space-y-2 p-3">
                 <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
                 <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
@@ -517,8 +517,8 @@ export function DefaultHome({ auth }: Props) {
             </section>
           ) : fleetSnapshotQuery.isError ? (
             <section className="rounded-sm border border-red-200 bg-red-50">
-              <div className="border-b border-red-200 px-3 py-2 text-sm font-semibold text-red-900">Fleet Snapshot</div>
-              <div className="flex items-center justify-between px-3 py-3 text-sm text-red-800">
+              <div className="border-b border-red-200 px-3 py-2 text-xs font-semibold text-red-900">Fleet Snapshot</div>
+              <div className="flex items-center justify-between px-3 py-3 text-xs text-red-800">
                 <span>Failed to load fleet snapshot. Try refreshing.</span>
                 <Button
                   variant="secondary"

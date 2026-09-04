@@ -47,7 +47,7 @@ export function HelpCenterPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search by title or keywords…"
-          className="w-full max-w-xl rounded-sm border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+          className="w-full max-w-xl rounded-sm border border-gray-300 px-3 py-2 text-xs text-gray-900 shadow-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
         />
       </div>
 
@@ -60,7 +60,7 @@ export function HelpCenterPage() {
         testIdPrefix="help-center"
         dataAttributes={{ "data-help-center-filter-toolbar": "collapsed" }}
       >
-        <label className="text-sm text-gray-700">
+        <label className="text-xs text-gray-700">
           Category{" "}
           <SelectCombobox
             className="ml-1 rounded-sm border px-2 py-1"
@@ -79,8 +79,8 @@ export function HelpCenterPage() {
 
       {results ? (
         <section aria-label="Search results">
-          <h2 className="text-sm font-semibold text-gray-800">Results</h2>
-          {results.length === 0 ? <p className="text-sm text-gray-600">No articles matched.</p> : null}
+          <h2 className="text-xs font-semibold text-gray-800">Results</h2>
+          {results.length === 0 ? <p className="text-xs text-gray-600">No articles matched.</p> : null}
           <ul className="mt-2 space-y-2">
             {results
               .filter((a) => !categoryFilter || a.category === categoryFilter)
@@ -90,7 +90,7 @@ export function HelpCenterPage() {
                     kind="help_article"
                     id={a.slug}
                     label={a.title}
-                    className="text-sm font-medium text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+                    className="text-xs font-medium text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
                   />
                   <span className="ml-2 text-xs text-gray-500">{a.category}</span>
                 </li>
@@ -109,7 +109,7 @@ export function HelpCenterPage() {
                       kind="help_article"
                       id={a.slug}
                       label={a.title}
-                      className="text-sm text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+                      className="text-xs text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
                     />
                   </li>
                 ))}

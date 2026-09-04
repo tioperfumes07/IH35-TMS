@@ -11,7 +11,7 @@ export function CurrentLoadSection({
 }) {
   if (!currentLoad) {
     return (
-      <section className="rounded-sm border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+      <section className="rounded-sm border border-dashed border-gray-200 bg-gray-50 p-4 text-xs text-gray-600">
         <h3 className="font-semibold text-gray-800">Current load</h3>
         <p className="mt-1">Available — no active load assigned to unit <EntityLinkOrTombstone kind="unit" id={unitId} name={unitNumber} noun="Unit" data-testid="available-unit-record-link" />.</p>
       </section>
@@ -21,8 +21,8 @@ export function CurrentLoadSection({
   const customerName = currentLoad.customer != null ? String(currentLoad.customer) : "—";
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h3 className="text-sm font-semibold text-gray-800">Current load</h3>
-      <p className="mt-1 text-sm">
+      <h3 className="text-xs font-semibold text-gray-800">Current load</h3>
+      <p className="mt-1 text-xs">
         Load{" "}
         {currentLoad.load_id ? (
           <EntityLinkOrTombstone kind="load" id={String(currentLoad.load_id)} name={currentLoad.load_number} noun="Load" className="font-semibold text-slate-700 underline" data-testid="vp-current-load-link" />

@@ -100,7 +100,7 @@ function LayoverSummaryCard({ driverId, companyId }: { driverId: string; company
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-slate-900">Layovers (last 30 days)</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Layovers (last 30 days)</h2>
         <EntityLink
           kind="driver_layover_history"
           id={driverId}
@@ -267,11 +267,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   const hos = hosQ.data?.hos ?? aggregate?.hos ?? null;
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-600">Select an operating company.</div>;
   }
 
   if (profileQ.isLoading) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-slate-600">Loading driver profile…</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-600">Loading driver profile…</div>;
   }
 
   if (profileQ.isError) {
@@ -287,7 +287,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
   if (!driver || !aggregate) {
     return (
-      <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3 text-sm text-slate-600">
+      <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-600">
         <p>Driver not found.</p>
         {onBack ? (
           <button type="button" onClick={onBack} className="text-xs font-semibold text-slate-700 hover:underline">
@@ -570,7 +570,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         exist on mdata.drivers.
       */}
       <section id="driver-dqf-checklist" className="scroll-mt-4 rounded-sm border border-gray-200 bg-white p-3">
-        <h2 className="mb-1 text-sm font-semibold text-slate-900">Compliance summary</h2>
+        <h2 className="mb-1 text-xs font-semibold text-slate-900">Compliance summary</h2>
         <p className="mb-3 text-xs text-slate-600">
           Profile readiness combines master-data credentials with DQF checklist rows from the driver-qualification API.
           File status:{" "}
@@ -608,7 +608,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       </section>
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
-        <h2 className="mb-3 text-sm font-semibold text-slate-900">DQF checklist</h2>
+        <h2 className="mb-3 text-xs font-semibold text-slate-900">DQF checklist</h2>
         <DriverDqfPanel companyId={companyId} driverId={id} editable focus={dqfFocus} onClearFocus={() => setDqfFocus("all")} />
       </section>
 
@@ -739,7 +739,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       </div>
 
       <section data-testid="dp-section-audit-history" className="rounded-sm border border-gray-200 bg-white p-3">
-        <h2 className="mb-3 text-sm font-semibold text-slate-900">Audit History</h2>
+        <h2 className="mb-3 text-xs font-semibold text-slate-900">Audit History</h2>
         <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="driver" entityId={id} />
       </section>
     </div>

@@ -160,7 +160,7 @@ export function FaroImportPage() {
           <input
             type="file"
             accept=".csv,text/csv"
-            className="mt-1 block w-full max-w-md text-sm text-slate-200"
+            className="mt-1 block w-full max-w-md text-xs text-slate-200"
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
@@ -192,7 +192,7 @@ export function FaroImportPage() {
 
       {preview ? (
         <div className="rounded-sm border border-slate-300/40 bg-[#12182B] p-4">
-          <h3 className="mb-2 text-sm font-semibold text-white">
+          <h3 className="mb-2 text-xs font-semibold text-white">
             Preview — {preview.line_count} line{preview.line_count === 1 ? "" : "s"}
           </h3>
           <ParityTable

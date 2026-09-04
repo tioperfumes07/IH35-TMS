@@ -301,7 +301,7 @@ export function FinancialStatementsPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <p className="text-sm text-slate-500">Loading…</p>
+        <p className="text-xs text-slate-500">Loading…</p>
       </div>
     );
   }
@@ -311,7 +311,7 @@ export function FinancialStatementsPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
           Financial statements are not yet enabled for this company. (Feature flag <code>{FINANCE_STATEMENTS_UI_FLAG}</code> is off.)
         </div>
       </div>
@@ -564,7 +564,7 @@ export function FinancialStatementsPage() {
       </div>
       {header}
 
-      {!companyId ? <p className="mb-3 text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="mb-3 text-xs text-red-600">Select an operating company.</p> : null}
 
       <div className="no-print mb-4 flex flex-wrap items-center gap-2 border-b border-slate-200">
         {tabs.map((t) => (
@@ -573,7 +573,7 @@ export function FinancialStatementsPage() {
             type="button"
             onClick={() => setTab(t.id)}
             className={[
-              "whitespace-nowrap border-b-2 px-1 py-2 text-sm font-medium",
+              "whitespace-nowrap border-b-2 px-1 py-2 text-xs font-medium",
               tab === t.id ? "border-slate-800 text-slate-900" : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700",
             ].join(" ")}
             aria-pressed={tab === t.id}
@@ -667,7 +667,7 @@ export function FinancialStatementsPage() {
               onRetry={() => void plQuery.refetch()}
             />
           ) : null}
-          {plQuery.isLoading ? <p className="text-sm text-slate-500">Loading…</p> : null}
+          {plQuery.isLoading ? <p className="text-xs text-slate-500">Loading…</p> : null}
           {plQuery.data ? (
             <>
               <div className="grid gap-2 md:grid-cols-3">
@@ -699,7 +699,7 @@ export function FinancialStatementsPage() {
                 />
               ))}
               <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
-                <div className="flex items-center justify-between px-3 py-2 text-sm font-semibold">
+                <div className="flex items-center justify-between px-3 py-2 text-xs font-semibold">
                   <span>Net income</span>
                   <span className={plQuery.data.net_income < 0 ? "text-rose-700" : "text-slate-700"}>{money(plQuery.data.net_income)}</span>
                 </div>
@@ -720,7 +720,7 @@ export function FinancialStatementsPage() {
               onRetry={() => void bsQuery.refetch()}
             />
           ) : null}
-          {bsQuery.isLoading ? <p className="text-sm text-slate-500">Loading…</p> : null}
+          {bsQuery.isLoading ? <p className="text-xs text-slate-500">Loading…</p> : null}
           {bsQuery.data ? (
             <>
               <div className="grid gap-2 md:grid-cols-3">
@@ -798,7 +798,7 @@ export function FinancialStatementsPage() {
             </div>
           ) : null}
           <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">Trial balance</div>
+            <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800">Trial balance</div>
             <ParityTable
               embedded
               columns={trialBalanceColumns(applied.start, applied.end, basis, showCodes)}
@@ -872,7 +872,7 @@ function StatementSection({
   );
   return (
     <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">{title}</div>
+      <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800">{title}</div>
       <ParityTable
         embedded
         columns={columns}

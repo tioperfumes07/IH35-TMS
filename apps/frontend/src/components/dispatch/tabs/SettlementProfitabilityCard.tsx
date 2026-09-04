@@ -34,7 +34,7 @@ function money(cents: number | null | undefined, currency?: string | null) {
 function Row({ label, cents, currency, negative = false }: { label: string; cents: number; currency: string; negative?: boolean }) {
   const isNeg = negative && cents > 0;
   return (
-    <div className="flex justify-between text-sm">
+    <div className="flex justify-between text-xs">
       <span className="text-gray-600">{label}</span>
       <span className={isNeg ? "text-red-600" : "text-gray-900"}>
         {isNeg ? `−${money(cents, currency)}` : money(cents, currency)}
@@ -53,7 +53,7 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
 
   if (query.isLoading) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500 animate-pulse">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-xs text-gray-500 animate-pulse">
         Computing profitability…
       </div>
     );
@@ -61,7 +61,7 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
 
   if (query.error) {
     return (
-      <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm text-slate-700">
+      <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs text-slate-700">
         Profitability data unavailable.
       </div>
     );
@@ -129,7 +129,7 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
           <Row label="Accessorial deductions" cents={d.accessorial_deductions_cents} currency={currencyCode} negative />
         )}
         <div className="border-t border-gray-200 mt-1 pt-1.5">
-          <div className="flex justify-between text-sm font-semibold">
+          <div className="flex justify-between text-xs font-semibold">
             <span className="text-gray-700">Net profit</span>
             <span className={variantText[variant]}>{money(d.net_profit_cents, currencyCode)}</span>
           </div>

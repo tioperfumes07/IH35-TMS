@@ -212,7 +212,7 @@ export function InTransitIssuesPage() {
   );
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
   }
 
   return (
@@ -225,7 +225,7 @@ export function InTransitIssuesPage() {
             <Button size="sm" onClick={() => setCreateOpen(true)}>
               + Create Issue
             </Button>
-            <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-sm">
+            <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-xs">
               Dispatch Home
             </Link>
           </div>
@@ -394,7 +394,7 @@ export function InTransitIssuesPage() {
               rows={4}
             />
           </div>
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          {error ? <p className="text-xs text-red-600">{error}</p> : null}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)} disabled={createMutation.isPending}>
               Cancel

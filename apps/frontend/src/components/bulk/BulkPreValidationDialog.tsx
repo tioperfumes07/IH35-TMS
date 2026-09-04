@@ -28,7 +28,7 @@ export function BulkPreValidationDialog({
 }: BulkPreValidationDialogProps) {
   return (
     <Modal open={open} onClose={onCancel} title={`${actionLabel} pre-check`}>
-      <div className="space-y-4 text-sm">
+      <div className="space-y-4 text-xs">
         <p className="text-slate-800" data-testid="bulk-prevalidation-summary">
           <strong>{blocked.length}</strong> selected row{blocked.length === 1 ? "" : "s"} cannot be{" "}
           {actionLabel.toLowerCase()}ed. Deselect them or proceed with the{" "}
@@ -52,14 +52,14 @@ export function BulkPreValidationDialog({
         <div className="flex justify-end gap-2 pt-2">
           <button
             type="button"
-            className="rounded-sm border border-slate-300 px-3 py-1.5 text-sm text-slate-700"
+            className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs text-slate-700"
             onClick={onCancel}
           >
             Cancel
           </button>
           <button
             type="button"
-            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
             disabled={voidableCount <= 0}
             data-testid="bulk-prevalidation-proceed"
             onClick={onProceedVoidable}

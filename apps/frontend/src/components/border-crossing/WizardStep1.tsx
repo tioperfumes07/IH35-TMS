@@ -14,8 +14,8 @@ export function WizardStep1({ form, onChange, operatingCompanyId }: Props) {
   const hasSelected = Boolean(form.loadId || form.unitId || form.driverId);
   return (
     <section data-testid="border-wizard-step-1" className="space-y-3">
-      <h3 className="text-sm font-semibold">Step 1 — Load & direction</h3>
-      <label className="block text-sm">
+      <h3 className="text-xs font-semibold">Step 1 — Load & direction</h3>
+      <label className="block text-xs">
         Load
         <EntityPicker
           kind="load"
@@ -29,7 +29,7 @@ export function WizardStep1({ form, onChange, operatingCompanyId }: Props) {
           className="mt-1"
         />
       </label>
-      <label className="block text-sm">
+      <label className="block text-xs">
         Unit *
         <EntityPicker
           kind="unit"
@@ -41,7 +41,7 @@ export function WizardStep1({ form, onChange, operatingCompanyId }: Props) {
           className="mt-1"
         />
       </label>
-      <label className="block text-sm">
+      <label className="block text-xs">
         Driver
         <EntityPicker
           kind="driver"
@@ -79,7 +79,7 @@ export function WizardStep1({ form, onChange, operatingCompanyId }: Props) {
           ) : null}
         </div>
       ) : null}
-      <label className="block text-sm">
+      <label className="block text-xs">
         Direction *
         <select
           className="mt-1 w-full rounded-sm border px-2 py-1.5"

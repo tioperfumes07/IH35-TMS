@@ -17,7 +17,7 @@ export function SafetySettingsPage({ operatingCompanyId }: Props) {
     enabled: Boolean(operatingCompanyId),
   });
 
-  if (settingsQuery.isLoading) return <div className="text-sm text-gray-500">Loading settings...</div>;
+  if (settingsQuery.isLoading) return <div className="text-xs text-gray-500">Loading settings...</div>;
   if (settingsQuery.isError) {
     return (
       <div data-testid="safety-settings-query-error">
@@ -30,7 +30,7 @@ export function SafetySettingsPage({ operatingCompanyId }: Props) {
       </div>
     );
   }
-  if (!settingsQuery.data) return <div className="text-sm text-gray-500">Settings not found.</div>;
+  if (!settingsQuery.data) return <div className="text-xs text-gray-500">Settings not found.</div>;
 
   return (
     <SafetySettingsForm

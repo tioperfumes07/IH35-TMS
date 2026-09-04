@@ -121,7 +121,7 @@ export function SessionDetail({ sessionUuid, operatingCompanyId }: Props) {
         <p className="text-xs text-slate-500">
           Status: <span className="font-semibold">{query.isLoading ? "loading" : (session?.diff_status ?? "not found")}</span>
         </p>
-        {session?.diff_summary ? <p className="mt-1 text-sm text-slate-700">{session.diff_summary}</p> : null}
+        {session?.diff_summary ? <p className="mt-1 text-xs text-slate-700">{session.diff_summary}</p> : null}
         {session ? (
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs" data-testid="photo-comparison-session-links">
             <EntityLink kind="driver" id={session.driver_uuid} label={entityLabel(session.driver_name, session.driver_uuid, "Driver")} />
@@ -173,7 +173,7 @@ export function SessionDetail({ sessionUuid, operatingCompanyId }: Props) {
       />
 
       <div>
-        <h3 className="mb-2 text-sm font-semibold text-slate-800">AI findings</h3>
+        <h3 className="mb-2 text-xs font-semibold text-slate-800">AI findings</h3>
         {angleFindingsResult.invalid ? (
           <ListErrorState
             title="Photo comparison evidence has an invalid format"

@@ -98,7 +98,7 @@ export function DispatcherHome({ auth }: Props) {
       />
 
       {homeQuery.isError ? (
-        <section className="rounded-sm border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-700">
+        <section className="rounded-sm border border-red-200 bg-red-50 px-3 py-3 text-xs text-red-700">
           Unable to load dispatcher queue details. Retry once backend route is available.
         </section>
       ) : (
@@ -112,10 +112,10 @@ export function DispatcherHome({ auth }: Props) {
             data-testid="dispatcher-booking-gap-panel"
             className="overflow-hidden rounded-sm border border-slate-200 bg-white"
           >
-            <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">
+            <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">
               Booking gap analytics (7d)
             </div>
-            <div className="grid grid-cols-2 text-sm sm:divide-x sm:divide-slate-100">
+            <div className="grid grid-cols-2 text-xs sm:divide-x sm:divide-slate-100">
               <div className="border-t border-slate-100 px-3 py-2">
                 <div className="text-xs text-slate-500">Booked loads</div>
                 <div className="text-xl font-semibold text-slate-900">{data?.booking_gap_analytics.loads_booked_7d ?? 0}</div>

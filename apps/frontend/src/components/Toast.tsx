@@ -47,7 +47,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             role="alert"
             data-testid="toast-message"
             data-variant={toast.variant}
-            className={`rounded-md border px-3 py-2 text-sm font-medium shadow-xs ${variantClasses(toast.variant)}`}
+            className={`rounded-md border px-3 py-2 text-xs font-medium shadow-xs ${variantClasses(toast.variant)}`}
           >
             {toast.message}
           </div>

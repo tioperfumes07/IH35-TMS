@@ -16,7 +16,7 @@ type DqfDocsStepProps = {
 export function OnboardingStepDqfDocs({ docs, onUpload, uploadingKey, disabled }: DqfDocsStepProps) {
   return (
     <div data-testid="onboarding-step-dqf-docs" className="space-y-4">
-      <p className="text-sm text-slate-600">Upload DQF supporting documents via the docs module.</p>
+      <p className="text-xs text-slate-600">Upload DQF supporting documents via the docs module.</p>
       {DQF_DOC_TYPES.map(({ key, label }) => (
         <OnboardingDocUploadField
           key={key}

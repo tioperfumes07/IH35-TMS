@@ -193,7 +193,7 @@ export function LoadCancellationReasonsListPage() {
         }
       />
 
-      <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-600">
+      <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">
         Cancellation root-cause reporting taxonomy. Codes here classify why a load was cancelled for
         dispatch reporting and analytics.
       </div>

@@ -39,7 +39,7 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
       <aside className="fixed right-0 top-0 z-50 h-full w-[480px] overflow-y-auto border-l border-gray-200 bg-white p-4 text-xs">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Liability Detail</h3>
+          <h3 className="text-xs font-semibold">Liability Detail</h3>
           <button type="button" className="text-gray-500 underline" onClick={onClose}>Close</button>
         </div>
         <div className="space-y-1 rounded-sm border border-gray-200 bg-gray-50 p-2">

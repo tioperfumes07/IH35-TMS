@@ -85,7 +85,7 @@ export function DefectDetailPage() {
     : undefined;
 
   if (!defectId) {
-    return <div className="p-4 text-sm text-gray-500">Missing defect id.</div>;
+    return <div className="p-4 text-xs text-gray-500">Missing defect id.</div>;
   }
 
   return (
@@ -97,7 +97,7 @@ export function DefectDetailPage() {
         pattern as the rest of the app: prefer real in-app history, fall back to the defects inbox
         only on a direct load/refresh.
       */}
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-2 text-xs">
         <button
           type="button"
           aria-label="Back"
@@ -114,9 +114,9 @@ export function DefectDetailPage() {
         </button>
       </div>
 
-      {q.isLoading ? <p className="text-sm text-gray-500">Loading defect…</p> : null}
+      {q.isLoading ? <p className="text-xs text-gray-500">Loading defect…</p> : null}
       {q.isError || (!q.isLoading && !defect) ? (
-        <p className="text-sm text-slate-700" data-testid="maint-dvir-defect-empty">
+        <p className="text-xs text-slate-700" data-testid="maint-dvir-defect-empty">
           Defect not found for this entity — it may be missing, voided, or outside the active operating company.
         </p>
       ) : null}
@@ -127,12 +127,12 @@ export function DefectDetailPage() {
             <h1 className="text-lg font-semibold text-gray-900">
               {defect.item_key} · {defect.severity}
             </h1>
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-1 text-xs text-gray-600">
               Unit <EntityLinkOrTombstone kind="unit" id={defect.unit_id} name={defect.unit_number} noun="Unit" /> · Driver{" "}
               <EntityLinkOrTombstone kind="driver" id={defect.driver_id} name={defect.driver_name} noun="Driver" /> ·{" "}
               {defect.submitted_at ? new Date(defect.submitted_at).toLocaleString() : "—"}
             </p>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-gray-800">{defect.notes || "No driver notes."}</p>
+            <p className="mt-2 whitespace-pre-wrap text-xs text-gray-800">{defect.notes || "No driver notes."}</p>
             <p className="mt-2 text-xs text-gray-500">
               Photos: {defect.photo_keys?.length ?? 0} · Status: {defect.triage_status}
               {defect.follow_up_wo_id ? (
@@ -142,10 +142,10 @@ export function DefectDetailPage() {
           </header>
 
           <section className="rounded-sm border border-gray-200 bg-white p-4">
-            <h2 className="text-sm font-semibold text-gray-900">Mechanic notes</h2>
+            <h2 className="text-xs font-semibold text-gray-900">Mechanic notes</h2>
             <textarea
               rows={3}
-              className="mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={mechanicNotes}
               onChange={(event) => setMechanicNotes(event.target.value)}
               placeholder="Shop triage notes…"
@@ -170,7 +170,7 @@ export function DefectDetailPage() {
           </section>
 
           <section className="rounded-sm border border-gray-200 bg-white p-4">
-            <h2 className="text-sm font-semibold text-gray-900">Triage history</h2>
+            <h2 className="text-xs font-semibold text-gray-900">Triage history</h2>
             <ul className="mt-2 space-y-1 text-xs text-gray-700">
               {history.map((entry, index) => (
                 <li key={`${entry.event_class}-${index}`}>

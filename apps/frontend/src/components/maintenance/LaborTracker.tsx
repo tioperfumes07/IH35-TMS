@@ -247,7 +247,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
 
   return (
     <section
-      className="overflow-hidden rounded-sm border border-gray-200 bg-white text-sm"
+      className="overflow-hidden rounded-sm border border-gray-200 bg-white text-xs"
       data-testid="maint-labor-tracker"
     >
       <div className="border-b border-gray-200 bg-gray-50 px-3 py-2">
@@ -376,7 +376,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
       </div>
 
       <div
-        className={`rounded-sm border px-3 py-2 text-sm ${openEntry ? "border-amber-200 bg-amber-50 text-amber-900" : "border-gray-200 bg-gray-50 text-gray-700"}`}
+        className={`rounded-sm border px-3 py-2 text-xs ${openEntry ? "border-amber-200 bg-amber-50 text-amber-900" : "border-gray-200 bg-gray-50 text-gray-700"}`}
         data-testid="maint-labor-running-timer"
       >
         {runningLabel}

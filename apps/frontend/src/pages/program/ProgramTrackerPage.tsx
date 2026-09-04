@@ -101,7 +101,7 @@ function LayerChips({ r }: { r: TrackerBlockRow }) {
 // `extended` (By-Module drill-down only) adds 4 LIVE-from-registry columns: Wired / Needs design / Missing /
 // Completeness. Top-level Pending/In-Progress/Completed tables stay compact (extended omitted → false).
 function BlockTable({ rows, kind, moved, extended = false }: { rows: TrackerBlockRow[]; kind: "open" | "completed"; moved: Set<string>; extended?: boolean }) {
-  if (rows.length === 0) return <p className="px-3 py-4 text-sm text-slate-500">None.</p>;
+  if (rows.length === 0) return <p className="px-3 py-4 text-xs text-slate-500">None.</p>;
   return (
     <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
       <table className="w-full border-collapse text-xs">
@@ -176,7 +176,7 @@ function CompletedSection({ rows, moved }: { rows: TrackerBlockRow[]; moved: Set
 function SequenceTable({ phases }: { phases: TrackerPhase[] }) {
   return (
     <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-      <table className="w-full border-collapse text-sm">
+      <table className="w-full border-collapse text-xs">
         <thead>
           <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-slate-500">
             <th className="px-3 py-2 text-left">#</th>
@@ -323,7 +323,7 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
       <div className="flex flex-wrap gap-1 border-b border-gray-200">
         {tabs.map((t) => (
           <button key={t.key} type="button" onClick={() => setTab(t.key)}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm ${tab === t.key ? "border-[#1f2a44] font-semibold text-slate-900" : "border-transparent text-slate-500 hover:text-slate-700"}`}>
+            className={`-mb-px border-b-2 px-3 py-2 text-xs ${tab === t.key ? "border-[#1f2a44] font-semibold text-slate-900" : "border-transparent text-slate-500 hover:text-slate-700"}`}>
             {t.label}{typeof t.count === "number" ? <span className="ml-1 tabular-nums text-slate-400">({t.count})</span> : null}
           </button>
         ))}
@@ -408,7 +408,7 @@ export function ProgramTrackerPage() {
         }
       />
       {query.isLoading ? (
-        <p className="text-sm text-slate-500">Loading live tracker…</p>
+        <p className="text-xs text-slate-500">Loading live tracker…</p>
       ) : query.isError ? (
         <ListErrorBanner
           message={`Couldn't load the tracker: ${userFacingApiError(query.error, "error")}`}

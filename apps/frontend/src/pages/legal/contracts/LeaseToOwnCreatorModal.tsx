@@ -252,21 +252,21 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
           ))}
         </div>
 
-        {ensureQuery.isError && <p className="text-sm text-crit">Could not load the lease-to-own template (is the feature flag on?).</p>}
+        {ensureQuery.isError && <p className="text-xs text-crit">Could not load the lease-to-own template (is the feature flag on?).</p>}
 
         {/* Step 1 — Parties & Terms */}
         {stepIdx === 0 && (
           <div className="grid gap-3 md:grid-cols-2">
-            <div className="md:col-span-2 rounded-sm bg-slate-50 p-2 text-sm">
+            <div className="md:col-span-2 rounded-sm bg-slate-50 p-2 text-xs">
               <strong>Seller:</strong> {seller ? seller.legal_name : "loading…"} <span className="text-slate-500">(equipment owner — TRK default)</span>
             </div>
-            <label className="flex flex-col gap-1 text-sm">Seller signer
+            <label className="flex flex-col gap-1 text-xs">Seller signer
               <input className="rounded-sm border px-2 py-1" value={sellerSigner.signer_name} onChange={(e) => setSellerSigner({ ...sellerSigner, signer_name: e.target.value })} />
             </label>
-            <label className="flex flex-col gap-1 text-sm">Seller signer title
+            <label className="flex flex-col gap-1 text-xs">Seller signer title
               <input className="rounded-sm border px-2 py-1" value={sellerSigner.signer_title} onChange={(e) => setSellerSigner({ ...sellerSigner, signer_title: e.target.value })} />
             </label>
-            <div className="flex flex-col gap-1 text-sm">
+            <div className="flex flex-col gap-1 text-xs">
               <label htmlFor="lease-to-own-owner-picker">Truck-owner to lease from</label>
               <Combobox
                 id="lease-to-own-owner-picker"
@@ -278,7 +278,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
                 allowClear={false}
               />
             </div>
-            <div className="flex flex-col gap-1 text-sm md:col-span-2" data-testid="lease-to-own-lessee-customer-block">
+            <div className="flex flex-col gap-1 text-xs md:col-span-2" data-testid="lease-to-own-lessee-customer-block">
               <label>Lessee customer *</label>
               {/* CLS-SILENT-CAP: EntityPicker server-search — no capped listCustomers roster. */}
               <EntityPicker
@@ -309,37 +309,37 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
                 className="w-full"
               />
             </div>
-            <label className="flex flex-col gap-1 text-sm">Lessee (Buyer) legal name
+            <label className="flex flex-col gap-1 text-xs">Lessee (Buyer) legal name
               <input className="rounded-sm border px-2 py-1" value={lessee.name} onChange={(e) => setLessee({ ...lessee, name: e.target.value })} placeholder="Acme Transportation, Inc." />
             </label>
-            <label className="flex flex-col gap-1 text-sm">Lessee entity type
+            <label className="flex flex-col gap-1 text-xs">Lessee entity type
               <input className="rounded-sm border px-2 py-1" value={lessee.entity_type} onChange={(e) => setLessee({ ...lessee, entity_type: e.target.value })} placeholder="Inc. / LLC" />
             </label>
-            <label className="flex flex-col gap-1 text-sm">Lessee signer
+            <label className="flex flex-col gap-1 text-xs">Lessee signer
               <input className="rounded-sm border px-2 py-1" value={lessee.signer} onChange={(e) => setLessee({ ...lessee, signer: e.target.value })} />
             </label>
-            <label className="flex flex-col gap-1 text-sm">Lessee signer title
+            <label className="flex flex-col gap-1 text-xs">Lessee signer title
               <input className="rounded-sm border px-2 py-1" value={lessee.title} onChange={(e) => setLessee({ ...lessee, title: e.target.value })} placeholder="President" />
             </label>
-            <label className="flex flex-col gap-1 text-sm md:col-span-2">Lessee address
+            <label className="flex flex-col gap-1 text-xs md:col-span-2">Lessee address
               <input className="rounded-sm border px-2 py-1" value={lessee.address} onChange={(e) => setLessee({ ...lessee, address: e.target.value })} />
             </label>
-            <label className="flex flex-col gap-1 text-sm">Lease term (months)
+            <label className="flex flex-col gap-1 text-xs">Lease term (months)
               <input type="number" className="rounded-sm border px-2 py-1" value={terms.term_months} onChange={(e) => setTerms({ ...terms, term_months: e.target.value })} />
             </label>
-            <label className="flex flex-col gap-1 text-sm">Use charge (%)
+            <label className="flex flex-col gap-1 text-xs">Use charge (%)
               <input type="number" className="rounded-sm border px-2 py-1" value={terms.use_charge_pct} onChange={(e) => setTerms({ ...terms, use_charge_pct: e.target.value })} />
             </label>
-            <label className="flex flex-col gap-1 text-sm">Governing law
+            <label className="flex flex-col gap-1 text-xs">Governing law
               <input className="rounded-sm border px-2 py-1" value={terms.governing_law} onChange={(e) => setTerms({ ...terms, governing_law: e.target.value })} />
             </label>
-            <label className="flex flex-col gap-1 text-sm">Venue county
+            <label className="flex flex-col gap-1 text-xs">Venue county
               <input className="rounded-sm border px-2 py-1" value={terms.venue_county} onChange={(e) => setTerms({ ...terms, venue_county: e.target.value })} />
             </label>
-            <label className="flex flex-col gap-1 text-sm">Execution date
+            <label className="flex flex-col gap-1 text-xs">Execution date
               <DatePicker className="" value={terms.execution_date} onChange={(next) => setTerms({ ...terms, execution_date: next })} />
             </label>
-            <label className="flex flex-col gap-1 text-sm">Reference # (optional)
+            <label className="flex flex-col gap-1 text-xs">Reference # (optional)
               <input className="rounded-sm border px-2 py-1" value={terms.reference_no} onChange={(e) => setTerms({ ...terms, reference_no: e.target.value })} />
             </label>
           </div>
@@ -383,7 +383,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
         {stepIdx === 3 && (
           <div className="space-y-2">
             {!canSave && <p className="text-xs text-crit">Need a linked lessee customer and at least one vehicle to save.</p>}
-            <div className="max-h-96 overflow-auto rounded-sm border bg-white p-4 text-sm" dangerouslySetInnerHTML={{ __html: previewHtml || "<p>Loading preview…</p>" }} />
+            <div className="max-h-96 overflow-auto rounded-sm border bg-white p-4 text-xs" dangerouslySetInnerHTML={{ __html: previewHtml || "<p>Loading preview…</p>" }} />
           </div>
         )}
 

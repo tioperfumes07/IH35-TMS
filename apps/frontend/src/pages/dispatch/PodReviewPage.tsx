@@ -177,7 +177,7 @@ export function PodReviewPage() {
       dataAttributes={{ "data-pod-filter-toolbar": "collapsed" }}
     >
       <div className="flex flex-wrap items-center gap-3">
-        <label className="text-sm">
+        <label className="text-xs">
           Filter by load
           <div className="mt-1" data-testid="pod-load-filter">
             <EntityPicker
@@ -192,7 +192,7 @@ export function PodReviewPage() {
             />
           </div>
         </label>
-        <label className="text-sm">
+        <label className="text-xs">
           POD status
           <SelectCombobox
             className="mt-1 block w-full"

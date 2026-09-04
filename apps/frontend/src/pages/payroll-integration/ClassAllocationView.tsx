@@ -17,7 +17,7 @@ type Props = { allocations: PayrollClassAllocation[]; totalCents: number };
 
 export function ClassAllocationView({ allocations, totalCents }: Props) {
   if (allocations.length === 0 || totalCents === 0) {
-    return <div className="text-sm text-gray-400">No allocation data.</div>;
+    return <div className="text-xs text-gray-400">No allocation data.</div>;
   }
   return (
     <div className="space-y-3">
@@ -34,7 +34,7 @@ export function ClassAllocationView({ allocations, totalCents }: Props) {
       </div>
       <div className="flex flex-wrap gap-4">
         {allocations.map((alloc) => (
-          <div key={alloc.class} className="flex items-center gap-2 text-sm">
+          <div key={alloc.class} className="flex items-center gap-2 text-xs">
             <span className={`inline-block h-3 w-3 rounded-xs ${CLASS_COLORS[alloc.class] ?? "bg-gray-400"}`} />
             <span className="font-medium">{alloc.class}</span>
             <span className="tabular-nums text-gray-600">{cents(alloc.amount_cents)}</span>

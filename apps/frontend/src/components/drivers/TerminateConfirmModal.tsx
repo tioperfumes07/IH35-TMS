@@ -113,7 +113,7 @@ export function TerminateConfirmModal({
   return (
     <Modal open={open} onClose={handleClose} title={`Terminate — ${driverName}`} confirmDiscardOnClose isDirty={Boolean(terminationReasonId || summary || eventDate !== companyToday())} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
       <div className="space-y-3">
-        <p className="text-sm text-gray-600">
+        <p className="text-xs text-gray-600">
           Creates a termination safety event and updates driver status to Terminated.
         </p>
         <div className="flex flex-col gap-1">
@@ -163,7 +163,7 @@ export function TerminateConfirmModal({
             data-testid="terminate-summary"
           />
         </div>
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {error ? <p className="text-xs text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={attemptClose} disabled={pending}>
             Cancel

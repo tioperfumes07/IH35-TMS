@@ -1006,7 +1006,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             <button
               type="button"
               onClick={() => setShowMexicanIdentity((value) => !value)}
-              className="w-full text-left text-sm font-semibold text-gray-700"
+              className="w-full text-left text-xs font-semibold text-gray-700"
             >
               Mexican Identity (optional) {showMexicanIdentity ? "▲" : "▼"}
             </button>
@@ -1097,7 +1097,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             <button
               type="button"
               onClick={() => setShowVisaEmergency((value) => !value)}
-              className="w-full text-left text-sm font-semibold text-gray-700"
+              className="w-full text-left text-xs font-semibold text-gray-700"
             >
               Visa & Emergency Contact (optional) {showVisaEmergency ? "▲" : "▼"}
             </button>
@@ -1191,7 +1191,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
 
           {wizardStep === 4 ? (
           <div className="col-span-full space-y-3 rounded-md border border-slate-200 p-3" data-testid="driver-create-dq-step">
-            <div className="text-sm font-semibold text-slate-800">DQ documents & drug screen</div>
+            <div className="text-xs font-semibold text-slate-800">DQ documents & drug screen</div>
             <p className="text-xs text-slate-600">
               Stage the required hiring documents here. They upload to the saved driver record after Save.
               Pre-employment drug screen must be acknowledged before create.
@@ -1219,7 +1219,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 className="rounded-sm border border-slate-200 bg-slate-50 py-4"
               />
             ) : null}
-            <label className="flex items-start gap-2 text-sm text-slate-800">
+            <label className="flex items-start gap-2 text-xs text-slate-800">
               {/* C9-SUBMISSION-GATE: this transient acknowledgement gates Save and its value drives
                   the rendered saveDisabledReason; it is not represented as a stored driver fact. */}
               <input
@@ -1265,7 +1265,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           ) : null}
 
           {wizardStep === 4 && returningDetection?.returning_driver ? (
-            <div className={`col-span-full rounded-md border p-3 text-sm ${getDetectionSeverityClass(returningDetection)}`}>
+            <div className={`col-span-full rounded-md border p-3 text-xs ${getDetectionSeverityClass(returningDetection)}`}>
               <div className="font-semibold">RETURNING DRIVER DETECTED</div>
               <div className="mt-1 text-xs">
                 Prior safety events match this CURP/CDL identity. Review before proceeding.
@@ -1408,7 +1408,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           whatever phone was on the record, and this line asserted it had. Saving no longer sends; the
           invite is prepared and sending is a separate, deliberate action below. The copy states what
           actually happened rather than what the button used to do. */}
-      <p className="text-sm text-gray-700" data-testid="invite-not-sent-notice">
+      <p className="text-xs text-gray-700" data-testid="invite-not-sent-notice">
         Driver created. <strong>No invite has been sent.</strong> The invite link below is ready and
         expires 72 hours after it is sent.
       </p>
@@ -1428,7 +1428,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         </Button>
       </div>
       {createSummary?.linked_user_event_type === "existing_user" ? (
-        <p className="text-sm text-slate-700">
+        <p className="text-xs text-slate-700">
           Phone {createSummary.phone} was already registered. Linked existing account.
         </p>
       ) : null}

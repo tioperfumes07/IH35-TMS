@@ -91,7 +91,7 @@ export function SettlementDisputeResolveModal({ dispute, onClose, onResolve }: S
 
   return (
     <Modal open={Boolean(dispute)} onClose={onClose} title="Resolve settlement dispute">
-      <div className="space-y-3 text-sm" data-testid="settlement-dispute-resolve-modal">
+      <div className="space-y-3 text-xs" data-testid="settlement-dispute-resolve-modal">
         <div className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs text-gray-700">
           Claimed: <span className="font-semibold">{money(dispute.claimed_amount_cents)}</span> — {dispute.dispute_type}
         </div>

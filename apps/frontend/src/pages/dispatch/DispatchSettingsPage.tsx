@@ -40,7 +40,7 @@ function PrefToggle({
   testId?: string;
 }) {
   return (
-    <label className="flex items-center gap-2 text-sm">
+    <label className="flex items-center gap-2 text-xs">
       <input
         type="checkbox"
         checked={checked}
@@ -90,7 +90,7 @@ export function DispatchSettingsPage() {
     return (
       <div
         data-testid="dispatch-settings-need-company"
-        className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+        className="rounded-sm border bg-white p-4 text-xs text-slate-600"
       >
         Select an operating company. Local dispatcher defaults apply per browser; the default landing
         view preference saves for your user once a company context is active for Dispatch.
@@ -114,7 +114,7 @@ export function DispatchSettingsPage() {
 
       {!prefsQuery.isError && !prefsQuery.isLoading && !prefsQuery.data ? (
         <p
-          className="rounded-sm border bg-white p-3 text-sm text-slate-600"
+          className="rounded-sm border bg-white p-3 text-xs text-slate-600"
           data-testid="dispatch-settings-honest-empty"
         >
           No saved default landing view yet — choose Home or Loads below to create your preference.
@@ -125,7 +125,7 @@ export function DispatchSettingsPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-sm border p-4" data-testid="dispatch-settings-default-view">
           <h2 className="mb-3 font-semibold">Default landing view</h2>
-          <p className="mb-3 text-sm text-slate-600">
+          <p className="mb-3 text-xs text-slate-600">
             Choose which dispatch surface opens when you visit Dispatch Home without a view override.
           </p>
           {prefsQuery.isError ? (
@@ -135,7 +135,7 @@ export function DispatchSettingsPage() {
             </p>
           ) : null}
           <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-xs">
               <input
                 type="radio"
                 name="dispatch_default_view"
@@ -147,7 +147,7 @@ export function DispatchSettingsPage() {
               />
               Dispatch Home (dashboard + load board)
             </label>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-xs">
               <input
                 type="radio"
                 name="dispatch_default_view"
@@ -164,9 +164,9 @@ export function DispatchSettingsPage() {
 
         <section className="rounded-sm border p-4" data-testid="dispatch-settings-default-sort">
           <h2 className="mb-3 font-semibold">Default sort</h2>
-          <p className="mb-3 text-sm text-slate-600">Applied when opening the loads list until you change sort in the board.</p>
+          <p className="mb-3 text-xs text-slate-600">Applied when opening the loads list until you change sort in the board.</p>
           <select
-            className="w-full rounded-sm border px-2 py-1 text-sm"
+            className="w-full rounded-sm border px-2 py-1 text-xs"
             value={localSettings.default_sort}
             data-testid="dispatch-default-sort-select"
             onChange={(e) => patchLocal({ default_sort: e.target.value })}
@@ -181,11 +181,11 @@ export function DispatchSettingsPage() {
 
         <section className="rounded-sm border p-4" data-testid="dispatch-settings-alert-thresholds">
           <h2 className="mb-3 font-semibold">Alert thresholds</h2>
-          <p className="mb-3 text-sm text-slate-600">
+          <p className="mb-3 text-xs text-slate-600">
             Minutes past scheduled arrival before load rows show yellow (barely making it) or red (late) indicators.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-sm">
+            <label className="text-xs">
               Yellow after (minutes)
               <input
                 type="number"
@@ -196,7 +196,7 @@ export function DispatchSettingsPage() {
                 onChange={(e) => patchLocal({ alert_yellow_minutes: Number(e.target.value) || 0 })}
               />
             </label>
-            <label className="text-sm">
+            <label className="text-xs">
               Red after (minutes)
               <input
                 type="number"
@@ -212,7 +212,7 @@ export function DispatchSettingsPage() {
 
         <section className="rounded-sm border p-4" data-testid="dispatch-settings-auto-routing">
           <h2 className="mb-3 font-semibold">Auto-routing rules</h2>
-          <p className="mb-3 text-sm text-slate-600">
+          <p className="mb-3 text-xs text-slate-600">
             Controls for optimal-driver suggestions in Book Load and reassignment flows.
           </p>
           <div className="space-y-2">

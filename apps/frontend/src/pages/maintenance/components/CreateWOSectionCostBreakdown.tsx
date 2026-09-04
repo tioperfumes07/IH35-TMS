@@ -53,13 +53,13 @@ export function CreateWOSectionCostBreakdown({ control, register, watch }: Props
       <div className="space-y-2">
         {fields.map((field, idx) => (
           <div key={field.id} className="grid grid-cols-1 gap-2 rounded-sm border border-slate-200 bg-white p-2 md:grid-cols-7">
-            <SelectCombobox {...register(`line_items.${idx}.line_type`)} className="h-8 rounded-sm border border-gray-300 px-2 text-sm">
+            <SelectCombobox {...register(`line_items.${idx}.line_type`)} className="h-8 rounded-sm border border-gray-300 px-2 text-xs">
               <option value="parts">Parts</option>
               <option value="labor">Labor</option>
               <option value="other">Other</option>
             </SelectCombobox>
-            <input {...register(`line_items.${idx}.description`)} placeholder="Description" className="h-8 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
-            <input type="number" step="0.01" {...register(`line_items.${idx}.quantity`, { valueAsNumber: true })} placeholder="Qty" className="h-8 rounded-sm border border-gray-300 px-2 text-sm" />
+            <input {...register(`line_items.${idx}.description`)} placeholder="Description" className="h-8 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
+            <input type="number" step="0.01" {...register(`line_items.${idx}.quantity`, { valueAsNumber: true })} placeholder="Qty" className="h-8 rounded-sm border border-gray-300 px-2 text-xs" />
             {/* M-1: dollars-mode via Controller; WO line unit_cost/amount = z.number() DOLLARS (work-orders.routes), byte-for-byte. */}
             <Controller control={control} name={`line_items.${idx}.unit_cost`} render={({ field }) => (
               <MoneyInput valueDollars={field.value ?? null} onChangeDollars={(d) => field.onChange(d ?? 0)} ariaLabel="Unit cost (USD)" className="w-full" />

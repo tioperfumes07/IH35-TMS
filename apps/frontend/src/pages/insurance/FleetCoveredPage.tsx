@@ -53,12 +53,12 @@ export function FleetCoveredPage() {
     { key: "covered_since", label: "Covered Since", sortable: true, render: (row) => row.covered_since ?? "—" },
   ], []);
 
-  if (!companyId) return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view covered fleet.</div>;
+  if (!companyId) return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">Select an operating company to view covered fleet.</div>;
   if (query.isError) return <ListErrorState status={0} message="Failed to load covered fleet." onRetry={() => void query.refetch()} />;
 
   return <div className="space-y-4">
     <header className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-slate-900">Fleet Covered</h2>
+      <h2 className="text-xs font-semibold text-slate-900">Fleet Covered</h2>
       <p className="mt-1 text-xs text-slate-600">One row per active tractor or trailer, with current policy and allocated monthly economics.</p>
       <p className="mt-2 text-xs font-medium text-slate-700">Premium allocation: {allocationMethods.length ? allocationMethods.map(label).join(", ") : "—"}</p>
     </header>

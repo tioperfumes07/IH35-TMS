@@ -9,7 +9,7 @@ export function DriverLoadsPage() {
   const { t } = useTranslation();
   const q = useQuery({ queryKey: ["driver", "loads"], queryFn: listDriverLoads });
 
-  if (q.isLoading) return <p className="text-sm text-gray-600">…</p>;
+  if (q.isLoading) return <p className="text-xs text-gray-600">…</p>;
   if (q.isError) {
     return (
       <ListErrorState
@@ -21,7 +21,7 @@ export function DriverLoadsPage() {
     );
   }
   const loads = q.data ?? [];
-  if (loads.length === 0) return <p className="text-sm text-gray-700">{t("driver.no_loads")}</p>;
+  if (loads.length === 0) return <p className="text-xs text-gray-700">{t("driver.no_loads")}</p>;
 
   return (
     <div className="space-y-2">

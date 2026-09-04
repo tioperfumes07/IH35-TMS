@@ -16,7 +16,7 @@ export function ExhibitCard({ letter, title, summary, active, onSelect }: Exhibi
       }`}
     >
       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Exhibit {letter.toUpperCase()}</div>
-      <div className="text-sm font-semibold text-slate-900">{title}</div>
+      <div className="text-xs font-semibold text-slate-900">{title}</div>
       <div className="mt-1 text-xs text-slate-600">{summary}</div>
     </button>
   );

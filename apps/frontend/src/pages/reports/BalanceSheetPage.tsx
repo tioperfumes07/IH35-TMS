@@ -186,7 +186,7 @@ export function BalanceSheetPage() {
         }
       />
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
       {exportAction.error ? (
         <p role="alert" className="no-print text-xs text-red-700">
@@ -234,12 +234,12 @@ export function BalanceSheetPage() {
         </div>
       ) : null}
 
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
 
       {query.data ? (
         <div className="grid gap-3 lg:grid-cols-2">
           <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-            <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold">Assets</div>
+            <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold">Assets</div>
             <table className="min-w-full text-left text-xs">
               <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                 <tr>
@@ -284,7 +284,7 @@ export function BalanceSheetPage() {
 
           <div className="space-y-3">
             <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-              <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold">Liabilities</div>
+              <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold">Liabilities</div>
               <table className="min-w-full text-left text-xs">
                 <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                   <tr>
@@ -328,7 +328,7 @@ export function BalanceSheetPage() {
             </div>
 
             <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-              <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold">Equity</div>
+              <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold">Equity</div>
               <table className="min-w-full text-left text-xs">
                 <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                   <tr>

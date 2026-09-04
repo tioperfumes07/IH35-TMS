@@ -92,7 +92,7 @@ export function HistoryTab({ reports, loading, onOpen, onAmend, onPrint }: Props
   return (
     <div className="space-y-3 p-4">
       <div className="rounded-sm border bg-white">
-        <div className="border-b bg-slate-800 px-3 py-2 text-sm font-semibold text-white">Filing History</div>
+        <div className="border-b bg-slate-800 px-3 py-2 text-xs font-semibold text-white">Filing History</div>
         <ParityTable
           rows={filtered}
           columns={columns}
@@ -110,7 +110,7 @@ export function HistoryTab({ reports, loading, onOpen, onAmend, onPrint }: Props
               testIdPrefix="form425c-history"
               dataAttributes={{ "data-form425c-history-filter-toolbar": "collapsed" }}
             >
-              <label className="text-sm text-gray-700">
+              <label className="text-xs text-gray-700">
                 Status{" "}
                 <SelectCombobox
                   className="ml-1"

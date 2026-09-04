@@ -281,7 +281,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
     return (
       <div className="space-y-3 p-4">
         <PageHeader title="Fuel" subtitle="Overview" backHref="/home" />
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
           Select an operating company to view fuel.
         </div>
       </div>
@@ -344,7 +344,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       {tab === "relay_inbox" ? (
         <div className="space-y-3">
           {/* Keep the locked "Relay inbox" named section (verify-architectural-design), then the review queue. */}
-          <h3 className="text-sm font-semibold text-gray-900">Relay inbox</h3>
+          <h3 className="text-xs font-semibold text-gray-900">Relay inbox</h3>
           <RelayDepositReview companyId={companyId} />
         </div>
       ) : null}
@@ -367,8 +367,8 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
         <div className="space-y-2">
           {/* FUEL-2: read-only coverage check surfaces unmapped fuel categories (verify-only, no posting). */}
           <FuelGlMappingCoverage companyId={companyId} />
-          <section className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700">
-            <h3 className="text-sm font-semibold text-gray-900">Expense mapping</h3>
+          <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700">
+            <h3 className="text-xs font-semibold text-gray-900">Expense mapping</h3>
             <p className="mt-2 text-xs text-gray-600">Map fuel card spend to GL expense categories for posting.</p>
             <Link to="/accounting/settings/expense-category-map" className="mt-3 inline-block text-xs font-semibold text-slate-700 underline">
               Open expense category map →
@@ -396,7 +396,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
           )}
           <section className="rounded-sm border border-gray-200 bg-white p-4">
             <div className="flex items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold text-gray-900">Fuel Transactions</h3>
+              <h3 className="text-xs font-semibold text-gray-900">Fuel Transactions</h3>
               <div className="flex items-center gap-2">
                 <ActionButton onClick={() => setCreateOpen(true)}>+ Create</ActionButton>
                 <ActionButton onClick={() => setImportOpen(true)}>Import Fuel Transactions</ActionButton>
@@ -513,8 +513,8 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
         lovesSyncQuery.isError ? (
           <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} />
         ) : (
-          <section className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700">
-            <h3 className="text-sm font-semibold text-gray-900">Loves daily prices</h3>
+          <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700">
+            <h3 className="text-xs font-semibold text-gray-900">Loves daily prices</h3>
             <p className="mt-2 text-xs text-gray-600">
               Last sync: {lovesSyncQuery.data?.last_synced_at ? new Date(String(lovesSyncQuery.data.last_synced_at)).toLocaleString() : "n/a"}
             </p>
@@ -599,7 +599,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
           <AvoidStatesBanner states={expensiveStates} />
 
           <section className="space-y-2">
-            <h3 className="text-sm font-semibold text-gray-900">HOS-aware route diagram</h3>
+            <h3 className="text-xs font-semibold text-gray-900">HOS-aware route diagram</h3>
             <RouteDiagramSvg
               totalMiles={detail?.total_distance_miles ?? null}
               stops={stops}
@@ -608,12 +608,12 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
           </section>
 
           <section className="space-y-2">
-            <h3 className="text-sm font-semibold text-gray-900">HOS-aware stop-logic panel</h3>
+            <h3 className="text-xs font-semibold text-gray-900">HOS-aware stop-logic panel</h3>
             <StopReasoningTable stops={stops} />
           </section>
 
           <section className="space-y-2">
-            <h3 className="text-sm font-semibold text-gray-900">Recommended stops (HOS-aware)</h3>
+            <h3 className="text-xs font-semibold text-gray-900">Recommended stops (HOS-aware)</h3>
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               {hosAware.length === 0 ? (
                 <p className="text-xs text-gray-500">No HOS-aware stop recommendations available.</p>
@@ -746,8 +746,8 @@ function PlannerSettingsForm({ companyId, settings }: { companyId: string; setti
     numbers.some(([, v]) => !(Number(v) > 0)) || Number(overfillPct) > 100;
 
   return (
-    <section className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700">
-      <h3 className="text-sm font-semibold text-gray-900">Planner settings</h3>
+    <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700">
+      <h3 className="text-xs font-semibold text-gray-900">Planner settings</h3>
       <p className="mt-1 text-xs text-gray-500">Routing limits used when generating fuel-stop recommendations.</p>
       <div className="mt-3 grid grid-cols-1 gap-3 text-xs md:grid-cols-2">
         {numbers.map(([label, value, setter]) => (

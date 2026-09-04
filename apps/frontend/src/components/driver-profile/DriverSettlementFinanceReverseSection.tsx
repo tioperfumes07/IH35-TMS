@@ -55,7 +55,7 @@ export function DriverSettlementFinanceReverseSection({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">Settlement disputes &amp; liabilities</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Settlement disputes &amp; liabilities</h3>
         <EntityLink
           kind="settlement_disputes_driver"
           id={driverId}
@@ -63,11 +63,11 @@ export function DriverSettlementFinanceReverseSection({
           className="text-xs font-semibold text-slate-700 underline"
         />
       </div>
-      <p className="text-sm text-gray-600">
+      <p className="text-xs text-gray-600">
         Open disputes and outstanding liabilities charged to this driver.
       </p>
 
-      {isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
       {disputesFailed ? (
         <ListErrorBanner message="Failed to load settlement disputes." onRetry={() => void disputesQuery.refetch()} />
       ) : null}
@@ -75,7 +75,7 @@ export function DriverSettlementFinanceReverseSection({
         <ListErrorBanner message="Failed to load liabilities." onRetry={() => void liabilitiesQuery.refetch()} />
       ) : null}
       {!isLoading && !disputesFailed && !liabilitiesFailed && total === 0 ? (
-        <p className="text-sm text-gray-500">No open disputes or liabilities for this driver.</p>
+        <p className="text-xs text-gray-500">No open disputes or liabilities for this driver.</p>
       ) : null}
 
       {disputes.length > 0 ? (
@@ -83,7 +83,7 @@ export function DriverSettlementFinanceReverseSection({
           <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Disputes</h4>
           <ul className="mt-1 space-y-2">
             {disputes.map((d) => (
-              <li key={d.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+              <li key={d.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
                 <EntityLink
                   kind="settlement"
                   id={d.settlement_id}
@@ -126,7 +126,7 @@ export function DriverSettlementFinanceReverseSection({
             {liabilities.map((l) => {
               const id = String(l.id ?? "");
               return (
-                <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+                <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
                   <EntityLink
                     kind="liability"
                     id={id}

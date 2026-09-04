@@ -29,7 +29,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
     const { error } = this.state;
     if (!error) return this.props.children;
     return (
-      <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+      <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700" role="alert">
         <div className="font-semibold">This section ({this.props.name}) hit an error and was skipped.</div>
         <div className="mt-1 wrap-break-word text-xs text-red-600">{error.message}</div>
         <button

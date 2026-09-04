@@ -80,21 +80,21 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
   });
 
   if (!hasParams || billsQuery.isLoading) {
-    return <div className="py-8 text-center text-sm text-gray-500">Loading driver pay…</div>;
+    return <div className="py-8 text-center text-xs text-gray-500">Loading driver pay…</div>;
   }
 
   if (billsQuery.error) {
     const err = billsQuery.error as { status?: number };
     if (err?.status === 501) {
       return (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-4 text-sm text-slate-700">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 p-4 text-xs text-slate-700">
           Driver finance module is not yet configured for this company.
         </div>
       );
     }
     if (err?.status === 403) {
       return (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-sm border border-red-200 bg-red-50 p-4 text-xs text-red-700">
           You do not have permission to view driver pay for this load.
         </div>
       );
@@ -117,7 +117,7 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
   if (bills.length === 0) {
     return (
       <div className="space-y-3">
-        <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-center text-xs text-gray-500">
           No driver bill for this load yet.
           <div className="mt-1 text-xs text-gray-400">
             Payables mint when the load is booked with miles and a driver pay rate (or on deliver when that path is armed). Settlement composition is separate.
@@ -133,7 +133,7 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm">
+      <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs">
         <div>
           <div className="text-xs text-gray-500">Driver bills (open/approved/paid)</div>
           <div className="font-semibold text-gray-900">{formatMoneyCents(grossCents, currencyCode)}</div>
@@ -157,7 +157,7 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
           // B-20260810-0003 → 31f155f3-…). No per-id driver-bill route yet; reverse to
           // settlement when settled, else driver profile. Never invent an AP bill link.
           return (
-            <div key={bill.id} className="flex items-center justify-between rounded-sm border border-gray-100 p-2 text-sm">
+            <div key={bill.id} className="flex items-center justify-between rounded-sm border border-gray-100 p-2 text-xs">
               <div className="flex min-w-0 flex-col gap-0.5">
                 <div className="flex flex-wrap items-center gap-1">
                   <span className={`rounded-sm px-1.5 py-0.5 text-xs font-semibold ${statusBadge(bill.status)}`}>

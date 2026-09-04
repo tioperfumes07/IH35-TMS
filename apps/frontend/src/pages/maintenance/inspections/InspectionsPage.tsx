@@ -367,7 +367,7 @@ export function InspectionsPage() {
           pageSize={INSPECTIONS_PAGE_SIZE}
           hidePager
         />
-        <div className="mt-3 flex items-center justify-between text-sm text-slate-600" data-testid="maintenance-inspections-server-pager">
+        <div className="mt-3 flex items-center justify-between text-xs text-slate-600" data-testid="maintenance-inspections-server-pager">
           <span>
             {totalCount === 0
               ? "0 of 0"
@@ -397,7 +397,7 @@ export function InspectionsPage() {
           setPhotoFile(null);
         }}
       >
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           <label className="block">
             <span className="text-xs text-gray-600">Unit</span>
             <EntityPicker

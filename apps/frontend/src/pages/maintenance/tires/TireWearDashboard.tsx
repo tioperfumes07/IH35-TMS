@@ -108,11 +108,11 @@ export function TireWearDashboard() {
         </div>
       </div>
 
-      {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select operating company.</p> : null}
 
       <section className="rounded-sm border border-gray-200 bg-white">
         <div className="border-b border-gray-100 px-3 py-2">
-          <h2 className="text-sm font-semibold text-gray-900">At-risk units (&lt;{withinDays} days)</h2>
+          <h2 className="text-xs font-semibold text-gray-900">At-risk units (&lt;{withinDays} days)</h2>
           <p className="text-xs text-gray-500">
             {atRiskQ.isError ? "Projection count unavailable" : `${rows.length} tire positions projected for replacement`}
           </p>

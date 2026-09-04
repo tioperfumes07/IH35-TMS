@@ -308,7 +308,7 @@ export function CustomerProfitabilityPage() {
         }
       />
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
       <CollapsedListFilters
@@ -349,7 +349,7 @@ export function CustomerProfitabilityPage() {
         </div>
       </CollapsedListFilters>
 
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
 
       {query.data ? (
         <>
@@ -387,7 +387,7 @@ export function CustomerProfitabilityPage() {
           />
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-semibold">Top 5 customers by revenue (margin % overlay)</div>
+            <div className="mb-2 text-xs font-semibold">Top 5 customers by revenue (margin % overlay)</div>
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={top5Chart} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>

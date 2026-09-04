@@ -82,7 +82,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
       <div className="space-y-3" data-testid="road-service-ticket-modal">
         <label className="block text-xs font-medium text-gray-700">
           Ticket #
-          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" value={ticketNumber} onChange={(e) => setTicketNumber(e.target.value)} />
+          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={ticketNumber} onChange={(e) => setTicketNumber(e.target.value)} />
         </label>
         <label className="block text-xs font-medium text-gray-700">
           Vendor
@@ -151,11 +151,11 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
         </label>
         <label className="block text-xs font-medium text-gray-700">
           Location
-          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} />
+          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} />
         </label>
         <label className="block text-xs font-medium text-gray-700">
           Initial complaint
-          <textarea className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" value={initialComplaint} onChange={(e) => setInitialComplaint(e.target.value)} />
+          <textarea className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={initialComplaint} onChange={(e) => setInitialComplaint(e.target.value)} />
         </label>
         {error ? <p className="text-xs text-red-600">{error}</p> : null}
         <div className="flex justify-end gap-2">

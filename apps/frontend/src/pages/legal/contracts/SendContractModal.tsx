@@ -150,7 +150,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
             <SelectCombobox
               value={templateId}
               onChange={(event) => setTemplateId(event.target.value)}
-              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             >
               <option value="">Select template</option>
               {templates.map((row) => (
@@ -172,7 +172,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
                   setSignerType(event.target.value as typeof signerType);
                   setSignerEntityId("");
                 }}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               >
                 <option value="driver">Driver</option>
                 <option value="employee">Employee</option>
@@ -240,7 +240,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
               <SelectCombobox
                 value={language}
                 onChange={(event) => setLanguage(event.target.value as typeof language)}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               >
                 <option value="en">English</option>
                 <option value="es">Spanish</option>
@@ -252,7 +252,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
               <input
                 value={signerName}
                 onChange={(event) => setSignerName(event.target.value)}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
                 placeholder="Full legal name"
               />
             </div>
@@ -261,7 +261,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
               <input
                 value={signerEmail}
                 onChange={(event) => setSignerEmail(event.target.value)}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
                 placeholder="name@example.com"
               />
             </div>
@@ -270,7 +270,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
               <input
                 value={signerPhone}
                 onChange={(event) => setSignerPhone(event.target.value)}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
                 placeholder="+19565550000"
               />
             </div>
@@ -294,7 +294,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
                   onChange={(event) =>
                     setVariableRows((prev) => prev.map((item, idx) => (idx === index ? { ...item, key: event.target.value } : item)))
                   }
-                  className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+                  className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
                   placeholder="variable_name"
                 />
                 <input
@@ -302,7 +302,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
                   onChange={(event) =>
                     setVariableRows((prev) => prev.map((item, idx) => (idx === index ? { ...item, value: event.target.value } : item)))
                   }
-                  className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+                  className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
                   placeholder="Value"
                 />
                 <Button
@@ -321,7 +321,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
         ) : null}
 
         {stepIdx === 3 ? (
-          <div className="space-y-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm">
+          <div className="space-y-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs">
             <div><span className="font-semibold">Template:</span> {selectedTemplate ? templateLabel(selectedTemplate) : "—"}</div>
             <div><span className="font-semibold">Signer:</span> {signerName || "—"} ({signerType})</div>
             <div><span className="font-semibold">Language:</span> {language}</div>
@@ -345,14 +345,14 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
             <SelectCombobox
               value={verifyChannel}
               onChange={(event) => setVerifyChannel(event.target.value as typeof verifyChannel)}
-              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             >
               <option value="none">None</option>
               <option value="sms">SMS code</option>
               <option value="email">Email code</option>
             </SelectCombobox>
             <div className="text-xs font-semibold text-gray-600">Delivery channels</div>
-            <div className="grid gap-1 text-sm">
+            <div className="grid gap-1 text-xs">
               <label><input type="checkbox" checked={sendEmail} onChange={(event) => setSendEmail(event.target.checked)} /> Email</label>
               <label><input type="checkbox" checked={sendSms} onChange={(event) => setSendSms(event.target.checked)} /> SMS</label>
               <label><input type="checkbox" checked={sendWhatsapp} onChange={(event) => setSendWhatsapp(event.target.checked)} /> WhatsApp</label>

@@ -175,7 +175,7 @@ export function DataImportPage() {
         ))}
       </div>
 
-      <p className="text-sm text-slate-600">
+      <p className="text-xs text-slate-600">
         Import curated production CSVs without shell access. Read the{" "}
         <a className="text-slate-700 underline" href={helpUrlFromRel("docs/seed-real-data-guide.md")} target="_blank" rel="noreferrer">
           seed real data guide
@@ -184,7 +184,7 @@ export function DataImportPage() {
       </p>
 
       {pageError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-800">{pageError}</div>
+        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-800">{pageError}</div>
       ) : null}
 
       {step === 1 ? (
@@ -202,14 +202,14 @@ export function DataImportPage() {
                 />
                 <div>
                   <div className="font-medium text-slate-900">{opt.title}</div>
-                  <div className="text-sm text-slate-600">{opt.description}</div>
+                  <div className="text-xs text-slate-600">{opt.description}</div>
                 </div>
               </label>
             ))}
           </div>
           <button
             type="button"
-            className="rounded-sm bg-[#1F2A44] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1F2A44]"
+            className="rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1F2A44]"
             onClick={() => setStep(2)}
           >
             Continue
@@ -221,7 +221,7 @@ export function DataImportPage() {
         <section className="space-y-4 rounded-sm border border-slate-200 bg-white p-4">
           <h2 className="text-lg font-semibold text-slate-900">2. Upload CSV</h2>
           {selected.companyRequired ? (
-            <label className="block text-sm">
+            <label className="block text-xs">
               <span className="font-medium text-slate-800">Operating company</span>
               <SelectCombobox
                 className="mt-1 block w-full max-w-xs rounded-sm border border-slate-300 h-9 px-2 text-xs"
@@ -233,7 +233,7 @@ export function DataImportPage() {
               </SelectCombobox>
             </label>
           ) : (
-            <div className="space-y-2 text-sm text-slate-600">
+            <div className="space-y-2 text-xs text-slate-600">
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={applyCompanyFilter} onChange={(e) => setApplyCompanyFilter(e.target.checked)} />
                 Limit rows to a single operating company (optional query filter)
@@ -255,13 +255,13 @@ export function DataImportPage() {
             </div>
           )}
 
-          <div className="text-sm">
+          <div className="text-xs">
             <a className="font-medium text-slate-700 underline" href={dataImportTemplateUrl(entity)} target="_blank" rel="noreferrer">
               Download CSV template ({entity})
             </a>
           </div>
 
-          <label className="flex min-h-[140px] cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-600 hover:bg-slate-100">
+          <label className="flex min-h-[140px] cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-slate-300 bg-slate-50 p-6 text-center text-xs text-slate-600 hover:bg-slate-100">
             <input
               type="file"
               accept=".csv,text/csv"
@@ -276,13 +276,13 @@ export function DataImportPage() {
           </label>
 
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="rounded-sm border border-slate-300 px-3 py-2 text-sm" onClick={() => setStep(1)}>
+            <button type="button" className="rounded-sm border border-slate-300 px-3 py-2 text-xs" onClick={() => setStep(1)}>
               Back
             </button>
             <button
               type="button"
               disabled={busy}
-              className="rounded-sm bg-[#1F2A44] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1F2A44] disabled:opacity-60"
+              className="rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1F2A44] disabled:opacity-60"
               onClick={() => void goNextFromUpload()}
             >
               {busy ? "Validating…" : "Run preview"}
@@ -295,11 +295,11 @@ export function DataImportPage() {
         <section className="space-y-4 rounded-sm border border-slate-200 bg-white p-4">
           <h2 className="text-lg font-semibold text-slate-900">3. Preview</h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-sm border border-emerald-100 bg-emerald-50 p-3 text-sm">
+            <div className="rounded-sm border border-emerald-100 bg-emerald-50 p-3 text-xs">
               <div className="font-semibold text-emerald-900">Valid rows</div>
               <div className="text-2xl font-bold text-emerald-800">{preview.valid_rows}</div>
             </div>
-            <div className="rounded-sm border border-amber-100 bg-amber-50 p-3 text-sm">
+            <div className="rounded-sm border border-amber-100 bg-amber-50 p-3 text-xs">
               <div className="font-semibold text-amber-900">Invalid rows</div>
               <div className="text-2xl font-bold text-amber-800">{preview.invalid_rows}</div>
             </div>
@@ -307,15 +307,15 @@ export function DataImportPage() {
 
           {preview.sample_valid.length ? (
             <div>
-              <h3 className="text-sm font-semibold text-slate-800">Sample valid rows</h3>
+              <h3 className="text-xs font-semibold text-slate-800">Sample valid rows</h3>
               <pre className="mt-2 max-h-48 overflow-auto rounded-sm bg-slate-900 p-3 text-xs text-slate-100">{JSON.stringify(preview.sample_valid, null, 2)}</pre>
             </div>
           ) : null}
 
           {preview.all_invalid.length ? (
             <div>
-              <h3 className="text-sm font-semibold text-slate-800">All invalid rows</h3>
-              <ul className="mt-2 max-h-56 list-disc space-y-1 overflow-auto pl-5 text-sm text-red-800">
+              <h3 className="text-xs font-semibold text-slate-800">All invalid rows</h3>
+              <ul className="mt-2 max-h-56 list-disc space-y-1 overflow-auto pl-5 text-xs text-red-800">
                 {preview.all_invalid.map((row) => (
                   <li key={row.row}>
                     Row {row.row}: {row.errors.join("; ")}
@@ -327,7 +327,7 @@ export function DataImportPage() {
 
           {preview.errors.length ? (
             <div>
-              <h3 className="text-sm font-semibold text-slate-800">Row messages</h3>
+              <h3 className="text-xs font-semibold text-slate-800">Row messages</h3>
               <ul className="mt-2 max-h-40 list-disc space-y-1 overflow-auto pl-5 text-xs text-slate-700">
                 {preview.errors.slice(0, 50).map((e, i) => (
                   <li key={`${e.row}-${i}`}>
@@ -340,14 +340,14 @@ export function DataImportPage() {
           ) : null}
 
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="rounded-sm border border-slate-300 px-3 py-2 text-sm" onClick={() => setStep(2)}>
+            <button type="button" className="rounded-sm border border-slate-300 px-3 py-2 text-xs" onClick={() => setStep(2)}>
               Back
             </button>
             <button
               type="button"
               disabled={preview.invalid_rows > 0}
               title={preview.invalid_rows > 0 ? "Fix invalid rows before committing." : undefined}
-              className="rounded-sm bg-[#1F2A44] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1F2A44] disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1F2A44] disabled:cursor-not-allowed disabled:opacity-50"
               onClick={() => setStep(4)}
             >
               Continue to commit
@@ -359,18 +359,18 @@ export function DataImportPage() {
       {step === 4 ? (
         <section className="space-y-4 rounded-sm border border-amber-200 bg-amber-50 p-4">
           <h2 className="text-lg font-semibold text-amber-950">4. Confirm commit</h2>
-          <p className="text-sm text-amber-950">
+          <p className="text-xs text-amber-950">
             Commits run in a single database transaction. If any row fails validation, the entire import rolls back and nothing is partially saved. Re-imports may skip rows that already exist —
             review your CSV for idempotency before continuing.
           </p>
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="rounded-sm border border-slate-300 bg-white px-3 py-2 text-sm" onClick={() => setStep(3)}>
+            <button type="button" className="rounded-sm border border-slate-300 bg-white px-3 py-2 text-xs" onClick={() => setStep(3)}>
               Back
             </button>
             <button
               type="button"
               disabled={busy}
-              className="rounded-sm bg-amber-700 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800 disabled:opacity-60"
+              className="rounded-sm bg-amber-700 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-800 disabled:opacity-60"
               onClick={() => void runCommit()}
             >
               {busy ? "Committing…" : "Commit import"}
@@ -385,17 +385,17 @@ export function DataImportPage() {
           {commitResult ? (
             <>
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-sm border border-slate-100 bg-slate-50 p-3 text-sm">
+                <div className="rounded-sm border border-slate-100 bg-slate-50 p-3 text-xs">
                   <div className="font-semibold">Inserted</div>
                   <div className="text-2xl font-bold text-slate-900">{commitResult.inserted_rows}</div>
                 </div>
-                <div className="rounded-sm border border-slate-100 bg-slate-50 p-3 text-sm">
+                <div className="rounded-sm border border-slate-100 bg-slate-50 p-3 text-xs">
                   <div className="font-semibold">Skipped</div>
                   <div className="text-2xl font-bold text-slate-900">{commitResult.skipped_rows}</div>
                 </div>
               </div>
               {commitResult.errors.length ? (
-                <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-900">
+                <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-900">
                   <div className="font-semibold">Errors</div>
                   <ul className="mt-2 list-disc pl-5">
                     {commitResult.errors.map((e, idx) => (
@@ -406,18 +406,18 @@ export function DataImportPage() {
                   </ul>
                 </div>
               ) : (
-                <p className="text-sm text-emerald-800">Import completed with no row-level errors reported.</p>
+                <p className="text-xs text-emerald-800">Import completed with no row-level errors reported.</p>
               )}
             </>
           ) : (
-            <p className="text-sm text-red-800">Import failed — see the message above. Fix the CSV and restart from step 2.</p>
+            <p className="text-xs text-red-800">Import failed — see the message above. Fix the CSV and restart from step 2.</p>
           )}
 
           <div className="flex flex-wrap gap-2">
-            <Link className="rounded-sm bg-[#1F2A44] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1F2A44]" to={POST_IMPORT_LINKS[entity].to}>
+            <Link className="rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1F2A44]" to={POST_IMPORT_LINKS[entity].to}>
               {POST_IMPORT_LINKS[entity].label}
             </Link>
-            <button type="button" className="rounded-sm border border-slate-300 px-3 py-2 text-sm" onClick={resetWizard}>
+            <button type="button" className="rounded-sm border border-slate-300 px-3 py-2 text-xs" onClick={resetWizard}>
               Start over
             </button>
           </div>

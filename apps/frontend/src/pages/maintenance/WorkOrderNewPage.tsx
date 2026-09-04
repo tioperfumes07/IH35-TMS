@@ -17,7 +17,7 @@ export function WorkOrderNewPage() {
   }, [open, navigate]);
 
   if (!selectedCompanyId) {
-    return <div className="p-4 text-sm text-gray-500">Select a company to create a work order.</div>;
+    return <div className="p-4 text-xs text-gray-500">Select a company to create a work order.</div>;
   }
 
   return (

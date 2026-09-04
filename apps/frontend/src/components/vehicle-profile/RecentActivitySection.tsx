@@ -47,7 +47,7 @@ export function RecentActivitySection({ activity }: { activity: Activity }) {
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="vehicle-recent-activity">
-      <h2 className="text-sm font-semibold text-gray-800">Recent activity</h2>
+      <h2 className="text-xs font-semibold text-gray-800">Recent activity</h2>
       <ParityTable
         rows={rows}
         columns={COLUMNS}

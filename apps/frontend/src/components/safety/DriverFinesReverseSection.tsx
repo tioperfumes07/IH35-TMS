@@ -76,18 +76,18 @@ export function DriverFinesReverseSection({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">Fines</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Fines</h3>
         <EntityLink kind="safety_fines_driver" id={driverId} label="Open Safety" className="text-xs font-semibold text-slate-700 underline" />
       </div>
-      <p className="text-sm text-gray-600">
+      <p className="text-xs text-gray-600">
         Civil citations and internal fines linked to this driver.
       </p>
 
-      {isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
       {civilFailed ? <ListErrorState status={0} message="Failed to load civil fines." onRetry={() => void civilQuery.refetch()} /> : null}
       {internalFailed ? <ListErrorState status={0} message="Failed to load internal fines." onRetry={() => void internalQuery.refetch()} /> : null}
       {!isLoading && !civilFailed && !internalFailed && total === 0 ? (
-        <p className="text-sm text-gray-500">No fines linked to this driver.</p>
+        <p className="text-xs text-gray-500">No fines linked to this driver.</p>
       ) : null}
 
       {civil.length > 0 ? (
@@ -98,7 +98,7 @@ export function DriverFinesReverseSection({
               const id = String(f.id ?? "");
               const label = entityLabel(f.violation_code ?? f.jurisdiction, id, "Fine");
               return (
-                <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+                <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
                   <EntityLink kind="safety_fine" id={id} label={label} className="font-semibold text-slate-700" />
                   <span className="ml-2 text-gray-600">{String(f.status ?? "")}</span>
                 </li>
@@ -123,7 +123,7 @@ export function DriverFinesReverseSection({
               const id = String(f.id ?? "");
               const label = String(f.reason_name ?? entityLabel(f.reason_code, id, "Internal fine"));
               return (
-                <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+                <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
                   <EntityLink kind="internal_fine" id={id} label={label} className="font-semibold text-slate-700" />
                   <span className="ml-2 text-gray-600">{String(f.status ?? "")}</span>
                 </li>

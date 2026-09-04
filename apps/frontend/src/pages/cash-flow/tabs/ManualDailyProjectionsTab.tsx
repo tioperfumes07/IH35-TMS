@@ -185,8 +185,8 @@ function ProjectionPanel({
   return (
     <div className="flex h-full min-h-[24rem] flex-col rounded-lg border border-gray-200 bg-white" data-mdp-panel={direction}>
       <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-3 py-2">
-        <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-        <span className={`text-sm font-semibold ${accent}`} data-mdp-header-total={direction}>{fmtCents(panelTotalCents)}</span>
+        <h3 className="text-xs font-semibold text-gray-900">{title}</h3>
+        <span className={`text-xs font-semibold ${accent}`} data-mdp-header-total={direction}>{fmtCents(panelTotalCents)}</span>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto" data-mdp-panel-list={direction}>
@@ -541,7 +541,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         />
       )}
       {(entriesQuery.isLoading || openingQuery.isLoading) && (
-        <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 text-xs text-gray-500">
           Loading projections…
         </div>
       )}
@@ -562,7 +562,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
       </div>
 
       {/* Opening → Projected closing + opening editor (kept). */}
-      <div className="flex flex-wrap items-center gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm">
+      <div className="flex flex-wrap items-center gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs">
         <span>Opening cash: <strong>{fmtCents(openingCents)}</strong></span>
         <span>
           Projected closing:{" "}

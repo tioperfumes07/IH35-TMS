@@ -172,7 +172,7 @@ export function LiabilitiesHomePage() {
       />
 
       {detailOpen && detailQuery.isError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+        <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-xs text-red-700">
           Failed to load liability detail. <button type="button" className="font-semibold underline" onClick={() => void detailQuery.refetch()}>Retry</button>
         </div>
       ) : null}

@@ -475,7 +475,7 @@ export function EquipmentTypesPage() {
 
           <div className="space-y-2 rounded-sm border border-gray-200 p-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-900">Line Items</h3>
+              <h3 className="text-xs font-semibold text-gray-900">Line Items</h3>
               <Button
                 type="button"
                 variant="secondary"
@@ -649,7 +649,7 @@ export function EquipmentTypesPage() {
                 className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
               />
             </div>
-            <label className="mt-6 flex items-center gap-2 text-sm text-gray-700">
+            <label className="mt-6 flex items-center gap-2 text-xs text-gray-700">
               <input
                 type="checkbox"
                 checked={editingEquipmentForm.is_active}
@@ -747,7 +747,7 @@ export function EquipmentTypesPage() {
                 className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               />
             </div>
-            <label className="md:col-span-2 flex items-center gap-2 text-sm text-gray-700">
+            <label className="md:col-span-2 flex items-center gap-2 text-xs text-gray-700">
               <input
                 type="checkbox"
                 checked={addLineItemForm.is_required}
@@ -821,7 +821,7 @@ export function EquipmentTypesPage() {
                 className="w-full rounded-sm border border-gray-300 h-9 px-2 text-xs"
               />
             </div>
-            <label className="mt-6 flex items-center gap-2 text-sm text-gray-700">
+            <label className="mt-6 flex items-center gap-2 text-xs text-gray-700">
               <input
                 type="checkbox"
                 checked={editingLineItemForm.is_required}
@@ -838,7 +838,7 @@ export function EquipmentTypesPage() {
                 className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
               />
             </div>
-            <label className="md:col-span-2 flex items-center gap-2 text-sm text-gray-700">
+            <label className="md:col-span-2 flex items-center gap-2 text-xs text-gray-700">
               <input
                 type="checkbox"
                 checked={editingLineItemForm.is_active}

@@ -191,7 +191,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
             data-testid="driver-team-name"
             value={form.team_name}
             onChange={(event) => setForm((value) => ({ ...value, team_name: event.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             placeholder="e.g. Laredo Night Team"
           />
           {errors.team_name ? <div className="mt-1 text-[11px] text-red-700">{errors.team_name}</div> : null}
@@ -247,7 +247,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
           <input
             value={form.relationship}
             onChange={(event) => setForm((value) => ({ ...value, relationship: event.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             placeholder="e.g. Spouse, Trainer/Trainee"
           />
         </label>
@@ -258,7 +258,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
             value={form.notes}
             onChange={(event) => setForm((value) => ({ ...value, notes: event.target.value }))}
             rows={3}
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
         </label>
 

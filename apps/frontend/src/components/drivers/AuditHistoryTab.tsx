@@ -234,7 +234,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
           <input
             type="text"
             placeholder="Email or ID"
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm w-32"
+            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-xs w-32"
             value={actorFilter}
             onChange={(e) => setActorFilter(e.target.value)}
             data-testid="driver-audit-filter-actor"

@@ -68,7 +68,7 @@ function FieldInput({
 
   if (field.type === "boolean") {
     return (
-      <label className="inline-flex items-center gap-2 text-sm">
+      <label className="inline-flex items-center gap-2 text-xs">
         <input
           type="checkbox"
           checked={Boolean(value)}
@@ -86,7 +86,7 @@ function FieldInput({
         value={String(value ?? "")}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+        className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
       >
         <option value="">Select…</option>
         {field.enumOptions.map((option) => (
@@ -160,7 +160,7 @@ function FieldInput({
           value={String(value ?? "")}
           disabled={disabled}
           placeholder={field.placeholder}
-          className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+          className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           onChange={(event) => onChange(event.target.value)}
         />
       </div>
@@ -175,7 +175,7 @@ function FieldInput({
       value={field.type === "number" ? String(value ?? "") : String(value ?? "")}
       disabled={disabled}
       placeholder={field.placeholder}
-      className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+      className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
       onChange={(event) => {
         if (field.type === "number") {
           const parsed = event.target.value === "" ? "" : Number(event.target.value);
@@ -268,7 +268,7 @@ export function CatalogEditModal({
 
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title={title} confirmDiscardOnClose isDirty={isDirty}>
-      <div className="space-y-3 text-sm">
+      <div className="space-y-3 text-xs">
         <p className="text-xs text-muted-foreground">Catalog: {catalogName}</p>
         {fields.map((field) => {
           const disabled = Boolean(readOnly || (mode === "edit" && field.readOnlyOnEdit));

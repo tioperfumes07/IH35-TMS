@@ -56,7 +56,7 @@ export function DriverFilesTab() {
           <DriversListPage onOpenProfile={(nextDriverId) => setDriverId(nextDriverId)} />
           <div className="mt-4 space-y-2" data-testid="driver-files-training-section">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold text-slate-900">Training Completions</h3>
+              <h3 className="text-xs font-semibold text-slate-900">Training Completions</h3>
               <span className="flex flex-wrap gap-3 text-xs">
                 <Link to="/safety/training/programs" className="font-semibold text-slate-700 underline">
                   Training Programs

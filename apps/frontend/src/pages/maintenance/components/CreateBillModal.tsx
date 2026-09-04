@@ -149,7 +149,7 @@ export function CreateBillModal({
       ) : null}
       {createdBill ? (
         <div
-          className="flex flex-col items-start gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm"
+          className="flex flex-col items-start gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs"
           data-testid="create-bill-modal-confirmation"
         >
           <p className="text-gray-700">

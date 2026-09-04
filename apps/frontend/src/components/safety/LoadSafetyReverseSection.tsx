@@ -129,7 +129,7 @@ export function LoadSafetyReverseSection({
         data-testid="load-safety-reverse-accidents"
       >
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-slate-900">
+          <h3 className="text-xs font-semibold text-slate-900">
             Accidents
             {accidentTotal > 0 ? (
               <span className="ml-2 text-xs font-normal text-gray-600">
@@ -145,7 +145,7 @@ export function LoadSafetyReverseSection({
           />
         </div>
         {accidentsQ.isLoading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-xs text-gray-500">Loading…</p>
         ) : null}
         {accidentsQ.isError ? (
           <ListErrorState status={0} message="Could not load accidents for this load." onRetry={() => void accidentsQ.refetch()} />
@@ -153,7 +153,7 @@ export function LoadSafetyReverseSection({
         {!accidentsQ.isLoading &&
         !accidentsQ.isError &&
         accidents.length === 0 ? (
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-gray-500">
             No accident reports linked to this load.
           </p>
         ) : null}
@@ -165,7 +165,7 @@ export function LoadSafetyReverseSection({
               return (
                 <li
                   key={id}
-                  className="text-sm text-slate-700"
+                  className="text-xs text-slate-700"
                   data-testid={`load-safety-accident-${id}`}
                 >
                   <EntityLink
@@ -228,7 +228,7 @@ export function LoadSafetyReverseSection({
         data-testid="load-safety-reverse-hos-violations"
       >
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-slate-900">
+          <h3 className="text-xs font-semibold text-slate-900">
             HOS Violations
             {hosViolationTotal ? ` (${hosViolationTotal})` : ""}
           </h3>
@@ -240,7 +240,7 @@ export function LoadSafetyReverseSection({
           />
         </div>
         {hosViolationsQ.isLoading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-xs text-gray-500">Loading…</p>
         ) : null}
         {hosViolationsQ.isError ? (
           <ListErrorState status={0} message="Could not load HOS violations for this load." onRetry={() => void hosViolationsQ.refetch()} />
@@ -248,12 +248,12 @@ export function LoadSafetyReverseSection({
         {!hosViolationsQ.isLoading &&
         !hosViolationsQ.isError &&
         hosViolations.length === 0 ? (
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-gray-500">
             No HOS violations linked to this load.
           </p>
         ) : null}
         {!hosViolationsQ.isError ? hosViolations.map((row) => (
-          <div key={s(row.id)} className="text-sm text-slate-700">
+          <div key={s(row.id)} className="text-xs text-slate-700">
             <EntityLink
               kind="hos_violation"
               id={s(row.id)}
@@ -284,7 +284,7 @@ export function LoadSafetyReverseSection({
         data-testid="load-safety-reverse-internal-fines"
       >
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-slate-900">
+          <h3 className="text-xs font-semibold text-slate-900">
             Internal Fines
             {internalFineTotal ? ` (${internalFineTotal})` : ""}
           </h3>
@@ -296,7 +296,7 @@ export function LoadSafetyReverseSection({
           />
         </div>
         {internalFinesQ.isLoading ? (
-          <p className="text-sm text-gray-500">Loading internal fines…</p>
+          <p className="text-xs text-gray-500">Loading internal fines…</p>
         ) : null}
         {internalFinesQ.isError ? (
           <ListErrorState status={0} message="Could not load internal fines for this load." onRetry={() => void internalFinesQ.refetch()} />
@@ -304,12 +304,12 @@ export function LoadSafetyReverseSection({
         {!internalFinesQ.isLoading &&
         !internalFinesQ.isError &&
         internalFines.length === 0 ? (
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-gray-500">
             No internal fines linked to this load.
           </p>
         ) : null}
         {!internalFinesQ.isError ? internalFines.map((row) => (
-          <div key={s(row.id)} className="text-sm text-slate-700">
+          <div key={s(row.id)} className="text-xs text-slate-700">
             <EntityLink
               kind="internal_fine"
               id={s(row.id)}
@@ -387,7 +387,7 @@ function LoadSafetyEventsBlock({
       data-testid="load-safety-reverse-safety-events"
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-slate-900">
           Safety Events
           {rows.length > 0 ? (
             <span className="ml-2 text-xs font-normal text-gray-600">
@@ -403,20 +403,20 @@ function LoadSafetyEventsBlock({
         />
       </div>
       {query.isLoading ? (
-        <p className="text-sm text-gray-500">Loading…</p>
+        <p className="text-xs text-gray-500">Loading…</p>
       ) : null}
       {query.isError ? (
         <ListErrorState status={0} message="Could not load safety events for this load." onRetry={() => void query.refetch()} />
       ) : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? (
-        <p className="text-sm text-gray-500">None linked to this load.</p>
+        <p className="text-xs text-gray-500">None linked to this load.</p>
       ) : null}
       {!query.isError && rows.length > 0 ? (
         <ul className="space-y-2">
           {rows.map((row) => (
             <li
               key={row.id}
-              className="text-sm text-slate-700"
+              className="text-xs text-slate-700"
               data-testid={`load-safety-event-${row.id}`}
             >
               <EntityLink
@@ -498,7 +498,7 @@ function LoadIncidentBlock({
       data-testid={`load-safety-reverse-${kind.type.replace(/_/g, "-")}`}
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-slate-900">
           {kind.title}
           {rows.length > 0 ? (
             <span className="ml-2 text-xs font-normal text-gray-600">
@@ -514,20 +514,20 @@ function LoadIncidentBlock({
         />
       </div>
       {query.isLoading ? (
-        <p className="text-sm text-gray-500">Loading…</p>
+        <p className="text-xs text-gray-500">Loading…</p>
       ) : null}
       {query.isError ? (
         <ListErrorState status={0} message={`Could not load ${kind.title.toLowerCase()}.`} onRetry={() => void query.refetch()} />
       ) : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? (
-        <p className="text-sm text-gray-500">None linked to this load.</p>
+        <p className="text-xs text-gray-500">None linked to this load.</p>
       ) : null}
       {!query.isError && rows.length > 0 ? (
         <ul className="space-y-2">
           {rows.map((row) => {
             const id = s(row.id);
             return (
-              <li key={id} className="text-sm text-slate-700">
+              <li key={id} className="text-xs text-slate-700">
                 <EntityLink
                   kind={kind.type}
                   id={id}

@@ -67,7 +67,7 @@ export function MaintenanceReportsPage() {
         <label className="mb-2 block text-xs text-gray-600">
           Report
           <select
-            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={report}
             onChange={(event) => setReport(event.target.value as (typeof REPORTS)[number]["id"])}
           >

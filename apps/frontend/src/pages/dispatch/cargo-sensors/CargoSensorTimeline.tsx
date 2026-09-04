@@ -101,16 +101,16 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
   const latest = query.data?.rows?.[0];
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">Select an operating company.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-500">Select an operating company.</div>;
   }
 
   if (query.isLoading) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">Loading cargo sensor timeline…</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-500">Loading cargo sensor timeline…</div>;
   }
 
   if (query.isError) {
     return (
-      <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700" role="alert" data-cargo-sensor-timeline-error>
+      <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700" role="alert" data-cargo-sensor-timeline-error>
         <div>Failed to load cargo sensor timeline.</div>
         <Button type="button" size="sm" variant="secondary" onClick={() => void query.refetch()}>
           Retry cargo sensors
@@ -120,12 +120,12 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
   }
 
   if (!query.data) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">No cargo sensor response for this load.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-500">No cargo sensor response for this load.</div>;
   }
 
   if (query.data.rows.length === 0) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500" data-testid="cargo-sensor-timeline-empty">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-500" data-testid="cargo-sensor-timeline-empty">
         No cargo sensor readings for this load yet.
       </div>
     );
@@ -134,7 +134,7 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
   return (
     <section className="space-y-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="cargo-sensor-timeline">
       <div className="space-y-2" data-testid="cargo-sensor-incidents">
-        <h3 className="text-sm font-semibold text-gray-900">Cargo incidents</h3>
+        <h3 className="text-xs font-semibold text-gray-900">Cargo incidents</h3>
         {query.data.incidents.length === 0 ? (
           <p className="text-xs text-gray-500">No cargo excursions recorded for this load.</p>
         ) : (
@@ -158,7 +158,7 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-gray-900">Cargo sensor timeline</h3>
+        <h3 className="text-xs font-semibold text-gray-900">Cargo sensor timeline</h3>
         {latest ? (
           <div className="text-xs text-gray-600">
             Latest: {statusText(latest.threshold_status)}{" "}

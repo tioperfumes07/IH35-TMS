@@ -106,7 +106,7 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Reason</label>
           <SelectCombobox
-            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={reasonCode}
             disabled={mut.isPending}
             onChange={(e) => setReasonCode(e.target.value)}

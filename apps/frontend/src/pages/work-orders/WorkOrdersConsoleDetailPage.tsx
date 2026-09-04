@@ -193,7 +193,7 @@ export function WorkOrdersConsoleDetailPage() {
 
       <PageHeader title={title} subtitle={String(wo?.description ?? "").slice(0, 160)} />
 
-      {!companyId ? <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm">Select a company.</div> : null}
+      {!companyId ? <div className="rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs">Select a company.</div> : null}
 
       <div className="flex flex-wrap gap-2">
         <Button variant="secondary" type="button" onClick={() => window.open(pdfHref, "_blank", "noopener,noreferrer")}>
@@ -240,7 +240,7 @@ export function WorkOrdersConsoleDetailPage() {
       {reasonModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true">
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-4 shadow-xl">
-            <h2 className="text-sm font-semibold text-slate-900">
+            <h2 className="text-xs font-semibold text-slate-900">
               {reasonModal.kind === "cancel" ? "Cancel work order" : "Void work order"}
             </h2>
             <p className="mt-1 text-xs text-slate-600">
@@ -270,7 +270,7 @@ export function WorkOrdersConsoleDetailPage() {
                 </label>
                 <textarea
                   id="wo-console-cancel-notes"
-                  className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-sm"
+                  className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-xs"
                   rows={2}
                   value={cancelNotes}
                   onChange={(e) => setCancelNotes(e.target.value)}
@@ -284,7 +284,7 @@ export function WorkOrdersConsoleDetailPage() {
                 </label>
                 <textarea
                   id="wo-reason"
-                  className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-sm"
+                  className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-xs"
                   rows={3}
                   value={reasonText}
                   onChange={(e) => setReasonText(e.target.value)}
@@ -320,7 +320,7 @@ export function WorkOrdersConsoleDetailPage() {
       ) : null}
 
       <div className="grid gap-3 md:grid-cols-2">
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Details</div>
           <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
             <div className="text-slate-500">Status</div>
@@ -338,7 +338,7 @@ export function WorkOrdersConsoleDetailPage() {
           </div>
         </div>
 
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Photos</div>
           <p className="mt-2 text-xs text-slate-600">Upload evidence photos (R2 signed URL).</p>
           <input
@@ -359,7 +359,7 @@ export function WorkOrdersConsoleDetailPage() {
 
       {id && companyId ? <WOTimeTrackingPanel workOrderId={String(id)} operatingCompanyId={companyId} /> : null}
 
-      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Line items</div>
         <pre className="mt-2 max-h-[320px] overflow-auto rounded-sm bg-slate-50 p-2 text-[11px]">
           {JSON.stringify(detailQuery.data?.line_items ?? [], null, 2)}

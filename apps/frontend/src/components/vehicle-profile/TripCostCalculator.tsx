@@ -61,7 +61,7 @@ export function TripCostCalculator({
 
   return (
     <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-3" data-testid="vp-trip-cost">
-      <button type="button" className="text-sm font-semibold text-gray-800" onClick={() => setOpen(!open)}>
+      <button type="button" className="text-xs font-semibold text-gray-800" onClick={() => setOpen(!open)}>
         Trip cost calculator {open ? "▾" : "▸"}
       </button>
       <p className="mt-1 text-xs text-gray-600">
@@ -79,7 +79,7 @@ export function TripCostCalculator({
       {open ? (
         <div className="mt-2 space-y-2">
           <input
-            className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
             placeholder="Destination ZIP"
             value={destination}
             aria-invalid={destination.length > 0 && !destinationValid}

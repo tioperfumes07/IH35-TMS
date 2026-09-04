@@ -132,20 +132,20 @@ export function CargoClaimReasonModal({ open, companyId, row, onClose, onSaved }
       <div className="space-y-3">
         <label className="block text-xs font-semibold text-gray-600">
           Reason Code
-          <input value={form.reason_code} onChange={(event) => setForm((v) => ({ ...v, reason_code: event.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" placeholder="WATER-DAMAGE" />
+          <input value={form.reason_code} onChange={(event) => setForm((v) => ({ ...v, reason_code: event.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="WATER-DAMAGE" />
           {errors.reason_code ? <div className="mt-1 text-[11px] text-red-700">{errors.reason_code}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Display Name
-          <input value={form.display_name} onChange={(event) => setForm((v) => ({ ...v, display_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+          <input value={form.display_name} onChange={(event) => setForm((v) => ({ ...v, display_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
           {errors.display_name ? <div className="mt-1 text-[11px] text-red-700">{errors.display_name}</div> : null}
         </label>
 
         <div className="grid grid-cols-2 gap-2">
           <label className="block text-xs font-semibold text-gray-600">
             Claim Category
-            <SelectCombobox value={form.claim_category} onChange={(event) => setForm((v) => ({ ...v, claim_category: event.target.value as CargoClaimCategory | "" }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm">
+            <SelectCombobox value={form.claim_category} onChange={(event) => setForm((v) => ({ ...v, claim_category: event.target.value as CargoClaimCategory | "" }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
               <option value="">— None —</option>
               {CATEGORY_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -156,14 +156,14 @@ export function CargoClaimReasonModal({ open, companyId, row, onClose, onSaved }
           </label>
           <label className="block text-xs font-semibold text-gray-600">
             Sort Order
-            <input type="number" value={form.sort_order} onChange={(event) => setForm((v) => ({ ...v, sort_order: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+            <input type="number" value={form.sort_order} onChange={(event) => setForm((v) => ({ ...v, sort_order: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
             {errors.sort_order ? <div className="mt-1 text-[11px] text-red-700">{errors.sort_order}</div> : null}
           </label>
         </div>
 
         <label className="block text-xs font-semibold text-gray-600">
           Description
-          <textarea value={form.description} onChange={(event) => setForm((v) => ({ ...v, description: event.target.value }))} rows={3} className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm" placeholder="Optional description" />
+          <textarea value={form.description} onChange={(event) => setForm((v) => ({ ...v, description: event.target.value }))} rows={3} className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs" placeholder="Optional description" />
         </label>
 
         <label className="flex items-center gap-2 text-xs text-gray-700">

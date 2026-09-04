@@ -185,12 +185,12 @@ export function LaunchTogglesPage() {
         subtitle="Go-live workflow for hidden operating carriers (USMCA July 2026 cutover)."
       />
 
-      {error ? <div className="rounded-sm border border-red-300 bg-red-50 p-3 text-sm text-red-800">{error}</div> : null}
+      {error ? <div className="rounded-sm border border-red-300 bg-red-50 p-3 text-xs text-red-800">{error}</div> : null}
 
-      <label className="block max-w-xl text-sm">
+      <label className="block max-w-xl text-xs">
         <span className="font-medium text-gray-700">Launch notes (optional)</span>
         <textarea
-          className="mt-1 w-full rounded-sm border border-gray-300 p-2 text-sm"
+          className="mt-1 w-full rounded-sm border border-gray-300 p-2 text-xs"
           rows={2}
           value={notes}
           onChange={(event) => setNotes(event.target.value)}

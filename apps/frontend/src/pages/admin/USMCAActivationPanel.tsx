@@ -79,7 +79,7 @@ export function USMCAActivationPanel() {
   });
 
   if (auth.user?.role !== "Owner") {
-    return <div className="p-6 text-sm text-gray-500">Owner access required for USMCA Activation.</div>;
+    return <div className="p-6 text-xs text-gray-500">Owner access required for USMCA Activation.</div>;
   }
 
   const data = stateQuery.data;
@@ -94,11 +94,11 @@ export function USMCAActivationPanel() {
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
       <PageHeader title="USMCA Activation" breadcrumb={[{ label: "Admin" }, { label: "USMCA Activation" }]} backHref="/admin" />
       <div className="flex items-center gap-3">
-        <span className={`rounded-sm px-3 py-1 text-sm font-semibold ${STATE_BADGE[currentState]}`}>
+        <span className={`rounded-sm px-3 py-1 text-xs font-semibold ${STATE_BADGE[currentState]}`}>
           {currentState.replace(/_/g, " ").toUpperCase()}
         </span>
         {data?.go_live_target_date && (
-          <span className="text-sm text-gray-500">Go-live target: {data.go_live_target_date}</span>
+          <span className="text-xs text-gray-500">Go-live target: {data.go_live_target_date}</span>
         )}
       </div>
 
@@ -106,10 +106,10 @@ export function USMCAActivationPanel() {
 
       {/* 16-item checklist */}
       <div className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold">Activation Checklist (16 items)</h3>
+        <h3 className="mb-3 text-xs font-semibold">Activation Checklist (16 items)</h3>
         <div className="space-y-2">
           {(data?.checklist ?? []).map((item) => (
-            <label key={item.id} className="flex cursor-pointer items-center gap-3 text-sm">
+            <label key={item.id} className="flex cursor-pointer items-center gap-3 text-xs">
               <input
                 type="checkbox"
                 checked={item.completed}
@@ -129,7 +129,7 @@ export function USMCAActivationPanel() {
           type="button"
           disabled={!allRequiredComplete || transitionMutation.isPending}
           onClick={() => transitionMutation.mutate(nextState)}
-          className="rounded-sm bg-[#1F2A44] px-4 py-2 text-sm font-medium text-white hover:bg-[#1F2A44] disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-medium text-white hover:bg-[#1F2A44] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {transitionMutation.isPending ? "Transitioning…" : `Transition to ${nextState.replace(/_/g, " ")}`}
         </button>
@@ -138,7 +138,7 @@ export function USMCAActivationPanel() {
       {/* Emergency rollback */}
       {currentState !== "rollback" && currentState !== "hidden" && (
         <div className="rounded-sm border border-red-200 bg-red-50 p-4">
-          <h4 className="mb-2 text-sm font-semibold text-red-700">Emergency Rollback</h4>
+          <h4 className="mb-2 text-xs font-semibold text-red-700">Emergency Rollback</h4>
           <p className="mb-3 text-xs text-red-600">Type DEACTIVATE to confirm emergency rollback.</p>
           <div className="flex gap-2">
             <input
@@ -146,13 +146,13 @@ export function USMCAActivationPanel() {
               value={rollbackConfirm}
               onChange={(e) => setRollbackConfirm(e.target.value)}
               placeholder="Type DEACTIVATE"
-              className="flex-1 rounded-sm border border-red-300 px-2 py-1 text-sm"
+              className="flex-1 rounded-sm border border-red-300 px-2 py-1 text-xs"
             />
             <button
               type="button"
               disabled={rollbackConfirm !== "DEACTIVATE" || transitionMutation.isPending}
               onClick={() => { setRollbackConfirm(""); transitionMutation.mutate("rollback"); }}
-              className="rounded-sm bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-40"
+              className="rounded-sm bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-40"
             >
               Rollback
             </button>

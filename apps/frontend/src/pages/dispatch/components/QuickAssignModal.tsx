@@ -115,7 +115,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
               }}
               open={open}
               placeholder="Select driver…"
-              className="h-9 w-full text-sm"
+              className="h-9 w-full text-xs"
               allowClear={false}
               disabled={loading}
               // Standalone Modal chrome → default shell="modal".
@@ -158,7 +158,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
               enabled={open}
               disabled={loading}
               placeholder="Select unit (optional)…"
-              className="h-9 w-full text-sm"
+              className="h-9 w-full text-xs"
             />
           </div>
         </label>
@@ -176,7 +176,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
               enabled={open}
               disabled={loading}
               placeholder="Select trailer (optional)…"
-              className="h-9 w-full text-sm"
+              className="h-9 w-full text-xs"
             />
           </div>
         </label>

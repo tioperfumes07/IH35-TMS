@@ -300,7 +300,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
   return (
     <ParityDrawer open={open} onClose={closeModal} title="Create Claim" size="wide">
       <form
-        className="space-y-4 text-sm"
+        className="space-y-4 text-xs"
         data-testid="claim-create-form"
         onSubmit={(event) => {
           event.preventDefault();

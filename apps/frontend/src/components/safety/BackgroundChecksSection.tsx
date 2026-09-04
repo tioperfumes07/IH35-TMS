@@ -123,7 +123,7 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="background-checks-section">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900">Background & MVR checks</h2>
+          <h2 className="text-xs font-semibold text-slate-900">Background & MVR checks</h2>
           <p className="mt-1 text-xs text-slate-600">Company-scoped driver screening history and expirations.</p>
         </div>
         <Button size="sm" onClick={() => { setSelectedDriverId(driverId ?? ""); setOpen(true); }}>+ Create check</Button>

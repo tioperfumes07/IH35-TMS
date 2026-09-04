@@ -219,7 +219,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
 
       <section className="space-y-2 border-t border-gray-200 pt-3" data-testid="customer-legal-contracts-reverse">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-slate-900">E-signature contracts</h3>
+          <h3 className="text-xs font-semibold text-slate-900">E-signature contracts</h3>
           <EntityLink kind="legal_contracts_customer" id={customerId} label="Open Legal Contracts" className="text-xs font-semibold text-slate-700 underline" />
         </div>
         {legalContractsQuery.isError ? <ListErrorState title="Couldn't load this customer's legal contracts" status={0} message={(legalContractsQuery.error as Error)?.message} onRetry={() => void legalContractsQuery.refetch()} /> : null}
@@ -257,7 +257,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
                 {supersedeTarget.effective_date ? ` (effective ${formatDate(supersedeTarget.effective_date)})` : ""}
               </p>
             )}
-            <label className="block text-sm">
+            <label className="block text-xs">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Contract type *</span>
               <select
                 value={meta.contract_type}
@@ -294,7 +294,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
                 />
               </div>
             </div>
-            <label className="block text-sm">
+            <label className="block text-xs">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Notes</span>
               <textarea
                 value={meta.notes}

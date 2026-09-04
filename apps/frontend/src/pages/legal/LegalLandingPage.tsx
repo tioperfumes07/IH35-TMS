@@ -86,7 +86,7 @@ export function LegalLandingPage() {
         <DrillKpiCard size="md" label="Expiring Contracts (60d)" value={metrics.expiringContracts} to="/legal/contracts" />
       </div>
 
-      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-700">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-700">
         <div className="mb-2 font-semibold text-gray-900">Quick Actions</div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="secondary" onClick={() => navigate("/legal/contracts?openSend=1")}>

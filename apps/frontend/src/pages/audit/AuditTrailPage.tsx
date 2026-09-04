@@ -266,7 +266,7 @@ export function AuditTrailPage() {
       {auditEventId ? (
         <section className="rounded-sm border border-slate-300 bg-slate-50 p-3" data-testid="audit-trail-exact-event">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-slate-900">Selected audit event</h2>
+            <h2 className="text-xs font-semibold text-slate-900">Selected audit event</h2>
             <Link className="text-xs font-semibold text-slate-700 underline" to="/audit/trail">Clear event target</Link>
           </div>
           {exactAuditQuery.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading selected audit event…</p> : null}
@@ -304,7 +304,7 @@ export function AuditTrailPage() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Module
             <select
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs normal-case font-normal"
               value={draft.module}
               onChange={(e) => staged.setDraft((d) => ({ ...d, module: e.target.value }))}
             >
@@ -314,7 +314,7 @@ export function AuditTrailPage() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Action / event type
             <input
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs normal-case font-normal"
               value={draft.action}
               onChange={(e) => staged.setDraft((d) => ({ ...d, action: e.target.value }))}
               placeholder="e.g. invoice.created"
@@ -323,7 +323,7 @@ export function AuditTrailPage() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Entity type
             <input
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs normal-case font-normal"
               value={draft.entityType}
               onChange={(e) => staged.setDraft((d) => ({ ...d, entityType: e.target.value }))}
               placeholder="e.g. invoice"
@@ -332,7 +332,7 @@ export function AuditTrailPage() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Entity ID (UUID)
             <input
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs normal-case font-normal font-mono"
               value={draft.entityId}
               onChange={(e) => staged.setDraft((d) => ({ ...d, entityId: e.target.value }))}
               placeholder="uuid"
@@ -341,7 +341,7 @@ export function AuditTrailPage() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Actor user ID
             <input
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs normal-case font-normal font-mono"
               value={draft.actorUserId}
               onChange={(e) => staged.setDraft((d) => ({ ...d, actorUserId: e.target.value }))}
               placeholder="uuid"
@@ -350,7 +350,7 @@ export function AuditTrailPage() {
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Correlation ID
             <input
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal font-mono"
+              className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs normal-case font-normal font-mono"
               value={draft.correlationId}
               onChange={(e) => staged.setDraft((d) => ({ ...d, correlationId: e.target.value }))}
               placeholder="uuid"
@@ -446,7 +446,7 @@ export function AuditTrailPage() {
       </section>
 
       {totalPages > 1 && (
-        <div className="flex items-center gap-3 text-sm">
+        <div className="flex items-center gap-3 text-xs">
           <button type="button" disabled={currentPage <= 1} onClick={() => setOffset((o) => Math.max(0, o - PAGE_SIZE))} className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs disabled:opacity-40 hover:bg-gray-50">← Previous</button>
           <span className="text-xs text-gray-600">Page {currentPage} of {totalPages}</span>
           <button type="button" disabled={currentPage >= totalPages} onClick={() => setOffset((o) => o + PAGE_SIZE)} className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs disabled:opacity-40 hover:bg-gray-50">Next →</button>

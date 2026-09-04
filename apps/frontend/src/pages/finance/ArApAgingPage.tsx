@@ -426,7 +426,7 @@ export function ArApAgingPage() {
       <div className="space-y-4">
         <PageHeader title="AR / AP Aging" subtitle="Accounts receivable & payable aging (read-only)" />
         <FinanceModuleTabs />
-        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-xs text-gray-500">
           AR / AP aging is not yet enabled for this account.
           <p className="mt-1 text-xs text-gray-400">This report is turned on per operating company and isn’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable it, or switch to a company where it’s already on.</p>
         </div>
@@ -496,7 +496,7 @@ export function ArApAgingPage() {
       </p>
 
       {!operatingCompanyId ? (
-        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-xs text-gray-500">
           Select an operating company to view aging.
         </div>
       ) : isError ? (
@@ -538,7 +538,7 @@ export function ArApAgingPage() {
             />
           )}
           {totals && rowCount > 0 && (
-            <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-1 rounded-sm border-t-2 border-gray-300 bg-gray-50 px-3 py-2 text-sm">
+            <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-1 rounded-sm border-t-2 border-gray-300 bg-gray-50 px-3 py-2 text-xs">
               <span className="mr-auto font-semibold text-gray-900">Grand total</span>
               {BUCKET_COLS.map((c) => (
                 <span key={c.key} className="whitespace-nowrap">

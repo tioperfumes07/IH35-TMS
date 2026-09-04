@@ -41,7 +41,7 @@ export function LiveTelemetrySection({
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="vp-live-telemetry">
-      <h3 className="text-sm font-semibold text-gray-800">Live telemetry (Samsara)</h3>
+      <h3 className="text-xs font-semibold text-gray-800">Live telemetry (Samsara)</h3>
       <p className="mt-1 text-xs text-gray-600" data-testid="vp-telemetry-freshness">
         {hasGps
           ? isLive

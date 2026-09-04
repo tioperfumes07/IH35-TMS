@@ -132,13 +132,13 @@ export function AmortizationPage() {
 
   // UI-BACK-BUTTON-MISSING-ENTIRELY: see LoanWizardPage.tsx sibling comment.
   const header = <PageHeader backHref="/finance/overview" title="Amortization" subtitle="Create a loan and generate its amortization schedule. Schedules are stored; posting is a separate step." />;
-  if (flagLoading) return <div className="p-6"><FinanceModuleTabs />{header}<p className="text-sm text-slate-500">Loading…</p></div>;
+  if (flagLoading) return <div className="p-6"><FinanceModuleTabs />{header}<p className="text-xs text-slate-500">Loading…</p></div>;
   if (!enabled)
     return (
       <div className="p-6"><FinanceModuleTabs />{header}
         <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
-          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">Amortization unavailable</div>
-          <p className="px-4 py-3 text-sm text-slate-600">
+          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-medium text-slate-700">Amortization unavailable</div>
+          <p className="px-4 py-3 text-xs text-slate-600">
             Amortization is not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_AMORTIZATION_FLAG}</code> is off.)
           </p>
         </section>
@@ -152,7 +152,7 @@ export function AmortizationPage() {
   // The date field now has its own dedicated dateField() below, using the real shared DatePicker.
   const field = (label: string, key: keyof typeof form, type: "text" | "number" = "text") => (
     <label className="block"><span className="text-xs font-medium text-slate-600">{label}</span>
-      <input type={type} value={form[key]} onChange={set(key)} className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" />
+      <input type={type} value={form[key]} onChange={set(key)} className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs" />
     </label>
   );
   // ACCT-F5314: see LoanWizardPage — same dollars-string-in-form / MoneyInput DOLLARS-mode seam.
@@ -184,7 +184,7 @@ export function AmortizationPage() {
       <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x lg:divide-slate-100">
           <div className="min-w-0">
-            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">New loan</div>
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700">New loan</div>
             <div className="px-4 py-3">
               <div className="grid grid-cols-2 gap-3">
                 {field("Name", "name")}{field("Lender", "lender")}
@@ -195,23 +195,23 @@ export function AmortizationPage() {
                 onClick={onCreate}
                 disabled={busy || !companyId || !formReady}
                 data-testid="amortization-create-button"
-                className="mt-4 rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                className="mt-4 rounded-sm bg-[#1f2a44] px-4 py-2 text-xs font-medium text-white disabled:opacity-50"
               >
                 {busy ? "Generating…" : "Create + generate schedule"}
               </button>
-              {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+              {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
             </div>
           </div>
 
           <div className="min-w-0 border-t border-slate-100 lg:border-t-0">
-            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">Loans</div>
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700">Loans</div>
             <div className="px-4 py-3">
               {loadError ? (
-                <p className="text-sm text-red-600" data-testid="amortization-load-error">{loadError}</p>
+                <p className="text-xs text-red-600" data-testid="amortization-load-error">{loadError}</p>
               ) : null}
-              {!loadError && loans.length === 0 ? <p className="text-sm text-slate-500">No loans yet.</p> : null}
+              {!loadError && loans.length === 0 ? <p className="text-xs text-slate-500">No loans yet.</p> : null}
               {!loadError && loans.length > 0 ? (
-                <ul className="space-y-1 text-sm">
+                <ul className="space-y-1 text-xs">
                   {loans.map((l) => (
                     <li key={l.id}>
                       <button onClick={() => openSchedule(l.id)} className={`w-full text-left rounded-sm px-2 py-1 ${selected === l.id ? "bg-slate-100" : "hover:bg-slate-50"}`}>
@@ -226,9 +226,9 @@ export function AmortizationPage() {
           </div>
 
           <div className="min-w-0 border-t border-slate-100 lg:border-t-0">
-            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">Schedule</div>
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700">Schedule</div>
             <div className="px-4 py-3">
-              {schedule.length === 0 ? <p className="text-sm text-slate-500">Select a loan to view its schedule.</p> : (
+              {schedule.length === 0 ? <p className="text-xs text-slate-500">Select a loan to view its schedule.</p> : (
                 <ParityTable<AmortRow>
                   columns={SCHEDULE_COLUMNS}
                   rows={schedule}

@@ -90,13 +90,13 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
   );
 
   if (!operatingCompanyId) {
-    return <p className="text-sm text-slate-600">Select an operating company to load live duty status.</p>;
+    return <p className="text-xs text-slate-600">Select an operating company to load live duty status.</p>;
   }
 
   return (
     <div className="space-y-3" data-testid="eld-live-duty-tab">
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-        <div className="text-sm font-semibold text-slate-800">Live Duty Status</div>
+        <div className="text-xs font-semibold text-slate-800">Live Duty Status</div>
         <div className="text-[11px] text-slate-500">
           Canonical roster from <code className="text-xs">GET /api/v1/telematics/hos/daily-roster</code> · duty day{" "}
           {date} (America/Chicago). Refreshes every 60s.

@@ -185,7 +185,7 @@ export function LaneProfitabilityPage() {
       <PageHeader title="Lane profitability" subtitle="Corridor P&L heatmap · which lanes to chase or drop" />
       <ReportsSubNav />
 
-      {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select operating company.</p> : null}
 
       <div className="flex flex-wrap items-end gap-3">
         <CollapsedListFilters
@@ -249,7 +249,7 @@ export function LaneProfitabilityPage() {
               </div>
               <div className="border-t border-slate-100 bg-emerald-50 px-4 py-3 md:border-t-0">
                 <div className="text-xs uppercase text-emerald-800">Most profitable lane</div>
-                <div className="text-sm font-semibold text-emerald-900">
+                <div className="text-xs font-semibold text-emerald-900">
                   {query.data.most_profitable_lane
                     ? `${query.data.most_profitable_lane.origin_city}, ${query.data.most_profitable_lane.origin_state} → ${query.data.most_profitable_lane.destination_city}, ${query.data.most_profitable_lane.destination_state}`
                     : "—"}
@@ -260,7 +260,7 @@ export function LaneProfitabilityPage() {
               </div>
               <div className="border-t border-slate-100 bg-rose-50 px-4 py-3 md:border-t-0">
                 <div className="text-xs uppercase text-rose-800">Least profitable lane</div>
-                <div className="text-sm font-semibold text-rose-900">
+                <div className="text-xs font-semibold text-rose-900">
                   {query.data.least_profitable_lane
                     ? `${query.data.least_profitable_lane.origin_city}, ${query.data.least_profitable_lane.origin_state} → ${query.data.least_profitable_lane.destination_city}, ${query.data.least_profitable_lane.destination_state}`
                     : "—"}
@@ -274,7 +274,7 @@ export function LaneProfitabilityPage() {
 
           <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
             <div className="border-b border-slate-200 px-4 py-2">
-              <h2 className="text-sm font-semibold text-slate-900">Profit per mile by lane (top 8)</h2>
+              <h2 className="text-xs font-semibold text-slate-900">Profit per mile by lane (top 8)</h2>
             </div>
             <div className="h-72 p-4">
               <ResponsiveContainer width="100%" height="100%">

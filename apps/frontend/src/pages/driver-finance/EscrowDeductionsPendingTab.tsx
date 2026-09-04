@@ -166,7 +166,7 @@ export function EscrowDeductionsPendingTab() {
       <PageHeader title="Escrow Deductions Pending Review" subtitle="Auto-proposed abandonment deductions requiring Owner decision." />
 
       {!isOwner ? (
-        <div className="rounded-sm border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900">
+        <div className="rounded-sm border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900">
           Owner approval required.
         </div>
       ) : null}
@@ -218,7 +218,7 @@ export function EscrowDeductionsPendingTab() {
       >
         {selected ? (
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm">
+            <div className="space-y-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs">
               <div><span className="font-semibold">Driver:</span> <EntityLink kind="driver" id={selected.driver_id} label={entityLabel(selected.driver_name, selected.driver_id, "Driver")} /></div>
               <div><span className="font-semibold">Load:</span> <EntityLink kind="load" id={selected.load_id} label={entityLabel(selected.load_number, selected.load_id, "Load")} /></div>
               <div><span className="font-semibold">Proposed:</span> {formatMoney(selected.proposed_amount_cents)}</div>
@@ -244,7 +244,7 @@ export function EscrowDeductionsPendingTab() {
 
               <label className="block text-xs font-semibold uppercase text-gray-600">Review Notes</label>
               <textarea
-                className="min-h-28 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                className="min-h-28 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={reviewNotes}
                 onChange={(event) => setReviewNotes(event.target.value)}
                 placeholder="Explain decision..."

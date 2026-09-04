@@ -42,7 +42,7 @@ export function SearchResultItem({ result, active, onSelect }: Props) {
         {result.entity_type}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium text-gray-900">{result.display_text}</span>
+        <span className="block truncate text-xs font-medium text-gray-900">{result.display_text}</span>
         {result.secondary_text ? (
           <span className="block truncate text-xs text-gray-500">{result.secondary_text}</span>
         ) : null}

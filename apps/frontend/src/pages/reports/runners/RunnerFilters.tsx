@@ -85,7 +85,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             type="button"
             onClick={() => onRun(values)}
             disabled={isRunning}
-            className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isRunning ? "Running..." : "Run report"}
           </button>
@@ -115,7 +115,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
               return (
                 <label key={filter.key} className="block">
                   <FilterLabel filter={filter} />
-                  <input type="month" className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(draft[filter.key] ?? "")} onChange={(e) => staged.setDraft({ ...draft, [filter.key]: e.target.value })} />
+                  <input type="month" className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs" value={String(draft[filter.key] ?? "")} onChange={(e) => staged.setDraft({ ...draft, [filter.key]: e.target.value })} />
                 </label>
               );
             }
@@ -130,7 +130,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
                     onChange={(next) => staged.setDraft({ ...draft, [filter.key]: next ?? "" })}
                     enabled={Boolean(selectedCompanyId)}
                     placeholder="Select unit"
-                    className="h-9 w-full text-sm"
+                    className="h-9 w-full text-xs"
                     dataField={`runner-filter-${filter.key}`}
                     allowClear
                     allowCreate={false}
@@ -149,7 +149,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
                     onChange={(next) => staged.setDraft({ ...draft, [filter.key]: next ?? "" })}
                     enabled={Boolean(selectedCompanyId)}
                     placeholder="Search driver…"
-                    className="h-9 w-full text-sm"
+                    className="h-9 w-full text-xs"
                     dataField={`runner-filter-${filter.key}`}
                     allowClear
                     allowCreate={false}
@@ -162,7 +162,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             return (
               <label key={filter.key} className="block">
                 <FilterLabel filter={filter} />
-                <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(draft[filter.key] ?? selectedCompanyId ?? "")} onChange={(e) => staged.setDraft({ ...draft, [filter.key]: e.target.value })}>
+                <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs" value={String(draft[filter.key] ?? selectedCompanyId ?? "")} onChange={(e) => staged.setDraft({ ...draft, [filter.key]: e.target.value })}>
                   {companies.map((company) => (
                     <option key={company.id} value={company.id}>
                       {company.legal_name}
@@ -187,7 +187,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             onRun(draft);
           }}
           disabled={requiredMissing || isRunning}
-          className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isRunning ? "Running..." : "Run report"}
         </button>

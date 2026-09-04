@@ -172,7 +172,7 @@ export function ListView<T>({
   return (
     <div className="flex flex-col h-full">
       {persistError && (
-        <div role="alert" className="flex items-center justify-between gap-3 border-b border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+        <div role="alert" className="flex items-center justify-between gap-3 border-b border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
           <span>{persistError}</span>
           <button type="button" className="font-semibold underline" onClick={retryPersist}>
             Retry save
@@ -180,7 +180,7 @@ export function ListView<T>({
         </div>
       )}
       {widthPersistError && (
-        <div role="alert" data-column-width-save-error={tableId} className="flex items-center justify-between gap-3 border-b border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+        <div role="alert" data-column-width-save-error={tableId} className="flex items-center justify-between gap-3 border-b border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
           <span>Column widths could not be saved. This layout is temporary.</span>
           <button type="button" className="font-semibold underline" onClick={retryWidthPersist}>Retry save</button>
         </div>
@@ -293,7 +293,7 @@ export function ListView<T>({
               <tr>
                 <td
                   colSpan={visibleCols.length + 1}
-                  className="px-4 py-8 text-center text-sm text-gray-400"
+                  className="px-4 py-8 text-center text-xs text-gray-400"
                 >
                   No rows to display
                 </td>

@@ -21,7 +21,7 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
   });
 
   if (!cid) {
-    return <div className="text-sm text-slate-500">Select a company to view weekly revenue.</div>;
+    return <div className="text-xs text-slate-500">Select a company to view weekly revenue.</div>;
   }
 
   if (query.isLoading) {
@@ -43,8 +43,8 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
   if (data.length === 0 || !hasRevenue) {
     return (
       <div className="home-recharts-print w-full">
-        <h3 className="mb-2 text-sm font-semibold text-slate-900">Weekly revenue</h3>
-        <div className="flex h-[240px] items-center justify-center rounded-sm border border-dashed border-slate-200 text-sm text-slate-500">
+        <h3 className="mb-2 text-xs font-semibold text-slate-900">Weekly revenue</h3>
+        <div className="flex h-[240px] items-center justify-center rounded-sm border border-dashed border-slate-200 text-xs text-slate-500">
           No revenue recorded in the last 7 days.
         </div>
       </div>
@@ -53,7 +53,7 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
 
   return (
     <div className="home-recharts-print w-full">
-      <h3 className="mb-2 text-sm font-semibold text-slate-900">Weekly revenue</h3>
+      <h3 className="mb-2 text-xs font-semibold text-slate-900">Weekly revenue</h3>
       <p className="mb-2 text-[11px] text-slate-500">Invoice basis (GL posted available per-day on API)</p>
       <ResponsiveContainer width="100%" height={240}>
         <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>

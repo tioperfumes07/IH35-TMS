@@ -17,7 +17,7 @@ export function PortalLayout() {
           <Link to="/portal/dashboard" className="text-lg font-semibold text-slate-900">
             IH 35 Shipper Portal
           </Link>
-          <nav className="flex items-center gap-3 text-sm">
+          <nav className="flex items-center gap-3 text-xs">
             <Link to="/portal/dashboard" className="text-slate-700 hover:text-slate-900">
               Loads
             </Link>

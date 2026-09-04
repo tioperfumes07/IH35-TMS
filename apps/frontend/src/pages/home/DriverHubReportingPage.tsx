@@ -195,7 +195,7 @@ export function DriverHubReportingPage() {
     enabled: Boolean(companyId) && Boolean(range.from) && Boolean(range.to),
   });
   const data = query.data;
-  const inputCls = "min-h-11 rounded-sm border border-gray-300 px-2 text-sm";
+  const inputCls = "min-h-11 rounded-sm border border-gray-300 px-2 text-xs";
 
   return (
     <div className="space-y-3">
@@ -217,7 +217,7 @@ export function DriverHubReportingPage() {
 
       {!companyId ? (
         <div
-          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700"
+          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700"
           data-testid="driver-hub-reporting-need-company"
         >
           Select an operating company to view driver inbox reporting.
@@ -234,7 +234,7 @@ export function DriverHubReportingPage() {
         <ListErrorBanner onRetry={() => void query.refetch()} />
       ) : null}
       {query.isLoading ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading…</div>
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">Loading…</div>
       ) : query.isError ? (
         <ListErrorState
           title="Could not load reporting."

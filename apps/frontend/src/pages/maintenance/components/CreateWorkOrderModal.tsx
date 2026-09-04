@@ -1081,7 +1081,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     return (
       <Modal open={open} onClose={handleModalClose} title="Work order created" sizePreset="md">
         <div className="space-y-3 text-xs text-sidebar-bg">
-          <p className="text-sm text-gray-700">
+          <p className="text-xs text-gray-700">
             Work order <EntityLink kind="work_order" id={createdWO.uuid} label={entityLabel(createdWO.display_id, createdWO.uuid, "Work order")} className="font-semibold text-slate-700 hover:underline" /> created.
             {createdExpense ? (
               <>

@@ -220,7 +220,7 @@ export function UploadModal({
             const file = event.dataTransfer.files[0];
             if (file) setSelectedFile(file);
           }}
-          className={`rounded-sm border border-dashed p-4 text-center text-sm ${dragOver ? "border-slate-300 bg-slate-100" : "border-gray-300 bg-gray-50"}`}
+          className={`rounded-sm border border-dashed p-4 text-center text-xs ${dragOver ? "border-slate-300 bg-slate-100" : "border-gray-300 bg-gray-50"}`}
         >
           <p className="font-medium text-gray-700">Drag and drop file here</p>
           <p className="text-xs text-gray-500">or click to browse</p>
@@ -318,7 +318,7 @@ export function UploadModal({
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             rows={3}
-            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-sm"
+            className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
           />
         </div>
 

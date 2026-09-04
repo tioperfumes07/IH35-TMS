@@ -211,7 +211,7 @@ export function TripPairingBoardPage() {
     return (
       <div
         data-testid="dispatch-trip-pairing-need-company"
-        className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+        className="rounded-sm border bg-white p-4 text-xs text-slate-600"
       >
         Select an operating company to load the trip pairing board.
       </div>
@@ -296,7 +296,7 @@ export function TripPairingBoardPage() {
           <option>Flatbed</option>
         </select>
         <input
-          className="h-9 w-56 rounded-sm border border-slate-300 px-2 text-sm"
+          className="h-9 w-56 rounded-sm border border-slate-300 px-2 text-xs"
           placeholder="Search unit or driver…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -317,7 +317,7 @@ export function TripPairingBoardPage() {
       </div>
 
       {query.isLoading ? (
-        <div className="px-3 py-6 text-sm text-slate-500">Loading board…</div>
+        <div className="px-3 py-6 text-xs text-slate-500">Loading board…</div>
       ) : query.isError ? (
         <ListErrorBanner
           message={userFacingApiError(query.error, "Could not load trip pairing board")}
@@ -326,7 +326,7 @@ export function TripPairingBoardPage() {
       ) : tours.length === 0 && unbooked.length === 0 ? (
         <div
           data-testid="dispatch-trip-pairing-honest-empty"
-          className="rounded-sm border bg-white px-3 py-6 text-center text-sm text-slate-500"
+          className="rounded-sm border bg-white px-3 py-6 text-center text-xs text-slate-500"
         >
           No tours or unbooked units for this company on the trip pairing board. Assign units/drivers
           and book northbound loads — rows appear once the board feed returns tours or an unbooked pool.

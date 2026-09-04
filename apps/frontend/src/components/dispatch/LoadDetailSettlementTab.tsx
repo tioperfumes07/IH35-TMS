@@ -49,14 +49,14 @@ function statusBadge(status: string) {
 function LegRow({ label, leg, isCurrent }: { label: string; leg: SettlementLeg | null; isCurrent: boolean }) {
   if (!leg) {
     return (
-      <div className="flex items-center gap-2 text-sm text-gray-400">
+      <div className="flex items-center gap-2 text-xs text-gray-400">
         <span className="w-5 text-xs font-bold text-gray-400">{label}</span>
         <span className="text-xs italic">No load linked yet</span>
       </div>
     );
   }
   return (
-    <div className="flex items-center gap-2 text-sm">
+    <div className="flex items-center gap-2 text-xs">
       <span className={`w-5 text-xs font-bold ${isCurrent ? "text-slate-700" : "text-gray-500"}`}>{label}</span>
       <EntityLinkOrTombstone kind="load" id={leg.load_id} name={leg.load_number} noun="Load" className={`font-mono text-xs ${isCurrent ? "font-bold text-slate-700" : "text-gray-700"}`} />
       {isCurrent && (
@@ -78,12 +78,12 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
   });
 
   if (query.isLoading) {
-    return <div className="py-8 text-center text-sm text-gray-500">Loading settlement info…</div>;
+    return <div className="py-8 text-center text-xs text-gray-500">Loading settlement info…</div>;
   }
 
   if (query.error) {
     return (
-      <div className="rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      <div className="rounded-sm border border-red-200 bg-red-50 p-4 text-xs text-red-700">
         Failed to load settlement data.
       </div>
     );
@@ -93,7 +93,7 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
 
   if (!settlement) {
     return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-500">
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-center text-xs text-gray-500">
         No settlement or pre-settlement found for this load.
         <div className="mt-1 text-xs text-gray-400">
           A pre-settlement is created automatically when the driver delivers the northbound leg.
@@ -147,7 +147,7 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
       </div>
 
       {/* Pay summary */}
-      <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm">
+      <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs">
         <div>
           <div className="text-xs text-gray-500">Gross pay</div>
           <div className="font-semibold text-gray-900">{formatMoneyDollars(settlement.gross_pay, currencyCode)}</div>

@@ -40,7 +40,7 @@ export function AnomalyAlertsPage() {
         <button
           type="button"
           onClick={() => setTab("alerts")}
-          className={`rounded px-3 py-1.5 text-sm font-medium ${tab === "alerts" ? "bg-slate-100 text-slate-700" : "text-gray-700 hover:bg-gray-100"}`}
+          className={`rounded px-3 py-1.5 text-xs font-medium ${tab === "alerts" ? "bg-slate-100 text-slate-700" : "text-gray-700 hover:bg-gray-100"}`}
         >
           Alerts
         </button>
@@ -48,7 +48,7 @@ export function AnomalyAlertsPage() {
           <button
             type="button"
             onClick={() => setTab("rules")}
-            className={`rounded px-3 py-1.5 text-sm font-medium ${tab === "rules" ? "bg-slate-100 text-slate-700" : "text-gray-700 hover:bg-gray-100"}`}
+            className={`rounded px-3 py-1.5 text-xs font-medium ${tab === "rules" ? "bg-slate-100 text-slate-700" : "text-gray-700 hover:bg-gray-100"}`}
           >
             Rules
           </button>

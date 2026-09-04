@@ -33,7 +33,7 @@ export function UnitTaxFilingsReverseSection({ operatingCompanyId, unitId }: { o
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-tax-filings-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">Tax filings</h3>
+        <h3 className="text-xs font-semibold text-slate-900">Tax filings</h3>
         <EntityLink
           kind="property_tax_unit"
           id={unitId}

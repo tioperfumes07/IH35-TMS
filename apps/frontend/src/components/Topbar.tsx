@@ -247,7 +247,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
 
       {/* Same reason as the left column: without min-w-0 this item cannot shrink and the action
           buttons collide with the centre status bar at narrow widths. */}
-      <div className="relative flex min-w-0 flex-wrap items-center justify-end gap-2 text-sm text-gray-700">
+      <div className="relative flex min-w-0 flex-wrap items-center justify-end gap-2 text-xs text-gray-700">
         {office ? (
           <div ref={createMenuRef} className="relative">
             <button
@@ -277,7 +277,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
                   <button
                     key={to}
                     type="button"
-                    className="block w-full px-4 py-2 text-left text-sm text-gray-800 hover:bg-gray-50"
+                    className="block w-full px-4 py-2 text-left text-xs text-gray-800 hover:bg-gray-50"
                     onClick={() => { setCreateOpen(false); navigate(to); }}
                   >
                     {label}

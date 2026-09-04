@@ -72,7 +72,7 @@ export function DriverHosDetailPage() {
       ) : null}
 
       {!operatingCompanyId ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm text-slate-700">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs text-slate-700">
           Select an operating company to view HOS details.
         </div>
       ) : null}
@@ -105,7 +105,7 @@ export function DriverHosDetailPage() {
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <h2 className="text-sm font-semibold text-gray-900">24-hour duty status timeline</h2>
+            <h2 className="text-xs font-semibold text-gray-900">24-hour duty status timeline</h2>
             <div className="mt-2 space-y-1">
               {hosQuery.data.timeline_24h.map((event) => (
                 <div key={event.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-100 bg-gray-50 px-2 py-1 text-xs">
@@ -126,7 +126,7 @@ export function DriverHosDetailPage() {
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <h2 className="text-sm font-semibold text-gray-900">Last 8 days summary</h2>
+            <h2 className="text-xs font-semibold text-gray-900">Last 8 days summary</h2>
             <div className="mt-2 space-y-1">
               {hosQuery.data.summary_8d.map((row) => (
                 <div key={`${row.service_day}-${row.duty_status}`} className="flex items-center justify-between rounded-sm border border-gray-100 bg-gray-50 px-2 py-1 text-xs">
@@ -139,7 +139,7 @@ export function DriverHosDetailPage() {
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <h2 className="text-sm font-semibold text-gray-900">Manual edit audit</h2>
+            <h2 className="text-xs font-semibold text-gray-900">Manual edit audit</h2>
             <p className="mt-1 text-xs text-gray-600">
               Manual edits require supervisor sign-off. Current count: {hosQuery.data.manual_edits.count}
             </p>
@@ -158,7 +158,7 @@ export function DriverHosDetailPage() {
         </>
       ) : null}
 
-      {hosQuery.isLoading ? <div className="text-sm text-gray-500">Loading HOS details...</div> : null}
+      {hosQuery.isLoading ? <div className="text-xs text-gray-500">Loading HOS details...</div> : null}
       {hosQuery.isError ? (
         <ListErrorState
           title="Couldn't load HOS details"

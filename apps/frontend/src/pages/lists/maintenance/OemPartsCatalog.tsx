@@ -97,7 +97,7 @@ function OemPartsCreateModal({
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title="Create OEM Part Template">
       <div className="space-y-3">
-        <label className="block text-sm">
+        <label className="block text-xs">
           Brand
           <input
             value={form.brand}
@@ -105,7 +105,7 @@ function OemPartsCreateModal({
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
           />
         </label>
-        <label className="block text-sm">
+        <label className="block text-xs">
           OEM Part #
           <input
             value={form.oem_part_number ?? ""}
@@ -113,7 +113,7 @@ function OemPartsCreateModal({
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
           />
         </label>
-        <label className="block text-sm">
+        <label className="block text-xs">
           Name
           <input
             value={form.part_name}
@@ -121,7 +121,7 @@ function OemPartsCreateModal({
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
           />
         </label>
-        <label className="block text-sm">
+        <label className="block text-xs">
           Category
           <SelectCombobox
             value={form.category}
@@ -135,7 +135,7 @@ function OemPartsCreateModal({
             ))}
           </SelectCombobox>
         </label>
-        <label className="block text-sm">
+        <label className="block text-xs">
           Default Supplier
           <input
             value={form.default_supplier ?? ""}
@@ -143,7 +143,7 @@ function OemPartsCreateModal({
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
           />
         </label>
-        {error ? <div className="text-sm text-red-600">{error}</div> : null}
+        {error ? <div className="text-xs text-red-600">{error}</div> : null}
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>
             Cancel
@@ -213,11 +213,11 @@ export function OemPartsCatalog() {
         actions={<Button onClick={() => setModalOpen(true)}>+ Create</Button>}
       />
 
-      <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700">
+      <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-700">
         {total} OEM part templates · {brandCount} brands · {fleetCount} in your fleet
       </div>
 
-      <p className="text-sm text-slate-600">
+      <p className="text-xs text-slate-600">
         Universal OEM part templates (world knowledge). This is not company parts inventory — use Maintenance Parts for stocked items.
       </p>
 
@@ -225,11 +225,11 @@ export function OemPartsCatalog() {
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
         {/* MAINT-F3508: server-bound OEM search (q) — keep; ParityTable toolbar Search suppressed */}
-        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search name or part #" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
+        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search name or part #" className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
         <SelectCombobox
           value={brandFilter}
           onChange={(event) => setBrandFilter(event.target.value)}
-          className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
         >
           <option value="">All brands</option>
           {brandOptions.map((brand) => (
@@ -241,7 +241,7 @@ export function OemPartsCatalog() {
         <SelectCombobox
           value={categoryFilter}
           onChange={(event) => setCategoryFilter(event.target.value)}
-          className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+          className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
         >
           <option value="">All categories</option>
           {OEM_PART_CATEGORIES.map((category) => (
@@ -252,7 +252,7 @@ export function OemPartsCatalog() {
         </SelectCombobox>
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-slate-700">
+      <label className="flex items-center gap-2 text-xs text-slate-700">
         <input type="checkbox" checked={fleetOnly} onChange={(event) => setFleetOnly(event.target.checked)} />
         Fleet brands only (from trucks, trailers, and reefers in your fleet)
       </label>

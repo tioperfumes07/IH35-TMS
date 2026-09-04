@@ -84,7 +84,7 @@ export function QuickAssignModal({ open, companyId, target, onClose, onConfirm }
           onChange={(next) => setDriverId(next ?? "")}
           open={open}
           placeholder="Select driver…"
-          className="h-9 w-full text-sm"
+          className="h-9 w-full text-xs"
           allowClear={false}
           // Standalone Modal chrome → default shell="modal".
         />

@@ -20,12 +20,12 @@ export function DriverHosViolationsReverseSection({ operatingCompanyId, driverId
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3">
-      <h3 className="text-sm font-semibold text-gray-800">HOS violations{total ? ` (${total})` : ""}</h3>
+      <h3 className="text-xs font-semibold text-gray-800">HOS violations{total ? ` (${total})` : ""}</h3>
       {query.isError ? <ListErrorState status={0} message="HOS violations could not be loaded." onRetry={() => void query.refetch()} /> : null}
-      {query.isLoading ? <p className="mt-2 text-sm text-gray-500">Loading HOS violations…</p> : null}
-      {!query.isLoading && !query.isError && violations.length === 0 ? <p className="mt-2 text-sm text-gray-500">No HOS violations are linked to this driver.</p> : null}
+      {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading HOS violations…</p> : null}
+      {!query.isLoading && !query.isError && violations.length === 0 ? <p className="mt-2 text-xs text-gray-500">No HOS violations are linked to this driver.</p> : null}
       <div className="mt-2 space-y-2">
-        {violations.map((row) => <div key={String(row.id)} className="text-sm"><span className="font-medium">{String(row.violation_type)}</span> · {new Date(String(row.occurred_at)).toLocaleString()}{row.related_load_id ? <> · <EntityLink kind="load" id={String(row.related_load_id)} label={entityLabel(row.related_load_number, row.related_load_id, "Load")} /></> : null}</div>)}
+        {violations.map((row) => <div key={String(row.id)} className="text-xs"><span className="font-medium">{String(row.violation_type)}</span> · {new Date(String(row.occurred_at)).toLocaleString()}{row.related_load_id ? <> · <EntityLink kind="load" id={String(row.related_load_id)} label={entityLabel(row.related_load_number, row.related_load_id, "Load")} /></> : null}</div>)}
       </div>
       {!query.isError && total > pageSize ? <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid="driver-hos-violations-reverse-pager">
         <Button size="sm" variant="secondary" disabled={page <= 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous violations</Button>

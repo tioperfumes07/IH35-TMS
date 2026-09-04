@@ -15,7 +15,7 @@ export function MergeExportTab({ company, month, year, canGenerate, generating, 
   return (
     <div className="space-y-3 p-4">
       <div className="rounded-sm border bg-white p-4">
-        <div className="text-sm font-semibold text-slate-800">Build Complete Report Package</div>
+        <div className="text-xs font-semibold text-slate-800">Build Complete Report Package</div>
         <p className="mt-2 text-xs text-slate-600">
           Prints the current MOR without changing status or writing a filing PDF. Use{" "}
           <strong>Generate PDF</strong> on Form 425C to create the court artifact and mark ready to
@@ -41,7 +41,7 @@ export function MergeExportTab({ company, month, year, canGenerate, generating, 
           type="button"
           onClick={onGenerate}
           disabled={generating}
-          className="mt-3 rounded-sm bg-slate-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className="mt-3 rounded-sm bg-slate-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
         >
           {generating ? "Generating..." : "Generate Filing HTML + Print PDF"}
         </button>

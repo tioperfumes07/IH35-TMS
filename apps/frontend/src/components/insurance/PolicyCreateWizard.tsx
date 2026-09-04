@@ -327,7 +327,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
 
   return (
     <ParityDrawer open={open} onClose={guardedOnClose} title={title} size="wide">
-      <div className="space-y-4 text-sm">
+      <div className="space-y-4 text-xs">
         <StepIndicator current={step} total={4} />
 
         {serverError ? (

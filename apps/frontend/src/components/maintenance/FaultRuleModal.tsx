@@ -59,7 +59,7 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
         </div>
       }
     >
-      <div className="space-y-3 text-sm">
+      <div className="space-y-3 text-xs">
         <label className="block">
           <span className="text-gray-600">Fault code</span>
           <input
