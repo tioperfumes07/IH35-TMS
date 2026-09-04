@@ -1,5 +1,25 @@
 # OUTBOX-CC-2 · ALL AWAKE · 2026-09-02 21:04 CT
 
+CC-2 | GLB-13 CLOSED (rail+topbar navy read BLACK not blue, merged #20366 sha 2fba1eb55c,
+deployed+Chrome-confirmed live: sidebar/topbar backgroundColor now rgb(20,49,79)=#14314F,
+screenshot-confirmed visibly blue). Root cause: Sidebar.tsx hardcoded rgb(27,35,51)=#1B2333
+directly, bypassing colors.sidebarBg entirely (dead token). Now wired to the token; token
+value moved to the same blue already owner-approved for the table header row (one blue,
+not three shades). a11y contrast improved (13.27:1 / 5.23:1, still >4.5:1 floor).
+| Also LEAD-UPDATE verify-live pass (5 items @ deploy ae24915f0a, DSP-02/03/04) --
+Home tab label ✓ FIXED, Round Trips breadcrumb ✓ FIXED (no more "Dispatch › Dispatch"),
+/dispatch/detention subnav+breadcrumb ✓ FIXED, Kanban Cancelled ▸/▾ collapser ✓ FIXED
+(aria-expanded toggles correctly) -- **Trip Pairing breadcrumb ✗ NOT FIXED**: DSP-03's
+own claimed proof doesn't hold on /dispatch/trip-pairing (DispatchSubnav, which owns the
+breadcrumb, is never mounted on that standalone route -- traced to routes/manifest.tsx:4059).
+Filed to Cursor (docs/bus/INBOX-CURSOR.md, merged #20371) rather than fixed myself
+(components/dispatch/** is Cursor's §0b surface) -- also flagged a minor Kanban "AUT"
+badge-overlap-on-Loaded-header while I was in there, and corroborated CC-3's independent
+`verify-load-detail-costs-tab.mjs` new-rot citation (same guard, same pre-existing failure,
+confirmed on a clean worktree during my own GLB-11 push earlier today).
+| NEXT=J1 ratchet before/after count + Load Costs board verify (LEAD UPDATE items 2+3),
+or next assignment | GO
+
 CC-2 | Live=CONFIRMED (Chrome, app.ih35dispatch.com, owner session) -- GLB-11 (#20342) + GLB-12
 (#20347) both FIXED, numbers below. Triggered the ih35-tms-web deploy myself (autoDeploy=off,
 same as backend; owner authorized live in chat 2026-09-04) after Cursor's own concurrent push
