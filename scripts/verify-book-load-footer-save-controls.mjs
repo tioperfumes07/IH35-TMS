@@ -1,0 +1,97 @@
+#!/usr/bin/env node
+// WIZ-49 — Book Load / Edit Load footer save controls guard.
+//
+// Locks the three additive footer affordances the owner ordered, so they can never silently
+// regress:
+//   a) QuickBooks-style split Save (SaveDropdown) with "Save and close" + "Save and print" wired.
+//   b) A Print control wired to the ONE existing dispatch-sheet PDF path (openPrintableDocument on
+//      /dispatch/loads/:id/dispatch-sheet.html) — never a new PDF path.
+//   c) An in-modal, aria-live save-confirmation banner (the page-level toast renders behind the
+//      wizard, so the operator inside it never sees it).
+//   d) "Save and send" must NOT be wired to a real send yet — it carries a pending-ruling reason
+//      (WIZ-49d) instead, so it is a visible-but-disabled affordance, not a dead no-op.
+//
+// Exit 1 on any missing contract; exit 0 when all hold.
+
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const root = resolve(here, "..");
+const MODAL = resolve(root, "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx");
+const DROPDOWN = resolve(root, "apps/frontend/src/components/forms/SaveDropdown.tsx");
+
+const errors = [];
+function must(cond, msg) {
+  if (!cond) errors.push(msg);
+}
+
+let modal;
+let dropdown;
+try {
+  modal = readFileSync(MODAL, "utf8");
+} catch {
+  console.error(`E_NO_MODAL: cannot read ${MODAL}`);
+  process.exit(1);
+}
+try {
+  dropdown = readFileSync(DROPDOWN, "utf8");
+} catch {
+  console.error(`E_NO_DROPDOWN: cannot read ${DROPDOWN}`);
+  process.exit(1);
+}
+
+// (a) split Save
+must(/import\s+\{\s*SaveDropdown\s*\}/.test(modal), "MISSING: BookLoadModalV4 must import SaveDropdown");
+must(/<SaveDropdown\b/.test(modal), "MISSING: footer must render <SaveDropdown> (QuickBooks split save)");
+must(/onSaveAndClose=\{/.test(modal), "MISSING: SaveDropdown must wire onSaveAndClose (owner named 'Save and close')");
+must(/onSaveAndPrint=\{/.test(modal), "MISSING: SaveDropdown must wire onSaveAndPrint");
+
+// (b) Print → existing dispatch-sheet path, no new PDF route
+must(
+  /import\s+\{\s*openPrintableDocument\s*\}/.test(modal),
+  "MISSING: BookLoadModalV4 must import openPrintableDocument (reuse the existing print path)"
+);
+must(
+  /dispatch\/loads\/\$\{encodeURIComponent\([^)]*\)\}\/dispatch-sheet\.html/.test(modal),
+  "MISSING: Print must target the existing /dispatch/loads/:id/dispatch-sheet.html path — no new PDF path"
+);
+must(
+  /data-testid="book-load-print-dispatch-sheet"/.test(modal),
+  "MISSING: footer must render the standalone Print control (data-testid book-load-print-dispatch-sheet)"
+);
+
+// (c) in-modal confirmation
+must(
+  /data-testid="book-load-save-confirmation-banner"/.test(modal),
+  "MISSING: an in-modal save-confirmation banner (data-testid book-load-save-confirmation-banner)"
+);
+must(
+  /book-load-save-confirmation-banner"[\s\S]{0,200}aria-live=/.test(modal),
+  "MISSING: the in-modal save banner must be aria-live so it is announced inside the modal"
+);
+
+// (d) Save and send is filed, not built
+must(
+  /saveAndSendDisabledReason=/.test(modal),
+  "MISSING: 'Save and send' must be a disabled affordance with a pending-ruling reason (WIZ-49d), not wired"
+);
+must(
+  !/onSaveAndSend=\{/.test(modal),
+  "FORBIDDEN: onSaveAndSend must NOT be wired yet — the send is on owner hold (WIZ-49d)"
+);
+
+// SaveDropdown must actually support the disabled 'Save and send' contract.
+must(
+  /saveAndSendDisabledReason/.test(dropdown),
+  "MISSING: SaveDropdown must support saveAndSendDisabledReason (disabled 'Save and send' placeholder)"
+);
+
+if (errors.length) {
+  console.error("verify-book-load-footer-save-controls: FAIL");
+  for (const e of errors) console.error("  - " + e);
+  process.exit(1);
+}
+console.log("verify-book-load-footer-save-controls: PASS (split save + print + in-modal ack; send filed WIZ-49d)");
+process.exit(0);

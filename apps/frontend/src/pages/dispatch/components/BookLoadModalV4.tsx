@@ -50,6 +50,8 @@ import { MilesInvertAckDialog } from "./book-load-v4/MilesInvertAckDialog";
 import { milesUntrustworthyFlags } from "./book-load-v4/miles-invert";
 import { LoadSaveProofPanel } from "./book-load-v4/LoadSaveProofPanel";
 import type { LoadSaveProof } from "./book-load-v4/load-save-proof-types";
+import { SaveDropdown } from "../../../components/forms/SaveDropdown";
+import { openPrintableDocument } from "../../../lib/openPrintableDocument";
 import { OcrDropZone } from "./book-load-v4/OcrDropZone";
 import { RateConUploadPanel } from "./book-load-v4/RateConUploadPanel";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
@@ -325,6 +327,10 @@ export function BookLoadModalV4({
   const [saveAck, setSaveAck] = useState<{ id: string; loadNumber: string; summary: string } | null>(null);
   const [showMilesInvertAck, setShowMilesInvertAck] = useState(false);
   const milesInvertAckedLaneRef = useRef<string | null>(null);
+  // WIZ-49a — QuickBooks-style split save: the caret action chosen for the in-flight submit. Read in
+  // submitLoad's success branches (applyPostSaveIntent) so "Save and close" / "Save and print" resolve
+  // AFTER the save actually succeeds — never before, so a failed save never closes or prints a stale id.
+  const pendingSaveActionRef = useRef<"default" | "close" | "print">("default");
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -966,6 +972,57 @@ export function BookLoadModalV4({
     [form, isEditMode, pushToast]
   );
 
+  // WIZ-49b — Print reuses the ONE existing dispatch-sheet route (LoadDetailDrawer prints the same
+  // path). No new PDF path. The dispatch sheet is the revenue-omitted driver document (industry
+  // standard: Axele/EZ-Loader/Alvys separate it from the rate confirmation that carries the rate).
+  const printDispatchSheet = useCallback(
+    (loadId: string) => {
+      if (!loadId) return;
+      openPrintableDocument(
+        `/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/dispatch-sheet.html?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+      );
+    },
+    [operatingCompanyId]
+  );
+
+  // WIZ-49a — resolve the caret action AFTER a save succeeds. Returns true when it fully handled the
+  // post-save UX (so the caller must NOT also render the lingering ack panel).
+  function applyPostSaveIntent(id: string, label: string): boolean {
+    const intent = pendingSaveActionRef.current;
+    pendingSaveActionRef.current = "default";
+    if (intent === "close") {
+      setSaveAck(null);
+      setSaveProof(null);
+      setSaveProofCreated(null);
+      onCreated({ id, label });
+      onClose();
+      return true;
+    }
+    if (intent === "print") {
+      printDispatchSheet(id);
+    }
+    return false;
+  }
+
+  // WIZ-49a — the exact submit path the form's onSubmit runs (book + dispatch / save changes), callable
+  // from the split-save caret so every caret action funnels through the ONE validated submit.
+  const runPrimarySubmit = () => {
+    if (isEditMode && !editLoad) {
+      setSubmitErrorMessage("Load details must finish loading before changes can be saved.");
+      return;
+    }
+    void form.handleSubmit(async (values) => {
+      const hasRowOverrides = Object.keys(blockOverridesRef.current).length > 0;
+      await submitLoad(values, "book_dispatch", { override: hasRowOverrides });
+    }, onInvalidSubmit)();
+  };
+
+  // WIZ-49b — the id whose dispatch sheet can be printed: an existing load in Edit mode, or the load
+  // this session just created (Book mode). Null before a Book save → Print is disabled with a reason.
+  const persistedLoadIdForPrint = isEditMode
+    ? editLoadId ?? null
+    : saveAck?.id ?? saveProofCreated?.id ?? null;
+
   async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
     if (submitInFlightRef.current) return;
     submitInFlightRef.current = true;
@@ -1058,6 +1115,7 @@ export function BookLoadModalV4({
         if (mint?.outcome === "skipped_no_pay_rate") {
           pushToast(driverBillMintSkippedMessage("updated", mint.missing), "info");
         }
+        if (applyPostSaveIntent(editLoadId, loadNumber)) return;
         setSaveAck({
           id: editLoadId,
           loadNumber,
@@ -1341,11 +1399,13 @@ export function BookLoadModalV4({
       }
       const proof = (payload as { save_proof?: LoadSaveProof }).save_proof;
       if (proof && createdId) {
+        if (applyPostSaveIntent(createdId, createdLabel || createdId)) return;
         setSaveProof(proof);
         setSaveProofCreated({ id: createdId, label: createdLabel });
         return;
       }
       if (createdId) {
+        if (applyPostSaveIntent(createdId, createdLabel || createdId)) return;
         setSaveAck({
           id: createdId,
           loadNumber: createdLabel || createdId,
@@ -1523,6 +1583,45 @@ export function BookLoadModalV4({
             }, onInvalidSubmit)(event);
           }}
         >
+          {/* WIZ-49c — save confirmation INSIDE the modal. The page-level toast renders behind the
+              wizard, so an operator working inside it never sees "Load N is saved." This sticky,
+              aria-live banner pins the confirmation to the top of the modal body (and offers Open /
+              Print / Continue) so the save is acknowledged where the operator is actually looking. */}
+          {saveAck ? (
+            <div
+              className="sticky top-0 z-20 border-b border-[#16A34A] bg-[#ecfdf3] px-3 py-2"
+              data-testid="book-load-save-confirmation-banner"
+              role="status"
+              aria-live="polite"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs font-semibold text-[#166534]">
+                  Load {saveAck.loadNumber} is saved.
+                </p>
+                <div className="flex items-center gap-3">
+                  <EntityLink kind="load" id={saveAck.id} label={saveAck.loadNumber || "Open load"} />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => printDispatchSheet(saveAck.id)}
+                  >
+                    Print
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      const ack = saveAck;
+                      setSaveAck(null);
+                      onCreated({ id: ack.id, label: ack.loadNumber });
+                      onClose();
+                    }}
+                  >
+                    Continue
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : null}
           {isEditMode && editLoadQuery.isError ? (
             <div className="mx-3 mt-2">
               <ListErrorBanner message="Could not load persisted load details." onRetry={() => void editLoadQuery.refetch()} />
@@ -2505,8 +2604,31 @@ export function BookLoadModalV4({
                   Save draft
                 </Button>
               )}
+              {/* WIZ-49b — Print the dispatch sheet (driver copy; rate hidden). Reuses the ONE existing
+                  /dispatch/loads/:id/dispatch-sheet.html path (same as Load Detail). Disabled with a
+                  reason until the load has been saved once, so it is never a silent no-op. */}
               <Button
-                type="submit"
+                type="button"
+                variant="secondary"
+                data-testid="book-load-print-dispatch-sheet"
+                disabled={!persistedLoadIdForPrint}
+                title={
+                  persistedLoadIdForPrint
+                    ? "Print the dispatch sheet (driver copy — customer rate hidden)"
+                    : "Save the load first, then print the dispatch sheet"
+                }
+                onClick={() => {
+                  if (persistedLoadIdForPrint) printDispatchSheet(persistedLoadIdForPrint);
+                }}
+              >
+                Print
+              </Button>
+              {/* WIZ-49a — QuickBooks-style split save: primary action + caret (Save and close /
+                  Save and print / Save and send). "Save and send" is intentionally disabled pending
+                  the owner ruling (WIZ-49d) on rate confirmation vs dispatch sheet. */}
+              <SaveDropdown
+                storageKey={isEditMode ? "book-load-edit" : "book-load-new"}
+                loading={form.formState.isSubmitting}
                 disabled={
                   form.formState.isSubmitting || (isEditMode && !editLoad) ||
                   repairBlockSubmitBlocked ||
@@ -2514,15 +2636,35 @@ export function BookLoadModalV4({
                   (!isEditMode && preDispatch.remainingBlockers > 0) ||
                   (creditLimitBlock != null && (!canOverrideCreditLimit || !overrideCreditLimit))
                 }
-              >
-                {isEditMode
-                  ? "Save changes"
-                  : preDispatch.remainingBlockers > 0
-                    ? "Override & dispatch"
-                    : repairBlockSubmitBlocked
-                      ? "Resolve blocker to dispatch"
-                      : "Book + dispatch"}
-              </Button>
+                title={
+                  repairBlockSubmitBlocked
+                    ? "Resolve or override the unit blocker above before dispatching"
+                    : preDispatch.hasUnackedInsScheduleConfirm
+                      ? "Acknowledge the insurance schedule confirmation above"
+                      : creditLimitBlock != null && (!canOverrideCreditLimit || !overrideCreditLimit)
+                        ? "Customer over credit limit — override required above"
+                        : "Complete the required fields to save"
+                }
+                primaryLabel={
+                  isEditMode
+                    ? "Save changes"
+                    : preDispatch.remainingBlockers > 0
+                      ? "Override & dispatch"
+                      : repairBlockSubmitBlocked
+                        ? "Resolve blocker to dispatch"
+                        : "Book + dispatch"
+                }
+                onSave={runPrimarySubmit}
+                onSaveAndClose={() => {
+                  pendingSaveActionRef.current = "close";
+                  runPrimarySubmit();
+                }}
+                onSaveAndPrint={() => {
+                  pendingSaveActionRef.current = "print";
+                  runPrimarySubmit();
+                }}
+                saveAndSendDisabledReason="Pending owner ruling (WIZ-49d): send the rate confirmation (shows the customer rate) or the dispatch sheet (rate hidden) to the driver — not built until the owner decides what is sent."
+              />
             </div>
           </div>
           <div className="border-t border-gray-100 px-3 py-1 text-right text-xs text-gray-500">
