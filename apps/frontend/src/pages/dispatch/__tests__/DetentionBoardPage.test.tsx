@@ -31,6 +31,8 @@ vi.mock("../../../api/dispatch", () => ({
         driver_name: "Pat Driver",
         unit_number: "T-101",
         status: "accruing",
+        operational_state: "active",
+        billing_state: "unbilled_receivable",
         started_at: new Date(Date.now() - 90 * 60_000).toISOString(),
         billable_minutes: 30,
         live_accrued_amount_cents: 2500,
@@ -81,7 +83,9 @@ describe("DetentionBoardPage (B21-D5)", () => {
     wrap(<DetentionBoardPage />);
     expect(await screen.findByText("Sync from arrivals")).toBeTruthy();
     expect(await screen.findByText("Stop accrual")).toBeTruthy();
-    expect(screen.getByText("Accrual")).toBeTruthy();
+    // Detention-status badge for an accruing event renders operationalStateLabel("active")
+    // === "Accruing" (the prior "Accrual" assertion was a stale typo that never matched).
+    expect(screen.getByText("Accruing")).toBeTruthy();
   });
 
   it("submits immutable company and event variables to detention writes", async () => {
