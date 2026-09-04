@@ -698,7 +698,7 @@
       "purpose": "company_settlements WORM — trg_worm_refuse_delete on accounting.company_settlements + accounting.company_settlement_driver_settlements (ratchet 91->93)"
     },
     "202613640001": {
-      "claimed_by": "codex",
+      "claimed_by": "claude",
       "claimed_at": "2026-09-04",
       "purpose": "FLT-08 unit evidence categories — seed registration, IFTA, Form 2290 and title document types for the canonical shared uploader; require expiry where compliance is date-bound"
     }
