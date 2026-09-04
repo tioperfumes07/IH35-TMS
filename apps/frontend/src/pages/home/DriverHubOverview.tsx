@@ -148,7 +148,7 @@ export function DriverHubOverview({ companyId, canReview }: { companyId: string;
               className="rounded-sm border border-[#e5e7eb] bg-white p-3 shadow-xs transition hover:border-slate-300 hover:shadow-sm"
             >
               <div className="text-[11px] font-semibold uppercase tracking-[0.25px] text-[#6B7280]">{card.title}</div>
-              <div className={`mt-1 text-2xl font-bold tabular-nums ${card.isError ? "text-red-700" : "text-[#1A1F36]"}`}>
+              <div className={`mt-1 text-page-title font-bold tabular-nums ${card.isError ? "text-red-700" : "text-[#1A1F36]"}`}>
                 {formatCount(card.count, card.isError)}
               </div>
               <p className="mt-1 text-[11px] text-[#8A92AB]">{card.subtitle}</p>

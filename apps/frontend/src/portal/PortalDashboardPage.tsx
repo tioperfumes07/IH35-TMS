@@ -67,7 +67,7 @@ export function PortalDashboardPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Your loads</h1>
+        <h1 className="text-page-title font-semibold text-slate-900">Your loads</h1>
         <p className="text-xs text-slate-600">Active and recent shipments for your account.</p>
       </div>
 

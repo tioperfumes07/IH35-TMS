@@ -336,7 +336,7 @@ export function CreditMemosPage() {
           </div>
         }
       >
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           <QboDocumentNumberField
             label="Credit memo no."
             value={createDisplayId}
@@ -428,7 +428,7 @@ export function CreditMemosPage() {
           </div>
         }
       >
-        {creditMemoDetailQuery.isLoading ? <p className="text-sm text-slate-500">Loading credit memo...</p> : null}
+        {creditMemoDetailQuery.isLoading ? <p className="text-xs text-slate-500">Loading credit memo...</p> : null}
         {creditMemoDetailQuery.isError ? (
           <ListErrorState
             title="Couldn't load credit memo"
@@ -438,7 +438,7 @@ export function CreditMemosPage() {
           />
         ) : null}
         {creditMemo ? (
-          <div className="space-y-4 text-sm">
+          <div className="space-y-4 text-xs">
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3">
               <div>
                 <dt className="text-xs font-semibold text-slate-600">Customer</dt>
@@ -476,7 +476,7 @@ export function CreditMemosPage() {
               </div>
             ) : null}
             <div>
-              <h3 className="text-sm font-semibold text-slate-900">Applied invoices</h3>
+              <h3 className="text-xs font-semibold text-slate-900">Applied invoices</h3>
               <CreditMemoApplications applications={creditMemoDetailQuery.data?.applications ?? []} />
             </div>
             <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="credit_memo" documentId={creditMemo.id} />
@@ -508,7 +508,7 @@ export function CreditMemosPage() {
           </div>
         }
       >
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           <p className="text-slate-600">
             Available credit: <span className="font-semibold text-slate-900">{money(Number(creditMemo?.amount_unapplied_cents ?? 0))}</span>
           </p>
@@ -571,7 +571,7 @@ export function CreditMemosPage() {
 
 function CreditMemoApplications({ applications }: { applications: CreditMemoApplication[] }) {
   if (applications.length === 0) {
-    return <p className="mt-1 text-sm text-slate-500">No invoices have been credited yet.</p>;
+    return <p className="mt-1 text-xs text-slate-500">No invoices have been credited yet.</p>;
   }
   return (
     <div className="mt-2 space-y-2">

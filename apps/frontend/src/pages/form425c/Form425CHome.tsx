@@ -600,7 +600,7 @@ export function Form425CHome() {
       </div>
       <div className="flex items-center justify-between gap-2 bg-[#1f2a44] px-5 py-3 text-white">
         <div>
-          <div className="text-lg font-extrabold">{profiles[activeCompany].name || "Form 425C"}</div>
+          <div className="text-page-title font-extrabold">{profiles[activeCompany].name || "Form 425C"}</div>
           <div className="text-xs opacity-75">Official Form 425C — Monthly Operating Report System</div>
         </div>
         <Link to="/425c/exhibits" className="shrink-0 text-xs font-semibold text-white hover:underline">

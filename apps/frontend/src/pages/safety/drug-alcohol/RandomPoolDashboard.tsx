@@ -199,18 +199,18 @@ export function RandomPoolDashboard({ companyId }: Props) {
         <div className="mt-4 grid gap-3 sm:grid-cols-4">
           <div className="rounded-sm border border-gray-100 p-3 text-center">
             <div className="text-[11px] uppercase tracking-wide text-slate-500">Pool Size</div>
-            <div className="mt-1 text-xl font-semibold text-slate-900">{mostRecent.pool_size}</div>
+            <div className="mt-1 text-page-title font-semibold text-slate-900">{mostRecent.pool_size}</div>
           </div>
           <div className="rounded-sm border border-gray-100 p-3 text-center">
             <div className="text-[11px] uppercase tracking-wide text-slate-500">Drug Selected</div>
-            <div className="mt-1 text-xl font-semibold text-slate-900">
+            <div className="mt-1 text-page-title font-semibold text-slate-900">
               {mostRecent.drug_drawn_count}
               <span className="ml-1 text-xs font-normal text-slate-500">{drugPct(mostRecent)}</span>
             </div>
           </div>
           <div className="rounded-sm border border-gray-100 p-3 text-center">
             <div className="text-[11px] uppercase tracking-wide text-slate-500">Alcohol Selected</div>
-            <div className="mt-1 text-xl font-semibold text-slate-900">
+            <div className="mt-1 text-page-title font-semibold text-slate-900">
               {mostRecent.alcohol_drawn_count}
               <span className="ml-1 text-xs font-normal text-slate-500">{alcoholPct(mostRecent)}</span>
             </div>

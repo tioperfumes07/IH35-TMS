@@ -30,8 +30,8 @@ export function ExpenseCreatePage() {
 
   return (
     <AccountingSubNavWrapper title="Expenses" subtitle="Record a vendor expense or bill payment">
-      {!companyId ? <div className="text-sm text-red-600">Select an operating company in the shell header.</div> : null}
-      <p className="text-sm text-gray-600">
+      {!companyId ? <div className="text-xs text-red-600">Select an operating company in the shell header.</div> : null}
+      <p className="text-xs text-gray-600">
         Recording an expense in the side panel.{" "}
         <button
           type="button"
@@ -99,7 +99,7 @@ export function ExpenseCreatePage() {
             ) : null}
           </div>
         ) : (
-          <div className="text-sm text-red-600">Select an operating company in the shell header.</div>
+          <div className="text-xs text-red-600">Select an operating company in the shell header.</div>
         )}
       </ParityDrawer>
     </AccountingSubNavWrapper>

@@ -83,7 +83,7 @@ export function ApplicationPage() {
   if (submitted) {
     return (
       <div className="mx-auto max-w-lg space-y-3 rounded-sm border bg-white p-6 shadow-xs" data-testid="application-page">
-        <h1 className="text-xl font-semibold text-gray-900">Application received</h1>
+        <h1 className="text-page-title font-semibold text-gray-900">Application received</h1>
         <p className="text-xs text-gray-600">
           Thank you for applying to {portalQ.data.company_name}. Our recruiting team will review your submission.
         </p>
@@ -94,7 +94,7 @@ export function ApplicationPage() {
   return (
     <div className="mx-auto max-w-lg space-y-4 rounded-sm border bg-white p-6 shadow-xs" data-testid="application-page">
       <header className="space-y-1">
-        <h1 className="text-xl font-semibold text-gray-900">Driver application</h1>
+        <h1 className="text-page-title font-semibold text-gray-900">Driver application</h1>
         <p className="text-xs text-gray-600">{portalQ.data.company_name}</p>
       </header>
 

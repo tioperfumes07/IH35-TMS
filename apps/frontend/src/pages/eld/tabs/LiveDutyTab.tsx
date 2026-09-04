@@ -116,7 +116,7 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
           ).map(([label, value]) => (
             <div key={label} className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
               <div className="text-[11px] uppercase text-slate-700">{label}</div>
-              <div className="text-xl font-semibold tabular-nums text-slate-900">{value}</div>
+              <div className="text-page-title font-semibold tabular-nums text-slate-900">{value}</div>
             </div>
           ))}
         </div>

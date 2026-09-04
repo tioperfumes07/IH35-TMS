@@ -87,7 +87,7 @@ export function DrillKpiCard({
     : "text-[11px] uppercase tracking-wide text-gray-500";
   const valueClass = compact
     ? `font-semibold ${VALUE_TONE[valueTone]}`
-    : `mt-1 text-xl font-semibold text-gray-900 ${VALUE_TONE[valueTone]}`;
+    : `mt-1 text-page-title font-semibold text-gray-900 ${VALUE_TONE[valueTone]}`;
 
   const body = (
     <>

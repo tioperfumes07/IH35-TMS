@@ -136,7 +136,7 @@ export function FactoringDetailPage() {
   // isFetching, so a disabled query (selectedCompanyId not yet resolved on cold nav) reports
   // isLoading=false and falls through to "not found" for a real record. isPending is correct here —
   // see JournalEntryDetailPage.tsx for the full live-repro writeup. Do not revert to isLoading.
-  if (query.isPending) return <div className="text-sm text-gray-500">Loading factoring batch...</div>;
+  if (query.isPending) return <div className="text-xs text-gray-500">Loading factoring batch...</div>;
   if (query.isError)
     return (
       <ListErrorState
@@ -146,7 +146,7 @@ export function FactoringDetailPage() {
         onRetry={() => void query.refetch()}
       />
     );
-  if (!detail) return <div className="text-sm text-red-600">Factoring batch not found.</div>;
+  if (!detail) return <div className="text-xs text-red-600">Factoring batch not found.</div>;
 
   type FactoringInvoiceRow = FactoringAdvanceDetail["invoices"][number];
 
@@ -228,46 +228,46 @@ export function FactoringDetailPage() {
         <DataPanel title="Header">
           <DataPanelRow>
             <span className="text-xs text-gray-600">Factor</span>
-            <span className="text-sm text-gray-900">{detail.factoring_company_name}</span>
+            <span className="text-xs text-gray-900">{detail.factoring_company_name}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Submitted</span>
-            <span className="text-sm text-gray-900">{new Date(detail.submitted_at).toLocaleString()}</span>
+            <span className="text-xs text-gray-900">{new Date(detail.submitted_at).toLocaleString()}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Status</span>
-            <span className="text-sm text-gray-900">{detail.status}</span>
+            <span className="text-xs text-gray-900">{detail.status}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Batch ref</span>
-            <span className="text-sm text-gray-900">{detail.submission_batch_ref ?? "-"}</span>
+            <span className="text-xs text-gray-900">{detail.submission_batch_ref ?? "-"}</span>
           </DataPanelRow>
         </DataPanel>
 
         <DataPanel title="Amounts">
           <DataPanelRow>
             <span className="text-xs text-gray-600">Invoice Total</span>
-            <span className="text-sm text-gray-900">{totals?.total}</span>
+            <span className="text-xs text-gray-900">{totals?.total}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Advance Rate</span>
-            <span className="text-sm text-gray-900">{detail.advance_rate_pct}%</span>
+            <span className="text-xs text-gray-900">{detail.advance_rate_pct}%</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Advance</span>
-            <span className="text-sm text-gray-900">{totals?.advance}</span>
+            <span className="text-xs text-gray-900">{totals?.advance}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Reserve</span>
-            <span className="text-sm text-gray-900">{totals?.reserve}</span>
+            <span className="text-xs text-gray-900">{totals?.reserve}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Fee</span>
-            <span className="text-sm text-gray-900">{totals?.fee}</span>
+            <span className="text-xs text-gray-900">{totals?.fee}</span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Release</span>
-            <span className="text-sm text-gray-900">{totals?.release}</span>
+            <span className="text-xs text-gray-900">{totals?.release}</span>
           </DataPanelRow>
         </DataPanel>
       </div>
@@ -294,7 +294,7 @@ export function FactoringDetailPage() {
         ) : packetQuery.isError ? (
           <p className="text-xs text-red-700">Could not load advance packet for JE links.</p>
         ) : (
-          <div className="space-y-3 text-sm">
+          <div className="space-y-3 text-xs">
             <div>
               <p className="mb-1 text-xs font-semibold text-slate-600">Reserve movements</p>
               {(packetQuery.data?.reserve_movements ?? []).length === 0 ? (
@@ -383,7 +383,7 @@ export function FactoringDetailPage() {
           </div>
         }
       >
-        <div className="space-y-2 text-sm">
+        <div className="space-y-2 text-xs">
           {action === "advance" ? (
             <label className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-gray-600">Advanced at</span>

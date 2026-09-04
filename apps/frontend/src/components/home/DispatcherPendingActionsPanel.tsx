@@ -24,7 +24,7 @@ export function DispatcherPendingActionsPanel({
             <div className="text-xs text-slate-600">Requests waiting for owner approval on your queue.</div>
           </div>
           <div className="text-right">
-            <div className="text-lg font-semibold text-slate-900">{detentionApprovals}</div>
+            <div className="text-page-title font-semibold text-slate-900">{detentionApprovals}</div>
             <Link to="/dispatch" className="text-xs font-medium text-slate-700 underline">
               Open
             </Link>
@@ -36,7 +36,7 @@ export function DispatcherPendingActionsPanel({
             <div className="text-xs text-slate-600">Unread inbound driver/customer message threads.</div>
           </div>
           <div className="text-right">
-            <div className="text-lg font-semibold text-slate-900">{incomingMessageQueue}</div>
+            <div className="text-page-title font-semibold text-slate-900">{incomingMessageQueue}</div>
             <Link to="/drivers" className="text-xs font-medium text-slate-700 underline">
               Open
             </Link>
@@ -48,7 +48,7 @@ export function DispatcherPendingActionsPanel({
             <div className="text-xs text-slate-600">Loads still not dispatched from your recent bookings.</div>
           </div>
           <div className="text-right">
-            <div className="text-lg font-semibold text-slate-900">{bookingGapOpen}</div>
+            <div className="text-page-title font-semibold text-slate-900">{bookingGapOpen}</div>
             <Link to="/dispatch?view=loads" className="text-xs font-medium text-slate-700 underline">
               Review
             </Link>

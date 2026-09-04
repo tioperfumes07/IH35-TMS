@@ -205,7 +205,7 @@ export default function PositionHistoryPage() {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">Position History</h1>
+        <h1 className="text-page-title font-semibold text-gray-900">Position History</h1>
         <p className="text-xs text-gray-500">Track part installations, removals, and replacements</p>
       </div>
 

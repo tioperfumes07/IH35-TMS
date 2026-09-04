@@ -55,7 +55,7 @@ export function BankingReportsTabContent() {
         </div>
       </div>
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <p className="text-sm font-semibold text-gray-900">Banking-relevant reports</p>
+        <p className="text-xs font-semibold text-gray-900">Banking-relevant reports</p>
         <p className="mt-1 text-xs text-gray-600">
           This tab surfaces existing report pages from the Reports module. No new report types were introduced in this phase.
         </p>
@@ -67,7 +67,7 @@ export function BankingReportsTabContent() {
             to={report.href}
             className="rounded-sm border border-gray-200 bg-white px-3 py-2 hover:border-slate-300 hover:bg-slate-100"
           >
-            <p className="text-sm font-semibold text-gray-900">{report.label}</p>
+            <p className="text-xs font-semibold text-gray-900">{report.label}</p>
             <p className="mt-1 text-xs text-gray-600">{report.detail}</p>
           </Link>
         ))}

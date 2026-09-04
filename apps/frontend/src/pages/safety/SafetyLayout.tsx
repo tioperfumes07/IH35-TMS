@@ -177,7 +177,7 @@ export function SafetyLayout() {
                 </>
               )}
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">Safety</h2>
+            <h2 className="text-page-title font-semibold text-slate-900">Safety</h2>
           </div>
           <div className="flex items-center gap-2">
             <div className="text-xs text-slate-500">Compliance · inspections · discipline · liability · alerts</div>

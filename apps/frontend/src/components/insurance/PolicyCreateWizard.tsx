@@ -526,7 +526,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             {premiumCents > 0 && termMonths > 0 && selectedUnits.length > 0 ? (
               <div className="rounded-sm border border-slate-200 bg-slate-100 px-4 py-3">
                 <p className="text-xs font-semibold text-slate-700">Cost per vehicle insured per month</p>
-                <p className="mt-0.5 text-lg font-bold text-slate-700">{costInfo.costPerVehicleDisplay}</p>
+                <p className="mt-0.5 text-page-title font-bold text-slate-700">{costInfo.costPerVehicleDisplay}</p>
                 <p className="mt-0.5 text-xs text-slate-600">
                   {selectedUnits.length} vehicle{selectedUnits.length !== 1 ? "s" : ""} ·{" "}
                   {formatMoney(costInfo.totalMonthlyPremiumCents)} / mo total · {termMonths} month term

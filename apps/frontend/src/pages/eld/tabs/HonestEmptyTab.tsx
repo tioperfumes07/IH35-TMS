@@ -17,7 +17,7 @@ export function HonestEmptyTab({ title, body, testId }: Props) {
       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-700">
         <Radio className="h-6 w-6" />
       </div>
-      <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+      <h2 className="text-page-title font-semibold text-gray-900">{title}</h2>
       <p className="mt-1 text-xs text-gray-600">{body}</p>
     </section>
   );

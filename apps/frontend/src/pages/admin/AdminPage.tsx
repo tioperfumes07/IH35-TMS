@@ -59,7 +59,7 @@ export function AdminPage() {
       {/* USMCA activation inline panel when on /admin or /admin/usmca-activation */}
       {(role === "Owner" || role === "SuperAdmin") && (
         <div className="mt-4">
-          <h3 className="mb-3 text-base font-semibold text-gray-800">USMCA Activation Control</h3>
+          <h3 className="mb-3 text-xs font-semibold text-gray-800">USMCA Activation Control</h3>
           <USMCAActivationPanel />
         </div>
       )}

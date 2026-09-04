@@ -65,7 +65,7 @@ export function DriverLoginPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col gap-3 bg-slate-50 px-4 py-8">
-      <h1 className="text-lg font-semibold text-slate-900">{t("driver.login_title")}</h1>
+      <h1 className="text-page-title font-semibold text-slate-900">{t("driver.login_title")}</h1>
       {step === "phone" ? (
         <>
           <label className="text-xs font-medium text-slate-600">{t("driver.phone_label")}</label>

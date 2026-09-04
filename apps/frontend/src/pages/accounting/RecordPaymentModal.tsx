@@ -327,7 +327,7 @@ export function RecordPaymentModal({
           }
         }}
       >
-        {errorMessage ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</div> : null}
+        {errorMessage ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{errorMessage}</div> : null}
 
         <QboDocumentNumberField
           label="Payment no."
@@ -419,7 +419,7 @@ export function RecordPaymentModal({
 
         <div className="rounded-sm border border-gray-200 bg-gray-50 p-3">
           <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-900">Apply to invoices</h3>
+            <h3 className="text-xs font-semibold text-gray-900">Apply to invoices</h3>
             <span className="text-xs text-gray-600">
               Applied {money(totalApplied)} / Remaining {money(remaining)}
             </span>
@@ -444,7 +444,7 @@ export function RecordPaymentModal({
               return (
                 <div key={invoice.id} className="rounded-sm border border-gray-200 bg-white p-2">
                   <div className="flex items-center justify-between gap-2">
-                    <label className="flex items-center gap-2 text-sm text-gray-800">
+                    <label className="flex items-center gap-2 text-xs text-gray-800">
                       <input
                         type="checkbox"
                         checked={checked}

@@ -29,7 +29,7 @@ export function CsaFleetScoreCard({ value }: Props) {
     <section className="rounded-sm border border-slate-200 bg-white p-4">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-3xl font-semibold text-slate-900">{totalPoints == null ? "—" : totalPoints.toLocaleString()}</div>
+          <div className="text-page-title font-semibold text-slate-900">{totalPoints == null ? "—" : totalPoints.toLocaleString()}</div>
           <div className="text-xs text-slate-600">Internal inspection points</div>
         </div>
         <span className="rounded-full border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700">

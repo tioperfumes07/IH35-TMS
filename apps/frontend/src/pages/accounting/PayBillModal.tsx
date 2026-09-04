@@ -120,7 +120,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
         }
       >
         {!bill ? (
-          <div className="text-sm text-gray-600">No bill selected.</div>
+          <div className="text-xs text-gray-600">No bill selected.</div>
         ) : (
           <form
             id="pay-bill-form"
@@ -337,7 +337,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
         title="Add bank account"
         size="regular"
       >
-        <div className="space-y-3 text-sm text-gray-700" data-testid="pay-bill-add-bank-drawer">
+        <div className="space-y-3 text-xs text-gray-700" data-testid="pay-bill-add-bank-drawer">
           <p>
             Connect a bank account for this company. After Plaid succeeds, the new account appears in{" "}
             <strong>From bank account</strong> and can be selected for this payment.

@@ -92,7 +92,7 @@ export function PayrollIntegrationPage() {
         {kpis.map((kpi) => (
           <div key={kpi.label} className={`rounded-sm border p-4 ${kpi.highlight ? "border-slate-300 bg-slate-100" : "border-gray-200 bg-white"}`}>
             <div className="text-xs font-medium uppercase tracking-wide text-gray-500">{kpi.label}</div>
-            <div className={`mt-1 text-2xl font-bold tabular-nums ${kpi.highlight ? "text-slate-700" : "text-gray-900"}`}>
+            <div className={`mt-1 text-page-title font-bold tabular-nums ${kpi.highlight ? "text-slate-700" : "text-gray-900"}`}>
               {aggregateQuery.isLoading ? "…" : kpi.value}
             </div>
             <div className="mt-0.5 text-xs text-gray-400">{kpi.sub}</div>

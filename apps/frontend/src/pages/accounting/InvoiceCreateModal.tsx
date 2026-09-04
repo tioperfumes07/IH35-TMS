@@ -71,7 +71,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
               className="rounded-sm border border-gray-200 px-3 py-3 text-left hover:border-slate-300 hover:bg-slate-100"
               onClick={() => setStep("from_load")}
             >
-              <div className="text-sm font-semibold text-gray-900">From an existing load</div>
+              <div className="text-xs font-semibold text-gray-900">From an existing load</div>
               <div className="text-xs text-gray-600">Pick a delivered or in-transit load; invoice fields pre-fill from load data.</div>
             </button>
             <button
@@ -79,7 +79,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
               className="rounded-sm border border-gray-200 px-3 py-3 text-left hover:border-slate-300 hover:bg-slate-100"
               onClick={() => setStep("blank")}
             >
-              <div className="text-sm font-semibold text-gray-900">Blank invoice (no load)</div>
+              <div className="text-xs font-semibold text-gray-900">Blank invoice (no load)</div>
               <div className="text-xs text-gray-600">Start with an empty invoice form inside Accounting.</div>
             </button>
             <p className="text-xs text-gray-500">Recurring templates are not available yet — use Manual invoice types from the list header dropdown if needed.</p>
@@ -93,7 +93,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
 
         {step === "from_load" && createdFromLoad ? (
           <div
-            className="flex flex-col items-start gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm"
+            className="flex flex-col items-start gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs"
             data-testid="invoice-create-from-load-confirmation"
           >
             <p className="text-gray-700">
@@ -134,7 +134,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
                   setLoadPage(1);
                 }}
                 placeholder="Search load # or customer"
-                className="h-9 min-w-[200px] flex-1 rounded-sm border border-gray-300 px-2 text-sm"
+                className="h-9 min-w-[200px] flex-1 rounded-sm border border-gray-300 px-2 text-xs"
               />
               <select
                 value={statusFilter}
@@ -142,7 +142,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
                   setStatusFilter(event.target.value as LoadStatusFilter);
                   setLoadPage(1);
                 }}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
               >
                 <option value="all">All statuses</option>
                 <option value="delivered">Delivered</option>

@@ -100,7 +100,7 @@ function SectionDivider({ title, index }: { title: string; index: number }) {
     <div className="mt-8 border-b-2 border-slate-800 pb-1 print:mt-6">
       <div className="flex items-baseline gap-3">
         <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">{index + 1}</span>
-        <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+        <h2 className="text-xs font-semibold text-slate-900">{title}</h2>
       </div>
     </div>
   );
@@ -517,7 +517,7 @@ export function ManagementReportPackagePage() {
           {/* Cover page */}
           <div className="mb-8 border-b-2 border-slate-800 pb-6 print:pb-4">
             <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-2">Management Report Package</div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-1">{pkg.label}</h1>
+            <h1 className="text-page-title font-bold text-slate-900 mb-1">{pkg.label}</h1>
             <div className="text-slate-600 text-xs mb-4">{pkg.description}</div>
             <div className="grid grid-cols-2 gap-4 text-xs text-slate-500 mt-6">
               <div><span className="font-semibold text-slate-700">Entity</span><br />{entityName}</div>

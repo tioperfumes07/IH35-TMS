@@ -327,7 +327,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
   return (
     <section data-testid="compliance-section-fleet-hos">
       <div className="mb-2">
-        <h2 className="text-base font-semibold text-slate-900">Live Fleet — Location &amp; Hours of Service</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Live Fleet — Location &amp; Hours of Service</h2>
         <p className="text-xs text-slate-500">Every vehicle Samsara reports, its current driver, and HOS clocks (refreshes every 5 min).</p>
       </div>
 

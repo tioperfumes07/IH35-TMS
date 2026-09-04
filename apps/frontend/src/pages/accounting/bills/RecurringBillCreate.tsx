@@ -154,14 +154,14 @@ export function RecurringBillCreate() {
           <ArrowLeft className="h-4 w-4" aria-hidden />
           <span>Back</span>
         </button>
-        <h1 className="text-lg font-semibold text-gray-900">Create Recurring Bill Template</h1>
+        <h1 className="text-page-title font-semibold text-gray-900">Create Recurring Bill Template</h1>
       </div>
 
       {/* Flat QBO-style form — no nested bordered card (box-in-box). Vendor left, template name flush right. */}
       <div className="space-y-5">
         <div className="flex flex-wrap items-start gap-4">
           <div className="min-w-[16rem] flex-1">
-            <label className="mb-1 block text-sm font-medium text-gray-700">Vendor *</label>
+            <label className="mb-1 block text-xs font-medium text-gray-700">Vendor *</label>
             {vendorsQuery.isError ? (
               <div className="mb-2">
                 <ListErrorBanner
@@ -188,11 +188,11 @@ export function RecurringBillCreate() {
             />
           </div>
           <div className="ml-auto w-56 shrink-0 text-right">
-            <label className="mb-1 block text-sm font-medium text-gray-700">Template name *</label>
+            <label className="mb-1 block text-xs font-medium text-gray-700">Template name *</label>
             <input
               type="text"
               aria-label="Template name"
-              className="w-full rounded-sm border border-gray-300 px-3 py-2 text-right text-sm focus:border-slate-300 focus:outline-hidden"
+              className="w-full rounded-sm border border-gray-300 px-3 py-2 text-right text-xs focus:border-slate-300 focus:outline-hidden"
               placeholder="e.g. Monthly Office Rent"
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
@@ -201,7 +201,7 @@ export function RecurringBillCreate() {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Amount *</label>
+          <label className="mb-1 block text-xs font-medium text-gray-700">Amount *</label>
           <MoneyInput
             valueDollars={amount ? Number(amount) : null}
             onChangeDollars={(d) => setAmount(d == null ? "" : String(d))}
@@ -211,10 +211,10 @@ export function RecurringBillCreate() {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Memo</label>
+          <label className="mb-1 block text-xs font-medium text-gray-700">Memo</label>
           <input
             type="text"
-            className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-hidden"
+            className="w-full rounded-sm border border-gray-300 px-3 py-2 text-xs focus:border-slate-300 focus:outline-hidden"
             placeholder="Optional memo on generated bill"
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
@@ -223,7 +223,7 @@ export function RecurringBillCreate() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Frequency *</label>
+            <label className="mb-1 block text-xs font-medium text-gray-700">Frequency *</label>
             <SelectCombobox
               value={frequency}
               onChange={(event) => setFrequency(event.target.value as RecurringBillFrequency)}
@@ -237,7 +237,7 @@ export function RecurringBillCreate() {
             </SelectCombobox>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">First Generation Date *</label>
+            <label className="mb-1 block text-xs font-medium text-gray-700">First Generation Date *</label>
             <DatePicker
               className="w-full"
               value={nextGenerationDate}
@@ -248,7 +248,7 @@ export function RecurringBillCreate() {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">End Date (optional)</label>
+          <label className="mb-1 block text-xs font-medium text-gray-700">End Date (optional)</label>
           <DatePicker
             className="w-full"
             value={endDate}
@@ -265,14 +265,14 @@ export function RecurringBillCreate() {
             checked={autoPost}
             onChange={(e) => setAutoPost(e.target.checked)}
           />
-          <label htmlFor="auto-post" className="text-sm text-gray-700">
+          <label htmlFor="auto-post" className="text-xs text-gray-700">
             Auto-post bill to ledger when generated
           </label>
         </div>
 
         <div data-testid="recurring-bill-line-items">
           <div className="mb-2 flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-700">Line Items</label>
+            <label className="text-xs font-medium text-gray-700">Line Items</label>
             <button
               type="button"
               onClick={addLineItem}
@@ -300,7 +300,7 @@ export function RecurringBillCreate() {
             <div key={idx} className="mb-3 grid gap-2 md:grid-cols-[1fr_minmax(10rem,14rem)_7rem_auto]">
               <input
                 type="text"
-                className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
+                className="rounded-sm border border-gray-300 px-2 py-1.5 text-xs focus:border-slate-300 focus:outline-hidden"
                 placeholder="Description"
                 value={item.description}
                 onChange={(e) => updateLineItem(idx, "description", e.target.value)}
@@ -343,7 +343,7 @@ export function RecurringBillCreate() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="rounded-sm border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          className="rounded-sm border border-gray-300 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
         >
           Cancel
         </button>
@@ -351,7 +351,7 @@ export function RecurringBillCreate() {
           type="button"
           disabled={!isValid || createMutation.isPending}
           onClick={() => createMutation.mutate()}
-          className="rounded-sm bg-[#1F2A44] px-4 py-2 text-sm font-medium text-white hover:bg-[#1F2A44] disabled:opacity-50"
+          className="rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-medium text-white hover:bg-[#1F2A44] disabled:opacity-50"
         >
           {createMutation.isPending ? "Creating…" : "Create Template"}
         </button>

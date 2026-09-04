@@ -101,7 +101,7 @@ export function BillDetailPage() {
   // isFetching, so a disabled query (selectedCompanyId not yet resolved on cold nav) reports
   // isLoading=false and falls through to "not found" for a real record. isPending is correct here —
   // see JournalEntryDetailPage.tsx for the full live-repro writeup. Do not revert to isLoading.
-  if (detailQuery.isPending) return <div className="p-4 text-sm text-slate-500">Loading bill…</div>;
+  if (detailQuery.isPending) return <div className="p-4 text-xs text-slate-500">Loading bill…</div>;
   if (detailQuery.isError)
     return (
       <ListErrorState
@@ -117,7 +117,7 @@ export function BillDetailPage() {
   const payments = detailQuery.data?.payments ?? [];
   const vendorCreditApplications = detailQuery.data?.vendor_credit_applications ?? [];
 
-  if (!bill) return <div className="p-4 text-sm text-red-600">Bill not found.</div>;
+  if (!bill) return <div className="p-4 text-xs text-red-600">Bill not found.</div>;
 
   const displayId = visibleDocumentLabel(bill.display_id ?? bill.bill_number, bill.id, "Bill");
   const balance = Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0);
@@ -296,33 +296,33 @@ export function BillDetailPage() {
         ) : null}
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Bill #</span>
-          <span className="text-sm text-gray-900">{bill.display_id ?? "—"}</span>
+          <span className="text-xs text-gray-900">{bill.display_id ?? "—"}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Vendor Invoice #</span>
-          <span className="text-sm text-gray-900">{bill.bill_number ?? "—"}</span>
+          <span className="text-xs text-gray-900">{bill.bill_number ?? "—"}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Bill date</span>
-          <span className="text-sm text-gray-900">{formatDateUS(bill.bill_date)}</span>
+          <span className="text-xs text-gray-900">{formatDateUS(bill.bill_date)}</span>
         </DataPanelRow>
         {bill.due_date ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Due date</span>
-            <span className="text-sm text-gray-900">{formatDateUS(bill.due_date)}</span>
+            <span className="text-xs text-gray-900">{formatDateUS(bill.due_date)}</span>
           </DataPanelRow>
         ) : null}
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Amount</span>
-          <span className="text-sm text-gray-900">{money(bill.amount_cents)}</span>
+          <span className="text-xs text-gray-900">{money(bill.amount_cents)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Paid</span>
-          <span className="text-sm text-gray-900">{money(bill.paid_cents)}</span>
+          <span className="text-xs text-gray-900">{money(bill.paid_cents)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Open balance</span>
-          <span className="text-sm font-semibold text-gray-900">{money(balance)}</span>
+          <span className="text-xs font-semibold text-gray-900">{money(balance)}</span>
         </DataPanelRow>
         {bill.journal_entry_id ? (
           <DataPanelRow>
@@ -375,7 +375,7 @@ export function BillDetailPage() {
           <Link
             to={`/accounting/allocations?bill_id=${bill.id}`}
             data-testid="bill-detail-allocations-link"
-            className="text-sm text-slate-700 hover:underline"
+            className="text-xs text-slate-700 hover:underline"
           >
             Unit allocations for this bill
           </Link>
@@ -383,12 +383,12 @@ export function BillDetailPage() {
         {bill.memo ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Memo</span>
-            <span className="text-sm text-gray-900">{bill.memo}</span>
+            <span className="text-xs text-gray-900">{bill.memo}</span>
           </DataPanelRow>
         ) : null}
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Created</span>
-          <span className="text-sm text-gray-900">{formatDateUS(bill.created_at)}</span>
+          <span className="text-xs text-gray-900">{formatDateUS(bill.created_at)}</span>
         </DataPanelRow>
       </DataPanel>
 
@@ -424,13 +424,13 @@ export function BillDetailPage() {
       <DataPanel title="Vendor credits">
         <div className="space-y-2" data-testid="bill-detail-vendor-credit-applications">
           {vendorCreditApplications.length === 0 ? (
-            <p className="text-sm text-slate-500">No vendor credits applied to this bill.</p>
+            <p className="text-xs text-slate-500">No vendor credits applied to this bill.</p>
           ) : (
             vendorCreditApplications.map((application) => (
               <div key={application.id} className="flex items-center justify-between gap-3 rounded-sm border border-slate-200 px-3 py-2">
                 <Link
                   to={`/accounting/vendor-credits?credit_id=${encodeURIComponent(application.credit_id)}`}
-                  className="text-sm font-medium text-slate-800 hover:underline"
+                  className="text-xs font-medium text-slate-800 hover:underline"
                 >
                   {entityLabel(application.display_id, application.credit_id, "Vendor credit")}
                 </Link>

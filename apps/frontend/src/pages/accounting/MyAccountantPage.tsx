@@ -98,7 +98,7 @@ function PeriodStatusPanel({ periods }: { periods: AccountingPeriod[] }) {
   if (periods.length === 0) {
     return (
       <div className="py-8 text-center">
-        <p className="text-sm text-gray-500">No accounting periods defined for this entity yet.</p>
+        <p className="text-xs text-gray-500">No accounting periods defined for this entity yet.</p>
         <p className="mt-1 text-xs text-gray-400">Period status will appear here once periods are created.</p>
       </div>
     );
@@ -126,7 +126,7 @@ function PeriodStatusPanel({ periods }: { periods: AccountingPeriod[] }) {
 function SectionCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
     <section className="mb-6 rounded-lg border border-gray-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+      <h2 className="text-xs font-semibold text-gray-900">{title}</h2>
       {subtitle && <p className="mb-3 mt-0.5 text-xs text-gray-500">{subtitle}</p>}
       {children}
     </section>
@@ -189,7 +189,7 @@ export function MyAccountantPage() {
   if (!flagLoading && !enabled) {
     return (
       <AccountingSubNavWrapper title="My Accountant" subtitle="Read-only accountant workspace">
-        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-xs text-gray-500">
           The accountant workspace is not yet enabled for this account.
           <p className="mt-1 text-xs text-gray-400">This module is turned on per operating company and isn’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable it, or switch to a company where it’s already on.</p>
         </div>
@@ -201,7 +201,7 @@ export function MyAccountantPage() {
     <AccountingSubNavWrapper title="My Accountant" subtitle="Read-only accountant workspace — books at a glance, reports, and CPA export (per-entity)">
       <SectionCard title="Books at a glance" subtitle="Period status for this entity (read-only — period close is managed in Month Close)">
         {isLoading || flagLoading ? (
-          <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
+          <p className="py-8 text-center text-xs text-gray-500">Loading…</p>
         ) : isError ? (
           <ListErrorState
             title="Failed to load period status"
@@ -222,7 +222,7 @@ export function MyAccountantPage() {
               to={r.to}
               className="rounded-sm border border-gray-200 px-3 py-2 transition-colors hover:border-slate-300 hover:bg-slate-50"
             >
-              <div className="text-sm font-medium text-slate-700">{r.label}</div>
+              <div className="text-xs font-medium text-slate-700">{r.label}</div>
               <div className="text-xs text-gray-500">{r.description}</div>
             </Link>
           ))}
@@ -231,7 +231,7 @@ export function MyAccountantPage() {
 
       <SectionCard title="Export for CPA" subtitle="Download the standard period package — read-only file export (no changes are made)">
         {!operatingCompanyId ? (
-          <p className="py-2 text-sm text-gray-500">Select an entity to enable exports.</p>
+          <p className="py-2 text-xs text-gray-500">Select an entity to enable exports.</p>
         ) : (
           <ParityTable
             columns={exportColumns}

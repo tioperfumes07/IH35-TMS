@@ -101,7 +101,7 @@ export function HelpCenterPage() {
         <div className="grid gap-4 md:grid-cols-2">
           {visibleCategories.map((cat) => (
             <section key={cat} className="rounded-sm border border-gray-200 bg-white p-4">
-              <h2 className="text-base font-semibold text-gray-900">{cat}</h2>
+              <h2 className="text-xs font-semibold text-gray-900">{cat}</h2>
               <ul className="mt-2 space-y-1">
                 {(byCat[cat] ?? []).map((a) => (
                   <li key={a.slug}>

@@ -114,7 +114,7 @@ export function AccountTypeCatalogPage() {
       <Link
         to="/lists"
         aria-label="Back to Lists & Catalogs"
-        className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-slate-600 hover:underline"
+        className="mb-3 inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:underline"
       >
         ← Lists &amp; Catalogs / Accounting
       </Link>
@@ -130,7 +130,7 @@ export function AccountTypeCatalogPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search type or detail type…"
-          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-400"
+          className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs focus:outline-hidden focus:ring-1 focus:ring-slate-400"
         />
         {!isLoading && !isError && (
           <span className="text-xs text-gray-500">
@@ -140,9 +140,9 @@ export function AccountTypeCatalogPage() {
       </div>
 
       {!companyId ? (
-        <p className="py-8 text-center text-sm text-gray-500">Select an operating company to view the account-type catalog.</p>
+        <p className="py-8 text-center text-xs text-gray-500">Select an operating company to view the account-type catalog.</p>
       ) : isLoading ? (
-        <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
+        <p className="py-8 text-center text-xs text-gray-500">Loading…</p>
       ) : isError ? (
         <ListErrorState
           title="Couldn't load account type catalog"
@@ -153,14 +153,14 @@ export function AccountTypeCatalogPage() {
         />
       ) : listState.isEmpty ? (
         <div className="py-12 text-center">
-          <p className="text-sm text-gray-500">No account types found.</p>
+          <p className="text-xs text-gray-500">No account types found.</p>
           <p className="mt-1 text-xs text-gray-400">The account-type taxonomy has not been seeded yet.</p>
         </div>
       ) : (
         <div className="space-y-6">
           {groups.map(([groupName, entries]) => (
             <section key={groupName}>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">{groupName}</h2>
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">{groupName}</h2>
               <ParityTable
                 columns={COLUMNS}
                 rows={entries}

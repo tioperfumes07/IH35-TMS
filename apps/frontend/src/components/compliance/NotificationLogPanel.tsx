@@ -51,7 +51,7 @@ const COLUMNS: Array<ParityColumn<LogEntry>> = [
 export function NotificationLogPanel({ entries }: Props) {
   return (
     <div className="space-y-3" data-testid="compliance-log-panel">
-      <h3 className="text-lg font-semibold">Notification Log</h3>
+      <h3 className="text-page-title font-semibold">Notification Log</h3>
       <ParityTable
         rows={entries}
         columns={COLUMNS}

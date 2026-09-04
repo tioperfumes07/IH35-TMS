@@ -35,7 +35,7 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
   if (isLoading) {
     return (
       <section className="rounded-sm border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Pending &amp; Sync</div>
+        <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Pending &amp; Sync</div>
         <div className="space-y-2 p-3">
           <div className="h-4 animate-pulse rounded-sm bg-slate-100" />
           <div className="h-4 animate-pulse rounded-sm bg-slate-100" />
@@ -58,8 +58,8 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
 
   return (
     <section className="rounded-sm border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Pending &amp; Sync</div>
-      <ul className="divide-y divide-slate-100 text-sm">
+      <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Pending &amp; Sync</div>
+      <ul className="divide-y divide-slate-100 text-xs">
         <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
           <span>Journal entries awaiting approval (GL-linked)</span>
           <span className="font-semibold tabular-nums text-slate-900">{pending}</span>
@@ -94,7 +94,7 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
         {pendingQuery.isLoading ? (
           <div className="h-4 animate-pulse rounded-sm bg-slate-100" />
         ) : pendingQuery.isError ? (
-          <div className="flex items-center justify-between gap-3 text-sm text-red-700">
+          <div className="flex items-center justify-between gap-3 text-xs text-red-700">
             <span>Failed to load pending journal approvals — this is not confirmed "no pending approvals."</span>
             <button
               type="button"
@@ -105,9 +105,9 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
             </button>
           </div>
         ) : !controlAvailable ? (
-          <p className="text-sm text-slate-700">{unavailableMessage}</p>
+          <p className="text-xs text-slate-700">{unavailableMessage}</p>
         ) : items.length === 0 ? (
-          <p className="text-sm text-slate-500">No pending journal approvals.</p>
+          <p className="text-xs text-slate-500">No pending journal approvals.</p>
         ) : (
           <ul className="divide-y divide-slate-100">
             {items.map((item) => {

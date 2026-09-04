@@ -244,7 +244,7 @@ export function TripProfitability() {
           ].map(({ label, value, highlight }) => (
             <div key={label} className="rounded-sm border bg-white p-3">
               <div className="text-xs text-slate-500">{label}</div>
-              <div className={`text-lg font-semibold ${highlight ?? "text-slate-900"}`}>{value}</div>
+              <div className={`text-page-title font-semibold ${highlight ?? "text-slate-900"}`}>{value}</div>
             </div>
           ))}
         </div>

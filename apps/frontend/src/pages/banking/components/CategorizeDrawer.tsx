@@ -70,7 +70,7 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
       <aside className="fixed right-0 top-0 z-50 h-full w-[480px] overflow-y-auto border-l border-gray-200 bg-white p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Categorize Transaction</h3>
+          <h3 className="text-xs font-semibold">Categorize Transaction</h3>
           <button type="button" className="text-xs text-gray-500 underline" onClick={onClose}>Close</button>
         </div>
 

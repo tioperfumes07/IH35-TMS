@@ -113,7 +113,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
       }
     >
       {!bill ? (
-        <div className="text-sm text-gray-600">No bill selected.</div>
+        <div className="text-xs text-gray-600">No bill selected.</div>
       ) : (
         <form
           id="cc-bill-payment-form"

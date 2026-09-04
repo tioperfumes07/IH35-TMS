@@ -256,7 +256,7 @@ export function FaultDraftsPage() {
       {selected ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-lg rounded-sm bg-white p-4 shadow-lg">
-            <h3 className="text-base font-semibold">
+            <h3 className="text-xs font-semibold">
               <EntityLinkOrTombstone
                 kind="work_order"
                 id={selected.id}

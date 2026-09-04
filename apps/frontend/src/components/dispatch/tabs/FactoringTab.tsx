@@ -127,7 +127,7 @@ const STAGE_COLORS: Record<FactoringStage, string> = {
 function CheckItem({ label, ok, note }: { label: string; ok: boolean; note?: ReactNode }) {
   return (
     <div className="flex items-start gap-2 text-xs">
-      <span className={`mt-0.5 text-base leading-none ${ok ? "text-slate-700" : "text-gray-300"}`}>
+      <span className={`mt-0.5 text-xs leading-none ${ok ? "text-slate-700" : "text-gray-300"}`}>
         {ok ? "✓" : "○"}
       </span>
       <div>

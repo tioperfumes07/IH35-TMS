@@ -182,7 +182,7 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
         </div>
       }
     >
-      <div className="space-y-3 text-sm">
+      <div className="space-y-3 text-xs">
         {factoringSummaryQuery.isError ? (
           <ListErrorBanner
             message={`Failed to load factoring defaults: ${(factoringSummaryQuery.error as Error)?.message ?? "Request failed"}`}

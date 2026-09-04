@@ -28,17 +28,17 @@ export function AccountingRecurringTemplateDetailPage() {
         <Link
           to="/accounting/bills/recurring"
           data-testid="recurring-template-reverse-drill"
-          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-800 hover:bg-gray-50"
         >
           Back to recurring bills
         </Link>
       )}
     >
-      {!companyId ? <p className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm">Select an operating company to view this template.</p> : null}
+      {!companyId ? <p className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs">Select an operating company to view this template.</p> : null}
       {query.isError ? <ListErrorState title="Couldn't load recurring template" status={0} message={query.error instanceof Error ? query.error.message : undefined} onRetry={() => void query.refetch()} /> : null}
-      {query.isPending && companyId ? <p className="text-sm text-slate-500">Loading recurring template…</p> : null}
+      {query.isPending && companyId ? <p className="text-xs text-slate-500">Loading recurring template…</p> : null}
       {row ? <div className="space-y-4">
-        <section className="grid gap-3 rounded-sm border border-slate-200 bg-white p-4 text-sm md:grid-cols-3">
+        <section className="grid gap-3 rounded-sm border border-slate-200 bg-white p-4 text-xs md:grid-cols-3">
           <div><span className="text-slate-500">Transaction</span><p className="font-medium">{label(row.kind)}</p></div>
           <div><span className="text-slate-500">Schedule</span><p className="font-medium">{label(row.cadence)}</p></div>
           <div><span className="text-slate-500">Status</span><p className="font-medium">{row.is_active ? "Active" : "Inactive"}</p></div>
@@ -47,8 +47,8 @@ export function AccountingRecurringTemplateDetailPage() {
           <div><span className="text-slate-500">Runs</span><p>{row.run_count}</p></div>
           <div><span className="text-slate-500">Created by</span><p>{row.created_by_name || "System"}</p></div>
         </section>
-        <section className="rounded-sm border border-slate-200 bg-white p-4"><h2 className="mb-3 text-sm font-semibold">Template fields</h2>
-          {fields.length ? <dl className="grid gap-3 text-sm md:grid-cols-2">{fields.map(([key, value]) => <div key={key}><dt className="text-slate-500">{label(key)}</dt><dd className="break-words font-medium">{String(value)}</dd></div>)}</dl> : <p className="text-sm text-slate-500">No scalar template fields.</p>}
+        <section className="rounded-sm border border-slate-200 bg-white p-4"><h2 className="mb-3 text-xs font-semibold">Template fields</h2>
+          {fields.length ? <dl className="grid gap-3 text-xs md:grid-cols-2">{fields.map(([key, value]) => <div key={key}><dt className="text-slate-500">{label(key)}</dt><dd className="break-words font-medium">{String(value)}</dd></div>)}</dl> : <p className="text-xs text-slate-500">No scalar template fields.</p>}
         </section>
       </div> : null}
     </AccountingSubNavWrapper>

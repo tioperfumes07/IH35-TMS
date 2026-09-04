@@ -304,7 +304,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                     Act: <strong>{formatCents(card.actual)}</strong>
                   </span>
                 </div>
-                <div className={`mt-1 flex items-center gap-1 text-base font-bold ${pos ? "text-slate-700" : "text-red-700"}`}>
+                <div className={`mt-1 flex items-center gap-1 text-xs font-bold ${pos ? "text-slate-700" : "text-red-700"}`}>
                   {pos ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                   {formatCents(varCents, { sign: true })}
                   <span className="ml-1 text-xs font-medium">{formatPct(card.pct)}</span>

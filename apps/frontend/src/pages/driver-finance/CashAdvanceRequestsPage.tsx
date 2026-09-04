@@ -456,7 +456,7 @@ export function CashAdvanceRequestsPage() {
       {denyForId ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-lg bg-white p-4 shadow-lg">
-            <h2 className="text-base font-semibold text-gray-900">Deny request</h2>
+            <h2 className="text-xs font-semibold text-gray-900">Deny request</h2>
             <p className="mt-1 text-xs text-gray-600">Reason is visible to audit and helps the driver understand the decision.</p>
             <textarea
               className="mt-3 w-full rounded-sm border border-gray-200 p-2 text-xs"

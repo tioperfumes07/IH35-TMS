@@ -87,7 +87,7 @@ export function PeriodComparisonPage() {
         render: (row) => (
           <Link
             to={`/accounting/posting-lineage?source_transaction_type=account&source_transaction_id=${encodeURIComponent(row.account_id ?? row.row_key)}`}
-            className="text-sm font-medium text-slate-700 hover:underline"
+            className="text-xs font-medium text-slate-700 hover:underline"
           >
             Open lineage
           </Link>
@@ -101,20 +101,20 @@ export function PeriodComparisonPage() {
     <AccountingSubNavWrapper title="Period comparison" subtitle="Side-by-side period variance for P&L or balance sheet with accrual/cash basis selection.">
 
       {!companyId ? (
-        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">Select an operating company before running comparison.</p>
+        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">Select an operating company before running comparison.</p>
       ) : null}
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         <label className="text-xs text-gray-600">
           Report type
-          <select value={type} onChange={(event) => setType(event.target.value as ComparisonReportType)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm">
+          <select value={type} onChange={(event) => setType(event.target.value as ComparisonReportType)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
             <option value="pl">P&L</option>
             <option value="bs">Balance Sheet</option>
           </select>
         </label>
         <label className="text-xs text-gray-600">
           Basis
-          <select value={basis} onChange={(event) => setBasis(event.target.value as ComparisonReportBasis)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm">
+          <select value={basis} onChange={(event) => setBasis(event.target.value as ComparisonReportBasis)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
             <option value="accrual">Accrual</option>
             <option value="cash">Cash</option>
           </select>
@@ -125,7 +125,7 @@ export function PeriodComparisonPage() {
             value={periods}
             onChange={(event) => setPeriods(event.target.value)}
             placeholder="2026-Q1,2025-Q1"
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
         </label>
       </div>
@@ -174,7 +174,7 @@ function ClassCostCenterVariancePanel({ companyId, periods }: { companyId: strin
           row.class_id ? (
             <Link
               to={`/lists/accounting/classes?class_id=${encodeURIComponent(row.class_id)}`}
-              className="text-sm font-medium text-slate-700 hover:underline"
+              className="text-xs font-medium text-slate-700 hover:underline"
             >
               {row.class_name}
               {row.class_code ? ` (${row.class_code})` : ""}
@@ -219,7 +219,7 @@ function ClassCostCenterVariancePanel({ companyId, periods }: { companyId: strin
   return (
     <section className="mt-6 space-y-2" data-testid="cost-center-class-variance-panel">
       <div>
-        <h2 className="text-sm font-semibold text-gray-900">Cost centers (Class variance)</h2>
+        <h2 className="text-xs font-semibold text-gray-900">Cost centers (Class variance)</h2>
         <p className="text-xs text-gray-600">
           QBO Class dimension — expense / COGS / other-expense JE rollup. No new GL math.
         </p>

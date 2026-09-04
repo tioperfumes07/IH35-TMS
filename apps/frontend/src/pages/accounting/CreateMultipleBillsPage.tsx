@@ -296,7 +296,7 @@ export function CreateMultipleBillsPage() {
     <div className="space-y-3" data-testid="create-multiple-bills-page">
       <PageHeader title="Create multiple bills" subtitle="Bulk vendor bill drafting from selected bank transactions." />
       {!companyId ? (
-        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800">Select an operating company.</p>
+        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800">Select an operating company.</p>
       ) : null}
       {vendorsQuery.isError ? (
         <ListErrorBanner
@@ -310,7 +310,7 @@ export function CreateMultipleBillsPage() {
           onRetry={() => void coaQuery.refetch()}
         />
       ) : null}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
         <span className="font-medium text-gray-800">Rows: {rows.length}</span>
         <span className="text-gray-700">Total draft amount: ${totalUsd.toFixed(2)}</span>
         <span className="w-full text-xs font-normal text-gray-500" data-testid="multi-bills-number-hint">

@@ -1027,7 +1027,7 @@ export function CustomersPage() {
                 <section className="rounded-sm border border-gray-200 bg-white p-3">
                   <div className="mb-2 flex items-center justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-gray-900">{selectedCustomer.name}</h2>
+                      <h2 className="text-page-title font-semibold text-gray-900">{selectedCustomer.name}</h2>
                       <p className="text-xs text-gray-500">{selectedCustomer.customer_code || "Customer"} — {selectedCustomer.customer_type ?? "Type not set"}</p>
                       <div className="mt-1 flex items-center gap-2">
                         <span
@@ -1085,9 +1085,9 @@ export function CustomersPage() {
                   ) : (
                     <div data-testid="customer-financial-summary-values">
                       <p className="text-xs text-gray-600">Open balance</p>
-                      <p className="text-xl font-semibold text-gray-900">{fmtMoney(summaryQuery.data?.aging_buckets?.total_open ?? 0)}</p>
+                      <p className="text-page-title font-semibold text-gray-900">{fmtMoney(summaryQuery.data?.aging_buckets?.total_open ?? 0)}</p>
                       <p className="mt-2 text-xs text-gray-600">Overdue payment</p>
-                      <p className="text-lg font-semibold text-red-700">{fmtMoney(overdue)}</p>
+                      <p className="text-page-title font-semibold text-red-700">{fmtMoney(overdue)}</p>
                     </div>
                   )}
                 </section>

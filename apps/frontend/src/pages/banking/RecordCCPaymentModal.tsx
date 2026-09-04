@@ -192,7 +192,7 @@ export function RecordCCPaymentModal({
         </div>
       }
     >
-      <div className="space-y-3 text-sm" data-testid="record-cc-payment-drawer">
+      <div className="space-y-3 text-xs" data-testid="record-cc-payment-drawer">
         {/* LINK-F5190: linkBankTransactionId is the real originating banking.bank_transactions id
             (already used functionally in categorizeBankTransaction below) -- was never rendered. */}
         {linkBankTransactionId ? (

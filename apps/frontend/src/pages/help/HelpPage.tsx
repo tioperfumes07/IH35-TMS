@@ -32,7 +32,7 @@ export function HelpPage() {
             to={tile.to}
             className="rounded-sm border border-gray-200 bg-white p-4 hover:border-slate-300 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
           >
-            <h2 className="text-base font-semibold text-gray-900">{tile.title}</h2>
+            <h2 className="text-xs font-semibold text-gray-900">{tile.title}</h2>
             <p className="mt-1 text-xs text-gray-600">{tile.description}</p>
           </Link>
         ))}

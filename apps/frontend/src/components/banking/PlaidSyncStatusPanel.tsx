@@ -18,7 +18,7 @@ export function PlaidSyncStatusPanel({ operatingCompanyId }: Props) {
     .reverse()[0];
 
   return (
-    <section data-testid="plaid-sync-status-panel" className="rounded-sm border border-gray-200 p-3 text-sm">
+    <section data-testid="plaid-sync-status-panel" className="rounded-sm border border-gray-200 p-3 text-xs">
       <h3 className="font-semibold">Plaid sync status</h3>
       <p>Accounts: {accounts.length}</p>
       <p>Last sync: {lastSync ? new Date(String(lastSync)).toLocaleString() : "—"}</p>

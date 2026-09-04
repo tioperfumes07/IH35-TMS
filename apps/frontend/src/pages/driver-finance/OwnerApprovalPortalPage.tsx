@@ -88,7 +88,7 @@ export function OwnerApprovalPortalPage() {
     <div className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900">
       <div className="mx-auto max-w-4xl space-y-4">
         <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
-          <h1 className="text-lg font-semibold">Owner approval — cash advance request</h1>
+          <h1 className="text-page-title font-semibold">Owner approval — cash advance request</h1>
           <p className="mt-1 text-xs text-slate-600">Documented decision required (minimum 30 characters).</p>
         </div>
 

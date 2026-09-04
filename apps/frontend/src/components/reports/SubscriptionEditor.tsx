@@ -107,7 +107,7 @@ export function SubscriptionEditor({
       data-testid="subscription-editor"
     >
       <div className="mx-auto w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-xl">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="text-page-title font-semibold text-slate-900">
           {mode === "edit" ? "Edit subscription" : "Add subscription"}
         </h2>
         <div className="mt-4 space-y-3 text-xs">

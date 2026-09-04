@@ -31,14 +31,14 @@ export function PrintOrientationDialog({ open, title = "Print", onCancel, onConf
         aria-labelledby={titleId}
         className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-sm border border-gray-200 bg-white p-4 shadow-lg"
       >
-        <h2 id={titleId} className="text-sm font-semibold text-gray-900">
+        <h2 id={titleId} className="text-xs font-semibold text-gray-900">
           {title}
         </h2>
         <p className="mt-1 text-xs text-gray-600">Choose page orientation. The table will auto-adjust to fit the page.</p>
         <div className="mt-3 flex gap-2">
           <button
             type="button"
-            className={`flex-1 rounded-sm border px-3 py-2 text-sm ${
+            className={`flex-1 rounded-sm border px-3 py-2 text-xs ${
               orientation === "portrait" ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-gray-300 text-gray-800"
             }`}
             onClick={() => setOrientation("portrait")}
@@ -48,7 +48,7 @@ export function PrintOrientationDialog({ open, title = "Print", onCancel, onConf
           </button>
           <button
             type="button"
-            className={`flex-1 rounded-sm border px-3 py-2 text-sm ${
+            className={`flex-1 rounded-sm border px-3 py-2 text-xs ${
               orientation === "landscape" ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-gray-300 text-gray-800"
             }`}
             onClick={() => setOrientation("landscape")}

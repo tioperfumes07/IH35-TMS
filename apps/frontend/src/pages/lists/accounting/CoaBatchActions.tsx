@@ -133,7 +133,7 @@ export function CoaBatchActions({ selectedIds, rows, operatingCompanyId, onCompl
           closeMerge();
         }}
       >
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           <p className="text-slate-600">
             Choose the surviving account. Sub-accounts of the merged accounts are reparented onto it, and every
             place that designates a merged account for future postings — item default accounts, account role

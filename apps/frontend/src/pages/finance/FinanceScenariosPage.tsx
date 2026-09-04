@@ -189,7 +189,7 @@ export function FinanceScenariosPage() {
 
   const header = (
     <div className="mb-4">
-      <h1 className="text-lg font-semibold text-slate-800">Scenarios</h1>
+      <h1 className="text-page-title font-semibold text-slate-800">Scenarios</h1>
       <p className="text-xs text-slate-500">
         Versioned forecast scenarios — activate one at a time to drive Overview and Projections. Nothing posts to the GL.
       </p>

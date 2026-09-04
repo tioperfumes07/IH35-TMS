@@ -50,7 +50,7 @@ export function BackArrowHeader({ backTo, breadcrumb, title, countBadge, actions
           <span aria-hidden>←</span>
           <span>Back</span>
         </button>
-        <h1 className="m-0 text-base font-semibold">{title}</h1>
+        <h1 className="m-0 text-xs font-semibold">{title}</h1>
         {countBadge !== undefined ? <span className="ml-1 text-[11px] text-(--text-secondary)">{countBadge}</span> : null}
         <div className="ml-auto flex gap-2">{actions}</div>
       </div>

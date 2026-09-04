@@ -31,7 +31,7 @@ export function Step2QBOConnect({ companyId, value, disabled, onChange }: Props)
 
   return (
     <div className="space-y-3" data-testid="onboarding-step-qbo">
-      <h2 className="text-base font-semibold text-gray-900">Connect QuickBooks Online</h2>
+      <h2 className="text-xs font-semibold text-gray-900">Connect QuickBooks Online</h2>
       <p className="text-xs text-gray-600">
         Authorize QBO so invoices, bills, payments, and journal entries sync automatically. You can complete this later from Accounting settings.
       </p>

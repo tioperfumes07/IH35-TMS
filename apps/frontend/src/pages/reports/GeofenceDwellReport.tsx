@@ -185,15 +185,15 @@ export function GeofenceDwellReport() {
       <section className="grid gap-2 sm:grid-cols-3">
         <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
           <div className="text-[11px] uppercase text-slate-500">Visits</div>
-          <div className="text-lg font-semibold text-slate-900">{summary.events}</div>
+          <div className="text-page-title font-semibold text-slate-900">{summary.events}</div>
         </div>
         <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
           <div className="text-[11px] uppercase text-slate-500">Closed dwells</div>
-          <div className="text-lg font-semibold text-slate-900">{summary.completedDwells}</div>
+          <div className="text-page-title font-semibold text-slate-900">{summary.completedDwells}</div>
         </div>
         <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
           <div className="text-[11px] uppercase text-slate-500">Avg dwell</div>
-          <div className="text-lg font-semibold text-slate-900">{minutesToClock(summary.avgDwell)}</div>
+          <div className="text-page-title font-semibold text-slate-900">{minutesToClock(summary.avgDwell)}</div>
         </div>
       </section>
 

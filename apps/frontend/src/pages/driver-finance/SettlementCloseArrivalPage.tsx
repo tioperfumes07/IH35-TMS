@@ -422,7 +422,7 @@ export function SettlementCloseArrivalPage() {
 
               {/* NET */}
               <div className="border-t border-gray-200 pt-2">
-                <div className="flex items-center justify-between text-base font-semibold text-gray-900">
+                <div className="flex items-center justify-between text-xs font-semibold text-gray-900">
                   <span>NET PAY</span>
                   <span>{formatUsd(netPay)}</span>
                 </div>

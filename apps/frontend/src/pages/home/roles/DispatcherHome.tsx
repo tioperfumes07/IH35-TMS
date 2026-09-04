@@ -118,21 +118,21 @@ export function DispatcherHome({ auth }: Props) {
             <div className="grid grid-cols-2 text-xs sm:divide-x sm:divide-slate-100">
               <div className="border-t border-slate-100 px-3 py-2">
                 <div className="text-xs text-slate-500">Booked loads</div>
-                <div className="text-xl font-semibold text-slate-900">{data?.booking_gap_analytics.loads_booked_7d ?? 0}</div>
+                <div className="text-page-title font-semibold text-slate-900">{data?.booking_gap_analytics.loads_booked_7d ?? 0}</div>
               </div>
               <div className="border-t border-slate-100 px-3 py-2">
                 <div className="text-xs text-slate-500">Open gaps</div>
-                <div className="text-xl font-semibold text-slate-900">
+                <div className="text-page-title font-semibold text-slate-900">
                   {data?.booking_gap_analytics.unresolved_dispatch_gaps_7d ?? 0}
                 </div>
               </div>
               <div className="border-t border-slate-100 px-3 py-2">
                 <div className="text-xs text-slate-500">Exceptions</div>
-                <div className="text-xl font-semibold text-slate-900">{data?.booking_gap_analytics.exception_loads_7d ?? 0}</div>
+                <div className="text-page-title font-semibold text-slate-900">{data?.booking_gap_analytics.exception_loads_7d ?? 0}</div>
               </div>
               <div className="border-t border-slate-100 px-3 py-2">
                 <div className="text-xs text-slate-500">Gap rate</div>
-                <div className="text-xl font-semibold text-slate-700">{data?.booking_gap_analytics.gap_rate_pct ?? 0}%</div>
+                <div className="text-page-title font-semibold text-slate-700">{data?.booking_gap_analytics.gap_rate_pct ?? 0}%</div>
               </div>
             </div>
           </section>

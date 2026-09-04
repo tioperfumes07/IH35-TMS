@@ -95,7 +95,7 @@ export function MaintenancePmCountdownCards({ rows, loading = false, compact = f
             return (
               <div key={card.id} className="border-t border-gray-100 px-3 py-2 first:border-t-0">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">{card.label}</div>
-                <div className="mt-1 text-lg font-semibold text-gray-900">{dueCount}</div>
+                <div className="mt-1 text-page-title font-semibold text-gray-900">{dueCount}</div>
                 <div className="text-[11px] text-gray-600">{formatCountdown(nextRow)}</div>
                 {overdueCount > 0 ? (
                   <div className="mt-1 text-[11px] text-red-600">{overdueCount} overdue</div>

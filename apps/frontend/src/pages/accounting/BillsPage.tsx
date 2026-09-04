@@ -131,7 +131,7 @@ function billKpiCard(label: string, value: string, sublabel: string, tone: "neut
   return (
     <div className={`rounded-sm border border-gray-200 bg-white px-3 py-2 ${toneClass}`}>
       <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
-      <p className="text-lg font-semibold text-gray-900">{value}</p>
+      <p className="text-page-title font-semibold text-gray-900">{value}</p>
       <p className="text-xs text-gray-500">{sublabel}</p>
     </div>
   );
@@ -684,7 +684,7 @@ export function BillsPage() {
             />
           </label>
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="text-gray-600">Category:</span>
           <button
             type="button"
@@ -707,7 +707,7 @@ export function BillsPage() {
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="text-gray-600">Status:</span>
           <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1" value={staged.draft.status} onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value as typeof status })}>
             <option value="active">Active (hide voided)</option>
@@ -741,7 +741,7 @@ export function BillsPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="text-gray-600">From:</span>
           <DatePicker value={staged.draft.dateFrom} onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })} max={staged.draft.dateTo || undefined} className="w-36" />
           <span className="text-gray-600">To:</span>
@@ -807,7 +807,7 @@ export function BillsPage() {
       }}
     />
     <div className="space-y-3">
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {billsQuery.isError ? <ListErrorBanner onRetry={() => void billsQuery.refetch()} /> : null}
       {highlightedBillId ? (
         <p
@@ -923,7 +923,7 @@ export function BillsPage() {
         affectedCount={pendingIds.length}
         description="Set a scheduled payment date on selected open bills."
         payloadFields={
-          <label className="block text-sm text-gray-700">
+          <label className="block text-xs text-gray-700">
             Scheduled date
             <DatePicker
               className="mt-1 w-full"

@@ -680,7 +680,7 @@ export function InvoicesListPage() {
         affectedCount={pendingIds.length}
         description="Attach selected invoices to a factoring batch."
         payloadFields={
-          <label className="block text-sm text-gray-700">
+          <label className="block text-xs text-gray-700">
             Factoring batch
             {/* C1 PICKER LAW: was a raw-UUID box on a BULK action — one mistyped id attaches every
                 selected invoice to the wrong factoring batch. Read-only pick: creating an advance is

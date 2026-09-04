@@ -453,7 +453,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
         <header className="z-20 shrink-0 border-b border-gray-200 bg-white p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-page-title font-semibold text-gray-900">
                 Load{" "}
                 <EntityLinkOrTombstone kind="load" id={load?.id ?? loadId} name={load?.load_number} noun="Load" />
               </h2>

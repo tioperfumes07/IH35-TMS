@@ -330,7 +330,7 @@ export function VendorCreditsPage() {
           </div>
         }
       >
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           <div className="flex w-full items-start gap-3" data-testid="qbo-vendor-credit-header">
             <label className="min-w-0 flex-1 block">
               <span className="text-xs font-medium text-gray-600">Vendor *</span>
@@ -411,7 +411,7 @@ export function VendorCreditsPage() {
           </div>
         }
       >
-        {creditDetailQuery.isLoading ? <p className="text-sm text-slate-500">Loading vendor credit...</p> : null}
+        {creditDetailQuery.isLoading ? <p className="text-xs text-slate-500">Loading vendor credit...</p> : null}
         {creditDetailQuery.isError ? (
           <ListErrorState
             title="Couldn't load vendor credit"
@@ -421,7 +421,7 @@ export function VendorCreditsPage() {
           />
         ) : null}
         {credit ? (
-          <div className="space-y-4 text-sm">
+          <div className="space-y-4 text-xs">
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3">
               <div>
                 <dt className="text-xs font-semibold text-slate-600">Vendor</dt>
@@ -453,7 +453,7 @@ export function VendorCreditsPage() {
               </div>
             ) : null}
             <div>
-              <h3 className="text-sm font-semibold text-slate-900">Applied bills</h3>
+              <h3 className="text-xs font-semibold text-slate-900">Applied bills</h3>
               <VendorCreditApplications applications={creditDetailQuery.data?.applications ?? []} />
             </div>
             <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="vendor_credit" documentId={credit.id} />
@@ -485,7 +485,7 @@ export function VendorCreditsPage() {
           </div>
         }
       >
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-xs">
           <p className="text-slate-600">
             Available credit: <span className="font-semibold text-slate-900">{money(Number(credit?.amount_unapplied_cents ?? 0))}</span>
           </p>
@@ -548,7 +548,7 @@ export function VendorCreditsPage() {
 
 function VendorCreditApplications({ applications }: { applications: VendorCreditApplication[] }) {
   if (applications.length === 0) {
-    return <p className="mt-1 text-sm text-slate-500">No bills have been credited yet.</p>;
+    return <p className="mt-1 text-xs text-slate-500">No bills have been credited yet.</p>;
   }
   return (
     <div className="mt-2 space-y-2">

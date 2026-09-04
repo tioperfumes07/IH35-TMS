@@ -93,11 +93,11 @@ export function CashForecastPage() {
   return (
     <AccountingSubNavWrapper title="13-week cash forecast" subtitle="Rolling cash projection with AR/AP, factoring, and configurable recurring outflows.">
 
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
 
       <div className="grid gap-3 lg:grid-cols-3">
         <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <h2 className="mb-2 text-sm font-semibold">Configuration</h2>
+          <h2 className="mb-2 text-xs font-semibold">Configuration</h2>
           {settingsQuery.isError ? (
             <div className="mb-2">
               <ListErrorBanner
@@ -149,13 +149,13 @@ export function CashForecastPage() {
 
         <div className="rounded-sm border border-gray-200 bg-white p-3 lg:col-span-2">
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Projected balance</h2>
+            <h2 className="text-xs font-semibold">Projected balance</h2>
             <label className="text-xs text-gray-600">
               Weeks
               <select
                 value={weeks}
                 onChange={(event) => setWeeks(Number(event.target.value))}
-                className="ml-2 h-8 rounded-sm border border-gray-300 px-2 text-sm"
+                className="ml-2 h-8 rounded-sm border border-gray-300 px-2 text-xs"
               >
                 <option value={13}>13</option>
                 <option value={8}>8</option>

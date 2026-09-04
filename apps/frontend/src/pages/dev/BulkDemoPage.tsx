@@ -83,7 +83,7 @@ export function BulkDemoPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-4 p-6">
       <header>
-        <h1 className="text-xl font-semibold text-gray-900">Bulk components demo</h1>
+        <h1 className="text-page-title font-semibold text-gray-900">Bulk components demo</h1>
         <p className="text-xs text-gray-600">
           Mock table with {TOTAL_ROWS} rows, {PAGE_SIZE} per page. Selection persists across pages.
         </p>

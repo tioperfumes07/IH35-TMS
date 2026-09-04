@@ -87,7 +87,7 @@ export function TireWearDashboard() {
     <div className="space-y-4 p-4" data-testid="tire-wear-dashboard">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-gray-900">Tire Wear Tracking</h1>
+          <h1 className="text-page-title font-semibold text-gray-900">Tire Wear Tracking</h1>
           <p className="text-xs text-gray-600">
             CAP-12 tread projections · DOT minimums 4/32&quot; steer · 2/32&quot; drive
           </p>

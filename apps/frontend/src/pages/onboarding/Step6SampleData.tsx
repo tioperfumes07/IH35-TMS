@@ -26,7 +26,7 @@ export function Step6SampleData({ value, disabled, seeding, onSeed }: Props) {
 
   return (
     <div className="space-y-3" data-testid="onboarding-step-samples">
-      <h2 className="text-base font-semibold text-gray-900">Seed sample data (optional)</h2>
+      <h2 className="text-xs font-semibold text-gray-900">Seed sample data (optional)</h2>
       <p className="text-xs text-gray-600">
         Add one sample customer, vendor, driver, truck, and load so you can explore every module with realistic data.
         Sample rows are flagged and can be removed later from admin tools.

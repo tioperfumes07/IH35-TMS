@@ -1776,7 +1776,7 @@ export function BankingTransactionsDesignView({
             <label className="text-xs text-gray-600">
               Check No.
               <input
-                className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={draft.checkNo}
                 onChange={(event) => setDraft(tx, { checkNo: event.target.value })}
               />
@@ -1845,14 +1845,14 @@ export function BankingTransactionsDesignView({
               ) : draft.transactionType === "CC Payment" ? (
                 <button
                   type="button"
-                  className="mt-0.5 block w-full rounded-sm border border-gray-300 px-2 py-1 text-left text-sm hover:bg-gray-50"
+                  className="mt-0.5 block w-full rounded-sm border border-gray-300 px-2 py-1 text-left text-xs hover:bg-gray-50"
                   onClick={() => setCcPaymentModalTx(tx)}
                 >
                   {draft.fromTo || "Select CC payment details…"}
                 </button>
               ) : (
                 <span
-                  className="mt-0.5 block w-full px-2 py-1 text-sm text-gray-500"
+                  className="mt-0.5 block w-full px-2 py-1 text-xs text-gray-500"
                   title="Derived from the category / payee you select — not a free-text field."
                 >
                   {computeFromTo(tx, draft) || "Auto — set by the category / payee"}
@@ -1909,7 +1909,7 @@ export function BankingTransactionsDesignView({
             <label className="text-xs text-gray-600">
               Location
               <input
-                className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={draft.location}
                 onChange={(event) => setDraft(tx, { location: event.target.value })}
               />
@@ -2199,7 +2199,7 @@ export function BankingTransactionsDesignView({
           <label className="mt-2 block text-xs text-gray-600">
             Memo
             <textarea
-              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               rows={3}
               value={draft.memo}
               onChange={(event) => setDraft(tx, { memo: event.target.value })}
@@ -2209,7 +2209,7 @@ export function BankingTransactionsDesignView({
             <label className="mt-2 block text-xs text-gray-600">
               Tags
               <input
-                className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 value={draft.tags}
                 onChange={(event) => setDraft(tx, { tags: event.target.value })}
               />
@@ -2271,14 +2271,14 @@ export function BankingTransactionsDesignView({
               Open match drawer
             </button>
           </div>
-          {matchCandidatesQuery.isLoading ? <p className="mt-2 text-sm text-gray-500">Loading match candidates...</p> : null}
+          {matchCandidatesQuery.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading match candidates...</p> : null}
           {matchCandidatesQuery.isError ? (
-            <p className="mt-2 text-sm text-red-700">Could not load match candidates.</p>
+            <p className="mt-2 text-xs text-red-700">Could not load match candidates.</p>
           ) : null}
           {!matchCandidatesQuery.isLoading &&
           !matchCandidatesQuery.isError &&
           (matchCandidatesQuery.data?.candidates ?? []).length === 0 ? (
-            <p className="mt-2 text-sm text-gray-500">No match candidates found for this transaction.</p>
+            <p className="mt-2 text-xs text-gray-500">No match candidates found for this transaction.</p>
           ) : null}
           <div className="mt-2 space-y-1.5">
             {[...(matchCandidatesQuery.data?.candidates ?? [])]
@@ -2462,7 +2462,7 @@ export function BankingTransactionsDesignView({
           <div className="relative ml-auto">
             <button
               type="button"
-              className="rounded-sm border border-gray-300 px-2 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs font-medium text-gray-800 hover:bg-gray-50"
               onClick={() => setLinkMenuOpen((v) => !v)}
             >
               Link account ▾
@@ -2471,7 +2471,7 @@ export function BankingTransactionsDesignView({
               <div className="absolute right-0 z-20 mt-1 min-w-[220px] rounded-sm border border-gray-200 bg-white shadow-md">
                 <button
                   type="button"
-                  className="block w-full border-b border-gray-100 px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
                   onClick={() => {
                     setLinkMenuOpen(false);
                     uploadInputRef.current?.click();
@@ -2481,7 +2481,7 @@ export function BankingTransactionsDesignView({
                 </button>
                 <button
                   type="button"
-                  className="block w-full border-b border-gray-100 px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
                   onClick={() => {
                     setLinkMenuOpen(false);
                     onManageConnections();
@@ -2497,7 +2497,7 @@ export function BankingTransactionsDesignView({
                       ? `/accounting/account-register?accountId=${encodeURIComponent(selectedAccount.id)}`
                       : "/accounting/account-register"
                   }
-                  className="block px-3 py-2 text-sm hover:bg-gray-50"
+                  className="block px-3 py-2 text-xs hover:bg-gray-50"
                   onClick={() => setLinkMenuOpen(false)}
                 >
                   Go to bank register
@@ -3052,7 +3052,7 @@ export function BankingTransactionsDesignView({
         >
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-md bg-white p-4 shadow-xl">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-gray-900">
+              <h2 className="text-xs font-semibold text-gray-900">
                 Categorize {bulkSelection.selectedIds.size} transaction(s)
               </h2>
               <button

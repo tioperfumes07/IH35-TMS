@@ -74,7 +74,7 @@ export function QboSyncQueuePage() {
     <div className="space-y-3">
       <PageHeader backHref="/banking" title="QBO Sync Queue" subtitle="Review pending/failed/blocked banking sync jobs" />
       {statsQuery.isError || queueQuery.isError ? <ListErrorBanner onRetry={() => void refresh()} /> : null}
-      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           <p>Pending: {Number(statsQuery.data?.pending ?? 0)}</p>
           <p>In-flight: {Number(statsQuery.data?.in_flight ?? 0)}</p>
@@ -123,7 +123,7 @@ export function QboSyncQueuePage() {
             </div>
           ))}
           {(queueQuery.data?.items ?? []).length === 0 && !queueQuery.isLoading ? (
-            <p className="text-sm text-gray-500">No queue items found for this company.</p>
+            <p className="text-xs text-gray-500">No queue items found for this company.</p>
           ) : null}
         </div>
         <CappedListNotice

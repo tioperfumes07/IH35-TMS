@@ -152,20 +152,20 @@ export function DeadheadReportPage() {
           <div className="grid gap-3 md:grid-cols-4">
             <div className="rounded-sm border border-gray-200 bg-white p-4">
               <div className="text-xs text-gray-500">Fleet avg deadhead</div>
-              <div className="text-2xl font-semibold">{pct(reportQuery.data.fleet.avg_deadhead_pct)}</div>
+              <div className="text-page-title font-semibold">{pct(reportQuery.data.fleet.avg_deadhead_pct)}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-4">
               <div className="text-xs text-gray-500">Total deadhead miles</div>
-              <div className="text-2xl font-semibold">{reportQuery.data.fleet.total_deadhead_miles.toLocaleString()}</div>
+              <div className="text-page-title font-semibold">{reportQuery.data.fleet.total_deadhead_miles.toLocaleString()}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-4">
               <div className="text-xs text-gray-500">Est. deadhead cost</div>
-              <div className="text-2xl font-semibold">{money(reportQuery.data.fleet.estimated_deadhead_cost_cents)}</div>
+              <div className="text-page-title font-semibold">{money(reportQuery.data.fleet.estimated_deadhead_cost_cents)}</div>
               <div className="text-[11px] text-gray-500">Fuel CPM × 1.4 driver-pay adj</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-4">
               <div className="text-xs text-gray-500">Trucks tracked</div>
-              <div className="text-2xl font-semibold">{reportQuery.data.fleet.truck_count}</div>
+              <div className="text-page-title font-semibold">{reportQuery.data.fleet.truck_count}</div>
             </div>
           </div>
 

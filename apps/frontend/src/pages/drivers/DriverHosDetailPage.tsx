@@ -82,19 +82,19 @@ export function DriverHosDetailPage() {
           <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs uppercase text-gray-500">11hr drive</div>
-              <div className="text-lg font-semibold">{minutesToLabel(hosQuery.data.clocks.drive_remaining_min)}</div>
+              <div className="text-page-title font-semibold">{minutesToLabel(hosQuery.data.clocks.drive_remaining_min)}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs uppercase text-gray-500">14hr window</div>
-              <div className="text-lg font-semibold">{minutesToLabel(hosQuery.data.clocks.window_remaining_min)}</div>
+              <div className="text-page-title font-semibold">{minutesToLabel(hosQuery.data.clocks.window_remaining_min)}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs uppercase text-gray-500">30m break</div>
-              <div className="text-lg font-semibold">{minutesToLabel(hosQuery.data.clocks.break_remaining_min)}</div>
+              <div className="text-page-title font-semibold">{minutesToLabel(hosQuery.data.clocks.break_remaining_min)}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs uppercase text-gray-500">70hr cycle</div>
-              <div className="text-lg font-semibold">{minutesToLabel(hosQuery.data.clocks.cycle_remaining_min)}</div>
+              <div className="text-page-title font-semibold">{minutesToLabel(hosQuery.data.clocks.cycle_remaining_min)}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs uppercase text-gray-500">Status</div>

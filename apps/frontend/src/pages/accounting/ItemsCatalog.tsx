@@ -27,13 +27,13 @@ export function ItemsCatalog({ onSynced }: Props = {}) {
   const operatingCompanyId = selectedCompanyId ?? "";
 
   if (!operatingCompanyId) {
-    return <p className="text-sm text-muted-foreground">Select an operating company to manage items sync.</p>;
+    return <p className="text-xs text-muted-foreground">Select an operating company to manage items sync.</p>;
   }
 
   return (
     <div className="flex flex-col gap-3 rounded-sm border border-border p-4">
-      <h2 className="text-lg font-semibold">Products &amp; Services (QBO Items)</h2>
-      <p className="text-sm text-muted-foreground">Pull and reconcile QBO items into the items catalog for WO auto-post.</p>
+      <h2 className="text-page-title font-semibold">Products &amp; Services (QBO Items)</h2>
+      <p className="text-xs text-muted-foreground">Pull and reconcile QBO items into the items catalog for WO auto-post.</p>
       <div className="flex gap-2">
         <button
           type="button"
@@ -58,7 +58,7 @@ export function ItemsCatalog({ onSynced }: Props = {}) {
           Reconcile
         </button>
       </div>
-      {status ? <p className="text-sm">{status}</p> : null}
+      {status ? <p className="text-xs">{status}</p> : null}
     </div>
   );
 }

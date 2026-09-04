@@ -68,7 +68,7 @@ export function CustomerRelationshipScore({ score, loading = false, error = null
       {!loading && !error && !noData ? (
         <>
           <div className="mb-2 flex items-end gap-2">
-            <p className="text-2xl font-semibold text-gray-900">
+            <p className="text-page-title font-semibold text-gray-900">
               {typeof score?.overall_health_score === "number" ? score.overall_health_score.toFixed(1) : "—"}
             </p>
             <span className="pb-1 text-xs text-gray-500">/ 100</span>

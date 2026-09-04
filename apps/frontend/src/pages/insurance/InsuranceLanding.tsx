@@ -38,7 +38,7 @@ function Card(props: CardProps) {
       aria-label={`${label} — view records`}
     >
       <p className="text-xs font-medium uppercase tracking-wide text-red-700">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-red-700">{formatKpiValue(value)}</p>
+      <p className="mt-2 text-page-title font-semibold text-red-700">{formatKpiValue(value)}</p>
       {actionLabel ? <span className="mt-2 inline-block text-xs font-semibold text-red-700 underline">{actionLabel}</span> : null}
     </Link>
   );

@@ -195,7 +195,7 @@ export function ReportsHomePage() {
               {item.label}
             </div>
             <div
-              className={`text-lg font-semibold ${item.warn ? "text-[#334155]" : "text-slate-900"}`}
+              className={`text-page-title font-semibold ${item.warn ? "text-[#334155]" : "text-slate-900"}`}
             >
               {item.value}
             </div>

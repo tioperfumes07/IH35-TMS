@@ -34,12 +34,12 @@ export function IdentityHeader({
         {photoUrl ? (
           <img src={photoUrl} alt="" className="h-16 w-16 rounded-full object-cover" />
         ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 text-lg font-semibold text-slate-600">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 text-page-title font-semibold text-slate-600">
             {name.slice(0, 1)}
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-semibold text-gray-900">{name}</h2>
+          <h2 className="text-page-title font-semibold text-gray-900">{name}</h2>
           <p className="text-xs text-gray-600">
             DOB {driver.date_of_birth ? String(driver.date_of_birth) : "—"} · Hired{" "}
             {driver.hire_date ? String(driver.hire_date) : "—"}

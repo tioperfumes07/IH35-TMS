@@ -306,8 +306,8 @@ export function AccountsPayableAgingPage() {
     <AccountingSubNavWrapper title="Accounts Payable" subtitle={apSubtitle}>
       <div className="mb-3 flex flex-wrap items-end gap-3 print:hidden" data-ap-aging-filter-toolbar="collapsed">
         <div className="inline-flex overflow-hidden rounded-sm border border-slate-300">
-          <button type="button" className={`px-3 py-1.5 text-sm ${view === "by_vendor" ? "bg-slate-800 text-white" : "bg-white text-slate-700"}`} onClick={() => setView("by_vendor")}>By Vendor</button>
-          <button type="button" className={`px-3 py-1.5 text-sm ${view === "by_type" ? "bg-slate-800 text-white" : "bg-white text-slate-700"}`} onClick={() => setView("by_type")}>By Vendor Type</button>
+          <button type="button" className={`px-3 py-1.5 text-xs ${view === "by_vendor" ? "bg-slate-800 text-white" : "bg-white text-slate-700"}`} onClick={() => setView("by_vendor")}>By Vendor</button>
+          <button type="button" className={`px-3 py-1.5 text-xs ${view === "by_type" ? "bg-slate-800 text-white" : "bg-white text-slate-700"}`} onClick={() => setView("by_type")}>By Vendor Type</button>
         </div>
 
         <CollapsedListFilters
@@ -371,7 +371,7 @@ export function AccountsPayableAgingPage() {
       </div>
 
       {query.isLoading ? (
-        <div className="px-3 py-6 text-sm text-slate-500">Loading A/P aging…</div>
+        <div className="px-3 py-6 text-xs text-slate-500">Loading A/P aging…</div>
       ) : query.isError ? (
         <ListErrorState
           title="Couldn't load A/P aging"

@@ -117,7 +117,7 @@ export function SessionDetail({ sessionUuid, operatingCompanyId }: Props) {
   return (
     <section className="space-y-4 rounded-sm border border-slate-200 bg-white p-4" data-testid="photo-comparison-session-detail">
       <header>
-        <h2 className="text-base font-semibold text-slate-900">Photo comparison session</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Photo comparison session</h2>
         <p className="text-xs text-slate-500">
           Status: <span className="font-semibold">{query.isLoading ? "loading" : (session?.diff_status ?? "not found")}</span>
         </p>

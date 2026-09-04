@@ -73,7 +73,7 @@ export function ExpenseDetailPage() {
   // isFetching, so a disabled query (selectedCompanyId not yet resolved on cold nav) reports
   // isLoading=false and falls through to "not found" for a real record. isPending is correct here —
   // see JournalEntryDetailPage.tsx for the full live-repro writeup. Do not revert to isLoading.
-  if (detailQuery.isPending) return <div className="p-4 text-sm text-slate-500">Loading expense…</div>;
+  if (detailQuery.isPending) return <div className="p-4 text-xs text-slate-500">Loading expense…</div>;
   if (detailQuery.isError) {
     return (
       <ListErrorState
@@ -87,7 +87,7 @@ export function ExpenseDetailPage() {
 
   const expense = detailQuery.data?.expense;
   const lines = detailQuery.data?.lines ?? [];
-  if (!expense) return <div className="p-4 text-sm text-red-600">Expense not found.</div>;
+  if (!expense) return <div className="p-4 text-xs text-red-600">Expense not found.</div>;
 
   const displayId = expenseListLabel(expense.expense_number);
 
@@ -247,19 +247,19 @@ export function ExpenseDetailPage() {
         ) : null}
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Expense #</span>
-          <span className="text-sm text-gray-900">{expenseListLabel(expense.expense_number)}</span>
+          <span className="text-xs text-gray-900">{expenseListLabel(expense.expense_number)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Date</span>
-          <span className="text-sm text-gray-900">{formatDateUS(expense.transaction_date)}</span>
+          <span className="text-xs text-gray-900">{formatDateUS(expense.transaction_date)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Amount</span>
-          <span className="text-sm text-gray-900">{money(expense.total_amount_cents)}</span>
+          <span className="text-xs text-gray-900">{money(expense.total_amount_cents)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">GL posting</span>
-          <span className="text-sm capitalize text-gray-900">{expense.posting_status}</span>
+          <span className="text-xs capitalize text-gray-900">{expense.posting_status}</span>
         </DataPanelRow>
         {expense.journal_entry_id ? (
           <DataPanelRow>
@@ -306,7 +306,7 @@ export function ExpenseDetailPage() {
             <span className="text-xs font-semibold text-gray-600">Payment account</span>
             <Link
               to={`/accounting/chart-of-accounts/register/${expense.payment_account_uuid}`}
-              className="text-sm text-slate-700 hover:underline"
+              className="text-xs text-slate-700 hover:underline"
             >
               {accountLabel(expense.payment_account_number, expense.payment_account_name, expense.payment_account_uuid)}
             </Link>
@@ -369,12 +369,12 @@ export function ExpenseDetailPage() {
         {expense.memo ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Memo</span>
-            <span className="text-sm text-gray-900">{expense.memo}</span>
+            <span className="text-xs text-gray-900">{expense.memo}</span>
           </DataPanelRow>
         ) : null}
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Created</span>
-          <span className="text-sm text-gray-900">{formatDateUS(expense.created_at)}</span>
+          <span className="text-xs text-gray-900">{formatDateUS(expense.created_at)}</span>
         </DataPanelRow>
       </DataPanel>
 

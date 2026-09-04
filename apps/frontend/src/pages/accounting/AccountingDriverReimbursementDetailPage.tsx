@@ -23,10 +23,10 @@ export function AccountingDriverReimbursementDetailPage() {
   });
   const row = query.data;
   return <AccountingSubNavWrapper title={row ? `Driver reimbursement — ${row.reason}` : "Driver reimbursement"} subtitle="Canonical reimbursement claim, payout, and posting lineage">
-    {!companyId ? <p className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm">Select an operating company to view this reimbursement.</p> : null}
+    {!companyId ? <p className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs">Select an operating company to view this reimbursement.</p> : null}
     {query.isError ? <ListErrorState title="Couldn't load driver reimbursement" status={0} message={query.error instanceof Error ? query.error.message : undefined} onRetry={() => void query.refetch()} /> : null}
-    {query.isPending && companyId ? <p className="text-sm text-slate-500">Loading driver reimbursement…</p> : null}
-    {row ? <section className="grid gap-3 rounded-sm border border-slate-200 bg-white p-4 text-sm md:grid-cols-3">
+    {query.isPending && companyId ? <p className="text-xs text-slate-500">Loading driver reimbursement…</p> : null}
+    {row ? <section className="grid gap-3 rounded-sm border border-slate-200 bg-white p-4 text-xs md:grid-cols-3">
       <div><span className="text-slate-500">Driver</span><p><EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /></p></div>
       <div><span className="text-slate-500">Amount</span><p className="font-medium">{formatUsdCents(Number(row.amount_cents))}</p></div>
       <div><span className="text-slate-500">Type</span><p className="capitalize">{words(row.reimbursement_type)}</p></div>

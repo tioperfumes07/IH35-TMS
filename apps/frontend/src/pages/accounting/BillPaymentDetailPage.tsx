@@ -56,7 +56,7 @@ export function BillPaymentDetailPage() {
   // isFetching, so a disabled query (selectedCompanyId not yet resolved on cold nav) reports
   // isLoading=false and falls through to "not found" for a real record. isPending is correct here —
   // see JournalEntryDetailPage.tsx for the full live-repro writeup. Do not revert to isLoading.
-  if (detailQuery.isPending) return <div className="p-4 text-sm text-slate-500">Loading bill payment…</div>;
+  if (detailQuery.isPending) return <div className="p-4 text-xs text-slate-500">Loading bill payment…</div>;
   if (detailQuery.isError) {
     return (
       <ListErrorState
@@ -69,7 +69,7 @@ export function BillPaymentDetailPage() {
   }
 
   const payment = detailQuery.data?.payment;
-  if (!payment) return <div className="p-4 text-sm text-red-600">Bill payment not found.</div>;
+  if (!payment) return <div className="p-4 text-xs text-red-600">Bill payment not found.</div>;
 
   const displayId = entityLabel(payment.reference_number ?? payment.check_number, payment.id, "Payment");
   const isVoided = Boolean(payment.revoked_at);
@@ -127,15 +127,15 @@ export function BillPaymentDetailPage() {
       <DataPanel title="Bill payment">
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Payment date</span>
-          <span className="text-sm text-gray-900">{formatDateUS(payment.payment_date)}</span>
+          <span className="text-xs text-gray-900">{formatDateUS(payment.payment_date)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Amount</span>
-          <span className="text-sm text-gray-900">{money(payment.amount_cents)}</span>
+          <span className="text-xs text-gray-900">{money(payment.amount_cents)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Method</span>
-          <span className="text-sm text-gray-900">{payment.payment_method}</span>
+          <span className="text-xs text-gray-900">{payment.payment_method}</span>
         </DataPanelRow>
         {payment.bill_id ? (
           <DataPanelRow>
@@ -191,24 +191,24 @@ export function BillPaymentDetailPage() {
         {payment.reference_number ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Reference</span>
-            <span className="text-sm text-gray-900">{entityLabel(payment.reference_number, payment.id, "Reference")}</span>
+            <span className="text-xs text-gray-900">{entityLabel(payment.reference_number, payment.id, "Reference")}</span>
           </DataPanelRow>
         ) : null}
         {payment.check_number ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Check #</span>
-            <span className="text-sm text-gray-900">{entityLabel(payment.check_number, payment.id, "Check")}</span>
+            <span className="text-xs text-gray-900">{entityLabel(payment.check_number, payment.id, "Check")}</span>
           </DataPanelRow>
         ) : null}
         {payment.memo ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Memo</span>
-            <span className="text-sm text-gray-900">{payment.memo}</span>
+            <span className="text-xs text-gray-900">{payment.memo}</span>
           </DataPanelRow>
         ) : null}
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Created</span>
-          <span className="text-sm text-gray-900">{formatDateUS(payment.created_at)}</span>
+          <span className="text-xs text-gray-900">{formatDateUS(payment.created_at)}</span>
         </DataPanelRow>
       </DataPanel>
       </div>

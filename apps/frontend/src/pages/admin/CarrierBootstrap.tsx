@@ -81,7 +81,7 @@ export function CarrierBootstrapPage() {
       {error ? <div className="rounded-sm border border-red-300 bg-red-50 p-3 text-xs text-red-800">{error}</div> : null}
 
       <section className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
-        <h2 className="mb-3 text-lg font-semibold">Hidden carriers</h2>
+        <h2 className="mb-3 text-page-title font-semibold">Hidden carriers</h2>
         {carriersQuery.isLoading ? <p className="text-xs text-gray-600">Loading…</p> : null}
         {carriersQuery.isError ? (
           <p className="text-xs text-red-700">Failed to load hidden carriers.</p>

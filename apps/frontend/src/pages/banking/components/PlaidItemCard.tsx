@@ -25,7 +25,7 @@ export function PlaidItemCard({ institution, accounts, actions, nowMs }: Props) 
             {institution.slice(0, 1).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900">{institution}</p>
+            <p className="text-xs font-semibold text-gray-900">{institution}</p>
             <p className="text-xs text-gray-500">Last sync: {lastSyncMs ? new Date(lastSyncMs).toLocaleString() : "—"}</p>
           </div>
         </div>

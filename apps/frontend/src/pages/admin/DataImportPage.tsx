@@ -189,7 +189,7 @@ export function DataImportPage() {
 
       {step === 1 ? (
         <section className="space-y-3 rounded-sm border border-slate-200 bg-white p-4">
-          <h2 className="text-lg font-semibold text-slate-900">1. Entity type</h2>
+          <h2 className="text-page-title font-semibold text-slate-900">1. Entity type</h2>
           <div className="space-y-3">
             {ENTITIES.map((opt) => (
               <label key={opt.slug} className="flex cursor-pointer gap-3 rounded-sm border border-slate-100 p-3 hover:bg-slate-50">
@@ -219,7 +219,7 @@ export function DataImportPage() {
 
       {step === 2 ? (
         <section className="space-y-4 rounded-sm border border-slate-200 bg-white p-4">
-          <h2 className="text-lg font-semibold text-slate-900">2. Upload CSV</h2>
+          <h2 className="text-page-title font-semibold text-slate-900">2. Upload CSV</h2>
           {selected.companyRequired ? (
             <label className="block text-xs">
               <span className="font-medium text-slate-800">Operating company</span>
@@ -293,15 +293,15 @@ export function DataImportPage() {
 
       {step === 3 && preview ? (
         <section className="space-y-4 rounded-sm border border-slate-200 bg-white p-4">
-          <h2 className="text-lg font-semibold text-slate-900">3. Preview</h2>
+          <h2 className="text-page-title font-semibold text-slate-900">3. Preview</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-sm border border-emerald-100 bg-emerald-50 p-3 text-xs">
               <div className="font-semibold text-emerald-900">Valid rows</div>
-              <div className="text-2xl font-bold text-emerald-800">{preview.valid_rows}</div>
+              <div className="text-page-title font-bold text-emerald-800">{preview.valid_rows}</div>
             </div>
             <div className="rounded-sm border border-amber-100 bg-amber-50 p-3 text-xs">
               <div className="font-semibold text-amber-900">Invalid rows</div>
-              <div className="text-2xl font-bold text-amber-800">{preview.invalid_rows}</div>
+              <div className="text-page-title font-bold text-amber-800">{preview.invalid_rows}</div>
             </div>
           </div>
 
@@ -358,7 +358,7 @@ export function DataImportPage() {
 
       {step === 4 ? (
         <section className="space-y-4 rounded-sm border border-amber-200 bg-amber-50 p-4">
-          <h2 className="text-lg font-semibold text-amber-950">4. Confirm commit</h2>
+          <h2 className="text-page-title font-semibold text-amber-950">4. Confirm commit</h2>
           <p className="text-xs text-amber-950">
             Commits run in a single database transaction. If any row fails validation, the entire import rolls back and nothing is partially saved. Re-imports may skip rows that already exist —
             review your CSV for idempotency before continuing.
@@ -381,17 +381,17 @@ export function DataImportPage() {
 
       {step === 5 ? (
         <section className="space-y-4 rounded-sm border border-slate-200 bg-white p-4">
-          <h2 className="text-lg font-semibold text-slate-900">5. Result</h2>
+          <h2 className="text-page-title font-semibold text-slate-900">5. Result</h2>
           {commitResult ? (
             <>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-sm border border-slate-100 bg-slate-50 p-3 text-xs">
                   <div className="font-semibold">Inserted</div>
-                  <div className="text-2xl font-bold text-slate-900">{commitResult.inserted_rows}</div>
+                  <div className="text-page-title font-bold text-slate-900">{commitResult.inserted_rows}</div>
                 </div>
                 <div className="rounded-sm border border-slate-100 bg-slate-50 p-3 text-xs">
                   <div className="font-semibold">Skipped</div>
-                  <div className="text-2xl font-bold text-slate-900">{commitResult.skipped_rows}</div>
+                  <div className="text-page-title font-bold text-slate-900">{commitResult.skipped_rows}</div>
                 </div>
               </div>
               {commitResult.errors.length ? (

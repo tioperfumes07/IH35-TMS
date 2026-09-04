@@ -54,11 +54,11 @@ export function CustomerDrillModal({ open, customer, openBalanceCents = 0, overd
         <div className="grid grid-cols-1 gap-3 border-t border-gray-100 pt-3 sm:grid-cols-2">
           <div>
             <p className="text-xs font-semibold text-gray-600">Open balance</p>
-            <p className="text-lg font-semibold text-gray-900">{openBalanceCents == null ? "Unavailable" : fmtMoney(openBalanceCents)}</p>
+            <p className="text-page-title font-semibold text-gray-900">{openBalanceCents == null ? "Unavailable" : fmtMoney(openBalanceCents)}</p>
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-600">Overdue payment</p>
-            <p className="text-lg font-semibold text-red-700">{fmtMoney(overdueCents)}</p>
+            <p className="text-page-title font-semibold text-red-700">{fmtMoney(overdueCents)}</p>
           </div>
         </div>
         )}

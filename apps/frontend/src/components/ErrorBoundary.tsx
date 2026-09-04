@@ -25,7 +25,7 @@ function ErrorFallback({ error, onReload }: { error: Error; onReload: () => void
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-950 px-4 py-10 text-slate-50">
       <div className="w-full max-w-xl rounded-lg border border-white/10 bg-slate-900 p-6 shadow-xl">
-        <h1 className="text-xl font-semibold text-white">Something went wrong</h1>
+        <h1 className="text-page-title font-semibold text-white">Something went wrong</h1>
         <p className="mt-2 text-xs text-slate-300">
           The page hit an unexpected error. You can reload to try again, or email support with the prefilled details below.
         </p>

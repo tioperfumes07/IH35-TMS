@@ -616,7 +616,7 @@ export function VendorsPage() {
                 <section className="rounded-sm border border-gray-200 bg-white p-3">
                   <div className="mb-2 flex items-center justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-gray-900">
+                      <h2 className="text-page-title font-semibold text-gray-900">
                         <EntityLink
                           kind="vendor"
                           id={selectedVendor.id}
@@ -658,9 +658,9 @@ export function VendorsPage() {
                 <section className="rounded-sm border border-gray-200 bg-white p-3">
                   <h3 className="mb-2 text-xs font-semibold text-gray-900">Summary</h3>
                   <p className="text-xs text-gray-600">Open balance</p>
-                  <p className="text-xl font-semibold text-gray-900">{balancesQuery.isError ? <span className="text-red-600 text-base">Failed to load — <button type="button" className="underline" onClick={() => void balancesQuery.refetch()}>Retry</button></span> : fmtMoney(openByVendorId.get(selectedVendor.id) ?? 0)}</p>
+                  <p className="text-page-title font-semibold text-gray-900">{balancesQuery.isError ? <span className="text-red-600 text-xs">Failed to load — <button type="button" className="underline" onClick={() => void balancesQuery.refetch()}>Retry</button></span> : fmtMoney(openByVendorId.get(selectedVendor.id) ?? 0)}</p>
                   <p className="mt-2 text-xs text-gray-600">Overdue payment</p>
-                  <p className="text-lg font-semibold text-red-700">{fmtMoney(overdueCents)}</p>
+                  <p className="text-page-title font-semibold text-red-700">{fmtMoney(overdueCents)}</p>
                 </section>
               </div>
 

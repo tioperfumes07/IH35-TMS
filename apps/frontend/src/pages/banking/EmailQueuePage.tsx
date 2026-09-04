@@ -44,7 +44,7 @@ export function EmailQueuePage() {
     return (
       <div className="space-y-3">
         <PageHeader backHref="/banking" title="Email Queue" subtitle="Owner/Administrator only" />
-        <p className="text-sm text-gray-600">You need Owner or Administrator access to view outbound email jobs.</p>
+        <p className="text-xs text-gray-600">You need Owner or Administrator access to view outbound email jobs.</p>
       </div>
     );
   }
@@ -89,7 +89,7 @@ export function EmailQueuePage() {
             </div>
           ))}
           {(queueQuery.data?.items ?? []).length === 0 && !queueQuery.isLoading ? (
-            <p className="text-sm text-gray-500">No email queue rows returned for this company.</p>
+            <p className="text-xs text-gray-500">No email queue rows returned for this company.</p>
           ) : null}
         </div>
         <CappedListNotice

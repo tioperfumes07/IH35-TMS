@@ -138,19 +138,19 @@ export function DispatchMarginPage() {
           <div className="grid gap-3 md:grid-cols-4">
             <div className="rounded-sm border bg-white p-3">
               <div className="text-xs text-slate-500">Revenue</div>
-              <div className="text-lg font-semibold">{money(query.data.totals.revenue_cents)}</div>
+              <div className="text-page-title font-semibold">{money(query.data.totals.revenue_cents)}</div>
             </div>
             <div className="rounded-sm border bg-white p-3">
               <div className="text-xs text-slate-500">Direct cost</div>
-              <div className="text-lg font-semibold">{money(query.data.totals.direct_cost_cents)}</div>
+              <div className="text-page-title font-semibold">{money(query.data.totals.direct_cost_cents)}</div>
             </div>
             <div className="rounded-sm border bg-white p-3">
               <div className="text-xs text-slate-500">Margin</div>
-              <div className="text-lg font-semibold">{money(query.data.totals.margin_cents)}</div>
+              <div className="text-page-title font-semibold">{money(query.data.totals.margin_cents)}</div>
             </div>
             <div className="rounded-sm border bg-white p-3">
               <div className="text-xs text-slate-500">Loads</div>
-              <div className="text-lg font-semibold">{query.data.totals.load_count}</div>
+              <div className="text-page-title font-semibold">{query.data.totals.load_count}</div>
             </div>
           </div>
 

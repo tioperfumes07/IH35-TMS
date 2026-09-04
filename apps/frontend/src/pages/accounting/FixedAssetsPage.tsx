@@ -148,12 +148,12 @@ function TrkBulkRegisterPanel({
       >
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">Register TRK-owned units</h2>
+            <h2 className="text-xs font-semibold text-gray-900">Register TRK-owned units</h2>
             <p className="text-xs text-gray-500 mt-1">
               Bulk register fixed assets on TRK books. Purchase prices are owner-provided only — units without an explicit cents value are skipped (missing_price).
             </p>
           </div>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none ml-4" aria-label="Close">×</button>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 text-page-title leading-none ml-4" aria-label="Close">×</button>
         </div>
 
         <label className="block text-xs font-medium text-gray-700 mb-1" htmlFor="fa-prices-json">
@@ -166,7 +166,7 @@ function TrkBulkRegisterPanel({
           onChange={(e) => setPricesText(e.target.value)}
           rows={8}
           placeholder={PRICES_JSON_EXAMPLE}
-          className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+          className="w-full rounded-sm border border-gray-300 px-3 py-2 text-xs font-mono focus:outline-hidden focus:ring-1 focus:ring-slate-500"
         />
         {parseError ? <p className="mt-1 text-xs text-red-600">{parseError}</p> : null}
 
@@ -186,7 +186,7 @@ function TrkBulkRegisterPanel({
         {lastResult ? <RegisterResultSummary result={lastResult} /> : null}
 
         <div className="mt-4 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50">
+          <button type="button" onClick={onClose} className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50">
             Close
           </button>
           <button
@@ -194,7 +194,7 @@ function TrkBulkRegisterPanel({
             data-testid="fa-register-trk-submit"
             disabled={registerMutation.isPending || Object.keys(pricesMap).length === 0 || !parsed.ok}
             onClick={() => void registerMutation.mutate()}
-            className="rounded-sm bg-slate-800 text-white px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-slate-700"
+            className="rounded-sm bg-slate-800 text-white px-3 py-1.5 text-xs disabled:opacity-40 hover:bg-slate-700"
           >
             {registerMutation.isPending ? "Registering…" : "Register with owner prices"}
           </button>
@@ -213,7 +213,7 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[88vh] flex flex-col" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">{detail.name}</h2>
+            <h2 className="text-xs font-semibold text-gray-900">{detail.name}</h2>
             <p className="text-xs text-gray-500 mt-0.5">
               {detail.asset_number ? `#${detail.asset_number} · ` : ""}{detail.class_name ?? "—"} · {titleize(detail.method)} · {detail.useful_life_months} mo · {titleize(detail.convention)}
             </p>
@@ -226,10 +226,10 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
               </p>
             ) : null}
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none ml-4">×</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-page-title leading-none ml-4">×</button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 text-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 text-xs">
           <div><div className="text-xs text-gray-500">Cost</div><div className="tabular-nums">{fmtCents(detail.purchase_price_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Salvage</div><div className="tabular-nums">{fmtCents(detail.salvage_value_cents)}</div></div>
           <div><div className="text-xs text-gray-500">Depr. to date</div><div className="tabular-nums text-slate-700">{fmtCents(detail.depreciation_to_date_cents)}</div></div>
@@ -472,7 +472,7 @@ export function FixedAssetsPage() {
           type="button"
           data-testid="fa-open-trk-register"
           onClick={() => setRegisterOpen(true)}
-          className="ml-auto rounded-sm border border-slate-300 px-3 py-1.5 text-sm text-slate-800 hover:bg-slate-50"
+          className="ml-auto rounded-sm border border-slate-300 px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50"
         >
           Register TRK units
         </button>
@@ -483,7 +483,7 @@ export function FixedAssetsPage() {
   if (!flagLoading && !enabled) {
     return (
       <AccountingSubNavWrapper title="Fixed Assets" subtitle="Fixed asset register and depreciation schedules">
-        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-xs text-gray-500">
           Fixed asset tracking is not yet enabled for this account.
           <p className="mt-1 text-xs text-gray-400">This module is turned on per operating company and isn’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable it, or switch to a company where it’s already on.</p>
         </div>
@@ -536,7 +536,7 @@ export function FixedAssetsPage() {
       />
 
       {total > limit && (
-        <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
+        <div className="flex items-center justify-between mt-3 text-xs text-gray-600">
           <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0}
             className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
           <span>{offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}</span>

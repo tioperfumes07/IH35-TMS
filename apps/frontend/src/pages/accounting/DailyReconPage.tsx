@@ -152,15 +152,15 @@ export function DailyReconPage() {
       kpiStrip={kpiStrip}
     >
       {!companyId ? (
-        <p className="text-sm text-slate-700">Select an operating company.</p>
+        <p className="text-xs text-slate-700">Select an operating company.</p>
       ) : query.isLoading ? (
-        <p className="text-sm text-gray-500">Loading…</p>
+        <p className="text-xs text-gray-500">Loading…</p>
       ) : query.isError ? (
-        <p className="text-sm text-red-600">Failed to load reconciliation data.</p>
+        <p className="text-xs text-red-600">Failed to load reconciliation data.</p>
       ) : !data?.gl_posting_active ? (
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-4 py-6 text-center">
           <p className="font-semibold text-slate-700">TMS posting not enabled — nothing to reconcile yet.</p>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-xs text-slate-600">
             GL posting is not yet turned on for this entity. Once posting is live, daily TMS
             journal entries will appear here paired against QBO sync queue results.
           </p>
@@ -218,7 +218,7 @@ export function DailyReconPage() {
 
           {/* Days */}
           {listState.isEmpty ? (
-            <div className="rounded-sm border border-gray-200 bg-white px-4 py-6 text-center text-sm text-gray-500">
+            <div className="rounded-sm border border-gray-200 bg-white px-4 py-6 text-center text-xs text-gray-500">
               No transactions found for the selected filters.
             </div>
           ) : (
@@ -231,7 +231,7 @@ export function DailyReconPage() {
                       ? "bg-slate-50 border-b border-slate-200"
                       : "bg-gray-50 border-b border-gray-200"
                   }`}>
-                    <span className="font-semibold text-sm text-gray-900">{formatDateUS(day.date)}</span>
+                    <span className="font-semibold text-xs text-gray-900">{formatDateUS(day.date)}</span>
                     {day.all_reconciled ? (
                       <span className="text-xs font-semibold text-slate-600">All reconciled</span>
                     ) : (

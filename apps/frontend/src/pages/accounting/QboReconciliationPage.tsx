@@ -218,7 +218,7 @@ export function QboReconciliationPage() {
   if (!flagLoading && !enabled) {
     return (
       <AccountingSubNavWrapper title="TMS ↔ QBO Reconciliation" subtitle="Daily count & balance agreement between TMS and QuickBooks">
-        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
+        <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-xs text-gray-500">
           The daily TMS ↔ QBO reconciliation screen is not yet enabled for this account.
           <p className="mt-1 text-xs text-gray-400">Enable the {FLAG} feature flag to use this module.</p>
         </div>
@@ -232,7 +232,7 @@ export function QboReconciliationPage() {
       subtitle="Daily count & balance agreement between TMS and QuickBooks (read-only — display only)"
     >
       {isLoading || flagLoading ? (
-        <p className="py-8 text-center text-sm text-gray-500">Loading…</p>
+        <p className="py-8 text-center text-xs text-gray-500">Loading…</p>
       ) : isError ? (
         <ListErrorState
           title="Failed to load reconciliation."
@@ -278,7 +278,7 @@ export function QboReconciliationPage() {
 
           {/* Per-object count reconciliation */}
           <div>
-            <h2 className="mb-2 text-sm font-semibold text-gray-800">Object counts</h2>
+            <h2 className="mb-2 text-xs font-semibold text-gray-800">Object counts</h2>
             <ParityTable<ReconObject>
               columns={objectColumns}
               rows={objects}
@@ -296,7 +296,7 @@ export function QboReconciliationPage() {
           {/* Balance reconciliation (AR / AP) */}
           {balances.length > 0 && (
             <div>
-              <h2 className="mb-2 text-sm font-semibold text-gray-800">Balance reconciliation</h2>
+              <h2 className="mb-2 text-xs font-semibold text-gray-800">Balance reconciliation</h2>
               <ParityTable<ReconObject>
                 columns={balanceColumns}
                 rows={balances}
@@ -311,7 +311,7 @@ export function QboReconciliationPage() {
           {/* Findings drill-down */}
           <div>
             <div className="mb-2 flex items-center gap-2">
-              <h2 className="text-sm font-semibold text-gray-800">
+              <h2 className="text-xs font-semibold text-gray-800">
                 Reconciliation findings{selectedObject ? ` · ${selectedObject}` : ""}
               </h2>
               {selectedObject && (
@@ -321,7 +321,7 @@ export function QboReconciliationPage() {
               )}
             </div>
             {visibleFindings.length === 0 ? (
-              <div className="rounded-sm border border-gray-200 bg-white px-4 py-8 text-center text-sm text-gray-400">
+              <div className="rounded-sm border border-gray-200 bg-white px-4 py-8 text-center text-xs text-gray-400">
                 {findings.length === 0
                   ? "No reconciliation findings recorded. A reconciliation run populates this list."
                   : "No findings for the selected object."}

@@ -549,15 +549,15 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
       <div className="grid grid-cols-3 gap-3" data-mdp-kpi-row="true">
         <div className="flex min-h-[5.5rem] flex-col rounded-lg border border-slate-200 bg-white px-4 py-3" data-mdp-kpi="income">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Expected Income</p>
-          <p className="mt-1 text-lg font-semibold text-slate-700" data-mdp-kpi-total="income">{fmtCents(totalIncome)}</p>
+          <p className="mt-1 text-page-title font-semibold text-slate-700" data-mdp-kpi-total="income">{fmtCents(totalIncome)}</p>
         </div>
         <div className="flex min-h-[5.5rem] flex-col rounded-lg border border-slate-200 bg-white px-4 py-3" data-mdp-kpi="expense">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Expected Expenses</p>
-          <p className="mt-1 text-lg font-semibold text-slate-700" data-mdp-kpi-total="expense">{fmtCents(totalExpense)}</p>
+          <p className="mt-1 text-page-title font-semibold text-slate-700" data-mdp-kpi-total="expense">{fmtCents(totalExpense)}</p>
         </div>
         <div className={`flex min-h-[5.5rem] flex-col rounded-lg border px-4 py-3 ${netPositive ? "border-slate-200 bg-slate-50" : "border-slate-300 bg-slate-100"}`} data-mdp-kpi="net">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Predicted Net</p>
-          <p className={`mt-1 text-lg font-semibold ${netPositive ? "text-slate-700" : "text-slate-900"}`} data-mdp-kpi-total="net">{fmtCents(net)}</p>
+          <p className={`mt-1 text-page-title font-semibold ${netPositive ? "text-slate-700" : "text-slate-900"}`} data-mdp-kpi-total="net">{fmtCents(net)}</p>
         </div>
       </div>
 

@@ -151,7 +151,7 @@ export function PaymentDetailPage() {
   // isFetching, so a disabled query (selectedCompanyId not yet resolved on cold nav) reports
   // isLoading=false and falls through to "not found" for a real record. isPending is correct here —
   // see JournalEntryDetailPage.tsx for the full live-repro writeup. Do not revert to isLoading.
-  if (detailQuery.isPending) return <div className="text-sm text-gray-500">Loading payment...</div>;
+  if (detailQuery.isPending) return <div className="text-xs text-gray-500">Loading payment...</div>;
   if (detailQuery.isError)
     return (
       <ListErrorState
@@ -161,7 +161,7 @@ export function PaymentDetailPage() {
         onRetry={() => void detailQuery.refetch()}
       />
     );
-  if (!payment) return <div className="text-sm text-red-600">Payment not found.</div>;
+  if (!payment) return <div className="text-xs text-red-600">Payment not found.</div>;
 
   return (
     <AccountingSubNavWrapper>
@@ -201,37 +201,37 @@ export function PaymentDetailPage() {
       <DataPanel title="Header">
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Customer</span>
-          <span className="text-sm text-gray-900">
+          <span className="text-xs text-gray-900">
             <EntityLink kind="customer" id={payment.customer_id} label={entityLabel(payment.customer_name, payment.customer_id, "Customer")} />
           </span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Date</span>
-          <span className="text-sm text-gray-900">{formatDateUS(payment.payment_date)}</span>
+          <span className="text-xs text-gray-900">{formatDateUS(payment.payment_date)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Method</span>
-          <span className="text-sm text-gray-900">{payment.payment_method}</span>
+          <span className="text-xs text-gray-900">{payment.payment_method}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Reference</span>
-          <span className="text-sm text-gray-900">{payment.reference || "-"}</span>
+          <span className="text-xs text-gray-900">{payment.reference || "-"}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Amount</span>
-          <span className="text-sm text-gray-900">{money(payment.amount_cents)}</span>
+          <span className="text-xs text-gray-900">{money(payment.amount_cents)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Applied</span>
-          <span className="text-sm text-gray-900">{money(payment.amount_applied_cents)}</span>
+          <span className="text-xs text-gray-900">{money(payment.amount_applied_cents)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Unapplied</span>
-          <span className="text-sm text-gray-900">{money(payment.amount_unapplied_cents)}</span>
+          <span className="text-xs text-gray-900">{money(payment.amount_unapplied_cents)}</span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Deposited to</span>
-          <span className="text-sm text-gray-900">
+          <span className="text-xs text-gray-900">
             <EntityLink
               kind="account"
               id={payment.deposited_to_account_id || undefined}
@@ -250,7 +250,7 @@ export function PaymentDetailPage() {
         {payment.matched_bank_transaction_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Bank transaction</span>
-            <span className="text-sm text-gray-900">
+            <span className="text-xs text-gray-900">
               <EntityLink
                 kind="bank_transaction"
                 id={payment.matched_bank_transaction_id}
@@ -278,7 +278,7 @@ export function PaymentDetailPage() {
           the existing poster already writes; no new GL math, no posting from this page. */}
       <DataPanel title="GL / Journal entries">
         {(payment.journal_entries ?? []).length === 0 ? (
-          <div className="text-sm text-gray-600" data-testid="payment-journal-entries-empty">
+          <div className="text-xs text-gray-600" data-testid="payment-journal-entries-empty">
             No journal entries linked yet (unposted or posting reversed).
           </div>
         ) : (
@@ -295,7 +295,7 @@ export function PaymentDetailPage() {
                     label={entityLabel(je.memo, je.journal_entry_id, "Journal entry")}
                   />
                 </span>
-                <span className="text-sm text-gray-900">
+                <span className="text-xs text-gray-900">
                   {je.entry_date ? formatDateUS(je.entry_date) : "—"}
                   {je.status ? ` · ${je.status}` : ""}
                 </span>
@@ -326,7 +326,7 @@ export function PaymentDetailPage() {
 
       {payment.notes ? (
         <DataPanel title="Notes">
-          <div className="text-sm text-gray-700">{payment.notes}</div>
+          <div className="text-xs text-gray-700">{payment.notes}</div>
         </DataPanel>
       ) : null}
 

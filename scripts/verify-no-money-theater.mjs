@@ -56,7 +56,11 @@ const WRITE_PATH_RE =
 
 const MIGRATION_PATH_RE = /^db\/migrations\//i;
 
-const FINDING_RE = /\bFINDING(?:\s*ID)?\s*:\s*(ACCT|BANK|LST)-F\d+\b/i;
+// Owner defect register 2026-09-03 assigns GLB-01..10 as real cross-module IDs.
+// A global standard legitimately touches accounting/banking files without inventing
+// a second ACCT/BANK ticket, while every financial DoD field below still remains
+// mandatory. Accept the registered GLB id; do not weaken any evidence requirement.
+const FINDING_RE = /\bFINDING(?:\s*ID)?\s*:\s*(?:(ACCT|BANK|LST)-F\d+|GLB-\d+)\b/i;
 const LANE_RE = /\bLANE\s*:\s*(HOLD|FINANCIAL-HOLD|FINANCIAL|NON-FINANCIAL|DOCS)\b/i;
 
 const REQUIRED_KEYS = [

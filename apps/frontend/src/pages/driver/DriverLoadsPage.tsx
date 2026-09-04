@@ -25,7 +25,7 @@ export function DriverLoadsPage() {
 
   return (
     <div className="space-y-2">
-      <h2 className="text-base font-semibold">{t("driver.loads_title")}</h2>
+      <h2 className="text-xs font-semibold">{t("driver.loads_title")}</h2>
       <ul className="space-y-2">
         {loads.map((load: DriverLoad) => (
           <li key={load.id} className="rounded-sm border border-slate-200 bg-white p-3">

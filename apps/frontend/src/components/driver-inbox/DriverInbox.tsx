@@ -115,7 +115,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
   return (
     <div className="overflow-hidden rounded-sm border border-[#e5e7eb] bg-[#f8f8f4]">
       <div className="px-[18px] pt-[14px] pb-[10px]">
-        <span className="text-[22px] font-semibold text-[#1A1F36]">Inbox</span>
+        <span className="text-page-title font-semibold text-[#1A1F36]">Inbox</span>
         <span className="ml-[10px] text-xs text-[#8A92AB]">Driver Hub · requests from the driver app</span>
       </div>
 
@@ -258,7 +258,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
       {denyForId ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/40 p-4">
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-4 shadow-lg">
-            <h2 className="text-base font-semibold text-[#1A1F36]">Deny request</h2>
+            <h2 className="text-xs font-semibold text-[#1A1F36]">Deny request</h2>
             <p className="mt-1 text-xs text-[#8A92AB]">Reason is recorded to the audit trail and shared with the driver.</p>
             <textarea
               className="mt-3 w-full rounded-sm border border-[#e5e7eb] p-2 text-xs"

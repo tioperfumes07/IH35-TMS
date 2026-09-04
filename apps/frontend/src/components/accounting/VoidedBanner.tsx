@@ -22,7 +22,7 @@ export function VoidedBanner({
       <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-red-900">
         {documentLabel} is VOID
       </div>
-      <div className="text-sm text-red-900">
+      <div className="text-xs text-red-900">
         Voided {formatDateUS(voidedAt)}
         {voidReason ? ` — ${voidReason}` : ""}
       </div>

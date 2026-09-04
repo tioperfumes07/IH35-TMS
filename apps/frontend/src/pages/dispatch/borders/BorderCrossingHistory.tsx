@@ -135,7 +135,7 @@ export function BorderCrossingHistory() {
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">GPS Border Crossing Events</h1>
+      <h1 className="text-page-title font-semibold mb-4">GPS Border Crossing Events</h1>
       {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage
           presenting as a unit with no border crossings, on a USMCA cross-border compliance surface. */}
       {isError ? (

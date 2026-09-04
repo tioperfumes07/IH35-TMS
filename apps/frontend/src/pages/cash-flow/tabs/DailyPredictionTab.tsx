@@ -176,13 +176,13 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Expected Income</p>
-          <p className="mt-1 text-xl font-bold text-gray-900">
+          <p className="mt-1 text-page-title font-bold text-gray-900">
             {isLoading ? "—" : formatCents(data?.income_subtotal_cents ?? 0)}
           </p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Expected Expenses</p>
-          <p className="mt-1 text-xl font-bold text-gray-900">
+          <p className="mt-1 text-page-title font-bold text-gray-900">
             {isLoading ? "—" : formatCents(data?.expense_subtotal_cents ?? 0)}
           </p>
         </div>
@@ -196,7 +196,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
             ) : (
               <TrendingDown className="h-5 w-5 text-red-600" />
             )}
-            <p className={`text-xl font-bold ${netPositive ? "text-slate-700" : "text-red-700"}`}>
+            <p className={`text-page-title font-bold ${netPositive ? "text-slate-700" : "text-red-700"}`}>
               {isLoading ? "—" : formatCents(net, { sign: true })}
             </p>
           </div>
@@ -452,7 +452,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       {!isLoading && data && (
         <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-5 py-4">
           <span className="text-xs font-semibold text-gray-700">Predicted net cash flow for {fmtDate(date)}</span>
-          <span className={`text-2xl font-bold ${netPositive ? "text-slate-700" : "text-red-700"}`}>
+          <span className={`text-page-title font-bold ${netPositive ? "text-slate-700" : "text-red-700"}`}>
             {formatCents(net, { sign: true })}
           </span>
         </div>

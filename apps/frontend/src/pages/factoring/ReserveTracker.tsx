@@ -72,7 +72,7 @@ function KpiCard({
   const content = (
     <>
       <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="mt-1 text-lg font-bold text-gray-900">{value}</div>
+      <div className="mt-1 text-page-title font-bold text-gray-900">{value}</div>
       {sub ? <div className="mt-0.5 text-[11px] text-gray-500">{sub}</div> : null}
     </>
   );
@@ -409,7 +409,7 @@ export function ReserveTracker() {
           {([7, 14, 30, 60] as const).map((days) => (
             <div key={days} className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-center">
               <div className="text-[11px] uppercase tracking-wide text-gray-500">Next {days}d</div>
-              <div className="mt-1 text-base font-bold text-gray-900">
+              <div className="mt-1 text-xs font-bold text-gray-900">
                 {fmtM(forecastByWindow[days])}
               </div>
             </div>
@@ -460,7 +460,7 @@ export function ReserveTracker() {
                   onClick={(e) => e.stopPropagation()}
                 />
               </div>
-              <div className="mt-1 text-xl font-bold text-gray-900">{fmtM(bal.balance_cents)}</div>
+              <div className="mt-1 text-page-title font-bold text-gray-900">{fmtM(bal.balance_cents)}</div>
               <div className="mt-1 text-[11px] text-gray-500">
                 Last movement: {fmtDt(bal.last_movement_at)}
               </div>

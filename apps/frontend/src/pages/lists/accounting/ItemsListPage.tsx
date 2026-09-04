@@ -187,7 +187,7 @@ export function ItemsListPage() {
       testIdPrefix="items"
       dataAttributes={{ "data-items-filter-toolbar": "collapsed" }}
       searchSlot={
-        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search items…" className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-sm" />
+        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search items…" className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-xs" />
       }
     >
       <label className="flex items-center gap-2 text-xs text-gray-700">
@@ -223,7 +223,7 @@ export function ItemsListPage() {
       ) : null}
 
       {!companyId ? (
-        <div className="rounded-sm border border-gray-200 bg-white px-3 py-6 text-sm text-slate-600">Select a company to view products &amp; services.</div>
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-6 text-xs text-slate-600">Select a company to view products &amp; services.</div>
       ) : query.isError ? (
         <ListErrorBanner
           message="Failed to load products & services."
@@ -241,7 +241,7 @@ export function ItemsListPage() {
                 <div key={name} className="rounded-sm border border-gray-200 bg-white">
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-gray-50"
+                    className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-gray-50"
                     onClick={() => setCollapsed((prev) => ({ ...prev, [name]: !isCollapsed }))}
                     aria-expanded={!isCollapsed}
                   >

@@ -141,7 +141,7 @@ export function DispatchAlertsPage() {
           >
             <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">{c.title}</div>
             <div
-              className={`mt-2 text-3xl font-bold tabular-nums ${c.isError ? "text-red-700" : "text-gray-900"}`}
+              className={`mt-2 text-page-title font-bold tabular-nums ${c.isError ? "text-red-700" : "text-gray-900"}`}
             >
               {formatCount(c.count, c.isError)}
             </div>

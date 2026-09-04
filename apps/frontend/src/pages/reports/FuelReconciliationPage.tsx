@@ -303,7 +303,7 @@ export function FuelReconciliationPage() {
             ).map(([k, v]) => (
               <div key={k} className="rounded-sm border border-gray-200 bg-white p-3">
                 <div className="text-[11px] font-semibold uppercase text-gray-500">{k}</div>
-                <div className="text-lg font-semibold">{v}</div>
+                <div className="text-page-title font-semibold">{v}</div>
               </div>
             ))}
           </div>

@@ -38,7 +38,7 @@ export function DriverSettingsPage() {
 
   return (
     <div className="space-y-3 text-xs">
-      <h2 className="text-base font-semibold">{t("driver.settings_title")}</h2>
+      <h2 className="text-xs font-semibold">{t("driver.settings_title")}</h2>
       <p className="text-xs text-slate-600">Use the header to switch {t("driver.language")} (EN/ES).</p>
       <button type="button" className="rounded-sm bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50" disabled={pushPending} onClick={() => void enablePush()}>
         {pushPending ? "Enabling…" : t("driver.push_enable")}

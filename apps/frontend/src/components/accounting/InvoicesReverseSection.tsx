@@ -41,7 +41,7 @@ export function InvoicesReverseSection({
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-slate-900">
           Invoices
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
@@ -52,15 +52,15 @@ export function InvoicesReverseSection({
           Open Invoices
         </Link>
       </div>
-      {invoicesQ.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {invoicesQ.isError ? <p className="text-sm text-red-600">Could not load invoices for {contextLabel}.</p> : null}
+      {invoicesQ.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
+      {invoicesQ.isError ? <p className="text-xs text-red-600">Could not load invoices for {contextLabel}.</p> : null}
       {!invoicesQ.isLoading && !invoicesQ.isError && rows.length === 0 ? (
-        <p className="text-sm text-gray-500">No invoices linked to {contextLabel}.</p>
+        <p className="text-xs text-gray-500">No invoices linked to {contextLabel}.</p>
       ) : null}
       {rows.length > 0 ? (
         <ul className="space-y-2">
           {rows.map((row) => (
-            <li key={row.id} className="text-sm text-slate-700" data-testid={`invoice-reverse-${row.id}`}>
+            <li key={row.id} className="text-xs text-slate-700" data-testid={`invoice-reverse-${row.id}`}>
               <EntityLink
                 kind="invoice"
                 id={row.id}

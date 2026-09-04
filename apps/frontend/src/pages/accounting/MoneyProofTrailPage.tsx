@@ -13,7 +13,7 @@ export function MoneyProofTrailPage() {
         <MoneyProofTrailPanel operatingCompanyId={selectedCompanyId} documentType={documentType as MoneyProofDocumentType} documentId={id} />
       ) : (
         <section className="rounded-sm border border-[#E5E7EB] bg-white p-4" aria-label="Choose a document list">
-          <h2 className="text-sm font-semibold text-[#0F1219]">Choose a document</h2>
+          <h2 className="text-xs font-semibold text-[#0F1219]">Choose a document</h2>
           <p className="mt-1 text-xs text-[#4B5563]">
             Open a real document from one of these lists, then use its Proof trail panel to inspect the journal entry, accounts moved, and linked records.
           </p>

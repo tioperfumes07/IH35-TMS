@@ -25,7 +25,7 @@ export function PerformanceScorecardSection({ scorecard, unavailable = false }: 
         {cards.map(([label, value]) => (
           <div key={label} className="rounded-sm border border-gray-100 bg-gray-50 p-2">
             <div className="text-[11px] uppercase text-gray-500">{label}</div>
-            <div className="text-lg font-semibold text-gray-900">{value}</div>
+            <div className="text-page-title font-semibold text-gray-900">{value}</div>
           </div>
         ))}
       </div>

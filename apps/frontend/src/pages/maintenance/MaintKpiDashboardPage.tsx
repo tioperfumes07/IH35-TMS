@@ -77,7 +77,7 @@ function KpiTile({
       data-testid={testId}
     >
       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="text-xl font-semibold text-slate-900">{value}</div>
+      <div className="text-page-title font-semibold text-slate-900">{value}</div>
       <div className="text-xs text-slate-500">{hint}</div>
       <div className="mt-1">
         <MiniSparkline points={sparkline} testId={`${testId}-sparkline`} />

@@ -85,12 +85,12 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">{detail.description}</h2>
+            <h2 className="text-xs font-semibold text-gray-900">{detail.description}</h2>
             <p className="text-xs text-gray-500 mt-0.5">
               {detail.asset_number ? `#${detail.asset_number} · ` : ""}{fmtCents(detail.total_amount_cents)} over {detail.periods} months
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none ml-4">×</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-page-title leading-none ml-4">×</button>
         </div>
 
         <div className="mb-4">
@@ -227,11 +227,11 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-4">
-          <h2 className="text-base font-semibold text-gray-900">New Prepaid Expense</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+          <h2 className="text-xs font-semibold text-gray-900">New Prepaid Expense</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-page-title leading-none">×</button>
         </div>
-        {error && <p className="text-sm text-red-600 mb-3 rounded-sm bg-red-50 px-3 py-2">{error}</p>}
-        <div className="space-y-3 text-sm">
+        {error && <p className="text-xs text-red-600 mb-3 rounded-sm bg-red-50 px-3 py-2">{error}</p>}
+        <div className="space-y-3 text-xs">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-0.5">Description *</label>
             <input className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-slate-500"
@@ -323,9 +323,9 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
           )}
         </div>
         <div className="flex justify-end gap-2 mt-5">
-          <button onClick={onClose} className="rounded-sm border border-gray-300 px-4 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+          <button onClick={onClose} className="rounded-sm border border-gray-300 px-4 py-1.5 text-xs text-gray-700 hover:bg-gray-50">Cancel</button>
           <button onClick={() => mutation.mutate()} disabled={!valid || mutation.isPending}
-            className="rounded-sm bg-slate-700 px-4 py-1.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
+            className="rounded-sm bg-slate-700 px-4 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
             {mutation.isPending ? "Creating…" : "Create"}
           </button>
         </div>
@@ -462,7 +462,7 @@ export function PrepaidExpensesPage() {
       subtitle="Prepaid assets and amortization schedules"
       createControl={
         <button onClick={() => setShowCreate(true)}
-          className="rounded-sm bg-slate-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-800">
+          className="rounded-sm bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800">
           + Create Prepaid
         </button>
       }
@@ -475,7 +475,7 @@ export function PrepaidExpensesPage() {
         <SchedulePanel detail={detail} onClose={closeDetail} />
       )}
 
-      {isError ? <p className="text-sm text-red-600 py-2 text-center">Failed to load prepaid expenses.</p> : null}
+      {isError ? <p className="text-xs text-red-600 py-2 text-center">Failed to load prepaid expenses.</p> : null}
 
       <ParityTable
         columns={columns}
@@ -492,7 +492,7 @@ export function PrepaidExpensesPage() {
       />
 
       {total > limit && (
-        <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
+        <div className="flex items-center justify-between mt-3 text-xs text-gray-600">
           <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0}
             className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
           <span>{offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}</span>

@@ -83,8 +83,8 @@ export function VendorBalancesPage() {
         <section className="rounded-sm border border-gray-200 bg-white">
           <div className="border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Vendors by balance</div>
           <div className="max-h-[65vh] overflow-auto">
-            {balancesQuery.isLoading ? <p className="px-3 py-3 text-sm text-gray-500">Loading vendor balances...</p> : null}
-            {!balancesQuery.isLoading && (balancesQuery.data?.rows ?? []).length === 0 ? <p className="px-3 py-3 text-sm text-gray-500">No outstanding balances.</p> : null}
+            {balancesQuery.isLoading ? <p className="px-3 py-3 text-xs text-gray-500">Loading vendor balances...</p> : null}
+            {!balancesQuery.isLoading && (balancesQuery.data?.rows ?? []).length === 0 ? <p className="px-3 py-3 text-xs text-gray-500">No outstanding balances.</p> : null}
             {(balancesQuery.data?.rows ?? []).map((row) => (
               <button
                 key={row.vendor_id}
@@ -95,7 +95,7 @@ export function VendorBalancesPage() {
                   setSelectedBillId(null);
                 }}
               >
-                <div className="truncate text-sm font-semibold text-gray-900">{entityLabel(row.vendor_name, row.vendor_id, "Vendor")}</div>
+                <div className="truncate text-xs font-semibold text-gray-900">{entityLabel(row.vendor_name, row.vendor_id, "Vendor")}</div>
                 <div className="mt-0.5 flex items-center justify-between text-xs text-gray-600">
                   <span>{row.open_bill_count} open bills</span>
                   <span className="font-semibold text-red-700">{money(row.balance_cents)}</span>
@@ -118,9 +118,9 @@ export function VendorBalancesPage() {
             ) : null}
           </div>
           <div className="max-h-[65vh] overflow-auto">
-            {!selectedVendor ? <p className="px-3 py-3 text-sm text-gray-500">Select a vendor to view bills.</p> : null}
-            {selectedVendor && billsQuery.isLoading ? <p className="px-3 py-3 text-sm text-gray-500">Loading bills...</p> : null}
-            {selectedVendor && !billsQuery.isLoading && (billsQuery.data?.rows ?? []).length === 0 ? <p className="px-3 py-3 text-sm text-gray-500">No bills for this vendor.</p> : null}
+            {!selectedVendor ? <p className="px-3 py-3 text-xs text-gray-500">Select a vendor to view bills.</p> : null}
+            {selectedVendor && billsQuery.isLoading ? <p className="px-3 py-3 text-xs text-gray-500">Loading bills...</p> : null}
+            {selectedVendor && !billsQuery.isLoading && (billsQuery.data?.rows ?? []).length === 0 ? <p className="px-3 py-3 text-xs text-gray-500">No bills for this vendor.</p> : null}
             {(billsQuery.data?.rows ?? []).map((bill) => {
               const remaining = Math.max(0, Number(bill.amount_cents) - Number(bill.paid_cents));
               const dueDelta = bill.due_date ? daysUntil(bill.due_date) : null;
@@ -130,7 +130,7 @@ export function VendorBalancesPage() {
                 <div key={bill.id} className={`border-b border-gray-100 px-3 py-2 ${selectedBillId === bill.id ? "bg-slate-100" : ""}`}>
                   <button type="button" className="w-full text-left" onClick={() => setSelectedBillId(bill.id)}>
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm font-semibold text-gray-900">{visibleDocumentLabel(bill.bill_number, bill.id, "Bill")}</div>
+                      <div className="text-xs font-semibold text-gray-900">{visibleDocumentLabel(bill.bill_number, bill.id, "Bill")}</div>
                       <div className="text-xs font-semibold text-red-700">{money(remaining)}</div>
                     </div>
                     <div className="mt-0.5 text-xs text-gray-600">
@@ -159,10 +159,10 @@ export function VendorBalancesPage() {
         <section className="rounded-sm border border-gray-200 bg-white">
           <div className="border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment history</div>
           <div className="max-h-[65vh] overflow-auto">
-            {!selectedBill ? <p className="px-3 py-3 text-sm text-gray-500">Select a bill to view payments.</p> : null}
-            {selectedBill && billDetailQuery.isLoading ? <p className="px-3 py-3 text-sm text-gray-500">Loading payment history...</p> : null}
+            {!selectedBill ? <p className="px-3 py-3 text-xs text-gray-500">Select a bill to view payments.</p> : null}
+            {selectedBill && billDetailQuery.isLoading ? <p className="px-3 py-3 text-xs text-gray-500">Loading payment history...</p> : null}
             {selectedBill && !billDetailQuery.isLoading && (billDetailQuery.data?.payments ?? []).length === 0 ? (
-              <p className="px-3 py-3 text-sm text-gray-500">No payments recorded yet.</p>
+              <p className="px-3 py-3 text-xs text-gray-500">No payments recorded yet.</p>
             ) : null}
             {(billDetailQuery.data?.payments ?? []).map((payment) => (
               <div key={payment.id} className="border-b border-gray-100 px-3 py-2 text-xs">

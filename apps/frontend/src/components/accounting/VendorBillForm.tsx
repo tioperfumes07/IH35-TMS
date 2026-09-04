@@ -619,7 +619,7 @@ export function VendorBillForm({
         display-only until a tax expense line with a real CoA
         account is entered — the bill amount equals the sum of lines (no invented tax GL).
       </div>
-      {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
+      {formError ? <p className="text-xs text-red-600">{formError}</p> : null}
 
       <UploadZone
         operatingCompanyId={operatingCompanyId}
@@ -635,7 +635,7 @@ export function VendorBillForm({
             type="button"
             disabled={submitting}
             onClick={onCancel}
-            className="rounded-sm border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-sm border border-gray-300 bg-white px-4 py-2 text-xs font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {cancelLabel}
           </button>
@@ -644,7 +644,7 @@ export function VendorBillForm({
           type="submit"
           data-testid={submitTestId}
           disabled={submitting || !operatingCompanyId || amountCents <= 0 || !vendorId.trim()}
-          className="rounded-sm bg-slate-800 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-sm bg-slate-800 px-4 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? "Saving…" : submitLabel}
         </button>

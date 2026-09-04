@@ -158,7 +158,7 @@ export function TasksReportPage() {
         ] as Array<[string, number | string]>).map(([label, value]) => (
           <div key={label} className="rounded-sm border border-slate-200 bg-white p-3">
             <div className="text-xs font-semibold text-slate-500">{label}</div>
-            <div className="text-xl font-bold text-slate-900">{value}</div>
+            <div className="text-page-title font-bold text-slate-900">{value}</div>
           </div>
         ))}
       </div>
