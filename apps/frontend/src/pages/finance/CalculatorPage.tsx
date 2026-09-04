@@ -14,8 +14,11 @@ import {
   type CalcPreviewRow,
   type CalcScenario,
 } from "../../api/financeCalculator";
+import { formatUsdCents } from "../../lib/money";
 
-const dollars = (c: number) => (c / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
+// GLB-05 — delegates to the canonical formatter instead of reimplementing it (the old body used an
+// unpinned toLocaleString(undefined, ...) locale, not guaranteed QBO "$1,234.56").
+const dollars = (c: number) => formatUsdCents(c);
 const toCents = (s: string) => Math.round((Number(s) || 0) * 100);
 
 // Display-only ParityTable migration: same columns, order, and dollars() formatting as the

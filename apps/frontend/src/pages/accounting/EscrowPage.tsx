@@ -13,11 +13,15 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 import { EscrowDeductionsPendingTab } from "../driver-finance/EscrowDeductionsPendingTab";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatUsdCents } from "../../lib/money";
 
 type EscrowViewTab = "accounts" | "pending";
 
+// GLB-05 — delegates to the canonical formatter (lib/money.ts) instead of reimplementing it. The
+// old body called toLocaleString(undefined, ...) — an unpinned locale that formats differently
+// depending on the runtime's default locale, not guaranteed QBO "$1,234.56" the way formatUsdCents is.
 function money(cents: number) {
-  return (cents / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
+  return formatUsdCents(cents);
 }
 
 function dt(value: string) {

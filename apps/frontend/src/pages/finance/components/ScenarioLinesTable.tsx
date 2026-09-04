@@ -6,8 +6,11 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { recordLineActual, type ForecastLine } from "../../../api/financeScenarios";
+import { formatUsdCents } from "../../../lib/money";
 
-const dollars = (cents: number) => (cents / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
+// GLB-05 — delegates to the canonical formatter instead of reimplementing it (the old body used an
+// unpinned toLocaleString(undefined, ...) locale, not guaranteed QBO "$1,234.56").
+const dollars = (cents: number) => formatUsdCents(cents);
 
 type Props = {
   lines: ForecastLine[];
