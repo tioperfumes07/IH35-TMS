@@ -21,8 +21,12 @@ import { EntityLink, type EntityKind } from "../../components/shared/EntityLink"
 import { ReconMatchSuggestions } from "./ReconMatchSuggestions";
 import { formatDateUS } from "../../lib/formatDate";
 
+import { formatUsdCents } from "../../lib/money";
+
+// GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
+// local currency formatter (same shape lib/money.ts already covers).
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 const OBLIGATION_ENTITY_KIND: Record<ObligationType, EntityKind> = {

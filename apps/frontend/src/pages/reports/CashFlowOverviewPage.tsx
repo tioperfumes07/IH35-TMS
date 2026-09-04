@@ -28,8 +28,12 @@ import { printLetterHtml } from "../../lib/openPrintableDocument";
 const PAYROLL_ALERT_CENTS = 50_000_00;
 const DIP_ATTENTION_CENTS = 25_000_00;
 
+import { formatUsdCents } from "../../lib/money";
+
+// GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
+// local currency formatter (same shape lib/money.ts already covers).
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 function addDays(isoDate: string, days: number) {

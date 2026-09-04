@@ -29,8 +29,12 @@ import { SafetyAlertsReverseSection } from "../../components/safety/SafetyAlerts
 
 const INCOME_TYPES = ["Income", "OtherIncome"];
 
+import { formatUsdCents } from "../../lib/money";
+
+// GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
+// local currency formatter (same shape lib/money.ts already covers).
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 /** CUST-LINK-01 — Neon lucia invoice_lines density is sparse (~5 rows vs ~12k invoices). */
