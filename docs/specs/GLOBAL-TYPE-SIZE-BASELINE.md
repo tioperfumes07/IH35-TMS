@@ -13,7 +13,7 @@ Source: Claude + Jorge approved 2026-06-07
 - Surface (card/panel): #FFFFFF
 - Page background: #F7F8FA
 - Border: 1px solid #E5E7EB
-- Border radius: 4px
+- Border radius: 2px, one token (`rounded-sm`) everywhere except deliberate pills/avatars (SQUARE-EDGES LAW, owner ruling 2026-09-04, ORCH-measured — was a 2px/4px/0px/9999px mix)
 - Left rail (sidebar): navy #1B2333
 - Primary action / status green: #16A34A
 
@@ -21,6 +21,12 @@ Source: Claude + Jorge approved 2026-06-07
 - Equal paired-field sizes (label + input same width pairing)
 - Centered column headers in tables/lists
 - Every column header is sortable (click = ascending, second click = descending)
+- All headers, columns and KPI values centered, system-wide (owner ruling 2026-09-04)
+- Clickable boxes size to their text: 28px height, 12px font, 2px radius, 0 8px padding
+  (owner ruling 2026-09-04, ORCH-measured off the banner buttons — the one already-correct case)
+- KPI tiles: target 93px (Safety "Active Drivers"), hard ceiling 101px (Safety "Total Safety
+  Events"), centered, 2px radius, 1px border, padding 4px 8px, grid gap-2 (owner ruling
+  2026-09-04, ORCH-measured)
 
 ## Application
 This baseline applies to ALL screens: lists, catalogs, bills, invoices, registers, drawers, forms, modals, reports. No component may deviate without Jorge's explicit approval.

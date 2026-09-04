@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 
 export type ToolbarSegmentOption<T extends string> = {
   value: T;
@@ -17,8 +16,12 @@ type Props<T extends string> = {
 };
 
 /**
- * LAY-10 — one control height for every segment toggle in a PageHeader toolbar row.
- * Matches FILTER_CONTROL_SIZE_CLASS (h-9) so Filters / Create / view-mode read as one row.
+ * CLICKABLE-BOX-SIZE LAW (owner ruling 2026-09-04, ORCH-measured) — this is ORCH's own "view
+ * toggles" example, measured at 32px/4px radius and named wrong. Fixed to the one clickable-box
+ * target: 28px height, 12px font, 2px radius, 0 8px padding.
+ * (Was LAY-10: matched FILTER_CONTROL_SIZE_CLASS (h-9) so Filters/Create/view-mode read as one
+ * row in a toolbar. That coupling is superseded here — segment toggles are clickable boxes, not
+ * filter inputs, per the 2026-09-04 spec's own split between the two.)
  */
 export function ToolbarSegmentControl<T extends string>({
   value,
@@ -29,7 +32,7 @@ export function ToolbarSegmentControl<T extends string>({
 }: Props<T>) {
   return (
     <div
-      className={`inline-flex ${FILTER_CONTROL_SIZE_CLASS} items-stretch rounded-sm border border-gray-300 bg-white p-0.5 ${className}`.trim()}
+      className={`inline-flex h-7 items-stretch rounded-sm border border-gray-300 bg-white p-0.5 text-center ${className}`.trim()}
       {...dataAttributes}
     >
       {options.map((option) => {
@@ -39,7 +42,7 @@ export function ToolbarSegmentControl<T extends string>({
             key={option.value}
             type="button"
             data-testid={option.testId}
-            className={`inline-flex h-full items-center rounded-sm px-3 font-medium ${
+            className={`inline-flex h-full items-center justify-center rounded-sm px-2 text-xs font-medium ${
               active ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"
             }`}
             onClick={() => onChange(option.value)}

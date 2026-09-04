@@ -1162,7 +1162,12 @@ export function ParityTable<T>({
       ) : null}
 
       <div className="overflow-x-auto">
-      <table className="w-full table-fixed text-left" style={{ fontSize: d.font }}>
+      {/* CENTER-EVERYTHING LAW (owner ruling 2026-09-04) — text-align is inherited, so this is the
+          one place that flips every header/column that doesn't declare its own alignment. A column
+          with an explicit text-right/text-left in its own className (money columns, etc.) still
+          wins on its own <td>/<th> — direct declarations beat inheritance regardless of source
+          order, so deliberately right-aligned numeric columns are unaffected. */}
+      <table className="w-full table-fixed text-center" style={{ fontSize: d.font }}>
         <thead
           className={stickyHeader ? "sticky top-0 z-10" : ""}
           style={{ backgroundColor: colors.tableHeaderBg, color: colors.tableHeaderText }}
@@ -1242,7 +1247,11 @@ export function ParityTable<T>({
                       // — per owner coordination, my own equivalent hunk was dropped in favor of
                       // this one rather than double-editing ParityTable's sort button.)
                       className={`inline-flex h-full w-full items-center gap-1 ${
-                        /\btext-right\b/.test(column.className ?? "") ? "justify-end" : "justify-start"
+                        /\btext-right\b/.test(column.className ?? "")
+                          ? "justify-end"
+                          : /\btext-left\b/.test(column.className ?? "")
+                            ? "justify-start"
+                            : "justify-center"
                       }`}
                       onClick={() => toggleSort(key)}
                     >

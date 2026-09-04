@@ -87,19 +87,36 @@ export const spacing = {
   tableRowHeight: 24,
   tableHeaderHeight: 26,
   tableCellPaddingX: 8,
-  // UI CONTROL LAW (owner ruling 2026-09-01) — one height for every "md" button regardless of
-  // variant, matching filterControlHeight/FILTER_CONTROL_SIZE_CLASS so a button and a filter in
-  // the same toolbar row read as one row. Was 32/28/24 (three different button heights — the
-  // direct, file-level cause of the owner's "three different box sizes" report on the accounting
-  // toolbar) — corrected here, not a fresh invention. buttonHeightSmall (icon/sm variant) also
-  // raised: 24px sat exactly ON the WCAG 2.2 SC 2.5.8 floor with zero margin.
-  buttonHeightPrimary: 36,
-  buttonHeightSecondary: 36,
-  buttonHeightSmall: 32,
-  buttonPaddingX: 12,
-  radiusCard: 4,
+  // CLICKABLE-BOX-SIZE LAW (owner ruling 2026-09-04, ORCH-measured — supersedes the 2026-09-01
+  // uniform-36px ruling below with a new uniform-28px target). ORCH's DESIGN-SPEC-MEASURED-LIVE
+  // doc measured the banner buttons as the one already-correct case: 28px / 12px font / 2px
+  // radius / 0 8px padding. View toggles (32px/4px radius) and "Back" (16px font) were the wrong
+  // cases, corrected by adopting this one number everywhere rather than three.
+  // Prior text (owner ruling 2026-09-01) for the record: "one height for every 'md' button
+  // regardless of variant, matching filterControlHeight/FILTER_CONTROL_SIZE_CLASS so a button and
+  // a filter in the same toolbar row read as one row. Was 32/28/24 (three different button
+  // heights — the direct, file-level cause of the owner's 'three different box sizes' report on
+  // the accounting toolbar)." That still stands for filterControlHeight (unchanged, see below) —
+  // only the button height itself moved again, on new measured numbers.
+  buttonHeightPrimary: 28,
+  buttonHeightSecondary: 28,
+  buttonHeightSmall: 28,
+  buttonPaddingX: 8,
+  // SQUARE-EDGES LAW (owner ruling 2026-09-04, ORCH-measured) — one token, 2px, was a 4/2/4 mix
+  // (and briefly 0 earlier in this same session — corrected before it shipped).
+  radiusCard: 2,
   radiusPill: 2,
-  radiusButton: 4,
+  radiusButton: 2,
+  // KPI-TILE-SIZE LAW (owner ruling 2026-09-04, ORCH-measured off /safety/home with
+  // getComputedStyle — supersedes this session's own earlier 68px estimate, which was measured
+  // off a different element / methodology). Target = Safety "Active Drivers" = 93px. Hard ceiling
+  // = Safety "Total Safety Events" = 101px — nothing may render taller. Load Costs board's tile
+  // measured 108px, over the ceiling, and its grid was missing gap-2 (used border-b instead of a
+  // full border) — fixed to match Safety's own pattern.
+  kpiTileTargetHeight: 93,
+  kpiTileMaxHeight: 101,
+  kpiTilePaddingY: 4,
+  kpiTilePaddingX: 8,
   sectionGap: 16,
   panelGap: 12,
   /** FILTER LAW (COLUMN LAW 2026-09-01) — the one control height every list-toolbar filter shares:
@@ -127,14 +144,18 @@ export const FILTER_CONTROL_SIZE_CLASS = "h-9 text-xs";
  * filter call site is unaffected. */
 export const FORM_FIELD_CONTROL_SIZE_CLASS = "h-7 text-xs";
 
-/** UI CONTROL LAW (owner ruling 2026-09-01, docs/bus/UI-CONTROL-LAW-SPEC-2026-09-01.md) — the
- * app's ONE button scale. "md" (the size used everywhere a page renders a real action button —
- * Create, Void, Clear, Export, gear) matches FILTER_CONTROL_SIZE_CLASS's own height/font so a
- * button and a filter in the same toolbar read as one row. "iconSm" (icon-only / compact buttons)
- * is a second, smaller tier — raised from the pre-ruling h-6 (24px, exactly on the WCAG 2.2
- * SC 2.5.8 floor with zero margin) to h-8 (32px). */
-export const BUTTON_MD_SIZE_CLASS = "h-9 px-3 text-xs font-medium";
-export const BUTTON_ICON_SM_SIZE_CLASS = "h-8 text-xs font-medium";
+/** CLICKABLE-BOX-SIZE LAW (owner ruling 2026-09-04, ORCH-measured, supersedes the 2026-09-01
+ * UI-CONTROL-LAW-SPEC h-9/h-8 scale below) — the app's ONE button scale is now the banner
+ * buttons' own already-correct measurement: h-7 (28px), 12px font, px-2 (0 8px padding), 2px
+ * radius (Button.tsx applies radiusButton itself). "iconSm" collapses onto the same h-7 — ORCH's
+ * spec names one clickable-box target, not a two-tier scale. Prior text, for the record: "md" (the
+ * size used everywhere a page renders a real action button — Create, Void, Clear, Export, gear)
+ * matched FILTER_CONTROL_SIZE_CLASS's own height so a button and a filter in the same toolbar read
+ * as one row; "iconSm" was a second, smaller tier at h-8 (32px) — the "view toggles ... wrong" case
+ * in ORCH's own spec. That coupling to FILTER_CONTROL_SIZE_CLASS (filter/search INPUTS, not
+ * buttons) is left as-is below; only the button scale itself moves here. */
+export const BUTTON_MD_SIZE_CLASS = "h-7 px-2 text-xs font-medium";
+export const BUTTON_ICON_SM_SIZE_CLASS = "h-7 text-xs font-medium";
 
 /** UI CONTROL LAW — one size for every toolbar icon app-wide (Search, SlidersHorizontal, the
  * gear, etc.). The gear was the owner's own cited example of a control smaller than its

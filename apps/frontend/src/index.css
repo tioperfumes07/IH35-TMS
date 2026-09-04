@@ -1,6 +1,24 @@
 @import 'tailwindcss';
 
 @theme {
+  /* SQUARE-EDGES LAW (owner ruling 2026-09-04, corrected same day per ORCH's live-measured
+     DESIGN-SPEC-MEASURED-LIVE-2026-09-04.md) — ONE radius token everywhere: 2px, the existing
+     `rounded-sm` value already correct on KPI tiles/banner buttons. NOT 0 — "fine edge" means 2px,
+     not square-cut; an earlier pass in this same session wrongly zeroed this, corrected here before
+     it shipped. This `@theme` override reaches every `rounded-*` utility class in the tree
+     (rounded-xs/sm/rounded/md/lg/xl/2xl/3xl/4xl — ~5,278 call sites) from one place instead of a
+     file-by-file sweep. `rounded-full` is untouched (Tailwind hardcodes it to 9999px, not a theme
+     var) — deliberate pills/avatars stay circular, per the owner's own carve-out. */
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
+  --radius-4xl: 2px;
+  --radius: 2px;
+
   --color-crit: #dc2626;
   --color-warn: #d97706;
   --color-info: #2563eb;
@@ -43,7 +61,12 @@ body,
 }
 
 body {
+  /* ROOT-CAUSE FIX (owner ruling 2026-09-04) — was 16px (the browser default, never set here), so
+     any component that forgot its own override silently inherited 16px instead of the locked 12px
+     body scale ("Back" was the case ORCH caught: 16px font, inherits body). One line instead of
+     hunting every silent-inherit call site. */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 12px;
   color: #1f2937;
   background: #f7f8fa;
   overflow-x: hidden;

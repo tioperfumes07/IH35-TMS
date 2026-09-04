@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { spacing } from "../../../design/tokens";
 import {
   ACTIVITY_WINDOW_OPTIONS,
   getActiveDriverSet,
@@ -59,19 +60,30 @@ function KpiTile({
     </>
   );
 
+  // CENTER-EVERYTHING + KPI-TILE-SIZE LAW (owner ruling 2026-09-04): this is the live reference
+  // tile ("Total Safety Events") the sizing ceiling is measured against — centered text, and its
+  // own max-height kept in sync with spacing.kpiTileMaxHeight so it can't drift past its own bar.
   if (to) {
     return (
       <Link
         to={to}
         data-testid="safety-home-kpi-link"
-        className="block rounded-sm border border-gray-200 bg-white px-3 py-2 transition hover:border-slate-300 hover:shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+        className="block rounded-sm border border-gray-200 bg-white px-3 py-2 text-center transition hover:border-slate-300 hover:shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+        style={{ maxHeight: spacing.kpiTileMaxHeight }}
       >
         {inner}
       </Link>
     );
   }
 
-  return <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">{inner}</div>;
+  return (
+    <div
+      className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-center"
+      style={{ maxHeight: spacing.kpiTileMaxHeight }}
+    >
+      {inner}
+    </div>
+  );
 }
 
 /** Accidents have no `status` column on prod — triage by recent accident_at instead. */
