@@ -1,3 +1,25 @@
+# ORCHESTRATOR ORDER 2026-09-04 — SUPERSEDES EVERY EARLIER ENTRY
+`git pull --ff-only origin main`
+
+Canonical full text (LAW + all seats): `docs/bus/ORDER-2026-09-04-ALL-SEATS.md`
+ACK one line to your OUTBOX, then EXECUTE your section. Never POST Book Load. Only Cursor deploys.
+
+## YOUR SECTION
+
+================= CURSOR — FINISH DISPATCH, URGENT =================
+Owner: "i need right now for it to finish all the changes in dispatch module, urgently, columns, remove buttons, resize buttons, etc. it looks too dirty."
+PART 1 FIRST AS ONE GUARDED SWEEP (rule 9.0.17), then DEPLOY so he can see it: every clickable box on dispatch 28px text-height (List, Table, Assignment, Export, Book, View all, board-view row, sub-nav chips, filter pills); one 2px radius token, collapsing the live drift of 2px KPI/banner vs 4px section wrappers and view-toggles vs 0px table headers vs 9999px round icon buttons; one 28px button size — root cause is body at 16px with every component overriding down individually, which is why "Back" is 16px; everything centered; KPI tiles <=101px target 93px.
+REMOVE (archive behind a flag, never delete): out-of-service vehicles from Dispatch, in-shop only at the bottom redesigned; the Fleet OOS/In-Shop strip at the very bottom that duplicates the In-Shop section; the word "Unassigned" on awaiting-assignment rows; the dead controls 34-37. Mutual exclusivity is law — in shop means not in any available column, awaiting or booked means not in shop. Codex merged the predicate in #20339 and f9c3a32f5: in_shop = voided_at IS NULL AND status NOT IN ('complete','cancelled'), same company and unit. BUILD AGAINST IT NOW, do not wait another day on his endpoint.
+COLUMNS: Kanban column width not adjustable and cards do not drag, centered headers and outlines on every lane; List headers must fit on ONE row, reduce text size until they do; a column with no data shows a dash never text; awaiting-assignment rows show no vehicle number and the unit number is that row's primary identifier; restore the board design that went missing.
+BROKEN VIEWS: Table view renders nothing — DispatchBoard.tsx:1513-1515 routes List and Table through the same renderListOrTable(), build the real Table view; Assignment view columns not draggable; Round Trips is missing trips; T156 missing from the Home KPIs; answer in one line what the Detention tab is for.
+LoadDetailCostsTab.tsx is your file and CC-1 needs the account-picker fix in it — post him a SURFACE-BREACH-AUTHORIZED ACK or take the change yourself. Do not let it stall; the owner cannot record a cost until it lands.
+AFTER DISPATCH IS CLEAN — DRIVER INSTRUCTION SHEET. Your WIZ-49d finding's first line is WRONG: it says "nothing built yet" but apps/backend/src/render/dispatch-sheet.template.ts is 204 lines, rich, LIVE, route /api/v1/dispatch/loads/:loadId/dispatch-sheet.html, used by LoadDetailDrawer.tsx:789 and BookLoadModalV4.tsx:993; apps/backend/src/dispatch/pdf-template/driver-instructions.hbs is a thin stub. "Book and send" was held behind a sign-off that was never required. RESEARCH SETTLED, DO NOT RE-OPEN: McLeod Driver Sidekick shows Stops/Map/Freight/Images with PAY ON A SEPARATE SCREEN; Alvys keeps paystubs separate from load info; neither shows the driver his pay in advance and the owner agrees. DELETE the Driver pay summary from the driver document (payRows, grossFootnote, autoBillId leave the model). ADD Border and customs (port of entry, broker, pedimento, crossing instructions) only on cross-border loads. ADD "Documents you must bring back" — signed BOL, signed POD, scale ticket, lumper receipt, header right "The trip does not close without all four." Populate every per-stop field and show APPOINTMENT vs FCFS as a pill. docType = DRIVER INSTRUCTION SHEET, retire driver-instructions.hbs behind a flag. Enable "Book and send". THIS DESIGN IS NOW THE STANDARD FOR EVERY PDF AND PRINT — pdf-styles.inline.ts + wrapPdfDocument is the house style for invoice, rate con, settlement, driver settlement, BOL, work order, bill, expense, factoring schedule, IFTA, insurance cert. Guard verify-all-pdfs-use-house-template.
+CURSOR LANE BOUNDARY: the planners are CASCADE's, do not absorb his work; tokens.ts is CC-2's. YOU ARE THE ONLY SEAT THAT DEPLOYS.
+
+
+---
+## HISTORY (superseded — keep for audit, do not execute)
+
 # INBOX-CURSOR · LEAD · 2026-09-04 18:16 CT
 `git pull --ff-only origin main`
 
