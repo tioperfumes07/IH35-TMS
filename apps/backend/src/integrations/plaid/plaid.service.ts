@@ -91,7 +91,7 @@ async function lookupOwnerEmails() {
 
 async function loadCategoryRules(operatingCompanyId: string) {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<TransactionCategoryRule>(
       `
         SELECT
@@ -553,7 +553,7 @@ export async function autoCategorize(
 
   let applied = false;
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [transaction.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [transaction.operating_company_id]);
     const updated = await client.query(
       `
         UPDATE banking.bank_transactions

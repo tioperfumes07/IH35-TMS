@@ -143,7 +143,7 @@ function logForensicHeap(batchId: string, entityType: string, pageStart: number,
 async function loadBatch(batchId: string, operatingCompanyId?: string | null) {
   return withLuciaBypass(async (client) => {
     if (operatingCompanyId) {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     }
     const res = await client.query<BatchRow>(
       `
@@ -165,7 +165,7 @@ export async function startImportBatch(actorUserId: string, operatingCompanyId: 
     throw new Error("QBO not authorized for this company. Please authorize via /admin/forensic-review.");
   }
   const createdBatch = await withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ id: string; operating_company_id: string; status: string; started_at: string }>(
       `
         INSERT INTO qbo_archive.import_batches (
