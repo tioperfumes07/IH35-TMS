@@ -4,7 +4,11 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { createCashAdvanceRequest } from "../driver-finance/cash-advance-requests.service.js";
 import { driverBillNumberFromLoadNumber } from "../driver-finance/driver-bill-number.js";
-import { effectiveTeamPercentsFromRow, splitTotalCents } from "../driver-finance/settlement-engine.js";
+import {
+  appendSettlementLineFromDriverBillIfMissing,
+  effectiveTeamPercentsFromRow,
+  splitTotalCents,
+} from "../driver-finance/settlement-engine.js";
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { bookLoadRateTotalCents } from "./book-load-accessorial.js";
 import { assertDriverQualifiedForLoad } from "./driver-qualification.service.js";
@@ -2337,6 +2341,13 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       );
     }
 
+    // SET-02 (owner ruling 2026-09-03/09-04): "driver bill at load creation... linked to the
+    // settlement." Set by the SET-01 block immediately below when a pre-settlement is resolved;
+    // read further down (after createDriverBillArtifacts mints the bill) to append this load's
+    // settlement_lines row in the SAME booking transaction -- a bill can never exist without
+    // already being reflected on the pre-settlement it belongs to, same principle as SET-01.
+    let settlementIdForBillLink: string | null = null;
+
     {
       // SET-01 (owner ruling 2026-09-03/09-04, settled, do not re-litigate): "The instant a load
       // is CREATED it joins a pre-settlement. Not at delivery. Not at invoice. At creation." and
@@ -2351,7 +2362,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       // not touch. Extracted to its own function (not inlined here) so the exact production call
       // shape is independently unit-testable against a mock client, without booking a real load.
       if (input.assigned_primary_driver_id && input.trip_type) {
-        await linkLoadToPresettlementAtBookingInClientTx(client, {
+        const presettlementLink = await linkLoadToPresettlementAtBookingInClientTx(client, {
           operating_company_id: input.operating_company_id,
           load_id: String(load.id),
           driver_id: input.assigned_primary_driver_id,
@@ -2360,6 +2371,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           tour_id: input.tour_id ?? null,
           actor_user_id: input.requestingUserUuid,
         });
+        settlementIdForBillLink = presettlementLink.settlement_id;
       } else {
         await appendCrudAudit(
           client,
@@ -2396,6 +2408,25 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     if (input.save_mode === "book_dispatch") {
       // MILES-ON-BOOK — return mint outcome so Book Load can warn on silent pay skips.
       driverBillMint = await createDriverBillArtifacts(client, input, load, loadNumber, input.stops);
+
+      // SET-02 (owner ruling 2026-09-03/09-04): "driver bill at load creation... linked to the
+      // settlement." A minted bill used to sit unlinked until something ELSE (the pre-settlement
+      // view route, the bookended-settlement service, or payrun close) lazily called
+      // appendSettlementLineFromDriverBillIfMissing — meaning "linked to the settlement" was true
+      // eventually, not at creation. Calling it here, in the SAME transaction as the bill mint and
+      // the SET-01 presettlement link immediately above, closes that gap: primaryDriverForPay is
+      // the primary driver (team-split settlement-line wiring is a separate, not-yet-built concern
+      // -- SET-01's own presettlement link is also primary-driver-only today, same scope boundary).
+      if (driverBillMint.outcome === "minted" && settlementIdForBillLink && input.assigned_primary_driver_id) {
+        await appendSettlementLineFromDriverBillIfMissing(client, {
+          settlementId: settlementIdForBillLink,
+          operatingCompanyId: input.operating_company_id,
+          driverId: input.assigned_primary_driver_id,
+          loadId: String(load.id),
+          actorUserId: input.requestingUserUuid,
+        });
+      }
+
       await appendCrudAudit(
         client,
         input.requestingUserUuid,
