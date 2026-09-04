@@ -49,6 +49,29 @@ body {
   overflow-x: hidden;
 }
 
+/* GLB-03 fit-to-page contract. :where() keeps specificity at zero so an approved
+   component can still be more specific, while every ordinary page/modal/table gets
+   a safe default: content may scroll inside its own table region, never widen or
+   disappear beyond the application viewport. */
+:where(main, section, article, aside, form, [role="dialog"]) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(div, section, main, article):has(> table) {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+:where(img, svg, canvas, video) {
+  max-width: 100%;
+}
+
+:where(td, th) {
+  overflow-wrap: anywhere;
+}
+
 /* GLB-01 locked type scale: use this named utility for the only approved page/KPI
    display size. Body text remains Tailwind text-xs (12px); section/table headers
    use the locked 11px contract. A named utility avoids hundreds of arbitrary-value
