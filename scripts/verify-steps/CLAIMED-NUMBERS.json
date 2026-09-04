@@ -7383,5 +7383,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-04",
     "purpose": "verify-bank-match-no-double-match-all-six-kinds (BANKING-MATCH-FLOW-AUDIT Q4/F4 matched-state guard: proves fetchLedgerCandidates excludes an already-matched document across all 6 ledger_entry_kind sources -- payment, bill_payment, transfer, je, bill, expense -- not just the original bill/expense-only pair)"
+  },
+  "10299": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-money-text-component-adoption-ratchet (GLB-05: publishes the canonical MoneyText display component + a frozen-baseline ratchet against new hand-rolled toLocaleString(..., {style:'currency'}) money formatting app-wide; baseline measured after converting 6 files to the canonical formatUsdCents this session)"
   }
 }
