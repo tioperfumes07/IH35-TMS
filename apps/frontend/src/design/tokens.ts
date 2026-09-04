@@ -85,7 +85,11 @@ export const spacing = {
   panelPaddingY: 10,
   panelBorderTop: 2,
   tableRowHeight: 24,
-  tableHeaderHeight: 26,
+  // ONE-HEIGHT LAW (owner ruling 2026-09-04, ORCH-measured) — 30, was 26 (DataTable's own prior
+  // value, never shared with ParityTable, which had no explicit height at all and drifted to a
+  // measured 30px on Dispatch vs 34px on Load Costs, two live instances of the same component).
+  // Now the one number both DataTable and ParityTable read.
+  tableHeaderHeight: 30,
   tableCellPaddingX: 8,
   // CLICKABLE-BOX-SIZE LAW (owner ruling 2026-09-04, ORCH-measured — supersedes the 2026-09-01
   // uniform-36px ruling below with a new uniform-28px target). ORCH's DESIGN-SPEC-MEASURED-LIVE

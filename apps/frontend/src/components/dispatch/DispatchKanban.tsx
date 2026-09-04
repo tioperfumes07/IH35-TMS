@@ -851,7 +851,7 @@ function KanbanDispatchColumn({
       <button
         type="button"
         onClick={() => onColumnHeaderClick(column.statuses)}
-        className="text-left text-xs font-semibold text-gray-700 hover:text-slate-900 hover:underline"
+        className="text-center text-xs font-semibold text-gray-700 hover:text-slate-900 hover:underline"
         data-testid={`kanban-column-header-link-${column.key}`}
         title={`View ${column.title} loads in the list`}
       >
@@ -861,12 +861,17 @@ function KanbanDispatchColumn({
       <h3 className="text-xs font-semibold text-gray-700">{column.title}</h3>
     );
 
+  {/* CENTERING + SQUARE-EDGES LAW (owner ruling 2026-09-04, item #13, ORCH-measured): Kanban lane
+      headers centered (a 3-column grid keeps the title true-centered regardless of the count
+      badge's width, which a plain justify-between can't do) and given a full outline (border, not
+      just border-b), matching the same 2px radius as everything else. */}
   if (column.collapsedByDefault) {
     return (
       <section className="min-w-[270px] rounded-sm border border-gray-200 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
-        <header className="flex items-center justify-between border-b border-gray-100 pb-2">
-          {headerLink}
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
+        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-sm border border-gray-100 px-2 pb-2 pt-1">
+          <span />
+          <div className="text-center">{headerLink}</div>
+          <span className="justify-self-end rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
         </header>
         <KanbanColumnSortControls columnKey={column.key} sort={columnSort} onToggleSort={onToggleColumnSort} />
       </section>
@@ -880,10 +885,11 @@ function KanbanDispatchColumn({
       className={`${minWidth} flex-1 rounded-sm border border-gray-200 bg-white p-2`}
       data-testid={`kanban-column-${column.key}`}
     >
-      <header className="mb-2 border-b border-gray-100 pb-2">
-        <div className="flex items-center justify-between">
-          {headerLink}
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
+      <header className="mb-2 rounded-sm border border-gray-100 px-2 pb-2 pt-1">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <span />
+          <div className="text-center">{headerLink}</div>
+          <span className="justify-self-end rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
         </div>
         <KanbanColumnSortControls columnKey={column.key} sort={columnSort} onToggleSort={onToggleColumnSort} />
       </header>

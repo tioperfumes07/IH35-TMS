@@ -1,11 +1,13 @@
 # IH35-TMS — Global Type & Size Baseline (LOCKED)
-Source: Claude + Jorge approved 2026-06-07
+Source: Claude + Jorge approved 2026-06-07. Dated measurement record for the 2026-09-04 entries
+below: [DESIGN-SPEC-MEASURED-LIVE-2026-09-04.md](./DESIGN-SPEC-MEASURED-LIVE-2026-09-04.md) — this
+file is kept current; that one is the "what was measured and why" record.
 
 ## Typography
 - Base body: 12px
 - H1: 22px / weight 600
 - Column/section headers (page subheads, not table thead): 11px / weight 700 / UPPERCASE / color #4B5563
-- Table header row (ParityTable thead): 11px / weight 700 / UPPERCASE / background #14314F / text #FFFFFF (owner 2026-09-03 — grey-on-near-white did not differentiate)
+- Table header row (ParityTable thead): 11px / weight 700 / UPPERCASE / background #14314F / text #FFFFFF (owner 2026-09-03 — grey-on-near-white did not differentiate); height 30px, one number for every table (owner ruling 2026-09-04, ORCH-measured — was emergent/undeclared and had drifted to 30px on Dispatch vs 34px on Load Costs)
 - Text colors: primary #0F1219 | secondary #1F2A44 | muted #6B7280
 - Cell padding: ~7px
 
@@ -27,6 +29,8 @@ Source: Claude + Jorge approved 2026-06-07
 - KPI tiles: target 93px (Safety "Active Drivers"), hard ceiling 101px (Safety "Total Safety
   Events"), centered, 2px radius, 1px border, padding 4px 8px, grid gap-2 (owner ruling
   2026-09-04, ORCH-measured)
+- Kanban lane headers: centered title (independent of a count badge's width) + a full outline,
+  not just a bottom border (owner ruling 2026-09-04, ORCH-measured)
 
 ## Application
 This baseline applies to ALL screens: lists, catalogs, bills, invoices, registers, drawers, forms, modals, reports. No component may deviate without Jorge's explicit approval.
