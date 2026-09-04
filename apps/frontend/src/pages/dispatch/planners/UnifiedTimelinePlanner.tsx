@@ -56,34 +56,8 @@ function parseLeaveCells(rows: Array<Record<string, unknown>> | undefined): Map<
   return m;
 }
 
-function dayCoveredByLoad(load: PlannerLoadEvent, day: string): boolean {
-  const startDay = toDayKey(load.start_at);
-  const endDay = toDayKey(load.end_at) ?? startDay;
-  if (!startDay) return false;
-  return day >= startDay && day <= (endDay ?? startDay);
-}
-
-function utilPct(loads: PlannerLoadEvent[], days: string[]): number {
-  if (days.length === 0) return 0;
-  let covered = 0;
-  for (const day of days) {
-    if (loads.some((load) => dayCoveredByLoad(load, day))) covered += 1;
-  }
-  return Math.round((covered / days.length) * 100);
-}
-
 function LoadCustomerLink({ load }: { load: PlannerLoadEvent }) {
   return <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" />;
-}
-
-function StatusPill({ status }: { status: "Available" | "On-load" | "On-leave" | "Unknown" }) {
-  const cls =
-    status === "On-leave"
-      ? "bg-[#fdf3e7] text-[#854F0B]"
-      : status === "On-load"
-        ? "bg-slate-200 text-slate-800"
-        : "bg-slate-100 text-slate-500";
-  return <span className={`rounded-sm px-1.5 py-0.5 text-xs font-semibold ${cls}`}>{status}</span>;
 }
 
 export function UnifiedTimelinePlanner() {
@@ -139,20 +113,12 @@ export function UnifiedTimelinePlanner() {
     return s;
   }, [leaveByCell]);
 
-  const statusFor = (driver: PlannerDriverRow): "Available" | "On-load" | "On-leave" | "Unknown" => {
-    if ((loadsByDriver.get(driver.id)?.length ?? 0) > 0) return "On-load";
-    if (leaveQuery.isError) return "Unknown";
-    if (driverHasLeave.has(driver.id)) return "On-leave";
-    return "Available";
-  };
-
   const toRows = (list: PlannerDriverRow[]): PlannerGridRow[] =>
     list.map((driver) => {
-      const status = statusFor(driver);
       const sorted = [...(loadsByDriver.get(driver.id) ?? [])].sort((a, b) =>
         String(a.start_at).localeCompare(String(b.start_at))
       );
-      const pct = utilPct(sorted, days);
+      const idle = sorted.length === 0 && !driverHasLeave.has(driver.id);
       const dwells = dwellsFromDayMap(days, (d) => leaveByCell.get(`${driver.id}|${d}`), `leave-${driver.id}`);
       for (let i = 0; i < sorted.length - 1; i += 1) {
         const load = sorted[i];
@@ -169,31 +135,22 @@ export function UnifiedTimelinePlanner() {
       }
       return {
         id: driver.id,
-        idle: status === "Available",
+        idle,
         name: <EntityLink kind="driver" id={driver.id} label={entityLabel(driver.name, driver.id, "Driver")} />,
-        secondary: (
-          <>
-            <StatusPill status={status} />
-            <span data-testid={`timeline-util-${driver.id}`} className="text-xs font-medium text-slate-600">
-              {pct}%
-            </span>
-            {sorted[0] ? <LoadCustomerLink load={sorted[0]} /> : null}
-          </>
-        ),
+        secondary: sorted[0] ? <LoadCustomerLink load={sorted[0]} /> : null,
         unit: driver.unit_number ? (
           <EntityLinkOrTombstone kind="unit" id={driver.unit_id} name={driver.unit_number} noun="Unit" />
         ) : null,
-        action:
-          status === "Available" ? (
-            <button
-              type="button"
-              data-testid={`timeline-book-${driver.id}`}
-              onClick={() => openBookForUnit(driver.unit_id)}
-              className="rounded-sm bg-slate-800 px-1.5 py-0.5 text-xs font-semibold text-white"
-            >
-              + Book
-            </button>
-          ) : null,
+        action: driver.unit_id ? (
+          <button
+            type="button"
+            data-testid={`timeline-book-${driver.id}`}
+            onClick={() => openBookForUnit(driver.unit_id)}
+            className="rounded-sm bg-slate-800 px-1.5 py-0.5 text-xs font-semibold text-white"
+          >
+            + Book
+          </button>
+        ) : null,
         dwells,
         bars: sorted.map((load) => ({
           id: load.id,

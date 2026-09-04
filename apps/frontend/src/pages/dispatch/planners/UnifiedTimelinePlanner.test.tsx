@@ -64,25 +64,23 @@ describe("UnifiedTimelinePlanner (Phase 1)", () => {
     expect(await screen.findByText("Jane Driver")).toBeTruthy();
     expect(await screen.findByTestId("planner-time-axis")).toBeTruthy();
     expect(await screen.findByTestId("planner-axis-month-row")).toBeTruthy();
-    expect(screen.getByTestId("timeline-util-d1")).toBeTruthy();
+    expect(screen.getByText("ACME")).toBeTruthy(); // first-load customer link in secondary
     // The load bar comes from getDispatchPlannerWeek loads[] — the fix for the empty grid.
     // The load bar's testid is keyed on the load's stable id (load-500), not its display number
     // (L-500) — matches the `data-testid={`timeline-load-${load.id}`}` convention.
     expect(await screen.findByTestId("timeline-load-load-500")).toBeTruthy();
   });
 
-  it("shows a Status column (On-load / On-leave / Available) and a + Book on idle drivers", async () => {
+  it("does not render an Available/0% status overlay, but still gives idle drivers a + Book action", async () => {
     wrap(<UnifiedTimelinePlanner />);
     await screen.findByText("Jane Driver");
-    expect(screen.getByText("On-load")).toBeTruthy(); // d1 has a load
-    expect(screen.getByText("On-leave")).toBeTruthy(); // d2 has leave, no load
-    expect(screen.getAllByText("Available").length).toBeGreaterThan(0); // d3 free + idle cell hint
-    // Idle/available driver gets a + Book affordance.
+    expect(screen.queryByText("Available")).toBeNull();
+    expect(screen.queryByText("On-load")).toBeNull();
+    expect(screen.queryByText("On-leave")).toBeNull();
     expect(screen.getByTestId("timeline-book-d3")).toBeTruthy();
     expect(screen.getAllByText("Book").length).toBeGreaterThan(0);
     const loadedRow = screen.getByText("Jane Driver").closest(".pg-name");
     expect(loadedRow?.querySelector(".pg-col-action")).toBeTruthy();
-    expect(loadedRow?.querySelector(".pg-col-action")?.textContent).toBe("");
   });
 
   it("passes the planner row id as the canonical driver FK when booking its unit", async () => {

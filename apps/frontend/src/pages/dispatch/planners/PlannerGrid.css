@@ -213,6 +213,15 @@
   justify-content: flex-end;
   padding-right: 8px;
 }
+.planner-grid-canonical .pg-name-cols .pg-col-name,
+.planner-grid-canonical .pg-name-cols .pg-col-sec,
+.planner-grid-canonical .pg-name-cols .pg-col-unit,
+.planner-grid-canonical .pg-name-cols .pg-col-action {
+  border-right: 1px solid var(--rule-day);
+}
+.planner-grid-canonical .pg-name-cols .pg-col-action:last-child {
+  border-right: 0;
+}
 .planner-grid-canonical .pg-r.idle .pg-name {
   color: var(--mute);
   font-weight: 500;
