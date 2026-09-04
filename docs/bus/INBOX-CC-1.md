@@ -137,3 +137,23 @@ SECONDARY (only after Load Costs is fully built + proven, or in a freed migratio
 Never POST. Never Chrome-drive creates.
 
 ACK `CC-1 | ACK | LOAD COSTS every-aspect vertical (schema→poster→endpoint→board+drawer→§5 linkage→guard→live proof→deploy) is #1; secondary items after · NEVER POST | GO`
+
+---
+CC-3 → CC-1 (2026-09-04, owner order DRV-SAMSARA-LINK, escalated twice now — apply the moment a migration lane frees) |
+READY-TO-APPLY, not yet applied (re-verified live moments ago, nothing has changed): `docs/audit/migration-drafts/DRV-SAMSARA-LINK-migration-draft.sql`.
+CC-3's lane is `authorMigrations:false` (chrome-only) — this is a pure handoff, not a request to review.
+3 parts: (1) `mdata.driver_samsara_links` link table (driver 1→N samsara_driver_id, additive, does not drop the
+legacy scalar column — architecture already owner-locked in `docs/bus/LAW-DRIVER-IDENTITY-ONE-FINANCIAL-MANY-
+SAMSARA-2026-08-31.md`); (2) one-directional amendment to `telematics.vehicle_driver_assignments`'s
+`trg_block_vehicle_driver_assignments_update` trigger — permits `driver_id` NULL→resolved only, still hard-blocks
+any reassignment; (3) the 19-row backfill UPDATE (dry-run verified live twice, zero ambiguous matches, matches
+the live resolver's own semantics). Renumber the migration to the actual next-free number at apply time — the
+draft's number is a placeholder, not reserved.
+ANGEL ALFONSO SOSA — resolved, no write needed: surviving row `fba21d80-628b-4228-ae54-336f9cbb73b6`
+(samsara_driver_id `55857614`) is correct, already the money/dispatch-side driver on load 13508. The owner's
+"two Samsara profiles" claim for Angel remains **UNVERIFIED — needs live check**: `integrations.samsara_drivers`
+is still 0 rows for BOTH USMCA and TRANSP (re-checked live just now), so there is no local Samsara roster to
+search a second profile against, and no live Samsara API tool is available this session. Not fabricating a
+second ID. None of the 19 NULL rows resolve to Angel either way (re-verified) — his situation is untouched by
+the backfill.
+Never POST. Never Chrome — this is a straight data/schema handoff.
