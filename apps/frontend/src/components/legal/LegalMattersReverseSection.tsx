@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { legalMattersApi } from "../../api/legal-matters";
 import { useAuth } from "../../auth/useAuth";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLink, resolveEntityRoute } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
 
@@ -34,6 +35,7 @@ export function LegalMattersReverseSection({
   "data-testid": testId = "legal-matters-reverse-section",
 }: Props) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const canView = user?.role === "Owner" || user?.role === "Administrator";
 
   const query = useQuery({
@@ -56,10 +58,16 @@ export function LegalMattersReverseSection({
             ? ("legal_matters_driver" as const)
             : ("legal_matters_equipment" as const);
   const openId = String(Object.values(filter)[0] ?? "");
+  // DRV-12: "the large boxes ... go NOWHERE when clicked" -- only the small "Open Legal" corner
+  // link navigated; the card body looked clickable but did nothing. Same FleetTable.tsx pattern
+  // (row onClick navigates, an inner link's own onClick still stopPropagation()s so it isn't
+  // double-navigated).
+  const openRoute = resolveEntityRoute(openKind, openId);
 
   return (
     <div
-      className="space-y-2 rounded-sm border border-gray-200 bg-white p-3"
+      className={`space-y-2 rounded-sm border border-gray-200 bg-white p-3 ${openRoute ? "cursor-pointer hover:bg-gray-50" : ""}`}
+      onClick={openRoute ? () => navigate(openRoute) : undefined}
       data-testid={testId}
     >
       <div className="flex items-center justify-between gap-2">

@@ -1,10 +1,11 @@
 import { type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { insuranceClaimsApi, type InsuranceClaim } from "../../api/insurance";
 import { useAuth } from "../../auth/useAuth";
 import { formatUsdCents } from "../../lib/money";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLink, resolveEntityRoute } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
 
@@ -138,6 +139,7 @@ export function InsuranceClaimsReverseSection({
   "data-testid": testId = "insurance-claims-reverse-section",
 }: Props) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const canView = user?.role === "Owner" || user?.role === "Administrator";
 
   const query = useQuery({
@@ -162,10 +164,15 @@ export function InsuranceClaimsReverseSection({
           ? ("insurance_claims_load" as const)
           : ("insurance_claims_trailer" as const);
   const openId = String(Object.values(filter)[0] ?? "");
+  // DRV-12: "the large boxes ... go NOWHERE when clicked" -- only the small "Open Claims" corner
+  // link navigated. Same FleetTable.tsx row-onClick pattern; EntityLink's own onClick already
+  // stopPropagation()s so the corner link isn't double-navigated.
+  const openRoute = resolveEntityRoute(openKind, openId);
 
   return (
     <div
-      className="space-y-2 rounded-sm border border-gray-200 bg-white p-3"
+      className={`space-y-2 rounded-sm border border-gray-200 bg-white p-3 ${openRoute ? "cursor-pointer hover:bg-gray-50" : ""}`}
+      onClick={openRoute ? () => navigate(openRoute) : undefined}
       data-testid={testId}
     >
       <div className="flex items-center justify-between gap-2">

@@ -1,9 +1,10 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { ListErrorState } from "../ListErrorState";
 import { getSafetyFines, getInternalFines } from "../../api/safety";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLink, resolveEntityRoute } from "../shared/EntityLink";
 import { Button } from "../Button";
 
 type Props = {
@@ -31,6 +32,7 @@ export function DriverFinesReverseSection({
   driverId,
   "data-testid": testId = "driver-fines-reverse-section",
 }: Props) {
+  const navigate = useNavigate();
   const enabled = Boolean(operatingCompanyId) && Boolean(driverId);
   const civilPageSize = 25;
   const [civilPage, setCivilPage] = useState(1);
@@ -72,9 +74,18 @@ export function DriverFinesReverseSection({
   const civilFailed = civilQuery.isError;
   const internalFailed = internalQuery.isError;
   const total = civil.length + internal.length;
+  // DRV-12: "the large boxes ... go NOWHERE when clicked" -- only the small "Open Safety" corner
+  // link navigated. Same FleetTable.tsx row-onClick pattern. The pager buttons below are real
+  // in-card actions (page civil/internal fines without navigating away), so their two wrapper
+  // divs stop propagation explicitly -- Button, unlike EntityLink, does not do this on its own.
+  const openRoute = resolveEntityRoute("safety_fines_driver", driverId);
 
   return (
-    <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
+    <div
+      className={`space-y-2 rounded-sm border border-gray-200 bg-white p-3 ${openRoute ? "cursor-pointer hover:bg-gray-50" : ""}`}
+      onClick={openRoute ? () => navigate(openRoute) : undefined}
+      data-testid={testId}
+    >
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-xs font-semibold text-slate-900">Fines</h3>
         <EntityLink kind="safety_fines_driver" id={driverId} label="Open Safety" className="text-xs font-semibold text-slate-700 underline" />
@@ -108,7 +119,7 @@ export function DriverFinesReverseSection({
         </div>
       ) : null}
       {!civilQuery.isError && civilTotal > civilPageSize ? (
-        <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-fines-civil-server-pager">
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-fines-civil-server-pager" onClick={(event) => event.stopPropagation()}>
           <Button size="sm" variant="secondary" disabled={civilPage <= 1 || civilQuery.isFetching} onClick={() => setCivilPage((current) => Math.max(1, current - 1))}>Previous civil fines</Button>
           <span className="text-slate-600">Page {civilPage} of {civilPageCount} · {civilTotal} civil fines</span>
           <Button size="sm" variant="secondary" disabled={civilPage >= civilPageCount || civilQuery.isFetching} onClick={() => setCivilPage((current) => Math.min(civilPageCount, current + 1))}>Next civil fines</Button>
@@ -133,7 +144,7 @@ export function DriverFinesReverseSection({
         </div>
       ) : null}
       {!internalQuery.isError && internalTotal > internalPageSize ? (
-        <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-fines-internal-server-pager">
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-fines-internal-server-pager" onClick={(event) => event.stopPropagation()}>
           <Button size="sm" variant="secondary" disabled={internalPage <= 1 || internalQuery.isFetching} onClick={() => setInternalPage((current) => Math.max(1, current - 1))}>Previous internal fines</Button>
           <span className="text-slate-600">Page {internalPage} of {internalPageCount} · {internalTotal} internal fines</span>
           <Button size="sm" variant="secondary" disabled={internalPage >= internalPageCount || internalQuery.isFetching} onClick={() => setInternalPage((current) => Math.min(internalPageCount, current + 1))}>Next internal fines</Button>
