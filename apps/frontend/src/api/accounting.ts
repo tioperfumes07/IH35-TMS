@@ -1152,6 +1152,60 @@ export function createExpense(
   );
 }
 
+/** SET-24 category — the broker's own diesel/driver-pay/repair categories, distinct from a CoA account. */
+export const BROKER_ADVANCE_CATEGORIES = ["diesel", "driver_pay", "repair", "other"] as const;
+export type BrokerAdvanceCategory = (typeof BROKER_ADVANCE_CATEGORIES)[number];
+
+export type BrokerAdvanceRow = {
+  id: string;
+  load_id: string;
+  customer_id: string;
+  category: BrokerAdvanceCategory;
+  instrument_type: string;
+  instrument_reference: string;
+  amount_cents: string;
+  received_at: string;
+  notes: string | null;
+  applied_to_invoice_id: string | null;
+  applied_at: string | null;
+  voided_at: string | null;
+  created_at: string;
+};
+
+/**
+ * SET-15 — the ONE write path a broker advance goes through, matching broker-advances.routes.ts's
+ * own header comment ("whatever hosts it -- tab 13's SET-15 stacked entry -- calls this SAME
+ * endpoint"). A partial payment against the load's receivable (diesel/driver pay/repair via
+ * Comchek/EFT/wire) -- never a driver liability, never a reduction of the invoice face.
+ */
+export function createBrokerAdvance(
+  operatingCompanyId: string,
+  body: {
+    load_id: string;
+    customer_id: string;
+    category: BrokerAdvanceCategory;
+    instrument_type: string;
+    instrument_reference: string;
+    amount_cents: number;
+    received_at: string;
+    notes?: string | null;
+  }
+) {
+  return apiRequest<{ broker_advance_id: string; applied_to_invoice_id: string | null }>(
+    "/api/v1/accounting/broker-advances",
+    { method: "POST", body: { operating_company_id: operatingCompanyId, ...body } }
+  );
+}
+
+export function listBrokerAdvances(operatingCompanyId: string, params: { load_id?: string } = {}) {
+  const query = new URLSearchParams();
+  if (params.load_id) query.set("load_id", params.load_id);
+  const qs = query.toString();
+  return apiRequest<{ rows: BrokerAdvanceRow[] }>(
+    withCompany(`/api/v1/accounting/broker-advances${qs ? `?${qs}` : ""}`, operatingCompanyId)
+  );
+}
+
 export function voidVendorBillPayment(id: string, operatingCompanyId: string, reason: string) {
   return apiRequest<{ ok: true }>(withCompany(`/api/v1/accounting/bill-payments/${id}/void`, operatingCompanyId), {
     method: "POST",
