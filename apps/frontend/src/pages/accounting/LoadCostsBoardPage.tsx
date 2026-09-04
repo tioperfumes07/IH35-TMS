@@ -10,8 +10,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 
 type FilterPill = "in_motion" | "delivered_open" | "all_open" | "this_week";
-type SortKey = "load" | "status" | "pickup_date" | "projected_delivery" | "delivered" | "route_crew" | "revenue" | "costs" | "driver" | "margin";
-type BoardRow = { load_id:string; load_number:string; status:string; customer_name:string|null; driver_name:string|null; unit_number:string|null; trailer_number:string|null; pickup_city:string|null; delivery_city:string|null; pickup_date:string|null; scheduled_delivery_at:string|null; actual_delivery_at:string|null; created_at:string; revenue_cents:string; expense_cents:string; bill_cents:string; driver_pay_cents:string; expense_count:number; bill_count:number };
+type SortKey = "load" | "status" | "pickup_date" | "projected_delivery" | "delivered" | "route_crew" | "revenue" | "costs" | "repairs_maintenance" | "driver" | "margin";
+type BoardRow = { load_id:string; load_number:string; status:string; customer_name:string|null; driver_name:string|null; unit_number:string|null; trailer_number:string|null; pickup_city:string|null; delivery_city:string|null; pickup_date:string|null; scheduled_delivery_at:string|null; actual_delivery_at:string|null; created_at:string; revenue_cents:string; expense_cents:string; bill_cents:string; repairs_maintenance_cents:string; driver_pay_cents:string; expense_count:number; bill_count:number };
 const money = new Intl.NumberFormat("en-US", { style:"currency", currency:"USD" });
 const fmt = (c:number) => money.format(c / 100);
 const CLOSED = ["cancelled","abandoned","closed","paid","driver_walkoff","driver_no_show"];
@@ -22,7 +22,7 @@ export const LOAD_COSTS_ELEMENT_MANIFEST = [
   "load-costs-pill-in_motion", "load-costs-pill-delivered_open", "load-costs-pill-all_open", "load-costs-pill-this_week",
   "kpi-loads-in-motion", "kpi-revenue-booked", "kpi-costs-recorded", "kpi-driver-pay", "kpi-approx-margin", "kpi-bank-unmatched",
   "col-load", "col-status", "col-pickup-date", "col-projected-delivery", "col-delivered", "col-route-crew",
-  "col-revenue", "col-costs", "col-driver", "col-margin", "load-costs-expand", "panel-costs-on-load",
+  "col-revenue", "col-costs", "col-repairs-maintenance", "col-driver", "col-margin", "load-costs-expand", "panel-costs-on-load",
   "panel-approx-settlement", "btn-add-cost", "btn-receipt-photo", "btn-fuel-advance",
 ] as const;
 const rowCosts = (r:BoardRow) => Number(r.expense_cents) + Number(r.bill_cents);
@@ -71,6 +71,7 @@ export function LoadCostsBoardPage() {
     {key:"route_crew",label:"Route and crew",testId:"col-route-crew",sortable:true,render:r=><span>{r.pickup_city&&r.delivery_city?`${r.pickup_city} → ${r.delivery_city}`:r.pickup_city??r.delivery_city??"Route not set"}<small className="block text-[#6B7280]">{r.customer_name??"Customer not set"} · {r.driver_name??"Not assigned"} · {r.unit_number??"Not assigned"} · {r.trailer_number??"No trailer"}</small></span>},
     {key:"revenue",label:"Revenue",testId:"col-revenue",sortable:true,className:"text-right",render:r=>fmt(Number(r.revenue_cents))},
     {key:"costs",label:"Costs",testId:"col-costs",sortable:true,className:"text-right",render:r=>fmt(rowCosts(r))},
+    {key:"repairs_maintenance",label:"R&M EXP",testId:"col-repairs-maintenance",sortable:true,className:"text-right",render:r=>fmt(Number(r.repairs_maintenance_cents))},
     {key:"driver",label:"Driver",testId:"col-driver",sortable:true,className:"text-right",render:r=>fmt(rowPay(r))},
     {key:"margin",label:"Margin",testId:"col-margin",sortable:true,className:"text-right",render:r=>Number(r.revenue_cents)?`${(rowMargin(r)/Number(r.revenue_cents)*100).toFixed(1)}%`:"—"},
   ];
