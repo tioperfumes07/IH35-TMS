@@ -27,7 +27,11 @@ type Props = {
   fixedCustomerType?: Exclude<CustomerProfileFormValues["customer_type"], "">;
 };
 
-const PARENT_CUSTOMER_FETCH_LIMIT = 200;
+// CLS-SILENT-CAP (GO-23 wave 1 row 1 systemic sweep): was 200 against a per-company roster that
+// can exceed it (live: TRK 1,447 / TRANSP 1,260 / USMCA 1,223), and this picker has no search box
+// of its own to reach a parent past the cap — CappedListNotice below already reports it honestly,
+// but honesty is the floor, not the fix; raise the cap so it stops firing for every live company.
+const PARENT_CUSTOMER_FETCH_LIMIT = 2000;
 
 export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose, fixedCustomerType }: Props) {
   const { pushToast } = useToast();
