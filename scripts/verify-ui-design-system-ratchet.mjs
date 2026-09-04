@@ -26,6 +26,8 @@ const LABEL = "verify-ui-design-system-ratchet";
 const BASELINE = path.join(ROOT, "scripts", "ui-design-system-baseline.json");
 const SRC = path.join(ROOT, "apps", "frontend", "src");
 const INDEX_CSS = path.join(SRC, "index.css");
+const KPI_CARD = path.join(SRC, "components", "layout", "KpiCard.tsx");
+const DRILL_KPI_CARD = path.join(SRC, "components", "layout", "DrillKpiCard.tsx");
 
 /** The one picker that dismisses on outside mousedown. Everything else traps the user. */
 const GOOD_PICKER = "components/Combobox";
@@ -151,12 +153,29 @@ function selftest() {
     console.error(`${LABEL}: SELFTEST FAIL — text-page-title must remain locked to 22px`);
     process.exit(1);
   }
+  const kpi = fs.readFileSync(KPI_CARD, "utf8");
+  const drill = fs.readFileSync(DRILL_KPI_CARD, "utf8");
+  if (!kpi.includes('className="inline-flex h-full w-full min-w-0') ||
+      !kpi.includes('className="block h-full w-full min-w-0') ||
+      !drill.includes('"block h-full w-full min-w-0 rounded-sm border')) {
+    console.error(`${LABEL}: SELFTEST FAIL — shared KPI primitives must fill one equal grid cell`);
+    process.exit(1);
+  }
   console.log(`${LABEL}: SELFTEST PASS`);
   process.exit(0);
 }
 
 const argv = process.argv.slice(2);
 if (argv.includes("--selftest")) selftest();
+
+const kpi = fs.readFileSync(KPI_CARD, "utf8");
+const drill = fs.readFileSync(DRILL_KPI_CARD, "utf8");
+if (!kpi.includes('className="inline-flex h-full w-full min-w-0') ||
+    !kpi.includes('className="block h-full w-full min-w-0') ||
+    !drill.includes('"block h-full w-full min-w-0 rounded-sm border')) {
+  console.error(`${LABEL}: FAIL — GLB-04 shared KPI primitives no longer fill equal-width/equal-height grid cells`);
+  process.exit(1);
+}
 
 const measured = measure();
 if (argv.includes("--worklist")) {

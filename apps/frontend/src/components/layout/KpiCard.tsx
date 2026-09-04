@@ -23,7 +23,7 @@ type Props = {
 export function KpiCard({ label, number, accent, to, onClick, disabled, disabledReason }: Props) {
   const card = (
     <div
-      className="inline-flex min-w-[150px] max-w-full shrink-0 items-center justify-between gap-2 bg-white"
+      className="inline-flex h-full w-full min-w-0 items-center justify-between gap-2 bg-white"
       style={{
         height: spacing.kpiCardHeight,
         paddingLeft: spacing.kpiCardPaddingX,
@@ -53,7 +53,7 @@ export function KpiCard({ label, number, accent, to, onClick, disabled, disabled
   if (disabled) {
     return (
       <div
-        className="inline-block shrink-0 cursor-not-allowed rounded-sm"
+        className="block h-full w-full min-w-0 cursor-not-allowed rounded-sm"
         aria-disabled="true"
         title={disabledReason ?? NOT_AVAILABLE_YET}
         data-kpi-disabled="true"
@@ -65,7 +65,7 @@ export function KpiCard({ label, number, accent, to, onClick, disabled, disabled
 
   if (to) {
     return (
-      <Link to={to} aria-label={`${label} — view details`} className="inline-block shrink-0 rounded-sm transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400">
+      <Link to={to} aria-label={`${label} — view details`} className="block h-full w-full min-w-0 rounded-sm transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400">
         {card}
       </Link>
     );
@@ -77,7 +77,7 @@ export function KpiCard({ label, number, accent, to, onClick, disabled, disabled
         type="button"
         onClick={onClick}
         aria-label={`${label} — view details`}
-        className="inline-block shrink-0 rounded-sm text-left transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400"
+        className="block h-full w-full min-w-0 rounded-sm text-left transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400"
       >
         {card}
       </button>
