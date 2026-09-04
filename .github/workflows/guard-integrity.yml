@@ -24,8 +24,9 @@ jobs:
       - run: npm ci
 
       # Guard classification remit — every guard in this workflow is tagged CORRECT, STALE,
-      # MISCALIBRATED, or MANDATES-A-DEFECT. The last class is found by asking "if I satisfy this
-      # assertion exactly, what does the operator experience?", not by running the guard.
+      # MISCALIBRATED, MANDATES-A-DEFECT, or NOT-WIRED. The worst classes are found by asking
+      # "if this guard passes, what does the operator experience?" and "does CI ever run it?",
+      # not by simply running the guard.
       #   CORRECT: real defect detector (silent caps, uncapped entity pickers).
       #   STALE: checks a file/location that no longer holds the contract (verify-ui-regressions
       #          reading Dispatch.tsx for the Pre-settlements tab).
@@ -34,6 +35,8 @@ jobs:
       #   MANDATES-A-DEFECT (not in this workflow, cited as a live example): a green guard that
       #          required disabled={customersQuery.isLoading || customersQuery.isError} on a focused
       #          search input, discarding keystrokes and preventing the owner from typing a customer.
+      #   NOT-WIRED: the guard file exists and passes locally, but no entry in scripts/verify-steps/
+      #              invokes it, so CI never runs it and greenness is theater.
       - name: guard classification
         run: |
           echo "verify-no-silent-list-caps -> CORRECT"
@@ -43,6 +46,34 @@ jobs:
           echo "verify-combobox-listbox-z-index-above-drawers -> MISCALIBRATED"
           echo "verify-modal-z-index-above-drawers -> MISCALIBRATED"
           echo "verify-bookload-customer-server-search.mjs (live example) -> MANDATES-A-DEFECT"
+          echo "scripts/verify-*.mjs not invoked by scripts/verify-steps/ -> NOT-WIRED"
+
+      - name: guard-wired-audit
+        run: |
+          node -e '
+          const { readdir, readFile } = require("fs/promises");
+          const path = require("path");
+          (async () => {
+            const root = process.cwd();
+            const scriptsDir = path.join(root, "scripts");
+            const stepsDir = path.join(root, "scripts", "verify-steps");
+            const all = (await readdir(scriptsDir)).filter(f => f.startsWith("verify-") && f.endsWith(".mjs"));
+            const steps = (await readdir(stepsDir)).filter(f => f.endsWith(".mjs"));
+            const stepText = (await Promise.all(steps.map(async f => {
+              const content = await readFile(path.join(stepsDir, f), "utf8");
+              return f + "\n" + content;
+            }))).join("\n");
+            const notWired = all.filter(f => !stepText.includes(f.replace(/\.mjs$/, "")));
+            console.log("Total verify-*.mjs files: " + all.length);
+            console.log("Wired into verify-steps: " + (all.length - notWired.length));
+            console.log("NOT-WIRED count: " + notWired.length);
+            if (notWired.length) {
+              console.log("First 20 NOT-WIRED guards:");
+              notWired.slice(0, 20).forEach(f => console.log("  " + f));
+            }
+            process.exit(0);
+          })();
+          '
 
       - name: verify:no-silent-list-caps --selftest
         run: node scripts/verify-no-silent-list-caps.mjs --selftest
