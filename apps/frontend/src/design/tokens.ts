@@ -8,8 +8,13 @@ export const colors = {
   slate: "#334155",
   slateLt: "#64748B",
   accentTint: "#EAECF1", // §7 active-state light tint (selected row / active fill) — replaces light-blue
-  topbarBg: "#1F2A44",
-  sidebarBg: "#1F2A44",
+  // NAVY-NOT-BLACK LAW (owner ruling 2026-09-04) — "#1F2A44" and Sidebar.tsx's separate hardcoded
+  // "#1B2333" both read as near-black on most monitors (low saturation despite being technically
+  // navy) — the owner's literal complaint: "the app now looks BLACK; owner wants BLUE." Now the
+  // same blue already owner-approved for the table header row (#14314F, 2026-09-03) — one blue
+  // token for rail + topbar + table header, not three different dark shades.
+  topbarBg: "#14314F",
+  sidebarBg: "#14314F",
   sidebarBorder: "#2A3242",
   sidebarTextMuted: "#9CA3AF",
   sidebarTextActive: "#FFFFFF",

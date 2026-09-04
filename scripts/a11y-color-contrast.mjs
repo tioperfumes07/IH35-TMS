@@ -27,8 +27,10 @@ export const TOKEN_PAIRS = [
   { id: "secondary-button", role: "text", fg: "#0F1219", bg: "#FFFFFF", note: "secondary button label" },
   { id: "tertiary-button", role: "text", fg: "#2563EB", bg: "#FFFFFF", note: "tertiary link button" },
   { id: "danger-button", role: "text", fg: "#FFFFFF", bg: "#DC2626", note: "danger button label" },
-  { id: "sidebar-active-item", role: "text", fg: "#FFFFFF", bg: "#1B2333", note: "active sidebar nav item" },
-  { id: "sidebar-inactive-item", role: "text", fg: "#9CA3AF", bg: "#1B2333", note: "inactive sidebar nav item" },
+  // NAVY-NOT-BLACK LAW (owner ruling 2026-09-04) — #1B2333, was near-black; now #14314F, the same
+  // blue already owner-approved for the table header row.
+  { id: "sidebar-active-item", role: "text", fg: "#FFFFFF", bg: "#14314F", note: "active sidebar nav item" },
+  { id: "sidebar-inactive-item", role: "text", fg: "#9CA3AF", bg: "#14314F", note: "inactive sidebar nav item" },
   { id: "page-body-text", role: "text", fg: "#1F2937", bg: "#F7F8FA", note: "page body text" },
   { id: "page-heading-text", role: "text", fg: "#0F1219", bg: "#FFFFFF", note: "page heading text" },
   { id: "warn-badge", role: "ui", fg: "#FFFFFF", bg: "#D97706", note: "warning badge" },

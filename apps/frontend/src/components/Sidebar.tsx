@@ -4,7 +4,7 @@ import { NavLink, useLocation } from "react-router-dom";
 
 import { getArrivingSoon } from "../api/maintenance";
 import { useCompanyContext } from "../contexts/CompanyContext";
-import { spacing } from "../design/tokens";
+import { colors, spacing } from "../design/tokens";
 import type { UserRole } from "../types/api";
 import { rememberModuleHref } from "../lib/lastModuleNav";
 import { resolveSidebarOrder, SIDEBAR_ITEM_META } from "./layout/sidebar-config";
@@ -62,7 +62,12 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
         className={`sidebar z-50 shrink-0 flex-col text-white md:z-auto md:flex max-lg:overflow-x-hidden ${
           mobileOpen ? "fixed inset-y-0 left-0 flex w-20 md:relative md:inset-auto" : "hidden md:flex"
         }`}
-        style={{ background: "rgb(27, 35, 51)", borderRight: "1px solid rgb(42, 50, 66)" }}
+        // NAVY-NOT-BLACK LAW (owner ruling 2026-09-04) — was a hardcoded rgb(27, 35, 51) / #1B2333
+        // literal that bypassed the shared token entirely (colors.sidebarBg existed and was never
+        // read here). #1B2333 is technically navy but low-saturation enough to read as near-black
+        // on most monitors — the owner's own complaint. Now reads colors.sidebarBg, the same blue
+        // already owner-approved for the table header row (#14314F, 2026-09-03).
+        style={{ background: colors.sidebarBg, borderRight: `1px solid ${colors.sidebarBorder}` }}
       >
         <div className="flex h-full flex-col items-center gap-1 py-2">
           {visibleMetas.map((meta) => {
