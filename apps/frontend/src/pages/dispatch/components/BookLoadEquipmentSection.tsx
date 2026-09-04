@@ -405,24 +405,27 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       {/* WIZ-32 / WIZ-16: a 0 in this box is a claim that the rate is zero. The field is display-only
           and READ-ONLY: blank when no driver (or no per-mile rate card), and the driver's resolved
           per-mile rate once one is selected — read from the same table settlement pays on. The load
-          stores no override (the submit omits a 0), so booking still resolves the rate live. */}
+          stores no override (booking resolves the rate live), so this control carries NO hidden
+          register input: the form value comes from defaultValues and the submit omits a 0. The label
+          is associated (htmlFor/id) with the single VISIBLE read-only input, so any label-target — a
+          screen reader, getByLabelText, or an orch DOM probe — resolves to value=""/readOnly=true, never
+          to a hidden "0". A hidden register field used to sit first under this label and read as a 0. */}
       <div className="flex flex-wrap items-end gap-3">
         <Field
+          htmlFor="book-load-driver-pay-rate-per-mile"
           label="Driver pay rate / mi"
           hint="Resolves automatically from the driver's profile rate card — read-only."
           input={
-            <>
-              <input type="hidden" {...register("driver_pay_rate_per_mile", { valueAsNumber: true })} />
-              <input
-                type="text"
-                readOnly
-                value={resolvedDriverRatePerMile}
-                placeholder={primaryDriverId && driverPayCardQuery.isLoading ? "…" : ""}
-                data-testid="driver-pay-rate-per-mile"
-                aria-readonly="true"
-                className="h-7 w-[5.5rem] rounded-sm border border-gray-300 bg-slate-50 px-2 text-right text-xs tabular-nums"
-              />
-            </>
+            <input
+              id="book-load-driver-pay-rate-per-mile"
+              type="text"
+              readOnly
+              value={resolvedDriverRatePerMile}
+              placeholder={primaryDriverId && driverPayCardQuery.isLoading ? "…" : ""}
+              data-testid="driver-pay-rate-per-mile"
+              aria-readonly="true"
+              className="h-7 w-[5.5rem] rounded-sm border border-gray-300 bg-slate-50 px-2 text-right text-xs tabular-nums"
+            />
           }
         />
       </div>
@@ -540,10 +543,10 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   );
 }
 
-function Field({ label, input, hint }: { label: string; input: JSX.Element; hint?: string }) {
+function Field({ label, input, hint, htmlFor }: { label: string; input: JSX.Element; hint?: string; htmlFor?: string }) {
   return (
     <div className="min-w-0 space-y-0.5">
-      <label className="block whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">{label}</label>
+      <label htmlFor={htmlFor} className="block whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">{label}</label>
       {input}
       {hint ? <p className="mt-1 text-xs text-gray-600">{hint}</p> : null}
     </div>
