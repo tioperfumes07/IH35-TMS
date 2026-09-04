@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202613670001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-04",
+      "purpose": "LANE-MILEAGE-LIVE-CONSTRAINTS-BLOCK-OWNER-RULING (CC-3 finding 2026-09-04, GUARD-WORKORDERS.md, routed to CC-1/Cursor). Two live catalogs.lane_mileage constraints block a full re-import of the owner's corrected source and are incompatible with the owner's 2026-09-04 ruling: (1) practical_miles NOT NULL rejects 26 real lanes observed only via a short-route data point; (2) CHECK lane_mileage_short_miles_not_over_practical (short_miles<=practical_miles) assumes short can never exceed practical, but the owner's ruling is that short=AlwaysTrack shortest+deadhead blend legitimately exceeds practical on ~2,203/3,335 lanes -- MILES-INVERT-01 (migration 202613500001, already live) already flags this exact shape as short_miles_untrustworthy rather than rejecting it; this older CHECK constraint predates that design and now conflicts with it. Drop both constraints (DROP NOT NULL, DROP CONSTRAINT) -- additive-in-spirit (widens what can be stored), no data loss, no fabricated replacement bound (owner: 'Any formula would fabricate driver pay')."
+    },
     "202613660001": {
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-04",
