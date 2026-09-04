@@ -16,7 +16,8 @@ const EMPTY_FILTERS = {
 };
 
 type BookStop = {
-  stop_type: "pickup" | "delivery";
+  // 'border' = port-of-entry crossing stop injected for a cross-border (NB/SB) load on submit.
+  stop_type: "pickup" | "delivery" | "border";
   sequence_number: number;
   city: string;
   state: string;

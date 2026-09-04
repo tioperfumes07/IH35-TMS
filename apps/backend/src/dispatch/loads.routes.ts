@@ -300,7 +300,11 @@ const createDispatchLoadBodySchema = z.object({
   stops: z
     .array(
       z.object({
-        stop_type: z.enum(["pickup", "delivery"]),
+        // WIZ border-capture: 'border' lets Book Load persist the port-of-entry crossing stop for a
+        // northbound/southbound (cross-border) load, so mdata.load_stops carries a stop_type='border'
+        // row and LoadDetailDrawer.loadHasCrossBorder() shows the Customs tab on its own. DB
+        // mdata.stop_type_enum already supports 'border'; the INSERT is generic on stop_type.
+        stop_type: z.enum(["pickup", "delivery", "border"]),
         sequence_number: z.number().int().min(1),
         location_id: z.string().uuid().optional(),
         company_name: z.string().trim().max(200).optional(),

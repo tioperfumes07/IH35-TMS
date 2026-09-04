@@ -52,6 +52,9 @@ import { LoadSaveProofPanel } from "./book-load-v4/LoadSaveProofPanel";
 import type { LoadSaveProof } from "./book-load-v4/load-save-proof-types";
 import { SaveDropdown } from "../../../components/forms/SaveDropdown";
 import { openPrintableDocument } from "../../../lib/openPrintableDocument";
+import { BorderCrossingCaptureField } from "./book-load-v4/BorderCrossingCaptureField";
+import type { PortOfEntry } from "../../../components/border-crossing/borderCrossingApi";
+import { buildBorderCrossingStop, isCrossBorderTripType, withBorderCrossingStop } from "./book-load-v4/borderCrossingStop";
 import { OcrDropZone } from "./book-load-v4/OcrDropZone";
 import { RateConUploadPanel } from "./book-load-v4/RateConUploadPanel";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
@@ -163,11 +166,15 @@ type FormValues = BookLoadFormValues & {
     | "Operator entered";
   pickup_number: string;
   border_routing: string;
+  // Border-crossing capture: the selected reference.ports_of_entry id for a cross-border (NB/SB)
+  // load. On submit it becomes a stop_type='border' stop so the Customs tab appears on its own.
+  border_port_of_entry_id: string;
   is_sample_data: boolean;
   factoring_company_vendor_id: string;
   accessorial_rows: AccessorialRow[];
   stops: Array<{
-    stop_type: "pickup" | "delivery";
+    // 'border' = the port-of-entry crossing stop injected on submit for a cross-border (NB/SB) load.
+    stop_type: "pickup" | "delivery" | "border";
     sequence_number: number;
     // GO-24: mdata.locations catalog FK (load_stops.location_id, already live). Set by LocationPicker
     // on a catalog match; empty when the operator typed an address with no match — never blocks booking.
@@ -331,6 +338,9 @@ export function BookLoadModalV4({
   // submitLoad's success branches (applyPostSaveIntent) so "Save and close" / "Save and print" resolve
   // AFTER the save actually succeeds — never before, so a failed save never closes or prints a stale id.
   const pendingSaveActionRef = useRef<"default" | "close" | "print">("default");
+  // Border-crossing capture: the full port row selected in the wizard, read at submit to build the
+  // stop_type='border' crossing stop for a cross-border (NB/SB) load.
+  const selectedBorderPortRef = useRef<PortOfEntry | null>(null);
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -407,6 +417,7 @@ export function BookLoadModalV4({
       mileage_source: "",
       pickup_number: "",
       border_routing: "",
+      border_port_of_entry_id: "",
       is_sample_data: false,
       factoring_company_vendor_id: "",
       accessorial_rows: [],
@@ -1157,6 +1168,18 @@ export function BookLoadModalV4({
       pushToast("Select a Trip Type before booking", "error");
       return;
     }
+    // WIZ border-capture: a cross-border (NB/SB) load MUST record where it crosses. Without this the
+    // load saved with no stop_type='border' stop and LoadDetailDrawer correctly hid the Customs tab
+    // (owner block, load 13508). Fail loud naming the field rather than dropping the crossing silently.
+    if (isCrossBorderTripType(values.trip_type) && !values.border_port_of_entry_id.trim()) {
+      form.setError("border_port_of_entry_id", {
+        type: "required",
+        message:
+          "Select the border crossing (port of entry) — a northbound/southbound load must record where the freight crosses.",
+      });
+      pushToast("Select the border crossing before booking a cross-border load", "error");
+      return;
+    }
     const linehaulNeg = linehaulFuelError("linehaul", Number(values.linehaul_cents || 0));
     if (linehaulNeg) {
       form.setError("linehaul_cents", { type: "validate", message: linehaulNeg });
@@ -1182,6 +1205,18 @@ export function BookLoadModalV4({
     }
     const token = applyOverrides ? overrideToken ?? crypto.randomUUID() : undefined;
     if (applyOverrides && !overrideToken) setOverrideToken(token ?? null);
+    // WIZ border-capture: for a cross-border (NB/SB) load, inject the port-of-entry crossing stop
+    // (stop_type='border') before the first delivery so mdata.load_stops carries it and the Customs
+    // tab shows on its own. sequence_number is renumbered by the map's index below.
+    const submitStops =
+      isCrossBorderTripType(values.trip_type) && selectedBorderPortRef.current
+        ? withBorderCrossingStop(values.stops, {
+            ...buildBorderCrossingStop(selectedBorderPortRef.current),
+            sequence_number: 0,
+            address_line1: "",
+            scheduled_arrival_at: "",
+          })
+        : values.stops;
     try {
       const payload = await createDispatchLoad({
         operating_company_id: operatingCompanyId,
@@ -1257,7 +1292,7 @@ export function BookLoadModalV4({
         miles_shortest: numOrUndef(values.miles_shortest),
         miles_deadhead: numOrUndef(values.miles_deadhead),
         mileage_source: values.mileage_source || undefined,
-        stop_count: String((values.stops ?? []).length),
+        stop_count: String((submitStops ?? []).length),
         pickup_number: values.pickup_number || undefined,
         border_routing: values.border_routing || undefined,
         // FAIL-D6 — send the flag explicitly. Sending `undefined` when false is fine (the column is NOT
@@ -1305,7 +1340,7 @@ export function BookLoadModalV4({
                 // W7 — per-stop extra rates as customer charge lines (were dropped from the payload).
                 ...stopExtraRateChargeLines(values.stops ?? []),
               ],
-        stops: values.stops.map((stop, index) => {
+        stops: submitStops.map((stop, index) => {
           const place = resolveStopPlace(stop.city ?? "", stop.state ?? "");
           return {
           stop_type: stop.stop_type,
@@ -1701,6 +1736,22 @@ export function BookLoadModalV4({
               <p className="mt-1 text-[11px] text-gray-600">Part of this unit's tour — follows its most recent Northbound leg (joined automatically).</p>
             ) : null}
           </div>
+
+          {/* WIZ border-capture: a cross-border (NB/SB) load must record where it crosses. Selecting a
+              port of entry here becomes a stop_type='border' stop on submit, so the Customs tab and
+              crossing tracking appear on the load on their own. Book (create) path only — Edit adds
+              customs stops via the Stops tab. Never weaken loadHasCrossBorder to force the tab. */}
+          {!isEditMode && isCrossBorderTripType(watchedTripType) ? (
+            <BorderCrossingCaptureField
+              value={form.watch("border_port_of_entry_id")}
+              error={form.formState.errors.border_port_of_entry_id ? String(form.formState.errors.border_port_of_entry_id.message) : null}
+              onSelect={(port) => {
+                selectedBorderPortRef.current = port;
+                form.setValue("border_port_of_entry_id", port?.id ?? "", { shouldDirty: true });
+                if (port) form.clearErrors("border_port_of_entry_id");
+              }}
+            />
+          ) : null}
 
           {gateBanner ? (
             <div

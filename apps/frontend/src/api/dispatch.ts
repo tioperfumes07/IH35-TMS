@@ -193,7 +193,8 @@ export type DispatchBookLoadPayload = {
   temp_fahrenheit?: number;
   charges: Array<{ code: string; additional_charge_id?: string; description?: string; amount_cents: number }>;
   stops: Array<{
-    stop_type: "pickup" | "delivery";
+    // 'border' = a port-of-entry crossing stop for a cross-border (NB/SB) load (Book Load capture).
+    stop_type: "pickup" | "delivery" | "border";
     sequence_number: number;
     location_id?: string;
     company_name?: string;
