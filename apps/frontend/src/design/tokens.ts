@@ -28,11 +28,33 @@ export const colors = {
   mutedText: "#6B7280",
   tinyLabel: "#9CA3AF",
   // GLOBAL-TYPE-SIZE-BASELINE.md: section labels stay 11px/700/UPPERCASE/#4B5563.
-  // Owner 2026-09-03: TABLE header rows use navy fill + white type so they differentiate
-  // from the white card. Type scale unchanged. Do not use this pair on buttons/chips/tabs.
+  // TABLE-HEADER-RETIRE-NAVY LAW (owner ruling 2026-09-04, verbatim: "in the columns headers i
+  // want all centered, and also light background color, the blue is too aggressive, and regular
+  // color text centered") — SUPERSEDES the 2026-09-03 navy-fill/white-type ruling directly below.
+  // Navy #14314F stays on the left rail, the top banner, and printed document headers; it leaves
+  // table headers. Type scale (11px/700/uppercase) and centering are unchanged.
   columnHeader: "#4B5563",
-  tableHeaderBg: "#14314F",
-  tableHeaderText: "#FFFFFF",
+  tableHeaderBg: "#EEF2F6",
+  tableHeaderText: "#1F2937",
+  // COLUMNS-MUST-DISTINGUISH LAW (owner ruling 2026-09-04, verbatim: "i want the columns to
+  // distinguish as i've stated many times before") — reference render:
+  // ~/Downloads/09-04-2026-Load-Costs-Board-GROUPED-render.html.
+  tableHeaderIce: "#EEF2F6", // th-bg, same value as tableHeaderBg — named for the reference doc's own token
+  tableHeaderInk: "#1F2937", // th-ink, same value as tableHeaderText
+  tableColumnRule: "#C7D2DC", // th-border — 1px vertical rule between every column, header and body
+  tableGroupBandBg: "#E4EAF1", // grp-bg — the grouped band row above column headers
+  tableRowStripe: "#FAFBFC", // zebra strip on even body rows
+  // Column-group tints (odd rows / even rows) — revenue, trip-expense, driver-pay bands.
+  groupTintRevenue: "#EEF4FA",
+  groupTintRevenueEven: "#E4EDF6",
+  groupTintCost: "#FDF6F3",
+  groupTintCostEven: "#F8EDE8",
+  groupTintPay: "#F4F1FA",
+  groupTintPayEven: "#EDE7F5",
+  // KPI-TILE-COLOR LAW (owner ruling 2026-09-04, verbatim: "for all kpis i want different color
+  // not just white background a light color to distinguish and darker border").
+  kpiTileBg: "#F4F7FA",
+  kpiTileBorder: "#C7D2DC",
   safety: { strong: "#DC2626", soft: "#FEE2E2" },
   maintenance: { strong: "#6B7280", soft: "#F3F4F6" },
   dispatch: { strong: "#2563EB", soft: "#DBEAFE" },
