@@ -1,4 +1,5 @@
-# STATUS-NOW · 2026-09-04 18:25 CT
-Tip pending ORDER-2026-09-04-ALL-SEATS on main. Orchestrator order SUPERSEDES all prior INBOX rows.
-ACTIVE: CC-2 tokens FIRST · CC-1 Load Costs blockers (13508 draft + CostOfGoodsSold picker) · Cursor Dispatch PART 1 sweep · CC-3 DRV-03 · Codex In-Shop feed + maint count · Cascade planner bars (stop auditing).
-Never POST Book Load. Only Cursor deploys.
+# STATUS-NOW · 2026-09-04 18:32 CT
+Tip `526e392d74` (#20401 Dispatch PART 1). FAST-MERGE 4min ON. ORDER-2026-09-04 binds all seats.
+DEPLOY: FE `dep-dadl9ppt0dsc73f1qqtg` + API `dep-dadl9q0n74is73ahs060` kicked to tip (4 undeployed → batch). Prove version.json / healthz when live.
+ACTIVE: CC-1 Load Costs blockers · CC-2 tokens/Chrome · CC-3 DRV-03 · Codex In-Shop · Cascade planners · Cursor Dispatch continue.
+Never POST Book Load.

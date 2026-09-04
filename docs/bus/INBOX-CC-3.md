@@ -1,3 +1,27 @@
+# ORCHESTRATOR FAST-MERGE WAKE · 2026-09-04 18:32 CT
+`git pull --ff-only origin main`
+
+## FAST-MERGE 4-MINUTE LAW (ON — permanent weekend method)
+Canonical: `docs/bus/FAST-MERGE-4MIN-LAW.md`
+
+1. Gate: `node scripts/money-pr-local-gate.mjs` (Cursor: `node scripts/ops/cursor-ship-preflight.mjs --body-file …`) → **exit 0 = merge proof**
+2. Push → open **ready** PR (never draft) → **same 15s** squash:
+   `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`
+3. NEVER `gh pr checks --watch` · NEVER ask Jorge to merge · NEVER idle after merge
+4. `--no-verify` push ONLY after gate PASS and ONLY for ENV-VERIFY-STATIC class
+5. One vertical at a time · FINISH before next · Never POST Book Load
+6. Deploy is batched 5–10 merges — **Cursor/CC-1 only** — do not per-merge deploy
+
+Tip `526e392d74`. FE+API deploy kicked to tip (batch of 4 undeployed). Pull. ACK. CODE NOW.
+
+## SEAT NOTE
+DRV-03 finish · FAST-MERGE · push --no-verify authorized after gate PASS (ENV-VERIFY-STATIC).
+
+ACK `CC-3 | ACK | FAST-MERGE 4min · NEVER POST | GO`
+
+---
+## PRIOR (still valid under ORDER-2026-09-04)
+
 # ORCHESTRATOR ORDER 2026-09-04 — SUPERSEDES EVERY EARLIER ENTRY
 `git pull --ff-only origin main`
 
