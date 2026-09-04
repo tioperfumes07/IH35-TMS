@@ -8,7 +8,8 @@ export type SaveDropdownPersistedAction =
   | "save_and_add_another"
   | "save_and_print"
   | "save_and_download"
-  | "save_and_view_list";
+  | "save_and_view_list"
+  | "save_and_send";
 
 export type SaveDropdownProps = {
   /** Unique key for remembering last primary action in localStorage */
@@ -20,6 +21,12 @@ export type SaveDropdownProps = {
   onSaveAndPrint?: () => void | Promise<void>;
   onSaveAndDownload?: () => void | Promise<void>;
   onSaveAndViewList?: () => void | Promise<void>;
+  onSaveAndSend?: () => void | Promise<void>;
+  /** WIZ-49: when set (and `onSaveAndSend` is not), a "Save and send" menu item is rendered
+   * DISABLED with this reason as its tooltip. Owner named "Save and send" for the split control,
+   * but WHAT is sent (rate con vs dispatch sheet) is a pending owner ruling (WIZ-49d) — so the
+   * affordance is visible with its reason rather than built as a dead no-op or omitted silently. */
+  saveAndSendDisabledReason?: string;
   disabled?: boolean;
   dirty?: boolean;
   loading?: boolean;
@@ -41,7 +48,8 @@ function readPreference(key: string): SaveDropdownPersistedAction | null {
       raw === "save_and_add_another" ||
       raw === "save_and_print" ||
       raw === "save_and_download" ||
-      raw === "save_and_view_list"
+      raw === "save_and_view_list" ||
+      raw === "save_and_send"
     ) {
       return raw;
     }
@@ -59,7 +67,15 @@ function writePreference(key: string, action: SaveDropdownPersistedAction) {
   }
 }
 
-type ActionEntry = { key: SaveDropdownPersistedAction; label: string; run: () => void | Promise<void> };
+type ActionEntry = {
+  key: SaveDropdownPersistedAction;
+  label: string;
+  run: () => void | Promise<void>;
+  /** Rendered as a disabled menu item (never selectable as primary). */
+  disabled?: boolean;
+  /** Native tooltip shown on a disabled item so it is never a silent no-op. */
+  title?: string;
+};
 
 /**
  * QuickBooks-style split primary + caret menu for form submit affordances.
@@ -73,6 +89,8 @@ export function SaveDropdown({
   onSaveAndPrint,
   onSaveAndDownload,
   onSaveAndViewList,
+  onSaveAndSend,
+  saveAndSendDisabledReason,
   disabled = false,
   dirty: _dirty = false,
   loading = false,
@@ -89,6 +107,17 @@ export function SaveDropdown({
     if (onSaveAndPrint) entries.push({ key: "save_and_print", label: "Save and print", run: onSaveAndPrint });
     if (onSaveAndDownload) entries.push({ key: "save_and_download", label: "Save and download PDF", run: onSaveAndDownload });
     if (onSaveAndViewList) entries.push({ key: "save_and_view_list", label: "Save and view list", run: onSaveAndViewList });
+    if (onSaveAndSend) {
+      entries.push({ key: "save_and_send", label: "Save and send", run: onSaveAndSend });
+    } else if (saveAndSendDisabledReason) {
+      entries.push({
+        key: "save_and_send",
+        label: "Save and send",
+        run: () => {},
+        disabled: true,
+        title: saveAndSendDisabledReason,
+      });
+    }
     return entries;
   }, [
     onSave,
@@ -97,6 +126,8 @@ export function SaveDropdown({
     onSaveAndDownload,
     onSaveAndPrint,
     onSaveAndViewList,
+    onSaveAndSend,
+    saveAndSendDisabledReason,
     primaryLabel,
   ]);
 
@@ -104,7 +135,8 @@ export function SaveDropdown({
 
   useEffect(() => {
     const saved = readPreference(storageKey);
-    const available = actionList.map((a) => a.key);
+    // A disabled action (e.g. the WIZ-49d "Save and send" placeholder) can never be the primary.
+    const available = actionList.filter((a) => !a.disabled).map((a) => a.key);
     if (saved && available.includes(saved)) {
       setPrimaryKey(saved);
       return;
@@ -122,21 +154,23 @@ export function SaveDropdown({
   }, [menuOpen]);
 
   const runPrimary = async () => {
-    const match = actionList.find((a) => a.key === primaryKey) ?? actionList[0];
+    const match = actionList.find((a) => a.key === primaryKey && !a.disabled) ?? actionList.find((a) => !a.disabled);
     if (!match) return;
     writePreference(storageKey, match.key);
     await match.run();
   };
 
   const selectMenuAction = async (key: SaveDropdownPersistedAction) => {
+    const match = actionList.find((a) => a.key === key);
+    if (!match || match.disabled) return;
     setMenuOpen(false);
     setPrimaryKey(key);
     writePreference(storageKey, key);
-    const match = actionList.find((a) => a.key === key);
-    if (match) await match.run();
+    await match.run();
   };
 
-  const primaryDef = actionList.find((a) => a.key === primaryKey) ?? actionList[0];
+  const primaryDef =
+    actionList.find((a) => a.key === primaryKey && !a.disabled) ?? actionList.find((a) => !a.disabled) ?? actionList[0];
   const primaryText = primaryDef?.label ?? primaryLabel;
 
   return (
@@ -173,10 +207,14 @@ export function SaveDropdown({
               <button
                 type="button"
                 role="menuitem"
-                className="block w-full px-3 py-2 text-left hover:bg-gray-50"
+                aria-disabled={item.disabled || undefined}
+                disabled={item.disabled}
+                title={item.disabled ? item.title : undefined}
+                className="block w-full px-3 py-2 text-left hover:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-400 disabled:hover:bg-white"
                 onClick={() => void selectMenuAction(item.key)}
               >
                 {item.label}
+                {item.disabled ? <span className="ml-1 text-gray-400">(pending)</span> : null}
               </button>
             </li>
           ))}

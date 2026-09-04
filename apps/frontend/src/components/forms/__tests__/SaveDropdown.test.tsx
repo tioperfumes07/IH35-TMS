@@ -47,4 +47,28 @@ describe("SaveDropdown", () => {
     const key = "ih35.saveDropdown.sd-test-ls";
     expect(localStorage.getItem(key)).toBe("save_and_close");
   });
+
+  it("renders 'Save and send' disabled with a reason when saveAndSendDisabledReason is set (WIZ-49d)", async () => {
+    const onSave = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <SaveDropdown
+        storageKey="sd-test-send-disabled"
+        onSave={onSave}
+        onSaveAndClose={vi.fn()}
+        saveAndSendDisabledReason="Pending owner ruling: rate con vs dispatch sheet."
+      />
+    );
+
+    const chevrons = screen.getAllByRole("button", { expanded: false });
+    await user.click(chevrons[chevrons.length - 1]);
+
+    const sendItem = await screen.findByRole("menuitem", { name: /save and send/i });
+    expect((sendItem as HTMLButtonElement).disabled).toBe(true);
+    expect(sendItem.getAttribute("title")).toMatch(/pending owner ruling/i);
+
+    // A disabled placeholder must never become the primary action (never a silent no-op).
+    await user.click(sendItem);
+    expect(onSave).not.toHaveBeenCalled();
+  });
 });
