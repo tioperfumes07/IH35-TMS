@@ -116,15 +116,20 @@ const COLUMNS = [
   ["telematics.vehicle_driver_pairing_overlap_flags", "driver_id"], ["utilization.driver_period", "driver_id"],
 ];
 
-// Known, owner-acknowledged exceptions this pass — not silently accepted, filed to
-// GUARD-WORKORDERS.md the same day this guard was authored:
+// Known exceptions — not silently accepted, filed to GUARD-WORKORDERS.md the same day this
+// guard was authored, all four are the SAME pair (loser 09e229e7 / survivor deb4e3a4, Jose
+// Manuel Mejia Olmos), a genuine Samsara-side duplicate-telemetry situation, not a repoint miss:
 //   - drivers.retention_scores: write role has no GRANT on this table (separate finding, not this
-//     merge's fault) — 2 rows still orphaned, routed for a grants migration.
-//   - hos.duty_status_events (18 rows) and the 1-row collisions in catalogs.driver_leave_balances /
-//     safety.driver_safety_scores: a genuine Samsara-side duplicate-device pairing on ONE driver
-//     (Jose Manuel Mejia Olmos) that this TMS-side merge cannot resolve without either violating the
-//     CAP-11 append-only law on hos.duty_status_events or picking a winner between two independently
-//     real historical rows — owner decision required, not a guess.
+//     merge's fault) — 2 rows still orphaned, routed to CC-1 for a grants migration. STILL OPEN.
+//   - catalogs.driver_leave_balances / safety.driver_safety_scores (1 row each): blocked by a real
+//     unique constraint against the survivor's own row for the identical period, proven byte-
+//     identical/zero-value on both sides — routed to CC-1 for a deactivated_at column + void. STILL OPEN.
+//   - hos.duty_status_events (18 rows): OWNER-RULED PERMANENT 2026-09-03, see
+//     HOS-DUTY-STATUS-EVENTS-DUPLICATE-PAIR-NEVER-REPOINT in GUARD-WORKORDERS.md — CAP-11
+//     append-only wins over "repoint everything"; a duty-status event records what a specific
+//     driver was doing at a specific time, and rewriting whose event it was falsifies history to
+//     tidy a join. NEVER UPDATE/DELETE these rows and never remove this line from the set below
+//     without a NEW owner ruling reversing this one.
 const KNOWN_OPEN_EXCEPTIONS = new Set([
   "drivers.retention_scores.driver_uuid",
   "hos.duty_status_events.driver_id",
