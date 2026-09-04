@@ -7463,5 +7463,10 @@
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-04",
     "purpose": "verify-pre-settlement-empty-state-not-404 (LOAD-COSTS-COMPLETE money item (8), owner order 2026-09-04: 'Pre-Settlement returns HTTP 404 for the ordinary empty state. Return 200.'). Guards that GET /api/v1/driver-finance/pre-settlements/by-driver/:driverId returns the honest { settlement: null, lines: [] } for a driver with no open pre-settlement (never a raw 404), while keeping the schema_absent case (a real config gap) distinct so it never collapses back into the same 404 branch."
+  },
+  "10338": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-planner-bars-wired-from-loads (GO-23 owner order 2026-09-04: dispatch planners render empty because TruckPlanner.tsx and SafetyDriverSchedulerGrid.tsx pass bars: []). Guards that both planner surfaces compute bars from real load/assignment data for the selected date range instead of hardcoding an empty array."
   }
 }
