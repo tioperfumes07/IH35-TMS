@@ -5352,6 +5352,11 @@
     "claimed_at": "2026-09-03",
     "purpose": "verify-liability-balance-syncs-at-settlement-close (item 6/GO-22 B7: closeSettlementPayRun's advance-recovery loop only ever updated driver_advances.outstanding_balance -- the sibling driver_finance.driver_liabilities row was never synced, staying frozen forever and blinding CASH-ADV-F9930's paid_to_date-based reversal guard to the real recovery path)"
   },
+  "10285": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-cancellation-voids-expenses-and-advances (SET-09: cancelling a load did not void the load's expenses, did not release bank matches, and did not reverse advances/liabilities -- expenses now void via executeVoidCancel which releases bank matches for free via postVoidReversal's BANK-ORPHAN-01; advances reverse via a new shared reverseDriverAdvanceInClientTx, gated on paid_to_date)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
