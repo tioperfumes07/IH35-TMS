@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import pg from "pg";
+import { repairUtf8Mojibake } from "../src/lib/repair-utf8-mojibake.js";
 
 dotenv.config();
 
@@ -113,7 +114,7 @@ function assertHeaders(found: string[], expected: readonly string[], label: stri
 function nonempty(value: unknown): string {
   const text = typeof value === "string" ? value.trim() : "";
   if (!text) throw new Error("Required value missing");
-  return text;
+  return repairUtf8Mojibake(text);
 }
 
 function nullable(value: unknown): string | null {

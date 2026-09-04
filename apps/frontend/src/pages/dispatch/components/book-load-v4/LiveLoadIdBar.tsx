@@ -132,11 +132,8 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
   }, [awaitingFirstNumber, bumpReserve, display]);
 
   return (
-    <div
-      className="flex items-end gap-4 px-4 py-2 text-[11px] font-semibold tracking-wide text-white"
-      style={{ background: "#0F1320" }}
-    >
-      <div className="min-w-[14rem] rounded-sm bg-white px-2 py-1 text-left normal-case tracking-normal text-slate-900">
+    <div className="flex flex-wrap items-end gap-3" data-testid="book-load-live-load-id-bar">
+      <div className="min-w-[14rem] max-w-[18rem] text-left normal-case tracking-normal text-slate-900">
         <QboDocumentNumberField
           label="Load #"
           value={manualNumber}
@@ -151,29 +148,27 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
           autoFocus={awaitingFirstNumber}
           hint={
             awaitingFirstNumber
-              ? "Click this white box and type the first number (example 13508). Grey hint text is not the number."
+              ? "Click the white box and type the first number (example 13508)."
               : undefined
           }
           data-testid="qbo-document-number-load"
         />
       </div>
       {awaitingFirstNumber ? (
-        <span className="normal-case font-normal tracking-normal" style={{ color: "#A8B0C7" }}>
+        <span className="pb-5 text-xs font-normal text-slate-600">
           First load for this company — type the Load # in the box. Later loads can stay blank.
         </span>
       ) : error ? (
         <>
-          <span className="normal-case tracking-normal text-red-200">Load number unavailable: {error}</span>
-          <button type="button" className="rounded-sm border border-white/30 px-2 py-1 normal-case" onClick={() => void bumpReserve()}>
+          <span className="pb-5 text-xs text-red-700">Load number unavailable: {error}</span>
+          <button type="button" className="mb-5 rounded-sm border border-gray-300 px-2 py-1 text-xs" onClick={() => void bumpReserve()}>
             Retry
           </button>
         </>
       ) : (
         <>
-          <span style={{ color: display ? "#6EE7B7" : "#A8B0C7" }}>{display ? "● Reserved" : "Reserving…"}</span>
-          <span className="ml-auto normal-case tracking-normal" style={{ color: "#A8B0C7" }}>
-            {secondsLeft}s
-          </span>
+          <span className="pb-5 text-xs text-slate-600">{display ? "Reserved" : "Reserving…"}</span>
+          <span className="pb-5 text-xs text-slate-500">{secondsLeft}s</span>
         </>
       )}
     </div>

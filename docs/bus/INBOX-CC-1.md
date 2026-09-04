@@ -1,11 +1,16 @@
-# INBOX-CC-1 · SET QUEUE + VOID-COLUMN · 2026-09-03 18:44 CT
+# INBOX-CC-1 · 2026-09-03 20:42 CT
 `git pull --ff-only origin main`
 
-LAW: `docs/lockdown/VOID-COLUMN-CONVENTION-LAW-2026-09-03.md`
-Settlements / bills / driver bills use **voided_at** (money reversed). Do not invent deleted_at.
+NOW: SET-10 (merge 126 lane-key spelling variants). Then SET-11 (relative spread, rescore lanes).
+THIS BLOCKS WIZ-01.
 
-NOW: SET-10 + SET-11 (lane-key normalize + relative spread). SET-01 already on main #20157.
+RULING (locked tonight — do not ask again):
+- Do **not** populate `practical_min` / `practical_max`. Leave both NULL.
+- Do **not** derive min/max from spread. Operator spread is the live reread column — your Neon check stands.
+- SET-10 is key-merge, not filling those columns.
+
+After SET-11, overflow (CC-3 filed): GRANT on `drivers.retention_scores`; add `deactivated_at` on `driver_leave_balances` / `driver_safety_scores` to void the two byte-identical dupes. Never DROP. Never DELETE.
 
 Never POST. Never Chrome.
 
-ACK `CC-1 | ACK | SET-10 SET-11 · NEVER POST | GO`
+ACK `CC-1 | ACK | SET-10 then SET-11 · NEVER POST | GO`

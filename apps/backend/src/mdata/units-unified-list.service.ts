@@ -31,6 +31,11 @@ export type UnifiedFleetRow = {
   estimated_completion_date?: string | null;
   work_order_id?: string | null;
   work_order_display_id?: string | null;
+  assigned_driver_id?: string | null;
+  assigned_driver_name?: string | null;
+  irp_expiration?: string | null;
+  us_insurance_expiration?: string | null;
+  mx_insurance_expiration?: string | null;
 };
 
 export function buildReeferSummary(row: Record<string, unknown>): string | null {
@@ -144,6 +149,11 @@ export async function fetchUnifiedFleetList(
         oos_detail.estimated_completion_date,
         oos_detail.work_order_id,
         oos_detail.work_order_display_id,
+        assigned_driver_id,
+        mdata.resolve_driver_label_same_company(assigned_driver_id, $${truckCompanyParamIndex}) AS assigned_driver_name,
+        irp_expiration,
+        us_insurance_expiration,
+        mx_insurance_expiration,
         vehicle_type,
         owner_company_id,
         currently_leased_to_company_id,
@@ -184,6 +194,11 @@ export async function fetchUnifiedFleetList(
         equipment_type,
         reefer_year,
         reefer_brand,
+        NULL::uuid AS assigned_driver_id,
+        NULL::text AS assigned_driver_name,
+        NULL::date AS irp_expiration,
+        us_insurance_expiration,
+        mx_insurance_expiration,
         owner_company_id,
         currently_leased_to_company_id,
         deactivated_at
@@ -217,6 +232,11 @@ export async function fetchUnifiedFleetList(
     estimated_completion_date: row.estimated_completion_date != null ? String(row.estimated_completion_date) : null,
     work_order_id: row.work_order_id != null ? String(row.work_order_id) : null,
     work_order_display_id: row.work_order_display_id != null ? String(row.work_order_display_id) : null,
+    assigned_driver_id: row.assigned_driver_id != null ? String(row.assigned_driver_id) : null,
+    assigned_driver_name: row.assigned_driver_name != null ? String(row.assigned_driver_name) : null,
+    irp_expiration: row.irp_expiration != null ? String(row.irp_expiration) : null,
+    us_insurance_expiration: row.us_insurance_expiration != null ? String(row.us_insurance_expiration) : null,
+    mx_insurance_expiration: row.mx_insurance_expiration != null ? String(row.mx_insurance_expiration) : null,
   }));
 
   const trailers: UnifiedFleetRow[] = trailerRes.rows.map((row) => ({
@@ -233,6 +253,11 @@ export async function fetchUnifiedFleetList(
     operating_company_id: operatingCompanyId,
     equipment_type: row.equipment_type != null ? String(row.equipment_type) : null,
     deactivated_at: row.deactivated_at != null ? String(row.deactivated_at) : null,
+    assigned_driver_id: null,
+    assigned_driver_name: null,
+    irp_expiration: null,
+    us_insurance_expiration: row.us_insurance_expiration != null ? String(row.us_insurance_expiration) : null,
+    mx_insurance_expiration: row.mx_insurance_expiration != null ? String(row.mx_insurance_expiration) : null,
   }));
 
   const merged = [...trucks, ...trailers].sort((a, b) =>

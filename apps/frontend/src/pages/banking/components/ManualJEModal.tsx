@@ -284,7 +284,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
           </>
         ) : (
           <>
-            <div className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-2 text-[12px] text-slate-700">
+            <div className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-2 text-xs text-slate-700">
               ⚡ High-risk action. Posting this manual journal entry immediately affects financial reporting.
             </div>
             <div className="rounded-sm border border-gray-200 p-2 text-xs">

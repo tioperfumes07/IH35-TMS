@@ -721,7 +721,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             }))}
             itemIds={DRIVERS_LIST_STATUS_TABS.map((tab) => tab.id)}
           />
-          <p className="text-[12px] text-slate-600 px-1">
+          <p className="text-xs text-slate-600 px-1">
             Active = load or driving activity in the last 30 days (or hired within 30 days). All others stay Inactive; use Reactivate to return a driver to Active.
           </p>
           {subnavTab === "drivers" ? (

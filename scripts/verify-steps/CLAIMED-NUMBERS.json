@@ -5352,6 +5352,16 @@
     "claimed_at": "2026-09-03",
     "purpose": "verify-liability-balance-syncs-at-settlement-close (item 6/GO-22 B7: closeSettlementPayRun's advance-recovery loop only ever updated driver_advances.outstanding_balance -- the sibling driver_finance.driver_liabilities row was never synced, staying frozen forever and blinding CASH-ADV-F9930's paid_to_date-based reversal guard to the real recovery path)"
   },
+  "10285": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-cancellation-voids-expenses-and-advances (SET-09: cancelling a load did not void the load's expenses, did not release bank matches, and did not reverse advances/liabilities -- expenses now void via executeVoidCancel which releases bank matches for free via postVoidReversal's BANK-ORPHAN-01; advances reverse via a new shared reverseDriverAdvanceInClientTx, gated on paid_to_date)"
+  },
+  "10289": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-cc3-ddl-handoff-retention-leave-safety (CC-3 DDL handoff: drivers.retention_scores had only SELECT/INSERT for ih35_app, no UPDATE/DELETE; catalogs.driver_leave_balances and safety.driver_safety_scores had no way to void a duplicate row -- migration 202613620001 grants the full CRUD set and adds deactivated_at per the VOID-COLUMN CONVENTION law)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -7348,5 +7358,15 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-03",
     "purpose": "verify-no-new-deleted-at-columns (VOID-COLUMN-CONVENTION-LAW-2026-09-03: never add deleted_at to a new table -- voided_at/deactivated_at/revoked_at are the only three void-marker conventions, ratchet baseline 15 migration files defining a deleted_at column)"
+  },
+  "10283": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-bank-recon-variance-je-always-balanced (BANK-F9998 F8: structural balanced-JE proof for the variance-match posting path -- two posting legs always share one magnitude on opposite sides, provably balanced for any variance amount; does not enable live Confirm, that stays Tier-1/owner-reserved)"
+  },
+  "10287": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-health-financial-checks (ACC-18: adds --selftest + CI wiring to a guard that already existed but never ran; also covers the new ObservabilityPage healthz-checks UI section)"
   }
 }

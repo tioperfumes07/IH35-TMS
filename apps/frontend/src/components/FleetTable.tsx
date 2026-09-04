@@ -47,6 +47,11 @@ export type FleetRow = {
   estimated_completion_date?: string | null;
   work_order_id?: string | null;
   work_order_display_id?: string | null;
+  assigned_driver_id?: string | null;
+  assigned_driver_name?: string | null;
+  irp_expiration?: string | null;
+  us_insurance_expiration?: string | null;
+  mx_insurance_expiration?: string | null;
 };
 
 export type SoftDeleteFilter = "active" | "inactive" | "all";
@@ -80,6 +85,10 @@ const FLEET_COLUMNS: TableColumn[] = [
   { key: "make_model", label: "Make/Model" },
   { key: "year", label: "Year" },
   { key: "status", label: "Status" },
+  { key: "assigned_driver", label: "Assigned Driver" },
+  { key: "irp_expiration", label: "IRP Expires" },
+  { key: "us_insurance_expiration", label: "US Insurance" },
+  { key: "mx_insurance_expiration", label: "MX Insurance" },
   { key: "oos_reason", label: "OOS Reason" },
   { key: "oos_since", label: "Down Since" },
   { key: "days_oos", label: "Days OOS" },
@@ -129,7 +138,7 @@ function fleetProfilePath(row: FleetRow): string {
 
 // Stable searchable text per row (module-level so the controller's memo stays stable).
 function fleetSearchText(row: FleetRow): string {
-  return [row.unit_number, row.vin, row.make, row.model, row.type, row.vehicle_type, row.equipment_type, row.status, row.id]
+  return [row.unit_number, row.vin, row.make, row.model, row.type, row.vehicle_type, row.equipment_type, row.status, row.assigned_driver_name, row.id]
     .filter(Boolean)
     .join(" ");
 }
@@ -151,6 +160,10 @@ function fleetSortValue(row: FleetRow, key: string): string | number | null {
     // all 109 units on prod. humanizeEnumLabel keeps the value (it is often the only status recorded)
     // while making it readable: "InService" -> "In service", "OutOfService" -> "Out of service".
     case "status": return row.status ? humanizeEnumLabel(row.status) : null;
+    case "assigned_driver": return row.assigned_driver_name ?? null;
+    case "irp_expiration": return row.irp_expiration ? new Date(row.irp_expiration).getTime() : null;
+    case "us_insurance_expiration": return row.us_insurance_expiration ? new Date(row.us_insurance_expiration).getTime() : null;
+    case "mx_insurance_expiration": return row.mx_insurance_expiration ? new Date(row.mx_insurance_expiration).getTime() : null;
     case "oos_reason": return row.oos_reason ?? null;
     case "oos_since": return row.oos_since ? new Date(row.oos_since).getTime() : null;
     case "days_oos": return row.days_oos ?? null;
@@ -492,6 +505,10 @@ export function FleetTable({
       case "make_model": return <td key={key} className="truncate px-2 py-1">{`${String(row.make ?? "—")} ${String(row.model ?? "")}`.trim()}</td>;
       case "year": return <td key={key} className="px-2 py-1">{String(row.year ?? "—")}</td>;
       case "status": return <td key={key} className="px-2 py-1">{row.status ? humanizeEnumLabel(row.status) : "—"}</td>;
+      case "assigned_driver": return <td key={key} className="px-2 py-1" onClick={(e) => e.stopPropagation()}>{row.assigned_driver_id ? <EntityLink kind="driver" id={row.assigned_driver_id} label={entityLabel(row.assigned_driver_name, row.assigned_driver_id, "Driver")} /> : "—"}</td>;
+      case "irp_expiration": return <td key={key} className="px-2 py-1 tabular-nums">{formatOosDate(row.irp_expiration)}</td>;
+      case "us_insurance_expiration": return <td key={key} className="px-2 py-1 tabular-nums">{formatOosDate(row.us_insurance_expiration)}</td>;
+      case "mx_insurance_expiration": return <td key={key} className="px-2 py-1 tabular-nums">{formatOosDate(row.mx_insurance_expiration)}</td>;
       case "oos_reason": return <td key={key} className="truncate px-2 py-1">{row.oos_reason || "—"}</td>;
       case "oos_since": return <td key={key} className="px-2 py-1 tabular-nums">{formatOosDate(row.oos_since)}</td>;
       case "days_oos": return <td key={key} className="px-2 py-1 tabular-nums">{row.days_oos == null ? "—" : formatOosDays(row.days_oos)}</td>;
@@ -517,6 +534,10 @@ export function FleetTable({
         case "make_model": return `${row.make ?? ""} ${row.model ?? ""}`.trim();
         case "year": return String(row.year ?? "");
         case "status": return String(row.status ?? "");
+        case "assigned_driver": return String(row.assigned_driver_name ?? "");
+        case "irp_expiration": return String(row.irp_expiration ?? "");
+        case "us_insurance_expiration": return String(row.us_insurance_expiration ?? "");
+        case "mx_insurance_expiration": return String(row.mx_insurance_expiration ?? "");
         case "location": return fleetLocationText(row);
         case "odometer": return row.odometer_mi != null ? String(Math.round(row.odometer_mi)) : "";
         case "next_pm": return row.next_due_odometer != null ? String(row.next_due_odometer) : "";
@@ -578,7 +599,7 @@ export function FleetTable({
             </div>
             <select
               aria-label="Filter by status"
-              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]"
+              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={staged.draft.statusFilter}
               onChange={(e) => staged.setDraft({ ...staged.draft, statusFilter: e.target.value })}
             >
@@ -589,7 +610,7 @@ export function FleetTable({
             </select>
             <select
               aria-label="Filter by type"
-              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]"
+              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={staged.draft.typeListFilter}
               onChange={(e) => staged.setDraft({ ...staged.draft, typeListFilter: e.target.value })}
             >

@@ -88,6 +88,12 @@ export function collectProblems(root = ROOT) {
   if (!/watchedCustomerId[\s\S]{0,900}?fromApi\.some[\s\S]{0,200}?o\.value === id/.test(liveCode)) {
     problems.push(`${LIVE_WIZARD}: customerOptions must seed watchedCustomerId when missing from API page`);
   }
+  if (!/seen\.has\(c\.id\)/.test(liveCode) || !/seen\.add\(c\.id\)/.test(liveCode)) {
+    problems.push(`${LIVE_WIZARD}: customerOptions must dedupe by customer id before render`);
+  }
+  if (!/md:col-span-2/.test(liveCode) || !/Customer WO #/.test(liveCode)) {
+    problems.push(`${LIVE_WIZARD}: Section A customer field must span 2 of 4 columns`);
+  }
   // C1: the seeded (watchedCustomerId, missing-from-API-page) option's label is entityLabel(name,
   // id, "Customer") now too, same acceptance as the two checks above.
   if (

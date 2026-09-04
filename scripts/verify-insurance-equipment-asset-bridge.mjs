@@ -5,7 +5,8 @@
  * trailer rows, live-verified. mdata.equipment (trailers) had no counterpart in mdata.assets at all
  * and no code path ever wrote one — the $343,495 of insured trailer value had no reachable home.
  * Guard: equipment create mints/relinks its mdata.assets row the same way unit create does
- * (ensureUnitAsset / FAIL-INS-POLICY-ASSET-404), via the new ensureEquipmentAsset shared function.
+ * (ensureUnitAsset / FAIL-INS-POLICY-ASSET-404), via ensureEquipmentAsset, using one of the
+ * asset registry's actual trailer subtypes rather than its forbidden generic `trailer` literal.
  *
  *   node scripts/verify-insurance-equipment-asset-bridge.mjs
  *   node scripts/verify-insurance-equipment-asset-bridge.mjs --selftest
@@ -31,8 +32,16 @@ export function assertGuard({ shared, routes }) {
   if (!shared?.includes("export async function ensureEquipmentAsset")) {
     errs.push(`${SHARED}: must export ensureEquipmentAsset`);
   }
-  if (!shared?.includes("'trailer'")) {
-    errs.push(`${SHARED}: must mint mdata.assets rows with asset_type='trailer'`);
+  if (!shared?.includes("assetTypeForEquipmentType")) {
+    errs.push(`${SHARED}: must map equipment_type to a canonical mdata.assets asset_type`);
+  }
+  for (const canonicalType of ['"dry_van"', '"reefer"', '"flatbed"', '"other"']) {
+    if (!shared?.includes(canonicalType)) {
+      errs.push(`${SHARED}: canonical equipment mapping must include ${canonicalType}`);
+    }
+  }
+  if (shared?.match(/VALUES\s*\([^)]*['"]trailer['"]/s)) {
+    errs.push(`${SHARED}: must not INSERT generic asset_type='trailer' — the database CHECK forbids it`);
   }
   if (!shared?.includes("ON CONFLICT (tenant_id, unit_code)")) {
     errs.push(`${SHARED}: must be idempotent on the same natural key ensureUnitAsset uses`);
@@ -58,21 +67,30 @@ export function assertGuard({ shared, routes }) {
   if (routes?.includes("ensureEquipmentAsset(") && !routes.includes("tenantId: effectiveCompanyId")) {
     errs.push(`${ROUTES}: the asset must belong to the same lessee-resolved company the equipment row was scoped under`);
   }
+  if (routes?.includes("ensureEquipmentAsset(") && !routes.includes("equipmentType: String(row.equipment_type)")) {
+    errs.push(`${ROUTES}: equipment create must pass its canonical equipment_type into the asset bridge`);
+  }
 
   return errs;
 }
 
 function selftest() {
   const goodShared = `
+    export function assetTypeForEquipmentType(value) {
+      if (value === "DryVan") return "dry_van";
+      if (value === "Reefer") return "reefer";
+      if (value === "Flatbed") return "flatbed";
+      return "other";
+    }
     export async function ensureEquipmentAsset
     INSERT INTO mdata.assets (tenant_id, unit_code, asset_type, vin, make, model, year, status, equipment_id)
-    VALUES ($1::uuid, $2, 'trailer', $3, $4, $5, $6, 'active', $7::uuid)
+    VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, 'active', $8::uuid)
     ON CONFLICT (tenant_id, unit_code) DO UPDATE SET
     equipment_id = EXCLUDED.equipment_id
   `;
   const goodRoutes = `
     import { ensureEquipmentAsset } from "./ensure-equipment-asset.shared.js";
-    await ensureEquipmentAsset(client, { tenantId: effectiveCompanyId, equipmentId: String(row.id) });
+    await ensureEquipmentAsset(client, { tenantId: effectiveCompanyId, equipmentId: String(row.id), equipmentType: String(row.equipment_type) });
   `;
   const good = assertGuard({ shared: goodShared, routes: goodRoutes });
   if (good.length) {
@@ -82,8 +100,8 @@ function selftest() {
 
   // Mutation 1: no export at all.
   const bad1 = assertGuard({ shared: "// nothing here", routes: goodRoutes });
-  // Mutation 2: sets asset_type to tractor instead of trailer (would corrupt the tractor bucket).
-  const bad2 = assertGuard({ shared: goodShared.replace("'trailer'", "'tractor'"), routes: goodRoutes });
+  // Mutation 2: collapses a canonical subtype to generic trailer, which the DB CHECK forbids.
+  const bad2 = assertGuard({ shared: goodShared.replace("VALUES ($1::uuid, $2, $3", "VALUES ($1::uuid, $2, 'trailer'"), routes: goodRoutes });
   // Mutation 3: no ON CONFLICT — not idempotent, a retry would throw or duplicate.
   const bad3 = assertGuard({ shared: goodShared.replace("ON CONFLICT (tenant_id, unit_code) DO UPDATE SET", ""), routes: goodRoutes });
   // Mutation 4: defaults insured_value_cents to 0 on mint (fabricates a valued-at-nothing asset).
@@ -98,6 +116,8 @@ function selftest() {
   const bad5 = assertGuard({ shared: goodShared, routes: "// no call" });
   // Mutation 6: route calls it under the wrong tenant (owner instead of lessee).
   const bad6 = assertGuard({ shared: goodShared, routes: goodRoutes.replace("effectiveCompanyId", "resolvedOwnerId") });
+  // Mutation 7: route omits the equipment type, so the bridge cannot preserve the subtype.
+  const bad7 = assertGuard({ shared: goodShared, routes: goodRoutes.replace(", equipmentType: String(row.equipment_type)", "") });
 
   for (const [name, res] of [
     ["bad1-no-export", bad1],
@@ -106,13 +126,14 @@ function selftest() {
     ["bad4-fabricated-value", bad4],
     ["bad5-never-called", bad5],
     ["bad6-wrong-tenant", bad6],
+    ["bad7-type-not-forwarded", bad7],
   ]) {
     if (res.length === 0) {
       console.error(`${LABEL} --selftest FAIL ${name}: mutation not caught`);
       process.exit(1);
     }
   }
-  console.log(`${LABEL} --selftest PASS 6/6 mutations caught`);
+  console.log(`${LABEL} --selftest PASS 7/7 mutations caught`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -132,4 +153,4 @@ if (errs.length) {
   for (const e of errs) console.error(`  ✗ ${e}`);
   process.exit(1);
 }
-console.log(`[${LABEL}] OK — equipment create mints its mdata.assets counterpart, insurable going forward`);
+console.log(`[${LABEL}] OK — equipment create mints its subtype-correct mdata.assets counterpart`);

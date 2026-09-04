@@ -102,6 +102,15 @@ function assert(files) {
   if (!/data-testid="book-load-lane-new"/.test(strip)) {
     problems.push(`${STRIP}: new lanes must say the lane is new (State C).`);
   }
+  if (!/data-testid="book-load-miles-state-high"/.test(strip) || !/High — filled from history/.test(strip)) {
+    problems.push(`${STRIP}: WIZ-01 High state must be labelled on the strip (autofill + source).`);
+  }
+  if (!/data-testid="book-load-miles-state-thin"/.test(strip) || !/Thin — boxes stay empty/.test(strip)) {
+    problems.push(`${STRIP}: WIZ-01 Thin state must be labelled (empty + history + Use).`);
+  }
+  if (!/data-testid="book-load-miles-state-new"/.test(strip) || !/New — no history/.test(strip)) {
+    problems.push(`${STRIP}: WIZ-01 New state must be labelled (empty + honest no history).`);
+  }
   if (!/resolveStopPlace/.test(modal) || !/originPlace\.city && originPlace\.state && destPlace\.city && destPlace\.state/.test(modal)) {
     problems.push(
       `${MODAL}: lane lookup must parse City "Laredo TX" into city+state — requiring the St picker left miles at 0 and Book toasted Enter practical miles before booking.`,
@@ -229,6 +238,11 @@ if (SELFTEST) {
     process.exit(1);
   }
   checks.push(["lookup failure swallowed as New lane", assert(swallowed).some((p) => /must not pretend New lane/.test(p))]);
+  const noHighLabel = {
+    ...files,
+    [STRIP]: files[STRIP].replace(/data-testid="book-load-miles-state-high"/g, 'data-testid="book-load-miles-state-gone"'),
+  };
+  checks.push(["WIZ-01 High label dropped", assert(noHighLabel).some((p) => /WIZ-01 High state/.test(p))]);
   const noProof = {
     ...files,
     [SVC]: files[SVC].replace(/buildLoadSaveProof/g, "skipSaveProof").replace(/save_proof,/g, "save_skipped,"),

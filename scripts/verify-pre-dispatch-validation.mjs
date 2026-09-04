@@ -224,7 +224,44 @@ check(
   "Add tests for block and warn severity semantics"
 );
 
-// ── Summary ───────────────────────────────────────────────────────────────────
+const panelSource = read("apps/frontend/src/components/dispatch/PreDispatchValidationPanel.tsx");
+const validationPanel = read("apps/frontend/src/components/shared/ValidationPanel.tsx");
+check(
+  "Empty form does not start as canDispatch true",
+  /canDispatch:\s*false/.test(modalSource ?? "") &&
+    !/canDispatch:\s*true/.test(
+      (modalSource ?? "").slice((modalSource ?? "").indexOf("useState<{"), (modalSource ?? "").indexOf("blockOverridesRef"))
+    ),
+  "BookLoadModalV4 preDispatch initial canDispatch must be false"
+);
+check(
+  "Empty pre-dispatch panel shows Not run",
+  /checksNotRun/.test(panelSource ?? "") && /pre-dispatch-checks-not-run/.test(panelSource ?? ""),
+  "PreDispatchValidationPanel must render checks-not-run on an empty form"
+);
+check(
+  "Green pass copy requires can_dispatch",
+  /All pre-dispatch checks pass/.test(validationPanel ?? "") && /!result\.can_dispatch/.test(validationPanel ?? ""),
+  "ValidationPanel must not paint a green pass when can_dispatch is false"
+);
+check(
+  "Cleared copy names override count",
+  /Booking is cleared to dispatch with \{Object\.keys\(blockOverrides\)\.length\} override/.test(panelSource ?? ""),
+  "Cleared state must say the booking is cleared to dispatch with N overrides recorded"
+);
+check(
+  "Override-required line only while remaining > 0",
+  /remainingBlockers > 0/.test(panelSource ?? "") &&
+    panelSource?.includes("override required to dispatch") &&
+    /pre-dispatch-blockers-active/.test(panelSource ?? "") &&
+    /pre-dispatch-overrides-cleared/.test(panelSource ?? ""),
+  "The red remaining-blockers chrome must not render after every blocker is overridden"
+);
+check(
+  "Section D header reads CLEARED once remaining is 0 with overrides",
+  /pre-dispatch-header-cleared/.test(modalSource ?? "") && /CLEARED/.test(modalSource ?? ""),
+  "BookLoadModalV4 Section D must show CLEARED, not Active blocker(s), when remainingBlockers is 0"
+);
 console.log("");
 if (failures.length === 0) {
   console.log(`GAP-14 verify PASSED — all ${12 + requiredRules.length} checks green.\n`);

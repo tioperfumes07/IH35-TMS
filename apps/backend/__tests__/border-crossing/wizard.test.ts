@@ -31,6 +31,11 @@ describe("border crossing wizard routes", () => {
     assert.match(routes, /\/api\/v1\/border-crossing\/:id\/emanifest\.pdf/);
     assert.match(routes, /fast_card_expiration/);
     assert.match(routes, /driver_fast_card_verified/);
+    assert.match(routes, /persistEmanifestForLoad/);
+    assert.match(routes, /INSERT INTO docs\.files/);
+    assert.match(routes, /INSERT INTO docs\.file_links/);
+    assert.match(routes, /'load'/);
+    assert.match(routes, /deleteObjectBytes/);
   });
 
   it("warns when FAST card is expired", () => {

@@ -1,12 +1,10 @@
 {
-  "healthzSha": "629f6c9",
-
-  "generated_at": "2026-09-03T23:25:46.101Z",
-
+  "healthzSha": "5b4de40",
+  "generated_at": "2026-09-04T00:49:31.276Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "629f6c9",
+    "deployedSha": "5b4de40",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2125,96 +2123,94 @@
   },
   "recentActivity": [
     {
-
-      "number": 20161,
-      "title": "FINDING: WIZ-22 — four Book Load deletions and miles strip above stops",
+      "number": 20190,
+      "title": "FINDING: SAFETY-USMCA-MERGE-DOWNSTREAM-REFERENCES-REPOINTED -- 1046/1048 orphaned driver-id references repointed live, guard added, 3 exceptions routed",
       "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20161",
-      "sha": "856c3be8f6",
-      "committedAtIso": "2026-09-03T18:10:56-05:00"
+      "mergedAtCt": "09/03/2026, 07:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20190",
+      "sha": "844e6f2bc3",
+      "committedAtIso": "2026-09-03T19:43:06-05:00"
     },
     {
-      "number": 20153,
-      "title": "FINDING: Fleet column order was fixed and not persisted",
+      "number": 20189,
+      "title": "FINDING: FLT-07 unit profile hid canonical compliance due dates",
       "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20153",
-      "sha": "629f6c9f85",
-      "committedAtIso": "2026-09-03T18:08:23-05:00"
+      "mergedAtCt": "09/03/2026, 07:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20189",
+      "sha": "7fcb2cd4ab",
+      "committedAtIso": "2026-09-03T19:35:44-05:00"
     },
     {
-      "number": 20157,
-      "title": "FINDING: LST-F20306 (GO-19-2b item 3: pre-settlement linking was opt-in and suggest-only, never auto-confirmed)",
+      "number": 20188,
+      "title": "FINDING: FLT-09 future trailer assets used invalid generic type",
       "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20157",
-      "sha": "3b05ce8b1c",
-      "committedAtIso": "2026-09-03T18:04:34-05:00"
+      "mergedAtCt": "09/03/2026, 07:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20188",
+      "sha": "2ab82518f3",
+      "committedAtIso": "2026-09-03T19:28:59-05:00"
     },
     {
-      "number": 20156,
-      "title": "CC-2-FINDING: BANK-F9998 F3+F4 — Match drawer excludes reversed JEs and closes the multi-match hole",
+      "number": 20187,
+      "title": "FINDING: LST-F6134",
       "state": "merged",
-      "mergedAtCt": "09/03/2026, 06:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20156",
-      "sha": "71d772e0dc",
-      "committedAtIso": "2026-09-03T18:02:37-05:00"
+      "mergedAtCt": "09/03/2026, 07:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20187",
+      "sha": "81101be203",
+      "committedAtIso": "2026-09-03T19:27:32-05:00"
     },
     {
-      "number": 20160,
-      "title": "docs(bus): OUTBOX -- item 3 closed + phantom-relation-guard registry fix + entity-scope flag on cited gap figures",
+      "number": 20186,
+      "title": "FINDING: FLT-08 unit insurance evidence was invisible",
       "state": "merged",
-      "mergedAtCt": "09/03/2026, 05:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20160",
-      "sha": "f50bc9833f",
-      "committedAtIso": "2026-09-03T17:59:20-05:00"
+      "mergedAtCt": "09/03/2026, 07:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20186",
+      "sha": "75af5f9701",
+      "committedAtIso": "2026-09-03T19:18:27-05:00"
     },
     {
-      "number": 20159,
-      "title": "FINDING: SAFETY-DQF-CATALOG-AUDITED-AGAINST-FMCSA-REGS",
+      "number": 20185,
+      "title": "FINDING: BANK-F10001",
       "state": "merged",
-      "mergedAtCt": "09/03/2026, 05:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20159",
-      "sha": "8ef5d700fa",
-      "committedAtIso": "2026-09-03T17:57:43-05:00"
+      "mergedAtCt": "09/03/2026, 07:17 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20185",
+      "sha": "6d08baf1af",
+      "committedAtIso": "2026-09-03T19:17:48-05:00"
     },
     {
-      "number": 20158,
-      "title": "FINDING: N/A (docs only, cross-seat finding batch for Cursor)",
+      "number": 20184,
+      "title": "FINDING: N/A (docs only, OUTBOX fast-merge status lines)",
       "state": "merged",
-      "mergedAtCt": "09/03/2026, 05:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20158",
-      "sha": "2863f3c446",
-      "committedAtIso": "2026-09-03T17:57:12-05:00"
+      "mergedAtCt": "09/03/2026, 07:17 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20184",
+      "sha": "93a7e8eb6e",
+      "committedAtIso": "2026-09-03T19:17:39-05:00"
     },
     {
-      "number": 20154,
-      "title": "FINDING: BANK-F9999",
+      "number": 20183,
+      "title": "FINDING: LST-F20310 (item 6: settlement-close never synced driver_liabilities balance)",
       "state": "merged",
-      "mergedAtCt": "09/03/2026, 05:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20154",
-      "sha": "b8f0e7471d",
-      "committedAtIso": "2026-09-03T17:55:15-05:00"
+      "mergedAtCt": "09/03/2026, 07:11 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20183",
+      "sha": "d446a8bf1a",
+      "committedAtIso": "2026-09-03T19:11:23-05:00"
     },
     {
-      "number": 20155,
-      "title": "FINDING: LST-F20305 (25-task #12: deadhead pay line missing from driver-facing settlement screen)",
+      "number": 20182,
+      "title": "FINDING: N/A (CLAIM-RESERVE: verify-step 10279 for CC-2)",
       "state": "merged",
-      "mergedAtCt": "09/03/2026, 05:52 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20155",
-      "sha": "7d5ea3b27a",
-      "committedAtIso": "2026-09-03T17:52:51-05:00"
+      "mergedAtCt": "09/03/2026, 07:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20182",
+      "sha": "20c97dc213",
+      "committedAtIso": "2026-09-03T19:10:37-05:00"
     },
     {
-      "number": 20150,
-      "title": "CC-1- FINDING: LST-F20304 -- lane_mileage punctuation/SAINT-ST normalization pass",
+      "number": 20180,
+      "title": "FINDING: SAFETY-W8BEN-FOREIGN-TAX-STATUS-MISSING-ON-CANONICAL-DRIVER-PAGE",
       "state": "merged",
-      "mergedAtCt": "09/03/2026, 05:50 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20150",
-      "sha": "e4924ea4e0",
-      "committedAtIso": "2026-09-03T17:50:19-05:00"
-
+      "mergedAtCt": "09/03/2026, 07:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20180",
+      "sha": "cbb521cffd",
+      "committedAtIso": "2026-09-03T19:06:14-05:00"
     }
   ]
 }

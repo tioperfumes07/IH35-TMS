@@ -84,7 +84,7 @@ export function TopStatusBar({
 
   return (
     <div
-      className="flex max-w-[min(760px,94vw)] flex-nowrap items-center justify-center gap-x-2 rounded-full px-2 py-1 text-[12px] leading-snug"
+      className="flex max-w-[min(760px,94vw)] flex-nowrap items-center justify-center gap-x-2 rounded-full px-2 py-1 text-xs leading-snug"
       style={{ backgroundColor: "#151A24", color: muted }}
       data-status-bar-desktop
     >

@@ -15,7 +15,7 @@ import { useForm, type FieldErrors } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad, createTrailerInterchange, getLaneMileage, getChainDeadhead } from "../../../api/dispatch";
 import { resolveStopPlace } from "./book-load-city-state";
-import { historicalImportReasonsCatalogClient, listAllDispatchCatalogRows, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
+import { historicalImportReasonsCatalogClient, listAllDispatchCatalogRows, loadCommoditiesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { properPersonOrPlaceName } from "../../../lib/properDisplayText";
@@ -25,6 +25,7 @@ import { getLoad, updateDispatchLoadFull, type LoadDetail } from "../../../api/l
 import { buildEditPrefill, buildEditPatchBody } from "./book-load-v4/editLoadMapping";
 import { bookLoadToastMessage, bookLoadToastTone, serverStatusOf } from "./book-load-toast";
 import { searchCustomersAutocomplete } from "../../../api/mdata";
+import { heldEntityIsSelectable, heldEntityMergedMessage } from "../../../lib/resolve-held-entity";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { ConfirmDiscardDialog } from "../../../components/dialogs/ConfirmDiscardDialog";
@@ -320,6 +321,7 @@ export function BookLoadModalV4({
   const [showSpecialNotes, setShowSpecialNotes] = useState(false);
   const [saveProof, setSaveProof] = useState<LoadSaveProof | null>(null);
   const [saveProofCreated, setSaveProofCreated] = useState<{ id: string; label?: string } | null>(null);
+  const [saveAck, setSaveAck] = useState<{ id: string; loadNumber: string; summary: string } | null>(null);
   const [showMilesInvertAck, setShowMilesInvertAck] = useState(false);
   const milesInvertAckedLaneRef = useRef<string | null>(null);
 
@@ -422,12 +424,14 @@ export function BookLoadModalV4({
     hasWarnings: boolean;
     hasUnackedInsScheduleConfirm: boolean;
     remainingBlockers: number;
+    overrideCount: number;
   }>({
-    canDispatch: true,
+    canDispatch: false,
     hasBlockers: false,
     hasWarnings: false,
     hasUnackedInsScheduleConfirm: false,
     remainingBlockers: 0,
+    overrideCount: 0,
   });
   const blockOverridesRef = useRef<Record<string, { reason: string; at: string }>>({});
   // GAP-47 — dispatch authorization gates (distinct from GAP-14's physical-readiness checks above):
@@ -735,6 +739,20 @@ export function BookLoadModalV4({
     enabled: Boolean(operatingCompanyId),
     staleTime: 15_000,
   });
+  const heldCustomerQuery = useQuery({
+    queryKey: ["book-load-held-customer", operatingCompanyId, watchedCustomerId],
+    queryFn: () => heldEntityIsSelectable("customer", String(watchedCustomerId), operatingCompanyId),
+    enabled: Boolean(open && operatingCompanyId && watchedCustomerId),
+    staleTime: 15_000,
+  });
+  useEffect(() => {
+    if (!heldCustomerQuery.isFetched || heldCustomerQuery.isError) return;
+    if (heldCustomerQuery.data === false && watchedCustomerId) {
+      form.setValue("customer_id", "", { shouldDirty: true, shouldValidate: true });
+      form.setValue("customer_name", "", { shouldDirty: true });
+      form.setError("customer_id", { type: "validate", message: heldEntityMergedMessage("customer") });
+    }
+  }, [form, heldCustomerQuery.data, heldCustomerQuery.isError, heldCustomerQuery.isFetched, watchedCustomerId]);
   // ACCT-F10158 / FE-COMBOBOX-STALE-LABEL: Edit Load prefills customer_id via form.reset, but a
   // capped/searched result page can omit the already-committed customer. Combobox then shows the
   // empty placeholder even though the FK is set — and clearCommittedOnEdit + typing one keystroke
@@ -745,7 +763,13 @@ export function BookLoadModalV4({
   // uuid-shaped name and falls back to "Customer — not visible" instead, same convention as
   // every other reverse-link label in this codebase (BillsReverseSection, EntityLinkOrTombstone).
   const customerOptions = useMemo(() => {
-    const fromApi = (customersQuery.data ?? []).map((c) => ({ value: c.id, label: entityLabel(c.display_name, c.id, "Customer") }));
+    const seen = new Set<string>();
+    const fromApi: Array<{ value: string; label: string }> = [];
+    for (const c of customersQuery.data ?? []) {
+      if (!c.id || seen.has(c.id)) continue;
+      seen.add(c.id);
+      fromApi.push({ value: c.id, label: entityLabel(c.display_name, c.id, "Customer") });
+    }
     const id = String(watchedCustomerId || "").trim();
     const name = String(watchedCustomerName || "").trim();
     if (id && !fromApi.some((o) => o.value === id)) {
@@ -770,6 +794,15 @@ export function BookLoadModalV4({
   const lumperProviderOptions = useMemo(
     () => (lumperProvidersQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code })),
     [lumperProvidersQuery.data?.rows]
+  );
+  const commoditiesQuery = useQuery({
+    queryKey: ["book-load-load-commodities", operatingCompanyId],
+    queryFn: () => listAllDispatchCatalogRows(loadCommoditiesCatalogClient, { operating_company_id: operatingCompanyId, is_active: "true" }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const commodityOptions = useMemo(
+    () => (commoditiesQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code })),
+    [commoditiesQuery.data?.rows]
   );
   // GO-21 B3 — historical import reason quick-pick (migration 202613480001). Consumed like the
   // "Customer reference lookup" pattern: onChange writes the picked row's TEXT into the existing
@@ -832,10 +865,8 @@ export function BookLoadModalV4({
   const driverBillMissing = useMemo(() => {
     const missing: string[] = [];
     if (!(Number(milesPractical || 0) > 0)) missing.push("practical miles");
-    if (!(Number(driverPayRatePerMile || 0) > 0)) missing.push("driver pay rate / mile");
-    else if (String(driverPayRateOverrideReason ?? "").trim().length < 10) missing.push("override reason (10+ chars)");
     return missing;
-  }, [milesPractical, driverPayRatePerMile, driverPayRateOverrideReason]);
+  }, [milesPractical]);
   const ratePerMile = useMemo(() => {
     const miles = Number(milesPractical || 0);
     if (miles <= 0) return 0;
@@ -930,6 +961,43 @@ export function BookLoadModalV4({
   async function submitLoadInner(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
     setGateBanner(null);
     setSubmitErrorMessage(null);
+    setSaveAck(null);
+
+    const recordedOverrides = Object.entries(blockOverridesRef.current);
+    const applyOverrides = Boolean(opts?.override || recordedOverrides.length);
+
+    const driverId = String(values.assigned_primary_driver_id || "").trim();
+    const unitId = String(values.assigned_unit_id || "").trim();
+    const trailerId = String(values.assigned_trailer_unit_id || values.interchange_trailer_id || "").trim();
+    const customerId = String(values.customer_id || "").trim();
+    try {
+      if (driverId && !(await heldEntityIsSelectable("driver", driverId, operatingCompanyId, { driverRoster: "active_or_probation" }))) {
+        form.setValue("assigned_primary_driver_id", "", { shouldDirty: true });
+        setSubmitErrorMessage(heldEntityMergedMessage("driver"));
+        pushToast(heldEntityMergedMessage("driver"), "error");
+        return;
+      }
+      if (unitId && !(await heldEntityIsSelectable("unit", unitId, operatingCompanyId))) {
+        form.setValue("assigned_unit_id", "", { shouldDirty: true });
+        setSubmitErrorMessage(heldEntityMergedMessage("unit"));
+        pushToast(heldEntityMergedMessage("unit"), "error");
+        return;
+      }
+      if (trailerId && values.trailer_source !== "interchange" && !(await heldEntityIsSelectable("trailer", trailerId, operatingCompanyId))) {
+        form.setValue("assigned_trailer_unit_id", "", { shouldDirty: true });
+        setSubmitErrorMessage(heldEntityMergedMessage("trailer"));
+        pushToast(heldEntityMergedMessage("trailer"), "error");
+        return;
+      }
+      if (customerId && !(await heldEntityIsSelectable("customer", customerId, operatingCompanyId))) {
+        form.setValue("customer_id", "", { shouldDirty: true });
+        setSubmitErrorMessage(heldEntityMergedMessage("customer"));
+        pushToast(heldEntityMergedMessage("customer"), "error");
+        return;
+      }
+    } catch {
+      // A lookup timeout must not invent a merge; the server remains the submit-time authority.
+    }
 
     // Block 7 — EDIT mode: PATCH only the fields the user changed (dirtyFields-gated, anti-data-loss).
     // Trip-type is not editable here, so the create-only trip_type gate below does not apply.
@@ -942,12 +1010,12 @@ export function BookLoadModalV4({
           values as unknown as Record<string, unknown>,
           form.formState.dirtyFields as unknown as Record<string, unknown>,
           operatingCompanyId,
-          opts?.override
+          applyOverrides
             ? overrideReason.trim().length >= 10
               ? overrideReason
               : Object.values(blockOverridesRef.current)[0]?.reason
             : undefined,
-          opts?.override
+          applyOverrides
             ? Object.entries(blockOverridesRef.current).map(([rule_code, rec]) => ({
                 rule_code,
                 reason: rec.reason,
@@ -958,15 +1026,19 @@ export function BookLoadModalV4({
         // DRV-BILL-SKIP-PATHS — Edit Load calls ensureDriverBillArtifactsForLoad (#5408); surface mint skips
         // the same way Book does (LV-DISPATCH-TOAST-LIES companion: report server outcome, never invent pay).
         const patchResult = await updateDispatchLoadFull(editLoadId, body);
-        pushToast("Load updated", "success");
+        const loadNumber = String(editLoad?.load_number ?? "") || editLoadId;
+        pushToast(`Load ${loadNumber} is saved.`, "success");
         const mint = (
           patchResult as { driver_bill_mint?: { outcome?: string; missing?: string[] } | null }
         ).driver_bill_mint;
         if (mint?.outcome === "skipped_no_pay_rate") {
           pushToast(driverBillMintSkippedMessage("updated", mint.missing), "info");
         }
-        onCreated({ id: editLoadId, label: editLoad?.load_number ? String(editLoad.load_number) : undefined });
-        onClose();
+        setSaveAck({
+          id: editLoadId,
+          loadNumber,
+          summary: "The load was saved. Open it to continue, or close this window.",
+        });
       } catch (error) {
         const data = error instanceof ApiError ? ((error.data as Record<string, unknown>) ?? {}) : {};
         if (error instanceof ApiError && error.status === 409 && String(data.error ?? "") === "load_edit_locked") {
@@ -1026,8 +1098,8 @@ export function BookLoadModalV4({
         return;
       }
     }
-    const token = opts?.override ? overrideToken ?? crypto.randomUUID() : undefined;
-    if (opts?.override && !overrideToken) setOverrideToken(token ?? null);
+    const token = applyOverrides ? overrideToken ?? crypto.randomUUID() : undefined;
+    if (applyOverrides && !overrideToken) setOverrideToken(token ?? null);
     try {
       const payload = await createDispatchLoad({
         operating_company_id: operatingCompanyId,
@@ -1195,12 +1267,12 @@ export function BookLoadModalV4({
         }),
         save_mode: saveMode,
         override_token: token,
-        override_reason: opts?.override
+        override_reason: applyOverrides
           ? overrideReason.trim().length >= 10
             ? overrideReason
             : Object.values(blockOverridesRef.current)[0]?.reason
           : undefined,
-        override_rules: opts?.override
+        override_rules: applyOverrides
           ? Object.entries(blockOverridesRef.current).map(([rule_code, rec]) => ({
               rule_code,
               reason: rec.reason,
@@ -1230,13 +1302,18 @@ export function BookLoadModalV4({
       // `toMdataStatus(input.status)`), so asserting dispatch from `saveMode` told a dispatcher a truck was
       // rolling under an audited DOT override while the record sat at `assigned_not_dispatched`.
       const serverStatus = serverStatusOf(payload);
-      pushToast(bookLoadToastMessage(saveMode, serverStatus), bookLoadToastTone(saveMode, serverStatus));
+      const createdId = String((payload as { id?: string }).id ?? "");
+      const createdLabel = String((payload as { load_number?: string }).load_number ?? "") || undefined;
+      pushToast(
+        createdLabel
+          ? `${bookLoadToastMessage(saveMode, serverStatus)} · ${createdLabel}`
+          : bookLoadToastMessage(saveMode, serverStatus),
+        bookLoadToastTone(saveMode, serverStatus)
+      );
       const mint = (payload as { driver_bill_mint?: { outcome?: string; missing?: string[] } }).driver_bill_mint;
       if (mint?.outcome === "skipped_no_pay_rate") {
         pushToast(driverBillMintSkippedMessage("booked", mint.missing), "info");
       }
-      const createdId = String((payload as { id?: string }).id ?? "");
-      const createdLabel = String((payload as { load_number?: string }).load_number ?? "") || undefined;
       // GO-23 A1 — trailer_interchanges.load_id is a real FK, so this can only be created AFTER the
       // load itself exists. The load is already committed at this point regardless of outcome here;
       // a failure to attach the interchange record must not be reported as a failed save.
@@ -1253,8 +1330,15 @@ export function BookLoadModalV4({
         setSaveProofCreated({ id: createdId, label: createdLabel });
         return;
       }
-      onCreated(createdId ? { id: createdId, label: createdLabel } : undefined);
-      onClose();
+      if (createdId) {
+        setSaveAck({
+          id: createdId,
+          loadNumber: createdLabel || createdId,
+          summary: "The load was saved. Open it to continue, or close this window.",
+        });
+        return;
+      }
+      setSubmitErrorMessage("Save returned no load id. Do not assume it booked — retry, or open Loads and search by customer.");
     } catch (error) {
       if (error instanceof ApiError) {
         const data = (error.data as Record<string, unknown>) ?? {};
@@ -1361,6 +1445,7 @@ export function BookLoadModalV4({
       // the highest drawer") — this hand-rolled portal never got the same treatment. z-[216] keeps it
       // unambiguously topmost even alongside a Modal.tsx-based dialog.
       className="fixed inset-0 z-[216] flex items-start justify-center overflow-y-auto px-4 py-6"
+      data-ih35-blocking-modal="true"
       style={{ background: "rgba(15, 19, 32, 0.6)" }}
       onMouseDown={attemptBookLoadClose}
     >
@@ -1408,11 +1493,6 @@ export function BookLoadModalV4({
             />
           </div>
         </header>
-
-        {/* Edit mode reuses the real LOAD# (in the header) — no new reservation bar. */}
-        {isEditMode ? null : (
-          <LiveLoadIdBar operatingCompanyId={operatingCompanyId} onReservationUpdate={onReservationUpdate} />
-        )}
 
         <form
           className="flex flex-1 flex-col overflow-y-auto"
@@ -1477,7 +1557,7 @@ export function BookLoadModalV4({
             <span className="text-[11px] font-bold uppercase tracking-[0.4px] text-gray-600">
               Trip Type <span className="text-red-500">*</span>
             </span>
-            <div className="mt-1 flex gap-2">
+            <div className="mt-1 flex flex-wrap gap-2">
               {([
                 ["NB", "▲", "Northbound", "Border → US interior", "#1F2A44"],
                 ["TR", "▶", "Triangulation", "US interior → US interior", "#64748b"],
@@ -1492,11 +1572,11 @@ export function BookLoadModalV4({
                       form.setValue("trip_type", code, { shouldDirty: true });
                       form.clearErrors("trip_type");
                     }}
-                    className="flex h-7 flex-1 items-center rounded-sm border px-2.5 text-left transition-colors"
+                    className="inline-flex h-7 shrink-0 items-center rounded-sm border px-2.5 text-left transition-colors"
                     title={desc}
                     style={active ? { backgroundColor: color, borderColor: color, color: "white" } : { borderColor: "#cbd5e1", color: "#1f2733" }}
                   >
-                    <span className="truncate text-xs font-bold leading-tight">{icon} {code} · {label}</span>
+                    <span className="whitespace-nowrap text-xs font-bold leading-tight">{icon} {code} · {label}</span>
                   </button>
                 );
               })}
@@ -1615,6 +1695,9 @@ export function BookLoadModalV4({
                   </span>
                 </div>
                 <div className="space-y-2 p-3">
+                  {isEditMode ? null : (
+                    <LiveLoadIdBar operatingCompanyId={operatingCompanyId} onReservationUpdate={onReservationUpdate} />
+                  )}
                   {/* §A rate-con upload — RESTORED per owner 2026-07-04 as the BUTTON variant (click → file
                       picker), matching how it worked before. The drag-drop zone lives in §E (Documents).
                       Both share the ONE extraction path and fill the same editable draft. */}
@@ -1667,7 +1750,7 @@ export function BookLoadModalV4({
                       block in §E (Documents). The duplicate button-panel affordance was removed here. */}
 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
-                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563] md:col-span-2">
                       Customer
                       <input type="hidden" {...form.register("customer_id", { required: "Select a customer from the list" })} />
                       <div className="mt-0.5">
@@ -1717,6 +1800,7 @@ export function BookLoadModalV4({
                       Pickup #
                       <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
+                  </div>
                     <input
                       type="hidden"
                       {...form.register("live_load_number", {
@@ -1727,7 +1811,6 @@ export function BookLoadModalV4({
                       autoComplete="off"
                       data-testid="book-load-live-load-number"
                     />
-                  </div>
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
                     {/* Customer type + freight identity — belong in §A with the customer/charges.
                         Restored 2026-09-03 after an unauthorized move into §B. Pieces is on this
@@ -1747,7 +1830,33 @@ export function BookLoadModalV4({
                     </label>
                     <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Commodity
-                      <input {...form.register("commodity")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+                      <div className="mt-0.5" data-testid="book-load-commodity-picker">
+                        <ReferenceSelect
+                          size="sm"
+                          value={
+                            commodityOptions.find((o) => o.label === String(form.watch("commodity") || "").trim())?.value ??
+                            null
+                          }
+                          onChange={(next) => {
+                            const match = commodityOptions.find((o) => o.value === next);
+                            form.setValue("commodity", match?.label ?? "", { shouldDirty: true });
+                          }}
+                          options={commodityOptions}
+                          createKind="load_commodity"
+                          operatingCompanyId={operatingCompanyId}
+                          placeholder="Select commodity"
+                          loading={commoditiesQuery.isLoading}
+                          disabled={commoditiesQuery.isLoading || commoditiesQuery.isError}
+                          onOptionCreated={(opt) => {
+                            void commoditiesQuery.refetch();
+                            form.setValue("commodity", opt.label, { shouldDirty: true });
+                          }}
+                        />
+                        {commoditiesQuery.isError ? (
+                          <ListErrorBanner message="Could not load commodities." onRetry={() => void commoditiesQuery.refetch()} />
+                        ) : null}
+                      </div>
+                      <input type="hidden" {...form.register("commodity")} />
                     </label>
                     <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Weight (lbs)
@@ -2160,8 +2269,12 @@ export function BookLoadModalV4({
                 <span className="blw-sec-chip">D</span>
                 <span className="blw-sec-name">Pre-dispatch validation</span>
                 <span className="blw-sec-meta">
-                  {preDispatch.hasBlockers || authGateBlocked || repairBlockSubmitBlocked ? (
+                  {preDispatch.remainingBlockers > 0 || authGateBlocked || repairBlockSubmitBlocked ? (
                     <b className="text-red-700">Active blocker(s) — override required</b>
+                  ) : preDispatch.overrideCount > 0 ? (
+                    <b className="text-slate-800" data-testid="pre-dispatch-header-cleared">
+                      CLEARED
+                    </b>
                   ) : preDispatch.hasUnackedInsScheduleConfirm ? (
                     <b className="text-slate-700">Insurance schedule confirmation required before booking</b>
                   ) : assignedPrimaryDriverId || assignedUnitId || watchedCustomerId ? (
@@ -2208,6 +2321,7 @@ export function BookLoadModalV4({
                   }
                   onBlockOverridesChange={(rows) => {
                     blockOverridesRef.current = rows;
+                    setPreDispatch((prev) => ({ ...prev, overrideCount: Object.keys(rows).length }));
                     const first = Object.values(rows)[0];
                     if (first?.reason) setOverrideReason(first.reason);
                   }}
@@ -2300,6 +2414,33 @@ export function BookLoadModalV4({
             </section>
           </div>
 
+          {saveAck ? (
+            <div
+              className="border-t border-slate-300 bg-slate-50 px-3 py-3"
+              data-testid="book-load-save-ack"
+              role="status"
+            >
+              <p className="text-xs font-semibold text-slate-900">
+                Load {saveAck.loadNumber} is saved.
+              </p>
+              <p className="mt-1 text-xs text-slate-800">{saveAck.summary}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <EntityLink kind="load" id={saveAck.id} label={saveAck.loadNumber || "Open load"} />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    const ack = saveAck;
+                    setSaveAck(null);
+                    onCreated({ id: ack.id, label: ack.loadNumber });
+                    onClose();
+                  }}
+                >
+                  Continue
+                </Button>
+              </div>
+            </div>
+          ) : null}
           {saveProof ? (
             <LoadSaveProofPanel
               proof={saveProof}
@@ -2357,7 +2498,7 @@ export function BookLoadModalV4({
                 {isEditMode
                   ? "Save changes"
                   : preDispatch.remainingBlockers > 0
-                    ? `Book + dispatch (${preDispatch.remainingBlockers} remain)`
+                    ? "Override & dispatch"
                     : "Book + dispatch"}
               </Button>
             </div>

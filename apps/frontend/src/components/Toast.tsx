@@ -31,7 +31,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         setToasts((prev) => [...prev, { id, message, variant }]);
         window.setTimeout(() => {
           setToasts((prev) => prev.filter((toast) => toast.id !== id));
-        }, 4000);
+        }, variant === "success" ? 10_000 : 6_000);
       },
     }),
     []
@@ -40,7 +40,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="fixed right-4 top-4 z-50 flex w-80 flex-col gap-2">
+      <div className="fixed right-4 top-4 z-[230] flex w-80 flex-col gap-2">
         {toasts.map((toast) => (
           <div
             key={toast.id}

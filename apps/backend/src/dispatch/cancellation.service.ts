@@ -6,6 +6,7 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { auditVoid, isVoidEnforcementEnabled, pgDateColumnToIsoDay, postVoidReversal } from "../accounting/void.service.js";
 import { executeVoidCancel } from "../governance/void-cancel-executors.js";
+import { reverseDriverAdvanceInClientTx } from "../cash-advances/cash-advance-create.js";
 
 function isOwner(role: string) {
   return role === "Owner";
@@ -357,6 +358,94 @@ export async function cancelLoadInClientTx(
           }
         }
 
+        // VOID-CASCADE-EXPENSES (SET-09, owner 2026-09-03: cancelling a load did not void the
+        // load's expenses) — every open (non-void) accounting.expenses row sourced from this load
+        // gets voided via the SAME shared executeVoidCancel("expense", ...) executor the direct
+        // /api/v1/expenses/:id/void route uses, which internally calls postVoidReversal(entityType:
+        // "expense"). postVoidReversal ALREADY unconditionally releases any bank-transaction match
+        // tied to the voided entity BEFORE it does anything else (BANK-ORPHAN-01: "no voided
+        // document may leave a bank transaction categorized against it") — so this one call also
+        // closes the BANK-MATCH-RELEASE hole named in the same owner instruction; no separate bank-
+        // match code is needed here. No blocking gate analogous to invoices' paid/factored exists
+        // for expenses (they carry no "collected" state), so every open expense is voided.
+        const openExpensesRes = await client.query<{ id: string }>(
+          `SELECT id::text FROM accounting.expenses
+            WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'void'
+            FOR UPDATE`,
+          [input.load_id, input.operating_company_id]
+        );
+        const voidedExpenseIds: string[] = [];
+        for (const exp of openExpensesRes.rows) {
+          const expResult = await executeVoidCancel("expense", {
+            client,
+            operatingCompanyId: input.operating_company_id,
+            entityId: exp.id,
+            action: "cancel",
+            userId,
+            reason: `Load cancelled (${input.reason_code}) — expense voided by load cancellation cascade: ${input.cancellation_notes.trim()}`,
+          });
+          if (expResult.kind === "ok" || expResult.kind === "already_done") {
+            voidedExpenseIds.push(exp.id);
+          } else {
+            throw Object.assign(
+              new Error(`load_cancel_expense_void_failed:${exp.id}:${expResult.kind}`),
+              { code: "load_cancel_expense_void_failed", expense_id: exp.id, result: expResult.kind }
+            );
+          }
+        }
+
+        // VOID-CASCADE-ADVANCES (SET-09, owner 2026-09-03: cancelling a load did not reverse
+        // ADVANCES/LIABILITIES) — every driver_advances row load-linked to this load (#1440
+        // traceability: driver_advances.load_id mirrors cash_advance_requests.load_id when a
+        // request originated from a booked load) is reversed via the SAME shared
+        // reverseDriverAdvanceInClientTx primitive the direct PATCH .../reverse route uses.
+        // CASH-ADV-F9930's correct-grain guard (paid_to_date > 0 blocks reversal) applies here too:
+        // an advance already recovered through a settlement is not silently un-recovered by a
+        // cancellation — it fails loud instead, same "no partial cascade, no silent orphan" policy
+        // already established above for unvoidable invoices.
+        const loadAdvancesRes = await client.query<{
+          id: string;
+          liability_id: string | null;
+          linked_bill_payment_id: string | null;
+          linked_bill_id: string | null;
+          paid_to_date: string | null;
+        }>(
+          `
+            SELECT a.id::text, a.liability_id::text, a.linked_bill_payment_id::text, a.linked_bill_id::text,
+                   l.paid_to_date::text
+              FROM driver_finance.driver_advances a
+              LEFT JOIN driver_finance.driver_liabilities l
+                ON l.id = a.liability_id AND l.operating_company_id = a.operating_company_id
+             WHERE a.load_id = $1::uuid
+               AND a.operating_company_id = $2::uuid
+               AND a.disbursement_status <> 'reversed'
+             FOR UPDATE OF a
+          `,
+          [input.load_id, input.operating_company_id]
+        );
+        const unreversableAdvances = loadAdvancesRes.rows.filter((r) => Number(r.paid_to_date ?? 0) > 0);
+        if (unreversableAdvances.length > 0) {
+          throw Object.assign(
+            new Error(
+              `load_cancel_blocked_unreversable_advance: advance(s) ${unreversableAdvances
+                .map((r) => r.id)
+                .join(", ")} already have settlement deductions recorded against them (paid_to_date > 0) — real money already moved, cannot be silently reversed by a cancellation. Resolve manually.`
+            ),
+            { code: "load_cancel_blocked_unreversable_advance", details: unreversableAdvances }
+          );
+        }
+        const reversedAdvanceIds: string[] = [];
+        for (const adv of loadAdvancesRes.rows) {
+          await reverseDriverAdvanceInClientTx(client, userId, input.operating_company_id, {
+            advanceId: adv.id,
+            liabilityId: adv.liability_id,
+            linkedBillPaymentId: adv.linked_bill_payment_id,
+            linkedBillId: adv.linked_bill_id,
+            reason: `Load cancelled (${input.reason_code}) — advance reversed by load cancellation cascade: ${input.cancellation_notes.trim()}`,
+          });
+          reversedAdvanceIds.push(adv.id);
+        }
+
         const liveInvoicesForGate = await client.query<{ id: string; status: string; issue_date: string | null }>(
           `SELECT id::text, status::text, issue_date::text FROM accounting.invoices
             WHERE source_load_id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'void'`,
@@ -433,7 +522,13 @@ export async function cancelLoadInClientTx(
         // Always write the money-artifacts audit when any financial artifact was touched — this
         // includes driver bills, settlements, and invoices. Even an empty set on one axis is
         // worth recording (zero orphans = confirmed clean cascade).
-        if (voidedDriverBillIds.length > 0 || cancelledSettlementIds.length > 0 || voidedInvoiceIds.length > 0) {
+        if (
+          voidedDriverBillIds.length > 0 ||
+          cancelledSettlementIds.length > 0 ||
+          voidedInvoiceIds.length > 0 ||
+          voidedExpenseIds.length > 0 ||
+          reversedAdvanceIds.length > 0
+        ) {
           await appendCrudAudit(
             client,
             userId,
@@ -442,12 +537,16 @@ export async function cancelLoadInClientTx(
               resource_type: "mdata.loads",
               resource_id: input.load_id,
               operating_company_id: input.operating_company_id,
-              // Ordered steps: settlements first (GL reversal), then driver bills (subledger), then invoices (A/R reversal).
+              // Ordered steps: settlements first (GL reversal), then driver bills (subledger), then
+              // expenses (bank-match release rides along, BANK-ORPHAN-01), then advances/liabilities,
+              // then invoices (A/R reversal).
               settlements_cancelled: cancelledSettlementIds,
               settlements_skipped_paid: skippedSettlementIds,
               driver_bills_voided: voidedDriverBillIds,
+              expenses_voided: voidedExpenseIds,
+              advances_reversed: reversedAdvanceIds,
               invoices_voided: voidedInvoiceIds,
-              note: "load cancellation cascade: settlements cancelled, driver bills voided, invoices voided with reversing JEs — all in the same transaction",
+              note: "load cancellation cascade: settlements cancelled, driver bills voided, expenses voided (bank matches released), advances/liabilities reversed, invoices voided with reversing JEs — all in the same transaction",
             },
             "warning",
             "VOID-CANCEL-NOT-VOID"

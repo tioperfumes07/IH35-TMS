@@ -28,6 +28,10 @@ const TABLE_FILE = path.join(ROOT, "apps/frontend/src/components/FleetTable.tsx"
 const PAGE_FILE = path.join(ROOT, "apps/frontend/src/pages/maintenance/FleetTablePage.tsx");
 
 const REQUIRED_TESTIDS = ["fleet-oos-since", "fleet-oos-days", "fleet-oos-location"];
+const REQUIRED_FLEET_ORDER = [
+  "unit_number", "vin", "type", "make_model", "year",
+  "status", "assigned_driver", "irp_expiration", "us_insurance_expiration", "mx_insurance_expiration",
+];
 
 export function collectProblems(stripSrc, routesSrc, unifiedSrc = "", tableSrc = "", pageSrc = "") {
   const problems = [];
@@ -49,6 +53,14 @@ export function collectProblems(stripSrc, routesSrc, unifiedSrc = "", tableSrc =
   }
   for (const key of ["oos_reason", "oos_since", "days_oos", "estimated_completion_date", "work_order_id"]) {
     if (!new RegExp(`key:\\s*["']${key}["']`).test(tableSrc)) problems.push(`main Fleet registry must expose ${key}`);
+  }
+  for (const field of ["assigned_driver_id", "assigned_driver_name", "irp_expiration", "us_insurance_expiration", "mx_insurance_expiration"]) {
+    if (!new RegExp(`\\b${field}\\b`).test(unifiedSrc)) problems.push(`unified fleet rows must carry ${field}`);
+  }
+  const orderedKeys = [...tableSrc.matchAll(/key:\s*["']([^"']+)["']/g)].map((match) => match[1]);
+  const requiredOrder = REQUIRED_FLEET_ORDER.map((key) => orderedKeys.indexOf(key));
+  if (requiredOrder.some((index) => index < 0) || requiredOrder.some((index, position) => position > 0 && index <= requiredOrder[position - 1])) {
+    problems.push(`main Fleet registry order must be identity, status, assignment, compliance dates`);
   }
   if (!/tone=["']in-shop["']/.test(pageSrc) || !/tone=["']oos["']/.test(pageSrc)) {
     problems.push("In-Shop and OOS KPI controls must use distinct visual tones");
@@ -78,8 +90,8 @@ function check() {
 function selftest() {
   const goodStrip = `data-testid="fleet-oos-since" data-testid="fleet-oos-days" data-testid="fleet-oos-location"`;
   const goodRoutes = `SELECT id, unit_number, vin, status, oos_since, oos_location FROM mdata.units WHERE 1=1`;
-  const goodUnified = `oos_since days_oos oos_reason oos_location estimated_completion_date work_order_id work_order_display_id`;
-  const goodTable = `key: "oos_reason" key: "oos_since" key: "days_oos" key: "estimated_completion_date" key: "work_order_id" kind="work_order" columnOrder setColumnOrder dragHandleProps draggable orderedVisibleColumns.map renderFleetCell`;
+  const goodUnified = `oos_since days_oos oos_reason oos_location estimated_completion_date work_order_id work_order_display_id assigned_driver_id assigned_driver_name irp_expiration us_insurance_expiration mx_insurance_expiration`;
+  const goodTable = `key: "unit_number" key: "vin" key: "type" key: "make_model" key: "year" key: "status" key: "assigned_driver" key: "irp_expiration" key: "us_insurance_expiration" key: "mx_insurance_expiration" key: "oos_reason" key: "oos_since" key: "days_oos" key: "estimated_completion_date" key: "work_order_id" kind="work_order" columnOrder setColumnOrder dragHandleProps draggable orderedVisibleColumns.map renderFleetCell`;
   const goodPage = `tone="in-shop" tone="oos"`;
   if (collectProblems(goodStrip, goodRoutes, goodUnified, goodTable, goodPage).length) {
     throw new Error("selftest good fixture must pass");
@@ -104,6 +116,9 @@ function selftest() {
     [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace("setColumnOrder", ""), goodPage), "persist its operator column order"],
     [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace("dragHandleProps", ""), goodPage), "drag reorder controls"],
     [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace("renderFleetCell", ""), goodPage), "same ordered columns"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified.replace("assigned_driver_name", ""), goodTable, goodPage), "assigned_driver_name"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('key: "assigned_driver" ', ""), goodPage), "identity, status, assignment, compliance dates"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('key: "irp_expiration" key: "us_insurance_expiration"', 'key: "us_insurance_expiration" key: "irp_expiration"'), goodPage), "identity, status, assignment, compliance dates"],
   ];
   for (const [run, expected] of mutations) {
     const problems = run();

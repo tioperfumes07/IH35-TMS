@@ -7,7 +7,9 @@ import { companyToday } from "../lib/businessDate";
 import { History, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ApiError } from "../api/client";
+import { apiRequest, ApiError } from "../api/client";
+import { W8BenSection } from "../components/driver-profile/W8BenSection";
+import { W8BenModal } from "../components/drivers/W8BenModal";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { AuditHistoryTab } from "../components/drivers/AuditHistoryTab";
 import { ConfirmModal } from "../components/shared/ConfirmModal";
@@ -323,6 +325,21 @@ export function DriverDetailPage() {
     queryFn: listClassesForJe,
     enabled: activeTab === "Profile" && Boolean(driver?.operating_company_id),
   });
+
+  // W-8BEN (IRS foreign-status certificate) — required at hire for foreign (B-1) drivers,
+  // renewed yearly. SAFETY-W8BEN-FOREIGN-TAX-STATUS-MISSING-ON-CANONICAL-DRIVER-PAGE: this
+  // page (canonical /drivers/:id) previously had no W-8BEN section at all even though
+  // USMCA's driver base is majority Mexican-national B-1 — only the secondary
+  // /drivers/:id/profile page had it wired.
+  const w8benQuery = useQuery({
+    queryKey: ["driver-w8ben-summary", id, companyId],
+    queryFn: () =>
+      apiRequest<{ w8ben: Record<string, unknown>; w8ben_unavailable: boolean }>(
+        `/api/v1/mdata/drivers/${encodeURIComponent(id)}/w8ben-summary?operating_company_id=${encodeURIComponent(companyId)}`
+      ),
+    enabled: activeTab === "Profile" && Boolean(id && companyId),
+  });
+  const [w8benOpen, setW8benOpen] = useState(false);
 
   useEffect(() => {
     if (!driver) return;
@@ -1448,6 +1465,21 @@ export function DriverDetailPage() {
               ) : null}
             </div>
           </div>
+          <div data-testid="driver-detail-section-w8ben">
+            <W8BenSection
+              w8ben={w8benQuery.data?.w8ben ?? { status: "missing", on_file: false }}
+              unavailable={w8benQuery.isError || w8benQuery.data?.w8ben_unavailable === true}
+              onCapture={() => setW8benOpen(true)}
+            />
+          </div>
+          <W8BenModal
+            open={w8benOpen}
+            driverId={id}
+            companyId={companyId}
+            driverName={`${driver.first_name} ${driver.last_name}`}
+            onClose={() => setW8benOpen(false)}
+            onCreated={() => void queryClient.invalidateQueries({ queryKey: ["driver-w8ben-summary", id, companyId] })}
+          />
         </div>
       ) : null}
 

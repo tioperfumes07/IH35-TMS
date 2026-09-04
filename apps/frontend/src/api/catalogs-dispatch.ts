@@ -100,7 +100,7 @@ export function resolveDispatchCatalogRowId(
   return rows.find((row) => row.code === value)?.id;
 }
 
-export function createDispatchCatalogClient(catalogPath: "load-types" | "detention-reasons" | "pickup-time-types" | "additional-charges" | "lumper-providers" | "load-trailer-equipment" | "historical-import-reasons") {
+export function createDispatchCatalogClient(catalogPath: "load-types" | "detention-reasons" | "pickup-time-types" | "additional-charges" | "lumper-providers" | "load-trailer-equipment" | "historical-import-reasons" | "load-commodities") {
   const basePath = `/api/v1/catalogs/dispatch/${catalogPath}`;
   return {
     list: (filters: DispatchCatalogListFilters) =>
@@ -133,3 +133,4 @@ export const loadTrailerEquipmentCatalogClient = createDispatchCatalogClient("lo
 // GO-21 B3 — catalogs.historical_import_reasons (migration 202613480001). Quick-pick source for the
 // Book Load "Historical import reason" field; see BookLoadModalV4.tsx.
 export const historicalImportReasonsCatalogClient = createDispatchCatalogClient("historical-import-reasons");
+export const loadCommoditiesCatalogClient = createDispatchCatalogClient("load-commodities");

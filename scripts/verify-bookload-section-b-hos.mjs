@@ -19,6 +19,11 @@ if (!/operatingCompanyId=\{effectiveOperatingCompanyId\}/.test(modal)) fail("Boo
 if (!/export function resolveDisplayHosClocks/.test(clocks)) fail("hosClocks must expose resolveDisplayHosClocks for partial certified/in-app merge");
 if (!/eld\?\.cycle_remaining_min \?\? row\?\.cycle_remaining_min/.test(clocks)) fail("merge must backfill null certified cycle from in-app cycle_remaining_min");
 if (!/assignment_mode|assignmentMode === "team"/.test(sec) || !/secondaryDriverId/.test(sec)) fail("team mode must also show the team driver HOS");
+const hosBlockIdx = sec.indexOf('data-testid="book-load-driver-hos"');
+const adjIdx = sec.indexOf('data-testid="expected-adjustments"');
+if (hosBlockIdx < 0 || adjIdx < 0 || hosBlockIdx > adjIdx) fail("Driver HOS must sit under the driver picker, before expected adjustments");
+if (/HOS · detention/.test(sec)) fail("expected adjustments must not bury HOS in its header");
+if (/OptimalDriversPanel/.test(sec)) fail("ranked driver suggestions must stay off Book Load section B");
 const blk = readFileSync(join(root, "apps/frontend/src/components/dispatch/hos/DriverHosClocks.tsx"), "utf8");
 const blockStart = blk.indexOf("export function DriverHosClocksBlock(");
 const blockEnd = blk.indexOf("export function DriverHosClockValue(", blockStart);

@@ -315,7 +315,7 @@ export function CreateMultipleBillsPage() {
         <span className="text-gray-700">Total draft amount: ${totalUsd.toFixed(2)}</span>
         <span className="w-full text-xs font-normal text-gray-500" data-testid="multi-bills-number-hint">
           {nextBillHint
-            ? `Leave blank to mint. Next unused is ${nextBillHint} — that is a caption, not the box.`
+            ? `Leave blank to mint. Next unused is ${nextBillHint}.`
             : "Leave blank to mint. Type any number you want."}
         </span>
         <div className="flex gap-2">

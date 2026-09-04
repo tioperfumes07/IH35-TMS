@@ -49,7 +49,7 @@ const EMPTY_RESULT: ValidationResult = {
   blockers: [],
   warnings: [],
   info: [],
-  can_dispatch: true,
+  can_dispatch: false,
 };
 
 async function fetchPreDispatchValidation(body: {
@@ -78,7 +78,7 @@ export function PreDispatchValidationPanel({
   onValidationChange,
   onOverrideReasonChange,
   canOwnerOverride = false,
-  onOwnerOverride,
+  onOwnerOverride: _onOwnerOverride,
   onRemainingBlockersChange,
   onBlockOverridesChange,
 }: Props) {
@@ -98,12 +98,12 @@ export function PreDispatchValidationPanel({
       );
       onValidationChange?.(
         canDispatchOverride ?? data.can_dispatch,
-        data.blockers.length > 0,
+        data.blockers.filter((b) => !blockOverrides[b.rule_id]).length > 0,
         data.warnings.length > 0,
         unackedInsSchedule
       );
     },
-    [acknowledgedRules, onValidationChange]
+    [acknowledgedRules, blockOverrides, onValidationChange]
   );
 
   // Re-run whenever any key input changes.
@@ -120,10 +120,9 @@ export function PreDispatchValidationPanel({
     setRowReasons({});
     onBlockOverridesChange?.({});
     onRemainingBlockersChange?.(0);
-    // Only run if there's something to validate.
     if (!driverUuid && !unitUuid && !customerId) {
       setResult(EMPTY_RESULT);
-      onValidationChange?.(true, false, false, false);
+      onValidationChange?.(false, false, false, false);
       return;
     }
 
@@ -163,8 +162,9 @@ export function PreDispatchValidationPanel({
   }, [inputKey, retryGeneration]);
 
   useEffect(() => {
+    if (!driverUuid && !unitUuid && !customerId) return;
     reportValidationState(result);
-  }, [acknowledgedRules, result, reportValidationState]);
+  }, [acknowledgedRules, customerId, driverUuid, result, reportValidationState, unitUuid]);
 
   const logInsScheduleConfirmation = useCallback(async (ruleId: string) => {
     const isDriverRule = ruleId === "INS-SCHEDULE-NOT-ON-POLICY";
@@ -216,6 +216,7 @@ export function PreDispatchValidationPanel({
 
   const remainingBlockers = result.blockers.filter((b) => !blockOverrides[b.rule_id]).length;
   const hasUnackedBlockers = remainingBlockers > 0;
+  const checksNotRun = !driverUuid && !unitUuid && !customerId;
 
   useEffect(() => {
     onRemainingBlockersChange?.(remainingBlockers);
@@ -257,7 +258,14 @@ export function PreDispatchValidationPanel({
         </div>
       ) : null}
 
-      {error ? (
+      {checksNotRun ? (
+        <div
+          className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600"
+          data-testid="pre-dispatch-checks-not-run"
+        >
+          Not run — select a driver, unit, or customer to run checks.
+        </div>
+      ) : error ? (
         <div className="border-t border-slate-200 bg-slate-50 px-0 py-2 text-xs text-slate-700" role="alert">
           <span>Pre-dispatch check unavailable: {error}</span>
           <button
@@ -294,43 +302,34 @@ export function PreDispatchValidationPanel({
         />
       )}
 
-      {result.blockers.length > 0 && !loading && (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-2.5 text-xs">
+      {result.blockers.length > 0 && !loading && remainingBlockers > 0 ? (
+        <div className="rounded-sm border border-red-200 bg-red-50 p-2.5 text-xs" data-testid="pre-dispatch-blockers-active">
           <div className="mb-1.5 font-semibold text-red-800">
-            {remainingBlockers > 0
-              ? `Book stays disabled — ${remainingBlockers} blocker(s) remain. Override each row.`
-              : "Every blocker is overridden for this booking. Book + dispatch will record one audit row per rule."}
+            Book stays disabled — {remainingBlockers} blocker(s) remain. Override each row.
           </div>
-          {canOwnerOverride && remainingBlockers === 0 && onOwnerOverride ? (
-            <button
-              type="button"
-              onClick={() => onOwnerOverride?.()}
-              className="rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 hover:bg-red-100"
-            >
-              Override &amp; dispatch
-            </button>
-          ) : null}
           {!canOwnerOverride && hasUnackedBlockers ? (
             <div className="mt-1 text-xs text-red-600">
               Dispatcher-level override requires owner approval. Contact your owner to proceed.
             </div>
           ) : null}
         </div>
-      )}
+      ) : null}
+      {result.blockers.length > 0 && !loading && remainingBlockers === 0 ? (
+        <div className="rounded-sm border border-slate-300 bg-slate-50 p-2.5 text-xs" data-testid="pre-dispatch-overrides-cleared">
+          <div className="font-semibold text-slate-800">
+            Booking is cleared to dispatch with {Object.keys(blockOverrides).length} override
+            {Object.keys(blockOverrides).length === 1 ? "" : "s"} recorded.
+          </div>
+        </div>
+      ) : null}
 
-      {!loading && !error && (
+      {!checksNotRun && !loading && !error && remainingBlockers > 0 ? (
         <div className="flex items-center justify-between text-xs text-gray-400">
           <span>
-            {result.blockers.length > 0
-              ? `${result.blockers.length} blocker(s) — override required to dispatch`
-              : result.warnings.some((w) => isInsScheduleRule(w.rule_id) && !acknowledgedRules.has(w.rule_id))
-              ? "Insurance schedule confirmation required before booking"
-              : result.warnings.length > 0
-              ? `${result.warnings.length} warning(s) — acknowledge to note, booking still allowed`
-              : "All checks pass"}
+            {`${remainingBlockers} blocker(s) — override required to dispatch`}
           </span>
         </div>
-      )}
+      ) : null}
 
       <ConfirmModal
         open={pendingInsScheduleConfirm != null}
