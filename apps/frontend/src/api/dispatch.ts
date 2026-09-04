@@ -1533,6 +1533,25 @@ export function getLaneMileage(params: {
   return apiRequest<LaneMileageLookupResult>(`/api/v1/dispatch/lane-mileage?${u.toString()}`);
 }
 
+// WIZ-32 / WIZ-16 — the driver's profile rate card, read-only, for the Book Load "Driver pay rate /
+// mi" display. Never used to POST an override: the load stores no rate so booking resolves live from
+// the same table (driver_finance.driver_pay_rates). has_rate=false / null cents means blank on screen
+// — a 0 would be a false claim the rate is zero.
+export type DriverPayCard = {
+  has_rate: boolean;
+  basis_type: string | null;
+  rate_per_mile_cents: number | null;
+  rate_empty_per_mile_cents: number | null;
+  flat_per_load_cents: number | null;
+};
+
+export function getDriverPayCard(params: { operating_company_id: string; driver_id: string }) {
+  const u = new URLSearchParams();
+  u.set("operating_company_id", params.operating_company_id);
+  u.set("driver_id", params.driver_id);
+  return apiRequest<DriverPayCard>(`/api/v1/dispatch/driver-pay-card?${u.toString()}`);
+}
+
 // GO-23 owner ruling 2026-09-02: deadhead is a TRIP property (this unit's real last delivery to
 // this pickup), never catalogs.lane_mileage's lane average. Returns { source: "blank", reason }
 // rather than a number when there is no locatable prior delivery — never a false 0.
