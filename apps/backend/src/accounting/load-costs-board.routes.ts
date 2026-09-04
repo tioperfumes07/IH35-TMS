@@ -13,7 +13,7 @@ export const LOAD_COSTS_HUB_LINKAGE = {
   5: { hub: "mdata.loads", via: "load_id on expenses, bill_lines, driver_bills — the board key", reverse: "this board and load Costs tab" },
   6: { hub: "catalogs.accounts", via: "expense and bill line GL account when coded", reverse: "GL / account register" },
   7: { hub: "mdata.customers", via: "load.customer_id", reverse: "customer loads" },
-  8: { hub: "maintenance.work_orders", na: "A load cost is an expense or vendor bill, not a shop work order. When a shop bill is load-coded, the bill still carries load_id; the WO surface finds it through the bill, not this aggregate." },
+  8: { hub: "maintenance.work_orders", via: "same-load linked_work_order_uuid on the expense or bill; only direct trip repairs enter R&M", reverse: "work order financial links and load Costs board" },
   9: { hub: "mdata.vendors", via: "expense.vendor_id and bills.vendor_id", reverse: "vendor bills / expenses" },
   10: { hub: "accounting.journal_entries", via: "posting on the expense or bill, never a parallel ledger", reverse: "JE source links" },
   11: { hub: "docs.files", via: "receipts / attachments on the expense or bill", reverse: "Docs module by source id" },
@@ -28,13 +28,13 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
       return reply.code(403).send({ error: "forbidden" });
     }
     const parsed = companyQuerySchema.extend({
-      load_costs_sort: z.enum(["load", "status", "pickup_date", "projected_delivery", "delivered", "route_crew", "revenue", "costs", "driver", "margin"]).default("load"),
+      load_costs_sort: z.enum(["load", "status", "pickup_date", "projected_delivery", "delivered", "route_crew", "revenue", "costs", "repairs_maintenance", "driver", "margin"]).default("load"),
       sort_direction: z.enum(["asc", "desc"]).default("desc"),
     }).safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
     return withCompanyScope(String(user.uuid), parsed.data.operating_company_id, async (client) => {
-      const sortColumns = { load:"l.load_number", status:"l.status", pickup_date:"pickup.scheduled_arrival_at", projected_delivery:"delivery.scheduled_arrival_at", delivered:"delivery.actual_arrival_at", route_crew:"pickup.city", revenue:"l.rate_total_cents", costs:"(COALESCE(ec.expense_cents,0)+COALESCE(bc.bill_cents,0))", driver:"COALESCE(dp.driver_pay_cents,0)", margin:"(l.rate_total_cents-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dp.driver_pay_cents,0))" } as const;
+      const sortColumns = { load:"l.load_number", status:"l.status", pickup_date:"pickup.scheduled_arrival_at", projected_delivery:"delivery.scheduled_arrival_at", delivered:"delivery.actual_arrival_at", route_crew:"pickup.city", revenue:"l.rate_total_cents", costs:"(COALESCE(ec.expense_cents,0)+COALESCE(bc.bill_cents,0))", repairs_maintenance:"COALESCE(rm.repairs_maintenance_cents,0)", driver:"COALESCE(dp.driver_pay_cents,0)", margin:"(l.rate_total_cents-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dp.driver_pay_cents,0))" } as const;
       const sortSql = `${sortColumns[parsed.data.load_costs_sort]} ${parsed.data.sort_direction.toUpperCase()} NULLS LAST, l.load_number ASC`;
       const result = await client.query(
         `WITH expense_costs AS (
@@ -59,6 +59,37 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
               AND b.status NOT IN ('void','voided')
               AND b.revoked_at IS NULL
             GROUP BY bl.load_id
+         ), repair_documents AS (
+           SELECT e.load_id, e.total_amount_cents::bigint AS amount_cents
+             FROM accounting.expenses e
+             JOIN maintenance.work_orders wo
+               ON wo.id = e.linked_work_order_uuid
+              AND wo.operating_company_id = e.operating_company_id
+              AND wo.load_id = e.load_id
+              AND wo.load_id IS NOT NULL
+              AND wo.status <> 'cancelled'
+            WHERE e.operating_company_id = $1::uuid
+              AND e.load_id IS NOT NULL
+              AND e.status <> 'void'
+           UNION ALL
+           SELECT bl.load_id, ROUND(bl.amount * 100)::bigint AS amount_cents
+             FROM accounting.bill_lines bl
+             JOIN accounting.bills b
+               ON b.id = bl.bill_id
+              AND b.operating_company_id = $1::uuid
+             JOIN maintenance.work_orders wo
+               ON wo.id = b.linked_work_order_uuid
+              AND wo.operating_company_id = b.operating_company_id
+              AND wo.load_id = bl.load_id
+              AND wo.load_id IS NOT NULL
+              AND wo.status <> 'cancelled'
+            WHERE bl.load_id IS NOT NULL
+              AND b.status NOT IN ('void','voided')
+              AND b.revoked_at IS NULL
+         ), repair_costs AS (
+           SELECT load_id, COALESCE(SUM(amount_cents), 0)::bigint AS repairs_maintenance_cents
+             FROM repair_documents
+            GROUP BY load_id
          ), driver_pay AS (
            SELECT db.load_id,
                   COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS driver_pay_cents
@@ -75,12 +106,13 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                 delivery.actual_arrival_at::text AS actual_delivery_at, l.created_at::text, l.rate_total_cents::text AS revenue_cents,
                 COALESCE(ec.expense_cents, 0)::text AS expense_cents,
                 COALESCE(bc.bill_cents, 0)::text AS bill_cents,
+                COALESCE(rm.repairs_maintenance_cents, 0)::text AS repairs_maintenance_cents,
                 COALESCE(dp.driver_pay_cents, 0)::text AS driver_pay_cents,
                 COALESCE(ec.expense_count, 0)::int AS expense_count,
                 COALESCE(bc.bill_count, 0)::int AS bill_count,
                 COALESCE(bc.unpaid_bill_count, 0)::int AS unpaid_bill_count
            FROM views.dispatch_load_with_driver_status l
-           LEFT JOIN expense_costs ec ON ec.load_id=l.id LEFT JOIN bill_costs bc ON bc.load_id=l.id LEFT JOIN driver_pay dp ON dp.load_id=l.id
+           LEFT JOIN expense_costs ec ON ec.load_id=l.id LEFT JOIN bill_costs bc ON bc.load_id=l.id LEFT JOIN repair_costs rm ON rm.load_id=l.id LEFT JOIN driver_pay dp ON dp.load_id=l.id
            LEFT JOIN mdata.customers c ON c.id=l.customer_id AND c.operating_company_id=l.operating_company_id
            -- W-FIX-3b (loads.routes.ts, same rule): mdata.units has owner_company_id /
            -- currently_leased_to_company_id, never operating_company_id. mdata.loads has NO
