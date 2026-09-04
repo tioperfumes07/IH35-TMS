@@ -5,6 +5,52 @@ import {
 
 export { DuplicateDocumentNumberError };
 
+/**
+ * SET-25 (owner order 2026-09-04). parseOperatorDocumentNumber only checks a GENERIC character
+ * class (alphanumeric/./_/-, length) -- it says nothing about the SHAPE a given document type's
+ * own DB CHECK constraint actually requires. A manual/auto display_id could pass that generic
+ * check and still hit a raw, unhandled Postgres constraint-violation error at INSERT time (exactly
+ * what blocked the owner's first invoice: accounting.invoices' load_number-shaped display_id
+ * passed the generic check, then died on invoices_display_id_check, which the app-side code never
+ * consulted). The DB constraint must be the SECOND line of defense, never the first -- these
+ * patterns are kept in lockstep with the live constraints by
+ * verify-invoice-display-id-shape-matches-db-constraint.mjs (verify-step 10305), which reads
+ * pg_get_constraintdef and fails if the two ever disagree.
+ */
+export class InvalidDisplayIdShapeError extends Error {
+  constructor(
+    readonly docType: string,
+    readonly value: string
+  ) {
+    super(`${value} does not match the accepted display_id shape for ${docType}`);
+    this.name = "InvalidDisplayIdShapeError";
+  }
+}
+
+/** accounting.invoices.invoices_display_id_check, widened 2026-09-04 (SET-25) to also accept the
+ * plain-digit load_number shape GO-10 REV-B L3 locked. All four alternatives are live-accepted;
+ * none may be removed without a matching migration (the two YYYYMMDD-prefixed ones are dead --
+ * 0 live rows -- but are KEPT per owner order, not silently dropped from validation either). */
+export const INVOICE_DISPLAY_ID_PATTERN =
+  /^(INV-[0-9]{4}-[0-9]{5}|L-[0-9]{8}-[0-9]{4}|LUSMCAFREIGHT-[0-9]{8}-[0-9]{4}|[0-9]{1,12})$/;
+
+/** accounting.payments.payments_display_id_check -- unchanged by this PR, live-verified. */
+export const PAYMENT_DISPLAY_ID_PATTERN = /^PMT-[0-9]{4}-[0-9]{5}$/;
+
+/** accounting.bills carries NO display_id CHECK constraint today (live-verified) -- there is
+ * nothing for the DB to reject a manual bill number against, so this validates against the SAME
+ * shape nextBillDisplayId itself generates, as defense in depth rather than a DB-constraint
+ * mirror: a manual override that does not match the series' own shape is still a real mistake to
+ * catch, even though nothing downstream would currently refuse it. */
+export const BILL_DISPLAY_ID_PATTERN = /^BILL-[0-9]{4}-[0-9]{5}$/;
+
+function assertDisplayIdShape(value: string, pattern: RegExp, docType: string): string {
+  if (!pattern.test(value)) {
+    throw new InvalidDisplayIdShapeError(docType, value);
+  }
+  return value;
+}
+
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
@@ -227,6 +273,7 @@ export async function resolveInvoiceDisplayId(
 ): Promise<string> {
   const manual = parseOperatorDocumentNumber(requested);
   if (manual) {
+    assertDisplayIdShape(manual, INVOICE_DISPLAY_ID_PATTERN, "invoice");
     await withDisplayLock(client, `accounting.invoice.display_id:${operatingCompanyId}`);
     const taken = await client.query(
       `
@@ -243,7 +290,7 @@ export async function resolveInvoiceDisplayId(
     return manual;
   }
   const fallback = autoFallback?.trim();
-  if (fallback) return fallback;
+  if (fallback) return assertDisplayIdShape(fallback, INVOICE_DISPLAY_ID_PATTERN, "invoice");
   return nextInvoiceDisplayId(client, operatingCompanyId, referenceDate);
 }
 
@@ -255,6 +302,7 @@ export async function resolvePaymentDisplayId(
 ): Promise<string> {
   const manual = parseOperatorDocumentNumber(requested);
   if (manual) {
+    assertDisplayIdShape(manual, PAYMENT_DISPLAY_ID_PATTERN, "payment");
     await withDisplayLock(client, `accounting.payment.display_id:${operatingCompanyId}`);
     const taken = await client.query(
       `
@@ -281,6 +329,7 @@ export async function resolveBillDisplayId(
 ): Promise<string> {
   const manual = parseOperatorDocumentNumber(requested);
   if (manual) {
+    assertDisplayIdShape(manual, BILL_DISPLAY_ID_PATTERN, "bill");
     await withDisplayLock(client, `accounting.bill.display_id:${operatingCompanyId}`);
     const taken = await client.query(
       `
