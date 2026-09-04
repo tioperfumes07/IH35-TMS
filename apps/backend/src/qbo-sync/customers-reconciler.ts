@@ -52,7 +52,10 @@ async function createMissingFromMirror(client: PoolClient, operatingCompanyId: s
         )
         SELECT
           qc.operating_company_id,
-          qc.display_name,
+          CASE
+            WHEN qc.display_name ~ 'Ã.|Â.' THEN convert_from(convert_to(qc.display_name, 'LATIN1'), 'UTF8')
+            ELSE qc.display_name
+          END,
           qc.primary_email,
           qc.primary_phone,
           qc.qbo_id,

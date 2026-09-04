@@ -167,6 +167,16 @@ export function ValidationPanel({
   const allItems = [...result.blockers, ...result.warnings, ...result.info];
 
   if (allItems.length === 0) {
+    if (!result.can_dispatch) {
+      return (
+        <div
+          className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600"
+          data-testid="pre-dispatch-checks-incomplete"
+        >
+          Checks have not passed yet.
+        </div>
+      );
+    }
     return (
       <div className="flex items-center gap-2 rounded-sm border border-green-300 bg-green-50 px-3 py-2 text-xs text-green-800">
         <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-green-600 text-xs font-bold text-white">✓</span>

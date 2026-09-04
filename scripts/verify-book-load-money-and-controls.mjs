@@ -95,6 +95,22 @@ function violations(lib, editor, wizard, equipment, timeWindow, moneyInput, numb
   if (!/driver-pay-rate-per-mile[\s\S]{0,220}h-7 w-\[5\.5rem\][\s\S]{0,80}text-right[\s\S]{0,40}tabular-nums/.test(equipment)) {
     errors.push("Driver pay rate must be h-7, narrow, right-aligned, tabular-nums");
   }
+  const tripBannerStart = wizard.indexOf('data-testid="trip-type-banner"');
+  const tripBanner = tripBannerStart >= 0 ? wizard.slice(tripBannerStart, tripBannerStart + 1800) : "";
+  if (!tripBanner || /\bflex-1\b/.test(tripBanner)) {
+    errors.push("Trip Type buttons must not use flex-1 (they stretch to 376px)");
+  }
+  if (!/createKind="load_commodity"/.test(wizard)) {
+    errors.push("Commodity must be a catalog picker with inline create");
+  }
+  if (!/md:col-span-2/.test(wizard)) {
+    errors.push("Customer field must span 2 columns in the Section A 4-column grid");
+  }
+  const liveBarIdx = wizard.indexOf("<LiveLoadIdBar");
+  const customerHeaderIdx = wizard.indexOf("Customer · Invoice · Charges");
+  if (liveBarIdx < 0 || customerHeaderIdx < 0 || liveBarIdx < customerHeaderIdx) {
+    errors.push("Load # must sit inside Section A, not over the modal header");
+  }
   return errors;
 }
 
@@ -110,6 +126,10 @@ const equipment = fs.readFileSync(EQUIPMENT, "utf8");
 const timeWindow = fs.readFileSync(TIME_WINDOW, "utf8");
 const moneyInput = fs.readFileSync(MONEY_INPUT, "utf8");
 const numberInput = fs.readFileSync(NUMBER_INPUT, "utf8");
+const combo = fs.readFileSync("apps/frontend/src/components/Combobox.tsx", "utf8");
+if (!combo.includes("formFieldChrome") || !combo.includes("h-7 w-full min-w-0 rounded-sm border")) {
+  throw new Error("Combobox size=sm must paint the 28px bordered input itself (WIZ-34)");
+}
 
 if (process.argv.includes("--selftest")) {
   const base = [lib, editor, wizard, equipment, timeWindow, moneyInput, numberInput];
@@ -117,7 +137,7 @@ if (process.argv.includes("--selftest")) {
     [lib.replace("sum + Number(row.amount_cents || 0)", "sum + Math.max(0, Number(row.amount_cents || 0))"), editor, wizard, equipment, timeWindow, moneyInput, numberInput],
     [lib, editor.replace("amount_cents: c ?? 0", "amount_cents: Math.max(0, c ?? 0)"), wizard, equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replaceAll("Invoice total", "Section total"), equipment, timeWindow, moneyInput, numberInput],
-    [lib, editor, wizard.replace("flex h-7 flex-1", "flex h-[46px] flex-1"), equipment, timeWindow, moneyInput, numberInput],
+    [lib, editor, wizard.replace("inline-flex h-7 shrink-0", "flex h-[46px] flex-1"), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('linehaulFuelError("linehaul"', 'linehaulFuelErrorDISABLED("linehaul"'), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('form.setError("linehaul_cents"', 'form.setErrorDISABLED("linehaul_cents"'), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard, equipment, timeWindow, moneyInput.replace("h-7 w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs tabular-nums", "w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs"), numberInput],

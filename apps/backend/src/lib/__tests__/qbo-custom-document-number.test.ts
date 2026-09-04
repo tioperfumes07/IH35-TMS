@@ -35,7 +35,7 @@ describe("QboDocumentNumberField — empty box (GO-06 owner 2026-09-01)", () => 
     expect(src).not.toMatch(/onChange\(suggested\)/);
     expect(src).not.toMatch(/placeholder=\{suggested\}/);
     expect(src).toMatch(/placeholder=""/);
-    expect(src).toMatch(/Leave blank to mint/);
+    expect(src).toMatch(/Leave blank to use the next unused number/);
   });
 });
 

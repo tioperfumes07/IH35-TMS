@@ -49,7 +49,7 @@ const EMPTY_RESULT: ValidationResult = {
   blockers: [],
   warnings: [],
   info: [],
-  can_dispatch: true,
+  can_dispatch: false,
 };
 
 async function fetchPreDispatchValidation(body: {
@@ -120,10 +120,9 @@ export function PreDispatchValidationPanel({
     setRowReasons({});
     onBlockOverridesChange?.({});
     onRemainingBlockersChange?.(0);
-    // Only run if there's something to validate.
     if (!driverUuid && !unitUuid && !customerId) {
       setResult(EMPTY_RESULT);
-      onValidationChange?.(true, false, false, false);
+      onValidationChange?.(false, false, false, false);
       return;
     }
 
@@ -163,8 +162,9 @@ export function PreDispatchValidationPanel({
   }, [inputKey, retryGeneration]);
 
   useEffect(() => {
+    if (!driverUuid && !unitUuid && !customerId) return;
     reportValidationState(result);
-  }, [acknowledgedRules, result, reportValidationState]);
+  }, [acknowledgedRules, customerId, driverUuid, result, reportValidationState, unitUuid]);
 
   const logInsScheduleConfirmation = useCallback(async (ruleId: string) => {
     const isDriverRule = ruleId === "INS-SCHEDULE-NOT-ON-POLICY";
@@ -216,6 +216,7 @@ export function PreDispatchValidationPanel({
 
   const remainingBlockers = result.blockers.filter((b) => !blockOverrides[b.rule_id]).length;
   const hasUnackedBlockers = remainingBlockers > 0;
+  const checksNotRun = !driverUuid && !unitUuid && !customerId;
 
   useEffect(() => {
     onRemainingBlockersChange?.(remainingBlockers);
@@ -257,7 +258,14 @@ export function PreDispatchValidationPanel({
         </div>
       ) : null}
 
-      {error ? (
+      {checksNotRun ? (
+        <div
+          className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600"
+          data-testid="pre-dispatch-checks-not-run"
+        >
+          Not run — select a driver, unit, or customer to run checks.
+        </div>
+      ) : error ? (
         <div className="border-t border-slate-200 bg-slate-50 px-0 py-2 text-xs text-slate-700" role="alert">
           <span>Pre-dispatch check unavailable: {error}</span>
           <button
@@ -318,7 +326,7 @@ export function PreDispatchValidationPanel({
         </div>
       )}
 
-      {!loading && !error && (
+      {!checksNotRun && !loading && !error && (
         <div className="flex items-center justify-between text-xs text-gray-400">
           <span>
             {result.blockers.length > 0
