@@ -506,17 +506,27 @@ export function Combobox({
         )
       : null;
 
+  const formFieldChrome = size === "sm";
+
   return (
-    <div ref={containerRef} className={`relative ${className ?? ""}`}>
+    <div ref={containerRef} className={`relative w-full min-w-0 ${className ?? ""}`}>
       <div
         // FILTER LAW (COLUMN LAW 2026-09-01) — this is the ONE place the app's canonical filter/
         // combobox control height+font live; TableSearch.tsx now shares the same constant so a
         // filter and the search box sitting next to it in the same toolbar row never drift apart.
-        className={`flex ${controlSizeClass} items-center gap-1 rounded border bg-white px-2 ${
+        // WIZ-34: form (size=sm) paints the SAME 28px bordered box as a plain input. The live
+        // measurement is the role=combobox <input>, so that element carries h-7 + border.
+        className={`flex w-full min-w-0 items-center gap-1 ${
+          formFieldChrome
+            ? ""
+            : `rounded border bg-white px-2 ${controlSizeClass}`
+        } ${
           disabled
             ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
             : error
             ? "border-red-400 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-200"
+            : formFieldChrome
+            ? ""
             : "border-gray-300 focus-within:border-slate-300 focus-within:ring-2 focus-within:ring-slate-400"
         }`}
       >
@@ -560,7 +570,17 @@ export function Combobox({
           aria-controls={listboxId}
           aria-autocomplete="list"
           aria-invalid={Boolean(error)}
-          className="w-full bg-transparent text-xs outline-hidden placeholder:text-gray-400 disabled:cursor-not-allowed"
+          className={
+            formFieldChrome
+              ? `h-7 w-full min-w-0 rounded-sm border px-2 text-xs outline-hidden placeholder:text-gray-400 disabled:cursor-not-allowed ${
+                  disabled
+                    ? "border-gray-200 bg-gray-100 text-gray-400"
+                    : error
+                      ? "border-red-400 bg-white"
+                      : "border-gray-300 bg-white"
+                }`
+              : "h-full min-h-0 w-full bg-transparent text-xs outline-hidden placeholder:text-gray-400 disabled:cursor-not-allowed"
+          }
         />
         {allowClear && value ? (
           <button

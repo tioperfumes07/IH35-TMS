@@ -5,7 +5,6 @@ import { listDriverTeams } from "../../../api/mdata";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { SelectCombobox } from "../../../components/Combobox";
-import { OptimalDriversPanel } from "../../../components/dispatch/OptimalDriversPanel";
 import { DriverHosClocksBlock } from "../../../components/dispatch/hos/DriverHosClocks";
 import { DeadheadOptimizerPanel } from "../../../components/dispatch/DeadheadOptimizerPanel";
 import { DriverInstructionsTextarea } from "./book-load-v4/DriverInstructionsTextarea";
@@ -44,17 +43,13 @@ type Props = {
   }) => void;
 };
 
-export function BookLoadEquipmentSection({ register, watch, setValue, operatingCompanyId, optimizerLoadId, deadheadAfterAt, deadheadDropCity, deadheadDropState, onOptionsResolved }: Props) {
+export function BookLoadEquipmentSection({ register, watch, setValue, operatingCompanyId, deadheadAfterAt, deadheadDropCity, deadheadDropState, onOptionsResolved }: Props) {
   const assignmentMode = watch ? watch("assignment_mode") : "solo";
   const primaryDriverId = watch ? String(watch("assigned_primary_driver_id") ?? "").trim() : "";
   const secondaryDriverId = watch ? String(watch("assigned_secondary_driver_id") ?? "").trim() : "";
   const hosOperatingCompanyId = operatingCompanyId?.trim() || undefined;
   const assignedUnitId = watch ? String(watch("assigned_unit_id") ?? "") : "";
   const assignedTrailerUnitId = watch ? String(watch("assigned_trailer_unit_id") ?? "") : "";
-  // GO-21 B5 — a typed driver_pay_rate_per_mile does nothing unless paired with a real reason;
-  // only show the (required) reason field once the operator has actually typed a rate, so the
-  // common case (no rate typed, driver's profile card prices the load) stays uncluttered.
-  const driverPayRatePerMileTyped = watch ? Number(watch("driver_pay_rate_per_mile") ?? 0) : 0;
   const [primaryDriverOption, setPrimaryDriverOption] = useState<EntityPickerOption | null>(null);
   const [secondaryDriverOption, setSecondaryDriverOption] = useState<EntityPickerOption | null>(null);
   const [unitOption, setUnitOption] = useState<EntityPickerOption | null>(null);
@@ -89,7 +84,6 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
     trailerSource,
     unitOption,
   ]);
-  const reservationUuid = watch ? String(watch("reservation_uuid") ?? "") : "";
   const trailerType = watch ? String(watch("trailer_type") ?? "") : "";
   const temperatureType = watch ? String(watch("temperature_type") ?? "") : ""; // W-FIX-1 Frozen/Fresh segmented
   // Conditional equipment detail reveals (render-v6 §B): reefer detail only on a reefer trailer, tarp detail
@@ -98,13 +92,6 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   const isFlatbed = trailerType === "flatbed";
   // render-v6 §B: Tarp qty + size are disabled until "Tarp required?" = Yes (reuses requires_tarps).
   const tarpRequired = watch ? Boolean(watch("requires_tarps")) : false;
-  const hazmat = watch ? Boolean(watch("hazmat")) : false;
-  const stops = watch ? (watch("stops") as Array<{ city?: string; state?: string }> | undefined) : undefined;
-  const pickupStop = stops?.find((s) => s) ?? stops?.[0];
-  const optimizerLoadKey =
-    optimizerLoadId ||
-    reservationUuid ||
-    "00000000-0000-4000-8000-000000000000";
   const teamsQuery = useQuery({
     queryKey: ["book-load-driver-teams", operatingCompanyId],
     queryFn: () => listDriverTeams(String(operatingCompanyId)),
@@ -146,7 +133,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
 
   return (
     <section className="space-y-2">
-      <div className="grid grid-cols-1 items-end gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.35fr)]">
+      <div className="grid grid-cols-1 items-end gap-2 md:grid-cols-2">
         {/* render-v6 §B labels: Reefer / Flatbed / Dry Van (/ Lowboy — needs a trailer_type enum value via a
             gated migration; flagged). power_only_* kept — real data; removing them would break power-only loads. */}
         <Field label="Trailer type" input={
@@ -186,14 +173,14 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
             />
           }
         />
+        </div>
         <Field
           label="Trailer"
           input={
-            <div className="flex min-w-0 items-stretch gap-1">
-              {/* GO-23 A1: our trailer XOR an interchange trailer — never both. Switching source
-                  clears the other field so exactly one FK can ever be set. Toggle + picker stay
-                  ONE h-7 row (locked form scale) so this cell does not wrap under type/unit. */}
-              <div className="inline-flex h-7 shrink-0 overflow-hidden whitespace-nowrap rounded-sm border border-gray-300 bg-white text-xs font-semibold leading-none" data-testid="trailer-source-toggle">
+            <div className="flex w-full min-w-0 flex-col gap-1">
+              {/* GO-23 A1: our trailer XOR an interchange trailer — never both. Toggle sits above the
+                  picker so the unit name is never clipped to "Select tra...". */}
+              <div className="inline-flex h-7 w-fit shrink-0 overflow-hidden whitespace-nowrap rounded-sm border border-gray-300 bg-white text-xs font-semibold leading-none" data-testid="trailer-source-toggle">
                 <button
                   type="button"
                   title="Our trailer"
@@ -219,7 +206,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                   Interchange
                 </button>
               </div>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 w-full">
               {trailerSource === "owned" ? (
                 <EntityPicker
                   size="sm"
@@ -252,7 +239,6 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
             </div>
           }
         />
-      </div>
       {trailerEquipmentQuery.isError ? (
         <ListErrorState
           status={0}
@@ -343,20 +329,12 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           }
         />
       </div>
-      {operatingCompanyId && pickupStop?.city ? (
-        <OptimalDriversPanel
-          loadId={optimizerLoadKey}
-          operatingCompanyId={operatingCompanyId}
-          selectedDriverId={primaryDriverId}
-          onSelectDriver={(id) => setValue?.("assigned_primary_driver_id", id, { shouldDirty: true })}
-          preview={{
-            pickup_city: pickupStop.city,
-            pickup_state: pickupStop.state,
-            hazmat,
-            trailer_type: trailerType,
-          }}
-        />
-      ) : null}
+      <div className="space-y-2" data-testid="book-load-driver-hos">
+        <DriverHosClocksBlock driverId={primaryDriverId || undefined} operatingCompanyId={hosOperatingCompanyId} heading="Driver HOS (hours of service)" />
+        {assignmentMode === "team" && secondaryDriverId ? (
+          <DriverHosClocksBlock driverId={secondaryDriverId} operatingCompanyId={hosOperatingCompanyId} heading="Team driver HOS" />
+        ) : null}
+      </div>
       {/* RENDER-A-v2 §B: deadhead-optimizer aid sits with the driver-assignment helpers, before reefer/flatbed. */}
       {assignedUnitId && operatingCompanyId ? (
         <DeadheadOptimizerPanel
@@ -407,47 +385,26 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       {teamsQuery.isError ? (
         <ListErrorState status={0} message="Driver teams unavailable." onRetry={() => void teamsQuery.refetch()} />
       ) : null}
-      {/* Driver pay rate — compact QuickBooks money format (h-7, narrow, right-aligned, tabular 2dp).
-          Not full-width: sized to a rate like 0.70, not a charge column. */}
+      {/* WIZ-32: a 0 in this box is a claim that the rate is zero. The caption says leave blank
+          and resolve from the driver profile card (submit-time). The field is display-only. */}
       <div className="flex flex-wrap items-end gap-3">
         <Field
           label="Driver pay rate / mi"
           hint="Leave blank — pay resolves automatically from the driver's profile rate card."
           input={
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              {...register("driver_pay_rate_per_mile", {
-                valueAsNumber: true,
-                setValueAs: (v) => {
-                  if (v === "" || v == null) return 0;
-                  const n = Number(v);
-                  return Number.isFinite(n) ? Math.round(n * 100) / 100 : 0;
-                },
-              })}
-              data-testid="driver-pay-rate-per-mile"
-              className="h-7 w-[5.5rem] rounded-sm border border-gray-300 px-2 text-right text-xs tabular-nums"
-            />
-          }
-        />
-        {driverPayRatePerMileTyped > 0 ? (
-          <Field
-            label="Override reason (required)"
-            hint="A typed rate with no reason is never used; the driver's profile card prices the load instead."
-            input={
+            <>
+              <input type="hidden" {...register("driver_pay_rate_per_mile", { valueAsNumber: true })} />
               <input
                 type="text"
-                minLength={10}
-                maxLength={1000}
-                placeholder="Why does this load override the driver's card rate?"
-                data-testid="driver-pay-rate-override-reason"
-                {...register("driver_pay_rate_override_reason")}
-                className="h-7 w-full min-w-[16rem] rounded-sm border border-gray-300 px-2 text-xs"
+                readOnly
+                value=""
+                data-testid="driver-pay-rate-per-mile"
+                aria-readonly="true"
+                className="h-7 w-[5.5rem] rounded-sm border border-gray-300 bg-slate-50 px-2 text-right text-xs tabular-nums"
               />
-            }
-          />
-        ) : null}
+            </>
+          }
+        />
       </div>
       {/* RENDER-A-v2 §B REEFER PANEL (amber, "Refrigerated") — reefer trailer only. "Temperature type"
           (Frozen/Fresh) is asked FIRST, THEN "Reefer temperature (°F)" (the single setpoint reefer_temp_f).
@@ -543,18 +500,11 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           <DriverInstructionsTextarea register={register as never} />
         </div>
       </details>
-      {/* RENDER-A-v2 §B: "Expected adjustments" (HOS · detention · late risk) is the LAST §B block. Holds the
-          Driver HOS clock set (always shown; "No HOS data" until a driver + Samsara HOS) + the chargeback /
-          detention / late-risk callout. */}
       <details open data-testid="expected-adjustments" className="rounded-sm border border-gray-200">
         <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#1f2a44]">
-          Expected adjustments <span className="font-normal text-gray-400">HOS · detention · late risk</span>
+          Expected adjustments <span className="font-normal text-gray-400">detention · late risk</span>
         </summary>
         <div className="space-y-2 border-t border-gray-200 p-2">
-          <DriverHosClocksBlock driverId={primaryDriverId || undefined} operatingCompanyId={hosOperatingCompanyId} heading="Driver HOS (hours of service)" />
-          {assignmentMode === "team" && secondaryDriverId ? (
-            <DriverHosClocksBlock driverId={secondaryDriverId} operatingCompanyId={hosOperatingCompanyId} heading="Team driver HOS" />
-          ) : null}
           <ExpectedAdjustmentsCallout
             register={register as never}
             operatingCompanyId={operatingCompanyId ?? ""}

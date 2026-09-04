@@ -157,11 +157,6 @@ export function MilesStrip({
           <div className="font-mono text-xs text-slate-900">{!(ratePerMile <= 0) ? `$${ratePerMile.toFixed(3)}` : ""}</div>
         </div>
       </div>
-      <p className="border-t border-slate-200 px-2 py-1 text-xs text-slate-600">
-        Customer pays the typed rate. Practical miles compute revenue per mile. Driver pay is loaded miles times the
-        loaded rate plus empty miles times the empty rate — two lines. Short miles stay blank until a trustworthy source
-        exists; you may type them.
-      </p>
       {historyOffer ? (
         <p className="border-t border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-800" data-testid="book-load-lane-history">
           Seen {historyOffer.runs} times · median {historyOffer.median.toLocaleString(undefined, { maximumFractionDigits: 1 })} mi

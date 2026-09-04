@@ -104,7 +104,7 @@ export function BookLoadStopsSection({
         {fields.map((field, index) => {
           const isPickup = String(currentStops[index]?.stop_type ?? (index % 2 === 0 ? "pickup" : "delivery")) === "pickup";
           return (
-            <div key={field.id} data-testid={`stop-card-${index}`} className="overflow-hidden rounded-sm border border-gray-200 bg-white">
+            <div key={field.id} data-testid={`stop-card-${index}`} className="min-w-0 overflow-hidden rounded-sm border border-gray-200 bg-white">
               <div className={`flex items-center gap-2 px-2 py-1 text-[11px] font-bold tracking-[0.03em] ${isPickup ? "bg-[#1F2A44] text-white" : "bg-slate-200 text-slate-800"}`}>
                 <span className={`rounded-sm px-1.5 py-0.5 text-[11px] font-semibold uppercase ${isPickup ? "bg-white/20 text-white" : "bg-slate-600 text-white"}`}>
                   {isPickup ? "PICKUP" : "DELIVERY"}
@@ -120,14 +120,14 @@ export function BookLoadStopsSection({
                 ) : null}
               </div>
 
-              <div className="space-y-2 p-2">
+              <div className="min-w-0 space-y-2 p-2">
                 <input type="hidden" {...register(`stops.${index}.stop_type`)} />
                 <input type="hidden" {...register(`stops.${index}.country`)} />
 
                 {/* Row 1 — address details */}
                 <div
                   data-testid={`stop-locrow-${index}`}
-                  className="grid grid-cols-1 items-end gap-2 overflow-x-auto md:grid-cols-[minmax(8rem,1.1fr)_minmax(11rem,2fr)_minmax(6.5rem,1fr)_3.75rem_4.5rem]"
+                  className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2"
                 >
                   <Field
                     label="Location"
@@ -196,6 +196,8 @@ export function BookLoadStopsSection({
                       />
                     }
                   />
+                </div>
+                <div className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-3" data-testid={`stop-cityrow-${index}`}>
                   <Field
                     label="City"
                     input={
@@ -217,14 +219,14 @@ export function BookLoadStopsSection({
                     }
                   />
                   <Field label="Zip" input={<input {...register(`stops.${index}.postal_code`)} className={CELL} placeholder="ZIP" />} />
-                  <input type="hidden" {...register(`stops.${index}.latitude`)} />
-                  <input type="hidden" {...register(`stops.${index}.longitude`)} />
                 </div>
+                <input type="hidden" {...register(`stops.${index}.latitude`)} />
+                <input type="hidden" {...register(`stops.${index}.longitude`)} />
 
                 {/* Row 2 — appointment + site */}
                 <div
                   data-testid={`stop-siterow-${index}`}
-                  className="grid grid-cols-1 items-end gap-2 overflow-x-auto md:grid-cols-[minmax(7.25rem,0.9fr)_4.75rem_minmax(7.5rem,1.2fr)_minmax(6.5rem,0.8fr)_minmax(4.25rem,0.55fr)]"
+                  className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2 lg:grid-cols-3"
                 >
                   <Controller
                     control={control}
@@ -248,7 +250,7 @@ export function BookLoadStopsSection({
                 </div>
 
                 {/* Row 3 — time window (smaller) + remaining stop economics */}
-                <div data-testid={`stop-timewindow-${index}`} className="grid grid-cols-1 items-end gap-2 overflow-x-auto md:grid-cols-[minmax(9rem,1fr)_minmax(8.5rem,1fr)_minmax(6.5rem,0.85fr)_minmax(7rem,0.9fr)]">
+                <div data-testid={`stop-timewindow-${index}`} className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2">
                   <Field
                     label="Time window"
                     input={<TimeWindowDropdown register={register} name={`stops.${index}.time_window_type`} />}
@@ -332,7 +334,7 @@ export function BookLoadStopsSection({
 
 function Field({ label, input }: { label: string; input: JSX.Element }) {
   return (
-    <div className="min-w-0 space-y-0.5">
+    <div className="min-w-0 w-full space-y-0.5">
       <label className="block whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">{label}</label>
       {input}
     </div>

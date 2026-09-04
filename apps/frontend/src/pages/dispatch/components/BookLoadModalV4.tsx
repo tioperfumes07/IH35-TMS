@@ -15,7 +15,7 @@ import { useForm, type FieldErrors } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad, createTrailerInterchange, getLaneMileage, getChainDeadhead } from "../../../api/dispatch";
 import { resolveStopPlace } from "./book-load-city-state";
-import { historicalImportReasonsCatalogClient, listAllDispatchCatalogRows, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
+import { historicalImportReasonsCatalogClient, listAllDispatchCatalogRows, loadCommoditiesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { properPersonOrPlaceName } from "../../../lib/properDisplayText";
@@ -423,7 +423,7 @@ export function BookLoadModalV4({
     hasUnackedInsScheduleConfirm: boolean;
     remainingBlockers: number;
   }>({
-    canDispatch: true,
+    canDispatch: false,
     hasBlockers: false,
     hasWarnings: false,
     hasUnackedInsScheduleConfirm: false,
@@ -745,7 +745,13 @@ export function BookLoadModalV4({
   // uuid-shaped name and falls back to "Customer — not visible" instead, same convention as
   // every other reverse-link label in this codebase (BillsReverseSection, EntityLinkOrTombstone).
   const customerOptions = useMemo(() => {
-    const fromApi = (customersQuery.data ?? []).map((c) => ({ value: c.id, label: entityLabel(c.display_name, c.id, "Customer") }));
+    const seen = new Set<string>();
+    const fromApi: Array<{ value: string; label: string }> = [];
+    for (const c of customersQuery.data ?? []) {
+      if (!c.id || seen.has(c.id)) continue;
+      seen.add(c.id);
+      fromApi.push({ value: c.id, label: entityLabel(c.display_name, c.id, "Customer") });
+    }
     const id = String(watchedCustomerId || "").trim();
     const name = String(watchedCustomerName || "").trim();
     if (id && !fromApi.some((o) => o.value === id)) {
@@ -770,6 +776,15 @@ export function BookLoadModalV4({
   const lumperProviderOptions = useMemo(
     () => (lumperProvidersQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code })),
     [lumperProvidersQuery.data?.rows]
+  );
+  const commoditiesQuery = useQuery({
+    queryKey: ["book-load-load-commodities", operatingCompanyId],
+    queryFn: () => listAllDispatchCatalogRows(loadCommoditiesCatalogClient, { operating_company_id: operatingCompanyId, is_active: "true" }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const commodityOptions = useMemo(
+    () => (commoditiesQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code })),
+    [commoditiesQuery.data?.rows]
   );
   // GO-21 B3 — historical import reason quick-pick (migration 202613480001). Consumed like the
   // "Customer reference lookup" pattern: onChange writes the picked row's TEXT into the existing
@@ -832,10 +847,8 @@ export function BookLoadModalV4({
   const driverBillMissing = useMemo(() => {
     const missing: string[] = [];
     if (!(Number(milesPractical || 0) > 0)) missing.push("practical miles");
-    if (!(Number(driverPayRatePerMile || 0) > 0)) missing.push("driver pay rate / mile");
-    else if (String(driverPayRateOverrideReason ?? "").trim().length < 10) missing.push("override reason (10+ chars)");
     return missing;
-  }, [milesPractical, driverPayRatePerMile, driverPayRateOverrideReason]);
+  }, [milesPractical]);
   const ratePerMile = useMemo(() => {
     const miles = Number(milesPractical || 0);
     if (miles <= 0) return 0;
@@ -1409,11 +1422,6 @@ export function BookLoadModalV4({
           </div>
         </header>
 
-        {/* Edit mode reuses the real LOAD# (in the header) — no new reservation bar. */}
-        {isEditMode ? null : (
-          <LiveLoadIdBar operatingCompanyId={operatingCompanyId} onReservationUpdate={onReservationUpdate} />
-        )}
-
         <form
           className="flex flex-1 flex-col overflow-y-auto"
           onSubmit={(event) => {
@@ -1477,7 +1485,7 @@ export function BookLoadModalV4({
             <span className="text-[11px] font-bold uppercase tracking-[0.4px] text-gray-600">
               Trip Type <span className="text-red-500">*</span>
             </span>
-            <div className="mt-1 flex gap-2">
+            <div className="mt-1 flex flex-wrap gap-2">
               {([
                 ["NB", "▲", "Northbound", "Border → US interior", "#1F2A44"],
                 ["TR", "▶", "Triangulation", "US interior → US interior", "#64748b"],
@@ -1492,11 +1500,11 @@ export function BookLoadModalV4({
                       form.setValue("trip_type", code, { shouldDirty: true });
                       form.clearErrors("trip_type");
                     }}
-                    className="flex h-7 flex-1 items-center rounded-sm border px-2.5 text-left transition-colors"
+                    className="inline-flex h-7 shrink-0 items-center rounded-sm border px-2.5 text-left transition-colors"
                     title={desc}
                     style={active ? { backgroundColor: color, borderColor: color, color: "white" } : { borderColor: "#cbd5e1", color: "#1f2733" }}
                   >
-                    <span className="truncate text-xs font-bold leading-tight">{icon} {code} · {label}</span>
+                    <span className="whitespace-nowrap text-xs font-bold leading-tight">{icon} {code} · {label}</span>
                   </button>
                 );
               })}
@@ -1615,6 +1623,9 @@ export function BookLoadModalV4({
                   </span>
                 </div>
                 <div className="space-y-2 p-3">
+                  {isEditMode ? null : (
+                    <LiveLoadIdBar operatingCompanyId={operatingCompanyId} onReservationUpdate={onReservationUpdate} />
+                  )}
                   {/* §A rate-con upload — RESTORED per owner 2026-07-04 as the BUTTON variant (click → file
                       picker), matching how it worked before. The drag-drop zone lives in §E (Documents).
                       Both share the ONE extraction path and fill the same editable draft. */}
@@ -1667,7 +1678,7 @@ export function BookLoadModalV4({
                       block in §E (Documents). The duplicate button-panel affordance was removed here. */}
 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
-                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563] md:col-span-2">
                       Customer
                       <input type="hidden" {...form.register("customer_id", { required: "Select a customer from the list" })} />
                       <div className="mt-0.5">
@@ -1717,6 +1728,7 @@ export function BookLoadModalV4({
                       Pickup #
                       <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
+                  </div>
                     <input
                       type="hidden"
                       {...form.register("live_load_number", {
@@ -1727,7 +1739,6 @@ export function BookLoadModalV4({
                       autoComplete="off"
                       data-testid="book-load-live-load-number"
                     />
-                  </div>
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
                     {/* Customer type + freight identity — belong in §A with the customer/charges.
                         Restored 2026-09-03 after an unauthorized move into §B. Pieces is on this
@@ -1747,7 +1758,33 @@ export function BookLoadModalV4({
                     </label>
                     <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Commodity
-                      <input {...form.register("commodity")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+                      <div className="mt-0.5" data-testid="book-load-commodity-picker">
+                        <ReferenceSelect
+                          size="sm"
+                          value={
+                            commodityOptions.find((o) => o.label === String(form.watch("commodity") || "").trim())?.value ??
+                            null
+                          }
+                          onChange={(next) => {
+                            const match = commodityOptions.find((o) => o.value === next);
+                            form.setValue("commodity", match?.label ?? "", { shouldDirty: true });
+                          }}
+                          options={commodityOptions}
+                          createKind="load_commodity"
+                          operatingCompanyId={operatingCompanyId}
+                          placeholder="Select commodity"
+                          loading={commoditiesQuery.isLoading}
+                          disabled={commoditiesQuery.isLoading || commoditiesQuery.isError}
+                          onOptionCreated={(opt) => {
+                            void commoditiesQuery.refetch();
+                            form.setValue("commodity", opt.label, { shouldDirty: true });
+                          }}
+                        />
+                        {commoditiesQuery.isError ? (
+                          <ListErrorBanner message="Could not load commodities." onRetry={() => void commoditiesQuery.refetch()} />
+                        ) : null}
+                      </div>
+                      <input type="hidden" {...form.register("commodity")} />
                     </label>
                     <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Weight (lbs)

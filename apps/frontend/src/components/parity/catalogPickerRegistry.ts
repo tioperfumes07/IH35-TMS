@@ -462,6 +462,15 @@ export const CATALOG_PICKER_CONFIGS = {
     consumerPath: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
   }),
 
+  load_commodity: catalogEntry({
+    key: "load_commodity",
+    label: "Commodity",
+    table: "catalogs.load_commodities",
+    endpoint: "/api/v1/catalogs/dispatch/load-commodities",
+    evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
+    consumerPath: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+  }),
+
   dispatch_flag_color: {
     key: "dispatch_flag_color",
     label: "dispatch flag",

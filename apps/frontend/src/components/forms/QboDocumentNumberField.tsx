@@ -80,7 +80,7 @@ export function QboDocumentNumberField({
         autoComplete="off"
         spellCheck={false}
         inputMode="numeric"
-        className="h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-right text-xs font-mono text-slate-900 caret-slate-900 normal-case tracking-normal placeholder:text-gray-400"
+        className="h-7 w-full rounded-sm border border-gray-300 bg-white px-2 text-right text-xs font-mono text-slate-900 caret-slate-900 normal-case tracking-normal placeholder:text-gray-400"
         value={value}
         disabled={disabled || locked}
         placeholder=""
@@ -95,8 +95,8 @@ export function QboDocumentNumberField({
         <span className="font-normal text-gray-500">
           {hint
             ?? (suggested
-              ? `Leave blank to mint. Next unused is ${suggested} — that is a caption, not the box.`
-              : "Leave blank to mint. Type any number you want.")}
+              ? `Leave blank to use the next unused number (${suggested}).`
+              : "Leave blank to use the next unused number.")}
         </span>
       )}
       {locked && lockReason ? <span className="font-normal text-gray-500">{lockReason}</span> : null}
