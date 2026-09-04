@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   PresettlementLinkError,
   confirmPresettlementLink,
+  linkLoadToPresettlementAtBookingInClientTx,
   suggestPresettlementLink,
 } from "../presettlement-link.service.js";
 
@@ -150,5 +151,74 @@ describe("presettlement link — GO-22", () => {
     const err = new PresettlementLinkError("some_code", "some message");
     expect(err).toBeInstanceOf(Error);
     expect(err.code).toBe("some_code");
+  });
+
+  // SET-01 (owner ruling 2026-09-03/09-04): "the instant a load is CREATED it joins a
+  // pre-settlement... assignment is automatic." This is the exact function book-load.service.ts
+  // calls, unconditionally, from inside its own booking transaction -- these tests exercise the
+  // real production code path (not a re-implementation of it) against a mock client, proving both
+  // the resolution AND the transaction ordering (suggest's own writes happen before confirm's)
+  // without booking a real load anywhere, live or otherwise.
+  describe("linkLoadToPresettlementAtBookingInClientTx — SET-01 (called from book-load.service.ts at booking time)", () => {
+    it("NB leg: suggests+confirms create_new in one call, returns a real settlement_id", async () => {
+      const { client, calls } = makeClient();
+      const result = await linkLoadToPresettlementAtBookingInClientTx(client as never, {
+        operating_company_id: OPCO,
+        load_id: LOAD_ID,
+        driver_id: DRIVER_ID,
+        trip_type: "NB",
+        tour_id: TOUR_ID,
+        actor_user_id: USER_ID,
+      });
+      expect(result.action).toBe("create_new");
+      expect(result.settlement_id).toBe("new-settlement-id");
+      expect(result.suggestion_id).toBe(SUGGESTION_ID);
+      // Transaction-order proof: the suggestion INSERT (suggest phase) happens strictly before
+      // the driver_settlements INSERT and the mdata.loads UPDATE (confirm phase) — matching the
+      // owner's "assignment is automatic... a load can never exist without already being linked"
+      // requirement, not just "eventually linked."
+      const suggestIdx = calls.findIndex((c) => /INSERT INTO driver_finance\.presettlement_link_suggestions/.test(c.sql));
+      const settlementIdx = calls.findIndex((c) => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql));
+      const loadUpdateIdx = calls.findIndex((c) => /UPDATE mdata\.loads SET presettlement_link_id/.test(c.sql));
+      expect(suggestIdx).toBeGreaterThanOrEqual(0);
+      expect(settlementIdx).toBeGreaterThan(suggestIdx);
+      expect(loadUpdateIdx).toBeGreaterThan(suggestIdx);
+    });
+
+    it("TR/SB leg with an open settlement for the tour: suggests+confirms link_existing, joins the SAME settlement (never opens a new one)", async () => {
+      const { client, calls } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "S-1" } });
+      const result = await linkLoadToPresettlementAtBookingInClientTx(client as never, {
+        operating_company_id: OPCO,
+        load_id: LOAD_ID,
+        driver_id: DRIVER_ID,
+        trip_type: "TR",
+        tour_id: TOUR_ID,
+        actor_user_id: USER_ID,
+      });
+      expect(result.action).toBe("link_existing");
+      expect(result.settlement_id).toBe(OPEN_SETTLEMENT_ID);
+      // A southbound (or, here, a triangulation) leg joining an open tour must NEVER mint a
+      // second driver_settlements row -- that would silently split one trip's money across two
+      // settlements.
+      expect(calls.some((c) => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql))).toBe(false);
+    });
+
+    it("throws a real PresettlementLinkError, never a silent partial result, when the suggestion cannot be confirmed", async () => {
+      // The suggest-then-confirm ordering means a race (a suggestion resolved by something else
+      // between the two calls) or any other confirm-side failure must fail LOUD here -- book-load
+      // .service.ts's own transaction then rolls back the whole booking, never leaving a load
+      // half-linked. Simulated here via a suggestion that already resolved to a non-pending status.
+      const { client } = makeClient({ suggestionStatus: "rejected" });
+      await expect(
+        linkLoadToPresettlementAtBookingInClientTx(client as never, {
+          operating_company_id: OPCO,
+          load_id: LOAD_ID,
+          driver_id: DRIVER_ID,
+          trip_type: "NB",
+          tour_id: TOUR_ID,
+          actor_user_id: USER_ID,
+        })
+      ).rejects.toBeInstanceOf(PresettlementLinkError);
+    });
   });
 });

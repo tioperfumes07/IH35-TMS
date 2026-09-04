@@ -1,10 +1,14 @@
-// GO-22 pre-settlement (owner direct instruction 2026-09-02). Answers book-load.service.ts's own
-// TODO P6-FOLLOWUP-PRESETTLEMENT-LINK: "when presettlement query service exists, look up driver's
-// open presettlement here." NB with none open starts one; TR and SB legs join the open one for
-// that tour_id. "RECOMMEND, NEVER AUTO-COMMIT... a load never joins a settlement silently" — this
-// file only ever SUGGESTS; confirmPresettlementLink is the one place that actually writes
-// driver_finance.driver_settlements / mdata.loads.presettlement_link_id, and it only runs when a
-// human calls it.
+// GO-22 pre-settlement (owner direct instruction 2026-09-02), superseded by SET-01 (owner ruling
+// 2026-09-03/09-04, settled): "The instant a load is CREATED it joins a pre-settlement. Not at
+// delivery. Not at invoice. At creation. Assignment is automatic. Closing is human-confirmed."
+// suggestPresettlementLink still only ever SUGGESTS (writes a suggestion row, resolution logic
+// unchanged: NB with none open starts one; TR and SB legs join the open one for that tour_id) —
+// confirmPresettlementLink is the one place that actually writes driver_finance.driver_settlements
+// / mdata.loads.presettlement_link_id. It is NO LONGER human-only: linkLoadToPresettlementAtBooking
+// below calls both, unconditionally, from inside book-load.service.ts's own booking transaction,
+// so a load can never exist without already being linked. A human can still separately reject/
+// re-link via listPendingPresettlementSuggestions + confirmPresettlementLink directly (unchanged),
+// but that path is no longer the ONLY writer.
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { allocateNextLoadNumber } from "./load-id-reservation.service.js";
 
@@ -171,8 +175,10 @@ type ConfirmInput = {
 };
 
 /**
- * The only place that actually links a load to a pre-settlement. Always a human-initiated call —
- * never invoked from the book-load path itself.
+ * The only place that actually links a load to a pre-settlement — writes
+ * driver_finance.driver_settlements and mdata.loads.presettlement_link_id. Called both by
+ * linkLoadToPresettlementAtBooking (below, automatic, at book time) and directly by a human
+ * resolving a pending suggestion (e.g. the TR/SB "no open pre-settlement found" case).
  */
 export async function confirmPresettlementLink(client: DbClient, input: ConfirmInput) {
   const res = await client.query<{
@@ -286,4 +292,66 @@ export async function listPendingPresettlementSuggestions(client: DbClient, oper
     [operatingCompanyId]
   );
   return res.rows;
+}
+
+export type LinkAtBookingInput = {
+  operating_company_id: string;
+  load_id: string;
+  driver_id: string;
+  unit_id?: string | null;
+  trip_type: TripType;
+  tour_id?: string | null;
+  actor_user_id: string;
+};
+
+export type LinkAtBookingResult = {
+  suggestion_id: string;
+  settlement_id: string;
+  action: "create_new" | "link_existing";
+};
+
+/**
+ * SET-01 (owner ruling 2026-09-03/09-04, settled): "The instant a load is CREATED it joins a
+ * pre-settlement. Not at delivery. Not at invoice. At creation. Assignment is automatic. Closing
+ * is human-confirmed." Extracted from book-load.service.ts's inline call so the exact production
+ * code path is independently testable against a real Postgres (not a mock) without booking a real
+ * load through the app.
+ *
+ * Calls suggestPresettlementLink first (unchanged resolution logic: NB opens a new pre-settlement,
+ * TR/SB joins the open one for this driver+tour_id) then confirmPresettlementLink immediately
+ * after, in the SAME caller transaction -- the caller (book-load.service.ts) wraps both in its own
+ * booking transaction, so a load can never exist without already being linked. This function does
+ * not open or commit a transaction itself; that is the caller's responsibility, matching every
+ * other *InClientTx helper in this codebase (e.g. reverseDriverAdvanceInClientTx).
+ */
+export async function linkLoadToPresettlementAtBookingInClientTx(
+  client: DbClient,
+  input: LinkAtBookingInput
+): Promise<LinkAtBookingResult> {
+  const suggestion = await suggestPresettlementLink(client, {
+    operating_company_id: input.operating_company_id,
+    load_id: input.load_id,
+    driver_id: input.driver_id,
+    unit_id: input.unit_id ?? null,
+    trip_type: input.trip_type,
+    tour_id: input.tour_id ?? null,
+    actor_user_id: input.actor_user_id,
+  });
+  const action: "create_new" | "link_existing" = suggestion.suggested_settlement_id ? "link_existing" : "create_new";
+  const confirmed = await confirmPresettlementLink(client, {
+    operating_company_id: input.operating_company_id,
+    suggestion_id: suggestion.suggestion_id,
+    action,
+    actor_user_id: input.actor_user_id,
+  });
+  if (confirmed.status !== "confirmed" || !confirmed.settlement_id) {
+    // confirmPresettlementLink only returns non-confirmed for action="reject", which this
+    // function never passes -- an assertion, not a real runtime branch, kept so a future edit
+    // to confirmPresettlementLink's contract fails loud here instead of returning a bad shape.
+    throw new PresettlementLinkError(
+      "link_at_booking_did_not_confirm",
+      "confirmPresettlementLink did not return a confirmed settlement_id"
+    );
+  }
+  return { suggestion_id: suggestion.suggestion_id, settlement_id: confirmed.settlement_id, action };
 }
