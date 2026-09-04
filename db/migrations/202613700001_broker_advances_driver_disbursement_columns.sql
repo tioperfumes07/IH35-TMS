@@ -36,11 +36,23 @@ ALTER TABLE accounting.broker_advances
   ADD COLUMN IF NOT EXISTS disbursed_amount_cents bigint,
   ADD COLUMN IF NOT EXISTS disbursed_journal_entry_id uuid REFERENCES accounting.journal_entries(id);
 
-ALTER TABLE accounting.broker_advances
-  ADD CONSTRAINT IF NOT EXISTS broker_advances_disbursement_paired CHECK (
-    (disbursed_to_driver_bill_id IS NULL AND disbursed_amount_cents IS NULL AND disbursed_journal_entry_id IS NULL)
-    OR (disbursed_to_driver_bill_id IS NOT NULL AND disbursed_amount_cents > 0 AND disbursed_journal_entry_id IS NOT NULL)
-  );
+-- PostgreSQL has no ADD CONSTRAINT IF NOT EXISTS. Guard the exact table+constraint identity so
+-- migration replay is a no-op while a same-named constraint on another table cannot mask this one.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'broker_advances_disbursement_paired'
+      AND conrelid = 'accounting.broker_advances'::regclass
+  ) THEN
+    ALTER TABLE accounting.broker_advances
+      ADD CONSTRAINT broker_advances_disbursement_paired CHECK (
+        (disbursed_to_driver_bill_id IS NULL AND disbursed_amount_cents IS NULL AND disbursed_journal_entry_id IS NULL)
+        OR (disbursed_to_driver_bill_id IS NOT NULL AND disbursed_amount_cents > 0 AND disbursed_journal_entry_id IS NOT NULL)
+      );
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS ix_broker_advances_disbursed_to_driver_bill
   ON accounting.broker_advances (disbursed_to_driver_bill_id)
