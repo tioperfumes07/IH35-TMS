@@ -1027,7 +1027,7 @@ export function ParityTable<T>({
           {selectable && selected.size > 0 ? (
             <div className="flex flex-wrap items-center gap-2">
               <span
-                className="rounded-sm bg-slate-800 px-2 py-1 text-[12px] font-bold tracking-wide text-white"
+                className="rounded-sm bg-slate-800 px-2 py-1 text-xs font-bold tracking-wide text-white"
                 data-testid="parity-selection-count"
                 title={`${selected.size} row(s) selected for bulk action`}
               >
@@ -1088,7 +1088,7 @@ export function ParityTable<T>({
                   <select
                     id="parity-gear-page-size"
                     aria-label="Rows per page"
-                    className="h-8 w-full rounded-sm border border-gray-300 px-1 text-[12px]"
+                    className="h-8 w-full rounded-sm border border-gray-300 px-1 text-xs"
                     value={draftPageSize}
                     onChange={(e) => {
                       const next = Number(e.target.value);
@@ -1109,7 +1109,7 @@ export function ParityTable<T>({
                 </div>
                 <div className="mb-2 flex flex-col gap-0.5">
                   {(Object.keys(DENSITY) as ParityDensity[]).map((opt) => (
-                    <label key={opt} className="flex items-center gap-2 text-[12px] text-gray-700">
+                    <label key={opt} className="flex items-center gap-2 text-xs text-gray-700">
                       <input
                         type="radio"
                         name="parity-density"
@@ -1131,7 +1131,7 @@ export function ParityTable<T>({
                       return (
                         <label
                           key={key}
-                          className="flex items-center gap-2 py-0.5 text-[12px] text-gray-700"
+                          className="flex items-center gap-2 py-0.5 text-xs text-gray-700"
                         >
                           <input
                             type="checkbox"
@@ -1144,9 +1144,9 @@ export function ParityTable<T>({
                     })}
                 </div>
                 <div className="mt-2 flex items-center justify-end gap-2 border-t border-gray-200 pt-2">
-                  <button type="button" className="rounded-sm px-2 py-1 text-[12px] font-semibold text-gray-600 hover:bg-gray-100" onClick={resetGear}>Reset</button>
-                  <button type="button" className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-[12px] font-semibold text-gray-700 hover:bg-gray-50" onClick={cancelGear}>Cancel</button>
-                  <button type="button" className="rounded-sm bg-[#1F2A44] px-2 py-1 text-[12px] font-semibold text-white hover:bg-[#172036]" onClick={applyGear}>Apply</button>
+                  <button type="button" className="rounded-sm px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-100" onClick={resetGear}>Reset</button>
+                  <button type="button" className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50" onClick={cancelGear}>Cancel</button>
+                  <button type="button" className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white hover:bg-[#172036]" onClick={applyGear}>Apply</button>
                 </div>
               </div>
             ) : null}

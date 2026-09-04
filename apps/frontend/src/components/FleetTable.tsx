@@ -578,7 +578,7 @@ export function FleetTable({
             </div>
             <select
               aria-label="Filter by status"
-              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]"
+              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={staged.draft.statusFilter}
               onChange={(e) => staged.setDraft({ ...staged.draft, statusFilter: e.target.value })}
             >
@@ -589,7 +589,7 @@ export function FleetTable({
             </select>
             <select
               aria-label="Filter by type"
-              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]"
+              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={staged.draft.typeListFilter}
               onChange={(e) => staged.setDraft({ ...staged.draft, typeListFilter: e.target.value })}
             >

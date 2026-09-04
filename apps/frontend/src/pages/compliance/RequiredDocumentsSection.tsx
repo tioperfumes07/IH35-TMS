@@ -112,7 +112,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
           <button
             type="button"
             onClick={() => setShowCreate((s) => !s)}
-            className="rounded-sm border border-[#1f2a44] px-3 py-1 text-[12px] font-semibold text-[#1f2a44] hover:bg-slate-50"
+            className="rounded-sm border border-[#1f2a44] px-3 py-1 text-xs font-semibold text-[#1f2a44] hover:bg-slate-50"
           >
             {showCreate ? "Cancel" : "+ Create required type"}
           </button>
@@ -128,7 +128,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
             role="tab"
             aria-selected={entityKind === k.id}
             onClick={() => setEntityKind(k.id)}
-            className={`px-3 py-1.5 text-[12px] font-semibold ${
+            className={`px-3 py-1.5 text-xs font-semibold ${
               entityKind === k.id ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "text-slate-500 hover:text-slate-700"
             }`}
           >
@@ -244,7 +244,7 @@ function CreateRow({
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="e.g. hazmat_cert"
-            className="mt-0.5 rounded-sm border border-slate-300 px-2 py-1 text-[12px]"
+            className="mt-0.5 rounded-sm border border-slate-300 px-2 py-1 text-xs"
           />
         </label>
         <label className="flex flex-col text-[11px] text-slate-500">
@@ -253,7 +253,7 @@ function CreateRow({
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder="e.g. Hazmat Certificate"
-            className="mt-0.5 rounded-sm border border-slate-300 px-2 py-1 text-[12px]"
+            className="mt-0.5 rounded-sm border border-slate-300 px-2 py-1 text-xs"
           />
         </label>
         <label className="flex flex-col text-[11px] text-slate-500">
@@ -261,7 +261,7 @@ function CreateRow({
           <select
             value={enforcement}
             onChange={(e) => setEnforcement(e.target.value as RequiredDocEnforcement)}
-            className="mt-0.5 rounded-sm border border-slate-300 px-2 py-1 text-[12px]"
+            className="mt-0.5 rounded-sm border border-slate-300 px-2 py-1 text-xs"
           >
             <option value="warn">Warn</option>
             <option value="hard_block">Hard block</option>
@@ -275,7 +275,7 @@ function CreateRow({
           type="button"
           disabled={!valid || pending}
           onClick={() => onSubmit({ code, label, enforcement, has_expiry: hasExpiry })}
-          className="rounded-sm bg-[#1f2a44] px-3 py-1 text-[12px] font-semibold text-white disabled:opacity-50"
+          className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
         >
           {pending ? "Creating…" : "+ Create"}
         </button>

@@ -288,7 +288,7 @@ export function TripPairingBoardPage() {
         <select
           disabled
           title="Trailer-type filtering lights up once trailer_type is on the board payload (C1b backend)."
-          className="h-9 rounded-sm border border-slate-300 bg-slate-50 px-2 text-[12px] text-slate-400"
+          className="h-9 rounded-sm border border-slate-300 bg-slate-50 px-2 text-xs text-slate-400"
         >
           <option>All trailer types</option>
           <option>Reefer</option>

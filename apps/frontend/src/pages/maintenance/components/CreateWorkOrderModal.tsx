@@ -862,7 +862,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           </div>
 
           {editBlockMessage ? (
-            <div data-testid="edit-wo-posted-lock" className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-[12px] text-red-900">
+            <div data-testid="edit-wo-posted-lock" className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">
               {editBlockMessage}
             </div>
           ) : null}
@@ -1049,7 +1049,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             </div>
             <div className="mt-2 flex items-center gap-2">
               <button type="button" data-testid="edit-wo-add-line" onClick={addEditLine} className="rounded-sm bg-[#1f2a44] px-2.5 py-1 text-[11px] font-semibold text-white">+ Create line</button>
-              <span className="ml-auto text-[12px] font-semibold text-sidebar-active">Total ${editLinesTotal.toFixed(2)}</span>
+              <span className="ml-auto text-xs font-semibold text-sidebar-active">Total ${editLinesTotal.toFixed(2)}</span>
             </div>
           </SectionCard>
 
@@ -1271,7 +1271,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                   return (
                     <button type="button" key={p.v} onClick={() => form.setValue("payment_timing", p.v)}
                       className={`flex-1 rounded-md border p-1.5 text-center ${on ? "border-[#1d2b45] bg-[#1d2b45] text-white" : "border-[#d6dae1] bg-white text-sidebar-active"}`}>
-                      <div className="text-[12px] font-extrabold">{p.h}</div>
+                      <div className="text-xs font-extrabold">{p.h}</div>
                       <div className="text-xs opacity-75">{p.s}</div>
                     </button>
                   );

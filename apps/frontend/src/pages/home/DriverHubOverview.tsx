@@ -59,10 +59,10 @@ export function DriverHubOverview({ companyId, canReview }: { companyId: string;
   });
 
   if (!canReview) {
-    return <p className="text-[12px] text-[#8A92AB]">Reviewing requests requires a Manager, Accountant, or Owner role.</p>;
+    return <p className="text-xs text-[#8A92AB]">Reviewing requests requires a Manager, Accountant, or Owner role.</p>;
   }
   if (!companyId) {
-    return <p className="text-[12px] text-[#8A92AB]">Select an operating company to view driver requests and alerts.</p>;
+    return <p className="text-xs text-[#8A92AB]">Select an operating company to view driver requests and alerts.</p>;
   }
 
   const leaveCount = leaveQ.isLoading || leaveQ.isError ? null : (leaveQ.data?.total_count ?? 0);

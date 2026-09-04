@@ -161,7 +161,7 @@ export function HosDriverMapPreviewPage() {
           {/* ID reconcile */}
           <div className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3">
             <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700">Stored vs proposed ID reconciliation</div>
-            <div className="flex flex-wrap gap-4 text-[12px] text-gray-700">
+            <div className="flex flex-wrap gap-4 text-xs text-gray-700">
               <span><span className="font-semibold text-emerald-700">{d.id_reconcile.stored_matches_proposed}</span> stored = proposed</span>
               <span><span className="font-semibold text-red-600">{d.id_reconcile.stored_differs_from_proposed}</span> stored ≠ proposed</span>
               <span><span className="font-semibold text-amber-700">{d.id_reconcile.stored_but_no_roster_match}</span> stored but no roster match</span>
