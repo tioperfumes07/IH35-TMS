@@ -112,6 +112,20 @@ function nonEmpty(...parts: Array<string | null | undefined>): string {
     .join(" ");
 }
 
+/**
+ * WIZ-44 (owner ruling 2026-09-04) — a picker must NEVER offer an option the form's own re-resolve
+ * will then reject. Master-data rows carry a canonical liveness column: `deactivated_at IS NULL`
+ * means live/selectable. `status` is ops/roster (Active|Inactive|InService|…), NOT liveness — a
+ * driver merged tonight can keep status Active while `deactivated_at` is set, and the customer
+ * picker already learned this in #20174 (VOID-COLUMN 2026-09-03: selectable ⇔ deactivated_at IS
+ * NULL, never status). This is the one-predicate-per-surface (LAW-3) enforced at the single surface
+ * every entity picker flows through — the registry — so no picker can hand back a merged/deactivated
+ * id that fails save. The admin list endpoints are unaffected: they call the list APIs directly.
+ */
+function isLive(row: { deactivated_at?: string | null }): boolean {
+  return row.deactivated_at == null;
+}
+
 const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
   customer: {
     kind: "customer",
@@ -131,7 +145,7 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
         status: "active",
         limit: 200,
       });
-      return res.customers.map((customer) => ({
+      return res.customers.filter(isLive).map((customer) => ({
         value: customer.id,
         label: customer.name,
         sublabel: customer.customer_code || undefined,
@@ -174,6 +188,8 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
       for (const res of pages) {
         for (const d of res.drivers ?? []) {
           if (seen.has(d.id)) continue;
+          // WIZ-44: never offer a merged/deactivated driver — its id fails the form's re-resolve.
+          if (!isLive(d)) continue;
           seen.add(d.id);
           out.push({
             value: d.id,
@@ -212,20 +228,22 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
         search: opts?.search || undefined,
         equipment_kind: opts?.equipmentKind,
       });
-      return (res.equipment ?? []).map((row) => {
-        const e = row as {
-          id: string;
-          equipment_number?: string | null;
-          equipment_type?: string | null;
-          make?: string | null;
-          model?: string | null;
-        };
-        return {
-          value: e.id,
-          label: entityLabel(nonEmpty(e.equipment_number), e.id, "Trailer"),
-          sublabel: [e.equipment_type, e.make, e.model].filter(Boolean).join(" · ") || undefined,
-        };
-      });
+      return (res.equipment ?? [])
+        .filter((row) => isLive(row as { deactivated_at?: string | null }))
+        .map((row) => {
+          const e = row as {
+            id: string;
+            equipment_number?: string | null;
+            equipment_type?: string | null;
+            make?: string | null;
+            model?: string | null;
+          };
+          return {
+            value: e.id,
+            label: entityLabel(nonEmpty(e.equipment_number), e.id, "Trailer"),
+            sublabel: [e.equipment_type, e.make, e.model].filter(Boolean).join(" · ") || undefined,
+          };
+        });
     },
   },
 
@@ -255,13 +273,15 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
         limit: 500,
         search: opts?.search || undefined,
       });
-      return (res.units ?? []).map((row) => {
-        const u = row as { id: string; unit_number?: string | null; display_id?: string | null };
-        return {
-          value: u.id,
-          label: entityLabel(nonEmpty(u.unit_number) || nonEmpty(u.display_id), u.id, "Unit"),
-        };
-      });
+      return (res.units ?? [])
+        .filter((row) => isLive(row as { deactivated_at?: string | null }))
+        .map((row) => {
+          const u = row as { id: string; unit_number?: string | null; display_id?: string | null };
+          return {
+            value: u.id,
+            label: entityLabel(nonEmpty(u.unit_number) || nonEmpty(u.display_id), u.id, "Unit"),
+          };
+        });
     },
   },
 
@@ -314,7 +334,9 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
         limit: opts?.search ? 200 : 1000,
         search: opts?.search || undefined,
       });
-      return (res.vendors ?? []).map((v) => ({ value: v.id, label: v.name, sublabel: v.vendor_type }));
+      return (res.vendors ?? [])
+        .filter((v) => isLive(v as { deactivated_at?: string | null }))
+        .map((v) => ({ value: v.id, label: v.name, sublabel: v.vendor_type }));
     },
   },
 
