@@ -306,14 +306,14 @@ export function DispatchPage({
               size="sm"
               data-testid="dispatch-view-overview"
               disabled={boardScope === "history"}
-              title={boardScope === "history" ? "Overview is live-board only — switch to Live" : undefined}
+              title={boardScope === "history" ? "Home is live-board only — switch to Live" : undefined}
               onClick={() => {
                 const next = new URLSearchParams(searchParams);
                 next.set("view", "overview");
                 setSearchParams(next);
               }}
             >
-              Overview
+              Home
             </Button>
             <Button
               type="button"

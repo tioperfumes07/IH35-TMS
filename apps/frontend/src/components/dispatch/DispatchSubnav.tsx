@@ -112,8 +112,8 @@ export const DISPATCH_HOME_QUICK_JUMP_COUNT =
   countDispatchNavDestinations(DISPATCH_NAV_ITEMS);
 
 const BREADCRUMB_LABELS: Record<string, string> = {
-  "/dispatch": "Overview",
-  "/dispatch?view=overview": "Overview",
+  "/dispatch": "Home",
+  "/dispatch?view=overview": "Home",
   "/dispatch?view=kanban": "Load board",
   "/dispatch?view=list": "Load board",
   "/dispatch/loads": "Load board",
