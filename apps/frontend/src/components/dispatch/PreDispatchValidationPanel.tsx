@@ -315,8 +315,8 @@ export function PreDispatchValidationPanel({
         </div>
       ) : null}
       {result.blockers.length > 0 && !loading && remainingBlockers === 0 ? (
-        <div className="rounded-sm border border-green-300 bg-green-50 p-2.5 text-xs" data-testid="pre-dispatch-overrides-cleared">
-          <div className="font-semibold text-green-800">
+        <div className="rounded-sm border border-slate-300 bg-slate-50 p-2.5 text-xs" data-testid="pre-dispatch-overrides-cleared">
+          <div className="font-semibold text-slate-800">
             Booking is cleared to dispatch with {Object.keys(blockOverrides).length} override
             {Object.keys(blockOverrides).length === 1 ? "" : "s"} recorded.
           </div>

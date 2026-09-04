@@ -2272,7 +2272,7 @@ export function BookLoadModalV4({
                   {preDispatch.remainingBlockers > 0 || authGateBlocked || repairBlockSubmitBlocked ? (
                     <b className="text-red-700">Active blocker(s) — override required</b>
                   ) : preDispatch.overrideCount > 0 ? (
-                    <b className="text-green-800" data-testid="pre-dispatch-header-cleared">
+                    <b className="text-slate-800" data-testid="pre-dispatch-header-cleared">
                       CLEARED
                     </b>
                   ) : preDispatch.hasUnackedInsScheduleConfirm ? (
@@ -2416,14 +2416,14 @@ export function BookLoadModalV4({
 
           {saveAck ? (
             <div
-              className="border-t border-green-300 bg-green-50 px-3 py-3"
+              className="border-t border-slate-300 bg-slate-50 px-3 py-3"
               data-testid="book-load-save-ack"
               role="status"
             >
-              <p className="text-xs font-semibold text-green-900">
+              <p className="text-xs font-semibold text-slate-900">
                 Load {saveAck.loadNumber} is saved.
               </p>
-              <p className="mt-1 text-xs text-green-900">{saveAck.summary}</p>
+              <p className="mt-1 text-xs text-slate-800">{saveAck.summary}</p>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <EntityLink kind="load" id={saveAck.id} label={saveAck.loadNumber || "Open load"} />
                 <Button
