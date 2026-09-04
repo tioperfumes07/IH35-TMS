@@ -1,14 +1,28 @@
 // SET-24 (owner order 2026-09-04). A broker-sent advance against a specific load's receivable --
 // diesel, driver pay, or a repair when cash is tight. Drivers are B1 COMPANY drivers, not
 // owner-operators, so the money reaching them (a Comchek) is a disbursement instrument, never
-// driver pay and never a driver debt -- this file NEVER writes to driver_finance.*. At delivery
-// the factoring company purchases the receivable and advances the DIFFERENCE: the invoice face
-// stays the full rate, the broker has prepaid part of it. So this is a PARTIAL PAYMENT against the
-// receivable -- it reduces what the factor will purchase (accounting.invoices.
-// broker_advance_applied_cents), never the invoice face (rate_total_cents / the line amounts),
-// never a driver liability.
+// driver pay and never a driver debt -- this file NEVER writes to driver_finance.driver_
+// liabilities/driver_advances/settlement_lines. At delivery the factoring company purchases the
+// receivable and advances the DIFFERENCE: the invoice face stays the full rate, the broker has
+// prepaid part of it. So this is a PARTIAL PAYMENT against the receivable -- it reduces what the
+// factor will purchase (accounting.invoices.broker_advance_applied_cents), never the invoice face
+// (rate_total_cents / the line amounts), never a driver liability.
+//
+// LOAD-COSTS-COMPLETE item (2) (owner ruling 2026-09-04, verbatim): "the broker might send the
+// driver money and we apply it as a bill payment to the driver." applyBrokerAdvanceToDriverBillInClientTx
+// below is that SECOND event, distinct from the receipt/AR-reduction event above -- same
+// instrument (one Comchek, two sides, one trace via disbursed_journal_entry_id on the SAME row),
+// but this side settles part of an EXISTING driver_finance.driver_bills liability via a real,
+// balanced JE (DR Driver Settlements Payable / CR Accounts Receivable) through
+// journal-entries.service. Still never touches driver_liabilities/driver_advances/settlement_lines
+// -- a driver_bills row already exists from booking; this only reduces how much of it is still
+// owed, it never creates a new liability or a settlement deduction.
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { createJournalEntryOnClient } from "./journal-entries.service.js";
 import { findConflictingInvoiceForLoad } from "./from-load.js";
+
+const DRIVER_SETTLEMENTS_PAYABLE_ACCOUNT_NUMBER = "2200";
+const ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER = "1100";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -147,4 +161,187 @@ export async function recordBrokerAdvanceInClientTx(
   );
 
   return { brokerAdvanceId, appliedToInvoiceId };
+}
+
+export type DisburseBrokerAdvanceToDriverBillInput = {
+  operatingCompanyId: string;
+  brokerAdvanceId: string;
+  driverBillId: string;
+  /** Capped below at both the advance's own remaining amount and the bill's remaining balance -- never trusted at face value. */
+  amountCents: number;
+  actorUserId: string;
+};
+
+export type DisburseBrokerAdvanceToDriverBillResult = {
+  disbursedAmountCents: number;
+  journalEntryId: string;
+};
+
+async function resolveAccountId(client: Queryable, operatingCompanyId: string, accountNumber: string): Promise<string> {
+  const res = await client.query<{ id: string }>(
+    `SELECT id FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND account_number = $2 LIMIT 1`,
+    [operatingCompanyId, accountNumber]
+  );
+  const id = res.rows[0]?.id;
+  if (!id) throw new BrokerAdvanceError("gl_account_not_found", `catalogs.accounts has no account_number=${accountNumber} for this company`);
+  return String(id);
+}
+
+/**
+ * LOAD-COSTS-COMPLETE item (2) -- the broker paid the driver directly (a Comchek/EFT the driver
+ * cashed), so we record it as a bill payment against the driver's EXISTING driver_finance.
+ * driver_bills liability, funded by the broker, linked to the SAME broker_advances receipt row.
+ * NEVER driver pay, NEVER a driver debt, NEVER a settlement deduction -- this reduces what an
+ * ALREADY-EXISTING driver_bills row still owes; it creates no new liability anywhere.
+ *
+ * Double entry, through journal-entries.service, or it does not post (owner's own words) --
+ * DR Driver Settlements Payable (2200) / CR Accounts Receivable (1100). No cash account moves:
+ * economically the broker's direct payment to the driver simultaneously reduces what the
+ * customer/broker owes us AND what we owe the driver, netting through a third party with zero
+ * cash of ours touched.
+ */
+export async function applyBrokerAdvanceToDriverBillInClientTx(
+  client: Queryable,
+  input: DisburseBrokerAdvanceToDriverBillInput
+): Promise<DisburseBrokerAdvanceToDriverBillResult> {
+  if (!Number.isFinite(input.amountCents) || input.amountCents <= 0) {
+    throw new BrokerAdvanceError("amount_must_be_positive", "amountCents must be a positive integer");
+  }
+
+  const hasColumnsRes = await client.query<{ ok: boolean }>(
+    `
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'accounting' AND table_name = 'broker_advances'
+          AND column_name = 'disbursed_to_driver_bill_id'
+      ) AS ok
+    `
+  );
+  if (!Boolean(hasColumnsRes.rows[0]?.ok)) {
+    throw new BrokerAdvanceError(
+      "disbursement_columns_not_migrated",
+      "migration 202613700001 has not been applied yet -- broker-driver disbursement is unavailable until it lands"
+    );
+  }
+
+  const advanceRes = await client.query<{
+    category: string;
+    amount_cents: string;
+    disbursed_amount_cents: string | null;
+    voided_at: string | null;
+    load_id: string;
+    instrument_reference: string;
+    received_at: string;
+  }>(
+    `SELECT category, amount_cents::text, disbursed_amount_cents::text, voided_at::text, load_id::text, instrument_reference, received_at::date::text AS received_at
+       FROM accounting.broker_advances
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+      LIMIT 1`,
+    [input.brokerAdvanceId, input.operatingCompanyId]
+  );
+  const advance = advanceRes.rows[0];
+  if (!advance) throw new BrokerAdvanceError("broker_advance_not_found");
+  if (advance.voided_at) throw new BrokerAdvanceError("broker_advance_voided", "cannot disburse a voided advance");
+  if (advance.category !== "driver_pay") {
+    throw new BrokerAdvanceError(
+      "wrong_category_for_driver_disbursement",
+      `broker_advances.category must be 'driver_pay' to disburse to a driver bill, got '${advance.category}'`
+    );
+  }
+  if (advance.disbursed_amount_cents != null) {
+    throw new BrokerAdvanceError("already_disbursed", "this broker advance already has a driver-bill disbursement recorded");
+  }
+  const advanceRemainingCents = Math.round(Number(advance.amount_cents));
+
+  const billRes = await client.query<{ id: string; driver_id: string; load_id: string; gross_amount_cents: string; status: string }>(
+    `SELECT id, driver_id::text, load_id::text, gross_amount_cents::text, status
+       FROM driver_finance.driver_bills
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+      LIMIT 1`,
+    [input.driverBillId, input.operatingCompanyId]
+  );
+  const bill = billRes.rows[0];
+  if (!bill) throw new BrokerAdvanceError("driver_bill_not_found");
+  if (bill.status === "void") throw new BrokerAdvanceError("driver_bill_voided", "cannot disburse against a voided driver bill");
+  if (bill.load_id !== advance.load_id) {
+    throw new BrokerAdvanceError(
+      "load_mismatch",
+      "the driver bill and the broker advance must be for the same load -- this is one instrument settling one load's driver pay, not a cross-load transfer"
+    );
+  }
+
+  const priorDisbursedRes = await client.query<{ covered: string }>(
+    `SELECT COALESCE(SUM(disbursed_amount_cents), 0)::text AS covered
+       FROM accounting.broker_advances
+      WHERE operating_company_id = $1::uuid AND disbursed_to_driver_bill_id = $2::uuid`,
+    [input.operatingCompanyId, input.driverBillId]
+  );
+  const billRemainingCents = Math.max(0, Math.round(Number(bill.gross_amount_cents)) - Math.round(Number(priorDisbursedRes.rows[0]!.covered)));
+
+  const disbursedAmountCents = Math.min(input.amountCents, advanceRemainingCents, billRemainingCents);
+  if (disbursedAmountCents <= 0) {
+    throw new BrokerAdvanceError(
+      "nothing_to_disburse",
+      `disbursement would be zero -- advance remaining=${advanceRemainingCents}, bill remaining=${billRemainingCents}, requested=${input.amountCents}`
+    );
+  }
+
+  const payableAccountId = await resolveAccountId(client, input.operatingCompanyId, DRIVER_SETTLEMENTS_PAYABLE_ACCOUNT_NUMBER);
+  const receivableAccountId = await resolveAccountId(client, input.operatingCompanyId, ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER);
+
+  const je = await createJournalEntryOnClient(
+    client as never,
+    {
+      operating_company_id: input.operatingCompanyId,
+      entry_date: advance.received_at,
+      memo: `Broker advance ${advance.instrument_reference} disbursed directly to driver, settling driver bill ${input.driverBillId}`,
+      source: "manual",
+      postings: [
+        {
+          account_id: payableAccountId,
+          debit_or_credit: "debit",
+          amount_cents: disbursedAmountCents,
+          entity_uuid: bill.driver_id,
+          entity_type: "driver",
+          description: "Driver bill settled by broker's direct advance to the driver",
+        },
+        {
+          account_id: receivableAccountId,
+          debit_or_credit: "credit",
+          amount_cents: disbursedAmountCents,
+          description: "Receivable reduced -- broker prepaid this portion directly to the driver",
+        },
+      ],
+    },
+    { userId: input.actorUserId, role: "system" }
+  );
+
+  await client.query(
+    `UPDATE accounting.broker_advances
+        SET disbursed_to_driver_bill_id = $2::uuid,
+            disbursed_amount_cents = $3,
+            disbursed_journal_entry_id = $4::uuid,
+            updated_at = now()
+      WHERE id = $1::uuid`,
+    [input.brokerAdvanceId, input.driverBillId, disbursedAmountCents, je.id]
+  );
+
+  await appendCrudAudit(
+    client as never,
+    input.actorUserId,
+    "accounting.broker_advance.disbursed_to_driver_bill",
+    {
+      resource_type: "accounting.broker_advances",
+      resource_id: input.brokerAdvanceId,
+      operating_company_id: input.operatingCompanyId,
+      driver_bill_id: input.driverBillId,
+      driver_id: bill.driver_id,
+      disbursed_amount_cents: disbursedAmountCents,
+      journal_entry_id: je.id,
+    },
+    "info",
+    "LOAD-COSTS-COMPLETE-item-2"
+  );
+
+  return { disbursedAmountCents, journalEntryId: String(je.id) };
 }
