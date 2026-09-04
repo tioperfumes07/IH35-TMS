@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202613650001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-04",
+      "purpose": "invoices_display_id_check_widen_plain_digits (SET-25: GO-10 REV-B L3 killed the L-YYYYMMDD-NNNN / LUSMCAFREIGHT-YYYYMMDD-NNNN load-number formats in favor of plain digits, but accounting.invoices.invoices_display_id_check still only accepts the two dead formats + INV-YYYY-NNNNN -- from-load.ts writes the load's own plain-digit load_number as display_id (owner ruling 2026-08-24), so no invoice can ever be minted on any load booked under the current numbering. Widen to ALSO accept ^[0-9]{1,12}$, additive only -- 11,980/11,980 existing rows already match the untouched INV-YYYY-NNNNN pattern, zero orphan risk, live-verified twice.)"
+    },
     "202613630001": {
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-04",
