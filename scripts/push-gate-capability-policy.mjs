@@ -156,6 +156,45 @@ export function loadLiveRequiredStatusChecks(
   return { requiredContexts, errors };
 }
 
+export const verifyNameCache = new Map();
+
+function buildVerifyNameMap(root) {
+  const map = new Map();
+  const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+  for (const [name, command] of Object.entries(pkg.scripts ?? {})) {
+    if (!name.startsWith("verify:")) continue;
+    const m = String(command).match(/scripts\/(verify-[a-z0-9-]+\.mjs)/i);
+    if (m) map.set(m[1], name);
+  }
+  const stepsDir = path.join(root, "scripts/verify-steps");
+  let stepFiles;
+  try { stepFiles = fs.readdirSync(stepsDir); } catch { stepFiles = []; }
+  const guardRe = /verify-[a-z0-9-]+\.mjs/gi;
+  for (const f of stepFiles) {
+    let txt;
+    try { txt = fs.readFileSync(path.join(stepsDir, f), "utf8"); } catch { continue; }
+    const seen = new Set(txt.match(guardRe) ?? []);
+    for (const guardFile of seen) {
+      if (map.has(guardFile)) continue;
+      const slug = guardFile.match(/^verify-[a-z0-9-]+/i)?.[0];
+      if (slug) map.set(guardFile, `verify:${slug.slice("verify-".length)}`);
+    }
+  }
+  return map;
+}
+
+function guardVerifyName(file, root = ROOT) {
+  const relative = path.relative(root, file).replace(/\\/g, "/");
+  const basename = path.basename(relative);
+  if (!verifyNameCache.has(root)) {
+    verifyNameCache.set(root, buildVerifyNameMap(root));
+  }
+  const cached = verifyNameCache.get(root).get(basename);
+  if (cached) return cached;
+  if (!/^scripts\/verify-[a-z0-9-]+\.mjs$/i.test(relative)) return null;
+  return null;
+}
+
 export function loadCapabilityPolicy(root, options = {}) {
   const meta = JSON.parse(
     fs.readFileSync(path.resolve(root, "scripts/verify-meta.json"), "utf8")

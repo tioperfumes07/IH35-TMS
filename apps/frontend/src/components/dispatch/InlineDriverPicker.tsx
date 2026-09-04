@@ -17,6 +17,11 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const startEdit = () => {
+    setOpen(true);
+    setError(null);
+  };
+
   if (!open) {
     return (
       <div className="flex min-w-0 items-center gap-1" onClick={(event) => event.stopPropagation()}>
@@ -26,23 +31,32 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
             id={driverId}
             name={displayLabel}
             noun="Driver"
-            className="single-line-name min-w-0 flex-1 hover:underline"
-            data-testid={`inline-driver-link-${loadId}`}
+            className="single-line-name min-w-0 flex-1 cursor-pointer text-slate-700 hover:underline"
+            data-testid={`inline-driver-picker-${loadId}`}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              startEdit();
+            }}
           />
         ) : (
-          <span className="single-line-name min-w-0 flex-1 text-slate-500">Unassigned</span>
+          <span
+            role="button"
+            tabIndex={0}
+            aria-label={`Assign driver for load ${loadId}`}
+            className="single-line-name min-w-0 flex-1 cursor-pointer text-slate-500 hover:underline"
+            data-testid={`inline-driver-picker-${loadId}`}
+            onClick={startEdit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                startEdit();
+              }
+            }}
+          >
+            —
+          </span>
         )}
-        <button
-          type="button"
-          className="shrink-0 rounded-sm px-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-          data-testid={`inline-driver-picker-${loadId}`}
-          onClick={() => {
-            setOpen(true);
-            setError(null);
-          }}
-        >
-          {driverId ? "Change" : "Assign"}
-        </button>
         {error ? <span className="rounded-sm bg-red-100 px-1 text-xs text-red-700">{error}</span> : null}
       </div>
     );

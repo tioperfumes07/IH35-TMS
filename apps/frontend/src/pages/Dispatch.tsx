@@ -9,7 +9,6 @@ import { Button } from "../components/Button";
 import { DataPanel } from "../components/layout/DataPanel";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/layout/PageHeader";
-import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { useToast } from "../components/Toast";
 import { dataTableErrorState } from "../lib/tableError";
 import { DispatchKanban } from "../components/dispatch/DispatchKanban";
@@ -27,7 +26,7 @@ import { PreSettlementsPanel } from "../components/driver-finance/PreSettlements
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../lib/api-error-message";
 import { companyToday, addDaysIso } from "../lib/businessDate";
-import { DISPATCH_SECONDARY_TAB_PATH, dispatchSecondaryTabFromPath } from "../router/route-manifest";
+import { dispatchSecondaryTabFromPath } from "../router/route-manifest";
 
 type ViewMode = "overview" | "list" | "kanban" | "units";
 
@@ -41,15 +40,6 @@ function parseViewMode(raw: string | null, loadsRoute: boolean): ViewMode {
   return loadsRoute ? "list" : "overview";
 }
 type DispatchSubTabId = "load_board" | "book_load" | "load_costs" | "assignments" | "settlements" | "pre_settlements";
-
-const DISPATCH_SUB_TABS: Array<{ id: DispatchSubTabId; label: string }> = [
-  { id: "load_board", label: "Load board" },
-  { id: "book_load", label: "Book load" },
-  { id: "load_costs", label: "Load costs" },
-  { id: "assignments", label: "Assignments" },
-  { id: "settlements", label: "Settlements" },
-  { id: "pre_settlements", label: "Pre-settlements" },
-];
 
 function parseMulti(value: string | null): string[] {
   if (!value) return [];
@@ -303,7 +293,6 @@ export function DispatchPage({
     <div className="space-y-3">
       <PageHeader
         title="Dispatch"
-        subtitle="Loads, stops, assignments, geofencing"
         actions={
           <div className="flex min-w-0 gap-2 overflow-x-auto">
             <Button
@@ -420,12 +409,6 @@ export function DispatchPage({
 
       <DispatchSubnav operatingCompanyId={defaultCompanyIds[0] ?? ""} />
 
-      <div data-testid="dispatch-secondary-nav">
-        <NavyPageSubNav
-          items={DISPATCH_SUB_TABS.map((tab) => ({ label: tab.label, to: DISPATCH_SECONDARY_TAB_PATH[tab.id] }))}
-        />
-      </div>
-
       {subTab === "load_board" && view === "overview" ? (
         <DispatchOverview
           operatingCompanyId={defaultCompanyIds[0] ?? ""}
@@ -517,6 +500,7 @@ export function DispatchPage({
             loads={loads}
             awaitingTrucks={awaitingTrucks}
             activeGeofenceBreachVehicleIds={activeGeofenceBreachVehicleIds}
+            operatingCompanyId={defaultCompanyIds[0] ?? ""}
             loading={loadsQuery.isLoading}
             listError={dataTableErrorState(loadsQuery.error, () => void loadsQuery.refetch())}
             onLoadClick={(id) => {

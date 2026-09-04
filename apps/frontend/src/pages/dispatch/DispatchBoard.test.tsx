@@ -290,9 +290,9 @@ describe("DispatchBoard ETA chip (P5-T20)", () => {
       </QueryClientProvider>
     );
 
-    expect(await screen.findByTestId("dispatch-board-headers-awaiting")).toBeTruthy();
-    expect(screen.getByTestId("dispatch-board-headers-booked")).toBeTruthy();
-    expect(screen.getByTestId("dispatch-board-headers-in_shop")).toBeTruthy();
+    expect(await screen.findByTestId("dispatch-board-section-table-awaiting")).toBeTruthy();
+    expect(screen.getByTestId("dispatch-board-section-table-booked")).toBeTruthy();
+    expect(screen.getByTestId("dispatch-board-section-table-in_shop")).toBeTruthy();
 
     fireEvent.change(screen.getByTestId("dispatch-board-filter-awaiting"), { target: { value: "no-match" } });
     expect(screen.getByText("No awaiting assignment rows match this section filter.")).toBeTruthy();
