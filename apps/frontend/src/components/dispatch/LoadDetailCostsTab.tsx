@@ -24,7 +24,7 @@ import { useToast } from "../Toast";
 import { EntityLink } from "../shared/EntityLink";
 import { formatMoneyCents } from "./constants";
 
-type CostChoice = "expense" | "bill" | "advance" | null;
+type CostChoice = "expense" | "bill" | "advance" | "fuel_advance" | null;
 type Draft = {
   id: string;
   kind: CostChoice;
@@ -49,10 +49,10 @@ const ADVANCE_CATEGORY_LABEL: Record<BrokerAdvanceCategory, string> = {
   other: "Other",
 };
 
-function blankDraft(): Draft {
+function blankDraft(kind: CostChoice = null): Draft {
   return {
     id: crypto.randomUUID(),
-    kind: null,
+    kind,
     date: companyToday(),
     vendorId: "",
     categoryId: "",
@@ -66,7 +66,7 @@ function blankDraft(): Draft {
   };
 }
 
-export function LoadDetailCostsTab({ load, canEdit }: { load: LoadDetail; canEdit: boolean }) {
+export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: LoadDetail; canEdit: boolean; canEditReason?: string }) {
   const [drafts, setDrafts] = useState<Draft[]>([blankDraft()]);
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -88,7 +88,19 @@ export function LoadDetailCostsTab({ load, canEdit }: { load: LoadDetail; canEdi
   const revenue = Number(load.rate_total_cents ?? 0);
   const chart = accounts.data?.accounts ?? [];
   const categories = chart.filter((row) => /expense|cost of goods/i.test(row.account_type));
-  const paymentAccounts = chart.filter((row) => /asset/i.test(row.account_type));
+  // QBO/CoA account_type is literally "Bank" for a bank account, never "Asset" -- /asset/i alone
+  // silently dropped every real bank account from "Paid with", leaving only cards/other-current-asset
+  // rows. Match the same asset-type vocabulary used elsewhere in this app (account-picker-scope.ts).
+  const paymentAccounts = chart.filter((row) => /asset|bank|credit ?card/i.test(row.account_type));
+  // LOAD-COSTS-COMPLETE item (1) -- a fuel advance is cash the company hands a driver on the road to
+  // buy fuel. Drivers here are B1 company drivers, never owner-operators, so this is a straight
+  // company expense (DR fuel expense / CR bank) -- never a receivable, never a settlement deduction,
+  // never a driver_finance.* write. The category is fixed to the entity's Fuel expense account so it
+  // can never be miscategorized by a dropdown pick, and the payment account is restricted to bank
+  // accounts (never a card) to match the owner's exact instruction.
+  const fuelAccount = categories.find((row) => /fuel/i.test(row.account_name));
+  const bankAccounts = paymentAccounts.filter((row) => /bank/i.test(row.account_type) || /bank/i.test(row.account_name));
+  const fuelAdvancePaymentAccounts = bankAccounts.length ? bankAccounts : paymentAccounts;
   const draftTotal = drafts.reduce((sum, row) => sum + Math.max(0, Math.round(Number(row.amount || 0) * 100)), 0);
   const displayNumber = (index: number) => savedCount + index === 0 ? load.load_number : `${load.load_number}-${savedCount + index}`;
   const update = (id: string, patch: Partial<Draft>) => setDrafts((rows) => rows.map((row) => row.id === id ? { ...row, ...patch, error: null } : row));
@@ -99,7 +111,7 @@ export function LoadDetailCostsTab({ load, canEdit }: { load: LoadDetail; canEdi
       for (const [index, row] of drafts.entries()) {
         const amountCents = Math.round(Number(row.amount) * 100);
         const missing = !row.kind
-          ? "Choose Expense, Bill, or Advance received."
+          ? "Choose Expense, Bill, Fuel advance, or Advance received."
           : row.kind === "advance"
             ? !row.advanceCategory
               ? "Advance category is required."
@@ -110,23 +122,38 @@ export function LoadDetailCostsTab({ load, canEdit }: { load: LoadDetail; canEdi
                   : !(amountCents > 0)
                     ? "Amount must be greater than zero."
                     : null
-            : !row.vendorId
-              ? "Vendor is required."
-              : !row.categoryId
-                ? "Category is required."
-                : !(amountCents > 0)
-                  ? "Amount must be greater than zero."
-                  : row.kind === "expense" && !row.paymentAccountId
-                    ? "Paid with is required."
-                    : row.kind === "bill" && !row.invoiceNo.trim()
-                      ? "Vendor invoice number is required."
-                      : null;
+            : row.kind === "fuel_advance"
+              ? !load.assigned_primary_driver_id
+                ? "Assign a driver to this load before recording a fuel advance."
+                : !fuelAccount
+                  ? "No Fuel expense account found in this entity's chart of accounts — add one before recording a fuel advance."
+                  : !row.paymentAccountId
+                    ? "Bank account is required."
+                    : !(amountCents > 0)
+                      ? "Amount must be greater than zero."
+                      : null
+              : !row.vendorId
+                ? "Vendor is required."
+                : !row.categoryId
+                  ? "Category is required."
+                  : !(amountCents > 0)
+                    ? "Amount must be greater than zero."
+                    : row.kind === "expense" && !row.paymentAccountId
+                      ? "Paid with is required."
+                      : row.kind === "bill" && !row.invoiceNo.trim()
+                        ? "Vendor invoice number is required."
+                        : null;
         if (missing) { errors.set(row.id, missing); continue; }
         try {
           if (row.kind === "expense") {
             await createExpense(opco, { category_account_id: row.categoryId, expense_date: row.date, amount_cents: amountCents, payment_account_uuid: row.paymentAccountId, vendor_uuid: row.vendorId, load_id: load.id, expense_number: displayNumber(index), memo: `Load cost · ${load.load_number}`, is_sample_data: false });
           } else if (row.kind === "bill") {
             await createVendorBill(opco, { vendor_id: row.vendorId, bill_number: row.invoiceNo.trim(), display_id: displayNumber(index), bill_date: row.date, amount_cents: amountCents, coa_account_id: row.categoryId, driver_id: load.assigned_primary_driver_id ?? undefined, memo: `Load cost · ${load.load_number}`, is_sample_data: false, lines: [{ account_id: row.categoryId, amount_cents: amountCents, description: `Load cost · ${load.load_number}`, section: "A", load_id: load.id }] }, { idempotencyKey: generateIdempotencyKey() });
+          } else if (row.kind === "fuel_advance") {
+            // Company expense, never a driver liability: DR fuel expense / CR bank, through the same
+            // createExpense write path as any other paid-now cost — driver_id is set so the line
+            // shows whose fuel this was, but nothing here writes driver_finance.* or a receivable.
+            await createExpense(opco, { category_account_id: fuelAccount!.id, expense_date: row.date, amount_cents: amountCents, payment_account_uuid: row.paymentAccountId, driver_id: load.assigned_primary_driver_id!, load_id: load.id, expense_number: displayNumber(index), memo: `Fuel advance · Load ${load.load_number}`, is_sample_data: false });
           } else {
             await createBrokerAdvance(opco, { load_id: load.id, customer_id: load.customer_id, category: row.advanceCategory as BrokerAdvanceCategory, instrument_type: row.instrumentType.trim(), instrument_reference: row.instrumentReference.trim(), amount_cents: amountCents, received_at: row.date });
           }
@@ -141,14 +168,19 @@ export function LoadDetailCostsTab({ load, canEdit }: { load: LoadDetail; canEdi
   return <div className="space-y-4" data-testid="load-costs-tab-shell">
     <section className="rounded-sm border border-gray-200 bg-white p-3 text-xs"><span className="font-semibold uppercase text-gray-500">Load </span><EntityLink kind="load" id={load.id} label={load.load_number} /> · {load.customer_name ?? "Customer not visible"} · {load.assigned_primary_driver_name ?? "Driver not assigned"}</section>
     {canEdit ? <section className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-gray-600">Every cost is born attached to this load. You never type the number.</p><div className="flex gap-2"><Button data-testid="load-costs-save-all" type="button" size="sm" variant="secondary" disabled={save.isPending} onClick={() => save.mutate()}>Save all</Button><Button data-testid="load-costs-add-top" type="button" size="sm" onClick={() => setDrafts((rows) => [...rows, blankDraft()])}>+ Add another cost</Button></div></div>
+      <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-gray-600">Every cost is born attached to this load. You never type the number.</p><div className="flex flex-wrap gap-2"><Button data-testid="load-costs-save-all" type="button" size="sm" variant="secondary" disabled={save.isPending} onClick={() => save.mutate()}>Save all</Button><Button data-testid="load-costs-add-top" type="button" size="sm" onClick={() => setDrafts((rows) => [...rows, blankDraft()])}>+ Add another cost</Button><Button data-testid="load-costs-add-fuel-advance-top" type="button" size="sm" onClick={() => setDrafts((rows) => [...rows, blankDraft("fuel_advance")])}>+ Fuel advance</Button></div></div>
       {drafts.map((row, index) => <article key={row.id} data-testid="load-costs-entry" className="overflow-hidden rounded-sm border border-gray-200 bg-white">
-        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2"><span className="font-mono text-xs font-semibold">{displayNumber(index)}</span><div className="flex overflow-hidden rounded-sm border border-gray-200"><button data-testid="load-cost-toggle-expense" type="button" className={`px-3 py-1 text-xs font-semibold ${row.kind === "expense" ? "bg-slate-700 text-white" : "bg-white text-gray-600"}`} onClick={() => update(row.id, { kind: "expense" })}>Expense · paid now</button><button data-testid="load-cost-toggle-bill" type="button" className={`px-3 py-1 text-xs font-semibold ${row.kind === "bill" ? "bg-slate-700 text-white" : "bg-white text-gray-600"}`} onClick={() => update(row.id, { kind: "bill" })}>Bill · owed</button><button data-testid="load-cost-toggle-advance" type="button" className={`px-3 py-1 text-xs font-semibold ${row.kind === "advance" ? "bg-slate-700 text-white" : "bg-white text-gray-600"}`} onClick={() => update(row.id, { kind: "advance" })}>Advance received</button></div><span data-testid="load-cost-status" className="text-xs text-gray-500">new — not saved</span></header>
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2"><span className="font-mono text-xs font-semibold">{displayNumber(index)}</span><div className="flex overflow-hidden rounded-sm border border-gray-200"><button data-testid="load-cost-toggle-expense" type="button" className={`px-3 py-1 text-xs font-semibold ${row.kind === "expense" ? "bg-slate-700 text-white" : "bg-white text-gray-600"}`} onClick={() => update(row.id, { kind: "expense" })}>Expense · paid now</button><button data-testid="load-cost-toggle-bill" type="button" className={`px-3 py-1 text-xs font-semibold ${row.kind === "bill" ? "bg-slate-700 text-white" : "bg-white text-gray-600"}`} onClick={() => update(row.id, { kind: "bill" })}>Bill · owed</button><button data-testid="load-cost-toggle-fuel-advance" type="button" className={`px-3 py-1 text-xs font-semibold ${row.kind === "fuel_advance" ? "bg-slate-700 text-white" : "bg-white text-gray-600"}`} onClick={() => update(row.id, { kind: "fuel_advance" })}>Fuel advance</button><button data-testid="load-cost-toggle-advance" type="button" className={`px-3 py-1 text-xs font-semibold ${row.kind === "advance" ? "bg-slate-700 text-white" : "bg-white text-gray-600"}`} onClick={() => update(row.id, { kind: "advance" })}>Advance received</button></div><span data-testid="load-cost-status" className="text-xs text-gray-500">new — not saved</span></header>
         {row.kind === "advance" ? <div className="grid gap-3 p-3 md:grid-cols-5">
           <Field label="Date"><DatePicker data-testid="load-cost-field-date" className="mt-1 h-8 w-full" value={row.date} onChange={(value) => update(row.id, { date: value })} /></Field>
           <Field label="Category"><select data-testid="load-cost-field-advance-category" className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={row.advanceCategory} onChange={(e) => update(row.id, { advanceCategory: e.target.value as BrokerAdvanceCategory | "" })}><option value="">Select category</option>{BROKER_ADVANCE_CATEGORIES.map((c) => <option key={c} value={c}>{ADVANCE_CATEGORY_LABEL[c]}</option>)}</select></Field>
           <Field label="Instrument type"><input data-testid="load-cost-field-instrument-type" className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Comchek / EFT / wire" value={row.instrumentType} onChange={(e) => update(row.id, { instrumentType: e.target.value })} /></Field>
           <Field label="Instrument reference"><input data-testid="load-cost-field-instrument-reference" className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="check / transaction no." value={row.instrumentReference} onChange={(e) => update(row.id, { instrumentReference: e.target.value })} /></Field>
+          <Field label="Amount"><div data-testid="load-cost-field-amount"><MoneyInput className="mt-1 h-8 w-full" valueCents={row.amount ? Math.round(Number(row.amount) * 100) : null} onChangeCents={(cents) => update(row.id, { amount: cents == null ? "" : String(cents / 100) })} /></div></Field>
+        </div> : row.kind === "fuel_advance" ? <div className="grid gap-3 p-3 md:grid-cols-4">
+          <Field label="Date"><DatePicker data-testid="load-cost-field-date" className="mt-1 h-8 w-full" value={row.date} onChange={(value) => update(row.id, { date: value })} /></Field>
+          <Field label="Category"><div data-testid="load-cost-field-fuel-category" className="mt-1 flex h-8 w-full items-center rounded-sm border border-gray-200 bg-gray-50 px-2 text-xs text-gray-600">{fuelAccount ? `${fuelAccount.account_number ? `${fuelAccount.account_number} · ` : ""}${fuelAccount.account_name} (auto)` : "No Fuel expense account found"}</div></Field>
+          <Field label="Paid from (bank)"><select data-testid="load-cost-field-fuel-bank" className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={row.paymentAccountId} onChange={(e) => update(row.id, { paymentAccountId: e.target.value })}><option value="">Select bank account</option>{fuelAdvancePaymentAccounts.map((a) => <option key={a.id} value={a.id}>{a.account_number ? `${a.account_number} · ` : ""}{a.account_name}</option>)}</select></Field>
           <Field label="Amount"><div data-testid="load-cost-field-amount"><MoneyInput className="mt-1 h-8 w-full" valueCents={row.amount ? Math.round(Number(row.amount) * 100) : null} onChangeCents={(cents) => update(row.id, { amount: cents == null ? "" : String(cents / 100) })} /></div></Field>
         </div> : <div className="grid gap-3 p-3 md:grid-cols-5">
           <Field label="Date"><DatePicker data-testid="load-cost-field-date" className="mt-1 h-8 w-full" value={row.date} onChange={(value) => update(row.id, { date: value })} /></Field>
@@ -157,10 +189,10 @@ export function LoadDetailCostsTab({ load, canEdit }: { load: LoadDetail; canEdi
           {row.kind === "bill" ? <Field label="Vendor invoice no."><input data-testid="load-cost-field-vendor-invoice" className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="off the paper" value={row.invoiceNo} onChange={(e) => update(row.id, { invoiceNo: e.target.value })} /></Field> : <Field label="Paid with"><select data-testid="load-cost-field-paid-with" className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={row.paymentAccountId} onChange={(e) => update(row.id, { paymentAccountId: e.target.value })}><option value="">Select bank or card</option>{paymentAccounts.map((a) => <option key={a.id} value={a.id}>{a.account_number ? `${a.account_number} · ` : ""}{a.account_name}</option>)}</select></Field>}
           <Field label="Amount"><div data-testid="load-cost-field-amount"><MoneyInput className="mt-1 h-8 w-full" valueCents={row.amount ? Math.round(Number(row.amount) * 100) : null} onChangeCents={(cents) => update(row.id, { amount: cents == null ? "" : String(cents / 100) })} /></div></Field>
         </div>}
-        <p data-testid="load-cost-hint" className={`px-3 pb-3 text-xs ${row.error ? "text-red-700" : "text-gray-500"}`}>{row.error ?? (row.kind === "advance" ? "Advance received is a partial payment against this load's invoice — never a driver liability, never a reduction of the invoice amount. It nets against the invoice once one exists." : row.kind === "bill" ? "Bill · owed credits Accounts Payable. The vendor invoice number is never filled in for you, because it stops us paying the same bill twice." : row.kind === "expense" ? "Expense · paid now debits the selected category and credits the selected bank or card." : "Choose whether this cost was paid now, is owed, or is a broker advance received.")}</p>
+        <p data-testid="load-cost-hint" className={`px-3 pb-3 text-xs ${row.error ? "text-red-700" : "text-gray-500"}`}>{row.error ?? (row.kind === "advance" ? "Advance received is a partial payment against this load's invoice — never a driver liability, never a reduction of the invoice amount. It nets against the invoice once one exists." : row.kind === "fuel_advance" ? "Fuel advance is cash the company gives the driver for fuel — a company expense, DR Fuel Expense / CR bank. Never a receivable, never a settlement deduction, never a driver liability." : row.kind === "bill" ? "Bill · owed credits Accounts Payable. The vendor invoice number is never filled in for you, because it stops us paying the same bill twice." : row.kind === "expense" ? "Expense · paid now debits the selected category and credits the selected bank or card." : "Choose whether this cost was paid now, is owed, a fuel advance, or a broker advance received.")}</p>
       </article>)}
-      <div className="flex gap-2"><Button data-testid="load-costs-add-bottom" type="button" size="sm" onClick={() => setDrafts((rows) => [...rows, blankDraft()])}>+ Add another cost</Button><Link data-testid="load-costs-receipt-photo" className="inline-flex h-8 items-center rounded-sm border border-slate-700 px-3 text-xs font-semibold text-slate-700" to={`/accounting/receipts?load_id=${encodeURIComponent(load.id)}`}>+ From a receipt photo</Link></div>
-    </section> : null}
+      <div className="flex flex-wrap gap-2"><Button data-testid="load-costs-add-bottom" type="button" size="sm" onClick={() => setDrafts((rows) => [...rows, blankDraft()])}>+ Add another cost</Button><Button data-testid="load-costs-add-fuel-advance-bottom" type="button" size="sm" onClick={() => setDrafts((rows) => [...rows, blankDraft("fuel_advance")])}>+ Fuel advance</Button><Link data-testid="load-costs-receipt-photo" className="inline-flex h-8 items-center rounded-sm border border-slate-700 px-3 text-xs font-semibold text-slate-700" to={`/accounting/receipts?load_id=${encodeURIComponent(load.id)}`}>+ From a receipt photo</Link></div>
+    </section> : <section data-testid="load-costs-readonly-reason" className="rounded-sm border border-slate-300 bg-slate-100 p-3 text-xs text-slate-700">{canEditReason ?? "You don't have permission to add costs to this load right now."}</section>}
     <section data-testid="load-costs-totals" className="overflow-hidden rounded-sm border border-gray-200 bg-gray-50 text-xs"><Total label="Line haul revenue" value={formatMoneyCents(revenue, currency)} /><Total label={`Costs on this load · ${savedCount} saved`} value={formatMoneyCents(savedCosts + draftTotal, currency)} /><Total label="Driver pay" value={formatMoneyCents(driverPay, currency)} />{savedAdvances.length ? <Total label={`Broker advance received · ${savedAdvances.length} saved`} value={formatMoneyCents(savedAdvanceCents, currency)} /> : null}<Total label={`Approximate margin on ${load.load_number}`} value={formatMoneyCents(revenue - savedCosts - driverPay - draftTotal, currency)} strong /></section>
     <section data-testid="load-costs-bank-panel" className="rounded-sm border border-gray-200 bg-white"><h3 className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase text-gray-600">WHAT THE BANK WILL DO WITH THESE</h3><p className="px-3 py-3 text-xs text-gray-600">Paid expenses are offered for bank matching: saved · matched or saved · waiting for the bank. Bills match when their payment lands. Advances received net against this load's invoice once one exists — they never touch the bank feed as a cost.</p></section>
     {savedCount || savedAdvances.length ? <section className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-600">

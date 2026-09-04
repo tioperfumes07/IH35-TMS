@@ -75,6 +75,10 @@ type Props = {
   loadId: string | null;
   isOpen: boolean;
   canEdit: boolean;
+  /** LOAD-COSTS-COMPLETE item (2) -- when canEdit is false, the Costs tab must say why instead of
+   * silently hiding every create control. Optional: callers that don't have a specific reason yet
+   * fall back to a generic message rather than rendering nothing. */
+  canEditReason?: string;
   operatingCompanyId?: string;
   initialTab?: DrawerTab;
   onClose: () => void;
@@ -149,7 +153,7 @@ function serializeFactoringPackageNotes(meta: FactoringPackageMeta, visibleNotes
   return `${FACTORING_PACKAGE_META_PREFIX}${JSON.stringify(meta)}\n${visibleNotes.trim()}`.trim();
 }
 
-export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, initialTab = "Overview", onClose }: Props) {
+export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, operatingCompanyId, initialTab = "Overview", onClose }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<DrawerTab>(initialTab);
@@ -1267,7 +1271,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
 
           {activeTab === "Costs" && load ? (
             <div className="space-y-3">
-              <LoadDetailCostsTab load={load} canEdit={canEdit} />
+              <LoadDetailCostsTab load={load} canEdit={canEdit} canEditReason={canEditReason} />
               <MoneyProofTrailPanel operatingCompanyId={load.operating_company_id} documentType="load" documentId={load.id} />
             </div>
           ) : null}
