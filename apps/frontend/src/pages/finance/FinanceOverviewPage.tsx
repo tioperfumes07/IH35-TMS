@@ -8,8 +8,11 @@ import { FINANCE_HUB_SCENARIOS_FLAG, getActiveScenarioSummary } from "../../api/
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatUsdCents } from "../../lib/money";
 
-const dollars = (cents: number) => (cents / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
+// GLB-05 — delegates to the canonical formatter instead of reimplementing it (the old body used an
+// unpinned toLocaleString(undefined, ...) locale, not guaranteed QBO "$1,234.56").
+const dollars = (cents: number) => formatUsdCents(cents);
 
 // C8 — each tile is a real aggregate of this scenario's forecast_lines rows; the scenario detail
 // page (ScenarioLinesTable) is the honest drill target, not a fabricated route — it's the exact

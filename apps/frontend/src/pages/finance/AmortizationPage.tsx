@@ -15,8 +15,11 @@ import {
   type AmortLoan,
   type AmortRow,
 } from "../../api/financeAmortization";
+import { formatUsdCents } from "../../lib/money";
 
-const dollars = (cents: number) => (cents / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
+// GLB-05 — delegates to the canonical formatter instead of reimplementing it (the old body used an
+// unpinned toLocaleString(undefined, ...) locale, not guaranteed QBO "$1,234.56").
+const dollars = (cents: number) => formatUsdCents(cents);
 const toCents = (s: string) => Math.round((Number(s) || 0) * 100);
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
