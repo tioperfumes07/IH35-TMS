@@ -7418,5 +7418,25 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-04",
     "purpose": "verify-matched-state-requires-matched-id (owner-ordered: banking.bank_transactions.review_state = 'matched' must require at least one matched_*_id non-null -- guards every UPDATE that sets review_state to 'matched' also sets a matched_*_id column in the same statement; DB-level CHECK constraint routed to CC-1, migration authority required)"
+  },
+  "10309": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-04",
+    "purpose": "GUARD-INTEGRITY (owner order 2026-09-04): wires scripts/verify-driver-bill-miles-basis-numeric.mjs (DRV-BILL-MILES-INTEGER) into scripts/verify-steps/ so verify:pre-commit/CI actually runs it going forward -- the guard existed and passed at merge time (PR #20280) but was never discoverable by the CI aggregator (which only readdirSync's scripts/verify-steps/), a real gap this claim fixes."
+  },
+  "10313": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-04",
+    "purpose": "GUARD-INTEGRITY (owner order 2026-09-04): wires scripts/verify-miles-shortest-never-autofilled-from-catalog.mjs (MILES-SHORTEST-HOLDS-ALWAYSTRACK-BLEND) into scripts/verify-steps/, same gap as 10309."
+  },
+  "10317": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-04",
+    "purpose": "GUARD-INTEGRITY (owner order 2026-09-04): wires scripts/verify-lane-mileage-short-over-practical-constraint-dropped.mjs (LANE-MILEAGE-LIVE-CONSTRAINTS-BLOCK-OWNER-RULING) into scripts/verify-steps/, same gap as 10309."
+  },
+  "10321": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-04",
+    "purpose": "GUARD-INTEGRITY (owner order 2026-09-04): wires scripts/verify-load-costs-tab-advance-received-wired.mjs (SET-15) into scripts/verify-steps/, same gap as 10309. Also wires the already-claimed-but-never-installed 10305 (verify-invoice-display-id-shape-matches-db-constraint, SET-25) in the same PR."
   }
 }
