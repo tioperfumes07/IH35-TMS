@@ -7479,6 +7479,11 @@
     "claimed_at": "2026-09-04",
     "purpose": "verify-planner-design-system (GO-23 PR3 owner order 2026-09-04: apply GLOBAL-TYPE-SIZE-BASELINE.md to dispatch planner surfaces — navy #14314F active tabs/buttons, 28px clickable boxes, 12px body, 2px radius, centered column headers, baseline border/text colors)."
   },
+  "10343": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-planner-design-ruling-09-04 (owner 2026-09-04: dispatch planner headers are light #EEF2F6 / #E4EAF1 with centered regular #1F2937 ink, no aggressive navy table headers, 1px #C7D2DC column rules, no hardcoded colours in components)."
+  },
   "10341": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-04",
