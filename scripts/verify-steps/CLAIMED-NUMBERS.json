@@ -7408,5 +7408,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-04",
     "purpose": "verify-bank-transactions-direction-uses-is-credit (BANK-F10005 amendment, owner-ordered: banking.bank_transactions.amount_cents's sign runs OPPOSITE is_credit on this table -- a schema-level trap, not a one-off; guards that every deposit/withdrawal direction query reads is_credit, never sign(amount_cents))"
+  },
+  "10311": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-matched-state-requires-matched-id (owner-ordered: banking.bank_transactions.review_state = 'matched' must require at least one matched_*_id non-null -- guards every UPDATE that sets review_state to 'matched' also sets a matched_*_id column in the same statement; DB-level CHECK constraint routed to CC-1, migration authority required)"
   }
 }
