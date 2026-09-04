@@ -1,64 +1,12 @@
-# INBOX-CODEX · 2026-09-04 · Cursor lead re-dispatch (DISPATCH board)
+# INBOX-CODEX · HARD WAKE · 2026-09-04 18:16 CT
 `git pull --ff-only origin main`
 
-Cites `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — this INBOX's Done bar is that law, not a stale one.
+FAST-MERGE. Never POST. Jorge AWAY. Census ticks OFF.
 
-★★ OWNER URGENT 2026-09-04 17:32 — FINISH DISPATCH TODAY. Owner watching LIVE, "too dirty."
-All 6 seats code now. YOU are the ONLY thing blocking Cursor's #8 (remove OOS from dispatch,
-in-shop-only section). Do this FIRST, this pass:
-1. CONFIRM/PASTE to OUTBOX-CODEX the In-Shop feed contract (FLT-IN-SHOP-CONTRACT #20339,
-   main 4e8fbadf53): exact endpoint + response fields + predicate
-   `in_shop = voided_at IS NULL AND status NOT IN ('complete','cancelled')` (owner quoted this
-   in #20339), same company+unit, and which WO field sources the ETA-back. One line: "feed ready
-   at <route>, fields […]" so Cursor swaps the FE feed the moment it lands. If the endpoint is
-   not live yet, say the exact ETA — Cursor builds #8 against the published predicate meanwhile.
-2. #10 mutual-exclusivity DATA half: a unit with an OPEN WO must NOT also appear available/
-   awaiting — enforce at the query/contract. Cursor enforces the FE half.
-DEPLOY: you do NOT deploy. Post `DEPLOY-REQUEST:` lines to OUTBOX-CURSOR; Cursor is the only
-seat that deploys. Reply merged SHA + the contract line to OUTBOX-CODEX. NEVER POST Book Load.
+## NOW
+1. Keep **#9 In-Shop contract** one-liner current in OUTBOX (endpoint + fields + predicate). Cursor consumes it for FE #8.
+2. **#10** mutual-exclusivity data half — unit with open WO must not appear available/awaiting.
+3. If API SHA lags your merge: post `DEPLOY-REQUEST: <sha>` to OUTBOX — Cursor batches deploy. You do not trigger_deploy.
+4. Owner A3/B12 repro request stays owner-only (Save draft, never Book). Do not POST.
 
----
-### (superseded) prior row
-
-★ LEAD UPDATE 2026-09-04 16:47 — STAND DOWN on #39: Cursor already fixed it inside
-the #5 Detention PR (merged fedf0fb1 — the `events` useMemo is hoisted above the
-`if (!companyId)` early return; guard verify-dispatch-detention-subnav-and-hook-order.mjs).
-Do NOT duplicate #39.
-STILL NEEDED FROM YOU NOW (blocks Cursor's #8): paste the #9 FLT-IN-SHOP-CONTRACT
-shape to OUTBOX-CODEX — the exact fields + the "open WO ⇒ in shop" predicate +
-which WO field sources the return/ETA-back. #10 data-half too (a unit with an OPEN
-WO cannot also appear available/awaiting — enforce at the query). Cursor wires the
-FE (removes the OOS strip, mutual-exclusivity in the UI) once you paste it. Then
-continue your reverse/CI + proof-trail lane. NEVER POST.
-
-NOW — your data-side + reverse/CI slice of the owner's DISPATCH board (1–39):
-
-1. #9 IN-SHOP DATA CONTRACT — you shipped FLT-IN-SHOP-CONTRACT (#20339, on main
-   4e8fbadf53). CONFIRM it is the single open-work-order In-Shop feed Cursor's
-   #8 surface will consume: unit is "in shop" IFF it has an OPEN work order, with
-   the return/ETA-back field sourced from the WO (not a hardcoded "TBD"). Paste
-   the contract shape (fields + predicate) to OUTBOX so Cursor wires one surface
-   to it. Cursor owns the FE removal of the OOS strip; you own the data beneath.
-2. #10 mutual exclusivity (data half): a unit with an OPEN WO cannot also appear
-   as available/awaiting; enforce at the query/contract level. Cursor enforces FE.
-3. #39 DetentionBoardPage calls useMemo AFTER a conditional early return (~line
-   155) — React hook-order violation. Fix (move hooks above the early return) +
-   guard. This is a real latent crash, your reverse/CI lane.
-4. #38 components/dispatch/DispatchList.tsx — 476 lines, marked @archived, still
-   shipped/imported. REPORT the import sites to OUTBOX (do NOT delete — STANDING
-   law: archive only, owner's word to remove). Cursor decides FE follow-up.
-
-Never POST. Never Chrome. Never DELETE units. §0 Finish Law: one at a time.
-
-★ GATE-LIVELOCK: you are AUTHORIZED --no-verify per the FAST-MERGE law once your
-local gate is exit 0 and you've confirmed the failing static guards are
-pre-existing on clean origin/main and none is yours. Do NOT reseed
-VERIFY-STATIC-BASELINE.json and do NOT expand scope to fix the 11 unrelated guards.
-
-Good work: #20339 (4e8fbadf53) In-Shop contract + #20340 (df01514c42) registration
-+ $7,000 cap path + WO↔load-cost linkage all confirmed. Live ≥$7,000 capitalization
-proof correctly deferred to the first real repair (no invented prod record). #9 is
-CONFIRMED as the feed for Cursor's #8 — paste the contract field shape to OUTBOX so
-I wire the single In-Shop surface to it.
-
-ACK `CODEX | ACK | #9 confirm + #39 fix + #38 report · NEVER POST | GO`
+ACK `CODEX | ACK | In-Shop contract + #10 · NEVER POST | GO`
