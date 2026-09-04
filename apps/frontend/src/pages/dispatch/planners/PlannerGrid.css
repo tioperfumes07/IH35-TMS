@@ -1,24 +1,24 @@
 .planner-grid-canonical {
-  --ink: #0f1729;
-  --navy: #1f2a44;
-  --slate: #475569;
-  --mute: #64748b;
-  --rule-day: #cbd5e1;
-  --rule-week: #94a3b8;
-  --rule-month: #334155;
-  --row: #dbe2ea;
-  --zebra: #f4f7fa;
-  --weekend: rgba(100, 116, 139, 0.09);
-  --today: #b45309;
-  --nb: #1f2a44;
-  --sb: #475569;
-  --tr: #b45309;
-  --dwell: #cbd5e1;
+  --ink: #0f1219;
+  --navy: #14314f;
+  --slate: #1f2a44;
+  --mute: #6b7280;
+  --rule-day: #e5e7eb;
+  --rule-week: #d1d5db;
+  --rule-month: #9ca3af;
+  --row: #e5e7eb;
+  --zebra: #f7f8fa;
+  --weekend: rgba(107, 114, 128, 0.09);
+  --today: #16a34a;
+  --nb: #14314f;
+  --sb: #1f2a44;
+  --tr: #16a34a;
+  --dwell: #e5e7eb;
   --frozen: 180px;
   --day: 52px;
   --rowh: 34px;
   color: var(--ink);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.45;
 }
 .planner-grid-canonical .pg-scroll {
@@ -71,12 +71,14 @@
   background: #f1f5f9;
   border-right: 2px solid var(--slate);
   padding: 3px 10px;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--slate);
+  color: #4b5563;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 .planner-grid-canonical .pg-frz.pg-frz-cols {
   display: grid;
@@ -91,14 +93,16 @@
 }
 .planner-grid-canonical .pg-mon {
   flex: 0 0 auto;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--slate);
+  color: #4b5563;
   padding: 3px 7px;
   border-left: 2px solid var(--rule-month);
   white-space: nowrap;
   border-bottom: 1px solid var(--rule-day);
+  text-align: center;
 }
 .planner-grid-canonical .pg-dh {
   flex: 0 0 var(--day);
@@ -120,9 +124,10 @@
 }
 .planner-grid-canonical .pg-dh .w {
   display: block;
-  font-size: 9px;
+  font-size: 11px;
+  font-weight: 700;
   line-height: 1;
-  color: var(--mute);
+  color: #4b5563;
   text-transform: uppercase;
 }
 .planner-grid-canonical .pg-dh .n {
@@ -278,7 +283,7 @@
   align-items: center;
   padding: 0 7px;
   color: #fff;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -338,6 +343,6 @@
 }
 .planner-grid-canonical .pg-empty {
   padding: 16px 12px;
-  font-size: 13px;
-  color: #64748b;
+  font-size: 12px;
+  color: #6b7280;
 }

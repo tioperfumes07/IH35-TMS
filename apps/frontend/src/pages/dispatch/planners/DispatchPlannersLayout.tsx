@@ -56,7 +56,7 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
               key={tab.to}
               to={tab.to}
               className={({ isActive }: { isActive: boolean }) =>
-                `rounded-sm px-3 py-1.5 font-medium ${isActive ? "bg-slate-800 text-white" : "text-gray-700 hover:bg-gray-100"}`
+                `flex h-7 items-center rounded-sm px-3 text-xs font-medium ${isActive ? "bg-[#14314F] text-white" : "text-gray-700 hover:bg-gray-100"}`
               }
             >
               {tab.label}
