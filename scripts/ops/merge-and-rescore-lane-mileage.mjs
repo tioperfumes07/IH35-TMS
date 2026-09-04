@@ -177,17 +177,16 @@ export function mergeGroups(rows, aliasMap) {
     const practicalMins = practicalRows.map((r) => Number(r.practical_min)).filter(Number.isFinite);
     const practicalMaxs = practicalRows.map((r) => Number(r.practical_max)).filter(Number.isFinite);
 
-    const shortRows = g.rows.filter((r) => r.short_miles != null && r.short_miles !== "");
-    const totalShortRuns = shortRows.reduce((s, r) => s + Number(r.n_short || 0), 0);
-    const weightedShortMiles =
-      totalShortRuns > 0
-        ? shortRows.reduce((s, r) => s + Number(r.short_miles) * Number(r.n_short || 0), 0) / totalShortRuns
-        : shortRows.length > 0
-          ? Number(shortRows[0].short_miles)
-          : null;
-    const shortMins = shortRows.map((r) => Number(r.short_min)).filter(Number.isFinite);
-    const shortMaxs = shortRows.map((r) => Number(r.short_max)).filter(Number.isFinite);
-    const totalNShort = g.rows.reduce((s, r) => s + Number(r.n_short || 0), 0);
+    // LANE-MILEAGE-SHORT-MILES-REGRESSION (owner order 2026-09-04, URGENT, reverses (c) above):
+    // this source's short_miles is the AlwaysTrack St. Miles blend (Loaded + Empty), never an
+    // independent shortest-route figure -- there is nothing here to weight-average or merge.
+    // ALWAYS null/null/null/0, regardless of what any variant row in the group carries. Do not
+    // resurrect the weighted-merge logic (c) above described; it merged garbage honestly, which
+    // is still garbage.
+    const weightedShortMiles = null;
+    const shortMins = [];
+    const shortMaxs = [];
+    const totalNShort = 0;
 
     const emptyRows = g.rows.filter((r) => r.empty_miles != null && r.empty_miles !== "");
     const weightedEmptyMiles =
@@ -307,8 +306,11 @@ if (process.argv.includes("--selftest")) {
     console.error(`merge-and-rescore-lane-mileage SELFTEST FAIL — practical_min/max not aggregated as true observed extremes: ${JSON.stringify(dallas)}`);
     process.exit(1);
   }
-  // (5) short_miles/n_short/short_min/short_max/empty_miles must survive the merge -- this is the
-  // exact class of bug that silently dropped them for every one of 3,006 live lanes.
+  // (5) LANE-MILEAGE-SHORT-MILES-REGRESSION (owner order 2026-09-04, reverses this comment's own
+  // prior framing): short_miles/n_short/short_min/short_max must be discarded by the merge
+  // ALWAYS, regardless of what any variant row carries -- the source's short_miles is the
+  // AlwaysTrack blend, never an independent shortest-route figure. empty_miles still survives
+  // (informational only, live-verified to never feed pay -- see seed-lane-mileage.mjs header).
   const shortEmptyFixture = [
     {
       origin_city: "TULSA", origin_state: "OK", dest_city: "LAREDO", dest_state: "TX",
@@ -324,18 +326,25 @@ if (process.argv.includes("--selftest")) {
     },
   ];
   const tulsa = mergeGroups(shortEmptyFixture, aliasMap).find((m) => m.origin_city === "TULSA");
-  if (!tulsa || tulsa.short_miles == null || tulsa.n_short !== 3 || tulsa.short_min !== 640 || tulsa.short_max !== 655 || tulsa.empty_miles <= 0) {
-    console.error(`merge-and-rescore-lane-mileage SELFTEST FAIL — short_miles/n_short/short_min/short_max/empty_miles not carried through the merge: ${JSON.stringify(tulsa)}`);
+  if (!tulsa || tulsa.short_miles !== null || tulsa.n_short !== 0 || tulsa.short_min !== null || tulsa.short_max !== null || tulsa.empty_miles <= 0) {
+    console.error(`merge-and-rescore-lane-mileage SELFTEST FAIL — short_miles/n_short/short_min/short_max must always be discarded (empty_miles must still survive): ${JSON.stringify(tulsa)}`);
     process.exit(1);
   }
-  // (6) a lane with short-route data but ZERO practical observations must not be dropped or
-  // crash the weighting (Number(null) must never silently zero-weight a real average).
+  // (6) a group with NO practical observation at all (only ever possible from a short-only
+  // source row, which seed-lane-mileage.mjs no longer allows this far) still merges honestly to
+  // practical_miles=null here -- filtering it out of the INSERT is the caller's job (below), not
+  // this pure function's, so it stays observable/testable on its own.
   const shortOnlyFixture = [
     { origin_city: "ADRIAN", origin_state: "PA", dest_city: "LAREDO", dest_state: "TX", practical_miles: "", practical_spread: "", practical_min: "", practical_max: "", n_practical: "", short_miles: "338.4", short_min: "338.4", short_max: "338.4", n_short: 1, empty_miles: "", first_seen: "", last_seen: "" },
   ];
   const adrian = mergeGroups(shortOnlyFixture, aliasMap).find((m) => m.origin_city === "ADRIAN");
-  if (!adrian || adrian.practical_miles !== null || adrian.short_miles !== 338.4) {
+  if (!adrian || adrian.practical_miles !== null || adrian.short_miles !== null) {
     console.error(`merge-and-rescore-lane-mileage SELFTEST FAIL — short-only (no practical) lane mishandled: ${JSON.stringify(adrian)}`);
+    process.exit(1);
+  }
+  const src2 = readFileSync(fileURLToPath(import.meta.url), "utf8");
+  if (!/if \(r\.practical_miles == null\) continue;/.test(src2)) {
+    console.error("merge-and-rescore-lane-mileage SELFTEST FAIL — the INSERT loop no longer skips practical_miles==null rows -- this would crash against the restored NOT NULL constraint");
     process.exit(1);
   }
   const src = readFileSync(fileURLToPath(import.meta.url), "utf8");
@@ -393,6 +402,12 @@ async function main() {
   );
 
   for (const r of merged) {
+    // LANE-MILEAGE-SHORT-MILES-REGRESSION (owner order 2026-09-04): practical_miles is NOT NULL
+    // again (migration 202613680001). A merged group with no practical observation at all (only
+    // ever possible if a short-only source row reached this far, which seed-lane-mileage.mjs no
+    // longer allows) has zero legitimate mileage content now that short_miles is always discarded
+    // too -- skip it rather than crash the INSERT or fabricate a value.
+    if (r.practical_miles == null) continue;
     await client.query(
       `INSERT INTO catalogs.lane_mileage (
          operating_company_id, origin_city, origin_state, dest_city, dest_state,
