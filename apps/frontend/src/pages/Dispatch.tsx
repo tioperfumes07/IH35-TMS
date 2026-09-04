@@ -463,6 +463,7 @@ export function DispatchPage({
               setSearchParams(next);
             }}
             onBookReturn={() => openBookLoadModal()}
+            deepLink={roundTripsRoute}
           />
         ) : view === "list" ? (
           <DispatchBoard

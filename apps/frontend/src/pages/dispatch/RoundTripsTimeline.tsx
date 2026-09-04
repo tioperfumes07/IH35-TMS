@@ -77,7 +77,7 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
           ))}
         </div>
         {byUnit.length === 0 ? (
-          <div className="p-4 text-xs text-gray-500">No assigned loads in this range.</div>
+          <div className="p-4 text-xs text-gray-500">No open tours. A tour opens when a northbound load is booked from the yard.</div>
         ) : (
           byUnit.map(([unitId, unitLoads]) => {
             const chrono = [...unitLoads].sort((a, b) => loadSpanStartMs(a) - loadSpanStartMs(b));

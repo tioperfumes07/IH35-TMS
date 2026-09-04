@@ -43,6 +43,8 @@ type Props = {
   listError?: DataTableErrorState;
   onLoadClick: (loadId: string) => void;
   onBookReturn: () => void;
+  /** BRD-10: the /dispatch/round-trips deep link should land on the timeline, not the load board. */
+  deepLink?: boolean;
 };
 
 function TripCard({
@@ -202,16 +204,24 @@ function readSort(): SortMode {
   return "truck";
 }
 
-function readView(): BoardView {
+function readView(deepLink?: boolean): BoardView {
   const raw = typeof localStorage !== "undefined" ? localStorage.getItem(VIEW_KEY) : null;
   if (raw === "timeline" || raw === "board") return raw;
-  return "board";
+  return deepLink ? "timeline" : "board";
 }
 
-export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLoadClick, onBookReturn }: Props) {
+export function RoundTrips({
+  loads,
+  operatingCompanyId,
+  loading,
+  listError,
+  onLoadClick,
+  onBookReturn,
+  deepLink,
+}: Props) {
   const enabled = Boolean(operatingCompanyId);
   const [sort, setSort] = useState<SortMode>(readSort);
-  const [boardView, setBoardView] = useState<BoardView>(readView);
+  const [boardView, setBoardView] = useState<BoardView>(() => readView(deepLink));
   const [range, setRange] = useState(defaultTimelineRange);
 
   const preSettlementsQuery = useQuery({
@@ -354,7 +364,7 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
         <RoundTripsTimeline loads={loads} rangeFrom={range.from} rangeTo={range.to} onLoadClick={onLoadClick} />
       ) : pairs.length === 0 ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">
-          No active unit round trips. Book loads to see outbound + return pairing.
+          No open tours. A tour opens when a northbound load is booked from the yard.
         </div>
       ) : (
         <div className="overflow-x-auto overflow-y-auto max-h-[70vh] space-y-2 pr-1" data-testid="round-trips-load-board">
