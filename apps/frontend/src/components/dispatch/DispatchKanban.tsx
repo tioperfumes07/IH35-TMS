@@ -10,7 +10,7 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DispatchLoadRow, LoadStatus } from "../../api/loads";
 import { patchAssignUnit } from "../../api/dispatch";
 import type { UnitsWithoutLoad } from "../../api/dispatch";
@@ -832,6 +832,8 @@ function KanbanDispatchColumn({
   onColumnHeaderClick,
   columnSort,
   onToggleColumnSort,
+  width,
+  onResize,
 }: {
   column: KanbanColumnDef;
   loads: DispatchLoadRow[];
@@ -841,8 +843,33 @@ function KanbanDispatchColumn({
   onColumnHeaderClick?: (statuses: string[]) => void;
   columnSort?: KanbanColumnSort;
   onToggleColumnSort: (columnKey: string, sortKey: "unit" | "load") => void;
+  width?: number;
+  onResize?: (columnKey: string, width: number) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `column:${column.key}` });
+  // DSP-12 (owner 2026-09-04): "each individual column we cannot adjust width." Lanes were fixed at a
+  // density-derived min-width with flex-1, so a dispatcher could never widen a busy lane to read long
+  // load/route text. This ref + pointer-drag handle lets each lane be resized; the width persists per
+  // lane key (see DispatchKanban.setColumnWidth) so the board keeps the operator's layout across reloads.
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const onResizePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (!onResize) return;
+      // Do not let the resize gesture bubble into dnd-kit card/column drag sensors.
+      e.preventDefault();
+      e.stopPropagation();
+      const startX = e.clientX;
+      const startWidth = sectionRef.current?.getBoundingClientRect().width ?? width ?? 290;
+      const handleMove = (ev: PointerEvent) => onResize(column.key, startWidth + (ev.clientX - startX));
+      const handleUp = () => {
+        window.removeEventListener("pointermove", handleMove);
+        window.removeEventListener("pointerup", handleUp);
+      };
+      window.addEventListener("pointermove", handleMove);
+      window.addEventListener("pointerup", handleUp);
+    },
+    [column.key, onResize, width],
+  );
   // DSP-15 (owner 2026-09-04): a collapsedByDefault lane (Cancelled) previously rendered ONLY
   // its header + count with no way to open it — the cancelled loads were unreachable on the
   // board. This expander toggles the lane open on demand; the hook lives above every early
@@ -896,7 +923,9 @@ function KanbanDispatchColumn({
   const minWidth = density === "compact" ? "min-w-[200px]" : density === "standard" ? "min-w-[230px]" : "min-w-[290px]";
   return (
     <section
-      className={`${minWidth} flex-1 rounded-sm border border-gray-200 bg-white p-2`}
+      ref={sectionRef}
+      className={`relative ${width ? "" : `${minWidth} flex-1`} rounded-sm border border-gray-200 bg-white p-2`}
+      style={width ? { width: `${width}px`, flex: "0 0 auto" } : undefined}
       data-testid={`kanban-column-${column.key}`}
     >
       <header className="mb-2 rounded-sm border border-gray-100 px-2 pb-2 pt-1">
@@ -965,6 +994,16 @@ function KanbanDispatchColumn({
           );
         })}
       </div>
+      {onResize ? (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          data-testid={`kanban-column-resize-${column.key}`}
+          onPointerDown={onResizePointerDown}
+          className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-slate-300"
+          title="Drag to resize this lane"
+        />
+      ) : null}
     </section>
   );
 }
@@ -993,6 +1032,28 @@ export function DispatchKanban({
   // (~5-line) remain available via the toggle (additive). Standard balances fleet density vs readability.
   const [density, setDensity] = useState<KanbanDensity>(KANBAN_DEFAULT_DENSITY);
   const [columnSorts, setColumnSorts] = useState<Record<string, KanbanColumnSort>>({});
+  // DSP-12 (owner 2026-09-04): per-lane widths, persisted so the dispatcher's board layout survives a
+  // reload. Clamped 180–560px so a lane can't be dragged to zero or off the board.
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
+    try {
+      const raw = localStorage.getItem("ih35.kanban.columnWidths");
+      return raw ? (JSON.parse(raw) as Record<string, number>) : {};
+    } catch {
+      return {};
+    }
+  });
+  const setColumnWidth = useCallback((columnKey: string, next: number) => {
+    setColumnWidths((prev) => {
+      const clamped = Math.max(180, Math.min(560, Math.round(next)));
+      const merged = { ...prev, [columnKey]: clamped };
+      try {
+        localStorage.setItem("ih35.kanban.columnWidths", JSON.stringify(merged));
+      } catch {
+        /* localStorage unavailable (private mode) — width stays in-session only */
+      }
+      return merged;
+    });
+  }, []);
   const [pendingAssign, setPendingAssign] = useState<PendingKanbanAssign | null>(null);
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -1222,6 +1283,8 @@ export function DispatchKanban({
                 onColumnHeaderClick={onColumnHeaderClick}
                 columnSort={columnSorts[group.key]}
                 onToggleColumnSort={toggleKanbanColumnSort}
+                width={columnWidths[group.key]}
+                onResize={setColumnWidth}
               />
             );
           })}
