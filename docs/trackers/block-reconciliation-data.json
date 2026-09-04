@@ -1,6 +1,6 @@
 {
  "date": "2026-09-04",
- "generated_at_iso": "2026-09-04T11:27:52.995Z",
+ "generated_at_iso": "2026-09-04T16:28:34.023Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 30,
@@ -13727,6 +13727,36 @@
  ],
  "merged_prs": [
   {
+   "number": 20303,
+   "title": "Claude-1- FINDING: N/A -- SURFACE-BREACH-AUTHORIZED request to Cursor (LoadDetailCostsTab.tsx)",
+   "mergedAt": "2026-09-04T16:11:12Z",
+   "branch": "cc-1/surface-breach-request-cursor-load-costs"
+  },
+  {
+   "number": 20302,
+   "title": "Claude-1- FINDING: ACCT-F25010 -- LANE-MILEAGE-SHORT-MILES-REGRESSION restore (URGENT, owner error, not CC-3's)",
+   "mergedAt": "2026-09-04T16:08:32Z",
+   "branch": "cc-1/lane-mileage-restore-feature"
+  },
+  {
+   "number": 20301,
+   "title": "Claude-1- FINDING: N/A -- CLAIM-RESERVE 10325 verify-lane-mileage-short-miles-never-from-alwaystrack-blend",
+   "mergedAt": "2026-09-04T15:05:07Z",
+   "branch": "chore/claim-verify-step-10325-cc1"
+  },
+  {
+   "number": 20300,
+   "title": "Claude-1- FINDING: N/A -- CLAIM-RESERVE 202613680001 lane_mileage restore (URGENT, owner error)",
+   "mergedAt": "2026-09-04T14:57:55Z",
+   "branch": "chore/claim-migration-202613680001-cc1"
+  },
+  {
+   "number": 20299,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-04T11:28:26Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 20298,
    "title": "Claude-1- FINDING: LST-F25005 -- SET-15 Load Costs tab gains Advance received row type",
    "mergedAt": "2026-09-04T08:18:35Z",
@@ -13839,6 +13869,12 @@
    "title": "Claude-1- FINDING: LST-F25002 -- DRV-BILL-MILES-INTEGER widen (live-blocking)",
    "mergedAt": "2026-09-04T06:44:15Z",
    "branch": "cc-1/drv-bill-miles-integer-widen"
+  },
+  {
+   "number": 20279,
+   "title": "Cursor- fix(infra): ACCT-F9001 — LoadCostsBoardPage silent list cap + six CI guards failing on origin/main",
+   "mergedAt": "2026-09-04T15:06:13Z",
+   "branch": "cascade/guard-integrity"
   },
   {
    "number": 20278,
@@ -17289,42 +17325,6 @@
    "title": "FINDING: defect-class counts re-derived + specs-vs-live schema sweep",
    "mergedAt": "2026-09-02T16:39:43Z",
    "branch": "cascade/defect-counts"
-  },
-  {
-   "number": 19682,
-   "title": "FINDING: 3 unique silent no-ops — portal download, earnings refresh, CBP widget stuck loading",
-   "mergedAt": "2026-09-02T16:34:56Z",
-   "branch": "cascade/hunt3"
-  },
-  {
-   "number": 19680,
-   "title": "CC-2-FINDING: GO23 J1/K2/N1/GO24 fourth status report",
-   "mergedAt": "2026-09-02T15:23:53Z",
-   "branch": "cc2/go23-j1-k2-n1-go24-fourth-report"
-  },
-  {
-   "number": 19679,
-   "title": "CC-2- fix(book-load): GO23-J1 fourth pass -- MilesStrip/StopsSection/LoadTemplateLibrary",
-   "mergedAt": "2026-09-02T15:13:58Z",
-   "branch": "cc2/go23-j1-book-load-fourth-pass"
-  },
-  {
-   "number": 19678,
-   "title": "Claude-1- GO-23 purge-tail EXECUTED (10 tables, per-row verified)",
-   "mergedAt": "2026-09-02T15:08:11Z",
-   "branch": "cc1/purge-tail-final-ship-1788361499"
-  },
-  {
-   "number": 19677,
-   "title": "ChatGpt-Codex-1- Enroll eight orphan guards and correct cargo startup contract",
-   "mergedAt": "2026-09-02T16:53:13Z",
-   "branch": "codex/enroll-eight-orphan-guards"
-  },
-  {
-   "number": 19676,
-   "title": "CC-2- fix(load-detail): GO23-J1 Bills/Expenses reverse sections + N1-Pay code-verify",
-   "mergedAt": "2026-09-02T15:05:58Z",
-   "branch": "cc2/go23-j1-loaddetail-reverse-sections"
   }
  ],
  "merged_pr_total": 3000,
