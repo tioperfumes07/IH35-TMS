@@ -1,6 +1,18 @@
 # INBOX-CC-2 · 2026-09-04 · Cursor lead re-dispatch (DISPATCH design tokens)
 `git pull --ff-only origin main`
 
+★ OWNER CALLED YOU OUT BY NAME (2026-09-04): "CC2 IS NOT DOING THAT." Every seat
+must FINISH its job COMPLETELY — not tokens on one file, the WHOLE vertical:
+transcribe the locked tokens → APPLY them across ALL dispatch surfaces (KPI tiles,
+buttons, table headers, corners) → run the ratchet DOWN → then OPEN CHROME and
+VERIFY the applied result live (you are the ONLY seat that writes the verified
+flag — so the verify is yours to do, not to skip). "Merged" is not "done";
+"transcribed" is not "done." Applied + ratchet-down + Chrome-proven is done.
+Report the before/after ratchet counts AND a Chrome screenshot of a dispatch
+screen at the new tokens. If a surface is off-scale and you cannot reach it, name
+the file and say so — do not leave it silently off-scale.
+
+
 NOW — your design-system transcription slice of the DISPATCH board. These are
 MEASURED live off the owner's own app (getComputedStyle), not adjectives. Owner
 named Safety · Total Safety Events as the reference tile. Transcribe into the

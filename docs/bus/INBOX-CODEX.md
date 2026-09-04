@@ -20,4 +20,15 @@ NOW — your data-side + reverse/CI slice of the owner's DISPATCH board (1–39)
 
 Never POST. Never Chrome. Never DELETE units. §0 Finish Law: one at a time.
 
+★ GATE-LIVELOCK: you are AUTHORIZED --no-verify per the FAST-MERGE law once your
+local gate is exit 0 and you've confirmed the failing static guards are
+pre-existing on clean origin/main and none is yours. Do NOT reseed
+VERIFY-STATIC-BASELINE.json and do NOT expand scope to fix the 11 unrelated guards.
+
+Good work: #20339 (4e8fbadf53) In-Shop contract + #20340 (df01514c42) registration
++ $7,000 cap path + WO↔load-cost linkage all confirmed. Live ≥$7,000 capitalization
+proof correctly deferred to the first real repair (no invented prod record). #9 is
+CONFIRMED as the feed for Cursor's #8 — paste the contract field shape to OUTBOX so
+I wire the single In-Shop surface to it.
+
 ACK `CODEX | ACK | #9 confirm + #39 fix + #38 report · NEVER POST | GO`
