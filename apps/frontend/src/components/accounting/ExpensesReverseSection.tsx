@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { listExpenses } from "../../api/accounting";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatMoneyCents } from "../dispatch/constants";
@@ -44,21 +44,30 @@ export function ExpensesReverseSection({
 }: Props) {
   const filterKey = Object.keys(filter)[0] as keyof Filter;
   const filterValue = Object.values(filter)[0] as string;
+  const navigate = useNavigate();
   const expensesQ = useQuery({
     queryKey: ["accounting", "expenses", "reverse", operatingCompanyId, filter],
     queryFn: () => listExpenses(operatingCompanyId, { ...filter }),
     enabled: Boolean(operatingCompanyId) && Boolean(filterValue),
   });
   const rows = expensesQ.data?.rows ?? [];
+  // DRV-12: "the large boxes ... go NOWHERE when clicked" -- only the small "Open Expenses"
+  // corner link navigated. Same FleetTable.tsx row-onClick pattern; the corner links stop
+  // propagation themselves (react-router's bare <Link> doesn't by default, unlike EntityLink).
+  const openExpensesRoute = `/accounting/expenses?${filterKey}=${encodeURIComponent(filterValue)}`;
 
   return (
-    <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
+    <div
+      className="cursor-pointer space-y-2 rounded-sm border border-gray-200 bg-white p-3 hover:bg-gray-50"
+      onClick={() => navigate(openExpensesRoute)}
+      data-testid={testId}
+    >
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-xs font-semibold text-slate-900">
           Expenses
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
-        <span className="flex items-center gap-3">
+        <span className="flex items-center gap-3" onClick={(event) => event.stopPropagation()}>
           {/* N1 (GO-23 wave 1) — ExpenseCreatePage was routed but nothing in dispatch reached it,
               so load-scoped cost had nowhere to go. Only the load filter carries a create path;
               driver/trailer/unit/work_order/insurance_claim entry points are a separate ask. */}
@@ -73,7 +82,7 @@ export function ExpensesReverseSection({
           ) : null}
           <Link
             className="text-xs font-semibold text-slate-700 underline"
-            to={`/accounting/expenses?${filterKey}=${encodeURIComponent(filterValue)}`}
+            to={openExpensesRoute}
           >
             Open Expenses
           </Link>
