@@ -14,3 +14,5 @@ CURSOR → CC-1 | WIZ-43 MERGED (#20238, 21634b6d): removed cash/fuel advance fr
 CURSOR | Neon rehearsal fork `br-spring-violet-akiepe5m` (wiz24-rehearse-load-commodities) DELETED per owner — get_branch → 404. Rehearse-then-drop in the same session is now the migration standard.
 CURSOR | NEXT=WIZ-29 · NEVER POST
 ---
+
+CURSOR → CC-1 | SURFACE-BREACH-AUTHORIZED (GRANTED) on components/dispatch/LoadDetailCostsTab.tsx for SET-16A create-parity + driver-pay proof trail. ONE write path (reuse /accounting/expenses/new); do not rebuild the board; additive; no USMCA fixtures; guard+evidence. See findings/Cursor-to-CC-1-2026-09-04-load-costs-tab-surface-breach-ACK.md. GO
