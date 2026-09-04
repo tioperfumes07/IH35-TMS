@@ -1,5 +1,3 @@
-import { pool } from "../auth/db.js";
-
 type Queryable = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -17,10 +15,29 @@ export type DriverAssignmentAvailability = {
   asset_label?: string | null;
 };
 
+/**
+ * DRV-AVAILABILITY-RLS-MASKED (owner order 2026-09-04, live-blocking): `queryable` used to be
+ * optional, defaulting to a bare pool connection that set ONLY `app.operating_company_id` (see
+ * the removed fallback below in git history). mdata.drivers has RLS ENABLED and FORCED, and its
+ * `drivers_select` policy is `identity.is_lucia_bypass() OR operating_company_id IN (SELECT
+ * org.user_accessible_company_ids()) OR identity_user_id = identity.current_user_id()` — NONE of
+ * those three disjuncts reads `app.operating_company_id`. A bare-pool caller therefore always saw
+ * ZERO rows for mdata.drivers, and this function's own zero-row branch turned that MASKED read
+ * into `E_DRIVER_NOT_FOUND` — a real driver reported missing, live, on the booking path (owner
+ * repro: GET .../drivers/:id -> 200 Active; GET .../load-availability -> E_DRIVER_NOT_FOUND, same
+ * driver, same company). `maintenance.work_orders` (also queried below) is the OPPOSITE case — its
+ * RLS keys ONLY on `app.operating_company_id` — so this function's two queries span both of this
+ * schema's RLS families and NEEDS both GUCs set correctly, which only a real per-user scope (e.g.
+ * `withCompanyScope`, which sets `app.current_user_id` via `withCurrentUser` AND
+ * `app.operating_company_id`) provides. `queryable` is now REQUIRED: there is no safe default
+ * connection to fall back to, and a caller that forgets to pass one now fails to COMPILE instead
+ * of silently returning a masked "not found" at runtime — "fail loud" per the owner's own order.
+ * See docs/audit/GUARD-WORKORDERS.md DRV-AVAILABILITY-RLS-MASKED for the live repro and fix proof.
+ */
 export async function canAssignLoadToDriver(
   driverId: string,
   tenantId: string,
-  queryable?: Queryable
+  queryable: Queryable
 ): Promise<DriverAssignmentAvailability> {
   const run = async (db: Queryable): Promise<DriverAssignmentAvailability> => {
     // HOS first — same gate Book uses. Quick-assign previously only checked repair WO and could
@@ -123,21 +140,5 @@ export async function canAssignLoadToDriver(
     };
   };
 
-  if (queryable) {
-    return run(queryable);
-  }
-
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [tenantId]);
-    const result = await run(client);
-    await client.query("COMMIT");
-    return result;
-  } catch (error) {
-    await client.query("ROLLBACK").catch(() => {});
-    throw error;
-  } finally {
-    client.release();
-  }
+  return run(queryable);
 }
