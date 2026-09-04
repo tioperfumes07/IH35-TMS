@@ -26,6 +26,7 @@ const guards = [
 export default {
   name: "verify-nonmoney-reverse-link-orphan-guard-registry-batch",
   async run(ctx) {
+    await ctx.run("node", ["scripts/verify-border-crossing-broker-linkage.mjs", "--selftest"]);
     for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
   },
 };
