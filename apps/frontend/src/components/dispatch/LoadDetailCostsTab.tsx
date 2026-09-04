@@ -11,6 +11,8 @@ import {
   listExpenses,
   type BrokerAdvanceCategory,
 } from "../../api/accounting";
+import { getAllAccounts } from "../../api/banking";
+import { formatBankAccountPickerLabel } from "../../pages/banking/transferAccountPicker";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { apiRequest, generateIdempotencyKey } from "../../api/client";
 import type { LoadDetail } from "../../api/loads";
@@ -77,6 +79,14 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
   const vendors = useQuery({ queryKey: ["load-costs", "vendors", opco], queryFn: () => listVendors({ operating_company_id: opco, status: "active", limit: 5000 }) });
   const accounts = useQuery({ queryKey: ["load-costs", "accounts", opco], queryFn: () => listCatalogAccounts({ operating_company_id: opco, status: "active", postable_only: true }) });
   const advances = useQuery({ queryKey: ["load-costs", "advances", opco, load.id], queryFn: () => listBrokerAdvances(opco, { load_id: load.id }) });
+  // LOAD-COSTS-COMPLETE items (1)/(5) (owner correction 2026-09-04): a broker advance receipt only
+  // gets a real JE (DR bank / CR AR-or-deposit-liability) when the caller says which of OUR real
+  // banking.bank_accounts the cash landed in -- required for diesel/repair/other (cash always
+  // lands in our bank for those); optional for driver_pay (the broker may have paid the driver
+  // directly, our bank never holding it). Reuses banking.ts's own getAllAccounts, the same source
+  // every other bank-account picker in this app reads (RecordPaymentModal, CreateAdvanceModal).
+  const bankAccountsQuery = useQuery({ queryKey: ["load-costs", "bank-accounts", opco], queryFn: () => getAllAccounts(opco) });
+  const advanceBankAccountRows = (bankAccountsQuery.data?.accounts ?? []) as Array<{ id: string; display_name?: string | null; account_name?: string | null; institution_name?: string | null; account_mask?: string | null }>;
   const savedExpenses = expenses.data?.rows ?? [];
   const savedBills = bills.data?.rows ?? [];
   const savedAdvances = (advances.data?.rows ?? []).filter((row) => !row.voided_at);
@@ -119,9 +129,14 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
                 ? "Instrument type is required."
                 : !row.instrumentReference.trim()
                   ? "Instrument reference is required."
-                  : !(amountCents > 0)
-                    ? "Amount must be greater than zero."
-                    : null
+                  // LOAD-COSTS-COMPLETE items (1)/(5) -- required for diesel/repair/other (cash
+                  // always lands in our bank for those); optional only for driver_pay (the broker
+                  // may have paid the driver directly).
+                  : row.advanceCategory !== "driver_pay" && !row.paymentAccountId
+                    ? "Bank account is required for this category — cash always lands in our bank for diesel/repair/other."
+                    : !(amountCents > 0)
+                      ? "Amount must be greater than zero."
+                      : null
             : row.kind === "fuel_advance"
               ? !load.assigned_primary_driver_id
                 ? "Assign a driver to this load before recording a fuel advance."
@@ -155,7 +170,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
             // shows whose fuel this was, but nothing here writes driver_finance.* or a receivable.
             await createExpense(opco, { category_account_id: fuelAccount!.id, expense_date: row.date, amount_cents: amountCents, payment_account_uuid: row.paymentAccountId, driver_id: load.assigned_primary_driver_id!, load_id: load.id, expense_number: displayNumber(index), memo: `Fuel advance · Load ${load.load_number}`, is_sample_data: false });
           } else {
-            await createBrokerAdvance(opco, { load_id: load.id, customer_id: load.customer_id, category: row.advanceCategory as BrokerAdvanceCategory, instrument_type: row.instrumentType.trim(), instrument_reference: row.instrumentReference.trim(), amount_cents: amountCents, received_at: row.date });
+            await createBrokerAdvance(opco, { load_id: load.id, customer_id: load.customer_id, category: row.advanceCategory as BrokerAdvanceCategory, instrument_type: row.instrumentType.trim(), instrument_reference: row.instrumentReference.trim(), amount_cents: amountCents, received_at: row.date, bank_account_id: row.paymentAccountId || null });
           }
         } catch (error) { errors.set(row.id, userFacingApiError(error, "Could not save this cost.")); }
       }
@@ -182,6 +197,12 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
           <Field label="Category"><select data-testid="load-cost-field-advance-category" className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={row.advanceCategory} onChange={(e) => update(row.id, { advanceCategory: e.target.value as BrokerAdvanceCategory | "" })}><option value="">Select category</option>{BROKER_ADVANCE_CATEGORIES.map((c) => <option key={c} value={c}>{ADVANCE_CATEGORY_LABEL[c]}</option>)}</select></Field>
           <Field label="Instrument type"><input data-testid="load-cost-field-instrument-type" className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Comchek / EFT / wire" value={row.instrumentType} onChange={(e) => update(row.id, { instrumentType: e.target.value })} /></Field>
           <Field label="Instrument reference"><input data-testid="load-cost-field-instrument-reference" className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="check / transaction no." value={row.instrumentReference} onChange={(e) => update(row.id, { instrumentReference: e.target.value })} /></Field>
+          {/* LOAD-COSTS-COMPLETE items (1)/(5) -- required for diesel/repair/other (cash always lands
+             * in our bank for those, so this posts a real DR bank / CR AR-or-deposit-liability JE);
+             * optional for driver_pay (the broker may have paid the driver directly, skipping our
+             * bank entirely -- item (2)'s disbursement, if this row is later disbursed, is that
+             * row's only ledger entry). */}
+          <Field label={row.advanceCategory === "driver_pay" ? "Deposited into (bank) — optional" : "Deposited into (bank)"}><select data-testid="load-cost-field-advance-bank" className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={row.paymentAccountId} onChange={(e) => update(row.id, { paymentAccountId: e.target.value })}><option value="">{row.advanceCategory === "driver_pay" ? "No bank -- broker paid the driver directly" : "Select bank account"}</option>{advanceBankAccountRows.map((a) => <option key={a.id} value={a.id}>{formatBankAccountPickerLabel(a)}</option>)}</select></Field>
           <Field label="Amount"><div data-testid="load-cost-field-amount"><MoneyInput className="mt-1 h-8 w-full" valueCents={row.amount ? Math.round(Number(row.amount) * 100) : null} onChangeCents={(cents) => update(row.id, { amount: cents == null ? "" : String(cents / 100) })} /></div></Field>
         </div> : row.kind === "fuel_advance" ? <div className="grid grid-cols-2 gap-3 p-3">
           <Field label="Date"><DatePicker data-testid="load-cost-field-date" className="mt-1 h-8 w-full" value={row.date} onChange={(value) => update(row.id, { date: value })} /></Field>

@@ -1189,9 +1189,13 @@ export function createBrokerAdvance(
     amount_cents: number;
     received_at: string;
     notes?: string | null;
+    /** LOAD-COSTS-COMPLETE items (1)/(5) -- required for diesel/repair/other (real cash always
+     * lands in one of our bank accounts); optional for driver_pay (the broker may have paid the
+     * driver directly, our bank never holding it). Drives a real receipt-side JE server-side. */
+    bank_account_id?: string | null;
   }
 ) {
-  return apiRequest<{ broker_advance_id: string; applied_to_invoice_id: string | null }>(
+  return apiRequest<{ broker_advance_id: string; applied_to_invoice_id: string | null; journal_entry_id: string | null }>(
     "/api/v1/accounting/broker-advances",
     { method: "POST", body: { operating_company_id: operatingCompanyId, ...body } }
   );

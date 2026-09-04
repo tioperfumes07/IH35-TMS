@@ -15,21 +15,36 @@ const CUSTOMER_ID = "22222222-2222-2222-2222-222222222222";
 const USER_ID = "33333333-3333-3333-3333-333333333333";
 const NEW_BROKER_ADVANCE_ID = "44444444-4444-4444-4444-444444444444";
 const LIVE_INVOICE_ID = "55555555-5555-5555-5555-555555555555";
+const BANK_ACCOUNT_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+const BANK_LEDGER_ACCOUNT_ID = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+const RECEIVABLE_1100_ID = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+const DEPOSITS_2250_ID = "dddddddd-dddd-dddd-dddd-dddddddddddd";
 
-function makeClient(overrides: { liveInvoiceId?: string | null } = {}) {
+function makeClient(overrides: { liveInvoiceId?: string | null; bankHidden?: boolean; invoiceStatus?: string } = {}) {
   const calls: { sql: string; values: unknown[] }[] = [];
   const client = {
     query: vi.fn(async (sql: string, values: unknown[] = []) => {
       calls.push({ sql, values });
       if (/SELECT audit\.append_event/.test(sql)) return { rows: [] };
+      if (/FROM banking\.bank_accounts/.test(sql)) return { rows: [{ id: BANK_ACCOUNT_ID, ledger_account_id: BANK_LEDGER_ACCOUNT_ID }] };
       if (/SELECT id FROM mdata\.loads WHERE/.test(sql)) return { rows: [{ id: LOAD_ID }] };
       if (/SELECT id FROM mdata\.customers WHERE/.test(sql)) return { rows: [{ id: CUSTOMER_ID }] };
       if (/INSERT INTO accounting\.broker_advances/.test(sql)) return { rows: [{ id: NEW_BROKER_ADVANCE_ID }] };
       if (/SELECT i\.id\s+FROM accounting\.invoices i/.test(sql)) {
         return { rows: overrides.liveInvoiceId ? [{ id: overrides.liveInvoiceId }] : [] };
       }
+      // LOAD-COSTS-COMPLETE item (4)/(5) proforma-awareness: fetched separately (findConflicting
+      // InvoiceForLoad only selects i.id). Defaults to "sent" (a real, posted invoice) so every
+      // pre-existing test above keeps its AR-credit behavior unless it opts into proforma.
+      if (/SELECT status FROM accounting\.invoices WHERE/.test(sql)) {
+        return { rows: overrides.liveInvoiceId ? [{ status: overrides.invoiceStatus ?? "sent" }] : [] };
+      }
       if (/UPDATE accounting\.invoices SET broker_advance_applied_cents/.test(sql)) return { rows: [] };
       if (/UPDATE accounting\.broker_advances SET applied_to_invoice_id/.test(sql)) return { rows: [] };
+      if (/SELECT id FROM catalogs\.accounts WHERE.*account_number = \$2/.test(sql)) {
+        return { rows: [{ id: values[1] === "1100" ? RECEIVABLE_1100_ID : DEPOSITS_2250_ID }] };
+      }
+      if (/UPDATE accounting\.broker_advances SET receipt_journal_entry_id/.test(sql)) return { rows: [] };
       return { rows: [] };
     }),
   };
@@ -46,6 +61,7 @@ const validInput = {
   amountCents: 50000,
   receivedAt: "2026-08-15",
   actorUserId: USER_ID,
+  bankAccountId: BANK_ACCOUNT_ID,
 };
 
 describe("recordBrokerAdvanceInClientTx — SET-24", () => {
@@ -108,10 +124,61 @@ describe("recordBrokerAdvanceInClientTx — SET-24", () => {
   it("throws load_not_found for a load outside the caller's own company scope", async () => {
     const { client } = makeClient();
     client.query = vi.fn(async (sql: string) => {
+      if (/FROM banking\.bank_accounts/.test(sql)) return { rows: [{ id: BANK_ACCOUNT_ID, ledger_account_id: BANK_LEDGER_ACCOUNT_ID }] };
       if (/SELECT id FROM mdata\.loads WHERE/.test(sql)) return { rows: [] };
       return { rows: [] };
     });
     await expect(recordBrokerAdvanceInClientTx(client as never, validInput)).rejects.toMatchObject({ code: "load_not_found" });
+  });
+
+  it("rejects a missing bank account for diesel/repair/other -- cash always lands in our bank for those", async () => {
+    const { client } = makeClient();
+    await expect(
+      recordBrokerAdvanceInClientTx(client as never, { ...validInput, bankAccountId: null })
+    ).rejects.toMatchObject({ code: "bank_account_required" });
+  });
+
+  it("driver_pay may omit the bank account -- the broker paid the driver directly, our bank never held it", async () => {
+    createJournalEntryOnClient.mockClear();
+    const { client, calls } = makeClient({ liveInvoiceId: null });
+    const result = await recordBrokerAdvanceInClientTx(client as never, { ...validInput, category: "driver_pay", bankAccountId: null });
+    expect(result.journalEntryId).toBeNull();
+    expect(createJournalEntryOnClient).not.toHaveBeenCalled();
+    expect(calls.some((c) => /FROM banking\.bank_accounts/.test(c.sql))).toBe(false);
+  });
+
+  it("no live invoice yet: posts a real JE DR bank / CR 2250 Customer Deposits -- there is no receivable to credit", async () => {
+    createJournalEntryOnClient.mockClear();
+    const { client } = makeClient({ liveInvoiceId: null });
+    const result = await recordBrokerAdvanceInClientTx(client as never, validInput);
+    expect(createJournalEntryOnClient).toHaveBeenCalledTimes(1);
+    const [, input] = createJournalEntryOnClient.mock.calls[0]!;
+    const debit = input.postings.find((p: { debit_or_credit: string }) => p.debit_or_credit === "debit");
+    const credit = input.postings.find((p: { debit_or_credit: string }) => p.debit_or_credit === "credit");
+    expect(debit).toMatchObject({ account_id: BANK_LEDGER_ACCOUNT_ID, amount_cents: validInput.amountCents });
+    expect(credit).toMatchObject({ account_id: DEPOSITS_2250_ID, amount_cents: validInput.amountCents });
+    expect(result.journalEntryId).toBe("je-1");
+  });
+
+  it("a live invoice already exists: posts a real JE DR bank / CR 1100 Accounts Receivable", async () => {
+    createJournalEntryOnClient.mockClear();
+    const { client } = makeClient({ liveInvoiceId: LIVE_INVOICE_ID });
+    await recordBrokerAdvanceInClientTx(client as never, validInput);
+    const [, input] = createJournalEntryOnClient.mock.calls[0]!;
+    const credit = input.postings.find((p: { debit_or_credit: string }) => p.debit_or_credit === "credit");
+    expect(credit).toMatchObject({ account_id: RECEIVABLE_1100_ID, amount_cents: validInput.amountCents });
+  });
+
+  // LOAD-COSTS-COMPLETE items (4)/(5) (owner correction 2026-09-04): applied_to_invoice_id alone
+  // is not enough -- ND-INV-01's proforma invoice is explicitly NON-POSTING, so a load whose only
+  // invoice is still proforma has no A/R row to credit either.
+  it("the matched invoice is still proforma (non-posting): credits 2250 Customer Deposits, never 1100 AR", async () => {
+    createJournalEntryOnClient.mockClear();
+    const { client } = makeClient({ liveInvoiceId: LIVE_INVOICE_ID, invoiceStatus: "proforma" });
+    await recordBrokerAdvanceInClientTx(client as never, validInput);
+    const [, input] = createJournalEntryOnClient.mock.calls[0]!;
+    const credit = input.postings.find((p: { debit_or_credit: string }) => p.debit_or_credit === "credit");
+    expect(credit).toMatchObject({ account_id: DEPOSITS_2250_ID, amount_cents: validInput.amountCents });
   });
 });
 
@@ -119,7 +186,6 @@ const DRIVER_BILL_ID = "66666666-6666-6666-6666-666666666666";
 const DRIVER_ID = "77777777-7777-7777-7777-777777777777";
 const PAYABLE_ACCOUNT_ID = "88888888-8888-8888-8888-888888888888";
 const RECEIVABLE_ACCOUNT_ID = "99999999-9999-9999-9999-999999999999";
-const LIABILITY_ACCOUNT_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 
 // LOAD-COSTS-COMPLETE item (2) (owner ruling 2026-09-04): "the broker might send the driver
 // money and we apply it as a bill payment to the driver."
@@ -134,11 +200,10 @@ describe("applyBrokerAdvanceToDriverBillInClientTx — LOAD-COSTS-COMPLETE item 
     billLoadId?: string;
     grossAmountCents?: number;
     priorDisbursedCoveredCents?: number;
-    /** LOAD-COSTS-COMPLETE item (4) -- defaults to "a posted invoice already exists" so every
-     * pre-existing test above keeps its original AR-credit behavior unless it opts into the
-     * pre-invoice/still-proforma scenario. */
+    /** undefined -> LIVE_INVOICE_ID (a real, posted invoice: preserves every pre-existing test's
+     * AR-credit expectation); null -> no invoice; a string -> that invoice id. */
     appliedToInvoiceId?: string | null;
-    invoiceStatus?: string | null;
+    invoiceStatus?: string;
   } = {}) {
     const calls: { sql: string; values: unknown[] }[] = [];
     const client = {
@@ -157,7 +222,7 @@ describe("applyBrokerAdvanceToDriverBillInClientTx — LOAD-COSTS-COMPLETE item 
                 instrument_reference: "CMK-88213456",
                 received_at: "2026-09-04",
                 applied_to_invoice_id: overrides.appliedToInvoiceId === undefined ? LIVE_INVOICE_ID : overrides.appliedToInvoiceId,
-                invoice_status: overrides.invoiceStatus === undefined ? "sent" : overrides.invoiceStatus,
+                invoice_status: overrides.appliedToInvoiceId === null ? null : (overrides.invoiceStatus ?? "sent"),
               },
             ],
           };
@@ -180,10 +245,8 @@ describe("applyBrokerAdvanceToDriverBillInClientTx — LOAD-COSTS-COMPLETE item 
         }
         if (/SELECT id FROM catalogs\.accounts WHERE.*account_number = \$2/.test(sql)) {
           const accountNumber = values[1];
-          return { rows: [{ id: accountNumber === "2200" ? PAYABLE_ACCOUNT_ID : RECEIVABLE_ACCOUNT_ID }] };
-        }
-        if (/FROM accounting\.chart_of_accounts_roles/.test(sql)) {
-          return { rows: [{ account_id: LIABILITY_ACCOUNT_ID }] };
+          const idByNumber: Record<string, string> = { "2200": PAYABLE_ACCOUNT_ID, "1100": RECEIVABLE_ACCOUNT_ID, "2250": DEPOSITS_2250_ID };
+          return { rows: [{ id: idByNumber[accountNumber as string] ?? RECEIVABLE_ACCOUNT_ID }] };
         }
         if (/UPDATE accounting\.broker_advances\s+SET\s+disbursed_to_driver_bill_id/.test(sql)) return { rows: [] };
         return { rows: [] };
@@ -248,9 +311,9 @@ describe("applyBrokerAdvanceToDriverBillInClientTx — LOAD-COSTS-COMPLETE item 
     expect(result.disbursedAmountCents).toBe(15000);
   });
 
-  it("posts a real, balanced JE through journal-entries.service -- DR Driver Settlements Payable / CR Accounts Receivable, tagged to the driver", async () => {
+  it("TIMING: no live invoice yet -- posts DR Driver Settlements Payable / CR 2250 Customer Deposits, never AR", async () => {
     createJournalEntryOnClient.mockClear();
-    const { client, calls } = makeDisburseClient();
+    const { client, calls } = makeDisburseClient({ appliedToInvoiceId: null });
     const result = await applyBrokerAdvanceToDriverBillInClientTx(client as never, validDisburseInput);
     expect(createJournalEntryOnClient).toHaveBeenCalledTimes(1);
     const [, input] = createJournalEntryOnClient.mock.calls[0]!;
@@ -258,7 +321,7 @@ describe("applyBrokerAdvanceToDriverBillInClientTx — LOAD-COSTS-COMPLETE item 
     const debit = input.postings.find((p: { debit_or_credit: string }) => p.debit_or_credit === "debit");
     const credit = input.postings.find((p: { debit_or_credit: string }) => p.debit_or_credit === "credit");
     expect(debit).toMatchObject({ account_id: PAYABLE_ACCOUNT_ID, amount_cents: 50000, entity_uuid: DRIVER_ID, entity_type: "driver" });
-    expect(credit).toMatchObject({ account_id: RECEIVABLE_ACCOUNT_ID, amount_cents: 50000 });
+    expect(credit).toMatchObject({ account_id: DEPOSITS_2250_ID, amount_cents: 50000 });
     expect(result.journalEntryId).toBe("je-1");
     // Never touches driver_finance.driver_liabilities / driver_advances / settlement_lines --
     // this settles an EXISTING driver_bills row, it creates no new liability anywhere.
@@ -270,29 +333,24 @@ describe("applyBrokerAdvanceToDriverBillInClientTx — LOAD-COSTS-COMPLETE item 
     expect(linkCall!.values).toEqual([NEW_BROKER_ADVANCE_ID, DRIVER_BILL_ID, 50000, "je-1"]);
   });
 
-  // LOAD-COSTS-COMPLETE item (4) (owner correction 2026-09-04) -- crediting Accounts Receivable
-  // unconditionally, including when no invoice exists for the load yet, posted against a
-  // receivable that isn't there. Pre-invoice, the credit must land on the Broker/Customer Advance
-  // Liability role instead.
-  it("credits the Broker/Customer Advance Liability role, not Accounts Receivable, when no invoice exists yet for the load", async () => {
+  it("TIMING: a live invoice already exists -- posts DR Driver Settlements Payable / CR 1100 Accounts Receivable", async () => {
     createJournalEntryOnClient.mockClear();
-    const { client } = makeDisburseClient({ appliedToInvoiceId: null, invoiceStatus: null });
+    const { client } = makeDisburseClient({ appliedToInvoiceId: LIVE_INVOICE_ID });
     await applyBrokerAdvanceToDriverBillInClientTx(client as never, validDisburseInput);
     const [, input] = createJournalEntryOnClient.mock.calls[0]!;
     const credit = input.postings.find((p: { debit_or_credit: string }) => p.debit_or_credit === "credit");
-    expect(credit).toMatchObject({ account_id: LIABILITY_ACCOUNT_ID, amount_cents: 50000 });
-    expect(credit.account_id).not.toBe(RECEIVABLE_ACCOUNT_ID);
+    expect(credit).toMatchObject({ account_id: RECEIVABLE_ACCOUNT_ID, amount_cents: 50000 });
   });
 
-  // Same defect, second shape: an invoice row exists but is still a non-posting PROFORMA (ND-INV-01
-  // -- "Pro Forma is NON-POSTING ... Official invoice posts A/R only after POD convert"), so there is
-  // STILL no posted receivable to net against even though applied_to_invoice_id is set.
-  it("credits the Broker/Customer Advance Liability role when the only invoice is still proforma (non-posting)", async () => {
+  // LOAD-COSTS-COMPLETE item (4) (owner correction 2026-09-04): the matched invoice existing is
+  // not enough -- ND-INV-01's proforma invoice is explicitly non-posting, so it has no A/R row yet.
+  it("TIMING: the matched invoice is still proforma -- posts CR 2250 Customer Deposits, never 1100 AR", async () => {
     createJournalEntryOnClient.mockClear();
     const { client } = makeDisburseClient({ appliedToInvoiceId: LIVE_INVOICE_ID, invoiceStatus: "proforma" });
     await applyBrokerAdvanceToDriverBillInClientTx(client as never, validDisburseInput);
     const [, input] = createJournalEntryOnClient.mock.calls[0]!;
     const credit = input.postings.find((p: { debit_or_credit: string }) => p.debit_or_credit === "credit");
-    expect(credit).toMatchObject({ account_id: LIABILITY_ACCOUNT_ID, amount_cents: 50000 });
+    expect(credit).toMatchObject({ account_id: DEPOSITS_2250_ID, amount_cents: 50000 });
+    expect(credit.account_id).not.toBe(RECEIVABLE_ACCOUNT_ID);
   });
 });

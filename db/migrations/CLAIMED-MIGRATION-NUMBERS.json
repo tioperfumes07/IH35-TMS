@@ -8,6 +8,21 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202613720001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-04",
+      "purpose": "LOAD-COSTS-COMPLETE items (1)/(2) TIMING correction (owner order 2026-09-04, QBO/NetSuite customer-deposit pattern researched first): creates catalogs.accounts 2250 'Customer Deposits (Broker Advances)' (Liability, USMCA-only -- no such account exists live today, verified). Adds bank_account_id/receipt_journal_entry_id/reclass_journal_entry_id to accounting.broker_advances so item (1)'s receipt posts a real balanced JE (DR bank / CR 1100 AR if an invoice already exists, else CR 2250) and buildInvoiceFromLoad's existing unapplied-advance claim loop can post the DR 2250 / CR 1100 reclass JE when it later claims a pre-invoice advance -- one claim path, not a second one. Applied live and verified on Neon tiny-field-89581227/br-fancy-credit-akjnd07a."
+    },
+    "202613700200": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-04",
+      "purpose": "RETROACTIVE CLAIM (self-caught process violation -- this migration was authored and applied before being claimed, in violation of the claim-before-write law). shortest<=practical CHECK on mdata.loads (loads_miles_shortest_not_over_practical), mirroring catalogs.lane_mileage / catalogs.point_mileage's own checks -- the table that pays the driver had none. Applied live and verified on Neon tiny-field-89581227/br-fancy-credit-akjnd07a, 0 pre-existing violations. Superseded by/duplicate-of the SAME constraint 202613710001 above reserves under a different number for the same purpose (ACCT-F25011 root-cause fix) -- both are additive/idempotent (IF NOT EXISTS), so no conflict; 202613710001 will safely no-op if ever authored against the same constraint name."
+    },
+    "202613700100": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-04",
+      "purpose": "RETROACTIVE CLAIM (self-caught process violation -- authored and applied before being claimed). Reactivates USMCA's 12 driver_finance.driver_advance_accounts rows (is_active=true), reversing this session's own earlier 202613690001 deactivation per the owner's correction that this table is the general-purpose auto-provisioned asset bridge every driver gets, needed for the no-load 'loan to driver' case. Applied live and verified (12 active / 0 inactive) on Neon tiny-field-89581227/br-fancy-credit-akjnd07a. Same purpose as 202613730001 below (claimed by an earlier, unmerged PR for the identical fix) -- this repo's migration landed first and is idempotent; 202613730001 is intentionally not being authored to avoid a duplicate no-op migration file."
+    },
     "202613710001": {
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-04",
