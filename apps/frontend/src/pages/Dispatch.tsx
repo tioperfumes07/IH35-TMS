@@ -155,7 +155,16 @@ export function DispatchPage({
 
   const view = roundTripsRoute ? "units" : parseViewMode(searchParams.get("view"), loadsRoute);
   const showLoadBoard = view === "kanban" || view === "list" || view === "units";
-  const showFleetOosStrip = subTab === "load_board" && (view === "overview" || view === "kanban" || view === "list" || view === "units");
+  // DSP-8 (owner 2026-09-04): "THE FLEET OOS IN SHOP AT THE VERY BOTTOM IS UNNECESSARY YOU ALREADY
+  // HAVE AN IN SHOP SECTION" + "we do not need to see the vehicles out of service" in dispatch. The
+  // bottom Fleet OOS/In-Shop strip is ARCHIVED behind this flag — Rule 07, never delete: the
+  // component, its import and its visibility predicate all stay in source; only the render is gated
+  // off. Flip to false to restore it.
+  const FLEET_OOS_STRIP_ARCHIVED = true;
+  const showFleetOosStrip =
+    !FLEET_OOS_STRIP_ARCHIVED &&
+    subTab === "load_board" &&
+    (view === "overview" || view === "kanban" || view === "list" || view === "units");
   const sort = searchParams.get("sort") ?? "created_at:desc";
   const offset = Number(searchParams.get("offset") ?? "0");
   const limit = Number(searchParams.get("limit") ?? "50");
