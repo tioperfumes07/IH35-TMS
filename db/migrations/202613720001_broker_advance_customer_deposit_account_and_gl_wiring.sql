@@ -14,10 +14,20 @@ BEGIN;
 -- (verified live: only "Undeposited Funds," an unrelated Asset account, and its QBO mirror).
 -- Number 2250 is free among the existing 2xxx liability series (2000 A/P .. 2600 IFTA/Sales Tax
 -- Payable) and slots naturally after Driver Net-Pay Clearing / Driver Settlements Payable.
+--
+-- FIX (CI security-audit-heavy caught this before merge): org.companies.id is
+-- DEFAULT gen_random_uuid() (0013_org_companies.sql) -- the literal '5c854333-...' is prod's
+-- OBSERVED value, not a deterministic one, so it does not exist in CI's freshly-seeded database
+-- and a hardcoded INSERT referencing it violates accounts_operating_company_id_fkey on replay.
+-- Resolved by company code instead (0015_company_scoping.sql's own established convention),
+-- portable to both prod (where code='USMCA' resolves to 5c854333-...) and CI's fresh seed.
 DO $$
 DECLARE
-  v_usmca uuid := '5c854333-6ea5-4faa-af31-67cb272fef80';
+  v_usmca uuid := (SELECT id FROM org.companies WHERE code = 'USMCA');
 BEGIN
+  IF v_usmca IS NULL THEN
+    RAISE EXCEPTION 'org.companies has no USMCA row -- cannot create the Customer Deposits account';
+  END IF;
   IF NOT EXISTS (
     SELECT 1 FROM catalogs.accounts WHERE operating_company_id = v_usmca AND account_number = '2250'
   ) THEN
