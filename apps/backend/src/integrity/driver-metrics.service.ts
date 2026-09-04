@@ -314,15 +314,15 @@ export function buildDriverMetricsAggregationSql(): string {
         COUNT(*) FILTER (
           WHERE lower(COALESCE(p.category, '')) IN ('battery', 'electrical')
              AND (
-               lower(COALESCE(p.name, '')) LIKE '%batt%'
-               OR lower(COALESCE(p.sku, '')) LIKE '%batt%'
+               lower(COALESCE(p.part_description, '')) LIKE '%batt%'
+               OR lower(COALESCE(p.part_number, '')) LIKE '%batt%'
              )
         )::numeric AS battery_lines,
         COUNT(*) FILTER (
           WHERE lower(COALESCE(p.category, '')) IN ('airbag', 'suspension')
              AND (
-               lower(COALESCE(p.name, '')) LIKE '%air%bag%'
-               OR lower(COALESCE(p.sku, '')) LIKE '%air%bag%'
+               lower(COALESCE(p.part_description, '')) LIKE '%air%bag%'
+               OR lower(COALESCE(p.part_number, '')) LIKE '%air%bag%'
              )
         )::numeric AS airbag_lines,
         COUNT(*) FILTER (
@@ -331,9 +331,9 @@ export function buildDriverMetricsAggregationSql(): string {
       FROM maintenance.work_orders w
       JOIN maintenance.work_order_lines wl
         ON wl.work_order_uuid = w.id
-      LEFT JOIN maint.part p
+      LEFT JOIN maintenance.parts_inventory p
         ON p.id = wl.part_uuid
-       AND p.tenant_id = w.operating_company_id
+       AND p.operating_company_id = w.operating_company_id
       CROSS JOIN bounds b
       WHERE w.operating_company_id = $1::uuid
         AND w.driver_id IS NOT NULL

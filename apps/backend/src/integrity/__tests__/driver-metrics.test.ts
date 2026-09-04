@@ -149,7 +149,9 @@ describe("driver metrics aggregation fixtures", () => {
     expect(sql).toContain("fuel.fuel_transactions");
     expect(sql).toContain("maintenance.work_orders");
     expect(sql).toContain("safety.accident_reports");
-    expect(sql).toContain("maint.part");
+    expect(sql).toContain("maintenance.parts_inventory");
+    expect(sql).toContain("p.operating_company_id = w.operating_company_id");
+    expect(sql).not.toContain("maint.part");
   });
 
   it("sorts leaderboard rows by metric direction", () => {
