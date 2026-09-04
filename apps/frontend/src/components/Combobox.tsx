@@ -211,7 +211,14 @@ export function Combobox({
     const fromOptions = options.find((option) => option.value === value) ?? null;
     if (fromOptions) setCommittedOption(fromOptions);
   }, [options, value]);
-  const displayValue = open ? query : selectedOption?.label ?? "";
+  // WIZ-46 D1: focusing a picker must NOT blank the committed selection. The old rule
+  // (`open ? query : label`) showed an empty box the instant the listbox opened — the operator
+  // saw "NCC Logistics" vanish to the placeholder on click, read it as the value being lost, and
+  // the field ended invalid. Keep the committed label visible whenever the user has not typed
+  // (query empty); switch to the typed query only once there is one. onFocus selects the label so
+  // the first keystroke cleanly replaces it (see below) — the FK is only dropped on real edit via
+  // clearCommittedOnEdit, never on focus.
+  const displayValue = open && query.length > 0 ? query : selectedOption?.label ?? "";
 
   // SAF-F31: tell the parent what was typed so it can refetch server-side. Effect (not inline in the
   // input handler) so a programmatic query reset also reaches the parent and cannot leave the picker
@@ -553,10 +560,17 @@ export function Combobox({
             // the 13 raw-Combobox filter sites keep the old behaviour. Same invariant, correct layer.
             if (clearCommittedOnEdit && value !== null && value !== "") onChange(null);
           }}
-          onFocus={() => {
+          onFocus={(event) => {
             if (!disabled) {
               setOpen(true);
               setQuery("");
+              // WIZ-46 D1: displayValue keeps showing the committed label while query is empty, so
+              // select it — the first character typed then replaces the whole label instead of
+              // appending to it. rAF runs after the click's caret placement so the selection sticks.
+              const el = event.currentTarget;
+              requestAnimationFrame(() => {
+                if (document.activeElement === el) el.select();
+              });
             }
           }}
           onBlur={handleInputBlur}
