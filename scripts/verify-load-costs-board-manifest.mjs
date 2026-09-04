@@ -9,17 +9,17 @@ const IDS = [
   "load-costs-pill-in_motion", "load-costs-pill-delivered_open", "load-costs-pill-all_open", "load-costs-pill-this_week",
   "kpi-loads-in-motion", "kpi-revenue-booked", "kpi-costs-recorded", "kpi-driver-pay", "kpi-approx-margin", "kpi-bank-unmatched",
   "col-load", "col-status", "col-pickup-date", "col-projected-delivery", "col-delivered", "col-route-crew",
-  "col-revenue", "col-costs", "col-repairs-maintenance", "col-driver", "col-margin", "load-costs-expand", "panel-costs-on-load",
+  "col-revenue", "col-costs", "col-late-fee", "col-lumper", "col-fuel", "col-rm-exp", "col-repairs-maintenance", "col-driver", "col-margin", "load-costs-expand", "panel-costs-on-load",
   "panel-approx-settlement", "btn-add-cost", "btn-receipt-photo", "btn-fuel-advance",
 ];
 
-const COLUMN_ORDER = ["load", "status", "pickup-date", "projected-delivery", "delivered", "route-crew", "revenue", "costs", "repairs-maintenance", "driver", "margin"];
+const COLUMN_ORDER = ["load", "status", "pickup-date", "projected-delivery", "delivered", "route-crew", "revenue", "costs", "late-fee", "lumper", "fuel", "rm-exp", "repairs-maintenance", "driver", "margin"];
 
 function violations(board, backend) {
   const errors = [];
   for (const id of IDS) if (!board.includes(`"${id}"`)) errors.push(`missing ${id}`);
   const offsets = COLUMN_ORDER.map((id) => board.indexOf(`testId:\"col-${id}\"`));
-  if (offsets.some((offset) => offset < 0) || offsets.some((offset, index) => index > 0 && offset <= offsets[index - 1])) errors.push("ten columns are not declared in locked left-to-right order");
+  if (offsets.some((offset) => offset < 0) || offsets.some((offset, index) => index > 0 && offset <= offsets[index - 1])) errors.push("fifteen columns are not declared in locked left-to-right order");
   if (!board.includes("<ParityTable") || !board.includes("enableColumnReorder") || !board.includes('sortMode="external"') || !board.includes("onSortChange=")) errors.push("board is not a reorderable ParityTable with external/server sort");
   if (!board.includes("<DrillKpiCard") || (board.match(/<DrillKpiCard/g) ?? []).length !== 6) errors.push("six KPIs are not DrillKpiCard buttons");
   if (!board.includes("scheduled_delivery_at") || !board.includes("actual_delivery_at") || !board.includes('r.actual_delivery_at?formatDateUS(r.actual_delivery_at):"—"')) errors.push("projected/delivered dates are not truthful stop dates");
