@@ -55,6 +55,7 @@ import {
   type EntityPickerOption,
 } from "./parity/entityPickerRegistry";
 import { lookupUnitByVin } from "../api/mdata";
+import { heldEntityIsSelectable, heldEntityMergedMessage } from "../lib/resolve-held-entity";
 
 /** MOD-05 — compact VIN-like query (11–17 alnum) for cross-entity existence probe. */
 function compactVinLikeQuery(raw: string): string {
@@ -163,8 +164,34 @@ export function EntityPicker({
   }, [kind, onChange, operatingCompanyId, value]);
 
   const scopedValue = value === invalidatedValue ? null : value;
+  const [heldStaleMessage, setHeldStaleMessage] = useState<string | null>(null);
 
   const queryEnabled = enabled && Boolean(operatingCompanyId);
+  const shouldResolveHeld =
+    queryEnabled &&
+    Boolean(scopedValue) &&
+    (kind === "driver" || kind === "unit" || kind === "trailer" || kind === "customer");
+  const heldQuery = useQuery({
+    queryKey: ["entity-picker-held", kind, operatingCompanyId, scopedValue, driverRoster],
+    queryFn: () =>
+      heldEntityIsSelectable(kind, String(scopedValue), operatingCompanyId, {
+        driverRoster: kind === "driver" ? (driverRoster === "active_only" ? "active" : driverRoster) : undefined,
+      }),
+    enabled: shouldResolveHeld,
+    staleTime: 15_000,
+  });
+
+  useEffect(() => {
+    if (!shouldResolveHeld || heldQuery.isLoading || heldQuery.isError) return;
+    if (heldQuery.data === false && scopedValue) {
+      setHeldStaleMessage(heldEntityMergedMessage(kind));
+      setInvalidatedValue(scopedValue);
+      onChange(null);
+    } else if (heldQuery.data === true) {
+      setHeldStaleMessage(null);
+    }
+  }, [heldQuery.data, heldQuery.isError, heldQuery.isLoading, kind, onChange, scopedValue, shouldResolveHeld]);
+
   const driverRosterKey = kind === "driver" ? driverRoster : "n/a";
   // `trailer` is the product entity, not an alias for every row in mdata.equipment. Chassis are
   // selectable only where a parent explicitly opts into that subtype (equipment transfer).
@@ -226,18 +253,18 @@ export function EntityPicker({
     const rows = mergePickerOptionsByValue(
       rosterQuery.data ?? [],
       mergePickerOptionsByValue(
-        selectedOption ? [selectedOption, ...created] : created,
+        selectedOption && heldQuery.data !== false ? [selectedOption, ...created] : created,
         vinScopedOption,
       ),
     );
     // A value that is not in the roster (an archived driver still referenced by an old record, a
     // load outside the 200-row page) must stay VISIBLE and selected rather than silently blanking
     // the field — a picker that drops the value it was handed is worse than the text box it replaced.
-    if (scopedValue && !rows.some((r) => r.value === scopedValue)) {
+    if (scopedValue && heldQuery.data !== false && !rows.some((r) => r.value === scopedValue)) {
       rows.unshift({ value: scopedValue, label: scopedValue, sublabel: "not in the current list" });
     }
     return rows;
-  }, [rosterQuery.data, created, scopedValue, selectedOption, inScopeVinUnit]);
+  }, [rosterQuery.data, created, scopedValue, selectedOption, inScopeVinUnit, heldQuery.data]);
 
   // A kind may refuse inline create for a stated reason (transactions and money documents do).
   // MOD-05: never offer create when the typed VIN already exists (cross-entity → warn; in-scope → select).
@@ -290,11 +317,16 @@ export function EntityPicker({
           onSearch={config.serverSearch ? setRosterSearch : undefined}
           placeholder={placeholder ?? `Select ${config.label}`}
           loading={rosterQuery.isLoading}
-          error={rosterLoadFailed ? `Couldn't load ${config.label} list` : undefined}
+          error={heldStaleMessage ?? (rosterLoadFailed ? `Couldn't load ${config.label} list` : undefined)}
           disabled={disabled || !operatingCompanyId}
           allowClear={allowClear}
           allowAddNew={createOffered ? { label: entityAddNewLabel(kind), onAdd: () => setCreateOpen(true) } : undefined}
         />
+        {heldStaleMessage ? (
+          <p className="text-[11px] font-medium text-slate-800" data-testid="entity-picker-held-merged" role="status">
+            {heldStaleMessage}
+          </p>
+        ) : null}
         {crossEntityVin ? (
           <p
             className="text-[11px] font-medium text-slate-700"

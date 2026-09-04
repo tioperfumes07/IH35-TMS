@@ -33,6 +33,9 @@ vi.mock("../../../api/mdata", async (importOriginal) => {
   return {
     ...actual,
     searchCustomersAutocomplete: (...args: unknown[]) => searchCustomersAutocompleteMock(...args),
+    getCustomerDetail: vi.fn().mockResolvedValue({ customer: { deactivated_at: null } }),
+    getDriver: vi.fn().mockResolvedValue({ status: "Active", deactivated_at: null }),
+    getUnit: vi.fn().mockResolvedValue({ deactivated_at: null }),
   };
 });
 

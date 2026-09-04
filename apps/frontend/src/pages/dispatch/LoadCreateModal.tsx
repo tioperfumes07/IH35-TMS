@@ -27,14 +27,27 @@ export function LoadCreateModal({
     queryFn: () => getDriverLoadAvailability(selectedDriverId, operatingCompanyId),
   });
 
-  const repairBlocked = availabilityQuery.data?.ok === false;
-  const submitBlocked = availabilityQuery.isError || (repairBlocked && !overrideRepairBlock);
+  const notFound = availabilityQuery.data?.code === "E_DRIVER_NOT_FOUND";
+  const repairBlocked = availabilityQuery.data?.ok === false && !notFound;
+  const submitBlocked = availabilityQuery.isError || notFound || (repairBlocked && !overrideRepairBlock);
 
   useEffect(() => {
     onSubmitBlockedChange?.(submitBlocked);
   }, [onSubmitBlockedChange, submitBlocked]);
 
-  if (!selectedDriverId || (!repairBlocked && !availabilityQuery.isError)) return null;
+  if (!selectedDriverId || (!repairBlocked && !notFound && !availabilityQuery.isError)) return null;
+
+  if (notFound) {
+    return (
+      <div
+        className="rounded-sm border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-800"
+        data-testid="book-load-driver-merged"
+        role="status"
+      >
+        This driver record was merged — reselect.
+      </div>
+    );
+  }
 
   if (availabilityQuery.isError) {
     return (

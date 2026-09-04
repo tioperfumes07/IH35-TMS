@@ -25,6 +25,9 @@ const listLoads = vi.fn();
 const listVendors = vi.fn();
 const listUnits = vi.fn().mockResolvedValue({ units: [] });
 const lookupUnitByVin = vi.fn().mockResolvedValue({ found: false, unit: null });
+const getDriver = vi.fn();
+const getUnit = vi.fn();
+const getCustomerDetail = vi.fn();
 const listInsuranceClaims = vi.fn();
 const listInsuranceLawsuits = vi.fn();
 
@@ -33,6 +36,9 @@ vi.mock("../../../api/mdata", () => ({
   listUnits: (...args: unknown[]) => listUnits(...args),
   listVendors: (...args: unknown[]) => listVendors(...args),
   lookupUnitByVin: (...args: unknown[]) => lookupUnitByVin(...args),
+  getDriver: (...args: unknown[]) => getDriver(...args),
+  getUnit: (...args: unknown[]) => getUnit(...args),
+  getCustomerDetail: (...args: unknown[]) => getCustomerDetail(...args),
 }));
 vi.mock("../../../api/loads", () => ({ listLoads: (...args: unknown[]) => listLoads(...args) }));
 vi.mock("../../../api/maintenance", () => ({ listWorkOrders: vi.fn().mockResolvedValue({ work_orders: [] }) }));
@@ -118,6 +124,12 @@ describe("EntityPicker (C1 picker law)", () => {
     listInsuranceLawsuits.mockResolvedValue({
       lawsuits: [{ id: "ls-1", case_number: "CASE-1", status: "active" }],
     });
+    getDriver.mockReset();
+    getDriver.mockResolvedValue({ id: "drv-archived", status: "Active", deactivated_at: null });
+    getUnit.mockReset();
+    getUnit.mockResolvedValue({ id: "unit-1", deactivated_at: null });
+    getCustomerDetail.mockReset();
+    getCustomerDetail.mockResolvedValue({ customer: { id: "cust-1", deactivated_at: null } });
   });
 
   it("reads the canonical roster company-scoped", async () => {
@@ -310,6 +322,26 @@ describe("EntityPicker (C1 picker law)", () => {
     await waitFor(() => expect(listDrivers).toHaveBeenCalled());
     const input = (await screen.findByTestId("picker-under-test")) as HTMLInputElement;
     await waitFor(() => expect(input.value).toBe("drv-archived"));
+  });
+
+  it("clears a merged/deactivated held driver and never keeps the captured name", async () => {
+    const onChange = vi.fn();
+    getDriver.mockResolvedValue({ id: "drv-merged", status: "Inactive", deactivated_at: "2026-09-03T00:00:00Z" });
+    wrap(
+      <EntityPicker
+        kind="driver"
+        operatingCompanyId={COMPANY}
+        value="drv-merged"
+        onChange={onChange}
+        selectedOption={{ value: "drv-merged", label: "ANGEL ALFONSO SOSA" }}
+        dataTestId="picker-merged"
+      />
+    );
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith(null));
+    expect(await screen.findByTestId("entity-picker-held-merged")).toHaveTextContent(
+      /This driver record was merged — reselect/
+    );
+    expect(screen.queryByText("ANGEL ALFONSO SOSA")).toBeNull();
   });
 
   it("DEFECT-6c: does not show a load error after clearing search when prior roster data exists", async () => {
