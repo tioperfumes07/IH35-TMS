@@ -89,10 +89,22 @@ export type CreateDriverCashAdvanceCoreResult =
   | { ok: false; code: number; error: string; message?: string };
 
 /** Purpose → books routing (master plan §2.2). Lumper is load expense, not personal amortize. */
+// LOAD-COSTS-COMPLETE item (3) (owner ruling 2026-09-04, verbatim): "we never send fuel advance
+// to a driver... the fuel advance from us to the driver is a company expense. he is a company
+// driver, not an owner operator." driver_settlement routing books this liability-and-repayment
+// machinery (driver_liabilities, driver_advances, recovery schedules, amortization) -- the
+// owner-operator model. USMCA's fleet is entirely B1 company drivers (confirmed this session,
+// SET-24) -- that model can never legitimately apply to a USMCA driver, for any purpose, even one
+// an explicit caller override requests. Enforced HERE, at the service boundary, not in a React
+// dropdown -- a rule only the UI enforces is not enforced (owner's own words).
+const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+
 export function resolveEconomicRouting(
   purpose: CashAdvancePurpose,
-  explicit?: CashAdvanceEconomicRouting | null
+  explicit?: CashAdvanceEconomicRouting | null,
+  operatingCompanyId?: string | null
 ): CashAdvanceEconomicRouting {
+  if (operatingCompanyId === USMCA_COMPANY_ID) return "load_expense";
   if (explicit) return explicit;
   if (purpose === "lumper") return "load_expense";
   return "driver_settlement";
@@ -231,7 +243,7 @@ export async function createDriverCashAdvanceCore(
     }
   }
 
-  const economicRouting = resolveEconomicRouting(body.purpose, body.economic_routing);
+  const economicRouting = resolveEconomicRouting(body.purpose, body.economic_routing, companyId);
   const isLoadExpense = economicRouting === "load_expense";
 
   if (isLoadExpense && !body.load_id) {

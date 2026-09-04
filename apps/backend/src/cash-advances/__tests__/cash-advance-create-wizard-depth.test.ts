@@ -27,6 +27,24 @@ describe("resolveEconomicRouting", () => {
   it("honors explicit override", () => {
     expect(resolveEconomicRouting("lumper", "driver_settlement")).toBe("driver_settlement");
   });
+
+  // LOAD-COSTS-COMPLETE item (3) (owner ruling 2026-09-04): USMCA's fleet is entirely B1 company
+  // drivers -- driver_settlement (the owner-operator liability/repayment model) must be
+  // UNREACHABLE at this service boundary for USMCA, for ANY purpose, even an explicit override.
+  const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
+  it("forces load_expense for USMCA regardless of purpose", () => {
+    expect(resolveEconomicRouting("family_emergency", null, USMCA)).toBe("load_expense");
+    expect(resolveEconomicRouting("fuel_deposit", null, USMCA)).toBe("load_expense");
+    expect(resolveEconomicRouting("lumper", null, USMCA)).toBe("load_expense");
+  });
+  it("forces load_expense for USMCA even when the caller explicitly requests driver_settlement", () => {
+    expect(resolveEconomicRouting("fuel_deposit", "driver_settlement", USMCA)).toBe("load_expense");
+  });
+  it("leaves non-USMCA companies on the existing purpose/explicit resolution (no behavior change)", () => {
+    expect(resolveEconomicRouting("fuel_deposit", null, "some-other-company-uuid")).toBe("driver_settlement");
+    expect(resolveEconomicRouting("fuel_deposit", null, null)).toBe("driver_settlement");
+    expect(resolveEconomicRouting("fuel_deposit")).toBe("driver_settlement");
+  });
 });
 
 describe("resolveRepaymentSchedule", () => {
