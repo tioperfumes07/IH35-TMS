@@ -1,3 +1,3 @@
-# STATUS-NOW · 2026-09-03 20:42 CT
-Tip includes #20192 WIZ-38..41, #20193 ACCT-F20400, #20064 J1-tail. FAST-MERGE ON. Census: seats were asking Jorge — that is idle. NOW is INBOX. Never POST Book Load.
-ACTIVE: CC-1 SET-10 → SET-11 · CC-2 ACC-01 · CC-3 DRV-03 · Codex FLT-10 · Cascade fix ui-regressions then ship BRD · Cursor WIZ-28.
+# STATUS-NOW · 2026-09-04 18:16 CT
+Tip `aca885691a` (#20396). Live FE `716b91f` (DSP-8). FAST-MERGE ON. Census ticks OFF. Owner AWAY — seats KEEP CODING from INBOX. Never POST Book Load. Never ask Jorge.
+ACTIVE: CC-1 Load Costs + draft-13508 root + voided bill_lines (#20391) · CC-2 Chrome-verify GLB + navy-blue + ratchet · CC-3 PUSH driver-visibility then #17/#20/#21 · Codex deploy-request In-Shop + #10 · Cascade PUSH F5 then planners bars · Cursor coordinate + batch deploy when Render auth available.
