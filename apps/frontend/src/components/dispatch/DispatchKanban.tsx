@@ -915,13 +915,33 @@ function KanbanDispatchColumn({
           ) : (
             <span />
           )}
-          <div className="text-center">{headerLink}</div>
+          <div className="flex items-center justify-center gap-1 text-center">
+            {headerLink}
+            {/* DSP-16 (owner 2026-09-04): the "Loaded" lane is statuses:[] + derivedOnly — it is
+                populated ONLY by the pickup-departure telematics signal, never by a drag (a drop is
+                correctly refused, see FAIL-K1). Badge it "Auto" so the operator does not try. */}
+            {column.derivedOnly ? (
+              <span
+                className="rounded-sm bg-slate-100 px-1 py-0.5 text-xs font-semibold uppercase text-slate-500"
+                data-testid={`kanban-column-auto-badge-${column.key}`}
+                title="Set automatically from pickup-departure telematics — not drag-droppable"
+              >
+                Auto
+              </span>
+            ) : null}
+          </div>
           <span className="justify-self-end rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
         </div>
         <KanbanColumnSortControls columnKey={column.key} sort={columnSort} onToggleSort={onToggleColumnSort} />
       </header>
       <div ref={setNodeRef} className={`max-h-[68vh] ${detailed ? "space-y-2" : "space-y-1"} overflow-y-auto rounded-sm p-1 ${isOver ? "bg-slate-100" : "bg-transparent"}`}>
-        {loads.length === 0 ? <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">(empty)</div> : null}
+        {loads.length === 0 ? (
+          <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">
+            {column.derivedOnly
+              ? "Set automatically from pickup-departure telematics — you can't drag a card here."
+              : "(empty)"}
+          </div>
+        ) : null}
         {loads.map((load) => {
           const breach = Boolean(load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id));
           if (column.key === "awaiting_assignment") {
