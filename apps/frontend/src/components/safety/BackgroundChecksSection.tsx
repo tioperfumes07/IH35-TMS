@@ -64,7 +64,7 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
       expiry_date: input.expiryDate || undefined,
       notes: input.notes.trim() || undefined,
     }),
-    onSuccess: async (_result, input) => {
+    onSuccess: async (result, input) => {
       if (input.generation !== companyGenerationRef.current) return;
       companyGenerationRef.current += 1;
       setOpen(false);
@@ -75,6 +75,10 @@ export function BackgroundChecksSection({ operatingCompanyId, driverId }: { oper
       setExpiryDate("");
       setNotes("");
       await queryClient.invalidateQueries({ queryKey: ["safety", "background-checks", input.companyId] });
+      // DRV-07: same UPL-03 gap as DRV-04's medical card -- "Create background / MVR check" closed
+      // the modal with no path to attach the document; the row-level Upload button only exists once
+      // the row is saved. Chain straight into the same, already-working per-row UploadModal.
+      setUploadCheckId(result.id);
     },
   });
   useEffect(() => {
