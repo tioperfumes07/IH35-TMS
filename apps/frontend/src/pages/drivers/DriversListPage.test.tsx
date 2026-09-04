@@ -72,4 +72,33 @@ describe("DriversListPage", () => {
     expect(await screen.findByText("Alex Rivera")).toBeInTheDocument();
     expect(await screen.findByText("No DQF items")).toBeInTheDocument();
   });
+
+  // DRIVER-VISIBILITY (owner order 2026-09-04, Rule 4): this list defaulted to status:"All"
+  // unconditionally (every terminated/inactive driver on-screen with no way to narrow down).
+  // Default must be Active-only, with an explicit off-by-default "Show inactive" opt-in.
+  it("defaults to status=Active and only widens to All when Show inactive is checked", async () => {
+    const { listDrivers } = await import("../../api/mdata");
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <ToastProvider>
+          <MemoryRouter>
+            <DriversListPage />
+          </MemoryRouter>
+        </ToastProvider>
+      </QueryClientProvider>
+    );
+
+    await screen.findByText("Driver qualification profiles");
+    expect(listDrivers).toHaveBeenCalledWith(expect.objectContaining({ status: "Active" }));
+    expect(listDrivers).not.toHaveBeenCalledWith(expect.objectContaining({ status: "All" }));
+
+    const toggle = screen.getByRole("checkbox", { name: /show inactive/i });
+    expect(toggle).not.toBeChecked();
+    toggle.click();
+
+    await vi.waitFor(() => {
+      expect(listDrivers).toHaveBeenCalledWith(expect.objectContaining({ status: "All" }));
+    });
+  });
 });

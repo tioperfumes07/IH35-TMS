@@ -38,6 +38,12 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  // DRIVER-VISIBILITY (owner order 2026-09-04, Rule 4 systemwide): this DQF/"Profiles" list defaulted
+  // to status:"All" unconditionally -- every terminated/inactive driver rendered here with no way to
+  // narrow to who is actually driving. Default active-only, explicit opt-in to see the rest (never
+  // the reverse) -- matches the same default Drivers.tsx's roster already uses (parseDriverListStatus).
+  const [showInactive, setShowInactive] = useState(false);
+  const driverStatusFilter = showInactive ? "All" : "Active";
   // B-A3: KPI focus — filters the loaded DQF summary rows by the same level the KPI counts.
   const [dqfFocus, setDqfFocus] = useState<DqfFocus>(null);
   const [showImport, setShowImport] = useState(false);
@@ -49,10 +55,10 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
   // Server-side pagination (GO-LIVE Block 1A): fetch only the current page + a real total, so the FULL
   // roster is reachable via Prev/Next — not truncated to the default first 50.
   const driversQ = useQuery({
-    queryKey: ["drivers", "dqf-list", companyId, search, page],
+    queryKey: ["drivers", "dqf-list", companyId, search, page, driverStatusFilter],
     enabled: Boolean(companyId),
     queryFn: () =>
-      listDrivers({ operating_company_id: companyId, status: "All", search, limit: pageSize, offset: page * pageSize }),
+      listDrivers({ operating_company_id: companyId, status: driverStatusFilter, search, limit: pageSize, offset: page * pageSize }),
   });
   const pageDrivers = useMemo(() => driversQ.data?.drivers ?? [], [driversQ.data?.drivers]);
   const totalDrivers = driversQ.data?.total ?? 0;
@@ -220,6 +226,17 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
         subtitle="Fleet DQF checklist and compliance status chips"
         actions={
           <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1.5 text-xs text-slate-600">
+              <input
+                type="checkbox"
+                checked={showInactive}
+                onChange={(event) => {
+                  setShowInactive(event.target.checked);
+                  setPage(0);
+                }}
+              />
+              Show inactive
+            </label>
             <input
               className="h-8 w-[220px] rounded-sm border border-gray-300 px-2 text-xs"
               value={search}
