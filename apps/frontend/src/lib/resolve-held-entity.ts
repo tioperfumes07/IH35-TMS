@@ -28,7 +28,7 @@ export async function heldEntityIsSelectable(
   kind: EntityPickerKind,
   id: string,
   operatingCompanyId: string,
-  opts?: { driverRoster?: "active" | "active_or_probation" }
+  opts?: { driverRoster?: "active" | "active_only" | "active_or_probation" }
 ): Promise<boolean> {
   const trimmed = id.trim();
   if (!trimmed || !operatingCompanyId) return false;

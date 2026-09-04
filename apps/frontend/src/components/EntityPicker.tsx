@@ -175,7 +175,7 @@ export function EntityPicker({
     queryKey: ["entity-picker-held", kind, operatingCompanyId, scopedValue, driverRoster],
     queryFn: () =>
       heldEntityIsSelectable(kind, String(scopedValue), operatingCompanyId, {
-        driverRoster: kind === "driver" ? driverRoster : undefined,
+        driverRoster: kind === "driver" ? (driverRoster === "active_only" ? "active" : driverRoster) : undefined,
       }),
     enabled: shouldResolveHeld,
     staleTime: 15_000,

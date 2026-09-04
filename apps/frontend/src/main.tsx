@@ -6,6 +6,7 @@ import App from "./App";
 import { installStaleChunkRecovery } from "./bootstrap/installStaleChunkRecovery";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { StaleDeployBanner } from "./components/StaleDeployBanner";
+import { ToastProvider } from "./components/Toast";
 import { initFrontendSentry } from "./observability/sentry-client";
 import "./index.css";
 import i18n from "./i18n";
