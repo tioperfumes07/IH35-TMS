@@ -3,6 +3,7 @@ import { getComparableMetrics, getUnitFinancialYTD } from "./unit-financial.serv
 import { getLatestHosClocksByDriver } from "../integrations/samsara/samsara-hos-clocks-pull.service.js";
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
 import { excludeInsuranceFixtureSql } from "../insurance/insurance-visibility.js";
+import { form2290DueDateForFirstUse } from "../compliance/form-2290-generator.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -602,6 +603,57 @@ export async function buildUnitAggregate(
     days_until_expiration: daysUntil(p.expiration as string),
   }));
 
+  const [annualDotRes, iftaRes, form2290Res, linkedPolicyRead] = await Promise.all([
+    client.query(
+      `SELECT inspection_date::text AS completed_at, outcome,
+              (inspection_date + INTERVAL '1 year')::date::text AS due_at
+       FROM maintenance.inspections
+       WHERE unit_id = $1::uuid AND operating_company_id = $2::uuid
+         AND inspection_type = 'annual_dot' AND status = 'completed' AND archived_at IS NULL
+       ORDER BY inspection_date DESC NULLS LAST LIMIT 1`,
+      [unitId, operatingCompanyId]
+    ),
+    client.query(
+      `SELECT issued_date::text, expiry_date::text AS due_at, permit_number
+       FROM safety.permits
+       WHERE unit_id = $1::uuid AND operating_company_id = $2::uuid
+         AND permit_type = 'ifta_sticker' AND archived_at IS NULL
+       ORDER BY expiry_date DESC LIMIT 1`,
+      [unitId, operatingCompanyId]
+    ),
+    client.query(
+      `SELECT f.filing_status, f.tax_period_start::text, f.tax_period_end::text
+       FROM compliance.form_2290_filing_vehicles fv
+       JOIN compliance.form_2290_filings f
+         ON f.id = fv.filing_id AND f.operating_company_id = fv.operating_company_id
+       WHERE fv.vehicle_id = $1::uuid AND fv.operating_company_id = $2::uuid
+       ORDER BY f.tax_period_start DESC LIMIT 1`,
+      [unitId, operatingCompanyId]
+    ),
+    lookupLinkedPolicies(client, operatingCompanyId, unitId),
+  ]);
+  const annualDot = annualDotRes.rows[0] ?? null;
+  const ifta = iftaRes.rows[0] ?? null;
+  const form2290 = form2290Res.rows[0] ?? null;
+  const activePolicy = linkedPolicyRead.policies.find((p) => p.status === "active") ?? linkedPolicyRead.policies[0] ?? null;
+  const registrationDue = unit.irp_expiration ?? registration_plates.map((p) => p.expiration).filter(Boolean).sort()[0] ?? null;
+  const form2290Due = unit.acquired_date ? form2290DueDateForFirstUse(String(unit.acquired_date)) : null;
+  const regulatoryStatus = (dueAt: unknown, present: boolean) => {
+    if (!present) return "missing";
+    const days = daysUntil(dueAt == null ? null : String(dueAt));
+    if (days === null) return "needs review";
+    if (days < 0) return "expired";
+    if (days <= 30) return "due soon";
+    return "current";
+  };
+  const regulatory_requirements = [
+    { id: "annual-dot", requirement: "Annual DOT inspection", status: regulatoryStatus(annualDot?.due_at, annualDot?.outcome === "pass"), due_at: annualDot?.due_at ?? null, cadence: "Every 12 months", authority: "49 CFR 396.17" },
+    { id: "registration", requirement: "Registration / IRP", status: regulatoryStatus(registrationDue, Boolean(registrationDue)), due_at: registrationDue, cadence: "Recorded registration expiry", authority: "IRP cab card / issuing jurisdiction" },
+    { id: "ifta", requirement: "IFTA license / decal", status: regulatoryStatus(ifta?.due_at, Boolean(ifta)), due_at: ifta?.due_at ?? null, cadence: "Recorded permit expiry", authority: "IFTA license and decal" },
+    { id: "form-2290", requirement: "Form 2290 HVUT", status: form2290?.filing_status === "accepted" ? "current" : regulatoryStatus(form2290Due, Boolean(form2290)), due_at: form2290Due, cadence: "Last day of month after first use", authority: "IRS Form 2290" },
+    { id: "insurance", requirement: "Insurance", status: regulatoryStatus(activePolicy?.expiration, Boolean(activePolicy)), due_at: activePolicy?.expiration ?? null, cadence: "Recorded policy expiry", authority: "Carrier policy term" },
+  ];
+
   const compliance = {
     dot_inspection: { last_date: null, result: null, next_due: null, days_until_due: null },
     us_insurance: {
@@ -637,6 +689,7 @@ export async function buildUnitAggregate(
     },
     ifta_current_quarter_filed: false,
     annual_inspection_status: "unknown",
+    regulatory_requirements,
   };
 
   const maintenance_alerts: Array<{ severity: string; message: string; source: string; created_at: string }> = [];
@@ -901,10 +954,9 @@ export async function buildUnitAggregate(
     (purchase_price_cents ?? 0) + lifetime_maintenance_cents + lifetime_fuel_cents;
 
   const unitNumber = unit.unit_number != null ? String(unit.unit_number) : null;
-  const [usMonthlyPremiumCents, mxMonthlyPremiumCents, linkedPolicyRead] = await Promise.all([
+  const [usMonthlyPremiumCents, mxMonthlyPremiumCents] = await Promise.all([
     lookupPolicyMonthlyPremiumCents(client, operatingCompanyId, unitNumber, unit.us_insurance_policy_number as string | null),
     lookupPolicyMonthlyPremiumCents(client, operatingCompanyId, unitNumber, unit.mx_insurance_policy_number as string | null),
-    lookupLinkedPolicies(client, operatingCompanyId, unitId),
   ]);
 
   return {

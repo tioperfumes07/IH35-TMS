@@ -16,6 +16,15 @@ type PlateRow = {
   expiration: string;
 };
 
+type RegulatoryRow = {
+  __rowKey: string;
+  requirement: string;
+  status: string;
+  dueAt: string;
+  cadence: string;
+  authority: string;
+};
+
 function fmtDate(value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
   return formatDateUS(value as string) || "—";
@@ -58,6 +67,22 @@ const PLATE_COLUMNS: Array<ParityColumn<PlateRow>> = [
   },
 ];
 
+const REGULATORY_COLUMNS: Array<ParityColumn<RegulatoryRow>> = [
+  { key: "requirement", label: "Requirement", sortable: true },
+  { key: "status", label: "Status", sortable: true },
+  { key: "dueAt", label: "Due date", sortable: true },
+  { key: "cadence", label: "Cadence", sortable: true },
+  { key: "authority", label: "Authority", sortable: true },
+];
+
+const REQUIRED_REGULATORY_NAMES = [
+  "Annual DOT inspection",
+  "Registration / IRP",
+  "IFTA license / decal",
+  "Form 2290 HVUT",
+  "Insurance",
+];
+
 export function ComplianceSection({ compliance }: { compliance: Record<string, unknown> }) {
   const us = (compliance.us_insurance as Record<string, unknown>) ?? {};
   const mx = (compliance.mx_insurance as Record<string, unknown>) ?? {};
@@ -67,6 +92,15 @@ export function ComplianceSection({ compliance }: { compliance: Record<string, u
     country: String(p.country ?? "—"),
     jurisdiction: String(p.jurisdiction ?? "—"),
     expiration: fmtDate(p.expiration),
+  }));
+  const regulatory = (compliance.regulatory_requirements as Array<Record<string, unknown>>) ?? [];
+  const regulatoryRows: RegulatoryRow[] = regulatory.map((row, idx) => ({
+    __rowKey: String(row.id ?? `${row.requirement ?? "requirement"}-${idx}`),
+    requirement: String(row.requirement ?? "—"),
+    status: String(row.status ?? "needs review"),
+    dueAt: fmtDate(row.due_at),
+    cadence: String(row.cadence ?? "—"),
+    authority: String(row.authority ?? "—"),
   }));
 
   return (
@@ -79,6 +113,17 @@ export function ComplianceSection({ compliance }: { compliance: Record<string, u
         <div>SCT: {String((compliance.sct_permit as Record<string, unknown>)?.number ?? "—")}</div>
         <div>PITA: {String((compliance.pita as Record<string, unknown>)?.status ?? "—")}</div>
         <div>IFTA filed: {String(compliance.ifta_current_quarter_filed ? "yes" : "no")}</div>
+      </div>
+      <div className="mt-3">
+        <ParityTable
+          rows={regulatoryRows}
+          columns={REGULATORY_COLUMNS}
+          rowKey={(row) => row.__rowKey}
+          storageKey="vehicle-regulatory-compliance"
+          emptyText={`No regulatory compliance data for ${REQUIRED_REGULATORY_NAMES.join(", ")}.`}
+          tableTestId="vp-regulatory-compliance-table"
+          initialPageSize={25}
+        />
       </div>
       {plateRows.length > 0 ? (
         <div className="mt-3">

@@ -15,6 +15,13 @@ const LABEL = "verify-vehicle-compliance-uses-paritytable";
 const PAGE = "apps/frontend/src/components/vehicle-profile/ComplianceSection.tsx";
 
 const REQUIRED_LABELS = ["Country", "Jurisdiction", "Expiration"];
+const REGULATORY_REQUIREMENTS = [
+  "Annual DOT inspection",
+  "Registration / IRP",
+  "IFTA license / decal",
+  "Form 2290 HVUT",
+  "Insurance",
+];
 
 function assertMigrated(src) {
   const errors = [];
@@ -56,6 +63,20 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="vp-compliance-plates-table"')) {
     errors.push(`${PAGE}: must set tableTestId="vp-compliance-plates-table"`);
   }
+  if (!src.includes('tableTestId="vp-regulatory-compliance-table"')) {
+    errors.push(`${PAGE}: must expose the five-row regulatory compliance table`);
+  }
+  if (!src.includes("regulatory_requirements")) {
+    errors.push(`${PAGE}: must read canonical regulatory_requirements from the unit aggregate`);
+  }
+  for (const requirement of REGULATORY_REQUIREMENTS) {
+    if (!src.includes(requirement)) {
+      errors.push(`${PAGE}: missing regulatory requirement ${requirement}`);
+    }
+  }
+  for (const label of ["Requirement", "Status", "Due date", "Cadence", "Authority"]) {
+    if (!src.includes(`label: "${label}"`)) errors.push(`${PAGE}: missing regulatory column ${label}`);
+  }
   return errors;
 }
 
@@ -74,6 +95,11 @@ function selftest() {
           <div>US insurance</div>
           <div>MX insurance</div>
           <div>DOT inspection</div>
+          <div>Annual DOT inspection Registration / IRP IFTA license / decal Form 2290 HVUT Insurance</div>
+          <ParityTable tableTestId="vp-regulatory-compliance-table" rows={compliance.regulatory_requirements} columns={[
+            { label: "Requirement" }, { label: "Status" }, { label: "Due date" },
+            { label: "Cadence" }, { label: "Authority" },
+          ]} />
           <ParityTable
             storageKey="vehicle-compliance-plates"
             tableTestId="vp-compliance-plates-table"
@@ -102,6 +128,17 @@ function selftest() {
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
     process.exit(1);
+  }
+  for (const token of [
+    'tableTestId="vp-regulatory-compliance-table"',
+    "regulatory_requirements",
+    ...REGULATORY_REQUIREMENTS,
+    ...["Requirement", "Status", "Due date", "Cadence", "Authority"].map((label) => `label: "${label}"`),
+  ]) {
+    if (assertMigrated(good.replace(token, "__PLANTED_MUTATION__")).length === 0) {
+      console.error(`${LABEL} --selftest FAIL planted mutation survived: ${token}`);
+      process.exit(1);
+    }
   }
   console.log(`${LABEL} --selftest PASS`);
 }
