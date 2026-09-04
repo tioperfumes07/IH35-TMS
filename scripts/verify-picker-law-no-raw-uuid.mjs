@@ -565,7 +565,7 @@ export function contractErrors(src) {
     errors.push(`PRIMITIVE: missing file ${PICKER_FILE} — C1 has no shared EntityPicker to migrate call sites to.`);
   } else {
     const p = blankComments(picker);
-    if (!/from\s+"\.\.\/Combobox"|from\s+"\.\.\/shared\/Combobox"/.test(p)) {
+    if (!/from\s+"\.\/Combobox"|from\s+"\.\.\/Combobox"|from\s+"\.\.\/shared\/Combobox"/.test(p)) {
       errors.push(
         `PRIMITIVE-REUSE: ${PICKER_FILE} must compose the EXISTING shared Combobox. ` +
           `A hand-rolled dropdown would fork the mechanism C1 is required to extend.`

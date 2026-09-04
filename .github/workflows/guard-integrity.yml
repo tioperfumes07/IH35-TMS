@@ -1,0 +1,73 @@
+name: guard-integrity
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  guard-integrity:
+    name: guard-integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci
+
+      # Guard classification remit — every guard in this workflow is tagged CORRECT, STALE,
+      # MISCALIBRATED, or MANDATES-A-DEFECT. The last class is found by asking "if I satisfy this
+      # assertion exactly, what does the operator experience?", not by running the guard.
+      #   CORRECT: real defect detector (silent caps, uncapped entity pickers).
+      #   STALE: checks a file/location that no longer holds the contract (verify-ui-regressions
+      #          reading Dispatch.tsx for the Pre-settlements tab).
+      #   MISCALIBRATED: compares against irrelevant surfaces (z-index guards vs top-pinned banner,
+      #                  toast container, child confirmation modal).
+      #   MANDATES-A-DEFECT (not in this workflow, cited as a live example): a green guard that
+      #          required disabled={customersQuery.isLoading || customersQuery.isError} on a focused
+      #          search input, discarding keystrokes and preventing the owner from typing a customer.
+      - name: guard classification
+        run: |
+          echo "verify-no-silent-list-caps -> CORRECT"
+          echo "verify-entity-picker-not-capped -> CORRECT"
+          echo "verify-ui-regressions -> STALE"
+          echo "verify-picker-law-no-raw-uuid -> MISCALIBRATED"
+          echo "verify-combobox-listbox-z-index-above-drawers -> MISCALIBRATED"
+          echo "verify-modal-z-index-above-drawers -> MISCALIBRATED"
+          echo "verify-bookload-customer-server-search.mjs (live example) -> MANDATES-A-DEFECT"
+
+      - name: verify:no-silent-list-caps --selftest
+        run: node scripts/verify-no-silent-list-caps.mjs --selftest
+      - name: verify:no-silent-list-caps
+        run: node scripts/verify-no-silent-list-caps.mjs
+
+      - name: verify:entity-picker-not-capped --selftest
+        run: node scripts/verify-entity-picker-not-capped.mjs --selftest
+      - name: verify:entity-picker-not-capped
+        run: node scripts/verify-entity-picker-not-capped.mjs
+
+      - name: verify:ui-regressions
+        run: node scripts/verify-ui-regressions.mjs
+
+      - name: verify:picker-law-no-raw-uuid --selftest
+        run: node scripts/verify-picker-law-no-raw-uuid.mjs --selftest
+      - name: verify:picker-law-no-raw-uuid
+        run: node scripts/verify-picker-law-no-raw-uuid.mjs
+
+      - name: verify:combobox-listbox-z-index-above-drawers --selftest
+        run: node scripts/verify-combobox-listbox-z-index-above-drawers.mjs --selftest
+      - name: verify:combobox-listbox-z-index-above-drawers
+        run: node scripts/verify-combobox-listbox-z-index-above-drawers.mjs
+
+      - name: verify:modal-z-index-above-drawers --selftest
+        run: node scripts/verify-modal-z-index-above-drawers.mjs --selftest
+      - name: verify:modal-z-index-above-drawers
+        run: node scripts/verify-modal-z-index-above-drawers.mjs

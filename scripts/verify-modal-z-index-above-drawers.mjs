@@ -66,6 +66,12 @@ const DRIVER_ONBOARDING_TOUR = path.join(ROOT, "apps/frontend/src/pages/driver/D
 // dedicated verify-book-load-modal-z-index-above-drawer.mjs, same "other-direction" shape as
 // ParityDrawer/ConfirmDiscardDialog above; see the file-header comment for the full reasoning.
 const BOOK_LOAD_MODAL_V4 = path.join(ROOT, "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx");
+// Top-pinned deploy banner; it overlaps no office-app modal/drawer stacking tier.
+const STALE_DEPLOY_BANNER = path.join(ROOT, "apps/frontend/src/components/StaleDeployBanner.tsx");
+// Top-right transient notification container; separate overlay tier, not a drawer/modal.
+const TOAST_CONTAINER = path.join(ROOT, "apps/frontend/src/components/Toast.tsx");
+// Modal confirmation dialog opened over the dispatch wizard; it is a child/peer modal, not a drawer.
+const MILES_INVERT_ACK_DIALOG = path.join(ROOT, "apps/frontend/src/pages/dispatch/components/book-load-v4/MilesInvertAckDialog.tsx");
 const FRONTEND_SRC = path.join(ROOT, "apps/frontend/src");
 
 function assert(cond, msg) {
@@ -134,6 +140,9 @@ function check() {
     CONFIRM_DISCARD_DIALOG,
     DRIVER_ONBOARDING_TOUR,
     BOOK_LOAD_MODAL_V4,
+    STALE_DEPLOY_BANNER,
+    TOAST_CONTAINER,
+    MILES_INVERT_ACK_DIALOG,
   ]);
   assert(
     modalZ >= maxOther,

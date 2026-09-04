@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { listBills, listExpenses } from "../../api/accounting";
+import { listBills, listExpenses, type ExpenseListRow, type VendorBill } from "../../api/accounting";
 import { apiRequest } from "../../api/client";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
@@ -31,12 +31,24 @@ const rowMargin = (r:BoardRow) => Number(r.revenue_cents) - rowCosts(r) - rowPay
 function matches(r:BoardRow, f:FilterPill) { if (f === "in_motion") return MOTION.includes(r.status); if (f === "delivered_open") return DELIVERED.includes(r.status); if (f === "this_week") return !CLOSED.includes(r.status) && Date.parse(r.created_at) >= Date.now()-604800000; return !CLOSED.includes(r.status); }
 function chip(status:string) { if (status === "in_transit") return { backgroundColor:"#E3ECE8", color:"#2B5F52" }; if (DELIVERED.includes(status)) return { backgroundColor:"#F5EEDA", color:"#8A6410" }; if (["draft","booked","at_pickup"].includes(status)) return { backgroundColor:"#F4E7E0", color:"#8A4020" }; return { backgroundColor:"#F3F4F6", color:"#4B5563" }; }
 
+const PAGE_LIMIT=200;
+async function fetchAllExpenses(companyId:string,loadId:string){
+  const all:ExpenseListRow[]=[]; let offset=0;
+  while(true){ const res=await listExpenses(companyId,{load_id:loadId,limit:PAGE_LIMIT,offset}); const rows=res.rows??[]; all.push(...rows); if(rows.length<PAGE_LIMIT)break; offset+=PAGE_LIMIT; }
+  return all;
+}
+async function fetchAllBills(companyId:string,loadId:string){
+  const all:VendorBill[]=[]; let offset=0;
+  while(true){ const res=await listBills(companyId,{load_id:loadId,limit:PAGE_LIMIT,offset}); const rows=res.rows??[]; all.push(...rows); if(rows.length<PAGE_LIMIT)break; offset+=PAGE_LIMIT; }
+  return all;
+}
+
 function ExpandPanel({ row, companyId }:{ row:BoardRow; companyId:string }) {
-  const expenses = useQuery({ queryKey:["load-costs-board","expenses",companyId,row.load_id], queryFn:()=>listExpenses(companyId,{ load_id:row.load_id,limit:200 }) });
-  const bills = useQuery({ queryKey:["load-costs-board","bills",companyId,row.load_id], queryFn:()=>listBills(companyId,{ load_id:row.load_id,limit:200 }) });
+  const expenses = useQuery({ queryKey:["load-costs-board","expenses",companyId,row.load_id], queryFn:()=>fetchAllExpenses(companyId,row.load_id) });
+  const bills = useQuery({ queryKey:["load-costs-board","bills",companyId,row.load_id], queryFn:()=>fetchAllBills(companyId,row.load_id) });
   const entries = [
-    ...(expenses.data?.rows ?? []).filter(x=>x.status!=="void").map(x=>({id:x.id,number:x.expense_number??row.load_number,label:x.vendor_name??"Vendor not set",detail:x.line_description??x.memo??"Expense · paid now",amount:Number(x.total_amount_cents),owed:false})),
-    ...(bills.data?.rows ?? []).filter(x=>x.status!=="voided").map(x=>({id:x.id,number:x.display_id??row.load_number,label:x.vendor_name??"Vendor not set",detail:x.bill_number?`Vendor invoice ${x.bill_number}`:"Bill · owed",amount:Number(x.amount_cents),owed:x.status!=="paid"})),
+    ...(expenses.data ?? []).filter(x=>x.status!=="void").map(x=>({id:x.id,number:x.expense_number??row.load_number,label:x.vendor_name??"Vendor not set",detail:x.line_description??x.memo??"Expense · paid now",amount:Number(x.total_amount_cents),owed:false})),
+    ...(bills.data ?? []).filter(x=>x.status!=="voided").map(x=>({id:x.id,number:x.display_id??row.load_number,label:x.vendor_name??"Vendor not set",detail:x.bill_number?`Vendor invoice ${x.bill_number}`:"Bill · owed",amount:Number(x.amount_cents),owed:x.status!=="paid"})),
   ];
   const params = new URLSearchParams({load_id:row.load_id,load_number:row.load_number}).toString();
   return <div className="grid gap-3 bg-[#F7F8FA] p-3 md:grid-cols-[1.55fr_1fr]" data-testid="load-costs-expand">
