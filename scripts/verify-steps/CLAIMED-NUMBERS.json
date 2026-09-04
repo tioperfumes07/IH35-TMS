@@ -7403,5 +7403,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-04",
     "purpose": "verify-recon-session-unmatch-resets-review-state (ACC-20: the session-scoped unmatch route in reconciliation.routes.ts cleared all 6 matched_*_id pointers but never reset review_state back to 'for_review', leaving the row stuck at 'matched' with nothing matched -- an orphaned state that would not re-surface in the for-review queue)"
+  },
+  "10307": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-bank-transactions-direction-uses-is-credit (BANK-F10005 amendment, owner-ordered: banking.bank_transactions.amount_cents's sign runs OPPOSITE is_credit on this table -- a schema-level trap, not a one-off; guards that every deposit/withdrawal direction query reads is_credit, never sign(amount_cents))"
   }
 }
