@@ -34,7 +34,7 @@ export function collectFailures({ bookLoad = load(BOOK_LOAD_PATH), linkService =
   if (!/await linkLoadToPresettlementAtBookingInClientTx\(client, \{/.test(bookLoad)) {
     failures.push("book-load.service.ts does not call linkLoadToPresettlementAtBookingInClientTx");
   }
-  if (!/if \(input\.assigned_primary_driver_id && input\.trip_type\) \{\s*\n\s*await linkLoadToPresettlementAtBookingInClientTx/.test(bookLoad)) {
+  if (!/if \(input\.assigned_primary_driver_id && input\.trip_type\) \{\s*(?:const\s+\w+\s*=\s*)?await linkLoadToPresettlementAtBookingInClientTx/.test(bookLoad)) {
     failures.push("linkLoadToPresettlementAtBookingInClientTx is not called immediately when driver+trip_type are known");
   }
 
@@ -76,8 +76,8 @@ if (process.argv.includes("--selftest")) {
   // Proven failing on the ACTUAL pre-fix shape (PR #20157's own predecessor), not a synthetic
   // fixture: the historical opt-in gate this migration replaced.
   const preFixBookLoad = bookLoad.replace(
-    "if (input.assigned_primary_driver_id && input.trip_type) {\n        await linkLoadToPresettlementAtBookingInClientTx(client, {",
-    "if (input.addToOpenPresettlement) {\n      if (input.assigned_primary_driver_id && input.trip_type) {\n        await linkLoadToPresettlementAtBookingInClientTx(client, {"
+    "if (input.assigned_primary_driver_id && input.trip_type) {",
+    "if (input.addToOpenPresettlement) {"
   );
   if (preFixBookLoad === bookLoad) {
     console.error("verify-presettlement-auto-assign-at-creation SELFTEST FAIL — pre-fix plant target not found (source drifted)");
