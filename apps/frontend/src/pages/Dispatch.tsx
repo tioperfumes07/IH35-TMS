@@ -86,10 +86,12 @@ export function DispatchPage({
   initialSubTab,
   /** LV-DISPATCH-LOAD-DEEPLINK-DRAWER: route wrapper passes :id explicitly so the drawer cannot miss useParams. */
   deepLinkLoadId = null,
+  roundTripsDeepLink = false,
 }: {
   loadsDeepLink?: boolean;
   initialSubTab?: DispatchSubTabId;
   deepLinkLoadId?: string | null;
+  roundTripsDeepLink?: boolean;
 } = {}) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -130,25 +132,28 @@ export function DispatchPage({
   const [subTab, setSubTab] = useState<DispatchSubTabId>(initialSubTab ?? (dispatchSecondaryTabFromPath(location.pathname) as DispatchSubTabId));
   const onLoadDetailPath = Boolean(pathLoadId);
   const loadsRoute = loadsDeepLink || onLoadDetailPath || location.pathname === "/dispatch/loads";
+  const roundTripsRoute = roundTripsDeepLink || location.pathname === "/dispatch/round-trips";
 
   useEffect(() => {
     setSubTab(dispatchSecondaryTabFromPath(location.pathname) as DispatchSubTabId);
   }, [location.pathname]);
 
   useEffect(() => {
-    if (!loadsRoute) return;
+    if (!loadsRoute && !roundTripsRoute) return;
     setSubTab("load_board");
     // Default to the List board ONLY when no valid board view is selected — do NOT override an explicit
     // Kanban/Units choice (overriding it is what made the Kanban tab dead on /dispatch/loads).
+    // On the canonical Round Trips route we default to the Units view.
     const current = searchParams.get("view");
+    const target = roundTripsRoute ? "units" : "list";
     if (current !== "list" && current !== "kanban" && current !== "units") {
       const next = new URLSearchParams(searchParams);
-      next.set("view", "list");
+      next.set("view", target);
       setSearchParams(next, { replace: true });
     }
-  }, [loadsRoute, searchParams, setSearchParams]);
+  }, [loadsRoute, roundTripsRoute, searchParams, setSearchParams]);
 
-  const view = parseViewMode(searchParams.get("view"), loadsRoute);
+  const view = roundTripsRoute ? "units" : parseViewMode(searchParams.get("view"), loadsRoute);
   const showLoadBoard = view === "kanban" || view === "list" || view === "units";
   const showFleetOosStrip = subTab === "load_board" && (view === "overview" || view === "kanban" || view === "list" || view === "units");
   const sort = searchParams.get("sort") ?? "created_at:desc";

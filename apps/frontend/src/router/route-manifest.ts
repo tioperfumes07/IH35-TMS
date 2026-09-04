@@ -56,6 +56,7 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
   { path: "/dispatch/assignments", label: "Assignments", module: "dispatch" },
   { path: "/dispatch/settlements", label: "Settlements", module: "dispatch" },
   { path: "/dispatch/pre-settlements", label: "Pre-settlements", module: "dispatch" },
+  { path: "/dispatch/round-trips", label: "Round Trips", module: "dispatch" },
   { path: "/tasks", label: "Task Board", module: "tasks" },
   { path: "/tasks/calendar", label: "Calendar", module: "tasks" },
   { path: "/tasks/mine", label: "My Tasks", module: "tasks" },
