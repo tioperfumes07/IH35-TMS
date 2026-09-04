@@ -1765,7 +1765,13 @@ export function BookLoadModalV4({
                           placeholder="Search customers…"
                           onSearch={setCustomerSearch}
                           loading={customersQuery.isLoading}
-                          disabled={customersQuery.isLoading || customersQuery.isError}
+                          // WIZ-46 D2: NEVER fold the autocomplete's own `isLoading` into `disabled`.
+                          // The first keystroke changes customerSearch → new query key → isLoading
+                          // true → this input got the HTML `disabled` attribute → the browser blurred
+                          // the focused input (focus → BODY) and characters 2..n were discarded, so
+                          // only `search=N` ever reached the API. `loading` shows the fetch; the input
+                          // stays editable. `disabled` is reserved for a hard error state only.
+                          disabled={customersQuery.isError}
                           onOptionCreated={(opt) => {
                             void queryClient.invalidateQueries({ queryKey: ["book-load-v4-customers-autocomplete"] });
                             form.setValue("customer_id", opt.value, { shouldDirty: true, shouldValidate: true });

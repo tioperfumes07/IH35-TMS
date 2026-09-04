@@ -33,8 +33,16 @@ export function collectProblems(root = ROOT) {
   if (!/createKind=["']customer["']/.test(code)) {
     problems.push(`${FILE}: must keep createKind=customer`);
   }
-  if (!/disabled=\{customersQuery\.isLoading \|\| customersQuery\.isError\}/.test(code)) {
-    problems.push(`${FILE}: failed customer reads must disable the dependent picker`);
+  // WIZ-46: the customer autocomplete's own in-flight fetch must surface via `loading` (dropdown
+  // spinner) and must NEVER be folded into `disabled`. Folding isLoading into disabled set the HTML
+  // `disabled` attribute on the focused input at the first keystroke, the browser blurred it (focus
+  // → BODY), and characters 2..n were discarded — only `search=N` ever reached the API. `disabled`
+  // is reserved for the hard error state.
+  if (!/loading=\{customersQuery\.isLoading\}/.test(code)) {
+    problems.push(`${FILE}: in-flight customer search must be surfaced via loading={customersQuery.isLoading}`);
+  }
+  if (!/disabled=\{customersQuery\.isError\}/.test(code) || /disabled=\{[^}]*customersQuery\.isLoading/.test(code)) {
+    problems.push(`${FILE}: customer picker disabled must be isError only — never fold isLoading into disabled (WIZ-46)`);
   }
   if (!/customersQuery\.isError[\s\S]{0,180}?ListErrorBanner[\s\S]{0,180}?customersQuery\.refetch\(\)/.test(code)) {
     problems.push(`${FILE}: failed customer reads must disclose exact Retry instead of an empty picker`);
@@ -75,8 +83,12 @@ export function collectProblems(root = ROOT) {
   ) {
     problems.push(`${LIVE_WIZARD}: picker label must use the typed canonical Customer display_name contract`);
   }
-  if (!/disabled=\{customersQuery\.isLoading \|\| customersQuery\.isError\}/.test(liveCode)) {
-    problems.push(`${LIVE_WIZARD}: failed customer reads must disable the dependent picker`);
+  // WIZ-46 (see FILE note above): loading→spinner, error→disabled, never loading→disabled.
+  if (!/loading=\{customersQuery\.isLoading\}/.test(liveCode)) {
+    problems.push(`${LIVE_WIZARD}: in-flight customer search must be surfaced via loading={customersQuery.isLoading}`);
+  }
+  if (!/disabled=\{customersQuery\.isError\}/.test(liveCode) || /disabled=\{[^}]*customersQuery\.isLoading/.test(liveCode)) {
+    problems.push(`${LIVE_WIZARD}: customer picker disabled must be isError only — never fold isLoading into disabled (WIZ-46)`);
   }
   if (!/customersQuery\.isError[\s\S]{0,180}?ListErrorBanner[\s\S]{0,180}?customersQuery\.refetch\(\)/.test(liveCode)) {
     problems.push(`${LIVE_WIZARD}: failed customer reads must disclose exact Retry instead of an empty picker`);
@@ -176,6 +188,23 @@ if (process.argv.includes("--selftest")) {
     const labelMutation = collectProblems(stubRoot);
     if (!labelMutation.some((problem) => problem.includes("typed canonical Customer display_name contract"))) {
       console.error(`${LABEL} SELFTEST FAIL: real-source display_name mutation did not FAIL`);
+      process.exit(1);
+    }
+
+    // WIZ-46: reintroducing the fold of isLoading into `disabled` (the live defect that blurred the
+    // focused input and swallowed characters 2..n) must FAIL the guard.
+    for (const rel of [FILE, LIVE_WIZARD]) {
+      const source = readRel(ROOT, rel);
+      if (!source) throw new Error(`missing selftest source ${rel}`);
+      const mutated = source.replace(
+        /disabled=\{customersQuery\.isError\}/,
+        "disabled={customersQuery.isLoading || customersQuery.isError}",
+      );
+      fs.writeFileSync(path.join(stubRoot, rel), mutated);
+    }
+    const foldMutation = collectProblems(stubRoot);
+    if (!foldMutation.some((problem) => problem.includes("never fold isLoading into disabled (WIZ-46)"))) {
+      console.error(`${LABEL} SELFTEST FAIL: WIZ-46 isLoading→disabled fold was not caught`);
       process.exit(1);
     }
   } finally {

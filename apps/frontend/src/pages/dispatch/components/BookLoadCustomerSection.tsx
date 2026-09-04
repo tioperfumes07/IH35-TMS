@@ -108,7 +108,11 @@ export function BookLoadCustomerSection({
               placeholder="Search customers…"
               onSearch={setCustomerSearch}
               loading={customersQuery.isLoading}
-              disabled={customersQuery.isLoading || customersQuery.isError}
+              // WIZ-46: the autocomplete's own in-flight state goes to `loading` (spinner), NEVER to
+              // `disabled` — folding it in blurred the focused input on the first keystroke and
+              // discarded characters 2..n, so only `search=N` reached the API. `disabled` is the
+              // hard error state only.
+              disabled={customersQuery.isError}
               onOptionCreated={(opt) => {
                 void queryClient.invalidateQueries({ queryKey: ["book-load-customer-section", "customers"] });
                 setValue("customer_id", opt.value, { shouldDirty: true, shouldValidate: true });
