@@ -452,11 +452,14 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         `
             SELECT
               bt.*,
-              -- amount_cents is stored SIGNED on the Plaid convention: NEGATIVE = money IN (deposit),
-              -- POSITIVE = money OUT (withdrawal). The register previously mapped >=0 -> deposits, which
-              -- SWAPPED the two columns (a deposit showed under Withdrawals). Corrected to match the sign.
-              CASE WHEN bt.amount_cents < 0 THEN abs(bt.amount_cents)::numeric / 100 ELSE 0 END AS deposits,
-              CASE WHEN bt.amount_cents > 0 THEN bt.amount_cents::numeric / 100 ELSE 0 END AS withdrawals
+              -- BANK-F10005 amendment (2026-09-04) — amount_cents's sign happens to run opposite
+              -- is_credit on this table (Plaid convention: NEGATIVE = deposit, POSITIVE = withdrawal),
+              -- so branching on sign(amount_cents) gave the right answer today, but only by matching
+              -- an unenforced convention — a future write path that sets is_credit correctly without
+              -- following this exact sign would silently swap the two columns again. Read is_credit
+              -- directly, the authoritative direction column, instead of inferring from sign.
+              CASE WHEN bt.is_credit THEN abs(bt.amount_cents)::numeric / 100 ELSE 0 END AS deposits,
+              CASE WHEN NOT bt.is_credit THEN abs(bt.amount_cents)::numeric / 100 ELSE 0 END AS withdrawals
             FROM banking.bank_transactions bt
             WHERE bt.operating_company_id = $1::uuid
               AND bt.bank_account_id = $2
