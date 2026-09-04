@@ -7404,6 +7404,11 @@
     "claimed_at": "2026-09-04",
     "purpose": "verify-recon-session-unmatch-resets-review-state (ACC-20: the session-scoped unmatch route in reconciliation.routes.ts cleared all 6 matched_*_id pointers but never reset review_state back to 'for_review', leaving the row stuck at 'matched' with nothing matched -- an orphaned state that would not re-surface in the for-review queue)"
   },
+  "10305": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-invoice-display-id-shape-matches-db-constraint (SET-25: the owner could not create an invoice on his first real load -- accounting.invoices' load_number-shaped display_id, plain digits per GO-10 REV-B L3, was rejected by invoices_display_id_check, which only accepted two dead YYYYMMDD-prefixed formats + INV-YYYY-NNNNN. Migration 202613650001 widened the constraint; this guard proves the code-side INVOICE_DISPLAY_ID_PATTERN validator agrees with the live constraint on every accepted and rejected shape, and that resolveInvoiceDisplayId/resolvePaymentDisplayId/resolveBillDisplayId all validate shape BEFORE returning, not after the DB rejects it.)"
+  },
   "10307": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-04",
