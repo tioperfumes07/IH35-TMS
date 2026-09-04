@@ -575,7 +575,12 @@ function KanbanCompactCard({
             onClick={(event) => event.stopPropagation()}
           />
         ) : null}
-        {!load.assigned_primary_driver_id && !load.assigned_unit_id ? <span>Unassigned</span> : null}
+        {/* DSP-A (owner 2026-09-04): on the board every one of these cards is unassigned by
+            definition — the word "Unassigned" is noise that "looks too dirty." Show the empty-cell
+            dash instead (owner's dash-not-text rule), never the redundant label. */}
+        {!load.assigned_primary_driver_id && !load.assigned_unit_id ? (
+          <span className="text-gray-400" aria-label="No unit or driver assigned">—</span>
+        ) : null}
       </span>
       <EntityLinkOrTombstone
         kind="load"
@@ -1354,7 +1359,7 @@ export function DispatchKanban({
                       />
                     ) : null}
                     {!load.assigned_primary_driver_id && !load.assigned_unit_id ? (
-                      <span>Unassigned</span>
+                      <span className="text-gray-400" aria-label="No unit or driver assigned">—</span>
                     ) : null}
                   </span>
                   <EntityLinkOrTombstone
