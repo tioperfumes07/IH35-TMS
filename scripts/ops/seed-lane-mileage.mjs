@@ -30,30 +30,32 @@
  *   origin_postal_code / dest_postal_code: present as columns in this source, 0/3466 populated --
  *   passed through as NULL when blank (nothing to lose either way).
  *
- * LIVE SCHEMA COLLISIONS (found 2026-09-04 re-running this rebuild against the real table --
- * neither is fixable from this file without fabricating data, both are filed to
- * docs/audit/GUARD-WORKORDERS.md as migration-blocked packages for CC-1/Cursor):
+ * LIVE SCHEMA COLLISIONS (found 2026-09-04, RESOLVED same day by CC-1's migration 202613670001):
+ * two constraints on catalogs.lane_mileage briefly blocked a full re-import and contradicted the
+ * owner's 2026-09-04 ruling on this data -- both are now DROPPED live, so this script imports every
+ * source value verbatim again. History, kept here because the reasoning still matters for anyone
+ * touching this file (see LANE-MILEAGE-LIVE-CONSTRAINTS-BLOCK-OWNER-RULING /
+ * LST-F25004 in docs/audit/GUARD-WORKORDERS.md for the full live-proof trail):
  *
- *   (a) catalogs.lane_mileage.practical_miles is NOT NULL live. 26 of 3466 source rows have every
+ *   (a) catalogs.lane_mileage.practical_miles WAS NOT NULL live. 26 of 3466 source rows have every
  *       practical_* field blank (a lane observed only via a short-route data point, e.g.
- *       ADRIAN,PA->LAREDO,TX: blank practical_miles, short_miles=338.4, n_short=1). These rows are
- *       SKIPPED here (not inserted with a fabricated 0 or a copied short_miles value) -- see
- *       skipped[].reason === "no-practical-miles". Once a migration drops this NOT NULL (or the
- *       table gains a nullable-practical path), re-running this script picks them up with no code
- *       change.
- *   (b) catalogs.lane_mileage has CHECK lane_mileage_short_miles_not_over_practical (short_miles
- *       IS NULL OR short_miles <= practical_miles). The owner's 2026-09-04 ruling is that short is
- *       NOT bounded by practical in this source -- it's the AlwaysTrack shortest+deadhead blend, a
- *       genuinely different measure that exceeds practical on 2,203 of 3,335 lanes with both values
- *       (median ratio 1.067; verified live against this exact source). Any row where short_miles >
- *       practical_miles has its short_miles/n_short/short_min/short_max HELD to NULL/0 here --
- *       tracked via heldBackForShortConstraint -- rather than either failing the whole import or
- *       silently deriving/capping short from practical (the owner explicitly forbade deriving:
- *       "Any formula would fabricate driver pay"). Until CC-1/Cursor ships a migration relaxing or
- *       dropping this CHECK, these lanes autofill short=NULL exactly like the original bug (see
- *       book-load.service.ts's practical fallback) -- but now for a known, bounded, documented set
- *       of lanes instead of silently, for all of them. Re-running this script after that migration
- *       lands picks up every held-back value with no code change.
+ *       ADRIAN,PA->LAREDO,TX: blank practical_miles, short_miles=338.4, n_short=1). Migration
+ *       202613670001 dropped the NOT NULL -- these 26 rows now import with practical_miles=NULL,
+ *       never a fabricated 0 or a copied short_miles value.
+ *   (b) catalogs.lane_mileage HAD CHECK lane_mileage_short_miles_not_over_practical (short_miles IS
+ *       NULL OR short_miles <= practical_miles). The owner's ruling is that short is NOT bounded by
+ *       practical in this source -- it's the AlwaysTrack shortest+deadhead blend, a genuinely
+ *       different measure that exceeds practical on 2,203 of 3,335 lanes with both values (median
+ *       ratio 1.067; verified live). Migration 202613670001 dropped this CHECK with no replacement
+ *       bound -- MILES-INVERT-01's existing recompute_lane_short_miles_trust() trigger (already
+ *       live) is the correct flag-not-reject mechanism for this shape. short_miles now imports
+ *       verbatim, never held back, never derived/capped from practical.
+ *
+ * DO NOT reintroduce a client-side holdback/cap for either of these -- that was this file's own
+ * temporary workaround while the migration was pending, and became WRONG the moment the migration
+ * landed (a hardcoded JS rule doesn't know the DB constraint is gone). If a constraint like this
+ * is ever needed again, it belongs in the schema (so every writer, not just this script, obeys
+ * it), not duplicated as a business rule here.
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -137,7 +139,6 @@ function parseCsv(text) {
 export function buildInsertRows(rawRows) {
   const skipped = [];
   const rows = [];
-  let heldBackForShortConstraint = 0;
   for (const r of rawRows) {
     const originCity = r.origin_city.trim();
     const destCity = r.dest_city.trim();
@@ -145,27 +146,7 @@ export function buildInsertRows(rawRows) {
       skipped.push({ row: r, reason: "zip-as-city" });
       continue;
     }
-    const practicalMiles = num(r.practical_miles);
-    if (practicalMiles == null) {
-      // catalogs.lane_mileage.practical_miles is NOT NULL live -- see header note (a). Skipping,
-      // never fabricating a 0 or copying short_miles into it.
-      skipped.push({ row: r, reason: "no-practical-miles" });
-      continue;
-    }
     const confidence = mapConfidence(r.trust_level);
-    let shortMiles = num(r.short_miles);
-    let nShort = intOrZero(r.n_short);
-    let shortMin = num(r.short_min);
-    let shortMax = num(r.short_max);
-    if (shortMiles != null && shortMiles > practicalMiles) {
-      // Live CHECK lane_mileage_short_miles_not_over_practical -- see header note (b). Hold the
-      // whole short-route bundle to NULL/0 for this lane rather than deriving/capping it.
-      heldBackForShortConstraint += 1;
-      shortMiles = null;
-      nShort = 0;
-      shortMin = null;
-      shortMax = null;
-    }
     rows.push({
       origin_city: originCity,
       origin_state: r.origin_state.trim(),
@@ -173,16 +154,16 @@ export function buildInsertRows(rawRows) {
       dest_city: destCity,
       dest_state: r.dest_state.trim(),
       dest_postal_code: r.dest_postal_code?.trim() || null,
-      practical_miles: practicalMiles,
-      short_miles: shortMiles,
+      practical_miles: num(r.practical_miles),
+      short_miles: num(r.short_miles),
       empty_miles: num(r.empty_miles) ?? 0,
       n_practical: intOrZero(r.n_practical),
-      n_short: nShort,
+      n_short: intOrZero(r.n_short),
       practical_min: num(r.practical_min),
       practical_max: num(r.practical_max),
       practical_spread: num(r.practical_spread),
-      short_min: shortMin,
-      short_max: shortMax,
+      short_min: num(r.short_min),
+      short_max: num(r.short_max),
       confidence,
       autofill_allowed: confidence === "High" || confidence === "Check ZIP",
       source: "History",
@@ -190,7 +171,7 @@ export function buildInsertRows(rawRows) {
       last_seen: r.last_seen || null,
     });
   }
-  return { rows, skipped, heldBackForShortConstraint };
+  return { rows, skipped };
 }
 
 if (process.argv.includes("--selftest")) {
@@ -206,14 +187,15 @@ if (process.argv.includes("--selftest")) {
     console.error("seed-lane-mileage SELFTEST FAIL — quoted city / header parse");
     process.exit(1);
   }
-  const { rows: built, skipped, heldBackForShortConstraint } = buildInsertRows(rows);
-  // ADRIAN has no practical_miles (NOT NULL live) -> skipped, same bucket as the zip-as-city row.
-  if (built.length !== 3 || skipped.length !== 2) {
-    console.error(`seed-lane-mileage SELFTEST FAIL — expected 3 built + 2 skipped, got ${built.length}/${skipped.length}`);
+  const { rows: built, skipped } = buildInsertRows(rows);
+  // Only the zip-as-city row is skipped now -- practical_miles is nullable live (migration
+  // 202613670001), so ADRIAN's blank-practical/real-short row is built, not skipped.
+  if (built.length !== 4 || skipped.length !== 1) {
+    console.error(`seed-lane-mileage SELFTEST FAIL — expected 4 built + 1 skipped, got ${built.length}/${skipped.length}`);
     process.exit(1);
   }
-  if (!skipped.some((s) => s.reason === "zip-as-city") || !skipped.some((s) => s.reason === "no-practical-miles")) {
-    console.error(`seed-lane-mileage SELFTEST FAIL — expected both skip reasons present: ${JSON.stringify(skipped.map((s) => s.reason))}`);
+  if (skipped[0].reason !== "zip-as-city") {
+    console.error(`seed-lane-mileage SELFTEST FAIL — expected the one skip to be zip-as-city, got ${skipped[0].reason}`);
     process.exit(1);
   }
   if (built[0].confidence !== "High" || built[0].source !== "History") {
@@ -229,15 +211,19 @@ if (process.argv.includes("--selftest")) {
     console.error(`seed-lane-mileage SELFTEST FAIL — blank short_miles must stay NULL with n_short=0, not fabricated: ${JSON.stringify(omaha)}`);
     process.exit(1);
   }
-  // Live CHECK lane_mileage_short_miles_not_over_practical: short (1478.1) > practical (1319.7) --
-  // must be inserted (not skipped) with the short bundle held to NULL/0, not derived or capped.
-  const indy = built.find((b) => b.origin_city === "INDIANAPOLIS");
-  if (!indy || indy.practical_miles !== 1319.7 || indy.short_miles !== null || indy.n_short !== 0 || indy.short_min !== null || indy.short_max !== null) {
-    console.error(`seed-lane-mileage SELFTEST FAIL — short>practical row must hold the short bundle to NULL/0, not derive/cap it: ${JSON.stringify(indy)}`);
+  // The exact real-world shape this rebuild fixes: practical_* all blank, short_miles present.
+  // practical_miles is nullable live (migration 202613670001) -- this row is built, not skipped.
+  const adrianLike = built.find((b) => b.origin_city === "ADRIAN");
+  if (!adrianLike || adrianLike.practical_miles !== null || adrianLike.short_miles !== 338.4 || adrianLike.n_short !== 1) {
+    console.error(`seed-lane-mileage SELFTEST FAIL — practical-blank/short-present row mishandled: ${JSON.stringify(adrianLike)}`);
     process.exit(1);
   }
-  if (heldBackForShortConstraint !== 1) {
-    console.error(`seed-lane-mileage SELFTEST FAIL — expected heldBackForShortConstraint=1, got ${heldBackForShortConstraint}`);
+  // short (1478.1) > practical (1319.7) -- imports VERBATIM now that the CHECK constraint is
+  // dropped (migration 202613670001). Must NOT be held back/capped -- that was this file's own
+  // temporary workaround, now stale.
+  const indy = built.find((b) => b.origin_city === "INDIANAPOLIS");
+  if (!indy || indy.practical_miles !== 1319.7 || indy.short_miles !== 1478.1 || indy.n_short !== 7 || indy.short_min !== 1303.9 || indy.short_max !== 1552.5) {
+    console.error(`seed-lane-mileage SELFTEST FAIL — short>practical row must import verbatim now that the CHECK is dropped, not hold back/cap it: ${JSON.stringify(indy)}`);
     process.exit(1);
   }
   const src = readFileSync(fileURLToPath(import.meta.url), "utf8");
@@ -270,7 +256,7 @@ async function main() {
     console.error(`expected 3466 source rows, got ${raw.length}`);
     process.exit(1);
   }
-  const { rows, skipped, heldBackForShortConstraint } = buildInsertRows(raw);
+  const { rows, skipped } = buildInsertRows(raw);
   const client = new pg.Client({
     connectionString: url,
     ssl: url.includes("neon.tech") ? { rejectUnauthorized: false } : undefined,
@@ -373,9 +359,6 @@ async function main() {
   }, {});
   console.log(
     `deleted ${deleted.rowCount} prior rows; inserted ${n} rows (${skipped.length} skipped: ${JSON.stringify(skipReasons)})`
-  );
-  console.log(
-    `held ${heldBackForShortConstraint} lanes' short-route bundle to NULL/0 -- live CHECK lane_mileage_short_miles_not_over_practical blocks writing short>practical; see header note (b) and GUARD-WORKORDERS for the pending migration`
   );
   console.log(
     `BEFORE-write counts (from source): short_miles=${colsBefore.short_miles} n_short>0=${colsBefore.n_short_gt0} empty_miles>0=${colsBefore.empty_miles_gt0} practical_min=${colsBefore.practical_min} short_min=${colsBefore.short_min}`
