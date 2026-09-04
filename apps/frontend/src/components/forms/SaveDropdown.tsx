@@ -27,6 +27,10 @@ export type SaveDropdownProps = {
    * but WHAT is sent (rate con vs dispatch sheet) is a pending owner ruling (WIZ-49d) — so the
    * affordance is visible with its reason rather than built as a dead no-op or omitted silently. */
   saveAndSendDisabledReason?: string;
+  /** Per-usage overrides for the caret MENU item labels (the primary button keeps `primaryLabel`).
+   * Book Load uses this to render the owner's exact words — "Book and dispatch / Book and save /
+   * Book and print / Book and send" — without changing the shared defaults other forms rely on. */
+  menuLabels?: Partial<Record<SaveDropdownPersistedAction, string>>;
   disabled?: boolean;
   dirty?: boolean;
   loading?: boolean;
@@ -70,6 +74,8 @@ function writePreference(key: string, action: SaveDropdownPersistedAction) {
 type ActionEntry = {
   key: SaveDropdownPersistedAction;
   label: string;
+  /** Optional distinct label for the caret menu item (button keeps `label`). */
+  menuLabel?: string;
   run: () => void | Promise<void>;
   /** Rendered as a disabled menu item (never selectable as primary). */
   disabled?: boolean;
@@ -91,6 +97,7 @@ export function SaveDropdown({
   onSaveAndViewList,
   onSaveAndSend,
   saveAndSendDisabledReason,
+  menuLabels,
   disabled = false,
   dirty: _dirty = false,
   loading = false,
@@ -101,18 +108,18 @@ export function SaveDropdown({
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const actionList: ActionEntry[] = useMemo(() => {
-    const entries: ActionEntry[] = [{ key: "save", label: primaryLabel, run: onSave }];
-    if (onSaveAndClose) entries.push({ key: "save_and_close", label: "Save and close", run: onSaveAndClose });
-    if (onSaveAndAddAnother) entries.push({ key: "save_and_add_another", label: "Save and add another", run: onSaveAndAddAnother });
-    if (onSaveAndPrint) entries.push({ key: "save_and_print", label: "Save and print", run: onSaveAndPrint });
-    if (onSaveAndDownload) entries.push({ key: "save_and_download", label: "Save and download PDF", run: onSaveAndDownload });
-    if (onSaveAndViewList) entries.push({ key: "save_and_view_list", label: "Save and view list", run: onSaveAndViewList });
+    const entries: ActionEntry[] = [{ key: "save", label: primaryLabel, menuLabel: menuLabels?.save, run: onSave }];
+    if (onSaveAndClose) entries.push({ key: "save_and_close", label: menuLabels?.save_and_close ?? "Save and close", run: onSaveAndClose });
+    if (onSaveAndAddAnother) entries.push({ key: "save_and_add_another", label: menuLabels?.save_and_add_another ?? "Save and add another", run: onSaveAndAddAnother });
+    if (onSaveAndPrint) entries.push({ key: "save_and_print", label: menuLabels?.save_and_print ?? "Save and print", run: onSaveAndPrint });
+    if (onSaveAndDownload) entries.push({ key: "save_and_download", label: menuLabels?.save_and_download ?? "Save and download PDF", run: onSaveAndDownload });
+    if (onSaveAndViewList) entries.push({ key: "save_and_view_list", label: menuLabels?.save_and_view_list ?? "Save and view list", run: onSaveAndViewList });
     if (onSaveAndSend) {
-      entries.push({ key: "save_and_send", label: "Save and send", run: onSaveAndSend });
+      entries.push({ key: "save_and_send", label: menuLabels?.save_and_send ?? "Save and send", run: onSaveAndSend });
     } else if (saveAndSendDisabledReason) {
       entries.push({
         key: "save_and_send",
-        label: "Save and send",
+        label: menuLabels?.save_and_send ?? "Save and send",
         run: () => {},
         disabled: true,
         title: saveAndSendDisabledReason,
@@ -128,6 +135,7 @@ export function SaveDropdown({
     onSaveAndViewList,
     onSaveAndSend,
     saveAndSendDisabledReason,
+    menuLabels,
     primaryLabel,
   ]);
 
@@ -213,7 +221,7 @@ export function SaveDropdown({
                 className="block w-full px-3 py-2 text-left hover:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-400 disabled:hover:bg-white"
                 onClick={() => void selectMenuAction(item.key)}
               >
-                {item.label}
+                {item.menuLabel ?? item.label}
                 {item.disabled ? <span className="ml-1 text-gray-400">(pending)</span> : null}
               </button>
             </li>

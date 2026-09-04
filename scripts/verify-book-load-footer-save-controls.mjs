@@ -45,8 +45,20 @@ try {
 // (a) split Save
 must(/import\s+\{\s*SaveDropdown\s*\}/.test(modal), "MISSING: BookLoadModalV4 must import SaveDropdown");
 must(/<SaveDropdown\b/.test(modal), "MISSING: footer must render <SaveDropdown> (QuickBooks split save)");
-must(/onSaveAndClose=\{/.test(modal), "MISSING: SaveDropdown must wire onSaveAndClose (owner named 'Save and close')");
+must(/onSaveAndClose=\{/.test(modal), "MISSING: SaveDropdown must wire onSaveAndClose");
 must(/onSaveAndPrint=\{/.test(modal), "MISSING: SaveDropdown must wire onSaveAndPrint");
+
+// (a2) Owner's EXACT split-control words (2026-09-04): primary "Book + dispatch"; caret
+// "Book and dispatch / Book and save / Book and print / Book and send". Lock them so the labels
+// can never regress to the generic "Save and close / Save and print".
+must(modal.includes('"Book + dispatch"'), 'MISSING: primary label must be "Book + dispatch"');
+must(/menuLabels=/.test(modal), "MISSING: SaveDropdown must pass menuLabels with the owner's Book words");
+for (const label of ["Book and dispatch", "Book and save", "Book and print", "Book and send"]) {
+  must(modal.includes(`"${label}"`), `MISSING: caret menu must carry the owner's label "${label}"`);
+}
+// SaveDropdown must actually honor per-usage menu label overrides.
+must(/menuLabels\??:/.test(dropdown), "MISSING: SaveDropdown must accept a menuLabels override prop");
+must(/item\.menuLabel\s*\?\?\s*item\.label/.test(dropdown), "MISSING: SaveDropdown must render menuLabel over label in the caret menu");
 
 // (b) Print → existing dispatch-sheet path, no new PDF route
 must(
