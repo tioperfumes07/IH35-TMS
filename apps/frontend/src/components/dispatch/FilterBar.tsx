@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listAllCustomers, listCustomers } from "../../api/mdata";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityPicker } from "../EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
@@ -84,6 +85,12 @@ export function FilterBar({
   });
   const draft = staged.draft;
 
+  // CLS-SILENT-CAP (GO-23 wave 1 row 1 systemic sweep): the browse-all branch already uses
+  // listAllCustomers (exhausts the full roster, never truncates). The search branch's own
+  // limit was 200 — a broad search term against a per-company roster that can exceed it (live:
+  // TRK 1,447 / TRANSP 1,260 / USMCA 1,223) could still legitimately hit the cap. Raised to match
+  // the ceiling already established for other customer pickers this same sweep.
+  const CUSTOMER_SEARCH_LIMIT = 2000;
   const customersQuery = useQuery({
     queryKey: ["dispatch-filter", "customers", operatingCompanyId, customerSearch],
     queryFn: () =>
@@ -91,7 +98,7 @@ export function FilterBar({
         ? listCustomers({
             operating_company_id: operatingCompanyId,
             status: "active",
-            limit: 200,
+            limit: CUSTOMER_SEARCH_LIMIT,
             search: customerSearch,
           })
         : listAllCustomers({
@@ -185,17 +192,28 @@ export function FilterBar({
                 onRetry={() => void customersQuery.refetch()}
               />
             ) : (
-              <ReferenceSelect
-                value={draft.customerId}
-                onChange={(customerId) => staged.setDraft({ ...draft, customerId })}
-                options={customerOptions}
-                createKind="customer"
-                operatingCompanyId={operatingCompanyId}
-                placeholder="Search customer"
-                disabled={!operatingCompanyId || customersQuery.isLoading || customersQuery.isError}
-                loading={customersQuery.isLoading}
-                onSearch={setCustomerSearch}
-              />
+              <>
+                <ReferenceSelect
+                  value={draft.customerId}
+                  onChange={(customerId) => staged.setDraft({ ...draft, customerId })}
+                  options={customerOptions}
+                  createKind="customer"
+                  operatingCompanyId={operatingCompanyId}
+                  placeholder="Search customer"
+                  disabled={!operatingCompanyId || customersQuery.isLoading || customersQuery.isError}
+                  loading={customersQuery.isLoading}
+                  onSearch={setCustomerSearch}
+                />
+                {customerSearch ? (
+                  <CappedListNotice
+                    shown={customerOptions.length}
+                    limit={CUSTOMER_SEARCH_LIMIT}
+                    total={customersQuery.data?.total}
+                    hint="Narrow the search further to see the rest."
+                    className="text-xs text-slate-600"
+                  />
+                ) : null}
+              </>
             )}
           </div>
           <div className="space-y-1">

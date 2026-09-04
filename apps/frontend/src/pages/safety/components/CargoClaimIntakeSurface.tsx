@@ -48,7 +48,12 @@ type Props = {
   subtitle: string;
 };
 
-const PICKER_LIMIT = 200;
+// CLS-SILENT-CAP (GO-23 wave 1 row 1 systemic sweep): was 200 against a per-company customer
+// roster that can exceed it (live: TRK 1,447 / TRANSP 1,260 / USMCA 1,223) on a browse-all (no
+// search term) request. CappedListNotice below already reports the cap honestly; raise it so an
+// unsearched browse stops truncating for every live company. Shared with the cargo-claim-reasons
+// picker, whose catalog is far smaller — raising it costs that picker nothing.
+const PICKER_LIMIT = 2000;
 
 function todayISODate(): string {
   // companyNow() is an ISO timestamp; take the calendar date portion for the date input.

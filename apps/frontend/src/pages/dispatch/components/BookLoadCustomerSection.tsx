@@ -133,9 +133,11 @@ export function BookLoadCustomerSection({
               <span className="font-semibold">+ Add new</span> if this is a new customer.
             </p>
           ) : null}
-          {/* CLS-SILENT-CAP: the ranked autocomplete search is server-clamped to 100 rows per
-              request. Surface truncation so a customer past that cap is not silently missing —
-              typing narrows the match set below the cap for any reasonably distinct name. */}
+          {/* CLS-SILENT-CAP: the ranked autocomplete search is server-clamped to 2000 rows per
+              request (this comment said 100, stale since the A2 TURBO 2026-09-02 raise; caught
+              during the GO-23 wave 1 row 1 systemic picker-cap sweep). Surface truncation so a
+              customer past that cap is not silently missing — typing narrows the match set below
+              the cap for any reasonably distinct name. */}
           <CappedListNotice
             shown={customersQuery.data?.length ?? 0}
             limit={AUTOCOMPLETE_LIMIT}

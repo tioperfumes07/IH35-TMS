@@ -16,6 +16,7 @@ import {
   type DispatcherSafetyEvent,
 } from "../api/identity";
 import { listCustomers } from "../api/mdata";
+import { CappedListNotice } from "../components/CappedListNotice";
 import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
@@ -133,6 +134,14 @@ export function UserDetailPage() {
   });
 
   // SAF-B29: related-customer must not silent-fetch the full customer list.
+  // CLS-SILENT-CAP (GO-23 wave 1 row 1 systemic sweep): was limit 200/500 against a per-company
+  // roster that can exceed 500 (live: TRK 1,447 / TRANSP 1,260 / USMCA 1,223) with no truncation
+  // notice at all — a customer past the cap was simply absent from the dropdown, indistinguishable
+  // from "does not exist". CUSTOMER_PICKER_LIMIT covers every live entity's full roster with
+  // margin (matches the ceiling already established for the Book Load picker, api/mdata.ts
+  // searchCustomersAutocomplete); CappedListNotice below makes any future overflow visible instead
+  // of silent.
+  const CUSTOMER_PICKER_LIMIT = 2000;
   const [customerSearch, setCustomerSearch] = useState("");
   const customersQuery = useQuery({
     queryKey: ["customers", "for-dispatcher-safety", selectedCompanyId, customerSearch],
@@ -140,9 +149,9 @@ export function UserDetailPage() {
     queryFn: () =>
       listCustomers({
         operating_company_id: selectedCompanyId,
-        limit: customerSearch ? 200 : 500,
+        limit: CUSTOMER_PICKER_LIMIT,
         search: customerSearch || undefined,
-      }).then((result) => result.customers),
+      }),
   });
 
   const safetyEventsQuery = useQuery({
@@ -169,7 +178,7 @@ export function UserDetailPage() {
 
   const customerOptions = useMemo<ComboboxOption[]>(
     () =>
-      (customersQuery.isError ? [] : customersQuery.data ?? []).map((customer) => ({
+      (customersQuery.isError ? [] : customersQuery.data?.customers ?? []).map((customer) => ({
         value: customer.id,
         label: customer.name,
         sublabel: customer.mc_number ?? customer.dot_number ?? "",
@@ -652,16 +661,25 @@ export function UserDetailPage() {
             {enableRelated ? (
               <div className="mt-2 space-y-2">
                 {selectedCompanyId && !customersQuery.isError ? (
-                  <ReferenceSelect
-                    value={relatedCustomerId}
-                    onChange={setRelatedCustomerId}
-                    options={customerOptions.map((o) => ({ value: o.value, label: o.label, type: o.sublabel }))}
-                    createKind="customer"
-                    operatingCompanyId={selectedCompanyId}
-                    placeholder="Related customer"
-                    onSearch={setCustomerSearch}
-                    loading={customersQuery.isLoading}
-                  />
+                  <>
+                    <ReferenceSelect
+                      value={relatedCustomerId}
+                      onChange={setRelatedCustomerId}
+                      options={customerOptions.map((o) => ({ value: o.value, label: o.label, type: o.sublabel }))}
+                      createKind="customer"
+                      operatingCompanyId={selectedCompanyId}
+                      placeholder="Related customer"
+                      onSearch={setCustomerSearch}
+                      loading={customersQuery.isLoading}
+                    />
+                    <CappedListNotice
+                      shown={customerOptions.length}
+                      limit={CUSTOMER_PICKER_LIMIT}
+                      total={customersQuery.data?.total}
+                      hint="Type to search the full customer catalog."
+                      className="mt-1 text-xs text-slate-600"
+                    />
+                  </>
                 ) : customersQuery.isError ? (
                   <ListErrorState
                     status={0}

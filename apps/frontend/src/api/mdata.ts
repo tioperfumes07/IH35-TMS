@@ -1352,9 +1352,11 @@ export type CustomerAutocompleteRow = {
  * to a page-sized slice. This endpoint already existed and was already used by EntityPicker
  * kind="customer" elsewhere; BookLoadCustomerSection was the one caller still on the old
  * listCustomers(limit) shape, which is why a customer past the cap could go missing.
- * `limit` is server-clamped to 100 regardless of what's requested — always request 100 so
- * CappedListNotice's own shown>=limit heuristic can honestly report "showing the first 100" when
- * a search is broad enough to still exceed that.
+ * `limit` is server-clamped to 2000 regardless of what's requested (raised 100 -> 300 -> 2000,
+ * A2 TURBO 2026-09-02, customer-autocomplete.shared.ts) — this comment previously said 100, stale
+ * since that raise; caught during the GO-23 wave 1 row 1 systemic picker-cap sweep. Callers pass
+ * their own limit (defaulting to 2000 below) so CappedListNotice's shown>=limit heuristic can
+ * honestly report "showing the first N" when a search is broad enough to still exceed that.
  */
 export function searchCustomersAutocomplete(
   operatingCompanyId: string,
@@ -1364,7 +1366,7 @@ export function searchCustomersAutocomplete(
   const query = new URLSearchParams({
     operating_company_id: operatingCompanyId,
     autocomplete: "true",
-    limit: String(opts.limit ?? 100),
+    limit: String(opts.limit ?? 2000),
   });
   if (term.trim()) query.set("search", term.trim());
   if (opts.activeOnly === false) query.set("active_only", "false");

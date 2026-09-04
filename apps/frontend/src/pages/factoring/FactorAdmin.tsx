@@ -17,6 +17,7 @@ import {
   type FactorBatchHistoryRow,
 } from "../../api/factoring";
 import { listCustomers } from "../../api/mdata";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -213,14 +214,21 @@ export function FactorAdmin() {
     patchSearchParam("customer_id", next);
   }
 
+  // CLS-SILENT-CAP (GO-23 wave 1 row 1 systemic sweep): no limit was passed at all, so a
+  // browse-all (no search term) request silently defaulted to the endpoint's own default of 50 —
+  // against a per-company customer roster that can exceed it by an order of magnitude (live: TRK
+  // 1,447 / TRANSP 1,260 / USMCA 1,223). CUSTOMER_PICKER_LIMIT covers every live entity's full
+  // roster with margin; CappedListNotice below makes any future overflow visible instead of silent.
+  const CUSTOMER_PICKER_LIMIT = 2000;
   const customersQuery = useQuery({
     queryKey: ["factoring", "factor-admin", "customers", companyId, customerSearch],
     queryFn: () =>
       listCustomers({
         operating_company_id: companyId,
         status: "active",
+        limit: CUSTOMER_PICKER_LIMIT,
         search: customerSearch || undefined,
-      }).then((res) => res.customers),
+      }),
     enabled: Boolean(companyId),
   });
 
@@ -329,13 +337,13 @@ export function FactorAdmin() {
   });
 
   const selectedCustomer = useMemo(
-    () => (customersQuery.data ?? []).find((customer) => customer.id === detailCustomerId) ?? null,
+    () => (customersQuery.data?.customers ?? []).find((customer) => customer.id === detailCustomerId) ?? null,
     [customersQuery.data, detailCustomerId]
   );
 
   const customerOptions = useMemo(
     () =>
-      (customersQuery.data ?? []).map((customer) => ({
+      (customersQuery.data?.customers ?? []).map((customer) => ({
         value: customer.id,
         label: customer.name,
         type: customer.customer_code ?? undefined,
@@ -488,6 +496,13 @@ export function FactorAdmin() {
                 loading={customersQuery.isLoading}
                 onSearch={setCustomerSearch}
               />
+              <CappedListNotice
+                shown={customerOptions.length}
+                limit={CUSTOMER_PICKER_LIMIT}
+                total={customersQuery.data?.total}
+                hint="Type to search the full customer catalog."
+                className="mt-1 text-xs text-slate-600"
+              />
             </div>
           </div>
 
@@ -630,6 +645,13 @@ export function FactorAdmin() {
                   disabled={!companyId}
                   loading={customersQuery.isLoading}
                   onSearch={setCustomerSearch}
+                />
+                <CappedListNotice
+                  shown={customerOptions.length}
+                  limit={CUSTOMER_PICKER_LIMIT}
+                  total={customersQuery.data?.total}
+                  hint="Type to search the full customer catalog."
+                  className="mt-1 text-xs text-slate-600"
                 />
               </label>
               <label className="block" data-testid="factor-admin-assign-factor-picker">
