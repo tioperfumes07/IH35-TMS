@@ -31,6 +31,69 @@
         "voided_at"
       ]
     },
+    "accounting.broker_advances": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "accounting.company_settlements": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "accounting.vendor_credits": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "banking.reconciliation_drift_alerts": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "banking.reconciliation_sessions": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "driver_finance.driver_advances": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "driver_finance.driver_bills": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "driver_finance.driver_liabilities": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "driver_finance.driver_settlement_deductions": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
     "accounting.bill_payments": {
       "canonical_column": "revoked_at",
       "predicate": "revoked_at IS NULL",
