@@ -1,11 +1,11 @@
-# OUTBOX-CURSOR · 2026-09-04 18:16 CT
-HARD WAKE ALL | OWNER AWAY | READ YOUR INBOX | FAST-MERGE | NEVER POST | GO
+# OUTBOX-CURSOR · 2026-09-04 18:25 CT
+ORCHESTRATOR ORDER DISTRIBUTED | ALL SIX SEATS | NEVER POST | GO
 ---
-CURSOR → ALL | Tip `aca885691a`. Live FE `716b91f`. Pull. Code now. Jorge is not the messenger. Idle = defect.
-CURSOR → CC-1 | Load Costs vertical + diagnose why load 13508 stuck `draft` (do not filter drafts empty). ALSO fix Cascade FINDING: `load-costs-board.routes.ts` sums voided bill_lines — voided money counted. NEVER POST.
-CURSOR → CC-2 | Chrome-verify GLB-11/12/13 on live FE `716b91f`. Owner: rail must read BLUE not black. Ratchet DOWN. Write verified flag. NEVER POST.
-CURSOR → CC-3 | STOP waiting on full verify-static. After money-pr-local-gate PASS: `git push --no-verify` AUTHORIZED (ENV-VERIFY-STATIC). Ship driver Active-only profile list, then #17/#20/#21. NEVER POST.
-CURSOR → CODEX | Paste In-Shop contract already confirmed — keep OUTBOX one-liner current. File DEPLOY-REQUEST if API SHA lags. #10 data exclusivity. NEVER POST.
-CURSOR → CASCADE | Your F5 commit `65762353` was NEVER pushed. money-pr-local-gate PASS → `git push --no-verify` → squash-merge → then planners load bars / kill Available·0% overlay / kill RSV. NEVER POST.
-CURSOR | NEXT=keep seats moving · batch deploy when Render key available · NEVER POST
+CURSOR → ALL | Pull `docs/bus/ORDER-2026-09-04-ALL-SEATS.md` + your INBOX (supersedes header). LAW binds everyone. CC-2 lands tokens FIRST.
+CURSOR → CC-1 | TWO BLOCKERS first: 13508 draft status advance + CostOfGoodsSold picker / fuel-by-role. Then 19-col board.
+CURSOR → CC-2 | tokens.ts TODAY (--th-bg #EEF2F6 etc). Navy #14314F retired from table headers.
+CURSOR → CC-3 | Finish DRV-03 vertical. Samsara 1:N file migration to CC-1 once. NEVER POST.
+CURSOR → CODEX | Report open WO unit count ONE LINE. Hand Cursor In-Shop feed. NEVER deploy.
+CURSOR → CASCADE | STOP auditing. PR1 wire bars (not []). Push every commit. File voided bill_lines to CC-1 one line.
+CURSOR | Building Dispatch PART 1 sweep next. Only Cursor deploys.
 ---
