@@ -27,7 +27,8 @@ import { buildLoadSaveProof } from "./load-save-proof.js";
 import { linkLoadToPresettlementAtBookingInClientTx } from "./presettlement-link.service.js";
 
 type BookLoadStop = {
-  stop_type: "pickup" | "delivery";
+  // 'border' = a port-of-entry crossing stop captured in Book Load for a cross-border (NB/SB) load.
+  stop_type: "pickup" | "delivery" | "border";
   sequence_number: number;
   location_id?: string;
   company_name?: string;
