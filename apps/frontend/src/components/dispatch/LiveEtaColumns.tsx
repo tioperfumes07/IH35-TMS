@@ -101,12 +101,21 @@ export function SamsaraEtaColumn({ load }: { load: DispatchLoadRow }) {
 }
 
 export function OnTimePredictionColumn({ load }: { load: DispatchLoadRow }) {
+  const prediction = load.on_time_prediction ?? null;
+  // DSP-19 (owner 2026-09-04): "IF ON ANY COLUMN THERE IS NO DATA … PUT LINE NOT TEXT." No
+  // prediction was rendered as an "Unknown" pill — that reads as a real status and "looks too
+  // dirty." Render the empty-cell dash instead; a real green/amber/red still shows its pill.
+  if (prediction === null) {
+    return (
+      <span className="text-gray-400" data-testid="on-time-prediction-column" aria-label="No on-time prediction">—</span>
+    );
+  }
   return (
     <span
-      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${onTimeClass(load.on_time_prediction ?? null)}`}
+      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${onTimeClass(prediction)}`}
       data-testid="on-time-prediction-column"
     >
-      {onTimeLabel(load.on_time_prediction ?? null)}
+      {onTimeLabel(prediction)}
     </span>
   );
 }

@@ -426,13 +426,20 @@ function DocComplianceCell({ load }: { load: DispatchLoadRow }) {
 }
 
 function RiskCell({ load }: { load: DispatchLoadRow }) {
+  const label = riskTierLabel(load);
+  // DSP-19 (owner 2026-09-04): when there is no risk signal at all, riskTierLabel falls back to
+  // "Unknown" — an "Unknown" pill reads as a real risk tier and "looks too dirty." Render the
+  // empty-cell dash instead; any real tier (Late/At risk/On time/Early/Behind/Delayed) still shows.
+  if (label === "Unknown") {
+    return <span className="text-gray-400" aria-label="No risk signal">—</span>;
+  }
   return (
-    <div className="flex flex-col items-start gap-1">
+    <div className="flex flex-col items-center gap-1">
       <span
         className={`rounded-full px-2 py-0.5 text-xs font-semibold ${riskTierClass(load)}`}
         title={isAtRiskOfLate(load) ? "At risk of late delivery" : undefined}
       >
-        {riskTierLabel(load)}
+        {label}
       </span>
     </div>
   );

@@ -72,6 +72,7 @@ describe("LiveEtaColumns", () => {
 
     expect(screen.getByTestId("driver-status-column")).toHaveTextContent("No ping");
     expect(screen.getByTestId("samsara-eta-column")).toHaveTextContent("—");
-    expect(screen.getByTestId("on-time-prediction-column")).toHaveTextContent("Unknown");
+    // DSP-19: an empty on-time prediction renders the dash, not an "Unknown" pill (owner 2026-09-04).
+    expect(screen.getByTestId("on-time-prediction-column")).toHaveTextContent("—");
   });
 });
