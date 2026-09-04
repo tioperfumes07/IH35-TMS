@@ -4,7 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
-import { createDriverCashAdvanceCore, resolveCompanyCashAdvanceThresholdDollars } from "./cash-advance-create.js";
+import { createDriverCashAdvanceCore, resolveCompanyCashAdvanceThresholdDollars, reverseDriverAdvanceInClientTx } from "./cash-advance-create.js";
 import { postBillPaymentGlIfEnabled } from "../accounting/bill-payment-gl.service.js";
 
 const COMPANY_QUERY = z.object({
@@ -575,69 +575,13 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
         return { code: 400 as const, error: "cannot_reverse_after_settlement_deductions" };
       }
 
-      await client.query(
-        `
-          UPDATE driver_finance.driver_advances
-          SET disbursement_status = 'reversed',
-              updated_at = now()
-          WHERE id = $1
-        `,
-        [advance.id]
-      );
-      await client.query(
-        `
-          UPDATE driver_finance.driver_liabilities
-          SET current_balance = 0,
-              paid_to_date = original_amount
-          WHERE id = $1
-        `,
-        [advance.liability_id]
-      );
-      await client.query(
-        `
-          UPDATE driver_finance.deduction_schedule
-          SET is_held = true,
-              hold_reason = 'Advance reversed',
-              updated_at = now()
-          WHERE liability_id = $1
-        `,
-        [advance.liability_id]
-      );
-      if (advance.linked_bill_payment_id) {
-        await client.query(
-          `
-            UPDATE accounting.bill_payments
-            SET status = 'void',
-                updated_at = now()
-            WHERE id = $1
-          `,
-          [advance.linked_bill_payment_id]
-        );
-        if (advance.linked_bill_id) {
-          await client.query(
-            `
-              UPDATE accounting.bills
-              SET status = 'unpaid',
-                  updated_at = now()
-              WHERE id = $1
-            `,
-            [advance.linked_bill_id]
-          );
-        }
-      }
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "cash_advance.reversed",
-        {
-          resource_type: "driver_finance.driver_advances",
-          resource_id: String(advance.id),
-          operating_company_id: companyId,
-          liability_id: String(advance.liability_id ?? ""),
-        },
-        "warning",
-        "BT-3-CASH-ADVANCE-REBUILD"
-      );
+      await reverseDriverAdvanceInClientTx(client, user.uuid, companyId, {
+        advanceId: String(advance.id),
+        liabilityId: advance.liability_id ? String(advance.liability_id) : null,
+        linkedBillPaymentId: advance.linked_bill_payment_id ? String(advance.linked_bill_payment_id) : null,
+        linkedBillId: advance.linked_bill_id ? String(advance.linked_bill_id) : null,
+        reason: "Advance reversed",
+      });
       return { code: 200 as const, data: { ok: true } };
     });
 
