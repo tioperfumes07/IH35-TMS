@@ -1024,6 +1024,20 @@ export function DispatchBoard({
     { key: "pre_settlement", header: "Pre-settlement", cell: (load) => renderPreSettlementPrompt(load) },
   ];
 
+  // BRD-25: default visible columns must keep the board table within a 1280px viewport.
+  // Measured live on index-CPvziJFG.js: 1247 viewport -> clientWidth 1095; all other columns
+  // are reachable through the ParityTable gear column chooser and persisted per BRD-04.
+  const DEFAULT_VISIBLE_BOARD_KEYS = new Set([
+    "unit",
+    "trailer",
+    "load",
+    "driver",
+    "location",
+    "customer",
+    "pickup",
+    "delivery",
+    "status",
+  ]);
   const parityColumns: ParityColumn<BoardLoad>[] = boardColumns.map((column) => ({
     key: column.key,
     label: column.header,
@@ -1032,6 +1046,7 @@ export function DispatchBoard({
     sortValue: DISPATCH_SORTABLE_COLS.has(column.key)
       ? (load: BoardLoad) => dispatchSortValue(load, column.key)
       : undefined,
+    defaultHidden: !DEFAULT_VISIBLE_BOARD_KEYS.has(column.key),
   }));
 
   const renderListOrTable = () => {
