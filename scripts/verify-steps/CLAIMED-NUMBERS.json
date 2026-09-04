@@ -7474,6 +7474,11 @@
     "claimed_at": "2026-09-04",
     "purpose": "verify-planner-grid-styling (GO-23 PR2 owner order 2026-09-04: Book/Driver/Unit frozen columns get outlines, Available/0% overlay removed from Timeline, RSV text removed from Truck Planner, keyboard/drag horizontal scroll works, selected day range fits the viewport, empty cells show '—')."
   },
+  "10342": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-planner-design-system (GO-23 PR3 owner order 2026-09-04: apply GLOBAL-TYPE-SIZE-BASELINE.md to dispatch planner surfaces — navy #14314F active tabs/buttons, 28px clickable boxes, 12px body, 2px radius, centered column headers, baseline border/text colors)."
+  },
   "10341": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-04",
