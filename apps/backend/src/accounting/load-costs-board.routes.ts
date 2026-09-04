@@ -28,13 +28,15 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
       return reply.code(403).send({ error: "forbidden" });
     }
     const parsed = companyQuerySchema.extend({
-      load_costs_sort: z.enum(["load", "status", "pickup_date", "projected_delivery", "delivered", "route_crew", "revenue", "costs", "repairs_maintenance", "driver", "margin", "late_fee", "lumper", "fuel", "rm_exp"]).default("load"),
+      load_costs_sort: z.enum(["load", "status", "pickup_date", "projected_delivery", "delivered", "route_crew", "revenue", "costs", "repairs_maintenance", "driver", "margin"]).default("load"),
       sort_direction: z.enum(["asc", "desc"]).default("desc"),
+      /** LOAD-COSTS-COMPLETE item (3): voided (cancelled) loads hidden by default. */
+      show_voided: z.coerce.boolean().default(false),
     }).safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
     return withCompanyScope(String(user.uuid), parsed.data.operating_company_id, async (client) => {
-      const sortColumns = { load:"l.load_number", status:"l.status", pickup_date:"pickup.scheduled_arrival_at", projected_delivery:"delivery.scheduled_arrival_at", delivered:"delivery.actual_arrival_at", route_crew:"pickup.city", revenue:"l.rate_total_cents", costs:"(COALESCE(ec.expense_cents,0)+COALESCE(bc.bill_cents,0))", repairs_maintenance:"COALESCE(rm.repairs_maintenance_cents,0)", driver:"COALESCE(dp.driver_pay_cents,0)", margin:"(l.rate_total_cents-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dp.driver_pay_cents,0))", late_fee:"COALESCE(cc.late_fee_cents,0)", lumper:"COALESCE(cc.lumper_cents,0)", fuel:"COALESCE(cc.fuel_cents,0)", rm_exp:"COALESCE(cc.rm_exp_cents,0)" } as const;
+      const sortColumns = { load:"l.load_number", status:"l.status", pickup_date:"pickup.scheduled_arrival_at", projected_delivery:"delivery.scheduled_arrival_at", delivered:"delivery.actual_arrival_at", route_crew:"pickup.city", revenue:"l.rate_total_cents", costs:"(COALESCE(ec.expense_cents,0)+COALESCE(bc.bill_cents,0))", repairs_maintenance:"COALESCE(rm.repairs_maintenance_cents,0)", driver:"COALESCE(dp.driver_pay_cents,0)", margin:"(l.rate_total_cents-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dp.driver_pay_cents,0))" } as const;
       const sortSql = `${sortColumns[parsed.data.load_costs_sort]} ${parsed.data.sort_direction.toUpperCase()} NULLS LAST, l.load_number ASC`;
       const result = await client.query(
         `WITH expense_costs AS (
@@ -60,6 +62,70 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
               AND b.revoked_at IS NULL
               AND bl.voided_at IS NULL
             GROUP BY bl.load_id
+         -- LOAD-COSTS-COMPLETE item (3): owner's exact board-column list breaks "Costs" into
+         -- Late Fee / Lumper / Fuel / R&M Exp (already computed below, own WO-linkage mechanism) /
+         -- Other. RECONCILED with Cursor-load-costs-board-columns (#20360, merged same day): both
+         -- lanes built this bucketing independently -- Cursor's landed first and used the REAL
+         -- canonical taxonomy (accounting.line_category_load_required: def/detention_paid/diesel/
+         -- lumper/over_road_other/parking/roadside_repair/scale/toll, already populated directly on
+         -- expense_lines.line_category / bill_lines.line_category), strictly better than this
+         -- file's own first draft (a catalogs.accounts.account_name ILIKE match, the same fallback
+         -- convention LoadDetailCostsTab.tsx's Fuel-advance feature uses when no canonical category
+         -- exists -- it does here, so the fallback is dropped in favor of the real spine). Late Fee
+         -- maps to detention_paid (Cursor's own mapping, kept for consistency -- no distinct
+         -- "late fee" category exists in the spine). "Other" is the honest residual (all costs minus
+         -- every named bucket including R&M's own separate WO-linkage mechanism below), not a
+         -- second scan -- over_road_other/parking/scale/toll all fall into it naturally.
+         ), category_costs AS (
+           SELECT load_id,
+                  COALESCE(SUM(amount_cents) FILTER (WHERE line_category = 'detention_paid'), 0)::bigint AS late_fee_cents,
+                  COALESCE(SUM(amount_cents) FILTER (WHERE line_category = 'lumper'), 0)::bigint AS lumper_cents,
+                  COALESCE(SUM(amount_cents) FILTER (WHERE line_category IN ('diesel','def')), 0)::bigint AS fuel_cents
+             FROM (
+               SELECT el.load_id, el.line_category, el.amount_cents
+                 FROM accounting.expense_lines el
+                 JOIN accounting.expenses e ON e.id = el.expense_id AND e.operating_company_id = $1::uuid
+                WHERE el.load_id IS NOT NULL
+                  AND e.status <> 'void'
+               UNION ALL
+               SELECT bl.load_id, bl.line_category, ROUND(bl.amount * 100)::bigint AS amount_cents
+                 FROM accounting.bill_lines bl
+                 JOIN accounting.bills b ON b.id = bl.bill_id AND b.operating_company_id = $1::uuid
+                WHERE bl.load_id IS NOT NULL
+                  AND b.status NOT IN ('void','voided')
+                  AND b.revoked_at IS NULL
+                  AND bl.voided_at IS NULL
+             ) x
+            GROUP BY load_id
+         -- Driver-pay DETAIL (Short Miles / Rate Loaded / Loaded Pay / Empty Miles / Rate Empty /
+         -- Deadhead Pay): one representative driver_bills row per load (the primary, non-team,
+         -- most-recent bill) -- these are PER-BILL figures (a rate is never summed across bills),
+         -- unlike driver_pay_cents below which correctly sums gross across every bill on the load.
+         -- Short Miles stays NULL (blank, never invented) unless this bill's own basis really is
+         -- 'short' -- a 'practical'-basis bill has no short-miles figure to show honestly.
+         ), driver_pay_detail AS (
+           SELECT DISTINCT ON (db.load_id)
+                  db.load_id,
+                  CASE WHEN db.miles_basis_type = 'short' THEN db.miles_basis END AS short_miles,
+                  db.rate_per_mile_cents AS rate_loaded_cents,
+                  db.miles_deadhead AS empty_miles,
+                  db.rate_empty_per_mile_cents AS rate_empty_cents
+             FROM driver_finance.driver_bills db
+            WHERE db.operating_company_id = $1::uuid
+              AND db.load_id IS NOT NULL
+              AND db.status <> 'void'
+              AND db.team_driver_id IS NULL
+            ORDER BY db.load_id, db.created_at DESC
+         ), driver_pay_amounts AS (
+           SELECT db.load_id,
+                  COALESCE(SUM(db.loaded_pay_cents), 0)::bigint AS loaded_pay_cents,
+                  COALESCE(SUM(db.deadhead_pay_cents), 0)::bigint AS deadhead_pay_cents,
+                  BOOL_OR(db.miles_deadhead IS NOT NULL) AS has_deadhead_miles
+             FROM driver_finance.driver_bills db
+            WHERE db.operating_company_id = $1::uuid
+              AND db.load_id IS NOT NULL
+              AND db.status <> 'void'
+            GROUP BY db.load_id
          ), repair_documents AS (
            SELECT e.load_id, e.total_amount_cents::bigint AS amount_cents
              FROM accounting.expenses e
@@ -100,30 +166,6 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
               AND db.load_id IS NOT NULL
               AND db.status <> 'void'
             GROUP BY db.load_id
-         ), category_costs AS (
-           SELECT load_id,
-                  COALESCE(SUM(amount_cents) FILTER (WHERE line_category IN ('detention_paid')), 0)::bigint AS late_fee_cents,
-                  COALESCE(SUM(amount_cents) FILTER (WHERE line_category = 'lumper'), 0)::bigint AS lumper_cents,
-                  COALESCE(SUM(amount_cents) FILTER (WHERE line_category IN ('diesel','def')), 0)::bigint AS fuel_cents,
-                  COALESCE(SUM(amount_cents) FILTER (WHERE line_category = 'roadside_repair'), 0)::bigint AS rm_exp_cents
-             FROM (
-               SELECT el.load_id, el.line_category, ROUND(el.amount * 100)::bigint AS amount_cents
-                 FROM accounting.expense_lines el
-                 JOIN accounting.expenses e ON e.id = el.expense_id
-                WHERE e.operating_company_id = $1::uuid
-                  AND el.load_id IS NOT NULL
-                  AND e.status <> 'void'
-               UNION ALL
-               SELECT bl.load_id, bl.line_category, ROUND(bl.amount * 100)::bigint AS amount_cents
-                 FROM accounting.bill_lines bl
-                 JOIN accounting.bills b ON b.id = bl.bill_id
-                WHERE b.operating_company_id = $1::uuid
-                  AND bl.load_id IS NOT NULL
-                  AND b.status NOT IN ('void','voided')
-                  AND b.revoked_at IS NULL
-                  AND bl.voided_at IS NULL
-             ) x
-            GROUP BY load_id
          )
          SELECT l.id::text AS load_id, l.load_number, l.status::text, COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id,l.operating_company_id)) AS customer_name,
                 mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id,l.operating_company_id) AS driver_name,
@@ -137,12 +179,19 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                 COALESCE(ec.expense_count, 0)::int AS expense_count,
                 COALESCE(bc.bill_count, 0)::int AS bill_count,
                 COALESCE(bc.unpaid_bill_count, 0)::int AS unpaid_bill_count,
-                COALESCE(cc.late_fee_cents, 0)::text AS late_fee_cents,
-                COALESCE(cc.lumper_cents, 0)::text AS lumper_cents,
-                COALESCE(cc.fuel_cents, 0)::text AS fuel_cents,
-                COALESCE(cc.rm_exp_cents, 0)::text AS rm_exp_cents
+                COALESCE(cb.fuel_cents, 0)::text AS fuel_cents,
+                COALESCE(cb.lumper_cents, 0)::text AS lumper_cents,
+                COALESCE(cb.late_fee_cents, 0)::text AS late_fee_cents,
+                GREATEST(0, COALESCE(ec.expense_cents,0) + COALESCE(bc.bill_cents,0) - COALESCE(rm.repairs_maintenance_cents,0) - COALESCE(cb.fuel_cents,0) - COALESCE(cb.lumper_cents,0) - COALESCE(cb.late_fee_cents,0))::text AS other_cost_cents,
+                dpd.short_miles::text AS short_miles,
+                dpd.rate_loaded_cents::text AS rate_loaded_cents,
+                dpd.empty_miles::text AS empty_miles,
+                dpd.rate_empty_cents::text AS rate_empty_cents,
+                COALESCE(dpa.loaded_pay_cents, 0)::text AS loaded_pay_cents,
+                CASE WHEN COALESCE(dpa.has_deadhead_miles, false) THEN COALESCE(dpa.deadhead_pay_cents, 0)::text ELSE NULL END AS deadhead_pay_cents
            FROM views.dispatch_load_with_driver_status l
-           LEFT JOIN expense_costs ec ON ec.load_id=l.id LEFT JOIN bill_costs bc ON bc.load_id=l.id LEFT JOIN repair_costs rm ON rm.load_id=l.id LEFT JOIN driver_pay dp ON dp.load_id=l.id LEFT JOIN category_costs cc ON cc.load_id=l.id
+           LEFT JOIN expense_costs ec ON ec.load_id=l.id LEFT JOIN bill_costs bc ON bc.load_id=l.id LEFT JOIN repair_costs rm ON rm.load_id=l.id LEFT JOIN driver_pay dp ON dp.load_id=l.id
+           LEFT JOIN category_costs cb ON cb.load_id=l.id LEFT JOIN driver_pay_detail dpd ON dpd.load_id=l.id LEFT JOIN driver_pay_amounts dpa ON dpa.load_id=l.id
            LEFT JOIN mdata.customers c ON c.id=l.customer_id AND c.operating_company_id=l.operating_company_id
            -- W-FIX-3b (loads.routes.ts, same rule): mdata.units has owner_company_id /
            -- currently_leased_to_company_id, never operating_company_id. mdata.loads has NO
@@ -163,6 +212,11 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
            LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='pickup' AND soft_deleted_at IS NULL ORDER BY sequence_number ASC LIMIT 1) pickup ON true
            LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at,actual_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='delivery' AND soft_deleted_at IS NULL ORDER BY sequence_number DESC LIMIT 1) delivery ON true
           WHERE l.operating_company_id=$1::uuid AND l.soft_deleted_at IS NULL
+            -- LOAD-COSTS-COMPLETE item (3): drafts never appear on this board (owner order
+            -- 2026-09-04) -- a draft is not a real, money-bearing load yet. Voided (cancelled)
+            -- loads are hidden by default, toggle-able via show_voided.
+            AND l.status <> 'draft'
+            ${parsed.data.show_voided ? "" : "AND l.status <> 'cancelled'"}
           ORDER BY ${sortSql}`,
         [parsed.data.operating_company_id]
       );
