@@ -53,7 +53,11 @@ function violations(board, backend) {
   // computed from actual vs scheduled delivery -- NOT the load's lifecycle state (owner order
   // 2026-09-04). Spec §2.2's fourth branch is mandatory: never render "On Time" with no appointment.
   if (!board.includes("function serviceStatus") || !board.includes('"On Time"') || !board.includes('"Late"') || !board.includes('"In transit"') || !board.includes("Delivered — no appointment on file")) errors.push("Status column is not computed as the four-branch service-performance state (spec §2.2)");
-  if (!board.includes('backgroundColor: "#14314F"') || !board.includes('color: "#FFFFFF"')) errors.push("locked navy/white table header missing");
+  // Design law 2026-09-04: "The navy #14314F table header is RETIRED... regular ink, never white."
+  // Navy/white must be GONE from the header re-theme, and the light replacement present.
+  if (board.includes('headerBg="#14314F"') || board.includes('headerInk="#FFFFFF"')) errors.push("navy/white table header still present -- design law retired it");
+  if (!board.includes('headerBg="#EEF2F6"') || !board.includes('headerInk="#1F2937"')) errors.push("light table-header re-theme (headerBg/headerInk) missing");
+  if (!board.includes("columnGroups={COLUMN_GROUPS}") || !board.includes('label: "The trip"') || !board.includes('label: "Revenue"') || !board.includes('label: "Trip expense"') || !board.includes('label: "Driver pay"')) errors.push("grouped column-band row (spec §2.2) missing");
   // Drafts never shown; voided (cancelled) hidden by default, toggle-able.
   if (!backend.includes("l.status <> 'draft'") || !backend.includes("l.status <> 'cancelled'") || !backend.includes("show_voided")) errors.push("drafts-never-shown / voided-hidden-by-default filter missing");
   if (!backend.includes("repairs_maintenance_cents") || !backend.includes("linked_work_order_uuid") || !backend.includes("wo.load_id = e.load_id") || !backend.includes("wo.load_id = bl.load_id")) errors.push("direct-trip R&M must derive from same-load work-order financial links");
@@ -96,7 +100,10 @@ if (process.argv.includes("--selftest")) {
     { board: board.replaceAll('sortMode="external"', ""), backend },
     { board: board.replaceAll("onSortChange", ""), backend },
     { board: board.replaceAll("actual_delivery_at", "delivered_guess"), backend },
-    { board: board.replace('backgroundColor: "#14314F"', 'backgroundColor: "#F7F8FA"'), backend },
+    { board: board.replace('headerBg="#EEF2F6"', 'headerBg="#14314F"'), backend },
+    { board: board.replace('headerInk="#1F2937"', 'headerInk="#FFFFFF"'), backend },
+    { board: board.replaceAll("columnGroups={COLUMN_GROUPS}", ""), backend },
+    { board: board.replace('label: "The trip"', 'label: "removed"'), backend },
     { board: board.replace("function serviceStatus", "function removedServiceStatus"), backend },
     { board: board.replace('"In transit"', '"removed"'), backend },
     { board: board.replaceAll("Delivered — no appointment on file", "removed"), backend },

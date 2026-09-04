@@ -247,6 +247,26 @@ export type ParityTableProps<T> = {
    * section card (BOX-IN-BOX flatten). Additive — default false preserves all existing surfaces.
    */
   embedded?: boolean;
+  /**
+   * OPTIONAL grouped column-band row (owner design law, 2026-09-04: "the piece the owner keeps
+   * pointing at" -- Load Costs Board GROUPED render). Additive: omitting it keeps every existing
+   * consumer byte-identical (no second header row). When provided, renders ONE extra <tr> above the
+   * existing column-header row, one <th> per group in declaration order, colSpan'd to however many
+   * of that group's `keys` are CURRENTLY in visibleColumns (so hide/reorder never desyncs colSpan
+   * from the real header row below it). Any visible column not named in any group's `keys` gets its
+   * own 1-colspan, untinted cell so the two header rows always carry the same total column count.
+   */
+  columnGroups?: Array<{ label: string; keys: string[]; bg?: string }>;
+  /**
+   * OPTIONAL per-instance header re-theme (owner design law 2026-09-04: "the navy table header is
+   * RETIRED... light background, regular ink, never white -- this is system wide"). The system-wide
+   * fix is CC-2 landing new values for colors.tableHeaderBg/tableHeaderText in design/tokens.ts; this
+   * pair exists ONLY so an individual page can opt in ahead of that token landing without every one
+   * of ParityTable's ~130 other call sites changing underneath it. Omit both to keep today's
+   * colors.tableHeaderBg/tableHeaderText exactly as before (zero behavior change).
+   */
+  headerBg?: string;
+  headerInk?: string;
 };
 
 function compareSortValues(
@@ -408,6 +428,9 @@ export function ParityTable<T>({
   onPageSizeChange,
   hidePager = false,
   embedded = false,
+  columnGroups,
+  headerBg,
+  headerInk,
   footer,
 }: ParityTableProps<T>) {
   const persisted = useMemo(() => loadPersisted(storageKey), [storageKey]);
@@ -1010,6 +1033,11 @@ export function ParityTable<T>({
     ? "overflow-visible bg-white"
     : "overflow-visible rounded-md border border-gray-200 bg-white";
 
+  // Per-instance header re-theme (see headerBg/headerInk prop doc) -- falls back to the shared
+  // token unchanged when the caller passes neither, so every existing consumer is byte-identical.
+  const resolvedHeaderBg = headerBg ?? colors.tableHeaderBg;
+  const resolvedHeaderInk = headerInk ?? colors.tableHeaderText;
+
   return (
     <div className={shellClass} data-testid={tableTestId}>
       {/* Canonical list toolbar: search + applied range filter + optional slot + gear. */}
@@ -1170,13 +1198,56 @@ export function ParityTable<T>({
       <table className="w-full table-fixed text-center" style={{ fontSize: d.font }}>
         <thead
           className={stickyHeader ? "sticky top-0 z-10" : ""}
-          style={{ backgroundColor: colors.tableHeaderBg, color: colors.tableHeaderText }}
+          style={{ backgroundColor: resolvedHeaderBg, color: resolvedHeaderInk }}
           data-table-header="locked"
         >
+          {columnGroups ? (
+            <tr data-testid="parity-table-column-groups" style={{ height: 24 }}>
+              {renderExpanded ? <th className="w-8 px-2" /> : null}
+              {selectable ? <th className="w-8 px-2" /> : null}
+              {(() => {
+                const visibleKeys = visibleColumns.map((c) => String(c.key));
+                const grouped = new Set(columnGroups.flatMap((g) => g.keys));
+                const cells: Array<{ label: string; span: number; bg?: string }> = [];
+                for (const key of visibleKeys) {
+                  const owningGroup = columnGroups.find((g) => g.keys.includes(key));
+                  const last = cells[cells.length - 1];
+                  // Coalesce consecutive visible columns belonging to the SAME group into one cell;
+                  // an ungrouped column always gets its own untinted cell.
+                  if (owningGroup && last && last.label === owningGroup.label) {
+                    last.span += 1;
+                  } else if (owningGroup) {
+                    cells.push({ label: owningGroup.label, span: 1, bg: owningGroup.bg });
+                  } else {
+                    cells.push({ label: "", span: 1 });
+                  }
+                }
+                void grouped; // computed for future coverage assertions; not needed for render
+                return cells.map((cell, index) => (
+                  <th
+                    key={`${cell.label || "ungrouped"}-${index}`}
+                    colSpan={cell.span}
+                    className="border-b border-r border-slate-300 px-2 text-center font-bold uppercase last:border-r-0"
+                    style={{
+                      height: 24,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: 0.9,
+                      backgroundColor: cell.bg ?? "transparent",
+                      color: colors.columnHeader,
+                    }}
+                  >
+                    {cell.label}
+                  </th>
+                ));
+              })()}
+              {rowActions ? <th className="w-10 px-2" /> : null}
+            </tr>
+          ) : null}
           <tr style={{ height: DENSITY[density].rowH }}>
-            {renderExpanded ? <th className="w-8 px-2" style={{ backgroundColor: colors.tableHeaderBg }} /> : null}
+            {renderExpanded ? <th className="w-8 px-2" style={{ backgroundColor: resolvedHeaderBg }} /> : null}
             {selectable ? (
-              <th className="w-8 px-2" style={{ backgroundColor: colors.tableHeaderBg }}>
+              <th className="w-8 px-2" style={{ backgroundColor: resolvedHeaderBg }}>
                 {/* UI CONTROL LAW — same >=24x24 hit-target wrap as the row checkbox. */}
                 <span className={MIN_HIT_TARGET_CLASS}>
                   <input
@@ -1235,8 +1306,8 @@ export function ParityTable<T>({
                     fontSize: typography.panelHeader ?? 11,
                     fontWeight: 700,
                     letterSpacing: 0.3,
-                    backgroundColor: dragOverKey === key ? colors.accentTint : colors.tableHeaderBg,
-                    color: colors.tableHeaderText,
+                    backgroundColor: dragOverKey === key ? colors.accentTint : resolvedHeaderBg,
+                    color: resolvedHeaderInk,
                     ...(w ? { width: w } : {}),
                     ...(dragOverKey === key ? { outlineColor: colors.navy } : {}),
                   }}
@@ -1288,7 +1359,7 @@ export function ParityTable<T>({
                 </th>
               );
             })}
-            {rowActions ? <th className="w-10 px-2" style={{ backgroundColor: colors.tableHeaderBg }} /> : null}
+            {rowActions ? <th className="w-10 px-2" style={{ backgroundColor: resolvedHeaderBg }} /> : null}
           </tr>
         </thead>
         <tbody>
