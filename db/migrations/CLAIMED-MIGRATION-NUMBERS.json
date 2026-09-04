@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202613700001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-04",
+      "purpose": "LOAD-COSTS-COMPLETE item (2) (owner ruling 2026-09-04): broker pays THE DRIVER directly (Comchek/EFT), not us. Adds disbursed_to_driver_bill_id/disbursed_amount_cents/disbursed_journal_entry_id to accounting.broker_advances (one instrument, two sides, one trace -- the SAME row already used for the receipt/AR-reduction side, item (1)). Never touches driver_finance.driver_liabilities/driver_advances/settlement_lines -- never driver pay, never a driver debt, never a settlement deduction. Posts a real balanced JE (DR Driver Settlements Payable 2200 / CR Accounts Receivable 1100) through journal-entries.service, capped at the driver_bill's remaining (undisbursed) balance."
+    },
     "202613690001": {
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-04",

@@ -7448,5 +7448,10 @@
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-04",
     "purpose": "verify-usmca-driver-settlement-routing-unreachable (LOAD-COSTS-COMPLETE item (3), owner ruling 2026-09-04). Guards that resolveEconomicRouting (cash-advance-create.ts) can never resolve to 'driver_settlement' for USMCA -- the USMCA force-check must be the FIRST statement in the function, before any purpose switch or explicit-override check, and the create flow's call site must still pass companyId through. Wired into scripts/verify-steps/ in the same PR."
+  },
+  "10333": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-broker-advance-driver-disbursement-never-driver-liability (LOAD-COSTS-COMPLETE item (2), owner ruling 2026-09-04). Guards that applyBrokerAdvanceToDriverBillInClientTx never references driver_finance.driver_liabilities/driver_advances/settlement_lines, requires category='driver_pay', posts through journal-entries.service (never a raw INSERT INTO accounting.journal_entries), and caps the disbursed amount at the driver_bill's remaining undisbursed balance."
   }
 }
