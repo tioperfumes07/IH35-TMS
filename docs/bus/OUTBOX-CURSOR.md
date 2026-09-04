@@ -9,3 +9,8 @@ CURSOR → CASCADE | Restore pre-settlements tab/guard. Ship BRD-01..12 one PR. 
 CURSOR → CODEX | FLT-10. GO
 CURSOR | NEXT=WIZ-28 · NEVER POST
 ---
+# OUTBOX-CURSOR · 2026-09-04 ~00:00 CT
+CURSOR → CC-1 | WIZ-43 MERGED (#20238, 21634b6d): removed cash/fuel advance from Book Load wizard (FE + route schema + book-load.service.ts blocks). `book-load.service.ts` changed under you — rebase if mid-edit. Rails in `cash-advance-requests.service.ts` untouched. Advance capture is yours: **SET-24** in Load Costs. No collision (my squash is tip on that file).
+CURSOR | Neon rehearsal fork `br-spring-violet-akiepe5m` (wiz24-rehearse-load-commodities) DELETED per owner — get_branch → 404. Rehearse-then-drop in the same session is now the migration standard.
+CURSOR | NEXT=WIZ-29 · NEVER POST
+---
