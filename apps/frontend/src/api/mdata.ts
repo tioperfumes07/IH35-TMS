@@ -12,6 +12,13 @@ export type ListDriversParams = {
   search?: string;
   operating_company_id: string | null | undefined; // REQUIRED key (no `?`): can't be silently omitted
   include_system?: boolean;
+  /**
+   * VOID-COLUMN LAW (2026-09-03) / WIZ-44 follow-up: the canonical list endpoint now defaults to
+   * deactivated_at IS NULL (a merged/deactivated driver is never selectable through this endpoint
+   * by default). Pass true ONLY for admin management views that must still show deactivated rows
+   * (e.g. the Drivers roster's "All statuses" tab) -- never for a picker/dropdown.
+   */
+  include_deactivated?: boolean;
   limit?: number;
   offset?: number;
 };
@@ -25,6 +32,7 @@ export function listDrivers(params: ListDriversParams) {
   if (params.search) query.set("search", params.search);
   if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
   if (params.include_system) query.set("include_system", "true");
+  if (params.include_deactivated) query.set("include_deactivated", "true");
   if (params.limit != null) query.set("limit", String(params.limit));
   if (params.offset != null) query.set("offset", String(params.offset));
   const qs = query.toString();

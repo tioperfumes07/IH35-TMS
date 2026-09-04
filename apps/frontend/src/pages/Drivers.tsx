@@ -293,6 +293,9 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         operating_company_id: selectedCompanyId,
         status: "All",
         search,
+        // Admin roster management view -- must still show deactivated/merged rows so an owner can
+        // find, reactivate, or audit them. Every picker/dropdown must NOT set this (default false).
+        include_deactivated: true,
       }).then((result) => result.drivers),
   });
 
