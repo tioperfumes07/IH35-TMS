@@ -7454,6 +7454,11 @@
     "claimed_at": "2026-09-04",
     "purpose": "verify-broker-advance-driver-disbursement-never-driver-liability (LOAD-COSTS-COMPLETE item (2), owner ruling 2026-09-04). Guards that applyBrokerAdvanceToDriverBillInClientTx never references driver_finance.driver_liabilities/driver_advances/settlement_lines, requires category='driver_pay', posts through journal-entries.service (never a raw INSERT INTO accounting.journal_entries), and caps the disbursed amount at the driver_bill's remaining undisbursed balance."
   },
+  "10337": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-pre-settlement-empty-state-not-404 (LOAD-COSTS-COMPLETE follow-up, owner order 2026-09-04: 'Pre-Settlement returns HTTP 404 for the ordinary empty state. Return 200.'). Guards that GET /api/v1/driver-finance/pre-settlements/by-driver/:driverId returns the honest 200 { settlement: null, lines: [] } for a driver with no open pre-settlement, never a raw 404 -- apiRequest() throws on any non-2xx, which made PreSettlementPanel.tsx's own already-built honest empty-state branch unreachable."
+  },
   "10315": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-04",

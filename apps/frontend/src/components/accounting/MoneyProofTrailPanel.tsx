@@ -39,7 +39,11 @@ export function MoneyProofTrailPanel({
         <span className="font-mono text-xs text-slate-900">{proof.data.trace_key}</span>
       </DataPanelRow>
       {journalEntries.length === 0 ? (
-        <div className="text-xs text-slate-600">No ledger posting exists for this document.</div>
+        <div className="text-xs text-slate-600" data-testid="proof-trail-empty-reason">
+          {documentType === "driver_bill"
+            ? "Not yet posted — this tour is open. The GL entry is written at settlement."
+            : "No ledger posting exists for this document."}
+        </div>
       ) : journalEntries.map((row) => (
         <DataPanelRow key={row.journal_entry_id}>
           <EntityLink kind="journal_entry" id={row.journal_entry_id} label={entityLabel(row.memo, row.journal_entry_id, "Journal entry")} />

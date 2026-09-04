@@ -177,7 +177,12 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
       return { settlement, lines: linesRes.rows };
     });
 
-    if (!result) return reply.code(404).send({ error: "no_active_pre_settlement" });
+    // "No active pre-settlement" is the ordinary state for a driver mid-tour before their first
+    // southbound load, not an error condition -- a 404 there reads as "this driver doesn't exist"
+    // to any caller that doesn't special-case the status code. 200 with an honest empty payload
+    // lets the UI render "no open pre-settlement" without treating a normal state as a fetch
+    // failure.
+    if (!result) return reply.send({ settlement: null, lines: [] });
     return result;
   });
 
