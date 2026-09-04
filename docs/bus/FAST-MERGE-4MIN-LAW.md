@@ -60,7 +60,7 @@ Cursor already FAST-MERGED #14921 (claim-reserve) and #14923 (DRV-F6259) that we
 | **5 · Neon** | after | Money/migrations: **you** apply on Neon · prove one query |
 | **6 · Next** | same turn | OUTBOX one line → start next ☐ in INBOX |
 
-**Total wall clock: ~4–5 minutes.** Forbidden: babysitting 20 checks · asking Jorge to merge · idle after merge · **kicking Render after each merge** · **opening the next task while one of YOUR PRs is still OPEN**.
+**Total wall clock: ~4–5 minutes.** Forbidden: babysitting 20 checks · asking Jorge to merge · idle after merge · **opening the next task while one of YOUR PRs is still OPEN**.
 
 **Drain before new work (owner 2026-08-29 — CC-1 skipped step 4 from ~12:32Z, PRs piled until a sweep):** After `gh pr create` returns `N`, **same 15 seconds**, run the `gh api` PUT. Before starting anything new:
 
@@ -70,7 +70,7 @@ gh pr list --author @me --state open
 
 If that returns rows, **merge them first**. An open PR is unshipped work. Local gate exit 0 is merge proof — GitHub `total_count: 0` checks is **not** a reason to skip step 4.
 
-**Production deploy is not in this loop.** autoDeploy is OFF on purpose. Merging every 4 minutes is fine. Deploying after **each** merge 502s the API for the whole deploy (~3 min). Measured 2026-08-21: 9 deploys / 90 min, median gap 5.9 min — shorter than a deploy. **Cursor lead deploys every 5–10 minutes and every 5–10 merged PRs (default 5, never wait past 10) or on demand (Jorge).** Law: `docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md` · `docs/lockdown/USMCA-LAUNCH-FIRST-STANDING-LAW-2026-08-22.md`. Never `trigger_deploy` because healthz SHA lags `origin/main` after one merge.
+**Backend deploy proof is part of completion (owner ruling 2026-09-04).** Render service `srv-d7rpem7avr4c73fhp4n0` (`IH35-TMS`) has `autoDeploy="no"` and `autoDeployTrigger="off"`; a backend merge never deploys by itself. After a backend PR is merged green, the seat that merged it triggers exactly one backend deploy, then polls `GET https://ih35-tms.onrender.com/api/v1/healthz/shallow` until `git_sha` equals that PR's squash-merge commit. Paste the HTTP 200 JSON as live proof. Rechecking without triggering a deploy cannot advance this service. This backend-only rule supersedes the older Cursor-only/batched-deploy prohibition. Frontend deployment behavior is unchanged.
 
 ---
 
@@ -96,7 +96,7 @@ You may fast-merge **only when ALL are true:**
 - `--no-verify` because **your** guard/selftest failed
 - `--no-verify` **before** step 1 PASS
 - Claim a live SHA without healthz JSON 200 · skip OUTBOX · idle after merge
-- **Call Render deploy / `trigger_deploy` / “kick ih35-tms” after a merge** (`docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md`)
+- Trigger more than one backend deploy for the same merge, trigger before the backend PR is merged green, or claim backend completion before healthz `git_sha` matches the squash-merge commit
 
 ---
 
