@@ -16,6 +16,18 @@
  */
 const SAMPLE_NAME_PATTERN = /\b(test|demo|sample)\b/i;
 
+/**
+ * A second class of seat-authored fixture rows found live 2026-09-04 (owner doc "Factoring Is
+ * Built and Running... Eleven test customers are sitting in the live USMCA customer list"):
+ * P23-SMOKE-1786500785935, CC2-GUARD-VERIFY-20260811-CUSTOMER, CODEX-AUDIT-SPINE-20260816-0320,
+ * USMCA-CODEX-CREATE-20260810-0117, USMCA_P43_BILLING_SMOKE_20260812 -- none contain
+ * "test"/"demo"/"sample" so SAMPLE_NAME_PATTERN above never caught them; they went in untagged and
+ * had to be found and quarantined by hand. Prefix-anchored (not word-boundary, unlike
+ * SAMPLE_NAME_PATTERN) — an agent/session identifier token is always the FIRST thing in the name a
+ * seat writes, and no real carrier customer/vendor is ever going to start with one of these.
+ */
+const SEAT_SMOKE_PREFIX_PATTERN = /^(CC[1-3]?-|CODEX-|CASCADE-|CURSOR-|DEVIN-|P23-SMOKE-|USMCA[-_]CODEX-|USMCA_P\d+_)/i;
+
 export function looksLikeSampleDataName(name: string | null | undefined): boolean {
-  return typeof name === "string" && SAMPLE_NAME_PATTERN.test(name);
+  return typeof name === "string" && (SAMPLE_NAME_PATTERN.test(name) || SEAT_SMOKE_PREFIX_PATTERN.test(name));
 }

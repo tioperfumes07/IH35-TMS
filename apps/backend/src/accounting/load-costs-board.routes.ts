@@ -27,8 +27,16 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
     if (!["Owner", "Administrator", "Accountant", "Dispatcher", "SuperAdmin"].includes(String(user.role ?? ""))) {
       return reply.code(403).send({ error: "forbidden" });
     }
+    // Spec 09-04-2026 (Load Costs Board 19 Columns) §3: "every one of the 19 is server-side
+    // sortable, ascending and descending. A column the owner cannot sort is not delivered." Each key
+    // below matches a frontend ParityColumn `key` 1:1 (LoadCostsBoardPage.tsx) so the page can pass
+    // the clicked column key straight through as load_costs_sort with no translation table to drift.
     const parsed = companyQuerySchema.extend({
-      load_costs_sort: z.enum(["load", "status", "pickup_date", "projected_delivery", "delivered", "route_crew", "revenue", "costs", "repairs_maintenance", "driver", "margin"]).default("load"),
+      load_costs_sort: z.enum([
+        "load", "unit", "driver_name", "pu_date", "del_date", "status", "revenue",
+        "late_fee", "lumper", "fuel", "repairs_maintenance", "other",
+        "short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay", "gross", "margin",
+      ]).default("load"),
       sort_direction: z.enum(["asc", "desc"]).default("desc"),
       /** LOAD-COSTS-COMPLETE item (3): voided (cancelled) loads hidden by default. */
       show_voided: z.coerce.boolean().default(false),
@@ -36,7 +44,33 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     return withCompanyScope(String(user.uuid), parsed.data.operating_company_id, async (client) => {
-      const sortColumns = { load:"l.load_number", status:"l.status", pickup_date:"pickup.scheduled_arrival_at", projected_delivery:"delivery.scheduled_arrival_at", delivered:"delivery.actual_arrival_at", route_crew:"pickup.city", revenue:"l.rate_total_cents", costs:"(COALESCE(ec.expense_cents,0)+COALESCE(bc.bill_cents,0))", repairs_maintenance:"COALESCE(rm.repairs_maintenance_cents,0)", driver:"COALESCE(dp.driver_pay_cents,0)", margin:"(l.rate_total_cents-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dp.driver_pay_cents,0))" } as const;
+      // Sort by the raw numeric/timestamp CTE expression, never the ::text-cast SELECT-list alias --
+      // a text cast would sort "1000" before "200" lexicographically. `status` mirrors the frontend's
+      // own serviceStatus() branch order (LoadCostsBoardPage.tsx): In transit(0) < Delivered-no-
+      // appt(1) < On Time(2) < Late(3), so ascending server sort visually matches ascending column
+      // click same as every other column.
+      const sortColumns = {
+        load: "l.load_number",
+        unit: "u.unit_number",
+        driver_name: "mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id,l.operating_company_id)",
+        pu_date: "pickup.scheduled_arrival_at",
+        del_date: "delivery.actual_arrival_at",
+        status: "CASE WHEN delivery.actual_arrival_at IS NULL THEN 0 WHEN delivery.scheduled_arrival_at IS NULL THEN 1 WHEN delivery.actual_arrival_at <= delivery.scheduled_arrival_at THEN 2 ELSE 3 END",
+        revenue: "l.rate_total_cents",
+        late_fee: "COALESCE(cb.late_fee_cents,0)",
+        lumper: "COALESCE(cb.lumper_cents,0)",
+        fuel: "COALESCE(cb.fuel_cents,0)",
+        repairs_maintenance: "COALESCE(rm.repairs_maintenance_cents,0)",
+        other: "(COALESCE(ec.expense_cents,0)+COALESCE(bc.bill_cents,0)-COALESCE(rm.repairs_maintenance_cents,0)-COALESCE(cb.fuel_cents,0)-COALESCE(cb.lumper_cents,0)-COALESCE(cb.late_fee_cents,0))",
+        short_miles: "dpd.short_miles",
+        rate_loaded: "dpd.rate_loaded_cents",
+        loaded_pay: "COALESCE(dpa.loaded_pay_cents,0)",
+        empty_miles: "dpd.empty_miles",
+        rate_empty: "dpd.rate_empty_cents",
+        deadhead_pay: "CASE WHEN COALESCE(dpa.has_deadhead_miles,false) THEN COALESCE(dpa.deadhead_pay_cents,0) END",
+        gross: "COALESCE(dp.driver_pay_cents,0)",
+        margin: "(l.rate_total_cents-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dp.driver_pay_cents,0))",
+      } as const;
       const sortSql = `${sortColumns[parsed.data.load_costs_sort]} ${parsed.data.sort_direction.toUpperCase()} NULLS LAST, l.load_number ASC`;
       const result = await client.query(
         `WITH expense_costs AS (
@@ -76,6 +110,13 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
          -- "late fee" category exists in the spine). "Other" is the honest residual (all costs minus
          -- every named bucket including R&M's own separate WO-linkage mechanism below), not a
          -- second scan -- over_road_other/parking/scale/toll all fall into it naturally.
+         -- EXCLUDES lines whose HEADER is WO-linked (e.linked_work_order_uuid /
+         -- b.linked_work_order_uuid): those already count toward repairs_maintenance_cents below,
+         -- via its own, separately-guarded mechanism. Without this exclusion a line could double-
+         -- count into BOTH R&M and a category bucket (e.g. diesel bought for a roadside repair job)
+         -- -- live-verified 0 such rows exist today, but the exclusion makes the ZERO structural,
+         -- not incidental, so Late Fee+Lumper+Fuel+R&M+Other keeps footing to the same-load total
+         -- even after a future WO-linked, categorized line is entered.
          ), category_costs AS (
            SELECT load_id,
                   COALESCE(SUM(amount_cents) FILTER (WHERE line_category = 'detention_paid'), 0)::bigint AS late_fee_cents,
@@ -87,6 +128,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                  JOIN accounting.expenses e ON e.id = el.expense_id AND e.operating_company_id = $1::uuid
                 WHERE el.load_id IS NOT NULL
                   AND e.status <> 'void'
+                  AND e.linked_work_order_uuid IS NULL
                UNION ALL
                SELECT bl.load_id, bl.line_category, ROUND(bl.amount * 100)::bigint AS amount_cents
                  FROM accounting.bill_lines bl
@@ -95,6 +137,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                   AND b.status NOT IN ('void','voided')
                   AND b.revoked_at IS NULL
                   AND bl.voided_at IS NULL
+                  AND b.linked_work_order_uuid IS NULL
              ) x
             GROUP BY load_id
          -- Driver-pay DETAIL (Short Miles / Rate Loaded / Loaded Pay / Empty Miles / Rate Empty /
@@ -182,7 +225,13 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                 COALESCE(cb.fuel_cents, 0)::text AS fuel_cents,
                 COALESCE(cb.lumper_cents, 0)::text AS lumper_cents,
                 COALESCE(cb.late_fee_cents, 0)::text AS late_fee_cents,
-                GREATEST(0, COALESCE(ec.expense_cents,0) + COALESCE(bc.bill_cents,0) - COALESCE(rm.repairs_maintenance_cents,0) - COALESCE(cb.fuel_cents,0) - COALESCE(cb.lumper_cents,0) - COALESCE(cb.late_fee_cents,0))::text AS other_cost_cents,
+                -- Spec 09-04-2026 §2.4: "Other is the honest remainder and must foot ... If it does
+                -- not foot, the board is lying." A zero-floor clamp here would silently mask a
+                -- footing failure (a would-be-negative residual, which can ONLY happen from a bug in
+                -- the bucket CTEs above) by hiding it behind a false 0 -- removed on purpose. Verified
+                -- guard: verify-load-costs-cost-split-foots asserts Late Fee+Lumper+Fuel+R&M+Other ==
+                -- the non-void expense+bill total on live USMCA data every push.
+                (COALESCE(ec.expense_cents,0) + COALESCE(bc.bill_cents,0) - COALESCE(rm.repairs_maintenance_cents,0) - COALESCE(cb.fuel_cents,0) - COALESCE(cb.lumper_cents,0) - COALESCE(cb.late_fee_cents,0))::text AS other_cost_cents,
                 dpd.short_miles::text AS short_miles,
                 dpd.rate_loaded_cents::text AS rate_loaded_cents,
                 dpd.empty_miles::text AS empty_miles,
