@@ -757,6 +757,22 @@ export async function updateDispatchLoad(
     }
   }
 
+  // WIZ-STATUS-01 — a load that ends this edit with a committed driver/team must not stay 'draft'.
+  // The PATCH path intentionally excludes status (it flows through /transition), but assigning a driver
+  // via Edit Load left load 13508 at 'draft' while it auto-minted an OPEN driver bill and carried a
+  // proforma invoice — a money-bearing, crewed load cannot be a draft. Advance ONLY draft ->
+  // assigned_not_dispatched (a driver is assigned but not yet dispatched — never claim 'dispatched'
+  // here; dispatch is its own action). Non-draft loads are untouched, so post-delivery edits, etc. are
+  // unaffected. Proven live 2026-09-04: 13508 (draft, driver fba21d80, open bill 13508, proforma 13508).
+  const effectivePrimaryDriver =
+    "assigned_primary_driver_id" in fields
+      ? (fields.assigned_primary_driver_id ?? null)
+      : (old.assigned_primary_driver_id ?? null);
+  const effectiveTeam = "team_id" in fields ? (fields.team_id ?? null) : (old.team_id ?? null);
+  if (String(old.status ?? "") === "draft" && (effectivePrimaryDriver || effectiveTeam)) {
+    add("status", "assigned_not_dispatched", "::mdata.load_status_enum");
+  }
+
   if (setParts.length > 0) {
     add("updated_by_user_id", requestingUserUuid);
     setParts.push(`updated_at = now()`);
