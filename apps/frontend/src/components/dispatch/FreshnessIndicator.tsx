@@ -60,6 +60,12 @@ const COLOR_CLASS: Record<FreshnessColor, string> = {
 };
 
 export function FreshnessIndicator({ lastFetchedAt, cacheTier }: FreshnessIndicatorProps) {
+  // DSP-19 (owner 2026-09-04): a load that has never been fetched (no timestamp AND no tier) has no
+  // freshness to report — render the empty-cell dash, not a red "L? stale" pill that reads as a live
+  // signal ("PUT LINE NOT TEXT, IT LOOKS TOO DIRTY"). Any real tier/timestamp still renders its pill.
+  if (lastFetchedAt === null && cacheTier === null) {
+    return <span className="text-gray-400" data-testid="freshness-indicator-empty" aria-label="No freshness data">—</span>;
+  }
   const color = freshnessColor(lastFetchedAt, cacheTier);
   const age = formatFreshnessAge(lastFetchedAt);
   const tier = tierLabel(cacheTier);
