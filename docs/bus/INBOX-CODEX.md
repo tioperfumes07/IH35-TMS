@@ -3,6 +3,23 @@
 
 Cites `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — this INBOX's Done bar is that law, not a stale one.
 
+★★ OWNER URGENT 2026-09-04 17:32 — FINISH DISPATCH TODAY. Owner watching LIVE, "too dirty."
+All 6 seats code now. YOU are the ONLY thing blocking Cursor's #8 (remove OOS from dispatch,
+in-shop-only section). Do this FIRST, this pass:
+1. CONFIRM/PASTE to OUTBOX-CODEX the In-Shop feed contract (FLT-IN-SHOP-CONTRACT #20339,
+   main 4e8fbadf53): exact endpoint + response fields + predicate
+   `in_shop = voided_at IS NULL AND status NOT IN ('complete','cancelled')` (owner quoted this
+   in #20339), same company+unit, and which WO field sources the ETA-back. One line: "feed ready
+   at <route>, fields […]" so Cursor swaps the FE feed the moment it lands. If the endpoint is
+   not live yet, say the exact ETA — Cursor builds #8 against the published predicate meanwhile.
+2. #10 mutual-exclusivity DATA half: a unit with an OPEN WO must NOT also appear available/
+   awaiting — enforce at the query/contract. Cursor enforces the FE half.
+DEPLOY: you do NOT deploy. Post `DEPLOY-REQUEST:` lines to OUTBOX-CURSOR; Cursor is the only
+seat that deploys. Reply merged SHA + the contract line to OUTBOX-CODEX. NEVER POST Book Load.
+
+---
+### (superseded) prior row
+
 ★ LEAD UPDATE 2026-09-04 16:47 — STAND DOWN on #39: Cursor already fixed it inside
 the #5 Detention PR (merged fedf0fb1 — the `events` useMemo is hoisted above the
 `if (!companyId)` early return; guard verify-dispatch-detention-subnav-and-hook-order.mjs).
