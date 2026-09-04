@@ -1,5 +1,41 @@
 # OUTBOX-CC-2 · ALL AWAKE · 2026-09-02 21:04 CT
 
+CC-2 | Live=CONFIRMED (Chrome, app.ih35dispatch.com, owner session) -- GLB-11 (#20342) + GLB-12
+(#20347) both FIXED, numbers below. Triggered the ih35-tms-web deploy myself (autoDeploy=off,
+same as backend; owner authorized live in chat 2026-09-04) after Cursor's own concurrent push
+(#20349/#20350, Trip Pairing board-row) superseded mine in a race -- final live commit
+ae24915f0a (DSP-03-04, #20350), confirmed via `git merge-base --is-ancestor` that both GLB-11 and
+GLB-12 are ancestors. TRAP CAUGHT: the static site serves from an aggressive
+cache/CDN -- a plain reload kept showing the PRE-fix state; only a real network navigation
+(`?cachebust=N` query, forces a fresh document load) picked up the new bundle hash. Every number
+below is from a cache-busted load, confirmed via a changed `index-*.js` hash.
+(1) Banner: `document.querySelectorAll('button')[aria-label]` no longer contains "Tasks" or
+"Program Board" on /safety/home.
+(2) Radius: Total Safety Events tile + Active Drivers container both `border-radius: 2px`
+(getComputedStyle).
+(3) Centering: Total Safety Events `text-align: center`; Load Costs board `<th>` text centers by
+default (Revenue column still `justify-content: flex-end` -- money column correctly unaffected);
+Dispatch List "LOCATION" header likewise centered.
+(4) body font-size: `12px` (was 16px pre-fix, confirmed on the stale cached load first, then
+12px post-cachebust).
+(5) KPI ceiling: Total Safety Events `max-height: 101px`; Load Costs board's 6 KPI tiles measured
+60.125px actual height (grid `gap: 8px` confirmed) -- well under the 101px ceiling, was 108px
+pre-fix.
+(6) Kanban lane headers (GLB-12, /dispatch?view=kanban): all 11 lanes -- `border: 1px solid`
+(was border-b only), `border-radius: 2px`, 3-column CSS grid present
+(`gridTemplateColumns` non-empty 3-value), title `text-align: center` (was left).
+(7) Table header height (GLB-12, /dispatch?view=list): all 6 sampled `<th>` = 30px exactly (Unit/
+Trailer/Load #/Driver/Location/blank-select-all column), matching Load Costs' own headers (also
+30px) -- one number, not 30-vs-34 anymore.
+(8) Item #18 (LOCATION casing) -- actively re-checked live on this exact Dispatch List "LOCATION"
+column: DOM source text is "Location" (title-case), rendering uppercase via the same shared CSS
+transform as every sibling header. Not reproduced here. Still not located anywhere in a repo-wide
+grep. Standing open, needs the owner to name the actual screen if it's elsewhere.
+Bonus catch while verifying: Cursor's own DSP-02/03/04 (Trip Pairing board-row + breadcrumb fixes)
+rode the same deploy -- confirmed "Trip Pairing" now sits as a peer button in the Dispatch
+page-header row (Kanban · List · Round Trips · Trip Pairing), not just the queues sub-nav.
+| NEXT=awaiting next assignment | GO
+
 CC-2 | ACK | dispatch tokens 93px/2px/#14314F/centered · NEVER POST | GO
 CC-2 | dispatch design-token slice CLOSED (GLB-12, merged #20347 sha b8facc522c). ONE-HEIGHT LAW: tokens.ts `tableHeaderHeight` 26->30 (ORCH-measured; was never shared with ParityTable, which had no explicit header height at all -- that's how Dispatch (30px) and Load Costs (34px) drifted apart as two live instances of the same component), ParityTable's `<th>` now sets it explicitly. Kanban lane headers (#13): DispatchKanban.tsx's `ColumnDisplay` (both collapsed + expanded paths) moved from a 2-col `justify-between` to a 3-col grid (`1fr auto 1fr`) so the title true-centers independent of the count badge's width; `border-b` -> full `border` (the "outline") at the shared 2px radius; the header-link `<button>`'s own `text-left` (would have beaten the wrapper's centering -- direct declaration beats inheritance) changed to `text-center`. Landed `docs/specs/DESIGN-SPEC-MEASURED-LIVE-2026-09-04.md` as the dated transcription source next to the LOCKED `GLOBAL-TYPE-SIZE-BASELINE.md` (updated in the same commit), per the re-dispatch's own "do not invent a new scale" instruction. Radius/centering/box-size/KPI-ceiling from the prior GLB-11 pass (#20342) already cover Dispatch automatically -- same shared tokens/components (DrillKpiCard, Button.tsx, the index.css `@theme` radius override), not a dispatch-specific copy, so no separate work was needed there this cycle. HONEST GAP: item #18 (a "LOCATION" column label in all-caps source vs title-case siblings) NOT located -- grepped apps/frontend/src + apps/driver-pwa/src for the literal string, zero matches; recorded in the new spec doc, needs the owner to point at the actual screen. Verified against a clean origin/main worktree before shipping: DispatchKanban.test.tsx's 4 failures (missing QueryClient provider) and verify-dispatch-board-sections-and-columns.mjs's 1 failure (listColumns/boardColumns alias, an untouched file) both reproduced byte-identical there -- pre-existing, not this diff. Live=UNVERIFIED -- frontend deploy is Cursor's lane, this session cannot trigger it; will run the standing FIXED/NOT-FIXED Chrome pass with numbers once a deploy picks up this SHA. | NEXT=awaiting next assignment, or the next frontend deploy to Chrome-verify GLB-11+GLB-12 together | GO
 
