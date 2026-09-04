@@ -1163,15 +1163,37 @@ export async function checkExtendedSubledgerTieOutForCompany(client: DbClient, o
 // 2026-09-01. One detector's defect must never silence every other detector's proof that the
 // books are fine. Each call is now isolated: a failure is logged and the tick moves on, so a
 // single broken check degrades to "this one check is unknown" instead of "nothing ran tonight."
+//
+// ACC-19 (2026-09-04) — the try/catch above was NECESSARY but NOT SUFFICIENT. runLedgerIntegrityTick
+// runs inside ONE transaction for every company and every detector (withLuciaBypass does a single
+// BEGIN...COMMIT around the whole tick). A caught JS exception does not reset SQL-level transaction
+// state: once one detector's INSERT hit the still-open CHECK-constraint gap (test_named_account_in_coa
+// etc., routed to CC-1), Postgres marked the WHOLE transaction aborted, and every later
+// client.query() call — every remaining detector, for every remaining company, not just the one
+// that failed — threw "current transaction is aborted, commands ignored until end of transaction
+// block" and was itself swallowed by the same try/catch. LIVE-CONFIRMED 2026-09-04:
+// _system.background_jobs.ledger.integrity_cron — last_successful_run_at stuck at 2026-09-01T08:20,
+// last_failed_run_at 2026-09-04T03:20 (same error text), run_count_today=8, all 8 failing the same
+// way. That is the actual reason most of the LAW-TRANSACTION-HEALTH-REGISTER's checks show zero
+// findings: not "clean," but "never completed." Fix: a real SAVEPOINT per detector (the same
+// pattern already established in ensure-driver-vendor.shared.ts) — ROLLBACK TO SAVEPOINT resets
+// only that detector's sub-transaction state, so the next detector on the same client starts clean
+// regardless of what the previous one did.
 async function runDetectorIsolated(
   name: string,
   operatingCompanyId: string,
   runId: string,
+  client: DbClient,
   fn: () => Promise<void>
 ): Promise<void> {
+  const savepoint = `ledger_detector_${name.replace(/[^a-z0-9_]/gi, "_")}`;
+  await client.query(`SAVEPOINT ${savepoint}`);
   try {
     await fn();
+    await client.query(`RELEASE SAVEPOINT ${savepoint}`);
   } catch (err) {
+    await client.query(`ROLLBACK TO SAVEPOINT ${savepoint}`);
+    await client.query(`RELEASE SAVEPOINT ${savepoint}`);
     logger.error("ledger_integrity_detector_failed", err instanceof Error ? err : undefined, {
       detector: name,
       operating_company_id: operatingCompanyId,
@@ -1206,7 +1228,7 @@ export async function runLedgerIntegrityTick(client: DbClient): Promise<void> {
       ["extended_subledger_tie_out", () => checkExtendedSubledgerTieOutForCompany(client, operatingCompanyId, runId)],
     ];
     for (const [name, fn] of detectors) {
-      await runDetectorIsolated(name, operatingCompanyId, runId, fn);
+      await runDetectorIsolated(name, operatingCompanyId, runId, client, fn);
     }
   }
 }
