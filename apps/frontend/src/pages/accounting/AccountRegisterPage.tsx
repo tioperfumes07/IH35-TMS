@@ -529,10 +529,10 @@ export function AccountRegisterPage() {
                 <input value={search} onChange={(e) => setSearch(e.target.value)} className={inputCls} placeholder="memo, description, or ref" />
               </label>
               <div className="flex justify-between">
-                <button type="button" onClick={resetFilters} className="text-[12px] font-medium text-gray-500 underline">
+                <button type="button" onClick={resetFilters} className="text-xs font-medium text-gray-500 underline">
                   Reset
                 </button>
-                <button type="button" onClick={() => setFilterOpen(false)} className="text-[12px] font-semibold text-slate-700">
+                <button type="button" onClick={() => setFilterOpen(false)} className="text-xs font-semibold text-slate-700">
                   Done
                 </button>
               </div>
@@ -590,13 +590,13 @@ export function AccountRegisterPage() {
         {/* C/R (cleared/reconciled) is a bank-reconciliation concept; the GL posting model carries no
             cleared state and no posting→bank_transaction link exists (verified). Show an honest banner
             instead of a fake checkmark — bank reconciliation surfaces it once that linkage is built. */}
-        <div className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 text-[12px] text-slate-700">
+        <div className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700">
           Reconciliation not yet available — the C/R column reflects GL postings, which carry no cleared/reconciled state yet.
         </div>
         {/* Opening balance is a running summary, not a paginated row — kept pinned above the table
             (QBO shows it as the first register line; ParityTable's rows are page-sliced, so a summary
             row belongs outside it to stay visible on every page). */}
-        <div className="mb-0 flex items-center justify-between rounded-t-md border border-b-0 border-gray-200 bg-gray-50/60 px-2 py-1.5 text-[12px] text-gray-600">
+        <div className="mb-0 flex items-center justify-between rounded-t-md border border-b-0 border-gray-200 bg-gray-50/60 px-2 py-1.5 text-xs text-gray-600">
           <span>Opening balance ({normal === "debit" ? "Dr" : "Cr"})</span>
           <span className="font-medium tabular-nums">{report ? fmtCents(report.opening_balance_cents) : "—"}</span>
         </div>

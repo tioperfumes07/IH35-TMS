@@ -89,7 +89,7 @@ export function LoansAdvancesPage() {
             type="button"
             onClick={() => setWizardOpen(true)}
             disabled={!companyId}
-            className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#0f1729] disabled:opacity-40"
+            className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-40"
           >
             + Create
           </button>
