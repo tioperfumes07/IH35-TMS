@@ -1168,6 +1168,12 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
             matched_expense_id = NULL,
             matched_transfer_id = NULL,
             matched_journal_entry_id = NULL,
+            -- ACC-20 — this route never touched review_state at all: every matched_*_id pointer
+            -- was cleared but the row stayed 'matched', an orphaned state (matched but nothing is
+            -- matched) that recon-worklist.service.ts's own unmatchBankTransaction already avoids
+            -- ('for_review' is the correct "back in the queue" state; 'unmatched' is not a legal
+            -- review_state per the CHECK constraint). Matches that sibling function's behavior.
+            review_state = 'for_review',
             updated_at = now()
           FROM prior
           WHERE bt.id = prior.id
