@@ -358,6 +358,16 @@ export function DispatchPage({
             </Button>
             <Button
               type="button"
+              variant={location.pathname === "/dispatch/trip-pairing" ? "primary" : "secondary"}
+              size="sm"
+              data-testid="dispatch-view-trip-pairing"
+              title="Trip Pairing — match empty return trucks to loads"
+              onClick={() => navigate("/dispatch/trip-pairing")}
+            >
+              Trip Pairing
+            </Button>
+            <Button
+              type="button"
               variant={boardScope === "live" ? "primary" : "secondary"}
               size="sm"
               data-testid="dispatch-board-scope-live"

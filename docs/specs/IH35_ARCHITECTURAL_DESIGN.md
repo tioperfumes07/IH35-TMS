@@ -1401,6 +1401,7 @@ Names Master (`/lists/names`) is a **read-only hub** that searches existing part
 
 ## Dispatch (2026-06-08 update — additive)
 Surfaces: Home (default command center; renamed from "Overview" 2026-09-04 per owner — landing view value stays `?view=overview` for deep-link stability) · Load Board (true 7-state Kanban) · List (simple+risk) · Table (detailed) · Assignment (unassigned-on-top) · Round Trips (was Units) · Queues (At-Risk/Detention/Border/Late/Live Map) · Planners (Driver/Truck/Loads) · Settlements · Factoring.
+Board-view row (under Load board, owner 2026-09-04 item #2): Kanban · List · Round Trips · Trip Pairing are peer board views in the one page-header toggle row. Trip Pairing (`/dispatch/trip-pairing`) is surfaced there in addition to the queues sub-nav (additive — the sub-nav entry is retained, not removed). List/Table/Assignment remain sub-modes of the List board (`?board=` row) pending owner confirmation on promoting Table/Assignment to peers.
 Cross-cutting: OOS units pinned bottom of every view; breadcrumb page-title; denser six-column layout; all column headers sortable.
 Load click anywhere → existing LoadDetailDrawer (?load_id=), edit-capable, additive tabs (Factoring, Customs, profitability in Settlement).
 Connectivity: Dispatch ↔ Settlements (pre-settlement NB→SB, deductions/fines, profitability) ↔ Factoring (FARO packet/reserve) ↔ Accounting/Cash Flow ↔ Safety (Driver Scheduler, geofence, compliance) ↔ Maintenance (OOS/in-shop) ↔ Banking (FARO).
