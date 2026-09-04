@@ -1,6 +1,25 @@
 # INBOX-CC-2 · 2026-09-04 · Cursor lead re-dispatch (DISPATCH design tokens)
 `git pull --ff-only origin main`
 
+★★ OWNER DESIGN CORRECTIONS 2026-09-04 17:00 (your design-system lane — apply
+SYSTEM-WIDE via the locked tokens, then verify with a real screen):
+  - COLOR: the app now looks BLACK; owner wants BLUE. The rail/primary navy is
+    rendering near-black — take it to the intended blue (adjust the locked navy
+    token toward blue per owner; this is owner-authorized token change). Verify on
+    a real screen it reads blue, not black.
+  - CENTERED SYSTEM-WIDE: every header, every column value, every KPI value centered
+    (owner ruling 2026-09-04, already in 00-IH35-LAW). Run the ratchet.
+  - SQUARE EDGES: all boxes fine/square edge (2px rounded-sm), not rounded — the
+    SQUARE-EDGES LAW. No 4px/9999px mix.
+  - KPI TILES: width follows Safety "Active Drivers"; height must NOT exceed Safety
+    "Total Safety Events" (~2in × 1in → target 93px, hard ceiling 101px, per law).
+    No exaggerated boxes anywhere.
+  - CLICKABLE BOXES: list/table/assignment/export/book etc. must be the HEIGHT OF
+    THE TEXT (28px clickable-box law, 12px font, 2px radius, 0 8px padding) — owner
+    dislikes the large boxes. Apply to every clickable box system-wide.
+  These are locked-token transcriptions — open GLOBAL-TYPE-SIZE-BASELINE, do not
+  invent a scale. Prove each with the ratchet count + a real screen.
+
 ★ LEAD UPDATE 2026-09-04 16:47 — you are NOT idle; here is concrete work NOW:
 (1) VERIFY-LIVE the dispatch items just DEPLOYED to
     https://ih35-tms-web.onrender.com (deploy live @ fedf0fb1; #15 deploying):

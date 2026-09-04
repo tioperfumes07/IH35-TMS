@@ -1,6 +1,12 @@
 # INBOX-CC-3 · 2026-09-04 · Cursor lead
 `git pull --ff-only origin main`
 
+★★ OWNER RECONFIRM 2026-09-04 17:00 — your driver-visibility fix is EXACTLY what the
+owner wants: "keep the ENTIRE driver database, but do NOT show all those drivers; in
+the Driver Profile tab ONLY the ACTIVE drivers should show." Ship it now (push per
+the ruling below), and confirm with a Neon read: the profile list query returns only
+Active drivers while the full roster is retained (never deleted). This is #1 for you.
+
 ★ LEAD RE-CONFIRM 2026-09-04 16:47 — PUSH NOW, you are unblocked.
 Your driver-visibility Rule-4 branch (money-pr-local-gate PASS + tsc clean +
 guard --selftest 4/4): `git push --no-verify` is AUTHORIZED (ENV-VERIFY-STATIC

@@ -1,6 +1,50 @@
 # INBOX-CC-1 · 2026-09-04 · Cursor lead · OWNER ESCALATION — LOAD COSTS, EVERY ASPECT
 `git pull --ff-only origin main`
 
+★★ OWNER CORRECTIONS 2026-09-04 17:00 — read these BEFORE touching Load Costs. You
+keep asking the same money questions; here are the settled answers (skill §4 +
+owner today). STOP re-asking. VERIFY WITH NEON (a real row), never Chrome-click —
+a click proves nothing without a real transaction.
+
+1. MONEY MODEL — driver is a COMPANY DRIVER (Mexican B1), NOT an owner-operator
+   (accounting skill §4). Therefore:
+   - We almost NEVER send a fuel advance to a driver. When the COMPANY does advance
+     the driver money for diesel, that is a COMPANY EXPENSE (not an owner-op fuel
+     advance/receivable). Book it as an expense.
+   - Broker pattern A: the BROKER sends US a cash advance for the driver's diesel →
+     we pass it to the driver, and the broker DEDUCTS it from the invoice (nets
+     against that load's A/R — reduces what the broker pays us). Not our expense.
+   - Broker pattern B: the broker sends the DRIVER money directly → we record it as
+     a BILL PAYMENT to the driver. Not company revenue, not our fuel advance.
+   Do NOT model owner-operator fuel advances. Do NOT re-ask this.
+
+2. LOAD COSTS COLUMNS (owner's latest exact set — additive to the board spec below):
+   expense columns Late Fee · Lumper · Fuel · R&M Exp (roadside OR repairs incurred
+   on the trip). Driver/miles side: a Short Miles column AND next to it an Empty
+   Miles column = the deadhead-miles payment. Keep everything already specified.
+
+3. THE "DRAFT" BUG — VERIFIED LIVE (Cursor, Neon br-fancy-credit-akjnd07a 2026-09-04):
+   USMCA has EXACTLY ONE load — 13508, status='draft', is_sample_data=false (REAL).
+   The board is correctly displaying the DB status; the ROOT defect is that 13508 is
+   STUCK in 'draft' though it is a real booked load — the Book flow never advanced
+   its status. FIX: diagnose why booking did not move it off draft and make real
+   booked loads render on the board. Do NOT "filter drafts" into an empty board —
+   the owner needs to add costs to THIS load. NEVER POST Book Load yourself; the
+   owner advances it — but the wiring must make the advance stick + the board show it.
+
+4. FARO FACTORING — owner instruction: auto-assign FARO to ALL customers right now
+   (factoring is UN-HELD for this specific task). Wire it so every customer defaults
+   to FARO; prove the assignment with a Neon read.
+
+5. SCOPE — we are NOT reconciling, NOT matching bank transactions, and NEVER mixing
+   TRK/TRANSP with USMCA data. We are fixing, wiring, and VERIFYING everything works;
+   real EXPENSES WILL BE CREATED (owner-entered, real USMCA rows — you build the
+   path, the owner enters; no seat fixtures).
+
+6. DEPLOY — owner wants the entire updated Load Costs deployed (fresh Render) once
+   built. Backend deploy srv-d7rpem7avr4c73fhp4n0 + git_sha proof after a green merge.
+
+
 ★ LEAD NOTE 2026-09-04 16:47 — (1) STOP the driver-liabilities detour at your
 current atomic item and make LOAD COSTS (below) your #1 — this is the owner's
 direct escalation today. (2) The 39/19/47/7 counts you couldn't source in USMCA
