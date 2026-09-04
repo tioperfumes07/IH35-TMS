@@ -349,6 +349,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
           tenantId: effectiveCompanyId,
           equipmentId: String(row.id),
           equipmentNumber: String(row.equipment_number),
+          equipmentType: String(row.equipment_type),
           vin: (row.vin as string | null) ?? null,
           make: (row.make as string | null) ?? null,
           model: (row.model as string | null) ?? null,
