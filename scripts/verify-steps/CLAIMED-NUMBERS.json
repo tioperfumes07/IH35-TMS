@@ -7458,5 +7458,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-04",
     "purpose": "verify-seat-surface-ownership (owner-dictated §0b, verbatim table -- Rule 6: transcribe, never invent. Fails a PR when a commit touches a path outside the author seat's surface unless the commit body carries SURFACE-BREACH-AUTHORIZED: <owning seat> <reason>. Cited for weeks as the enforcement mechanism in the law doc + 4 bus docs; 0 files implemented it until this PR.)"
+  },
+  "10337": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-pre-settlement-empty-state-not-404 (LOAD-COSTS-COMPLETE money item (8), owner order 2026-09-04: 'Pre-Settlement returns HTTP 404 for the ordinary empty state. Return 200.'). Guards that GET /api/v1/driver-finance/pre-settlements/by-driver/:driverId returns the honest { settlement: null, lines: [] } for a driver with no open pre-settlement (never a raw 404), while keeping the schema_absent case (a real config gap) distinct so it never collapses back into the same 404 branch."
   }
 }
