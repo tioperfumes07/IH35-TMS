@@ -147,6 +147,22 @@ export function buildEditPrefill(load: LoadDetail): AnyValues {
   };
 }
 
+/**
+ * WIZ-48 — apply the Edit prefill EXACTLY ONCE per opened load.
+ *
+ * The Edit modal loads the persisted load and calls form.reset(prefill) to establish the clean
+ * (nothing-dirty) baseline. That query uses staleTime:0 and therefore refetches (focus/mount/
+ * reconnect); if the reset re-runs on every refetch it OVERWRITES the operator's in-progress edits
+ * and clears their dirtyFields, so a field changed before a refetch is silently dropped from the
+ * dirtyFields-gated PATCH (the truck on load 13508) while a field changed after it survives (the
+ * driver). Reset is applied once per load id: true only when this id has not yet been prefilled.
+ */
+export function shouldApplyEditPrefill(appliedLoadId: string | null, currentLoadId: string | null | undefined): boolean {
+  const id = str(currentLoadId).trim();
+  if (!id) return false;
+  return appliedLoadId !== id;
+}
+
 // Scalar editable fields: form key → PATCH key + value transform. Unpersisted fields are absent here.
 const SCALAR_FIELDS: Array<[string, string, (v: AnyValues) => unknown]> = [
   ["customer_id", "customer_id", (v) => str(v.customer_id) || undefined],
