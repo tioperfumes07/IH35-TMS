@@ -129,6 +129,16 @@ export const COA_ROLE_VALUES = [
   // ASC 850 requires related-party interest to be separately disclosable. DELIBERATELY absent from
   // ROLE_FALLBACKS — bound on prod for TRANSP+USMCA (6810); fails closed anywhere it is not bound.
   "related_party_interest_expense",
+  // ND-INV-01 (202609100090) — "Broker/customer advance liability role admits designation; poster
+  // reuse only (no new GL math)" per that migration's own header. Admitted at the DB CHECK level and
+  // in the frontend CoaRoles designation enum (apps/frontend/src/api/accounting.ts) since ND-INV-01,
+  // but NEVER added here — so even an owner who designated an account for it on the CoaRoles page had
+  // no backend poster that could resolve it (isCoaRole would reject it, resolveRoleAccount couldn't
+  // accept it as a CoaRole). LOAD-COSTS-COMPLETE item (4/5) (owner order 2026-09-04): a broker advance
+  // received/disbursed BEFORE an invoice exists for its load has no receivable yet to net against —
+  // this is the liability that holds it until buildInvoiceFromLoad reclassifies it into A/R at mint.
+  // DELIBERATELY absent from ROLE_FALLBACKS — owner designates; fails closed until then.
+  "broker_customer_advance_liability",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

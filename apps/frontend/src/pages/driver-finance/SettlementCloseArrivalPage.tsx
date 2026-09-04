@@ -112,7 +112,7 @@ export function SettlementCloseArrivalPage() {
   }, [accountsQuery.data, paymentMethodGlAccountId]);
 
   const closeMut = useMutation({
-    mutationFn: () => settleAndPay(String(detailQuery.data?.settlement.id), companyId),
+    mutationFn: () => settleAndPay(String(detailQuery.data?.settlement?.id), companyId),
     onSuccess: () => {
       pushToast("Settlement closed and driver notified", "success");
       setSelectedDriverId(null);

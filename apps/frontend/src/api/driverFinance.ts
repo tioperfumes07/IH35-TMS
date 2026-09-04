@@ -619,6 +619,9 @@ export type PreSettlementLine = {
 };
 
 export type PreSettlementDetail = {
+  /** LOAD-COSTS-COMPLETE money item (8) (2026-09-04) -- null means "no open tour for this driver
+   * right now", the ORDINARY empty state (200, not a 404). PreSettlementPanel.tsx already renders
+   * this honestly ("No active pre-settlement found for this driver."). */
   settlement: {
     id: string;
     display_id: string | null;
@@ -638,7 +641,7 @@ export type PreSettlementDetail = {
     trip_closed_at: string | null;
     period_start: string;
     period_end: string;
-  };
+  } | null;
   lines: PreSettlementLine[];
 };
 

@@ -126,7 +126,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
     if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const result = await withCompany(user.uuid, companyId, async (client) => {
-      if (!(await hasSettlementSchema(client))) return null;
+      if (!(await hasSettlementSchema(client))) return "schema_absent" as const;
 
       const sRes = await client.query(
         `
@@ -162,7 +162,11 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
         [params.data.driverId, companyId]
       );
       const settlement = sRes.rows[0] ?? null;
-      if (!settlement) return null;
+      // LOAD-COSTS-COMPLETE money item (8) (owner order 2026-09-04): a driver with no open tour is
+      // the ORDINARY empty state, not an error. Return an honest empty result -- {settlement: null,
+      // lines: []} -- so the caller can render its already-built "No active pre-settlement found"
+      // state (PreSettlementPanel.tsx) instead of an error/retry surface.
+      if (!settlement) return { settlement: null, lines: [] };
 
       const linesRes = await client.query(
         `
@@ -177,7 +181,10 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
       return { settlement, lines: linesRes.rows };
     });
 
-    if (!result) return reply.code(404).send({ error: "no_active_pre_settlement" });
+    // "schema_absent" is a real configuration gap (driver_finance.driver_settlements doesn't exist
+    // in this environment yet) -- distinct from the ordinary "no open tour" case above, which is
+    // never an error and is now returned as a 200 with an honest empty body.
+    if (result === "schema_absent") return reply.code(501).send({ error: "driver_finance_not_configured" });
     return result;
   });
 
