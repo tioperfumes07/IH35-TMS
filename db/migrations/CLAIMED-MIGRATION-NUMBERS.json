@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202613690001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-04",
+      "purpose": "LOAD-COSTS-COMPLETE item (3) (owner ruling 2026-09-04, verbatim: 'the fuel advance from us to the driver is a company expense... he is a company driver, not an owner operator'). Deactivates (is_active=false, NEVER deleted) the 12 active driver_finance.driver_advance_accounts rows for USMCA (all Asset-type 'Driver Cash Advance- <name>' accounts, DRIVERCASHAD896665-007..-020) -- they encode the owner-operator receivable-from-driver model against B1 company employees. driver_finance.driver_advances is 0 rows for USMCA, so this is corrected before the first row, not unwound after."
+    },
     "202613680001": {
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-04",
