@@ -17,8 +17,11 @@
  * driver can be legitimately archived for other reasons without a live duplicate to repoint to).
  *
  * Checks every driver_id/driver_uuid-shaped column this repo has today (kept in sync manually;
- * add a new one here whenever a new driver-referencing column is added). Fails listing every
- * (table.column, count) pair with a live reference to a voided-by-merge driver.
+ * add a new one here whenever a new driver-referencing column is added), PLUS docs.file_links'
+ * polymorphic entity_id (entity_type='driver') — added 2026-09-03 (DRV-05) after that exact gap
+ * let one Mexico licence PDF stay attached to an archived loser post-merge, structurally
+ * invisible to the typed-column scan above. Fails listing every (table.column, count) pair with
+ * a live reference to a voided-by-merge driver.
  */
 import fs from "node:fs";
 import { createRequire } from "node:module";
@@ -165,6 +168,28 @@ async function main() {
     }
 
     const problems = [];
+
+    // docs.file_links is polymorphic (entity_type/entity_id) rather than a typed driver_id/
+    // driver_uuid column, so it can never appear in COLUMNS above — the original scan structurally
+    // could not see it, which is exactly how DRV-05 slipped through: a Mexico licence PDF stayed
+    // attached to an archived loser (09e229e7) after being deliberately double-linked to both
+    // candidate rows pre-merge. Checked separately, same voided-id list, same live-undeleted rule.
+    let fileLinkRes;
+    try {
+      fileLinkRes = await client.query(
+        `SELECT count(*)::int AS n
+           FROM docs.file_links
+          WHERE entity_type = 'driver' AND deleted_at IS NULL AND entity_id = ANY($1::uuid[])`,
+        [voidedIds]
+      );
+      const n = fileLinkRes.rows[0].n;
+      if (n > 0) {
+        problems.push(`docs.file_links.entity_id (entity_type='driver'): ${n} live row(s) still reference a voided-by-merge driver`);
+      }
+    } catch (err) {
+      if (!/does not exist/i.test(String(err.message))) throw err;
+    }
+
     for (const [table, column] of COLUMNS) {
       const key = `${table}.${column}`;
       let res;
@@ -189,7 +214,7 @@ async function main() {
       fail(problems.map((p) => `- ${p}`).join("\n"));
     }
     console.log(
-      `${LABEL} — OK, 0 unexpected orphaned references across ${COLUMNS.length} driver-shaped columns (${KNOWN_OPEN_EXCEPTIONS.size} known open exceptions, each filed to GUARD-WORKORDERS.md)`
+      `${LABEL} — OK, 0 unexpected orphaned references across ${COLUMNS.length} driver-shaped columns + docs.file_links (${KNOWN_OPEN_EXCEPTIONS.size} known open exceptions, each filed to GUARD-WORKORDERS.md)`
     );
   } finally {
     await client.end();
