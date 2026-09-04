@@ -1,10 +1,10 @@
 {
-  "healthzSha": "b66fec7",
-  "generated_at": "2026-09-04T06:15:03.539Z",
+  "healthzSha": "f9c3a32",
+  "generated_at": "2026-09-04T22:22:44.958Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "b66fec7",
+    "deployedSha": "f9c3a32",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 20271,
-      "title": "FINDING: GLB-08 -- planner day-column headers now render AUG-21/SEP-01, not the locale \"Aug 16\"",
+      "number": 20365,
+      "title": "FINDING: N/A (docs only, OUTBOX entry recording LOAD-COSTS-COMPLETE item 3 merge + Cursor #20360 reconciliation)",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 01:13 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20271",
-      "sha": "3bf90a4c76",
-      "committedAtIso": "2026-09-04T01:13:32-05:00"
+      "mergedAtCt": "09/04/2026, 05:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20365",
+      "sha": "db4e9d5ec4",
+      "committedAtIso": "2026-09-04T17:18:01-05:00"
     },
     {
-      "number": 20269,
-      "title": "FINDING: ACCT-F25001 (SET-25: owner could not mint his first real invoice -- invoices_display_id_check rejected the load's own plain-digit load_number)",
+      "number": 20364,
+      "title": "FINDING: ACCT-F25019 (Load costs board rebuilt to the owner's exact column list -- Late Fee/Lumper/Fuel/R&M/Other cost breakdown, Short Miles/Rate Loaded/Loaded Pay/Empty Miles/Rate Empty/Deadhead Pay/Gross driver-pay detail, Status as service performance not lifecycle, drafts-never-shown, voided-hidden-by-default)",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 01:08 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20269",
-      "sha": "49c67f9e77",
-      "committedAtIso": "2026-09-04T01:08:44-05:00"
+      "mergedAtCt": "09/04/2026, 05:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20364",
+      "sha": "9cf3e7da42",
+      "committedAtIso": "2026-09-04T17:16:34-05:00"
     },
     {
-      "number": 20268,
-      "title": "FINDING: GLB-04",
+      "number": 0,
+      "title": "docs: GO-23 ROW 26 close-out finding — tracker DONE vs live broken surfaces",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 01:05 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20268",
-      "sha": "5faa00d767",
-      "committedAtIso": "2026-09-04T01:05:02-05:00"
+      "mergedAtCt": "09/04/2026, 05:15 PM CT",
+      "url": "",
+      "sha": "c5475cf10c",
+      "committedAtIso": "2026-09-04T17:15:04-05:00"
     },
     {
-      "number": 20266,
-      "title": "FINDING: N/A (registry-only claim, no code change)",
+      "number": 20363,
+      "title": "FINDING: DSP-39-GUARD-REGISTRATION — fixed Detention hook order was protected by an unregistered guard",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 01:02 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20266",
-      "sha": "98da663121",
-      "committedAtIso": "2026-09-04T01:02:18-05:00"
+      "mergedAtCt": "09/04/2026, 05:14 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20363",
+      "sha": "e6fd871792",
+      "committedAtIso": "2026-09-04T17:14:42-05:00"
     },
     {
-      "number": 20265,
-      "title": "FINDING: GLB-03",
+      "number": 20362,
+      "title": "FINDING: FLT-IN-SHOP-EXCLUSIVE — awaiting-unit API admitted units owned by the authoritative open-work-order In-Shop feed",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 12:57 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20265",
-      "sha": "194ec82e07",
-      "committedAtIso": "2026-09-04T00:57:54-05:00"
+      "mergedAtCt": "09/04/2026, 05:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20362",
+      "sha": "f9c3a32f5d",
+      "committedAtIso": "2026-09-04T17:10:20-05:00"
     },
     {
-      "number": 20263,
-      "title": "FINDING: GLB-06 -- ParityTable/DataTable row dividers bumped from near-invisible gray-100 to real gray-200",
+      "number": 20361,
+      "title": "FINDING: N/A (docs only — owner corrections to seat bus)",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 12:54 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20263",
-      "sha": "4645d49f03",
-      "committedAtIso": "2026-09-04T00:54:09-05:00"
+      "mergedAtCt": "09/04/2026, 05:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20361",
+      "sha": "e943bc27e4",
+      "committedAtIso": "2026-09-04T17:07:08-05:00"
     },
     {
-      "number": 20262,
-      "title": "FINDING: GLB-02",
+      "number": 0,
+      "title": "chore: canonicalize schema-parity baseline post-merge",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 12:51 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20262",
-      "sha": "b66fec76e1",
-      "committedAtIso": "2026-09-04T00:51:25-05:00"
+      "mergedAtCt": "09/04/2026, 05:06 PM CT",
+      "url": "",
+      "sha": "62aba6b430",
+      "committedAtIso": "2026-09-04T17:06:11-05:00"
     },
     {
-      "number": 20261,
-      "title": "FINDING: N/A (docs only, canonical-relations.json snapshot regen)",
+      "number": 20360,
+      "title": "Cursor-load-costs-board-columns",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 12:48 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20261",
-      "sha": "54e5b4a925",
-      "committedAtIso": "2026-09-04T00:48:29-05:00"
+      "mergedAtCt": "09/04/2026, 05:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20360",
+      "sha": "d3d89a6abc",
+      "committedAtIso": "2026-09-04T17:05:57-05:00"
     },
     {
-      "number": 20251,
-      "title": "FINDING: SET-01 — accept assigned awaited presettlement link",
+      "number": 20359,
+      "title": "FINDING: DSP-16",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 12:45 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20251",
-      "sha": "1c88d8fe6a",
-      "committedAtIso": "2026-09-04T00:45:46-05:00"
+      "mergedAtCt": "09/04/2026, 04:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20359",
+      "sha": "9326589026",
+      "committedAtIso": "2026-09-04T16:58:17-05:00"
     },
     {
-      "number": 20258,
-      "title": "FINDING: SET-24 — bind broker advances to prod snapshot",
+      "number": 20358,
+      "title": "FINDING: N/A (docs only — bus census + seat re-dispatch)",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 12:45 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20258",
-      "sha": "6c7a41a20d",
-      "committedAtIso": "2026-09-04T00:45:12-05:00"
+      "mergedAtCt": "09/04/2026, 04:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20358",
+      "sha": "b719b31e8d",
+      "committedAtIso": "2026-09-04T16:51:56-05:00"
     }
   ]
 }

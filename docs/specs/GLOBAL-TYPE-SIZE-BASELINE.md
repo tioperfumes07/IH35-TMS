@@ -16,7 +16,9 @@ file is kept current; that one is the "what was measured and why" record.
 - Page background: #F7F8FA
 - Border: 1px solid #E5E7EB
 - Border radius: 2px, one token (`rounded-sm`) everywhere except deliberate pills/avatars (SQUARE-EDGES LAW, owner ruling 2026-09-04, ORCH-measured — was a 2px/4px/0px/9999px mix)
-- Left rail (sidebar): navy #1B2333
+- Left rail (sidebar) + top banner: navy #14314F (NAVY-NOT-BLACK LAW, owner ruling 2026-09-04 —
+  was #1B2333/#1F2A44, two different low-saturation shades that both read as near-black; now the
+  same blue already owner-approved for the table header row, 2026-09-03)
 - Primary action / status green: #16A34A
 
 ## Layout
