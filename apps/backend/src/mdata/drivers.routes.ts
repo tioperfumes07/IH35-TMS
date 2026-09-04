@@ -184,6 +184,14 @@ const listQuerySchema = z.object({
   search: z.string().trim().min(1).max(100).optional(),
   operating_company_id: z.string().uuid().optional(),
   include_system: z.coerce.boolean().optional().default(false),
+  // VOID-COLUMN LAW (2026-09-03) / WIZ-44 follow-up: the DEFAULT for this canonical list/picker
+  // read is deactivated_at IS NULL — a merged/deactivated row must never be selectable through
+  // ANY caller of this endpoint, not just the entityPickerRegistry.ts layer WIZ-44 already fixed.
+  // The admin roster (Drivers.tsx, listAllDrivers) explicitly opts INTO seeing deactivated rows
+  // for management (reactivate, view history) by passing this true — shaped like `include_system`
+  // above (an explicit ask, never the default), but NOT role-gated: any role that can reach the
+  // roster page already saw every status, unrestricted, before this change.
+  include_deactivated: z.coerce.boolean().optional().default(false),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -1278,13 +1286,27 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const { limit, offset, status, search, operating_company_id, include_system } = parsedQuery.data;
+    const { limit, offset, status, search, operating_company_id, include_system, include_deactivated } = parsedQuery.data;
     if (include_system && !isOwnerOrAdmin(authUser.role)) {
       return reply.code(403).send({ error: "forbidden" });
     }
+    // include_deactivated is NOT role-gated: the driver roster (any authenticated role can reach
+    // /drivers, no route-level role restriction) already showed every status, unrestricted, before
+    // this change -- this flag only makes that existing behavior explicit/opt-in instead of ambient,
+    // it does not add a new permission boundary that was not already the case.
     const result = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
+      // VOID-COLUMN LAW (2026-09-03): selectable <=> deactivated_at IS NULL, never status. WIZ-44
+      // fixed this at the entityPickerRegistry.ts layer (LAW-3 one-predicate-per-surface); this is
+      // the SAME rule applied at the canonical list endpoint itself, so the API and the registry
+      // agree independently -- a caller that reaches this route directly (bypassing the registry)
+      // must not be able to reopen the merged-driver-still-selectable hole WIZ-44 just closed.
+      // The admin roster (listAllDrivers) opts OUT of this via include_deactivated=true, matching
+      // Cursor's own note that admin list endpoints must still show deactivated rows for management.
       const filters: string[] = [EXCLUDE_ARCHIVED_DRIVERS_SQL];
+      if (!include_deactivated) {
+        filters.push("deactivated_at IS NULL");
+      }
       if (!include_system) {
         // Exclude system pseudo-users from human listings. They are required by referential integrity for system-
         // generated events and must NOT be deleted.
