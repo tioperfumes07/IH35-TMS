@@ -476,6 +476,9 @@ export function DispatchBoard({
   const [quickAssignLoad, setQuickAssignLoad] = useState<BoardLoad | null>(null);
   const [sectionFilters, setSectionFilters] = useState<Record<string, string>>({});
   const [sectionSorts, setSectionSorts] = useState<Record<string, SectionSort>>({});
+  // Table board-mode owns a SINGLE global sort (the whole fleet in one flat grid), distinct from the
+  // per-section sorts the grouped List uses. Null until the operator sorts — falls back to the URL/default.
+  const [tableSort, setTableSort] = useState<SectionSort | null>(null);
   // Partial, not Record<"booked"|"assigned", SectionSort> — every real read of this state
   // (sortAssignmentBandRows's `sort?.key`, the `?? { key: ..., direction: ... }` fallbacks below)
   // already treats each band as optionally-sorted; the stricter Record type just didn't match
@@ -1241,6 +1244,102 @@ export function DispatchBoard({
     );
   };
 
+  // DISPATCH Table board-mode (owner 2026-09-04: "THE TABLE VIEW DOES NOT RENDER ANYTHING"). List and
+  // Table previously both called renderListOrTable(), so the Table toggle was dead — identical grouped
+  // output. Table is now the DISTINCT flat view: every truck/load in ONE spreadsheet grid (no per-section
+  // navy headers, no per-section search), one global sort, one pager — the "all rows at once" the operator
+  // expects from a Table, while List keeps the grouped-by-section board.
+  const renderTable = () => {
+    if (listError) {
+      return (
+        <ListErrorState
+          title="Couldn't load dispatch table"
+          status={listError.status}
+          message={listError.message}
+          onRetry={listError.onRetry}
+        />
+      );
+    }
+
+    const activeSort: SectionSort = tableSort ?? { key: dispatchSortKey, direction: dispatchSortDir };
+    const allRows = boardSections.flatMap((section) =>
+      section.rows.filter((row) => matchesDispatchSectionFilter(row, sectionFilters.table ?? "")),
+    );
+    const sortedRows = activeSort.key
+      ? [...allRows].sort((a, b) => {
+          const cmp = compareDispatch(dispatchSortValue(a, activeSort.key), dispatchSortValue(b, activeSort.key));
+          return activeSort.direction === "asc" ? cmp : -cmp;
+        })
+      : allRows;
+
+    const handleRowClick = (row: BoardLoad) => {
+      const unitId = unitIdFromBoardRowId(row.id);
+      if (unitId && onBookForUnit) onBookForUnit(unitId);
+      else if (!unitId && onRowClick) onRowClick(row.id);
+    };
+
+    return (
+      <section className="space-y-3" data-testid="dispatch-board-table-view">
+        <div className="flex items-center justify-between gap-3">
+          <input
+            type="search"
+            value={sectionFilters.table ?? ""}
+            onChange={(event) => setSectionFilters((current) => ({ ...current, table: event.target.value }))}
+            placeholder="Search the table"
+            className="w-64 rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900"
+            data-testid="dispatch-board-table-filter"
+          />
+          <div className="flex items-center gap-2">
+            {selection.count > 0 ? (
+              <Button type="button" variant="secondary" size="sm" onClick={exportSelectedCsv}>
+                Export Selected to CSV
+              </Button>
+            ) : null}
+            <Button type="button" variant="secondary" size="sm" onClick={onExportCsv}>
+              Export CSV
+            </Button>
+          </div>
+        </div>
+
+        <ParityTable
+          columns={parityColumns}
+          rows={sortedRows}
+          rowKey={(row) => row.id}
+          loading={loading}
+          emptyText="No loads match your filters."
+          onRowClick={handleRowClick}
+          selectable
+          selectedKeys={Array.from(selection.selectedIds)}
+          onSelectionChange={(keys) => selection.setSelectedIds(new Set(keys))}
+          maxSelectable={200}
+          onSelectionCapExceeded={() => pushToast("Cannot select more than 200 rows.", "error")}
+          sortKey={activeSort.key}
+          sortDirection={activeSort.direction}
+          onSortChange={(key, direction) => setTableSort({ key, direction })}
+          sortMode="external"
+          suppressToolbarSearch
+          suppressToolbarRange
+          hidePager
+          storageKey="dispatch-board-table"
+          enableColumnReorder
+          enableColumnResize
+          tableTestId="dispatch-board-flat-table"
+          rowTestId={(row) => `dispatch-board-table-row-${row.id}`}
+        />
+
+        <div className="flex items-center justify-between border-t border-gray-200 pt-2 text-xs">
+          <Button type="button" variant="secondary" size="sm" disabled={!hasPrev} onClick={() => onPageChange(Math.max(0, offset - limit))}>
+            Previous
+          </Button>
+          <span className="text-gray-600">{loadCountSummary}</span>
+          <Button type="button" variant="secondary" size="sm" disabled={!hasNext} onClick={() => onPageChange(offset + limit)}>
+            Next
+          </Button>
+        </div>
+      </section>
+    );
+  };
+
   const renderAssignmentView = () => {
     if (listError) {
       return (
@@ -1512,7 +1611,9 @@ export function DispatchBoard({
 
       {boardMode === "assignment"
         ? renderAssignmentView()
-        : renderListOrTable()}
+        : boardMode === "table"
+          ? renderTable()
+          : renderListOrTable()}
 
       <BulkActionModal
         open={statusModalOpen}
