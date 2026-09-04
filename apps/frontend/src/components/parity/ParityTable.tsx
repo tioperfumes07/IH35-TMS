@@ -1224,7 +1224,7 @@ export function ParityTable<T>({
                       : undefined
                   }
                   onDragEnd={enableColumnReorder ? () => { setDragKey(null); setDragOverKey(null); } : undefined}
-                  className={`relative px-2 font-semibold uppercase ${
+                  className={`relative whitespace-nowrap px-2 font-semibold uppercase ${
                     enableColumnReorder ? "cursor-grab active:cursor-grabbing" : ""
                   } ${dragOverKey === key ? "outline outline-2 -outline-offset-2" : ""} ${column.className ?? ""}`}
                   style={{
