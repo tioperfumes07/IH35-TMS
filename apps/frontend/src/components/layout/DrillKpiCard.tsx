@@ -78,7 +78,7 @@ export function DrillKpiCard({
 }: DrillKpiCardProps) {
   const compact = size === "sm";
   const shell = [
-    "block w-full min-w-0 rounded-sm border bg-white text-left",
+    "block h-full w-full min-w-0 rounded-sm border bg-white text-left",
     active ? "border-slate-400" : "border-gray-200",
     compact ? "px-2 py-1 text-[11px]" : "px-3 py-2",
   ].join(" ");
