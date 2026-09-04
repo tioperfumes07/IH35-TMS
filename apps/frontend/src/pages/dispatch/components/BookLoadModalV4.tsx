@@ -162,8 +162,6 @@ type FormValues = BookLoadFormValues & {
   pickup_number: string;
   border_routing: string;
   is_sample_data: boolean;
-  cash_advance_cents: number;
-  fuel_advance_cents: number;
   factoring_company_vendor_id: string;
   accessorial_rows: AccessorialRow[];
   stops: Array<{
@@ -401,8 +399,6 @@ export function BookLoadModalV4({
       pickup_number: "",
       border_routing: "",
       is_sample_data: false,
-      cash_advance_cents: 0,
-      fuel_advance_cents: 0,
       factoring_company_vendor_id: "",
       accessorial_rows: [],
       stops: [
@@ -1109,10 +1105,11 @@ export function BookLoadModalV4({
         piece_count: numOrUndef(values.pieces),
         commodity: values.commodity || undefined,
         weight_lbs: values.weight_lbs || undefined,
-        // [HOLD-FOR-JORGE — TIER 1] send booked advances so the backend can create the pending cash-advance
-        // request (cash) / defer (fuel). Previously collected in the form but never sent.
-        cash_advance_cents: values.cash_advance_cents || undefined,
-        fuel_advance_cents: values.fuel_advance_cents || undefined,
+        // WIZ-43 (owner ruling 2026-09-04): cash & fuel advance are NOT captured at booking. A broker
+        // advance can be diesel, driver pay, or a repair — three categories, three accounts — which only
+        // Load Costs (category / vendor / paid-with / amount / Expense-or-Bill) can carry. No advance
+        // fields are sent from the wizard. The driver-side advance keeps its own
+        // request → owner-approval → settlement-deduction rails, raised elsewhere.
         hazmat: values.hazmat,
         driver_instructions_text: values.driver_instructions_text || undefined,
         notes: values.notes || undefined,
@@ -2084,15 +2081,11 @@ export function BookLoadModalV4({
                     );
                   })()}
 
+                  {/* WIZ-43 (owner ruling 2026-09-04): the "Cash advance" and "Fuel advance" MoneyInputs were
+                      removed from the wizard — a broker advance is diesel, driver pay, or a repair (three
+                      categories, three accounts) and belongs in Load Costs, not one box at booking. Factoring
+                      company stays. */}
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                      Cash advance
-                      <MoneyInput valueCents={form.watch("cash_advance_cents")} onChangeCents={(c) => form.setValue("cash_advance_cents", c ?? 0, { shouldDirty: true })} className="mt-0.5 w-full" ariaLabel="Cash advance" />
-                    </label>
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                      Fuel advance
-                      <MoneyInput valueCents={form.watch("fuel_advance_cents")} onChangeCents={(c) => form.setValue("fuel_advance_cents", c ?? 0, { shouldDirty: true })} className="mt-0.5 w-full" ariaLabel="Fuel advance" />
-                    </label>
                     <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Factoring company
                       {/*

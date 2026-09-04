@@ -2,7 +2,6 @@ import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { randomUUID } from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
-import { createCashAdvanceRequest } from "../driver-finance/cash-advance-requests.service.js";
 import { driverBillNumberFromLoadNumber } from "../driver-finance/driver-bill-number.js";
 import {
   appendSettlementLineFromDriverBillIfMissing,
@@ -166,14 +165,9 @@ export type BookLoadInput = {
   historical_import_reason?: string;
   assigned_secondary_driver_id?: string;
   team_id?: string;
-  // [HOLD-FOR-JORGE — TIER 1] Booked advances. CASH advance → a PENDING driver cash-advance request (owner-approval,
-  // recovered from settlement). FUEL advance is a truck operating cost (fuel-card) — NEVER a driver debt; deferred
-  // (captured in audit, no settlement deduction). No money columns on mdata.loads.
-  cash_advance_cents?: number;
-  fuel_advance_cents?: number;
-  // Decision 4: full recovery at next settlement (default) | amortize with a per-settlement cap.
-  cash_advance_recovery_mode?: "full" | "amortize";
-  cash_advance_recovery_cents?: number;
+  // WIZ-43 (owner ruling 2026-09-04): cash & fuel advance are no longer captured at booking (they move to
+  // Load Costs). The wizard sends no advance fields, so the booking input carries none. The driver-side
+  // advance keeps its request → owner-approval → settlement-deduction rails, raised elsewhere.
   temp_fahrenheit?: number;
   charges: BookLoadCharge[];
   stops: BookLoadStop[];
@@ -1020,14 +1014,6 @@ export async function ensureDriverBillArtifactsForLoad(
 export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
   if (input.assigned_primary_driver_id && input.team_id) {
     return { kind: "error", status: 400, payload: { error: "solo_or_team_assignment_required_not_both" } };
-  }
-
-  // [HOLD-FOR-JORGE — TIER 1] A booked CASH advance is recovered from a driver's settlement, so it REQUIRES an
-  // assigned driver. Reject up-front rather than orphaning or silently dropping the money (GUARD-recommended).
-  // [DECISION FOR JORGE: reject (this) vs. hold-until-driver-assigned — see PR.] Fuel advance has no driver
-  // dependency (it's deferred either way), so it does not gate booking.
-  if ((input.cash_advance_cents ?? 0) > 0 && !input.assigned_primary_driver_id) {
-    return { kind: "error", status: 422, payload: { error: "cash_advance_requires_driver" } };
   }
 
   return withCurrentUser(input.requestingUserUuid, async (client) => {
@@ -2197,41 +2183,11 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       if (!tripDetailsUpdate.rows[0]?.id) throw new Error("book_load_trip_details_update_failed");
     }
 
-    // [HOLD-FOR-JORGE — TIER 1] Booked CASH advance → create a PENDING driver cash-advance request (owner-approval
-    // required; status 'pending' — NOT auto-approved), linked to this load + the assigned primary driver. Reuses
-    // the existing request → owner-approval → settlement-deduction rails (no money columns on mdata.loads, no new
-    // GL math). Full recovery at the next settlement is the default (proposed_recovery_per_settlement_cents left
-    // null; an explicit per-advance override amortizes). A cash advance needs a payee, so it requires a driver.
-    if ((input.cash_advance_cents ?? 0) > 0 && input.assigned_primary_driver_id) {
-      // Decision 4: FULL recovery at the next settlement is the default (proposed_recovery_per_settlement_cents
-      // omitted ⇒ full). An explicit 'amortize' override sets a per-settlement recovery cap. The driver is
-      // guaranteed present here (the no-driver case is rejected up-front above).
-      const recoveryCapCents =
-        input.cash_advance_recovery_mode === "amortize" ? input.cash_advance_recovery_cents : undefined;
-      await createCashAdvanceRequest(client, {
-        operatingCompanyId: input.operating_company_id,
-        driverId: input.assigned_primary_driver_id,
-        actorUserId: input.requestingUserUuid,
-        body: {
-          requested_amount_cents: input.cash_advance_cents!,
-          reason: `Cash advance booked at load creation (load ${String(load.load_number ?? load.id)}).`,
-          submitted_via: "office",
-          load_id: String(load.id),
-          proposed_recovery_per_settlement_cents: recoveryCapCents,
-        },
-      });
-    }
-    // [HOLD-FOR-JORGE — TIER 1] FUEL advance is a TRUCK operating cost (fuel-card / Corpay), NEVER a driver
-    // settlement deduction (deducting it would be double-recovery). No fuel-card persistence target exists yet, so
-    // DEFER: record the intent in the audit trail and create NO driver debt.
-    if ((input.fuel_advance_cents ?? 0) > 0) {
-      await appendCrudAudit(client, input.requestingUserUuid, "dispatch.fuel_advance.deferred_no_target", {
-        load_uuid: load.id,
-        load_number: String(load.load_number ?? load.id),
-        fuel_advance_cents: input.fuel_advance_cents,
-        reason: "fuel_advance_is_truck_operating_cost_not_driver_debt_no_fuelcard_target",
-      });
-    }
+    // WIZ-43 (owner ruling 2026-09-04): booking no longer creates a cash-advance request or a fuel-advance
+    // audit line. Those were the wrong direction (a broker advance is the broker's money, not a driver loan)
+    // and belong in Load Costs, which carries category / vendor / paid-with / amount / Expense-or-Bill. The
+    // driver-side advance keeps its request → owner-approval → settlement-deduction rails, raised from bill
+    // payment, load costs, or the driver app with hub approval — those rails are untouched.
 
     if (reservationId) {
       await consumeLoadNumberReservation(client, {
