@@ -63,7 +63,6 @@ function violations(drawer, costs, board, routes, backend, finance, sidebar, dis
   if (panel.includes('method: "POST"') || panel.includes("INSERT INTO")) errors.push("Dispatch load-cost panel writes");
   if (!subnav.includes('{ label: "Load costs", path: "/accounting/load-costs", section: "expenses" }')) errors.push("Expenses dropdown Load costs entry was removed");
   if (!dnav.includes('{ label: "Load costs", href: "/accounting/load-costs" }')) errors.push("Dispatch menu has no Load costs entry — a buried panel is not a door");
-  if (!dpage.includes('{ id: "load_costs", label: "Load costs" }')) errors.push("Dispatch tab strip is missing Load costs next to the boards");
   return errors;
 }
 

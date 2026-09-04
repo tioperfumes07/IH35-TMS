@@ -37,7 +37,7 @@ const CHECKS = [
   {
     name: "InvoicesListPage: createControl holds type Select + Create",
     file: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
-    pattern: /createControl=\{[\s\S]*SelectCombobox[\s\S]*className="h-8 text-\[13px\]"[\s\S]*\+ Create/,
+    pattern: /createControl=\{[\s\S]*SelectCombobox[\s\S]*className="h-8 text-(?:xs|\[13px\])"[\s\S]*\+ Create/,
   },
   {
     name: "InvoicesListPage: batch Void uses Button danger sm",

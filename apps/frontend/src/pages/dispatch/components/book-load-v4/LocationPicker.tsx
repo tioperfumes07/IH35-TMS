@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createLocation, listLocations, type MdataLocation } from "../../../../api/mdata";
 import { Combobox } from "../../../../components/Combobox";
 import { Button } from "../../../../components/Button";
+import { CappedListNotice } from "../../../../components/CappedListNotice";
 import { useToast } from "../../../../components/Toast";
 
 type Props = {
@@ -42,11 +43,17 @@ export function LocationPicker({ operatingCompanyId, value, onChange, disabled, 
   const [newName, setNewName] = useState("");
   const [newCity, setNewCity] = useState("");
   const [newState, setNewState] = useState("");
+  const [locationSearch, setLocationSearch] = useState("");
 
-  const queryKey = ["book-load-stop-locations", operatingCompanyId];
+  const queryKey = ["book-load-stop-locations", operatingCompanyId, locationSearch];
   const locationsQuery = useQuery({
     queryKey,
-    queryFn: () => listLocations({ operating_company_id: operatingCompanyId, limit: 200 }),
+    queryFn: () =>
+      listLocations({
+        operating_company_id: operatingCompanyId,
+        limit: 200,
+        search: locationSearch.trim() || undefined,
+      }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 30_000,
   });
@@ -87,12 +94,18 @@ export function LocationPicker({ operatingCompanyId, value, onChange, disabled, 
           onChange(next, row);
         }}
         placeholder={locationsQuery.isLoading ? "Loading locations…" : "Search locations…"}
+        onSearch={setLocationSearch}
         loading={locationsQuery.isLoading}
         disabled={disabled}
         allowClear
         allowAddNew={{ label: "+ Add new location", onAdd: () => setShowCreate(true) }}
         dataTestId={dataTestId}
         size="sm"
+      />
+      <CappedListNotice
+        shown={rows.length}
+        limit={200}
+        hint="Type to search the full location list."
       />
       {locationsQuery.isError ? <p className="text-xs text-red-600">Could not load locations.</p> : null}
       {showCreate ? (

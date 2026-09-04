@@ -86,6 +86,7 @@ try {
   assertIncludes(vendorCreate, "properPersonOrPlaceName", "Vendor create payload must title-case names/addresses");
 
   const dispatch = read("apps/frontend/src/pages/Dispatch.tsx");
+  const dispatchSubNav = read("apps/frontend/src/components/dispatch/DispatchSubnav.tsx");
   // orphan-triage F1: AccountingSubNav.tsx (verified-dead, zero-consumer duplicate of the live
   // AccountingSubNavWrapper.tsx — see verify-accounting-nav.mjs Check 4) was deleted. It only ever
   // re-exported subnav-manifest.ts's SUBNAV_ITEMS, which is what the `label:` check below matches
@@ -95,7 +96,7 @@ try {
     fs.existsSync("apps/frontend/src/routes/manifest.tsx") ? read("apps/frontend/src/routes/manifest.tsx") : ""
   }`;
   const accountingPreSettlementsPage = read("apps/frontend/src/pages/accounting/AccountingPreSettlementsPage.tsx");
-  assertIncludes(dispatch, 'label: "Pre-settlements"', "Dispatch pre-settlements tab missing");
+  assertIncludes(dispatchSubNav, 'label: "Pre-settlements"', "Dispatch pre-settlements tab missing");
   assertIncludes(accountingSubNav, 'label: "Pre-settlements"', "Accounting pre-settlements tab missing");
   assertIncludes(appRoutes, 'path="/accounting/pre-settlements"', "Accounting pre-settlements route missing");
   assertIncludes(accountingPreSettlementsPage, "PreSettlementsPanel", "Accounting pre-settlements must reuse shared panel");

@@ -41,6 +41,13 @@ const COMBOBOX = path.join(ROOT, "apps/frontend/src/components/Combobox.tsx");
 // Driver PWA onboarding tour (react-joyride) — its own separate zIndex convention, unrelated to
 // office-app Combobox occlusion; see the file-header comment above for the full reasoning.
 const DRIVER_ONBOARDING_TOUR = path.join(ROOT, "apps/frontend/src/pages/driver/DriverOnboardingTour.tsx");
+// Top-pinned deploy banner; it overlaps no office-app Combobox/ReferenceSelect dropdown.
+const STALE_DEPLOY_BANNER = path.join(ROOT, "apps/frontend/src/components/StaleDeployBanner.tsx");
+// Top-right transient notification container; separate overlay tier, not a drawer/modal.
+const TOAST_CONTAINER = path.join(ROOT, "apps/frontend/src/components/Toast.tsx");
+// Modal confirmation dialog; it is a child/peer modal meant to sit above underlying UI, not a
+// drawer/modal that a Combobox dropdown opened inside would fight with.
+const MILES_INVERT_ACK_DIALOG = path.join(ROOT, "apps/frontend/src/pages/dispatch/components/book-load-v4/MilesInvertAckDialog.tsx");
 const FRONTEND_SRC = path.join(ROOT, "apps/frontend/src");
 
 function assert(cond, msg) {
@@ -90,7 +97,7 @@ function comboboxListboxZIndex() {
 
 function check() {
   const listboxZ = comboboxListboxZIndex();
-  const maxOther = maxArbitraryZIndex([COMBOBOX, DRIVER_ONBOARDING_TOUR]);
+  const maxOther = maxArbitraryZIndex([COMBOBOX, DRIVER_ONBOARDING_TOUR, STALE_DEPLOY_BANNER, TOAST_CONTAINER, MILES_INVERT_ACK_DIALOG]);
   assert(
     listboxZ >= maxOther,
     `Combobox listbox zIndex (${listboxZ}) is below the highest z-[N] used elsewhere in the frontend (${maxOther}). ` +

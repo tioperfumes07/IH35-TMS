@@ -7,7 +7,9 @@ import {
 } from "../../../../api/dispatch";
 import { listVendors, searchCustomersAutocomplete } from "../../../../api/mdata";
 import { Combobox } from "../../../../components/Combobox";
+import { ReferenceSelect, type ReferenceOption } from "../../../../components/parity/ReferenceSelect";
 import { Button } from "../../../../components/Button";
+import { CappedListNotice } from "../../../../components/CappedListNotice";
 import { useToast } from "../../../../components/Toast";
 
 type Props = {
@@ -36,6 +38,7 @@ export function InterchangeTrailerPicker({ operatingCompanyId, value, onChange, 
   const [newCounterpartyType, setNewCounterpartyType] = useState<"customer" | "vendor">("customer");
   const [newCounterpartyId, setNewCounterpartyId] = useState<string | null>(null);
   const [counterpartySearch, setCounterpartySearch] = useState("");
+  const [vendorSearch, setVendorSearch] = useState("");
 
   const trailersQuery = useQuery({
     queryKey: ["interchange-trailers", operatingCompanyId],
@@ -56,8 +59,8 @@ export function InterchangeTrailerPicker({ operatingCompanyId, value, onChange, 
     staleTime: 30_000,
   });
   const vendorsQuery = useQuery({
-    queryKey: ["interchange-counterparty-vendors", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 200 }),
+    queryKey: ["interchange-counterparty-vendors", operatingCompanyId, vendorSearch],
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 1000, search: vendorSearch }),
     enabled: Boolean(operatingCompanyId) && showCreate && newCounterpartyType === "vendor",
     staleTime: 30_000,
   });
@@ -108,7 +111,7 @@ export function InterchangeTrailerPicker({ operatingCompanyId, value, onChange, 
         loading={trailersQuery.isLoading}
         disabled={disabled}
         allowClear
-        allowAddNew={{ label: "+ New interchange trailer", onAdd: () => setShowCreate(true) }}
+        allowAddNew={{ label: "+ Create interchange trailer", onAdd: () => setShowCreate(true) }}
         dataTestId="interchange-trailer-picker"
       />
       {trailersQuery.isError ? <p className="text-xs text-red-600">Could not load interchange trailers.</p> : null}
@@ -150,18 +153,42 @@ export function InterchangeTrailerPicker({ operatingCompanyId, value, onChange, 
           <label className="block text-xs font-semibold text-gray-600">
             {newCounterpartyType === "customer" ? "Customer" : "Vendor"} (owner of this trailer)
             <div className="mt-0.5">
-              <Combobox
-                size={size}
-                options={counterpartyOptions}
-                value={newCounterpartyId}
-                onChange={(next) => setNewCounterpartyId(next ?? null)}
-                onSearch={newCounterpartyType === "customer" ? setCounterpartySearch : undefined}
-                placeholder={`Select ${newCounterpartyType}`}
-                loading={newCounterpartyType === "customer" ? customersQuery.isLoading : vendorsQuery.isLoading}
-                clearCommittedOnEdit
-                dataField="interchange_counterparty_id"
-                dataTestId="interchange-counterparty-picker"
-              />
+              {newCounterpartyType === "vendor" ? (
+                <ReferenceSelect
+                  size={size}
+                  createKind="vendor"
+                  operatingCompanyId={operatingCompanyId}
+                  options={counterpartyOptions as ReferenceOption[]}
+                  value={newCounterpartyId}
+                  onChange={(next) => setNewCounterpartyId(next)}
+                  onSearch={setVendorSearch}
+                  placeholder="Select vendor"
+                  loading={vendorsQuery.isLoading}
+                  addNewLabel="+ Add new vendor"
+                  onOptionCreated={() => void vendorsQuery.refetch()}
+                />
+              ) : (
+                <Combobox
+                  size={size}
+                  options={counterpartyOptions}
+                  value={newCounterpartyId}
+                  onChange={(next) => setNewCounterpartyId(next ?? null)}
+                  onSearch={setCounterpartySearch}
+                  placeholder="Select customer"
+                  loading={customersQuery.isLoading}
+                  clearCommittedOnEdit
+                  dataField="interchange_counterparty_id"
+                  dataTestId="interchange-counterparty-picker"
+                />
+              )}
+              {newCounterpartyType === "vendor" ? (
+                <CappedListNotice
+                  shown={vendorsQuery.data?.vendors?.length ?? 0}
+                  limit={200}
+                  total={vendorsQuery.data?.total ?? null}
+                  hint="Type to search the full vendor list."
+                />
+              ) : null}
             </div>
           </label>
           <div className="flex gap-1">
