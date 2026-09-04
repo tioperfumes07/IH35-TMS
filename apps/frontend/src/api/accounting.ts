@@ -2157,6 +2157,9 @@ export type MoneyProofTrail = {
   document_type: MoneyProofDocumentType;
   document_id: string;
   display_id: string | null;
+  /** LOAD-COSTS-COMPLETE item (4) -- lifecycle status of the underlying document when the config
+   * exposes one (currently driver_bill); null for document types that don't carry a status. */
+  status: string | null;
   trace_no: string;
   trace_key: string;
   postings: Array<{

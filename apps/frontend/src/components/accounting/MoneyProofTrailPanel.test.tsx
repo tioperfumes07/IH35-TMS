@@ -7,11 +7,11 @@ import { MoneyProofTrailPanel } from "./MoneyProofTrailPanel";
 const getMoneyProofTrail = vi.fn();
 vi.mock("../../api/accounting", () => ({ getMoneyProofTrail: (...args: unknown[]) => getMoneyProofTrail(...args) }));
 
-function renderPanel() {
+function renderPanel(documentType: "expense" | "driver_bill" = "expense") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <MemoryRouter><QueryClientProvider client={client}>
-      <MoneyProofTrailPanel operatingCompanyId="company" documentType="expense" documentId="expense" />
+      <MoneyProofTrailPanel operatingCompanyId="company" documentType={documentType} documentId={documentType} />
     </QueryClientProvider></MemoryRouter>,
   );
 }
@@ -35,5 +35,14 @@ describe("MoneyProofTrailPanel", () => {
     getMoneyProofTrail.mockResolvedValue({ document_type: "expense", document_id: "expense", display_id: "EXP-1", trace_no: "7", trace_key: "EX-000007", postings: [] });
     renderPanel();
     expect(await screen.findByText("No ledger posting exists for this document.")).toBeTruthy();
+  });
+
+  // LOAD-COSTS-COMPLETE item (4) -- an open driver bill has no posting BY DESIGN (driver pay posts
+  // at settlement); the generic "no posting" text reads as a defect, so this must say why instead.
+  it("tells the driver why an open tour's proof trail has no posting yet, instead of reading as a gap", async () => {
+    getMoneyProofTrail.mockResolvedValue({ document_type: "driver_bill", document_id: "driver_bill", display_id: "DB-1", status: "open", trace_no: "7", trace_key: "DB-000007", postings: [] });
+    renderPanel("driver_bill");
+    expect(await screen.findByText("Not yet posted — this tour is open. The entry is written at settlement.")).toBeTruthy();
+    expect(screen.queryByText("No ledger posting exists for this document.")).toBeNull();
   });
 });

@@ -11,7 +11,10 @@ export const MONEY_PROOF_DOCUMENTS = {
   bill_payment: { table: "accounting.bill_payments", sourceType: "bill_payment", labelSql: "COALESCE(check_number, reference_number)" },
   credit_memo: { table: "accounting.credit_memos", sourceType: "credit_memo", labelSql: "display_id" },
   vendor_credit: { table: "accounting.vendor_credits", sourceType: "vendor_credit", labelSql: "display_id" },
-  driver_bill: { table: "driver_finance.driver_bills", sourceType: "driver_bill", labelSql: "bill_number" },
+  // LOAD-COSTS-COMPLETE item (4) (owner order 2026-09-04) -- an open driver bill has NO journal
+  // entry yet by design (driver pay posts at settlement, not at bill creation); statusColumn lets
+  // the frontend tell "not yet posted, expected" apart from a real posting gap.
+  driver_bill: { table: "driver_finance.driver_bills", sourceType: "driver_bill", labelSql: "bill_number", statusColumn: "status" },
   settlement: { table: "driver_finance.driver_settlements", sourceType: "settlement", linkedType: "driver_settlement", labelSql: "display_id" },
 } as const;
 
@@ -29,8 +32,10 @@ export async function getMoneyProofTrail(
 ) {
   const config = MONEY_PROOF_DOCUMENTS[documentType];
   const linkedType = "linkedType" in config ? config.linkedType : config.sourceType;
+  const statusColumn = "statusColumn" in config ? config.statusColumn : null;
   const document = await client.query(
-    `SELECT id::text, trace_no::text, trace_key, ${config.labelSql}::text AS display_id
+    `SELECT id::text, trace_no::text, trace_key, ${config.labelSql}::text AS display_id,
+            ${statusColumn ? `${statusColumn}::text` : "NULL::text"} AS status
        FROM ${config.table}
       WHERE id = $1::uuid AND operating_company_id = $2::uuid
       LIMIT 1`,
@@ -64,6 +69,7 @@ export async function getMoneyProofTrail(
     document_type: documentType,
     document_id: documentId,
     display_id: document.rows[0].display_id == null ? null : String(document.rows[0].display_id),
+    status: document.rows[0].status == null ? null : String(document.rows[0].status),
     trace_no: String(document.rows[0].trace_no ?? ""),
     trace_key: traceKey,
     postings: postings.rows.map((row) => ({

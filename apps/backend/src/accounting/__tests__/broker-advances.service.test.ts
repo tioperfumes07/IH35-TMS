@@ -119,6 +119,7 @@ const DRIVER_BILL_ID = "66666666-6666-6666-6666-666666666666";
 const DRIVER_ID = "77777777-7777-7777-7777-777777777777";
 const PAYABLE_ACCOUNT_ID = "88888888-8888-8888-8888-888888888888";
 const RECEIVABLE_ACCOUNT_ID = "99999999-9999-9999-9999-999999999999";
+const LIABILITY_ACCOUNT_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 
 // LOAD-COSTS-COMPLETE item (2) (owner ruling 2026-09-04): "the broker might send the driver
 // money and we apply it as a bill payment to the driver."
@@ -133,13 +134,18 @@ describe("applyBrokerAdvanceToDriverBillInClientTx — LOAD-COSTS-COMPLETE item 
     billLoadId?: string;
     grossAmountCents?: number;
     priorDisbursedCoveredCents?: number;
+    /** LOAD-COSTS-COMPLETE item (4) -- defaults to "a posted invoice already exists" so every
+     * pre-existing test above keeps its original AR-credit behavior unless it opts into the
+     * pre-invoice/still-proforma scenario. */
+    appliedToInvoiceId?: string | null;
+    invoiceStatus?: string | null;
   } = {}) {
     const calls: { sql: string; values: unknown[] }[] = [];
     const client = {
       query: vi.fn(async (sql: string, values: unknown[] = []) => {
         calls.push({ sql, values });
         if (/information_schema\.columns/.test(sql)) return { rows: [{ ok: overrides.columnsExist ?? true }] };
-        if (/SELECT category, amount_cents::text/.test(sql)) {
+        if (/FROM accounting\.broker_advances ba/.test(sql)) {
           return {
             rows: [
               {
@@ -150,6 +156,8 @@ describe("applyBrokerAdvanceToDriverBillInClientTx — LOAD-COSTS-COMPLETE item 
                 load_id: LOAD_ID,
                 instrument_reference: "CMK-88213456",
                 received_at: "2026-09-04",
+                applied_to_invoice_id: overrides.appliedToInvoiceId === undefined ? LIVE_INVOICE_ID : overrides.appliedToInvoiceId,
+                invoice_status: overrides.invoiceStatus === undefined ? "sent" : overrides.invoiceStatus,
               },
             ],
           };
@@ -173,6 +181,9 @@ describe("applyBrokerAdvanceToDriverBillInClientTx — LOAD-COSTS-COMPLETE item 
         if (/SELECT id FROM catalogs\.accounts WHERE.*account_number = \$2/.test(sql)) {
           const accountNumber = values[1];
           return { rows: [{ id: accountNumber === "2200" ? PAYABLE_ACCOUNT_ID : RECEIVABLE_ACCOUNT_ID }] };
+        }
+        if (/FROM accounting\.chart_of_accounts_roles/.test(sql)) {
+          return { rows: [{ account_id: LIABILITY_ACCOUNT_ID }] };
         }
         if (/UPDATE accounting\.broker_advances\s+SET\s+disbursed_to_driver_bill_id/.test(sql)) return { rows: [] };
         return { rows: [] };
@@ -257,5 +268,31 @@ describe("applyBrokerAdvanceToDriverBillInClientTx — LOAD-COSTS-COMPLETE item 
     // Links back to the SAME broker_advances row -- one instrument, two sides, one trace.
     const linkCall = calls.find((c) => /UPDATE accounting\.broker_advances\s+SET\s+disbursed_to_driver_bill_id/.test(c.sql));
     expect(linkCall!.values).toEqual([NEW_BROKER_ADVANCE_ID, DRIVER_BILL_ID, 50000, "je-1"]);
+  });
+
+  // LOAD-COSTS-COMPLETE item (4) (owner correction 2026-09-04) -- crediting Accounts Receivable
+  // unconditionally, including when no invoice exists for the load yet, posted against a
+  // receivable that isn't there. Pre-invoice, the credit must land on the Broker/Customer Advance
+  // Liability role instead.
+  it("credits the Broker/Customer Advance Liability role, not Accounts Receivable, when no invoice exists yet for the load", async () => {
+    createJournalEntryOnClient.mockClear();
+    const { client } = makeDisburseClient({ appliedToInvoiceId: null, invoiceStatus: null });
+    await applyBrokerAdvanceToDriverBillInClientTx(client as never, validDisburseInput);
+    const [, input] = createJournalEntryOnClient.mock.calls[0]!;
+    const credit = input.postings.find((p: { debit_or_credit: string }) => p.debit_or_credit === "credit");
+    expect(credit).toMatchObject({ account_id: LIABILITY_ACCOUNT_ID, amount_cents: 50000 });
+    expect(credit.account_id).not.toBe(RECEIVABLE_ACCOUNT_ID);
+  });
+
+  // Same defect, second shape: an invoice row exists but is still a non-posting PROFORMA (ND-INV-01
+  // -- "Pro Forma is NON-POSTING ... Official invoice posts A/R only after POD convert"), so there is
+  // STILL no posted receivable to net against even though applied_to_invoice_id is set.
+  it("credits the Broker/Customer Advance Liability role when the only invoice is still proforma (non-posting)", async () => {
+    createJournalEntryOnClient.mockClear();
+    const { client } = makeDisburseClient({ appliedToInvoiceId: LIVE_INVOICE_ID, invoiceStatus: "proforma" });
+    await applyBrokerAdvanceToDriverBillInClientTx(client as never, validDisburseInput);
+    const [, input] = createJournalEntryOnClient.mock.calls[0]!;
+    const credit = input.postings.find((p: { debit_or_credit: string }) => p.debit_or_credit === "credit");
+    expect(credit).toMatchObject({ account_id: LIABILITY_ACCOUNT_ID, amount_cents: 50000 });
   });
 });

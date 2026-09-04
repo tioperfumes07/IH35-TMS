@@ -25,8 +25,9 @@ vi.mock("../../api/accounting", async () => {
     createVendorBill: (...args: unknown[]) => createVendorBill(...args),
   };
 });
+const listCatalogAccounts = vi.fn().mockResolvedValue({ accounts: [] });
 vi.mock("../../api/catalog-accounts", () => ({
-  listCatalogAccounts: vi.fn().mockResolvedValue({ accounts: [] }),
+  listCatalogAccounts: (...args: unknown[]) => listCatalogAccounts(...args),
 }));
 vi.mock("../../api/mdata", () => ({
   listVendors: vi.fn().mockResolvedValue({ vendors: [] }),
@@ -51,13 +52,13 @@ const load = {
   assigned_primary_driver_name: "Test Driver",
 } as unknown as LoadDetail;
 
-function renderTab() {
+function renderTab(opts: { canEdit?: boolean; canEditReason?: string } = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
         <ToastProvider>
-          <LoadDetailCostsTab load={load} canEdit={true} />
+          <LoadDetailCostsTab load={load} canEdit={opts.canEdit ?? true} canEditReason={opts.canEditReason} />
         </ToastProvider>
       </MemoryRouter>
     </QueryClientProvider>
@@ -144,5 +145,111 @@ describe("LoadDetailCostsTab — SET-15 advance received", () => {
     expect(await screen.findByTestId("load-cost-saved-advance")).toHaveTextContent("Advance · Diesel · Comchek CHK-9931");
     // $5,000.00 revenue - $0 costs - $0 driver pay = margin unaffected by the $150.00 advance.
     expect(screen.getByText("Approximate margin on 13508")).toBeInTheDocument();
+  });
+});
+
+// LOAD-COSTS-COMPLETE item (2) (owner order 2026-09-04) -- `{canEdit ? ... : null}` used to delete
+// every create control silently and degrade the tab to a read-only totals panel with no explanation.
+// That is the defect the owner hit; the tab must say why instead of going quiet.
+describe("LoadDetailCostsTab — LOAD-COSTS-COMPLETE item (2) canEdit gate", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    listExpenses.mockResolvedValue({ rows: [] });
+    listBills.mockResolvedValue({ rows: [] });
+    listBrokerAdvances.mockResolvedValue({ rows: [] });
+  });
+
+  it("shows an honest reason instead of silently hiding every create control when canEdit is false", async () => {
+    renderTab({ canEdit: false });
+    expect(await screen.findByTestId("load-costs-readonly-reason")).toHaveTextContent(
+      "You don't have permission to add costs to this load right now."
+    );
+    expect(screen.queryByTestId("load-costs-add-top")).not.toBeInTheDocument();
+    // The totals panel is NOT part of the gate -- it must keep rendering regardless of canEdit.
+    expect(screen.getByTestId("load-costs-totals")).toBeInTheDocument();
+  });
+
+  it("uses the caller-supplied reason when one is given", async () => {
+    renderTab({ canEdit: false, canEditReason: "This load is closed and can no longer take new costs." });
+    expect(await screen.findByTestId("load-costs-readonly-reason")).toHaveTextContent(
+      "This load is closed and can no longer take new costs."
+    );
+  });
+});
+
+// LOAD-COSTS-COMPLETE item (1) (owner order 2026-09-04) -- "+ Fuel advance" is cash the company
+// hands a B1 company driver for fuel: a straight company expense (DR Fuel Expense / CR bank), never
+// a receivable, never a settlement deduction, never a driver_finance.* write.
+describe("LoadDetailCostsTab — LOAD-COSTS-COMPLETE item (1) fuel advance", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    listExpenses.mockResolvedValue({ rows: [] });
+    listBills.mockResolvedValue({ rows: [] });
+    listBrokerAdvances.mockResolvedValue({ rows: [] });
+    listCatalogAccounts.mockResolvedValue({
+      accounts: [
+        { id: "acct-fuel", account_number: "6100", account_name: "Fuel Expense", account_type: "Expense" },
+        { id: "acct-bank", account_number: "1000", account_name: "Operating Bank", account_type: "Bank" },
+        { id: "acct-card", account_number: "1010", account_name: "Fuel Card", account_type: "Other Current Asset" },
+      ],
+    });
+    createExpense.mockResolvedValue({ expense_id: "exp-1", posting_status: "posted", journal_entry_id: "je-1" });
+  });
+
+  it("+ Fuel advance opens pre-set to the auto-resolved Fuel account and a bank-only payment picker, and Save all posts it as a driver-linked company expense", async () => {
+    renderTab();
+
+    fireEvent.click(await screen.findByTestId("load-costs-add-fuel-advance-top"));
+
+    // A second row was added (the pre-existing blank draft plus this one) already in fuel_advance mode.
+    const categoryLabels = await screen.findAllByTestId("load-cost-field-fuel-category");
+    expect(categoryLabels[categoryLabels.length - 1]).toHaveTextContent("6100 · Fuel Expense (auto)");
+    const bankPickers = screen.getAllByTestId("load-cost-field-fuel-bank");
+    const bankPicker = bankPickers[bankPickers.length - 1];
+    // Only the bank account is offered, never the fuel card (an "Other Current Asset").
+    expect(bankPicker.textContent).toContain("Operating Bank");
+    expect(bankPicker.textContent).not.toContain("Fuel Card");
+
+    fireEvent.change(bankPicker, { target: { value: "acct-bank" } });
+    const amountInputs = screen.getAllByTestId("load-cost-field-amount");
+    fireEvent.change(amountInputs[amountInputs.length - 1].querySelector("input")!, { target: { value: "200.00" } });
+
+    fireEvent.click(screen.getByTestId("load-costs-save-all"));
+
+    await waitFor(() => expect(createExpense).toHaveBeenCalledTimes(1));
+    expect(createExpense).toHaveBeenCalledWith(
+      "5c854333-6ea5-4faa-af31-67cb272fef80",
+      expect.objectContaining({
+        category_account_id: "acct-fuel",
+        payment_account_uuid: "acct-bank",
+        driver_id: "driver-1",
+        load_id: "load-1",
+        amount_cents: 20000,
+      })
+    );
+    // Never a vendor bill, never a broker advance, never touching driver_finance.
+    expect(createVendorBill).not.toHaveBeenCalled();
+    expect(createBrokerAdvance).not.toHaveBeenCalled();
+  });
+
+  it("blocks save with a specific reason when no driver is assigned to the load", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <ToastProvider>
+            <LoadDetailCostsTab load={{ ...load, assigned_primary_driver_id: null } as unknown as LoadDetail} canEdit={true} />
+          </ToastProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    fireEvent.click(await screen.findByTestId("load-costs-add-fuel-advance-top"));
+    fireEvent.click(screen.getByTestId("load-costs-save-all"));
+
+    await waitFor(() =>
+      expect(screen.getAllByTestId("load-cost-hint").some((el) => el.textContent === "Assign a driver to this load before recording a fuel advance.")).toBe(true)
+    );
+    expect(createExpense).not.toHaveBeenCalled();
   });
 });

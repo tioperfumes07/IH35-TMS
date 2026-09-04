@@ -20,6 +20,7 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { createJournalEntryOnClient } from "./journal-entries.service.js";
 import { findConflictingInvoiceForLoad } from "./from-load.js";
+import { resolveRoleAccount } from "./coa-roles/resolver.service.js";
 
 const DRIVER_SETTLEMENTS_PAYABLE_ACCOUNT_NUMBER = "2200";
 const ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER = "1100";
@@ -195,10 +196,21 @@ async function resolveAccountId(client: Queryable, operatingCompanyId: string, a
  * ALREADY-EXISTING driver_bills row still owes; it creates no new liability anywhere.
  *
  * Double entry, through journal-entries.service, or it does not post (owner's own words) --
- * DR Driver Settlements Payable (2200) / CR Accounts Receivable (1100). No cash account moves:
- * economically the broker's direct payment to the driver simultaneously reduces what the
- * customer/broker owes us AND what we owe the driver, netting through a third party with zero
- * cash of ours touched.
+ * DR Driver Settlements Payable (2200) / CR (Accounts Receivable OR Broker/Customer Advance
+ * Liability -- see below). No cash account moves: economically the broker's direct payment to the
+ * driver simultaneously reduces what the customer/broker owes us AND what we owe the driver,
+ * netting through a third party with zero cash of ours touched.
+ *
+ * LOAD-COSTS-COMPLETE item (4) (owner correction 2026-09-04): the credit leg is CONDITIONAL on
+ * whether an invoice exists for this load yet. Crediting Accounts Receivable unconditionally --
+ * including when broker_advances.applied_to_invoice_id IS NULL -- posted against a receivable that
+ * does not exist yet (this load's own file comment already called that state "honest": "an honest
+ * 'received before first pickup' state"). Pre-invoice, this nets against the
+ * broker_customer_advance_liability role instead (ND-INV-01's purpose-built, previously-orphaned
+ * role -- admitted at the DB CHECK level and in the frontend CoaRoles enum since ND-INV-01 but never
+ * wired into the backend resolver until this fix); buildInvoiceFromLoad (from-load.ts)
+ * reclassifies it into Accounts Receivable the moment an invoice is first minted for the load, per
+ * the §3 two-event latch.
  */
 export async function applyBrokerAdvanceToDriverBillInClientTx(
   client: Queryable,
@@ -232,10 +244,16 @@ export async function applyBrokerAdvanceToDriverBillInClientTx(
     load_id: string;
     instrument_reference: string;
     received_at: string;
+    applied_to_invoice_id: string | null;
+    invoice_status: string | null;
   }>(
-    `SELECT category, amount_cents::text, disbursed_amount_cents::text, voided_at::text, load_id::text, instrument_reference, received_at::date::text AS received_at
-       FROM accounting.broker_advances
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+    `SELECT ba.category, ba.amount_cents::text, ba.disbursed_amount_cents::text, ba.voided_at::text,
+            ba.load_id::text, ba.instrument_reference, ba.received_at::date::text AS received_at,
+            ba.applied_to_invoice_id::text, inv.status AS invoice_status
+       FROM accounting.broker_advances ba
+       LEFT JOIN accounting.invoices inv
+         ON inv.id = ba.applied_to_invoice_id AND inv.operating_company_id = ba.operating_company_id
+      WHERE ba.id = $1::uuid AND ba.operating_company_id = $2::uuid
       LIMIT 1`,
     [input.brokerAdvanceId, input.operatingCompanyId]
   );
@@ -287,7 +305,20 @@ export async function applyBrokerAdvanceToDriverBillInClientTx(
   }
 
   const payableAccountId = await resolveAccountId(client, input.operatingCompanyId, DRIVER_SETTLEMENTS_PAYABLE_ACCOUNT_NUMBER);
-  const receivableAccountId = await resolveAccountId(client, input.operatingCompanyId, ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER);
+  // LOAD-COSTS-COMPLETE item (4) (owner correction 2026-09-04): only net against Accounts
+  // Receivable when a receivable ACTUALLY EXISTS for this load. `applied_to_invoice_id` alone is not
+  // enough -- ND-INV-01's proforma invoice is explicitly NON-POSTING ("Pro Forma is NON-POSTING
+  // (status=proforma). Official invoice posts A/R only after POD convert" -- from-load.ts /
+  // proforma-convert.service.ts), so a load whose only invoice is still a proforma has NO A/R row to
+  // reduce either. Pre-invoice AND pre-conversion both land on the Broker/Customer Advance Liability
+  // role; a receivable only exists once the invoice has left proforma status.
+  const hasPostedReceivable = advance.applied_to_invoice_id != null && advance.invoice_status !== "proforma" && advance.invoice_status !== "void";
+  const creditAccountId = hasPostedReceivable
+    ? await resolveAccountId(client, input.operatingCompanyId, ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER)
+    : await resolveRoleAccount(client as never, input.operatingCompanyId, "broker_customer_advance_liability");
+  const creditDescription = hasPostedReceivable
+    ? "Receivable reduced -- broker prepaid this portion directly to the driver"
+    : "Customer-deposit liability recorded -- no posted receivable exists yet for this load (no invoice, or still proforma); reclassify into Accounts Receivable once the invoice posts A/R";
 
   const je = await createJournalEntryOnClient(
     client as never,
@@ -306,10 +337,10 @@ export async function applyBrokerAdvanceToDriverBillInClientTx(
           description: "Driver bill settled by broker's direct advance to the driver",
         },
         {
-          account_id: receivableAccountId,
+          account_id: creditAccountId,
           debit_or_credit: "credit",
           amount_cents: disbursedAmountCents,
-          description: "Receivable reduced -- broker prepaid this portion directly to the driver",
+          description: creditDescription,
         },
       ],
     },

@@ -28,4 +28,24 @@ describe("money proof trail", () => {
     await expect(getMoneyProofTrail({ query }, "company", "invoice", "missing")).resolves.toBeNull();
     expect(query).toHaveBeenCalledTimes(1);
   });
+
+  // LOAD-COSTS-COMPLETE item (4) -- an open driver bill has no posting BY DESIGN (driver pay posts
+  // at settlement). The frontend needs the bill's own status to tell that apart from a real gap.
+  it("driver_bill selects and returns its own status column so an unposted-but-open bill is distinguishable", async () => {
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [{ id: "db-1", trace_no: "7", trace_key: "DB-000007", display_id: "DB-1", status: "open" }] })
+      .mockResolvedValueOnce({ rows: [] });
+    const proof = await getMoneyProofTrail({ query }, "company", "driver_bill", "db-1");
+    expect(proof).toMatchObject({ status: "open", postings: [] });
+    expect(query.mock.calls[0][0]).toContain("status::text");
+  });
+
+  it("a document type with no statusColumn returns status: null rather than guessing a column name", async () => {
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [{ id: "exp-1", trace_no: "1", trace_key: "EX-000001", display_id: "EXP-1" }] })
+      .mockResolvedValueOnce({ rows: [] });
+    const proof = await getMoneyProofTrail({ query }, "company", "expense", "exp-1");
+    expect(proof).toMatchObject({ status: null });
+    expect(query.mock.calls[0][0]).toContain("NULL::text AS status");
+  });
 });
