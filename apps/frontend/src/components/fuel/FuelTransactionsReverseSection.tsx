@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { getFuelTransactions } from "../../api/fuelPlanner";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatMoneyCents } from "../dispatch/constants";
-import { EntityLink } from "../shared/EntityLink";
+import { EntityLink, resolveEntityRoute } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -49,6 +50,7 @@ export function FuelTransactionsReverseSection({
 }: Props) {
   const filterKey = Object.keys(filter)[0] as keyof Filter;
   const filterValue = Object.values(filter)[0] as string;
+  const navigate = useNavigate();
   const fuelQ = useQuery({
     queryKey: ["fuel", "reverse", "transactions", operatingCompanyId, filter],
     queryFn: () => getFuelTransactions(operatingCompanyId, { ...filter }),
@@ -58,9 +60,17 @@ export function FuelTransactionsReverseSection({
   // failed refetch. Never render that stale payload beside the failure state:
   // operators must not mistake cached linkage for a current successful read.
   const rows = fuelQ.isError ? [] : (fuelQ.data?.transactions ?? []);
+  // DRV-12: "the large boxes ... go NOWHERE when clicked" -- only the small "Open Fuel History"
+  // corner link navigated. Same FleetTable.tsx row-onClick pattern; EntityLink's own onClick
+  // already stopPropagation()s so the corner link isn't double-navigated.
+  const openRoute = resolveEntityRoute(FUEL_HISTORY_KIND[filterKey], filterValue);
 
   return (
-    <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
+    <div
+      className={`space-y-2 rounded-sm border border-gray-200 bg-white p-3 ${openRoute ? "cursor-pointer hover:bg-gray-50" : ""}`}
+      onClick={openRoute ? () => navigate(openRoute) : undefined}
+      data-testid={testId}
+    >
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-xs font-semibold text-slate-900">
           Fuel transactions
