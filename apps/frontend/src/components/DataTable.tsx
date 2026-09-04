@@ -169,7 +169,7 @@ export function DataTable<T>({
         />
       </div> : null}
       <table className="w-full table-fixed text-left" style={{ fontSize: typography.tableRow }}>
-        <thead className="bg-gray-50">
+        <thead style={{ backgroundColor: colors.tableHeaderBg, color: colors.tableHeaderText }} data-table-header="locked">
           <tr style={{ height: spacing.tableHeaderHeight }}>
             {visibleColumns.map((column) => {
               const a = resolveAlign(column);
@@ -183,12 +183,18 @@ export function DataTable<T>({
                       : "none"
                     : undefined
                 }
-                className={`font-semibold uppercase text-gray-600 ${a.textClass} ${a.numeric ? "tabular-nums" : ""} ${column.className ?? ""}`}
+                className={`font-semibold uppercase ${a.textClass} ${a.numeric ? "tabular-nums" : ""} ${column.className ?? ""}`}
                 style={{
                   paddingLeft: spacing.tableCellPaddingX,
                   paddingRight: spacing.tableCellPaddingX,
-                  fontSize: typography.kpiLabel,
+                  // GLB-02 (owner 2026-09-03): column headers must match ParityTable's own thead
+                  // exactly (docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md) -- this table was still on
+                  // bg-gray-50/text-gray-600/9px (typography.kpiLabel), a second, inconsistent
+                  // header look next to ParityTable's locked navy/white 11px. One token, everywhere.
+                  fontSize: typography.panelHeader,
                   letterSpacing: typography.tightUpper,
+                  backgroundColor: colors.tableHeaderBg,
+                  color: colors.tableHeaderText,
                 }}
               >
                 {column.sortable ? (
