@@ -9,7 +9,9 @@ const BACKEND = "apps/backend/src/accounting/load-costs-board.routes.ts";
 // Rate Loaded · Loaded Pay · Empty Miles · Rate Empty · Deadhead Pay · Gross. Replaces the prior
 // locked 11-column set (Pickup date/Projected delivery/Delivered/Route and crew/Costs/Driver/Margin)
 // by owner order -- this guard was rewritten in the SAME commit as the redesign, per standing rule
-// "any tab/column redesign updates its own locked-manifest guard in the same PR."
+// "any tab/column redesign updates its own locked-manifest guard in the same PR." Rewritten again
+// (spec 09-04-2026-Claude-Coder-1-Load-Costs-Board-19-Columns.md) to require SERVER-SIDE sort on all
+// 19, a footing totals row, and the exact §2.2 four-branch Status wording.
 const IDS = [
   "load-costs-shell", "load-costs-back", "load-costs-title", "load-costs-topbar",
   "load-costs-pill-in_motion", "load-costs-pill-delivered_open", "load-costs-pill-all_open", "load-costs-pill-this_week",
@@ -28,20 +30,29 @@ const COLUMN_ORDER = [
   "short-miles", "rate-loaded", "loaded-pay", "empty-miles", "rate-empty", "deadhead-pay", "gross",
 ];
 
+// Every one of the 19 frontend column keys must be a server sort key too (spec §3 / DoD-2): "every
+// one of the 19 is server-side sortable... A column the owner cannot sort is not delivered."
+const SORT_KEYS = [
+  "load", "unit", "driver_name", "pu_date", "del_date", "status", "revenue",
+  "late_fee", "lumper", "fuel", "repairs_maintenance", "other",
+  "short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay", "gross",
+];
+
 function violations(board, backend) {
   const errors = [];
   for (const id of IDS) if (!board.includes(`"${id}"`)) errors.push(`missing ${id}`);
   const offsets = COLUMN_ORDER.map((id) => board.indexOf(`testId: "col-${id}"`));
   if (offsets.some((offset) => offset < 0) || offsets.some((offset, index) => index > 0 && offset <= offsets[index - 1])) errors.push("nineteen columns are not declared in locked left-to-right order");
-  // Internal (client-side) sort, not server/external -- item (3)'s 13 new numeric/derived columns
-  // (Short Miles, rates, pay splits) each carry their own sortValue extractor; a server sort key per
-  // column would have to grow in lockstep by hand and is not the contract here.
-  if (!board.includes("<ParityTable") || !board.includes("enableColumnReorder") || !board.includes("enableColumnResize") || board.includes('sortMode="external"')) errors.push("board is not a reorderable, resizable, internally-sorted ParityTable");
+  // Spec §3/DoD-2: SERVER-side sort, controlled (sortKey/sortDirection/onSortChange all wired) with
+  // sortMode="external" -- ParityTable must never re-order rows itself on this board.
+  if (!board.includes("<ParityTable") || !board.includes("enableColumnReorder") || !board.includes("enableColumnResize") || !board.includes('sortMode="external"') || !board.includes("onSortChange") || !board.includes("sortKey={sortKey}") || !board.includes("sortDirection={sortDirection}")) errors.push("board is not a reorderable, resizable, server-sorted (external) ParityTable");
+  for (const key of SORT_KEYS) if (!backend.includes(`"${key}"`)) errors.push(`backend load_costs_sort enum is missing server sort key: ${key}`);
   if (!board.includes("<DrillKpiCard") || (board.match(/<DrillKpiCard/g) ?? []).length !== 6) errors.push("six KPIs are not DrillKpiCard buttons");
   if (!board.includes("scheduled_delivery_at") || !board.includes("actual_delivery_at") || !board.includes('actual_delivery_at ? formatDateUS(r.actual_delivery_at) : "—"')) errors.push("Del Date is not the truthful actual-delivery stop date");
-  // Status = SERVICE performance (On Time / Late), computed from actual vs scheduled delivery --
-  // NOT the load's lifecycle state (owner order 2026-09-04, explicit correction from the prior design).
-  if (!board.includes("function serviceStatus") || !board.includes('"On Time"') || !board.includes('"Late"')) errors.push("Status column is not computed as On Time / Late service performance");
+  // Status = SERVICE performance (In transit / On Time / Late / Delivered — no appointment on file),
+  // computed from actual vs scheduled delivery -- NOT the load's lifecycle state (owner order
+  // 2026-09-04). Spec §2.2's fourth branch is mandatory: never render "On Time" with no appointment.
+  if (!board.includes("function serviceStatus") || !board.includes('"On Time"') || !board.includes('"Late"') || !board.includes('"In transit"') || !board.includes("Delivered — no appointment on file")) errors.push("Status column is not computed as the four-branch service-performance state (spec §2.2)");
   if (!board.includes('backgroundColor: "#14314F"') || !board.includes('color: "#FFFFFF"')) errors.push("locked navy/white table header missing");
   // Drafts never shown; voided (cancelled) hidden by default, toggle-able.
   if (!backend.includes("l.status <> 'draft'") || !backend.includes("l.status <> 'cancelled'") || !backend.includes("show_voided")) errors.push("drafts-never-shown / voided-hidden-by-default filter missing");
@@ -50,6 +61,12 @@ function violations(board, backend) {
   // Honesty rule (owner order 2026-09-04): Empty Miles / Deadhead Pay render BLANK, never 0, when
   // untracked -- a 0 would claim no empty miles and underpay the driver.
   if (!backend.includes("has_deadhead_miles") || !board.includes("empty_miles == null") || !board.includes("deadhead_pay_cents == null")) errors.push("Empty Miles / Deadhead Pay honesty rule (blank, never zero) missing");
+  // Spec §2.4 / §5.3: "If it does not foot, the board is lying" -- no clamp may hide a footing bug,
+  // and the category buckets must exclude WO-linked lines so they can never double-count with R&M.
+  if (backend.includes("GREATEST(0,")) errors.push("other_cost_cents is clamped -- a footing failure would be silently masked (spec §2.4)");
+  if (!backend.includes("e.linked_work_order_uuid IS NULL") || !backend.includes("b.linked_work_order_uuid IS NULL")) errors.push("category_costs must exclude WO-linked lines to avoid double-counting with R&M");
+  // Spec §4: "A totals row that foots every money column."
+  if (!board.includes("footer={") || !board.includes("load-costs-totals-revenue") || !board.includes("load-costs-totals-other") || !board.includes("load-costs-totals-gross")) errors.push("board has no footing totals row");
   if (board.includes('method: "POST"') || backend.includes("INSERT INTO") || backend.includes("UPDATE accounting") || backend.includes("DELETE FROM")) errors.push("read-only board introduced a writer");
   return errors;
 }
@@ -69,18 +86,31 @@ if (process.argv.includes("--selftest")) {
     catch { caught += 1; continue; }
     throw new Error(`single-id mutation escaped: ${id}`);
   }
+  for (const key of SORT_KEYS) {
+    try { check(board, backend.replaceAll(`"${key}"`, `"removed_${key}"`)); }
+    catch { caught += 1; continue; }
+    throw new Error(`sort-key mutation escaped: ${key}`);
+  }
   const structural = [
     { board: board.replace("enableColumnReorder", ""), backend },
-    { board: board.replace("<ParityTable", '<ParityTable sortMode="external"'), backend },
+    { board: board.replaceAll('sortMode="external"', ""), backend },
+    { board: board.replaceAll("onSortChange", ""), backend },
     { board: board.replaceAll("actual_delivery_at", "delivered_guess"), backend },
     { board: board.replace('backgroundColor: "#14314F"', 'backgroundColor: "#F7F8FA"'), backend },
     { board: board.replace("function serviceStatus", "function removedServiceStatus"), backend },
+    { board: board.replace('"In transit"', '"removed"'), backend },
+    { board: board.replaceAll("Delivered — no appointment on file", "removed"), backend },
     { board, backend: backend.replaceAll("repairs_maintenance_cents", "removed_rm_cents") },
     { board, backend: backend.replaceAll("wo.load_id = e.load_id", "TRUE") },
     { board, backend: backend.replaceAll("wo.load_id = bl.load_id", "TRUE") },
     { board, backend: backend.replace("l.status <> 'draft'", "TRUE") },
     { board, backend: backend.replace("l.status <> 'cancelled'", "TRUE") },
     { board: board.replaceAll("empty_miles == null", "false"), backend },
+    { board, backend: `${backend}\nGREATEST(0, ` },
+    { board, backend: backend.replace("e.linked_work_order_uuid IS NULL", "TRUE") },
+    { board, backend: backend.replace("b.linked_work_order_uuid IS NULL", "TRUE") },
+    { board: board.replace("footer={", "removedFooter={"), backend },
+    { board: board.replace("load-costs-totals-revenue", "removed"), backend },
   ];
   for (const [index, source] of structural.entries()) {
     try { check(source.board, source.backend); }
@@ -88,7 +118,7 @@ if (process.argv.includes("--selftest")) {
     throw new Error(`structural mutation escaped: ${index + 1}`);
   }
   check(board, backend);
-  console.log(`PASS verify-load-costs-board-manifest --selftest (${caught}/${IDS.length + structural.length})`);
+  console.log(`PASS verify-load-costs-board-manifest --selftest (${caught}/${IDS.length + SORT_KEYS.length + structural.length})`);
 } else {
   check(board, backend);
   console.log(`PASS verify-load-costs-board-manifest (${IDS.length}/${IDS.length} ids)`);

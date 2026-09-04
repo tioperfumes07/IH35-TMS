@@ -15,6 +15,18 @@ describe("looksLikeSampleDataName", () => {
     expect(looksLikeSampleDataName("DEVIN-AUDIT-GO2136-CREATE-TEST")).toBe(true);
   });
 
+  // Factoring doc 09-04-2026: 11 real USMCA customer rows found live, none containing
+  // "test"/"demo"/"sample", quarantined by hand because the create path let them through.
+  it("matches seat/session smoke-identifier prefixes, even with no test/demo/sample word", () => {
+    expect(looksLikeSampleDataName("CC2-BATTERY-20260807-CUSTOMER-01")).toBe(true);
+    expect(looksLikeSampleDataName("CC3-CUSTOMER-DEACTIVATE-CONTROL2-20260826")).toBe(true);
+    expect(looksLikeSampleDataName("CODEX-AUDIT-SPINE-20260816-0320")).toBe(true);
+    expect(looksLikeSampleDataName("P23-SMOKE-1786500785935")).toBe(true);
+    expect(looksLikeSampleDataName("USMCA-CODEX-CREATE-20260810-0117")).toBe(true);
+    expect(looksLikeSampleDataName("USMCA-CODEX-SUBCUSTOMER-20260810-0126")).toBe(true);
+    expect(looksLikeSampleDataName("USMCA_P43_BILLING_SMOKE_20260812")).toBe(true);
+  });
+
   it("does NOT false-positive on a real name that merely contains the substring", () => {
     // Loves-IN471-DEMOTTE — a real Love's truck stop vendor name, found live on prod. "demo" is a
     // substring but not a word — a bare-substring pattern would have wrongly flagged it.
