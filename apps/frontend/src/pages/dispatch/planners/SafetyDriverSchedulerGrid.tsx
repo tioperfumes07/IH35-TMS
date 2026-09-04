@@ -12,6 +12,7 @@ import type { PlannerRange } from "./planner-range";
 import { listPlannerDays } from "./planner-range";
 import { PlannerAxisHead } from "./PlannerAxisHead";
 import { dwellsFromDayMap, PlannerGrid } from "./PlannerGrid";
+import { groupPlannerBarsByKey, usePlannerLoads } from "./planner-bars";
 
 void PlannerAxisHead;
 
@@ -38,6 +39,12 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
     }
     return m;
   }, [query.data?.leave_day_cells]);
+
+  const loadsQuery = usePlannerLoads(operatingCompanyId, range.start, range.end);
+  const loadBarsByDriver = useMemo(
+    () => groupPlannerBarsByKey(loadsQuery.data ?? [], days, (l) => l.assigned_primary_driver_id),
+    [loadsQuery.data, days],
+  );
 
   if (query.isLoading) return <div className="text-xs text-gray-500">Loading grid…</div>;
   if (query.isError) {
@@ -67,7 +74,7 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
             id: driverId,
             name: <EntityLinkOrTombstone kind="driver" id={driverId} name={name} noun="Driver" />,
             unit: unit ? <EntityLinkOrTombstone kind="unit" id={unitId} name={unit} noun="Unit" /> : null,
-            bars: [],
+            bars: loadBarsByDriver.get(driverId) ?? [],
             dwells: dwellsFromDayMap(days, (d) => cellByDriverDay.get(`${driverId}|${d}`), `leave-${driverId}`),
           };
         })}

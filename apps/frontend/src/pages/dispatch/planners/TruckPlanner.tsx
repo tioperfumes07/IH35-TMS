@@ -11,6 +11,7 @@ import { isOperatorVisibleUnit } from "../../../lib/operator-fleet-visibility";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { PlannerAxisHead } from "./PlannerAxisHead";
 import { PlannerGrid } from "./PlannerGrid";
+import { groupPlannerBarsByKey, usePlannerLoads } from "./planner-bars";
 
 void PlannerAxisHead;
 
@@ -67,6 +68,8 @@ export function TruckPlanner() {
     enabled: Boolean(operatingCompanyId),
     queryFn: () => listUnitsWithoutLoad(operatingCompanyId),
   });
+
+  const loadsQuery = usePlannerLoads(operatingCompanyId, range.start, range.end);
 
   const truckRows = useMemo(() => {
     const rows = new Map<string, TruckRow>();
@@ -141,9 +144,14 @@ export function TruckPlanner() {
     return [...rows.values()].sort((a, b) => a.unitNumber.localeCompare(b.unitNumber));
   }, [gridQuery.data, reservedQuery.data, unitsQuery.data]);
 
-  const isLoading = gridQuery.isLoading || unitsQuery.isLoading || reservedQuery.isLoading;
-  const isError = gridQuery.isError || unitsQuery.isError || reservedQuery.isError;
-  const firstError = gridQuery.error ?? unitsQuery.error ?? reservedQuery.error;
+  const isLoading = gridQuery.isLoading || unitsQuery.isLoading || reservedQuery.isLoading || loadsQuery.isLoading;
+  const isError = gridQuery.isError || unitsQuery.isError || reservedQuery.isError || loadsQuery.isError;
+  const firstError = gridQuery.error ?? unitsQuery.error ?? reservedQuery.error ?? loadsQuery.error;
+
+  const loadBarsByUnit = useMemo(
+    () => groupPlannerBarsByKey(loadsQuery.data ?? [], days, (l) => l.assigned_unit_id),
+    [loadsQuery.data, days],
+  );
 
   if (!operatingCompanyId) {
     return (
@@ -166,6 +174,7 @@ export function TruckPlanner() {
             void gridQuery.refetch();
             void unitsQuery.refetch();
             void reservedQuery.refetch();
+            void loadsQuery.refetch();
           }}
         />
       ) : null}
@@ -189,7 +198,7 @@ export function TruckPlanner() {
               unit: row.driverName ? (
                 <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
               ) : null,
-              bars: [],
+              bars: loadBarsByUnit.get(row.unitId) ?? [],
             }))}
           empty={
             truckRows.length === 0 ? (
@@ -221,7 +230,7 @@ export function TruckPlanner() {
                 unit: row.driverName ? (
                   <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
                 ) : null,
-                bars: [],
+                bars: loadBarsByUnit.get(row.unitId) ?? [],
               }))}
             empty={null}
           />
