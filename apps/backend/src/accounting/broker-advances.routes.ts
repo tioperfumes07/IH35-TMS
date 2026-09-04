@@ -6,10 +6,17 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import {
+  applyBrokerAdvanceToDriverBillInClientTx,
   BROKER_ADVANCE_CATEGORIES,
   BrokerAdvanceError,
   recordBrokerAdvanceInClientTx,
 } from "./broker-advances.service.js";
+
+const disburseToDriverBillBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  driver_bill_id: z.string().uuid(),
+  amount_cents: z.number().int().positive(),
+});
 
 const createBrokerAdvanceBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -56,6 +63,43 @@ export async function registerBrokerAdvancesRoutes(app: FastifyInstance) {
       throw err;
     }
   });
+
+  // LOAD-COSTS-COMPLETE item (2) -- the broker paid the driver directly; record it as a bill
+  // payment against the driver's existing driver_bills liability, linked to the SAME advance row.
+  app.post(
+    "/api/v1/accounting/broker-advances/:id/disburse-to-driver-bill",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      const params = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const body = disburseToDriverBillBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return validationError(reply, body.error);
+
+      try {
+        const result = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) =>
+          applyBrokerAdvanceToDriverBillInClientTx(client, {
+            operatingCompanyId: body.data.operating_company_id,
+            brokerAdvanceId: params.data.id,
+            driverBillId: body.data.driver_bill_id,
+            amountCents: body.data.amount_cents,
+            actorUserId: user.uuid,
+          })
+        );
+        return reply.code(201).send({
+          disbursed_amount_cents: result.disbursedAmountCents,
+          journal_entry_id: result.journalEntryId,
+        });
+      } catch (err) {
+        if (err instanceof BrokerAdvanceError) {
+          const notFound = err.code === "broker_advance_not_found" || err.code === "driver_bill_not_found";
+          return reply.code(notFound ? 404 : 400).send({ error: err.code, message: err.message });
+        }
+        throw err;
+      }
+    }
+  );
 
   app.get("/api/v1/accounting/broker-advances", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
