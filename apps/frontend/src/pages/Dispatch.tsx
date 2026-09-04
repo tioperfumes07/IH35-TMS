@@ -500,6 +500,7 @@ export function DispatchPage({
             loads={loads}
             awaitingTrucks={awaitingTrucks}
             activeGeofenceBreachVehicleIds={activeGeofenceBreachVehicleIds}
+            operatingCompanyId={defaultCompanyIds[0] ?? ""}
             loading={loadsQuery.isLoading}
             listError={dataTableErrorState(loadsQuery.error, () => void loadsQuery.refetch())}
             onLoadClick={(id) => {

@@ -2,16 +2,20 @@ import {
   DndContext,
   KeyboardSensor,
   PointerSensor,
+  pointerWithin,
   useDraggable,
   useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import type { DispatchLoadRow, LoadStatus } from "../../api/loads";
+import { patchAssignUnit } from "../../api/dispatch";
 import type { UnitsWithoutLoad } from "../../api/dispatch";
+import { userFacingApiError } from "../../lib/api-error-message";
+import { ConfirmModal } from "../shared/ConfirmModal";
 import type { DataTableErrorState } from "../../lib/tableError";
 import { classifyProfit, formatProfitCents, getLoadProfitability, profitBadgeClassName } from "../../lib/loadProfit";
 import { entityLabel } from "../../lib/entity-label";
@@ -22,6 +26,16 @@ import { ListErrorState } from "../ListErrorState";
 import { useToast } from "../Toast";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { canDragLoad, flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, toRouteSummary } from "./constants";
+
+function combineRefs<T>(...refs: Array<React.Ref<T> | undefined>) {
+  return (node: T | null) => {
+    for (const ref of refs) {
+      if (!ref) continue;
+      if (typeof ref === "function") ref(node);
+      else (ref as React.MutableRefObject<T | null>).current = node;
+    }
+  };
+}
 
 type KanbanColumnSort = { key: "unit" | "load"; direction: "asc" | "desc" };
 
@@ -60,6 +74,7 @@ type Props = {
   // DB-2: clicking a lane header navigates to the List view pre-filtered to that lane's statuses
   // (reuses the existing `statuses` + `view` URL params; additive — header becomes a button).
   onColumnHeaderClick?: (statuses: string[]) => void;
+  operatingCompanyId?: string;
   listError?: DataTableErrorState;
 };
 
@@ -368,6 +383,10 @@ function KanbanDispatchCard({
     data: { loadId: load.id, status: load.status },
     disabled: !draggableEnabled,
   });
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: `droppable:load:${load.id}`,
+    data: { type: "load", loadId: load.id },
+  });
 
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
   const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);
@@ -380,14 +399,16 @@ function KanbanDispatchCard({
 
   return (
     <div
-      ref={setNodeRef}
+      ref={combineRefs(setNodeRef, setDroppableRef)}
       style={style}
       {...attributes}
       {...listeners}
       onClick={() => onClick(load.id)}
       className={`relative cursor-pointer rounded border border-gray-200 bg-white p-3 text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-sm ${
         isDragging ? "opacity-60" : ""
-      } ${draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-default"}`}
+      } ${isOver ? "ring-2 ring-slate-400" : ""} ${
+        draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-default"
+      }`}
       data-testid={`kanban-card-${load.load_number}`}
     >
       <div className="absolute inset-y-0 right-0 w-1 rounded-r bg-gray-400" />
@@ -498,12 +519,16 @@ function KanbanCompactCard({
     data: { loadId: load.id, status: load.status },
     disabled: !draggableEnabled,
   });
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: `droppable:load:${load.id}`,
+    data: { type: "load", loadId: load.id },
+  });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
   const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);
 
   return (
     <div
-      ref={setNodeRef}
+      ref={combineRefs(setNodeRef, setDroppableRef)}
       style={style}
       {...attributes}
       {...listeners}
@@ -520,7 +545,9 @@ function KanbanCompactCard({
         .join(" · ")}
       className={`flex h-10 items-center gap-2 rounded border border-gray-200 bg-white px-2 text-[11px] shadow-xs transition hover:bg-gray-50 ${
         isDragging ? "opacity-60" : ""
-      } ${draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
+      } ${isOver ? "ring-2 ring-slate-400" : ""} ${
+        draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+      }`}
       data-testid={`kanban-compact-card-${load.load_number}`}
       data-kanban-card-compact="true"
     >
@@ -589,13 +616,17 @@ function KanbanStandardCard({
     data: { loadId: load.id, status: load.status },
     disabled: !draggableEnabled,
   });
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: `droppable:load:${load.id}`,
+    data: { type: "load", loadId: load.id },
+  });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
   const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);
   const secondaryLoad = cardSecondaryLoadNumber(load);
 
   return (
     <div
-      ref={setNodeRef}
+      ref={combineRefs(setNodeRef, setDroppableRef)}
       style={style}
       {...attributes}
       {...listeners}
@@ -603,7 +634,9 @@ function KanbanStandardCard({
       title={`${cardPrimaryLabel(load)} · ${entityLabel(load.load_number, load.id, "Load")} · ${lane}`}
       className={`flex flex-col gap-0.5 rounded border border-gray-200 bg-white px-2 py-1.5 text-[11px] shadow-xs transition hover:bg-gray-50 ${
         isDragging ? "opacity-60" : ""
-      } ${draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
+      } ${isOver ? "ring-2 ring-slate-400" : ""} ${
+        draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+      }`}
       data-testid={`kanban-standard-card-${load.load_number}`}
       data-kanban-card-standard="true"
     >
@@ -677,12 +710,28 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
     load.assigned_primary_driver_name || load.assigned_primary_driver_id
       ? entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")
       : null;
+  // BRD-12: truck cards are draggable onto load cards to assign the unit. The same press-and-hold still
+  // opens the Book wizard via onClick when the pointer is released within the drag activation distance.
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: load.id,
+    data: {
+      type: "unit",
+      unitId: load.assigned_unit_id,
+      unitNumber: load.assigned_unit_number,
+      driverName: load.assigned_primary_driver_name,
+    },
+  });
+  const transformStyle = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
   // Clicking anywhere on the card OR the explicit "+ Book load" button opens the Book wizard pre-filled with
   // this truck. The button is a real <button> (not a span) so it's an unmistakable, findable affordance; it
   // stops propagation only to avoid a harmless double-fire with the card click.
   // Exact Leaves home.kanban:unit|driver — unit/driver were plain labels despite IDs.
   return (
     <div
+      ref={setNodeRef}
+      style={transformStyle}
+      {...attributes}
+      {...listeners}
       role="button"
       tabIndex={0}
       data-testid={`awaiting-truck-card-${load.id}`}
@@ -693,7 +742,9 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
           onBook(load.id);
         }
       }}
-      className="cursor-pointer rounded-sm border border-gray-200 bg-white p-2 hover:border-slate-400 hover:bg-slate-50"
+      className={`cursor-pointer rounded-sm border border-gray-200 bg-white p-2 hover:border-slate-400 hover:bg-slate-50 ${
+        isDragging ? "opacity-60" : ""
+      } ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
     >
       <div className="flex items-center justify-between gap-2">
         {load.assigned_unit_id ? (
@@ -865,13 +916,49 @@ function KanbanDispatchColumn({
   );
 }
 
-export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreachVehicleIds, loading, onLoadClick, onBookForUnit, onStatusDrop, onColumnHeaderClick, listError }: Props) {
+type PendingKanbanAssign = {
+  unitId: string;
+  unitNumber?: string | null;
+  loadId: string;
+  loadNumber?: string | null;
+};
+
+export function DispatchKanban({
+  loads,
+  awaitingTrucks = [],
+  activeGeofenceBreachVehicleIds,
+  loading,
+  onLoadClick,
+  onBookForUnit,
+  onStatusDrop,
+  onColumnHeaderClick,
+  operatingCompanyId,
+  listError,
+}: Props) {
   const [optimisticLoads, setOptimisticLoads] = useState<DispatchLoadRow[]>(loads);
   // DISPATCH-UI-REFINE-2 ITEM 1 — default to STANDARD (2-line) density. Compact (1-line) + Detailed
   // (~5-line) remain available via the toggle (additive). Standard balances fleet density vs readability.
   const [density, setDensity] = useState<KanbanDensity>(KANBAN_DEFAULT_DENSITY);
   const [columnSorts, setColumnSorts] = useState<Record<string, KanbanColumnSort>>({});
+  const [pendingAssign, setPendingAssign] = useState<PendingKanbanAssign | null>(null);
   const { pushToast } = useToast();
+  const queryClient = useQueryClient();
+
+  const assignMutation = useMutation({
+    mutationFn: ({ loadId, unitId }: { loadId: string; unitId: string }) =>
+      patchAssignUnit(loadId, { operating_company_id: operatingCompanyId ?? "", unit_uuid: unitId }),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["loads"] });
+      const loadNumber = pendingAssign?.loadNumber || variables.loadId;
+      const unitNumber = pendingAssign?.unitNumber || variables.unitId;
+      pushToast(`Assigned unit ${unitNumber} to load ${loadNumber}.`, "success");
+      setPendingAssign(null);
+    },
+    onError: (error) => {
+      pushToast(userFacingApiError(error, "Could not assign unit to load"), "error");
+      // Leave the modal open so the dispatcher can retry or cancel explicitly.
+    },
+  });
 
   const toggleKanbanColumnSort = (columnKey: string, sortKey: "unit" | "load") => {
     setColumnSorts((current) => {
@@ -916,6 +1003,28 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
   const handleDragEnd = async (event: DragEndEvent) => {
     const activeId = event.active.id;
     const overId = event.over?.id;
+    const activeData = (event.active.data.current ?? {}) as { type?: string; unitId?: string; unitNumber?: string | null };
+    const overData = (event.over?.data.current ?? {}) as { type?: string; loadId?: string };
+
+    // BRD-12: dragging a truck card (unit) onto a load card assigns the unit to that load.
+    // This is intentionally surfaced as a confirmation modal — no silent reassignment on a stray drag.
+    if (activeData.type === "unit") {
+      if (overData.type === "load" && activeData.unitId && overData.loadId) {
+        const load = optimisticLoads.find((item) => item.id === overData.loadId);
+        if (load) {
+          setPendingAssign({
+            unitId: activeData.unitId,
+            unitNumber: activeData.unitNumber,
+            loadId: load.id,
+            loadNumber: load.load_number,
+          });
+          return;
+        }
+      }
+      pushToast("Drop the truck onto a load card to assign it.", "info");
+      return;
+    }
+
     // LV-KANBAN-DROP-OUTSIDE-DROPPABLE-IS-SILENT. `event.over` is null whenever the release does not
     // resolve over a registered droppable — a near-miss with the pointer, or the keyboard sensor moving
     // the overlay in pixel steps that never snap to a lane. This used to return bare: no request, no
@@ -931,8 +1040,7 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
     const targetGroup = KANBAN_STATUS_GROUPS.find((group) => group.key === targetColumnKey);
     const load = optimisticLoads.find((item) => item.id === loadId);
     if (!load && isSyntheticKanbanCardId(loadId)) {
-      // Truck card: not a load, nothing to transition. Unreachable today because synthetic cards are no
-      // longer draggable (#4793), but it stays feedback-bearing so no early return in this handler is silent.
+      // Truck card: not a load, nothing to transition. Now handled by the BRD-12 unit-drop branch above.
       pushToast("That is a truck without a load — book it to a load first.", "info");
       return;
     }
@@ -1008,8 +1116,23 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
   }
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
       <div className="relative" data-testid="dispatch-kanban-board">
+        <ConfirmModal
+          open={Boolean(pendingAssign)}
+          title="Assign unit to load"
+          message={
+            pendingAssign
+              ? `Assign unit ${pendingAssign.unitNumber || pendingAssign.unitId} to load ${pendingAssign.loadNumber || pendingAssign.loadId}?`
+              : ""
+          }
+          confirmLabel="Assign"
+          onClose={() => setPendingAssign(null)}
+          onConfirm={async () => {
+            if (!pendingAssign) return;
+            await assignMutation.mutateAsync({ loadId: pendingAssign.loadId, unitId: pendingAssign.unitId });
+          }}
+        />
         <div className="mb-2 flex items-center justify-end gap-1 text-[11px]">
           <span className="text-gray-500">Density</span>
           {KANBAN_DENSITIES.map((mode) => (
