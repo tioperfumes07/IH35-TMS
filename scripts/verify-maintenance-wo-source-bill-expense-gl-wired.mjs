@@ -29,6 +29,21 @@ const LABEL = "verify-maintenance-wo-source-bill-expense-gl-wired";
 
 const CHECKS = [
   {
+    name: "shared close invariant rejects a cost-bearing WO without a same-company/unit/vendor financial document",
+    file: "apps/backend/src/maintenance/work-order-financial-link.ts",
+    pattern: /assertWorkOrderCostFinancialLink[\s\S]*linked_work_order_uuid[\s\S]*unit_id[\s\S]*vendor/,
+  },
+  {
+    name: "maintenance close routes enforce the shared financial-link invariant before terminal UPDATE",
+    file: "apps/backend/src/maintenance/work-orders.routes.ts",
+    pattern: /assertWorkOrderCostFinancialLink[\s\S]*UPDATE maintenance\.work_orders[\s\S]*SET status = 'complete'/,
+  },
+  {
+    name: "legacy work-order complete route enforces the same shared invariant",
+    file: "apps/backend/src/work-orders/work-orders.routes.ts",
+    pattern: /assertWorkOrderCostFinancialLink[\s\S]*UPDATE maintenance\.work_orders[\s\S]*SET status = 'complete'/,
+  },
+  {
     name: "CreateWorkOrderModal carries the full source_type union (IS/ES/AC/ET/RT/IT/RS) — one surface, 7 sources",
     file: "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx",
     pattern: /source_type:\s*"IS"\s*\|\s*"ES"\s*\|\s*"AC"\s*\|\s*"ET"\s*\|\s*"RT"\s*\|\s*"IT"\s*\|\s*"RS"/,
@@ -82,6 +97,12 @@ export function checkAll(readFile) {
 
 if (process.argv.includes("--selftest")) {
   const GOOD_FIXTURES = {
+    "apps/backend/src/maintenance/work-order-financial-link.ts":
+      "assertWorkOrderCostFinancialLink linked_work_order_uuid unit_id vendor",
+    "apps/backend/src/maintenance/work-orders.routes.ts":
+      "assertWorkOrderCostFinancialLink UPDATE maintenance.work_orders SET status = 'complete'",
+    "apps/backend/src/work-orders/work-orders.routes.ts":
+      "assertWorkOrderCostFinancialLink UPDATE maintenance.work_orders SET status = 'complete'",
     "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx":
       'source_type: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS";',
     "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx": `

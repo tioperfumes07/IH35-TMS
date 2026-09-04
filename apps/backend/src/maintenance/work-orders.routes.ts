@@ -18,6 +18,7 @@ import { emitMaintenanceSpineEvent } from "./maintenance-spine-emit.js";
 import { isWoInvoiceMismatch, validateWoVendorInvoiceTotals } from "./wo-cost-validation.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
+import { assertWorkOrderCostFinancialLink } from "./work-order-financial-link.js";
 
 const workOrderStatusSchema = z.enum(["open", "in_progress", "waiting_parts", "complete", "cancelled"]);
 const workOrderTypeSchema = z.enum(["pm", "repair", "tire", "accident"]);
@@ -1323,6 +1324,8 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       }
       try {
         await validateWoVendorInvoiceTotals(client, String(params.data.id), companyId);
+        const financialLink = await assertWorkOrderCostFinancialLink(client, companyId, params.data.id);
+        if (!financialLink.ok) return { financialLinkBlocked: true as const, ...financialLink };
         const updateRes = await client.query(
           `
             UPDATE maintenance.work_orders
@@ -1380,6 +1383,12 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
     if ("invalid" in result) return reply.code(400).send({ error: "invalid_transition", from_status: result.from, to_status: result.to });
     if ("conflict" in result) return reply.code(409).send({ error: "work_order_completion_conflict" });
+    if ("financialLinkBlocked" in result) return reply.code(422).send({
+      error: "WORK_ORDER_COST_FINANCIAL_LINK_REQUIRED",
+      reason: result.reason,
+      cost_cents: result.cost_cents,
+      message: "Add a linked bill or expense with the same unit and vendor before closing this cost-bearing work order.",
+    });
     if ("invoiceMismatch" in result) {
       const d = result.detail;
       if (!d) {
@@ -1439,6 +1448,10 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (!allowedTransitions[current.status as z.infer<typeof workOrderStatusSchema>].includes(parsed.data.new_status)) {
         return { invalid: true as const, from: current.status, to: parsed.data.new_status };
       }
+      if (CLOSED_STATUSES.has(parsed.data.new_status)) {
+        const financialLink = await assertWorkOrderCostFinancialLink(client, companyId, params.data.id);
+        if (!financialLink.ok) return { financialLinkBlocked: true as const, ...financialLink };
+      }
       const transitionRes = await client.query(`UPDATE maintenance.work_orders SET status = $2, updated_at = now() WHERE id = $1 AND operating_company_id = $3::uuid AND status = $4 RETURNING id::text`, [
         params.data.id,
         parsed.data.new_status,
@@ -1489,6 +1502,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
     if ("invalid" in result) return reply.code(400).send({ error: "invalid_transition", from_status: result.from, to_status: result.to });
     if ("conflict" in result) return reply.code(409).send({ error: "work_order_transition_conflict" });
+    if ("financialLinkBlocked" in result) return reply.code(422).send({ error: "WORK_ORDER_COST_FINANCIAL_LINK_REQUIRED", reason: result.reason, cost_cents: result.cost_cents, message: "Add a linked bill or expense with the same unit and vendor before closing this cost-bearing work order." });
     void withCurrentUser(user.uuid, (client) =>
       emitMaintenanceSpineEvent(client, {
         operating_company_id: companyId,
@@ -1534,6 +1548,10 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (!allowedTransitions[current.status as z.infer<typeof workOrderStatusSchema>].includes(parsed.data.new_status)) {
         return { invalid: true as const, from: current.status, to: parsed.data.new_status };
       }
+      if (CLOSED_STATUSES.has(parsed.data.new_status)) {
+        const financialLink = await assertWorkOrderCostFinancialLink(client, companyId, params.data.id);
+        if (!financialLink.ok) return { financialLinkBlocked: true as const, ...financialLink };
+      }
       const transitionRes = await client.query(`UPDATE maintenance.work_orders SET status = $2, updated_at = now() WHERE id = $1 AND operating_company_id = $3::uuid AND status = $4 RETURNING id::text`, [
         params.data.id,
         parsed.data.new_status,
@@ -1584,6 +1602,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
     if ("invalid" in result) return reply.code(400).send({ error: "invalid_transition", from_status: result.from, to_status: result.to });
     if ("conflict" in result) return reply.code(409).send({ error: "work_order_transition_conflict" });
+    if ("financialLinkBlocked" in result) return reply.code(422).send({ error: "WORK_ORDER_COST_FINANCIAL_LINK_REQUIRED", reason: result.reason, cost_cents: result.cost_cents, message: "Add a linked bill or expense with the same unit and vendor before closing this cost-bearing work order." });
     void withCurrentUser(user.uuid, (client) =>
       emitMaintenanceSpineEvent(client, {
         operating_company_id: companyId,
