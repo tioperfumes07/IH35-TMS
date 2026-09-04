@@ -22,8 +22,16 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 // BANKREC-CONFIRM-01 (Tier 2): Confirm is enabled ONLY for an exact-amount match (amount_gap_cents
 // === 0) on a persistable non-bill kind. gap=0 = pure link-and-clear (review_state='matched' +
 // matched_<kind>_id) — NO journal entry is posted. "bill" always stays held (CHAIN-04 / Part 2b
-// records the bill payment). Any variance (gap !== 0) stays held pending the balanced-JE proof.
-const VARIANCE_HELD_NOTE = "Variance posting pending balanced-JE proof (Tier-1)";
+// records the bill payment). Any variance (gap !== 0) stays held.
+//
+// BANK-F9998 F8 (2026-09-03) — the balanced-JE proof this note asks for now exists:
+// scripts/verify-bank-recon-variance-je-always-balanced.mjs proves, structurally, that
+// match.service.ts's postDifferenceJournalEntry can never post an unbalanced variance JE (its two
+// posting legs always share one magnitude on opposite sides, for any variance amount). That is
+// the PROOF, not an authorization to post — whether/when a variance match becomes live-confirmable
+// here is still a separate, owner-reserved Tier-1 decision (this codebase's own HOLD-FOR-JORGE
+// convention for money-posting UI), so canConfirm below is deliberately unchanged.
+const VARIANCE_HELD_NOTE = "Variance posting proven balanced (Tier-1) — awaiting owner go-ahead to enable Confirm";
 
 type Props = {
   open: boolean;

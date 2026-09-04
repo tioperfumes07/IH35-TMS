@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { logger } from "../observability/structured-logger.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import {
   loadControlBalanceCents,
@@ -1154,27 +1155,58 @@ export async function checkExtendedSubledgerTieOutForCompany(client: DbClient, o
   }
 }
 
+// ACC-19 / BANK-F10002 — the loop below used to await each detector directly: one throw (the
+// mdata.units bug, BANK-F9999, or the reconciliation_findings.finding_type CHECK constraint
+// missing 6 values 6 detectors already try to write — filed separately, a migration only CC-1 can
+// author) aborted the WHOLE tick for EVERY remaining detector and EVERY remaining company. Live-
+// measured 2026-09-03: the units bug alone meant 24 detector-runs never executed once since
+// 2026-09-01. One detector's defect must never silence every other detector's proof that the
+// books are fine. Each call is now isolated: a failure is logged and the tick moves on, so a
+// single broken check degrades to "this one check is unknown" instead of "nothing ran tonight."
+async function runDetectorIsolated(
+  name: string,
+  operatingCompanyId: string,
+  runId: string,
+  fn: () => Promise<void>
+): Promise<void> {
+  try {
+    await fn();
+  } catch (err) {
+    logger.error("ledger_integrity_detector_failed", err instanceof Error ? err : undefined, {
+      detector: name,
+      operating_company_id: operatingCompanyId,
+      run_id: runId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
 export async function runLedgerIntegrityTick(client: DbClient): Promise<void> {
   const companies = await listActiveCompanies(client);
   for (const operatingCompanyId of companies) {
     const runId = randomUUID();
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    await checkStrandedIntermediateForCompany(client, operatingCompanyId, runId);
-    await checkSubledgerTieOutForCompany(client, operatingCompanyId, runId);
-    await checkAskMyAccountantForCompany(client, operatingCompanyId, runId);
-    await checkPerEntryBalanceForCompany(client, operatingCompanyId, runId);
-    await checkNoGlDeltaForCompany(client, operatingCompanyId, runId);
-    await checkFutureDatedEntriesForCompany(client, operatingCompanyId, runId);
-    await checkReversalIntegrityForCompany(client, operatingCompanyId, runId);
-    // LAW-TRANSACTION-HEALTH-REGISTER-2026-09-01 bands A/C/F — CC-2.
-    await checkMinimumPostingLinesForCompany(client, operatingCompanyId, runId);
-    await checkOrphanPostingsForCompany(client, operatingCompanyId, runId);
-    await checkExpenseNoGlDeltaForCompany(client, operatingCompanyId, runId);
-    await checkVoidReversalIntegrityForCompany(client, operatingCompanyId, runId);
-    await checkVoidMetadataCompletenessForCompany(client, operatingCompanyId, runId);
-    await checkSampleDataFlagExplicitForCompany(client, operatingCompanyId, runId);
-    await checkTestNamedAccountForCompany(client, operatingCompanyId, runId);
-    await checkDriverCashAdvanceTieOutForCompany(client, operatingCompanyId, runId);
-    await checkExtendedSubledgerTieOutForCompany(client, operatingCompanyId, runId);
+    const detectors: Array<[string, () => Promise<void>]> = [
+      ["stranded_intermediate", () => checkStrandedIntermediateForCompany(client, operatingCompanyId, runId)],
+      ["subledger_tie_out", () => checkSubledgerTieOutForCompany(client, operatingCompanyId, runId)],
+      ["ask_my_accountant", () => checkAskMyAccountantForCompany(client, operatingCompanyId, runId)],
+      ["per_entry_balance", () => checkPerEntryBalanceForCompany(client, operatingCompanyId, runId)],
+      ["no_gl_delta", () => checkNoGlDeltaForCompany(client, operatingCompanyId, runId)],
+      ["future_dated_entries", () => checkFutureDatedEntriesForCompany(client, operatingCompanyId, runId)],
+      ["reversal_integrity", () => checkReversalIntegrityForCompany(client, operatingCompanyId, runId)],
+      // LAW-TRANSACTION-HEALTH-REGISTER-2026-09-01 bands A/C/F — CC-2.
+      ["minimum_posting_lines", () => checkMinimumPostingLinesForCompany(client, operatingCompanyId, runId)],
+      ["orphan_postings", () => checkOrphanPostingsForCompany(client, operatingCompanyId, runId)],
+      ["expense_no_gl_delta", () => checkExpenseNoGlDeltaForCompany(client, operatingCompanyId, runId)],
+      ["void_reversal_integrity", () => checkVoidReversalIntegrityForCompany(client, operatingCompanyId, runId)],
+      ["void_metadata_completeness", () => checkVoidMetadataCompletenessForCompany(client, operatingCompanyId, runId)],
+      ["sample_data_flag_explicit", () => checkSampleDataFlagExplicitForCompany(client, operatingCompanyId, runId)],
+      ["test_named_account", () => checkTestNamedAccountForCompany(client, operatingCompanyId, runId)],
+      ["driver_cash_advance_tie_out", () => checkDriverCashAdvanceTieOutForCompany(client, operatingCompanyId, runId)],
+      ["extended_subledger_tie_out", () => checkExtendedSubledgerTieOutForCompany(client, operatingCompanyId, runId)],
+    ];
+    for (const [name, fn] of detectors) {
+      await runDetectorIsolated(name, operatingCompanyId, runId, fn);
+    }
   }
 }
