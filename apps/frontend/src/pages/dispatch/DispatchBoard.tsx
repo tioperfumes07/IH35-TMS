@@ -28,11 +28,13 @@ function renderCustomerCell(load: DispatchLoadRow): ReactNode {
 // the load's detail page. stopPropagation so it does NOT also trigger the row's onRowClick (which opens
 // the load drawer) — same pattern as renderCustomerCell above.
 function renderLoadNumberCell(load: DispatchLoadRow, className = "code-cell font-medium"): ReactNode {
-  // Awaiting-assignment rows are keyed by a synthetic "unit:<uuid>" or "unit:inshop:<uuid>" id. A load
-  // that does not exist must render "Unassigned", not "Load — not visible" — the id-present branch of
-  // entityLabel would invert the contract and make every empty truck look like an unresolvable load.
+  // Awaiting-assignment rows are keyed by a synthetic "unit:<uuid>" or "unit:inshop:<uuid>" id — no
+  // load exists to link to. The row's Status cell already renders the "Unassigned" pill (statusVariant
+  // + STATUS_LABEL.unassigned); repeating the word here duplicated it (owner, dispatch board #17: "the
+  // dash in Load# is enough"). unitToBoardRow's own comment already documents every load-specific cell
+  // falling through to "—" — this one branch was the exception; it no longer is.
   if (load.id.startsWith("unit:")) {
-    return <span className={className}>Unassigned</span>;
+    return <span className={className}>—</span>;
   }
   return (
     <EntityLink

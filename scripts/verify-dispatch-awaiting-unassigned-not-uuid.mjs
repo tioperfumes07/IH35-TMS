@@ -1,3 +1,5 @@
+// MATRIX-BUILT-OPTIONAL — a text-rendering/regex assertion (Load# dash + unit-number display),
+// not an EntityLink/FK/connectivity wiring ratchet the Program matrix's Box 3 auto-green needs.
 import { readFileSync } from "node:fs";
 
 const BOARD = "apps/frontend/src/pages/dispatch/DispatchBoard.tsx";
@@ -15,7 +17,11 @@ function problems(board, routes) {
   if (!/assigned_unit_number:\s*unit\.unit_number/.test(unitRow)) failures.push("row must map unit_number");
   if (!/\{\s*key:\s*"unit",\s*header:\s*"Unit",\s*cell:\s*\(load\)\s*=>\s*renderUnitCell\(load\)\s*\}/.test(boardColumns)) failures.push("board must render Unit cell");
   if (!/"unit"/.test(visibleKeys)) failures.push("Unit must be visible by default");
-  if (!/load\.id\.startsWith\("unit:"\)/.test(loadCell) || !/>Unassigned<\/span>/.test(loadCell)) failures.push("Load # must render Unassigned");
+  // Dispatch board #17 (owner, 2026-09-04): Load# saying "Unassigned" duplicated the Status
+  // column's own "Unassigned" pill on the same row -- "the dash in Load# is enough." Load# now
+  // renders "—"; the invariant this guard protects (no raw synthetic unit: UUID, no broken
+  // EntityLink) is unchanged.
+  if (!/load\.id\.startsWith\("unit:"\)/.test(loadCell) || !/>—<\/span>/.test(loadCell)) failures.push("Load # must render — (not the Status pill's own \"Unassigned\" text again)");
   return failures;
 }
 
