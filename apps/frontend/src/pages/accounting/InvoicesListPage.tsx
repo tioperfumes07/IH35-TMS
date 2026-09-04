@@ -59,8 +59,12 @@ const STATUS_OPTIONS: Array<{ value: InvoiceListFilter; label: string }> = [
   { value: "with_balance", label: "With balance" },
 ];
 
+import { formatUsdCents } from "../../lib/money";
+
+// GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
+// local currency formatter (same shape lib/money.ts already covers).
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 /** LV-AR-OPEN-INCLUDES-VOIDED / ACCT-F5027 — void paper is not billed A/R. */

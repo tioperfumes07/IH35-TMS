@@ -32,8 +32,12 @@ const METHOD_OPTIONS: Array<{ value: BillPaymentMethod; label: string }> = [
   { value: "credit_card", label: "Credit Card" },
 ];
 
+import { formatUsdCents } from "../../lib/money";
+
+// GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
+// local currency formatter (same shape lib/money.ts already covers).
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClose, onSaved }: Props) {
