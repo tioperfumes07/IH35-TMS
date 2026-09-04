@@ -15,12 +15,16 @@ type Props = {
   checks: Array<{
     text: string;
     code: string;
-    state: "live" | "pending" | "on_save";
+    // WIZ-47: "blocked" is a live gate that is CURRENTLY failing. A gate that blocks
+    // submit must never render as a passing "live" ✓ — it renders red so the checks
+    // panel reads the same truth as the submit button.
+    state: "live" | "pending" | "on_save" | "blocked";
   }>;
 };
 
 export function BookLoadValidationSection({ checks }: Props) {
   const liveCount = checks.filter((check) => check.state === "live").length;
+  const blockedCount = checks.filter((check) => check.state === "blocked").length;
   const pendingCount = checks.filter((check) => check.state === "pending").length;
   const onSaveCount = checks.filter((check) => check.state === "on_save").length;
   const saveActions = [
@@ -43,17 +47,29 @@ export function BookLoadValidationSection({ checks }: Props) {
             >
               <span
                 className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-xs font-semibold ${
-                  check.state === "live"
-                    ? "bg-[#1c9d5b] text-white"
-                    : check.state === "pending"
-                      ? "bg-slate-200 text-slate-700"
-                      : "bg-[#1f2733] text-white"
+                  check.state === "blocked"
+                    ? "bg-[#b91c1c] text-white"
+                    : check.state === "live"
+                      ? "bg-[#1c9d5b] text-white"
+                      : check.state === "pending"
+                        ? "bg-slate-200 text-slate-700"
+                        : "bg-[#1f2733] text-white"
                 }`}
-                aria-label={check.state === "live" ? "Live gate" : check.state === "pending" ? "Not automated" : "Runs on save"}
+                aria-label={
+                  check.state === "blocked"
+                    ? "Active blocker"
+                    : check.state === "live"
+                      ? "Live gate"
+                      : check.state === "pending"
+                        ? "Not automated"
+                        : "Runs on save"
+                }
               >
-                {check.state === "live" ? "✓" : check.state === "pending" ? "—" : "→"}
+                {check.state === "blocked" ? "✕" : check.state === "live" ? "✓" : check.state === "pending" ? "—" : "→"}
               </span>
-              <span className="flex-1">{check.text}</span>
+              <span className="flex-1" style={check.state === "blocked" ? { color: "#b91c1c", fontWeight: 600 } : undefined}>
+                {check.text}
+              </span>
               <span className="rounded-sm border border-gray-200 bg-white px-1.5 py-0.5 font-mono text-xs" style={{ color: colors.mutedText }}>
                 {check.code}
               </span>
@@ -71,6 +87,9 @@ export function BookLoadValidationSection({ checks }: Props) {
           ))}
         </div>
         <div className="mt-2 border-t border-gray-100 pt-1.5 text-xs font-semibold" style={{ color: colors.bodyText }}>
+          {blockedCount > 0 ? (
+            <span style={{ color: "#b91c1c" }}>{blockedCount} active blocker{blockedCount === 1 ? "" : "s"} · </span>
+          ) : null}
           {liveCount} live gates · {pendingCount} not automated · {onSaveCount} run on save
         </div>
       </DataPanel>

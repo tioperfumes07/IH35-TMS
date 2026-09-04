@@ -443,8 +443,10 @@ export function BookLoadModalV4({
     trailer: EntityPickerOption | null;
     primaryDriver: EntityPickerOption | null;
   }>({ unit: null, trailer: null, primaryDriver: null });
-  // GAP-47 — active-repair-work-order block on the selected driver, with a dispatcher override checkbox.
-  const [overrideRepairBlock, setOverrideRepairBlock] = useState(false);
+  // GAP-47 / WIZ-47 — active-repair-work-order block on the selected unit. The override is now
+  // reason-carrying (>=10 chars, recorded, audited) — the same contract as a per-row pre-dispatch
+  // blocker override — instead of a bare checkbox that recorded nothing. Empty reason = not overridden.
+  const [repairOverrideReason, setRepairOverrideReason] = useState("");
   const [repairBlockSubmitBlocked, setRepairBlockSubmitBlocked] = useState(false);
   const watchedStops = form.watch("stops");
   const deadheadAfterAt = useMemo(() => {
@@ -489,6 +491,7 @@ export function BookLoadModalV4({
     setGateBanner(null);
     setSubmitErrorMessage(null);
     setOverrideReason("");
+    setRepairOverrideReason("");
     setOverrideToken(null);
     setPendingCloseAfterAdvisory(false);
     setShowSpecialNotes(false);
@@ -880,9 +883,17 @@ export function BookLoadModalV4({
     []
   );
 
+  // WIZ-47: the unit-repair gate must read the SAME source that disables the submit button
+  // (repairBlockSubmitBlocked). It was hardcoded `state: "live"` (green ✓) forever — so an
+  // active-repair-work-order block greyed out Book while this panel still rendered a passing
+  // checkmark. A gate that blocks submit must render "blocked", never green.
   const validationChecks = useMemo(
     () => [
-      { text: "Unit repair / availability gate", code: "readiness", state: "live" as const },
+      {
+        text: "Unit repair / availability gate",
+        code: repairBlockSubmitBlocked ? "override required" : "readiness",
+        state: (repairBlockSubmitBlocked ? "blocked" : "live") as "blocked" | "live",
+      },
       { text: "DVIR major-defect authorization gate", code: "authorization required", state: "live" as const },
       { text: "Trailer inspection check", code: "not automated", state: "pending" as const },
       { text: "Customer quality flag warning", code: "not automated", state: "pending" as const },
@@ -890,7 +901,7 @@ export function BookLoadModalV4({
       { text: "Driver instructions → mobile + dispatch PDF", code: "on save", state: "on_save" as const },
       { text: "Expected adjustments → invoice review", code: "on save", state: "on_save" as const },
     ],
-    []
+    [repairBlockSubmitBlocked]
   );
   // GO-19 slice 03 — driver bill number EQUALS the load number, no 'B-' prefix, no transformation
   // (driver-bill-number.ts's driverBillNumberFromLoadNumber contract). This preview used to strip a
@@ -960,7 +971,22 @@ export function BookLoadModalV4({
     setSaveAck(null);
 
     const recordedOverrides = Object.entries(blockOverridesRef.current);
-    const applyOverrides = Boolean(opts?.override || recordedOverrides.length);
+    // WIZ-47 — the unit-repair-WO override is a recorded, audited override exactly like a per-row
+    // pre-dispatch blocker override: it rides in the same override_rules array the backend audits,
+    // carrying its >=10-char reason. Empty reason = the block was never overridden.
+    const repairOverrideApplied = repairOverrideReason.trim().length >= 10;
+    const applyOverrides = Boolean(opts?.override || recordedOverrides.length || repairOverrideApplied);
+    const overrideRuleRows = [
+      ...recordedOverrides.map(([rule_code, rec]) => ({ rule_code, reason: rec.reason, subject: rule_code })),
+      ...(repairOverrideApplied
+        ? [{ rule_code: "unit_repair_active_wo", reason: repairOverrideReason.trim(), subject: "unit" }]
+        : []),
+    ];
+    const primaryOverrideReason = applyOverrides
+      ? overrideReason.trim().length >= 10
+        ? overrideReason.trim()
+        : (recordedOverrides[0]?.[1]?.reason ?? (repairOverrideApplied ? repairOverrideReason.trim() : undefined))
+      : undefined;
 
     const driverId = String(values.assigned_primary_driver_id || "").trim();
     const unitId = String(values.assigned_unit_id || "").trim();
@@ -1006,18 +1032,8 @@ export function BookLoadModalV4({
           values as unknown as Record<string, unknown>,
           form.formState.dirtyFields as unknown as Record<string, unknown>,
           operatingCompanyId,
-          applyOverrides
-            ? overrideReason.trim().length >= 10
-              ? overrideReason
-              : Object.values(blockOverridesRef.current)[0]?.reason
-            : undefined,
-          applyOverrides
-            ? Object.entries(blockOverridesRef.current).map(([rule_code, rec]) => ({
-                rule_code,
-                reason: rec.reason,
-                subject: rule_code,
-              }))
-            : undefined
+          primaryOverrideReason,
+          applyOverrides ? overrideRuleRows : undefined
         );
         // DRV-BILL-SKIP-PATHS — Edit Load calls ensureDriverBillArtifactsForLoad (#5408); surface mint skips
         // the same way Book does (LV-DISPATCH-TOAST-LIES companion: report server outcome, never invent pay).
@@ -1264,18 +1280,8 @@ export function BookLoadModalV4({
         }),
         save_mode: saveMode,
         override_token: token,
-        override_reason: applyOverrides
-          ? overrideReason.trim().length >= 10
-            ? overrideReason
-            : Object.values(blockOverridesRef.current)[0]?.reason
-          : undefined,
-        override_rules: applyOverrides
-          ? Object.entries(blockOverridesRef.current).map(([rule_code, rec]) => ({
-              rule_code,
-              reason: rec.reason,
-              subject: rule_code,
-            }))
-          : undefined,
+        override_reason: primaryOverrideReason,
+        override_rules: applyOverrides ? overrideRuleRows : undefined,
         override_credit_limit: overrideCreditLimit || undefined,
       });
       const warnings = Array.isArray((payload as Record<string, unknown>)?.wf_044_maintenance_warnings)
@@ -2324,6 +2330,9 @@ export function BookLoadModalV4({
                     const first = Object.values(rows)[0];
                     if (first?.reason) setOverrideReason(first.reason);
                   }}
+                  // WIZ-47 — do not print "cleared to dispatch" while the unit-repair gate still
+                  // disables submit. Same source as the submit button's `disabled` (line ~2491).
+                  externallyBlocked={repairBlockSubmitBlocked}
                   // OWNER-ALWAYS-OVERRIDE: these two props were NEVER passed. Both are optional, so
                   // inside the panel `value={overrideReason ?? ""}` was permanently "" and onChange
                   // optional-chained to a no-op — the override textarea could not receive a single
@@ -2361,8 +2370,8 @@ export function BookLoadModalV4({
                 <LoadCreateModal
                   operatingCompanyId={operatingCompanyId}
                   selectedDriverId={assignedPrimaryDriverId || ""}
-                  overrideRepairBlock={overrideRepairBlock}
-                  onOverrideRepairBlockChange={setOverrideRepairBlock}
+                  overrideReason={repairOverrideReason}
+                  onOverrideReasonChange={setRepairOverrideReason}
                   onSubmitBlockedChange={setRepairBlockSubmitBlocked}
                 />
                 <BookLoadValidationSection checks={validationChecks} />
@@ -2498,7 +2507,9 @@ export function BookLoadModalV4({
                   ? "Save changes"
                   : preDispatch.remainingBlockers > 0
                     ? "Override & dispatch"
-                    : "Book + dispatch"}
+                    : repairBlockSubmitBlocked
+                      ? "Resolve blocker to dispatch"
+                      : "Book + dispatch"}
               </Button>
             </div>
           </div>
