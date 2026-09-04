@@ -132,7 +132,7 @@ export type PayRunJeLegPreview = {
   description: string;
 };
 
-export type RecoverableAdvance = { id: string; display_id: string | null; amount_cents: number };
+export type RecoverableAdvance = { id: string; display_id: string | null; amount_cents: number; liability_id: string | null };
 
 export type SettlementPayRunResult = {
   result: "previewed" | "posted";
@@ -301,9 +301,15 @@ async function loadRecoverableAdvances(
   operatingCompanyId: string,
   driverId: string
 ): Promise<RecoverableAdvance[]> {
-  const res = await client.query<{ id: string; display_id: string | null; amount: string; outstanding_balance: string }>(
+  const res = await client.query<{
+    id: string;
+    display_id: string | null;
+    amount: string;
+    outstanding_balance: string;
+    liability_id: string | null;
+  }>(
     `
-      SELECT id::text, display_id, amount::text, outstanding_balance::text
+      SELECT id::text, display_id, amount::text, outstanding_balance::text, liability_id::text
       FROM driver_finance.driver_advances
       WHERE operating_company_id = $1::uuid
         AND driver_id = $2::uuid
@@ -320,7 +326,7 @@ async function loadRecoverableAdvances(
       const outstanding = dollarsToCents(r.outstanding_balance);
       const amount = dollarsToCents(r.amount);
       const cents = outstanding > 0 ? outstanding : amount;
-      return { id: r.id, display_id: r.display_id, amount_cents: cents };
+      return { id: r.id, display_id: r.display_id, amount_cents: cents, liability_id: r.liability_id };
     })
     .filter((a) => a.amount_cents > 0);
 }
@@ -817,6 +823,25 @@ export async function closeSettlementPayRun(
           [adv.id, settlementId, opco]
         );
         if ((upd.rowCount ?? 0) > 0) recoveredIds.push(adv.id);
+        // LIABILITY-BALANCE-SYNC-AT-CLOSE (item 6, this pass): driver_finance.driver_liabilities is
+        // the GL-facing liability record created alongside this advance at disbursement
+        // (cash-advance-create.ts createDriverCashAdvanceCore), but until now nothing here ever
+        // updated it when the advance was actually recovered through a settlement close — only
+        // driver_advances.outstanding_balance moved, leaving driver_liabilities frozen at its
+        // original balance forever, even after full recovery. That gap is what made
+        // CASH-ADV-F9930's paid_to_date-based reversal guard (fixed separately) blind to the real
+        // recovery path: a fully-recovered advance would still show paid_to_date=0 and could be
+        // wrongly reversed. Full recovery here (this branch) means the liability is fully paid.
+        if (adv.liability_id) {
+          await client.query(
+            `
+              UPDATE driver_finance.driver_liabilities
+                 SET current_balance = 0, paid_to_date = original_amount, updated_at = now()
+               WHERE id = $1::uuid AND operating_company_id = $2::uuid
+            `,
+            [adv.liability_id, opco]
+          );
+        }
       } else {
         const remainingBalanceCents = adv.amount_cents - takeCents;
         const upd = await client.query(
@@ -829,6 +854,22 @@ export async function closeSettlementPayRun(
           [adv.id, (remainingBalanceCents / 100).toFixed(2), opco]
         );
         if ((upd.rowCount ?? 0) > 0) recoveredIds.push(adv.id);
+        // LIABILITY-BALANCE-SYNC-AT-CLOSE — partial recovery: current_balance mirrors the advance's
+        // remaining outstanding_balance; paid_to_date is derived from original_amount so it always
+        // reflects the true cumulative recovery across every close that has touched this liability,
+        // not just this one (a liability can be partially recovered across several settlements).
+        if (adv.liability_id) {
+          await client.query(
+            `
+              UPDATE driver_finance.driver_liabilities
+                 SET current_balance = $2::numeric,
+                     paid_to_date = original_amount - $2::numeric,
+                     updated_at = now()
+               WHERE id = $1::uuid AND operating_company_id = $3::uuid
+            `,
+            [adv.liability_id, (remainingBalanceCents / 100).toFixed(2), opco]
+          );
+        }
       }
       remainingRecoveryCapCents -= takeCents;
     }
