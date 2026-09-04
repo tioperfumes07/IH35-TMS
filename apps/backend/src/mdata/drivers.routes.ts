@@ -852,6 +852,40 @@ export async function createDriverCanonical(
         if (!referrer.rows[0]) return { error: "referring_driver_not_found" as const };
       }
 
+      // DRV-03 — DQF hard_block gate, server-side (owner: "enforced server-side, not just in
+      // React"). Mirrors CreateDriverModal.tsx's unsatisfiedHardBlockDqfItems check against the
+      // SAME live compliance.required_document_types catalog, so a direct API call cannot bypass
+      // what the wizard blocks. Only the office hire flow (b.operating_company_id present) gates —
+      // the maintenance quick-add path (options.assignCompanyId, no onboarding) is a different
+      // product concern and untouched. Every seeded code is enforcement='warn' today (verified
+      // live 2026-09-04) so this is a true no-op now; it activates the instant the owner promotes
+      // a code via the existing PATCH /required-document-types endpoint, with no further code
+      // change. Only 'cdl' is checkable from this payload alone — any OTHER code promoted to
+      // hard_block (med_cert/mvr/clearinghouse/driver_application/w9) fails closed with a named
+      // reason rather than silently passing, since their records don't exist until after the
+      // driver row does; that two-phase gap is real and reported, not hidden.
+      if (b.operating_company_id) {
+        const hardBlockRes = await client.query<{ code: string; label: string }>(
+          `SELECT code, label
+             FROM compliance.required_document_types
+            WHERE operating_company_id = $1::uuid
+              AND entity_kind = 'driver'
+              AND is_active = true
+              AND enforcement = 'hard_block'`,
+          [b.operating_company_id]
+        );
+        const unsatisfied = hardBlockRes.rows.filter((item) => {
+          if (item.code === "cdl") return !(b.cdl_number && b.cdl_expires_at);
+          return true; // no other code has a satisfiable signal in this payload today
+        });
+        if (unsatisfied.length > 0) {
+          return {
+            error: "driver_dqf_required_document_missing" as const,
+            missing: unsatisfied.map((item): { code: string; label: string } => ({ code: item.code, label: item.label })),
+          };
+        }
+      }
+
       const res = await client.query(
         `
             INSERT INTO mdata.drivers (
@@ -1248,6 +1282,16 @@ export async function createDriverCanonical(
       if (created.error === "prior_driver_not_most_recent_in_chain")
         return { status: 409, body: { error: "prior_driver_not_most_recent_in_chain" } };
       if (created.error === "override_required_for_rehire") return { status: 400, body: { error: "override_required_for_rehire" } };
+      if (created.error === "driver_dqf_required_document_missing") {
+        return {
+          status: 409,
+          body: {
+            error: "driver_dqf_required_document_missing",
+            message: `Required DQF item(s) not on file: ${(created.missing as Array<{ code: string; label: string }>).map((m) => m.label).join(", ")}.`,
+            missing: created.missing,
+          },
+        };
+      }
       return { status: 400, body: { error: String((created as { error: string }).error) } };
     }
 
