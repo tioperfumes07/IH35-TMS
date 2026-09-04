@@ -24,7 +24,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
 import { useToast } from "../Toast";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
 import { canDragLoad, flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, toRouteSummary } from "./constants";
 
 function combineRefs<T>(...refs: Array<React.Ref<T> | undefined>) {
@@ -843,6 +843,11 @@ function KanbanDispatchColumn({
   onToggleColumnSort: (columnKey: string, sortKey: "unit" | "load") => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `column:${column.key}` });
+  // DSP-15 (owner 2026-09-04): a collapsedByDefault lane (Cancelled) previously rendered ONLY
+  // its header + count with no way to open it — the cancelled loads were unreachable on the
+  // board. This expander toggles the lane open on demand; the hook lives above every early
+  // return so lane hook order stays stable.
+  const [expanded, setExpanded] = useState(false);
 
   // DB-2: lanes that map to real load statuses get a clickable header → filtered List view.
   // Synthetic lanes (awaiting_assignment has statuses: []) stay plain.
@@ -865,11 +870,20 @@ function KanbanDispatchColumn({
       headers centered (a 3-column grid keeps the title true-centered regardless of the count
       badge's width, which a plain justify-between can't do) and given a full outline (border, not
       just border-b), matching the same 2px radius as everything else. */}
-  if (column.collapsedByDefault) {
+  if (column.collapsedByDefault && !expanded) {
     return (
       <section className="min-w-[270px] rounded-sm border border-gray-200 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
-        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-sm border border-gray-100 px-2 pb-2 pt-1">
-          <span />
+        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-sm border border-gray-100 px-2 pb-2 pt-1">
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="inline-flex items-center rounded p-0.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+            data-testid={`kanban-column-expander-${column.key}`}
+            aria-expanded={false}
+            title={`Show ${column.title} loads`}
+          >
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+          </button>
           <div className="text-center">{headerLink}</div>
           <span className="justify-self-end rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
         </header>
@@ -887,7 +901,20 @@ function KanbanDispatchColumn({
     >
       <header className="mb-2 rounded-sm border border-gray-100 px-2 pb-2 pt-1">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-          <span />
+          {column.collapsedByDefault ? (
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="inline-flex w-fit items-center rounded p-0.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+              data-testid={`kanban-column-collapser-${column.key}`}
+              aria-expanded={true}
+              title={`Collapse ${column.title}`}
+            >
+              <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          ) : (
+            <span />
+          )}
           <div className="text-center">{headerLink}</div>
           <span className="justify-self-end rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{loads.length}</span>
         </div>
