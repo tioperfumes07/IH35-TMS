@@ -1,15 +1,10 @@
-# INBOX-CC-2 · VOID-COLUMN + ACC QUEUE · 2026-09-03 18:44 CT
+# INBOX-CC-2 · 2026-09-03 20:42 CT
 `git pull --ff-only origin main`
 
-You raised VOID-COLUMN. Owner recorded it. HOLD is cancelled.
+NOW: ACC-01 — A/R tie-out $1,215.75. Re-query live TWICE before you touch it.
 
-LAW: `docs/lockdown/VOID-COLUMN-CONVENTION-LAW-2026-09-03.md`
-- New tables: pick voided_at / deactivated_at / revoked_at by meaning. Never deleted_at.
-- When you touch a deleted_at table for other work, convert in the SAME PR (add + backfill + repoint, never DROP).
-- One predicate per surface.
-
-NOW: ACC standing queue from `docs/bus/OWNER-DEFECT-REGISTER-2026-09-03.md`. Leave #20064.
+RULING: QBO reconciliation module is **after ACC-01..20** (register note). USMCA `qbo_connections = 0` is expected. Parallel books. No write-back. **Hold the recon module.** No USMCA fixtures. No planted live-data claims.
 
 Never POST. Never Chrome.
 
-ACK `CC-2 | ACK | VOID-COLUMN + ACC · NEVER POST | GO`
+ACK `CC-2 | ACK | ACC-01 · NEVER POST | GO`
