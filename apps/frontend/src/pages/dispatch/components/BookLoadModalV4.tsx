@@ -22,7 +22,7 @@ import { properPersonOrPlaceName } from "../../../lib/properDisplayText";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { getLoad, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
-import { buildEditPrefill, buildEditPatchBody } from "./book-load-v4/editLoadMapping";
+import { buildEditPrefill, buildEditPatchBody, shouldApplyEditPrefill } from "./book-load-v4/editLoadMapping";
 import { bookLoadToastMessage, bookLoadToastTone, serverStatusOf } from "./book-load-toast";
 import { searchCustomersAutocomplete } from "../../../api/mdata";
 import { heldEntityIsSelectable, heldEntityMergedMessage } from "../../../lib/resolve-held-entity";
@@ -293,6 +293,9 @@ export function BookLoadModalV4({
   const panelRef = useRef<HTMLDivElement>(null);
   const liveLoadNumberUserTypedRef = useRef(createLiveLoadNumberUserTypedRef());
   const autoPrefillAppliedKeyRef = useRef<string | null>(null);
+  // WIZ-48 — the id whose Edit prefill has already been applied. Guards the reset below so a refetch
+  // (staleTime:0) never re-runs form.reset and clobbers the operator's in-progress edits.
+  const editPrefillAppliedRef = useRef<string | null>(null);
   const { enabled: wizardV5 } = useFeatureFlag(LOAD_WIZARD_V5_FLAG, operatingCompanyId);
 
   const [gateBanner, setGateBanner] = useState<{
@@ -487,6 +490,7 @@ export function BookLoadModalV4({
     }
     resetLiveLoadNumberUserTyped(liveLoadNumberUserTypedRef.current);
     autoPrefillAppliedKeyRef.current = null;
+    editPrefillAppliedRef.current = null;
     form.reset();
     setGateBanner(null);
     setSubmitErrorMessage(null);
@@ -534,11 +538,19 @@ export function BookLoadModalV4({
   const effectiveOperatingCompanyId = editLoad?.operating_company_id ?? operatingCompanyId ?? "";
   useEffect(() => {
     if (!open || !isEditMode || !editLoad) return;
+    // WIZ-48 (owner-blocking silent data loss): apply the prefill EXACTLY ONCE per opened load id.
+    // editLoadQuery uses staleTime:0, so it refetches (focus/mount/reconnect); re-running form.reset on
+    // every refetch OVERWROTE the operator's in-progress edits and cleared their dirtyFields, so a field
+    // changed BEFORE a refetch (the truck on 13508) was silently dropped from the dirtyFields-gated PATCH
+    // while a field changed AFTER it (the driver) survived. Reset once → the prefill is the clean
+    // baseline and later refetches never clobber edits.
+    if (!shouldApplyEditPrefill(editPrefillAppliedRef.current, editLoadId)) return;
+    editPrefillAppliedRef.current = editLoadId ?? null;
     // reset WITHOUT keepDefaultValues so the prefilled values become the clean baseline — nothing is
     // dirty until the user edits, which is what the dirtyFields-gated Save body relies on.
     form.reset({ ...form.getValues(), ...(buildEditPrefill(editLoad) as Partial<FormValues>) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isEditMode, editLoad]);
+  }, [open, isEditMode, editLoad, editLoadId]);
 
   const finalizeBookLoadClose = useCallback(() => {
     setShowDiscardConfirm(false);
