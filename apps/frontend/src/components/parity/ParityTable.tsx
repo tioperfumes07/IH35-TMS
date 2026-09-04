@@ -344,6 +344,22 @@ function measureTextWidth(text: string, fontPx: number): number {
   return ctx.measureText(text).width;
 }
 
+/**
+ * NO-TRUNCATION LAW (owner ruling 2026-09-04, verbatim: "no header label is ever truncated, the
+ * column sizes to its label") — header labels needed their OWN measurement, not the body-text one
+ * above. The real rendered `<th>` is `font-weight:700` (autoFitWidths measured at 600) with
+ * `text-transform:uppercase` (canvas measurement never applied it — "Late Fee" measures narrower
+ * than the "LATE FEE" that actually renders) and a `letterSpacing:0.3` per character canvas
+ * `measureText` has no concept of. All three together under-measured just enough to clip "Late
+ * Fee"/"Lumper"/"Fuel"/"R&M Exp" on the Load Costs board — confirmed live, owner screenshot. */
+function measureHeaderLabelWidth(label: string, fontPx: number): number {
+  const ctx = getMeasureCanvasCtx();
+  const upper = label.toUpperCase();
+  if (!ctx) return upper.length * fontPx * 0.65;
+  ctx.font = `700 ${fontPx}px sans-serif`;
+  return ctx.measureText(upper).width + upper.length * 0.3;
+}
+
 function cellTextForMeasurement<T>(column: ParityColumn<T>, row: T): string {
   const value = column.exportValue?.(row) ?? column.sortValue?.(row) ?? (row as Record<string, unknown>)[String(column.key)];
   if (value === null || value === undefined) return "";
@@ -572,6 +588,17 @@ export function ParityTable<T>({
   }, [columns, colOrder]);
   const visibleColumns = orderedColumns.filter((c) => c.alwaysVisible || !hidden.has(String(c.key)));
 
+  // COLUMNS-MUST-DISTINGUISH LAW (owner ruling 2026-09-04) — column-key -> the owning group's `bg`
+  // (if any), for tinting body cells the full column height to match the group band above them.
+  // Recomputed from `columnGroups` directly (not the visible/ordered list) since a column's group
+  // membership doesn't depend on its current position — only the header band row's colSpans do.
+  const columnBg = useMemo(() => {
+    if (!columnGroups) return null;
+    const map = new Map<string, string | undefined>();
+    for (const g of columnGroups) for (const k of g.keys) map.set(k, g.bg);
+    return map;
+  }, [columnGroups]);
+
   function moveColumn(sourceKey: string, targetKey: string) {
     if (sourceKey === targetKey) return;
     const currentOrder = orderedColumns.map((c) => String(c.key));
@@ -641,7 +668,7 @@ export function ParityTable<T>({
     for (const column of visibleColumns) {
       const key = String(column.key);
       if (colWidths[key] != null) continue; // manual resize already won for this column.
-      let widest = measureTextWidth(column.label, typography.panelHeader ?? 11);
+      let widest = measureHeaderLabelWidth(column.label, typography.panelHeader ?? 11);
       for (const row of sample) {
         const text = cellTextForMeasurement(column, row);
         if (!text) continue;
@@ -952,9 +979,12 @@ export function ParityTable<T>({
 
   // Shared per-row renderer so the grouped (A2) and ungrouped paths emit IDENTICAL row markup —
   // selection, expansion (incl. A1 controlled expansion), density, and row actions all compose.
-  const renderDataRow = (row: T) => {
+  // `rowIndex` drives zebra striping (COLUMNS-MUST-DISTINGUISH LAW) — set per data-td explicitly
+  // (not relied on via <tr> background) since a grouped column's own tint must win per-cell.
+  const renderDataRow = (row: T, rowIndex = 0) => {
     const id = rowKey(row);
     const isExpanded = expanded.has(id);
+    const isEvenRow = rowIndex % 2 === 1;
     return (
       <Fragment key={id}>
       <tr
@@ -999,19 +1029,37 @@ export function ParityTable<T>({
             </span>
           </td>
         ) : null}
-        {visibleColumns.map((column) => (
+        {visibleColumns.map((column) => {
+          // COLUMNS-MUST-DISTINGUISH LAW (owner ruling 2026-09-04) — a grouped column's own tint
+          // always wins over plain zebra striping (ungrouped columns still zebra-stripe); selection
+          // wins over both.
+          const groupBg = columnBg?.get(String(column.key));
+          const cellBg = selected.has(id)
+            ? colors.accentTint
+            : groupBg
+              ? groupBg
+              : isEvenRow
+                ? colors.tableRowStripe
+                : undefined;
+          return (
           <td
             key={String(column.key)}
             className={`overflow-hidden wrap-break-word px-2 align-top text-gray-800 ${
               column.cellClass ?? column.className ?? ""
             }`}
-            style={{ paddingTop: d.padY, paddingBottom: d.padY }}
+            style={{
+              paddingTop: d.padY,
+              paddingBottom: d.padY,
+              borderRight: `1px solid ${colors.tableColumnRule}`,
+              ...(cellBg ? { backgroundColor: cellBg } : {}),
+            }}
           >
             {column.render
               ? column.render(row)
               : String((row as Record<string, unknown>)[String(column.key)] ?? "")}
           </td>
-        ))}
+          );
+        })}
         {rowActions ? (
           <td className="px-2 text-right" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
             {rowActions(row)}
@@ -1203,17 +1251,23 @@ export function ParityTable<T>({
         >
           {columnGroups ? (
             <tr data-testid="parity-table-column-groups" style={{ height: 24 }}>
-              {renderExpanded ? <th className="w-8 px-2" /> : null}
-              {selectable ? <th className="w-8 px-2" /> : null}
+              {renderExpanded || selectable ? (
+                <th
+                  colSpan={(renderExpanded ? 1 : 0) + (selectable ? 1 : 0)}
+                  style={{ backgroundColor: colors.tableGroupBandBg, borderRight: `1px solid ${colors.tableColumnRule}`, borderBottom: `1px solid ${colors.tableColumnRule}` }}
+                />
+              ) : null}
               {(() => {
                 const visibleKeys = visibleColumns.map((c) => String(c.key));
-                const grouped = new Set(columnGroups.flatMap((g) => g.keys));
                 const cells: Array<{ label: string; span: number; bg?: string }> = [];
                 for (const key of visibleKeys) {
                   const owningGroup = columnGroups.find((g) => g.keys.includes(key));
                   const last = cells[cells.length - 1];
                   // Coalesce consecutive visible columns belonging to the SAME group into one cell;
-                  // an ungrouped column always gets its own untinted cell.
+                  // an ungrouped column always gets its own untinted cell. Reordering/hiding columns
+                  // recomputes this every render (visibleColumns, not a static layout), so a column
+                  // dragged out of its group's run just yields more, narrower band cells — never a
+                  // stale colspan.
                   if (owningGroup && last && last.label === owningGroup.label) {
                     last.span += 1;
                   } else if (owningGroup) {
@@ -1222,26 +1276,31 @@ export function ParityTable<T>({
                     cells.push({ label: "", span: 1 });
                   }
                 }
-                void grouped; // computed for future coverage assertions; not needed for render
                 return cells.map((cell, index) => (
                   <th
                     key={`${cell.label || "ungrouped"}-${index}`}
                     colSpan={cell.span}
-                    className="border-b border-r border-slate-300 px-2 text-center font-bold uppercase last:border-r-0"
+                    className="text-center font-bold uppercase"
                     style={{
-                      height: 24,
                       fontSize: 10,
                       fontWeight: 700,
                       letterSpacing: 0.9,
-                      backgroundColor: cell.bg ?? "transparent",
-                      color: colors.columnHeader,
+                      backgroundColor: cell.bg ?? colors.tableGroupBandBg,
+                      color: colors.mutedText,
+                      borderRight: `1px solid ${colors.tableColumnRule}`,
+                      borderBottom: `1px solid ${colors.tableColumnRule}`,
                     }}
                   >
                     {cell.label}
                   </th>
                 ));
               })()}
-              {rowActions ? <th className="w-10 px-2" /> : null}
+              {rowActions ? (
+                <th
+                  className="w-10 px-2"
+                  style={{ backgroundColor: colors.tableGroupBandBg, borderBottom: `1px solid ${colors.tableColumnRule}` }}
+                />
+              ) : null}
             </tr>
           ) : null}
           <tr style={{ height: DENSITY[density].rowH }}>
@@ -1308,6 +1367,10 @@ export function ParityTable<T>({
                     letterSpacing: 0.3,
                     backgroundColor: dragOverKey === key ? colors.accentTint : resolvedHeaderBg,
                     color: resolvedHeaderInk,
+                    // COLUMNS-MUST-DISTINGUISH LAW (owner ruling 2026-09-04) — a 1px vertical rule
+                    // between every column, header and body (th-border in the reference render).
+                    borderRight: `1px solid ${colors.tableColumnRule}`,
+                    borderBottom: `2px solid ${colors.tableColumnRule}`,
                     ...(w ? { width: w } : {}),
                     ...(dragOverKey === key ? { outlineColor: colors.navy } : {}),
                   }}
@@ -1407,12 +1470,12 @@ export function ParityTable<T>({
                       </div>
                     </td>
                   </tr>
-                  {isCollapsed ? null : group.rows.map((row) => renderDataRow(row))}
+                  {isCollapsed ? null : group.rows.map((row, i) => renderDataRow(row, i))}
                 </Fragment>
               );
             })
           ) : (
-            pageRows.map((row) => renderDataRow(row))
+            pageRows.map((row, i) => renderDataRow(row, i))
           )}
         </tbody>
         {footer ? (

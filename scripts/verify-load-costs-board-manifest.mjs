@@ -54,7 +54,10 @@ function violations(board, backend) {
   // 2026-09-04). Spec §2.2's fourth branch is mandatory: never render "On Time" with no appointment.
   if (!board.includes("function serviceStatus") || !board.includes('"On Time"') || !board.includes('"Late"') || !board.includes('"In transit"') || !board.includes("Delivered — no appointment on file")) errors.push("Status column is not computed as the four-branch service-performance state (spec §2.2)");
   // Design law 2026-09-04: "The navy #14314F table header is RETIRED... regular ink, never white."
-  // Navy/white must be GONE from the header re-theme, and the light replacement present.
+  // Navy/white must be GONE from the header re-theme, and the light replacement present. (CC-2's
+  // ParityTable now defaults tableHeaderBg/tableHeaderText to this same light pair via tokens.ts,
+  // and additionally accepts headerBg/headerInk as an explicit per-table override — this board
+  // passes them explicitly rather than relying on the default, so both checks below still hold.)
   if (board.includes('headerBg="#14314F"') || board.includes('headerInk="#FFFFFF"')) errors.push("navy/white table header still present -- design law retired it");
   if (!board.includes('headerBg="#EEF2F6"') || !board.includes('headerInk="#1F2937"')) errors.push("light table-header re-theme (headerBg/headerInk) missing");
   if (!board.includes("columnGroups={COLUMN_GROUPS}") || !board.includes('label: "The trip"') || !board.includes('label: "Revenue"') || !board.includes('label: "Trip expense"') || !board.includes('label: "Driver pay"')) errors.push("grouped column-band row (spec §2.2) missing");

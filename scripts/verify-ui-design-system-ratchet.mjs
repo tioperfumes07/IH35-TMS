@@ -28,6 +28,7 @@ const SRC = path.join(ROOT, "apps", "frontend", "src");
 const INDEX_CSS = path.join(SRC, "index.css");
 const KPI_CARD = path.join(SRC, "components", "layout", "KpiCard.tsx");
 const DRILL_KPI_CARD = path.join(SRC, "components", "layout", "DrillKpiCard.tsx");
+const TOKENS_TS = path.join(SRC, "design", "tokens.ts");
 
 /** The one picker that dismisses on outside mousedown. Everything else traps the user. */
 const GOOD_PICKER = "components/Combobox";
@@ -161,6 +162,13 @@ function selftest() {
     console.error(`${LABEL}: SELFTEST FAIL — shared KPI primitives must fill one equal grid cell`);
     process.exit(1);
   }
+  const tokensSrc = fs.readFileSync(TOKENS_TS, "utf8");
+  const bg = tokensSrc.match(/tableHeaderBg:\s*"(#[0-9A-Fa-f]{6})"/)?.[1];
+  const text = tokensSrc.match(/tableHeaderText:\s*"(#[0-9A-Fa-f]{6})"/)?.[1];
+  if (bg?.toUpperCase() === "#14314F" || text?.toUpperCase() === "#FFFFFF") {
+    console.error(`${LABEL}: SELFTEST FAIL — live tokens.ts still has the retired navy/white table header (bg=${bg}, text=${text})`);
+    process.exit(1);
+  }
   console.log(`${LABEL}: SELFTEST PASS`);
   process.exit(0);
 }
@@ -174,6 +182,23 @@ if (!kpi.includes('className="inline-flex h-full w-full min-w-0') ||
     !kpi.includes('className="block h-full w-full min-w-0') ||
     !drill.includes('"block h-full w-full min-w-0 rounded-sm border')) {
   console.error(`${LABEL}: FAIL — GLB-04 shared KPI primitives no longer fill equal-width/equal-height grid cells`);
+  process.exit(1);
+}
+
+// TABLE-HEADER-RETIRE-NAVY LAW (owner ruling 2026-09-04, verbatim: "the blue is too aggressive")
+// — navy `#14314F`/white left table headers for good; it stays on the rail, top banner, and
+// printed document headers only. `tokens.ts`'s `tableHeaderBg`/`tableHeaderText` are the ONE place
+// every ParityTable/DataTable header reads its color from — this fails hard (not a ratchet count)
+// the moment navy comes back on that specific pair, so no PR can silently regress it.
+const tokensSrc = fs.readFileSync(TOKENS_TS, "utf8");
+const headerBgMatch = tokensSrc.match(/tableHeaderBg:\s*"(#[0-9A-Fa-f]{6})"/);
+const headerTextMatch = tokensSrc.match(/tableHeaderText:\s*"(#[0-9A-Fa-f]{6})"/);
+if (!headerBgMatch || !headerTextMatch) {
+  console.error(`${LABEL}: FAIL — could not find tableHeaderBg/tableHeaderText in ${path.relative(ROOT, TOKENS_TS)}`);
+  process.exit(1);
+}
+if (headerBgMatch[1].toUpperCase() === "#14314F" || headerTextMatch[1].toUpperCase() === "#FFFFFF") {
+  console.error(`${LABEL}: FAIL — navy/white table header reintroduced (tableHeaderBg=${headerBgMatch[1]}, tableHeaderText=${headerTextMatch[1]}); retired by owner ruling 2026-09-04, navy stays on the rail/topbar/printed docs only`);
   process.exit(1);
 }
 

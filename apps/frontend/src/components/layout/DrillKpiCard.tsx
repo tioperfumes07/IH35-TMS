@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { spacing } from "../../design/tokens";
+import { colors, spacing } from "../../design/tokens";
 
 /**
  * C8 — the shared KPI/stat card. Two rules live here so no call site can forget either one.
@@ -84,11 +84,18 @@ export function DrillKpiCard({
     // names one KPI-tile target, not two. h-full still fills a naturally-sized row, but maxHeight
     // below (inline style) is the hard ceiling — Safety's own "Total Safety Events" tile — so no
     // KPI tile system-wide can grow past it.
-    "block h-full w-full min-w-0 rounded-sm border bg-white px-2 py-1 text-center",
-    active ? "border-slate-400" : "border-gray-200",
+    // KPI-TILE-COLOR LAW (owner ruling 2026-09-04, verbatim "not just white background a light
+    // color to distinguish and darker border") — bg/border now come from the shell style below
+    // (colors.kpiTileBg/kpiTileBorder), not a Tailwind bg-white/border-gray-200 pair; `active`
+    // still gets its own distinct selected-state border, painted after the base style so it wins.
+    "block h-full w-full min-w-0 rounded-sm border px-2 py-1 text-center",
     compact ? "text-[11px]" : "",
   ].join(" ");
   const maxHeightStyle = { maxHeight: spacing.kpiTileMaxHeight };
+  const kpiTileStyle = {
+    backgroundColor: colors.kpiTileBg,
+    borderColor: active ? colors.navy : colors.kpiTileBorder,
+  };
   const labelClass = compact
     ? "text-[11px] uppercase tracking-wide text-gray-500"
     : "text-[11px] uppercase tracking-wide text-gray-500";
@@ -103,7 +110,9 @@ export function DrillKpiCard({
       {hint ? <div className="mt-0.5 text-[11px] leading-snug text-gray-500">{hint}</div> : null}
     </>
   );
-  const style = accent ? { ...maxHeightStyle, borderLeft: `3px solid ${accent}` } : maxHeightStyle;
+  const style = accent
+    ? { ...maxHeightStyle, ...kpiTileStyle, borderLeft: `3px solid ${accent}` }
+    : { ...maxHeightStyle, ...kpiTileStyle };
 
   if (unavailable) {
     return (

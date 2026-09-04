@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
-import { spacing } from "../../../design/tokens";
+import { colors, spacing } from "../../../design/tokens";
 import {
   ACTIVITY_WINDOW_OPTIONS,
   getActiveDriverSet,
@@ -68,8 +68,8 @@ function KpiTile({
       <Link
         to={to}
         data-testid="safety-home-kpi-link"
-        className="block rounded-sm border border-gray-200 bg-white px-3 py-2 text-center transition hover:border-slate-300 hover:shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-        style={{ maxHeight: spacing.kpiTileMaxHeight }}
+        className="block rounded-sm border px-3 py-2 text-center transition hover:border-slate-300 hover:shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+        style={{ maxHeight: spacing.kpiTileMaxHeight, backgroundColor: colors.kpiTileBg, borderColor: colors.kpiTileBorder }}
       >
         {inner}
       </Link>
@@ -78,8 +78,8 @@ function KpiTile({
 
   return (
     <div
-      className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-center"
-      style={{ maxHeight: spacing.kpiTileMaxHeight }}
+      className="rounded-sm border px-3 py-2 text-center"
+      style={{ maxHeight: spacing.kpiTileMaxHeight, backgroundColor: colors.kpiTileBg, borderColor: colors.kpiTileBorder }}
     >
       {inner}
     </div>

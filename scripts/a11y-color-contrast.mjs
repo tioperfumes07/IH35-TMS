@@ -31,6 +31,8 @@ export const TOKEN_PAIRS = [
   // blue already owner-approved for the table header row.
   { id: "sidebar-active-item", role: "text", fg: "#FFFFFF", bg: "#14314F", note: "active sidebar nav item" },
   { id: "sidebar-inactive-item", role: "text", fg: "#9CA3AF", bg: "#14314F", note: "inactive sidebar nav item" },
+  // TABLE-HEADER-RETIRE-NAVY LAW (owner ruling 2026-09-04) — light header bg, regular ink.
+  { id: "table-header", role: "text", fg: "#1F2937", bg: "#EEF2F6", note: "ParityTable/DataTable column header" },
   { id: "page-body-text", role: "text", fg: "#1F2937", bg: "#F7F8FA", note: "page body text" },
   { id: "page-heading-text", role: "text", fg: "#0F1219", bg: "#FFFFFF", note: "page heading text" },
   { id: "warn-badge", role: "ui", fg: "#FFFFFF", bg: "#D97706", note: "warning badge" },
