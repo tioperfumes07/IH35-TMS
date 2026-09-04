@@ -7343,5 +7343,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1050
+  "total_claimed": 1050,
+  "10279": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-no-new-deleted-at-columns (VOID-COLUMN-CONVENTION-LAW-2026-09-03: never add deleted_at to a new table -- voided_at/deactivated_at/revoked_at are the only three void-marker conventions, ratchet baseline 15 migration files defining a deleted_at column)"
+  }
 }
