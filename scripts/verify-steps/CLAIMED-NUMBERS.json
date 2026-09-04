@@ -7394,6 +7394,11 @@
     "claimed_at": "2026-09-04",
     "purpose": "verify-money-text-component-adoption-ratchet (GLB-05: publishes the canonical MoneyText display component + a frozen-baseline ratchet against new hand-rolled toLocaleString(..., {style:'currency'}) money formatting app-wide; baseline measured after converting 6 files to the canonical formatUsdCents this session)"
   },
+  "10301": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-broker-advance-never-driver-liability-never-invoice-face (SET-24: a broker-sent load advance is a partial payment against that load's receivable, netting into accounting.invoices.broker_advance_applied_cents -- an existing, live, never-written column -- never a driver_finance.* write, never a reduction of the invoice face)"
+  },
   "10303": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-04",
