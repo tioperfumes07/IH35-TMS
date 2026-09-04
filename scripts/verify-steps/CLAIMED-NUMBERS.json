@@ -5357,6 +5357,11 @@
     "claimed_at": "2026-09-03",
     "purpose": "verify-cancellation-voids-expenses-and-advances (SET-09: cancelling a load did not void the load's expenses, did not release bank matches, and did not reverse advances/liabilities -- expenses now void via executeVoidCancel which releases bank matches for free via postVoidReversal's BANK-ORPHAN-01; advances reverse via a new shared reverseDriverAdvanceInClientTx, gated on paid_to_date)"
   },
+  "10289": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-cc3-ddl-handoff-retention-leave-safety (CC-3 DDL handoff: drivers.retention_scores had only SELECT/INSERT for ih35_app, no UPDATE/DELETE; catalogs.driver_leave_balances and safety.driver_safety_scores had no way to void a duplicate row -- migration 202613620001 grants the full CRUD set and adds deactivated_at per the VOID-COLUMN CONVENTION law)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
