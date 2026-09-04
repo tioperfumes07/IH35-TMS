@@ -6,6 +6,7 @@ import { resolveInvoiceDisplayId } from "./display-id.js";
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { createJournalEntryOnClient } from "./journal-entries.service.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -415,9 +416,16 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
   // touches rate_total_cents / the invoice face, only the separate broker_advance_applied_cents
   // tracking column -- the receivable amount the factor will eventually purchase is reduced by
   // this, the invoice's own face amount never is.
-  const unappliedAdvances = await client.query<{ id: string; amount_cents: string }>(
+  const unappliedAdvances = await client.query<{
+    id: string;
+    amount_cents: string;
+    customer_id: string;
+    receipt_journal_entry_id: string | null;
+    disbursed_journal_entry_id: string | null;
+    disbursed_amount_cents: string | null;
+  }>(
     `
-      SELECT id, amount_cents::text
+      SELECT id, amount_cents::text, customer_id::text, receipt_journal_entry_id::text, disbursed_journal_entry_id::text, disbursed_amount_cents::text
       FROM accounting.broker_advances
       WHERE load_id = $1::uuid
         AND operating_company_id = $2::uuid
@@ -437,6 +445,53 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
       `UPDATE accounting.broker_advances SET applied_to_invoice_id = $1::uuid, applied_at = now(), updated_at = now() WHERE id = ANY($2::uuid[])`,
       [invoice.id, unappliedAdvances.rows.map((r) => r.id)]
     );
+
+    // SET-24 TIMING correction (owner order 2026-09-04): every claimed row that actually posted a
+    // JE while unapplied (item (1)'s receipt, item (2)'s disbursement, or both) credited 2250
+    // Customer Deposits at the time -- there was no invoice yet to reduce. Reclassifying THAT SAME
+    // liability into 1100 AR now that a real receivable exists is the SAME claim loop above, not a
+    // second claim path. A row with neither JE (a driver_pay advance the broker paid straight to
+    // the driver, never disbursed) has nothing to reclassify -- it never touched 2250.
+    for (const row of unappliedAdvances.rows) {
+      const reclassCents = (row.receipt_journal_entry_id ? Number(row.amount_cents) : 0) + (row.disbursed_journal_entry_id ? Number(row.disbursed_amount_cents ?? 0) : 0);
+      if (reclassCents <= 0) continue;
+      const [depositAccountRes, receivableAccountRes] = await Promise.all([
+        client.query<{ id: string }>(`SELECT id FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND account_number = '2250' LIMIT 1`, [input.operatingCompanyId]),
+        client.query<{ id: string }>(`SELECT id FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND account_number = '1100' LIMIT 1`, [input.operatingCompanyId]),
+      ]);
+      const depositAccountId = depositAccountRes.rows[0]?.id;
+      const receivableAccountId = receivableAccountRes.rows[0]?.id;
+      if (!depositAccountId || !receivableAccountId) continue; // pre-202613720001 environment -- reclass unavailable, never crash invoice minting over it
+      const reclassJe = await createJournalEntryOnClient(
+        client as never,
+        {
+          operating_company_id: input.operatingCompanyId,
+          entry_date: new Date().toISOString().slice(0, 10),
+          memo: `Broker advance reclassified from customer deposit to receivable -- invoice minted for load ${input.loadId}`,
+          source: "manual",
+          postings: [
+            {
+              account_id: depositAccountId,
+              debit_or_credit: "debit",
+              amount_cents: reclassCents,
+              entity_uuid: row.customer_id,
+              entity_type: "customer",
+              description: "Customer deposit liability cleared -- invoice now exists",
+            },
+            {
+              account_id: receivableAccountId,
+              debit_or_credit: "credit",
+              amount_cents: reclassCents,
+              entity_uuid: row.customer_id,
+              entity_type: "customer",
+              description: "Receivable reduced by the previously-deposited broker advance",
+            },
+          ],
+        },
+        { userId: input.userId, role: "system" }
+      );
+      await client.query(`UPDATE accounting.broker_advances SET reclass_journal_entry_id = $2::uuid, updated_at = now() WHERE id = $1`, [row.id, reclassJe.id]);
+    }
   }
 
   const refreshedInvoiceRes = await client.query(`SELECT * FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [invoice.id, input.operatingCompanyId]);

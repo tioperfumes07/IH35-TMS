@@ -43,6 +43,32 @@ export function collectFailures(src = loadSource()) {
   if (!/Math\.min\(input\.amountCents, advanceRemainingCents, billRemainingCents\)/.test(body)) {
     failures.push("the disbursed amount is not capped at both the advance's remaining amount and the bill's remaining balance");
   }
+  // TIMING (owner order 2026-09-04): CR 1100 AR only when a receivable has ACTUALLY POSTED --
+  // an unconditional CR to 1100 is a negative AR on a receivable that does not exist yet.
+  // hasPostedReceivable is stricter than a bare applied_to_invoice_id check: it also requires the
+  // matched invoice's status to be neither proforma (ND-INV-01 non-posting) nor void.
+  if (!/hasPostedReceivable\s*=\s*advance\.applied_to_invoice_id\s*!=\s*null\s*&&\s*advance\.invoice_status\s*!==\s*"proforma"\s*&&\s*advance\.invoice_status\s*!==\s*"void"/.test(body)) {
+    failures.push("the disbursement's hasPostedReceivable check no longer requires a non-null applied_to_invoice_id AND a non-proforma/non-void invoice status");
+  }
+  if (!/creditAccountNumber\s*=\s*hasPostedReceivable\s*\?\s*ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER\s*:\s*CUSTOMER_DEPOSITS_ACCOUNT_NUMBER/.test(body)) {
+    failures.push("the disbursement's credit account is not branched on hasPostedReceivable (1100 if a receivable has posted, else 2250 Customer Deposits) -- an unconditional CR to 1100 books a receivable that may not exist yet");
+  }
+
+  const receiptFnMatch = src.match(/export async function recordBrokerAdvanceInClientTx\([\s\S]*?\n\}/);
+  if (!receiptFnMatch) {
+    failures.push("could not find recordBrokerAdvanceInClientTx -- source shape drifted");
+  } else {
+    const receiptBody = receiptFnMatch[0];
+    if (!/await createJournalEntryOnClient\(/.test(receiptBody)) {
+      failures.push("recordBrokerAdvanceInClientTx (item 1's receipt) does not post through createJournalEntryOnClient anywhere -- real cash arriving must be able to reach a balanced JE (board row C6)");
+    }
+    if (!/hasPostedReceivable\s*=\s*appliedToInvoiceId\s*!=\s*null\s*&&\s*appliedInvoiceStatus\s*!==\s*"proforma"\s*&&\s*appliedInvoiceStatus\s*!==\s*"void"/.test(receiptBody)) {
+      failures.push("the receipt's hasPostedReceivable check no longer requires a non-null appliedToInvoiceId AND a non-proforma/non-void invoice status");
+    }
+    if (!/creditAccountNumber\s*=\s*hasPostedReceivable\s*\?\s*ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER\s*:\s*CUSTOMER_DEPOSITS_ACCOUNT_NUMBER/.test(receiptBody)) {
+      failures.push("the receipt's credit account is not branched on hasPostedReceivable (1100 if a receivable has posted, else 2250 Customer Deposits)");
+    }
+  }
 
   return failures;
 }
@@ -65,7 +91,7 @@ if (process.argv.includes("--selftest")) {
     escaped.push("planted driver_liabilities reference not caught (guard's own regex should have flagged it -- verifying it fires)");
   }
 
-  const badCategory = src.replace('category !== "driver_pay"', 'false');
+  const badCategory = src.replace('if (advance.category !== "driver_pay") {', 'if (false) {');
   if (badCategory === src || collectFailures(badCategory).length === 0) {
     escaped.push("category check removed");
   }
@@ -75,11 +101,53 @@ if (process.argv.includes("--selftest")) {
     escaped.push("createJournalEntryOnClient call removed");
   }
 
+  // creditAccountNumber's ternary line is textually identical in both functions, so these plants
+  // are scoped by including unique preceding context from each function rather than a bare
+  // single-line replace (which would always hit whichever function appears first in the file).
+  const disbursementCreditLine =
+    "const payableAccountId = await resolveAccountId(client, input.operatingCompanyId, DRIVER_SETTLEMENTS_PAYABLE_ACCOUNT_NUMBER);\n  const hasPostedReceivable = advance.applied_to_invoice_id != null && advance.invoice_status !== \"proforma\" && advance.invoice_status !== \"void\";\n  const creditAccountNumber = hasPostedReceivable ? ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER : CUSTOMER_DEPOSITS_ACCOUNT_NUMBER;";
+  const badTiming = src.replace(
+    disbursementCreditLine,
+    disbursementCreditLine.replace("const creditAccountNumber = hasPostedReceivable ? ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER : CUSTOMER_DEPOSITS_ACCOUNT_NUMBER;", "const creditAccountNumber = ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER;")
+  );
+  if (badTiming === src || collectFailures(badTiming).length === 0) {
+    escaped.push("disbursement's unconditional CR to 1100 not caught");
+  }
+  const badProformaGuard = src.replace(
+    disbursementCreditLine,
+    disbursementCreditLine.replace(
+      'const hasPostedReceivable = advance.applied_to_invoice_id != null && advance.invoice_status !== "proforma" && advance.invoice_status !== "void";',
+      "const hasPostedReceivable = advance.applied_to_invoice_id != null;"
+    )
+  );
+  if (badProformaGuard === src || collectFailures(badProformaGuard).length === 0) {
+    escaped.push("disbursement's proforma/void carve-out removed, not caught");
+  }
+
+  // recordBrokerAdvanceInClientTx's occurrence is the only OTHER one, so a plain replaceAll here
+  // (after the disbursement-scoped tests above already proved that side is covered) mutates just
+  // the receipt's copy in practice, verified by the assertion still requiring a failure.
+  const badReceiptTiming = src.replace(
+    "const creditAccountNumber = hasPostedReceivable ? ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER : CUSTOMER_DEPOSITS_ACCOUNT_NUMBER;",
+    "const creditAccountNumber = ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER;"
+  );
+  if (badReceiptTiming === src || collectFailures(badReceiptTiming).length === 0) {
+    escaped.push("receipt's unconditional CR to 1100 not caught");
+  }
+
+  const badReceiptProformaGuard = src.replace(
+    'const hasPostedReceivable = appliedToInvoiceId != null && appliedInvoiceStatus !== "proforma" && appliedInvoiceStatus !== "void";',
+    "const hasPostedReceivable = appliedToInvoiceId != null;"
+  );
+  if (badReceiptProformaGuard === src || collectFailures(badReceiptProformaGuard).length === 0) {
+    escaped.push("receipt's proforma/void carve-out removed, not caught");
+  }
+
   if (escaped.length) {
     console.error(`verify-broker-advance-driver-disbursement-never-driver-liability SELFTEST FAIL — escaped: ${escaped.join(", ")}`);
     process.exit(1);
   }
-  console.log("verify-broker-advance-driver-disbursement-never-driver-liability SELFTEST PASS — 3/3 plants rejected");
+  console.log("verify-broker-advance-driver-disbursement-never-driver-liability SELFTEST PASS — 5/5 plants rejected");
 }
 
 const failures = collectFailures();

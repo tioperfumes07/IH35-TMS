@@ -29,6 +29,10 @@ const listCatalogAccounts = vi.fn().mockResolvedValue({ accounts: [] });
 vi.mock("../../api/catalog-accounts", () => ({
   listCatalogAccounts: (...args: unknown[]) => listCatalogAccounts(...args),
 }));
+const getAllAccounts = vi.fn().mockResolvedValue({ accounts: [] });
+vi.mock("../../api/banking", () => ({
+  getAllAccounts: (...args: unknown[]) => getAllAccounts(...args),
+}));
 vi.mock("../../api/mdata", () => ({
   listVendors: vi.fn().mockResolvedValue({ vendors: [] }),
 }));
@@ -75,10 +79,11 @@ describe("LoadDetailCostsTab — SET-15 advance received", () => {
     listExpenses.mockResolvedValue({ rows: [] });
     listBills.mockResolvedValue({ rows: [] });
     listBrokerAdvances.mockResolvedValue({ rows: [] });
-    createBrokerAdvance.mockResolvedValue({ broker_advance_id: "adv-1", applied_to_invoice_id: null });
+    createBrokerAdvance.mockResolvedValue({ broker_advance_id: "adv-1", applied_to_invoice_id: null, journal_entry_id: null });
+    getAllAccounts.mockResolvedValue({ accounts: [{ id: "bank-1", display_name: "Operating Bank", institution_name: "BofA", account_mask: "1234" }] });
   });
 
-  it("toggling Advance received swaps to the advance fields, and Save all calls createBrokerAdvance with the load's real FKs", async () => {
+  it("toggling Advance received swaps to the advance fields, and Save all calls createBrokerAdvance with the load's real FKs and the chosen bank account", async () => {
     renderTab();
 
     fireEvent.click(await screen.findByTestId("load-cost-toggle-advance"));
@@ -86,6 +91,7 @@ describe("LoadDetailCostsTab — SET-15 advance received", () => {
     expect(screen.getByTestId("load-cost-field-advance-category")).toBeInTheDocument();
     expect(screen.getByTestId("load-cost-field-instrument-type")).toBeInTheDocument();
     expect(screen.getByTestId("load-cost-field-instrument-reference")).toBeInTheDocument();
+    expect(await screen.findByTestId("load-cost-field-advance-bank")).toBeInTheDocument();
     // The expense/bill-only fields must NOT render while kind === "advance".
     expect(screen.queryByTestId("load-cost-field-vendor")).not.toBeInTheDocument();
     expect(screen.queryByTestId("load-cost-field-paid-with")).not.toBeInTheDocument();
@@ -93,6 +99,7 @@ describe("LoadDetailCostsTab — SET-15 advance received", () => {
     fireEvent.change(screen.getByTestId("load-cost-field-advance-category"), { target: { value: "diesel" } });
     fireEvent.change(screen.getByTestId("load-cost-field-instrument-type"), { target: { value: "Comchek" } });
     fireEvent.change(screen.getByTestId("load-cost-field-instrument-reference"), { target: { value: "CHK-9931" } });
+    fireEvent.change(screen.getByTestId("load-cost-field-advance-bank"), { target: { value: "bank-1" } });
     fireEvent.change(screen.getByTestId("load-cost-field-amount").querySelector("input")!, { target: { value: "150.00" } });
 
     fireEvent.click(screen.getByTestId("load-costs-save-all"));
@@ -107,10 +114,45 @@ describe("LoadDetailCostsTab — SET-15 advance received", () => {
         instrument_type: "Comchek",
         instrument_reference: "CHK-9931",
         amount_cents: 15000,
+        bank_account_id: "bank-1",
       })
     );
     expect(createExpense).not.toHaveBeenCalled();
     expect(createVendorBill).not.toHaveBeenCalled();
+  });
+
+  // LOAD-COSTS-COMPLETE items (1)/(5) (owner correction 2026-09-04) -- diesel/repair/other cash
+  // always lands in our bank; driver_pay is the one category where the broker may have paid the
+  // driver directly, so the bank field is optional there.
+  it("blocks save with a specific reason when diesel/repair/other has no bank account chosen", async () => {
+    renderTab();
+    fireEvent.click(await screen.findByTestId("load-cost-toggle-advance"));
+    fireEvent.change(screen.getByTestId("load-cost-field-advance-category"), { target: { value: "repair" } });
+    fireEvent.change(screen.getByTestId("load-cost-field-instrument-type"), { target: { value: "EFT" } });
+    fireEvent.change(screen.getByTestId("load-cost-field-instrument-reference"), { target: { value: "EFT-1" } });
+    fireEvent.change(screen.getByTestId("load-cost-field-amount").querySelector("input")!, { target: { value: "50.00" } });
+    fireEvent.click(screen.getByTestId("load-costs-save-all"));
+    await waitFor(() =>
+      expect(screen.getByTestId("load-cost-hint")).toHaveTextContent(
+        "Bank account is required for this category — cash always lands in our bank for diesel/repair/other."
+      )
+    );
+    expect(createBrokerAdvance).not.toHaveBeenCalled();
+  });
+
+  it("driver_pay may omit the bank account -- the broker may have paid the driver directly", async () => {
+    renderTab();
+    fireEvent.click(await screen.findByTestId("load-cost-toggle-advance"));
+    fireEvent.change(screen.getByTestId("load-cost-field-advance-category"), { target: { value: "driver_pay" } });
+    fireEvent.change(screen.getByTestId("load-cost-field-instrument-type"), { target: { value: "Comchek" } });
+    fireEvent.change(screen.getByTestId("load-cost-field-instrument-reference"), { target: { value: "CHK-2" } });
+    fireEvent.change(screen.getByTestId("load-cost-field-amount").querySelector("input")!, { target: { value: "75.00" } });
+    fireEvent.click(screen.getByTestId("load-costs-save-all"));
+    await waitFor(() => expect(createBrokerAdvance).toHaveBeenCalledTimes(1));
+    expect(createBrokerAdvance).toHaveBeenCalledWith(
+      "5c854333-6ea5-4faa-af31-67cb272fef80",
+      expect.objectContaining({ category: "driver_pay", bank_account_id: null })
+    );
   });
 
   it("blocks save with a specific hint when the advance's required fields are blank", async () => {
