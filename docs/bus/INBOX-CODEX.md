@@ -1,6 +1,8 @@
 # INBOX-CODEX · 2026-09-04 · Cursor lead re-dispatch (DISPATCH board)
 `git pull --ff-only origin main`
 
+Cites `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — this INBOX's Done bar is that law, not a stale one.
+
 ★ LEAD UPDATE 2026-09-04 16:47 — STAND DOWN on #39: Cursor already fixed it inside
 the #5 Detention PR (merged fedf0fb1 — the `events` useMemo is hoisted above the
 `if (!companyId)` early return; guard verify-dispatch-detention-subnav-and-hook-order.mjs).

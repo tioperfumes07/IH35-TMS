@@ -12,7 +12,12 @@ import path from "node:path";
 import process from "node:process";
 
 const ROOT = process.cwd();
-const TARGET = "apps/frontend/src/components/shared/SelectCombobox.tsx";
+// GO-23-K2-BATCH-1-SHARED-COMBOBOX-RETIRE (#19936) deleted components/shared/SelectCombobox.tsx --
+// the SelectCombobox export now lives in the canonical components/Combobox.tsx (same
+// singleFrameLayoutClassName adapter, same guarantees). Repointed, not retired: the invariant this
+// guard protects (no raw caller className reaching the outer frame) still applies to the surviving
+// definition. This guard crashed with ENOENT against the deleted path until this fix.
+const TARGET = "apps/frontend/src/components/Combobox.tsx";
 const POLICY = "apps/frontend/src/lib/single-frame-classname.ts";
 const FRONTEND = path.join(ROOT, "apps/frontend/src");
 

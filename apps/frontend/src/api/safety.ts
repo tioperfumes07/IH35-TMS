@@ -663,6 +663,27 @@ export function listClearinghouseQueries(companyId: string, range: { limit?: num
   ).then((payload) => ({ queries: payload.clearinghouse_queries ?? [], total_count: payload.total_count ?? 0 }));
 }
 
+// DRV-03 — the backend route (POST /api/v1/safety/drug-program/clearinghouse-queries) had no frontend
+// caller anywhere in the app; the driver-create DQF checklist is the first one. §382.701(b): a
+// pre-employment FULL query is required before a new driver's first dispatch.
+export type CreateClearinghouseQueryInput = {
+  driver_id: string;
+  query_status: "clear" | "record_found" | "pending" | "error";
+  queried_at?: string;
+  consent_on_file?: boolean;
+  expires_at?: string;
+  notes?: string;
+  query_type?: "pre_employment_full" | "annual_limited" | "full";
+  reference_number?: string;
+};
+
+export function createClearinghouseQuery(companyId: string, body: CreateClearinghouseQueryInput) {
+  return apiRequest<Record<string, unknown>>(
+    `/api/v1/safety/drug-program/clearinghouse-queries?${q(companyId)}`,
+    { method: "POST", body }
+  );
+}
+
 // SM3 — Drug & Alcohol consortium enrollment (GAP-81 safety.da_program_enrollments). Backs the
 // per-driver "D&A pool status" field on the Safety Home driver cards. active_only defaults true on the
 // server, so this returns the currently-enrolled roster; a driver absent from it is not in the pool.
