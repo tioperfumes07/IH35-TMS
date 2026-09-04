@@ -53,6 +53,11 @@ describe("units unified list", () => {
                 estimated_completion_date: "2026-09-08",
                 work_order_id: "wo-1",
                 work_order_display_id: "WO-101-ENGINE-09-03-2026-0001-V5",
+                assigned_driver_id: "driver-1",
+                assigned_driver_name: "Angel Rodriguez",
+                irp_expiration: "2027-01-31",
+                us_insurance_expiration: "2027-02-28",
+                mx_insurance_expiration: "2027-03-31",
                 vehicle_type: "Sleeper",
               },
             ],
@@ -91,6 +96,11 @@ describe("units unified list", () => {
       estimated_completion_date: "2026-09-08",
       work_order_id: "wo-1",
       work_order_display_id: "WO-101-ENGINE-09-03-2026-0001-V5",
+      assigned_driver_id: "driver-1",
+      assigned_driver_name: "Angel Rodriguez",
+      irp_expiration: "2027-01-31",
+      us_insurance_expiration: "2027-02-28",
+      mx_insurance_expiration: "2027-03-31",
     });
     expect(rows.find((r) => r.id === "trailer-1")?.type).toBe("Reefer (2019 Thermo King)");
   });
