@@ -1778,7 +1778,7 @@ export function BankingTransactionsDesignView({
                   }}
                 />
                 <CappedListNotice
-                  shown={vendorsQuery.data?.vendors.length ?? 0}
+                  shown={vendorsQuery.data?.vendors?.length ?? 0}
                   limit={PICKER_PAGE}
                   total={vendorsQuery.data?.total}
                   hint="Type to search the full vendor catalog."
@@ -1981,7 +1981,7 @@ export function BankingTransactionsDesignView({
                   }}
                 />
                 <CappedListNotice
-                  shown={customersQuery.data?.customers.length ?? 0}
+                  shown={customersQuery.data?.customers?.length ?? 0}
                   limit={PICKER_PAGE}
                   total={customersQuery.data?.total}
                   hint="Type to search the full customer catalog."
