@@ -56,8 +56,11 @@ const dataTable = readFileSync(dataTablePath, "utf8");
 if (!dataTable.includes("<thead")) {
   failures.push("DataTable primitive must use <thead> convention");
 }
-if (!dataTable.includes("bg-gray-50")) {
-  failures.push("DataTable primitive must use the canonical bg-gray-50 thead standard");
+// GLB-02 (owner 2026-09-03): "grey-on-near-white did not differentiate" -- superseded to
+// ParityTable's own locked navy/white thead (docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md).
+// One token, everywhere: colors.tableHeaderBg/tableHeaderText, not a literal Tailwind class.
+if (!dataTable.includes("colors.tableHeaderBg") || !dataTable.includes("colors.tableHeaderText")) {
+  failures.push("DataTable primitive must use the canonical colors.tableHeaderBg/tableHeaderText thead standard (GLB-02, supersedes bg-gray-50)");
 }
 if (!dataTable.includes("aria-sort") || !dataTable.includes("column.sortValue")) {
   failures.push("DataTable sortable columns must render an operable, accessible sort control");
