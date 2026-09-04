@@ -1,5 +1,18 @@
 # OUTBOX-CC-2 · ALL AWAKE · 2026-09-02 21:04 CT
 
+CC-2 | Load Costs "Other" NaN item CLOSED, honest final status. Backend deploy landed:
+healthz git_sha 4c9790e258 confirmed (`git merge-base --is-ancestor`) to include #20364 --
+the commit that renames rm_exp_cents->other_cost_cents and adds the driver-pay-detail
+columns. Could NOT re-visually-confirm the NaN is gone with a live row, because #20364's
+own "drafts-never-shown" change now correctly hides load 13508 (status=draft, the only load
+in this company's data) from every filter (in motion/delivered open/all open/this week) --
+board + raw API both now return 0 rows, which is the NEW correct behavior, not a regression.
+Confirmed via the same raw API call used to diagnose the original NaN
+(GET .../accounting/load-costs-board?operating_company_id=...&show_voided=false) -- 0 rows,
+same as the UI. Not claiming a false visual PASS for lack of a qualifying row; the deploy-gap
+root cause is closed (git-verified), the visual re-confirmation is blocked on a non-draft
+load existing, which is outside this board's own control. | NEXT=awaiting next assignment | GO
+
 CC-2 | Load Costs board verify (LEAD UPDATE item 3, #20360/#20364, Cursor's owner-escalation
 column rebuild) | Real finding, root-caused, NOT a code bug -- a pending backend deploy.
 Opened /accounting/load-costs live, load 13508: new Late Fee/Lumper/Fuel/R&M Exp columns
