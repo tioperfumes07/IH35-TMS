@@ -51,7 +51,15 @@ export function AuthGatePanel(props: AuthGatePanelProps) {
   useEffect(() => {
     onBlockersChange?.(q.isError || blockers.length > 0);
   }, [blockers.length, onBlockersChange, q.isError]);
-  if (!q.data && !q.isLoading && !q.isError) return null;
+  // WIZ-29 (owner 2026-09-04): a gate panel with nothing to report must render NOTHING — not an empty
+  // bordered box under the pre-dispatch checks panel. Once the gate query resolved as `pass: true`
+  // with no blockers/warnings/info (and not loading/errored), the container rendered with no children:
+  // the "dead empty box" the owner saw. The affirmative "ready to book" state is already carried by
+  // the checks panel above, so there is nothing for this panel to add. This return supersedes the old
+  // pre-first-load `!q.data` guard (that state has no gate output either, so it still returns null).
+  const hasGateOutput =
+    q.isLoading || q.isError || blockers.length > 0 || warnings.length > 0 || info.length > 0;
+  if (!hasGateOutput) return null;
   const hasIdentity = Boolean(props.loadUuid || props.unitUuid || props.driverUuid || props.trailerUuid);
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 p-3" data-testid="auth-gate-panel">
