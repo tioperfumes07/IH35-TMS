@@ -53,7 +53,7 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
       expiry_date: input.expiryDate,
       notes: input.notes.trim() || undefined,
     }),
-    onSuccess: async (_result, input) => {
+    onSuccess: async (result, input) => {
       if (input.generation !== companyGenerationRef.current) return;
       companyGenerationRef.current += 1;
       setOpen(false);
@@ -63,6 +63,11 @@ export function MedicalCardsHistorySection({ operatingCompanyId, driverId }: { o
       setExpiryDate("");
       setNotes("");
       await queryClient.invalidateQueries({ queryKey: ["safety", "medical-cards", input.companyId] });
+      // DRV-04: "Add DOT medical card" previously closed the create modal with no path to attach the
+      // document -- the row-level Upload button only appears once the row exists (UPL-02's own
+      // comment above), so a first-time user landed on a saved card with no visible next step. Chain
+      // straight into the same, already-working per-row UploadModal the instant the card is created.
+      setUploadCardId(result.id);
     },
   });
   useEffect(() => {
