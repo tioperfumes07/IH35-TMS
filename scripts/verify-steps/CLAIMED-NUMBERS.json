@@ -5332,6 +5332,11 @@
     "claimed_at": "2026-09-03",
     "purpose": "verify-deadhead-pay-line-renders-on-settlement (25-task #12: SettlementDetailPage.tsx never filtered settlement_lines for line_type='deadhead_pay' -- not its own row, not folded into Earnings, silently absent from both the display and the client-side gross total)"
   },
+  "10271": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-03",
+    "purpose": "verify-bank-feed-live-tieout-selftest-wiring (BANK-F10000: pre-existing guard already asserted review_state=matched requires a matched_*_id but was never wired into any verify-step, so it never ran in CI -- caught 126 USMCA rows in that exact orphaned state, reset live)"
+  },
   "10273": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-03",
