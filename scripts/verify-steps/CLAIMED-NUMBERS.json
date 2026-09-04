@@ -7438,5 +7438,10 @@
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-04",
     "purpose": "GUARD-INTEGRITY (owner order 2026-09-04): wires scripts/verify-load-costs-tab-advance-received-wired.mjs (SET-15) into scripts/verify-steps/, same gap as 10309. Also wires the already-claimed-but-never-installed 10305 (verify-invoice-display-id-shape-matches-db-constraint, SET-25) in the same PR."
+  },
+  "10325": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-lane-mileage-short-miles-never-from-alwaystrack-blend (LANE-MILEAGE-SHORT-MILES-REGRESSION, owner order 2026-09-04, URGENT, owner's own error). Guards that catalogs.lane_mileage.short_miles is never populated from the AlwaysTrack CSV's own short_miles column (St. Miles = Loaded + Empty, the shortest+deadhead blend) in either import script (seed-lane-mileage.mjs, merge-and-rescore-lane-mileage.mjs), and that no live lane has short_miles populated or short_miles>practical_miles. Wired into scripts/verify-steps/ in the same PR that adds the guard -- not a second orphaned guard."
   }
 }
