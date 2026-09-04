@@ -54,6 +54,7 @@ import {
 import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
 import { resolveLaneMileage } from "./lane-mileage.service.js";
 import { computeChainDeadheadMiles } from "./deadhead/chain-deadhead.service.js";
+import { openWorkOrderPredicateSql } from "../maintenance/in-shop-condition.js";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
 // (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
@@ -2083,6 +2084,16 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             -- OutOfService/InMaintenance (those belong to the In-shop / Fleet-OOS surfaces, not Awaiting).
             AND u.status = 'InService'::mdata.unit_status
             AND l.id IS NULL
+            -- FLT-IN-SHOP-EXCLUSIVE: Awaiting and In shop are mutually exclusive at the API
+            -- contract, not merely filtered in one frontend. Use the exact predicate that
+            -- supplies /maintenance/fleet-table/rows so the two surfaces cannot drift.
+            AND NOT EXISTS (
+              SELECT 1
+              FROM maintenance.work_orders awaiting_wo
+              WHERE awaiting_wo.unit_id = u.id
+                AND awaiting_wo.operating_company_id = $1::uuid
+                AND ${openWorkOrderPredicateSql("awaiting_wo")}
+            )
           GROUP BY u.id, u.unit_number, tr.id, tr.equipment_number, ud.id, ud.first_name, ud.last_name,
             last_delivery.last_drop_at,
             p.city, p.state, p.formatted_location, p.lat, p.lng, p.captured_at

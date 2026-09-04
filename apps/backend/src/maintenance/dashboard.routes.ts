@@ -9,6 +9,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 // FLEET-KPI-PARITY: the fleet KPI must count exactly the rows the Fleet roster shows. Same helper the
 // roster uses (mdata/units-unified-list.service.ts) — never a second inline copy of the pattern.
 import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
+import { openWorkOrderPredicateSql } from "./in-shop-condition.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -451,8 +452,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
              ) estimate ON TRUE
              WHERE wo.unit_id = u.id
                AND wo.operating_company_id = $1::uuid
-               AND wo.voided_at IS NULL
-               AND wo.status NOT IN ('complete', 'cancelled')
+               AND ${openWorkOrderPredicateSql("wo")}
              ORDER BY COALESCE(wo.work_started_at, wo.opened_at, wo.created_at) ASC, wo.id
              LIMIT 1
            ) in_shop ON TRUE`
