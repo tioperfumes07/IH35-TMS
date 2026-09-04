@@ -687,7 +687,7 @@ export async function autoCreateBillFromWO(
   const billRes = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.bills (
-        operating_company_id, vendor_id, vendor_uuid, mdata_vendor_id, linked_work_order_uuid, unit_id, status, bill_date, due_date, amount_cents, total_amount, qbo_sync_pending, is_sample_data
+        operating_company_id, vendor_id, vendor_uuid, mdata_vendor_id, linked_work_order_uuid, unit_id, load_id, status, bill_date, due_date, amount_cents, total_amount, qbo_sync_pending, is_sample_data
       )
       SELECT
         w.operating_company_id,
@@ -706,6 +706,7 @@ export async function autoCreateBillFromWO(
           LIMIT 1),
         w.id,
         w.unit_id,
+        w.load_id,
         'unpaid',
         CURRENT_DATE,
         CURRENT_DATE + INTERVAL '30 days',

@@ -21,11 +21,13 @@ export async function assertWorkOrderCostFinancialLink(
   const context = await client.query<{
     unit_id: string | null;
     vendor_id: string | null;
+    load_id: string | null;
     cost_cents: string | number | null;
   }>(
     `SELECT
        wo.unit_id::text AS unit_id,
        COALESCE(wo.external_vendor_id, wo.vendor_id)::text AS vendor_id,
+       wo.load_id::text AS load_id,
        GREATEST(
          COALESCE(ROUND(wo.total_actual_cost * 100), 0),
          COALESCE(wo.estimated_cost_cents, 0),
@@ -54,14 +56,16 @@ export async function assertWorkOrderCostFinancialLink(
     `SELECT linked.kind, linked.id
        FROM (
          SELECT 'bill'::text AS kind, b.id::text AS id, b.unit_id::text AS unit_id,
-                COALESCE(b.mdata_vendor_id::text, b.vendor_uuid, b.vendor_id) AS vendor_id
+                COALESCE(b.mdata_vendor_id::text, b.vendor_uuid, b.vendor_id) AS vendor_id,
+                b.load_id::text AS load_id
            FROM accounting.bills b
           WHERE b.operating_company_id = $1::uuid
             AND b.linked_work_order_uuid = $2::uuid
             AND b.revoked_at IS NULL
          UNION ALL
          SELECT 'expense'::text AS kind, e.id::text AS id, e.unit_id::text AS unit_id,
-                e.vendor_uuid::text AS vendor_id
+                e.vendor_uuid::text AS vendor_id,
+                e.load_id::text AS load_id
            FROM accounting.expenses e
           WHERE e.operating_company_id = $1::uuid
             AND e.linked_work_order_uuid = $2::uuid
@@ -69,12 +73,12 @@ export async function assertWorkOrderCostFinancialLink(
        ) linked
       WHERE linked.unit_id = $3::text
         AND linked.vendor_id = $4::text
+        AND linked.load_id IS NOT DISTINCT FROM $5::text
       ORDER BY CASE linked.kind WHEN 'expense' THEN 1 ELSE 2 END
       LIMIT 1`,
-    [operatingCompanyId, workOrderId, row.unit_id, row.vendor_id]
+    [operatingCompanyId, workOrderId, row.unit_id, row.vendor_id, row.load_id]
   );
   const financial = linked.rows[0];
   if (!financial) return { ok: false, cost_cents: costCents, reason: "financial_document_required" };
   return { ok: true, cost_cents: costCents, financial_kind: financial.kind, financial_id: financial.id };
 }
-

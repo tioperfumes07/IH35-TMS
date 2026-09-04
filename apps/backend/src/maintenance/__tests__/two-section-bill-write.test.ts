@@ -77,6 +77,8 @@ describe("autoCreateBillFromWO — bill_lines write (Phase 1.5 bill-branch regre
     expect(billInsert, "bills INSERT must run").toBeTruthy();
     expect(billInsert!.sql).toMatch(/\bunit_id\b/);
     expect(billInsert!.sql).toMatch(/w\.unit_id/);
+    expect(billInsert!.sql).toMatch(/\bload_id\b/);
+    expect(billInsert!.sql).toMatch(/w\.load_id/);
     expect(billInsert!.sql).toMatch(/COALESCE\(w\.external_vendor_id,\s*w\.vendor_id\)/);
 
     const billLineInsert = calls.find((c) => c.sql.includes("INSERT INTO accounting.bill_lines"));
