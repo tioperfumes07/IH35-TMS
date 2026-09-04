@@ -15,6 +15,7 @@ import {
   checkTestNamedAccountForCompany,
   checkVoidMetadataCompletenessForCompany,
   checkVoidReversalIntegrityForCompany,
+  runLedgerIntegrityTick,
 } from "./ledger-integrity-detectors.service.js";
 
 const COMPANY = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -709,5 +710,74 @@ describe("ledger-integrity-detectors.service — extended B3/B4/B7/B8 subledger 
     // (correct role -> function dispatch). GL/subledger sign-normalization and tie-out arithmetic
     // are already covered by loadControlBalanceCents' own tests elsewhere; not re-asserted here.
     expect(client.calls.some((c) => c.sql.includes("FROM accounting.escrow_accounts"))).toBe(true);
+  });
+});
+
+// ACC-19 (2026-09-04) — LIVE-CONFIRMED: _system.background_jobs.ledger.integrity_cron has been
+// failing every tick since before 2026-09-01 (last_successful_run_at stuck there;
+// last_failed_run_at as recent as this fix, same error every time: "current transaction is
+// aborted, commands ignored until end of transaction block"). runLedgerIntegrityTick runs every
+// company and every detector inside ONE transaction (withLuciaBypass does a single BEGIN...COMMIT
+// around the whole tick); a caught JS exception from one detector's query does NOT reset Postgres's
+// own aborted-transaction state, so every later client.query() on the same client — every
+// remaining detector, for every remaining company — was itself throwing "transaction aborted" and
+// being silently swallowed by the very isolation try/catch meant to contain the damage. This test
+// proves the fix: a real per-detector SAVEPOINT / ROLLBACK TO SAVEPOINT / RELEASE SAVEPOINT lets
+// the NEXT detector on the same client run to completion after an earlier one throws.
+describe("ledger-integrity-detectors.service — ACC-19 SAVEPOINT isolation (transaction-poisoning fix)", () => {
+  it("recovers via ROLLBACK TO SAVEPOINT so a later detector still runs after an earlier one throws", async () => {
+    const calls: Call[] = [];
+    const client = {
+      calls,
+      async query(sql: string, values?: unknown[]) {
+        calls.push({ sql, values });
+        if (sql.includes("FROM org.companies")) return { rows: [{ id: COMPANY }] };
+        // Simulate test_named_account's first F2_TARGETS query (catalogs.accounts) blowing up —
+        // exactly the shape of the real CHECK-constraint-violation failure mode, without needing to
+        // reproduce the constraint itself in a mock.
+        if (sql.includes("FROM catalogs.accounts") && sql.includes("deactivated_at IS NULL")) {
+          throw new Error("simulated: reconciliation_findings.finding_type CHECK constraint violation");
+        }
+        return { rows: [] };
+      },
+    };
+
+    await runLedgerIntegrityTick(client as never);
+
+    const sqls = calls.map((c) => c.sql);
+    const savepointIdx = sqls.findIndex((s) => s.includes("SAVEPOINT ledger_detector_test_named_account") && !s.includes("ROLLBACK") && !s.includes("RELEASE"));
+    const rollbackIdx = sqls.findIndex((s) => s.includes("ROLLBACK TO SAVEPOINT ledger_detector_test_named_account"));
+    const releaseIdx = sqls.findIndex((s) => s.includes("RELEASE SAVEPOINT ledger_detector_test_named_account"));
+    const driverCashAdvanceIdx = sqls.findIndex((s) => s.includes("FROM driver_finance.driver_advance_accounts"));
+
+    // The recovery sequence happened, in order, around the throw.
+    expect(savepointIdx).toBeGreaterThanOrEqual(0);
+    expect(rollbackIdx).toBeGreaterThan(savepointIdx);
+    expect(releaseIdx).toBeGreaterThan(rollbackIdx);
+    // driver_cash_advance_tie_out runs AFTER test_named_account in the detector array (BANK-F10002
+    // regression this fix targets) — it must still fire, proving the client is usable again.
+    expect(driverCashAdvanceIdx).toBeGreaterThan(releaseIdx);
+  });
+
+  it("does not leave a dangling savepoint when a detector succeeds (RELEASE without ROLLBACK)", async () => {
+    const calls: Call[] = [];
+    const client = {
+      calls,
+      async query(sql: string, values?: unknown[]) {
+        calls.push({ sql, values });
+        if (sql.includes("FROM org.companies")) return { rows: [{ id: COMPANY }] };
+        return { rows: [] };
+      },
+    };
+
+    await runLedgerIntegrityTick(client as never);
+
+    const sqls = calls.map((c) => c.sql);
+    expect(sqls.some((s) => s.includes("ROLLBACK TO SAVEPOINT"))).toBe(false);
+    // Every SAVEPOINT taken (one per detector) is matched by a RELEASE — 15 detectors, 15 of each.
+    const savepointCount = sqls.filter((s) => s.startsWith("SAVEPOINT ledger_detector_")).length;
+    const releaseCount = sqls.filter((s) => s.startsWith("RELEASE SAVEPOINT ledger_detector_")).length;
+    expect(savepointCount).toBeGreaterThan(0);
+    expect(releaseCount).toBe(savepointCount);
   });
 });
