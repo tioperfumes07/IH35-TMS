@@ -41,6 +41,7 @@ import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomp
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { listVendors, listCustomers } from "../../../api/mdata";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 import { classesCatalogClient, itemsCatalogClient, type AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import { BankTransactionSplitModal } from "./BankTransactionSplitModal";
 import { BankTransactionAttachmentsNotesModal } from "./BankTransactionAttachmentsNotesModal";
@@ -444,6 +445,11 @@ export function BankingTransactionsDesignView({
 
   // Catalog-linkage pickers (QBO parity). Server-side search + page size 200 — never load 1000/5000
   // into the browser and pretend the roster is complete. Typing refetches; empty query loads first page.
+  // CLS-SILENT-CAP (GO-23 wave 1 row 1 systemic sweep): the page-size-200 design here is
+  // deliberate (see the comment above) and stays — this is NOT the same defect as a picker that
+  // caps below the roster with no way to see more; typing narrows the search. What WAS missing is
+  // the honesty half of that design: nothing told the user a browse-all page was partial. Keep
+  // `total` from both list calls and surface it via CappedListNotice at each render site below.
   const [vendorSearch, setVendorSearch] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
   const PICKER_PAGE = 200;
@@ -454,7 +460,7 @@ export function BankingTransactionsDesignView({
         operating_company_id: companyId,
         limit: PICKER_PAGE,
         search: vendorSearch.trim() || undefined,
-      }).then((r) => r.vendors ?? []),
+      }),
     enabled: Boolean(companyId),
     staleTime: 30_000,
   });
@@ -465,7 +471,7 @@ export function BankingTransactionsDesignView({
         operating_company_id: companyId,
         limit: PICKER_PAGE,
         search: customerSearch.trim() || undefined,
-      }).then((r) => r.customers ?? []),
+      }),
     enabled: Boolean(companyId),
     staleTime: 30_000,
   });
@@ -1750,7 +1756,7 @@ export function BankingTransactionsDesignView({
                 <ReferenceSelect
                   value={draft.vendorId || null}
                   onChange={(vid) => {
-                    const v = (vendorsQuery.data ?? []).find((x) => x.id === vid);
+                    const v = (vendorsQuery.data?.vendors ?? []).find((x) => x.id === vid);
                     const vendorAcct =
                       typeof v?.default_expense_account_id === "string" ? v.default_expense_account_id : "";
                     setDraft(tx, {
@@ -1760,7 +1766,7 @@ export function BankingTransactionsDesignView({
                       accountId: draft.accountId || vendorAcct || "",
                     });
                   }}
-                  options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
+                  options={(vendorsQuery.data?.vendors ?? []).map((v) => ({ value: v.id, label: v.name }))}
                   createKind="vendor"
                   operatingCompanyId={companyId}
                   placeholder="Search payee (vendor)"
@@ -1770,6 +1776,13 @@ export function BankingTransactionsDesignView({
                     void vendorsQuery.refetch();
                     setDraft(tx, { payee: opt.label });
                   }}
+                />
+                <CappedListNotice
+                  shown={vendorsQuery.data?.vendors.length ?? 0}
+                  limit={PICKER_PAGE}
+                  total={vendorsQuery.data?.total}
+                  hint="Type to search the full vendor catalog."
+                  className="mt-1 text-xs text-slate-600"
                 />
               </div>
             </label>
@@ -1953,10 +1966,10 @@ export function BankingTransactionsDesignView({
                 <ReferenceSelect
                   value={draft.customerId || null}
                   onChange={(cid) => {
-                    const c = (customersQuery.data ?? []).find((x) => x.id === cid);
+                    const c = (customersQuery.data?.customers ?? []).find((x) => x.id === cid);
                     setDraft(tx, { customerId: cid ?? "", customerProject: c?.name ?? "" });
                   }}
-                  options={(customersQuery.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
+                  options={(customersQuery.data?.customers ?? []).map((c) => ({ value: c.id, label: c.name }))}
                   createKind="customer"
                   operatingCompanyId={companyId}
                   placeholder="Search customer"
@@ -1966,6 +1979,13 @@ export function BankingTransactionsDesignView({
                     void customersQuery.refetch();
                     setDraft(tx, { customerProject: opt.label });
                   }}
+                />
+                <CappedListNotice
+                  shown={customersQuery.data?.customers.length ?? 0}
+                  limit={PICKER_PAGE}
+                  total={customersQuery.data?.total}
+                  hint="Type to search the full customer catalog."
+                  className="mt-1 text-xs text-slate-600"
                 />
               </div>
             </label>
