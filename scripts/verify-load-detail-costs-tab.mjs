@@ -44,12 +44,22 @@ function violations(drawer, costs, board, routes, backend, finance, sidebar, dis
   if (!drawer.includes('"Costs",') || !drawer.includes('activeTab === "Costs"') || !drawer.includes("<LoadDetailCostsTab")) errors.push("13th Costs tab is not mounted");
   if (!costs.includes("listExpenses(opco, { load_id: load.id") || !costs.includes("listBills(opco, { load_id: load.id")) errors.push("existing load-scoped expense/bill reads are missing");
   if (!costs.includes('data-cost-driver-column="driver_uuid"') || !costs.includes('data-cost-driver-column="driver_id"')) errors.push("expense.driver_uuid and bill.driver_id identities are not explicit");
-  if (!costs.includes('type CostChoice = "expense" | "bill" | null') || !costs.includes("Choose whether this cost was paid now or is owed.")) errors.push("Expense-or-Bill choice no longer starts with no default");
+  // SET-15/LOAD-COSTS-COMPLETE (owner order 2026-09-04): the choice grew from Expense/Bill to also
+  // include Advance received and Fuel advance -- this check was rewritten in the same commit that
+  // shipped "+ Fuel advance" (LoadDetailCostsTab.tsx), matching the real, current CostChoice union
+  // and its no-default fallback hint text, rather than pinning the pre-SET-15 two-choice shape.
+  if (!costs.includes('type CostChoice = "expense" | "bill" | "advance" | "fuel_advance" | null') || !costs.includes("Choose whether this cost was paid now, is owed, a fuel advance, or a broker advance received.")) errors.push("Expense/Bill/Advance/Fuel-advance choice no longer starts with no default");
   if (!costs.includes("createExpense(") || !costs.includes("createVendorBill(") || costs.includes("dispatch.load_costs")) errors.push("Costs tab is not using the canonical expense and bill writers");
   if (!costs.includes("Approximate · before settlement") || !costs.includes("No costs on this load yet.")) errors.push("honest margin or empty-state copy is missing");
   if (!board.includes('data-testid="load-costs-title"') || !board.includes('?tab=Costs`')) errors.push("Accounting Costs board or canonical Costs-tab drill is missing");
   if (!board.includes("/api/v1/accounting/load-costs-board")) errors.push("Costs board is not composed from canonical load/accounting reader");
-  if (!board.includes("Pickup date") || !board.includes("Projected delivery") || !board.includes("Delivered")) errors.push("Load costs board missing the locked three-date columns");
+  // LOAD-COSTS-COMPLETE item (3) (owner order 2026-09-04): replaces the prior locked three-date set
+  // (Pickup date / Projected delivery / Delivered) with the owner's exact PU Date / Del Date pair --
+  // PU Date = projected date entered at booking, Del Date = the real delivered date. "Projected
+  // delivery" (the scheduled-appointment column) is deliberately dropped from the board, not lost:
+  // scheduled_delivery_at still flows through the backend response for Status's own On Time/Late
+  // computation and for any other consumer (e.g. DispatchLoadCostsPanel).
+  if (!board.includes("PU Date") || !board.includes("Del Date")) errors.push("Load costs board missing the locked PU Date / Del Date columns");
   if (!routes.includes('path="/accounting/load-costs"') || !drawer.includes('initialTab?: DrawerTab')) errors.push("Costs board route or drawer deep-link contract is missing");
   if (!backend.includes("LEFT JOIN bill_costs") || !backend.includes("SUM(ROUND(bl.amount * 100))") || !backend.includes("e.load_id IS NOT NULL")) errors.push("per-load expense/bill allocation is not enforced");
   if (!backend.includes("LOAD_COSTS_HUB_LINKAGE") || !backend.includes("org.companies") || !backend.includes("maintenance.work_orders")) errors.push("Load costs board is missing the twelve-hub declaration");
@@ -113,7 +123,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     [drawer.replace('"Costs",', '"Former costs",'), costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs.replace('data-cost-driver-column="driver_id"', 'data-cost-driver-column="driver_uuid"'), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
-    [drawer, costs.replace('type CostChoice = "expense" | "bill" | null', 'type CostChoice = "expense" | "bill"'), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
+    [drawer, costs.replace('type CostChoice = "expense" | "bill" | "advance" | "fuel_advance" | null', 'type CostChoice = "expense" | "bill" | "advance" | "fuel_advance"'), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs.replaceAll("No costs on this load yet.", "No rows."), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs, board.replaceAll("/api/v1/accounting/load-costs-board", "/api/v1/accounting/parallel-costs"), routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs, board, routes.replace('path="/accounting/load-costs"', 'path="/accounting/costs"'), backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
