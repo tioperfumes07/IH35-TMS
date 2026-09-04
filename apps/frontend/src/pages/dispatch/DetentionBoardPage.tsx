@@ -20,6 +20,7 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { DispatchAlertServerControls, type DispatchAlertRange } from "../../components/dispatch/DispatchAlertServerControls";
+import { DispatchSubnav } from "../../components/dispatch/DispatchSubnav";
 import { serverDispatchAlertQueryFromSortState, sortDispatchAlertBoardRows } from "./dispatchAlertBoardSort";
 
 function formatMoney(cents: number): string {
@@ -154,15 +155,19 @@ export function DetentionBoardPage() {
   const invalidate = (submittedCompanyId: string) =>
     queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-board", submittedCompanyId] });
 
-  if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
-  }
-
+  // DSP-39 (owner 2026-09-04): this useMemo previously sat AFTER the `if (!companyId)` early
+  // return below — a React hook-order violation that throws "rendered more hooks than during
+  // the previous render" the moment an operator with no selected company lands here, then
+  // selects one. Hooks must run unconditionally, so the memo is hoisted above every early return.
   const events = useMemo(
     () => sortDispatchAlertBoardRows(boardQ.data?.events ?? [], paritySortKey, sortDirection),
     [boardQ.data?.events, paritySortKey, sortDirection],
   );
   type DetentionRow = (typeof events)[number];
+
+  if (!companyId) {
+    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+  }
 
   // Migrated to the shared QBO-parity grid — columns, order, and per-row action buttons preserved
   // verbatim (§7 additive-only). Elapsed re-renders live off nowMs (30s ticker) via column render.
@@ -248,6 +253,12 @@ export function DetentionBoardPage() {
 
   return (
     <div data-testid="dispatch-detention-board-page" className="mx-auto max-w-7xl space-y-4">
+      {/* DSP-05 (owner 2026-09-04): the Detention page mounted a bare PageHeader, so the
+          dispatch queue sub-nav AND the "Dispatch › Detention" breadcrumb were absent —
+          the operator lost the tab bar the moment they opened this queue. DispatchSubnav
+          renders both (dispatch-queues-subnav + dispatch-breadcrumb) and its own hooks are
+          self-contained, so it does not affect this page's hook order. */}
+      <DispatchSubnav operatingCompanyId={companyId} />
       <PageHeader
         title="Detention board"
         subtitle="Operational detention and stopped, unbilled customer receivables · independent of load status"
