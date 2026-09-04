@@ -7443,5 +7443,10 @@
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-04",
     "purpose": "verify-lane-mileage-short-miles-never-from-alwaystrack-blend (LANE-MILEAGE-SHORT-MILES-REGRESSION, owner order 2026-09-04, URGENT, owner's own error). Guards that catalogs.lane_mileage.short_miles is never populated from the AlwaysTrack CSV's own short_miles column (St. Miles = Loaded + Empty, the shortest+deadhead blend) in either import script (seed-lane-mileage.mjs, merge-and-rescore-lane-mileage.mjs), and that no live lane has short_miles populated or short_miles>practical_miles. Wired into scripts/verify-steps/ in the same PR that adds the guard -- not a second orphaned guard."
+  },
+  "10329": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-usmca-driver-settlement-routing-unreachable (LOAD-COSTS-COMPLETE item (3), owner ruling 2026-09-04). Guards that resolveEconomicRouting (cash-advance-create.ts) can never resolve to 'driver_settlement' for USMCA -- the USMCA force-check must be the FIRST statement in the function, before any purpose switch or explicit-override check, and the create flow's call site must still pass companyId through. Wired into scripts/verify-steps/ in the same PR."
   }
 }
