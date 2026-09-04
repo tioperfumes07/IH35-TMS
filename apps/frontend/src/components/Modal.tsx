@@ -221,6 +221,7 @@ export function Modal({
             ? "fixed inset-0 z-[215] flex justify-end bg-black/50"
             : "fixed inset-0 z-[215] flex items-center justify-center bg-black/50 p-4"
         }
+        data-ih35-blocking-modal="true"
         onMouseDown={attemptClose}
       >
         <div

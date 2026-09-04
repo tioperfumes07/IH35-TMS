@@ -108,6 +108,7 @@ export type UnitsWithoutLoad = {
 export type DriverLoadAvailability = {
   ok: boolean;
   blocker?: string;
+  code?: "E_DRIVER_NOT_FOUND" | "E_DRIVER_HOS_VIOLATION" | "E_DRIVER_REPAIR_BLOCK";
   work_order_id?: string | null;
   asset_id?: string | null;
   /** FAIL-U1: operator-readable labels. ids stay for programmatic callers. */

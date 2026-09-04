@@ -5,7 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { installStaleChunkRecovery } from "./bootstrap/installStaleChunkRecovery";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { ToastProvider } from "./components/Toast";
+import { StaleDeployBanner } from "./components/StaleDeployBanner";
 import { initFrontendSentry } from "./observability/sentry-client";
 import "./index.css";
 import i18n from "./i18n";
@@ -37,6 +37,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
+        <StaleDeployBanner />
         {/*
           React Router 7 defaults BrowserRouter history updates to startTransition.
           A pending route render can therefore retain the previous committed screen even

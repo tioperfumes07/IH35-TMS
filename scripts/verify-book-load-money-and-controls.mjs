@@ -111,6 +111,18 @@ function violations(lib, editor, wizard, equipment, timeWindow, moneyInput, numb
   if (liveBarIdx < 0 || customerHeaderIdx < 0 || liveBarIdx < customerHeaderIdx) {
     errors.push("Load # must sit inside Section A, not over the modal header");
   }
+  if (!/data-testid="book-load-save-ack"/.test(wizard) || !/Load \{saveAck\.loadNumber\} is saved/.test(wizard)) {
+    errors.push("Save must acknowledge with the load number (WIZ-39)");
+  }
+  if (!/applyOverrides/.test(wizard) || !/override_rules: applyOverrides/.test(wizard)) {
+    errors.push("Book + dispatch must send recorded overrides once every blocker is overridden (WIZ-38)");
+  }
+  if (!/pre-dispatch-header-cleared/.test(wizard) || !/\bCLEARED\b/.test(wizard)) {
+    errors.push("Section D header must read CLEARED when remaining blockers are 0 and overrides exist (WIZ-38)");
+  }
+  if (!wizard.includes('"Override & dispatch"') || !wizard.includes('"Book + dispatch"')) {
+    errors.push("Footer must switch Override & dispatch → Book + dispatch when remaining blockers hit 0 (WIZ-38)");
+  }
   return errors;
 }
 
