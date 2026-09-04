@@ -1,4 +1,6 @@
 # OUTBOX-CODEX · SEQUENCE · 2026-09-02 21:08 CT
+CODEX | FLT-01/02 RE-DERIVED CLOSED | current main exposes OOS reason/start/expected return/work order; distinct In-shop/OOS tones; persisted draggable ordering | guard=verify-fleet-oos-columns-manifest selftest 21/21 + direct PASS | NEXT=FLT-04 guard registration | GO
+CODEX | FLT-04 COMPLETION | canonical catalogs.load_cancellation_reasons + required vehicle-swap reason + assignment-history event already pass 10/10 planted; registration gap wired into claimed Quick Assign verify-step | NEXT=FAST-MERGE then FLT-10 | GO
 CODEX | FLEET LIVE READ | USMCA work_orders=17 · open=0 · held units=[] | query run twice under set_config('app.bypass_rls','lucia',false) on br-fancy-credit-akjnd07a | no WO closed or mutated | GO
 CODEX | AWAITING VEHICLE NUMBER | origin/main already returns unit_number, maps assigned_unit_number, and renders Unit first/default-visible in List/Table plus primary EntityLink in Kanban; product claim does not reproduce | completion=registered guard strengthened to API→map→visible-column→cell with planted selftest | GO
 CODEX | #38 CLOSED READ-ONLY | DispatchList.tsx production imports=0; DispatchBoard imports only dispatchListTypes.ts contract | additive-only: file retained, no delete | GO
