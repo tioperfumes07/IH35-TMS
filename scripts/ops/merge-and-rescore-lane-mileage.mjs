@@ -13,10 +13,23 @@
  *     weighted pool of the merged group, THEN rescore.
  *
  * (b) practical_min/practical_max: the owner REJECTED deriving them as practical_miles +/-
- *     spread/2 ("invents two numbers that look observed"). This source (an AlwaysTrack aggregate
- *     extract, not raw per-run data) never carried true min/max -- they are NOT recoverable here.
- *     Left NULL on every row, honestly, per the owner's own rule: "A NULL is honest; a derived
- *     approximation presented as a range is not."
+ *     spread/2 ("invents two numbers that look observed"). UPDATED 2026-09-04
+ *     (LANE-MILEAGE-SHORT-EMPTY-DROPPED): the 2026-09-03 AlwaysTrack aggregate extract never
+ *     carried true min/max, so NULL was the only honest choice then. The current source
+ *     (db/seeds/lane-mileage-usmca.csv, rebuilt 2026-09-04) DOES carry real per-row
+ *     practical_min/practical_max/short_min/short_max -- merging duplicate-spelling variants of
+ *     the same real lane by MIN-of-observed-mins / MAX-of-observed-maxes is honest aggregation of
+ *     real data, not the rejected formula. Still never derived from spread/2; still NULL when a
+ *     group has no rows carrying a real value for that field.
+ *
+ * (c) short_miles/n_short/short_min/short_max/empty_miles (owner-verified live 2026-09-04): the
+ *     prior version of this script's `before` SELECT and INSERT never read or wrote these 5
+ *     columns at all, so every run of THIS script silently deleted whatever values a correct seed
+ *     import had written and reinserted rows without them -- the actual mechanism behind "0 of
+ *     3,006 live lanes have short_miles/empty_miles" despite the seed source having both. Fixed by
+ *     carrying them through mergeGroups() with their own independent weighting (short_miles by
+ *     n_short, NOT by n_practical -- a lane can have short-route observations with zero practical
+ *     observations, or vice versa) and writing them in the same INSERT as everything else.
  *
  * CONFIDENCE FORMULA (owner-approved, run-count + RELATIVE spread, not absolute miles):
  *   High:      n_practical >= 3  AND relative_spread_pct <= 5
@@ -141,15 +154,50 @@ export function mergeGroups(rows, aliasMap) {
 
   const merged = [];
   for (const g of groups.values()) {
-    const totalRuns = g.rows.reduce((s, r) => s + Number(r.n_practical || 0), 0);
+    // LANE-MILEAGE-SHORT-EMPTY-DROPPED (2026-09-04): practical_* and short_* are independent
+    // observation sets on this source -- 26 lanes have short_miles with NO practical data at all
+    // (n_practical=0), and short_miles is blank/NULL on 105 lanes that DO have practical data.
+    // Weighting practical_miles by n_practical must only sum over rows that actually HAVE
+    // practical data (Number(null) === 0 would silently zero-weight a real value into the
+    // average otherwise); short_miles gets its OWN independent weighted average by n_short.
+    const practicalRows = g.rows.filter((r) => r.practical_miles != null && r.practical_miles !== "");
+    const totalRuns = practicalRows.reduce((s, r) => s + Number(r.n_practical || 0), 0);
     const weightedMiles =
       totalRuns > 0
-        ? g.rows.reduce((s, r) => s + Number(r.practical_miles) * Number(r.n_practical || 0), 0) / totalRuns
-        : Number(g.rows[0].practical_miles);
+        ? practicalRows.reduce((s, r) => s + Number(r.practical_miles) * Number(r.n_practical || 0), 0) / totalRuns
+        : practicalRows.length > 0
+          ? Number(practicalRows[0].practical_miles)
+          : null;
     const weightedSpread =
       totalRuns > 0
-        ? g.rows.reduce((s, r) => s + Number(r.practical_spread || 0) * Number(r.n_practical || 0), 0) / totalRuns
-        : Number(g.rows[0].practical_spread || 0);
+        ? practicalRows.reduce((s, r) => s + Number(r.practical_spread || 0) * Number(r.n_practical || 0), 0) / totalRuns
+        : practicalRows.length > 0
+          ? Number(practicalRows[0].practical_spread || 0)
+          : null;
+    const practicalMins = practicalRows.map((r) => Number(r.practical_min)).filter(Number.isFinite);
+    const practicalMaxs = practicalRows.map((r) => Number(r.practical_max)).filter(Number.isFinite);
+
+    const shortRows = g.rows.filter((r) => r.short_miles != null && r.short_miles !== "");
+    const totalShortRuns = shortRows.reduce((s, r) => s + Number(r.n_short || 0), 0);
+    const weightedShortMiles =
+      totalShortRuns > 0
+        ? shortRows.reduce((s, r) => s + Number(r.short_miles) * Number(r.n_short || 0), 0) / totalShortRuns
+        : shortRows.length > 0
+          ? Number(shortRows[0].short_miles)
+          : null;
+    const shortMins = shortRows.map((r) => Number(r.short_min)).filter(Number.isFinite);
+    const shortMaxs = shortRows.map((r) => Number(r.short_max)).filter(Number.isFinite);
+    const totalNShort = g.rows.reduce((s, r) => s + Number(r.n_short || 0), 0);
+
+    const emptyRows = g.rows.filter((r) => r.empty_miles != null && r.empty_miles !== "");
+    const weightedEmptyMiles =
+      totalRuns > 0 && emptyRows.length > 0
+        ? emptyRows.reduce((s, r) => s + Number(r.empty_miles) * Number(r.n_practical || 0), 0) /
+          emptyRows.reduce((s, r) => s + Number(r.n_practical || 0), 0)
+        : emptyRows.length > 0
+          ? Number(emptyRows[0].empty_miles)
+          : 0;
+
     const firstSeen = g.rows.map((r) => r.first_seen).filter(Boolean).sort()[0] ?? null;
     const lastSeen = g.rows.map((r) => r.last_seen).filter(Boolean).sort().slice(-1)[0] ?? null;
     merged.push({
@@ -158,8 +206,19 @@ export function mergeGroups(rows, aliasMap) {
       dest_city: g.dest_city,
       dest_state: g.dest_state,
       n_practical: totalRuns,
-      practical_miles: Math.round(weightedMiles * 10) / 10,
-      practical_spread: Math.round(weightedSpread * 10) / 10,
+      practical_miles: weightedMiles != null ? Math.round(weightedMiles * 10) / 10 : null,
+      practical_spread: weightedSpread != null ? Math.round(weightedSpread * 10) / 10 : null,
+      // True observed extremes across the merged variants -- never derived from spread/2 (owner
+      // rejected that formula 2026-09-03). This source provides real per-row min/max; merging
+      // duplicate-spelling variants of the SAME lane by MIN-of-mins/MAX-of-maxes is honest
+      // aggregation of already-observed data, not fabrication.
+      practical_min: practicalMins.length > 0 ? Math.min(...practicalMins) : null,
+      practical_max: practicalMaxs.length > 0 ? Math.max(...practicalMaxs) : null,
+      short_miles: weightedShortMiles != null ? Math.round(weightedShortMiles * 10) / 10 : null,
+      short_min: shortMins.length > 0 ? Math.min(...shortMins) : null,
+      short_max: shortMaxs.length > 0 ? Math.max(...shortMaxs) : null,
+      n_short: totalNShort,
+      empty_miles: Math.round(weightedEmptyMiles * 10) / 10,
       first_seen: firstSeen,
       last_seen: lastSeen,
       variant_count: g.rows.length,
@@ -236,18 +295,56 @@ if (process.argv.includes("--selftest")) {
     console.error("merge-and-rescore-lane-mileage SELFTEST FAIL — single-run high-spread lane should stay Thin/OFF");
     process.exit(1);
   }
-  const src = readFileSync(fileURLToPath(import.meta.url), "utf8");
-  // Owner rejected deriving min/max from practical_miles +/- spread/2 ("invents two numbers that
-  // look observed"). Assert the literal INSERT always writes NULL for both, and that no arithmetic
-  // expression involving practical_spread feeds either column anywhere in the file.
-  if (!/practical_min,\s*practical_max\s*\)\s*VALUES\s*\(/.test(src) || !/NULL,\s*NULL\s*\)`/.test(src)) {
-    console.error("merge-and-rescore-lane-mileage SELFTEST FAIL — practical_min/practical_max INSERT no longer writes a literal NULL pair");
+  // (4) practical_min/practical_max: real MIN-of-mins/MAX-of-maxes across merged variants, never
+  // a spread/2 formula, never NULL when the group actually carries real per-row values.
+  const minMaxFixture = [
+    { origin_city: "DALLAS", origin_state: "TX", dest_city: "LAREDO", dest_state: "TX", practical_miles: "440.0", practical_spread: "5.0", practical_min: "435.0", practical_max: "445.0", n_practical: 3, first_seen: "2024-01-01", last_seen: "2024-06-01" },
+    { origin_city: "DALLAS", origin_state: "TX", dest_city: "LAREDO, TX", dest_state: "TX", practical_miles: "440.0", practical_spread: "2.0", practical_min: "438.0", practical_max: "452.0", n_practical: 2, first_seen: "2024-07-01", last_seen: "2024-08-01" },
+  ];
+  const minMaxMerged = mergeGroups(minMaxFixture, aliasMap);
+  const dallas = minMaxMerged.find((m) => m.origin_city === "DALLAS");
+  if (!dallas || dallas.practical_min !== 435 || dallas.practical_max !== 452) {
+    console.error(`merge-and-rescore-lane-mileage SELFTEST FAIL — practical_min/max not aggregated as true observed extremes: ${JSON.stringify(dallas)}`);
     process.exit(1);
   }
-  const insertSection = src.slice(src.indexOf("INSERT INTO catalogs.lane_mileage"));
-  if (/practical_min\s*:\s*[a-zA-Z]/.test(insertSection.split("VALUES")[1] ?? "")) {
-    console.error("merge-and-rescore-lane-mileage SELFTEST FAIL — practical_min appears computed, not literal NULL");
+  // (5) short_miles/n_short/short_min/short_max/empty_miles must survive the merge -- this is the
+  // exact class of bug that silently dropped them for every one of 3,006 live lanes.
+  const shortEmptyFixture = [
+    {
+      origin_city: "TULSA", origin_state: "OK", dest_city: "LAREDO", dest_state: "TX",
+      practical_miles: "620.0", practical_spread: "0", practical_min: "620.0", practical_max: "620.0", n_practical: 2,
+      short_miles: "650.0", short_min: "645.0", short_max: "655.0", n_short: 2, empty_miles: "12.0",
+      first_seen: "2024-01-01", last_seen: "2024-02-01",
+    },
+    {
+      origin_city: "TULSA", origin_state: "OK", dest_city: "LAREDO, TX", dest_state: "TX",
+      practical_miles: "620.0", practical_spread: "0", practical_min: "615.0", practical_max: "625.0", n_practical: 1,
+      short_miles: "640.0", short_min: "640.0", short_max: "640.0", n_short: 1, empty_miles: "8.0",
+      first_seen: "2024-03-01", last_seen: "2024-03-01",
+    },
+  ];
+  const tulsa = mergeGroups(shortEmptyFixture, aliasMap).find((m) => m.origin_city === "TULSA");
+  if (!tulsa || tulsa.short_miles == null || tulsa.n_short !== 3 || tulsa.short_min !== 640 || tulsa.short_max !== 655 || tulsa.empty_miles <= 0) {
+    console.error(`merge-and-rescore-lane-mileage SELFTEST FAIL — short_miles/n_short/short_min/short_max/empty_miles not carried through the merge: ${JSON.stringify(tulsa)}`);
     process.exit(1);
+  }
+  // (6) a lane with short-route data but ZERO practical observations must not be dropped or
+  // crash the weighting (Number(null) must never silently zero-weight a real average).
+  const shortOnlyFixture = [
+    { origin_city: "ADRIAN", origin_state: "PA", dest_city: "LAREDO", dest_state: "TX", practical_miles: "", practical_spread: "", practical_min: "", practical_max: "", n_practical: "", short_miles: "338.4", short_min: "338.4", short_max: "338.4", n_short: 1, empty_miles: "", first_seen: "", last_seen: "" },
+  ];
+  const adrian = mergeGroups(shortOnlyFixture, aliasMap).find((m) => m.origin_city === "ADRIAN");
+  if (!adrian || adrian.practical_miles !== null || adrian.short_miles !== 338.4) {
+    console.error(`merge-and-rescore-lane-mileage SELFTEST FAIL — short-only (no practical) lane mishandled: ${JSON.stringify(adrian)}`);
+    process.exit(1);
+  }
+  const src = readFileSync(fileURLToPath(import.meta.url), "utf8");
+  const insertSection = src.slice(src.indexOf("INSERT INTO catalogs.lane_mileage"));
+  for (const col of ["short_miles", "n_short", "short_min", "short_max", "empty_miles", "practical_min", "practical_max"]) {
+    if (!insertSection.includes(col)) {
+      console.error(`merge-and-rescore-lane-mileage SELFTEST FAIL — INSERT no longer writes ${col} (the exact class of silent-drop bug this file fixes)`);
+      process.exit(1);
+    }
   }
   console.log("merge-and-rescore-lane-mileage SELFTEST PASS");
   process.exit(0);
@@ -271,13 +368,20 @@ async function main() {
   await client.query("SELECT set_config('app.bypass_rls', 'lucia', true)");
 
   const before = await client.query(
-    `SELECT origin_city, origin_state, dest_city, dest_state, practical_miles::text, practical_spread::text,
-            n_practical, first_seen::text, last_seen::text
+    `SELECT origin_city, origin_state, origin_postal_code, dest_city, dest_state, dest_postal_code,
+            practical_miles::text, practical_spread::text, practical_min::text, practical_max::text,
+            n_practical, short_miles::text, short_min::text, short_max::text, n_short,
+            empty_miles::text, first_seen::text, last_seen::text
        FROM catalogs.lane_mileage
       WHERE operating_company_id = $1::uuid`,
     [USMCA]
   );
   const beforeCount = before.rows.length;
+  // LANE-MILEAGE-SHORT-EMPTY-DROPPED (2026-09-04): count what THIS run's own `before` snapshot
+  // actually carries, so the printed before/after proof is honest about what existed going in,
+  // not assumed from the last time this script's author looked.
+  const beforeShortPopulated = before.rows.filter((r) => r.short_miles != null).length;
+  const beforeEmptyPositive = before.rows.filter((r) => Number(r.empty_miles) > 0).length;
 
   const merged = mergeGroups(before.rows, aliasMap).map(scoreConfidence);
   const mergedGroupsWithVariants = merged.filter((m) => m.variant_count > 1);
@@ -292,14 +396,14 @@ async function main() {
     await client.query(
       `INSERT INTO catalogs.lane_mileage (
          operating_company_id, origin_city, origin_state, dest_city, dest_state,
-         practical_miles, practical_spread, n_practical,
-         confidence, autofill_allowed, source, first_seen, last_seen,
-         practical_min, practical_max
+         practical_miles, practical_spread, practical_min, practical_max, n_practical,
+         short_miles, short_min, short_max, n_short, empty_miles,
+         confidence, autofill_allowed, source, first_seen, last_seen
        ) VALUES (
          $1::uuid, $2, $3, $4, $5,
-         $6::numeric, $7::numeric, $8::int,
-         $9, $10, $11, $12::date, $13::date,
-         NULL, NULL
+         $6::numeric, $7::numeric, $8::numeric, $9::numeric, $10::int,
+         $11::numeric, $12::numeric, $13::numeric, $14::int, $15::numeric,
+         $16, $17, $18, $19::date, $20::date
        )`,
       [
         USMCA,
@@ -309,7 +413,14 @@ async function main() {
         r.dest_state,
         r.practical_miles,
         r.practical_spread,
+        r.practical_min,
+        r.practical_max,
         r.n_practical,
+        r.short_miles,
+        r.short_min,
+        r.short_max,
+        r.n_short,
+        r.empty_miles,
         r.confidence,
         r.autofill_allowed,
         "History",
@@ -324,7 +435,13 @@ async function main() {
   await client.query("RESET ROLE");
   await client.query("SELECT set_config('app.bypass_rls', 'lucia', true)");
   const after = await client.query(
-    `SELECT count(*)::int AS n FROM catalogs.lane_mileage WHERE operating_company_id = $1::uuid`,
+    `SELECT
+       count(*)::int AS n,
+       count(*) FILTER (WHERE short_miles IS NOT NULL)::int AS short_populated,
+       count(*) FILTER (WHERE empty_miles > 0)::int AS empty_positive,
+       count(*) FILTER (WHERE short_min IS NOT NULL)::int AS short_min_populated,
+       count(*) FILTER (WHERE practical_min IS NOT NULL)::int AS practical_min_populated
+     FROM catalogs.lane_mileage WHERE operating_company_id = $1::uuid`,
     [USMCA]
   );
   const afterCount = after.rows[0]?.n ?? 0;
@@ -334,7 +451,10 @@ async function main() {
   for (const r of merged) dist[r.confidence] = (dist[r.confidence] ?? 0) + 1;
 
   console.log(
-    `BEFORE: ${beforeCount} rows | duplicate groups merged: ${mergedGroupsWithVariants.length} (${variantRowsFolded} rows folded) | AFTER: ${afterCount} rows (verified live count)`
+    `BEFORE: ${beforeCount} rows (short_miles populated=${beforeShortPopulated}, empty_miles>0=${beforeEmptyPositive}) | duplicate groups merged: ${mergedGroupsWithVariants.length} (${variantRowsFolded} rows folded) | AFTER: ${afterCount} rows (verified live count)`
+  );
+  console.log(
+    `AFTER per-column: short_miles populated=${after.rows[0].short_populated} · short_min populated=${after.rows[0].short_min_populated} · empty_miles>0=${after.rows[0].empty_positive} · practical_min populated=${after.rows[0].practical_min_populated}`
   );
   console.log(`Confidence distribution: High=${dist.High} · Check ZIP=${dist["Check ZIP"]} · Thin=${dist.Thin}`);
   if (afterCount !== merged.length) {
