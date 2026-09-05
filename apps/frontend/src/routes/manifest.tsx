@@ -15,6 +15,8 @@ import { resolveListsDomainHubKey } from "../pages/lists/components/AllCatalogsM
 import { catalogKeyToCatalogName } from "../hooks/useCatalogQuery";
 const CustomersPage = React.lazy(() => import("../pages/Customers").then((m) => ({ default: m.CustomersPage })));
 const CustomerDetailPage = React.lazy(() => import("../pages/CustomerDetail").then((m) => ({ default: m.CustomerDetailPage })));
+const CustomerStatementPage = React.lazy(() => import("../pages/reports/CounterpartyStatementPage").then((m) => ({ default: m.CustomerStatementPage })));
+const VendorStatementPage = React.lazy(() => import("../pages/reports/CounterpartyStatementPage").then((m) => ({ default: m.VendorStatementPage })));
 const ListsHubPage = React.lazy(() => import("../pages/lists/ListsHubPage").then((m) => ({ default: m.ListsHubPage })));
 const ProgramBoardPage = React.lazy(() => import("../pages/program/ProgramBoardPage").then((m) => ({ default: m.ProgramBoardPage })));
 const FinalAdditionsPage = React.lazy(() => import("../pages/program/FinalAdditionsPage").then((m) => ({ default: m.FinalAdditionsPage })));
@@ -1099,6 +1101,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/customers/:id/statement"
+          element={
+            <ProtectedRoute>
+              <CustomerStatementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/vendors"
           element={
             <ProtectedRoute>
@@ -1111,6 +1121,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <VendorDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vendors/:id/statement"
+          element={
+            <ProtectedRoute>
+              <VendorStatementPage />
             </ProtectedRoute>
           }
         />

@@ -1158,6 +1158,9 @@ export function CustomerDetailPage() {
         actions={
           !editMode ? (
             <div className="flex items-center gap-2">
+              <Button variant="secondary" onClick={() => navigate(`/customers/${id}/statement`)}>
+                Statement
+              </Button>
               {customer.deactivated_at == null ? (
                 <Button variant="secondary" onClick={() => inactivateCustomerMutation.mutate()} loading={inactivateCustomerMutation.isPending}>
                   Inactivate

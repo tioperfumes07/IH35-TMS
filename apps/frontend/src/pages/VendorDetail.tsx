@@ -601,6 +601,9 @@ export function VendorDetailPage() {
             <span className={`rounded-sm px-2 py-1 text-xs font-semibold ${vendor.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-slate-100 text-slate-700"}`}>
               {vendor.deactivated_at ? "Inactive" : "Active"}
             </span>
+            <Button variant="secondary" onClick={() => navigate(`/vendors/${id}/statement`)}>
+              Statement
+            </Button>
             {vendor.deactivated_at ? (
               <Button variant="secondary" onClick={() => reactivateVendorMutation.mutate()} loading={reactivateVendorMutation.isPending}>
                 Reactivate
