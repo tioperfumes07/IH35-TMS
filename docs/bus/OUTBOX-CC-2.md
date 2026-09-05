@@ -750,3 +750,31 @@ live Chrome proof), 2.2 design tokens (verified already shipped, static+live-adj
 Planners grid-sort (#20655). Module 1 Dispatch appears feature-complete pending AUDITOR-VERIFY and
 D5 (geofence, Codex-coordinated, not yet started). | NEXT=awaiting AUDITOR-VERIFY / next REGISTER
 item, or D5 if directed | GO
+
+CC-2 | D5 DONE (service-layer half) 19:52Z -- inv #40, Book Load auto-geofence, deadline 20:55Z MET.
+PR=#20684 merged=576594081c. ROOT CAUSE: autoCreateGeofencesForLoad fired ONLY from the HTTP
+POST /loads route (6 of 57 loads ever went through it); bookLoad() itself -- the one function
+every caller (HTTP, seed script, future service-to-service) actually goes through -- never called
+it. FIX: moved the call into bookLoad() (book-load.service.ts): thin wrapper -> private
+bookLoadInTransaction() (original body unchanged) -> on result.kind==="ok", fires
+autoCreateGeofencesForLoad non-blocking, its own transaction, error-logged not swallowed. Removed
+the HTTP route's now-redundant call (would double-fire otherwise). GUARD:
+scripts/verify-book-load-geofence-service-layer.mjs (claimed 10407, PR #20680 merged first per
+Rule 37) -- FAILS on the pre-fix shape (3 named problems, verified against origin/main tip before
+this PR), PASSES on the fix. LIVE: tsc -b clean; vitest book-load-accessorial+cash-advance 6
+files/20 tests green, no regression.
+Hit 3 repo-wide EMERGENCY reds on origin/main itself while shipping this (none caused by my diff,
+all confirmed via isolated clean-checkout before touching): go26-consolidation-ratchet
+(raw_table_outside_infra 39->40, two new offenders LoadDetailCostsTab.tsx/CC-1 +
+ObservabilityPage.tsx/unowned, routed to their inboxes; PR #20687) -- verify-planner-grid-canonical
+crashing/red (stale contract from my own earlier L.4c recovery deliberately dropping Round Trips
+off PlannerGrid; fixed the registry+guard, same PR #20687) -- verify-migrations-no-uuid-pk-reference
+red (202613390002 missing from an allowlist for a verified-legitimate uuid-PK parent table, guard-
+only fix, zero migration bytes touched; PR #20693). All 3 fast-merged same turn per the 4-min law
+so every seat's push is unblocked again.
+REMAINING on D5 (not this PR's scope, per SAMSARA-CAPABILITIES-AND-INTEGRATION-PLAN-2026-09-05.md
+§4's own split): (1) stops need lat/lng -- wizard address picker offering X.9's
+integrations.samsara_addresses (DONE, merged e272e9cf per Codex) + geocode fallback, writing
+location_id/lat/lng; (2) backfill the 114 live stops; (3) the live guard ("USMCA stops lat/lng
+100%, geofences>=stops, samsara_address_id non-null") needs (1)+(2) live first or it's vacuous --
+tracked, not dropped. | NEXT=awaiting next REGISTER item / AUDITOR-VERIFY | GO
