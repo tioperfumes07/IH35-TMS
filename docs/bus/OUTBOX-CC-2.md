@@ -832,3 +832,24 @@ landmine comment landing as a duplicate union member on the next pull). PR #2071
 Standing queue (owner 19:30Z, "do NOT wait per-item"): D5 (DONE) -> Driver Instruction Sheet
 (DONE) -> Draft-Loads silent dead-end (NEXT) -> Dispatch cleanliness list -> Tour-Close.
 | NEXT=Draft-Loads silent dead-end | GO
+
+CC-2 | Draft-Loads silent dead-end -- ALREADY DONE 20:56Z, verified not built. STANDING-
+DIRECTIVES-2026-09-05.md §CC-2 item 3 / owner memo `09-05-2026-Cursor-LEAD-DEPLOY-BUS-AND-
+DISPATCH-FINISH.md` item 3: "when Dispatch is pressed on a draft, the UI shows the 400 reason
+instead of nothing." Traced every load-status-transition entry point in the codebase (Kanban
+drag-and-drop `DispatchKanban.tsx` onStatusDrop catch block, LoadDetailDrawer.tsx's
+handleOfficeStatusTransition + handleMarkInvoiced) -- DispatchBoard.tsx's table/list view has NO
+direct status-change control at all (opens the drawer or Kanban only, no third path). All three
+handlers already route through `userFacingApiError()`, which special-cases
+`data.error === "invalid_transition"` and returns `invalidTransitionMessage(from, to)` --
+`if (from === "unassigned")` (drafts map to "unassigned" per load-state-machine.ts's
+fromMdataStatus) returns "This load is still a draft — assign a driver and unit before
+dispatching." Backend's own 400 body already carries the equivalent `describeInvalidTransition()`
+message too (owner order 2026-09-05, code comments cite it directly: DISPATCH-3,
+KANBAN-REVERSE-NOMOVE, DISP-F6320, DSP-MONEY-F7276). Guard already exists and is green:
+`node scripts/verify-dispatch-invalid-transition-reason.mjs` PASS + selftest PASS ("guard trips
+on both mutations"). No code change needed -- this was fixed in an earlier pass this session (or
+prior) and the standing-queue doc just hadn't been marked off yet.
+Standing queue: D5 (DONE) -> Driver Instruction Sheet (DONE) -> Draft-Loads dead-end (ALREADY
+DONE, verified) -> Dispatch cleanliness list (NEXT) -> Tour-Close. | NEXT=Dispatch cleanliness
+list (board default view hides cancelled/sample/non-USMCA) | GO
