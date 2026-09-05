@@ -41,7 +41,7 @@ and are in **no** health path. Wire them in; do not rebuild them.
 
 | # | Control account | Subledger | Live now |
 |---|---|---|---|
-| B1 | 1100 Accounts Receivable | open invoices | **OUT −$1,215.75 ✗** (GL $10,446.25 vs $11,662.00) |
+| B1 | 1100 Accounts Receivable | open invoices | **$0.00 ✓ RE-RUN 2026-09-05** — this row's own $10,446.25/$11,662.00 figures were STALE (same "predates a full USMCA data reset" cause as B3/B4 below, just never updated in this row when the rest of the table was). Live today: GL $0.00 = subledger $0.00 (USMCA carries exactly 1 invoice, status='proforma', correctly excluded from the open-invoice subledger sum). Ties. |
 | B2 | 2000 Accounts Payable | open bills | **OUT −$268.77 ✗** (GL $7,460.00 vs $7,728.77) |
 | B3 | 1000 / 1090 Bank + Undeposited | `banking.bank_transactions` | **✗ RUN 2026-09-04, AMENDED** — GL (0 JEs) = **$0.00** vs bank subledger (343 non-voided of 400 total, 0 with `matched_journal_entry_id`) = net **$4,724.65** (89 credits $336,069.84 − 254 debits $331,345.19, per `is_credit`, the direction column — the earlier net figure used `amount_cents`'s sign directly, which runs opposite `is_credit`; same $4,724.65 magnitude, corrected sign). **Gross unposted activity: $667,415.03** across all 343 rows — the size-of-gap figure, not the net. USMCA has real bank activity that has **never once been posted to the GL**. Filed as BANK-F10005 (see GUARD-WORKORDERS.md, amended with the gross figure per owner order); Band B fix ownership is CC-1 per this doc's own remediation table. The earlier `−$41,255.43` figure in this row is STALE — it predates a full USMCA data reset and no longer reflects live state. |
 | B4 | 1150 Unbilled Revenue | delivered-not-invoiced loads | **$0.00 ✓ RUN** — USMCA has exactly 1 load, `status='draft'`, `rate_total_cents=0` — not delivered, nothing unbilled. The earlier `$109,158.50` figure is STALE for the same reason as B3. |
@@ -58,7 +58,7 @@ and are in **no** health path. Wire them in; do not rebuild them.
 |---|---|---|---|
 | C1 | Voided document that had GL has a balanced reversing JE | 0 violations | **0 ✓** (233 of 233 balanced, $173,463.49) |
 | C2 | Every voided document has `void_reason`, `voided_by_user_id`, `voided_at` | 0 nulls | **1 ✗** — `INV-2026-00024` |
-| C3 | Bank transaction still matched to a voided document | 0 | **5 ✗** — 4 categorized $5,700.00 + 1 pending −$1,200.00 |
+| C3 | Bank transaction still matched to a voided document | 0 | **0 ✓ RE-RUN 2026-09-05** — the 2026-09-04 "5 ✗" no longer reproduces: checked every match mechanism (`matched_invoice_id`/`matched_bill_id`/`matched_payment_id`/`matched_bill_payment_id`/`matched_journal_entry_id`/`matched_expense_id`/`reconciled_obligation_id`/`review_state='matched'`) against USMCA's 355 non-voided bank transactions — 0 rows carry ANY match reference today (positive-controlled: 355 real rows exist, not an RLS-masked read). Consistent with a further reset between 09-04 and 09-05 clearing match state along with the rest. |
 | C4 | One void-column convention across the schema | no `revoked_at` / `unapplied_at` / `reversed_at` drift | **✗** — 4 parallel conventions |
 | C5 | Reversal posts to the SAME accounts, opposite side, same amounts | 0 mismatches | **N/A ✓ RUN** — 0 voided documents with GL exist for USMCA today (0 JEs total), so there is nothing to reverse and nothing to mismatch. `checkVoidReversalIntegrityForCompany` already implements this logic (wired, isolated by the SAVEPOINT fix below) and will report a real result the first time USMCA has a voided posted document. |
 
@@ -130,10 +130,25 @@ CLAUDE.md §4 "an empty TMS table is expected" state, confirmed live, not assume
 unbuilt 1 (B10, blocked on how to check a frozen-entity pair without reading it) · Baseline-only 1
 (E4, needs a snapshot to diff against, established tonight).**
 
+**RE-SCORED 2026-09-05 (CC-2):** B1 and C3 (2 of the 14 "Failing") both re-ran clean today
+(cleared/reset since 09-04, see the RE-RUN note below B3's own row) — **Passing 4 · Failing 12 ·**
+the rest of the 09-04 breakdown unchanged. Only B3 (bank tie-out) and everything already-N/A stay
+as they were.
+
 **The one real, live, currently-true violation this sweep found: B3.** USMCA has 343 non-voided
 bank transactions summing to **−$4,724.65** — real money movement — and **zero** journal entries
 of any kind. None of that activity has ever been posted to the GL. Filed as a new finding, routed
 to CC-1 (Band B fix ownership is explicitly CC-1 per the table below; CC-2 builds/runs the check).
+
+**RE-RUN 2026-09-05 (CC-2, docs/bus/OWNER-DEFECT-REGISTER-2026-09-03.md ACC-01..20 sweep) —
+B1/C3 above corrected (both had gone stale/cleared since this table was last written; B4 was
+already correctly marked stale). B3 still real, numbers moved: 355 non-voided bank transactions
+(90 credits, 265 debits) net to **−$686,503.95**, GL bank-account balance still $0.00 (0
+postings). Still nobody's fixed it — still routed to CC-1 per this doc's own remediation table,
+not attempted here. ACC-18 (health endpoint has zero financial checks) also still open —
+confirmed live in source (`apps/backend/src/admin/health-deep.service.ts` has no reference to
+`ledger-integrity-detectors`/`subledger-gl-control-rec`) — this doc's own remediation table
+already correctly routes that wiring to Cursor; not built here either.**
 
 ## Remediation owners
 
