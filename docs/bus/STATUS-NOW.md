@@ -1,4 +1,5 @@
 # STATUS-NOW · 2026-09-05 04:22Z (Claude lead loop)
+**⛔ 13:36Z STOP THE SEED — 27 of 60 USMCA loads are TRANSPORTATION (lead gave the wrong split). CC-3: void the 27 families by 15:00Z; re-point scripts to the reconciliation sheets 2+4 (≥ 08/07); cutover guard. See INBOX top.**
 **13:29Z — Dispatch board column orders folded into CC-2 L.4a-fix (15:00Z): initials, short status codes, Live loc 180, outer frame, OWNER-REMOVE Commodity/Linehaul/Pre-settlement/Status from defaults.**
 **13:20Z — DRIVER PROFILE tabs measured live (7 defects). Codex DP.1 18:30Z, DP.2 19:30Z · CC-3 DP.3 audit scope 20:30Z · CC-1 D.4 earnings/debt history 21:30Z. Inventory rows 30–36.**
 **13:15Z real — FE live c16dccedf2 (dispatch board 31 cols back, partial: fix overflow/min-width/sticky/gear by 15:00Z, CC-2). API deploy still owed by Cursor. Deadlines unchanged.**

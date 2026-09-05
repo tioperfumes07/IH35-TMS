@@ -134,6 +134,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG
+- 13:36Z ⛔ OWNER: seeded loads not all USMCA (cutover 08/07/26). LEAD ERROR: feed split 5753–5795 ignored the entity split in the 08-31 reconciliation. Live: 60 USMCA loads, 27 TRANSPORTATION (18 pre-cutover, 9 Transp-Faro). Void 27 families (CC-3 15:00Z), re-point to sheets 2+4, cutover guard, Faro sheet 5 → factoring. Owner hand list corrected (5766 is TRANSP).
 - 13:29Z OWNER board column orders (initials, Off/UA codes, Live loc wider, outer frame, OWNER-REMOVE 4 default columns). Live: 34px equal split on all 32 cols, glued strings. → CC-2 L.4a-fix 15:00Z; LAW.md exception list updated.
 - 13:20Z OWNER: driver profile tabs not wired. Live: assignment tables on all 11 tabs; 5 action buttons; Load History 5 cols, row click → dispatch board; audit global + machine names; Documents 9 for 6 loads incl. L-2026… legacy; Equipment no trailer; Earnings 1 row $0. Codex DP.1/DP.2, CC-3 DP.3, CC-1 D.4.
 - 13:15Z (real) tick: clock correction (labels ran ahead; deadlines unchanged). CC-2 L.4a merged+live partial (31 cols/5 groups/Live loc/drag ✔; overflow 30/32, min-width 0, no sticky, no gear ✖ → L.4a-fix 15:00Z), L.4g ✔. FE live c16dccedf2 13:12Z (Cursor #20520 drawer). API still 836f4478 — deploy owed. ACKs: CC-2, CC-3.
