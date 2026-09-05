@@ -1212,14 +1212,11 @@ export function DispatchKanban({
       // KANBAN-REVERSE-NOMOVE (owner-live): forward moves worked, backward ones "did not move". They were
       // being REJECTED by the server, but this catch discarded the error and printed a generic sentence, so
       // the dispatcher was told the move failed and never WHY — indistinguishable from a dead board.
-      // Surface the server's own reason; keep the generic line only as the fallback when there is none.
-      const reason = error instanceof Error ? error.message.trim() : "";
-      pushToast(
-        reason
-          ? `Can't move ${load.load_number} to ${targetGroup.title} — ${reason}`
-          : `Can't move ${load.load_number} to ${targetGroup.title}. The server rejected it and gave no reason. Reverted.`,
-        "error"
-      );
+      // DISPATCH-3 (owner order 2026-09-05): route through userFacingApiError so an illegal transition
+      // (draft/unassigned → dispatched, load 13508) reads as the plain-English reason + corrective
+      // action instead of the bare "invalid_transition" code the transition route returns.
+      const reason = userFacingApiError(error, "the server rejected it and gave no reason").trim();
+      pushToast(`Can't move ${load.load_number} to ${targetGroup.title} — ${reason} Reverted.`, "error");
     }
   };
 
