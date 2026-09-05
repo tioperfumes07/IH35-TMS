@@ -397,6 +397,30 @@ export function getDispatchDriverStatus(id: string, operatingCompanyId: string) 
   );
 }
 
+// Inv #40 (STANDING-DIRECTIVES-2026-09-05.md §CC-2 item 1) — "On book, fire the geofence create
+// and show it." Per-stop read of what actually happened after bookLoad()'s non-blocking
+// auto-geofence trigger fired: a stop can be honestly skipped (no coordinates on file yet),
+// which is real state to show, not an error to hide.
+export type DispatchLoadGeofenceStop = {
+  stop_id: string;
+  sequence_number: number;
+  stop_type: string;
+  has_coordinates: boolean;
+  geofence_created: boolean;
+  samsara_address_id: string | null;
+};
+
+export type DispatchLoadGeofenceStatus = {
+  load_id: string;
+  stops: DispatchLoadGeofenceStop[];
+};
+
+export function getDispatchLoadGeofenceStatus(id: string, operatingCompanyId: string) {
+  return apiRequest<DispatchLoadGeofenceStatus>(
+    `/api/v1/dispatch/loads/${id}/geofence-status?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
 export function getUnitDispatchStatus(unitId: string, operatingCompanyId: string) {
   return apiRequest<Record<string, unknown>>(
     `/api/v1/dispatch/units/${unitId}/dispatch-status?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
