@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { geocodeSearch, type GeocodeResult } from "../../api/geocoding";
 
-// PC*MILER geocoding autocomplete for the Book Load §C one-line address (the field shipped in #1134).
-// GATED on PCMILER_ENABLED: flag OFF → a plain text input identical to #1134 (NO Trimble call). Flag ON →
-// debounced (400ms, min 3 chars) lookups against OUR backend proxy (/api/v1/geocoding/search); on select,
-// onResolve fires with the parsed result so the caller can populate city/state/country. The Trimble key is
-// never touched here (server-side only). Identical queries are cached client-side to conserve the trial cap.
+// Address autocomplete for the Book Load §C one-line address (the field shipped in #1134).
+// Debounced (400ms, min 3 chars) lookups against OUR backend proxy (/api/v1/geocoding/search), which picks the
+// provider server-side (Trimble/PC*MILER or Google — RULING 3). The ONLY gate is the backend's own
+// `enabled` answer: 2026-09-05 measured that the old `useFeatureFlag("PCMILER_ENABLED")` gate pointed at a
+// lib.feature_flags key that does not exist in production, so the field silently degraded to plain text for
+// everyone. On select, onResolve fires with the parsed result so the caller populates city/state/zip/country.
+// Provider keys are never touched here (server-side only). Identical queries are cached client-side.
 const MIN_CHARS = 3;
 const DEBOUNCE_MS = 400;
 
@@ -25,7 +26,9 @@ export function AddressGeocodeInput({
   className?: string;
   dataAttrs?: Record<string, string>;
 }) {
-  const { enabled } = useFeatureFlag("PCMILER_ENABLED");
+  // enabled = the backend said so on the last lookup (never a client-side flag). Starts true so the first
+  // 3-char query is attempted; flips false only when the proxy answers { enabled:false }.
+  const [enabled, setEnabled] = useState(true);
   const [results, setResults] = useState<GeocodeResult[]>([]);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +61,7 @@ export function AddressGeocodeInput({
       try {
         setError(null);
         const resp = await geocodeSearch(q);
+        setEnabled(Boolean(resp.enabled));
         const rs = resp.enabled ? resp.results ?? [] : [];
         cacheRef.current.set(key, rs);
         setResults(rs);
