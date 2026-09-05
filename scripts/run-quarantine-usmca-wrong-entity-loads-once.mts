@@ -2,7 +2,7 @@
 /**
  * Quarantine the 29 Transportation load families that were seeded into USMCA before the
  * 2026-08-07 operating cutover was reconciled. Every family is processed in its own transaction
- * through cancelLoadInClientTx, the same canonical cancellation/void cascade used by the API.
+ * through the canonical void executors at the load-line grain. Shared pre-settlements remain open.
  * Nothing is deleted or moved into Transportation.
  *
  * Usage:
@@ -10,8 +10,9 @@
  *   DATABASE_URL=<prod> npx tsx scripts/run-quarantine-usmca-wrong-entity-loads-once.mts --commit
  */
 import pg from "pg";
-import { cancelLoadInClientTx } from "../apps/backend/src/dispatch/cancellation.service.js";
+import { writeLoadCancellationRecord } from "../apps/backend/src/dispatch/cancellation.service.js";
 import { appendCrudAudit } from "../apps/backend/src/audit/crud-audit.js";
+import { executeVoidCancel } from "../apps/backend/src/governance/void-cancel-executors.js";
 
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
@@ -24,13 +25,14 @@ const VOID_REASON =
   "WRONG ENTITY — TRANSPORTATION (pre-cutover 2026-08-07 / Transportation Faro) — owner 13:36Z";
 const QUARANTINE_MEMO = "TRANSPORTATION-NOT-USMCA-2026-08-07-CUTOFF";
 const APPLY = process.argv.includes("--commit");
+const ONLY = process.argv.find((arg) => arg.startsWith("--only="))?.slice("--only=".length) ?? null;
 
 type Snapshot = {
   loads: number;
   invoices: number;
   expenses: number;
   driver_bills: number;
-  settlements: number;
+  settlement_lines: number;
   journal_entries: number;
 };
 
@@ -47,10 +49,8 @@ async function snapshot(client: pg.PoolClient, loadId: string): Promise<Snapshot
        (SELECT count(*)::int FROM accounting.invoices i WHERE i.source_load_id=$1::uuid AND i.status='void') AS invoices,
        (SELECT count(*)::int FROM accounting.expenses e WHERE e.load_id=$1::uuid AND e.status='void') AS expenses,
        (SELECT count(*)::int FROM driver_finance.driver_bills b WHERE b.load_id=$1::uuid AND b.status='void') AS driver_bills,
-       (SELECT count(DISTINCT ds.id)::int
-          FROM driver_finance.settlement_lines sl
-          JOIN driver_finance.driver_settlements ds ON ds.id=sl.settlement_id
-         WHERE sl.load_id=$1::uuid AND ds.status='cancelled') AS settlements,
+       (SELECT count(*)::int FROM driver_finance.settlement_lines sl
+         WHERE sl.load_id=$1::uuid AND sl.voided_at IS NOT NULL) AS settlement_lines,
        (SELECT count(DISTINCT je.id)::int
           FROM accounting.journal_entries je
           JOIN accounting.journal_entry_postings jep ON jep.journal_entry_uuid=je.id
@@ -76,9 +76,11 @@ async function main(): Promise<void> {
   const connectionString = process.env.DATABASE_URL || process.env.DATABASE_DIRECT_URL;
   if (!connectionString) throw new Error("DATABASE_URL or DATABASE_DIRECT_URL required");
   const pool = new pg.Pool({ connectionString, max: 1 });
-  const totals: Snapshot = { loads: 0, invoices: 0, expenses: 0, driver_bills: 0, settlements: 0, journal_entries: 0 };
+  const totals: Snapshot = { loads: 0, invoices: 0, expenses: 0, driver_bills: 0, settlement_lines: 0, journal_entries: 0 };
   try {
-    for (const loadNumber of LOAD_NUMBERS) {
+    const selected = ONLY ? LOAD_NUMBERS.filter((number) => number === ONLY) : LOAD_NUMBERS;
+    if (ONLY && selected.length === 0) throw new Error(`unknown_load_number:${ONLY}`);
+    for (const loadNumber of selected) {
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
@@ -125,11 +127,6 @@ async function main(): Promise<void> {
           `SELECT 'invoice' AS kind, id::text, status::text FROM accounting.invoices
              WHERE source_load_id=$1::uuid AND operating_company_id=$2::uuid AND status IN ('paid','factored')
            UNION ALL
-           SELECT 'settlement', ds.id::text, ds.status::text
-             FROM driver_finance.settlement_lines sl
-             JOIN driver_finance.driver_settlements ds ON ds.id=sl.settlement_id
-            WHERE sl.load_id=$1::uuid AND ds.operating_company_id=$2::uuid AND ds.status='paid'
-           UNION ALL
            SELECT 'advance', a.id::text, 'paid_to_date=' || COALESCE(dl.paid_to_date::text,'0')
              FROM driver_finance.driver_advances a
              JOIN driver_finance.driver_liabilities dl ON dl.id=a.liability_id
@@ -140,14 +137,64 @@ async function main(): Promise<void> {
           throw new Error(`unvoidable_money:${loadNumber}:${JSON.stringify(blockers.rows)}`);
         }
 
-        if (load.status !== "cancelled") {
-          await cancelLoadInClientTx(client, OWNER_USER_ID, "Owner", {
-            operating_company_id: USMCA,
-            load_id: load.id,
-            reason_code: "OTHER",
-            cancellation_notes: VOID_REASON,
-            billable_to_customer: false,
+        // A load can share a pre-settlement with legitimate sibling loads. The generic load-cancel
+        // cascade cancels the WHOLE parent settlement, which is the wrong grain here. Void only the
+        // target load's own lines and documents; leave every shared parent open.
+        const expenses = await client.query<{ id: string }>(
+          `SELECT id::text FROM accounting.expenses WHERE load_id=$1::uuid AND operating_company_id=$2::uuid AND status<>'void' FOR UPDATE`,
+          [load.id, USMCA]
+        );
+        for (const row of expenses.rows) {
+          const result = await executeVoidCancel("expense", {
+            client, operatingCompanyId: USMCA, entityId: row.id, action: "cancel", userId: OWNER_USER_ID, reason: VOID_REASON,
           });
+          if (result.kind !== "ok" && result.kind !== "already_done") throw new Error(`expense_void_refused:${row.id}:${result.kind}`);
+        }
+
+        const invoices = await client.query<{ id: string }>(
+          `SELECT id::text FROM accounting.invoices WHERE source_load_id=$1::uuid AND operating_company_id=$2::uuid AND status<>'void' FOR UPDATE`,
+          [load.id, USMCA]
+        );
+        for (const row of invoices.rows) {
+          const result = await executeVoidCancel("invoice", {
+            client, operatingCompanyId: USMCA, entityId: row.id, action: "cancel", userId: OWNER_USER_ID, reason: VOID_REASON,
+          });
+          if (result.kind !== "ok" && result.kind !== "already_done") throw new Error(`invoice_void_refused:${row.id}:${result.kind}`);
+        }
+
+        const bills = await client.query<{ id: string }>(
+          `UPDATE driver_finance.driver_bills
+              SET status='void', voided_at=COALESCE(voided_at,now()), voided_by_user_id=COALESCE(voided_by_user_id,$3::uuid),
+                  void_reason=COALESCE(void_reason,$4), updated_at=now()
+            WHERE load_id=$1::uuid AND operating_company_id=$2::uuid AND status<>'void' RETURNING id::text`,
+          [load.id, USMCA, OWNER_USER_ID, VOID_REASON]
+        );
+        const lines = await client.query<{ id: string }>(
+          `UPDATE driver_finance.settlement_lines
+              SET voided_at=COALESCE(voided_at,now()), voided_by_user_id=COALESCE(voided_by_user_id,$3::uuid),
+                  void_reason=COALESCE(void_reason,$4), is_active=false, updated_at=now()
+            WHERE load_id=$1::uuid AND operating_company_id=$2::uuid AND voided_at IS NULL RETURNING id::text`,
+          [load.id, USMCA, OWNER_USER_ID, VOID_REASON]
+        );
+        if (bills.rows.length || lines.rows.length) {
+          await appendCrudAudit(client, OWNER_USER_ID, "driver_finance.load_lines.voided_wrong_entity", {
+            resource_type: "mdata.loads", resource_id: load.id, operating_company_id: USMCA,
+            driver_bill_ids: bills.rows.map((r) => r.id), settlement_line_ids: lines.rows.map((r) => r.id), reason: VOID_REASON,
+          }, "warning", "USMCA-WRONG-ENTITY-QUARANTINE");
+        }
+
+        if (load.status !== "cancelled") {
+          const reason = await client.query<{ id: string }>(
+            `SELECT id::text FROM catalogs.load_cancellation_reasons WHERE operating_company_id=$1::uuid AND reason_code='OTHER' AND is_active=true LIMIT 1`,
+            [USMCA]
+          );
+          if (!reason.rows[0]) throw new Error("cancellation_reason_OTHER_missing");
+          await writeLoadCancellationRecord(client, {
+            operating_company_id: USMCA, load_id: load.id, reason_code: "OTHER", reason_code_id: reason.rows[0].id,
+            cancellation_notes: VOID_REASON, billable_to_customer: false, cancellation_charge_cents: null,
+            status: "approved", cancelled_by_user_id: OWNER_USER_ID, approved_by_user_id: OWNER_USER_ID,
+          });
+          await client.query(`UPDATE mdata.loads SET status='cancelled',updated_at=now() WHERE id=$1::uuid AND operating_company_id=$2::uuid`, [load.id, USMCA]);
         }
 
         await client.query(
@@ -162,6 +209,9 @@ async function main(): Promise<void> {
             WHERE id=$1::uuid AND operating_company_id=$2::uuid`,
           [load.id, USMCA, QUARANTINE_MEMO]
         );
+        await appendCrudAudit(client, OWNER_USER_ID, "mdata.loads.quarantined_wrong_entity", {
+          resource_type: "mdata.loads", resource_id: load.id, operating_company_id: USMCA, reason: VOID_REASON,
+        }, "warning", "USMCA-WRONG-ENTITY-QUARANTINE");
         const after = await snapshot(client, load.id);
         const changed = delta(after, before);
         for (const key of Object.keys(totals) as Array<keyof Snapshot>) totals[key] += changed[key];
@@ -179,7 +229,7 @@ async function main(): Promise<void> {
         client.release();
       }
     }
-    console.log(`${APPLY ? "COMMITTED" : "DRY-RUN COMPLETE"} loads=${LOAD_NUMBERS.length} changes=${JSON.stringify(totals)}`);
+    console.log(`${APPLY ? "COMMITTED" : "DRY-RUN COMPLETE"} loads=${selected.length} changes=${JSON.stringify(totals)}`);
   } finally {
     await pool.end();
   }
