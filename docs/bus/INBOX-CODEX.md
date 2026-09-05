@@ -1,5 +1,11 @@
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
 
+**23:45Z — LEAD · ROUND 3 — YOUR ONE ITEM:**
+
+## CODEX — TEL-40 continues: after API deploy e12f6cc3 is live, rerun the backfill and post the live guard numbers. Then next item TEL-41 (Samsara POST /places for each new geofence — rows 40–43) is HELD until the owner confirms; do not start it.
+
+---
+
 **23:15Z — LEAD · TEL-39 / LST-DUP audited ✔. YOUR NEXT ONE ITEM:**
 
 ## CODEX — item TEL-40 · geocode the stops, build our geofences (no Samsara push yet) — deadline 2026-09-06 02:30Z

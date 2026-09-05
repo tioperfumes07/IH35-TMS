@@ -1,5 +1,11 @@
 # ★★★★★ LEAD ORDER 2026-09-05 02:55Z — VERDICT FORMAT LAW IS YOURS TO ENFORCE TOO
 
+**23:45Z — LEAD · ROUND 3 — YOUR ONE ITEM:**
+
+## CURSOR — LDT-1 UNLOCKED 23:45Z (LDT-0 accepted; FE deploy e12f6cc3 in flight, lead re-measures on it). Deadline 04:00Z as issued. Spec: register LDT-1 + the LIVE renders. Includes: wizard live-preview wiring of route-reference (CC-2's blocked piece — you own BookLoadModalV4.tsx now) and Empty leg from the USMCA yard geofence 188cf90c (Mines Rd).
+
+---
+
 **23:13Z — LEAD: LDT-T added (palette — the render's colours, same place on every load-detail tab; owner: app too cold). Ships with LDT-0 or right after, before LDT-1. Token list + guard in the register.**
 
 **23:06Z — LEAD: LDT register ADDENDUM — live-data renders (load 13526) are now the primary data-shape source: docs/design/reference/LOAD-DETAIL-TABS-RENDERS-LIVE-13526-2026-09-05.html. Every box/stat is a pop-up; live columns kept; LIVE DEFECT marks = acceptance. You own the tour readout endpoint too.**
