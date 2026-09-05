@@ -50,6 +50,32 @@ const transactionsQuerySchema = z.object({
   end_date: z.string().date().optional(),
 });
 
+// B.2 (owner order 2026-09-05, CODER-SEQUENCE-NUMBERED-2026-09-05.md CC-2 §5): the FE transaction
+// TYPE filter moved from single-select to multi-select. Of its options, exactly these three map to
+// a real, indexed column and can be pushed server-side without changing meaning: money_in/money_out
+// (bt.is_credit) and ready_to_post (NOT bt.pending). The rest (suggested_matches, transfers, rules,
+// missing_from_to, uncategorized, requests_*) are derived from joined/computed fields the FE already
+// has in hand once transactions arrive (matched_kind, notes text, plaid_category shape) — pushing
+// those server-side too would duplicate business logic in two places for no correctness gain; the FE
+// keeps filtering them client-side over the page it already fetched, same as before this change.
+const SERVER_FILTERABLE_TRANSACTION_TYPES = ["money_in", "money_out", "ready_to_post"] as const;
+type ServerFilterableTransactionType = (typeof SERVER_FILTERABLE_TRANSACTION_TYPES)[number];
+const commaSeparatedTransactionTypesSchema = z
+  .string()
+  .trim()
+  .max(200)
+  .optional()
+  .transform((value): ServerFilterableTransactionType[] | undefined => {
+    if (!value) return undefined;
+    const parts = value
+      .split(",")
+      .map((part) => part.trim())
+      .filter((part): part is ServerFilterableTransactionType =>
+        (SERVER_FILTERABLE_TRANSACTION_TYPES as readonly string[]).includes(part)
+      );
+    return parts.length > 0 ? Array.from(new Set(parts)) : undefined;
+  });
+
 const companyTransactionsQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   limit: z.coerce.number().int().min(1).max(500).default(150),
@@ -60,6 +86,10 @@ const companyTransactionsQuerySchema = z.object({
   // used by expenses.routes.ts / bills.routes.ts / receipts.routes.ts / integration-transactions.routes.ts.
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  // B.2 — comma-separated subset of SERVER_FILTERABLE_TRANSACTION_TYPES; unrecognized values are
+  // silently dropped (the FE never sends one it doesn't recognize, and a stray one is not a defect
+  // worth a 400 over — same tolerance date_from/date_to already have via the regex .optional()).
+  types: commaSeparatedTransactionTypesSchema,
   sort: z.enum(["date_desc", "date_asc", "amount_desc", "amount_asc"]).default("date_desc"),
   // GO-19-02 (docs/lockdown/GO-19-BUILD-QUEUE.md slice 02): owner-only reveal toggle, same as the
   // account register — default false keeps the 34 GO-11 fixture rows out of this list.
@@ -633,6 +663,16 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
       if (query.data.date_to) {
         predicates.push(`bt.transaction_date <= $${idx++}::date`);
         values.push(query.data.date_to);
+      }
+      if (query.data.types && query.data.types.length > 0) {
+        // Multi-select is a UNION of the selected types (checking "Money in" + "Money out" together
+        // must show both, not neither) — OR the per-type predicates, never AND them.
+        const typePredicateSql: Record<ServerFilterableTransactionType, string> = {
+          money_in: "bt.is_credit = true",
+          money_out: "bt.is_credit = false",
+          ready_to_post: "bt.pending = false",
+        };
+        predicates.push(`(${query.data.types.map((t) => typePredicateSql[t]).join(" OR ")})`);
       }
       values.push(query.data.limit, query.data.offset);
       const limitIdx = values.length - 1;
