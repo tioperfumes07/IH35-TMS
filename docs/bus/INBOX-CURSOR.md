@@ -1,36 +1,21 @@
-# ★★ NOW · CURSOR LEAD — GEOFENCE/CPM DISPATCHED + PUSH-BACK CONTRACT
+# ★★ SEQUENCE · CURSOR LEAD · DO NOT JUMP
 `git pull --ff-only origin main`
 
-**Orders on tip after merge:**
-- CC-3 TOP: `docs/bus/ORDER-2026-09-04-CC-3-SAMSARA-GEOFENCE-IMPORT.md`
-- CC-1 CPM: `docs/bus/ORDER-2026-09-04-CC-1-THREE-MILE-CPM.md`
-- Contract: `docs/bus/CONTRACT-2026-09-04-BOOKLOAD-SAMSARA-PUSHBACK.md`
-- Feed board: `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md`
+**Master:** `docs/bus/SEQUENCE-2026-09-04-ALL-SEATS-STRICT.md`  
+**Also:** push-back contract · control 6 · ALL-SEATS Cursor dispatch finish
 
-**NOW:** Confirm seat ACKs. Do **not** build Samsara import (CC-3). ACK push-back contract; wait for CC-3 import before wiring Book Load. Control 6 still yours. Unblock ITEM ZERO / tour-close if CC-1 stalled >15m. Owner may still be driving — no pings.
+| Now | Step | Action |
+|---|---|---|
+| → | **C.0** | ACK; chase missing seat ACKs |
+| | **C.1** | ACK push-back contract — do not build yet |
+| | **C.2** | Each tick: STATUS step numbers; re-wake idle; flag ORDER VIOLATION if a seat jumped |
+| | **C.3** | Unblock CC-1 ITEM ZERO / tour-close if >15m |
+| | **C.4** | ITEM ZERO-B Laredo-or-yard tour-close before owner closes |
+| | **C.5** | Control 6 hand entry when taken |
+| | **C.6** | Wire Book Load→Samsara **after CC-3 3.6** |
+| | **C.7** | Deploy 5–10; finish dispatch cleanliness |
 
-ACK `CURSOR | ACK | BOOKLOAD→SAMSARA PUSHBACK CONTRACT | WAIT CC-3 IMPORT`
-
----
-# ★ NOW · OWNER DRIVING · LEAD WATCH + CONTROL 6
-`git pull --ff-only origin main`
-Board: `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md`
-
-**NOW:** Watch CC-1 feed. Keep control 5766/5772/5776/5780/5783/5784. If ITEM ZERO or ITEM ZERO-B blocks >15m, you fix. Deploy every 5–10 merges. No Jorge pings. Census OUTBOX each tick.
-
-ACK `CURSOR | ACK | DRIVER-AWAY LEAD · CONTROL 6 | GO`
-
----
-# ★★ OWNER ORDER 2026-09-04 — CONTROL GROUP STILL YOURS (6) + LEAD WATCH
-`git pull --ff-only origin main`
-
-**Law:** `docs/bus/ORDER-2026-09-04-SETTLEMENT-ENTRY-SPLIT.md`
-
-CC-1 feeds 31 as **open pre-settlements** (never closes). You keep control **5766 / 5772 / 5776 / 5780 / 5783 / 5784** for hand entry / break-finding. Owner closes pre-settlements one by one himself after CC-1 lands them open.
-
-Watch: ITEM ZERO (CostOfGoodsSold picker) + ITEM ZERO-B (tour-close Laredo delivery OR yard) must land before he starts closing. Telematics findings → CC-3.
-
-ACK `CURSOR | ACK | CONTROL 6 · LEAD WATCH PRE-SETTLE OPEN | GO`
+ACK `CURSOR | ACK | SEQUENCE C.0 · ENFORCE NO-JUMP | GO`
 
 ---
 # ORCHESTRATOR FAST-MERGE WAKE · 2026-09-04 18:32 CT

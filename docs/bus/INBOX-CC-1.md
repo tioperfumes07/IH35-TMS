@@ -1,60 +1,23 @@
-# ★★ NOW · CC-1 — THREE-MILE / TRUE CPM (+ settlement feed still on)
+# ★★ SEQUENCE · CC-1 · DO NOT JUMP
 `git pull --ff-only origin main`
 
-**Law:** `docs/bus/ORDER-2026-09-04-CC-1-THREE-MILE-CPM.md`  
-**Settlement feed still binds:** `docs/bus/ORDER-2026-09-04-SETTLEMENT-ENTRY-SPLIT.md`  
-**Board:** `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md`
+**Master:** `docs/bus/SEQUENCE-2026-09-04-ALL-SEATS-STRICT.md`  
+**Laws:** settlement split · three-mile CPM · ALL-SEATS CC-1 costs vertical · packets `docs/bus/settlement-entry-2026-09-04/`
 
-**Owner:** practical vs short vs **real driven** → true cost per mile. App stores only two today. Measured gap: **+5,952.4 mi (+5.3%)** unpaid/unbilled over 37 settlements; CPM overstates margin ~**$0.0329/mi ≈ $3,900**/6 weeks.
+**You are on steps 1.x only. Finish each before the next. OUTBOX checkoff every step.**
 
-**NOW sequence:**
-1. ITEM ZERO (CostOfGoodsSold) if still open
-2. Schema: `miles_driven_actual` on load + leg, source+reason — **NULL never 0**
-3. Guards: three-bases-separate · cpm-states-basis · actual-null-with-reason
-4. Continue settlement feed — **31 OPEN pre-settlements, NEVER CLOSE**
-5. Wire actual miles + CPM/MPG report **after** CC-3 geofence import (say the dependency — do not fake)
+| Now | Step | Action |
+|---|---|---|
+| → | **1.0** | ACK sequence |
+| | **1.1** | ITEM ZERO — CostOfGoodsSold + fuel by ROLE |
+| | **1.2→1.8** | Settlement feed 31 OPEN (masters→…→pre-settle). **NEVER CLOSE.** Hands off 5766/5772/5776/5780/5783/5784 |
+| | **1.9–1.10** | Three-mile schema + guards (NULL never 0) |
+| | **1.11–1.12** | **WAIT CC-3 ≥3.5** then actual miles + CPM/MPG labelled |
+| | **1.13** | Remaining ALL-SEATS load-costs done bar |
 
-Hands off control 6: 5766/5772/5776/5780/5783/5784. Addresses only for feed miles.
+5789 date → `2026-08-29` + memo. Addresses only. Stop at first refusal.
 
-ACK `CC-1 | ACK | THREE-MILE+CPM · FEED 31 OPEN · DEPENDS CC-3 GEOFENCES | GO`
-
----
-# ★ NOW · OWNER DRIVING · CC-1 ONLY JOB
-`git pull --ff-only origin main`
-Read `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md` then `docs/bus/ORDER-2026-09-04-SETTLEMENT-ENTRY-SPLIT.md`.
-
-**NOW:** (1) Fix ITEM ZERO CostOfGoodsSold picker + fuel ROLE. (2) Create 31 OPEN pre-settlements / 66 loads through real UI. **NEVER CLOSE.** Addresses only. Stop at first refusal.
-**CREATE:** 5753, 5760–5765, 5767–5771, 5773–5775, 5777–5779, 5781–5782, 5785–5795
-**HANDS OFF:** 5766, 5772, 5776, 5780, 5783, 5784
-**Report:** 31 OPEN · 0 closed · 0 close JEs. Do not ping Jorge.
-
-ACK `CC-1 | ACK | NOW FEED 31 OPEN · NEVER CLOSE | GO`
-
----
-# ★★ OWNER ORDER 2026-09-04 — FEED REAL SETTLEMENT DATA (YOUR 31 · OPEN PRE-SETTLE)
-`git pull --ff-only origin main`
-
-**Full law (supersedes all earlier settlement-entry lines):** `docs/bus/ORDER-2026-09-04-SETTLEMENT-ENTRY-SPLIT.md`  
-**Packets:** `docs/bus/settlement-entry-2026-09-04/` (feed md + split md + TIE-OUT + ENGINE-vs-PCMILER)
-
-**YOU CREATE 31 / 66 through the real UI.** Entity **USMCA**. `is_sample_data=false`.  
-**CREATE:** `5753, 5760–5765, 5767–5771, 5773–5775, 5777–5779, 5781–5782, 5785–5795`  
-**DO NOT TOUCH:** `5766, 5772, 5776, 5780, 5783, 5784`
-
-**Owner rulings that bind:**
-1. **NEVER CLOSE.** Create open **pre-settlements** only. Owner closes one by one. Report must show **31 OPEN · 0 closed · 0 close JEs**.
-2. **All 81 loads COMPLETE** (settlements-only download — no live loads in this set).
-3. **Addresses only** for miles — engine routes; paste into ENGINE workbook yellow columns.
-4. **5789** / load **13557** / LOVES invoice **99462408** (146.879 gal @ $5.719 = $840.00) at 10465LONESOME PINE TRAIL M,TN, TN: printed `2026-09-29` → load as **`2026-08-29`** + visible memo.
-
-**ITEM ZERO (blocks diesel):** fix `LoadDetailCostsTab` `CostOfGoodsSold` type match + bind fuel account by ROLE before any expense row.  
-**ITEM ZERO-B (before owner closes):** widen tour-close to **Laredo delivery OR yard geofence**; preserve type-A paid deadhead vs type-B none; guard `verify-tour-closes-on-laredo-delivery-or-yard`.
-
-Creation order: masters → loads/stops → customer invoices → expenses/bills (diesel+DEF paired) → driver bills → add-pay/reimburse/deduct → **pre-settlement STOP**. Payments only if document shows one.
-
-File telematics defects for CC-3 (do not fix): duplicate `vehicle_latest_position`, null city/state today, T144 silent since 2025-07-09.
-
-ACK `CC-1 | ACK | FEED-REAL-DATA 31 OPEN PRE-SETTLE · NEVER CLOSE · NEVER TOUCH 6 | GO`
+ACK `CC-1 | ACK | SEQUENCE 1.0 · NO JUMP | GO`
 
 ---
 # ORCHESTRATOR FAST-MERGE WAKE · 2026-09-04 18:32 CT

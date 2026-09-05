@@ -1,46 +1,23 @@
-# ★★ NOW · CC-3 TOP ITEM — SAMSARA GEOFENCE IMPORT
+# ★★ SEQUENCE · CC-3 · DO NOT JUMP
 `git pull --ff-only origin main`
 
-**Law:** `docs/bus/ORDER-2026-09-04-CC-3-SAMSARA-GEOFENCE-IMPORT.md`  
-**Push-back contract (with Cursor):** `docs/bus/CONTRACT-2026-09-04-BOOKLOAD-SAMSARA-PUSHBACK.md`
+**Master:** `docs/bus/SEQUENCE-2026-09-04-ALL-SEATS-STRICT.md`  
+**Laws:** `ORDER-2026-09-04-CC-3-SAMSARA-GEOFENCE-IMPORT.md` · push-back contract · ALL-SEATS CC-3 after import
 
-**Owner:** "Samsara has 100s of previous geofence." Live: `geo.geofences` = **2 rows total**. Collector never requested `addresses`. API healthy.
+**Geofence import is TOP. Telematics/DRV come AFTER 3.6. No skipping.**
 
-**NOW (in order):**
-1. Add `addresses` to remote-count collector → **one-line count** for both live entities
-2. `integrations.samsara_addresses` + project ALL into `mdata.locations` + `geo.geofences` (circles→polygons, keep radius; source+samsara id forever)
-3. Match by proximity AND name — **never auto-merge on name guess**; file collisions
-4. Import junk too — deactivate later on evidence, never delete
-5. ACK Book Load→Samsara push-back contract (Cursor waits)
+| Now | Step | Action |
+|---|---|---|
+| → | **3.0** | ACK sequence |
+| | **3.1** | Count Samsara `addresses` — one line |
+| | **3.2–3.5** | Table → import ALL → project geofences → match report → guards |
+| | **3.6** | ACK Book Load→Samsara contract |
+| | **3.7–3.9** | Telematics 3 (dup latest · null geocode · T144) |
+| | **3.10–3.12** | DRV-03 · samsara links handoff · accident VOID FE |
 
-**Guards:** verify-samsara-address-sync-idempotent · verify-geofence-carries-samsara-source-id · verify-no-geofence-around-unresolved-point
+Forbidden: settlements 5753/5760–5795; delete geofences; auto-merge on city name.
 
-Still yours after: DRV-03 DQF · driver_samsara_links · accident-liabilities VOID · telematics 3 (dup latest_position · null geocode · T144 silent).
-
-ACK `CC-3 | ACK | SAMSARA-GEOFENCE-IMPORT TOP · COUNT THEN IMPORT ALL | GO`
-
----
-# ★ NOW · OWNER DRIVING · TELEMATICS 3 ONLY
-`git pull --ff-only origin main`
-Board: `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md`
-
-**NOW:** File then fix: (1) dup vehicle_latest_position (2) null city/state/formatted_location today (3) T144 silent since 2025-07-09. Do not touch settlements 5753/5760–5795. Do not ping Jorge.
-
-ACK `CC-3 | ACK | TELEMATICS 3 · NO SETTLEMENT WRITES | GO`
-
----
-# ★ NOTICE 2026-09-04 — THREE TELEMATICS DEFECTS (YOUR LANE · FILE, THEN FIX)
-`git pull --ff-only origin main`
-
-Found while verifying settlement trucks. **Do not block CC-1 data entry.** File + fix in your telematics lane:
-
-1. `telematics.vehicle_latest_position` — **two rows per unit** for most units (should be one “latest”).
-2. `city` / `state` / `formatted_location` **NULL on every row captured 2026-09-04** — reverse geocode not populating; only stale rows have a place name.
-3. **T144** last report **2025-07-09** yet ran settlement **5760** in July 2026 — dead Samsara link or unit gone.
-
-Settlement entry itself is **CC-1 + Cursor only** — do not create/edit settlements `5753` / `5760`–`5795`.
-
-ACK `CC-3 | ACK | TELEMATICS 3 DEFECTS FILED · SETTLEMENT-ENTRY NOT MINE | GO`
+ACK `CC-3 | ACK | SEQUENCE 3.0 · NO JUMP · IMPORT BEFORE TELEMATICS | GO`
 
 ---
 # ORCHESTRATOR FAST-MERGE WAKE · 2026-09-04 18:32 CT

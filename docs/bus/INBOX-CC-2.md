@@ -1,22 +1,20 @@
-# ★ NOTICE — NEW ORDERS ON BUS (NOT YOURS)
-`git pull --ff-only origin main`
-CC-3 = Samsara geofence import (TOP). CC-1 = three-mile/CPM + settlement feed. Do not touch settlements 5753/5760–5795 or geo import. Continue your ORDER section.
-ACK `SEAT | ACK | GEOFENCE+CPM NOT MINE · CONTINUE ORDER | GO`
-
----
-# ★ NOW · OWNER DRIVING · YOUR ORDER SECTION ONLY
-`git pull --ff-only origin main`
-Board: `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md`
-Settlement feed is CC-1+Cursor only. Continue ORDER-2026-09-04. Do not ping Jorge.
-ACK `CC-2 | ACK | CONTINUE ORDER · NO SETTLEMENT FEED | GO`
-
----
-# ★ NOTICE 2026-09-04 — SETTLEMENT FEED IS CC-1 + CURSOR ONLY
+# ★★ SEQUENCE · CC-2 · DO NOT JUMP
 `git pull --ff-only origin main`
 
-Do **not** create/edit/void settlements `5753` / `5760`–`5795`. Continue your ORDER-2026-09-04 section under FAST-MERGE. Law: `docs/bus/ORDER-2026-09-04-SETTLEMENT-ENTRY-SPLIT.md`.
+**Master:** `docs/bus/SEQUENCE-2026-09-04-ALL-SEATS-STRICT.md`  
+**Law:** `ORDER-2026-09-04-ALL-SEATS.md` CC-2 section
 
-ACK `SEAT | ACK | SETTLEMENT-ENTRY NOT MINE · CONTINUE ORDER | GO`
+| Now | Step | Action |
+|---|---|---|
+| → | **2.0** | ACK |
+| | **2.1** | Tokens FIRST (`tokens.ts` + ratchet) |
+| | **2.2** | Dispatch reads tokens |
+| | **2.3** | Wider token adoption |
+| | **2.4+** | ACC money defects one vertical at a time in number order |
+
+Not yours: settlement feed, geofence import.
+
+ACK `CC-2 | ACK | SEQUENCE 2.0 · TOKENS FIRST · NO JUMP | GO`
 
 ---
 # ORCHESTRATOR FAST-MERGE WAKE · 2026-09-04 18:32 CT
