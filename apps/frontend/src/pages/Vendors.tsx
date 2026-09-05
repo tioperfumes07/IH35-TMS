@@ -4,7 +4,7 @@ import { DatePicker } from "../components/forms/DatePicker";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { listBills, listVendorBalances } from "../api/accounting";
+import { listBills, listVendorBalances, listExpenses, type ExpenseListRow } from "../api/accounting";
 import { listAllVendors, listVendorPaymentMethods, getVendorRollups, type VendorPaymentMethod, type VendorRollup } from "../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../lib/quality-badge";
 import { formatUsdCents } from "../lib/money";
@@ -23,7 +23,7 @@ import { VendorsSyncPanel } from "./vendors/VendorsSyncPanel";
 import { VendorCreateModal } from "../components/vendors/VendorCreateModal";
 import { useViewModePref } from "../hooks/useViewModePref";
 import { useUrlSort } from "../hooks/useUrlSort";
-import { formatDateUS } from "../lib/formatDate";
+import { formatDateUS, mmmDd } from "../lib/formatDate";
 import { EntityLink } from "../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 import { ReferenceSelect, type ReferenceOption } from "../components/parity/ReferenceSelect";
@@ -399,6 +399,11 @@ export function VendorsPage() {
       }),
     enabled: Boolean(companyId && selectedVendor?.id),
   });
+  const expensesQuery = useQuery({
+    queryKey: ["vendors", "expenses", companyId, selectedVendor?.id ?? ""],
+    queryFn: () => listExpenses(companyId, { vendor_uuid: selectedVendor?.id }),
+    enabled: Boolean(companyId && selectedVendor?.id && activeTab === "transaction_list"),
+  });
 
   const txRows = useMemo(() => {
     return (billsQuery.data?.rows ?? []).filter((bill) => {
@@ -445,6 +450,26 @@ export function VendorsPage() {
       { key: "pickup_date", label: "Pick-up date", defaultHidden: true, render: () => "—" },
       { key: "delivery_date", label: "Delivery date", defaultHidden: true, render: () => "—" },
       { key: "loaded_miles", label: "Loaded miles", defaultHidden: true, render: () => "—" },
+    ],
+    [],
+  );
+
+  const expenseColumns = useMemo<ParityColumn<ExpenseListRow>[]>(
+    () => [
+      { key: "date", label: "Date", sortable: true, render: (r) => mmmDd(r.transaction_date) || "—" },
+      { key: "description", label: "Description", render: (r) => r.memo ?? r.line_description ?? "—" },
+      {
+        key: "load",
+        label: "Load",
+        render: (r) =>
+          r.load_id ? (
+            <EntityLinkOrTombstone kind="load" id={r.load_id} name={r.load_number} noun="Load" />
+          ) : (
+            "—"
+          ),
+      },
+      { key: "amount", label: "Amount", render: (r) => fmtMoney(Number(r.total_amount_cents ?? 0)) },
+      { key: "status", label: "Status", sortable: true, render: (r) => r.status ?? "—" },
     ],
     [],
   );
@@ -697,7 +722,9 @@ export function VendorsPage() {
               {activeTab === "transaction_list" ? (
                 billsQuery.isError ? (
                   <ListErrorState title="Couldn't load vendor transactions" status={0} message={(billsQuery.error as Error)?.message} onRetry={() => void billsQuery.refetch()} />
-                ) : <ParityTable
+                ) : (
+                  <>
+                    <ParityTable
                   rows={txRows}
                   columns={txColumns}
                   rowKey={(bill) => bill.id}
@@ -773,6 +800,22 @@ export function VendorsPage() {
                     </div>
                   }
                 />
+                    <h4 className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500">Expenses</h4>
+                    {expensesQuery.isError ? (
+                      <ListErrorState title="Couldn't load vendor expenses" status={0} message={(expensesQuery.error as Error)?.message} onRetry={() => void expensesQuery.refetch()} />
+                    ) : (
+                      <ParityTable
+                        rows={expensesQuery.data?.rows ?? []}
+                        columns={expenseColumns}
+                        rowKey={(expense) => expense.id}
+                        onRowClick={(expense) => navigate(`/accounting/expenses/${expense.id}`)}
+                        loading={expensesQuery.isPending}
+                        storageKey="vendor-expenses"
+                        emptyText="No expenses for this vendor."
+                      />
+                    )}
+                  </>
+                )
               ) : activeTab === "vendor_details" ? (
                 <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-700" data-testid="vendor-master-detail-profile">
                   <div className="flex flex-wrap items-center justify-between gap-2">

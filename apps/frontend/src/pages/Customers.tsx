@@ -9,6 +9,7 @@ import { customerIsSelectable } from "../lib/customer-selectable";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { listAllInvoices, listAllPayments, type Invoice, type Payment } from "../api/accounting";
+import { listAllDispatchLoads, type DispatchLoad } from "../api/dispatch";
 import { listAllAccountingRecurringTemplates } from "../api/accountingRecurringTemplate";
 import { companyToday, addDaysIso } from "../lib/businessDate";
 import { ApiError } from "../api/client";
@@ -39,7 +40,7 @@ import { CustomersSyncPanel } from "./customers/CustomersSyncPanel";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { useViewModePref } from "../hooks/useViewModePref";
 import { useUrlSort } from "../hooks/useUrlSort";
-import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
+import { formatDateTimeUS, formatDateUS, mmmDd } from "../lib/formatDate";
 import { customerStatusLabel, customerTypeLabel } from "../lib/customerStatusLabel";
 import { userFacingApiError } from "../lib/api-error-message";
 import { listSpineEvents, type SpineEvent } from "../api/audit";
@@ -750,6 +751,16 @@ export function CustomersPage() {
       }),
     enabled: Boolean(companyId && selectedCustomer?.id),
   });
+  const loadsQuery = useQuery({
+    queryKey: ["customers", "loads", companyId, selectedCustomer?.id ?? ""],
+    queryFn: () => listAllDispatchLoads({
+      operating_company_id: companyId,
+      view: "home",
+      status: [],
+      customer: selectedCustomer?.id,
+    }),
+    enabled: Boolean(companyId && selectedCustomer?.id && activeTab === "transaction_list"),
+  });
   const statementInvoicesQuery = useQuery({
     queryKey: ["customers", "statement-invoices", companyId, selectedCustomer?.id ?? "", dateFrom, dateTo],
     queryFn: () =>
@@ -829,6 +840,26 @@ export function CustomersPage() {
       { key: "pickup_date", label: "Pick-up date", defaultHidden: true, render: () => "—" },
       { key: "delivery_date", label: "Delivery date", defaultHidden: true, render: () => "—" },
       { key: "loaded_miles", label: "Loaded miles", defaultHidden: true, render: () => "—" },
+    ],
+    [],
+  );
+
+  const loadColumns = useMemo<ParityColumn<DispatchLoad>[]>(
+    () => [
+      {
+        key: "load_no",
+        label: "Load #",
+        render: (load) => <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />,
+      },
+      { key: "status", label: "Status", sortable: true, render: (load) => load.status ?? "—" },
+      { key: "customer", label: "Customer", render: (load) => load.customer_name ?? "—" },
+      { key: "pickup", label: "Pickup", render: (load) => mmmDd(load.pickup_scheduled_at) || "—" },
+      {
+        key: "delivery",
+        label: "Delivery",
+        render: (load) => mmmDd(load.effective_delivery_date ?? load.scheduled_delivery_date ?? load.delivery_appointment_start_at) || "—",
+      },
+      { key: "rate", label: "Rate", render: (load) => fmtMoney(load.rate_total_cents ?? null) },
     ],
     [],
   );
@@ -1119,7 +1150,9 @@ export function CustomersPage() {
               {activeTab === "transaction_list" ? (
                 invoicesQuery.isError ? (
                   <ListErrorState title="Couldn't load customer transactions" status={0} message={(invoicesQuery.error as Error)?.message} onRetry={() => void invoicesQuery.refetch()} />
-                ) : <ParityTable
+                ) : (
+                  <>
+                    <ParityTable
                   rows={txRows}
                   columns={txColumns}
                   rowKey={(invoice) => invoice.id}
@@ -1212,6 +1245,22 @@ export function CustomersPage() {
                     </div>
                   }
                 />
+                    <h4 className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500">Loads</h4>
+                    {loadsQuery.isError ? (
+                      <ListErrorState title="Couldn't load customer loads" status={0} message={(loadsQuery.error as Error)?.message} onRetry={() => void loadsQuery.refetch()} />
+                    ) : (
+                      <ParityTable
+                        rows={loadsQuery.data?.loads ?? []}
+                        columns={loadColumns}
+                        rowKey={(load) => load.id}
+                        onRowClick={(load) => navigate(`/dispatch/loads/${load.id}`)}
+                        loading={loadsQuery.isPending}
+                        storageKey="customer-loads"
+                        emptyText="No loads for this customer."
+                      />
+                    )}
+                  </>
+                )
               ) : activeTab === "coi_requests" ? (
                 <CustomerCOITab
                   customerId={selectedCustomer.id}
