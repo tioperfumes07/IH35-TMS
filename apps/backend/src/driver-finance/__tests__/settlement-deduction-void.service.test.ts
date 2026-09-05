@@ -1,23 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { DeductionVoidError, voidSettlementDeduction } from "../settlement-deduction-void.service.js";
 
-// ACCT-SETL-DEDUCTION-VOID-DESIGN — owner ruling: one route, three branches keyed off status.
-// Mock the money-moving primitives (JE posting, account resolution) the same way
-// accident-liabilities.service.test.ts does, so these tests exercise this file's OWN branching
-// logic, not re-derive account resolution or JE mechanics that are already tested elsewhere.
+// ACCT-SETL-DEDUCTION-VOID-DESIGN — OWNER RULING 2026-09-05 19:44Z: one route, three branches keyed
+// off status, NONE of which forgive/refund/write off the debt. journal-entries.service is mocked
+// only to prove NO branch (including APPLIED, since the owner's ruling) ever calls it.
 vi.mock("../../accounting/journal-entries.service.js", () => ({
   createJournalEntryOnClient: vi.fn(async () => ({ id: "je-reversal-1" })),
-}));
-vi.mock("../../accounting/coa-roles/resolver.service.js", () => ({
-  resolveRoleAccountOptional: vi.fn(async (_client: unknown, _opco: string, role: string) =>
-    role === "ap_control" ? "ap-account-1" : `${role}-account-1`
-  ),
-  isCoaRole: vi.fn(() => true),
-}));
-vi.mock("../../accounting/settlement-posting/settlement-bill-payment-posting.service.js", () => ({
-  resolveDriverOwnAccount: vi.fn(async (_client: unknown, _opco: string, _driverId: string, _name: string, kind: string) =>
-    `driver-${kind}-account-1`
-  ),
 }));
 
 const OPCO = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -133,8 +121,8 @@ describe("voidSettlementDeduction — ACCT-SETL-DEDUCTION-VOID-DESIGN", () => {
     });
   });
 
-  describe("APPLIED branch — fully collected, NOT a void, a reversing JE that credits the driver back", () => {
-    it("posts a balanced 2-line JE (debit the deduction's own account, credit ap_control) and records void_reversal_entry_id", async () => {
+  describe("APPLIED branch — fully collected — RECORD-ONLY void, never a refund (owner ruling 2026-09-05 19:44Z)", () => {
+    it("voids the row with no reversing JE and no money movement; the collected amount is retained, not refunded", async () => {
       const { client, calls } = makeClient(baseRow({ status: "applied", amount_cents: "10000", remaining_balance_cents: "0", bucket_id: "bucket-1" }));
       const result = await voidSettlementDeduction(client, {
         operating_company_id: OPCO,
@@ -142,38 +130,41 @@ describe("voidSettlementDeduction — ACCT-SETL-DEDUCTION-VOID-DESIGN", () => {
         reason: "damage claim was withdrawn after collection",
         actor_user_id: ACTOR,
       });
-      expect(result.outcome).toBe("reversed_applied");
+      expect(result.outcome).toBe("voided_applied_retained");
       expect(result.collected_cents).toBe(10000);
-      expect(result.reversed_cents).toBe(10000);
-      expect(result.journal_entry_id).toBe("je-reversal-1");
+      expect(result.reversed_cents).toBe(0);
+      expect(result.journal_entry_id).toBeNull();
 
       const { createJournalEntryOnClient } = await import("../../accounting/journal-entries.service.js");
-      expect(createJournalEntryOnClient).toHaveBeenCalledTimes(1);
-      const [, jeInput] = vi.mocked(createJournalEntryOnClient).mock.calls[0]!;
-      expect(jeInput.postings).toHaveLength(2);
-      const debit = jeInput.postings.find((p: { debit_or_credit: string }) => p.debit_or_credit === "debit");
-      const credit = jeInput.postings.find((p: { debit_or_credit: string }) => p.debit_or_credit === "credit");
-      expect(debit).toMatchObject({ amount_cents: 10000, account_id: "damage_recovery-account-1" });
-      expect(credit).toMatchObject({ amount_cents: 10000, account_id: "ap-account-1" });
+      expect(createJournalEntryOnClient).not.toHaveBeenCalled();
 
       const update = calls.find((c) => c.sql.includes("UPDATE driver_finance.driver_settlement_deductions"));
-      expect(update!.sql).toMatch(/void_reversal_entry_id\s*=\s*\$4::uuid/);
-      expect(update!.values).toEqual([DEDUCTION_ID, "damage claim was withdrawn after collection", ACTOR, "je-reversal-1"]);
+      expect(update, "expected an UPDATE").toBeTruthy();
+      expect(update!.sql).not.toMatch(/void_reversal_entry_id/);
+      expect(update!.sql).toMatch(/voided_at\s*=\s*now\(\)/);
+      expect(String(update!.values[1])).toContain("$100.00 already collected, retained (never refunded)");
+      expect(update!.values).toEqual([DEDUCTION_ID, expect.stringContaining("already collected, retained"), ACTOR]);
     });
 
-    it("routes an advance-type deduction to the driver's OWN advance account, not the shared recovery account", async () => {
+    it("never calls the JE/account-resolution primitives regardless of deduction_type", async () => {
       const { client } = makeClient(baseRow({ status: "applied", deduction_type: "cash_advance", amount_cents: "5000", remaining_balance_cents: "0" }));
       const result = await voidSettlementDeduction(client, {
         operating_company_id: OPCO,
         deduction_id: DEDUCTION_ID,
-        reason: "advance repayment reversed",
+        reason: "advance repayment dispute withdrawn",
         actor_user_id: ACTOR,
       });
-      expect(result.outcome).toBe("reversed_applied");
+      expect(result.outcome).toBe("voided_applied_retained");
+      expect(result.reversed_cents).toBe(0);
       const { createJournalEntryOnClient } = await import("../../accounting/journal-entries.service.js");
-      const [, jeInput] = vi.mocked(createJournalEntryOnClient).mock.calls.at(-1)!;
-      const debit = jeInput.postings.find((p: { debit_or_credit: string }) => p.debit_or_credit === "debit");
-      expect(debit).toMatchObject({ account_id: "driver-advance-account-1" });
+      expect(createJournalEntryOnClient).not.toHaveBeenCalled();
+    });
+
+    it("throws deduction_zero_amount rather than void a zero-amount applied row", async () => {
+      const { client } = makeClient(baseRow({ status: "applied", amount_cents: "0", remaining_balance_cents: "0" }));
+      await expect(
+        voidSettlementDeduction(client, { operating_company_id: OPCO, deduction_id: DEDUCTION_ID, reason: "test", actor_user_id: ACTOR })
+      ).rejects.toMatchObject({ code: "deduction_zero_amount" });
     });
   });
 
