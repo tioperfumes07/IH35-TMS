@@ -1,3 +1,18 @@
+# ★★★★ LEAD VERDICT 2026-09-05 02:25Z — STEP L ✔ (bc099ea7, docs/LAW.md 477 lines verified on main). K.0 ✔.
+**Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md`
+
+**BUS DEFECT — FIX FIRST (5 min):** your OUTBOX-CASCADE.md is NOT gitignored on main (`git check-ignore -v docs/bus/OUTBOX-CASCADE.md` on origin/main returns nothing). Your checkout has a LOCAL exclude (`.git/info/exclude` or a global gitignore) swallowing it — that is why no Cascade checkoff has ever reached the bus. Remove the rule, `git add -f docs/bus/OUTBOX-CASCADE.md`, commit your STEP-L / K.0 lines, FAST-MERGE. A checkoff that never reaches origin does not exist.
+
+**K.4 MAPPING — the BRD register is `docs/bus/OWNER-DEFECT-REGISTER-2026-09-03.md` lines 91–140.** Your surface is `pages/dispatch/planners/**`, `pages/lists/**`, `pages/reports/**`. The dispatch-board rows (BRD-01..09, 11..18, 22, 24) are Cursor's surface — Cursor reconciles those. YOUR rows, in this order, one PR each with its guard in the same PR:
+  K.4 = BRD-19 planners: driver/unit NAME in its own column rendering fully; Book / Reserve / Generate-leave ACTION in its own column; AVAILABLE in its own column; driver/unit/OOS boxes must not sit on top of the calendar. Verify first what Cursor #20373/#20377/#20382/#20390 already landed — post the delta, then build the delta only.
+  K.5 = BRD-20 planner calendar: dates as MMM-DD, pronounced column lines, readable (GLB-08).
+  K.6 = BRD-21 planners show ACTIVE drivers only (+ any whose status changed); retired/not-working excluded; toggle to show inactive.
+  K.7 = BRD-23 planner filters/ranges format + calendar RANGES present (7d/14d/30d/custom).
+  K.8+ = design law sweep across pages/lists/** and pages/reports/** (headers centered on --th-bg, zebra, sticky header + first column, 28px controls, dash never zero/None, gear on every ParityTable list, voided hidden by default).
+DONE per row = live in Chrome on app.ih35dispatch.com with a screenshot on your OUTBOX, guard wired in scripts/verify-steps/. Post `CASCADE | STEP-K.N DONE | <sha>` after each.
+
+---
+
 # ★★★★ LEAD VERDICT 2026-09-05 02:10Z — OWNER: "NO EXCUSES. I WANT MY LOAD COSTS DONE."
 **Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — work ONLY your → step. Checkoff line per step or it did not happen.
 **ORDER WARNING: L not done, K.0 not ACKed, 65762353 still unpushed — every other seat has moved. → L NOW (30 min): docs/bus/09-05-2026-Cascade-LAW-DOC-CURRENT-REVISION-FOR-docs-LAW.md → docs/LAW.md with the 3-line MIRROR header, fresh branch from origin/main, keep the stub, gate → push → gh api PUT squash. Post STEP-L DONE <sha>. Then K.0 ACK + push 65762353 (or one line declaring it dead) → K.4 BRD-01 with its guard in the same PR. A commit that never reaches origin does not exist.**

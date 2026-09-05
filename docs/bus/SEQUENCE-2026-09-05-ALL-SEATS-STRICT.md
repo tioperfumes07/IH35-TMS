@@ -29,7 +29,7 @@ OUTBOX every 20 minutes, marks this board, and rewrites each INBOX TOP. Cursor d
 | C.3 | Apply CC-3 drafts if CC-1 silent by 02:30Z | conditional |
 | C.4 | Unit picker excludes Sold/deactivated/non-entity units (U-156-provisional) + guard | ✔ #20436 |
 | C.5 | Dispatch on a draft shows the 400 reason on screen | ✔ fe2e8976 |
-| C.6 | 09-04 dispatch cleanliness leftovers (Kanban width+drag, Assignment draggable cols, Round Trips missing trips, Detention one-liner) | → |
+| C.6 | 09-04 dispatch cleanliness leftovers (Kanban width+drag, Assignment draggable cols, Round Trips missing trips, Detention one-liner) + reconcile BRD-01..18/22/24 status on this board (they are your surface) | → |
 | C.7 | Driver Instruction Sheet per FINAL-No-Pay render; house PDF template guard | |
 | C.8 | Tour-close = Laredo delivery OR yard geofence | |
 | C.9 | Book Load → Samsara push-back — ⛔ until CC-3 3.6 | ⛔ |
@@ -86,10 +86,15 @@ OUTBOX every 20 minutes, marks this board, and rewrites each INBOX TOP. Cursor d
 ### CASCADE — lists/reports · `docs/bus/09-05-2026-Cascade-LAW-MIRROR-THEN-LISTS-AND-REPORTS.md`
 | # | Step | Mark |
 |---|---|---|
-| L | docs/LAW.md = 09-05 revision + MIRROR header; squash-merge | → |
-| K.0 | ACK; push 65762353 or declare dead | |
-| K.4–K.27 | BRD-01..24 one PR each, guard in same PR | |
+| L | docs/LAW.md = 09-05 revision + MIRROR header; squash-merge | ✔ bc099ea7 |
+| K.0 | ACK; push 65762353 or declare dead | ✔ (65762353 declared dead) — OUTBOX gitignore defect to fix |
+| K.4 | BRD-19 planners: name / action / available columns; boxes off the calendar | → |
+| K.5 | BRD-20 calendar dates MMM-DD, column lines | |
+| K.6 | BRD-21 active drivers only | |
+| K.7 | BRD-23 planner filters/ranges | |
+| K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG (newest first)
+- 02:25Z — Cascade L ✔ bc099ea7 (LAW.md 477 lines), K.0 ✔; BRD rows split: planners (19/20/21/23) = Cascade K.4–K.7, dispatch-board rows = Cursor reconciles. Cascade OUTBOX local-ignore defect ordered fixed.
 - 02:10Z — Cursor C.1/C.4/C.5 ✔ (683717b live). CC-1 1.0 ✔ Neon-verified; → 1.1 remainder then 1.3 Load Costs register (owner: no excuses). Codex X.3–X.5 ✔ → X.6/X.7. CC-2 2.0 ✔ → V + 2.2. CC-3 and Cascade: ORDER WARNING — silent since 01:16Z.
 - 02:00Z — board created. CC-1 skipped 1.0; reverted to 1.0. Codex X.2 accepted. Cascade L stale copy rejected, current text supplied.
