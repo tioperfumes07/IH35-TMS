@@ -237,7 +237,15 @@ async function textSearch(query: string, maxResults: number, apiKey: string): Pr
       textQuery: query,
       pageSize: Math.min(Math.max(maxResults, 1), 20),
       languageCode: "en",
-      locationBias: US_MX_BIAS,
+      // HARD restriction, not bias: measured 2026-09-05 19:30Z with bias only, "frio foods" returned Springs, South Africa
+      // and "hjm" returned Hounslow, England. Text Search accepts locationBias OR locationRestriction (rectangle only);
+      // our lanes are the continental US + Mexico, so restrict to that box. Autocomplete keeps includedRegionCodes us/mx.
+      locationRestriction: {
+        rectangle: {
+          low: { latitude: 14.0, longitude: -125.0 },
+          high: { latitude: 49.5, longitude: -66.0 },
+        },
+      },
     }),
   });
   if (!res.ok) throw new Error(`google_places_text_http_${res.status}`);
