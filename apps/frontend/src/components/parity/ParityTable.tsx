@@ -121,6 +121,12 @@ export type ParityTableProps<T> = {
    *  min-width:1660) scroll horizontally instead of squeezing columns to truncation. Opt-in;
    *  omitting it preserves the w-full behaviour every other table relies on. */
   minWidthPx?: number;
+  /** Column sizing model. "fixed" (default) = table-layout:fixed, columns take their stored/auto-fit
+   *  width — every existing list relies on this. "auto" = table-layout:auto, each column sizes to its
+   *  own label + widest value (DESIGN-CONTRACT §14 for the Load Costs board: NO fixed layout, NO equal
+   *  split); the auto-fit/resize width becomes a min-width floor rather than a hard width so content is
+   *  never truncated. Opt-in per board. */
+  columnLayout?: "fixed" | "auto";
   /** Drag-to-resize columns (widths persist with storageKey). Default true. */
   enableColumnResize?: boolean;
   /** Drag-a-header-to-move-it column reordering (order persists per storageKey, alongside width).
@@ -444,6 +450,7 @@ export function ParityTable<T>({
   exportFilename,
   stickyHeader = true,
   minWidthPx,
+  columnLayout = "fixed",
   enableColumnResize = true,
   enableColumnReorder = true,
   columnOrder: controlledColumnOrder,
@@ -1271,7 +1278,7 @@ export function ParityTable<T>({
           wins on its own <td>/<th> — direct declarations beat inheritance regardless of source
           order, so deliberately right-aligned numeric columns are unaffected. */}
       <table
-        className="w-full table-fixed text-center"
+        className={`w-full ${columnLayout === "auto" ? "table-auto" : "table-fixed"} text-center`}
         style={{ fontSize: d.font, ...(minWidthPx ? { minWidth: minWidthPx } : {}) }}
       >
         <thead
@@ -1404,7 +1411,7 @@ export function ParityTable<T>({
                     // between every column, header and body (th-border in the reference render).
                     borderRight: `1px solid ${colors.tableColumnRule}`,
                     borderBottom: `2px solid ${colors.tableColumnRule}`,
-                    ...(w ? { width: w } : {}),
+                    ...(w ? (columnLayout === "auto" ? { minWidth: w } : { width: w }) : {}),
                     ...(dragOverKey === key ? { outlineColor: colors.navy } : {}),
                   }}
                 >
