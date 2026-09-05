@@ -1,3 +1,15 @@
+# ★ OWNER ORDER 2026-09-04 20:01 — CC-2 REAL WORK NOW (design-system, not bus)
+`git pull --ff-only origin main` · FAST-MERGE · you are the ONLY seat that writes verified-live
+
+Owner: "I need CC-2 also working on something, not bullshit." Two concrete deliverables:
+
+**1. Dispatch design-system sweep — apply the locked treatment to EVERY dispatch surface.** Owner ruling (standing, dispatch-first → system-wide): column headers + KPI = **centered, light background (`#EEF2F6`/`kpiTileBg`), regular text, NO aggressive navy/blue header**, columns visibly distinguished (zebra/hairline), KPI cards light bg + darker border. ParityTable + dispatch KpiCard already carry the tokens — verify them LIVE and fix the surfaces that still deviate: `DispatchKanban.tsx` lane headers, planner grids, `DispatchLoadCostsPanel.tsx`, any `#14314F`/navy header rows on data tables (rail/top-banner stay navy — those are NOT data headers). One PR per surface, guard each.
+
+**2. J1 ratchet toward ZERO (your permanent close item).** `scripts/verify-ui-design-system-ratchet.mjs`. Drive `off_locked_scale_sizes` and `trapping_picker_total` DOWN on dispatch files first. J1 closes at 0/0 this week — that is your job, not green ratchet.
+
+Report each merge + a verified-live screenshot to OUTBOX-CC-2.
+
+---
 # ★★ SEQUENCE · CC-2 · DO NOT JUMP
 `git pull --ff-only origin main`
 
