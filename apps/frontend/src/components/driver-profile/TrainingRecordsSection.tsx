@@ -30,18 +30,21 @@ export function TrainingRecordsSection({
   }));
 
   const columns: Array<ParityColumn<TrainingRecordRow>> = [
-    { key: "type", label: "Type", render: (row) => String(row.type ?? "—") },
+    { key: "type", label: "Type", sortable: true, render: (row) => String(row.type ?? "—") },
     {
       key: "completion_date",
       label: "Completed",
+      sortable: true,
       render: (row) => formatDateUS(row.completion_date as string) || "—",
     },
     {
       key: "expiration_date",
       label: "Expiration",
+      sortable: true,
       render: (row) => <span className={statusClass(String(row.status))}>{String(row.expiration_date ?? "—")}</span>,
     },
-    { key: "certificate_url", label: "Certificate", render: (row) => (row.certificate_url ? "On file" : "—") },
+    // Not sortable: a derived "On file" / "—" presence flag, not an orderable value.
+    { key: "certificate_url", label: "Certificate", sortable: false, render: (row) => (row.certificate_url ? "On file" : "—") },
   ];
 
   return (

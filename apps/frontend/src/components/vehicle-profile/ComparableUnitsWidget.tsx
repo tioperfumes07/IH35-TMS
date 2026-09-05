@@ -22,10 +22,12 @@ type ComparisonRow = {
   fleet: string;
 };
 
+// Not sortable: a fixed 3-row metric comparison (maintenance/deviation/rank), not a record list —
+// there is no meaningful "sort by This unit" over three named summary rows.
 const comparisonColumns: DataTableColumn<ComparisonRow>[] = [
-  { key: "metric", label: "Metric", align: "left" },
-  { key: "unit", label: "This unit", align: "right", numeric: true },
-  { key: "fleet", label: "Fleet", align: "right", numeric: true },
+  { key: "metric", label: "Metric", align: "left", sortable: false },
+  { key: "unit", label: "This unit", align: "right", numeric: true, sortable: false },
+  { key: "fleet", label: "Fleet", align: "right", numeric: true, sortable: false },
 ];
 
 export function ComparableUnitsWidget({
