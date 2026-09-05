@@ -32,6 +32,10 @@ Devin is not active today — nothing routes to Devin.
 | 21 | Maintenance design law | Codex X.7 (maintenance tables on the ParityTable contract) and X.8 (WO comboboxes, ≥$7,000 role routing) not merged. | — | Codex | X.7 15:00Z · X.8 17:00Z | Cascade |
 | 22 | Planners (BRD-19/20/21/23) | Cascade K.4–K.7 — no post since 09-04. | — | Cascade | K.4 15:00Z | CC-2 |
 | 23 | Design tokens | CC-2 2.2 — encode the design-contract values in `tokens.ts` + ratchet — not posted. | — | CC-2 | after L.4a | — |
+| 24 | Driver Profile — Deductions | "Should be listed by driver." Live: card list (0 table rows), ordered by settlement, drivers repeat (Genaro ×5, Leonel ×7). | `/drivers/deductions` page | CC-1 D.1 | 20:00Z | CC-3 |
+| 25 | Driver Profile — Escrow | "Missing escrow view and escrow by driver; states 0 escrow." No Escrow entry in the Drivers subnav; only `/banking/driver-escrow`. Neon: 38 pending escrow deductions $950 / 7 drivers; `escrow_ledger` 0 rows; `escrow_balances` 3 rows incl. TEST driver "Juan USMCA-Battery" (quarantine) and a 1¢ row. | read model + new `/drivers/escrow` | CC-1 D.2 | 21:00Z | CC-3 |
+| 26 | Driver Profile — banner | "Top row banner in the wrong place." Live: `h1 Drivers` at y=205 under the status-tab strip and paragraph. | `pages/drivers` layout | CC-1 D.3 | 19:30Z | CC-3 |
+| 27 | Feed rulings (owner 14:15Z) | Lumper vendor = the delivery location, cash; missing customer = create from the document. Closes 13540 and 13525. | seed scripts rule | CC-3 | now | — |
 
 ---
 
@@ -66,6 +70,7 @@ Devin is not active today — nothing routes to Devin.
 2. **S.1** — settlement lines read model joins `driver_bills` on `source_driver_bill_id` and returns `miles`, `rate_cents`, `pay_cents` for earnings (`miles_basis`, `rate_per_mile_cents`, `loaded_pay_cents`) and deadhead (`miles_deadhead`, `rate_empty_per_mile_cents`, `deadhead_pay_cents`); FE shows `1,319.7` / `$0.4800`; guard: every earnings/deadhead line on S-13642 has miles>0 and rate>0 live. (#11) — 17:30Z
 3. **S.2** — `/accounting/bills/driver` reads `driver_finance.driver_bills` (Bill # · Driver · Load · Loaded mi · Rate · Empty mi · Rate · Gross · Status · Settlement); the All-bills list unions them with a **Source** column (Vendor / Driver), void hidden by default; guard: screen count = live count (17 today). (#13) — 18:30Z
 4. **S.3** — Invoices list **Factored** column (Not factored · Submitted · Advanced · Settled) + factor name from `factoring_status`/`factor_profile_id`; dash never blank; guard. (#14) — 19:00Z
+5. **D.3** driver-profile banner order (19:30Z) · **D.1** deductions grouped by driver (20:00Z) · **D.2** Escrow view + by-driver + profile card + quarantine test driver (21:00Z) — see the 14:20Z INBOX block. (#24–26)
 
 ### CODEX (maintenance)
 1. **X.7** maintenance tables/KPIs on the ParityTable design contract, one guarded PR — 15:00Z. 2. **X.8** WO create/edit comboboxes, unit-picker rule, ≥$7,000 role routing on screen — 17:00Z. 3. Re-post the DEPLOY-REQUEST for `e272e9cf` (X.9) to Cursor. Your feed slice is CC-3's. (#20, #21)
@@ -74,9 +79,8 @@ Devin is not active today — nothing routes to Devin.
 1. **K.9** — restore the Customers and Vendors landing **filter bar** from `git show 1e4a6282d7^:apps/frontend/src/pages/Customers.tsx` (and Vendors.tsx): inline, visible on first load, live-applied; keep later genuine fixes (`f21c9922bc` URL-addressable row, `4a2c208e00` balance sort, `485c52dca8` pager, `7c7b830569` void column, GLB-01 scale); gear popover may remain secondary. Guard: rendered — ≥5 visible filter controls above the list on `/customers` and `/vendors` at first load, 0 clicks. (#17) — 16:00Z
 2. **K.4** BRD-19 planners — 15:00Z; then K.5–K.7. (#22)
 
-### OWNER — the only two things waiting on you
-- Load **13525** (settlement 5778): the customer's name.
-- Load **13540** (settlement 5782): the vendor for the $120 lumper fee.
+### OWNER — answered 14:15Z
+- 13525: create the customer from the document. 13540: lumper vendor = the delivery location, cash. (Rulings R1/R2 in the 14:20Z block.)
 Also: record one real expense on 13508 through the Costs-tab register when the FE shows it — that is the live proof for #2.
 
 ---
