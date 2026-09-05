@@ -43,10 +43,11 @@ CC-1 12 · CC-3 8 · Codex 11 · owner 6. Live UI only, is_sample_data=false, ad
 |---|---|---|
 | C.1 | Deploy API to tip; healthz sha to OUTBOX | ✔ 683717b live 02:05Z |
 | C.2 | Census each 20-min tick; STATUS-NOW step numbers; ORDER VIOLATION calls | standing |
-| C.3 | Apply CC-3 drafts if CC-1 silent | ✔ not needed (CC-1 did 1.0) |
+| C.3 | Apply migration #4 (CC-1 missed M.1). Deadline 04:20Z | → |
 | L.1 | LOAD COSTS BOARD live defects | PARTIAL #20462 (lead re-measured FE 3251ee3 03:06Z: td rules ✔ nowrap ✔ rate ✔ Booked ✔ pills ✔ · th still 55px/6 truncated ✖ · th weight 400 ✖ (contract 700) · blank instead of — ✖) |
 | L.1b | contract values | 11/13 ✔ on 949c025 (re-measured 03:32Z) · truncation ✖ (root cause: table min-width 0 + wrapper overflow visible → 55px cols) · 4 empty cells not "—" ✖ |
-| L.1c | table min-width 1660px + wrapper overflow-x auto + sticky th; dashes in empty mileage cells; guard measures the rendered page. Deadline 04:15Z | → |
+| L.1c | min-width | PARTIAL #20470 (03:54Z re-measure FE 0d45afd: min-width 1660 ✔ but table-fixed → 20×83px equal, SECTION overflow-hidden clips 5 columns, th not sticky, 4 empties) |
+| L.1d | table-layout auto + per-column minWidth · ONE scroll container overflow-x:auto · sticky th + Load col · all empties — · Playwright guard on the rendered page. Deadline 04:30Z (final). Surrender: CC-2 for CSS | → |
 | L.2 | Costs-tab register (NUMBER editable, 12 cols, KPI cards, comboboxes, ≥480px) — owner records an expense on 13508. Deadline 06:00Z | |
 | L.3 | Board tab row + remove Margin. Deadline 07:00Z | |
 | C.4 | Unit picker excludes Sold/deactivated/non-entity units (U-156-provisional) + guard | ✔ #20436 |
@@ -61,13 +62,13 @@ CC-1 12 · CC-3 8 · Codex 11 · owner 6. Live UI only, is_sample_data=false, ad
 | # | Step | Mark |
 |---|---|---|
 | 1.0 | Apply CC-3 migration drafts (batch) on Neon; sha to both OUTBOXes | ✔ 3c3c4321 (Neon-verified) |
-| M.1 | Apply migration #4 (geofence_vehicle_state, supersede, driver_prompts, odometer segments, geofences cols). Deadline 03:40Z | → |
+| M.1 | Apply migration #4 | ✖ MISSED 03:40Z → transferred to Cursor C.3 (04:20Z) |
 | 1.3a | TRANSFERRED TO CURSOR L.1 (owner 03:10Z) | ✖ stood down |
 | M.2 | Durable draft advance, backend only + 400 reason body. Deadline 04:30Z | next |
 | 1.2 | CoGS picker + fuel by role + operating_bank by role (#20425 #20426) | ✔ |
 | 1.3/1.4 | → Cursor L.2 / L.3 | ✖ transferred |
 | M.3 | → CC-3 (owner 02:50Z) | ✖ transferred |
-| M.4a | FEED NOW (owner 02:58Z): 5753, 5760–5765, 5767–5771 (12) via live UI; first DONE/BLOCKED 04:00Z; slice 10:00Z via real UI; never close; hands off 5766/5772/5776/5780/5783/5784 | |
+| M.4a | FEED: 5753, 5760–5765, 5767–5771 (12) via live UI; first DONE/BLOCKED 04:00Z; no line by 04:20Z = slice re-split to CC-3 + Codex via real UI; never close; hands off 5766/5772/5776/5780/5783/5784 | |
 | M.5 | Three-mile schema + CPM; 1.11 actual miles ⛔ until CC-3 3.5 | |
 
 ### CC-2 — design + verify-live · `docs/bus/09-05-2026-Claude-Coder-2-DISPATCH-DESIGN-SWEEP-THEN-ACC-DEFECTS.md`
@@ -123,6 +124,7 @@ CC-1 12 · CC-3 8 · Codex 11 · owner 6. Live UI only, is_sample_data=false, ad
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG (newest first)
+- 03:58Z — L.1c re-measured: table-fixed equal 83px + SECTION clip → L.1d (04:30Z final, surrender CC-2). CC-1 missed M.1 → Cursor C.3 applies migration #4 (04:20Z). Feed: still 1 load / 0 expenses on Neon; 04:00Z deadline imminent, no seeder has posted.
 - 03:32Z — Cursor L.1b 949c025 re-measured 11/13; truncation root cause pinned (min-width 0, overflow visible); L.1c issued. M.1 vehicle_state still absent (03:40Z). Feed: no rows yet (04:00Z).
 - 03:06Z — Cursor L.1 #20462 re-measured: 5/7 pass; truncation (55px columns) NOT fixed, guard measured the wrong thing; th 400 vs contract 700; blanks not dashes → L.1b, deadline 04:15Z unchanged. M.1 (vehicle_state) still absent; feed lines none yet.
 - 03:05Z — OWNER: coders cannot reproduce the approved render → DESIGN CONTRACT: reference HTML + exact CSS values + computed-style guard in repo; th weight corrected to 700 (reference); prose specs banned.
