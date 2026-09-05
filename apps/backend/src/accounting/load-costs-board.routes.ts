@@ -144,12 +144,16 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
          -- Deadhead Pay): one representative driver_bills row per load (the primary, non-team,
          -- most-recent bill) -- these are PER-BILL figures (a rate is never summed across bills),
          -- unlike driver_pay_cents below which correctly sums gross across every bill on the load.
-         -- Short Miles stays NULL (blank, never invented) unless this bill's own basis really is
-         -- 'short' -- a 'practical'-basis bill has no short-miles figure to show honestly.
+         -- Short Miles = the LOADED miles the driver's bill is actually paid on = db.miles_basis,
+         -- WHATEVER the basis type ('short' OR 'practical'): loaded_pay_cents = miles_basis *
+         -- rate_per_mile_cents, so miles_basis IS the loaded-leg mileage the loaded rate applies to.
+         -- Owner ruling 2026-09-05 (13508 pays 1319.7 practical miles @ 48c -> $633.46 loaded pay,
+         -- yet the old CASE gated on type='short' left the column blank). It stays NULL only when the
+         -- bill itself has no basis, never because the basis happens to be 'practical'.
          ), driver_pay_detail AS (
            SELECT DISTINCT ON (db.load_id)
                   db.load_id,
-                  CASE WHEN db.miles_basis_type = 'short' THEN db.miles_basis END AS short_miles,
+                  db.miles_basis AS short_miles,
                   db.rate_per_mile_cents AS rate_loaded_cents,
                   db.miles_deadhead AS empty_miles,
                   db.rate_empty_per_mile_cents AS rate_empty_cents
