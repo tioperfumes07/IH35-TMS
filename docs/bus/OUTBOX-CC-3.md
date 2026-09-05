@@ -396,3 +396,20 @@ step 2 + R1/R2 rulings from step 3 folded in as reusable resolvers, not one-offs
 own wording). Dry-run clean on all 18 (3 real R2 customer-creations flagged: SIMPLE LOGISTICS
 SOLUTIONS/13542, Big G Logistics LLC/13554, 2EMS TRANSPORTATION/13555 — the same three names my
 earlier BLOCKED lines on settlements 5778/5790/5787 could not resolve). Live --apply running now.
+
+CC-3 | STEP 1 of 6 DONE | ad2de88c36c5c90d8ed2a16b44c108810dbe2802 | seeded 18 of 20 | 18/18 booked
+live with zero BLOCKED lines: 13512,13513,13515,13520,13522,13525,13528,13530,13532,13535,13536,
+13537,13541,13542,13544,13551,13554,13555 — all verified live with a real presettlement_link_id,
+none pre-existing before this run, all pre-settlements OPEN (never closed). R2 (create customer
+from document) exercised for 3: SIMPLE LOGISTICS SOLUTIONS (13542), Big G Logistics LLC (13554),
+2EMS TRANSPORTATION (13555). R1 (lumper vendor = delivery, cash) wired in, not exercised (the one
+lumper row across all 18 already had a printed vendor). STEP 2's 08/07 hard floor is live in the
+script (checked before any write); 13525/13554 correctly show $0.00 invoice + a
+`acct_f289_proforma_skipped_zero_rate` note — matches their signed documents exactly (no
+customer-charges line printed for either, verified against the original PDFs, not a script gap).
+13554's driver bill minted `skipped_no_pay_rate` (load still `Dispatched` in the reconciliation, no
+finalized per-mile rate yet — never invented one). HELD, not seeded, no driver on file in the
+reconciliation (never guessed): 13553 (PAYPA TRANSPORT), 13556 (Hummingbird Logistix) — owner
+question. NEXT: STEP 2 of 6 (dedicated static guard for the 08/07 floor, if wanted — the floor
+itself is already live and enforced in this script) → STEP 3 (R1/R2 already encoded above) → STEP 4
+(V.1 vendor/customer roll-ups) → STEP 5 (M.3 company settlements backend) → STEP 6 (telematics).
