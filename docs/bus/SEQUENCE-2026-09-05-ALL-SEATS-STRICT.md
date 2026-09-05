@@ -46,13 +46,15 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 |---|---|---|
 | C.1 | Deploy API to tip; healthz sha to OUTBOX | ✔ 683717b live 02:05Z |
 | C.2 | Census each 20-min tick; STATUS-NOW step numbers; ORDER VIOLATION calls | standing |
-| C.3 | Apply migration #4 (CC-1 missed M.1). Deadline 04:20Z | → |
+| C.3 | Apply migration #4 | ✔ b69fbd24 — geofence_vehicle_state verified on Neon 04:18Z |
 | L.1 | LOAD COSTS BOARD live defects | PARTIAL #20462 (lead re-measured FE 3251ee3 03:06Z: td rules ✔ nowrap ✔ rate ✔ Booked ✔ pills ✔ · th still 55px/6 truncated ✖ · th weight 400 ✖ (contract 700) · blank instead of — ✖) |
 | L.1b | contract values | 11/13 ✔ on 949c025 (re-measured 03:32Z) · truncation ✖ (root cause: table min-width 0 + wrapper overflow visible → 55px cols) · 4 empty cells not "—" ✖ |
 | L.1c | min-width | PARTIAL #20470 (03:54Z re-measure FE 0d45afd: min-width 1660 ✔ but table-fixed → 20×83px equal, SECTION overflow-hidden clips 5 columns, th not sticky, 4 empties) |
-| L.1d | table-layout auto + per-column minWidth · ONE scroll container overflow-x:auto · sticky th + Load col · all empties — · Playwright guard on the rendered page. Deadline 04:30Z (final). Surrender: CC-2 for CSS | → |
-| L.2 | Costs-tab register (NUMBER editable, 12 cols, KPI cards, comboboxes, ≥480px) — owner records an expense on 13508. Deadline 06:00Z | |
-| L.3 | Board tab row + remove Margin. Deadline 07:00Z | |
+| L.1d | scroller ✔ · dashes ✔ (2795482) · table-layout STILL fixed (20×83px), Deadhead Pay overflows, th not sticky | PARTIAL |
+| L.1d-final | table-layout auto · sticky th + Load col · rendered-page guard. Deadline 04:45Z. Surrender: CC-2 | → |
+| L.3 | TAB ROW Costs·Expenses·Bills·Fuel advances·Broker advances·Driver pay·R&M·Documents wiring existing list components (owner: "I still do not see the rest of the tabs"). MOVED AHEAD OF L.2. Deadline 06:00Z. Surrender: Cascade | next |
+| L.2 | Costs-tab register — owner records an expense on 13508. Deadline 08:00Z (after L.3) | |
+
 | C.4 | Unit picker excludes Sold/deactivated/non-entity units (U-156-provisional) + guard | ✔ #20436 |
 | C.5 | Dispatch on a draft shows the 400 reason on screen | ✔ fe2e8976 |
 | C.6 | 09-04 dispatch cleanliness leftovers (Kanban width+drag, Assignment draggable cols, Round Trips missing trips, Detention one-liner) + reconcile BRD-01..18/22/24 status on this board (they are your surface) | → |
@@ -127,6 +129,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG (newest first)
+- 04:22Z — C.3 ✔ verified. L.1d partial (scroller+dashes ✔; table-fixed 83px, th not sticky) → L.1d-final 04:45Z. Owner: tabs not visible → L.3 moved ahead of L.2 (06:00Z), L.2 → 08:00Z. D.3 wakes still not posted; feed 0 rows.
 - 04:08Z — OWNER: Cursor is the dispatcher — wakes CC-1/CC-3/Codex/Cascade sessions with their INBOX tops (D.1–D.4); root cause of the silent feed = seats are prompt-driven and nobody prompted them.
 - 03:58Z — L.1c re-measured: table-fixed equal 83px + SECTION clip → L.1d (04:30Z final, surrender CC-2). CC-1 missed M.1 → Cursor C.3 applies migration #4 (04:20Z). Feed: still 1 load / 0 expenses on Neon; 04:00Z deadline imminent, no seeder has posted.
 - 03:32Z — Cursor L.1b 949c025 re-measured 11/13; truncation root cause pinned (min-width 0, overflow visible); L.1c issued. M.1 vehicle_state still absent (03:40Z). Feed: no rows yet (04:00Z).

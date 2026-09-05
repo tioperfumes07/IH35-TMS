@@ -1,5 +1,5 @@
-# STATUS-NOW · 2026-09-05 03:58Z (Claude lead loop)
-Live API 7e852b2 · FE 0d45afd · FAST-MERGE ON · VERDICT FORMAT LAW + DESIGN CONTRACT in force
-Cursor → C.3 migration #4 DONE `b69fbd24`/202613761200 live on Neon (geofence_vehicle_state+driver_prompts+load_odometer_segments, FORCED RLS, 6256 flap rows superseded; engine 7e852b2 writes now, no API redeploy). L.1 FAIL1/2/3 DONE #20470+#20472 live `27954820`. NEXT L.1d table-layout auto (04:30Z) · then L.2 register.
-CC-1 → FEED 12 (line by 04:20Z or re-split) · M.2 04:30Z. CC-3 → FEED 8 then M.3. Codex → X.6 overdue → FEED 11 → X.9. CC-2 → contract into tokens 05:00Z (and L.1d CSS if Cursor misses). Cascade → K.4.
-Neon 03:54Z: USMCA 1 load / 0 expenses / 1 invoice / 2 driver bills — NO FEED ROWS YET.
+# STATUS-NOW · 2026-09-05 04:22Z (Claude lead loop)
+Live API 7e852b2 · FE 2795482 · geofence_vehicle_state LIVE · FAST-MERGE ON · VERDICT FORMAT LAW + DESIGN CONTRACT
+Cursor → D.3 wake CC-1/CC-3/Codex NOW → L.1d-final (table-layout auto, sticky; 04:45Z) → L.3 TAB ROW (06:00Z) → D.1/D.2 → L.2 register (08:00Z).
+CC-1 → FEED 12 + M.2 · CC-3 → FEED 8 → M.3 · Codex → X.6 → FEED 11 → X.9 · CC-2 → contract tokens 05:00Z · Cascade → K.4.
+Neon 04:18Z: USMCA 1 load / 0 expenses — feed has not started; seeders unwoken.
