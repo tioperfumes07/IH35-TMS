@@ -1,4 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
+import { humanizeAuditEventType } from "../../lib/humanizeAuditEventType";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useEffect, useState, useMemo } from "react";
@@ -41,6 +42,7 @@ function formatWhen(value: string): string {
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
 }
+
 
 function ChangesDiff({ changes }: { changes?: Record<string, { old: unknown; new: unknown }> }) {
   if (!changes || Object.keys(changes).length === 0) {
@@ -87,7 +89,7 @@ const COLUMNS: Array<ParityColumn<EventWithPayload>> = [
       <EntityLink
         kind="audit_event"
         id={row.id}
-        label={row.event_type}
+        label={humanizeAuditEventType(row.event_type)}
         className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
           row.severity === "error"
             ? "bg-red-100 text-red-700"
