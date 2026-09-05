@@ -1,0 +1,1423 @@
+{
+  "13512": {
+    "load_number": "13512",
+    "settlement_ref": "5772",
+    "customer_name": "Watco Supply Chain Services LLC DBA Watco Logistics",
+    "driver_name": "PEDRO ABRAHAM LOPEZ COLLADO",
+    "unit": "T152",
+    "trailer": "53211 - 53' Van",
+    "status_in_recon": "Completed",
+    "pickup": {
+      "location_name": null,
+      "city": "MARYLAND HEIGHTS",
+      "state": "MO",
+      "zip": null,
+      "date": "2026-08-10"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "WACO",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-12"
+    },
+    "linehaul_amount": 1700,
+    "loaded_miles": 721.4,
+    "loaded_rate": 0.45,
+    "empty_miles": 232.8,
+    "empty_rate": 0.45,
+    "fuel_rows": [
+      {
+        "date": "2026-08-10",
+        "vendor": "FLYING",
+        "location": "102FORM DRIVE WAYLAND,MD, MD",
+        "invoice": "99975493",
+        "gallons": 199,
+        "cpg": 5.359,
+        "receipt": 1066.44,
+        "actual": 1066.44
+      }
+    ],
+    "expense_rows": [
+      {
+        "date": "2026-08-10",
+        "vendor": "LOVES",
+        "location": "102FORM DRIVE WAYLAND,MD",
+        "invoice": "99975493",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 67.22
+      }
+    ],
+    "additional_pay_rows": [
+      {
+        "date": null,
+        "description": "Additional Pay (settlement 5772)",
+        "amount": 50
+      }
+    ],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": [
+      {
+        "date": "2026-08-13",
+        "description": "Driver-Escrow For Claims",
+        "amount": -25
+      }
+    ]
+  },
+  "13513": {
+    "load_number": "13513",
+    "settlement_ref": "5772",
+    "customer_name": "FLS Transportation Services Limited",
+    "driver_name": "PEDRO ABRAHAM LOPEZ COLLADO",
+    "unit": "T152",
+    "trailer": "53211 - 53' Van",
+    "status_in_recon": "Completed",
+    "pickup": {
+      "location_name": null,
+      "city": "CARROLTON",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-12"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "LAREDO",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-13"
+    },
+    "linehaul_amount": 525,
+    "loaded_miles": 442.2,
+    "loaded_rate": 0.45,
+    "empty_miles": 109.8,
+    "empty_rate": 0.45,
+    "fuel_rows": [
+      {
+        "date": "2026-08-11",
+        "vendor": "PILOT",
+        "location": "2409SO NEW ROAD WACO,TX, TX",
+        "invoice": "99014843",
+        "gallons": 141.218,
+        "cpg": 5.199,
+        "receipt": 734.19,
+        "actual": 734.19
+      }
+    ],
+    "expense_rows": [
+      {
+        "date": "2026-08-11",
+        "vendor": "LOVES",
+        "location": "2409SO NEW ROAD WACO,TX",
+        "invoice": "99014843",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 41.14
+      },
+      {
+        "date": "2026-08-13",
+        "vendor": "CAT SCALE",
+        "location": "619CROSSROADS AVE LAREDO.TX",
+        "invoice": null,
+        "description": "Driver Reimbursement-TPE-Scale",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 15.25
+      }
+    ],
+    "additional_pay_rows": [],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": [
+      {
+        "date": "2026-08-13",
+        "description": "Driver-Escrow For Claims",
+        "amount": -25
+      },
+      {
+        "date": "2026-08-13",
+        "description": "Admin fee",
+        "amount": -10
+      }
+    ]
+  },
+  "13515": {
+    "load_number": "13515",
+    "settlement_ref": "5776",
+    "customer_name": "FLS Transportation Services Limited",
+    "driver_name": "Leonel Antonio Morales",
+    "unit": "T175",
+    "trailer": "0016 - 53' Van",
+    "status_in_recon": "Completed",
+    "pickup": {
+      "location_name": null,
+      "city": "SEAGOVILLE",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-13"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "LAREDO",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-14"
+    },
+    "linehaul_amount": 525,
+    "loaded_miles": 436.1,
+    "loaded_rate": 0.45,
+    "empty_miles": 40,
+    "empty_rate": 0.45,
+    "fuel_rows": [
+      {
+        "date": "2026-08-09",
+        "vendor": "LOVES",
+        "location": "1703EASTFWY BAYTOWN,TX, TX",
+        "invoice": "99822323",
+        "gallons": 187.009,
+        "cpg": 5.409,
+        "receipt": 1011.53,
+        "actual": 1011.53
+      },
+      {
+        "date": "2026-08-10",
+        "vendor": "LOVES",
+        "location": "3910S,DIVISION STREET B,AR, AR",
+        "invoice": "99447451",
+        "gallons": 112.005,
+        "cpg": 5.359,
+        "receipt": 600.23,
+        "actual": 600.23
+      },
+      {
+        "date": "2026-08-12",
+        "vendor": "LOVES",
+        "location": "400NSTATE HWY 125STAFFORD,MO, MO",
+        "invoice": "99106176",
+        "gallons": 152.335,
+        "cpg": 5.449,
+        "receipt": 830.07,
+        "actual": 830.07
+      },
+      {
+        "date": "2026-08-13",
+        "vendor": "LOVES",
+        "location": "1021DALE EVANS ITALY,TX, TX",
+        "invoice": "99887970",
+        "gallons": 99.085,
+        "cpg": 5.549,
+        "receipt": 549.82,
+        "actual": 549.82
+      }
+    ],
+    "expense_rows": [
+      {
+        "date": "2026-08-09",
+        "vendor": "LOVES",
+        "location": "1703EASTFWY BAYTOWN,TX",
+        "invoice": "99822323",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 57.56
+      },
+      {
+        "date": "2026-08-12",
+        "vendor": "LOVES",
+        "location": "400NSTATE HWY 125STAFFORD,MO",
+        "invoice": "99106176",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 50.82
+      },
+      {
+        "date": "2026-08-13",
+        "vendor": "LOVES",
+        "location": "1021DALE EVANS ITALY,TX",
+        "invoice": "99887970",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 20.17
+      },
+      {
+        "date": "2026-08-11",
+        "vendor": "LOVES",
+        "location": "NORTHBROOK DRIVE ,IL",
+        "invoice": "1295098",
+        "description": "Driver Reimbursement-TPE-Scale",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 5.25
+      },
+      {
+        "date": "2026-08-11",
+        "vendor": "LOVES",
+        "location": "NORTHBROOK DRIVE ,IL",
+        "invoice": "1295089",
+        "description": "Driver Reimbursement-TPE-Scale",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 15.25
+      },
+      {
+        "date": "2026-08-14",
+        "vendor": "VALERO",
+        "location": "619CROSSROADS ST LAREDO,TX",
+        "invoice": "39016214",
+        "description": "Driver Reimbursement-TPE-Scale",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 15.25
+      },
+      {
+        "date": "2026-08-14",
+        "vendor": "VALERO",
+        "location": "619CROSSROADS ST LAREDO,TX",
+        "invoice": "40016373",
+        "description": "Driver Reimbursement-TPE-Scale",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 5.25
+      }
+    ],
+    "additional_pay_rows": [],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": [
+      {
+        "date": "2026-08-14",
+        "description": "Driver-Escrow For Claims",
+        "amount": -25
+      },
+      {
+        "date": "2026-08-14",
+        "description": "Admin fee",
+        "amount": -10
+      }
+    ]
+  },
+  "13520": {
+    "load_number": "13520",
+    "settlement_ref": "5776",
+    "customer_name": "BV LOGISTICS INC",
+    "driver_name": "Leonel Antonio Morales",
+    "unit": "T175",
+    "trailer": "00121 - 53' Van",
+    "status_in_recon": "Completed",
+    "pickup": {
+      "location_name": null,
+      "city": "JOLIET",
+      "state": "IL",
+      "zip": null,
+      "date": "2026-08-11"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "ARLINGTON",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-13"
+    },
+    "linehaul_amount": 2600,
+    "loaded_miles": 907.8,
+    "loaded_rate": 0.45,
+    "empty_miles": 21.9,
+    "empty_rate": 0.45,
+    "fuel_rows": [],
+    "expense_rows": [],
+    "additional_pay_rows": [],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": [
+      {
+        "date": "2026-08-14",
+        "description": "Driver-Escrow For Claims",
+        "amount": -25
+      }
+    ]
+  },
+  "13522": {
+    "load_number": "13522",
+    "settlement_ref": "5784",
+    "customer_name": "Del-Can Logistics LLC",
+    "driver_name": "JOSE ANTONIO VICENTE MARTINEZ",
+    "unit": "T171",
+    "trailer": "10380 - 53' Reefer",
+    "status_in_recon": "Completed",
+    "pickup": {
+      "location_name": null,
+      "city": "LAREDO",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-15"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "MOREHEAD",
+      "state": "KY",
+      "zip": null,
+      "date": "2026-08-17"
+    },
+    "linehaul_amount": 3500,
+    "loaded_miles": 1364.8,
+    "loaded_rate": 0.43,
+    "empty_miles": null,
+    "empty_rate": null,
+    "fuel_rows": [
+      {
+        "date": "2026-08-14",
+        "vendor": "LOVES",
+        "location": "101 PINNACLE ROAD LAREDO,TX, TX",
+        "invoice": "99984843",
+        "gallons": 68.344,
+        "cpg": 5.489,
+        "receipt": 375.14,
+        "actual": 375.14
+      },
+      {
+        "date": "2026-08-15",
+        "vendor": "LOVES",
+        "location": "21548FM471S NATALIA,TX, TX",
+        "invoice": "99522909",
+        "gallons": 165.199,
+        "cpg": 5.389,
+        "receipt": 890.26,
+        "actual": 890.26
+      },
+      {
+        "date": "2026-08-16",
+        "vendor": "LOVES",
+        "location": "11700I-30LITTLE ROCK AR, AR",
+        "invoice": "99566003",
+        "gallons": 102.036,
+        "cpg": 5.449,
+        "receipt": 555.99,
+        "actual": 555.99
+      }
+    ],
+    "expense_rows": [
+      {
+        "date": "2026-08-14",
+        "vendor": "LOVES",
+        "location": "101 PINNACLE ROAD LAREDO,TX",
+        "invoice": "99984843",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 30
+      },
+      {
+        "date": "2026-08-15",
+        "vendor": "LOVES",
+        "location": "21548FM471S NATALIA,TX",
+        "invoice": "99522909",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 18.35
+      },
+      {
+        "date": "2026-08-16",
+        "vendor": "LOVES",
+        "location": "11700I-30LITTLE ROCK AR",
+        "invoice": "99566003",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 21.5
+      },
+      {
+        "date": "2026-08-14",
+        "vendor": "FUEL AMERICA",
+        "location": "13602MINES ROAD LAREDO,TX",
+        "invoice": "01040479",
+        "description": "Reefer Trailer-Washout Expense",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 55.21
+      },
+      {
+        "date": "2026-08-15",
+        "vendor": "LOVES",
+        "location": "101 PINNACLE ROAD LAREDO,TX",
+        "invoice": "2044386",
+        "description": "OTR-Scale Expense",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 15.25
+      }
+    ],
+    "additional_pay_rows": [],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": [
+      {
+        "date": "2026-08-25",
+        "description": "Driver-Escrow For Claims",
+        "amount": -25
+      }
+    ]
+  },
+  "13525": {
+    "load_number": "13525",
+    "settlement_ref": "5778",
+    "customer_name": "Refrigerx Transportation LLC",
+    "driver_name": "HUGO GAYTAN SARABIA",
+    "unit": "T173",
+    "trailer": "10219 - 53' Reefer",
+    "status_in_recon": "Completed",
+    "pickup": {
+      "location_name": null,
+      "city": "Laredo",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-07"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "ERLANGER",
+      "state": "KY",
+      "zip": null,
+      "date": "2026-08-10"
+    },
+    "linehaul_amount": 0,
+    "loaded_miles": 1349.8,
+    "loaded_rate": 0.45,
+    "empty_miles": null,
+    "empty_rate": null,
+    "fuel_rows": [],
+    "expense_rows": [
+      {
+        "date": "2026-08-08",
+        "vendor": "LOVES",
+        "location": "21548FM471S NATALIA,TX",
+        "invoice": "1842133",
+        "description": "Driver Reimbursement-TPE-Scale",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 15.25
+      },
+      {
+        "date": "2026-08-08",
+        "vendor": "LOVES",
+        "location": "21548FM471S NATALIA,TX",
+        "invoice": "99517553",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 17.21
+      },
+      {
+        "date": "2026-08-10",
+        "vendor": "LOVES",
+        "location": "400L&N TURNPIKE HORSE C KY",
+        "invoice": "99418954",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 30.17
+      }
+    ],
+    "additional_pay_rows": [],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": [
+      {
+        "date": "2026-08-17",
+        "description": "Driver-Escrow For Claims",
+        "amount": -25
+      }
+    ]
+  },
+  "13528": {
+    "load_number": "13528",
+    "settlement_ref": "5784",
+    "customer_name": "Sajacks Freight",
+    "driver_name": "JOSE ANTONIO VICENTE MARTINEZ",
+    "unit": "T171",
+    "trailer": "10222 - 53' Reefer",
+    "status_in_recon": "Completed",
+    "pickup": {
+      "location_name": null,
+      "city": "harrison",
+      "state": "OH",
+      "zip": null,
+      "date": "2026-08-18"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "BELCAMP",
+      "state": "MD",
+      "zip": null,
+      "date": "2026-08-19"
+    },
+    "linehaul_amount": 3100,
+    "loaded_miles": 554.3,
+    "loaded_rate": 0.43,
+    "empty_miles": 158.7,
+    "empty_rate": 0.43,
+    "fuel_rows": [
+      {
+        "date": "2026-08-17",
+        "vendor": "LOVES",
+        "location": "313PORTER RD SADIAVILLE,KY, KY",
+        "invoice": "99558645",
+        "gallons": 143.381,
+        "cpg": 5.289,
+        "receipt": 758.34,
+        "actual": 758.34
+      },
+      {
+        "date": "2026-08-18",
+        "vendor": "LOVES",
+        "location": "66320GALMONT MORRISTOWN RD,OH, OH",
+        "invoice": "99415804",
+        "gallons": 67.37,
+        "cpg": 5.789,
+        "receipt": 390,
+        "actual": 390
+      },
+      {
+        "date": "2026-08-20",
+        "vendor": "LOVES",
+        "location": "22 OLD FORGE ROAD JONESTOWN,PA, PA",
+        "invoice": "99193164",
+        "gallons": 127.621,
+        "cpg": 6.249,
+        "receipt": 797.5,
+        "actual": 797.5
+      }
+    ],
+    "expense_rows": [
+      {
+        "date": "2026-08-17",
+        "vendor": "LOVES",
+        "location": "313PORTER RD SADIAVILLE,KY",
+        "invoice": "99558645",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 26.66
+      },
+      {
+        "date": "2026-08-18",
+        "vendor": "LOVES",
+        "location": "22OLD FORGE ROAD JONESTOWN,PA",
+        "invoice": "99193164",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 35.68
+      }
+    ],
+    "additional_pay_rows": [
+      {
+        "date": null,
+        "description": "Additional Pay (settlement 5784)",
+        "amount": 25
+      }
+    ],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": [
+      {
+        "date": "2026-08-25",
+        "description": "Driver-Escrow For Claims",
+        "amount": -25
+      }
+    ]
+  },
+  "13530": {
+    "load_number": "13530",
+    "settlement_ref": "5780",
+    "customer_name": "BBA Logistics",
+    "driver_name": "Rafael Rogelio Rivero Reynoso",
+    "unit": "T148",
+    "trailer": "10876 - 53' Reefer",
+    "status_in_recon": "Completed",
+    "pickup": {
+      "location_name": null,
+      "city": "Laredo",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-18"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "Houston",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-19"
+    },
+    "linehaul_amount": 1500,
+    "loaded_miles": 354.4,
+    "loaded_rate": 0.45,
+    "empty_miles": null,
+    "empty_rate": null,
+    "fuel_rows": [
+      {
+        "date": "2026-08-19",
+        "vendor": "LOVES",
+        "location": "21548FM 471S NATALIA,TX, TX",
+        "invoice": "99525016",
+        "gallons": 153.16,
+        "cpg": 5.509,
+        "receipt": 843.76,
+        "actual": 843.76
+      }
+    ],
+    "expense_rows": [
+      {
+        "date": "2026-08-18",
+        "vendor": "LOVES",
+        "location": "13602MINES ROAD LAREDO,TX",
+        "invoice": "00040979",
+        "description": "Reefer Trailer-Washout Expense",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 48.71
+      }
+    ],
+    "additional_pay_rows": [],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": []
+  },
+  "13532": {
+    "load_number": "13532",
+    "settlement_ref": "5780",
+    "customer_name": "Del-Can Logistics LLC",
+    "driver_name": "Rafael Rogelio Rivero Reynoso",
+    "unit": "T148",
+    "trailer": "10376 - 53' Reefer",
+    "status_in_recon": "Completed",
+    "pickup": {
+      "location_name": null,
+      "city": "PALESTINE",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-20"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "LAREDO",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-21"
+    },
+    "linehaul_amount": 1000,
+    "loaded_miles": 415.4,
+    "loaded_rate": 0.45,
+    "empty_miles": 174.9,
+    "empty_rate": 0.45,
+    "fuel_rows": [],
+    "expense_rows": [
+      {
+        "date": "2026-08-19",
+        "vendor": "TEN STAR TRUCKWASH",
+        "location": "3922 11TH BROOKSHIRE,TX",
+        "invoice": "397322164",
+        "description": "Reefer Trailer-Washout Expense",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 52
+      },
+      {
+        "date": "2026-08-21",
+        "vendor": "SR FORWARDING,INC",
+        "location": null,
+        "invoice": null,
+        "description": "Warehouse-Lumper Fee Expense",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 120
+      }
+    ],
+    "additional_pay_rows": [],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": []
+  },
+  "13535": {
+    "load_number": "13535",
+    "settlement_ref": "5783",
+    "customer_name": "Semares Forwarding Services",
+    "driver_name": "Jorge Luis Infante Corona",
+    "unit": "T177",
+    "trailer": "FB-56704 - 53' Flatbed",
+    "status_in_recon": "Completed",
+    "pickup": {
+      "location_name": null,
+      "city": "Laredo",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-18"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "EDISON",
+      "state": "NJ",
+      "zip": null,
+      "date": "2026-08-21"
+    },
+    "linehaul_amount": 4900,
+    "loaded_miles": 1958.9,
+    "loaded_rate": 0.5,
+    "empty_miles": null,
+    "empty_rate": null,
+    "fuel_rows": [
+      {
+        "date": "2026-08-12",
+        "vendor": "LOVES",
+        "location": "21548FM471S NATALIA,TX, TX",
+        "invoice": "99525008",
+        "gallons": 146.818,
+        "cpg": 5.449,
+        "receipt": 800.01,
+        "actual": 800.01
+      },
+      {
+        "date": "2026-08-13",
+        "vendor": "LOVES",
+        "location": "10465LONESMOE PINE TRAIL M,TN, TN",
+        "invoice": "99454237",
+        "gallons": 182.564,
+        "cpg": 5.889,
+        "receipt": 1075.12,
+        "actual": 1075.12
+      }
+    ],
+    "expense_rows": [
+      {
+        "date": "2026-08-13",
+        "vendor": "LOVES",
+        "location": "10465LONESMOE PINE TRAIL M,TN",
+        "invoice": "99448116",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 41.35
+      },
+      {
+        "date": "2026-08-19",
+        "vendor": "LOVES",
+        "location": "21548FM471S NATALIA,TX",
+        "invoice": "99525008",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 40.1
+      }
+    ],
+    "additional_pay_rows": [
+      {
+        "date": null,
+        "description": "Additional Pay (settlement 5783)",
+        "amount": 50
+      }
+    ],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": []
+  },
+  "13536": {
+    "load_number": "13536",
+    "settlement_ref": "5784",
+    "customer_name": "PRODIGEE LOGISTICS LLC",
+    "driver_name": "JOSE ANTONIO VICENTE MARTINEZ",
+    "unit": "T171",
+    "trailer": "10870 - 53' Reefer",
+    "status_in_recon": "Completed",
+    "pickup": {
+      "location_name": null,
+      "city": "JONESTOWN",
+      "state": "PA",
+      "zip": null,
+      "date": "2026-08-20"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "CUERTO",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-21"
+    },
+    "linehaul_amount": 4000,
+    "loaded_miles": 1630.8,
+    "loaded_rate": 0.43,
+    "empty_miles": 281,
+    "empty_rate": 0.43,
+    "fuel_rows": [
+      {
+        "date": "2026-08-21",
+        "vendor": "LOVES",
+        "location": "STEELE STATION RD STEELE,AL, AL",
+        "invoice": "99356279",
+        "gallons": 137.175,
+        "cpg": 5.669,
+        "receipt": 777.65,
+        "actual": 777.65
+      },
+      {
+        "date": "2026-08-23",
+        "vendor": "LOVES",
+        "location": "P.OBOX 1201 LULING,TX, TX",
+        "invoice": "99090868",
+        "gallons": 174.439,
+        "cpg": 5.749,
+        "receipt": 1002.85,
+        "actual": 1002.85
+      }
+    ],
+    "expense_rows": [
+      {
+        "date": "2026-08-21",
+        "vendor": "LOVES",
+        "location": "STEELE STATION RD STEELE,AL",
+        "invoice": "99356279",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 28.26
+      },
+      {
+        "date": "2026-08-23",
+        "vendor": "LOVES",
+        "location": "P.OBOX 1201 LULING,TX",
+        "invoice": "99090868",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 32.77
+      },
+      {
+        "date": "2026-08-20",
+        "vendor": "BLUE BEACON",
+        "location": "1240HARRISBURG PIKE CARISLE,PA",
+        "invoice": "042328496",
+        "description": "Reefer Trailer-Washout Expense",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 49.5
+      },
+      {
+        "date": "2026-08-20",
+        "vendor": "BLUE BEACON",
+        "location": "1240HARRISBURG PIKE CARISLE,PA",
+        "invoice": "042172057",
+        "description": "Reefer Trailer-Washout Expense",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 44.63
+      },
+      {
+        "date": "2026-08-20",
+        "vendor": "LOVES",
+        "location": "22OLD FORGE ROAD JONESTOWN,PA",
+        "invoice": "1344032",
+        "description": "OTR-Scale Expense",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 15.25
+      }
+    ],
+    "additional_pay_rows": [],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": [
+      {
+        "date": "2026-08-25",
+        "description": "Driver-Escrow For Claims",
+        "amount": -25
+      },
+      {
+        "date": "2026-08-25",
+        "description": "Admin fee",
+        "amount": -10
+      }
+    ]
+  },
+  "13537": {
+    "load_number": "13537",
+    "settlement_ref": "5783",
+    "customer_name": "OSTT Logistics",
+    "driver_name": "Jorge Luis Infante Corona",
+    "unit": "T177",
+    "trailer": "FB-56704 - 53' Flatbed",
+    "status_in_recon": "Completed",
+    "pickup": {
+      "location_name": null,
+      "city": "EDISON",
+      "state": "NJ",
+      "zip": null,
+      "date": "2026-08-21"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "Houston",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-24"
+    },
+    "linehaul_amount": 3300,
+    "loaded_miles": 1621,
+    "loaded_rate": 0.5,
+    "empty_miles": 360.3,
+    "empty_rate": 0.5,
+    "fuel_rows": [
+      {
+        "date": "2026-08-22",
+        "vendor": "LOVES",
+        "location": "10465LONESOME PINE TRAIL M,TN, TN",
+        "invoice": "99456225",
+        "gallons": 198,
+        "cpg": 5.879,
+        "receipt": 1164.04,
+        "actual": 1164.04
+      },
+      {
+        "date": "2026-08-24",
+        "vendor": "LOVES",
+        "location": "21548FM471S NATALIA,TX, TX",
+        "invoice": "99529093",
+        "gallons": 88.604,
+        "cpg": 5.649,
+        "receipt": 500.52,
+        "actual": 500.52
+      }
+    ],
+    "expense_rows": [
+      {
+        "date": "2026-08-22",
+        "vendor": "LOVES",
+        "location": "10465LONESOME PINE TRAIL M,TN",
+        "invoice": "99456225",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 40.25
+      }
+    ],
+    "additional_pay_rows": [
+      {
+        "date": null,
+        "description": "Additional Pay (settlement 5783)",
+        "amount": 125
+      }
+    ],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": [
+      {
+        "date": "2026-08-25",
+        "description": "Admin fee",
+        "amount": -10
+      }
+    ]
+  },
+  "13541": {
+    "load_number": "13541",
+    "settlement_ref": null,
+    "customer_name": "EGRO TRANSPORT LLC",
+    "driver_name": "JOSE ANTONIO VICENTE MARTINEZ",
+    "unit": "T171",
+    "trailer": "10870 - 53' Reefer",
+    "status_in_recon": "Dispatched",
+    "pickup": {
+      "location_name": null,
+      "city": "Laredo",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-25"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "TALLMADGE",
+      "state": "OH",
+      "zip": null,
+      "date": "2026-08-27"
+    },
+    "linehaul_amount": 3500,
+    "loaded_miles": 1602.9,
+    "loaded_rate": null,
+    "empty_miles": null,
+    "empty_rate": null,
+    "fuel_rows": [],
+    "expense_rows": [],
+    "additional_pay_rows": [],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": []
+  },
+  "13542": {
+    "load_number": "13542",
+    "settlement_ref": null,
+    "customer_name": "SIMPLE LOGISTICS SOLUTIONS",
+    "driver_name": "Leonel Antonio Morales",
+    "unit": "T175",
+    "trailer": "FB-56704 - 53' Flatbed",
+    "status_in_recon": "Completed",
+    "pickup": {
+      "location_name": "APPLIED LAREDO YARD",
+      "city": "LAREDO",
+      "state": "TX",
+      "zip": "78045",
+      "date": "2026-08-25"
+    },
+    "delivery": {
+      "location_name": "SUPERIOR CRANE",
+      "city": "MORRISVILLE",
+      "state": "NC",
+      "zip": "27560",
+      "date": "2026-08-27"
+    },
+    "linehaul_amount": 4000,
+    "loaded_miles": 1536.4,
+    "loaded_rate": 0.45,
+    "empty_miles": null,
+    "empty_rate": null,
+    "fuel_rows": [
+      {
+        "date": "2026-08-23",
+        "vendor": "LOVES",
+        "location": "101 PINNACLE ROAD LAREDO,TX, TX",
+        "invoice": "99988777",
+        "gallons": 100.558,
+        "cpg": 5.749,
+        "receipt": 578.11,
+        "actual": 578.11
+      },
+      {
+        "date": "2026-08-26",
+        "vendor": "LOVES",
+        "location": "21548FM471S NATALIA,TX, TX",
+        "invoice": "99530096",
+        "gallons": 184.001,
+        "cpg": 5.549,
+        "receipt": 1021.02,
+        "actual": 1021.02
+      },
+      {
+        "date": "2026-08-26",
+        "vendor": "LOVES",
+        "location": "2024A WEST STREET VINTON LA, LA",
+        "invoice": "99600926",
+        "gallons": 49.091,
+        "cpg": 5.489,
+        "receipt": 269.46,
+        "actual": 269.46
+      }
+    ],
+    "expense_rows": [
+      {
+        "date": "2026-08-22",
+        "vendor": "DTOPS",
+        "location": null,
+        "invoice": null,
+        "description": "OTR-Mexico Tolls & Intl Bridge",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 20.8
+      },
+      {
+        "date": "2026-08-23",
+        "vendor": "LOVES",
+        "location": "101 PINNACLE ROAD LAREDO,TX",
+        "invoice": "99988783",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 44.26
+      },
+      {
+        "date": "2026-08-26",
+        "vendor": "LOVES",
+        "location": "21548FM471S NATALIA,TX",
+        "invoice": "99530096",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 40.91
+      }
+    ],
+    "additional_pay_rows": [],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": [
+      {
+        "date": "2026-09-01",
+        "description": "Driver-Escrow For Claims",
+        "amount": -25
+      }
+    ]
+  },
+  "13544": {
+    "load_number": "13544",
+    "settlement_ref": null,
+    "customer_name": "Hawkeye Transportation Services",
+    "driver_name": "Rafael Rogelio Rivero Reynoso",
+    "unit": "T148",
+    "trailer": "10876 - 53' Reefer",
+    "status_in_recon": "Completed",
+    "pickup": {
+      "location_name": null,
+      "city": "LAREDO",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-24"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "Laredo",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-25"
+    },
+    "linehaul_amount": 600,
+    "loaded_miles": 7.2,
+    "loaded_rate": null,
+    "empty_miles": null,
+    "empty_rate": null,
+    "fuel_rows": [],
+    "expense_rows": [],
+    "additional_pay_rows": [],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": []
+  },
+  "13551": {
+    "load_number": "13551",
+    "settlement_ref": null,
+    "customer_name": "Armstrong Transport GR",
+    "driver_name": "Vicente Santos Contreras",
+    "unit": "T174",
+    "trailer": "FB-56704 - 53' Flatbed",
+    "status_in_recon": "Dispatched",
+    "pickup": {
+      "location_name": null,
+      "city": "LAREDO",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-26"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "NORTH WILKESBORO",
+      "state": "NC",
+      "zip": null,
+      "date": "2026-08-28"
+    },
+    "linehaul_amount": 3000,
+    "loaded_miles": 1439.2,
+    "loaded_rate": null,
+    "empty_miles": null,
+    "empty_rate": null,
+    "fuel_rows": [],
+    "expense_rows": [],
+    "additional_pay_rows": [],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": []
+  },
+  "13554": {
+    "load_number": "13554",
+    "settlement_ref": null,
+    "customer_name": "Big G Logistics, LLC",
+    "driver_name": "Leonel Antonio Morales",
+    "unit": "T175",
+    "trailer": "FB-56704 - 53' Flatbed",
+    "status_in_recon": "Dispatched",
+    "pickup": {
+      "location_name": "COMMSCOPE CATAWBA",
+      "city": "CATTAWBA",
+      "state": "NC",
+      "zip": "28609",
+      "date": "2026-08-28"
+    },
+    "delivery": {
+      "location_name": "QUANTA JOINT TRENCH",
+      "city": "HOUSTON",
+      "state": "TX",
+      "zip": "77093",
+      "date": "2026-08-31"
+    },
+    "linehaul_amount": 0,
+    "loaded_miles": null,
+    "loaded_rate": 0.45,
+    "empty_miles": null,
+    "empty_rate": null,
+    "fuel_rows": [
+      {
+        "date": "2026-08-28",
+        "vendor": "LOVES",
+        "location": "1217TROLLINGWOOD HAWFIELDS RD, NC",
+        "invoice": "2051327",
+        "gallons": 70.071,
+        "cpg": 5.169,
+        "receipt": 362.2,
+        "actual": 362.2
+      },
+      {
+        "date": "2026-08-29",
+        "vendor": "LOVES",
+        "location": "1127TYSON ROAD HOPE HULL,AL, AL",
+        "invoice": "99037285",
+        "gallons": 118.097,
+        "cpg": 5.769,
+        "receipt": 681.3,
+        "actual": 681.3
+      },
+      {
+        "date": "2026-08-31",
+        "vendor": "LOVES",
+        "location": "612PODERSON ROAD KATY TX, TX",
+        "invoice": "99110970",
+        "gallons": 161.216,
+        "cpg": 5.549,
+        "receipt": 894.59,
+        "actual": 894.59
+      }
+    ],
+    "expense_rows": [
+      {
+        "date": "2026-08-26",
+        "vendor": "LOVES",
+        "location": "2024A WEST STREET VINTON LA",
+        "invoice": "99600926",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 10.81
+      },
+      {
+        "date": "2026-08-29",
+        "vendor": "LOVES",
+        "location": "1127TYSON ROAD HOPE HULL,AL",
+        "invoice": "99037285",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 8.7
+      },
+      {
+        "date": "2026-08-31",
+        "vendor": "LOVES",
+        "location": "612PODERSON ROAD KATY TX",
+        "invoice": "99110970",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 63.94
+      }
+    ],
+    "additional_pay_rows": [],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": [
+      {
+        "date": "2026-09-01",
+        "description": "Driver-Escrow For Claims",
+        "amount": -25
+      },
+      {
+        "date": "2026-09-01",
+        "description": "Admin fee",
+        "amount": -10
+      }
+    ]
+  },
+  "13555": {
+    "load_number": "13555",
+    "settlement_ref": "5787",
+    "customer_name": "2EMS TRANSPORTATION",
+    "driver_name": "ALFONSO HIDALGO CHAVEZ",
+    "unit": "T164",
+    "trailer": "0510 - 53' Van",
+    "status_in_recon": "Completed",
+    "pickup": {
+      "location_name": null,
+      "city": "LAREDO",
+      "state": "TX",
+      "zip": null,
+      "date": "2026-08-19"
+    },
+    "delivery": {
+      "location_name": null,
+      "city": "Fountain",
+      "state": "CO",
+      "zip": null,
+      "date": "2026-08-22"
+    },
+    "linehaul_amount": 3180,
+    "loaded_miles": 1008.9,
+    "loaded_rate": 0.45,
+    "empty_miles": null,
+    "empty_rate": null,
+    "fuel_rows": [
+      {
+        "date": "2026-08-20",
+        "vendor": "PILOT",
+        "location": "1101UNIROYAL DRIVE LAREDO,TX, TX",
+        "invoice": "6610677",
+        "gallons": 113.135,
+        "cpg": 5.699,
+        "receipt": 644.76,
+        "actual": 644.76
+      },
+      {
+        "date": "2026-08-21",
+        "vendor": "LOVES",
+        "location": "1001EL MORO RD TRINIDAD,CO, CO",
+        "invoice": "2244651",
+        "gallons": 109,
+        "cpg": 5.589,
+        "receipt": 609.2,
+        "actual": 609.2
+      }
+    ],
+    "expense_rows": [
+      {
+        "date": "2026-08-18",
+        "vendor": "DTOPS",
+        "location": null,
+        "invoice": null,
+        "description": "Driver Reimbursement-Toll Expe",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 13.45
+      },
+      {
+        "date": "2026-08-20",
+        "vendor": "PILOT",
+        "location": "1101UNIROYAL DRIVE LAREDO,TX",
+        "invoice": "6610677",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 24.92
+      },
+      {
+        "date": "2026-08-20",
+        "vendor": "PILOT",
+        "location": "1101UNIROYAL DRIVE LAREDO,TX",
+        "invoice": "6232741",
+        "description": "OTR-Scale Expense",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 15.25
+      },
+      {
+        "date": "2026-08-21",
+        "vendor": "LOVES",
+        "location": "1001EL MORO RD TRINIDAD,CO",
+        "invoice": "2244651",
+        "description": "Fuel-DEF-Diesel Exhaust Fluid",
+        "reimb_flag": null,
+        "comp_exp_flag": "Y",
+        "amount": 24.82
+      }
+    ],
+    "additional_pay_rows": [],
+    "reimbursement_rows": [],
+    "deduction_rows_from_driver_settlement": [
+      {
+        "date": "2026-08-28",
+        "description": "Driver-Escrow For Claims",
+        "amount": -25
+      },
+      {
+        "date": "2026-08-28",
+        "description": "Admin fee",
+        "amount": -10
+      }
+    ]
+  }
+}
