@@ -275,11 +275,18 @@ export async function cancelLoadInClientTx(
       //      partial cascade, no silent orphan.
       if (!pendingOwnerApproval) {
         // VOID-CASCADE-DRIVER-BILLS — void every open (non-void) driver bill for this load in the
-        // same transaction. A cancelled load should not leave phantom payables orphaned. The driver
-        // bill schema carries only status + updated_at (no voided_at column) so a simple status
-        // flip + audit is the correct WORM pattern here. This does NOT invent GL math — driver bills
-        // are a TMS-native subledger concept; their GL impact materialises only when they are pulled
-        // into a settlement and settled via reverseSettlementBillPaymentInClientTx below.
+        // same transaction. A cancelled load should not leave phantom payables orphaned. This does
+        // NOT invent GL math — driver bills are a TMS-native subledger concept; their GL impact
+        // materialises only when they are pulled into a settlement and settled via
+        // reverseSettlementBillPaymentInClientTx below.
+        // ACCT-SETL-BILL-VOID-GAP: the "no voided_at column" half of the comment above is stale —
+        // driver_finance.driver_bills has carried voided_at/void_reason/voided_by_user_id/
+        // void_reversal_entry_id since GO-22 (migration 202613490001), this is the ONLY place in
+        // the codebase that ever sets status='void' on this table (confirmed via full-repo grep),
+        // and it never wrote the newer columns. Stamped here now (COALESCE-guarded, matching the
+        // same pattern already shipped for driver_advances/driver_liabilities in
+        // reverseDriverAdvanceInClientTx) — same trigger, same reason text, just also recorded to
+        // the standard register.
         const openDriverBillsRes = await client.query<{ id: string; bill_number: string }>(
           `SELECT id::text, bill_number
              FROM driver_finance.driver_bills
@@ -291,14 +298,18 @@ export async function cancelLoadInClientTx(
         );
         const voidedDriverBillIds: string[] = [];
         for (const bill of openDriverBillsRes.rows) {
+          const driverBillVoidReason = `Load cancelled (${input.reason_code}) — driver bill voided by load cancellation cascade`;
           await client.query(
             `UPDATE driver_finance.driver_bills
                 SET status = 'void',
+                    voided_at = COALESCE(voided_at, now()),
+                    void_reason = COALESCE(void_reason, $3),
+                    voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
                     updated_at = now()
               WHERE id = $1::uuid
                 AND operating_company_id = $2::uuid
                 AND status <> 'void'`,
-            [bill.id, input.operating_company_id]
+            [bill.id, input.operating_company_id, driverBillVoidReason, userId]
           );
           await appendCrudAudit(
             client,
@@ -310,7 +321,7 @@ export async function cancelLoadInClientTx(
               bill_number: bill.bill_number,
               load_id: input.load_id,
               operating_company_id: input.operating_company_id,
-              reason: `Load cancelled (${input.reason_code}) — driver bill voided by load cancellation cascade`,
+              reason: driverBillVoidReason,
             },
             "warning",
             "VOID-CASCADE-LOAD-CANCEL"
