@@ -371,3 +371,17 @@ never applied; merged PR #20529) — 36 loads total booked into USMCA (`operatin
 5c854333-6ea5-4faa-af31-67cb272fef80`) this session. Delivery-date-vs-2026-08-07 cutoff was never
 checked against this cutoff before booking (not part of the order as given) — standing by for the
 lead's reconciled instruction on which of these 36 need to move to Transportation.
+
+CC-3 | ACK SEQUENCE | STEP 1 of 6 STARTING | Read ~/Downloads/2026-09-05-CODER-SEQUENCE-NUMBERED-
+DEVIN.md (CC-3 block) + ~/Downloads/2026-09-05-USMCA-SEED-CONTAMINATION-AND-CORRECTED-SCOPE.md.
+Confirmed PR #20533 (71eb16bd) is docs-only (board reconciliation doc, no code/no Neon writes) --
+the 21-load quarantine it describes was executed separately by Cursor (M=6 item 2, "DONE" per the
+sequence doc), not by this seat, and nothing was voided by me. Sourcing the 20 missing USMCA loads
+(13512,13513,13515,13520,13522,13525,13528,13530,13532,13535,13536,13537,13541,13542,13544,13551,
+13553,13554,13555,13556) from IH35-BY-LOAD-20260904-WITH-DIESEL_1.xlsx's "USMCA BY LOAD" sheet
+(14 of 20 found there with full customer/origin/dest/driver/truck/trailer/pickup/delivery/linehaul/
+fuel/expense/deduction rows; 6 -- 13515,13522,13525,13530,13553,13555 -- not in that sheet, checking
+the workbook's other sheets next before falling back to the signed PDFs). Never a manual load;
+seeding from the reconciliation rows / signed docs only. Pre-settlement stays OPEN, never closed
+(step 1's own instruction). Next: locate the 6 missing rows, build the seed, apply the 08/07 floor
++ R1/R2 rulings from step 2/3 into the same script rather than as an afterthought.
