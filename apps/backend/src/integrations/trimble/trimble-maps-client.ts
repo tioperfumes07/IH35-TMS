@@ -43,6 +43,8 @@ export type GeocodeResult = {
   zip: string;
   lat: number | null;
   lon: number | null;
+  /** Business/place name when the provider returned one (Google Places Text Search). */
+  name?: string;
 };
 
 type TrimbleLocation = {
