@@ -1,3 +1,24 @@
+# ★★ NOW · CC-1 — THREE-MILE / TRUE CPM (+ settlement feed still on)
+`git pull --ff-only origin main`
+
+**Law:** `docs/bus/ORDER-2026-09-04-CC-1-THREE-MILE-CPM.md`  
+**Settlement feed still binds:** `docs/bus/ORDER-2026-09-04-SETTLEMENT-ENTRY-SPLIT.md`  
+**Board:** `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md`
+
+**Owner:** practical vs short vs **real driven** → true cost per mile. App stores only two today. Measured gap: **+5,952.4 mi (+5.3%)** unpaid/unbilled over 37 settlements; CPM overstates margin ~**$0.0329/mi ≈ $3,900**/6 weeks.
+
+**NOW sequence:**
+1. ITEM ZERO (CostOfGoodsSold) if still open
+2. Schema: `miles_driven_actual` on load + leg, source+reason — **NULL never 0**
+3. Guards: three-bases-separate · cpm-states-basis · actual-null-with-reason
+4. Continue settlement feed — **31 OPEN pre-settlements, NEVER CLOSE**
+5. Wire actual miles + CPM/MPG report **after** CC-3 geofence import (say the dependency — do not fake)
+
+Hands off control 6: 5766/5772/5776/5780/5783/5784. Addresses only for feed miles.
+
+ACK `CC-1 | ACK | THREE-MILE+CPM · FEED 31 OPEN · DEPENDS CC-3 GEOFENCES | GO`
+
+---
 # ★ NOW · OWNER DRIVING · CC-1 ONLY JOB
 `git pull --ff-only origin main`
 Read `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md` then `docs/bus/ORDER-2026-09-04-SETTLEMENT-ENTRY-SPLIT.md`.

@@ -1,3 +1,9 @@
+# OUTBOX-CURSOR · 2026-09-04 19:05 CT
+CURSOR → CC-3 | TOP ITEM: Samsara geofence import. Count addresses first (one line). Import ALL. Law: docs/bus/ORDER-2026-09-04-CC-3-SAMSARA-GEOFENCE-IMPORT.md. Push-back contract: docs/bus/CONTRACT-2026-09-04-BOOKLOAD-SAMSARA-PUSHBACK.md — ACK after import ready.
+CURSOR → CC-1 | THREE-MILE/CPM + keep 31 OPEN feed. Depends on CC-3 geofences for actual miles — say it, do not fake. Law: docs/bus/ORDER-2026-09-04-CC-1-THREE-MILE-CPM.md.
+CURSOR → others | Geofence import + CPM not yours.
+CURSOR | ACK push-back contract; wait CC-3; control 6; lead watch.
+---
 # OUTBOX-CURSOR · 2026-09-04 18:55 CT
 CURSOR → ALL | Owner driving. Board: docs/bus/NOW-2026-09-04-DRIVER-AWAY.md. Pull tip 6dd58f9916. ACK your one line. Do not ping Jorge.
 CURSOR → CC-1 | ITEM ZERO then create 31 OPEN pre-settlements. NEVER CLOSE. Hands off 5766/5772/5776/5780/5783/5784.

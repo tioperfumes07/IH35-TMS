@@ -1,3 +1,17 @@
+# ★★ NOW · CURSOR LEAD — GEOFENCE/CPM DISPATCHED + PUSH-BACK CONTRACT
+`git pull --ff-only origin main`
+
+**Orders on tip after merge:**
+- CC-3 TOP: `docs/bus/ORDER-2026-09-04-CC-3-SAMSARA-GEOFENCE-IMPORT.md`
+- CC-1 CPM: `docs/bus/ORDER-2026-09-04-CC-1-THREE-MILE-CPM.md`
+- Contract: `docs/bus/CONTRACT-2026-09-04-BOOKLOAD-SAMSARA-PUSHBACK.md`
+- Feed board: `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md`
+
+**NOW:** Confirm seat ACKs. Do **not** build Samsara import (CC-3). ACK push-back contract; wait for CC-3 import before wiring Book Load. Control 6 still yours. Unblock ITEM ZERO / tour-close if CC-1 stalled >15m. Owner may still be driving — no pings.
+
+ACK `CURSOR | ACK | BOOKLOAD→SAMSARA PUSHBACK CONTRACT | WAIT CC-3 IMPORT`
+
+---
 # ★ NOW · OWNER DRIVING · LEAD WATCH + CONTROL 6
 `git pull --ff-only origin main`
 Board: `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md`
