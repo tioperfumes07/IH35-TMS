@@ -14,6 +14,22 @@
 // Usage: node scripts/verify-active-entity-hardline.mjs [--selftest]
 import { readFileSync, existsSync } from "node:fs";
 
+export const ACTIVE_DRIVER_MIN = 10;
+export const ACTIVE_DRIVER_MAX_EXCLUSIVE = 40;
+export const IN_SERVICE_UNIT_MIN = 1;
+export const IN_SERVICE_UNIT_MAX = 20;
+
+export function auditCountBand(activeDriverCount, inServiceUnitCount) {
+  const failures = [];
+  if (!Number.isInteger(activeDriverCount) || activeDriverCount < ACTIVE_DRIVER_MIN || activeDriverCount >= ACTIVE_DRIVER_MAX_EXCLUSIVE) {
+    failures.push(`active drivers ${activeDriverCount} outside Rule 49 band ${ACTIVE_DRIVER_MIN}–${ACTIVE_DRIVER_MAX_EXCLUSIVE - 1}`);
+  }
+  if (!Number.isInteger(inServiceUnitCount) || inServiceUnitCount < IN_SERVICE_UNIT_MIN || inServiceUnitCount > IN_SERVICE_UNIT_MAX) {
+    failures.push(`in-service units ${inServiceUnitCount} outside Rule 49 band ${IN_SERVICE_UNIT_MIN}–${IN_SERVICE_UNIT_MAX}`);
+  }
+  return failures;
+}
+
 const DRIVERS_ROUTE = "apps/backend/src/mdata/drivers.routes.ts";
 const RULE_DOC = ".cursor/rules/49-active-entity-hardline.mdc";
 const ACTIVE_SET_SERVICE = "apps/backend/src/integrations/samsara/active-driver-set/recompute.service.ts";
@@ -144,6 +160,16 @@ function main() {
     cronMutation[0] = cronMutation[0].replace("listSamsaraIngestionTenantIds(client)", "[]");
     if (audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, positionsSrc, ingestionSrc, cronMutation).length === 0) {
       console.error("SELFTEST FAIL: planted cron-consumer mutation escaped"); process.exit(1);
+    }
+    const escapedCountMutation = [
+      auditCountBand(9, 16),
+      auditCountBand(40, 16),
+      auditCountBand(20, 0),
+      auditCountBand(20, 21),
+    ].some((failures) => failures.length === 0);
+    if (escapedCountMutation || auditCountBand(20, 16).length !== 0) {
+      console.error("SELFTEST FAIL: Rule 49 count-band boundary mutation escaped");
+      process.exit(1);
     }
     console.log("SELFTEST OK: guard trips on driver exclusions + 4 active-set mutations");
   }
