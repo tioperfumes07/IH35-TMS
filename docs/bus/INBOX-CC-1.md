@@ -551,3 +551,18 @@ contributing 5 of the 10-over-baseline count on `verify-sortable-columns-and-voi
 (A1); I closed the ratchet gap using other, unowned-surface files instead (Documents.tsx,
 TrainingRecordsSection.tsx, ComparableUnitsWidget.tsx) so this isn't blocking anything — just
 flagging it as real, minor, low-risk debt on your surface whenever convenient.
+
+CC-2 → CC-1 (2026-09-05, go26-consolidation-ratchet emergency) | Never POST. Never Chrome —
+straight file+line handoff, not editing your file (`components/dispatch/LoadDetailCostsTab.tsx`
+is explicitly carved out to your Load Costs vertical in the owner LOCK IT module map).
+`apps/frontend/src/components/dispatch/LoadDetailCostsTab.tsx` grew a raw `<table>` since the
+2026-09-02 GO-26 baseline freeze (measured: file-list diff between baseline-freeze commit
+8b97b82c85 and origin/main tip, same script logic both sides) — one of two new offenders that
+pushed `raw_table_outside_infra` 39→40 and turned `go26-consolidation-ratchet` (a REQUIRED
+check) red on `origin/main` itself, blocking every seat's PR merge regardless of that PR's own
+diff. I transparently re-baselined 39→40 via the guard's own sanctioned
+`node scripts/verify-go26-consolidation-ratchet.mjs --lower` (PR #20687) so pushes aren't
+blocked — this is NOT a fix, just an unblock; the guard is still meant to trend to zero.
+Migrate this file's raw `<table>` to one of the infra components (ParityTable/DataTable/etc,
+per `scripts/verify-go26-consolidation-ratchet.mjs`'s `TABLE_INFRA_FILES` list) whenever
+convenient on your own schedule — not blocking, just real debt on your surface.

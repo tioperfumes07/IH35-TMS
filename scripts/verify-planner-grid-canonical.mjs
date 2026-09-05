@@ -37,8 +37,15 @@ function inspect({ registry, sources }) {
   if (!Array.isArray(registry.source_contracts) || registry.source_contracts.length !== 6) {
     errors.push("registry must contain the six source-verifiable A contracts (A1-A4, A6-A7)");
   }
-  if (!Array.isArray(registry.route_contracts) || registry.route_contracts.length !== 5) {
-    errors.push("registry must contain exactly five canonical planner routes");
+  // BRD-10 (2026-09-05, L.4c recovery, verify-roundtrips-timeline-restored.mjs): Round Trips
+  // (/dispatch?view=units) deliberately stopped delegating to the shared PlannerGrid and went
+  // back to its own inline grid (restored commit 67faa3dcd) -- that guard explicitly FORBIDS
+  // <PlannerGrid in RoundTripsTimeline.tsx. This registry's route_contracts is therefore down
+  // to the four routes that still canonically render through PlannerGrid; Round Trips is
+  // guarded on its own by verify-roundtrips-timeline-restored.mjs +
+  // verify-dispatch-round-trips-read-recovery.mjs instead.
+  if (!Array.isArray(registry.route_contracts) || registry.route_contracts.length !== 4) {
+    errors.push("registry must contain exactly four canonical PlannerGrid planner routes");
   }
 
   const ids = new Set();
@@ -67,7 +74,11 @@ function inspect({ registry, sources }) {
   // PLN-06 — action width is a grid contract, not row content. Rows without an
   // available action still render the empty action cell, so links/buttons never
   // shift horizontally as status changes.
-  if (!grid.includes("hasActionColumn ? <div className=\"pg-col-action\">{row.action}</div> : null")) {
+  // Regex, not an exact-string match: the cell's inner rendering (CellOrDash wrapper,
+  // data-testid) has legitimately evolved since PLN-06 was written; the invariant that must
+  // hold is the GATE -- `hasActionColumn` (a grid-level flag), never a per-row `row.action`
+  // check, which is exactly the class of regression the mutation selftest below plants.
+  if (!/\{hasActionColumn \? \(\s*<div className="pg-col-action"[^>]*>[\s\S]*?<\/div>\s*\) : null\}/.test(grid)) {
     errors.push("PLN-06: canonical grid does not reserve the action cell for every row");
   }
   if (!grid.includes("actionLabel?: string") || !grid.includes('actionLabel ?? "Action"')) {
@@ -113,7 +124,7 @@ export function selftestPlannerGridCanonical() {
     ["A5 Available in track", mutate(good, grid, "<TrackOverlays days={days}", '<span>Available</span><TrackOverlays days={days}')],
     ["A6 dwell label", mutate(good, grid, "<i>{w.label}</i>", "<i />")],
     ["A7 OOS sticky flush", mutate(good, timeline, 'className="mt-3" data-testid="planner-oos-group"', 'className="sticky mt-3" data-testid="planner-oos-group"')],
-    ["PLN-06 empty action cell", mutate(good, grid, 'hasActionColumn ? <div className="pg-col-action">{row.action}</div> : null', 'row.action != null ? <div className="pg-col-action">{row.action}</div> : null')],
+    ["PLN-06 empty action cell", mutate(good, grid, '{hasActionColumn ? (', '{row.action != null ? (')],
     ["PLN-06 Book header", mutate(good, timeline, 'actionLabel="Book"', 'actionLabel=""')],
     ...good.registry.route_contracts.map((contract) => [
       `route ${contract.route}`,
@@ -135,7 +146,7 @@ export function verifyPlannerGridCanonical() {
       errors.forEach((error) => console.error(`  - ${error}`));
       process.exit(1);
     }
-    console.log(`${LABEL}: PASS — A1-A3/A5-A7 source contracts and A4 evidence hook hold across 5 planner routes`);
+    console.log(`${LABEL}: PASS — A1-A3/A5-A7 source contracts and A4 evidence hook hold across 4 planner routes`);
   } catch (error) {
     console.error(`${LABEL}: FAIL — ${error instanceof Error ? error.message : String(error)}`);
     return false;
