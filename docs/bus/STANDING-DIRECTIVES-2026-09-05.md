@@ -50,6 +50,6 @@
 - **Builder:** **L5 driver settlement detail** section tables to the §14 reference (slice 2 blocked on CC-1 S.1b — build FE scaffolding ready to bind; KPI grid slice-1 done #20660). Banking overflow only when the bus is green and a Cursor-lane FAIL is top.
 
 ---
-### OWNER DECISIONS OUTSTANDING (2)
-1. **Load 13525** — USMCA or Transportation? (blocks its seed)
-2. **Deduction refund policy** — on a partial/fully-collected deduction that is voided, refund already-collected money to the driver, or only stop future collection?
+### OWNER DECISIONS
+1. **Load 13525** — ✅ RULED USMCA by Cursor-lead (owner delegated; reconciler's call). Pickup 2026-08-07 = cutover floor, customer Refrigerx Transportation LLC, already in the seed data. CC-3 seeds via script. NO LONGER BLOCKED.
+2. **Deduction refund policy** — awaiting owner (explanation given 19:40Z): on a voided deduction that already collected money, does the company **refund** the collected amount to the driver, or only **stop future collection**? Default CC-3 builds now = stop-future-collection + preserve collected history (WORM); refund is a separate explicit action pending this ruling.
