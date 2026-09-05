@@ -1058,6 +1058,12 @@ export function syncPlaidItem(operatingCompanyId: string, plaidItemId: string) {
 
 export type CompanyTransactionsSort = "date_desc" | "date_asc" | "amount_desc" | "amount_asc";
 
+// B.2 — the three transaction-type filter values the server can predicate on directly (real,
+// indexed columns). Kept in sync with SERVER_FILTERABLE_TRANSACTION_TYPES in link.routes.ts; the
+// remaining TRANSACTION_TYPE_FILTER_OPTIONS ids stay client-only (derived/computed fields).
+export const SERVER_FILTERABLE_TRANSACTION_TYPES = ["money_in", "money_out", "ready_to_post"] as const;
+export type ServerFilterableTransactionType = (typeof SERVER_FILTERABLE_TRANSACTION_TYPES)[number];
+
 export function getPlaidCompanyTransactions(
   operatingCompanyId: string,
   options: {
@@ -1068,6 +1074,7 @@ export function getPlaidCompanyTransactions(
     sort?: CompanyTransactionsSort;
     date_from?: string;
     date_to?: string;
+    types?: ServerFilterableTransactionType[];
   } = {}
 ) {
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
@@ -1078,6 +1085,7 @@ export function getPlaidCompanyTransactions(
   if (options.sort) params.set("sort", options.sort);
   if (options.date_from) params.set("date_from", options.date_from);
   if (options.date_to) params.set("date_to", options.date_to);
+  if (options.types?.length) params.set("types", options.types.join(","));
   return apiRequest<{ transactions: PlaidBankTransaction[] }>(`/api/v1/banking/plaid/company-transactions?${params.toString()}`);
 }
 

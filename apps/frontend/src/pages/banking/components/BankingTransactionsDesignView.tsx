@@ -16,10 +16,12 @@ import {
   supersedePlaidPendingTransaction,
   updateBankTransactionDate,
   uploadBankStatementCsv,
+  SERVER_FILTERABLE_TRANSACTION_TYPES,
   type BankMatchCandidate,
   type BankMatchCandidateKind,
   type PlaidBankAccount,
   type PlaidBankTransaction,
+  type ServerFilterableTransactionType,
 } from "../../../api/banking";
 import {
   buildRelayFuelBreakdown,
@@ -253,6 +255,40 @@ function transactionLabel(tx: PlaidBankTransaction) {
   return tx.description || tx.merchant_name || "—";
 }
 
+/** B.2 — one predicate per TRANSACTION_TYPE_FILTER_OPTIONS id, extracted from the old single-select
+ * switch so the multi-select filter (a UNION over selectedTransactionTypes) and the server-side
+ * subset (SERVER_FILTERABLE_TRANSACTION_TYPES in api/banking.ts) read the same one definition per
+ * type — money_in/money_out/ready_to_post here MUST agree with the server's is_credit/pending SQL. */
+export function matchesTransactionTypeFilter(type: string, tx: PlaidBankTransaction): boolean {
+  const { spent, received } = spentReceived(tx);
+  switch (type) {
+    case "money_in":
+      return received > 0;
+    case "money_out":
+      return spent > 0;
+    case "ready_to_post":
+      return !tx.pending;
+    case "suggested_matches":
+      return Boolean(tx.matched_kind);
+    case "transfers":
+      return tx.plaid_category.some((category) => category.toLowerCase().includes("transfer"));
+    case "rules":
+      return tx.plaid_category.length > 0;
+    case "missing_from_to":
+      return !String(tx.merchant_name ?? tx.description ?? "").trim();
+    case "uncategorized":
+      return !tx.matched_kind && !hasPersistedMatch(tx);
+    case "requests_waiting_reply":
+      return String(tx.notes ?? "").toLowerCase().includes("waiting for reply");
+    case "requests_reply_received":
+      return String(tx.notes ?? "").toLowerCase().includes("reply received");
+    case "requests_completed":
+      return String(tx.notes ?? "").toLowerCase().includes("request completed");
+    default:
+      return true;
+  }
+}
+
 export function BankingTransactionsDesignView({
   companyId,
   accounts,
@@ -276,16 +312,30 @@ export function BankingTransactionsDesignView({
   const [activeReviewTab, setActiveReviewTab] = useState<ReviewTabId>("for_review");
   const [descriptionFilter, setDescriptionFilter] = useState("");
   const [amountFilter, setAmountFilter] = useState<AmountFilter>("all");
-  const [selectedTransactionType, setSelectedTransactionType] = useState(initialTransactionType ?? "all");
+  // B.2 — multi-select: an empty array means "All transaction types" (no filter, same meaning the
+  // single-select's "all" id used to carry). Selecting any type removes the implicit "all".
+  const [selectedTransactionTypes, setSelectedTransactionTypes] = useState<string[]>(
+    initialTransactionType && initialTransactionType !== "all" ? [initialTransactionType] : []
+  );
+  const toggleTransactionType = (id: string) => {
+    if (id === "all") {
+      setSelectedTransactionTypes([]);
+      return;
+    }
+    setSelectedTransactionTypes((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+    );
+  };
   // Deep-link / KPI filter must apply after mount — BankingHome sets initialTransactionType via
   // ?type=uncategorized (and similar). Without this sync, the first paint sticks on "all".
   useEffect(() => {
-    if (initialTransactionType) {
-      setSelectedTransactionType(initialTransactionType);
+    if (initialTransactionType && initialTransactionType !== "all") {
+      setSelectedTransactionTypes([initialTransactionType]);
     }
   }, [initialTransactionType]);
   const [categorizeBy, setCategorizeBy] = useState<CategorizeBy>("category");
   const [showDateFilterMenu, setShowDateFilterMenu] = useState(false);
+  const [showTypeFilterMenu, setShowTypeFilterMenu] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [collapsedAllGroupings, setCollapsedAllGroupings] = useState(false);
@@ -376,10 +426,34 @@ export function BankingTransactionsDesignView({
     return accounts[0] ?? null;
   }, [accounts, selectedAccountId]);
 
+  // B.2 — only push the type filter server-side when EVERY selected type is server-filterable
+  // (SERVER_FILTERABLE_TRANSACTION_TYPES): a mixed selection (e.g. "Money in" + "Rules") must still
+  // return the UNION of both, and the server cannot evaluate "Rules" (a derived/client-only shape),
+  // so a mixed or unrecognized selection falls back to fetching everything and letting the existing
+  // client-side matchesTransactionTypeFilter UNION (above) do the full, correct job — same result,
+  // just no server-side payload reduction for that particular mix.
+  const serverFilterTypes = useMemo(() => {
+    if (selectedTransactionTypes.length === 0) return undefined;
+    const allServerFilterable = selectedTransactionTypes.every((t) =>
+      (SERVER_FILTERABLE_TRANSACTION_TYPES as readonly string[]).includes(t)
+    );
+    return allServerFilterable ? (selectedTransactionTypes as ServerFilterableTransactionType[]) : undefined;
+  }, [selectedTransactionTypes]);
+
   const transactionsQuery = useQuery({
     // DISP-F9994 (item 24) -- dateFrom/dateTo joined the key so a date-range edit re-queries the
-    // server instead of re-filtering the same already-fetched page in the useMemo below.
-    queryKey: ["banking", "transactions-design", companyId, selectedAccount?.id ?? "", descriptionFilter, dateFrom, dateTo],
+    // server instead of re-filtering the same already-fetched page in the useMemo below. B.2 adds
+    // serverFilterTypes for the same reason (server-side types predicate).
+    queryKey: [
+      "banking",
+      "transactions-design",
+      companyId,
+      selectedAccount?.id ?? "",
+      descriptionFilter,
+      dateFrom,
+      dateTo,
+      serverFilterTypes?.join(",") ?? "",
+    ],
     queryFn: async () => {
       const merged: PlaidBankTransaction[] = [];
       let offset = 0;
@@ -392,6 +466,7 @@ export function BankingTransactionsDesignView({
           sort: "date_desc",
           date_from: dateFrom || undefined,
           date_to: dateTo || undefined,
+          types: serverFilterTypes,
         });
         const rows = page.transactions ?? [];
         merged.push(...rows);
@@ -565,32 +640,13 @@ export function BankingTransactionsDesignView({
       const { spent, received } = spentReceived(tx);
       if (amountFilter === "spent" && spent <= 0) return false;
       if (amountFilter === "received" && received <= 0) return false;
-      switch (selectedTransactionType) {
-        case "money_in":
-          return received > 0;
-        case "money_out":
-          return spent > 0;
-        case "ready_to_post":
-          return !tx.pending;
-        case "suggested_matches":
-          return Boolean(tx.matched_kind);
-        case "transfers":
-          return tx.plaid_category.some((category) => category.toLowerCase().includes("transfer"));
-        case "rules":
-          return tx.plaid_category.length > 0;
-        case "missing_from_to":
-          return !String(tx.merchant_name ?? tx.description ?? "").trim();
-        case "uncategorized":
-          return !tx.matched_kind && !hasPersistedMatch(tx);
-        case "requests_waiting_reply":
-          return String(tx.notes ?? "").toLowerCase().includes("waiting for reply");
-        case "requests_reply_received":
-          return String(tx.notes ?? "").toLowerCase().includes("reply received");
-        case "requests_completed":
-          return String(tx.notes ?? "").toLowerCase().includes("request completed");
-        default:
-          return true;
-      }
+      // B.2 — multi-select is a UNION: no selection (or "all") means unfiltered; any selection
+      // shows a transaction matching AT LEAST ONE selected type (matches the server's OR semantics
+      // for the subset it can pre-filter — see SERVER_FILTERABLE_TRANSACTION_TYPES in api/banking.ts
+      // — and stays correct here regardless of what the server already narrowed, since this is a
+      // strict re-check, never a widening one).
+      if (selectedTransactionTypes.length === 0) return true;
+      return selectedTransactionTypes.some((type) => matchesTransactionTypeFilter(type, tx));
     });
     const sortDir = sortBy.dir === "asc" ? 1 : -1;
     const sortVal = (tx: PlaidBankTransaction): string | number => {
@@ -641,21 +697,21 @@ export function BankingTransactionsDesignView({
       if (va > vb) return 1 * sortDir;
       return 0;
     });
-  }, [activeReviewTab, amountFilter, drafts, reviewTabBuckets, selectedTransactionType, sortBy]);
+  }, [activeReviewTab, amountFilter, drafts, reviewTabBuckets, selectedTransactionTypes, sortBy]);
 
   // CC-3 owner instructions 2026-09-02, item 9: "Empty state names the filter, never a blank
   // panel" -- names every active filter that could be why the list is empty, instead of one
   // static sentence regardless of what's actually applied.
   const emptyStateText = useMemo(() => {
     const reviewTabLabel = BANKING_REVIEW_TABS.find((t) => t.id === activeReviewTab)?.label ?? activeReviewTab;
-    const typeLabel = TRANSACTION_TYPE_FILTER_OPTIONS.find((t) => t.id === selectedTransactionType)?.label;
+    const typeLabels = TRANSACTION_TYPE_FILTER_OPTIONS.filter((t) => selectedTransactionTypes.includes(t.id)).map((t) => t.label);
     const parts = [`No "${reviewTabLabel}" transactions`];
-    if (selectedTransactionType !== "all" && typeLabel) parts.push(`type "${typeLabel}"`);
+    if (typeLabels.length > 0) parts.push(`type "${typeLabels.join(', ')}"`);
     if (amountFilter !== "all") parts.push(`amount "${amountFilter}"`);
     if (descriptionFilter.trim()) parts.push(`description containing "${descriptionFilter.trim()}"`);
     if (dateFrom || dateTo) parts.push(`date ${dateFrom || "…"} to ${dateTo || "…"}`);
     return parts.length > 1 ? `${parts[0]} matching ${parts.slice(1).join(", ")}.` : `${parts[0]}.`;
-  }, [activeReviewTab, selectedTransactionType, amountFilter, descriptionFilter, dateFrom, dateTo]);
+  }, [activeReviewTab, selectedTransactionTypes, amountFilter, descriptionFilter, dateFrom, dateTo]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -666,7 +722,7 @@ export function BankingTransactionsDesignView({
     dateTo,
     descriptionFilter,
     selectedAccount?.id,
-    selectedTransactionType,
+    selectedTransactionTypes,
     viewSettings.pageSize,
   ]);
 
@@ -2563,8 +2619,10 @@ export function BankingTransactionsDesignView({
             );
           })}
         </div>
+        {/* B.2 (owner order 2026-09-05) — one 28px (h-7) height for every control in this toolbar,
+        including the "Money in/out" grouping toggle below. Was a h-7/h-8 mix (measured live). */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="h-8 min-w-[260px]">
+          <div className="h-7 min-w-[260px]">
             <Combobox
               options={descriptionFilterOptions}
               value={descriptionFilter || null}
@@ -2575,12 +2633,12 @@ export function BankingTransactionsDesignView({
               dataTestId="banking-transactions-description-filter"
             />
           </div>
-          <div className="inline-flex overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
+          <div className="inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
             {(["all", "spent", "received"] as const).map((option) => (
               <button
                 key={option}
                 type="button"
-                className={`px-2.5 py-1 ${option !== "all" ? "border-l border-gray-300" : ""} ${
+                className={`flex h-7 items-center px-2.5 ${option !== "all" ? "border-l border-gray-300" : ""} ${
                   amountFilter === option ? "bg-[#1f2a44] text-white" : "text-gray-700"
                 }`}
                 onClick={() => setAmountFilter(option)}
@@ -2589,94 +2647,78 @@ export function BankingTransactionsDesignView({
               </button>
             ))}
           </div>
-          <div className="relative">
-            <button
-              type="button"
-              className="h-8 rounded-sm border border-gray-300 px-2 text-xs text-gray-700"
-              onClick={() => setShowDateFilterMenu((open) => !open)}
-              data-testid="bank-date-filter-button"
-            >
-              {!dateFrom && !dateTo
-                ? "All dates"
-                : dateFrom && dateTo
-                  ? `${dateFrom} → ${dateTo}`
-                  : dateFrom
-                    ? `From ${dateFrom}`
-                    : `To ${dateTo}`}
-            </button>
-            {showDateFilterMenu ? (
-              <div className="absolute left-0 z-20 mt-1 w-72 rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
-                <div className="mb-2 flex flex-wrap gap-1">
-                  {(
-                    [
-                      ["All", () => { setDateFrom(""); setDateTo(""); }],
-                      ["Today", () => {
-                        const d = new Date();
-                        const iso = d.toISOString().slice(0, 10);
-                        setDateFrom(iso); setDateTo(iso);
-                      }],
-                      ["This week", () => {
-                        const d = new Date();
-                        const day = d.getDay();
-                        const start = new Date(d); start.setDate(d.getDate() - ((day + 6) % 7));
-                        const end = new Date(start); end.setDate(start.getDate() + 6);
-                        setDateFrom(start.toISOString().slice(0, 10));
-                        setDateTo(end.toISOString().slice(0, 10));
-                      }],
-                      ["This month", () => {
-                        const d = new Date();
-                        const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
-                        const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0));
-                        setDateFrom(start.toISOString().slice(0, 10));
-                        setDateTo(end.toISOString().slice(0, 10));
-                      }],
-                      ["Last month", () => {
-                        const d = new Date();
-                        const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1));
-                        const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 0));
-                        setDateFrom(start.toISOString().slice(0, 10));
-                        setDateTo(end.toISOString().slice(0, 10));
-                      }],
-                    ] as Array<[string, () => void]>
-                  ).map(([label, apply]) => (
-                    <button
-                      key={label}
-                      type="button"
-                      className="rounded-sm border border-gray-300 px-1.5 py-0.5 text-xs text-gray-700 hover:bg-gray-50"
-                      onClick={() => { apply(); setShowDateFilterMenu(false); }}
-                    >
-                      {label}
-                    </button>
-                  ))}
+          {/* B.2 — date range VISIBLE ON LANDING: both fields render inline, not behind a click.
+          The "Presets" button is a pure convenience shortcut for the same two fields. */}
+          <div className="flex h-7 items-center gap-1">
+            <label htmlFor="tx-date-from" className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+              From
+            </label>
+            <DatePicker id="tx-date-from" value={dateFrom} onChange={setDateFrom} className="h-7 w-[130px]" />
+            <label htmlFor="tx-date-to" className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+              To
+            </label>
+            <DatePicker id="tx-date-to" value={dateTo} onChange={setDateTo} className="h-7 w-[130px]" />
+            <div className="relative">
+              <button
+                type="button"
+                className="flex h-7 items-center rounded-sm border border-gray-300 px-2 text-xs text-gray-700"
+                onClick={() => setShowDateFilterMenu((open) => !open)}
+                data-testid="bank-date-filter-button"
+              >
+                Presets
+              </button>
+              {showDateFilterMenu ? (
+                <div className="absolute left-0 z-20 mt-1 w-56 rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
+                  <div className="flex flex-wrap gap-1">
+                    {(
+                      [
+                        ["All", () => { setDateFrom(""); setDateTo(""); }],
+                        ["Today", () => {
+                          const d = new Date();
+                          const iso = d.toISOString().slice(0, 10);
+                          setDateFrom(iso); setDateTo(iso);
+                        }],
+                        ["This week", () => {
+                          const d = new Date();
+                          const day = d.getDay();
+                          const start = new Date(d); start.setDate(d.getDate() - ((day + 6) % 7));
+                          const end = new Date(start); end.setDate(start.getDate() + 6);
+                          setDateFrom(start.toISOString().slice(0, 10));
+                          setDateTo(end.toISOString().slice(0, 10));
+                        }],
+                        ["This month", () => {
+                          const d = new Date();
+                          const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+                          const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0));
+                          setDateFrom(start.toISOString().slice(0, 10));
+                          setDateTo(end.toISOString().slice(0, 10));
+                        }],
+                        ["Last month", () => {
+                          const d = new Date();
+                          const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1));
+                          const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 0));
+                          setDateFrom(start.toISOString().slice(0, 10));
+                          setDateTo(end.toISOString().slice(0, 10));
+                        }],
+                      ] as Array<[string, () => void]>
+                    ).map(([label, apply]) => (
+                      <button
+                        key={label}
+                        type="button"
+                        className="rounded-sm border border-gray-300 px-1.5 py-0.5 text-xs text-gray-700 hover:bg-gray-50"
+                        onClick={() => { apply(); setShowDateFilterMenu(false); }}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <label htmlFor="tx-date-from" className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                    From
-                  </label>
-                  <DatePicker id="tx-date-from" value={dateFrom} onChange={setDateFrom} className="mt-0.5 w-full" />
-                </div>
-                <div className="mt-1">
-                  <label htmlFor="tx-date-to" className="block text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                    To
-                  </label>
-                  <DatePicker id="tx-date-to" value={dateTo} onChange={setDateTo} className="mt-0.5 w-full" />
-                </div>
-                <button
-                  type="button"
-                  className="mt-2 rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                  onClick={() => {
-                    setDateFrom("");
-                    setDateTo("");
-                  }}
-                >
-                  Clear range
-                </button>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </div>
           <button
             type="button"
-            className="h-8 rounded-sm border border-gray-300 px-2 text-xs text-gray-700"
+            className="flex h-7 items-center rounded-sm border border-gray-300 px-2 text-xs text-gray-700"
             onClick={() => {
               const next = !collapsedAllGroupings;
               setCollapsedAllGroupings(next);
@@ -2693,49 +2735,102 @@ export function BankingTransactionsDesignView({
           </button>
           {/* DEFECT-9b + audit gap #5 — QBO grouping: By month | Money in/out | All dates (flat).
           Pipeline sorts the full set, then groups, then pages. Month bands follow date ASC/DESC.
-          turnOffGrouping remains the flat-list switch (settings + All dates). */}
-          <div className="inline-flex overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
+          turnOffGrouping remains the flat-list switch (settings + All dates). B.2: Money in/out is
+          explicitly named in the owner's "ALL controls incl Money in/out" height requirement. */}
+          <div className="inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
             <button
               type="button"
-              className={`px-2.5 py-1 ${!viewSettings.turnOffGrouping && viewSettings.groupMode === "month" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+              className={`flex h-7 items-center px-2.5 ${!viewSettings.turnOffGrouping && viewSettings.groupMode === "month" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
               onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: false, groupMode: "month" }))}
             >
               By month
             </button>
             <button
               type="button"
-              className={`border-l border-gray-300 px-2.5 py-1 ${!viewSettings.turnOffGrouping && viewSettings.groupMode === "money" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+              className={`flex h-7 items-center border-l border-gray-300 px-2.5 ${!viewSettings.turnOffGrouping && viewSettings.groupMode === "money" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
               onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: false, groupMode: "money" }))}
             >
               Money in/out
             </button>
             <button
               type="button"
-              className={`border-l border-gray-300 px-2.5 py-1 ${viewSettings.turnOffGrouping ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+              className={`flex h-7 items-center border-l border-gray-300 px-2.5 ${viewSettings.turnOffGrouping ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
               onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: true }))}
             >
               All dates
             </button>
           </div>
-          <SelectCombobox
-            value={selectedTransactionType}
-            onChange={(event) => setSelectedTransactionType(event.target.value)}
-            className="w-48 text-xs"
-          >
-            {TRANSACTION_TYPE_FILTER_OPTIONS.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </SelectCombobox>
-          <div className="ml-auto flex items-center gap-2">
+          {/* B.2 — transaction TYPE filter: multi-select checkboxes/chips (was a single-select
+          <select>). Selected ids render as removable chips on the trigger button; "All transaction
+          types" clears the selection. See matchesTransactionTypeFilter (module scope, above) and
+          SERVER_FILTERABLE_TRANSACTION_TYPES (api/banking.ts) for the server/client split. */}
+          <div className="relative">
+            <button
+              type="button"
+              className="flex h-7 min-w-[9rem] items-center justify-between gap-1 rounded-sm border border-gray-300 bg-white px-2 text-xs text-gray-700"
+              onClick={() => setShowTypeFilterMenu((open) => !open)}
+              data-testid="banking-transaction-type-filter-button"
+            >
+              {selectedTransactionTypes.length === 0 ? (
+                <span>All transaction types</span>
+              ) : (
+                <span className="flex flex-wrap items-center gap-1">
+                  {selectedTransactionTypes.map((id) => {
+                    const label = TRANSACTION_TYPE_FILTER_OPTIONS.find((t) => t.id === id)?.label ?? id;
+                    return (
+                      <span
+                        key={id}
+                        className="inline-flex items-center gap-1 rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-[11px] text-white"
+                      >
+                        {label}
+                        <span
+                          role="button"
+                          tabIndex={-1}
+                          aria-label={`Remove ${label}`}
+                          className="cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleTransactionType(id);
+                          }}
+                        >
+                          ×
+                        </span>
+                      </span>
+                    );
+                  })}
+                </span>
+              )}
+            </button>
+            {showTypeFilterMenu ? (
+              <div className="absolute left-0 z-20 mt-1 w-64 rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
+                {TRANSACTION_TYPE_FILTER_OPTIONS.map((option) => {
+                  const checked =
+                    option.id === "all" ? selectedTransactionTypes.length === 0 : selectedTransactionTypes.includes(option.id);
+                  return (
+                    <label
+                      key={option.id}
+                      className="flex cursor-pointer items-center gap-2 rounded-sm px-1.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleTransactionType(option.id)}
+                      />
+                      {option.label}
+                    </label>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+          <div className="ml-auto flex h-7 items-center gap-2">
             <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Categorize by</span>
-            <div className="inline-flex overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
+            <div className="inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
               {(["category", "item"] as const).map((option) => (
                 <button
                   key={option}
                   type="button"
-                  className={`px-2.5 py-1 ${option === "item" ? "border-l border-gray-300" : ""} ${
+                  className={`flex h-7 items-center px-2.5 ${option === "item" ? "border-l border-gray-300" : ""} ${
                     categorizeBy === option ? "bg-[#1f2a44] text-white" : "text-gray-700"
                   }`}
                   onClick={() => setCategorizeBy(option)}
@@ -2749,7 +2844,7 @@ export function BankingTransactionsDesignView({
                 ? `${pageRangeStart}-${pageRangeEnd} of ${pagedGroups.totalRows}`
                 : `0 of ${pagedGroups.totalRows}`}
             </span>
-            <div className="inline-flex items-center gap-1 rounded-sm border border-gray-300 bg-white px-1 py-0.5 text-xs text-gray-700">
+            <div className="inline-flex h-7 items-center gap-1 rounded-sm border border-gray-300 bg-white px-1 text-xs text-gray-700">
               <button
                 type="button"
                 className="rounded-sm px-1.5 py-0.5 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
@@ -2772,7 +2867,7 @@ export function BankingTransactionsDesignView({
               <button
                 type="button"
                 aria-label="View settings"
-                className="h-8 rounded-sm border border-gray-300 px-2 text-gray-700"
+                className="flex h-7 items-center rounded-sm border border-gray-300 px-2 text-gray-700"
                 onClick={() => setViewSettingsOpen((open) => !open)}
               >
                 <Settings className="h-4 w-4" />
@@ -2853,7 +2948,7 @@ export function BankingTransactionsDesignView({
             <div className="relative">
               <button
                 type="button"
-                className="h-8 rounded-sm border border-gray-300 px-2 text-gray-700"
+                className="flex h-7 items-center rounded-sm border border-gray-300 px-2 text-gray-700"
                 onClick={() => setPrintExportMenuOpen((open) => !open)}
               >
                 <Download className="h-4 w-4" />
