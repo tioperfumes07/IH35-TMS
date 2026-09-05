@@ -18,7 +18,7 @@ import { ScheduleReportModal } from "./ScheduleReportModal";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useSearchParams } from "react-router-dom";
-import { formatDateTimeUS } from "../../lib/formatDate";
+import { mmmDdTime } from "../../lib/formatDate";
 import { SCHEDULED_REPORT_LABELS } from "../../lib/scheduled-report-catalog";
 
 const REPORT_PRESETS: Record<string, { title: string; subtitle: string; reportIds: Set<string> }> = {
@@ -79,7 +79,7 @@ function scheduledStatusLabel(status: string): "Active" | "Paused" | "Failed" | 
 
 function scheduledTimestampLabel(value: string | null | undefined): string {
   if (!value) return "—";
-  return formatDateTimeUS(value) || "—";
+  return mmmDdTime(value) || "—";
 }
 
 function statusPill(status: string) {

@@ -3,6 +3,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import type { RunnerColumn } from "./runner-config";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { mmmDd } from "../../../lib/formatDate";
 
 type Props = {
   columns: RunnerColumn[];
@@ -13,7 +14,6 @@ type Props = {
 
 const currencyFormatter = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 const numberFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
-const dateFormatter = new Intl.DateTimeFormat(undefined, { month: "short", day: "2-digit", year: "numeric" });
 
 function formatCell(value: unknown, format: RunnerColumn["format"]) {
   if (value == null) return "";
@@ -21,8 +21,7 @@ function formatCell(value: unknown, format: RunnerColumn["format"]) {
   if (format === "percent") return `${numberFormatter.format(Number(value))}%`;
   if (format === "number") return numberFormatter.format(Number(value));
   if (format === "date") {
-    const d = new Date(String(value));
-    return Number.isNaN(d.getTime()) ? String(value) : dateFormatter.format(d);
+    return mmmDd(value) || String(value);
   }
   return String(value);
 }

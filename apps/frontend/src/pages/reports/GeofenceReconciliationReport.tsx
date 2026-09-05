@@ -4,7 +4,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
+import { mmmDdTime, mmmDd } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
@@ -93,7 +93,7 @@ export function GeofenceReconciliationReport() {
       },
       { key: "unit_id", label: "Unit", sortable: true, render: (f) => <EntityLink kind="unit" id={f.unit_id ?? undefined} label={f.unit_id ? entityLabel(f.unit_number, f.unit_id, "Unit") : "—"} /> },
       { key: "geofence_id", label: "Geofence", sortable: true, render: (f) => <EntityLink kind="geofence" id={f.geofence_id ?? undefined} label={entityLabel(f.geofence_label, f.geofence_id, "Geofence")} /> },
-      { key: "occurred_at", label: "Time", sortable: true, render: (f) => (f.occurred_at ? `${formatDateTimeUS(f.occurred_at)} CT` : "—") },
+      { key: "occurred_at", label: "Time", sortable: true, render: (f) => (f.occurred_at ? `${mmmDdTime(f.occurred_at)} CT` : "—") },
       {
         key: "resolved",
         label: "Status",
@@ -141,7 +141,7 @@ export function GeofenceReconciliationReport() {
           rowKey={(f) => f.uuid}
           loading={isLoading}
           storageKey="geofence-recon"
-          emptyText={`No anomalies found for ${formatDateUS(appliedDate)}.`}
+          emptyText={`No anomalies found for ${mmmDd(appliedDate)}.`}
           exportFilename={`geofence-recon-${appliedDate}`}
           rowClassName={(f) => (f.resolved ? "opacity-50" : "")}
           rowActions={(f) =>

@@ -5,6 +5,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { ListErrorState } from "../../../components/ListErrorState";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { mmmDdTime } from "../../../lib/formatDate";
 
 type Props = {
   operatingCompanyId: string;
@@ -97,7 +98,7 @@ export function IFTAStepMiles({ operatingCompanyId, preparationId, quarter, year
           {runMutation.isPending ? "Aggregating…" : "Run Step 1 — aggregate miles"}
         </button>
         {prepQuery.data?.miles_aggregated_at ? (
-          <p className="text-slate-600">Last aggregated: {new Date(prepQuery.data.miles_aggregated_at).toLocaleString()}</p>
+          <p className="text-slate-600">Last aggregated: {mmmDdTime(prepQuery.data.miles_aggregated_at)}</p>
         ) : null}
         {prepQuery.isError ? (
           <ListErrorState

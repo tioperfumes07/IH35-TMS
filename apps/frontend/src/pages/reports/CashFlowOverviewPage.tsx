@@ -22,7 +22,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { formatDateUS } from "../../lib/formatDate";
+import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 const PAYROLL_ALERT_CENTS = 50_000_00;
@@ -164,7 +164,7 @@ export function CashFlowOverviewPage() {
       title: `Cash flow overview ${appliedAsOf}`,
       bodyHtml: `
         <h1>Cash flow overview</h1>
-        <div class="meta">As of ${esc(formatDateUS(appliedAsOf) || appliedAsOf)} · printed ${esc(new Date().toLocaleString())}</div>
+        <div class="meta">As of ${esc(mmmDd(appliedAsOf) || appliedAsOf)} · printed ${esc(mmmDdTime(new Date()))}</div>
         <h1 style="margin-top:16px">Current state</h1>
         <table>
           <tbody>
@@ -289,13 +289,13 @@ export function CashFlowOverviewPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={projection} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v) => formatDateUS(v) || String(v)} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v) => mmmDd(v) || String(v)} />
                   <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 10 }} />
                   <Tooltip
                     content={({ active, payload, label }) =>
                       active && payload?.length ? (
                         <div className="rounded-sm border border-gray-200 bg-white p-2 text-xs shadow-sm">
-                          <div className="font-semibold">{formatDateUS(label) || String(label ?? "")}</div>
+                          <div className="font-semibold">{mmmDd(label) || String(label ?? "")}</div>
                           {payload.map((p) => (
                             <div key={String(p.dataKey)}>
                               {String(p.name)}: {money(Number(p.value))}

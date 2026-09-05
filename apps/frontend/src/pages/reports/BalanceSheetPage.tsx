@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { formatDateUS } from "../../lib/formatDate";
+import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { companyToday } from "../../lib/businessDate";
 import { BasisSelector, type AccountingBasis } from "../../components/accounting/BasisSelector";
 import {
@@ -119,9 +119,9 @@ export function BalanceSheetPage() {
       title: `Balance sheet as of ${applied.asOfDate}`,
       bodyHtml: `
         <h1>Balance sheet</h1>
-        <div class="meta">As of ${esc(formatDateUS(applied.asOfDate))} · ${esc(
+        <div class="meta">As of ${esc(mmmDd(applied.asOfDate))} · ${esc(
           applied.basis === "cash" ? "Cash" : "Accrual",
-        )} · printed ${esc(new Date().toLocaleString())}</div>
+        )} · printed ${esc(mmmDdTime(new Date()))}</div>
         <table>
           <tbody>
             <tr><th>Total assets</th><td>${esc(money(data.assets.total))}</td></tr>
@@ -143,7 +143,7 @@ export function BalanceSheetPage() {
       <ReportsSubNav />
       <PageHeader
         title="Balance sheet"
-        subtitle={`As of ${formatDateUS(applied.asOfDate)} · ${applied.basis === "cash" ? "Cash" : "Accrual"} basis`}
+        subtitle={`As of ${mmmDd(applied.asOfDate)} · ${applied.basis === "cash" ? "Cash" : "Accrual"} basis`}
         backHref="/reports"
         breadcrumb={["Reports", "Balance Sheet"]}
         actions={

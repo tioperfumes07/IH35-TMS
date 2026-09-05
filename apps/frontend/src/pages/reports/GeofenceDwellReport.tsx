@@ -7,7 +7,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getGeofenceDwellReport, listGeofences, type GeofenceDwellRow, type GeofenceLocationKind } from "../../api/geofencing";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { formatDateTimeUS } from "../../lib/formatDate";
+import { mmmDdTime } from "../../lib/formatDate";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Combobox } from "../../components/Combobox";
@@ -112,8 +112,8 @@ export function GeofenceDwellReport() {
       { key: "location_kind", label: "Kind", sortable: true },
       { key: "unit_number", label: "Unit", sortable: true, render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" /> },
       { key: "driver", label: "Driver", sortable: true, render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id ?? undefined} name={driverName(row.first_name, row.last_name)} noun="Driver" /> },
-      { key: "entered_at", label: "Entered", sortable: true, render: (row) => `${formatDateTimeUS(row.entered_at)} CT` },
-      { key: "exited_at", label: "Exited", sortable: true, render: (row) => (row.exited_at ? `${formatDateTimeUS(row.exited_at)} CT` : "In yard") },
+      { key: "entered_at", label: "Entered", sortable: true, render: (row) => `${mmmDdTime(row.entered_at)} CT` },
+      { key: "exited_at", label: "Exited", sortable: true, render: (row) => (row.exited_at ? `${mmmDdTime(row.exited_at)} CT` : "In yard") },
       { key: "dwell_minutes", label: "Dwell", sortable: true, render: (row) => minutesToClock(row.dwell_minutes) },
     ],
     [],

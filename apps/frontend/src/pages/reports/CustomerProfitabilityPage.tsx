@@ -33,7 +33,7 @@ import {
   CUSTOMER_PROFITABILITY_FLAG_LABELS,
   formatCustomerProfitabilityFlagLabel,
 } from "../../lib/formatCustomerProfitabilityFlagLabel";
-import { formatDateUS } from "../../lib/formatDate";
+import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 const DEFAULT_MIN_REVENUE_CENTS = 100_000; // $1,000
@@ -260,8 +260,8 @@ export function CustomerProfitabilityPage() {
       title: `Customer profitability ${applied.start}_${applied.end}`,
       bodyHtml: `
         <h1>Customer profitability</h1>
-        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · printed ${esc(
-          new Date().toLocaleString(),
+        <div class="meta">${esc(mmmDd(applied.start))} → ${esc(mmmDd(applied.end))} · printed ${esc(
+          mmmDdTime(new Date()),
         )}</div>
         <table>
           <tbody>

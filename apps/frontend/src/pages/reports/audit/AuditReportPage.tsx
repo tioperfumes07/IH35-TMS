@@ -10,6 +10,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { EntityPicker } from "../../../components/EntityPicker";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { ReportsSubNav } from "../ReportsSubNav";
+import { mmmDdTime } from "../../../lib/formatDate";
 
 const PAGE_SIZE = 100;
 
@@ -34,10 +35,6 @@ function subjectTypeToEntityLinkKind(subjectType: string | null | undefined): En
   return SUBJECT_TYPE_TO_ENTITY_KIND[subjectType] ?? null;
 }
 
-function formatDate(iso: string) {
-  try { return new Date(iso).toLocaleString(); } catch { return iso; }
-}
-
 type AuditReportTableRow = AuditReportRow & { row_key: string };
 
 const AUDIT_REPORT_COLUMNS: Array<ParityColumn<AuditReportTableRow>> = [
@@ -46,7 +43,7 @@ const AUDIT_REPORT_COLUMNS: Array<ParityColumn<AuditReportTableRow>> = [
     label: "Date/Time",
     sortable: true,
     sortValue: (row) => new Date(row.occurred_at).getTime(),
-    render: (row) => <span className="whitespace-nowrap text-gray-500">{formatDate(row.occurred_at)}</span>,
+    render: (row) => <span className="whitespace-nowrap text-gray-500">{mmmDdTime(row.occurred_at)}</span>,
   },
   {
     key: "event_type",

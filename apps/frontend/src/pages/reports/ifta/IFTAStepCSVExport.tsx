@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { generateIftaCsv, getIftaPreparation, submitIftaPreparation } from "../../../api/ifta";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { mmmDdTime } from "../../../lib/formatDate";
 
 type Props = {
   operatingCompanyId: string;
@@ -76,10 +77,10 @@ export function IFTAStepCSVExport({ operatingCompanyId, preparationId, quarter, 
           ) : null}
         </div>
         {prepQuery.data?.csv_generated_at ? (
-          <p className="text-slate-600">CSV generated: {new Date(prepQuery.data.csv_generated_at).toLocaleString()}</p>
+          <p className="text-slate-600">CSV generated: {mmmDdTime(prepQuery.data.csv_generated_at)}</p>
         ) : null}
         {prepQuery.data?.submitted_at ? (
-          <p className="font-semibold text-slate-800">Submitted: {new Date(prepQuery.data.submitted_at).toLocaleString()}</p>
+          <p className="font-semibold text-slate-800">Submitted: {mmmDdTime(prepQuery.data.submitted_at)}</p>
         ) : null}
         {!hasTax ? <p className="text-slate-800">Complete Step 3 before generating CSV.</p> : null}
         {csvMutation.isError ? <p className="text-red-700">{String((csvMutation.error as Error)?.message ?? "CSV generation failed")}</p> : null}

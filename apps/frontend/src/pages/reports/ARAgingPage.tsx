@@ -4,7 +4,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { exportArAging, getArAgingReport, type ARAgingRow } from "../../api/reports";
-import { formatDateUS } from "../../lib/formatDate";
+import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { companyToday } from "../../lib/businessDate";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -104,7 +104,7 @@ export function ARAgingPage() {
       { key: "bucket_31_60_cents", label: "31–60", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_31_60_cents) },
       { key: "bucket_61_90_cents", label: "61–90", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_61_90_cents) },
       { key: "bucket_91_plus_cents", label: "91+", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_91_plus_cents) },
-      { key: "last_payment_date", label: "Last Pmt", sortable: true, render: (r) => (r.last_payment_date ? formatDateUS(r.last_payment_date) : "—") },
+      { key: "last_payment_date", label: "Last Pmt", sortable: true, render: (r) => (r.last_payment_date ? mmmDd(r.last_payment_date) : "—") },
     ],
     [],
   );
@@ -147,7 +147,7 @@ export function ARAgingPage() {
           <td style="text-align:right">${esc(money(r.bucket_31_60_cents))}</td>
           <td style="text-align:right">${esc(money(r.bucket_61_90_cents))}</td>
           <td style="text-align:right">${esc(money(r.bucket_91_plus_cents))}</td>
-          <td>${esc(r.last_payment_date ? formatDateUS(r.last_payment_date) : "—")}</td>
+          <td>${esc(r.last_payment_date ? mmmDd(r.last_payment_date) : "—")}</td>
         </tr>`,
       )
       .join("");
@@ -155,7 +155,7 @@ export function ARAgingPage() {
       title: `A/R aging as of ${appliedFilters.asOfDate}`,
       bodyHtml: `
         <h1>Accounts receivable aging</h1>
-        <div class="meta">As of ${esc(formatDateUS(appliedFilters.asOfDate))} · Accrual · printed ${esc(new Date().toLocaleString())}</div>
+        <div class="meta">As of ${esc(mmmDd(appliedFilters.asOfDate))} · Accrual · printed ${esc(mmmDdTime(new Date()))}</div>
         <table>
           <tbody>
             <tr><th>Total open</th><td>${esc(money(kpis.total))}</td></tr>
@@ -191,7 +191,7 @@ export function ARAgingPage() {
       <ReportsSubNav />
       <PageHeader
         title="A/R aging"
-        subtitle={`As of ${formatDateUS(appliedFilters.asOfDate)} · open invoices by customer · Accrual basis`}
+        subtitle={`As of ${mmmDd(appliedFilters.asOfDate)} · open invoices by customer · Accrual basis`}
         backHref="/reports"
         breadcrumb={["Reports", "A/R Aging"]}
         actions={

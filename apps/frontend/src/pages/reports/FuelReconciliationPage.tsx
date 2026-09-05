@@ -22,7 +22,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { formatDateUS } from "../../lib/formatDate";
+import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 import { formatUsdCents } from "../../lib/money";
@@ -124,8 +124,8 @@ export function FuelReconciliationPage() {
       title: `Fuel reconciliation ${applied.start}_${applied.end}`,
       bodyHtml: `
         <h1>Fuel reconciliation</h1>
-        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · printed ${esc(
-          new Date().toLocaleString(),
+        <div class="meta">${esc(mmmDd(applied.start))} → ${esc(mmmDd(applied.end))} · printed ${esc(
+          mmmDdTime(new Date()),
         )}</div>
         <table>
           <tbody>
@@ -199,7 +199,7 @@ export function FuelReconciliationPage() {
 
   const cardColumns = useMemo<ParityColumn<FuelReconciliationUnmatchedCard>[]>(
     () => [
-      { key: "transaction_date", label: "Date", sortable: true, sortValue: (row) => row.transaction_date, render: (row) => (row.transaction_date ? formatDateUS(row.transaction_date) : "—") },
+      { key: "transaction_date", label: "Date", sortable: true, sortValue: (row) => row.transaction_date, render: (row) => (row.transaction_date ? mmmDd(row.transaction_date) : "—") },
       { key: "amount_cents", label: "Amount", sortable: true, render: (row) => money(row.amount_cents) },
       {
         key: "merchant_name",
@@ -229,7 +229,7 @@ export function FuelReconciliationPage() {
   const woColumns = useMemo<ParityColumn<FuelReconciliationUnmatchedWo>[]>(
     () => [
       { key: "wo_number", label: "WO#", sortable: true },
-      { key: "wo_date", label: "Date", sortable: true, sortValue: (row) => row.wo_date, render: (row) => (row.wo_date ? formatDateUS(row.wo_date) : "—") },
+      { key: "wo_date", label: "Date", sortable: true, sortValue: (row) => row.wo_date, render: (row) => (row.wo_date ? mmmDd(row.wo_date) : "—") },
       { key: "amount_cents", label: "Amount", sortable: true, render: (row) => money(row.amount_cents) },
       { key: "unit_number", label: "Unit", sortable: true },
     ],

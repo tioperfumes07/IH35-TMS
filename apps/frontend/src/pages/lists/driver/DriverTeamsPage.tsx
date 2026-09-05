@@ -18,7 +18,7 @@ import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
-import { formatDateUS } from "../../../lib/formatDate";
+import { mmmDd } from "../../../lib/formatDate";
 import { isUnresolvedEntityTombstone } from "../../../lib/entity-label";
 import { SelectCombobox } from "../../../components/Combobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -95,14 +95,14 @@ const TEAM_COLUMNS: Array<ParityColumn<MdataDriverTeam>> = [
     label: "Effective From",
     sortable: true,
     sortValue: (row) => row.effective_from ?? "",
-    render: (row) => <>{formatDateUS(row.effective_from) || "—"}</>,
+    render: (row) => <>{mmmDd(row.effective_from) || "—"}</>,
   },
   {
     key: "effective_to",
     label: "Effective To",
     sortable: true,
     sortValue: (row) => row.effective_to ?? "",
-    render: (row) => <>{formatDateUS(row.effective_to) || "—"}</>,
+    render: (row) => <>{mmmDd(row.effective_to) || "—"}</>,
   },
   {
     key: "is_active",

@@ -6,6 +6,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { formatUsd } from "../../../lib/money";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { mmmDdTime } from "../../../lib/formatDate";
 
 type Props = {
   operatingCompanyId: string;
@@ -126,7 +127,7 @@ export function IFTAStepTax({ operatingCompanyId, preparationId, quarter, year }
           {runMutation.isPending ? "Calculating…" : "Run Step 3 — calculate tax"}
         </button>
         {prepQuery.data?.tax_calculated_at ? (
-          <p className="text-slate-600">Last calculated: {new Date(prepQuery.data.tax_calculated_at).toLocaleString()}</p>
+          <p className="text-slate-600">Last calculated: {mmmDdTime(prepQuery.data.tax_calculated_at)}</p>
         ) : null}
         {prepQuery.isError ? (
           <ListErrorState

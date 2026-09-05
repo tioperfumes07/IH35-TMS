@@ -18,7 +18,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { formatDateUS } from "../../lib/formatDate";
+import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 import { formatUsdCents } from "../../lib/money";
@@ -159,8 +159,8 @@ export function SettlementSummaryPage() {
       title: `Settlement summary ${applied.start}_${applied.end}`,
       bodyHtml: `
         <h1>Settlement summary</h1>
-        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · printed ${esc(
-          new Date().toLocaleString(),
+        <div class="meta">${esc(mmmDd(applied.start))} → ${esc(mmmDd(applied.end))} · printed ${esc(
+          mmmDdTime(new Date()),
         )}</div>
         <table>
           <tbody>
