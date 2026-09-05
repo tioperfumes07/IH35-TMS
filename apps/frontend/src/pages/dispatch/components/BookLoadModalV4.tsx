@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createDispatchLoad, createTrailerInterchange, getLaneMileage, getChainDeadhead } from "../../../api/dispatch";
+import { createDispatchLoad, createTrailerInterchange, distributeLoadInstructions, getLaneMileage, getChainDeadhead } from "../../../api/dispatch";
 import { resolveStopPlace } from "./book-load-city-state";
 import { historicalImportReasonsCatalogClient, listAllDispatchCatalogRows, loadCommoditiesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
 import { ApiError } from "../../../api/client";
@@ -337,7 +337,7 @@ export function BookLoadModalV4({
   // WIZ-49a — QuickBooks-style split save: the caret action chosen for the in-flight submit. Read in
   // submitLoad's success branches (applyPostSaveIntent) so "Save and close" / "Save and print" resolve
   // AFTER the save actually succeeds — never before, so a failed save never closes or prints a stale id.
-  const pendingSaveActionRef = useRef<"default" | "close" | "print">("default");
+  const pendingSaveActionRef = useRef<"default" | "close" | "print" | "send">("default");
   // Border-crossing capture: the full port row selected in the wizard, read at submit to build the
   // stop_type='border' crossing stop for a cross-border (NB/SB) load.
   const selectedBorderPortRef = useRef<PortOfEntry | null>(null);
@@ -996,6 +996,28 @@ export function BookLoadModalV4({
     [operatingCompanyId]
   );
 
+  // WIZ-49d RESOLVED (owner order 2026-09-04, item 5 "enable Book and send"): the owner ruled the
+  // driver document is the no-pay driver instruction sheet (rate hidden) — so "Book and send" now
+  // sends it through the sanctioned manual distribution endpoint (POST /dispatch/loads/:id/
+  // distribute-instructions → generates the driver instructions PDF, links it, and delivers to the
+  // driver via PWA/WhatsApp/email). recipientRole="driver" carries no rate; the customer rate
+  // confirmation is a separate document that never reaches the driver.
+  const sendDriverInstructions = useCallback(
+    async (loadId: string, label: string) => {
+      if (!loadId) return;
+      try {
+        await distributeLoadInstructions(loadId, operatingCompanyId);
+        pushToast(`Driver instructions sent for load ${label}.`, "success");
+      } catch (error) {
+        pushToast(
+          userFacingApiError(error, `Load ${label} booked, but sending driver instructions failed — resend from the load.`),
+          "error"
+        );
+      }
+    },
+    [operatingCompanyId, pushToast]
+  );
+
   // WIZ-49a — resolve the caret action AFTER a save succeeds. Returns true when it fully handled the
   // post-save UX (so the caller must NOT also render the lingering ack panel).
   function applyPostSaveIntent(id: string, label: string): boolean {
@@ -1011,6 +1033,9 @@ export function BookLoadModalV4({
     }
     if (intent === "print") {
       printDispatchSheet(id);
+    }
+    if (intent === "send") {
+      void sendDriverInstructions(id, label);
     }
     return false;
   }
@@ -2714,10 +2739,21 @@ export function BookLoadModalV4({
                   pendingSaveActionRef.current = "print";
                   runPrimarySubmit();
                 }}
-                saveAndSendDisabledReason="Pending owner ruling (WIZ-49d): send the rate confirmation (shows the customer rate) or the dispatch sheet (rate hidden) to the driver — not built until the owner decides what is sent."
+                // WIZ-49d RESOLVED (owner order 2026-09-04, item 5): "Book and send" is enabled in book
+                // mode — it books + dispatches, then sends the no-pay driver instruction sheet to the
+                // driver via the distribution endpoint (see sendDriverInstructions). Edit mode has no
+                // send affordance (nothing new to dispatch), so it is only wired when not editing.
+                onSaveAndSend={
+                  isEditMode
+                    ? undefined
+                    : () => {
+                        pendingSaveActionRef.current = "send";
+                        runPrimarySubmit();
+                      }
+                }
                 // Owner's exact words for the Book Load split control (2026-09-04): primary "Book +
                 // dispatch"; caret "Book and dispatch / Book and save / Book and print / Book and send".
-                // "Book and send" stays disabled (WIZ-49d). Edit mode keeps the generic Save labels.
+                // Edit mode keeps the generic Save labels.
                 menuLabels={
                   isEditMode
                     ? undefined
