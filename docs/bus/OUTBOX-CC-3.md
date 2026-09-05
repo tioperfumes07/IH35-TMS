@@ -345,3 +345,10 @@ signed source JSON (script: node scripts/verify-settlement-seed-cc-3.mjs → 8/8
 MATCH); all 8 pre-settlements OPEN, never closed, correctly grouped per driver (S-13642..S-13648).
 `SELECT count(*) FROM mdata.loads WHERE operating_company_id='5c854333-6ea5-4faa-af31-67cb272fef80'
 AND is_sample_data=false` = 17. Deadline 08:00Z: met. NEXT: M.3 pre-settlement backend per INBOX.
+
+CC-3 | ACK 12:45Z RESET | df6b2929fa | Taking Codex's slice 5785-5795 (11 settlements) per the
+reassignment, extending scripts/seed-settlements-cc-3.ts's exact pattern to
+scripts/seed-settlements-codex.ts + scripts/verify-settlement-seed-codex.mjs, 5789/13557 date-memo
+rule applied. Deadline 15:30Z. 5778/13525 (no customer name) and 5782/13540 (lumper vendor blank)
+stay open pending owner answers, not touched further. M.3 resumes after (WIP stashed, uncommitted,
+nothing broken on main).
