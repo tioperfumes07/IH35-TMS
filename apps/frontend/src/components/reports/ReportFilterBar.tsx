@@ -83,7 +83,7 @@ export function ReportFilterBar({
   onStatusFilterChange,
   statusOptions,
 }: ReportFilterBarProps) {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [, setSearchParams] = useSearchParams();
 
   const syncUrl = useCallback(
     (key: string, value: string | null) => {
