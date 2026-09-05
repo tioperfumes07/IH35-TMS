@@ -13,6 +13,16 @@
       "claimed_at": "2026-09-04",
       "purpose": "LOAD-COSTS-COMPLETE items (1)/(2) TIMING correction (owner order 2026-09-04, QBO/NetSuite customer-deposit pattern researched first): creates catalogs.accounts 2250 'Customer Deposits (Broker Advances)' (Liability, USMCA-only -- no such account exists live today, verified). Adds bank_account_id/receipt_journal_entry_id/reclass_journal_entry_id to accounting.broker_advances so item (1)'s receipt posts a real balanced JE (DR bank / CR 1100 AR if an invoice already exists, else CR 2250) and buildInvoiceFromLoad's existing unapplied-advance claim loop can post the DR 2250 / CR 1100 reclass JE when it later claims a pre-invoice advance -- one claim path, not a second one. Applied live and verified on Neon tiny-field-89581227/br-fancy-credit-akjnd07a."
     },
+    "202613740001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-04",
+      "purpose": "LOAD-COSTS-COMPLETE-VERTICAL spec 09-04-2026 §1.2: widen accounting.chart_of_accounts_roles_role_check to admit two role values -- 'company_fuel_advance_expense' (NEW, so the fuel-advance account can be bound by role instead of name-matched, per owner ruling 'the fuel advance from us to the driver is a company expense... bind by role, never by name') and 'detention_pay_expense' (a real, currently-live drift found while investigating: already a first-class CoaRole in resolver.service.ts's COA_ROLE_VALUES since DWELL-01-D3, 2026-08-30, but never added to the live DB CHECK constraint -- designating it today would fail the INSERT). DROP+ADD CONSTRAINT, full reproduced superset, idempotent, matching the 202612811700 pattern."
+    },
+    "202613750001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-04",
+      "purpose": "LOAD-COSTS-COMPLETE-VERTICAL spec 09-04-2026 §1.2: seed accounting.chart_of_accounts_roles for USMCA, role='company_fuel_advance_expense' -> catalogs.accounts id 353fbd5b-d39c-4709-ac19-60cae52018f7 (account 5000 'Fuel & Diesel', CostOfGoodsSold, postable, active), resolved by org.companies.code='USMCA' (never a hardcoded UUID), idempotent ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE, matching the 202612880000 pattern. Depends on 202613740001 landing first (the CHECK-widen)."
+    },
     "202613700200": {
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-04",
