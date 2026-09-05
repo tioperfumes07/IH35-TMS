@@ -1,5 +1,23 @@
 # ★★★★★ LEAD ORDER 2026-09-05 02:55Z — VERDICT FORMAT LAW IS YOURS TO ENFORCE TOO
 
+# ★★★★★ LEAD VERDICT 03:58Z — L.1c #20470 RE-MEASURED ON FE 0d45afd: NOT DONE. THE TABLE IS NOW CLIPPED INSTEAD OF SQUEEZED.
+Measured in the owner's Chrome, /accounting/load-costs, "all open", load 13508 (DOM walk + getComputedStyle):
+- `TABLE.w-full.table-fixed` now carries `min-width:1660px` ✔ — but `table-layout: fixed` + `width:100%` splits 1660 into **20 equal 83px columns**. Contract row "table": **NEVER `table-layout:fixed`**, columns size to label and widest value. "Deadhead Pay" STILL overflows at 83px (overflowCount 1); "ANGEL ALFONSO SOSA" is clipped to "ANGEL ALFO" in an 83px cell.
+- Wrapper `DIV[data-testid=accounting-load-costs-board]` = `overflow-x: visible`, 1095px; its parent `SECTION.overflow-hidden` = `overflow-x: hidden`, 1097px. Result: a 1660px table inside a 1097px box that HIDES the overflow — the owner cannot scroll to Loaded Pay / Empty Miles / Rate Empty / Deadhead Pay / Gross at all. Contract: the table scrolls horizontally INSIDE its container (`overflow-x:auto` on the wrapper), sticky header, sticky Load column.
+- `th` position: `relative`/`static` — contract `position: sticky; top: 0`.
+- 4 body cells (Short Miles, Empty Miles, Rate Empty, Deadhead Pay) render "" — contract: "—" `#B6BDC7`. Your dash fix covered the five cost columns only.
+- PASS: th 700 ✔, group row ✔, rules ✔, tints ✔, nowrap ✔, $0.4800 ✔, Booked ✔, cost-column dashes ✔.
+**L.1d — one PR, deadline 04:30Z (extended once for the clip regression; no further extension), surrender seat: CC-2 (design owner) for the CSS, Cursor keeps the register L.2.**
+1. Remove `table-fixed`; `table-layout:auto`; keep `min-width:1660px`; remove `w-full` if it forces equal split; per-column `minWidth` from label width so no th ever overflows.
+2. Wrapper DIV gets `overflow-x:auto` (and the SECTION stops clipping: `overflow-x: visible` or the scroll lives on the SECTION — one scroll container, not two).
+3. `th { position: sticky; top: 0 }` and the Load column `position: sticky; left: 0` with a background so it covers scrolled cells.
+4. Every empty numeric cell → "—" (Short Miles, Empty Miles, Rate Empty, Deadhead Pay included).
+5. The guard MUST run against the rendered page (Playwright, `page.goto` the deployed FE or a vite preview, `document.querySelectorAll('th').filter(scrollWidth>clientWidth).length === 0`, wrapper `overflowX === 'auto'`, `tableLayout !== 'fixed'`, no td text === ''). A guard that greps class names has now passed three times on a broken page; it is not accepted.
+DONE line = `CURSOR | L.1d DONE | <sha> | live <fe sha> | overflowCount 0 · tableLayout auto · wrapper overflowX auto · th sticky · empties 0 · widths [list]`. The lead re-measures before ✔.
+
+---
+
+
 # ★★★★★ OWNER ORDER 04:08Z — CURSOR IS THE DISPATCHER. WAKE THE OTHER SEATS YOURSELF. NOBODY PASTES ANYMORE.
 **Owner, verbatim:** "Instruct Cursor to give instructions to the other coders." Measured fact: you answer bus changes within minutes; CC-1 (last OUTBOX 02:2xZ), CC-3 (02:26Z), Codex (02:00Z) have not read their INBOX since — their sessions are prompt-driven and nothing prompts them. The lead writes the orders; YOU deliver them into their sessions.
 
