@@ -156,11 +156,8 @@ export function VendorsPage() {
     },
   });
   // V8 — roster-level Category filter for the LEFT vendor list (distinct from By Category tab).
+  // K.9 — roster filters are inline (visible on first load, 0 clicks), not staged behind a popover.
   const [rosterCategory, setRosterCategory] = useState("");
-  const rosterFilters = useStagedListFilters({
-    applied: { listStatus, rosterCategory }, empty: { listStatus: "active" as const, rosterCategory: "" },
-    onApply: (next) => { setListStatus(next.listStatus); setRosterCategory(next.rosterCategory); },
-  });
   const [sidebarPage, setSidebarPage] = useState(1);
   const [sidebarPageSize, setSidebarPageSize] = useState(50);
   const createOpen = searchParams.get("create") === "1";
@@ -482,50 +479,37 @@ export function VendorsPage() {
                 Master-detail
               </button>
             </div>
-            {/* CHROME-04 — roster-level Status/Category chips collapsed behind a QBO-style
-                Filters popover (Dispatch FilterBar / CollapsedListFilters gold pattern).
-                Filters the left vendor list in BOTH list and master-detail view modes. */}
-            <CollapsedListFilters
-              activeFilterCount={(listStatus !== "active" ? 1 : 0) + (rosterCategory ? 1 : 0)}
-              onApply={rosterFilters.apply} onReset={rosterFilters.reset} onCancel={rosterFilters.cancel} applyDisabled={!rosterFilters.dirty}
-              testIdPrefix="vendors-roster"
-              dataAttributes={{ "data-vendors-roster-filter-toolbar": "collapsed" }}
-            >
-              <div className="space-y-1.5">
-                <div className="text-xs font-semibold text-gray-600">Status</div>
-                <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="vendors">
-                  {(["active", "inactive", "all"] as const).map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      className={`rounded-sm px-2 py-1 font-medium capitalize ${rosterFilters.draft.listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
-                      onClick={() => rosterFilters.setDraft({ ...rosterFilters.draft, listStatus: value })}
-                    >
-                      {value}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {/* V8 — roster Category filter (filters the left vendor list, not transactions). */}
-              {categoryOptions.length > 0 ? (
-                <div className="space-y-1.5">
-                  <div className="text-xs font-semibold text-gray-600">Category</div>
-                  <SelectCombobox
-                    value={rosterFilters.draft.rosterCategory}
-                    onChange={(event) => rosterFilters.setDraft({ ...rosterFilters.draft, rosterCategory: event.target.value })}
-                    className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                    aria-label="Filter vendors by category"
-                  >
-                    <option value="">All categories</option>
-                    {categoryOptions.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </SelectCombobox>
-                </div>
-              ) : null}
-            </CollapsedListFilters>
+            {/* K.9 — roster-level Status/Category filters INLINE (visible on first load, 0 clicks).
+                Restored from pre-CHROME-04 (1e4a6282d7^). Filters the left vendor list in BOTH
+                list and master-detail view modes. Direct state — no staging popover. */}
+            <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="vendors" data-vendors-roster-filter-toolbar="inline">
+              {(["active", "inactive", "all"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`rounded-sm px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                  onClick={() => setListStatus(value)}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+            {/* V8 — roster Category filter (filters the left vendor list, not transactions). */}
+            {categoryOptions.length > 0 ? (
+              <SelectCombobox
+                value={rosterCategory}
+                onChange={(event) => setRosterCategory(event.target.value)}
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                aria-label="Filter vendors by category"
+              >
+                <option value="">All categories</option>
+                {categoryOptions.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </SelectCombobox>
+            ) : null}
             <ActionButton data-testid="vendors-create-open" onClick={openCreate}>
               + Create Vendor
             </ActionButton>

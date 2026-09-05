@@ -439,11 +439,8 @@ export function CustomersPage() {
   // Active/Inactive soft-delete tabs (deactivated_at). Both default to "" = no filter.
   const [rosterType, setRosterType] = useState<"" | "broker" | "direct_shipper">("");
   const [rosterCreditStatus, setRosterCreditStatus] = useState<"" | "active" | "inactive" | "credit_hold" | "blacklist">("");
-  const rosterFilters = useStagedListFilters({
-    applied: { listTab, rosterType, rosterCreditStatus },
-    empty: { listTab: "active" as const, rosterType: "" as const, rosterCreditStatus: "" as const },
-    onApply: (next) => { setListTab(next.listTab); setRosterType(next.rosterType); setRosterCreditStatus(next.rosterCreditStatus); },
-  });
+  // K.9 — roster filters are inline (visible on first load, 0 clicks), not staged behind a popover.
+  // Direct state setters apply immediately, matching the pre-CHROME-04 design.
   // AUDIT 2610 / CLS-FILTER-GEAR-APPLY — Transaction List Filter panel must stage Status/Date/Category
   // behind Apply/Cancel/Reset (same CollapsedListFilters law as roster Filters). Do not mutate the
   // live invoice query until Apply.
@@ -903,58 +900,45 @@ export function CustomersPage() {
                 { value: "master-detail", label: "Master-detail", testId: "customers-view-master-detail" },
               ]}
             />
-            {/* CHROME-04 — roster-level Status/Type/Credit-status chips collapsed behind a
-                QBO-style Filters popover (Dispatch FilterBar / CollapsedListFilters gold pattern).
-                Filters the left customer list in BOTH list and master-detail view modes. */}
-            <CollapsedListFilters
-              activeFilterCount={(listStatus !== "active" ? 1 : 0) + (rosterType ? 1 : 0) + (rosterCreditStatus ? 1 : 0)}
-              onApply={rosterFilters.apply} onReset={rosterFilters.reset} onCancel={rosterFilters.cancel} applyDisabled={!rosterFilters.dirty}
-              testIdPrefix="customers-roster"
-              dataAttributes={{ "data-customers-roster-filter-toolbar": "collapsed" }}
+            {/* K.9 — roster-level Status/Type/Credit-status filters INLINE (visible on first load, 0 clicks).
+                Restored from pre-CHROME-04 (1e4a6282d7^). Filters the left customer list in BOTH
+                list and master-detail view modes. Direct state — no staging popover. */}
+            <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="customers" data-customers-roster-filter-toolbar="inline">
+              {(["active", "inactive", "all"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  data-testid={`customers-roster-status-${value}`}
+                  className={`rounded-sm px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                  onClick={() => setListTab(value)}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+            {/* V8 — roster Type + Credit-status filters (filter the left customer list, not transactions). */}
+            <SelectCombobox
+              value={rosterType}
+              onChange={(event) => setRosterType(event.target.value as typeof rosterType)}
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              aria-label="Filter customers by type"
             >
-              <div className="space-y-1.5">
-                <div className="text-xs font-semibold text-gray-600">Status</div>
-                <ToolbarSegmentControl
-                  value={rosterFilters.draft.listTab}
-                  onChange={(value) => rosterFilters.setDraft({ ...rosterFilters.draft, listTab: value })}
-                  dataAttributes={{ "data-list-status-filter": "customers" }}
-                  options={(["active", "inactive", "all"] as const).map((value) => ({
-                    value,
-                    label: value.charAt(0).toUpperCase() + value.slice(1),
-                    testId: `customers-roster-status-${value}`,
-                  }))}
-                />
-              </div>
-              {/* V8 — roster Type + Credit-status filters (filter the left customer list, not transactions). */}
-              <div className="space-y-1.5">
-                <div className="text-xs font-semibold text-gray-600">Type</div>
-                <SelectCombobox
-                  value={rosterFilters.draft.rosterType}
-                  onChange={(event) => rosterFilters.setDraft({ ...rosterFilters.draft, rosterType: event.target.value as typeof rosterType })}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                  aria-label="Filter customers by type"
-                >
-                  <option value="">All types</option>
-                  <option value="broker">Broker</option>
-                  <option value="direct_shipper">Direct shipper</option>
-                </SelectCombobox>
-              </div>
-              <div className="space-y-1.5">
-                <div className="text-xs font-semibold text-gray-600">Credit status</div>
-                <SelectCombobox
-                  value={rosterFilters.draft.rosterCreditStatus}
-                  onChange={(event) => rosterFilters.setDraft({ ...rosterFilters.draft, rosterCreditStatus: event.target.value as typeof rosterCreditStatus })}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                  aria-label="Filter customers by credit status"
-                >
-                  <option value="">All statuses</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="credit_hold">Credit hold</option>
-                  <option value="blacklist">Blacklist</option>
-                </SelectCombobox>
-              </div>
-            </CollapsedListFilters>
+              <option value="">All types</option>
+              <option value="broker">Broker</option>
+              <option value="direct_shipper">Direct shipper</option>
+            </SelectCombobox>
+            <SelectCombobox
+              value={rosterCreditStatus}
+              onChange={(event) => setRosterCreditStatus(event.target.value as typeof rosterCreditStatus)}
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              aria-label="Filter customers by credit status"
+            >
+              <option value="">All statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="credit_hold">Credit hold</option>
+              <option value="blacklist">Blacklist</option>
+            </SelectCombobox>
             <div className="relative z-50" onClick={(event) => event.stopPropagation()}>
               <Button type="button" className="relative z-50" data-testid="customers-create-open" onClick={openCreate}>
                 + Create Customer

@@ -85,34 +85,29 @@ if (!vendors.includes("data-vendors-filter-toolbar")) {
   failures.push("VendorsListView: missing data-vendors-filter-toolbar collapsed marker");
 }
 
-// CHROME-04 — Customers/Vendors PAGE-HEADER roster filters (Status/Type/Credit-status/Category)
-// must also collapse behind CollapsedListFilters — these sit ABOVE CustomersListView/VendorsListView
-// and were previously always-on chip strips + selects in the PageHeader actions row.
+// K.9 (2026-09-05) — Customers/Vendors PAGE-HEADER roster filters (Status/Type/Credit-status/Category)
+// are INLINE (visible on first load, 0 clicks), restored from pre-CHROME-04 (1e4a6282d7^).
+// The CHROME-04 collapse was reversed by owner order: the filters must be visible without clicking
+// a Filters popover. The transaction-list filters (txFilters/txnFilters) stay collapsed.
 const customersPage = read("apps/frontend/src/pages/Customers.tsx");
-if (!customersPage.includes("CollapsedListFilters")) {
-  failures.push("Customers.tsx: roster Status/Type/Credit-status filters must use CollapsedListFilters");
-}
-if (!customersPage.includes("data-customers-roster-filter-toolbar")) {
-  failures.push("Customers.tsx: missing data-customers-roster-filter-toolbar collapsed marker");
+if (!customersPage.includes('data-customers-roster-filter-toolbar="inline"')) {
+  failures.push("Customers.tsx: missing data-customers-roster-filter-toolbar=\"inline\" marker (K.9 inline filter bar)");
 }
 {
-  const beforePopover = customersPage.split("CollapsedListFilters")[0] ?? customersPage;
-  if (/data-list-status-filter="customers"/.test(beforePopover)) {
-    failures.push("Customers.tsx: roster Status chips still always-on outside the Filters popover");
+  const beforeTxFiltersPopover = customersPage.split("<CollapsedListFilters")[0] ?? customersPage;
+  if (!/data-list-status-filter="customers"/.test(beforeTxFiltersPopover)) {
+    failures.push("Customers.tsx: roster Status chips must be inline (visible on first load) before the transaction filters popover");
   }
 }
 
 const vendorsPage = read("apps/frontend/src/pages/Vendors.tsx");
-if (!vendorsPage.includes("CollapsedListFilters")) {
-  failures.push("Vendors.tsx: roster Status/Category filters must use CollapsedListFilters");
-}
-if (!vendorsPage.includes("data-vendors-roster-filter-toolbar")) {
-  failures.push("Vendors.tsx: missing data-vendors-roster-filter-toolbar collapsed marker");
+if (!vendorsPage.includes('data-vendors-roster-filter-toolbar="inline"')) {
+  failures.push("Vendors.tsx: missing data-vendors-roster-filter-toolbar=\"inline\" marker (K.9 inline filter bar)");
 }
 {
-  const beforePopover = vendorsPage.split("CollapsedListFilters")[0] ?? vendorsPage;
-  if (/data-list-status-filter="vendors"/.test(beforePopover)) {
-    failures.push("Vendors.tsx: roster Status chips still always-on outside the Filters popover");
+  const beforeTxnFiltersPopover = vendorsPage.split("<CollapsedListFilters")[0] ?? vendorsPage;
+  if (!/data-list-status-filter="vendors"/.test(beforeTxnFiltersPopover)) {
+    failures.push("Vendors.tsx: roster Status chips must be inline (visible on first load) before the transaction filters popover");
   }
 }
 
