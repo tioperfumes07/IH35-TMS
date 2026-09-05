@@ -403,7 +403,12 @@ async function fetchSamsaraStatsPage(token: string, after: string | null): Promi
   return { data, hasNextPage, cursor };
 }
 
-async function fetchSamsaraPage(token: string, endpoint: "/fleet/drivers" | "/fleet/vehicles" | "/fleet/trailers" | "/addresses", after: string | null): Promise<{
+async function fetchSamsaraPage(
+  token: string,
+  endpoint: "/fleet/drivers" | "/fleet/vehicles" | "/fleet/trailers" | "/addresses",
+  after: string | null,
+  extraParams?: Record<string, string>
+): Promise<{
   data: Record<string, unknown>[];
   hasNextPage: boolean;
   cursor: string | null;
@@ -411,6 +416,7 @@ async function fetchSamsaraPage(token: string, endpoint: "/fleet/drivers" | "/fl
   const url = new URL(`${SAMSARA_API_BASE}${endpoint}`);
   url.searchParams.set("limit", "512");
   if (after) url.searchParams.set("after", after);
+  for (const [key, value] of Object.entries(extraParams ?? {})) url.searchParams.set(key, value);
   let res: Response;
   try {
     res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }));
@@ -477,6 +483,45 @@ export class SamsaraClient {
       }
     } catch {
       return [];
+    }
+    return out;
+  }
+
+  /** ROW-39 (2026-09-05 owner finding): /fleet/drivers defaults to `driverActivationStatus=active`
+   *  when the param is omitted — every existing caller of listDrivers() above relies on exactly that
+   *  default (syncSamsaraDriversMaster creates/updates mdata.drivers rows from it; widening it would
+   *  flood the driver roster with hundreds of ex-employees never part of this TMS), so this is a
+   *  SEPARATE method, not a change to listDrivers()'s behavior. Used ONLY by the row-39 mirror
+   *  collector, which writes to integrations.samsara_drivers (a raw mirror), never to mdata.drivers.
+   *  Fetches BOTH statuses (two full paginated passes; Samsara has no combined "all" value) and
+   *  stamps driverActivationStatus onto every raw row so it is never missing even if the API response
+   *  itself omits the field. */
+  async listDriversAllActivationStatuses(): Promise<SamsaraDriver[]> {
+    const token = this._token();
+    if (!token) return [];
+    const out: SamsaraDriver[] = [];
+    for (const activationStatus of ["active", "deactivated"] as const) {
+      let after: string | null = null;
+      try {
+        for (let page = 0; page < 50; page += 1) {
+          const { data, hasNextPage, cursor } = await fetchSamsaraPage(token, "/fleet/drivers", after, {
+            driverActivationStatus: activationStatus,
+          });
+          for (const row of data) {
+            if (typeof row.id === "string" && row.id.trim().length > 0) {
+              out.push({
+                id: row.id.trim(),
+                raw: { ...row, driverActivationStatus: row.driverActivationStatus ?? activationStatus },
+              });
+            }
+          }
+          if (!hasNextPage || !cursor) break;
+          after = cursor;
+        }
+      } catch {
+        // one status pass failing (transient network etc.) must not drop what the OTHER pass already
+        // collected — never turn a partial success into an empty result for both.
+      }
     }
     return out;
   }
