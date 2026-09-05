@@ -58,8 +58,8 @@ Silence past a deadline = surrender. "Blocked" must quote the blocker and name w
 | M.2 | Durable draft advance, backend only + 400 reason body. Deadline 04:30Z | next |
 | 1.2 | CoGS picker + fuel by role + operating_bank by role (#20425 #20426) | ✔ |
 | 1.3/1.4 | → Cursor L.2 / L.3 | ✖ transferred |
-| M.3 | Pre-settlement BACKEND: 404→200, escrow $25/load conditional, consolidated read model endpoint (shape to Cursor). Deadline 06:00Z | |
-| M.4 | 31-settlement feed via real UI; never close; hands off 5766/5772/5776/5780/5783/5784 | |
+| M.3 | → CC-3 (owner 02:50Z) | ✖ transferred |
+| M.4a | Settlement feed first half 5753, 5760–5778 via real UI; never close; hands off 5766/5772/5776/5780/5783/5784 | |
 | M.5 | Three-mile schema + CPM; 1.11 actual miles ⛔ until CC-3 3.5 | |
 
 ### CC-2 — design + verify-live · `docs/bus/09-05-2026-Claude-Coder-2-DISPATCH-DESIGN-SWEEP-THEN-ACC-DEFECTS.md`
@@ -72,13 +72,15 @@ Silence past a deadline = surrender. "Blocked" must quote the blocker and name w
 | 2.4+ | ACC-01.. one vertical each, USMCA-filtered | |
 | V | Standing: verify-live every Cursor deploy (#20425/#20426 first) | standing |
 
-### CC-3 — telematics · `docs/bus/09-05-2026-Claude-Coder-3-GEOFENCE-ENGINE-REBUILD-LOVES-604-AND-ARRIVAL-ALERT-CHAIN-Updated.md`
+### CC-3 — MONEY CODER #2 (owner 02:50Z) + telematics · `docs/bus/09-05-2026-Claude-Coder-3-GEOFENCE-ENGINE-REBUILD-LOVES-604-AND-ARRIVAL-ALERT-CHAIN-Updated.md`
 | # | Step | Mark |
 |---|---|---|
 | 3.1 | Address count wiring | ✔ #20411 |
 | 3.2a | samsara_addresses draft handed | ✔ #20412 |
 | 3.2b | Engine flap fix code + guards + migration #4 drafted + TEST geofence archived | ✔ #20447, live in 7e852b2 (lead re-measured). API shapes still owed inside 3.3 |
-| 3.3 | Samsara import/projection service — CODE now against live tables; `--apply` ⛔ until geofence_vehicle_state exists + flap proof started. Deadline 04:30Z | → |
+| 3.3 | Samsara import/projection → TRANSFERRED TO CODEX X.9 (owner 02:50Z) | ✖ transferred |
+| M.3 | PRE-SETTLEMENT BACKEND (from CC-1): 404→200, escrow 2500¢ per load conditional, board+drop read-model endpoints, shapes to Cursor. Deadline 05:00Z. Surrender: CC-1 | → |
+| M.4b | Settlement feed second half 5779–5795 after Cursor L.2 live. Deadline 09:00Z | |
 | 3.4 | Match proximity+name, collision report | |
 | 3.5 | Three guards green | |
 | 3.6 | ACK push-back contract | |
@@ -95,7 +97,8 @@ Silence past a deadline = surrender. "Blocked" must quote the blocker and name w
 | X.3 | unit_number on every units-without-load row | ✔ |
 | X.4 | FLT-01 → FLT-02 → FLT-04 → FLT-10 | ✔ (FLT-10 render = Cascade) |
 | X.5 | Border contract endpoint to Cursor | ✔ #20437 |
-| X.6 | Live-verify X.2/X.3/X.5 on 61f1967; paste raw JSON | → |
+| X.6 | Live-verify X.2/X.3/X.5 on live API; paste raw JSON. Deadline 03:20Z | → |
+| X.9 | SAMSARA IMPORT/PROJECTION service (from CC-3 3.3): raw store, project locations+geofences, match, --dry-run default, --apply ⛔ until geofence_vehicle_state. Deadline 05:30Z. Surrender: CC-3 | next |
 | X.7 | Design law on maintenance surface, one guarded PR | |
 | X.8 | WO create/edit comboboxes + unit-picker rule + ≥$7,000 role routing on screen | |
 
@@ -111,6 +114,7 @@ Silence past a deadline = surrender. "Blocked" must quote the blocker and name w
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG (newest first)
+- 02:50Z (real clock; earlier labels 02:45–03:10Z ran ~25 min ahead) — OWNER: CC-1 unreliable → CC-3 is money coder #2 (M.3 pre-settlement backend, M.4b feed half); Codex takes Samsara import as X.9; both were idle >10 min.
 - 03:10Z — OWNER: Cursor takes Load Costs (board L.1, register L.2, tabs L.3); CC-1 stands down from UI → M.1 migration #4 (03:40Z), M.2 draft backend, M.3 pre-settlement backend, M.4 feed, M.5 mileage.
 - 03:00Z — CC-3 3.2b ✔ verified (code live in 7e852b2, TEST geofence archived on Neon); geofence_vehicle_state still absent → migration #4 = CC-1 0b after 1.3a, Cursor fallback. CC-3 → 3.3 code, deadline 04:30Z. VERDICT FORMAT LAW merged c9d81dcf (.cursor rule + LAW doc + board).
 - 02:45Z — Owner viewed the live board; lead measured it in the owner's Chrome (61f1967). CC-1 → 1.3a with a 03:45Z deadline; miss = Cursor takes the board + Costs tab (owner order). Codex → X.6/X.7/X.8.
