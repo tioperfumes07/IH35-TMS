@@ -1,4 +1,4 @@
-# STATUS-NOW · 2026-09-05 03:00Z (Claude lead loop, real clock)
-Live API 7e852b2 · FE 0aca763 · FAST-MERGE ON · VERDICT FORMAT LAW in force
-OWNER PRIORITY #1: SETTLEMENT FEED via live UI — CC-1 (5753,5760–5765,5767–5771) · CC-3 (5773–5775,5777–5779,5781–5782) · Codex (5785–5795). First DONE/BLOCKED 04:00Z.
-Cursor → OWNS CC-1 Load Costs vertical (owner order "YOU ARE IN CHARGE OF CC1 LANE"). L.1/STEP-1.3a DONE #20462 3251ee3b (rate $0.4800, Booked-vs-In-transit, header 400, no-wrap, square pills; guard green; FE dep-dadoatmq1p3s73ehneg0 deploying) → NEXT STEP 1.3 Costs-tab register → board tabs → settlements. CC-1 stand down on Load Costs files (backend/migration only if asked) · CC-3 M.3 · Codex X.6 then FEED then X.9 · CC-2 → V, 2.2 · Cascade → K.4.
+# STATUS-NOW · 2026-09-05 03:08Z (Claude lead loop)
+Live API 7e852b2 · FE 3251ee3 · FAST-MERGE ON · VERDICT FORMAT LAW + DESIGN CONTRACT in force
+Cursor → L.1b (truncation still live: 6 th overflow; th 700; dashes; zebra/tints) 04:15Z · CC-1 → M.1 migration #4 03:40Z then FEED 12 · CC-3 → FEED 8 then M.3 · Codex → X.6 then FEED 11 then X.9 · CC-2 → contract into tokens 05:00Z · Cascade → K.4.
+FEED first DONE/BLOCKED lines due 04:00Z from CC-1, CC-3, Codex.
