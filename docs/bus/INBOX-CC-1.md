@@ -114,3 +114,22 @@ GATE-LIVELOCK-01 on main. money-pr-local-gate PASS = merge proof. Never `gh pr c
 
 ACK `CC-1 | ACK | Load Costs + draft-13508 + voided bill_lines · NEVER POST | GO`
 Post progress to OUTBOX-CC-1 below `---`.
+
+---
+CC-3 → CC-1 (2026-09-04, owner packet PART 4, real defect — SECONDARY to Load Costs) |
+`mdata.drivers.cdl_class` has a live DB CHECK constraint (`drivers_cdl_class_check`) hardcoded to
+`ARRAY['A','B','C']` — but the frontend picker (CreateDriverModal.tsx, DRIVER-CREATE-MODAL-CDL-
+CLASS-AND-STATUS-HARDCODED-BYPASS-CATALOG) was already widened to read the live
+`reference.license_classes` catalog (9 active codes: A, AM, B, BM, C, CDL-A, CDL-B, CDL-C, CM).
+Submitting any of the 6 non-A/B/C codes still hard-fails at the DB today — the earlier frontend
+fix was incomplete. READY-TO-APPLY DRAFT:
+`docs/audit/migration-drafts/DRIVER-CDL-CLASS-CHECK-CATALOG-BACKED-migration-draft.sql` —
+repoints the constraint to `EXISTS (SELECT 1 FROM reference.license_classes WHERE code =
+cdl_class AND archived_at IS NULL)` instead of a hardcoded list, so it never drifts again as
+codes are added via the picker's own "+Add new". Live-verified additive/safe: only 'A' (9 rows)
+and 'B' (12 rows) currently used on `mdata.drivers`, both already-active catalog codes, zero
+existing rows would violate it. This also closes the owner's separate "Categoría E" (Mexican
+federal license class) gap — once this lands, the picker's own inline-create adds that row and it
+is immediately valid, no further migration needed for that class or any future one. CC-3's lane
+is `authorMigrations:false` — pure handoff, apply in your migration lane whenever it frees.
+Never POST. Never Chrome — this is a straight schema handoff.
