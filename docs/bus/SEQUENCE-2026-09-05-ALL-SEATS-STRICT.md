@@ -21,6 +21,9 @@ Every step the lead hands a seat, and every DONE a seat posts back, carries ALL 
 6. **THE DONE LINE** is re-measurable: `SEAT | STEP-N DONE | <sha> | <live sha> | <the same measurements, now passing> | NEXT N+1`. The lead re-measures before marking ✔.
 Silence past a deadline = surrender. "Blocked" must quote the blocker and name who unblocks it, in writing, before the deadline.
 
+## SETTLEMENT FEED — OWNER PRIORITY #1 (02:58Z) · `docs/bus/ORDER-2026-09-05-SETTLEMENT-FEED-PRIORITY.md`
+CC-1 12 · CC-3 8 · Codex 11 · owner 6. Live UI only, is_sample_data=false, addresses only, never close, stop at first refusal. Cursor fixes every FEED BLOCKED on its surface ahead of L.3.
+
 ## CROSS-SEAT GATES
 | Gate | Blocks | Opens when |
 |---|---|---|
@@ -59,7 +62,7 @@ Silence past a deadline = surrender. "Blocked" must quote the blocker and name w
 | 1.2 | CoGS picker + fuel by role + operating_bank by role (#20425 #20426) | ✔ |
 | 1.3/1.4 | → Cursor L.2 / L.3 | ✖ transferred |
 | M.3 | → CC-3 (owner 02:50Z) | ✖ transferred |
-| M.4a | Settlement feed first half 5753, 5760–5778 via real UI; never close; hands off 5766/5772/5776/5780/5783/5784 | |
+| M.4a | FEED NOW (owner 02:58Z): 5753, 5760–5765, 5767–5771 (12) via live UI; first DONE/BLOCKED 04:00Z; slice 10:00Z via real UI; never close; hands off 5766/5772/5776/5780/5783/5784 | |
 | M.5 | Three-mile schema + CPM; 1.11 actual miles ⛔ until CC-3 3.5 | |
 
 ### CC-2 — design + verify-live · `docs/bus/09-05-2026-Claude-Coder-2-DISPATCH-DESIGN-SWEEP-THEN-ACC-DEFECTS.md`
@@ -79,8 +82,8 @@ Silence past a deadline = surrender. "Blocked" must quote the blocker and name w
 | 3.2a | samsara_addresses draft handed | ✔ #20412 |
 | 3.2b | Engine flap fix code + guards + migration #4 drafted + TEST geofence archived | ✔ #20447, live in 7e852b2 (lead re-measured). API shapes still owed inside 3.3 |
 | 3.3 | Samsara import/projection → TRANSFERRED TO CODEX X.9 (owner 02:50Z) | ✖ transferred |
-| M.3 | PRE-SETTLEMENT BACKEND (from CC-1): 404→200, escrow 2500¢ per load conditional, board+drop read-model endpoints, shapes to Cursor. Deadline 05:00Z. Surrender: CC-1 | → |
-| M.4b | Settlement feed second half 5779–5795 after Cursor L.2 live. Deadline 09:00Z | |
+| M.3 | PRE-SETTLEMENT BACKEND (from CC-1): 404→200, escrow 2500¢ per load conditional, board+drop read-model endpoints, shapes to Cursor. After M.4b. Deadline 07:00Z. Surrender: CC-1 | next |
+| M.4b | FEED NOW (owner 02:58Z): 5773–5775, 5777–5779, 5781–5782 (8) via live UI; first DONE/BLOCKED 04:00Z; slice 10:00Z — BEFORE M.3 | → |
 | 3.4 | Match proximity+name, collision report | |
 | 3.5 | Three guards green | |
 | 3.6 | ACK push-back contract | |
@@ -98,7 +101,8 @@ Silence past a deadline = surrender. "Blocked" must quote the blocker and name w
 | X.4 | FLT-01 → FLT-02 → FLT-04 → FLT-10 | ✔ (FLT-10 render = Cascade) |
 | X.5 | Border contract endpoint to Cursor | ✔ #20437 |
 | X.6 | Live-verify X.2/X.3/X.5 on live API; paste raw JSON. Deadline 03:20Z | → |
-| X.9 | SAMSARA IMPORT/PROJECTION service (from CC-3 3.3): raw store, project locations+geofences, match, --dry-run default, --apply ⛔ until geofence_vehicle_state. Deadline 05:30Z. Surrender: CC-3 | next |
+| X.F | FEED NOW (owner 02:58Z): 5785–5795 (11) via live UI; first DONE/BLOCKED 04:00Z; slice 10:00Z — after X.6 | next |
+| X.9 | SAMSARA IMPORT/PROJECTION service (from CC-3 3.3): after X.F. Deadline 12:00Z. Surrender: CC-3 | |
 | X.7 | Design law on maintenance surface, one guarded PR | |
 | X.8 | WO create/edit comboboxes + unit-picker rule + ≥$7,000 role routing on screen | |
 
@@ -114,6 +118,7 @@ Silence past a deadline = surrender. "Blocked" must quote the blocker and name w
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG (newest first)
+- 02:58Z — OWNER: settlement feed is priority #1 for every money-capable seat, no gate. Split CC-1 12 / CC-3 8 / Codex 11 / owner 6. ORDER-2026-09-05-SETTLEMENT-FEED-PRIORITY.md on the bus.
 - 02:50Z (real clock; earlier labels 02:45–03:10Z ran ~25 min ahead) — OWNER: CC-1 unreliable → CC-3 is money coder #2 (M.3 pre-settlement backend, M.4b feed half); Codex takes Samsara import as X.9; both were idle >10 min.
 - 03:10Z — OWNER: Cursor takes Load Costs (board L.1, register L.2, tabs L.3); CC-1 stands down from UI → M.1 migration #4 (03:40Z), M.2 draft backend, M.3 pre-settlement backend, M.4 feed, M.5 mileage.
 - 03:00Z — CC-3 3.2b ✔ verified (code live in 7e852b2, TEST geofence archived on Neon); geofence_vehicle_state still absent → migration #4 = CC-1 0b after 1.3a, Cursor fallback. CC-3 → 3.3 code, deadline 04:30Z. VERDICT FORMAT LAW merged c9d81dcf (.cursor rule + LAW doc + board).
