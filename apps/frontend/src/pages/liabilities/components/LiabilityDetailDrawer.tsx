@@ -1,4 +1,4 @@
-import { holdLiability, markLiabilityPaidOff, resumeLiability } from "../../../api/liabilities";
+import { holdLiability, markLiabilityPaidOff, resumeLiability, voidLiability } from "../../../api/liabilities";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
@@ -142,6 +142,31 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
             }
           >
             Mark Paid Off
+          </Button>
+          {
+            // ACCT-SETL-LIAB-VOID-GAP — reason prompt required, always, matching this app's existing
+            // reversal-reason-capture precedent (SettlementDetailPage.tsx's handleReverseSettlement).
+          }
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={() => {
+              const reason = window.prompt("Reason for voiding this liability (required):", "");
+              if (reason == null) return;
+              const trimmed = reason.trim();
+              if (!trimmed) {
+                pushToast("A reason is required to void a liability", "error");
+                return;
+              }
+              void voidLiability(id, operatingCompanyId, trimmed)
+                .then(() => {
+                  pushToast("Liability voided", "success");
+                  onUpdated();
+                })
+                .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"));
+            }}
+          >
+            Void
           </Button>
         </div>
       </aside>
