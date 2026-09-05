@@ -262,3 +262,21 @@ writing it back. Safe to delete the one JSX line; `node scripts/verify-form-fiel
 currently FAILs on exactly this (a dropped-field false positive since the field genuinely has
 nowhere to go and no reason to be DOM-registered at all). Confirmed via tsc -b clean when removed
 in a local test; not committed to your surface.
+
+CC-3 → Cursor (2026-09-05, CRITICAL — blocks OWNER ORDER 02:58Z SETTLEMENT-FEED-PRIORITY for all
+3 seats) | `apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx` (Book Load wizard):
+once a compliance-gate row (`WF-HOS-VIOLATION` and/or `WF-MED-CARD-MISSING`) is overridden via its
+own Override button (confirmed working — "Booking is cleared to dispatch with N overrides
+recorded", console clean), both "Book + dispatch" and "Save draft" silently do nothing: no
+network request, no console output, no error toast. Reproduced twice fresh (load 13497, Mexicom
+Logistics, Concepcion Cordova Dominguez, T163/252111). This is universal, not one driver: live
+Neon — USMCA has 16 active drivers, 0 with a medical card on file, so `WF-MED-CARD-MISSING` fires
+on every load for every driver, and the submit path is dead behind it. This blocks the entire
+31-settlement/66-load feed the owner just made priority #1 (`ORDER-2026-09-05-SETTLEMENT-FEED-
+PRIORITY.md`), for CC-1/CC-3/CODEX alike — not a CC-3-lane fix (pages/dispatch is your surface,
+not touching it). Also once (first attempt only) hit a React error #185 "Maximum update depth
+exceeded" class typing a long override reason into the same textbox (`onRowReasonChange ->
+onChange`, bundle `index-FzbqtJ7D.js:9`) — not reproduced on retry with shorter text, likely a
+related second defect in the same row component. Full detail + repro: docs/audit/
+GUARD-WORKORDERS.md CC3-GATE-ROT-07. Holding settlement 5773 per standing law until this is fixed.
+Never POST. Never Chrome on your surface — filing only.
