@@ -55,8 +55,18 @@ const COLUMNS: Array<ParityColumn<Line>> = [
     render: (line) => line.source_label ?? "—",
   },
   { key: "description", label: "Description" },
-  { key: "miles", label: "Miles", render: (line) => <>{line.miles ?? "—"}</> },
-  { key: "rate", label: "Rate", render: (line) => <>{line.rate ?? "—"}</> },
+  // S.1 — same real-data + formatting fix as EarningsSection.tsx (driver_bills join, design-contract
+  // precision: miles 1-decimal + thousands separator, rate 4-decimal dollars-per-mile).
+  {
+    key: "miles",
+    label: "Miles",
+    render: (line) => <>{line.miles != null ? line.miles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : "—"}</>,
+  },
+  {
+    key: "rate",
+    label: "Rate",
+    render: (line) => <>{line.rate != null ? `$${line.rate.toFixed(4)}` : "—"}</>,
+  },
   {
     key: "amount",
     label: "Amount",
