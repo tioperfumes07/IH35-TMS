@@ -9,6 +9,39 @@ export function humanizeErrorCode(code: string): string {
   return trimmed.replace(/^E_/, "").replace(/_/g, " ").toLowerCase();
 }
 
+const DISPATCH_STATUS_LABELS: Record<string, string> = {
+  unassigned: "draft (unassigned)",
+  assigned_not_dispatched: "assigned",
+  dispatched: "dispatched",
+  driver_no_show: "driver no-show",
+  driver_walkoff: "driver walk-off",
+  in_transit: "in transit",
+  delivered_pending_docs: "delivered (pending docs)",
+  completed_docs_received: "completed",
+  invoiced: "invoiced",
+  paid: "paid",
+  cancelled: "cancelled",
+  abandoned: "abandoned",
+};
+
+function dispatchStatusLabel(status: string): string {
+  return DISPATCH_STATUS_LABELS[status] ?? status.replace(/_/g, " ");
+}
+
+/**
+ * DISPATCH-3 (owner order 2026-09-05): the load transition route rejects an illegal status change
+ * with {error:"invalid_transition", from_status, to_status} and NO human message, so a dispatcher
+ * pressing Dispatch on a draft (unassigned) load only ever saw the machine code "invalid_transition"
+ * — the button looked dead. Turn it into a plain-English reason with the corrective action. Draft is
+ * the common case (13508): a draft can only become assigned once it has a driver.
+ */
+export function invalidTransitionMessage(from: string, to: string): string {
+  if (from === "unassigned") {
+    return "This load is still a draft — assign a driver and unit before dispatching.";
+  }
+  return `A ${dispatchStatusLabel(from)} load can't move straight to ${dispatchStatusLabel(to)}.`;
+}
+
 /**
  * CU-09 / CLS-BARE-ERROR — prefer `message` / `blocker` / details, never a bare `E_*` code.
  * Use for every operator toast / submitError from an API catch.
@@ -16,6 +49,11 @@ export function humanizeErrorCode(code: string): string {
 export function userFacingApiError(err: unknown, fallback: string): string {
   if (err instanceof ApiError) {
     const data = (err.data as Record<string, unknown> | null) ?? {};
+    if (data.error === "invalid_transition") {
+      const from = typeof data.from_status === "string" ? data.from_status : "";
+      const to = typeof data.to_status === "string" ? data.to_status : "";
+      return invalidTransitionMessage(from, to);
+    }
     const details = data.details as Record<string, unknown> | undefined;
     if (details) {
       if (typeof details.message === "string" && details.message.trim()) return details.message.trim();
