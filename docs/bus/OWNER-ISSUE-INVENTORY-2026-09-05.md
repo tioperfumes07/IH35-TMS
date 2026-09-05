@@ -38,6 +38,13 @@ Devin is not active today — nothing routes to Devin.
 | 27 | Feed rulings (owner 14:15Z) | Lumper vendor = the delivery location, cash; missing customer = create from the document. Closes 13540 and 13525. | seed scripts rule | CC-3 | now | — |
 | 28 | Settlements list | Live: S-13646 Gross/Deductions/Net all $0.00 while lines total $958+; Loads cell "1352613527" (no separator); 7 button heights. | list read model | CC-1 S.1 (extend) | 17:30Z | CC-3 |
 | 29 | Seed — invoice dates | Live: seeded proformas carry Issue = 09/05/2026 (today), Due +30. Must be the load's pickup date from the document. | seed script | CC-3 | 16:00Z | CC-1 |
+| 30 | Driver Profile — layout | Assignment history + overlaps tables render above the content of all 11 tabs (double-routed). | profile page | Codex DP.1 | 18:30Z | Cascade |
+| 31 | Driver Profile — Actions | 5 header buttons (Onboarding · Edit · Deactivate · Resend Invite · HOS Detail) instead of one Actions ▾. | profile header | Codex DP.1 | 18:30Z | Cascade |
+| 32 | Driver Profile — Load History | 5 columns, no miles/pay/dates/settlement, no Export/PDF, row click lands on the dispatch board not the load, Method shows `full_form`. | Load History tab | Codex DP.1 | 18:30Z | Cascade |
+| 33 | Driver Profile — Audit History | Global audit component, 50 rows, machine event names; not scoped to the driver. | audit tab + API | CC-3 DP.3 | 20:30Z | CC-1 |
+| 34 | Driver Profile — Documents | 9 docs for a 6-load driver incl. legacy `L-20260830-00xx` instruction PDFs; per-load PDFs mixed with driver documents; Doc Date `-`. | Documents tab + docs.files | Codex DP.2 | 19:30Z | Cascade |
+| 35 | Driver Profile — Equipment | Unit only; no Trailer, no Load, no miles. | Equipment tab | Codex DP.2 | 19:30Z | Cascade |
+| 36 | Driver Profile — Earnings & Debt | 1 settlement row at $0.00/$0.00/$0.00 (6 bills exist); no per-load earnings, no debt history. | read model | CC-1 D.4 | 21:30Z | CC-3 |
 
 **Live re-measurement 14:40Z (Chrome back):** settlement detail Miles `0`/Rate `0` (fake zeros), 0 Add buttons, 0 inputs, first money section at y=756; Bills "No bills found." with 30 driver bills live; Invoices 38 rows, no Factored column; Banking toolbar 8 distinct control heights (20–36px), "All dates" duplicated, type filter is a text input, 0 date inputs visible, 0 suggestions on 355 rows.
 
@@ -76,7 +83,8 @@ Devin is not active today — nothing routes to Devin.
 4. **S.3** — Invoices list **Factored** column (Not factored · Submitted · Advanced · Settled) + factor name from `factoring_status`/`factor_profile_id`; dash never blank; guard. (#14) — 19:00Z
 5. **D.3** driver-profile banner order (19:30Z) · **D.1** deductions grouped by driver (20:00Z) · **D.2** Escrow view + by-driver + profile card + quarantine test driver (21:00Z) — see the 14:20Z INBOX block. (#24–26)
 
-### CODEX (maintenance)
+### CODEX (maintenance, then driver profile wiring)
+0. After X.8: **DP.1** (18:30Z) and **DP.2** (19:30Z) — driver profile tabs, see the driver-profile INBOX block.
 1. **X.7** maintenance tables/KPIs on the ParityTable design contract, one guarded PR — 15:00Z. 2. **X.8** WO create/edit comboboxes, unit-picker rule, ≥$7,000 role routing on screen — 17:00Z. 3. Re-post the DEPLOY-REQUEST for `e272e9cf` (X.9) to Cursor. Your feed slice is CC-3's. (#20, #21)
 
 ### CASCADE (lists/reports/planners)
