@@ -78,3 +78,5 @@ No open report/list/planner rows assigned to Cascade in OWNER-ISSUE-INVENTORY (#
 Requesting next assignment from lead — do not invent scope.
 
 CASCADE | SIDE-SEARCH+HISTORY DONE | 83368160b5 | origin/main | rows=real (listAllDispatchLoads + listExpenses, scoped by customer/vendor UUID) | guard=verify-counterparty-side-search.mjs + verify-counterparty-transactions-tab.mjs (extended) | NEXT next report row
+
+CASCADE | K.4 BRD-19 DONE | 7987870b7f | origin/main | S30 timeline util column testid present; selftest 10/10 PASS; guard OK | NEXT K.5 BRD-20
