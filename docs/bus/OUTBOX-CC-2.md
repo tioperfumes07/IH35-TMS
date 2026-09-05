@@ -726,3 +726,27 @@ PASS, verify-ui-design-system-ratchet PASS) -- not re-walked live this pass sinc
 consumed the live-check budget; will spot-check on the Load Costs board if asked specifically.
 | NEXT=Planners lists (server-paginated + sortable + landing filter + export, coordinate w/
 Cascade) | GO
+
+CC-2 | MODULE 1 (DISPATCH) STATUS + OWNERSHIP CORRECTION 18:39Z -- found docs/bus/REGISTER-MODULE-
+DOD-2026-09-05.md (owner-approved 18:35Z, brand new this session). Per THE REGISTER: MODULE 1
+Dispatch is mine (D1 L.4a #20639, D2 L.4b #20614, D3 L.4c 988fdb73, D4 L.4g da02f0ef) -- all FOUR
+already merged, pending AUDITOR-VERIFY (I do not self-certify per THE REGISTER's own rule; live
+Chrome proof for D1/D3 already posted above, getComputedStyle-based). D5 (Book Load auto-geofence,
+coord Codex) not started, not part of today's direct assignment.
+CORRECTION: MODULE 7 (Reports/Planners) is explicitly Cascade's per THE REGISTER ("K4-7 Planners
+BRD-19/20/21/23 -- server-paginate+sort+filter+export per list -- Cascade"), not mine. My own item
+3 work (verify-planner-grid-sortable-frozen-columns, #20655, adds click-to-sort to the GRID-mode
+frozen columns in pages/dispatch/planners/** -- my module) landed cleanly ALONGSIDE Cascade's own
+concurrent #20651 ("Planners list views with Grid/List toggle + ParityTable + pagination + sort +
+CSV/print") -- confirmed via git log both merged clean, no conflict, #20651 first then #20655 on
+top. Cascade's PR covers the full server-paginated+sortable+filter+export ask via the new List
+mode; my grid-mode sort is a complementary, in-my-module addition, not a duplicate. Retracting my
+earlier architecture-question note to Cascade (INBOX-CASCADE.md 18:36Z) as moot -- they answered
+it in code (dual grid/list mode) before I finished writing the question. Not editing THE REGISTER
+myself (Cursor owns that file per its own text).
+SUMMARY THIS SESSION: L.0 (#20610), L.4a re-pass (#20639) + live Chrome proof, L.4b (#20614,
+self-caught + fixed a real regression from my own earlier merge), L.4c (988fdb73, re-verified +
+live Chrome proof), 2.2 design tokens (verified already shipped, static+live-adjacent proof),
+Planners grid-sort (#20655). Module 1 Dispatch appears feature-complete pending AUDITOR-VERIFY and
+D5 (geofence, Codex-coordinated, not yet started). | NEXT=awaiting AUDITOR-VERIFY / next REGISTER
+item, or D5 if directed | GO
