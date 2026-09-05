@@ -36,6 +36,30 @@ if (/<PlannerGrid\b/.test(timeline)) {
   errors.push("RoundTripsTimeline.tsx must not delegate rendering to PlannerGrid; it must render its own inline grid.");
 }
 
+// DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §C — the long-leg data attribute existed with no
+// visual effect (no CSS rule painted it) and the legend row was entirely absent. Both real gaps,
+// fixed 2026-09-05 (L.4c). Everything else this guard already checked above was, on live
+// re-verification, already correctly restored — this only adds the two pieces that were missing.
+if (!/outline:\s*`1\.5px solid \$\{LONG_LEG_OUTLINE\}`/.test(timeline)) {
+  errors.push("RoundTripsTimeline.tsx must visually outline a long leg (1.5px, LONG_LEG_OUTLINE), not just carry the data-rt-long-leg attribute with no paint.");
+}
+if (!/const LONG_LEG_OUTLINE = "#dc2626"/.test(timeline)) {
+  errors.push("RoundTripsTimeline.tsx is missing the long-leg outline color token (#dc2626).");
+}
+if (!/data-testid="round-trips-timeline-legend"/.test(timeline)) {
+  errors.push("RoundTripsTimeline.tsx must render a legend row (round-trips-timeline-legend).");
+}
+for (const phrase of [
+  "NB — Northbound, starts the tour",
+  "TR — Triangulation",
+  "SB — Southbound, closes the settlement at Laredo",
+  "leg running 7+ days",
+]) {
+  if (!timeline.includes(phrase)) {
+    errors.push(`RoundTripsTimeline.tsx legend is missing the exact phrase: "${phrase}"`);
+  }
+}
+
 if (!/path: "\/dispatch\/round-trips"/.test(manifest)) {
   errors.push("route-manifest.ts must register the canonical /dispatch/round-trips route.");
 }
