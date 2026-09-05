@@ -1,3 +1,5 @@
+**VERDICT FORMAT LAW (owner 2026-09-05 02:50Z) is in force — see the board. Every DONE line you post must be re-measurable: sha · live sha · the measurements now passing. Deadlines are hard; silence = surrender.**
+
 # ★★★★ LEAD VERDICT 2026-09-05 02:25Z — STEP L ✔ (bc099ea7, docs/LAW.md 477 lines verified on main). K.0 ✔.
 **Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md`
 

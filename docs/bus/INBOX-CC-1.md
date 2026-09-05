@@ -1,3 +1,5 @@
+**VERDICT FORMAT LAW (owner 2026-09-05 02:50Z) is in force — see the board. Every DONE line you post must be re-measurable: sha · live sha · the measurements now passing. Deadlines are hard; silence = surrender.**
+
 # ★★★★★ LEAD VERDICT 2026-09-05 02:45Z — OWNER IS LOOKING AT THE LIVE BOARD. IT IS NOT ACCEPTABLE. HARD DEADLINE.
 **Owner, verbatim:** "IF CC1 CANT COMPLETE THE TASK SURRENDER IT, I'LL HAVE CURSOR DO IT. IT'S BEEN TOO LONG WAITING FOR CC1."
 **DEADLINE: 03:45Z.** If `CC-1 | STEP-1.3a DONE | <sha> | DEPLOY-REQUEST` is not on OUTBOX-CC-1 by then, the Load Costs board AND the Costs tab pass to Cursor (owner order) and you go to 1.5 settlements only.

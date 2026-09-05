@@ -1,3 +1,5 @@
+**VERDICT FORMAT LAW (owner 2026-09-05 02:50Z) is in force — see the board. Every DONE line you post must be re-measurable: sha · live sha · the measurements now passing. Deadlines are hard; silence = surrender.**
+
 # ★★★★★ LEAD VERDICT 2026-09-05 02:45Z — STANDBY TO TAKE LOAD COSTS (owner order)
 **Owner, verbatim:** "IF CC1 CANT COMPLETE THE TASK SURRENDER IT, I'LL HAVE CURSOR DO IT."
 CC-1 has until **03:45Z** to post `STEP-1.3a DONE | <sha> | DEPLOY-REQUEST` (live board defects measured by the lead — see INBOX-CC-1 items 1–7: 55px forced columns, truncated headers, wrapping money cells, th 700, td border-right 0, Rate Loaded "0.48¢/mi", IN TRANSIT on an undispatched load, ~90px rows, rounded pills). If it is not there at 03:45Z, YOU take `LoadCostsBoardPage.tsx`, `load-costs-board.routes.ts` sort/shape only, and `LoadDetailCostsTab.tsx` under SURFACE-BREACH-AUTHORIZED: owner 2026-09-05, and build 1.3a then the Costs-tab register per `docs/bus/09-05-2026-Claude-Coder-1-LOAD-COSTS-COMPLETE-VERTICAL-Updated.md` Part 3 and the render `IH35-LOAD-COSTS-MASTER-RENDER.html`. CC-1 keeps money posting/GL and settlements (1.5–1.7).
