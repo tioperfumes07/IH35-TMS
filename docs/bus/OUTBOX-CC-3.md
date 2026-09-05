@@ -352,3 +352,22 @@ scripts/seed-settlements-codex.ts + scripts/verify-settlement-seed-codex.mjs, 57
 rule applied. Deadline 15:30Z. 5778/13525 (no customer name) and 5782/13540 (lumper vendor blank)
 stay open pending owner answers, not touched further. M.3 resumes after (WIP stashed, uncommitted,
 nothing broken on main).
+
+CC-3 | STOPPED 13:33Z per OWNER STOP (relayed via Cursor lead): "HALT ALL SEEDING NOW. USMCA went
+operational 2026-08-07. Any load DELIVERED BEFORE 08/07/2026 is TRANSPORTATION, not USMCA. The seed
+instructions were WRONG and are contaminating USMCA with pre-operational July loads. Do NOT apply,
+void, close, or create anything further. Await the corrected reconciled (USMCA / Transportation /
+FARO) instruction from lead." Complied immediately — no further applies/voids/closes/creates issued
+after this message. The prior R1/R2-ruling instruction (close 5782/13540, 5778/13525) is superseded
+by this STOP and was NOT actioned.
+**Last applied (live write) before the STOP:** settlement 5794 (Codex slice, re-applied to correct a
+self-caught reimbursement duplicate), load 13568 — last individual live writes were voiding 2
+duplicate driver_finance.driver_reimbursements rows on load 13568 (status='void', voided_at set,
+kept the earliest of 3 identical rows). No writes issued after that.
+**Full session-to-date apply scope (for the reconciliation the lead is preparing):** CC-3 slice
+5773,5774,5775,5777,5778(partial: 13524 only, 13525 blocked),5779,5781,5782 (merged PR #20506/#20507);
+Codex slice 5785,5786,5788,5789,5791,5792,5793,5794,5795 (5787,5790 blocked on customer_not_found,
+never applied; merged PR #20529) — 36 loads total booked into USMCA (`operating_company_id
+5c854333-6ea5-4faa-af31-67cb272fef80`) this session. Delivery-date-vs-2026-08-07 cutoff was never
+checked against this cutoff before booking (not part of the order as given) — standing by for the
+lead's reconciled instruction on which of these 36 need to move to Transportation.
