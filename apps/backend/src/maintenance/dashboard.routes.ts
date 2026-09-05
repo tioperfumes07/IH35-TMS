@@ -402,6 +402,60 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     return payload;
   });
 
+  // FLT-IN-SHOP-FEED — the dispatch "In shop" section consumes this narrow contract rather than
+  // fetching the whole Fleet roster and reconstructing maintenance truth in the browser. The
+  // canonical predicate remains openWorkOrderPredicateSql; this route defines no competing state.
+  app.get("/api/v1/maintenance/in-shop-units", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const companyId = parsed.data.operating_company_id;
+
+    const rows = await withCompany(user.uuid, companyId, async (client) => {
+      if (!(await relationExists(client, "maintenance.work_orders"))) return [];
+      const result = await client.query(
+        `
+          SELECT
+            u.id::text AS unit_id,
+            u.unit_number,
+            wo.id::text AS work_order_id,
+            wo.display_id AS work_order_display_id,
+            COALESCE(wo.work_started_at, wo.opened_at, wo.created_at)::text AS opened_at,
+            estimate.estimated_completion_date::text AS expected_ready_at,
+            COALESCE(
+              mdata.resolve_vendor_label_same_company(COALESCE(wo.external_vendor_id, wo.vendor_id), wo.operating_company_id),
+              NULLIF(wo.repair_location, ''),
+              'Internal shop'
+            ) AS shop_or_vendor,
+            wo.status::text AS status
+          FROM maintenance.work_orders wo
+          JOIN mdata.units u ON u.id = wo.unit_id
+          LEFT JOIN LATERAL (
+            SELECT sre.estimated_completion_date
+            FROM maintenance.severe_repair_estimates sre
+            WHERE sre.trigger_wo_id = wo.id
+              AND sre.operating_company_id = wo.operating_company_id
+              AND sre.estimate_status IN ('open', 'awaiting_approval', 'approved')
+            ORDER BY sre.refreshed_at DESC NULLS LAST, sre.id
+            LIMIT 1
+          ) estimate ON TRUE
+          WHERE wo.operating_company_id = $1::uuid
+            AND ${openWorkOrderPredicateSql("wo")}
+            AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
+            AND u.deactivated_at IS NULL
+            AND ${excludeDemoPhantomSql("u.unit_number")}
+            AND ${excludeSampleDataSql("u.is_sample_data")}
+          ORDER BY COALESCE(wo.work_started_at, wo.opened_at, wo.created_at) ASC, wo.id ASC
+        `,
+        [companyId]
+      );
+      return result.rows;
+    });
+
+    return { rows };
+  });
+
   app.get("/api/v1/maintenance/fleet-table/rows", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;

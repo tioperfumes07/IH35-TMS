@@ -12,9 +12,22 @@ function routeSlice(source) {
   return source.slice(start, end);
 }
 
+function inShopRouteSlice(source) {
+  const start = source.indexOf('app.get("/api/v1/maintenance/in-shop-units"');
+  const end = source.indexOf('app.get("/api/v1/maintenance/fleet-table/rows"', start);
+  return start >= 0 && end > start ? source.slice(start, end) : "";
+}
+
 function problems(candidateBackend = backend, candidateFleet = fleetPage, candidateDispatch = dispatchApi, candidateDispatchBackend = dispatchBackend, candidateCondition = condition) {
   const route = routeSlice(candidateBackend);
+  const inShopRoute = inShopRouteSlice(candidateBackend);
   const checks = [
+    [inShopRoute.length > 0, "dedicated in-shop-only endpoint"],
+    [inShopRoute.includes('openWorkOrderPredicateSql("wo")'), "in-shop endpoint uses canonical open-work-order predicate"],
+    [inShopRoute.includes("wo.operating_company_id = $1::uuid"), "in-shop endpoint work-order company scope"],
+    [inShopRoute.includes("u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid"), "in-shop endpoint unit company scope"],
+    [inShopRoute.includes("unit_id") && inShopRoute.includes("unit_number") && inShopRoute.includes("work_order_id") && inShopRoute.includes("work_order_display_id"), "in-shop endpoint identities"],
+    [inShopRoute.includes("opened_at") && inShopRoute.includes("expected_ready_at") && inShopRoute.includes("shop_or_vendor") && inShopRoute.includes("status"), "in-shop endpoint contract fields"],
     [route.length > 0, "mounted route"],
     [route.includes("u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid"), "owner-or-lessee company scope"],
     [route.includes("u.deactivated_at IS NULL"), "active roster predicate"],
@@ -39,14 +52,14 @@ function problems(candidateBackend = backend, candidateFleet = fleetPage, candid
 if (process.argv.includes("--selftest")) {
   const mutations = [
     [backend.replace("ORDER BY u.unit_number ASC, u.id ASC", "ORDER BY u.unit_number ASC LIMIT 500"), fleetPage, dispatchApi],
-    [backend.replace("u.currently_leased_to_company_id = $1::uuid", "u.currently_leased_to_company_id = NULL"), fleetPage, dispatchApi],
-    [backend.replace("u.deactivated_at IS NULL", "TRUE"), fleetPage, dispatchApi],
+    [backend.replaceAll("u.currently_leased_to_company_id = $1::uuid", "u.currently_leased_to_company_id = NULL"), fleetPage, dispatchApi],
+    [backend.replaceAll("u.deactivated_at IS NULL", "TRUE"), fleetPage, dispatchApi],
     [backend, fleetPage.replace("...(maintByUnit[r.id] ?? {})", "{}"), dispatchApi],
     [backend, fleetPage.replace("oos_reason: r.in_shop_reason", "oos_reason: null"), dispatchApi],
     [backend, fleetPage, dispatchApi.replace("listDispatchInShopUnits", "listPartialInShopUnits")],
-    [backend.replace("wo.operating_company_id = $1::uuid", "TRUE"), fleetPage, dispatchApi],
-    [backend.replace('openWorkOrderPredicateSql("wo")', "'TRUE'"), fleetPage, dispatchApi],
-    [backend.replace("sre.trigger_wo_id = wo.id", "sre.unit_id = u.id"), fleetPage, dispatchApi],
+    [backend.replaceAll("wo.operating_company_id = $1::uuid", "TRUE"), fleetPage, dispatchApi],
+    [backend.replaceAll('openWorkOrderPredicateSql("wo")', "'TRUE'"), fleetPage, dispatchApi],
+    [backend.replaceAll("sre.trigger_wo_id = wo.id", "sre.unit_id = u.id"), fleetPage, dispatchApi],
     [backend.replace("in_shop.in_shop_reason,", "NULL::text AS missing_reason,"), fleetPage, dispatchApi],
   ];
   const extendedMutations = [
@@ -55,6 +68,8 @@ if (process.argv.includes("--selftest")) {
     [backend, fleetPage, dispatchApi, dispatchBackend.replace("AND NOT EXISTS (", "AND EXISTS ("), condition],
     [backend, fleetPage, dispatchApi, dispatchBackend.replace("awaiting_wo.operating_company_id = $1::uuid", "TRUE"), condition],
     [backend, fleetPage, dispatchApi, dispatchBackend, condition.replace("voided_at IS NULL", "TRUE")],
+    [backend.replace('app.get("/api/v1/maintenance/in-shop-units"', 'app.get("/api/v1/maintenance/removed-in-shop-units"'), fleetPage, dispatchApi, dispatchBackend, condition],
+    [backend.replaceAll('openWorkOrderPredicateSql("wo")', "'TRUE'"), fleetPage, dispatchApi, dispatchBackend, condition],
   ];
   const escaped = extendedMutations.filter(([b, f, d, db, c]) => problems(b, f, d, db, c).length === 0);
   if (escaped.length) throw new Error(`${escaped.length} planted defect(s) escaped`);
