@@ -33,6 +33,10 @@ type Line = {
   description: string;
   miles?: number;
   rate?: number;
+  /** SET-RATE — 'card' (driver rate card at line creation) vs 'derived' (backfilled amount/miles
+   *  for a line minted before the rate snapshot existed). Not rendered as its own column today;
+   *  carried through so a future audit surface can show provenance without another API round trip. */
+  rate_source?: string | null;
   amount: number;
 };
 
@@ -94,12 +98,25 @@ const COLUMNS: Array<ParityColumn<Line>> = [
   {
     key: "miles",
     label: "Loaded mi",
-    render: (line) => <>{line.miles != null ? line.miles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : "—"}</>,
+    // SET-RATE (LAW §8 "zero is a claim") — a genuinely-unknown leg (no telematics/dispatch miles
+    // captured for it) renders "—" with the reason on hover, never a 0.0 that reads as a real
+    // zero-mile trip.
+    render: (line) =>
+      line.miles != null ? (
+        <>{line.miles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</>
+      ) : (
+        <span title="no telematics miles for this leg">—</span>
+      ),
   },
   {
     key: "rate",
     label: "Rate",
-    render: (line) => <>{line.rate != null ? `$${line.rate.toFixed(4)}` : "—"}</>,
+    render: (line) =>
+      line.rate != null ? (
+        <>${line.rate.toFixed(4)}</>
+      ) : (
+        <span title="no telematics miles for this leg">—</span>
+      ),
   },
   {
     key: "amount",

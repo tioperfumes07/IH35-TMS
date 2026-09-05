@@ -618,8 +618,27 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             l.load_number,
             db.bill_number AS source_driver_bill_number,
             COALESCE(db.load_id, sl.load_id) AS load_id,
-            CASE WHEN sl.line_type = 'deadhead_pay' THEN db.miles_deadhead ELSE db.miles_basis END AS miles,
-            CASE WHEN sl.line_type = 'deadhead_pay' THEN db.rate_empty_per_mile_cents ELSE db.rate_per_mile_cents END AS rate_cents,
+            rate_basis.miles,
+            -- SET-RATE (owner order 2026-09-05, LAW §2/§8): rate MUST read the SAME source amount
+            -- came from (sl.amount — the exact number the "Amount" column renders), never a mutable
+            -- bill column joined independently. Measured live: db.rate_per_mile_cents had been minted
+            -- as round(LOADED+DEADHEAD total / LOADED-only miles) — a blended figure that displayed
+            -- $0.6000/mi next to a $724.50 amount for 1,610.0mi, when 724.50/1610 = $0.4500 (load
+            -- 13526). Deriving rate_cents FROM sl.amount and miles in the SAME row makes
+            -- amount == miles * rate a mathematical identity, not a hope. rate_source flags whether
+            -- that derived figure also matches the (now root-cause-fixed, book-load.service.ts) card
+            -- rate stored on the bill ('card') or not ('derived' — e.g. a pre-fix historical bill, or
+            -- a loaded leg whose amount bundles extra-stop/tarp/lumper bonuses on top of pure mileage
+            -- pay). NULL miles (no telematics/dispatch miles captured for this leg) — never a fake 0 —
+            -- yields NULL rate_cents/rate_source, never a fabricated rate.
+            CASE WHEN rate_basis.miles > 0 THEN ROUND((sl.amount * 100) / rate_basis.miles)::int ELSE NULL END AS rate_cents,
+            CASE
+              WHEN rate_basis.miles > 0 AND rate_basis.card_rate_cents IS NOT NULL
+                   AND ABS(ROUND((sl.amount * 100) / rate_basis.miles) - rate_basis.card_rate_cents) <= 1
+              THEN 'card'
+              WHEN rate_basis.miles > 0 THEN 'derived'
+              ELSE NULL
+            END AS rate_source,
             CASE WHEN sl.line_type = 'deadhead_pay' THEN db.deadhead_pay_cents ELSE db.loaded_pay_cents END AS pay_cents,
             origin_stop.city AS origin_city,
             origin_stop.state AS origin_state,
@@ -642,6 +661,14 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           LEFT JOIN mdata.loads l
             ON l.id = COALESCE(db.load_id, sl.load_id)
            AND l.operating_company_id = $2::uuid
+          -- SET-RATE: miles + the bill's OWN card rate for this line's leg (loaded vs. deadhead),
+          -- isolated once here so the rate_cents/rate_source CASE expressions above don't repeat the
+          -- line_type branch three times and risk drifting between copies.
+          LEFT JOIN LATERAL (
+            SELECT
+              CASE WHEN sl.line_type = 'deadhead_pay' THEN db.miles_deadhead ELSE db.miles_basis END AS miles,
+              CASE WHEN sl.line_type = 'deadhead_pay' THEN db.rate_empty_per_mile_cents ELSE db.rate_per_mile_cents END AS card_rate_cents
+          ) rate_basis ON true
           LEFT JOIN LATERAL (
             SELECT ls.city, ls.state, COALESCE(ls.actual_arrival_at, ls.scheduled_arrival_at) AS at
             FROM mdata.load_stops ls
