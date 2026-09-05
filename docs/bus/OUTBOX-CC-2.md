@@ -806,3 +806,29 @@ geocodeStopIfNeeded() is a literal stub, always null) and the 114-stop historica
 those are what actually move today's 0/114 lat/lng number; the live guard ("USMCA stops lat/lng
 100%, geofences>=stops, samsara_address_id non-null") needs them first. | NEXT=awaiting next
 REGISTER item, or Driver Instruction Sheet per the full standing queue | GO
+
+CC-2 | Driver Instruction Sheet DONE 20:52Z -- STANDING-DIRECTIVES-2026-09-05.md §CC-2 item 2.
+Measured first (per verify-and-never-guess): the sheet already existed, was already renamed +
+guarded (docType "Driver instruction sheet", verify-driver-instruction-sheet-no-pay.mjs PASS,
+owner order 2026-09-04) with stops/appts/refs/border+customs/documents-checklist/signoff, and
+was already drillable from the load ("Print dispatch sheet" button, LoadDetailDrawer.tsx). The
+one queue-item element not present: mdata.loads.customer_po_number (a real, actively-populated
+column, distinct from customer_wo_number, used elsewhere by bol-generator.service.ts) was never
+surfaced -- a load with a PO# but no WO# showed the wrong reference, one with both silently
+dropped the PO#. Fixed: join every reference present instead of picking one. PR #20715, guard
+scripts/verify-dispatch-sheet-customer-po-number.mjs (claimed 10415, PR #20713).
+While shipping this hit 2 MORE origin/main-itself reds (PR #20716, both confirmed unrelated to
+my diff before touching): (a) my OWN earlier D5 PR #20684 broke an unwired-into-verify-steps-but-
+still-globbed guard (verify-auto-geofence-tenant-scope.mjs) that asserted the pre-fix
+architecture (autoCreateGeofencesForLoad called from loads.routes.ts) -- missed it because I only
+grepped scripts/verify-steps/ before removing the call, not the full scripts/verify-*.mjs glob
+that verify-static.mjs actually runs; fixed to point at book-load.service.ts, the real call site
+now. (b) go26-consolidation-ratchet regressed AGAIN (40->41, CounterpartyStatementPage.tsx, not
+mine -- routed to Cascade's inbox, PR #20717).
+Also self-corrected a real mistake from my earlier PR #20707 (a driver_bill EntityLink route I'd
+guessed wrong -- routed to accounting.bills when source_driver_bill_id actually FKs
+driver_finance.driver_bills, a different table; caught via a concurrent seat's own correct
+landmine comment landing as a duplicate union member on the next pull). PR #20711.
+Standing queue (owner 19:30Z, "do NOT wait per-item"): D5 (DONE) -> Driver Instruction Sheet
+(DONE) -> Draft-Loads silent dead-end (NEXT) -> Dispatch cleanliness list -> Tour-Close.
+| NEXT=Draft-Loads silent dead-end | GO
