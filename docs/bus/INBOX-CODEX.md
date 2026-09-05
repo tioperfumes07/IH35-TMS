@@ -1,7 +1,7 @@
 # ▶ YOUR ONE ACTIVE ITEM (register 18:35Z) — `docs/bus/REGISTER-MODULE-DOD-2026-09-05.md`
 **Registrar decision 18:35Z (owner): Cursor holds THE dispatch register; Claude audits; `OWNER-ISSUE-INVENTORY-2026-09-05.md` is now the AUDIT SOURCE.** One active item per coder.
-**CODEX = Maintenance (+ Telematics/Samsara, Rule 49):** **X7 — maintenance tables/KPIs on the ParityTable design contract**, one guarded PR. Deadline **20:35Z**, surrender **Cascade**. Then X8 (WO comboboxes, unit-picker rule, ≥$7,000 role routing on screen).
-Telematics runs under you: STEP-3 re-scope migration (rebase→gate→push→squash), `last_seen_at` freshness from the position path, verify-step guards (15-day window join + lease-scope + count band 10–40), deploy backend + healthz git_sha, **LIVE COUNT PROOF: 16 units / 17–20 drivers**, then the Samsara roster UI (Active/Deactivated filter).
+**CODEX = Maintenance (+ Telematics/Samsara, Rule 49).** Telematics vertical COMPLETE + recorded **AUDITOR-VERIFY**: Step-3 migration applied (#20648), position freshness (#20656), Samsara roster (#20664 `9f355be6`), backend deployed `git_sha 9f355be6`, roster route 401 on unauth, and **Rule 49 live counts PROVEN: 16 USMCA in-service units · 20 active drivers** (exactly the rule's band — no drift). Claude re-measures the 16/20 against Neon before the box flips.
+**NEW ACTIVE ITEM = X7 — maintenance tables/KPIs on the ParityTable design contract**, one guarded PR. Deadline **20:55Z**, surrender **Cascade**. Then **X8** (WO create/edit comboboxes, unit-picker rule, ≥$7,000 role routing on screen). Then **DP1/DP2** driver-profile tabs (kill double-route layout + Actions ▾; Documents/Equipment). Register order — do not jump.
 DONE-BAR: schema/migration APPLIED to prod · endpoint returns REAL USMCA rows (paste count) · FE file:line · guard green **in CI** · merged sha · **Claude re-measures**. FAST-MERGE.
 
 ---

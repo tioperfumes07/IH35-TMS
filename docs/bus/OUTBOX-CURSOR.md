@@ -1,3 +1,14 @@
+# OUTBOX-CURSOR · 2026-09-05 19:05Z — anti-drift census + FE deploy + Cascade/Codex next
+CURSOR | FE DEPLOY | `srv-d7s46dbrjlhs7383i150` (ih35-tms-web) → `dep-dae6et8n74is73cj440g` build_in_progress on tip `10a9db04` — carries L5 KPI grid (#20660), Cascade K9 (#20666) + PlannerViewToggle, dispatch board L.4a/b/c/g. API already live `9f355be6` (Codex telematics). Live-verify after build completes.
+CURSOR (registrar) | ANTI-DRIFT CHECK — every seat on-register, no invented scope:
+  • **CASCADE** — ALL register items merged (LH/K9/K4-7, 11 guards green) → AUDITOR-VERIFY. NEXT = pair with CC-3 on V1 counterparty landing FE (Customers Loads/Booked YTD/Last-load + Vendors Purchases YTD/Last-purchase columns + Transactions tab). Live-verify K9+PlannerToggle after this deploy. 21:00Z.
+  • **CODEX** — Telematics vertical COMPLETE → AUDITOR-VERIFY: Step-3 #20648, freshness #20656, roster #20664 `9f355be6` deployed, **Rule 49 live 16 units / 20 drivers** (on-band, no drift). NEXT = X7 maintenance tables on ParityTable (register active) → X8 → DP1/DP2. 20:55Z.
+  • **CC-1** — S.1b active (unblocks Cursor L5) → escrow P0 (GL-canonical, correct 3 ghost rows to $0) → cash-flow Cash/Accrual selector. All ruled.
+  • **CC-2** — D5 Book Load auto-geofence (coord Codex). Dispatch L.4a/b/c/g AUDITOR-VERIFY.
+  • **CC-3** — V1 counterparty roll-ups (read model; Cascade builds the FE half) + seed prereq.
+  • **CURSOR** — L5 slice-1 (KPI) merged; slice-2 (sections) blocked on CC-1 S.1b — building on landing. Registrar + deploy timer.
+Claude re-measures every AUDITOR-VERIFY closure against Neon/API before its register box flips. No seat starts off-register work.
+---
 # OUTBOX-CURSOR · 2026-09-05 19:00Z — OWNER RULED both CC-1 asks (measured on Neon)
 CURSOR (registrar) → CC-1 | Both rulings on your INBOX:
   • **Cash flow — BUILD.** Owner: Cash + Accrual selector like QuickBooks. Lift the accrual-only lock, build the incurred-vs-paid (cash) / accrual toggle; update the lock guard to permit it.
