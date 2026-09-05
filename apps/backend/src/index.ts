@@ -141,6 +141,7 @@ import { registerDriversMessagesRoutes } from "./drivers/messages.routes.js";
 import { registerDriversDocumentAlertsRoutes } from "./drivers/document-alerts.routes.js";
 import { initializeDocumentAlertEngineCron } from "./drivers/document-alerts.cron.js";
 import { registerGeofencesRoutes } from "./telematics/geofences.routes.js";
+import { registerStopsGeocodeBackfillRoutes } from "./telematics/stops-geocode-backfill.routes.js";
 import { registerDashcamOnDemandRoutes } from "./telematics/dashcam-on-demand.routes.js";
 import { registerTelematicsPositionsRoutes } from "./telematics/positions.routes.js";
 import { registerTourCloseRoutes } from "./dispatch/driver-pwa/tour-close.routes.js";
@@ -953,6 +954,7 @@ async function main() {
   await registerChatRoutes(app);
   await registerDriversDocumentAlertsRoutes(app);
   await registerGeofencesRoutes(app);
+  await registerStopsGeocodeBackfillRoutes(app);
   await registerDriverDaySummaryRoutes(app);
   await registerTelematicsHeatmapRoutes(app);
   await registerDashcamOnDemandRoutes(app);

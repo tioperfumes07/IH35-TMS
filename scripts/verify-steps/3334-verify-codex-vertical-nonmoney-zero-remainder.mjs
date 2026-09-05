@@ -17,5 +17,7 @@ export default {
     await ctx.run("node", ["scripts/verify-samsara-routes-integration.mjs"]);
     await ctx.run("node", ["scripts/verify-samsara-driver-mirror-complete.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-samsara-driver-mirror-complete.mjs"]);
+    await ctx.run("node", ["scripts/verify-stops-geocoded.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-stops-geocoded.mjs"]);
   },
 };
