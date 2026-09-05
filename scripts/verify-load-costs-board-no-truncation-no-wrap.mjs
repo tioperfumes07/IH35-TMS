@@ -24,6 +24,14 @@ function auditBoard(src) {
   if (!/const fmtRate =[^\n]*toFixed\(4\)/.test(src)) f.push(`${BOARD}: fmtRate must format to four decimals (toFixed(4))`);
   // Defect 5: "Booked" branch for a non-departed load.
   if (!/label:\s*"Booked"/.test(src)) f.push(`${BOARD}: serviceStatus must have a "Booked" branch for loads that have not departed pickup`);
+  // L.1b / DESIGN-CONTRACT §20 "a dash is not a zero": the trip-expense cost columns render a dash
+  // (never $0.00) when nothing of that kind was recorded. fmtDash must exist and be used for all five.
+  if (!/const fmtDash =\s*\(c: number\)\s*=>\s*\(c \? fmt\(c\)\s*:\s*DASH\)/.test(src))
+    f.push(`${BOARD}: fmtDash must render a dash for zero (c ? fmt(c) : DASH)`);
+  for (const cents of ["late_fee_cents", "lumper_cents", "fuel_cents", "repairs_maintenance_cents", "other_cost_cents"]) {
+    if (!new RegExp(`render: r => fmtDash\\(Number\\(r\\.${cents}\\)\\)`).test(src))
+      f.push(`${BOARD}: cost column ${cents} must render via fmtDash (dash-not-zero)`);
+  }
   // Defect 6: money/mileage columns nowrap.
   if (!/const NUM\s*=\s*"[^"]*whitespace-nowrap[^"]*"/.test(src))
     f.push(`${BOARD}: the numeric column class (NUM) must include whitespace-nowrap`);
@@ -54,6 +62,8 @@ function main() {
     if (auditBoard(m1).length === 0) { console.error("SELFTEST FAIL: reverting rate format did not trip"); process.exit(1); }
     const m2 = boardSrc.replace(/label:\s*"Booked"/, 'label: "In transit"');
     if (auditBoard(m2).length === 0) { console.error("SELFTEST FAIL: removing Booked branch did not trip"); process.exit(1); }
+    const m4 = boardSrc.replace(/render: r => fmtDash\(Number\(r\.late_fee_cents\)\)/, "render: r => fmt(Number(r.late_fee_cents))");
+    if (auditBoard(m4).length === 0) { console.error("SELFTEST FAIL: reverting a cost cell to fmt (zero) did not trip"); process.exit(1); }
     const m3 = boardSrc.replace(/data-testid=\{`load-costs-pill-\$\{id\}`\}([^\n]*)rounded-sm/, "data-testid={`load-costs-pill-${id}`}$1rounded-full");
     if (auditBoard(m3).length === 0) { console.error("SELFTEST FAIL: rounded-full pill did not trip"); process.exit(1); }
     console.log("SELFTEST OK: guard trips on all mutations");
