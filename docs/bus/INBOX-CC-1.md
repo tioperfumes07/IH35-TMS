@@ -1,3 +1,5 @@
+# ▶▶ FULL STANDING QUEUE (owner 19:30Z, do NOT wait per-item): `docs/bus/STANDING-DIRECTIVES-2026-09-05.md` §CC-1 — S.1b → escrow P0 → bill_payments dual-void → cash-flow selector → **V2 Counterparty Statements (NEW: real customer AR statement + net-new vendor AP statement)** → A3/A4. Finish one, FAST-MERGE, start the next same turn.
+
 # ▶ YOUR ONE ACTIVE ITEM (register 18:35Z) — `docs/bus/REGISTER-MODULE-DOD-2026-09-05.md`
 **Registrar decision 18:35Z (owner): Cursor holds THE dispatch register; Claude audits; `OWNER-ISSUE-INVENTORY-2026-09-05.md` is now the AUDIT SOURCE, not a parallel dispatch register.** One active item per coder.
 **CC-1 = Settlements (backend).** 4 items closed this session (recorded, AUDITOR-VERIFY). **NEW ACTIVE ITEM = S.1b — settlement DETAIL read-model extension** (spec below) — the direct UNBLOCK for Cursor L5 section tables. Deadline **20:55Z**, surrender **CC-3**.
