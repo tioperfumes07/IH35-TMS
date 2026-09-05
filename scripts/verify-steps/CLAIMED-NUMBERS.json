@@ -12,6 +12,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-je-debit-credit-columns"
   },
+  "10425": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "cc-1",
+    "purpose": "verify-load-stop-legs-and-vendor-driver-id"
+  },
   "10423": {
     "claimed_at": "2026-09-05",
     "claimed_by": "cc-2",
