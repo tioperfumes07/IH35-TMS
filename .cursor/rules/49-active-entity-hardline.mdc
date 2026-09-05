@@ -1,0 +1,46 @@
+---
+description: HARDLINE — canonical ACTIVE definition for drivers/units and REAL for invoices; the database must never regress to the stale-status inflated set
+alwaysApply: true
+---
+
+# RULE 49 — ACTIVE-ENTITY HARDLINE (owner ruling 2026-09-05, ORCH-measured on Neon USMCA)
+
+The owner reported the driver list showing ~90 "active" drivers when the real active fleet is **15–20**. Root cause (measured, RLS-bypassed, USMCA branch `br-fancy-credit-akjnd07a`): the list keyed "active" off the **stale `status='Active'` flag** (103 rows) instead of **Samsara movement**. `integrations.samsara_drivers.last_seen_at` is dead (max 2026-05-23). Live movement is in `telematics.vehicle_latest_position` (updating today). `mdata.units.assigned_driver_id` is 0% populated — the driver↔truck link is `telematics.vehicle_driver_assignments`.
+
+This rule is LAW. Guard: `scripts/verify-active-entity-hardline.mjs`. It never regresses.
+
+## 1. CANONICAL ACTIVE DRIVER (owner definition — "Samsara drivers with any movement in the past 10–15 days")
+
+A driver is **ACTIVE** iff ALL hold:
+1. There EXISTS a `telematics.vehicle_driver_assignments vda` for the driver whose `unit_id` has a `telematics.vehicle_latest_position` with `captured_at >= now() - interval '15 days'`;
+2. the assignment overlaps that window: `vda.started_at <= now() AND (vda.ended_at IS NULL OR vda.ended_at >= now() - interval '15 days')`;
+3. `mdata.drivers.is_sample_data IS NOT TRUE`;
+4. `mdata.drivers.deactivated_at IS NULL` AND `status NOT IN ('Terminated')`.
+
+**Measured today: 20 drivers @ 15-day window, 17 @ 10-day window.** Window is 15 days (owner "10–15"; 15 is the ceiling of the range).
+
+- The full driver database (264 rows) is **retained** — never deleted. The driver LIST **default view** shows only ACTIVE. "Show all / inactive" is an explicit toggle. Driver Profile lists default to ACTIVE.
+- `status='Active'` alone is **NOT** active — it is a stale HR flag (103 rows). Never key a count or a default list off it.
+- Regression ceiling: the default driver list active count must be in the low tens (measured 20). A change that makes it render ≥ 40 by dropping the movement filter is a REGRESSION and the guard fails.
+
+## 2. CANONICAL ACTIVE / IN-SERVICE UNIT
+
+A unit is **IN SERVICE** iff `status='InService' AND is_sample_data IS NOT TRUE AND deactivated_at IS NULL AND sold_date IS NULL AND disposed_date IS NULL AND is_oos IS NOT TRUE`. **Measured: 31.**
+A unit is **ACTIVELY MOVING** iff in-service AND its `telematics.vehicle_latest_position.captured_at >= now() - interval '15 days'`. **Measured: 16.**
+- Sold / disposed / deactivated / OOS / sample units NEVER count as active and NEVER appear in the dispatch unit picker.
+
+## 3. REAL INVOICE (USMCA)
+
+A real invoice is `is_sample_data IS NOT TRUE` **and** USMCA-scoped. `mdata.qbo_ar_invoices` (12,087 rows, all under Transportation realm `91e0bf0a-133f-4ce8-a734-2586cfa66d96`) is the **commingled Transportation mirror, NOT USMCA truth** — never present it as the USMCA invoice count. USMCA invoices live in `accounting.invoices` (`is_sample_data=false`), scoped to `5c854333-6ea5-4faa-af31-67cb272fef80`.
+
+## 4. NON-REGRESSION INVARIANTS (never violate, any seat, any script)
+
+- **Sample data never counts as active/in-service/real** anywhere: KPI, list, default view, picker, export. `is_sample_data IS NOT TRUE` is mandatory on every such read.
+- **Deactivated / archived / terminated / sold / disposed / OOS never count as active.**
+- **No seed or import may CREATE a driver/unit in an Active/InService state, nor FLIP an inactive one to active.** Activation is an owner in-app action only. Seeds create drivers as `Probation`/`Inactive` and units as their real status.
+- **Void, never delete.** Cleaning the list is a filter, not a `DELETE`.
+- Any new "active"/"in service" count MUST reuse the canonical predicate above (a shared SQL helper / query builder), never a re-hardcoded status check that can drift.
+
+## 5. GUARD
+
+`scripts/verify-active-entity-hardline.mjs` (wired in `scripts/.gate-step-map.json` on the drivers/units routes) fails if the drivers list route drops `is_sample_data IS NOT TRUE` or `deactivated_at IS NULL`, or if a seed script inserts a driver with `status: 'Active'`. The movement-based default-list implementation carries its own verify-step guard asserting the 15-day window join.
