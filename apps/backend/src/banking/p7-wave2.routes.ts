@@ -215,6 +215,62 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     };
   });
 
+  // B.1 (owner order 2026-09-05, CODER-SEQUENCE-NUMBERED-2026-09-05.md CC-2 §6): a bulk version of
+  // match-candidates above so the transactions LIST can show a "suggested match" per row without
+  // opening the drawer for each one — same underlying findCandidates (zero new matching math),
+  // filtered to the narrower "exact cents, within AUTO_MATCH_DATE_WINDOW_DAYS (5), against an
+  // expense or bill" shape the owner specifically named. Read-only: this endpoint writes NOTHING —
+  // findCandidates already owns the one narrow, pre-existing auto-persist path (a MATCH LINK, never
+  // a GL post) for its own auto_match-quality case; this bulk wrapper does not add a second one.
+  // "Accept -> match never auto-post" holds because accepting a suggestion here reuses the existing
+  // accept-match flow (acceptMatchWithResolveDifference) unchanged — no new write path.
+  const suggestBodySchema = z.object({
+    operating_company_id: z.string().uuid(),
+    bank_transaction_ids: z.array(z.string().uuid()).min(1).max(200),
+  });
+  app.post("/api/v1/banking/transactions/suggest", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = financeUser(req, reply);
+    if (!user) return;
+
+    const body = suggestBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    const operatingCompanyId = body.data.operating_company_id;
+    await assertCompanyMembership(user.uuid, operatingCompanyId);
+
+    const results = await Promise.all(
+      body.data.bank_transaction_ids.map(async (bankTransactionId) => {
+        const candidates = await findCandidates({
+          operating_company_id: operatingCompanyId,
+          bank_transaction_id: bankTransactionId,
+          actor_user_uuid: user.uuid,
+        });
+        // "suggest exact cents +-5d to expenses/bills" — literal filter, narrower than the general
+        // auto_match flag (which also requires memo_similarity >= 0.8): amount_gap_cents === 0 and
+        // date_gap_days <= AUTO_MATCH_DATE_WINDOW_DAYS (5), kind in {expense, bill} only.
+        const best = candidates.find(
+          (c) => c.exact_amount && c.date_gap_days <= 5 && (c.ledger_entry_kind === "expense" || c.ledger_entry_kind === "bill")
+        );
+        if (!best) return { bank_transaction_id: bankTransactionId, suggestion: null };
+        return {
+          bank_transaction_id: bankTransactionId,
+          suggestion: {
+            suggested_ledger_entry_kind: best.ledger_entry_kind,
+            suggested_ledger_entry_id: best.ledger_entry_id,
+            // "suggested_* + confidence" — high when the SAME candidate already clears the full
+            // auto_match bar (adds memo_similarity >= 0.8), medium when only amount+date qualify.
+            suggested_confidence: best.auto_match ? "high" : "medium",
+            date_gap_days: best.date_gap_days,
+            memo_similarity: best.memo_similarity,
+          },
+        };
+      })
+    );
+
+    return {
+      suggestions: Object.fromEntries(results.map((r) => [r.bank_transaction_id, r.suggestion])),
+    };
+  });
+
   app.get("/api/v1/banking/rules", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = financeUser(req, reply);
     if (!user) return;

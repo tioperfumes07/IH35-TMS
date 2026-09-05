@@ -17,8 +17,10 @@ import {
   updateBankTransactionDate,
   uploadBankStatementCsv,
   SERVER_FILTERABLE_TRANSACTION_TYPES,
+  suggestBankTransactionMatches,
   type BankMatchCandidate,
   type BankMatchCandidateKind,
+  type BankTransactionSuggestion,
   type PlaidBankAccount,
   type PlaidBankTransaction,
   type ServerFilterableTransactionType,
@@ -351,6 +353,13 @@ export function BankingTransactionsDesignView({
     if (highlightTransactionId) setExpandedTxId(highlightTransactionId);
   }, [highlightTransactionId]);
   const [actionMenuTxId, setActionMenuTxId] = useState<string | null>(null);
+  // B.1 — bulk match suggestions (exact cents, +-5d, expense/bill) keyed by bank_transaction_id.
+  // null = no qualifying suggestion; missing key = not checked yet. Populated by "Suggest matches"
+  // in the toolbar. Never shown for an already-matched row (guarded at render via
+  // hasPersistedMatch), so a stale entry for a transaction matched elsewhere in the meantime is
+  // harmless — it just stops rendering.
+  const [txnSuggestions, setTxnSuggestions] = useState<Record<string, BankTransactionSuggestion | null>>({});
+  const [suggestingMatches, setSuggestingMatches] = useState(false);
   const [linkMenuOpen, setLinkMenuOpen] = useState(false);
   const [postingTxId, setPostingTxId] = useState<string | null>(null);
   const [excludingTxId, setExcludingTxId] = useState<string | null>(null);
@@ -899,6 +908,22 @@ export function BankingTransactionsDesignView({
     const otherSide = target || "Uncategorized";
     const isMoneyIn = tx.is_credit || Number(tx.amount_cents ?? 0) < 0;
     return isMoneyIn ? `${otherSide} → ${bank}` : `${bank} → ${otherSide}`;
+  }
+
+  // B.1 — bulk-suggest for the transactions currently on screen. Read-only (see api/banking.ts);
+  // "Accept" for a suggestion stays the existing Match drawer / acceptBankReconMatch flow, unchanged.
+  async function suggestMatchesForVisibleRows() {
+    const ids = pagedRows.map((tx) => tx.id).filter(Boolean);
+    if (ids.length === 0) return;
+    setSuggestingMatches(true);
+    try {
+      const { suggestions } = await suggestBankTransactionMatches(companyId, ids);
+      setTxnSuggestions((prev) => ({ ...prev, ...suggestions }));
+    } catch (error) {
+      pushToast(userFacingApiError(error, "Could not compute match suggestions"), "error");
+    } finally {
+      setSuggestingMatches(false);
+    }
   }
 
   async function postTransaction(tx: PlaidBankTransaction) {
@@ -1509,6 +1534,24 @@ export function BankingTransactionsDesignView({
               className={`relative flex items-center justify-end gap-1 ${menuOpen ? "z-50" : ""}`}
               onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
             >
+              {/* B.1 — suggested match badge (exact cents, +-5d, expense/bill). Click opens the
+              same Match drawer "Accept match (reconcile)" already uses below — Accept never
+              happens here directly, only navigation to the existing accept flow. */}
+              {txnSuggestions[tx.id] && !hasPersistedMatch(tx) ? (
+                <button
+                  type="button"
+                  title={`${txnSuggestions[tx.id]!.suggested_ledger_entry_kind} match, ${txnSuggestions[tx.id]!.date_gap_days}d gap`}
+                  className={`h-7 rounded-sm border px-1.5 text-[11px] font-semibold ${
+                    txnSuggestions[tx.id]!.suggested_confidence === "high"
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                      : "border-amber-300 bg-amber-50 text-amber-700"
+                  }`}
+                  onClick={() => setMatchDrawerTxId(tx.id)}
+                  data-testid={`banking-suggested-match-${tx.id}`}
+                >
+                  Suggested
+                </button>
+              ) : null}
               <ActionButton
                 className="h-7 px-2 text-[11px]"
                 onClick={() => void postTransaction(tx)}
@@ -2732,6 +2775,17 @@ export function BankingTransactionsDesignView({
             }}
           >
             Collapse all groupings
+          </button>
+          {/* B.1 — bulk-suggest matches (exact cents, +-5d, expense/bill) for the visible page.
+          Read-only; Accept still goes through the existing Match drawer, unchanged. */}
+          <button
+            type="button"
+            className="flex h-7 items-center rounded-sm border border-gray-300 px-2 text-xs text-gray-700 disabled:cursor-not-allowed disabled:text-gray-400"
+            onClick={() => void suggestMatchesForVisibleRows()}
+            disabled={suggestingMatches}
+            data-testid="banking-suggest-matches-button"
+          >
+            {suggestingMatches ? "Suggesting..." : "Suggest matches"}
           </button>
           {/* DEFECT-9b + audit gap #5 — QBO grouping: By month | Money in/out | All dates (flat).
           Pipeline sorts the full set, then groups, then pages. Month bands follow date ASC/DESC.
