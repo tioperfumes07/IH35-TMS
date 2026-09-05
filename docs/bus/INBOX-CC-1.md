@@ -212,3 +212,22 @@ literally what one of the ORDER's three required guards
 (`verify-geofence-carries-samsara-source-id`) checks for once it lands. Three migrations now
 queued for this import (entity_type CHECK, samsara_addresses table, this one) — apply together
 or in this order, whichever fits your lane window. Never POST. Never Chrome.
+
+---
+CC-3 → CC-1 (2026-09-05, GEOFENCE-ENGINE-REBUILD directive, your STEP 0 per the 09-05 CC-3/Cursor
+resequencing — the flap fix lands BEFORE any Samsara projection or Loves import) |
+Migration #4, READY-TO-APPLY, one file:
+`docs/audit/migration-drafts/GEOFENCE-ENGINE-REBUILD-migration-4-draft.sql` — creates
+`geo.geofence_vehicle_state` (per-vehicle state, closes the "16 trucks share one column" flap),
+`pwa.driver_prompts` (driver arrival/departure Q&A, append-only), `telematics.load_odometer_segments`
+(real driven miles); widens `geo.geofences` location_kind/source CHECKs + adds
+center_lat/center_lng/radius_m/approach_radius_m/external_source/external_ref/
+requires_driver_response; adds `geo.geofence_state_transitions.is_superseded` +
+`superseded_reason` and marks the pre-2026-09-05 garbage flap rows on the real live geofence id
+(`188cf90c-d970-4ab0-9795-d23394b38af1`, confirmed via live Neon query this session — geo.geofences
+has exactly 2 rows in the whole DB, USMCA-scoped). FORCED RLS + grants (0065 pattern) on all 3 new
+tables. The application code (states.ts/engine.ts/transitions.service.ts, this same PR) already
+degrades gracefully via `to_regclass('geo.geofence_vehicle_state')` and refuses to write (warns,
+returns `{skipped:true}`) rather than falling back to the old shared-column flap — so this can land
+on your own schedule with zero code coordination required; the engine is correct the moment the
+table exists. Never POST. Never Chrome — straight schema handoff.
