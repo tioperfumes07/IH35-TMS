@@ -57,7 +57,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | L.4a | CC-2 (was Cursor) | ✔ PARTIAL 25ea6905 live c16dccedf2 13:12Z: 31 cols, 5 groups, Live loc, draggable 31 · FAIL overflow 30/32, min-width 0, no sticky, no gear → L.4a-fix 15:00Z | Dispatch board per owner PREVIEW PDF: ALL columns, 5 group headers (ASSIGNMENT/HOS/LOAD/TELEMETRY/STATUS), Live loc, draggable via ParityTable, guard dispatch-board-preview-contract.spec.ts | **06:30Z** | CC-2 +10m | OPEN |
 | L.4b | CURSOR | Top bar: one nav, one toolbar, segmented List/Kanban/Round Trips, + Book Load sole filled button, /dispatch → Overview | **07:15Z** | CC-2 +10m | OPEN |
 | L.4g | CC-2 ✔ da02f0ef | ADDITIVE-ONLY guard scripts/verify-additive-only.mjs + docs/guards/additive-baseline.json wired into pnpm gate | **07:00Z** | CC-2 +10m | OPEN (breach #18231, #20242) |
-| L.4c | CURSOR | Round Trips bespoke timeline recovered from 22a266132 + 67faa3dcd (keep 82fda7c90) | **08:00Z** | CC-2 +10m | OPEN |
+| L.4c | CC-2 ✔ 988fdb73 (not yet deployed) | Round Trips bespoke timeline recovered from 22a266132 + 67faa3dcd (keep 82fda7c90) | **08:00Z** | CC-2 +10m | OPEN |
 | L.2 | Costs-tab register — owner records an expense on 13508. Deadline 08:00Z (after L.3) | |
 
 | C.4 | Unit picker excludes Sold/deactivated/non-entity units (U-156-provisional) + guard | ✔ #20436 |
@@ -134,6 +134,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG
+- 13:40Z tick: API live f387870f ✔ (#20505 booking crash fix shipped). CC-2 L.4c merged 988fdb73 (FE not deployed). Cursor ACCT-F1312 6049a940. Codex-slice seed 85aa885d landed 2 min before the STOP; CC-3 #20531 halted. Neon: 60 loads/60 invoices/315 expenses/61 bills/12 settlements; 27 wrong-entity families still unvoided (15:00Z). No ACK yet: Cursor, CC-1, Codex, Cascade.
 - 13:36Z ⛔ OWNER: seeded loads not all USMCA (cutover 08/07/26). LEAD ERROR: feed split 5753–5795 ignored the entity split in the 08-31 reconciliation. Live: 60 USMCA loads, 27 TRANSPORTATION (18 pre-cutover, 9 Transp-Faro). Void 27 families (CC-3 15:00Z), re-point to sheets 2+4, cutover guard, Faro sheet 5 → factoring. Owner hand list corrected (5766 is TRANSP).
 - 13:29Z OWNER board column orders (initials, Off/UA codes, Live loc wider, outer frame, OWNER-REMOVE 4 default columns). Live: 34px equal split on all 32 cols, glued strings. → CC-2 L.4a-fix 15:00Z; LAW.md exception list updated.
 - 13:20Z OWNER: driver profile tabs not wired. Live: assignment tables on all 11 tabs; 5 action buttons; Load History 5 cols, row click → dispatch board; audit global + machine names; Documents 9 for 6 loads incl. L-2026… legacy; Equipment no trailer; Earnings 1 row $0. Codex DP.1/DP.2, CC-3 DP.3, CC-1 D.4.
