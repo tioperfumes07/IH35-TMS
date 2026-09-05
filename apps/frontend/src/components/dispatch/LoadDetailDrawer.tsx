@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { type LoadDetail, type LoadStatus, updateLoad, useDispatchLoad, useLoad, useLoadAudit, useRemintDriverBill, useUpdateLoadStatus } from "../../api/loads";
 import { createInvoiceFromLoad, listLoadExpenses, listLoadInvoices } from "../../api/accounting";
-import { cancelDispatchLoad, distributeLoadInstructions, getDispatchAssignmentHistory, getDispatchLoadGeofenceStatus, getRecentAutoStatusSwitches } from "../../api/dispatch";
+import { cancelDispatchLoad, distributeLoadInstructions, geocodeDispatchLoadStops, getDispatchAssignmentHistory, getDispatchLoadGeofenceStatus, getRecentAutoStatusSwitches } from "../../api/dispatch";
 import { AutoStatusSwitchedBadge } from "./AutoStatusSwitchedBadge";
 import { resolveApiUrl } from "../../api/client";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
@@ -308,6 +308,28 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
     return { total: stops.length, created, missingCoordinates };
   }, [geofenceStatusQuery.data]);
 
+  // D5 (owner ruling 2026-09-05, "D5 Book Load auto-geofence FE trigger") — on-demand geocode for
+  // this already-booked load's stops still missing coordinates. Refetches geofence-status on
+  // success so the summary above reflects the new coordinates (and any geofence that could now
+  // be created) without a full page reload.
+  const geocodeStopsMutation = useMutation({
+    mutationFn: () => geocodeDispatchLoadStops(load!.id, load!.operating_company_id),
+    onSuccess: (data) => {
+      void geofenceStatusQuery.refetch();
+      if (data.stops_geocoded > 0) {
+        pushToast(`Geocoded ${data.stops_geocoded} of ${data.stops_geocode_failed + data.stops_geocoded} missing stop(s).`, "success");
+      } else {
+        pushToast(
+          data.stops_geocode_failed > 0
+            ? "No stops could be geocoded — address on file was not enough to place them."
+            : "No stops needed geocoding.",
+          "info"
+        );
+      }
+    },
+    onError: (err) => pushToast(userFacingApiError(err, "Could not geocode stops"), "error"),
+  });
+
   const routeSummary = useMemo(() => {
     if (!load) return "-";
     // FIX-2: derive origin/destination from the actual stops (first → last). first_pickup_city /
@@ -595,6 +617,17 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                                   : ""}
                               </span>
                             )}
+                            {geofenceStatusSummary.missingCoordinates > 0 ? (
+                              <button
+                                type="button"
+                                data-testid="load-detail-geocode-stops-button"
+                                className="rounded-sm border border-slate-300 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                disabled={geocodeStopsMutation.isPending}
+                                onClick={() => geocodeStopsMutation.mutate()}
+                              >
+                                {geocodeStopsMutation.isPending ? "Geocoding…" : "Geocode stops"}
+                              </button>
+                            ) : null}
                           </span>
                         ) : (
                           <span className="text-slate-500">—</span>

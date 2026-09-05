@@ -55,6 +55,7 @@ import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
 import { resolveLaneMileage } from "./lane-mileage.service.js";
 import { computeChainDeadheadMiles } from "./deadhead/chain-deadhead.service.js";
 import { openWorkOrderPredicateSql } from "../maintenance/in-shop-condition.js";
+import { backfillStopCoordinatesForLoad } from "../telematics/stop-geocode-fallback.service.js";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
 // (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
@@ -2270,5 +2271,33 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         samsara_address_id: row.samsara_address_id,
       })),
     };
+  });
+
+  // D5 (owner ruling 2026-09-05, "D5 Book Load auto-geofence FE trigger"): the genuine remaining
+  // gap behind "0 of 114 stops have lat/lng" was telematics/auto-geofence.service.ts's
+  // geocodeStopIfNeeded() being a literal stub -- fixed at its source (it now calls the real
+  // Trimble/Google provider chain via stop-geocode-fallback.service.ts, so every FUTURE booking's
+  // auto-geofence attempt self-heals missing coordinates). This endpoint is the on-demand path for
+  // TODAY's already-booked loads: geocode whatever stops on this one load are still missing
+  // coordinates, right now, and report how many actually got them.
+  app.post("/api/v1/dispatch/loads/:id/geocode-stops", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
+    if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
+
+    const result = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
+      const loadRes = await client.query<{ id: string }>(
+        `SELECT id FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        [params.data.id, operatingCompanyId]
+      );
+      if (!loadRes.rows[0]) return null;
+      return backfillStopCoordinatesForLoad(client, operatingCompanyId, params.data.id);
+    });
+
+    if (!result) return reply.code(404).send({ error: "dispatch_load_not_found" });
+    return { load_id: params.data.id, ...result };
   });
 }
