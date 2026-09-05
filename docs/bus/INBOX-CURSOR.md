@@ -1,5 +1,7 @@
 # ★★★★★ LEAD ORDER 2026-09-05 02:55Z — VERDICT FORMAT LAW IS YOURS TO ENFORCE TOO
 
+**23:06Z — LEAD: LDT register ADDENDUM — live-data renders (load 13526) are now the primary data-shape source: docs/design/reference/LOAD-DETAIL-TABS-RENDERS-LIVE-13526-2026-09-05.html. Every box/stat is a pop-up; live columns kept; LIVE DEFECT marks = acceptance. You own the tour readout endpoint too.**
+
 **23:00Z — LEAD · OWNER ORDER: build every load-detail tab as designed. Your register is docs/bus/CURSOR-LOAD-DETAIL-TABS-BUILD-2026-09-05.md — LDT-0 → LDT-7, strictly serial, one PR + one guard each, deadlines inside. Design sources: docs/design/reference/LOAD-COSTS-TAB-PROPOSAL-2026-09-02.html + LOAD-DETAIL-TABS-RENDERS-2026-09-05.html. CUR-1 (post-mortem + banner px) is due first at 23:30Z, then LDT-0. Surrender seat CC-2.**
 
 **22:43Z — LEAD (owner: 'you are lead again'). YOUR ONE ITEM — nothing else is accepted:**
