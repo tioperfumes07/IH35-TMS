@@ -53,7 +53,9 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | L.1d | scroller ✔ · dashes ✔ (2795482) · table-layout STILL fixed (20×83px), Deadhead Pay overflows, th not sticky | PARTIAL |
 | L.1d-final | table-layout auto · sticky th + Load col · rendered-page guard. Deadline 04:45Z. Surrender: CC-2 | → |
 | L.3 | TAB ROW Costs·Expenses·Bills·Fuel advances·Broker advances·Driver pay·R&M·Documents wiring existing list components (owner: "I still do not see the rest of the tabs"). MOVED AHEAD OF L.2. Deadline 06:00Z. Surrender: Cascade | next |
-| L.4 | CURSOR | RESTORE 33-column dispatch Table (BRD-25 hid 24; HOS/On-time/Samsara ETA); List = 18 cols; gear visible; guard dispatch-table-33-columns.spec.ts | **06:00Z** | CC-2 at 06:05Z | OPEN (owner 05:05Z) |
+| L.4a | CURSOR | Dispatch board per owner PREVIEW PDF: ALL columns, 5 group headers (ASSIGNMENT/HOS/LOAD/TELEMETRY/STATUS), Live loc, draggable via ParityTable, guard dispatch-board-preview-contract.spec.ts | **06:30Z** | CC-2 +10m | OPEN |
+| L.4b | CURSOR | Top bar: one nav, one toolbar, segmented List/Kanban/Round Trips, + Book Load sole filled button, /dispatch → Overview | **07:15Z** | CC-2 +10m | OPEN |
+| L.4c | CURSOR | Round Trips bespoke timeline recovered from 22a266132 + 67faa3dcd (keep 82fda7c90) | **08:00Z** | CC-2 +10m | OPEN |
 | L.2 | Costs-tab register — owner records an expense on 13508. Deadline 08:00Z (after L.3) | |
 
 | C.4 | Unit picker excludes Sold/deactivated/non-entity units (U-156-provisional) + guard | ✔ #20436 |
@@ -130,6 +132,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG
+- 05:20Z OWNER posted Dispatch Board Preview PDF → docs/design/reference + DESIGN-CONTRACT-DISPATCH-BOARD. L.4 split L.4a/b/c (06:30/07:15/08:00Z).
 - 05:05Z OWNER: cannot find the dispatch view with HOS/location/on-time (16-20+ cols). Live-measured Table mode = 9 of 33 columns, 0 chooser buttons — BRD-25 #20242. Cursor L.4 issued: restore 33 (Table) / 18 (List), gear, rendered guard, 06:00Z → CC-2.
 - 04:50Z OWNER: feed is a SEED (scripts/seed-settlements-<seat>.ts via service layer, real data, single-stop only; owner hands 5766/5772/5776/5780/5783/5784 + anything he already entered). Lead's UI-only rule struck in ORDER file, 09-04 feed doc and AGENTS.md L13 amended. CC-1 5753 login-BLOCKED and Codex 5785 repo-law-BLOCKED lines CLOSED. (newest first)
 - 04:22Z — C.3 ✔ verified. L.1d partial (scroller+dashes ✔; table-fixed 83px, th not sticky) → L.1d-final 04:45Z. Owner: tabs not visible → L.3 moved ahead of L.2 (06:00Z), L.2 → 08:00Z. D.3 wakes still not posted; feed 0 rows.
