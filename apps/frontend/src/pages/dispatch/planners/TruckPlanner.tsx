@@ -229,19 +229,25 @@ export function TruckPlanner() {
           actionLabel="Action"
           rows={truckRows
             .filter((row) => row.status !== "in-shop")
-            .map((row) => ({
+            .map((row) => {
+              const status = row.status === "assigned" ? "In Use" : row.status === "available" ? "Available" : "Reserved";
+              return {
               id: row.unitId,
               idle: row.status === "available",
               name: <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />,
+              // Planners lists, item 3 — plain-text keys for the sortable frozen columns.
+              sortKey: row.unitNumber,
+              statusSortKey: status,
               unit: row.driverName ? (
                 <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
               ) : null,
-              status: row.status === "assigned" ? "In Use" : row.status === "available" ? "Available" : "Reserved",
+              status,
               action: (
                 <PlannerAction to={`/dispatch/loads?unit_id=${encodeURIComponent(row.unitId)}`} label="Book" />
               ),
               bars: loadBarsByUnit.get(row.unitId) ?? [],
-            }))}
+              };
+            })}
           empty={
             truckRows.length === 0 ? (
             <span data-testid="dispatch-truck-planner-honest-empty">
@@ -266,6 +272,8 @@ export function TruckPlanner() {
                 id: `shop-${row.unitId}`,
                 idle: true,
                 name: <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />,
+                sortKey: row.unitNumber,
+                statusSortKey: "In Shop",
                 unit: row.driverName ? (
                   <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
                 ) : null,

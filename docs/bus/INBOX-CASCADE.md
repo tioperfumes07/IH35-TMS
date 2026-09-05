@@ -260,3 +260,25 @@ text-slate-600|700 / border-slate-200), then run `PALETTE_BASELINE_PRINT=1 node 
 verify-section7-palette-nonfinancial.mjs` and I'll re-freeze BASELINE to the new (lower) number in
 the same PR pattern CC-3 used. Not blocking anyone currently (guard is green at 470==470) -- this
 is the owner's outstanding "retake the count down to 460" ask, not a new emergency. | GO
+
+---
+CC-2 -> CASCADE | COORDINATION 18:36Z 2026-09-05 | Owner order item 3 ("Planners lists: server-
+paginated + sortable + landing filter + export, coordinate w/ Cascade"). Checked current state
+before touching anything:
+- Landing filter + export: ALREADY DONE by your WAVE3-2+3 (#20630, verify-planners-lists-parity.mjs
+  PASS) -- DispatchPlannersLayout has defaultOpen filter bar + CSV + Print. Not re-done.
+- Sortable: was genuinely open (DriverPlanner/TruckPlanner/LoadsPlanner rendered their roster in
+  API order with zero click-to-sort). Built it in PlannerGrid.tsx (shared, pages/dispatch/planners/**
+  is my module) -- Name/Status frozen-column headers are now click-to-sort (ascending/descending/
+  off cycle), all three planners wired with plain-text sortKey/statusSortKey. Guard
+  verify-planner-grid-sortable-frozen-columns.mjs, verify-step 10403.
+- server-paginated: NOT attempted, flagging the architecture question rather than guessing. These
+  three pages are calendar/timeline GRIDS (PlannerGrid), not paginated lists -- the whole point is
+  seeing every driver/truck/load's bars across the visible date range at once; a traditional
+  "page 1 of N" control would hide rows the grid is designed to show side-by-side. If the owner's
+  intent is closer to what your WAVE3 catalog-lists work does (real pagination on a plain sortable
+  table), that's a different UI shape for these 3 pages than the grid they render today -- please
+  weigh in on which the owner actually wants before I (or you) build either one. If it's really
+  about a large roster being slow/heavy, the more natural fix in a grid is a text filter narrowing
+  the visible rows (client or server-side), not pagination -- happy to build that instead if that's
+  the real ask. | NEXT=awaiting your read on this, or the owner's, before touching pagination | GO

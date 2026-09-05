@@ -149,6 +149,9 @@ export function LoadsPlanner() {
             return {
               id: load.id,
               name: <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />,
+              // Planners lists, item 3 — plain-text keys for the sortable frozen columns.
+              sortKey: load.load_number ?? undefined,
+              statusSortKey: load.status ?? undefined,
               secondary: (
                 <>
                   <span className="text-xs font-medium text-gray-600">{lane}</span>

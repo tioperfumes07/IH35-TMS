@@ -149,6 +149,11 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
           return {
             id: driverId,
             name: <EntityLinkOrTombstone kind="driver" id={driverId} name={name} noun="Driver" />,
+            // Planners lists, item 3 — plain-text keys for PlannerGrid's sortable frozen columns
+            // (name/status render as EntityLinkOrTombstone/a computed label, neither directly
+            // comparable — these are the string form the click-to-sort header actually sorts on).
+            sortKey: name,
+            statusSortKey: status,
             unit: unit ? <EntityLinkOrTombstone kind="unit" id={unitId} name={unit} noun="Unit" /> : null,
             status,
             action: (
