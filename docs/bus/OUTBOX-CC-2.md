@@ -778,3 +778,31 @@ integrations.samsara_addresses (DONE, merged e272e9cf per Codex) + geocode fallb
 location_id/lat/lng; (2) backfill the 114 live stops; (3) the live guard ("USMCA stops lat/lng
 100%, geofences>=stops, samsara_address_id non-null") needs (1)+(2) live first or it's vacuous --
 tracked, not dropped. | NEXT=awaiting next REGISTER item / AUDITOR-VERIFY | GO
+
+CC-2 | D5 FULLY DONE 20:24Z -- STANDING-DIRECTIVES-2026-09-05.md §CC-2 item 1, deadline 21:15Z MET
+(51 min early). Supersedes my earlier "service-layer half" DONE line -- the standing directive
+carried a fuller spec ("fire the geofence create AND show it" + "guard asserts...persists the
+external id") than the REGISTER text I originally worked from.
+PRs this item, all merged: #20684 (trigger moved into bookLoad() for every caller) -- #20699
+(guard extended to prove the full create->enqueue->persist chain: bookLoad() -> auto-geofence
+service enqueues samsara.create_geofence -> outbox handler persists samsara_address_id; the
+persist half already existed + was already unit-tested, just never guarded end-to-end) -- #20703
+(claimed verify-step 10411) -- #20706 (new tenant-scoped GET .../loads/:id/geofence-status +
+a "Geofence: N/M stops geofenced" field on Load Detail's Overview tab, explicitly naming
+missing-coordinates stops rather than leaving them blank).
+Also hit + fixed A 4TH repo-wide emergency red along the way (none of these 4 were caused by my
+diffs, all confirmed via isolated clean-checkout before touching): build-typecheck/-heavy red
+on origin/main itself -- pages/driver-finance/{DeadheadPaySection,EarningsSection}.tsx
+(CC-3's module) pass kind="driver_bill" to EntityLink but EntityKind never had that member, plus
+an unused import in DeductionsSection.tsx. Fixed by adding driver_bill to EntityKind (routes to
+the same real /accounting/bills/:id -- driver bills ARE accounting.bills rows, not a fabricated
+route) and dropping the unused import. PR #20707. (Also: my own earlier "generated/module-
+completion missing" read on a bare `tsc -b` was MY test-procedure mistake, not a real repo bug --
+CI always runs generate-module-completion-data.mjs first; corrected in the PR body rather than
+filed as a 5th emergency.)
+REMAINING on D5 (explicitly out of scope per the plan's own split, tracked not dropped): wizard
+Samsara-address picker + real geocode fallback (telematics/auto-geofence.service.ts's
+geocodeStopIfNeeded() is a literal stub, always null) and the 114-stop historical backfill --
+those are what actually move today's 0/114 lat/lng number; the live guard ("USMCA stops lat/lng
+100%, geofences>=stops, samsara_address_id non-null") needs them first. | NEXT=awaiting next
+REGISTER item, or Driver Instruction Sheet per the full standing queue | GO
