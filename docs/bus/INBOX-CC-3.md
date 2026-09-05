@@ -1,4 +1,17 @@
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
+
+**22:43Z — LEAD (owner: 'you are lead again'). YOUR ONE ITEM — nothing else is accepted:**
+
+## CC-3 — item SET-RATE · settlement detail rate source + no fake zeros
+- **Measured live (FE 25eeb90b, 15:3xZ, settlement of driver on load 13526):** Earnings row shows `1,610.0 mi · $0.6000 · $724.50` — $724.50 / 1,610.0 = **$0.4500**, so the displayed rate is not the rate that produced the amount; load 13567 shows `$0.4700` vs implied `$0.4500`. Empty Miles rows show `0.0 / $0.0000 / $0.00`.
+- **Rule:** LAW §8 "Zero is a claim"; §2 driver pay = short miles × rate card, two lines always (loaded + empty).
+- **Required value:** the rate column reads the SAME source the amount was computed from — `driver_finance.settlement_lines.rate_cents_per_mile` written at line creation from the driver's rate card (`rate_loaded_per_mile_cents` / `rate_empty_per_mile_cents`); if the line predates the column, backfill `rate = amount_cents / miles` only when miles > 0 and flag `rate_source='derived'`. When miles are unknown the row renders `—` and a reason ("no telematics miles for this leg"), never 0.0 / $0.0000 / $0.00. Display 4 decimals for rate, 1 for miles.
+- **Guard:** `scripts/verify-settlement-line-rate-consistency.mjs` — live: for every USMCA settlement line with miles > 0, |amount − miles×rate| ≤ 1 cent; no line renders a zero triple; `--selftest` plants a mismatched rate and must fail.
+- **Linkage:** driver_finance.settlement_lines ↔ driver_finance.driver_bills ↔ mdata.loads ↔ mdata.drivers (rate card) ↔ accounting.journal_entries.
+- **One PR.** **Deadline 00:45Z.** **Surrender:** CC-1.
+- Boarded, not yours to fix now: duplicate drivers Hugo Gaytan / Genaro Guerrero — lead places it after SET-RATE.
+
+---
 **DP1 ACCEPTED (7038277fc4, guard PASS). NEW ACTIVE: DP2 — Driver Profile Documents + Equipment Assignments.** De-duplicate/wire both sections; humanize any machine strings (reuse DP3 humanizer). GUARD `verify-driver-profile-dp2.mjs` (+selftest) in CI. DONE-BAR: FE reads scoped rows (paste driver_id count vs global), both-way linkage, guard green in CI, merged sha; Claude re-measures before ✔. DEADLINE 23:15Z · SURRENDER Cursor.
 **THEN (next, measured on Neon):** DRIVERS-ARE-VENDORS backfill — 16 active drivers have NO `mdata.vendors` row; 97 driver-vendors mis-typed `vendor_type='Other'` not `'Driver'`. Through the service layer (`is_sample_data=false`, never insert a driver as Active): backfill a `'Driver'` vendor for every settlement-active/Rule-49-active driver, re-type the 97, link driver settlement bills/expenses to the driver-vendor. GUARD `verify-driver-vendor-linkage.mjs`. THEN deduction-void (debt-preserving) → seed loads incl 13525 (owner unblocked it).
 DONE LINE: `CC-3 | DP2 DONE | <sha> | <live sha> | rows=<n> | NEXT drivers-are-vendors`

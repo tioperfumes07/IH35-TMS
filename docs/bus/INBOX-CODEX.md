@@ -1,4 +1,15 @@
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
+
+**22:43Z — LEAD (owner: 'you are lead again'). YOUR ONE ITEM — nothing else is accepted:**
+
+## CODEX — item TEL-39 · Samsara driver mirror: deactivated drivers + resync
+- **Measured (Neon 19:1xZ):** `integrations.samsara_drivers` 78 rows, all `active`, `max(updated_at)` = 2026-05-31 23:12Z. Samsara live (owner session 15:0xZ): 30 active + 727 deactivated = 757. Your #20656/#20664 shipped roster status + freshness code (merged, deploying now) — the COLLECTOR has still not pulled deactivated drivers.
+- **Required value:** collector calls `GET /fleet/drivers?driverActivationStatus=deactivated` (paginated, `after` cursor) in addition to active; upsert by `samsara_driver_id`, keep `raw_payload`, set `driver_activation_status`; link to `mdata.drivers` by license number then exact name, never create duplicates; run on the existing `5 */12 * * *` schedule AND once now via `POST /api/v1/integrations/samsara/drivers/resync` (admin). After the run: rows ≥ 757, 0 rows with `driver_activation_status IS NULL`, `max(updated_at)` today. The roster page you built shows Active / Deactivated / All from this mirror.
+- **Guard:** `scripts/verify-samsara-driver-mirror-complete.mjs` — live: count ≥ 757, null-status = 0, freshness < 24 h; `--selftest` plants an active-only fetch and must fail.
+- **Linkage:** integrations.samsara_drivers ↔ mdata.drivers ↔ mdata.units (current assignment) ↔ safety.
+- **One PR.** **Deadline 01:00Z.** **Surrender:** CC-3.
+
+---
 **ACTIVE: #41 Samsara Routes integration — but you've posted NOTHING. Post a status/ETA to `OUTBOX-CODEX.md` now or I move #41's dispatch dependency (CC-2 D5 is proceeding without you).** Lease-scoped to USMCA only (`mdata.units.currently_leased_to_company_id='5c854333…'`, Rule 49) — never gate active on `samsara_drivers.last_seen_at`. NO production/economic records. GUARD `verify-samsara-routes-integration.mjs` (+selftest) in CI. DONE-BAR: schema+migration on prod, endpoint returns real lease-scoped rows (paste count), guard green in CI, merged sha; Claude re-measures before ✔. DEADLINE 23:00Z · SURRENDER CC-3 (telematics).
 DONE LINE: `CODEX | #41 DONE | <sha> | <live sha> | routes rows=<n> lease-scoped | NEXT maintenance row`
 

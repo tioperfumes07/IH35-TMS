@@ -1,4 +1,15 @@
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
+
+**22:43Z — LEAD (owner: 'you are lead again'). YOUR ONE ITEM — nothing else is accepted:**
+
+## CC-2 — item DSP-48 · Google reference miles per leg in Book Load §C
+- **Measured:** Owner 19:4xZ ruling in LAW §2 row "Google distance = REFERENCE ONLY". Routes API enabled on the owner's key 19:39Z (same `GOOGLE_PLACES_API_KEY`). Wizard §C today shows Practical / Short / Empty miles only (`BookLoadStopsSection.tsx` miles strip); no reference figure. Stops now carry lat/lng on pick (Place Details, live since 18:19Z).
+- **Required value:** backend `POST /api/v1/geocoding/route-reference` in `integrations/google/` — body `{legs:[{from:{lat,lng},to:{lat,lng}}]}` → Google Routes `computeRoutes` (travelMode DRIVE, `X-Goog-FieldMask: routes.distanceMeters,routes.duration`), one call per leg, returns miles (1 decimal) + minutes; server-side key; 5-minute in-memory cache by rounded coords. Wizard §C: under each of Practical / Short / Empty miles a grey read-only line `Google ref 1,214.3 mi · 18 h 40 m` computed from yard→pickup (Empty), pickup→…→delivery (Practical & Short reference is the same Google figure), never editable, never copied into the inputs, never in pay/RPM/settlement. Persist per leg on save: `mdata.load_stop_legs.google_reference_miles numeric(9,1)`, `google_reference_fetched_at timestamptz` (migration, CC-1 lane rule: you draft, CC-1 applies in its lane if it is not your lane — say so in the PR). Nightly job NULLs rows older than 30 days (Google terms). Label on hover: "Google car routing — reference only".
+- **Guard:** `scripts/verify-google-reference-miles.mjs` — asserts the miles inputs are never written by the reference code path (grep + component test), asserts expiry job exists; `--selftest` plants a write into `miles_practical` and must fail.
+- **Linkage:** mdata.load_stops (lat/lng) → load_stop_legs (reference) ↔ mdata.loads. No money linkage by design.
+- **One PR.** **Deadline 01:00Z.** **Surrender:** Cursor.
+
+---
 **ACTIVE: D5 — Book Load geocode fallback (today 0/114 stop coords).** Ruling on your flag: do NOT wait on Codex #41 (nothing posted). One author per file — the uncommitted GATE-ROT-07 WIP in `BookLoadModalV4.tsx` is the blocker: if it's yours and complete, commit+merge it as its own atomic PR FIRST (by 22:45Z), then build D5 on the clean file; if it's another seat's, build the stop-coordinate geocode fallback as a separate service/util + wire the trigger in your OWN `git worktree` off origin/main, stage only files you author (never `git add -A`), leave `BookLoadModalV4.tsx` untouched. GUARD `verify-booking-stop-geocode.mjs` (+selftest) in CI. DONE-BAR: util/endpoint returns real lat/lng for a seeded stop (paste count), FE trigger wired, guard green in CI, merged sha; Claude re-measures before ✔. DEADLINE 23:30Z · SURRENDER Codex.
 DONE LINE: `CC-2 | D5 DONE | <sha> | <live sha> | stop coords <n>/114 geocoded | NEXT Driver Instruction Sheet`
 
