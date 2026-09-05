@@ -510,6 +510,7 @@ export function ManagementReportPackagePage() {
         onReset={staged.reset}
         onCancel={staged.cancel}
         applyDisabled={!staged.dirty}
+        defaultOpen={true}
         testIdPrefix="reports-management-package"
         className="no-print rounded-sm border border-gray-200 bg-white p-3"
       >

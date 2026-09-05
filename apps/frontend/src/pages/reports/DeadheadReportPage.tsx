@@ -72,8 +72,8 @@ export function DeadheadReportPage() {
   const [appliedPeriod, setAppliedPeriod] = useState<DeadheadPeriod>("last_4_weeks");
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const staged = useStagedListFilters({
-    applied: { period: appliedPeriod },
-    empty: { period: "last_4_weeks" as DeadheadPeriod },
+    applied: { period: appliedPeriod, groupBy: "week", minDeadheadMiles: "" },
+    empty: { period: "last_4_weeks" as DeadheadPeriod, groupBy: "week", minDeadheadMiles: "" },
     onApply: (next) => {
       setSelectedUnitId(null);
       setAppliedPeriod(next.period);
@@ -141,6 +141,7 @@ export function DeadheadReportPage() {
 
       <CollapsedListFilters
         activeFilterCount={appliedPeriod !== "last_4_weeks" ? 1 : 0}
+        defaultOpen={true}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -148,18 +149,45 @@ export function DeadheadReportPage() {
         testIdPrefix="reports-deadhead"
         className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-4"
       >
-        <label className="text-xs text-gray-600">
-          Period
-          <SelectCombobox
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-xs"
-            value={staged.draft.period}
-            onChange={(e) => staged.setDraft({ period: e.target.value as DeadheadPeriod })}
-          >
-            <option value="last_4_weeks">Last 4 weeks</option>
-            <option value="last_12_weeks">Last 12 weeks</option>
-            <option value="YTD">Year to date</option>
-          </SelectCombobox>
-        </label>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-xs text-gray-600">
+            Period
+            <SelectCombobox
+              className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              value={staged.draft.period}
+              onChange={(e) => staged.setDraft({ ...staged.draft, period: e.target.value as DeadheadPeriod })}
+            >
+              <option value="last_4_weeks">Last 4 weeks</option>
+              <option value="last_12_weeks">Last 12 weeks</option>
+              <option value="YTD">Year to date</option>
+            </SelectCombobox>
+          </label>
+          <label className="text-xs text-gray-600">
+            Group by
+            <select
+              className="mt-1 block h-9 rounded-sm border border-gray-300 px-2 text-xs"
+              value={staged.draft.groupBy}
+              onChange={(e) => staged.setDraft({ ...staged.draft, groupBy: e.target.value })}
+              data-testid="reports-deadhead-group-by"
+            >
+              <option value="day">Day</option>
+              <option value="week">Week</option>
+              <option value="month">Month</option>
+            </select>
+          </label>
+          <label className="text-xs text-gray-600">
+            Min deadhead miles
+            <input
+              type="number"
+              min={0}
+              className="mt-1 block h-9 w-32 rounded-sm border border-gray-300 px-2 text-xs"
+              value={staged.draft.minDeadheadMiles}
+              onChange={(e) => staged.setDraft({ ...staged.draft, minDeadheadMiles: e.target.value })}
+              data-testid="reports-deadhead-min-miles"
+              // TODO: wire to backend filter
+            />
+          </label>
+        </div>
       </CollapsedListFilters>
 
       {reportQuery.data ? (

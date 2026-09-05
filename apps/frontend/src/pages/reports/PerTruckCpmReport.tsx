@@ -50,10 +50,10 @@ export function PerTruckCpmReport() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const defaultRange = currentQuarterRange();
-  const [applied, setApplied] = useState(defaultRange);
+  const [applied, setApplied] = useState({ ...defaultRange, minMiles: "" });
   const staged = useStagedListFilters({
     applied,
-    empty: defaultRange,
+    empty: { ...defaultRange, minMiles: "" },
     onApply: setApplied,
   });
 
@@ -99,7 +99,8 @@ export function PerTruckCpmReport() {
         </button>
       </div>
       <CollapsedListFilters
-        activeFilterCount={JSON.stringify(applied) !== JSON.stringify(defaultRange) ? 1 : 0}
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify({ ...defaultRange, minMiles: "" }) ? 1 : 0}
+        defaultOpen={true}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -115,6 +116,18 @@ export function PerTruckCpmReport() {
           <label className="text-xs">
             To
             <DatePicker className="ml-2" value={staged.draft.to} onChange={(next) => staged.setDraft((p) => ({ ...p, to: next }))} />
+          </label>
+          <label className="text-xs">
+            Min miles
+            <input
+              type="number"
+              min={0}
+              className="ml-2 h-9 w-28 rounded-sm border border-gray-300 px-2 text-xs"
+              value={staged.draft.minMiles}
+              onChange={(e) => staged.setDraft((p) => ({ ...p, minMiles: e.target.value }))}
+              data-testid="reports-per-truck-cpm-min-miles"
+              // TODO: wire to backend filter
+            />
           </label>
         </div>
       </CollapsedListFilters>

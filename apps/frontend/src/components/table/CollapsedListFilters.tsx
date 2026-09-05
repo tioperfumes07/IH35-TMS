@@ -12,6 +12,8 @@ type BaseProps = {
   searchSlot?: ReactNode;
   testIdPrefix?: string;
   className?: string;
+  /** Open the filter panel on first render (K.9 pattern — 0 clicks to see controls). */
+  defaultOpen?: boolean;
   /** e.g. { "data-customers-filter-toolbar": "collapsed" } */
   dataAttributes?: Record<string, string>;
 };
@@ -31,6 +33,7 @@ export function CollapsedListFilters({
   searchSlot,
   testIdPrefix = "list",
   className = "",
+  defaultOpen = false,
   dataAttributes,
   onApply = () => {},
   onReset = () => {},
@@ -38,7 +41,7 @@ export function CollapsedListFilters({
   applyDisabled = false,
   applyLawExemptReason,
 }: Props) {
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(defaultOpen ?? false);
   const ref = useRef<HTMLDivElement>(null);
   const layoutClassName = singleFrameLayoutClassName(className);
 

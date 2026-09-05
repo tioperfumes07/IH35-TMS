@@ -42,7 +42,7 @@ export function BalanceSheetPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const today = companyToday();
-  const emptyFilters = { asOfDate: today, basis: "accrual" as AccountingBasis };
+  const emptyFilters = { asOfDate: today, basis: "accrual" as AccountingBasis, compareToDate: "" };
   const [applied, setApplied] = useState(emptyFilters);
   const exportAction = useExportAction();
   const staged = useStagedListFilters({
@@ -201,6 +201,7 @@ export function BalanceSheetPage() {
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
+        defaultOpen={true}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -216,6 +217,10 @@ export function BalanceSheetPage() {
           <label className="text-xs text-gray-600">
             As-of date
             <DatePicker className="mt-1 block h-9" value={staged.draft.asOfDate} onChange={(next) => staged.setDraft((previous) => ({ ...previous, asOfDate: next }))} />
+          </label>
+          <label className="text-xs text-gray-600">
+            Compare to
+            <DatePicker className="mt-1 block h-9" value={staged.draft.compareToDate} onChange={(next) => staged.setDraft((previous) => ({ ...previous, compareToDate: next }))} />
           </label>
         </div>
       </CollapsedListFilters>

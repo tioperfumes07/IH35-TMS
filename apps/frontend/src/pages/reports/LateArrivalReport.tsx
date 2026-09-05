@@ -56,7 +56,7 @@ const TAB_LABELS: Record<GroupBy, string> = {
 export function LateArrivalReport() {
   const { selectedCompanyId, companies } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
-  const emptyFilters = { from: monthStart(), to: today(), groupBy: "driver" as GroupBy };
+  const emptyFilters = { from: monthStart(), to: today(), groupBy: "driver" as GroupBy, minDelayHours: "" };
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({
     applied,
@@ -110,6 +110,7 @@ export function LateArrivalReport() {
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
+        defaultOpen={true}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -125,6 +126,18 @@ export function LateArrivalReport() {
           <label className="text-xs text-slate-600">
             To
             <DatePicker className="mt-1 block" value={staged.draft.to} onChange={(next) => staged.setDraft((p) => ({ ...p, to: next }))} />
+          </label>
+          <label className="text-xs text-slate-600">
+            Min delay (hours)
+            <input
+              type="number"
+              min={0}
+              className="mt-1 block h-9 w-32 rounded-sm border border-gray-300 px-2 text-xs"
+              value={staged.draft.minDelayHours}
+              onChange={(e) => staged.setDraft((p) => ({ ...p, minDelayHours: e.target.value }))}
+              data-testid="reports-late-arrival-min-delay"
+              // TODO: wire to backend filter
+            />
           </label>
         </div>
       </CollapsedListFilters>

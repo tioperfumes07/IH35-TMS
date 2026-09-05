@@ -57,10 +57,10 @@ export function MaintenanceCostPerUnitPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const emptyRange = currentQuarterRange();
-  const [applied, setApplied] = useState(emptyRange);
+  const [applied, setApplied] = useState({ ...emptyRange, unitFilter: "" });
   const staged = useStagedListFilters({
     applied,
-    empty: emptyRange,
+    empty: { ...emptyRange, unitFilter: "" },
     onApply: setApplied,
   });
 
@@ -242,7 +242,8 @@ export function MaintenanceCostPerUnitPage() {
       {query.isError ? <ReportBlockVPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
       <CollapsedListFilters
-        activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyRange) ? 1 : 0}
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify({ ...emptyRange, unitFilter: "" }) ? 1 : 0}
+        defaultOpen={true}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -258,6 +259,18 @@ export function MaintenanceCostPerUnitPage() {
           <label className="text-xs text-gray-600">
             To
             <DatePicker className="mt-1 block h-9" value={staged.draft.end} onChange={(next) => staged.setDraft((p) => ({ ...p, end: next }))} />
+          </label>
+          <label className="text-xs text-gray-600">
+            Unit
+            <input
+              type="text"
+              className="mt-1 block h-9 w-28 rounded-sm border border-gray-300 px-2 text-xs"
+              value={staged.draft.unitFilter}
+              onChange={(e) => staged.setDraft((p) => ({ ...p, unitFilter: e.target.value }))}
+              placeholder="All units"
+              data-testid="reports-maintenance-cost-per-unit-unit"
+              // TODO: wire to backend filter
+            />
           </label>
         </div>
       </CollapsedListFilters>

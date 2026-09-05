@@ -56,10 +56,10 @@ export function SettlementSummaryPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const emptyRange = defaultRange();
-  const [applied, setApplied] = useState(emptyRange);
+  const [applied, setApplied] = useState({ ...emptyRange, driverFilter: "" });
   const staged = useStagedListFilters({
     applied,
-    empty: emptyRange,
+    empty: { ...emptyRange, driverFilter: "" },
     onApply: setApplied,
   });
 
@@ -224,7 +224,8 @@ export function SettlementSummaryPage() {
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
       <CollapsedListFilters
-        activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyRange) ? 1 : 0}
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify({ ...emptyRange, driverFilter: "" }) ? 1 : 0}
+        defaultOpen={true}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -247,6 +248,18 @@ export function SettlementSummaryPage() {
               className="mt-1 block h-9"
               value={staged.draft.end}
               onChange={(next) => staged.setDraft((p) => ({ ...p, end: next }))}
+            />
+          </label>
+          <label className="text-xs text-gray-600">
+            Driver
+            <input
+              type="text"
+              className="mt-1 block h-9 w-40 rounded-sm border border-gray-300 px-2 text-xs"
+              value={staged.draft.driverFilter}
+              onChange={(e) => staged.setDraft((p) => ({ ...p, driverFilter: e.target.value }))}
+              placeholder="All drivers"
+              data-testid="reports-settlement-summary-driver"
+              // TODO: wire to backend filter
             />
           </label>
         </div>

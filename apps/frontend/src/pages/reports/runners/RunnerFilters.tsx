@@ -96,7 +96,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
 
   return (
     <section className="space-y-2" data-runner-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={activeFilterCount} testIdPrefix="runner" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
+      <CollapsedListFilters activeFilterCount={activeFilterCount} testIdPrefix="runner" defaultOpen={true} onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {filters.map((filter) => {
             if (filter.type === "date_range") {

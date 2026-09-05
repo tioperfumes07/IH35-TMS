@@ -113,6 +113,7 @@ export function DispatchMarginPage() {
         onReset={staged.reset}
         onCancel={staged.cancel}
         applyDisabled={!staged.dirty}
+        defaultOpen={true}
         testIdPrefix="reports-dispatch-margin"
         className="rounded-sm border border-slate-200 bg-white p-3"
       >
