@@ -1,4 +1,5 @@
 # STATUS-NOW · 2026-09-05 04:22Z (Claude lead loop)
+**05:50Z — FE deploy fixed by lead (#20502 5155d48d) after 3 build_failed from #20486 TS6133; API live 836f4478. Cursor L.0: gate must run tsc -b, 06:15Z.**
 **05:30Z — ADDITIVE-ONLY BREACH on record (#18231, #20242, Cursor). L.4g guard due 07:00Z. Every seat re-reads LAW L379.**
 **05:20Z — L.4 UPDATED from the owner's Dispatch Board Preview PDF (docs/design/reference). L.4a board 06:30Z · L.4b top bar 07:15Z · L.4c round trips 08:00Z.**
 **05:05Z — CURSOR L.4 (ahead of L.2/L.3 polish): restore the 33-column dispatch Table hidden by BRD-25; 06:00Z; see INBOX-CURSOR top.**
