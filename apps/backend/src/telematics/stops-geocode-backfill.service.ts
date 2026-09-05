@@ -9,6 +9,7 @@ type StopRow = {
   location_id: string | null; address_line1: string | null; city: string | null;
   state: string | null; postal_code: string | null; country: string | null;
   latitude: number | null; longitude: number | null;
+  location_latitude: number | null; location_longitude: number | null;
 };
 export type StopGeocodeFailure = { stop_id: string; load_id: string; reason: string };
 export type StopsGeocodeBackfillResult = {
@@ -31,9 +32,11 @@ async function candidateStops(client: DbClient, companyId: string, loadId?: stri
   return (await client.query<StopRow>(`
     SELECT s.id::text stop_id, s.load_id::text load_id, s.sequence_number, s.stop_type::text,
            s.location_id::text, s.address_line1, s.city, s.state, s.postal_code, s.country,
-           s.latitude::double precision, s.longitude::double precision
+           s.latitude::double precision, s.longitude::double precision,
+           loc.latitude::double precision location_latitude, loc.longitude::double precision location_longitude
       FROM mdata.load_stops s
       JOIN mdata.loads l ON l.id = s.load_id
+      LEFT JOIN mdata.locations loc ON loc.id=s.location_id AND loc.operating_company_id=$1::uuid AND loc.deactivated_at IS NULL
      WHERE l.operating_company_id = $1::uuid
        AND l.soft_deleted_at IS NULL AND l.status NOT IN ('cancelled','delivered')
        AND s.soft_deleted_at IS NULL ${loadClause}
@@ -69,7 +72,9 @@ export async function geocodeStopsWithClient(client: DbClient, actorId: string, 
   const failures: StopGeocodeFailure[] = [];
   let geocoded = 0, locations = 0, fences = 0;
   for (const stop of stops) {
-    const outcome = await geocodeAddressWithEvidence(stop);
+    const outcome = stop.location_latitude != null && stop.location_longitude != null
+      ? { ok: true as const, latitude: stop.location_latitude, longitude: stop.location_longitude, source: "location_existing", confidence: 1 }
+      : await geocodeAddressWithEvidence(stop);
     if (!outcome.ok || (outcome.latitude === 0 && outcome.longitude === 0)) {
       const reason = outcome.ok ? "zero_coordinates_rejected" : outcome.reason;
       await client.query(`UPDATE mdata.load_stops SET geocode_attempted_at=now(), geocode_failure_reason=$2, updated_at=now() WHERE id=$1::uuid`, [stop.stop_id, reason]);
