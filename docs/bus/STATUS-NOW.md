@@ -1,4 +1,5 @@
 # STATUS-NOW · 2026-09-05 04:22Z (Claude lead loop)
+**13:55Z — ONE INSTRUCTION SET: docs/bus/OWNER-ISSUE-INVENTORY-2026-09-05.md (23 issues, §B per seat). Banking B.1 matcher 19:30Z / B.2 filters+design 18:00Z added for CC-2.**
 **13:35Z — CC-3 V.1 = vendors+customers roll-ups 18:30Z · CASCADE K.9 = restore Customers/Vendors landing filter bar (root 1e4a6282d7) 16:00Z.**
 **13:15Z — SETTLEMENTS + VENDORS block on INBOX tops (CC-1 S.1–S.3 · CC-3 V.1, M.3 · Cursor L.5, L.6). Reference: docs/design/reference/DRIVER-SETTLEMENT-DETAIL-REFERENCE-2026-09-05.html.**
 **12:45Z LEAD RESET — read the ★★★★★ block at the top of your INBOX. Cursor: deploy API 0a9d3956 NOW (#20505 booking crash fix), L.0, L.4b, L.1d sticky by 14:00Z. CC-2: L.4a 15:00Z · L.4g 15:30Z · L.4c 16:30Z. CC-3: Codex slice 15:30Z. CC-1: script 14:30Z. Codex: X.7 15:00Z. Cascade: K.4 15:00Z.**

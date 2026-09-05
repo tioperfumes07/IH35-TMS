@@ -1,0 +1,83 @@
+# IH35-TMS — OWNER ISSUE INVENTORY AND ONE INSTRUCTION SET
+**Lead · 2026-09-05 13:55Z · repo tip `f1998d80` · API live `836f4478` · FE live `5155d48d` · Neon USMCA under bypass**
+Every number below was read from the live database, the deployed app, or the source file at tip today. Nothing is from memory. Where the Chrome extension was disconnected (13:00Z onward) the line says SOURCE and the seat re-measures live before DONE.
+Devin is not active today — nothing routes to Devin.
+
+---
+
+## A. THE INVENTORY — every open owner issue, one row each
+
+| # | Module | Issue (owner's words → measured) | Root cause (file:line / table) | Owner seat | Deadline UTC | Surrender |
+|---|---|---|---|---|---|---|
+| 1 | Load Costs board | "Still not done." Live 5155d48d: tab row ✔, `table-layout:auto` ✔, 1660px ✔, 0 truncation ✔, Short Miles 1,319.7 / $0.4800 / $633.46 ✔. **Header not sticky** (`th position: static`). | `LoadCostsBoardPage.tsx` th needs `position:sticky; top:0` | Cursor L.1d | 14:00Z | CC-2 |
+| 2 | Load Costs register | Costs-tab register (#20486) is live but **never proven with a real row** — owner has not recorded an expense on 13508 through it. | live proof owed | Cursor L.2 proof | with #1 | — |
+| 3 | Load Costs / gate | #20486 shipped with a false green: FE build failed 3× (TS6133); lead fixed #20502. **82 verify:static failures remain on tip** (#20508). Gate does not run the Render build command. | `pnpm gate` ≠ `tsc -b && vite build` | Cursor L.0 | 14:00Z | CC-2 |
+| 4 | Deploy | API live `836f4478` **lacks #20505** — `confirmPresettlementLink create_new` NOT NULL crash on every new-tour booking — and #20506. Lead's Render trigger blocked by policy; only Cursor deploys. | deploy not triggered | Cursor | NOW | — |
+| 5 | Seed | **17 of 66 loads seeded.** CC-3: 7 of 8 settlements (5773–5782) live — loads 17, stops 34, invoices 17, expenses 92, driver_bills 17, JEs 135. CC-1 slice (12) and Codex slice (11): no script. Owner keeps 5766/5772/5776/5780/5783/5784. | CC-1/Codex never wrote a script | CC-1 (12) · CC-3 (Codex's 11) | CC-1 script 14:30Z, seeded 16:00Z · CC-3 15:30Z | CC-1→CC-3 |
+| 6 | Seed — owner answers | 5778 / load **13525**: customer name blank on the PDF. 5782 / load **13540**: $120 lumper, vendor blank on the PDF. | source document gaps | **OWNER** | — | — |
+| 7 | Dispatch board | "Can't find my dispatch view (HOS, location, on-time, 16–20+ columns)." Live Table mode = **9 of 33** columns, 0 chooser buttons. Hidden by **#20242 BRD-25** (Cursor, 09-04). | `DispatchBoard.tsx:1039-1061` `DEFAULT_VISIBLE_BOARD_KEYS` | CC-2 L.4a (surrendered by Cursor) | 15:00Z | Cascade |
+| 8 | Dispatch top bar | Owner PDF §1: one nav, one toolbar, segmented List/Kanban/Round Trips, `+ Book Load` sole filled button, `/dispatch` → Overview. Live: two nav rows, 4 duplicate tabs, 32px buttons beside 36px. | `Dispatch.tsx` header | Cursor L.4b | 14:00Z | CC-2 |
+| 9 | Round Trips | Bespoke timeline cut by **#18231** (Cursor, 08-30) into PlannerGrid. Recover from `22a266132` + `67faa3dcd`, keep `82fda7c90`. | additive breach | CC-2 L.4c | 16:30Z | Cascade |
+| 10 | Additive-only law | Breached by #18231, #20242, and `1e4a6282d7` (#3204, 07-22). No guard exists. | LAW.md L379 unguarded | CC-2 L.4g `verify-additive-only.mjs` | 15:30Z | Cascade |
+| 11 | Driver settlement detail | "Boxes out of proportion; no add/create; not editable; Earnings/Empty miles missing rate and miles." `settlement_lines` has **no miles/rate columns**; page reads `line.miles` → `—` on **0 of 32** lines. Truth on `driver_bills` via `source_driver_bill_id`. No `+ Add`, no inline edit. | `SettlementDetailPage.tsx:257-300`; read model | CC-1 S.1 (read model) · Cursor L.5 (FE per reference) | 17:30Z · 18:00Z | CC-3 · CC-2 |
+| 12 | Company settlements | "Missing." `accounting.company_settlements` exists, **0 USMCA rows, no page, no route.** Waterfall fixed by doc 5784: Invoiced − Quick Pay 0.50% − Driver Salary − Additional Pay − Fuel − Company Expenses = Net Revenue. | never built | CC-3 M.3 backend · Cursor L.6 FE | 20:00Z · 21:00Z | CC-1 · CC-2 |
+| 13 | Bills | "Driver bills not appearing in Bills." Bills reads `accounting.bills` only (USMCA **0**); the **17** driver bills live in `driver_finance.driver_bills` (canonical). `/accounting/bills/driver` route exists, reads the wrong table. | `BillsPage.tsx:385,907` | CC-1 S.2 | 18:30Z | CC-3 |
+| 14 | Invoices | "Need a Factored column." `invoices.factoring_status` / `factor_profile_id` / `factoring_advance_id` exist on all 17; list renders none. | invoice list columns | CC-1 S.3 | 19:00Z | CC-3 |
+| 15 | Vendors | "Balances not appearing — not wired." Open Balance = `accounting.vendor_balances` = **bills only** → every vendor $0.00 while **92 posted expenses, all with a vendor, all paid** show nowhere. "Last Transaction" = `vendor.updated_at` (master edit date — a number-shaped lie). | `VendorsListView.tsx:264-284`; view | CC-3 V.1 | 18:30Z | CC-1 |
+| 16 | Customers | "Data not showing." 1,232 customers; **17 invoices all customer-linked, 17 loads**; list shows Open Balance (posted A/R only → $0) and nothing operational. No roll-up view exists. | `CustomersListView.tsx:39-120`; `customer-billing.routes.ts` | CC-3 V.1 (same sweep) | 18:30Z | CC-1 |
+| 17 | Customers/Vendors landing | "Views changed — I designed a filter view on the landing page." Removed by **`1e4a6282d7`** (07-22, CHROME-04 #3204 "collapse roster header filters behind Filters popover"); restyled by LAY-01 #19219 (09-01). No owner remove line. | `pages/Customers.tsx`, `Vendors.tsx` | Cascade K.9 (recover from `1e4a6282d7^`) | 16:00Z | CC-2 |
+| 18 | Banking — matching | "Expenses and bills not wired to Banking; no suggested matches." USMCA bank_transactions **355** (2025-12-08 → 2026-09-04; Aug 2026 = 217), all `pending_categorization/uncategorized`; `suggested_match_bill_id` 0, `suggested_vendor_id` 0, `matched_expense_id` 0, `matched_bill_id` 0, `categorized_at` 0. Only engine is rule-based `applyBankingRulesForTransaction` (`banking-rules.engine.ts:46`), needs `transaction_categories` rules; **no amount/date match to `accounting.expenses`/`bills`** exists. Exact-cents-within-5-days candidates today: **4** (fuel-card/settlement aggregation means most will be many-to-one). | no matcher for expenses/bills; no suggestion job | CC-2 B.1 | 19:30Z | CC-3 |
+| 19 | Banking — filters/design | "Design regressed, filters regressed, Money in/out buttons out of proportion, dates filter missing, type filter needs multi-select." SOURCE: `BankingTransactionsDesignView.tsx` — toolbar mixes **h-7 (28px) L1457, L2267** with **h-8 (32px) L2567, L2595**; type selector is a single `<select>` (L1746, options All/Money in/Money out); date range exists in code (L289, L2567-2599) — owner does not see it → re-measure live where it renders and why it is off-screen/collapsed. | `BankingTransactionsDesignView.tsx` (3,179 lines) | CC-2 B.2 | 18:00Z | Cascade |
+| 20 | Geofence / telematics | Engine fixed (3.2b) and `geo.geofence_vehicle_state` live; Samsara address import X.9 merged `e272e9cf`, **not deployed**; Love's 604 import waits on flap proof. | deploy + CC-3 3.13 | Cursor deploy · CC-3 | with #4 | — |
+| 21 | Maintenance design law | Codex X.7 (maintenance tables on the ParityTable contract) and X.8 (WO comboboxes, ≥$7,000 role routing) not merged. | — | Codex | X.7 15:00Z · X.8 17:00Z | Cascade |
+| 22 | Planners (BRD-19/20/21/23) | Cascade K.4–K.7 — no post since 09-04. | — | Cascade | K.4 15:00Z | CC-2 |
+| 23 | Design tokens | CC-2 2.2 — encode the design-contract values in `tokens.ts` + ratchet — not posted. | — | CC-2 | after L.4a | — |
+
+---
+
+## B. ONE INSTRUCTION SET — read top to bottom, every seat
+
+**Order of the day.** Deploy first, seed second, restore what was deleted third, then the settlements/counterparty/banking wiring. No seat starts row N+1 before posting row N's DONE line with measurements (FINISH LAW §0). Every DONE line: `SEAT | ROW DONE | <sha> | <live sha> | <measurements> | NEXT`. Silence at a deadline = surrender; the lead rewrites both INBOXes at the deadline.
+
+### CURSOR (deployer; dispatch FE; Load Costs vertical)
+1. **DEPLOY API on tip** (srv-d7rpem7avr4c73fhp4n0) — post `healthz git_sha`. Then deploy FE if anything merged since 5155d48d. (#4, #20)
+2. **L.0** — `pnpm gate` runs exactly `node scripts/generate-module-completion-data.mjs && tsc -b && vite build` (FE) and `npm run build` (API); guard `verify-gate-runs-render-build-commands.mjs`; clear the 82 verify:static failures on tip (#20508). (#3) — 14:00Z
+3. **L.1d** — Load Costs th sticky (`position:sticky; top:0`, measured). (#1) — 14:00Z
+4. **L.4b** — top bar per `docs/design/DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05.md` §B + guard test (2). (#8) — 14:00Z
+5. **L.5** — driver settlement detail exactly per `docs/design/reference/DRIVER-SETTLEMENT-DETAIL-REFERENCE-2026-09-05.html`: 6×93px KPI grid, one register table per section on the §14 contract, `+ Add additional pay / reimbursement / deduction` rows with NUMBER box, inline edit while OPEN (earnings/empty miles open the driver bill), lock at Close; rendered guard. (#11) — 18:00Z
+6. **L.6** — Company settlements list + detail at `/accounting/company-settlements` (additive sidebar entry under SETTLEMENTS) on CC-3's M.3 shapes; waterfall table; open/closed. (#12) — 21:00Z
+
+### CC-2 (banking; design tokens; takes the dispatch board surrendered by Cursor — `SURFACE-BREACH-AUTHORIZED: lead §0c 12:45Z`)
+1. **L.4a** — dispatch board per contract §A: delete `DEFAULT_VISIBLE_BOARD_KEYS`/`defaultHidden` (DispatchBoard.tsx L1039–1061); all 33 columns; group headers ASSIGNMENT · HOURS OF SERVICE · LOAD · TELEMETRY · STATUS; `Location` → `Live loc`; drag reorder + resize through ParityTable (reorder exists at ParityTable.tsx:1190); sticky first 4; guard test (1). (#7) — 15:00Z
+2. **L.4g** — `scripts/verify-additive-only.mjs` + `docs/guards/additive-baseline.json` (sidebar labels, route paths, board column keys, tab labels, filter-control labels) in `pnpm gate`; fails on any shrink or `defaultHidden` unless the PR body carries `OWNER-REMOVE: "<owner's words>" <date>`. (#10) — 15:30Z
+3. **L.4c** — Round Trips timeline recovered from `22a266132` + `67faa3dcd`, keep `82fda7c90`; NB `#1f2a44` · SB `#475569` · TR `#b45309`; 7-day leg outline; legend; guard test (3). (#9) — 16:30Z
+4. **B.2 banking filters/design** — one toolbar height (28px, §14 control token) for every control incl. Money in/out; type filter becomes a **multi-select** (All · Money in · Money out · Transfer · Check · Card · Fee …, checkboxes, chips) that filters server-side; the **date range** (from/to) visible on landing, not behind a gear; re-measure live in Chrome first (extension reconnected) and paste heights; guard: rendered — all toolbar controls `offsetHeight` equal, date inputs visible on first load, type control `aria-multiselectable=true`. (#19) — 18:00Z
+5. **B.1 banking matching** — a real matcher: for every uncategorized USMCA bank transaction propose (a) exact `abs(amount_cents)` = `expenses.total_amount_cents` or `bills.amount_cents` within ±5 days → `suggested_*`/`matched_expense_id` candidate, (b) many-to-one: a bank debit equal to the sum of same-vendor expenses in the statement window (fuel-card settlements), (c) vendor by `normalized_description` ↔ `mdata.vendors` alias table; write `suggested_confidence` high/medium/low + `suggested_source`; run on import and on demand (`POST /banking/transactions/suggest`); Categorize screen shows the suggestion with one-click Accept → match (never auto-post). Guard: after the run, USMCA `suggested_*` NOT NULL count ≥ the 4 exact candidates and every suggestion's cents foot. Never write `accounting.*` directly — through the existing categorize/match services. (#18) — 19:30Z
+6. **2.2** tokens after the above. (#23)
+
+### CC-3 (money #2; safety/telematics)
+1. **Seed Codex's slice 5785–5795** with your script pattern (`scripts/seed-settlements-codex.ts` + guard); 5789/13557 invoice 99462408 date 2026-09-29 → 2026-08-29 with memo. Leave 13525 and 13540 open for the owner. (#5) — 15:30Z. If CC-1 has no merged script by 14:30Z, its 12 are yours too.
+2. **V.1 counterparty roll-ups (vendors + customers, one sweep, one guard)** — append-only view columns: vendors `purchases_ytd_cents`, `purchases_total_cents`, `last_purchase_date`, `expense_count`; customers `accounting.customer_rollups` (`loads_count`, `booked_ytd_cents` incl. proforma labelled Booked, `open_ar_cents` posted only, `last_load_date`). Lists: Vendors + **Purchases YTD · Last purchase** ("Last Transaction" reads a transaction date, never `updated_at`); Customers + **Loads YTD · Booked YTD · Last load**. Detail pages: **Transactions** tab (expenses/bills · invoices/loads). Guard `verify-counterparty-rollups-live.mjs`: sum(Purchases YTD) = live sum of posted USMCA expenses; sum(Booked YTD) = the 17 invoice totals; 0 vendors with expenses or customers with loads showing "—". (#15, #16) — 18:30Z
+3. **M.3 company settlements backend** — service + read model: open = pre-settlement (many loads, one number, period_start/end), lines per the 5784 waterfall, `GET /company-settlements`, `GET /company-settlements/:id`, close = human-confirmed, posts through `journal-entries.service`; shapes to OUTBOX for Cursor L.6. (#12) — 20:00Z
+4. 3.13 Love's 604 import after the flap proof; 3.14 alert chain.
+
+### CC-1 (accounting read models)
+1. **Seed your 12** (5753, 5760–5765, 5767–5771): `scripts/seed-settlements-cc-1.ts` + `verify-settlement-seed-cc-1.mjs` from CC-3's pattern. Script PR 14:30Z · SEEDED 16:00Z. Nothing else first. (#5)
+2. **S.1** — settlement lines read model joins `driver_bills` on `source_driver_bill_id` and returns `miles`, `rate_cents`, `pay_cents` for earnings (`miles_basis`, `rate_per_mile_cents`, `loaded_pay_cents`) and deadhead (`miles_deadhead`, `rate_empty_per_mile_cents`, `deadhead_pay_cents`); FE shows `1,319.7` / `$0.4800`; guard: every earnings/deadhead line on S-13642 has miles>0 and rate>0 live. (#11) — 17:30Z
+3. **S.2** — `/accounting/bills/driver` reads `driver_finance.driver_bills` (Bill # · Driver · Load · Loaded mi · Rate · Empty mi · Rate · Gross · Status · Settlement); the All-bills list unions them with a **Source** column (Vendor / Driver), void hidden by default; guard: screen count = live count (17 today). (#13) — 18:30Z
+4. **S.3** — Invoices list **Factored** column (Not factored · Submitted · Advanced · Settled) + factor name from `factoring_status`/`factor_profile_id`; dash never blank; guard. (#14) — 19:00Z
+
+### CODEX (maintenance)
+1. **X.7** maintenance tables/KPIs on the ParityTable design contract, one guarded PR — 15:00Z. 2. **X.8** WO create/edit comboboxes, unit-picker rule, ≥$7,000 role routing on screen — 17:00Z. 3. Re-post the DEPLOY-REQUEST for `e272e9cf` (X.9) to Cursor. Your feed slice is CC-3's. (#20, #21)
+
+### CASCADE (lists/reports/planners)
+1. **K.9** — restore the Customers and Vendors landing **filter bar** from `git show 1e4a6282d7^:apps/frontend/src/pages/Customers.tsx` (and Vendors.tsx): inline, visible on first load, live-applied; keep later genuine fixes (`f21c9922bc` URL-addressable row, `4a2c208e00` balance sort, `485c52dca8` pager, `7c7b830569` void column, GLB-01 scale); gear popover may remain secondary. Guard: rendered — ≥5 visible filter controls above the list on `/customers` and `/vendors` at first load, 0 clicks. (#17) — 16:00Z
+2. **K.4** BRD-19 planners — 15:00Z; then K.5–K.7. (#22)
+
+### OWNER — the only two things waiting on you
+- Load **13525** (settlement 5778): the customer's name.
+- Load **13540** (settlement 5782): the vendor for the $120 lumper fee.
+Also: record one real expense on 13508 through the Costs-tab register when the FE shows it — that is the live proof for #2.
+
+---
+*Mirrored to `docs/bus/OWNER-ISSUE-INVENTORY-2026-09-05.md` and the top of every INBOX. Journal updated.*
