@@ -116,6 +116,11 @@ export type ParityTableProps<T> = {
   exportFilename?: string;
   /** Sticky header row on vertical scroll (universal-list standard). Default true. */
   stickyHeader?: boolean;
+  /** Minimum table width in px. When set, the table never compresses below this inside the
+   *  overflow-x-auto wrapper — wide multi-column boards (Load Costs, DESIGN-CONTRACT §14
+   *  min-width:1660) scroll horizontally instead of squeezing columns to truncation. Opt-in;
+   *  omitting it preserves the w-full behaviour every other table relies on. */
+  minWidthPx?: number;
   /** Drag-to-resize columns (widths persist with storageKey). Default true. */
   enableColumnResize?: boolean;
   /** Drag-a-header-to-move-it column reordering (order persists per storageKey, alongside width).
@@ -438,6 +443,7 @@ export function ParityTable<T>({
   suppressToolbarRange = false,
   exportFilename,
   stickyHeader = true,
+  minWidthPx,
   enableColumnResize = true,
   enableColumnReorder = true,
   columnOrder: controlledColumnOrder,
@@ -1264,7 +1270,10 @@ export function ParityTable<T>({
           with an explicit text-right/text-left in its own className (money columns, etc.) still
           wins on its own <td>/<th> — direct declarations beat inheritance regardless of source
           order, so deliberately right-aligned numeric columns are unaffected. */}
-      <table className="w-full table-fixed text-center" style={{ fontSize: d.font }}>
+      <table
+        className="w-full table-fixed text-center"
+        style={{ fontSize: d.font, ...(minWidthPx ? { minWidth: minWidthPx } : {}) }}
+      >
         <thead
           className={stickyHeader ? "sticky top-0 z-10" : ""}
           style={{ backgroundColor: resolvedHeaderBg, color: resolvedHeaderInk }}
