@@ -1,3 +1,11 @@
+# ★★★ FORCE — CURRENT ORDER 2026-09-05 (SUPERSEDES EVERYTHING BELOW) ★★★
+`git pull --ff-only origin main` · USMCA only · FAST-MERGE · no money path · you never deploy
+**Read & execute:** [`docs/bus/09-05-2026-Codex-IN-SHOP-FEED-FLEET-QUEUE-BORDER-CONTRACT.md`](09-05-2026-Codex-IN-SHOP-FEED-FLEET-QUEUE-BORDER-CONTRACT.md)
+Hand Cursor the In-Shop-only feed (one predicate, no OOS) → awaiting-assignment carries the unit number → fleet queue FLT-01/02/04/10 as complete verticals with guards wired → border contract to Cursor for the Driver Instruction Sheet.
+
+---
+## HISTORY (superseded 2026-09-05 — do not execute)
+
 # ★★ SEQUENCE · CODEX · DO NOT JUMP
 `git pull --ff-only origin main`
 

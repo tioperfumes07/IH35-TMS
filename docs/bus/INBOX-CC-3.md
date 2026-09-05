@@ -1,3 +1,11 @@
+# ★★★ FORCE — CURRENT ORDER 2026-09-05 (SUPERSEDES EVERYTHING BELOW) ★★★
+`git pull --ff-only origin main` · USMCA only · FAST-MERGE · backend seat may deploy Render after green backend PR
+**Read & execute:** [`docs/bus/09-05-2026-Claude-Coder-3-GEOFENCE-ENGINE-REBUILD-LOVES-604-AND-ARRIVAL-ALERT-CHAIN-Updated.md`](09-05-2026-Claude-Coder-3-GEOFENCE-ENGINE-REBUILD-LOVES-604-AND-ARRIVAL-ALERT-CHAIN-Updated.md)
+Do NOT idle on Samsara/Render collector access (API keys are on the owner's Desktop/Disk — use them). Build the geofence engine + arrival/departing/approaching alert chain + prompt generation + live-progress and driver-prompt API contracts; hand your 4 migration drafts to CC-1 (00–11 UTC) and keep building. Also PART 3 accident-liabilities void FE caller as a full vertical.
+
+---
+## HISTORY (superseded 2026-09-05 — do not execute)
+
 # ★ OWNER ORDER 2026-09-04 20:01 — CC-3 REAL BACKEND NOW (not bus)
 `git pull --ff-only origin main` · FAST-MERGE · backend seat may deploy Render after green backend PR (owner 2026-09-04)
 

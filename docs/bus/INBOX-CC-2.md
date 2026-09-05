@@ -1,3 +1,11 @@
+# ★★★ FORCE — CURRENT ORDER 2026-09-05 (SUPERSEDES EVERYTHING BELOW) ★★★
+`git pull --ff-only origin main` · USMCA only · FAST-MERGE · you own `tokens.ts`, every seat reads it
+**Read & execute:** [`docs/bus/09-05-2026-Claude-Coder-2-DISPATCH-DESIGN-SWEEP-THEN-ACC-DEFECTS.md`](09-05-2026-Claude-Coder-2-DISPATCH-DESIGN-SWEEP-THEN-ACC-DEFECTS.md)
+Land the tokens FIRST (light `#EEF2F6` centered headers, KPI `#F4F7FA`/`#C7D2DC` ≤101px, column rules + grouped bands, one 2px radius, 28px boxes) as one guarded dispatch sweep → then ACC-01..20 money defects, one complete vertical each.
+
+---
+## HISTORY (superseded 2026-09-05 — do not execute)
+
 # ★ OWNER ORDER 2026-09-04 20:01 — CC-2 REAL WORK NOW (design-system, not bus)
 `git pull --ff-only origin main` · FAST-MERGE · you are the ONLY seat that writes verified-live
 
