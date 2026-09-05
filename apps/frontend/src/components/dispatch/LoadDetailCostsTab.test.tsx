@@ -280,6 +280,8 @@ describe("LoadDetailCostsTab — fuel advance", () => {
   it("+ Fuel advance resolves the Fuel account + operating bank by role and Save posts a driver-linked company expense", async () => {
     renderTab();
 
+    // "+ New" is now one QuickBooks-style dropdown — open it, then pick Fuel advance.
+    fireEvent.click(await screen.findByTestId("load-costs-add-top"));
     fireEvent.click(await screen.findByTestId("load-costs-add-fuel-advance-top"));
 
     const categoryLabels = await screen.findAllByTestId("load-cost-field-fuel-category");
@@ -321,6 +323,7 @@ describe("LoadDetailCostsTab — fuel advance", () => {
       </QueryClientProvider>
     );
 
+    fireEvent.click(await screen.findByTestId("load-costs-add-top"));
     fireEvent.click(await screen.findByTestId("load-costs-add-fuel-advance-top"));
     fireEvent.click(screen.getByTestId("load-costs-save-all"));
 
