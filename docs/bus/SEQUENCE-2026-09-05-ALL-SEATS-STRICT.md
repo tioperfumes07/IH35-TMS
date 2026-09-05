@@ -134,6 +134,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG
+- 14:44Z 5-day pending register (09-01→09-05) verified vs 1,758 merges + OUTBOXes: 147 items, 74 pending, 35 claimed-unverified, 28 done. File on bus + Downloads + project. Biggest unshipped: Book Load wizard WIZ-04..21, Trip Pairing BRD-16..18, settlement spine SET-06/12/13/14, five CC-3→CC-1 migrations never applied, LTH-B3 355 bank txns unposted.
 - 14:13Z OWNER 'lock it': module ownership map + one lead + 20-min deploy timer written to LAW.md, CODEOWNERS, OWNERSHIP-MAP doc, all INBOX tops; rows transferred per map (Banking → Cursor; L.0/L.4b → CC-2; L.1d → CC-1; L.5/L.6/D.x/DP.1/DP.2 → CC-3; V.1/K.9 → CC-1).
 - 14:06Z 14:00Z passed: Cursor L.0/L.1d/L.4b unmerged, no ACK → CC-2 (L.0 15:30Z, L.1d 15:30Z, L.4b 16:30Z). Cursor: FE deploy owed. Journal 30 entries; inventory 38 rows; paths verified for the owner.
 - 13:45Z seed scope reconciled with the seat's 36-load analysis (09-04 four-way wins over 08-31 sheet 4): quarantine 29, keep 22, seed 14, verify 5, hold 4, owner decides 6.
