@@ -29,6 +29,27 @@ describe("BOX1_INCLUDED_LINE_TYPES", () => {
 });
 
 describe("aggregateBox1CompForTaxYear", () => {
+  // SETL-TAX-YEAR-USES-CLEARED-DATE — a payment issued Dec 31 that happens to clear the bank Jan 2
+  // must stay in the issue-year 1099 bucket. This function delegates the actual date filtering to
+  // SQL, so the regression that matters is the QUERY TEXT itself: it must key on
+  // payment_sent_at/paid_at (the two issue-date columns) and must NEVER reference
+  // payment_cleared_at (the later, reconciliation-only date) anywhere in the year predicate.
+  it("keys the tax-year predicate on payment_sent_at/paid_at, never payment_cleared_at", async () => {
+    const seenSql: string[] = [];
+    const client: Queryable = {
+      query: async <R extends Record<string, unknown>>(sql: string) => {
+        seenSql.push(sql);
+        return { rows: [] as unknown as R[] };
+      },
+    };
+    await aggregateBox1CompForTaxYear(client, "co-1", 2026);
+    expect(seenSql.length).toBeGreaterThan(0);
+    for (const sql of seenSql) {
+      expect(sql).not.toMatch(/payment_cleared_at/);
+      expect(sql).toMatch(/COALESCE\(\s*s\.payment_sent_at\s*,\s*s\.paid_at\s*\)/);
+    }
+  });
+
   it("sums earnings/extra_pay/team_split lines and nets same-year abandonment_chargeback, never net_pay", async () => {
     const client = mockClient({
       includedRows: [{ driver_id: "d1", total_cents: "500000", line_ids: ["l1", "l2"] }],
