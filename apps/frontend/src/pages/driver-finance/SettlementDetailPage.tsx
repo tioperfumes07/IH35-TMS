@@ -46,6 +46,7 @@ import { FinalizeBlock } from "./components/FinalizeBlock";
 import { HoldDeductionModal } from "./components/HoldDeductionModal";
 import { LiabilityBreakdownModal } from "./components/LiabilityBreakdownModal";
 import { NetPaySummary } from "./components/NetPaySummary";
+import { SettlementKpiGrid } from "./components/SettlementKpiGrid";
 import { PendingAckNotice } from "./components/PendingAckNotice";
 import { ReimbursementsSection } from "./components/ReimbursementsSection";
 import { SettlementHeader } from "./components/SettlementHeader";
@@ -329,6 +330,23 @@ export function SettlementDetailPage() {
     return { earningsTotal, deadheadTotal, extraTotal, reimbTotal, deductionTotal, pendingAckTotal };
   }, [deadhead, deductions, earnings, extra, reimbursements]);
 
+  // L5 — KPI grid inputs, exact per docs/design/reference/DRIVER-SETTLEMENT-DETAIL-REFERENCE-2026-09-05.html.
+  // Miles/rate come from the S.1 driver_bills join already mapped onto earnings/deadhead above; rate is the
+  // per-mile rate actually paid (first line with a non-zero rate — never a hardcoded default). Net = loaded +
+  // empty + additional + reimbursements − deductions (all cents), matching the reference's Net pay tile.
+  const kpi = useMemo(() => {
+    const loadedMiles = earnings.reduce((s, r) => s + r.miles, 0);
+    const loadedRate = earnings.find((r) => r.rate > 0)?.rate ?? 0;
+    const emptyMiles = deadhead.reduce((s, r) => s + r.miles, 0);
+    const emptyRate = deadhead.find((r) => r.rate > 0)?.rate ?? loadedRate;
+    const deductionBreakdown = deductions
+      .map((d) => `${d.description} ${formatUsdCents(d.this_period_amount)}`)
+      .join(" · ");
+    const netPayCents =
+      summary.earningsTotal + summary.deadheadTotal + summary.extraTotal + summary.reimbTotal - summary.deductionTotal;
+    return { loadedMiles, loadedRate, emptyMiles, emptyRate, deductionBreakdown, netPayCents };
+  }, [earnings, deadhead, deductions, summary]);
+
   if (!settlementId) {
     return (
       <div className="space-y-3">
@@ -460,6 +478,21 @@ export function SettlementDetailPage() {
         computedAt={debt.computedAt}
         loadIds={settlementLoadIds}
         onRefresh={() => void debt.refresh()}
+      />
+      <SettlementKpiGrid
+        loadedPayCents={summary.earningsTotal}
+        loadedMiles={kpi.loadedMiles}
+        loadedRate={kpi.loadedRate}
+        emptyPayCents={summary.deadheadTotal}
+        emptyMiles={kpi.emptyMiles}
+        emptyRate={kpi.emptyRate}
+        additionalCents={summary.extraTotal}
+        additionalLines={extra.length}
+        reimbursementCents={summary.reimbTotal}
+        reimbursementLines={reimbursements.length}
+        deductionCents={summary.deductionTotal}
+        deductionBreakdown={kpi.deductionBreakdown}
+        netPayCents={kpi.netPayCents}
       />
       <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="settlement" documentId={settlementId} />
       {settlementIsCancelled ? (
