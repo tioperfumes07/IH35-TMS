@@ -91,6 +91,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
   const { selectedCompanyId } = useCompanyContext();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("active");
+  const [showInactive, setShowInactive] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [activeRow, setActiveRow] = useState<DispatchCatalogRow | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
@@ -152,7 +153,8 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
     onError: (error) => setCodeError(parseCodeError(error) ?? "Could not deactivate this entry."),
   });
 
-  const rows = listQuery.data?.rows ?? [];
+  const allRows = listQuery.data?.rows ?? [];
+  const rows = showInactive ? allRows : allRows.filter((r) => r.is_active !== false);
   const total = listQuery.data?.total ?? 0;
   const isSaving = createMutation.isPending || updateMutation.isPending || deactivateMutation.isPending;
 
@@ -169,15 +171,24 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
         title={title}
         countBadge={total}
         actions={
-          <Button
-            onClick={() => {
-              setCodeError(null);
-              setActiveRow(null);
-              setModalMode("create");
-            }}
-          >
-            + Create Entry
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => {
+                setCodeError(null);
+                setActiveRow(null);
+                setModalMode("create");
+              }}
+            >
+              + Create Entry
+            </Button>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Print
+            </button>
+          </div>
         }
       />
 
@@ -199,6 +210,16 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
         </label>
       </div>
 
+      <label className="flex items-center gap-1 text-xs text-gray-600">
+        <input
+          type="checkbox"
+          checked={showInactive}
+          onChange={(e) => setShowInactive(e.target.checked)}
+          className="h-3.5 w-3.5 rounded-sm border-gray-300"
+        />
+        Show inactive
+      </label>
+
       {listQuery.isError ? (
         <ListErrorState
           title="Couldn't load catalog entries"
@@ -215,6 +236,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
           emptyText="No entries match these filters"
           storageKey={`dispatch-catalog-${catalogKey}`}
           tableTestId="dispatch-catalog-list-table"
+          exportFilename={`dispatch-catalog-${catalogKey}-${new Date().toISOString().slice(0, 10)}.csv`}
           // LST-F3510: keep API search above; hide ParityTable toolbar Search
           suppressToolbarSearch
           onRowClick={(row) => {

@@ -1964,6 +1964,20 @@ export function reactivateVendor(id: string) {
   );
 }
 
+// CC-3 V.1 / Wave 3 Step 3 — vendor counterparty roll-up (aggregated expense data).
+export type VendorRollup = {
+  vendor_id: string;
+  purchases_ytd_cents: number;
+  purchases_total_cents: number;
+  last_purchase_date: string | null;
+  expense_count: number;
+};
+
+export function getVendorRollups(operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<VendorRollup[]>(`/api/v1/mdata/vendor-rollups?${query.toString()}`);
+}
+
 // GO-24: mdata.locations is the live stop-location catalog (FK'd from mdata.load_stops.location_id,
 // catalogs.locations does NOT exist — never create it). Typed so the Book Load stop location picker
 // can read name/city/state/postal_code/lat/lng off a selected row without an `unknown` cast.
