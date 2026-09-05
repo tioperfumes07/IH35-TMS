@@ -93,6 +93,7 @@ export const REPORTS_SUB_NAV_ITEMS: NavyPageSubNavItem[] = [
   },
   { label: "Cancellations", to: "/reports/cancellations" },
   { label: "Driver Qualification File", to: "/reports/driver-qualification" },
+  { label: "Invoice Search", to: "/reports/invoice-search" },
   { label: "Scheduled (custom)", to: "/reports/scheduled-custom" },
   {
     label: "Audit",
@@ -125,6 +126,7 @@ export function reportsSubNavActiveHref(pathname: string): string {
     pathname === "/reports/deadhead" ||
     pathname === "/reports/cancellations" ||
     pathname === "/reports/driver-qualification" ||
+    pathname === "/reports/invoice-search" ||
     pathname === "/reports/scheduled"
   ) {
     return pathname;
