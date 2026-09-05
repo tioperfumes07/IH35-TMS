@@ -421,6 +421,25 @@ export function getDispatchLoadGeofenceStatus(id: string, operatingCompanyId: st
   );
 }
 
+// D5 (owner ruling 2026-09-05, "D5 Book Load auto-geofence FE trigger") — on-demand geocode for
+// an already-booked load's stops still missing coordinates (the real driver of "0 of 114 stops
+// have lat/lng"; auto-geofence.service.ts's geocoder now self-heals future bookings, this covers
+// today's backlog).
+export type DispatchLoadGeocodeStopsResult = {
+  load_id: string;
+  stops_checked: number;
+  stops_geocoded: number;
+  stops_already_had_coordinates: number;
+  stops_geocode_failed: number;
+};
+
+export function geocodeDispatchLoadStops(id: string, operatingCompanyId: string) {
+  return apiRequest<DispatchLoadGeocodeStopsResult>(
+    `/api/v1/dispatch/loads/${id}/geocode-stops?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "POST" }
+  );
+}
+
 export function getUnitDispatchStatus(unitId: string, operatingCompanyId: string) {
   return apiRequest<Record<string, unknown>>(
     `/api/v1/dispatch/units/${unitId}/dispatch-status?operating_company_id=${encodeURIComponent(operatingCompanyId)}`

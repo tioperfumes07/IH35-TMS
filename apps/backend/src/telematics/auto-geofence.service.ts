@@ -2,6 +2,7 @@ import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { TMS_AUTO_GEOFENCE_SIDE_METERS } from "../integrations/samsara/geofences/wf-051-radius.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
+import { geocodeAddress } from "./stop-geocode-fallback.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -13,6 +14,7 @@ type LoadStopRow = {
   address_line1: string | null;
   city: string | null;
   state: string | null;
+  postal_code: string | null;
   country: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -77,10 +79,15 @@ export function squareVerticesFromCenter(
   ];
 }
 
-async function geocodeStopIfNeeded(_stop: LoadStopRow): Promise<LatLng | null> {
-  // Non-blocking MVP: rely on stop/location coordinates.
-  // External geocoder integration can be added without changing CAP-2 callsites.
-  return null;
+async function geocodeStopIfNeeded(stop: LoadStopRow): Promise<LatLng | null> {
+  // D5 (owner ruling 2026-09-05): was a literal stub returning null unconditionally -- this is
+  // the reason 0 of 114 live stops ever carried lat/lng even after the auto-geofence trigger
+  // itself got fixed (PR #20684). Reuses the SAME Trimble/Google provider chain already built
+  // and owner-ruled "must return real addresses" for the address-search field
+  // (stop-geocode-fallback.service.ts mirrors integrations/trimble/geocoding.routes.ts's
+  // activeProvider()). Non-blocking by construction: geocodeAddress() never throws, degrading to
+  // null (skipped_missing_coordinates) exactly like a stop with no address ever did.
+  return geocodeAddress(stop);
 }
 
 async function loadStopsForGeofencing(client: DbClient, input: AutoGeofenceInput): Promise<LoadStopRow[]> {
@@ -92,6 +99,7 @@ async function loadStopsForGeofencing(client: DbClient, input: AutoGeofenceInput
         s.address_line1,
         s.city,
         s.state,
+        s.postal_code,
         s.country,
         COALESCE(s.latitude, loc.latitude)::double precision AS latitude,
         COALESCE(s.longitude, loc.longitude)::double precision AS longitude,
