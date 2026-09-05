@@ -106,7 +106,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Asset Condition Code", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -126,7 +126,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Asset Location", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -146,7 +146,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Asset Status", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -174,7 +174,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Tire Position", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -194,7 +194,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Expensive State", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -214,7 +214,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Fuel Brand", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -234,7 +234,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Fuel Card Type", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -254,7 +254,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Fuel Dispatch Route", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -274,7 +274,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Fuel Exception Type", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -294,7 +294,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Fuel Grade", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -314,7 +314,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Fuel Pump Type", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -334,7 +334,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Fuel Station Brand", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -354,7 +354,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Fuel Station State", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -374,7 +374,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Fuel Stop Reason Code", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -394,7 +394,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Fuel Tax Jurisdiction", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -414,7 +414,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Lease Term", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -434,7 +434,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Maintenance Failure Code", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -454,7 +454,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Maintenance Labor Code", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -474,7 +474,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Maintenance Part", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -494,7 +494,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Maintenance Priority Level", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -514,7 +514,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Maintenance Service Task", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -534,7 +534,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Maintenance Shop Location", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -554,7 +554,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Maintenance Vendor", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -574,7 +574,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Mpg Band", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -594,7 +594,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Pay Rate Template", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -614,7 +614,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Tractor Status", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -634,7 +634,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Trailer Status", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -654,7 +654,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Trailer Type", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -674,7 +674,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Unit Ownership Type", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -694,7 +694,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Work Order Statuse", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -943,7 +943,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Chart of Accounts Seed", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -963,7 +963,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Expense Categorie", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -983,7 +983,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Payment Method", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1003,7 +1003,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Tax Code", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1023,7 +1023,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Currency Code", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1043,7 +1043,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Driver Deduction Type", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1063,7 +1063,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Driver Pay Type", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1083,7 +1083,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Escrow Type", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1105,7 +1105,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Vendor Type", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1126,7 +1126,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Accident Type", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1146,7 +1146,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Workplace Incident Type", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1166,7 +1166,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Cdl Endorsement", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1186,7 +1186,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Cdl Restriction", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1206,7 +1206,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Employment Statuse", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1226,7 +1226,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "License Classe", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1246,7 +1246,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Medical Card Statuse", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1266,7 +1266,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Leave Type", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1286,7 +1286,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Cash Advance Type", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1306,7 +1306,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Pm Interval", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1326,7 +1326,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Repair Location", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1346,7 +1346,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Work Order Template", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1366,7 +1366,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Air Bag", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1386,7 +1386,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Battery", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1406,7 +1406,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Tire", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1426,7 +1426,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Trailer Part", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1446,7 +1446,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Truck Part", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1466,7 +1466,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Def Station", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1486,7 +1486,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Fuel Station", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1506,7 +1506,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Relay Account", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1526,7 +1526,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Toll Provider", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1546,7 +1546,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Load Trailer Equipment", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1566,7 +1566,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Mx Customs Broker", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1586,7 +1586,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Load Type", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1607,7 +1607,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Reason", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1628,7 +1628,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Type", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1649,7 +1649,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Charge", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1669,7 +1669,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Provider", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Sort", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
@@ -1691,7 +1691,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
       { key: "label", label: "Label", sortable: true, filterable: true },
       { key: "event_type", label: "Event Type", sortable: true, filterable: true },
       { key: "severity", label: "Severity", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
     fields: [
@@ -1715,7 +1715,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
       { key: "label", label: "Label", sortable: true, filterable: true },
       { key: "event_type", label: "Event Type", sortable: true, filterable: true },
       { key: "severity", label: "Severity", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],
     fields: [
@@ -1737,7 +1737,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Display Name", sortable: true, filterable: true },
-      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "description", label: "Description", sortable: true, filterable: false },
       { key: "sort_order", label: "Order", sortable: true, filterable: false },
       { key: "is_active", label: "Status", sortable: true, filterable: false },
     ],

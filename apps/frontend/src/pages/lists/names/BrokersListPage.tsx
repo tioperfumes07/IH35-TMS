@@ -25,21 +25,23 @@ export function BrokersListPage() {
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
 
   const query = useQuery({
-    queryKey: ["names", "brokers", companyId, search],
+    queryKey: ["names", "brokers", companyId, search, showInactive],
     queryFn: () =>
       listAllCustomers({
         operating_company_id: companyId,
         customer_type: "broker",
         search: search || undefined,
-        status: "active",
+        status: showInactive ? undefined : "active",
       }),
     enabled: Boolean(companyId),
     ...catalogListSearchQueryOptions,
   });
 
-  const rows = query.data?.customers ?? [];
+  const allRows = query.data?.customers ?? [];
+  const rows = showInactive ? allRows : allRows.filter((r) => r.status === "active");
 
   // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
   const columns = [
@@ -75,6 +77,16 @@ export function BrokersListPage() {
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by name, code, MC# or DOT#" className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
       </div>
+
+      <label className="flex items-center gap-1 text-xs text-gray-600">
+        <input
+          type="checkbox"
+          checked={showInactive}
+          onChange={(e) => setShowInactive(e.target.checked)}
+          className="h-3.5 w-3.5 rounded-sm border-gray-300"
+        />
+        Show inactive
+      </label>
 
       {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search filter above feeds
           `rows`; row-click → customer record preserved exactly. */}

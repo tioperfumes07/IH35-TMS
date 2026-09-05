@@ -128,6 +128,7 @@ export function DriverTeamsPage() {
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedTeam, setSelectedTeam] = useState<MdataDriverTeam | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
 
   // LST-F5215 — Lists hub ?create=1 must open DriverTeamModal (shared catalog create parity).
   useCreateQueryParam({
@@ -151,7 +152,7 @@ export function DriverTeamsPage() {
 
   const teams = query.data?.teams ?? [];
   // Free-text search: ParityTable toolbar owns it (LST-F3490) — status filter stays page-local.
-  const rows = teams;
+  const rows = showInactive ? teams : teams.filter((t) => t.is_active !== false);
 
   useEffect(() => {
     const teamId = searchParams.get("team_id");
@@ -203,6 +204,16 @@ export function DriverTeamsPage() {
           <option value="all">All</option>
         </SelectCombobox>
       </div>
+
+      <label className="flex items-center gap-1 text-xs text-gray-600">
+        <input
+          type="checkbox"
+          checked={showInactive}
+          onChange={(e) => setShowInactive(e.target.checked)}
+          className="h-3.5 w-3.5 rounded-sm border-gray-300"
+        />
+        Show inactive
+      </label>
 
       <ParityTable
         columns={TEAM_COLUMNS}

@@ -68,6 +68,7 @@ export function SafetyGenericCatalogListPage({ client, displayName, breadcrumbPa
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<SafetyGenericCatalogRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
 
   // LST-F5214 — Lists hub ?create=1 must open create modal (accounting catalog parity).
   useCreateQueryParam({
@@ -93,7 +94,8 @@ export function SafetyGenericCatalogListPage({ client, displayName, breadcrumbPa
     ...catalogListSearchQueryOptions,
   });
 
-  const rows = query.data?.rows ?? [];
+  const allRows = query.data?.rows ?? [];
+  const rows = showInactive ? allRows : allRows.filter((r) => r.is_active !== false);
   const total = query.data?.total ?? 0;
 
   return (
@@ -121,6 +123,16 @@ export function SafetyGenericCatalogListPage({ client, displayName, breadcrumbPa
         <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
         <CatalogStatusFilterCombobox value={status} onChange={setStatus} />
       </div>
+
+      <label className="flex items-center gap-1 text-xs text-gray-600">
+        <input
+          type="checkbox"
+          checked={showInactive}
+          onChange={(e) => setShowInactive(e.target.checked)}
+          className="h-3.5 w-3.5 rounded-sm border-gray-300"
+        />
+        Show inactive
+      </label>
 
       <ParityTable
         columns={COLUMNS}
