@@ -19,6 +19,13 @@ export type SamsaraDriver = { id: string; raw: Record<string, unknown> };
 export type SamsaraVehicle = { id: string; raw: Record<string, unknown> };
 export type SamsaraTrailer = { id: string; raw: Record<string, unknown> };
 export type SamsaraAddress = { id: string; raw: Record<string, unknown> };
+export type SamsaraRouteStopInput = {
+  externalIds: Ih35SamsaraExternalIds;
+  addressId: string;
+  scheduledArrivalTime?: string;
+  scheduledDepartureTime?: string;
+  notes?: string;
+};
 export type SamsaraHosLog = { startedAt: string; endedAt: string | null; hosStatusType: string };
 export type SamsaraHosDriverLogs = { driverId: string; logs: SamsaraHosLog[] };
 // Samsara's COMPUTED HOS clocks (GET /fleet/hos/clocks) — DOT-certified remaining, displayed verbatim (Blueprint
@@ -893,5 +900,59 @@ export class SamsaraClient {
       throw new SamsaraApiError("samsara_address_missing_id", res.status, json, false);
     }
     return { id };
+  }
+
+  /** Idempotent route delivery keyed by ih35Load; a retry patches the same Samsara route. */
+  async upsertRoute(input: {
+    loadId: string;
+    name: string;
+    unitId: string;
+    driverId?: string | null;
+    stops: SamsaraRouteStopInput[];
+  }): Promise<{ id: string; created: boolean }> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_not_configured", null, null, false);
+    if (input.stops.length < 2) throw new SamsaraApiError("samsara_route_requires_two_stops", null, null, false);
+    const externalRouteId = `ih35Load:${input.loadId}`;
+    const body = {
+      name: input.name.slice(0, 255),
+      externalIds: buildIh35SamsaraExternalIds({ ih35Load: input.loadId }),
+      vehicleId: `ih35Unit:${input.unitId}`,
+      ...(input.driverId ? { driverId: `ih35Driver:${input.driverId}` } : {}),
+      settings: {
+        routeStartingCondition: "departFirstStop",
+        routeCompletionCondition: "arriveLastStop",
+        sequencingMethod: "manual",
+      },
+      stops: input.stops.map((stop, index) => ({
+        externalIds: buildIh35SamsaraExternalIds(stop.externalIds),
+        addressId: stop.addressId,
+        sequenceNumber: index + 1,
+        ...(stop.scheduledArrivalTime ? { scheduledArrivalTime: stop.scheduledArrivalTime } : {}),
+        ...(stop.scheduledDepartureTime ? { scheduledDepartureTime: stop.scheduledDepartureTime } : {}),
+        ...(stop.notes ? { notes: stop.notes.slice(0, 2000) } : {}),
+      })),
+    };
+
+    const existingUrl = new URL(`${SAMSARA_API_BASE}/fleet/routes/${encodeURIComponent(externalRouteId)}`);
+    const existing = await withCircuitBreaker("samsara", () => samsaraFetch(existingUrl, { headers: bearerHeaders(token) }));
+    const created = existing.status === 404;
+    if (!created && !existing.ok) {
+      const errorBody = await readJsonResponse(existing);
+      throw new SamsaraApiError(`samsara_http_${existing.status}`, existing.status, errorBody, existing.status === 429 || existing.status >= 500);
+    }
+    const url = created ? new URL(`${SAMSARA_API_BASE}/fleet/routes`) : existingUrl;
+    const res = await withCircuitBreaker("samsara", () => samsaraFetch(url, {
+      method: created ? "POST" : "PATCH",
+      headers: { ...bearerHeaders(token), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }));
+    const json = await readJsonResponse(res);
+    if (!res.ok) throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+    const nested = asObject(json.data);
+    const idRaw = json.id ?? nested?.id;
+    const id = typeof idRaw === "string" && idRaw.trim() ? idRaw.trim() : "";
+    if (!id) throw new SamsaraApiError("samsara_route_missing_id", res.status, json, false);
+    return { id, created };
   }
 }

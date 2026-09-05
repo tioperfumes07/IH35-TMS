@@ -13,5 +13,7 @@ export default {
     await ctx.run("node", ["scripts/verify-samsara-external-ids-standard.mjs"]);
     await ctx.run("node", ["scripts/verify-samsara-real-driven-miles-per-leg.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-samsara-real-driven-miles-per-leg.mjs"]);
+    await ctx.run("node", ["scripts/verify-samsara-routes-integration.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-samsara-routes-integration.mjs"]);
   },
 };

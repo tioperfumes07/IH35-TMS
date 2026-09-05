@@ -111,6 +111,35 @@ describe("Samsara externalIds standard", () => {
   it("refuses a create correlation with no IH35 external id", () => {
     expect(() => buildIh35SamsaraExternalIds({})).toThrow("samsara_external_ids_required");
   });
+
+  it("creates an idempotent route with canonical load, unit, driver, and stop ids", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ message: "not found" }), { status: 404 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: { id: "route-1" } }), { status: 201 }));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    const client = new SamsaraClient({ apiToken: "token", samsaraOrgId: "org-1" });
+
+    await expect(client.upsertRoute({
+      loadId: "load-1", name: "13508", unitId: "unit-1", driverId: "driver-1",
+      stops: [
+        { externalIds: { ih35Load: "load-1", ih35Stop: "stop-1" }, addressId: "ih35Stop:stop-1" },
+        { externalIds: { ih35Load: "load-1", ih35Stop: "stop-2" }, addressId: "ih35Stop:stop-2" },
+      ],
+    })).resolves.toEqual({ id: "route-1", created: true });
+
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain("/fleet/routes/ih35Load%3Aload-1");
+    const create = fetchMock.mock.calls[1]?.[1] as RequestInit;
+    expect(create.method).toBe("POST");
+    expect(JSON.parse(String(create.body))).toMatchObject({
+      externalIds: { ih35Load: "load-1" },
+      vehicleId: "ih35Unit:unit-1",
+      driverId: "ih35Driver:driver-1",
+      stops: [
+        { externalIds: { ih35Load: "load-1", ih35Stop: "stop-1" } },
+        { externalIds: { ih35Load: "load-1", ih35Stop: "stop-2" } },
+      ],
+    });
+  });
 });
 
 describe("parseVehicleStatRow odometer (FINISH-OPS #7)", () => {
