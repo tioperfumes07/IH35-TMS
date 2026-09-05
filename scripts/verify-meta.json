@@ -61,6 +61,7 @@
     "verify:usmca-app-path-list-apis",
     "verify:usmca-compliance-neon-pv",
     "verify:usmca-fleet-fuel-tasks-neon-pv",
+    "verify:usmca-load-cutover-floor",
     "verify:migration-empty-db-safe",
     "verify:migration-idempotency",
     "verify:migration-no-unknown-roles",
