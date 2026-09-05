@@ -1411,6 +1411,27 @@ export function getBankReconWorklist(
   return apiRequest<BankReconWorklistPayload>(`/api/v1/bank-recon/worklist?${query.toString()}`);
 }
 
+export type BankTransactionSuggestion = {
+  suggested_ledger_entry_kind: "expense" | "bill";
+  suggested_ledger_entry_id: string;
+  suggested_confidence: "high" | "medium";
+  date_gap_days: number;
+  memo_similarity: number;
+};
+
+// B.1 — bulk match suggestions (exact cents, +-5d, expense/bill) for the banking transactions LIST,
+// so a row can show "Suggested" without opening the Match drawer for each one. Read-only: the drawer
+// (existing MatchDrawer + acceptBankReconMatch) still owns Accept — this never writes a match itself.
+export function suggestBankTransactionMatches(operatingCompanyId: string, bankTransactionIds: string[]) {
+  return apiRequest<{ suggestions: Record<string, BankTransactionSuggestion | null> }>(
+    `/api/v1/banking/transactions/suggest`,
+    {
+      method: "POST",
+      body: { operating_company_id: operatingCompanyId, bank_transaction_ids: bankTransactionIds },
+    }
+  );
+}
+
 export function acceptBankReconMatch(
   input: {
     operating_company_id: string;
