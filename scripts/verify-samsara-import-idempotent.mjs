@@ -9,6 +9,9 @@ runSourceGuard({
     "ON CONFLICT (operating_company_id, external_source, external_ref)",
     'mode: apply ? "apply" : "dry-run"',
     'SAMSARA_GEOFENCE_IMPORT_APPLY_APPROVED !== "flap proof started"',
+    "regexp_replace(lower(location_name)",
+    ") <= 805",
+    "matches.length === 1",
   ],
   selftestToken: "ON CONFLICT (operating_company_id, samsara_address_id) DO UPDATE",
 });

@@ -24,8 +24,48 @@ export type SamsaraAddressImportResult = {
   locations_would_project: number;
   geofences_would_project: number;
   unresolved_geofences: number;
+  matched_existing_locations: number;
+  ambiguous_matches: number;
+  collisions: Array<{ samsara_address_id: string; candidate_location_ids: string[] }>;
   writes: number;
 };
+
+type LocationMatch = { id: string; location_type: string };
+
+async function findLocationMatches(
+  client: PgClient,
+  operatingCompanyId: string,
+  row: AddressProjection
+): Promise<LocationMatch[]> {
+  if (row.latitude == null || row.longitude == null) return [];
+  const matches = await client.query(
+    `SELECT id::text, location_type::text
+       FROM mdata.locations
+      WHERE operating_company_id=$1::uuid
+        AND deactivated_at IS NULL
+        AND regexp_replace(lower(location_name),'[^a-z0-9]+','','g') =
+            regexp_replace(lower($2),'[^a-z0-9]+','','g')
+        AND latitude IS NOT NULL AND longitude IS NOT NULL
+        AND 111320 * sqrt(
+          power(latitude::double precision - $3::double precision, 2) +
+          power((longitude::double precision - $4::double precision) * cos(radians($3::double precision)), 2)
+        ) <= 805
+      ORDER BY id`,
+    [operatingCompanyId, row.name, row.latitude, row.longitude]
+  );
+  return matches.rows.map((match) => ({ id: String(match.id), location_type: String(match.location_type) }));
+}
+
+function geofenceKind(locationType: string | null): "customer_site" | "vendor_site" | "yard" | "custom" {
+  if (locationType === "yard") return "yard";
+  if (["mechanic_shop", "tire_shop", "wash_facility", "fuel_stop", "truck_stop"].includes(locationType ?? "")) {
+    return "vendor_site";
+  }
+  if (["customer_warehouse", "customer_terminal", "shipper_facility", "consignee_facility", "distribution_center", "cross_dock"].includes(locationType ?? "")) {
+    return "customer_site";
+  }
+  return "custom";
+}
 
 function object(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -77,7 +117,12 @@ export function projectSamsaraAddress(address: SamsaraAddress): AddressProjectio
   };
 }
 
-async function projectOne(client: PgClient, operatingCompanyId: string, row: AddressProjection): Promise<number> {
+async function projectOne(
+  client: PgClient,
+  operatingCompanyId: string,
+  row: AddressProjection,
+  matches: LocationMatch[]
+): Promise<number> {
   // Serializes the external identity so concurrent re-runs cannot leave an orphan duplicate location.
   await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [
     `${operatingCompanyId}:samsara-address:${row.samsaraAddressId}`,
@@ -103,7 +148,8 @@ async function projectOne(client: PgClient, operatingCompanyId: string, row: Add
       LIMIT 1`,
     [operatingCompanyId, row.samsaraAddressId]
   );
-  let locationId = existing.rows[0]?.location_id ? String(existing.rows[0].location_id) : null;
+  let locationId = existing.rows[0]?.location_id ? String(existing.rows[0].location_id) : matches.length === 1 ? matches[0].id : null;
+  let locationType = matches.length === 1 ? matches[0].location_type : null;
   if (!locationId) {
     const inserted = await client.query(
       `INSERT INTO mdata.locations (
@@ -117,7 +163,9 @@ async function projectOne(client: PgClient, operatingCompanyId: string, row: Add
       [operatingCompanyId, row.name, row.formattedAddress, row.latitude, row.longitude,
         `Samsara address ${row.samsaraAddressId}`]
     );
-    locationId = String(inserted.rows[0]?.id);
+    if (!inserted.rows[0]?.id) throw new Error("samsara_address_import_location_insert_returned_no_id");
+    locationId = String(inserted.rows[0].id);
+    locationType = "other";
   } else {
     await client.query(
       `UPDATE mdata.locations SET location_name=$3, address_line1=$4,
@@ -135,7 +183,7 @@ async function projectOne(client: PgClient, operatingCompanyId: string, row: Add
     `INSERT INTO geo.geofences (
        operating_company_id, label, location_kind, location_ref_id, vertices_json, is_active,
        source, samsara_address_id, external_source, external_ref, center_lat, center_lng, radius_m
-     ) VALUES ($1::uuid,$2,'custom',$3::uuid,$4::jsonb,true,
+     ) VALUES ($1::uuid,$2,$9,$3::uuid,$4::jsonb,true,
                'samsara_import',$5,'samsara',$5,$6,$7,$8)
      ON CONFLICT (operating_company_id, external_source, external_ref) WHERE external_ref IS NOT NULL
      DO UPDATE SET label=EXCLUDED.label, location_ref_id=EXCLUDED.location_ref_id,
@@ -143,7 +191,7 @@ async function projectOne(client: PgClient, operatingCompanyId: string, row: Add
        samsara_address_id=EXCLUDED.samsara_address_id, center_lat=EXCLUDED.center_lat,
        center_lng=EXCLUDED.center_lng, radius_m=EXCLUDED.radius_m, updated_at=now()`,
     [operatingCompanyId, row.name, locationId, JSON.stringify(row.vertices), row.samsaraAddressId,
-      row.latitude, row.longitude, row.radiusMeters]
+      row.latitude, row.longitude, row.radiusMeters, geofenceKind(locationType)]
   );
   return 3;
 }
@@ -175,16 +223,27 @@ export async function importSamsaraAddresses(options: {
       addresses = await samsara.listAddresses();
     }
     const projected = addresses.map(projectSamsaraAddress);
+    const matchSets: LocationMatch[][] = [];
+    for (const row of projected) matchSets.push(await findLocationMatches(client, options.operatingCompanyId, row));
+    const collisions = projected.flatMap((row, index) => matchSets[index].length > 1 ? [{
+      samsara_address_id: row.samsaraAddressId,
+      candidate_location_ids: matchSets[index].map((match) => match.id),
+    }] : []);
     const result: SamsaraAddressImportResult = {
       mode: apply ? "apply" : "dry-run",
       addresses_read: projected.length,
       locations_would_project: projected.length,
       geofences_would_project: projected.filter((row) => row.vertices !== null).length,
       unresolved_geofences: projected.filter((row) => row.vertices === null).length,
+      matched_existing_locations: matchSets.filter((matches) => matches.length === 1).length,
+      ambiguous_matches: collisions.length,
+      collisions,
       writes: 0,
     };
     if (!apply) return result;
-    for (const row of projected) result.writes += await projectOne(client, options.operatingCompanyId, row);
+    for (let index = 0; index < projected.length; index += 1) {
+      result.writes += await projectOne(client, options.operatingCompanyId, projected[index], matchSets[index]);
+    }
     return result;
   });
 }
