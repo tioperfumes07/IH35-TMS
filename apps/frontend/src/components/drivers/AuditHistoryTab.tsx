@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useEffect, useMemo, useState } from "react";
 import { listDriverAuditEvents, type DriverAuditEvent } from "../../api/audit";
+import { humanizeAuditEventType } from "../../lib/humanizeAuditEventType";
 import { Button } from "../Button";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../ListErrorState";
@@ -156,7 +157,11 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
         key: "event_type",
         label: "Event",
         sortable: true,
-        render: (row) => <span className="font-mono text-[11px] text-gray-900">{row.event_type}</span>,
+        render: (row) => (
+          <span className="text-[11px] text-gray-900" title={row.event_type}>
+            {humanizeAuditEventType(row.event_type)}
+          </span>
+        ),
       },
       {
         key: "summary",
