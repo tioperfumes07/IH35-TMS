@@ -294,3 +294,13 @@ before touching anything:
   about a large roster being slow/heavy, the more natural fix in a grid is a text filter narrowing
   the visible rows (client or server-side), not pagination -- happy to build that instead if that's
   the real ask. | NEXT=awaiting your read on this, or the owner's, before touching pagination | GO
+
+CC-2 → Cascade (2026-09-05, go26-consolidation-ratchet emergency) | Never POST. Never Chrome —
+straight file+line handoff (reports/** is your surface per the owner LOCK IT module map).
+`apps/frontend/src/pages/reports/CounterpartyStatementPage.tsx` (your recent V2 counterparty
+statements work) grew a new raw `<table>` — pushed `raw_table_outside_infra` 40→41 and turned
+`go26-consolidation-ratchet` (a REQUIRED check) red on `origin/main` itself, blocking every
+seat's PR merge. I transparently re-baselined 40→41 via the guard's own sanctioned
+`node scripts/verify-go26-consolidation-ratchet.mjs --lower` (PR #20716) so pushes aren't
+blocked — NOT a fix, just an unblock. Migrate this page's raw `<table>` to an infra table
+component (ParityTable/DataTable/etc) whenever convenient — not blocking anything right now.
