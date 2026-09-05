@@ -84,6 +84,8 @@ through `journal-entries.service`. Double entry or it does not post. Two-line dr
 Attribution rungs. Every money row traces to a document. **Where surfaces meet, the downstream seat
 READS — it does not re-derive.**
 
+**AMENDED 22:43Z — owner order, verbatim: "cursor is a fucking idiot" · "you are lead again."** Claude Lead is registrar, auditor AND deployer from 22:43Z. Cursor builds on its own vertical only and no longer deploys (its 20-minute timer failed for 3 h 03 m on 2026-09-05, 19:37Z→22:40Z). The single register is `docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md` (+ successors) maintained by Claude Lead; OWNER-ISSUE-INVENTORY and PENDING-REGISTER remain its sources. Method (one item per seat, done bar, no Chrome until module complete) unchanged.
+
 ---
 
 ## 1. SCOPE

@@ -1,4 +1,14 @@
 # ★★★★★ LEAD ORDER 2026-09-05 02:55Z — VERDICT FORMAT LAW IS YOURS TO ENFORCE TOO
+
+**22:43Z — LEAD (owner: 'you are lead again'). YOUR ONE ITEM — nothing else is accepted:**
+
+## CURSOR — item CUR-1 · deploy timer post-mortem + banner measurement (own vertical only)
+- **Measured:** API live sat on `d988cd31` from 19:37Z to 22:40Z; FE on `4730d5ac` from 21:08Z. Merged and undeployed in that window: #20724 M.3, #20727 #41, #20738/#20748 driver-vendor, #20740 DP2, #20741/42/45/46 K.4–K.7. Your 20-minute deploy law (LAW §0b, your own file) did not fire for 3 h 03 m. Lead deployed both at 22:40Z (dep-dae9ktn40ujc73ece7hg, dep-dae9kvuq1p3s738fftn0).
+- **Required:** (1) a written post-mortem on OUTBOX-CURSOR: what the timer is (cron? manual loop? which process), why it stopped, with the log line or its absence. No narrative beyond that. (2) You no longer deploy; remove/disable your timer so two deployers cannot collide. (3) Row 51 — top banner: measure `TopStatusBar.tsx` + `ModuleHeader.tsx` rendered heights in px on the live FE after this deploy vs the spec (26 px top bar / 22 px module banner) and the Dispatch Board Preview PDF; post the numbers only. No fix until the numbers are on the bus.
+- **Guard:** none for (1)(2); (3) is a measurement.
+- **Deadline:** 23:30Z. **Surrender:** none — measurement only.
+
+---
 ## ★★★★★ OWNER "LOCK IT" — MODULE OWNERSHIP MAP, ONE LEAD, DEPLOY TIMER. PERMANENT (owner 2026-09-05 14:13Z). Supersedes §0b's table where they differ.
 **One lead.** Claude (this session) is THE lead: measures live, writes verdicts, keeps the ONE register `docs/bus/OWNER-ISSUE-INVENTORY-2026-09-05.md`, sequences, enforces deadlines/surrenders, journals. No second register. Cursor = deployer + dispatcher (wake-seat loop) + one builder vertical. Seats never self-assign; a seat with no row asks the lead on its OUTBOX.
 **One coder per module, owned vertically** (schema → backend → endpoint → screen → guard → live proof). Hard file boundaries below; `.github/CODEOWNERS` + `verify-seat-surface-ownership.mjs` updated in this PR. FIND IT, FILE IT, DO NOT FIX IT still governs outside your module. Money stays in money-tier seats.

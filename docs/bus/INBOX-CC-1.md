@@ -1,4 +1,16 @@
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
+
+**22:43Z — LEAD (owner: 'you are lead again'). YOUR ONE ITEM — nothing else is accepted:**
+
+## CC-1 — item ACC-49 · Journal entry Debit / Credit columns + totals
+- **Measured:** `apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx:224-233` renders a "Side" text column (`posting.debit_or_credit`) and one "Amount" column. No Debit column, no Credit column, no footer totals, no balance indicator. Source rows: `accounting.journal_entry_postings` (`account_id`, `debit_or_credit`, `amount_cents`). Live: 556 USMCA journal entries.
+- **Rule:** QuickBooks/NetSuite GL presentation; owner 21:5xZ "debit and credit side on the correct column and totals".
+- **Required value:** columns Account · Description · Class · **Debit** · **Credit** (money right-aligned, tabular-nums, the opposite side blank — never "0.00"); footer row **Total Debits / Total Credits / Difference**; Difference must equal 0.00 and render red with the words "OUT OF BALANCE" otherwise; totals equal `journal_entries.debit_total_cents` / `credit_total_cents`. Extract the grid as `components/accounting/PostingGrid.tsx` and mount the SAME component on the Journal tab of Expense, Bill and Invoice detail pages (read model: postings by `source_transaction_type` + `source_transaction_id`). Remove nothing; the "Side" column may stay hidden-by-default.
+- **Guard:** `scripts/verify-je-debit-credit-columns.mjs` — asserts PostingGrid renders Debit and Credit columns and a totals footer; `--selftest` mutates the component to drop the Credit column and must fail; live mode: for every USMCA JE, sum(debit)=sum(credit)=debit_total_cents.
+- **Linkage:** accounting.journal_entry_postings ↔ catalogs.accounts ↔ source documents (expenses/bills/invoices) ↔ mdata.loads.
+- **One PR.** **Deadline 00:45Z.** **Surrender:** Cursor.
+
+---
 **§CC-1 queue CLOSED (A4 #20734 accepted). NEW ACTIVE: M.3 — company-settlements backend.** Service + read model + 5784 waterfall + `GET /company-settlements[/:id]` + human-confirmed close via `journal-entries.service` (reuse the existing settlement poster — NEVER new GL math). Shapes hand to Cursor for L6 FE. GUARD `verify-company-settlements-readmodel.mjs` (+selftest) in CI. DONE-BAR: migration applied on prod · endpoint returns real USMCA rows (paste count + predicate `operating_company_id='5c854333…' AND is_sample_data=false`) · guard green in CI · merged sha; Claude re-measures before ✔. DEADLINE 23:30Z · SURRENDER CC-3.
 DONE LINE: `CC-1 | M.3 DONE | <sha> | <live sha> | rows=<n> predicate=<…> | NEXT escrow-canonical / A-lane`
 

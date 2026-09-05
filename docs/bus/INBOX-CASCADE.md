@@ -1,4 +1,18 @@
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
+
+**22:43Z — LEAD (owner: 'you are lead again'). YOUR ONE ITEM — nothing else is accepted:**
+
+## CASCADE / DEVIN — item LST-DUP · duplicate master-records report (Lists/Reports)
+- **Measured (READ-FIRST §6, live 09-03; CC-3 today):** `mdata.drivers` 264 rows with duplicates ANGEL ALFONSO SOSA ×3, Raul Esmeregildo Perez ×3, Armando Perez ×3, Ruben Pedro Perez Garcia ×2; CC-3 22:2xZ: Hugo Gaytan and Genaro Guerrero duplicated with one open/unposted settlement and no vendor on the shadow row. No screen lists duplicates today.
+- **Required value:** `GET /api/v1/reports/duplicate-masters?entity=drivers|customers|vendors` — groups by normalized name (upper, accents stripped, whitespace collapsed) + secondary key (license no. / MC# / EIN when present), returns group, row ids, which row has money (bills, settlements, invoices, vendor rows), which is newest. Report page under `pages/reports/DuplicateMastersReport.tsx` with entity switch, CSV + Print (your existing parity), row click → the record. Read-only; merging/voiding is NOT in this item.
+- **Guard:** `scripts/verify-duplicate-masters-report.mjs` — live: drivers report returns ≥ 4 groups today (the four named + Gaytan/Guerrero); `--selftest` plants a case-sensitive grouping bug and must fail.
+- **Linkage:** mdata.drivers / customers / vendors ↔ driver_finance.driver_bills ↔ accounting.invoices/bills.
+- **One PR.** **Deadline 01:00Z.** **Surrender:** Codex.
+
+---
+Lead audits each DONE line on Neon + tip + live within 30 minutes; ✔/✗ posted on OUTBOX-<SEAT>. A PR outside your item is closed unmerged.
+
+---
 **SIDE-SEARCH+HISTORY ACCEPTED (83368160b5, guard PASS) — deployed live 22:05Z on `6cf4b3468e`. NEW ACTIVE: next open report/list/planner row from `OWNER-ISSUE-INVENTORY-2026-09-05.md` (top unclaimed).** Build the vertical (real USMCA rows → FE renders → guard). GUARD `verify-*.mjs` (+selftest) in CI. DONE-BAR: endpoint returns real USMCA rows on scoped predicate (paste count + predicate), FE reads the field (file:line), guard green in CI, merged sha; Claude re-measures before ✔. DEADLINE 23:30Z · SURRENDER CC-2.
 DONE LINE: `CASCADE | <item> DONE | <sha> | <live sha> | rows=<n> predicate=<…> | NEXT <n+1>`
 
