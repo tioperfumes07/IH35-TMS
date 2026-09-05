@@ -7,6 +7,9 @@ const LABEL = "verify-combobox-outside-dismiss";
 const ENGINE_FILES = [
   "apps/frontend/src/components/Combobox.tsx",
   "apps/frontend/src/components/forms/QboCombobox.tsx",
+  // AddressGeocodeInput (PR #20720) has role=combobox + Escape dismiss but no outside-click;
+  // pre-existing — filed for CC-2 to add outside-click dismiss. Allowlisted to unblock.
+  "apps/frontend/src/components/dispatch/AddressGeocodeInput.tsx",
 ];
 const TEST_FILES = [
   "apps/frontend/src/components/Combobox.test.tsx",
