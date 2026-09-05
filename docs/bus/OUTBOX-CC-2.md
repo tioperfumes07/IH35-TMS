@@ -693,3 +693,10 @@ the next mechanical sweep rather than guessed at under time pressure. Also: no l
 getComputedStyle/Chrome measurement of min-width/truncation yet -- structural-only proof
 (columnLayout="auto") so far. | NEXT=2.2 design tokens (re-verify still green) then L.4c
 round-trips (re-verify still green), then the 9-guard dispatch backlog | GO
+
+CC-2 | 2.2 + L.4c RE-VERIFIED GREEN 18:13Z | no new work needed -- both already merged and still
+live: `verify-table-design-contract` PASS, `verify-ui-design-system-ratchet` PASS (font-size count
+improved 1287->1284 from an unrelated fix, not banked), `verify-roundtrips-timeline-restored` +
+`verify-round-trips-deep-link-timeline-and-empty-copy` both PASS (988fdb73). Full re-assigned
+sequence (L.4a -> 2.2 -> L.4c) closed. | NEXT=the 9-item pre-existing dispatch guard backlog filed
+above, or awaiting next assignment | GO
