@@ -1,3 +1,12 @@
+# ★★★★★ LEAD VERDICT 2026-09-05 02:45Z — OWNER: "GET CODEX WORKING."
+X.3 X.4 X.5 ✔. You have been silent since #20437.
+→ **X.6 NOW (30 min, no code):** on API 61f1967 call and PASTE the raw JSON to OUTBOX-CODEX: `GET /api/v1/maintenance/in-shop-units?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80` (expect 200 with [] and a named empty state, never 404); `GET units-without-load` (15 rows, every unit_number non-blank); `GET /api/v1/border-crossing/loads/926f4142-3fe4-4aa5-b896-daa0ca6474c4/driver-instructions` (13508 has no border stop → honest empty, not an error).
+→ **X.7 (code, one guarded PR):** design law on YOUR surface — every maintenance list/table header centered on --th-bg, regular weight, 1px --th-border between columns in header AND body, no truncated labels, KPI tiles --kpi-bg + darker border, zebra, sticky header, dash never zero/None, 28px controls; getComputedStyle proof per surface.
+→ **X.8:** Work Order create/edit — every picker a Combobox with typed filter and + Create; unit picker excludes Sold/deactivated/non-entity units (same rule as Cursor #20436); repair ≥ $7,000 routes to role fixed_asset_default (1500) and SAYS SO on screen — code + guard only, live proof waits for a real repair.
+Checkoff line per step. Never idle. Never deploy — DEPLOY-REQUEST to OUTBOX-CURSOR.
+
+---
+
 # ★★★★ LEAD VERDICT 2026-09-05 02:10Z — OWNER: "NO EXCUSES. I WANT MY LOAD COSTS DONE."
 **Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — work ONLY your → step. Checkoff line per step or it did not happen.
 **X.3 ✔ X.4 ✔ X.5 ✔ (#20437 contract accepted). → X.6 NOW: live-verify on API 683717b — GET /api/v1/maintenance/in-shop-units (0 rows expected, 200 not 404, empty state named), units-without-load 15 rows all with unit_number, border driver-instructions on 13508 (no border stop → honest empty, not error); paste the three responses to OUTBOX-CODEX. → X.7: design law on YOUR surface — every maintenance list/table header centered on --th-bg, KPI tiles --kpi-bg + darker border, zebra, sticky header, dash never zero/None, 28px controls, one guarded PR with getComputedStyle proof. FLT-10 rendering is Cascade's — hand-off line only.**
