@@ -18,6 +18,7 @@ const ACTIVE_LOAD = new Set<string>(RT_PAIRING_ACTIVE_STATUSES);
 const NB = "#1f2a44";
 const SB = "#475569";
 const TR = "#b45309";
+const LONG_LEG_OUTLINE = "#dc2626";
 
 const COLOR: Record<TripKind, string> = { NB, SB, TR };
 
@@ -144,6 +145,11 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
                             left: `${left}%`,
                             width: `${Math.max(width, 1.2)}%`,
                             backgroundColor: COLOR[kind],
+                            // DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §C: "the long-leg flag that
+                            // outlined any NB or SB leg running 7 days or more" — the data-rt-long-leg
+                            // attribute existed but nothing painted it; the outline itself was the
+                            // part actually missing.
+                            ...(longFlag ? { outline: `1.5px solid ${LONG_LEG_OUTLINE}`, outlineOffset: -1 } : {}),
                           }}
                           onClick={() => onLoadClick(load.id)}
                         >
@@ -163,6 +169,33 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
             );
           })
         )}
+        {/* DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §C legend row — verbatim from the reference
+            PDF. A round trip is not a generic planner row: this is the key to reading NB opens a
+            tour and SB closes it. */}
+        <div
+          className="flex flex-wrap items-center gap-4 border-t border-gray-200 bg-slate-50 px-2 py-1.5 text-xs text-gray-600"
+          data-testid="round-trips-timeline-legend"
+        >
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: NB }} />
+            NB — Northbound, starts the tour
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: TR }} />
+            TR — Triangulation
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: SB }} />
+            SB — Southbound, closes the settlement at Laredo
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span
+              className="inline-block h-2.5 w-2.5 rounded-sm bg-white"
+              style={{ outline: `1.5px solid ${LONG_LEG_OUTLINE}`, outlineOffset: -1 }}
+            />
+            leg running 7+ days
+          </span>
+        </div>
       </div>
     </div>
   );

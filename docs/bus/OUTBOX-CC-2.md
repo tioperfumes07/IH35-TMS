@@ -462,3 +462,14 @@ REMAINING flagged honestly in the PR: sticky-left-4-columns (new ParityTable cap
 for a careful follow-up, not rushed into a ~130-call-site shared component) +
 verify-dispatch-board-sections-and-columns.mjs's other pre-existing sectionControlIssues rot
 (unrelated to this fix). | NEXT=L.4g additive-only guard (deadline 15:30Z) | GO
+
+CC-2 | L.4g DONE | da02f0ef | verify-additive-only PASS (selftest + live, sidebar 29, routes 580,
+Dispatch board 18+6 HOS, Load Costs board 17 cols/8 tabs, defaultHidden/DEFAULT_VISIBLE_* pattern
+19/19 grandfathered-ratchet) · verify-seat-surface-ownership OK
+Guard registered as verify-step 10371, wired into the same gate chain L.4a's guards run in.
+Snapshot mechanism documented as a regex heuristic (same class as this repo's other column
+scanners) with one known gap flagged honestly (Dispatch board's true 25-column count captures as
+18 due to JSX-brace-crossing render functions) -- not a functional weakness for THIS guard's job
+(it still protects whatever it captures from shrinking), and the separate L.4a
+verify-dispatch-board-preview-contract.mjs guard already covers the Dispatch board's full model
+precisely. | NEXT=L.4c Round Trips recovery (deadline 16:30Z) | GO
