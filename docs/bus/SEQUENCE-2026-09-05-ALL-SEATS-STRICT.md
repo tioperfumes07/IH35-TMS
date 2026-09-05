@@ -73,7 +73,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | 1.2 | CoGS picker + fuel by role + operating_bank by role (#20425 #20426) | ✔ |
 | 1.3/1.4 | → Cursor L.2 / L.3 | ✖ transferred |
 | M.3 | → CC-3 (owner 02:50Z) | ✖ transferred |
-| M.4a | FEED: 5753, 5760–5765, 5767–5771 (12) via live UI; first DONE/BLOCKED 04:00Z; no line by 04:20Z = slice re-split to CC-3 + Codex via real UI; never close; hands off 5766/5772/5776/5780/5783/5784 | |
+| M.4a | FEED: 5753, 5760–5765, 5767–5771 (12) via live UI; first DONE/BLOCKED 04:00Z; no line by 04:20Z = slice re-split to CC-3 + Codex via real UI; never close; hands off 5766/5772/5776/5780/5783/5784 | | — **04:50Z OWNER CORRECTION: SEED script, not UI. PR 06:30Z · live 08:00Z**
 | M.5 | Three-mile schema + CPM; 1.11 actual miles ⛔ until CC-3 3.5 | |
 
 ### CC-2 — design + verify-live · `docs/bus/09-05-2026-Claude-Coder-2-DISPATCH-DESIGN-SWEEP-THEN-ACC-DEFECTS.md`
@@ -93,7 +93,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | 3.2a | samsara_addresses draft handed | ✔ #20412 |
 | 3.2b | Engine flap fix code + guards + migration #4 drafted + TEST geofence archived | ✔ #20447, live in 7e852b2 (lead re-measured). API shapes still owed inside 3.3 |
 | 3.3 | Samsara import/projection → TRANSFERRED TO CODEX X.9 (owner 02:50Z) | ✖ transferred |
-| M.3 | PRE-SETTLEMENT BACKEND (from CC-1): 404→200, escrow 2500¢ per load conditional, board+drop read-model endpoints, shapes to Cursor. After M.4b. Deadline 07:00Z. Surrender: CC-1 | next |
+| M.3 | PRE-SETTLEMENT BACKEND (from CC-1): 404→200, escrow 2500¢ per load conditional, board+drop read-model endpoints, shapes to Cursor. After M.4b. Deadline 07:00Z. Surrender: CC-1 | next | — **04:50Z OWNER CORRECTION: SEED script, not UI. PR 06:30Z · live 08:00Z**
 | M.4b | FEED NOW (owner 02:58Z): 5773–5775, 5777–5779, 5781–5782 (8) via live UI; first DONE/BLOCKED 04:00Z; slice 10:00Z — BEFORE M.3 | → |
 | 3.4 | Match proximity+name, collision report | |
 | 3.5 | Three guards green | |
@@ -112,7 +112,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | X.4 | FLT-01 → FLT-02 → FLT-04 → FLT-10 | ✔ (FLT-10 render = Cascade) |
 | X.5 | Border contract endpoint to Cursor | ✔ #20437 |
 | X.6 | Live-verify X.2/X.3/X.5 on live API; paste raw JSON. Deadline 03:20Z | → |
-| X.F | FEED NOW (owner 02:58Z): 5785–5795 (11) via live UI; first DONE/BLOCKED 04:00Z; slice 10:00Z — after X.6 | next |
+| X.F | FEED NOW (owner 02:58Z): 5785–5795 (11) via live UI; first DONE/BLOCKED 04:00Z; slice 10:00Z — after X.6 | next | — **04:50Z OWNER CORRECTION: SEED script, not UI; repo-law BLOCKED line CLOSED. PR 06:30Z · live 08:00Z**
 | X.9 | SAMSARA IMPORT/PROJECTION service (from CC-3 3.3): after X.F. Deadline 12:00Z. Surrender: CC-3 | |
 | X.7 | Design law on maintenance surface, one guarded PR | |
 | X.8 | WO create/edit comboboxes + unit-picker rule + ≥$7,000 role routing on screen | |
@@ -128,7 +128,8 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | K.7 | BRD-23 planner filters/ranges | |
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
-## LEAD LOG (newest first)
+## LEAD LOG
+- 04:50Z OWNER: feed is a SEED (scripts/seed-settlements-<seat>.ts via service layer, real data, single-stop only; owner hands 5766/5772/5776/5780/5783/5784 + anything he already entered). Lead's UI-only rule struck in ORDER file, 09-04 feed doc and AGENTS.md L13 amended. CC-1 5753 login-BLOCKED and Codex 5785 repo-law-BLOCKED lines CLOSED. (newest first)
 - 04:22Z — C.3 ✔ verified. L.1d partial (scroller+dashes ✔; table-fixed 83px, th not sticky) → L.1d-final 04:45Z. Owner: tabs not visible → L.3 moved ahead of L.2 (06:00Z), L.2 → 08:00Z. D.3 wakes still not posted; feed 0 rows.
 - 04:08Z — OWNER: Cursor is the dispatcher — wakes CC-1/CC-3/Codex/Cascade sessions with their INBOX tops (D.1–D.4); root cause of the silent feed = seats are prompt-driven and nobody prompted them.
 - 03:58Z — L.1c re-measured: table-fixed equal 83px + SECTION clip → L.1d (04:30Z final, surrender CC-2). CC-1 missed M.1 → Cursor C.3 applies migration #4 (04:20Z). Feed: still 1 load / 0 expenses on Neon; 04:00Z deadline imminent, no seeder has posted.
