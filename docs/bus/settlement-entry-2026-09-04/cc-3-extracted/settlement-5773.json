@@ -1,0 +1,101 @@
+{
+  "settlement_number": 5773,
+  "start_date": "2026-07-03",
+  "end_date": "2026-08-12",
+  "driver_name": "Concepcion Cordova Dominguez",
+  "unit": "T163",
+  "trailer": "252111",
+  "loads": [
+    {
+      "load_number": "13497",
+      "customer_name": "Mexicom Logistics",
+      "pickup": {"location_name": "EBT Yard", "city": "Laredo", "state": "TX", "zip": "78045", "date": "2026-07-03"},
+      "delivery": {"location_name": "NEWBRICK 200", "city": "NORTH KINGSTOWN", "state": "RI", "zip": "02852", "date": "2026-08-07"},
+      "linehaul_miles_doc": 2145.4,
+      "linehaul_rate": 3.356,
+      "linehaul_amount": 7200.00,
+      "loaded_miles": 2088.6,
+      "loaded_rate": 0.45,
+      "loaded_amount": 939.87,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": 1,
+      "picks_amount": 0,
+      "drops_count": 1,
+      "drops_amount": 0,
+      "fuel_rows": [
+        {"date": "2026-08-04", "vendor": "LOVES", "location": "21548FM471S NATALIA,TX", "invoice": "99513946", "gallons": 61.788, "cpg": 5.289, "receipt": 326.80, "actual": 326.80},
+        {"date": "2026-08-05", "vendor": "LOVES", "location": "13023US35 JEFFERSONVILLE,OH", "invoice": "1235975", "gallons": 144.518, "cpg": 5.289, "receipt": 764.36, "actual": 764.36},
+        {"date": "2026-08-07", "vendor": "PILOT", "location": "433OLD GATE LANE MILFORD,CT", "invoice": "99564446", "gallons": 188.605, "cpg": 5.799, "receipt": 1093.72, "actual": 1093.72}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-04", "vendor": "LOVES", "location": "21548FM471S NATALIA,TX", "invoice": "99513946", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 24.12},
+        {"date": "2026-08-05", "vendor": "LOVES", "location": "13023US35 JEFFERSONVILLE,OH", "invoice": "1235975", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 51.17},
+        {"date": "2026-08-07", "vendor": "LOVES", "location": "433OLD GATE LANE MILFORD,CT", "invoice": "99564446", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 44.96}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-13", "description": "Driver-Escrow For Claims", "amount": -25.00}
+      ]
+    },
+    {
+      "load_number": "13511",
+      "customer_name": "Rehmann Transportation Corp.",
+      "pickup": {"location_name": "US Beverage Packers LLC", "city": "Keasbey", "state": "NJ", "zip": "08832", "date": "2026-08-07"},
+      "delivery": {"location_name": "Walgreens", "city": "Waxahachie", "state": "TX", "zip": "75165", "date": "2026-08-10"},
+      "linehaul_miles_doc": 2158.6,
+      "linehaul_rate": 1.668,
+      "linehaul_amount": 3600.00,
+      "loaded_miles": 1540.5,
+      "loaded_rate": 0.45,
+      "loaded_amount": 693.23,
+      "empty_miles": 587.6,
+      "empty_rate": 0.45,
+      "empty_amount": 264.42,
+      "picks_count": 1,
+      "picks_amount": 0,
+      "drops_count": 1,
+      "drops_amount": 0,
+      "fuel_rows": [
+        {"date": "2026-08-08", "vendor": "LOVES", "location": "601SOUTH RING RD ELIZABETHTOW,KY", "invoice": "99061371", "gallons": 151.316, "cpg": 5.149, "receipt": 779.13, "actual": 779.13},
+        {"date": "2026-08-10", "vendor": "LOVES", "location": "1021DALE EVANS ITALY,TX", "invoice": "99886347", "gallons": 159.168, "cpg": 5.289, "receipt": 841.84, "actual": 841.84}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-08", "vendor": "LOVES", "location": "601SOUTH RING RD ELIZABETHTOW,KY", "invoice": "99061371", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 38.93},
+        {"date": "2026-08-10", "vendor": "LOVES", "location": "1021DALE EVANS ITALY,TX", "invoice": "99886347", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 37.76}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-13", "description": "Driver-Escrow For Claims", "amount": -25.00},
+        {"date": "2026-08-13", "description": "Admin fee - GAS", "amount": -10.00}
+      ],
+      "_deadhead_context": [
+        {"kind": "empty", "date": "2026-07-07", "location": "NEWBRICK 200, NORTH KINGSTOWN, RI 02852"},
+        {"kind": "empty", "date": "2026-08-12", "location": "EBT Yard, Laredo, TX 78045"}
+      ]
+    }
+  ],
+  "company_settlement_totals": {
+    "invoiced": 10800.00,
+    "quick_pay_pct": 2.00,
+    "quick_pay_amount": -216.00,
+    "driver_salary": -1897.52,
+    "fuel": -3805.85,
+    "company_expenses": -196.94,
+    "net_revenue": 4683.69,
+    "total_miles": 4304.0,
+    "mpg": 6.102
+  },
+  "driver_settlement_totals": {
+    "total_loaded_miles": 3629.1,
+    "total_empty_miles": 587.6,
+    "total_miles": 4216.7,
+    "salary": 1897.52,
+    "deductions_total": -60.00,
+    "total_due": 1837.52,
+    "mpg": 6.102
+  }
+}

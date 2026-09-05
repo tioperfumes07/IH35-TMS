@@ -1,0 +1,91 @@
+{
+  "settlement_number": 5781,
+  "start_date": "2026-08-15",
+  "end_date": "2026-08-21",
+  "driver_name": "Leonel Antonio Morales",
+  "unit": "T175",
+  "trailer": "10222 / 10219",
+  "loads": [
+    {
+      "load_number": "13523",
+      "customer_name": "DLS Dardini Logistics Services",
+      "trailer": "10222",
+      "pickup": {"location_name": "Mission Produce Distribution", "city": "LAREDO", "state": "TX", "zip": "78045", "date": "2026-08-15"},
+      "delivery": {"location_name": "Aldi Salisbury", "city": "Salisbury", "state": "NC", "zip": "28146", "date": "2026-08-18"},
+      "linehaul_miles_doc": 1423.6,
+      "linehaul_rate": 2.529,
+      "linehaul_amount": 3600.00,
+      "loaded_miles": 1395.3,
+      "loaded_rate": 0.45,
+      "loaded_amount": 627.89,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": 1,
+      "picks_amount": 0,
+      "drops_count": 1,
+      "drops_amount": 0,
+      "fuel_rows": [
+        {"date": "2026-08-16", "vendor": "LOVES", "location": "21548FM471SNATALIA,TX, TX", "invoice": "99522983", "gallons": 53.008, "cpg": 5.389, "receipt": 285.66, "actual": 285.66},
+        {"date": "2026-08-16", "vendor": "LOVES", "location": "900SEAGLEST WEIMAR,TX, TX", "invoice": "99308095", "gallons": 79.004, "cpg": 5.689, "receipt": 449.45, "actual": 449.45},
+        {"date": "2026-08-17", "vendor": "LOVES", "location": "1917HWY18WEST POINT,GA, GA", "invoice": "99630372", "gallons": 113.002, "cpg": 5.589, "receipt": 631.57, "actual": 631.57}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-16", "vendor": "LOVES", "location": "21548FM471SNATALIA,TX", "invoice": "99522983", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 19.58},
+        {"date": "2026-08-16", "vendor": "LOVES", "location": "21548FM471SNATALIA,TX", "invoice": "99522983", "description": "Fuel-Reefer Diesel", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 188.92},
+        {"date": "2026-08-17", "vendor": "LOVES", "location": "1917HWY18WEST POINT,GA", "invoice": "99630372", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 29.34},
+        {"date": "2026-08-17", "vendor": "LOVES", "location": "1917HWY18WEST POINT,GA", "invoice": "99630372", "description": "Fuel-Reefer Diesel", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 83.84},
+        {"date": "2026-08-15", "vendor": "BLUEBEACON", "location": "12408MINES ROAD LAREDO,TX", "invoice": "114184107", "description": "Reefer Trailer-Washout Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 43.50},
+        {"date": "2026-08-16", "vendor": "LOVES", "location": "21548MF471S NATALIA,TX", "invoice": "2880940", "description": "Driver Reimbursement-TPE-Scale Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 15.25}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-21", "description": "Driver-Escrow For Claims - Driver-Escrow For Claims", "amount": -25.00}
+      ]
+    },
+    {
+      "load_number": "13534",
+      "customer_name": "Del-Can Logistics LLC",
+      "trailer": "10219",
+      "pickup": {"location_name": "Vertical Cold Storage", "city": "MARSHVILLE", "state": "NC", "zip": "28103", "date": "2026-08-19"},
+      "delivery": {"location_name": "Palos Garza", "city": "Laredo", "state": "TX", "zip": "78045", "date": "2026-08-21"},
+      "linehaul_miles_doc": 1490.8,
+      "linehaul_rate": 2.079,
+      "linehaul_amount": 3100.00,
+      "loaded_miles": 1391.7,
+      "loaded_rate": 0.45,
+      "loaded_amount": 626.27,
+      "empty_miles": 58.1,
+      "empty_rate": 0.45,
+      "empty_amount": 26.15,
+      "picks_count": 1,
+      "picks_amount": 0,
+      "drops_count": 1,
+      "drops_amount": 0,
+      "fuel_rows": [
+        {"date": "2026-08-20", "vendor": "LOVES", "location": "66595WADSWORTH PKWY MANDEVILLE, LA", "invoice": "99133290", "gallons": 130.041, "cpg": 5.589, "receipt": 726.80, "actual": 726.80},
+        {"date": "2026-08-23", "vendor": "LOVES", "location": "2609NORTH BELTLINE HWY P,AL, AL", "invoice": "99913592", "gallons": 50.006, "cpg": 5.849, "receipt": 292.49, "actual": 292.49}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-20", "vendor": "LOVES", "location": "66595WADSWORTH PKWY MANDEVILLE", "invoice": "99133290", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 24.59},
+        {"date": "2026-08-20", "vendor": "LOVES", "location": "66595WADSWORTH PKWY MANDEVILLE", "invoice": "99133290", "description": "Fuel-Reefer Diesel", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 246.04},
+        {"date": "2026-08-19", "vendor": "LOVES", "location": "1169RIESTER ROAD BLACKSBURG,SC", "invoice": "1338855", "description": "Scale Expense:OTR-Scale Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 15.25},
+        {"date": "2026-08-19", "vendor": "LOVES", "location": "1169RIESTER ROAD BLACKSBURG,SC", "invoice": "1338855", "description": "Scale Expense:OTR-Scale Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 5.25},
+        {"date": "2026-08-21", "vendor": "PALOS GARZA", "location": "12110RIVER BANK DR LAREDO,TX", "invoice": null, "description": "Warehouse-Lumper Fee Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 124.80}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-21", "description": "Driver-Escrow For Claims - Driver-Escrow For Claims", "amount": -25.00},
+        {"date": "2026-08-21", "description": "Admin fee - GAS", "amount": -10.00}
+      ]
+    }
+  ],
+  "_deadhead_context": [
+    {"load_number": "13534", "type": "Empty", "date": "2026-08-18", "location": "Salisbury, NC 28146 / Aldi Salisbury"}
+  ],
+  "_note_global": "Driver_Settlement_5781 lists pickup for Load 13523 with no 'mi.' prefix distance (unlike Load 13534's Pickup 58.1mi.) — matches source formatting exactly as printed; not an inconsistency, just an absent mileage-prefix on that particular pickup line.",
+  "company_settlement_totals": {"invoiced": 6700.00, "quick_pay_pct": 2.31, "quick_pay_amount": -154.50, "driver_salary": -1280.31, "fuel": -2385.97, "company_expenses": -796.36, "net_revenue": 2082.86, "total_miles": 2914.4, "mpg": 6.856},
+  "driver_settlement_totals": {"total_loaded_miles": 2787.0, "total_empty_miles": 58.1, "total_miles": 2845.1, "salary": 1280.31, "deductions_total": -60.00, "total_due": 1220.31, "mpg": 6.856}
+}
