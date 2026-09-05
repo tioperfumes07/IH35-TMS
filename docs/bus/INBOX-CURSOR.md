@@ -1,3 +1,11 @@
+# ★★★ FORCE — CURRENT ORDER 2026-09-05 (SUPERSEDES EVERYTHING BELOW) ★★★
+`git pull --ff-only origin main` · USMCA only · FAST-MERGE · only Cursor deploys
+**Read & execute:** [`docs/bus/09-05-2026-Cursor-LEAD-DEPLOY-BUS-AND-DISPATCH-FINISH.md`](09-05-2026-Cursor-LEAD-DEPLOY-BUS-AND-DISPATCH-FINISH.md)
+Deploy API to tip → six orders on the bus → finish dispatch (unit-picker hide `U-156-provisional`, draft dead-end reason, Kanban width+DnD, Assignment drag, Round Trips, Detention one-liner, Driver Instruction Sheet). 13508 root-caused (candidate 3); durable fix is CC-1 STEP 1. Do NOT merge Cascade `cursor/land-law-doc` until he lands the 09-05 revision.
+
+---
+## HISTORY (superseded 2026-09-05 — do not execute)
+
 # ★★ SEQUENCE · CURSOR LEAD · DO NOT JUMP
 `git pull --ff-only origin main`
 

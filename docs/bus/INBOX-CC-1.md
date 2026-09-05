@@ -1,3 +1,11 @@
+# ★★★ FORCE — CURRENT ORDER 2026-09-05 (SUPERSEDES EVERYTHING BELOW) ★★★
+`git pull --ff-only origin main` · USMCA only · FAST-MERGE · money = Tier A · reuse posters, no new GL math
+**Read & execute:** [`docs/bus/09-05-2026-Claude-Coder-1-LOAD-COSTS-COMPLETE-VERTICAL-Updated.md`](09-05-2026-Claude-Coder-1-LOAD-COSTS-COMPLETE-VERTICAL-Updated.md)
+STRICT ORDER: STEP 0 apply CC-3's 4 migration drafts (your 00–11 UTC window) → STEP 1 crew-with-driver-can-never-be-draft wiring fix + `verify-load-with-crew-is-not-draft` guard (13508 must un-draft through the wiring, not a hand UPDATE) → STEP 2 CoGS picker + fuel/bank by ROLE (done #20425/#20426) → STEP 3 Costs-tab register → STEP 4 board tabs → STEP 5 pre-settlements/settlements consolidated+expand, **escrow $25.00 PER LOAD, conditional (12/36 have none), cap $2,500 unchanged** → STEP 6 real settlement feed (leave in pre-settlement, owner closes) → STEP 7 mileage.
+
+---
+## HISTORY (superseded 2026-09-05 — do not execute)
+
 # ★ OWNER ORDER 2026-09-04 20:01 — CC-1 OWNS LOAD COSTS + SETTLEMENTS (do this, not bus)
 `git pull --ff-only origin main` · FAST-MERGE · USMCA only · money = Tier A · reuse existing posters, no new GL math
 
