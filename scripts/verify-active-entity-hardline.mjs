@@ -49,10 +49,10 @@ function audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, unitsS
   if (!/enum\(\["7", "14", "15", "30"\]\)/.test(routesSrc) || !/Number\(v \?\? "15"\)/.test(routesSrc))
     f.push(`${ACTIVE_SET_ROUTES}: API must expose and default the owner-selected 15-day window`);
 
-  if (!/status === "Active"[\s\S]*integrations\.active_driver_set_cache canonical_active_cache/.test(driversSrc))
-    f.push(`${DRIVERS_ROUTE}: status=Active list requests must use the canonical movement-derived cache`);
-  if (!/canonical_active_cache\.operating_company_id = \$\$\{ociIdx\}::uuid[\s\S]*canonical_active_cache\.threshold_days = 15/.test(driversSrc))
-    f.push(`${DRIVERS_ROUTE}: active driver list cache read must be company-scoped at the 15-day window`);
+  if (!/status === "Active"[\s\S]*withLuciaBypass\(\(client\) => getActiveDrivers\(client, scopedCompanyId, 15, 15\)\)/.test(driversSrc))
+    f.push(`${DRIVERS_ROUTE}: status=Active list requests must refresh/read the canonical 15-day movement set`);
+  if (!/values\.push\(movementActiveDriverIds \?\? \[\]\)[\s\S]*mdata\.drivers\.id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/.test(driversSrc))
+    f.push(`${DRIVERS_ROUTE}: active driver list must bind only the resolved movement UUIDs`);
   if (!/status === "InService"[\s\S]*currently_leased_to_company_id = \$\$\{ociIdx\}::uuid[\s\S]*is_oos IS NOT TRUE/.test(unitsSrc))
     f.push(`${UNITS_ROUTE}: status=InService list requests must use canonical lease scope and exclude OOS units`);
 
@@ -94,7 +94,7 @@ function main() {
       }
     }
     const listMutations = [
-      driversSrc.replace("integrations.active_driver_set_cache canonical_active_cache", "integrations.samsara_drivers canonical_active_cache"),
+      driversSrc.replace("getActiveDrivers(client, scopedCompanyId, 15, 15)", "getActiveDrivers(client, scopedCompanyId, 7, 15)"),
       unitsSrc.replace("is_oos IS NOT TRUE", "is_oos IS TRUE"),
     ];
     if (audit(listMutations[0], ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc).length === 0) {
