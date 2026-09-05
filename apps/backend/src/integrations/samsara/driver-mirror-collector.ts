@@ -116,13 +116,16 @@ export async function collectSamsaraDriverMirror(
          FROM mdata.drivers WHERE operating_company_id = $1::uuid`,
       [operatingCompanyId]
     );
-    const byLicense = new Map<string, string>();
+    const byLicense = new Map<string, string[]>();
     const byName = new Map<string, string[]>();
     for (const row of roster.rows) {
       const cdl = normalizeLicense(row.cdl_number);
       const mex = normalizeLicense(row.mexican_license_number);
-      if (cdl) byLicense.set(cdl, row.id);
-      if (mex) byLicense.set(mex, row.id);
+      for (const license of new Set([cdl, mex].filter((value): value is string => Boolean(value)))) {
+        const existing = byLicense.get(license) ?? [];
+        existing.push(row.id);
+        byLicense.set(license, existing);
+      }
       const name = normalizeName(`${row.first_name ?? ""} ${row.last_name ?? ""}`);
       if (name) {
         const existing = byName.get(name) ?? [];
@@ -133,10 +136,15 @@ export async function collectSamsaraDriverMirror(
 
     for (const driver of drivers) {
       const raw = driver.raw;
+      const activationStatus = readString(raw, "driverActivationStatus", "driver_activation_status")?.toLowerCase();
+      if (activationStatus !== "active" && activationStatus !== "deactivated") {
+        throw new Error(`samsara driver ${driver.id} missing canonical activation status`);
+      }
       const licenseNumber = normalizeLicense(readString(raw, "licenseNumber", "license_number"));
       const name = normalizeName(readString(raw, "name") ?? `${readString(raw, "firstName") ?? ""} ${readString(raw, "lastName") ?? ""}`);
 
-      let localDriverId: string | null = licenseNumber ? byLicense.get(licenseNumber) ?? null : null;
+      const licenseCandidates = licenseNumber ? byLicense.get(licenseNumber) ?? [] : [];
+      let localDriverId: string | null = licenseCandidates.length === 1 ? licenseCandidates[0]! : null;
       if (!localDriverId && name) {
         const candidates = byName.get(name) ?? [];
         // Never guess among ambiguous name matches (R2 convention) — link only when exactly one.
@@ -145,15 +153,19 @@ export async function collectSamsaraDriverMirror(
 
       const res = await client.query<{ inserted: boolean }>(
         `
-          INSERT INTO integrations.samsara_drivers (operating_company_id, samsara_driver_id, local_driver_id, raw_payload, last_seen_at)
-          VALUES ($1::uuid, $2, $3::uuid, $4::jsonb, '-infinity'::timestamptz)
+          INSERT INTO integrations.samsara_drivers (
+            operating_company_id, samsara_driver_id, local_driver_id, raw_payload,
+            driver_activation_status, last_seen_at
+          )
+          VALUES ($1::uuid, $2, $3::uuid, $4::jsonb, $5, '-infinity'::timestamptz)
           ON CONFLICT (operating_company_id, samsara_driver_id) DO UPDATE
             SET raw_payload = EXCLUDED.raw_payload,
+                driver_activation_status = EXCLUDED.driver_activation_status,
                 local_driver_id = COALESCE(integrations.samsara_drivers.local_driver_id, EXCLUDED.local_driver_id),
                 updated_at = now()
           RETURNING (xmax = 0) AS inserted
         `,
-        [operatingCompanyId, driver.id, localDriverId, JSON.stringify(raw)]
+        [operatingCompanyId, driver.id, localDriverId, JSON.stringify(raw), activationStatus]
       );
       upserted += 1;
       if (localDriverId) linked += 1;

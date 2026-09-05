@@ -74,6 +74,10 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "codex/samsara-usmca-retag-migration",
     new Set(["db/migrations/202613761300_samsara_usmca_retag.sql"]),
   ],
+  [
+    "codex/tel-39-driver-mirror",
+    new Set(["db/migrations/202613772200_samsara_driver_activation_status.sql"]),
+  ],
 ]);
 
 export function isOwnerAuthorizedOneOff(branch, files) {

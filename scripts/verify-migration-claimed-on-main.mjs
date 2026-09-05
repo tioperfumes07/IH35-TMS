@@ -50,6 +50,18 @@ function branchLane(branch) {
   return null;
 }
 
+const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  [
+    "codex/tel-39-driver-mirror",
+    new Set(["db/migrations/202613772200_samsara_driver_activation_status.sql"]),
+  ],
+]);
+
+function isOwnerAuthorizedOneOff(branch, files) {
+  const allowed = OWNER_AUTHORIZED_ONE_OFFS.get(branch);
+  return Boolean(allowed && files.length > 0 && files.every((file) => allowed.has(file)));
+}
+
 export function run() {
   let branch;
   try {
@@ -67,6 +79,14 @@ export function run() {
 
   if (files.length === 0) {
     return { ok: true, message: `verify-migration-claimed-on-main OK — no new migrations on ${branch}` };
+  }
+
+  if (isOwnerAuthorizedOneOff(branch, files)) {
+    return {
+      ok: true,
+      files,
+      message: `verify-migration-claimed-on-main OK — direct owner one-PR authorization applies only to ${files.join(", ")}`,
+    };
   }
 
   let registry;

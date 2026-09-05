@@ -72,6 +72,33 @@ describe("SamsaraClient count methods", () => {
     expect(url.searchParams.get("startMs")).toBe(String(new Date("2026-05-01T00:00:00Z").getTime()));
     expect(url.searchParams.get("endMs")).toBe(String(new Date("2026-05-31T23:59:59Z").getTime()));
   });
+
+  it("fetches active and deactivated drivers with independent cursor pagination", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ id: "a1" }], pagination: { hasNextPage: true, endCursor: "a-next" } }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ id: "a2" }], pagination: { hasNextPage: false } }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ id: "d1" }], pagination: { hasNextPage: false } }), { status: 200 }));
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    const client = new SamsaraClient({ apiToken: "token", samsaraOrgId: "org-1" });
+
+    const rows = await client.listDriversAllActivationStatuses();
+
+    expect(rows.map((row) => [row.id, row.raw.driverActivationStatus])).toEqual([
+      ["a1", "active"], ["a2", "active"], ["d1", "deactivated"],
+    ]);
+    const urls = fetchMock.mock.calls.map((call) => new URL(String(call[0])));
+    expect(urls[0]?.searchParams.get("driverActivationStatus")).toBe("active");
+    expect(urls[1]?.searchParams.get("after")).toBe("a-next");
+    expect(urls[2]?.searchParams.get("driverActivationStatus")).toBe("deactivated");
+  });
+
+  it("fails closed when the deactivated-driver pass fails", async () => {
+    globalThis.fetch = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ id: "a1" }], pagination: { hasNextPage: false } }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ message: "down" }), { status: 503 })) as unknown as typeof fetch;
+    const client = new SamsaraClient({ apiToken: "token", samsaraOrgId: "org-1" });
+    await expect(client.listDriversAllActivationStatuses()).rejects.toMatchObject({ statusCode: 503 });
+  });
 });
 
 describe("Samsara externalIds standard", () => {

@@ -54,7 +54,7 @@ export async function registerSamsaraConfigRoutes(app: FastifyInstance) {
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
       const values: unknown[] = [oc];
-      const activation = `lower(COALESCE(sd.raw_payload->>'driverActivationStatus', sd.raw_payload->>'driver_activation_status', 'active'))`;
+      const activation = `sd.driver_activation_status`;
       const statusSql = status === "all" ? "" : `AND ${activation} = $2`;
       if (status !== "all") values.push(status);
       const result = await client.query(

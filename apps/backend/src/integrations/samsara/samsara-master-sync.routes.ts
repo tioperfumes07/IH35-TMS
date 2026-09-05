@@ -4,9 +4,14 @@ import { withCompanyScope } from "../../accounting/shared.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { sendZodValidation } from "../../lib/zod-http-error.js";
 import { syncSamsaraDriversMaster, syncSamsaraVehiclesMaster, syncSamsaraTrailersMaster } from "./samsara-master-sync.service.js";
+import { collectSamsaraDriverMirror } from "./driver-mirror-collector.js";
 
 function officeRole(role: string) {
   return ["Owner", "Administrator", "Manager", "Dispatcher", "Accountant", "Safety"].includes(role);
+}
+
+function adminRole(role: string) {
+  return role === "Owner" || role === "Administrator";
 }
 
 const bodySchema = z.object({
@@ -14,6 +19,15 @@ const bodySchema = z.object({
 });
 
 export async function registerSamsaraMasterSyncRoutes(app: FastifyInstance) {
+  app.post("/api/v1/integrations/samsara/drivers/resync", { config: { rateLimit: { max: 2, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    if (!requireAuth(req, reply)) return reply;
+    const user = req.user as { uuid: string; role: string };
+    if (!adminRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden_admin_only" });
+    const parsed = bodySchema.safeParse(req.body ?? {});
+    if (!parsed.success) return sendZodValidation(reply, parsed.error);
+    return collectSamsaraDriverMirror(parsed.data.operating_company_id);
+  });
+
   app.post("/api/v1/integrations/samsara/drivers/sync", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     if (!requireAuth(req, reply)) return reply;
     const user = req.user as { uuid: string; role: string };
