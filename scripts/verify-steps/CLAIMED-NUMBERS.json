@@ -5577,6 +5577,11 @@
     "claimed_by": "cc-2",
     "purpose": "verify-banking-toolbar-uniform-height (owner order 2026-09-05, CODER-SEQUENCE-NUMBERED-2026-09-05.md CC-2 §5, B.2: 'one 28px toolbar height for ALL controls incl Money in/out; type = multi-select (checkboxes/chips, server-side); date range visible on landing'). Asserts the banking transactions toolbar has zero h-8/h-9 height literals, the transaction-type filter is multi-select (checkboxes), and the date range renders unconditionally rather than behind a click."
   },
+  "10387": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "cc-2",
+    "purpose": "verify-banking-suggest-matches-wired (owner order 2026-09-05, CODER-SEQUENCE-NUMBERED-2026-09-05.md CC-2 §6, B.1: 'banking matcher: suggest exact cents +-5d to expenses/bills ... suggested_* + confidence; POST /banking/transactions/suggest; Accept->match never auto-post'). Asserts the bulk suggest route reuses the existing findCandidates matcher (no duplicate matching algorithm), never posts/persists a match itself, and the frontend suggestion badge opens the existing Match drawer rather than accepting/posting directly."
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
