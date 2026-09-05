@@ -346,3 +346,11 @@ requests fired (checked network log). Load 13508 and all bank data unchanged.
 Nothing further filed this pass beyond BANK-F9995 (#20116, already merged). | NEXT=awaiting
 next assignment or will keep working the categorization queue read-only if more time is
 wanted | GO
+
+CC-2 | ACK | SEQUENCE 2.0 | GO
+CC-2 | STEP-2.1 DONE | #20397
+Retroactive ack per 09-05-2026-Claude-Coder-2-DISPATCH-DESIGN-SWEEP-THEN-ACC-DEFECTS.md: tokens
+landed (#20397), GLB-11/12/13 closed with getComputedStyle proof, ACC-13 (#20422/#20423/#20424)
+merged, all confirmed by owner 01:30 UTC. Continuing in order now: 2.2 dispatch design sweep,
+then 2.3 J1-to-zero, then 2.4+ ACC verticals. Currently landing the LAW-TRANSACTION-HEALTH-REGISTER
+B1/C3 re-score (#pending push) before starting 2.2. | NEXT=2.2 dispatch guarded sweep | GO
