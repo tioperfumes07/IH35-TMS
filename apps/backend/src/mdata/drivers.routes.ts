@@ -30,7 +30,7 @@ export function mapDriverUniqueConflict(error: unknown): DriverConflictBody {
   return { error: "mdata_driver_conflict", message: "Driver conflicts with an existing record" };
 }
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
-import { withCurrentUser } from "../auth/db.js";
+import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
@@ -59,6 +59,7 @@ import {
   DriverVendorMissingError,
   resolveDriverVendorLink,
 } from "../accounting/driver-vendor-link.service.js";
+import { getActiveDrivers } from "../integrations/samsara/active-driver-set/query.service.js";
 
 const DRIVER_STATUS_VALUES = ["Active", "Probation", "Inactive", "Terminated", "OnLeave"] as const;
 export const driverStatusSchema = z.enum(DRIVER_STATUS_VALUES);
@@ -1334,6 +1335,13 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if (include_system && !isOwnerOrAdmin(authUser.role)) {
       return reply.code(403).send({ error: "forbidden" });
     }
+    const scopedCompanyId = await withCurrentUser(authUser.uuid, (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid, operating_company_id),
+    );
+    if (!scopedCompanyId) return { drivers: [], total: 0 };
+    const movementActiveDriverIds = status === "Active"
+      ? (await withLuciaBypass((client) => getActiveDrivers(client, scopedCompanyId, 15, 15))).active_driver_uuids
+      : null;
     // include_deactivated is NOT role-gated: the driver roster (any authenticated role can reach
     // /drivers, no route-level role restriction) already showed every status, unrestricted, before
     // this change -- this flag only makes that existing behavior explicit/opt-in instead of ambient,
@@ -1395,25 +1403,13 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       // Entity scope (USMCA cross-entity leak fix): driver PII must never blend across operating
       // companies. mdata.drivers RLS is role-scoped, not entity-scoped, so ALWAYS bind the
       // operating_company_id predicate — using the requested company or the user's current one.
-      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
-      if (!scopedCompanyId) return { rows: [], total: 0 };
       // membership-scope-exempt: scopedCompanyId comes from resolveOperatingCompanyId, which validates a requested company against org.user_accessible_company_ids() and throws forbidden_company_membership
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       values.push(scopedCompanyId);
       const ociIdx = values.length;
       if (status === "Active") {
-        // Consume the snapshot built by recomputeActiveDriverSet under Lucia bypass. Reading the
-        // raw assignment table here would incorrectly hide still-Transportation-tagged Samsara
-        // rows before the idempotent re-tag step; the cache is already company-scoped and its
-        // producer is guarded against stale last_seen_at/status logic.
-        filters.push(`mdata.drivers.id = ANY(COALESCE((
-          SELECT canonical_active_cache.active_driver_uuids
-          FROM integrations.active_driver_set_cache canonical_active_cache
-          WHERE canonical_active_cache.operating_company_id = $${ociIdx}::uuid
-            AND canonical_active_cache.threshold_days = 15
-          ORDER BY canonical_active_cache.snapshot_at DESC
-          LIMIT 1
-        ), ARRAY[]::uuid[]))`);
+        values.push(movementActiveDriverIds ?? []);
+        filters.push(`mdata.drivers.id = ANY($${values.length}::uuid[])`);
       }
       // Predicate must appear in the SQL template literal (verify-mdata-entity-scope ratchet) —
       // do not bury operating_company_id only inside an interpolated ${whereClause}.
