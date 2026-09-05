@@ -163,6 +163,19 @@ jobs:
       - name: Frontend tsc -b (match Render, before long verify chain)
         run: node scripts/generate-module-completion-data.mjs && cd apps/frontend && npx tsc -b --pretty false
 
+      # L.0 (OWNER-ISSUE-INVENTORY-2026-09-05.md #3, owner order 2026-09-05, surrendered Cursor ->
+      # CC-2 14:00Z): "Gate does not run the Render build command | pnpm gate != tsc -b && vite
+      # build." The step above only ran the tsc HALF of Render's actual frontend buildCommand
+      # (render.yaml: `cd apps/frontend && npm install && npm run build`, where that "build" script
+      # is `generate-module-completion-data.mjs && tsc -b && vite build`) -- a Vite/Rollup-only
+      # failure (bad dynamic import, plugin error, asset resolution) that tsc cannot see would stay
+      # green here and only surface as a Render build_failed alert, exactly the #20486 failure
+      # class this job exists to catch before merge. Runs the real `vite build` (module-completion
+      # data + tsc -b already ran above and are idempotent to repeat via npm run build, but running
+      # vite alone here keeps this step fast and additive rather than re-doing the tsc pass).
+      - name: Frontend vite build (Render build-command parity, L.0)
+        run: cd apps/frontend && npx vite build
+
       - name: Verification source of truth (local + CI parity)
         run: npm run verify:pre-commit
 
