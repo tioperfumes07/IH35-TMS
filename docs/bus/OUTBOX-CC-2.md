@@ -660,3 +660,10 @@ NavItem API extension (Link-only today, Loads-history needs dynamic date default
 the owner's two concrete complaints required; filed as its own follow-up, not silently dropped.
 | NEXT=checking INBOX-CC-2.md for the next open CC-2 row (dispatch backlog / BRD items per LOCK
 IT) | GO
+
+CC-2 | 2.2 + L.4c RE-VERIFIED GREEN 18:13Z | no new work needed -- both already merged and still
+live: `verify-table-design-contract` PASS, `verify-ui-design-system-ratchet` PASS (font-size count
+improved 1287->1284 from an unrelated fix, not banked), `verify-roundtrips-timeline-restored` +
+`verify-round-trips-deep-link-timeline-and-empty-copy` both PASS (988fdb73). Full re-assigned
+sequence (L.4a -> 2.2 -> L.4c) closed. | NEXT=the 9-item pre-existing dispatch guard backlog filed
+above, or awaiting next assignment | GO
