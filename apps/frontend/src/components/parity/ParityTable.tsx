@@ -1465,10 +1465,14 @@ export function ParityTable<T>({
                     letterSpacing: 0.3,
                     backgroundColor: dragOverKey === key ? colors.accentTint : resolvedHeaderBg,
                     color: resolvedHeaderInk,
-                    // COLUMNS-MUST-DISTINGUISH LAW (owner ruling 2026-09-04) — a 1px vertical rule
-                    // between every column, header and body (th-border in the reference render).
+                    // COMPLETE-OUTLINE LAW (owner ruling 2026-09-05, supersedes the 2026-09-04
+                    // bottom-only/2px COLUMNS-MUST-DISTINGUISH ruling's border-bottom width): every
+                    // th gets a full 1px border box on all four sides, not just a bottom rule —
+                    // measured with getComputedStyle, verify-table-design-contract.mjs asserts it.
+                    borderTop: `1px solid ${colors.tableColumnRule}`,
                     borderRight: `1px solid ${colors.tableColumnRule}`,
-                    borderBottom: `2px solid ${colors.tableColumnRule}`,
+                    borderBottom: `1px solid ${colors.tableColumnRule}`,
+                    borderLeft: `1px solid ${colors.tableColumnRule}`,
                     ...(w ? (columnLayout === "auto" ? { minWidth: w } : { width: w }) : {}),
                     ...(dragOverKey === key ? { outlineColor: colors.navy } : {}),
                     ...(key in stickyLeftPx
