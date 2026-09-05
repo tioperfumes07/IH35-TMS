@@ -1513,7 +1513,7 @@ export function uploadBankStatementCsv(file: File, bankAccountId: string) {
   );
 }
 
-export type ObligationType = "load" | "settlement" | "fuel" | "work_order" | "ar_invoice" | "bill";
+export type ObligationType = "load" | "settlement" | "fuel" | "work_order" | "ar_invoice" | "bill" | "expense";
 export type ReconcileSuggestionType = ObligationType | "factoring_batch";
 
 export type ReconcileSuggestion = {
