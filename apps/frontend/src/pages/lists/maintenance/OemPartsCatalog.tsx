@@ -165,6 +165,7 @@ export function OemPartsCatalog() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [fleetOnly, setFleetOnly] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
 
   // LST-F5218 — Lists hub ?create=1 must open OEM part create modal.
   useCreateQueryParam({
@@ -192,7 +193,8 @@ export function OemPartsCatalog() {
     enabled: Boolean(companyId),
   });
 
-  const rows = query.data?.rows ?? [];
+  const allRows = query.data?.rows ?? [];
+  const rows = showInactive ? allRows : allRows.filter((r) => !r.archived_at);
   const total = query.data?.total_count ?? 0;
   const brandCount = query.data?.brand_count ?? 0;
   const fleetCount = query.data?.fleet_count ?? 0;
@@ -255,6 +257,16 @@ export function OemPartsCatalog() {
       <label className="flex items-center gap-2 text-xs text-slate-700">
         <input type="checkbox" checked={fleetOnly} onChange={(event) => setFleetOnly(event.target.checked)} />
         Fleet brands only (from trucks, trailers, and reefers in your fleet)
+      </label>
+
+      <label className="flex items-center gap-1 text-xs text-gray-600">
+        <input
+          type="checkbox"
+          checked={showInactive}
+          onChange={(e) => setShowInactive(e.target.checked)}
+          className="h-3.5 w-3.5 rounded-sm border-gray-300"
+        />
+        Show inactive
       </label>
 
       <ParityTable<OemPartRow>

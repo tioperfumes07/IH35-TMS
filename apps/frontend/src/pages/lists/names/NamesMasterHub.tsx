@@ -52,6 +52,7 @@ export function NamesMasterHub() {
   const [q, setQ] = useState("");
   const [type, setType] = useState<"all" | NamesEntityType>("all");
   const [page, setPage] = useState(0);
+  const [showVoided, setShowVoided] = useState(false);
   const pageSize = 50;
 
   const countsQuery = useQuery({
@@ -73,7 +74,8 @@ export function NamesMasterHub() {
     enabled: Boolean(companyId),
   });
 
-  const rows = searchQuery.data?.rows ?? [];
+  const allRows = searchQuery.data?.rows ?? [];
+  const rows = showVoided ? allRows : allRows.filter((r) => !r.archived_at);
   const total = searchQuery.data?.total ?? 0;
   const counts = countsQuery.data;
 
@@ -212,6 +214,16 @@ export function NamesMasterHub() {
           </button>
         ))}
       </div>
+
+      <label className="flex items-center gap-1 text-xs text-gray-600">
+        <input
+          type="checkbox"
+          checked={showVoided}
+          onChange={(e) => setShowVoided(e.target.checked)}
+          className="h-3.5 w-3.5 rounded-sm border-gray-300"
+        />
+        Show voided
+      </label>
 
       {counts ? (
         <div className="grid grid-cols-2 gap-2 md:grid-cols-5">

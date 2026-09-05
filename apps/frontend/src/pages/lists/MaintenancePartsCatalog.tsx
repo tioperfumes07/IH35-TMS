@@ -81,6 +81,7 @@ export function MaintenancePartsCatalog() {
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
 
   const query = useMaintenancePartsCatalog({
     operating_company_id: companyId,
@@ -93,7 +94,8 @@ export function MaintenancePartsCatalog() {
 
   });
 
-  const rows = query.data?.rows ?? [];
+  const allRows = query.data?.rows ?? [];
+  const rows = showInactive ? allRows : allRows.filter((r) => r.is_active);
   const total = query.data?.total ?? 0;
 
   return (
@@ -127,6 +129,16 @@ export function MaintenancePartsCatalog() {
           {CATEGORIES.map((c) => <option key={c} value={c}>{c ? properEnumOrFilterLabel(c) : "All categories"}</option>)}
         </SelectCombobox>
       </div>
+
+      <label className="flex items-center gap-1 text-xs text-gray-600">
+        <input
+          type="checkbox"
+          checked={showInactive}
+          onChange={(e) => setShowInactive(e.target.checked)}
+          className="h-3.5 w-3.5 rounded-sm border-gray-300"
+        />
+        Show inactive
+      </label>
 
       {query.isError ? (
         <ListErrorState

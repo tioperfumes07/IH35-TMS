@@ -79,6 +79,7 @@ export function TerminationReasonsListPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [activeRow, setActiveRow] = useState<DriverTerminationReason | null>(null);
   const [conflictError, setConflictError] = useState<string | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
 
   // LST-F5214 — Lists hub ?create=1 must open create modal (org-wide catalog; no opco gate).
   useCreateQueryParam({
@@ -139,10 +140,11 @@ export function TerminationReasonsListPage() {
     return allRows.filter((row) => {
       if (status === "active" && !row.is_active) return false;
       if (status === "inactive" && row.is_active) return false;
+      if (!showInactive && !row.is_active) return false;
       if (!term) return true;
       return row.code.toLowerCase().includes(term) || row.label.toLowerCase().includes(term);
     });
-  }, [allRows, search, status]);
+  }, [allRows, search, status, showInactive]);
 
   const isSaving = createMutation.isPending || updateMutation.isPending || deactivateMutation.isPending;
 
@@ -187,6 +189,16 @@ export function TerminationReasonsListPage() {
           <option value="all">All</option>
         </SelectCombobox>
       </div>
+
+      <label className="flex items-center gap-1 text-xs text-gray-600">
+        <input
+          type="checkbox"
+          checked={showInactive}
+          onChange={(e) => setShowInactive(e.target.checked)}
+          className="h-3.5 w-3.5 rounded-sm border-gray-300"
+        />
+        Show inactive
+      </label>
 
       {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above
           feed `rows`; row-click → edit modal preserved exactly. */}

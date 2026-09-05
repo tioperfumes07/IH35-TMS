@@ -190,6 +190,7 @@ export function MaintenanceServicesCatalog() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditForm | null>(null);
   const [editError, setEditError] = useState("");
+  const [showInactive, setShowInactive] = useState(false);
 
   const query = useMaintenanceServicesCatalog(companyId, {
     search: search || undefined,
@@ -199,7 +200,8 @@ export function MaintenanceServicesCatalog() {
   const createMutation = useCreateMaintenanceService(companyId);
   const updateMutation = useUpdateMaintenanceService(companyId);
 
-  const rows = query.data?.rows ?? [];
+  const allRows = query.data?.rows ?? [];
+  const rows = showInactive ? allRows : allRows.filter((s) => s.is_active);
   const total = query.data?.total ?? 0;
 
   const openEdit = (svc: MaintenanceService) => {
@@ -226,6 +228,16 @@ export function MaintenanceServicesCatalog() {
           {APPLIES_TO.map((t) => <option key={t} value={t}>{t || "All vehicle types"}</option>)}
         </SelectCombobox>
       </div>
+
+      <label className="flex items-center gap-1 text-xs text-gray-600">
+        <input
+          type="checkbox"
+          checked={showInactive}
+          onChange={(e) => setShowInactive(e.target.checked)}
+          className="h-3.5 w-3.5 rounded-sm border-gray-300"
+        />
+        Show inactive
+      </label>
 
       {query.isError ? (
         <ListErrorState

@@ -34,6 +34,7 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
   const [search, setSearch] = useState("");
   const [archiveFilter, setArchiveFilter] = useState<ArchiveFilter>("active");
   const [modalOpen, setModalOpen] = useState(false);
+  const [showVoided, setShowVoided] = useState(false);
 
   // LST-F5215 — Lists hub ?create=1 must open reference create modal (org-wide catalog).
   useCreateQueryParam({
@@ -56,10 +57,12 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
 
   const rows = useMemo(() => {
     const all = query.data?.rows ?? [];
-    if (archiveFilter === "archived") return all.filter((row) => row.archived_at);
-    if (archiveFilter === "active") return all.filter((row) => !row.archived_at);
-    return all;
-  }, [archiveFilter, query.data?.rows]);
+    let filtered = all;
+    if (archiveFilter === "archived") filtered = filtered.filter((row) => row.archived_at);
+    if (archiveFilter === "active") filtered = filtered.filter((row) => !row.archived_at);
+    if (!showVoided) filtered = filtered.filter((row) => !row.archived_at);
+    return filtered;
+  }, [archiveFilter, showVoided, query.data?.rows]);
 
   const total = query.data?.total_count ?? 0;
 
@@ -139,6 +142,16 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
           <option value="all">All</option>
         </SelectCombobox>
       </div>
+
+      <label className="flex items-center gap-1 text-xs text-gray-600">
+        <input
+          type="checkbox"
+          checked={showVoided}
+          onChange={(e) => setShowVoided(e.target.checked)}
+          className="h-3.5 w-3.5 rounded-sm border-gray-300"
+        />
+        Show voided
+      </label>
 
       {query.isError ? (
         <ListErrorState

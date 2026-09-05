@@ -46,6 +46,7 @@ export function CatalogTable({
 }: Props) {
   // Free-text search: ParityTable toolbar owns it (LST-F3480) — no page-local filterBar search.
   const [statusFilter, setStatusFilter] = useState<"true" | "false" | "all">("true");
+  const [showInactive, setShowInactive] = useState(false);
   const [sortKey, setSortKey] = useState(defaultSort.column);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">(defaultSort.dir);
   const [bulkApplying, setBulkApplying] = useState(false);
@@ -56,9 +57,10 @@ export function CatalogTable({
     return rows.filter((row) => {
       if (statusFilter === "true" && row.is_active === false) return false;
       if (statusFilter === "false" && row.is_active !== false) return false;
+      if (!showInactive && row.is_active === false) return false;
       return true;
     });
-  }, [rows, statusFilter]);
+  }, [rows, statusFilter, showInactive]);
 
   const parityColumns = useMemo((): Array<ParityColumn<CatalogRow>> => {
     return columns.map((column) => ({
@@ -129,6 +131,15 @@ export function CatalogTable({
               <option value="false">Inactive</option>
               <option value="all">All</option>
             </SelectCombobox>
+            <label className="flex items-center gap-1 text-xs text-gray-600 md:col-span-1">
+              <input
+                type="checkbox"
+                checked={showInactive}
+                onChange={(e) => setShowInactive(e.target.checked)}
+                className="h-3.5 w-3.5 rounded-sm border-gray-300"
+              />
+              Show inactive
+            </label>
           </div>
         }
         batchActions={(selected) => (
