@@ -957,13 +957,13 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             [params.data.id, companyId]
           );
           const existingKeys = new Set(
-            existingRes.rows.map((r) => `${r.section} ${r.description} ${r.amount_cents}`)
+            existingRes.rows.map((r) => `${r.section} ${r.description} ${r.amount_cents}`)
           );
           let ord = existingRes.rows.length;
           for (const line of body.data.cost_lines) {
             const description = line.description ?? "";
             const amountCents = Number(line.amount_cents ?? 0);
-            const key = `${line.section} ${description} ${amountCents}`;
+            const key = `${line.section} ${description} ${amountCents}`;
             if (existingKeys.has(key)) continue;
             await client.query(
               `
