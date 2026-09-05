@@ -491,3 +491,15 @@ ACC-01..20 comprehensively re-verified (ACC-08 filed, ACC-15 fixed, ACC-17 parti
 frontend build-outage diagnosed (fixed independently by another seat moments before my own fix
 would have shipped -- discarded the duplicate). 13 PRs merged this session total. | NEXT=awaiting
 next assignment (ACC-17 full consumer audit, ACC-20 code-path check, or new INBOX top) | GO
+
+CC-2 | ACK SEQUENCE | STEP 1 of 8 DONE | 8e543d4bac | live sha UNVERIFIED (no fresh deploy check
+yet this sequence) | sticky-left-4 (ASSIGNMENT: Unit/Trailer/Load#/Driver) added to ParityTable
+(stickyLeftCount prop, shared/opt-in) + wired both DispatchBoard mounts; groups/rename/drag/resize
+already held from L.4a. verify-dispatch-board-preview-contract selftest+normal PASS, verify-additive-only
+PASS, verify-seat-surface-ownership OK (SURFACE-BREACH-AUTHORIZED: Cursor cited per new sequence's
+MODULE OWNERSHIP table). 11 pre-existing/unrelated verify-static gated fails confirmed reproducing
+identically on a clean origin/main worktree (zero of this diff), --no-verify used per FAST-MERGE-4MIN-LAW.
+| NEXT 2 of 8 — L.4a-fix (truncation min-width, gear/column-chooser, driver initials, driver-status
+codes, Live loc 180px, GPS un-glued, 1px frame). NOT starting the "OWNER-REMOVE Commodity/Linehaul/
+Pre-settlement/Status from defaults" sub-item in that step without a literal OWNER-REMOVE quote --
+flagged, awaiting lead confirmation. | GO
