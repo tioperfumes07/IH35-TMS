@@ -11,6 +11,7 @@ export function CurrencyCodesListPage() {
         {
           key: "iso_numeric",
           label: "ISO numeric (optional)",
+          sortable: true,
           type: "text",
           required: false,
         },

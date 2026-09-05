@@ -13,12 +13,12 @@ import { DriverCatalogModal, type DriverCatalogClient } from "./DriverCatalogMod
 import { SelectCombobox } from "../../../components/Combobox";
 
 /** Catalog policy flags the owner may edit from Lists (driver_deduction_types). */
-type OptionalBooleanField = { key: "may_draw_escrow" | "survives_separation"; label: string };
+type OptionalBooleanField = { key: "may_draw_escrow" | "survives_separation"; label: string; sortable?: boolean };
 /**
  * A constrained-choice policy column. `options` is passed in from the ONE place that owns the
  * vocabulary — never re-typed per page — so the picker cannot drift from the database CHECK.
  */
-type OptionalEnumField = { key: "default_recovery_rail"; label: string; options: readonly string[] };
+type OptionalEnumField = { key: "default_recovery_rail"; label: string; options: readonly string[]; sortable?: boolean };
 
 type Props = {
   client: DriverCatalogClient & {

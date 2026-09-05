@@ -12,6 +12,7 @@ export function ChartOfAccountsSeedsListPage() {
         {
           key: "account_type",
           label: "Account Type",
+          sortable: true,
           type: "select",
           required: true,
           options: [
@@ -22,10 +23,11 @@ export function ChartOfAccountsSeedsListPage() {
             { value: "Expense", label: "Expense" },
           ],
         },
-        { key: "detail_type", label: "Detail Type", type: "text" },
+        { key: "detail_type", label: "Detail Type", sortable: true, type: "text" },
         {
           key: "normal_balance",
           label: "Normal Balance",
+          sortable: true,
           type: "select",
           options: [
             { value: "debit", label: "Debit" },

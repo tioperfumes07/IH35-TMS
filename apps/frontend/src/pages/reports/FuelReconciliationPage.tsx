@@ -182,6 +182,7 @@ export function FuelReconciliationPage() {
       {
         key: "flags",
         label: "Flags",
+        sortable: true,
         render: (r) => (
           <div className="flex flex-wrap gap-1">
             {(r.flags ?? []).map((f) => (
@@ -203,6 +204,7 @@ export function FuelReconciliationPage() {
       {
         key: "merchant_name",
         label: "Merchant",
+        sortable: true,
         render: (row) => (
           <div>
             <div>{row.merchant_name ?? row.description ?? "—"}</div>

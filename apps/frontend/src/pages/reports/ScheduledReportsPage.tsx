@@ -154,15 +154,17 @@ export function ScheduledReportsPage() {
         render: (r) => <span className="font-medium">{scheduledReportLabel(r)}</span>,
       },
       { key: "cadence_label", label: "Frequency", sortable: true },
-      { key: "recipients", label: "Recipients" },
+      { key: "recipients", label: "Recipients", sortable: true },
       {
         key: "last_run_at",
         label: "Last run",
+        sortable: true,
         render: (r) => scheduledTimestampLabel(r.last_run_at),
       },
       {
         key: "next_run_at",
         label: "Next run",
+        sortable: true,
         render: (r) => scheduledTimestampLabel(r.next_run_at),
       },
       {

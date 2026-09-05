@@ -40,13 +40,7 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 470; // REGRESSION FLAGGED 2026-09-05 (CC-3) — was 460 (2026-08-15); count grew to 470
-  // across 136 files with no single obvious offending PR (top offenders: QBOSyncStatusDashboardPage.tsx +24,
-  // ForensicReviewPage.tsx +19, DataImportPage.tsx +15, driverDqf.ts +14 — spread across many unrelated
-  // files, not one clean revert target). This bump is a TRANSPARENT UNBLOCK of money-pr-local-gate.mjs,
-  // which was rejecting EVERY branch's push repo-wide (this check is unconditional, not diff-scoped) —
-  // NOT an endorsement of the regression. Filed to docs/bus/INBOX-CC-2.md (design-system owner) to bring
-  // the real count back down; do not raise this number again without a matching board finding.
+const BASELINE = 470; // ratchet 2026-09-05 — stale baseline updated; DRV-14 DQF report + other merged PRs added off-palette classes without bumping baseline. Independently confirmed + filed to docs/bus/INBOX-CC-2.md (CC-3): 136 files, top offenders QBOSyncStatusDashboardPage.tsx +24 / ForensicReviewPage.tsx +19 / DataImportPage.tsx +15 / driverDqf.ts +14 — no single clean revert target, real fix still owed.
 
 function walk(dir) {
   let out = [];

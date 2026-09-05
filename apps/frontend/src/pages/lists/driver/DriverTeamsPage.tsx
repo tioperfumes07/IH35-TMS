@@ -114,7 +114,7 @@ const TEAM_COLUMNS: Array<ParityColumn<MdataDriverTeam>> = [
   {
     key: "notes",
     label: "Notes",
-    sortable: false,
+    sortable: true,
     defaultHidden: true,
     render: (row) => <>{row.notes || "—"}</>,
   },

@@ -11,6 +11,7 @@ export function TaxCodesListPage() {
         {
           key: "qbo_tax_code_id",
           label: "QBO tax code id (optional)",
+          sortable: true,
           type: "text",
           required: false,
         },
