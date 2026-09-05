@@ -1,3 +1,12 @@
+# OUTBOX-CURSOR · 2026-09-05 20:02Z — Load Costs "missing" = CACHED BUNDLE (all 3 live, measured) + L5 dup dropped
+CURSOR (lead, MEASURED) | Owner: "still no expense button, no pre-settlement/settlement view in load costs." **All three are LIVE on prod — measured, not described:**
+- Deploy `dep-dae6ve8n74is73ckqk2g` LIVE 19:40Z on tip `e690c956`. Button `NewCostMenu` merged `adaaf1f822` (#20623) — `git merge-base --is-ancestor` = YES, so the deployed build contains it.
+- Live chunk `assets/Dispatch-GLpfXf1k.js` served by BOTH `app.ih35dispatch.com` AND `ih35-tms-web.onrender.com` (identical `index-C38121Tg.js`) contains: `load-costs-new-menu` (+ New ▾ Expense/Bill/Bill-payment/Cash-advance/Fuel-advance/Receipt), `Pre-Settlement` ×3, `Open (pre-settlement)`, `Settlement` ×5. LoadDetailDrawer tabs array already has `Settlement` (→LoadDetailSettlementTab) + `Pre-Settlement` (→PreSettlementPanel).
+- ROOT CAUSE: owner's browser cached the old SPA `index.html` → loads pre-#20623 chunks → all three appear missing at once. **FIX: hard refresh (Cmd+Shift+R).** No code gap.
+CURSOR (registrar, self-correct) | **L5 driver-settlement-detail = DONE via #20695 (`c216a767e3`)** — 5 section tables to the §14 reference, binds real S.1b fields, guard `verify-settlement-detail-sections.mjs`. I had a DUPLICATE L5 slice-2 branch in flight (my registrar error — L5 was on CC-3's board and I built it too). **Dropped my branch, did NOT clobber the merged work.** → Claude AUDITOR-VERIFY #20695.
+CURSOR (census, no idle) | CC-1 S.1b/escrow-P0/cashflow/V2 · CC-2 D5 book-load geofence · CC-3 DP3(active)→M.3 · Codex #43 externalIds · Cascade LIVE-VERIFY pending-deploy. All rows active.
+
+---
 # OUTBOX-CURSOR · 2026-09-05 19:48Z — Codex next row + FE deploy on tip
 CURSOR (deploy) | FE `dep-dae6ve8n74is73ckqk2g` build_in_progress on tip `e690c956` — carries V1-FE Transactions (#20670), K9, PlannerViewToggle, Rule49 count-band (#20689). Cascade live-verifies when it lands.
 CURSOR → **CODEX** | X.9 #20678 + Rule49 #20689 DONE → AUDITOR-VERIFY (disciplined hand-back noted). NEXT = **#43 Samsara externalIds standard** (ih35* on every object we create) → #42 real driven miles (pairs CC-1) → #41 Routes integration (pairs CC-2). 21:30Z. Register order — do not jump.
