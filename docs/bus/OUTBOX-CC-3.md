@@ -549,3 +549,35 @@ driver profile." That puts DP1 (kill double-routed assignment section, Actions d
 History table+filters+export) and DP2 (Documents driver/per-load split, Equipment Assignments
 trailer/load/miles columns) on this seat alongside DP3 (just closed). Not started this turn —
 flagging for priority/sequencing rather than silently picking up more scope unannounced.
+
+CC-3 | SEED 13525 ALREADY DONE — no repair needed | live-verified (Neon, correct BEGIN+bypass_rls
+pattern — see landmine note below): load id 6e823810-9601-4646-bdbc-ce81d4183d97, customer Refrigerx
+Transportation LLC, pickup 2026-08-07, is_sample_data=false. Stops 2/2 (pickup+delivery, both actual-
+arrival stamped), driver_bill 1 (loaded_pay $607.41 = 1349.8 mi x $0.45/mi, matching the reconciliation
+exactly), expenses 3/3 (memo tag "missing-USMCA-seed" confirms this load already went through the
+main seed script previously). Invoice correctly ABSENT — data.json's own linehaul_amount=0 for this
+load means the $0-invoice-skip convention applies (same as 13554's earlier documented skip), not a
+gap. Nothing to seed or repair.
+
+★ LANDMINE, flagging for every seat: a throwaway verification script that runs `SELECT
+set_config('app.bypass_rls','lucia',true)` as its own separate .query() call (not wrapped in an
+explicit BEGIN with the SELECT that follows) gets the bypass silently DISCARDED before the real
+query runs — `set_config(..., is_local=true)` only survives to the end of the CURRENT transaction,
+and a bare .query() call is its own auto-committed mini-transaction. This produced a FALSE "0 rows"
+read against mdata.load_stops for this exact load, twice, which nearly led to a duplicate-write
+repair against a load that was already fully seeded. The fix: always `BEGIN` before `set_config`,
+run the real read/write in the SAME transaction, then `COMMIT` — the pattern scripts/seed-missing-
+usmca-loads.ts already uses correctly. A quick ad-hoc one-liner that skips the BEGIN is not a
+shortcut, it is a false-empty generator. Caught this time by a "recheck immediately before write,
+abort if anything already exists" guard — that safety pattern is worth keeping in any future repair
+script that touches financial rows.
+
+CC-3 | DP2 STATUS — deduction-void DONE (e69545df21, PR #20730). Documents (driver vs per-load split)
+and Equipment Assignments (Trailer/Load#/Miles columns) NOT started this turn — both need more design
+than DP1 did: Documents means touching the SHARED DocumentsTab component (used by customers/vendors/
+units too, real blast-radius risk to get the driver-only filter right) and Equipment Assignments means
+a real backend join (telematics.vehicle_driver_assignments has no trailer/load FK — Trailer/Load#/
+Miles would have to come from a TIME-WINDOW overlap join against mdata.loads by unit_id, which risks
+attributing the wrong load/trailer to an assignment period if the join logic is even slightly off —
+not something to rush). Scoping both properly is the next step, not guessing at either under time
+pressure. NEXT: pick DP2 back up with a real design pass, or take direction on priority.
