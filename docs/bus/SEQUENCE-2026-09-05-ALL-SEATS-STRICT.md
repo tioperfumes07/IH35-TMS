@@ -54,9 +54,9 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | L.1d-final | table-layout auto · sticky th + Load col · rendered-page guard. Deadline 04:45Z. Surrender: CC-2 | → |
 | L.3 | TAB ROW Costs·Expenses·Bills·Fuel advances·Broker advances·Driver pay·R&M·Documents wiring existing list components (owner: "I still do not see the rest of the tabs"). MOVED AHEAD OF L.2. Deadline 06:00Z. Surrender: Cascade | next |
 | L.0 | CURSOR | gate = Render build commands (tsc -b); guard verify-gate-runs-render-build-commands.mjs — after #20486 false green failed 3 FE deploys | **06:15Z** | CC-2 06:25Z | OPEN |
-| L.4a | CURSOR | Dispatch board per owner PREVIEW PDF: ALL columns, 5 group headers (ASSIGNMENT/HOS/LOAD/TELEMETRY/STATUS), Live loc, draggable via ParityTable, guard dispatch-board-preview-contract.spec.ts | **06:30Z** | CC-2 +10m | OPEN |
+| L.4a | CC-2 (was Cursor) | ✔ PARTIAL 25ea6905 live c16dccedf2 13:12Z: 31 cols, 5 groups, Live loc, draggable 31 · FAIL overflow 30/32, min-width 0, no sticky, no gear → L.4a-fix 15:00Z | Dispatch board per owner PREVIEW PDF: ALL columns, 5 group headers (ASSIGNMENT/HOS/LOAD/TELEMETRY/STATUS), Live loc, draggable via ParityTable, guard dispatch-board-preview-contract.spec.ts | **06:30Z** | CC-2 +10m | OPEN |
 | L.4b | CURSOR | Top bar: one nav, one toolbar, segmented List/Kanban/Round Trips, + Book Load sole filled button, /dispatch → Overview | **07:15Z** | CC-2 +10m | OPEN |
-| L.4g | CURSOR | ADDITIVE-ONLY guard scripts/verify-additive-only.mjs + docs/guards/additive-baseline.json wired into pnpm gate | **07:00Z** | CC-2 +10m | OPEN (breach #18231, #20242) |
+| L.4g | CC-2 ✔ da02f0ef | ADDITIVE-ONLY guard scripts/verify-additive-only.mjs + docs/guards/additive-baseline.json wired into pnpm gate | **07:00Z** | CC-2 +10m | OPEN (breach #18231, #20242) |
 | L.4c | CURSOR | Round Trips bespoke timeline recovered from 22a266132 + 67faa3dcd (keep 82fda7c90) | **08:00Z** | CC-2 +10m | OPEN |
 | L.2 | Costs-tab register — owner records an expense on 13508. Deadline 08:00Z (after L.3) | |
 
@@ -134,6 +134,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG
+- 13:15Z (real) tick: clock correction (labels ran ahead; deadlines unchanged). CC-2 L.4a merged+live partial (31 cols/5 groups/Live loc/drag ✔; overflow 30/32, min-width 0, no sticky, no gear ✖ → L.4a-fix 15:00Z), L.4g ✔. FE live c16dccedf2 13:12Z (Cursor #20520 drawer). API still 836f4478 — deploy owed. ACKs: CC-2, CC-3.
 - 14:40Z Chrome back; live re-measured settlements/bills/invoices/banking; inventory rows 28 (list fake zeros, Loads concat) and 29 (seed invoice dates = today → CC-3 16:00Z).
 - 14:20Z OWNER: deductions by driver, escrow view missing, profile banner misplaced, '0 escrow'. Measured live: card list not grouped; no Escrow subnav; h1 at y=205 under tabs; Neon 38 escrow deductions $950/7 drivers pending, escrow_ledger 0, escrow_balances 3 incl. TEST driver Juan USMCA-Battery. CC-1 D.1–D.3. Rulings R1/R2 close the feed blocks (CC-3).
 - 13:55Z OWNER: banking not wired (355 USMCA bank txns, 0 suggestions/matches; no expense/bill matcher exists; toolbar h-7 vs h-8; type filter single-select; date range not visible) → CC-2 B.1 19:30Z, B.2 18:00Z. Owner demanded ONE inventory + ONE instruction set → docs/bus/OWNER-ISSUE-INVENTORY-2026-09-05.md (23 rows) + Downloads copy.
