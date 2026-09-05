@@ -1,53 +1,24 @@
-# NOW — OWNER DRIVING · 2026-09-04 18:55 CT
+# NOW — 2026-09-04 · OWNER MAY BE DRIVING
 
-**Jorge is driving. Do not ping him. Pull tip. ACK. Execute your ONE line.**
+**Pull tip. ACK. One job. Do not ping Jorge.**
 
-Tip: `6dd58f9916` · FAST-MERGE ON · USMCA only · Never POST Book Load as a probe.
+## Priority stack (owner 2026-09-04 evening)
 
-**Single law for settlement feed:** `docs/bus/ORDER-2026-09-04-SETTLEMENT-ENTRY-SPLIT.md`  
-**Packets:** `docs/bus/settlement-entry-2026-09-04/`
+| Priority | Seat | Job | Law |
+|---|---|---|---|
+| **P0** | **CC-3** | **Samsara geofence import** — count addresses → import ALL → project geofences | `ORDER-2026-09-04-CC-3-SAMSARA-GEOFENCE-IMPORT.md` |
+| **P0** | **CC-1** | **Three-mile / true CPM** schema+guards (wire after geofences) + continue **31 OPEN** settlement feed | `ORDER-2026-09-04-CC-1-THREE-MILE-CPM.md` + settlement split |
+| **P1** | **Cursor** | Lead · Book Load→Samsara push-back contract · control 6 · unblock ZERO if stalled | `CONTRACT-2026-09-04-BOOKLOAD-SAMSARA-PUSHBACK.md` |
+| **P1** | **CC-3 later** | Telematics 3 + DRV-03 + samsara links + accident VOID | (after import) |
+| **P2** | CC-2 / Codex / Cascade | ORDER-2026-09-04 section only | no settlement / no geo import |
 
----
+## Hard rules (unchanged)
 
-## WHO DOES WHAT (no overlap)
+- Settlement feed: **31 OPEN · 0 closed · 0 close JEs** · hands off `5766/5772/5776/5780/5783/5784`
+- Actual miles: **NULL+reason, never 0** · never derive from practical/short
+- Geofences: import junk too · never auto-merge on city name · never delete
+- USMCA · `is_sample_data=false` · real UI · FAST-MERGE ON
 
-| Seat | NOW (one job) | Forbidden |
-|---|---|---|
-| **CC-1** | 1) Fix ITEM ZERO (`CostOfGoodsSold` picker + fuel ROLE). 2) Create **31** settlements / **66** loads as **OPEN pre-settlements**. Addresses only. Stop at first refusal. | Close any pre-settlement. Touch 5766/5772/5776/5780/5783/5784. Type settlement miles. SQL/seed. |
-| **Cursor** | Lead watch. Keep control **6** for later hand entry. Unblock ITEM ZERO / ITEM ZERO-B if CC-1 blocked >15m. Deploy every 5–10 merges. | Close pre-settlements. Invent payments. Ping Jorge. |
-| **CC-3** | File then fix 3 telematics defects (dup latest_position · null geocode today · T144 silent since 2025-07-09). | Settlement writes `5753`/`5760`–`5795`. |
-| **CC-2** | Continue ORDER-2026-09-04 design/tokens section. | Settlement feed. |
-| **Codex** | Continue ORDER fleet section. | Settlement feed. |
-| **Cascade** | Continue ORDER planners section. | Settlement feed. |
+## Dependency
 
----
-
-## CC-1 CREATE LIST (31)
-
-`5753, 5760, 5761, 5762, 5763, 5764, 5765, 5767, 5768, 5769, 5770, 5771, 5773, 5774, 5775, 5777, 5778, 5779, 5781, 5782, 5785, 5786, 5787, 5788, 5789, 5790, 5791, 5792, 5793, 5794, 5795`
-
-## OWNER CONTROL (6) — nobody else touches
-
-`5766, 5772, 5776, 5780, 5783, 5784`
-
----
-
-## HARD RULES (already ruled — do not re-ask)
-
-1. **31 OPEN pre-settlements · 0 closed · 0 close JEs.** Owner closes one by one later.
-2. **All loads COMPLETE** in this set (no live mid-trip statuses).
-3. **Addresses only** — engine miles → yellow ENGINE workbook columns.
-4. **`is_sample_data = false` · USMCA.**
-5. **Escrow $25 / load** (not $250 / settlement).
-6. **5789 / 13557 / LOVES 99462408 $840:** printed `2026-09-29` → load **`2026-08-29`** + memo.
-7. **ITEM ZERO-B** (tour-close = Laredo delivery OR yard) before owner starts closing — preserve type-A paid deadhead / type-B none.
-8. Stop at first UI refusal — that refusal is the finding.
-
----
-
-## DONE BAR (while Jorge is out)
-
-- CC-1 OUTBOX: ACK + ITEM ZERO SHA + running tally `created-open / refused` (one line each).
-- Cursor OUTBOX: tip SHA + open-PR census + deploy only if tip moved 5–10 merges.
-- CC-3 OUTBOX: three defects filed with IDs.
-- Nobody waits on Jorge.
+**True driven miles / detention / POD / invoice conversion need geofences.** CC-3 import is the prerequisite. CC-1 says so — does not invent brackets.

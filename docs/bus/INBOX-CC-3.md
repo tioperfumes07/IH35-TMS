@@ -1,3 +1,25 @@
+# ★★ NOW · CC-3 TOP ITEM — SAMSARA GEOFENCE IMPORT
+`git pull --ff-only origin main`
+
+**Law:** `docs/bus/ORDER-2026-09-04-CC-3-SAMSARA-GEOFENCE-IMPORT.md`  
+**Push-back contract (with Cursor):** `docs/bus/CONTRACT-2026-09-04-BOOKLOAD-SAMSARA-PUSHBACK.md`
+
+**Owner:** "Samsara has 100s of previous geofence." Live: `geo.geofences` = **2 rows total**. Collector never requested `addresses`. API healthy.
+
+**NOW (in order):**
+1. Add `addresses` to remote-count collector → **one-line count** for both live entities
+2. `integrations.samsara_addresses` + project ALL into `mdata.locations` + `geo.geofences` (circles→polygons, keep radius; source+samsara id forever)
+3. Match by proximity AND name — **never auto-merge on name guess**; file collisions
+4. Import junk too — deactivate later on evidence, never delete
+5. ACK Book Load→Samsara push-back contract (Cursor waits)
+
+**Guards:** verify-samsara-address-sync-idempotent · verify-geofence-carries-samsara-source-id · verify-no-geofence-around-unresolved-point
+
+Still yours after: DRV-03 DQF · driver_samsara_links · accident-liabilities VOID · telematics 3 (dup latest_position · null geocode · T144 silent).
+
+ACK `CC-3 | ACK | SAMSARA-GEOFENCE-IMPORT TOP · COUNT THEN IMPORT ALL | GO`
+
+---
 # ★ NOW · OWNER DRIVING · TELEMATICS 3 ONLY
 `git pull --ff-only origin main`
 Board: `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md`

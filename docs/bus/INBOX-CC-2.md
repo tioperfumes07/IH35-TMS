@@ -1,3 +1,9 @@
+# ★ NOTICE — NEW ORDERS ON BUS (NOT YOURS)
+`git pull --ff-only origin main`
+CC-3 = Samsara geofence import (TOP). CC-1 = three-mile/CPM + settlement feed. Do not touch settlements 5753/5760–5795 or geo import. Continue your ORDER section.
+ACK `SEAT | ACK | GEOFENCE+CPM NOT MINE · CONTINUE ORDER | GO`
+
+---
 # ★ NOW · OWNER DRIVING · YOUR ORDER SECTION ONLY
 `git pull --ff-only origin main`
 Board: `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md`
