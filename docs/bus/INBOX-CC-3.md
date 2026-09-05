@@ -1,3 +1,8 @@
+# ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
+**DP1 ACCEPTED (7038277fc4, guard PASS). NEW ACTIVE: DP2 — Driver Profile Documents + Equipment Assignments.** De-duplicate/wire both sections; humanize any machine strings (reuse DP3 humanizer). GUARD `verify-driver-profile-dp2.mjs` (+selftest) in CI. DONE-BAR: FE reads scoped rows (paste driver_id count vs global), both-way linkage, guard green in CI, merged sha; Claude re-measures before ✔. DEADLINE 23:15Z · SURRENDER Cursor.
+**THEN (next, measured on Neon):** DRIVERS-ARE-VENDORS backfill — 16 active drivers have NO `mdata.vendors` row; 97 driver-vendors mis-typed `vendor_type='Other'` not `'Driver'`. Through the service layer (`is_sample_data=false`, never insert a driver as Active): backfill a `'Driver'` vendor for every settlement-active/Rule-49-active driver, re-type the 97, link driver settlement bills/expenses to the driver-vendor. GUARD `verify-driver-vendor-linkage.mjs`. THEN deduction-void (debt-preserving) → seed loads incl 13525 (owner unblocked it).
+DONE LINE: `CC-3 | DP2 DONE | <sha> | <live sha> | rows=<n> | NEXT drivers-are-vendors`
+
 # ▶▶ FULL STANDING QUEUE (owner 19:30Z, do NOT wait per-item): `docs/bus/STANDING-DIRECTIVES-2026-09-05.md` §CC-3 — DP3 → M.3 company-settlements → deduction-void (pending+partial-remainder, ruled) → seed (13525 blocked on owner) → D.1–D.4 → L.6. Finish one, FAST-MERGE, start the next same turn.
 
 # ▶ YOUR ONE ACTIVE ITEM (register 18:35Z) — `docs/bus/REGISTER-MODULE-DOD-2026-09-05.md`

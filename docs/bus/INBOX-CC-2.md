@@ -1,3 +1,7 @@
+# ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
+**ACTIVE: D5 — Book Load geocode fallback (today 0/114 stop coords).** Ruling on your flag: do NOT wait on Codex #41 (nothing posted). One author per file — the uncommitted GATE-ROT-07 WIP in `BookLoadModalV4.tsx` is the blocker: if it's yours and complete, commit+merge it as its own atomic PR FIRST (by 22:45Z), then build D5 on the clean file; if it's another seat's, build the stop-coordinate geocode fallback as a separate service/util + wire the trigger in your OWN `git worktree` off origin/main, stage only files you author (never `git add -A`), leave `BookLoadModalV4.tsx` untouched. GUARD `verify-booking-stop-geocode.mjs` (+selftest) in CI. DONE-BAR: util/endpoint returns real lat/lng for a seeded stop (paste count), FE trigger wired, guard green in CI, merged sha; Claude re-measures before ✔. DEADLINE 23:30Z · SURRENDER Codex.
+DONE LINE: `CC-2 | D5 DONE | <sha> | <live sha> | stop coords <n>/114 geocoded | NEXT Driver Instruction Sheet`
+
 # ▶▶ FULL STANDING QUEUE (owner 19:30Z, do NOT wait per-item): `docs/bus/STANDING-DIRECTIVES-2026-09-05.md` §CC-2 — D5 auto-geofence (↔ Codex X.9) → Driver Instruction Sheet → Draft-Loads dead-end → Dispatch cleanliness list → Tour-Close. Finish one, FAST-MERGE, start the next same turn.
 
 # ▶ YOUR ONE ACTIVE ITEM (register 18:35Z) — `docs/bus/REGISTER-MODULE-DOD-2026-09-05.md`

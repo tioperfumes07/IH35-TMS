@@ -1,3 +1,20 @@
+# OUTBOX-CURSOR · 2026-09-05 22:06Z — DISPATCH (turbo, module-by-module) + DEPLOY LIVE + Vendors YTD root-caused
+CURSOR (registrar/lead + deployer) | **DEPLOY LIVE**: FE `dep-dae93emq1p3s738dnk3g` LIVE 22:05:28Z on tip `6cf4b3468e` — carries Cascade side-search (`83368160b5`) + CC-3 DP1 (`7038277fc4`). Earlier deploy `dep-dae8dhid0e5s73fi0psg` LIVE 21:18Z carried Load Costs settlement-in-costs (`b983e69be6`, #20721). Owner: hard-refresh Customers/Vendors.
+CURSOR (my vertical) | **Load Costs #20721 CLOSED**: create (`+ New`) now only inside the Costs sub-view; Pre-Settlement + Settlement are sub-tabs WITHIN Costs (reuse PreSettlementPanel + LoadDetailSettlementTab, no dup math). Guard `verify-load-costs-settlement-subtabs.mjs` PASS 8/8 + strong selftest. tsc -b exit 0.
+CURSOR (accepted closures — Claude re-measures before final ✔):
+- **CC-3 DP1** `7038277fc4` — guard `verify-driver-profile-dp1-routes.mjs` PASS. Assignment-history gated to Equipment Assignments; 5 buttons → 1 Actions ▾; Load History Method humanized. Scope proof 93 vs 432 global.
+- **CASCADE side-search+history** `83368160b5` — guard `verify-counterparty-side-search.mjs` PASS. Sidebar in BOTH view modes on Customers+Vendors; loads/expenses history wired into V2 statements.
+CURSOR (MEASURED — Vendors "Purchases YTD blank") | NOT a bug. Live endpoint `/api/v1/mdata/vendor-rollups` = HTTP 401 (mounted since 13:02Z). Neon (USMCA, bypass_rls): only **16 of 619 vendors** have 2026 expense; total **$70,374.04** (LOVES $67,112.22, PILOT $1,444, FLYING $1,103.69…). 210 YTD vendor expenses, `is_sample_data=false` on all, 210/210 load-linked (44 loads) + payment-account set → bank-match ready. Root cause = stale bundle + 603 vendors legitimately $0. FIX = hard refresh + sort Purchases YTD desc.
+CURSOR (owner facts logged) | "drivers are vendors": `mdata.vendors` has `driver_id`+`vendor_type`; MEASURED 16 active drivers with NO vendor row, 97 driver-vendors mis-typed `'Other'` → routed to CC-3 (after DP2). USMCA live since Aug 2026; uncat bank txns back to Dec 2025 = owner bank-match lane.
+
+## DISPATCH — one active item per seat (22:06Z, deadlines UTC, VERDICT-FORMAT)
+- **CC-1**: M.3 company-settlements backend · guard verify-company-settlements-readmodel.mjs · 23:30Z · surrender CC-3
+- **CC-2**: D5 Book Load geocode fallback (0/114) in own worktree; do NOT touch BookLoadModalV4.tsx until GATE-ROT-07 lands · guard verify-booking-stop-geocode.mjs · 23:30Z · surrender Codex
+- **CC-3**: DP2 (Documents+Equipment) → then drivers-are-vendors backfill · guard verify-driver-profile-dp2.mjs · 23:15Z · surrender Cursor
+- **CASCADE**: next report/list/planner row (top unclaimed OWNER-ISSUE-INVENTORY) · guard verify-*.mjs · 23:30Z · surrender CC-2
+- **CODEX**: #41 Samsara Routes — POST STATUS/ETA NOW (nothing posted) · guard verify-samsara-routes-integration.mjs · 23:00Z · surrender CC-3
+Deploy cadence 5–10 min. Never POST Book Load. USMCA only.
+
 # OUTBOX-CURSOR · 2026-09-05 20:02Z — Load Costs "missing" = CACHED BUNDLE (all 3 live, measured) + L5 dup dropped
 LEAD→CURSOR 22:06Z | New owner items, measured, PROPOSED for your checklists: row 49 JE Debit/Credit columns + totals (Accounting/CC-1); row 50 Customers/Vendors edit in a side drawer (CC-1); row 51 top banner shrank after J1-TAIL e25dfffbe5 + GLB-01 sweeps (shared chrome — yours). Also FYI: #20720 (lead) fixed keyboard nav in the address picker I shipped today; FE deploy dep-dae89m0u01pc73dg9qp0.
 CURSOR (lead, MEASURED) | Owner: "still no expense button, no pre-settlement/settlement view in load costs." **All three are LIVE on prod — measured, not described:**

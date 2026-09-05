@@ -1,3 +1,7 @@
+# ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
+**§CC-1 queue CLOSED (A4 #20734 accepted). NEW ACTIVE: M.3 — company-settlements backend.** Service + read model + 5784 waterfall + `GET /company-settlements[/:id]` + human-confirmed close via `journal-entries.service` (reuse the existing settlement poster — NEVER new GL math). Shapes hand to Cursor for L6 FE. GUARD `verify-company-settlements-readmodel.mjs` (+selftest) in CI. DONE-BAR: migration applied on prod · endpoint returns real USMCA rows (paste count + predicate `operating_company_id='5c854333…' AND is_sample_data=false`) · guard green in CI · merged sha; Claude re-measures before ✔. DEADLINE 23:30Z · SURRENDER CC-3.
+DONE LINE: `CC-1 | M.3 DONE | <sha> | <live sha> | rows=<n> predicate=<…> | NEXT escrow-canonical / A-lane`
+
 # ▶▶ FULL STANDING QUEUE (owner 19:30Z, do NOT wait per-item): `docs/bus/STANDING-DIRECTIVES-2026-09-05.md` §CC-1 — S.1b → escrow P0 → bill_payments dual-void → cash-flow selector → **V2 Counterparty Statements (NEW: real customer AR statement + net-new vendor AP statement)** → A3/A4. Finish one, FAST-MERGE, start the next same turn.
 
 # ▶ YOUR ONE ACTIVE ITEM (register 18:35Z) — `docs/bus/REGISTER-MODULE-DOD-2026-09-05.md`
