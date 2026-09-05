@@ -19,10 +19,6 @@ import { Link } from "react-router-dom";
 export type EntityKind =
   | "load"
   | "bill"
-  // driver_bill is an accounting.bills row (a 1099 driver bill), same table + same real detail
-  // route as "bill" -- not a separate entity/route, just a caller-side label for where the id
-  // came from (driver settlement lines). See resolveEntityRoute below.
-  | "driver_bill"
   | "invoice"
   | "settlement"
   | "journal_entry"
@@ -312,7 +308,6 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "load":
       return `/dispatch/loads/${id}`;
     case "bill":
-    case "driver_bill":
       return `/accounting/bills/${id}`;
     case "invoice":
       return `/accounting/invoices/${id}`;
