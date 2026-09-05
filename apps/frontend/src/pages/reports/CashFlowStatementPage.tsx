@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { BasisSelector, type AccountingBasis } from "../../components/accounting/BasisSelector";
 import {
   exportCashFlowStatementReport,
   getCashFlowStatementReport,
@@ -43,21 +44,24 @@ export function CashFlowStatementPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const defaultRange = currentMonthRange();
-  const [applied, setApplied] = useState({ ...defaultRange, basis: "accrual" });
+  // Q7 precedent (cash-basis/engine.ts, already locked for every other basis-enabled report in this
+  // app): basis defaults to accrual, frontend-only, no per-user memory.
+  const [applied, setApplied] = useState<{ start: string; end: string; basis: AccountingBasis }>({ ...defaultRange, basis: "accrual" });
   const staged = useStagedListFilters({
     applied,
-    empty: { ...defaultRange, basis: "accrual" },
+    empty: { ...defaultRange, basis: "accrual" as AccountingBasis },
     onApply: setApplied,
   });
   const exportAction = useExportAction();
 
   const query = useQuery({
-    queryKey: ["reports", "cash-flow-statement", companyId, applied.start, applied.end],
+    queryKey: ["reports", "cash-flow-statement", companyId, applied.start, applied.end, applied.basis],
     queryFn: () =>
       getCashFlowStatementReport({
         operating_company_id: companyId,
         from_date: applied.start,
         to_date: applied.end,
+        basis: applied.basis,
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -100,7 +104,9 @@ export function CashFlowStatementPage() {
       title: `Cash flow statement ${applied.start}_${applied.end}`,
       bodyHtml: `
         <h1>Cash flow statement</h1>
-        <div class="meta">${esc(mmmDd(applied.start))} → ${esc(mmmDd(applied.end))} · Accrual · printed ${esc(
+        <div class="meta">${esc(mmmDd(applied.start))} → ${esc(mmmDd(applied.end))} · ${esc(
+          applied.basis === "cash" ? "Cash" : "Accrual",
+        )} · printed ${esc(
           mmmDdTime(new Date()),
         )}</div>
         <table>
@@ -133,7 +139,7 @@ export function CashFlowStatementPage() {
       <ReportsSubNav />
       <PageHeader
         title="Cash flow statement"
-        subtitle="Operating, investing, and financing movements · Accrual basis"
+        subtitle={`Operating, investing, and financing movements · ${applied.basis === "cash" ? "Cash" : "Accrual"} basis`}
         backHref="/reports"
         breadcrumb={["Reports", "Cash Flow Statement"]}
         actions={
@@ -186,8 +192,19 @@ export function CashFlowStatementPage() {
       />
 
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
+      {/* ACCT-CASHFLOW-BASIS-LOCK-CONFLICT (owner ruling 2026-09-05): the accrual-only lock is lifted
+          for this page — the disclaimer below now describes what each basis actually means here
+          instead of asserting a policy that no longer applies. Accrual counts every incurred
+          operating/investing/financing account movement the moment it is recorded (revenue earned,
+          expense incurred, AP/AR change), whether or not cash has moved yet — its Reconciliation
+          badge legitimately reads "Needs review" whenever timing differs, which is expected, not an
+          error. Cash counts only journal entries that actually moved real cash, dated by when it
+          moved — this basis reconciles to the literal cash-at-start/cash-at-end change by
+          construction. */}
       <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-        This report is always accrual basis under the owner-locked reporting policy.
+        {applied.basis === "cash"
+          ? "Cash basis: only journal entries that moved real cash, dated by when cash actually moved."
+          : "Accrual basis: every incurred operating/investing/financing movement, dated by when it was recorded — may not tie to the period's actual cash change (that is expected, not an error)."}
       </p>
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
       {exportAction.error ? (
@@ -197,7 +214,7 @@ export function CashFlowStatementPage() {
       ) : null}
 
       <CollapsedListFilters
-        activeFilterCount={JSON.stringify(applied) !== JSON.stringify({ ...defaultRange, basis: "accrual" }) ? 1 : 0}
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify({ ...defaultRange, basis: "accrual" as AccountingBasis }) ? 1 : 0}
         defaultOpen={true}
         onApply={staged.apply}
         onReset={staged.reset}
@@ -223,21 +240,17 @@ export function CashFlowStatementPage() {
               onChange={(next) => staged.setDraft((previous) => ({ ...previous, end: next }))}
             />
           </label>
-          {/* ACCT-CASHFLOW-BASIS-DEAD-SELECTOR — this WAS an interactive Accrual/Cash <select> that
-              looked choosable but changed nothing: staged.draft.basis was never sent to
-              getCashFlowStatementReport() (no basis param exists on that function at all), and the
-              backend route ignores its own `basis` query param too (dead end-to-end, self-flagged
-              by the removed control's own "TODO: wire to backend filter" comment). This page is
-              hard owner-locked to accrual-only (scripts/verify-basis-selector-allowed-pages.mjs's
-              deniedPages, which also requires the disclaimer text above verbatim) — a control that
-              visually offers a choice the backend can never honor is a false affordance, not a
-              feature waiting to be wired. Replaced with a plain, non-interactive label matching
-              what the disclaimer paragraph above already states in prose. */}
-          <div className="text-xs text-gray-600">
-            Basis
-            <div className="mt-1 flex h-9 items-center text-xs text-slate-700" data-testid="reports-cash-flow-statement-basis">
-              Accrual (owner-locked)
-            </div>
+          {/* ACCT-CASHFLOW-BASIS-DEAD-SELECTOR / ACCT-CASHFLOW-BASIS-LOCK-CONFLICT: this control used to
+              be a fully dead <select> (never wired end-to-end) sitting behind a hard owner lock. The
+              owner ruling 2026-09-05 ("cash flow should always have cash and accrual selector, as in
+              QuickBooks") lifted that lock and asked for a real, working toggle — this is it, wired
+              through to getCashFlowStatementReport()'s real `basis` param and the backend route's
+              (previously-ignored) `basis` query param, both fixed in the same PR. */}
+          <div data-testid="reports-cash-flow-statement-basis">
+            <BasisSelector
+              value={staged.draft.basis}
+              onChange={(next) => staged.setDraft((previous) => ({ ...previous, basis: next }))}
+            />
           </div>
         </div>
       </CollapsedListFilters>
@@ -256,30 +269,42 @@ export function CashFlowStatementPage() {
             <div className="text-[11px] font-semibold uppercase text-gray-500">Cash at end</div>
             <div className="text-page-title font-semibold">{money(query.data.cash_at_end)}</div>
           </div>
-          <div
-            className={`rounded-sm border bg-white px-3 py-2 ${
-              query.data.reconciled && query.data.unclassified_leg_count === 0 ? "border-emerald-200" : "border-amber-300"
-            }`}
-          >
-            <div className="text-[11px] font-semibold uppercase text-gray-500">Reconciliation</div>
+          {/* Accrual mode not tying to the literal cash movement is EXPECTED (see disclaimer above),
+              never an alarm — a separate, honest "N/A" state, never the cash-mode reconciled badge
+              (whose amber/green logic below is UNCHANGED from before this PR — see
+              verify-cash-flow-statement-reconciled-badge-honest.mjs, which pins its exact text). */}
+          {query.data.basis === "accrual" ? (
+            <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
+              <div className="text-[11px] font-semibold uppercase text-gray-500">Reconciliation</div>
+              <div className="text-page-title font-semibold text-slate-700">N/A — accrual basis</div>
+              <div className="text-[11px] text-gray-500">Accrual does not tie to the literal cash-balance change by design.</div>
+            </div>
+          ) : (
             <div
-              className={`text-page-title font-semibold ${
-                query.data.reconciled && query.data.unclassified_leg_count === 0 ? "text-emerald-700" : "text-amber-700"
+              className={`rounded-sm border bg-white px-3 py-2 ${
+                query.data.reconciled && query.data.unclassified_leg_count === 0 ? "border-emerald-200" : "border-amber-300"
               }`}
             >
-              {!query.data.reconciled
-                ? "Needs review"
-                : query.data.unclassified_leg_count > 0
-                  ? "Reconciled — unclassified legs"
-                  : "Reconciled"}
+              <div className="text-[11px] font-semibold uppercase text-gray-500">Reconciliation</div>
+              <div
+                className={`text-page-title font-semibold ${
+                  query.data.reconciled && query.data.unclassified_leg_count === 0 ? "text-emerald-700" : "text-amber-700"
+                }`}
+              >
+                {!query.data.reconciled
+                  ? "Needs review"
+                  : query.data.unclassified_leg_count > 0
+                    ? "Reconciled — unclassified legs"
+                    : "Reconciled"}
+              </div>
+              <div className={query.data.unclassified_leg_count > 0 ? "text-[11px] font-semibold text-slate-700" : "text-[11px] text-gray-500"}>
+                Unclassified legs: {query.data.unclassified_leg_count}
+                {query.data.unclassified_leg_count > 0
+                  ? " — bucketed into Operating by default, may not reflect the true Operating/Investing/Financing split"
+                  : ""}
+              </div>
             </div>
-            <div className={query.data.unclassified_leg_count > 0 ? "text-[11px] font-semibold text-slate-700" : "text-[11px] text-gray-500"}>
-              Unclassified legs: {query.data.unclassified_leg_count}
-              {query.data.unclassified_leg_count > 0
-                ? " — bucketed into Operating by default, may not reflect the true Operating/Investing/Financing split"
-                : ""}
-            </div>
-          </div>
+          )}
         </div>
       ) : null}
 

@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 /**
  * verify-cash-flow-statement-live — owner order item 4 ("Cash flow statement: operating/investing/
- * financing from GL, incurred vs paid dates").
+ * financing from GL, incurred vs paid dates") + the 2026-09-05 owner ruling that lifted the
+ * accrual-only lock ("cash flow should always have cash and accrual selector, as in QuickBooks").
  *
  * The operating/investing/financing derivation ALREADY EXISTS and is ALREADY LIVE
  * (apps/backend/src/accounting/cash-flow.service.ts, registered at GET /api/v1/accounting/cash-flow)
- * — this guard exists to prove that with real data, not just that the SQL text looks right, and to
- * lock in that the report actually reconciles (cash_at_start + net_cash_change = cash_at_end).
+ * — this guard exists to prove that with real data, not just that the SQL text looks right.
  *
- * The "incurred vs paid dates" half is a SEPARATE, NOT-fixed item, filed as
- * ACCT-CASHFLOW-BASIS-LOCK-CONFLICT — this page is hard owner-locked to accrual-only
- * (scripts/verify-basis-selector-allowed-pages.mjs's deniedPages) and a real cash/paid-date toggle
- * would require lifting that lock, which is an owner decision this guard does not make for anyone.
- * This guard only asserts the honesty fix that IS in scope: the frontend never offers an
- * Accrual/Cash CHOICE that the backend cannot honor.
+ * STATIC HALF (updated this PR): the page used to be hard-locked to a non-interactive
+ * "Accrual (owner-locked)" label and a fixed disclaimer sentence — that lock is now LIFTED by an
+ * explicit owner ruling (scripts/verify-basis-selector-allowed-pages.mjs's allowedImportPages, same
+ * PR). This guard now asserts the OPPOSITE regression: the page must actually render a real
+ * <BasisSelector> wired to a `basis` field sent through getCashFlowStatementReport(), and must never
+ * fall back to the old dead, non-interactive locked label.
  *
  * DEGRADE-SAFE — matches verify-gl-posting-coverage.mjs's established pattern: no reachable
  * database is a SKIP + exit 0, never a FAIL.
@@ -29,57 +29,70 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-cash-flow-statement-live";
 const PAGE = path.join(ROOT, "apps", "frontend", "src", "pages", "reports", "CashFlowStatementPage.tsx");
 
-function checkNoDeadBasisSelector() {
+function checkRealBasisSelectorWired(src) {
   const offenders = [];
-  if (!fs.existsSync(PAGE)) return [`missing: ${path.relative(ROOT, PAGE)}`];
-  const src = fs.readFileSync(PAGE, "utf8");
-  // The page must never render an interactive <select> for basis — only ever a non-interactive
-  // statement of the locked policy (matching the disclaimer paragraph it already carries).
-  if (/<select[^>]*basis/i.test(src) || /onChange[^}]*basis:\s*e\.target\.value/.test(src)) {
-    offenders.push("CashFlowStatementPage.tsx offers an interactive basis <select> — this page is owner-locked to accrual-only (verify-basis-selector-allowed-pages.mjs deniedPages); a choosable control the backend cannot honor is a false affordance");
+  if (!/<BasisSelector\b/.test(src) || !/from\s+["'][^"']*BasisSelector["']/.test(src)) {
+    offenders.push("CashFlowStatementPage.tsx does not render a real <BasisSelector> — the owner ruling 2026-09-05 lifted the accrual-only lock and asked for a real, working toggle");
   }
-  if (!/owner-locked reporting policy/i.test(src)) {
-    offenders.push("CashFlowStatementPage.tsx is missing the required owner-locked-accrual disclaimer text");
+  if (!/basis:\s*applied\.basis/.test(src)) {
+    offenders.push("CashFlowStatementPage.tsx does not send the selected basis through getCashFlowStatementReport() — a selector that does not actually change the query is the same dead affordance this guard originally caught");
+  }
+  if (/Accrual \(owner-locked\)/.test(src)) {
+    offenders.push("CashFlowStatementPage.tsx still contains the old dead, non-interactive locked label — the toggle regressed back to fake-locked");
   }
   return offenders;
 }
 
+function checkStatic() {
+  if (!fs.existsSync(PAGE)) return [`missing: ${path.relative(ROOT, PAGE)}`];
+  return checkRealBasisSelectorWired(fs.readFileSync(PAGE, "utf8"));
+}
+
 async function main() {
   if (process.argv.includes("--selftest")) {
-    const os = await import("node:os");
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "cf-basis-"));
-    const f = path.join(tmp, "CashFlowStatementPage.tsx");
     const failures = [];
 
-    fs.writeFileSync(f, 'This report is always accrual basis under the owner-locked reporting policy.\n<div data-testid="x">Accrual (owner-locked)</div>');
-    const realCheck = () => {
-      const src = fs.readFileSync(f, "utf8");
-      const offenders = [];
-      if (/<select[^>]*basis/i.test(src) || /onChange[^}]*basis:\s*e\.target\.value/.test(src)) offenders.push("select");
-      if (!/owner-locked reporting policy/i.test(src)) offenders.push("disclaimer");
-      return offenders;
-    };
-    if (realCheck().length !== 0) failures.push(`case1 FAIL — clean fixture must be GREEN, got: ${realCheck().join(",")}`);
+    const clean = `
+      import { BasisSelector } from "../../components/accounting/BasisSelector";
+      getCashFlowStatementReport({ operating_company_id: companyId, basis: applied.basis });
+      <BasisSelector value={staged.draft.basis} onChange={() => {}} />
+    `;
+    if (checkRealBasisSelectorWired(clean).length !== 0) {
+      failures.push(`case1 FAIL — clean fixture (real selector, real basis param) must be GREEN, got: ${checkRealBasisSelectorWired(clean).join(",")}`);
+    }
 
-    fs.writeFileSync(f, 'This report is always accrual basis under the owner-locked reporting policy.\n<select onChange={(e) => setDraft((p) => ({...p, basis: e.target.value}))}><option value="accrual">Accrual</option></select>');
-    if (!realCheck().includes("select")) failures.push("case2 FAIL — a live basis <select> must be caught.");
+    const regressedToDeadLabel = `
+      <div data-testid="x">Accrual (owner-locked)</div>
+      This report is always accrual basis under the owner-locked reporting policy.
+    `;
+    if (checkRealBasisSelectorWired(regressedToDeadLabel).length === 0) {
+      failures.push("case2 FAIL — reverting to the old dead locked label must be caught.");
+    }
 
-    fs.rmSync(tmp, { recursive: true, force: true });
+    const selectorPresentButNotWired = `
+      import { BasisSelector } from "../../components/accounting/BasisSelector";
+      getCashFlowStatementReport({ operating_company_id: companyId });
+      <BasisSelector value={staged.draft.basis} onChange={() => {}} />
+    `;
+    if (checkRealBasisSelectorWired(selectorPresentButNotWired).length === 0) {
+      failures.push("case3 FAIL — a <BasisSelector> rendered but never sent to the API call must be caught (the ACCT-CASHFLOW-BASIS-DEAD-SELECTOR class this guard exists for).");
+    }
+
     if (failures.length) {
       for (const x of failures) console.error(`${LABEL} ${x}`);
       process.exit(1);
     }
-    console.log(`${LABEL} --selftest PASS — clean fixture GREEN, dead-selector-reintroduced fixture RED`);
+    console.log(`${LABEL} --selftest PASS — real-selector fixture GREEN, dead-label-regression fixture RED, selector-rendered-but-unwired fixture RED`);
     process.exit(0);
   }
 
-  const staticOffenders = checkNoDeadBasisSelector();
+  const staticOffenders = checkStatic();
   if (staticOffenders.length) {
     console.error(`${LABEL} FAIL:`);
     for (const o of staticOffenders) console.error(`  - ${o}`);
     process.exit(1);
   }
-  console.log(`${LABEL} static half OK — no dead basis selector, disclaimer present`);
+  console.log(`${LABEL} static half OK — real BasisSelector wired through to getCashFlowStatementReport()`);
 
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!connectionString) {
