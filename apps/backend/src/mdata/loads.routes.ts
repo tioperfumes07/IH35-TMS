@@ -435,6 +435,20 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         } catch (err) {
           await client.query(`ROLLBACK TO SAVEPOINT create_load`).catch(() => undefined);
           if ((err as { code?: string }).code !== "23505") throw err;
+          // GAP-TRACE-NO-MISLABELED-AS-DUPLICATE-LOAD-NUMBER (found live 2026-09-05, see the
+          // matching fix in book-load.service.ts) — this INSERT also carries the
+          // loads_opco_trace_no_key unique index (operating_company_id, trace_no), populated by a
+          // BEFORE INSERT trigger this route never sets a value for. Any 23505 here used to be
+          // assumed a load_number collision; only report that when the constraint that actually
+          // fired is the load_number one, or a trace_no counter desync masquerades as a false
+          // "duplicate load number" with existing_id always null.
+          if ((err as { constraint?: string }).constraint !== "loads_operating_company_id_load_number_key") {
+            throw Object.assign(new Error("load_insert_unique_violation_non_load_number"), {
+              code: "load_insert_unique_violation_non_load_number",
+              constraint: (err as { constraint?: string }).constraint,
+              cause: err,
+            });
+          }
           const existingRow = await client.query<{ id: string }>(
             `SELECT id::text FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 LIMIT 1`,
             [b.operating_company_id, loadNumber]

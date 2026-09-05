@@ -9,9 +9,11 @@
  * <n>.json — a faithful, field-by-field JSON transcription of the signed Company_Settlement_<n>.pdf
  * + Driver_Settlement_<n>.pdf (owner's Downloads), never a computed/derived number. Every dollar
  * amount, date, and address in those JSON files is copied verbatim from the two PDFs; nothing is
- * invented. Settlement 5782's Company_Settlement PDF is genuinely MISSING from Downloads (verified
- * — files run 5760-5781, then jump to 5783) — its customer/fuel/expense side is left null and this
- * script SKIPS 5782 entirely rather than seed a load with an invented customer.
+ * invented. Settlement 5782's Company_Settlement PDF was genuinely MISSING from CC-3's own Downloads
+ * (verified — files run 5760-5781, then jump to 5783); peer session ih35-tms-cc3-69 independently
+ * verified + cross-footed 5782 against the tie-out xlsx and shared the real, non-invented figures,
+ * which are now populated in settlement-5782.json (see its own _note for the provenance chain) — it
+ * runs through this script like every other settlement in the slice, not skipped.
  *
  * NO DIRECT SQL FOR WRITES. Every write goes through the SAME service functions the API routes call:
  *   - bookLoad() (apps/backend/src/dispatch/book-load.service.ts) — creates the load + its stops +
@@ -43,15 +45,19 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { bookLoad, type BookLoadInput } from "../apps/backend/src/dispatch/book-load.service.js";
 import { withCurrentUser } from "../apps/backend/src/auth/db.js";
+import { setScopedCompanyContext } from "../apps/backend/src/_helpers/scoped-company-context.js";
 import { createSettlementDeduction } from "../apps/backend/src/driver-finance/deductions.service.js";
 import { createDriverReimbursementCore } from "../apps/backend/src/driver-finance/driver-reimbursement.service.js";
 import { searchVendorsForAutocomplete } from "../apps/backend/src/mdata/vendor-autocomplete.shared.js";
 import { createIntegrationApp } from "../apps/backend/test-helpers/http-app.js";
 import { registerLoadRoutes } from "../apps/backend/src/mdata/loads.routes.js";
 import { registerExpenseRoutes } from "../apps/backend/src/accounting/expenses.routes.js";
+import { registerVendorRoutes } from "../apps/backend/src/mdata/vendors.routes.js";
+import { registerEquipmentRoutes } from "../apps/backend/src/mdata/equipment.routes.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SLICE_DIR = path.join(ROOT, "docs/bus/settlement-entry-2026-09-04/cc-3-extracted");
@@ -190,36 +196,139 @@ async function resolveUnitId(client: pg.PoolClient, unitNumber: string): Promise
   return res.rows[0].id;
 }
 
-async function resolveOrCreateTrailerId(client: pg.PoolClient, trailerNumber: string, dryRun: boolean): Promise<string | { wouldCreate: string }> {
+// GAP-NB-ALWAYS-OPENS-NEW (found live 2026-09-05, seeding the settlement feed): bookLoad's
+// automatic presettlement link (SET-01) is correct — NB always opens a fresh pre-settlement, TR/SB
+// join the open one for a matching tour_id — but this backfill books MULTIPLE historical loads per
+// driver (often 2+ per settlement) with no real dispatch "tour" concept printed anywhere on the
+// settlement PDFs to supply. Passing trip_type: "NB" for every load (the naive choice) makes EVERY
+// load after a driver's first try to open a SECOND pre-settlement, hitting
+// uq_driver_settlements_one_open_per_driver — a real, reproducible constraint violation, not a
+// flake. Fix: before booking, check whether this driver already has an OPEN settlement; if so this
+// load is "TR" joining that tour (backfilling a real, non-null tour_id onto it first if it does not
+// have one yet — pure additive metadata, touches no money column); if not, this is the driver's
+// first load this run, so it is "NB" and gets a fresh tour_id of its own so the NEXT load for the
+// same driver can find and join it the same way.
+async function resolveTripLinkage(
+  client: pg.PoolClient,
+  pool: pg.Pool,
+  driverId: string
+): Promise<{ trip_type: "NB" | "TR"; tour_id: string }> {
+  const open = await client.query<{ id: string; tour_id: string | null }>(
+    `SELECT id::text, tour_id::text FROM driver_finance.driver_settlements
+      WHERE driver_id = $1::uuid AND trip_closed_at IS NULL AND voided_at IS NULL
+      ORDER BY created_at DESC LIMIT 1`,
+    [driverId]
+  );
+  const existing = open.rows[0];
+  if (!existing) {
+    return { trip_type: "NB", tour_id: randomUUID() };
+  }
+  if (existing.tour_id) {
+    return { trip_type: "TR", tour_id: existing.tour_id };
+  }
+  // Backfill on a SEPARATE, short-lived connection that commits immediately, never on the caller's
+  // own long-lived per-settlement `client` (BEGIN'd for the whole settlement, per the PgBouncer GUC
+  // fix above): an UPDATE on the outer connection would hold this row's lock until that settlement's
+  // final COMMIT, and bookLoad()'s OWN presettlement-link write to this SAME row (a different
+  // connection) would then block waiting on it while the outer transaction is itself blocked
+  // awaiting bookLoad() to return — a self-inflicted hang, not a real Postgres deadlock, reproduced
+  // live before this fix.
+  const tourId = randomUUID();
+  const backfillClient = await pool.connect();
+  try {
+    await backfillClient.query(`BEGIN`);
+    await backfillClient.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
+    await backfillClient.query(`UPDATE driver_finance.driver_settlements SET tour_id = $1::uuid WHERE id = $2::uuid`, [tourId, existing.id]);
+    await backfillClient.query(`COMMIT`);
+  } catch (err) {
+    await backfillClient.query(`ROLLBACK`).catch(() => undefined);
+    throw err;
+  } finally {
+    backfillClient.release();
+  }
+  return { trip_type: "TR", tour_id: tourId };
+}
+
+async function resolveOrCreateTrailerId(
+  client: pg.PoolClient,
+  trailerNumber: string,
+  app: { inject: (opts: { method: string; url: string; headers: Record<string, string>; payload: unknown }) => Promise<{ statusCode: number; body: string }> },
+  authHeader: Record<string, string>,
+  dryRun: boolean
+): Promise<string | { wouldCreate: string }> {
   const existing = await client.query<{ id: string }>(
     `SELECT id::text FROM mdata.equipment WHERE equipment_number = $1 LIMIT 1`,
     [trailerNumber]
   );
   if (existing.rows[0]) return existing.rows[0].id;
   if (dryRun) return { wouldCreate: trailerNumber };
-  const created = await client.query<{ id: string }>(
-    `
-      INSERT INTO mdata.equipment (
-        id, equipment_number, equipment_type, status, currently_leased_to_company_id, created_by_user_id, updated_by_user_id
-      ) VALUES (gen_random_uuid(), $1, 'DryVan', 'InService', $2::uuid, $3::uuid, $3::uuid)
-      RETURNING id::text
-    `,
-    [trailerNumber, USMCA_COMPANY_ID, OWNER_USER_ID]
-  );
-  return created.rows[0].id;
+  // Real POST /api/v1/mdata/equipment route (same as the office Book Load wizard's own "+ Add new
+  // trailer" affordance used for 252111 earlier this session) — not raw SQL. USMCA owns and leases
+  // its own trailer per the printed settlement (no third-party interchange indicated).
+  const res = await app.inject({
+    method: "POST",
+    url: "/api/v1/mdata/equipment",
+    headers: authHeader,
+    payload: {
+      equipment_number: trailerNumber,
+      equipment_type: "DryVan",
+      status: "InService",
+      owner_company_id: USMCA_COMPANY_ID,
+      currently_leased_to_company_id: USMCA_COMPANY_ID,
+    },
+  });
+  if (res.statusCode >= 300) throw new Error(`trailer_create_failed: "${trailerNumber}" — ${res.statusCode} ${res.body}`);
+  const created = JSON.parse(res.body) as { id: string };
+  return created.id;
 }
 
-async function resolveVendorId(client: pg.PoolClient, vendorName: string): Promise<string> {
-  const rows = await searchVendorsForAutocomplete(client, {
+/**
+ * USMCA is a newer entity than TRANSP/TRK and carries far fewer historical vendor masters — a
+ * live-confirmed real gap, not a false miss: "PILOT" (and, per the pattern, likely other truck-
+ * stop chains too) simply has no USMCA vendor row at all (only TRANSP/TRK rows exist). This is
+ * NOT "match, never create a duplicate" territory — there is nothing to duplicate within USMCA's
+ * own scope. Created via the real POST /api/v1/mdata/vendors route (in-process inject()), same
+ * affordance the office UI's own vendor-create flow uses, `vendor_type: "Other"` matching every
+ * existing USMCA fuel-stop vendor's own convention (LOVES, FUEL AMERICA, etc. are all "Other").
+ */
+async function resolveVendorId(
+  client: pg.PoolClient,
+  vendorName: string,
+  app: { inject: (opts: { method: string; url: string; headers: Record<string, string>; payload: unknown }) => Promise<{ statusCode: number; body: string }> },
+  authHeader: Record<string, string>,
+  dryRun: boolean
+): Promise<string | { wouldCreate: string }> {
+  // Neon's pooled connection has a documented transient-empty-read flake (retried elsewhere this
+  // session too) — a genuine "LOVES doesn't exist" is rare and expensive to get wrong (it would
+  // create a real duplicate vendor master), so a single empty result is re-checked once before
+  // being trusted.
+  let rows = await searchVendorsForAutocomplete(client, {
     operating_company_id: USMCA_COMPANY_ID,
     term: vendorName,
     limit: 5,
     active_only: true,
   });
+  if (rows.length === 0) {
+    rows = await searchVendorsForAutocomplete(client, {
+      operating_company_id: USMCA_COMPANY_ID,
+      term: vendorName,
+      limit: 5,
+      active_only: true,
+    });
+  }
   const exact = rows.find((r) => r.display_name.toLowerCase() === vendorName.toLowerCase() || r.company_name?.toLowerCase() === vendorName.toLowerCase());
   const pick = exact ?? rows[0];
-  if (!pick) throw new Error(`vendor_not_found: "${vendorName}" — never creating a duplicate; verify the exact printed name`);
-  return pick.id;
+  if (pick) return pick.id;
+  if (dryRun) return { wouldCreate: vendorName };
+  const res = await app.inject({
+    method: "POST",
+    url: "/api/v1/mdata/vendors",
+    headers: authHeader,
+    payload: { operating_company_id: USMCA_COMPANY_ID, name: vendorName, vendor_type: "Other" },
+  });
+  if (res.statusCode >= 300) throw new Error(`vendor_create_failed: "${vendorName}" — ${res.statusCode} ${res.body}`);
+  const created = JSON.parse(res.body) as { id: string };
+  return created.id;
 }
 
 function accountForExpenseDescription(description: string): string {
@@ -252,6 +361,8 @@ async function main() {
   const app = await createIntegrationApp(async (a) => {
     await registerLoadRoutes(a);
     await registerExpenseRoutes(a);
+    await registerVendorRoutes(a);
+    await registerEquipmentRoutes(a);
   });
   const authHeader = {
     "x-test-auth": Buffer.from(JSON.stringify({ id: OWNER_USER_ID, role: "Owner", email: "tioperfumes07@gmail.com" }), "utf8").toString("base64url"),
@@ -269,14 +380,19 @@ async function main() {
     }
 
     const client = await pool.connect();
-    // Session-level (not SET LOCAL — this connection is exclusively this script's, held for the
-    // whole settlement, never returned to a shared pool mid-use) RLS bypass for THIS script's own
-    // master-resolution reads and trailer-creation write, matching the identity.is_lucia_bypass()
-    // OR-branch every RLS policy in this codebase carries. bookLoad()/app.inject()/
-    // createSettlementDeduction()/createDriverReimbursementCore() each open their OWN connection
-    // via withCurrentUser and set app.operating_company_id themselves — unaffected by this.
-    await client.query(`SELECT set_config('app.bypass_rls', 'lucia', false)`);
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [USMCA_COMPANY_ID]);
+    // GAP-PGBOUNCER-GUC-DROP (found live 2026-09-05, this exact run — root cause of the
+    // driver_not_found/customer_not_found/vendor-search-empty flakiness fought all session):
+    // DATABASE_URL here is Neon's "-pooler" endpoint (PgBouncer, transaction-pooling mode). A plain
+    // `set_config(..., false)` outside an explicit transaction is its OWN one-statement transaction
+    // as far as PgBouncer is concerned — it can land on one physical backend and then get silently
+    // dropped the moment PgBouncer reassigns THIS SAME client socket's next unwrapped statement to a
+    // different backend. Node's `pg.Pool` client object staying "ours" is not enough; only an
+    // EXPLICIT transaction (BEGIN...COMMIT) actually pins one physical backend under PgBouncer for
+    // its whole duration, which is why every RLS-scoped read below (mdata.vendors/drivers/customers)
+    // was intermittently phantom-empty against masters proven to exist by direct Neon queries.
+    await client.query(`BEGIN`);
+    await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [USMCA_COMPANY_ID]);
     let loadsCreated = 0;
     let stopsCreated = 0;
     let invoiceCents = 0;
@@ -296,14 +412,14 @@ async function main() {
           `SELECT id::text FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 LIMIT 1`,
           [USMCA_COMPANY_ID, load.load_number]
         );
-        if (existing.rows[0]) {
-          report.push(`CC-3 | FEED ${num} load ${load.load_number} SKIPPED | already exists (id ${existing.rows[0].id}) — never duplicating`);
-          continue;
+        const loadAlreadyExisted = Boolean(existing.rows[0]);
+        if (loadAlreadyExisted) {
+          report.push(`CC-3 | FEED ${num} load ${load.load_number} RESUME | load already exists (id ${existing.rows[0]!.id}) — never re-booking, but still completing any missing stop-evidence/expense/deduction/reimbursement rows (the expense route's own (vendor, invoice#) duplicate guard makes a re-run safe)`);
         }
 
         const customerId = load.customer_name ? await resolveCustomerId(client, load.customer_name) : null;
         const trailerNumber = load.trailer ?? settlement.trailer;
-        const trailerResolved = trailerNumber ? await resolveOrCreateTrailerId(client, trailerNumber, dryRun) : null;
+        const trailerResolved = trailerNumber ? await resolveOrCreateTrailerId(client, trailerNumber, app, authHeader, dryRun) : null;
         const trailerId = trailerResolved && typeof trailerResolved === "object" ? null : (trailerResolved as string | null);
 
         const loadedMiles = load.loaded_miles ?? 0;
@@ -315,13 +431,16 @@ async function main() {
           continue;
         }
 
+        const tripLinkage = loadAlreadyExisted ? { trip_type: "NB" as const, tour_id: randomUUID() } : await resolveTripLinkage(client, pool, driverId);
+
         const bookInput: BookLoadInput = {
           requestingUserUuid: OWNER_USER_ID,
           requestingUserRole: "Owner",
           operating_company_id: USMCA_COMPANY_ID,
           customer_id: customerId,
           status: "dispatched",
-          trip_type: "NB",
+          trip_type: tripLinkage.trip_type,
+          tour_id: tripLinkage.tour_id,
           load_number: load.load_number,
           requested_load_number: load.load_number,
           is_sample_data: false,
@@ -376,22 +495,58 @@ async function main() {
           loadsCreated += 1;
           stopsCreated += 2;
           invoiceCents += centsOf(load.linehaul_amount);
-          for (const f of load.fuel_rows) { dieselRows += 1; dieselCents += centsOf(f.actual); }
-          for (const e of load.expense_rows) { otherExpenseRows += 1; otherExpenseCents += centsOf(e.amount); }
+          const vendorNotes: string[] = [];
+          for (const f of load.fuel_rows) {
+            dieselRows += 1;
+            dieselCents += centsOf(f.actual);
+            const v = await resolveVendorId(client, f.vendor, app, authHeader, true);
+            if (typeof v === "object") vendorNotes.push(`WOULD CREATE vendor "${v.wouldCreate}"`);
+          }
+          for (const e of load.expense_rows) {
+            otherExpenseRows += 1;
+            otherExpenseCents += centsOf(e.amount);
+            if (e.vendor) {
+              const v = await resolveVendorId(client, e.vendor, app, authHeader, true);
+              if (typeof v === "object") vendorNotes.push(`WOULD CREATE vendor "${v.wouldCreate}"`);
+            }
+          }
           driverBillCents += centsOf(load.loaded_rate != null ? loadedMiles * load.loaded_rate : 0) + centsOf(load.empty_rate != null ? emptyMiles * load.empty_rate : 0);
-          report.push(`CC-3 | FEED ${num} load ${load.load_number} DRY-RUN | invoice $${(centsOf(load.linehaul_amount) / 100).toFixed(2)} · ${load.fuel_rows.length} diesel rows $${(load.fuel_rows.reduce((s, f) => s + f.actual, 0)).toFixed(2)} · ${load.expense_rows.length} other rows $${(load.expense_rows.reduce((s, e) => s + e.amount, 0)).toFixed(2)} · trailer ${trailerResolved && typeof trailerResolved === "object" ? `WOULD CREATE ${trailerResolved.wouldCreate}` : "matched"}`);
+          const trailerNote = trailerResolved && typeof trailerResolved === "object" ? `WOULD CREATE trailer ${trailerResolved.wouldCreate}` : "trailer matched";
+          const vendorNoteStr = [...new Set(vendorNotes)].join(", ");
+          report.push(`CC-3 | FEED ${num} load ${load.load_number} DRY-RUN | invoice $${(centsOf(load.linehaul_amount) / 100).toFixed(2)} · ${load.fuel_rows.length} diesel rows $${(load.fuel_rows.reduce((s, f) => s + f.actual, 0)).toFixed(2)} · ${load.expense_rows.length} other rows $${(load.expense_rows.reduce((s, e) => s + e.amount, 0)).toFixed(2)} · ${trailerNote}${vendorNoteStr ? " · " + vendorNoteStr : ""}`);
           continue;
         }
 
-        const result = await bookLoad(bookInput);
-        if (result.kind === "error") {
-          report.push(`CC-3 | FEED ${num} load ${load.load_number} BLOCKED | bookLoad refused: ${JSON.stringify(result.payload)} | owning seat: CC-3 (this script)`);
-          continue;
+        let loadId: string;
+        let driverBillMint: unknown = "resumed-load, not re-minted";
+        if (loadAlreadyExisted) {
+          loadId = existing.rows[0]!.id;
+        } else {
+          // Neon transient-empty-read flake (documented repeatedly this session — resolveVendorId
+          // has the same retry-once guard): assertLoadNumberAvailable's own duplicate check can
+          // phantom-positive on a read that a moment later shows clean. The genuine-conflict case
+          // ALWAYS carries a real existing_id (bookLoad looks the winning row up before returning);
+          // a phantom flake carries existing_id: null because that same lookup ALSO saw nothing.
+          // Only that null-existing_id shape is safe to retry — a real duplicate must never be retried
+          // into silently overwriting/reusing someone else's load.
+          let result = await bookLoad(bookInput);
+          if (
+            result.kind === "error" &&
+            (result.payload as { error?: string; existing_id?: string | null }).error === "duplicate_load_number" &&
+            (result.payload as { existing_id?: string | null }).existing_id == null
+          ) {
+            await new Promise((r) => setTimeout(r, 1500));
+            result = await bookLoad(bookInput);
+          }
+          if (result.kind === "error") {
+            report.push(`CC-3 | FEED ${num} load ${load.load_number} BLOCKED | bookLoad refused: ${JSON.stringify(result.payload)} | owning seat: CC-3 (this script)`);
+            continue;
+          }
+          loadId = String(result.row.id);
+          driverBillMint = result.row.driver_bill_mint;
+          loadsCreated += 1;
+          stopsCreated += 2;
         }
-        const loadId = String(result.row.id);
-        loadsCreated += 1;
-        stopsCreated += 2;
-        driverBillCents += Number(result.row.rate_total_cents ?? 0) > 0 && result.row.driver_bill_mint ? 0 : 0; // placeholder; real amount re-queried below
 
         const stopsRes = await client.query<{ id: string; stop_type: string }>(
           `SELECT id::text, stop_type FROM mdata.load_stops WHERE load_id = $1::uuid ORDER BY sequence_number ASC`,
@@ -424,7 +579,8 @@ async function main() {
         }
 
         for (const f of load.fuel_rows) {
-          const vendorId = await resolveVendorId(client, f.vendor);
+          const vendorResolved = await resolveVendorId(client, f.vendor, app, authHeader, false);
+          const vendorId = vendorResolved as string;
           const res = await app.inject({
             method: "POST",
             url: "/api/v1/expenses",
@@ -436,13 +592,29 @@ async function main() {
               expense_date: f.date,
               amount_cents: centsOf(f.actual),
               vendor_uuid: vendorId,
-              memo: `Diesel — ${f.location} (settlement ${num})`,
+              // GAP-EXPENSE-MEMO-COLLISION-ON-NULL-LOCATION (found live 2026-09-05): several source
+              // PDFs leave the fuel-row location OCR'd blank for the SAME driver's two-DEF-purchase
+              // day (settlement 5782/load 13540: both rows carry location=null), making the old
+              // "Diesel — <location>" memo IDENTICAL text for two genuinely different real
+              // purchases (different invoice #, different amount, different date). POST
+              // /api/v1/expenses' own duplicate-submission guard is a MEMO-text match within a
+              // 2-minute window — it correctly fired on the identical text and silently swallowed
+              // the second purchase entirely (409, no row created for it). Invoice number + date are
+              // unique per real purchase on every settlement PDF; folding both into the memo makes
+              // two distinct purchases produce distinct text even when location is missing.
+              memo: `Diesel — ${f.location ?? "no-location-on-file"} — inv ${f.invoice ?? "no-invoice"} — ${f.date} — $${f.actual.toFixed(2)} (settlement ${num})`,
               vendor_document_number: f.invoice,
               load_id: loadId,
               unit_id: unitId,
             },
           });
-          if (res.statusCode >= 300) {
+          if (res.statusCode === 409 && res.body.includes("duplicate_vendor_document_number")) {
+            // Resuming a load whose expenses were partially seeded before an earlier run stopped
+            // at a refusal — the route's own (vendor, invoice#) dedupe guard is what makes a
+            // re-run safe; this is success, not a block.
+            dieselRows += 1;
+            dieselCents += centsOf(f.actual);
+          } else if (res.statusCode >= 300) {
             report.push(`CC-3 | FEED ${num} load ${load.load_number} diesel ${f.invoice} BLOCKED | ${res.statusCode} ${res.body}`);
           } else {
             dieselRows += 1;
@@ -455,7 +627,34 @@ async function main() {
             report.push(`CC-3 | FEED ${num} load ${load.load_number} expense ${e.invoice ?? "(no invoice #)"} "${e.description}" BLOCKED | source PDF's own Vendor column is blank for this line — never inventing a vendor`);
             continue;
           }
-          const vendorId = await resolveVendorId(client, e.vendor);
+          const vendorResolvedE = await resolveVendorId(client, e.vendor, app, authHeader, false);
+          const vendorId = vendorResolvedE as string;
+          // GAP-EXPENSE-DUPE-VENDOR-INVOICE (found live seeding the settlement feed): the expense
+          // route's duplicate guard keys on (operating_company_id, vendor_uuid,
+          // vendor_document_number) alone — no amount/description/category in the key. Every DEF/
+          // scale/etc line in these source documents is printed on the SAME invoice number as its
+          // paired diesel purchase (same fuel receipt, two line items) — so a second row for the
+          // same vendor+invoice is REJECTED as a duplicate of the first, even on a first-ever run.
+          // The vendor's real invoice number is preserved as the primary token; a short
+          // description-derived suffix is appended ONLY to keep the (vendor, invoice) pair unique
+          // per row, never to fabricate a different invoice number. Filed to GUARD-WORKORDERS as a
+          // genuine backend gap (the guard should key in a way that tolerates >1 real line item per
+          // vendor invoice) — this is a documented workaround, not a fix to that root cause.
+          // GAP-EXPENSE-DUPE-VENDOR-INVOICE, part 2 (found live 2026-09-05): a description-only
+          // suffix still collides when the SAME invoice prints TWO lines with the identical
+          // description but different real amounts — settlement 5781/load 13534's invoice 1338855
+          // prints "Scale Expense:OTR-Scale Expense" TWICE ($15.25 and $5.25, both real, both on the
+          // signed PDF). The description suffix alone made row 2 look like a duplicate of row 1 and
+          // it was silently dropped. Folding the amount into the suffix keeps genuinely-identical
+          // resubmits (same desc, same amount) resume-safe while letting two real, differently-
+          // priced lines under one invoice both land.
+          // Amount FIRST: a truncated slice must never cut off the one token that actually
+          // discriminates two same-description lines (the earlier desc-then-amount order let a long
+          // description's slice(0,30) cut the amount digits off entirely before they ever appeared).
+          const dedupeSuffix = `${centsOf(e.amount)}-${e.description}`
+            .replace(/[^a-zA-Z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "")
+            .slice(0, 30);
           const res = await app.inject({
             method: "POST",
             url: "/api/v1/expenses",
@@ -467,13 +666,21 @@ async function main() {
               expense_date: e.date,
               amount_cents: centsOf(e.amount),
               vendor_uuid: vendorId,
-              memo: `${e.description} — ${e.location ?? ""} (settlement ${num})`.trim(),
-              vendor_document_number: e.invoice,
+              // Same GAP-EXPENSE-MEMO-COLLISION-ON-NULL-LOCATION fix as the diesel memo above, PLUS
+              // the amount (settlement 5781/load 13534 prints the SAME description/location/invoice/
+              // date TWICE with two different real amounts, $15.25 and $5.25 — without the amount
+              // here the memo-based 2-minute duplicate-submission guard still treated the second,
+              // genuinely different line as a resubmit of the first and dropped it).
+              memo: `${e.description} — ${e.location ?? "no-location-on-file"} — inv ${e.invoice ?? "no-invoice"} — ${e.date ?? "no-date"} — $${e.amount.toFixed(2)} (settlement ${num})`.trim(),
+              vendor_document_number: e.invoice ? `${e.invoice}-${dedupeSuffix}` : null,
               load_id: loadId,
               unit_id: unitId,
             },
           });
-          if (res.statusCode >= 300) {
+          if (res.statusCode === 409 && res.body.includes("duplicate_vendor_document_number")) {
+            otherExpenseRows += 1;
+            otherExpenseCents += centsOf(e.amount);
+          } else if (res.statusCode >= 300) {
             report.push(`CC-3 | FEED ${num} load ${load.load_number} expense ${e.invoice} BLOCKED | ${res.statusCode} ${res.body}`);
           } else {
             otherExpenseRows += 1;
@@ -483,6 +690,13 @@ async function main() {
 
         for (const r of load.reimbursement_rows.concat(load.additional_pay_rows)) {
           await withCurrentUser(OWNER_USER_ID, async (c) => {
+            // GAP-SCRIPT-MISSING-SCOPED-COMPANY-CONTEXT (found live 2026-09-05): withCurrentUser
+            // alone only sets app.current_user_id — it never sets app.operating_company_id, which
+            // every FORCED-RLS policy on driver_finance.* also requires (bookLoad() gets this for
+            // free because it calls setScopedCompanyContext itself; this script's own direct calls
+            // to createDriverReimbursementCore/createSettlementDeduction did not, and were hitting a
+            // real RLS 42501 on insert whenever a row's own policy branch needed the GUC).
+            await setScopedCompanyContext(c, OWNER_USER_ID, USMCA_COMPANY_ID);
             const outcome = await createDriverReimbursementCore(c, OWNER_USER_ID, USMCA_COMPANY_ID, {
               driver_id: driverId,
               amount_cents: centsOf(r.amount),
@@ -497,6 +711,7 @@ async function main() {
 
         for (const d of load.deduction_rows_from_driver_settlement) {
           await withCurrentUser(OWNER_USER_ID, async (c) => {
+            await setScopedCompanyContext(c, OWNER_USER_ID, USMCA_COMPANY_ID);
             await createSettlementDeduction(c, {
               driverId,
               operatingCompanyId: USMCA_COMPANY_ID,
@@ -510,7 +725,7 @@ async function main() {
         }
 
         report.push(
-          `CC-3 | FEED ${num} load ${load.load_number} DONE | invoice $${(invoiceCents / 100).toFixed(2)} · diesel rows ${load.fuel_rows.length} $${(load.fuel_rows.reduce((s, f) => s + f.actual, 0)).toFixed(2)} · other rows ${load.expense_rows.length} $${(load.expense_rows.reduce((s, e) => s + e.amount, 0)).toFixed(2)} · driver_bill_mint=${JSON.stringify(result.row.driver_bill_mint)}`
+          `CC-3 | FEED ${num} load ${load.load_number} DONE | invoice $${(invoiceCents / 100).toFixed(2)} · diesel rows ${load.fuel_rows.length} $${(load.fuel_rows.reduce((s, f) => s + f.actual, 0)).toFixed(2)} · other rows ${load.expense_rows.length} $${(load.expense_rows.reduce((s, e) => s + e.amount, 0)).toFixed(2)} · driver_bill_mint=${JSON.stringify(driverBillMint)}`
         );
       }
 
@@ -519,8 +734,11 @@ async function main() {
           `${dryRun ? "DRY-RUN" : "SEEDED"} totals settlement ${num}: loads ${loadsCreated} · stops ${stopsCreated} · invoice $${(invoiceCents / 100).toFixed(2)} · diesel rows ${dieselRows} $${(dieselCents / 100).toFixed(2)} · other rows ${otherExpenseRows} $${(otherExpenseCents / 100).toFixed(2)}`
         );
       }
+      await client.query(`COMMIT`);
     } catch (err) {
+      await client.query(`ROLLBACK`).catch(() => undefined);
       report.push(`CC-3 | FEED ${num} BLOCKED | ${(err as Error).message}`);
+      if (process.env.CC3_DIAG) console.error("TEMP-DIAG-CC3-STACK", (err as Error).stack);
     } finally {
       client.release();
     }

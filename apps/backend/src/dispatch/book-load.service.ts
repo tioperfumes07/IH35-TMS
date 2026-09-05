@@ -1988,6 +1988,26 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     } catch (err) {
       await client.query(`ROLLBACK TO SAVEPOINT book_load_insert`).catch(() => undefined);
       if ((err as { code?: string }).code !== "23505") throw err;
+      // GAP-TRACE-NO-MISLABELED-AS-DUPLICATE-LOAD-NUMBER (found live 2026-09-05, seeding the
+      // settlement feed): this catch used to assume ANY 23505 on this INSERT meant a load_number
+      // collision. mdata.loads carries a SECOND unique index this table's own INSERT never lists
+      // a value for — loads_opco_trace_no_key (operating_company_id, trace_no), populated by the
+      // trg_assign_trace_no BEFORE INSERT trigger. When that trigger's counter (lib.trace_counters)
+      // is out of sync with an already-claimed trace_no (verified live: a manually-created load
+      // predating the counter row held trace_no=2 while the counter had reset to 1), EVERY booking
+      // attempt hits a REAL 23505 on loads_opco_trace_no_key, and the old code mislabeled it
+      // duplicate_load_number with existing_id always null (the winner lookup only ever checks
+      // load_number) — actively hiding the real cause behind a plausible-looking wrong one. Only
+      // report duplicate_load_number when the constraint that actually fired is the load_number
+      // one; any other constraint on this INSERT is a distinct, non-load_number data integrity
+      // problem and must surface as its own error, not be laundered into this one.
+      if ((err as { constraint?: string }).constraint !== "loads_operating_company_id_load_number_key") {
+        throw Object.assign(new Error("load_insert_unique_violation_non_load_number"), {
+          code: "load_insert_unique_violation_non_load_number",
+          constraint: (err as { constraint?: string }).constraint,
+          cause: err,
+        });
+      }
       const winner = await client.query<{ id: string }>(
         `SELECT id::text FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 LIMIT 1`,
         [input.operating_company_id, loadNumber]
