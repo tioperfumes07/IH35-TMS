@@ -267,6 +267,13 @@ export type ParityTableProps<T> = {
    */
   headerBg?: string;
   headerInk?: string;
+  /**
+   * OPTIONAL per-instance header font-weight (owner ruling 2026-09-05: the Load Costs board's
+   * table headers must be REGULAR weight, not 700 — "the blue is too aggressive"). Opt-in like
+   * headerBg/headerInk so the ~130 other call sites stay at the shared 700 default; omit to keep
+   * today's weight exactly. Applies to both the group-band row and the column-header row.
+   */
+  headerWeight?: number;
 };
 
 function compareSortValues(
@@ -447,6 +454,7 @@ export function ParityTable<T>({
   columnGroups,
   headerBg,
   headerInk,
+  headerWeight,
   footer,
 }: ParityTableProps<T>) {
   const persisted = useMemo(() => loadPersisted(storageKey), [storageKey]);
@@ -1283,7 +1291,7 @@ export function ParityTable<T>({
                     className="text-center font-bold uppercase"
                     style={{
                       fontSize: 10,
-                      fontWeight: 700,
+                      fontWeight: headerWeight ?? 700,
                       letterSpacing: 0.9,
                       backgroundColor: cell.bg ?? colors.tableGroupBandBg,
                       color: colors.mutedText,
@@ -1363,7 +1371,7 @@ export function ParityTable<T>({
                     // two live instances (Dispatch 30px, Load Costs 34px) silently drifted apart.
                     height: spacing.tableHeaderHeight,
                     fontSize: typography.panelHeader ?? 11,
-                    fontWeight: 700,
+                    fontWeight: headerWeight ?? 700,
                     letterSpacing: 0.3,
                     backgroundColor: dragOverKey === key ? colors.accentTint : resolvedHeaderBg,
                     color: resolvedHeaderInk,
