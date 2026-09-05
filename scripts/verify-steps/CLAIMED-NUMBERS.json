@@ -5582,6 +5582,11 @@
     "claimed_by": "cc-2",
     "purpose": "verify-banking-suggest-matches-wired (owner order 2026-09-05, CODER-SEQUENCE-NUMBERED-2026-09-05.md CC-2 §6, B.1: 'banking matcher: suggest exact cents +-5d to expenses/bills ... suggested_* + confidence; POST /banking/transactions/suggest; Accept->match never auto-post'). Asserts the bulk suggest route reuses the existing findCandidates matcher (no duplicate matching algorithm), never posts/persists a match itself, and the frontend suggestion badge opens the existing Match drawer rather than accepting/posting directly."
   },
+  "10391": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "cc-2",
+    "purpose": "verify-render-build-parity-wired (OWNER-ISSUE-INVENTORY-2026-09-05.md #3, L.0, surrendered Cursor -> CC-2 14:00Z: 'Gate does not run the Render build command | pnpm gate != tsc -b && vite build'). Asserts both .github/workflows/ci.yml and scripts/verify-local-ci.mjs actually run the frontend `vite build` (not just `tsc -b`), matching render.yaml's real frontend buildCommand, so a Vite/Rollup-only failure cannot pass every gate and only surface as a Render build_failed alert."
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
