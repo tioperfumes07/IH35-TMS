@@ -45,6 +45,8 @@ const fmtRate = (c: string | null) => (c == null ? "" : `$${(Number(c) / 100).to
 // STEP-1.3a defect 1/6: money & mileage cells must never wrap (ParityTable's td carries
 // wrap-break-word). nowrap + tabular-nums; the column auto-fits to its widest value.
 const NUM = "text-center whitespace-nowrap [font-variant-numeric:tabular-nums]";
+// DESIGN-CONTRACT totals row bg (--grp-bg); the Gross cell uses the .tot-c shade (#EDF1F5).
+const TOTBG = "#E4EAF1";
 const CLOSED = ["cancelled", "abandoned", "closed", "paid", "driver_walkoff", "driver_no_show"];
 const MOTION = ["draft", "booked", "planned", "unassigned", "assigned", "assigned_not_dispatched", "dispatched", "at_pickup", "in_transit", "at_delivery"];
 const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced"];
@@ -63,28 +65,29 @@ const rowCosts = (r: BoardRow) => Number(r.expense_cents) + Number(r.bill_cents)
 const rowPay = (r: BoardRow) => Number(r.driver_pay_cents);
 const rowMargin = (r: BoardRow) => Number(r.revenue_cents) - rowCosts(r) - rowPay(r);
 function matches(r: BoardRow, f: FilterPill) { if (f === "in_motion") return MOTION.includes(r.status); if (f === "delivered_open") return DELIVERED.includes(r.status); if (f === "this_week") return !CLOSED.includes(r.status) && Date.parse(r.created_at) >= Date.now() - 604800000; return !CLOSED.includes(r.status); }
-function chip(style: { backgroundColor: string; color: string }) { return style; }
+function chip(style: { backgroundColor: string; color: string; borderColor?: string }) { return style; }
 // LOAD-COSTS-COMPLETE item (3) (owner order 2026-09-04), spec 09-04-2026 §2.2: Status on this board
 // is SERVICE performance (In transit / On Time / Late / Delivered — no appointment on file), computed
 // from actual delivery vs the scheduled appointment -- NOT the load's lifecycle state (that already
 // renders on every other dispatch surface). The fourth branch is mandatory: never render "On Time"
 // when there is no appointment to be on time for -- that would be a zero asserting a fact nobody
 // measured.
-function serviceStatus(r: BoardRow): { label: string; style: { backgroundColor: string; color: string } } {
+function serviceStatus(r: BoardRow): { label: string; style: { backgroundColor: string; color: string; borderColor: string } } {
   if (!r.actual_delivery_at) {
     // STEP-1.3a defect 5 (lead 2026-09-05, live-measured on 13508): a truck that has not departed
     // its pickup cannot be "In transit". Only a load whose lifecycle has actually left the shipper
     // (in_transit / at_delivery) is in transit; everything before that reads "Booked".
     const departed = r.status === "in_transit" || r.status === "at_delivery";
     return departed
-      ? { label: "In transit", style: { backgroundColor: "#F4E7C8", color: "#8A6D1D" } }
-      : { label: "Booked", style: { backgroundColor: "#EEF2F6", color: "#4B5563" } };
+      ? { label: "In transit", style: { backgroundColor: "#FEF9E7", color: "#8A6D1D", borderColor: "#F5E1A8" } }
+      : { label: "Booked", style: { backgroundColor: "#EEF2F6", color: "#4B5563", borderColor: "#C7D2DC" } };
   }
-  if (!r.scheduled_delivery_at) return { label: "Delivered — no appointment on file", style: { backgroundColor: "#F3F4F6", color: "#4B5563" } };
+  if (!r.scheduled_delivery_at) return { label: "Delivered — no appointment on file", style: { backgroundColor: "#F3F4F6", color: "#4B5563", borderColor: "#E5E7EB" } };
   const onTime = Date.parse(r.actual_delivery_at) <= Date.parse(r.scheduled_delivery_at);
+  // DESIGN-CONTRACT status pill palette: on-time posbg/pos/posbd, late negbg/neg/negbd.
   return onTime
-    ? { label: "On Time", style: { backgroundColor: "#E3ECE8", color: "#2B5F52" } }
-    : { label: "Late", style: { backgroundColor: "#F4E7E0", color: "#8A4020" } };
+    ? { label: "On Time", style: { backgroundColor: "#F0FDF4", color: "#166534", borderColor: "#86EFAC" } }
+    : { label: "Late", style: { backgroundColor: "#FEF2F2", color: "#991B1B", borderColor: "#FCA5A5" } };
 }
 
 const PAGE_LIMIT = 200;
@@ -143,7 +146,7 @@ export function LoadCostsBoardPage() {
     { key: "driver_name", label: "Driver", testId: "col-driver-name", sortable: true, className: "whitespace-nowrap", sortValue: r => r.driver_name ?? "", render: r => r.driver_name ?? "Not assigned" },
     { key: "pu_date", label: "PU Date", testId: "col-pu-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.pickup_date ?? "", render: r => r.pickup_date ? formatDateUS(r.pickup_date) : "—" },
     { key: "del_date", label: "Del Date", testId: "col-del-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.actual_delivery_at ?? "", render: r => r.actual_delivery_at ? formatDateUS(r.actual_delivery_at) : "—" },
-    { key: "status", label: "Status", testId: "col-status", sortable: true, className: "whitespace-nowrap", sortValue: r => serviceStatus(r).label, render: r => { const s = serviceStatus(r); return <span className="rounded-sm px-1.5 py-0.5 font-bold uppercase" style={chip(s.style)}>{s.label}</span>; } },
+    { key: "status", label: "Status", testId: "col-status", sortable: true, className: "whitespace-nowrap", sortValue: r => serviceStatus(r).label, render: r => { const s = serviceStatus(r); return <span className="inline-block rounded-[9px] border px-2 py-px font-bold uppercase tracking-[0.3px]" style={{ ...chip(s.style), fontSize: 10 }}>{s.label}</span>; } },
     { key: "revenue", label: "Revenue", testId: "col-revenue", sortable: true, className: NUM, sortValue: r => Number(r.revenue_cents), render: r => fmt(Number(r.revenue_cents)) },
     { key: "late_fee", label: "Late Fee", testId: "col-late-fee", sortable: true, className: NUM, sortValue: r => Number(r.late_fee_cents), render: r => fmt(Number(r.late_fee_cents)) },
     { key: "lumper", label: "Lumper", testId: "col-lumper", sortable: true, className: NUM, sortValue: r => Number(r.lumper_cents), render: r => fmt(Number(r.lumper_cents)) },
@@ -170,32 +173,36 @@ export function LoadCostsBoardPage() {
   // directly here because design/tokens.ts (CC-2's file) has not landed them yet -- do not hard-code
   // a colour that duplicates a token CC-2 already owns; these are net-NEW values with no token yet.
   // Migrate to token references the moment CC-2 ships them.
+  // DESIGN-CONTRACT-LOAD-COSTS-BOARD-2026-09-05 (owner-approved reference
+  // docs/design/reference/LOAD-COSTS-BOARD-REFERENCE-2026-09-04.html). The band ROW is one uniform
+  // --grp-bg shade (ParityTable paints it); these `bg`/`bgEven` colours tint the BODY cells only,
+  // odd/even. "The trip" columns carry NO body tint in the reference (plain zebra) -- band label only.
   const COLUMN_GROUPS = [
-    { label: "The trip", keys: ["load", "unit", "driver_name", "pu_date", "del_date", "status"], bg: "#E4EAF1" },
-    { label: "Revenue", keys: ["revenue"], bg: "#EEF4FA" },
-    { label: "Trip expense", keys: ["late_fee", "lumper", "fuel", "repairs_maintenance", "other"], bg: "#FDF6F3" },
-    { label: "Driver pay", keys: ["short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay"], bg: "#F4F1FA" },
-    { label: "", keys: ["gross"], bg: "#EDF1F5" },
-    { label: "", keys: ["margin"], bg: "#EDF1F5" },
+    { label: "The trip", keys: ["load", "unit", "driver_name", "pu_date", "del_date", "status"] },
+    { label: "Revenue", keys: ["revenue"], bg: "#EEF4FA", bgEven: "#E4EDF6" },
+    { label: "Trip expense", keys: ["late_fee", "lumper", "fuel", "repairs_maintenance", "other"], bg: "#FDF6F3", bgEven: "#F8EDE8" },
+    { label: "Driver pay", keys: ["short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay"], bg: "#F4F1FA", bgEven: "#EDE7F5" },
+    { label: "", keys: ["gross"], bg: "#EDF1F5", bgEven: "#E6EBF1" },
+    { label: "", keys: ["margin"], bg: "#EDF1F5", bgEven: "#E6EBF1" },
   ];
-  return <main className="space-y-4 bg-[#F7F8FA]" data-testid="load-costs-shell"><button type="button" data-testid="load-costs-back" className="text-xs font-semibold text-slate-700" onClick={() => navigate(-1)}>← Back</button><header data-testid="load-costs-title"><h1 className="font-semibold text-[#0F1219]" style={{ fontSize: 22 }}>Load costs</h1><p className="text-xs text-[#6B7280]">Live loads, recorded costs, and approximate margin. This board reads; it never posts.</p></header>{query.isError ? <ListErrorState title="Could not load the costs board." status={(query.error as { status?: number })?.status ?? 0} onRetry={() => void query.refetch()} /> : null}<section className="overflow-hidden rounded border border-[#E5E7EB] bg-white"><div data-testid="load-costs-topbar" className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3"><h2 className="font-semibold" style={{ fontSize: 22 }}>Costs</h2><div className="flex flex-wrap items-center gap-2"><div className="flex gap-1">{/* STEP-1.3a defect 7 (lead 2026-09-05): square 2px pills, light treatment (was rounded-full navy).
-    28px clickable box per CLICKABLE-BOX-SIZE LAW. */}
-{(["in_motion", "delivered_open", "all_open", "this_week"] as const).map(id => <button key={id} data-testid={`load-costs-pill-${id}`} type="button" onClick={() => setFilter(id)} className={`inline-flex h-7 items-center rounded-sm border px-3 text-xs capitalize ${filter === id ? "border-[#C7D2DC] bg-[#EEF2F6] font-semibold text-[#1F2937]" : "border-[#E5E7EB] text-[#6B7280] hover:bg-gray-50"}`}>{id.replaceAll("_", " ")}</button>)}</div><label className="flex items-center gap-1.5 text-xs text-[#4B5563]"><input data-testid="load-costs-show-voided" type="checkbox" checked={showVoided} onChange={e => setShowVoided(e.target.checked)} />Show voided</label></div></div><div className="grid grid-cols-2 gap-2 p-2 sm:grid-cols-3 lg:grid-cols-6" data-note="KPI-TILE-SIZE LAW 2026-09-04: gap-2 + padding replaces border-b, matching Safety's own KPI-row grid (was over the 101px ceiling with no gap)"><DrillKpiCard testId="kpi-loads-in-motion" label="Loads in motion" value={rows.filter(r => MOTION.includes(r.status)).length} hint={`${visible.length} rows`} onClick={() => setFilter("in_motion")} /><DrillKpiCard testId="kpi-revenue-booked" label="Revenue booked" value={fmt(revenue)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-costs-recorded" label="Costs recorded" value={fmt(costs)} hint={`${visible.reduce((n, r) => n + r.expense_count + r.bill_count, 0)} entries`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-driver-pay" label="Driver pay accruing" value={fmt(driver)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-approx-margin" label="Approximate margin" value={revenue ? `${(margin / revenue * 100).toFixed(1)}%` : "—"} hint={fmt(margin)} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-bank-unmatched" label="Bank items unmatched" value={query.data?.unmatched_bank_count ?? 0} hint="Open bank items" to="/banking/transactions" /></div><div><ParityTable columns={columns} rows={visible} rowKey={r => r.load_id} loading={query.isLoading} emptyText="No loads found for this company." storageKey="load-costs-board-v3" enableColumnReorder enableColumnResize renderExpanded={r => <ExpandPanel row={r} companyId={companyId} />} expandMode="single" suppressToolbarRange exportFilename="load-costs" tableTestId="accounting-load-costs-board" sortKey={sortKey} sortDirection={sortDirection} onSortChange={(key, direction) => { setSortKey(key); setSortDirection(direction); }} sortMode="external" columnGroups={COLUMN_GROUPS} headerBg="#EEF2F6" headerInk="#1F2937" headerWeight={400} footer={<>
-              <td className="px-2 py-1.5 font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} colSpan={6} data-testid="load-costs-totals-label">Totals ({visible.length} loads)</td>
-              <td className="px-2 py-1.5 text-center font-mono text-gray-900" data-testid="load-costs-totals-revenue">{fmt(totals.revenue)}</td>
-              <td className="px-2 py-1.5 text-center font-mono text-gray-900" data-testid="load-costs-totals-late-fee">{fmt(totals.late_fee)}</td>
-              <td className="px-2 py-1.5 text-center font-mono text-gray-900" data-testid="load-costs-totals-lumper">{fmt(totals.lumper)}</td>
-              <td className="px-2 py-1.5 text-center font-mono text-gray-900" data-testid="load-costs-totals-fuel">{fmt(totals.fuel)}</td>
-              <td className="px-2 py-1.5 text-center font-mono text-gray-900" data-testid="load-costs-totals-rm">{fmt(totals.rm)}</td>
+  return <main className="space-y-4 bg-[#F7F8FA]" data-testid="load-costs-shell"><button type="button" data-testid="load-costs-back" className="text-xs font-semibold text-slate-700" onClick={() => navigate(-1)}>← Back</button><header data-testid="load-costs-title"><h1 className="font-semibold text-[#0F1219]" style={{ fontSize: 22 }}>Load costs</h1><p className="text-xs text-[#6B7280]">Live loads, recorded costs, and approximate margin. This board reads; it never posts.</p></header>{query.isError ? <ListErrorState title="Could not load the costs board." status={(query.error as { status?: number })?.status ?? 0} onRetry={() => void query.refetch()} /> : null}<section className="overflow-hidden rounded border border-[#E5E7EB] bg-white"><div data-testid="load-costs-topbar" className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3"><h2 className="font-semibold" style={{ fontSize: 22 }}>Costs</h2><div className="flex flex-wrap items-center gap-2"><div className="flex gap-1">{/* DESIGN-CONTRACT chips: radius 2px, height 22px, border 1px --line2; ACTIVE = #14314F white
+    (the contract's own active-chip value -- distinct from the header row, which stays light ink). */}
+{(["in_motion", "delivered_open", "all_open", "this_week"] as const).map(id => <button key={id} data-testid={`load-costs-pill-${id}`} type="button" onClick={() => setFilter(id)} className={`inline-flex h-[22px] items-center rounded-sm border px-2 text-xs capitalize ${filter === id ? "border-[#14314F] bg-[#14314F] font-semibold text-white" : "border-[#C7D2DC] bg-white text-[#6B7280] hover:bg-gray-50"}`}>{id.replaceAll("_", " ")}</button>)}</div><label className="flex items-center gap-1.5 text-xs text-[#4B5563]"><input data-testid="load-costs-show-voided" type="checkbox" checked={showVoided} onChange={e => setShowVoided(e.target.checked)} />Show voided</label></div></div><div className="grid grid-cols-2 gap-2 p-2 sm:grid-cols-3 lg:grid-cols-6" data-note="KPI-TILE-SIZE LAW 2026-09-04: gap-2 + padding replaces border-b, matching Safety's own KPI-row grid (was over the 101px ceiling with no gap)"><DrillKpiCard testId="kpi-loads-in-motion" label="Loads in motion" value={rows.filter(r => MOTION.includes(r.status)).length} hint={`${visible.length} rows`} onClick={() => setFilter("in_motion")} /><DrillKpiCard testId="kpi-revenue-booked" label="Revenue booked" value={fmt(revenue)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-costs-recorded" label="Costs recorded" value={fmt(costs)} hint={`${visible.reduce((n, r) => n + r.expense_count + r.bill_count, 0)} entries`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-driver-pay" label="Driver pay accruing" value={fmt(driver)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-approx-margin" label="Approximate margin" value={revenue ? `${(margin / revenue * 100).toFixed(1)}%` : "—"} hint={fmt(margin)} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-bank-unmatched" label="Bank items unmatched" value={query.data?.unmatched_bank_count ?? 0} hint="Open bank items" to="/banking/transactions" /></div><div><ParityTable columns={columns} rows={visible} rowKey={r => r.load_id} loading={query.isLoading} emptyText="No loads found for this company." storageKey="load-costs-board-v3" enableColumnReorder enableColumnResize renderExpanded={r => <ExpandPanel row={r} companyId={companyId} />} expandMode="single" suppressToolbarRange exportFilename="load-costs" tableTestId="accounting-load-costs-board" sortKey={sortKey} sortDirection={sortDirection} onSortChange={(key, direction) => { setSortKey(key); setSortDirection(direction); }} sortMode="external" columnGroups={COLUMN_GROUPS} headerBg="#EEF2F6" headerInk="#1F2937" footer={<>
+              <td className="px-2 py-1.5 font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11, backgroundColor: TOTBG }} colSpan={6} data-testid="load-costs-totals-label">Totals ({visible.length} loads)</td>
+              <td className="px-2 py-1.5 text-center font-mono text-gray-900" style={{ backgroundColor: TOTBG }} data-testid="load-costs-totals-revenue">{fmt(totals.revenue)}</td>
+              <td className="px-2 py-1.5 text-center font-mono text-gray-900" style={{ backgroundColor: TOTBG }} data-testid="load-costs-totals-late-fee">{fmt(totals.late_fee)}</td>
+              <td className="px-2 py-1.5 text-center font-mono text-gray-900" style={{ backgroundColor: TOTBG }} data-testid="load-costs-totals-lumper">{fmt(totals.lumper)}</td>
+              <td className="px-2 py-1.5 text-center font-mono text-gray-900" style={{ backgroundColor: TOTBG }} data-testid="load-costs-totals-fuel">{fmt(totals.fuel)}</td>
+              <td className="px-2 py-1.5 text-center font-mono text-gray-900" style={{ backgroundColor: TOTBG }} data-testid="load-costs-totals-rm">{fmt(totals.rm)}</td>
               {/* Other IS the honest remainder -- foots by construction: Late Fee+Lumper+Fuel+R&M+Other
                   summed across these visible rows equals total costs summed across the same rows. */}
-              <td className="px-2 py-1.5 text-center font-mono text-gray-900" data-testid="load-costs-totals-other">{fmt(totals.other)}</td>
-              <td className="px-2 py-1.5" />
-              <td className="px-2 py-1.5" />
-              <td className="px-2 py-1.5 text-center font-mono text-gray-900" data-testid="load-costs-totals-loaded-pay">{fmt(totals.loaded_pay)}</td>
-              <td className="px-2 py-1.5" />
-              <td className="px-2 py-1.5" />
-              <td className="px-2 py-1.5 text-center font-mono text-gray-900" data-testid="load-costs-totals-deadhead-pay">{fmt(totals.deadhead_pay)}</td>
-              <td className="px-2 py-1.5 text-center font-mono text-gray-900" data-testid="load-costs-totals-gross">{fmt(totals.gross)}</td>
+              <td className="px-2 py-1.5 text-center font-mono text-gray-900" style={{ backgroundColor: TOTBG }} data-testid="load-costs-totals-other">{fmt(totals.other)}</td>
+              <td className="px-2 py-1.5" style={{ backgroundColor: TOTBG }} />
+              <td className="px-2 py-1.5" style={{ backgroundColor: TOTBG }} />
+              <td className="px-2 py-1.5 text-center font-mono text-gray-900" style={{ backgroundColor: TOTBG }} data-testid="load-costs-totals-loaded-pay">{fmt(totals.loaded_pay)}</td>
+              <td className="px-2 py-1.5" style={{ backgroundColor: TOTBG }} />
+              <td className="px-2 py-1.5" style={{ backgroundColor: TOTBG }} />
+              <td className="px-2 py-1.5 text-center font-mono text-gray-900" style={{ backgroundColor: TOTBG }} data-testid="load-costs-totals-deadhead-pay">{fmt(totals.deadhead_pay)}</td>
+              <td className="px-2 py-1.5 text-center font-mono font-bold text-gray-900" style={{ backgroundColor: "#EDF1F5" }} data-testid="load-costs-totals-gross">{fmt(totals.gross)}</td>
             </>} /></div></section></main>;
 }
