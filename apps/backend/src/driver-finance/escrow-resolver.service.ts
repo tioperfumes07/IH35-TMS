@@ -155,10 +155,27 @@ export async function resolveDriverEscrowLiabilityAccount(
 }
 
 /**
- * The driver's CURRENT escrow LIABILITY balance in cents (authoritative source): the per-driver running
- * balance in driver_finance.escrow_balances.current_balance_cents (the "running escrow balance per driver
- * across all settlements" table). Falls back to the most-recent driver_finance.escrow_ledger
- * running_balance_cents when no balances row exists yet. Returns 0 when the driver has no escrow history.
+ * The driver's CURRENT escrow LIABILITY balance in cents — authoritative source is the GL
+ * (accounting.escrow_accounts.balance_cents), NOT driver_finance.escrow_balances/escrow_ledger.
+ *
+ * ACCT-ESCROW-BALANCES-STALE-VS-GO19 (owner ruling 2026-09-05): this function used to read
+ * driver_finance.escrow_balances first (falling back to escrow_ledger) — a PARALLEL, unsynced summary
+ * table. Live-caught this session: the 2026-09-01 GO-19-02 WORM correction zeroed 3 drivers' GL balance
+ * on accounting.escrow_accounts directly (the canonical, trigger-maintained liability), but never
+ * touched driver_finance.escrow_balances, which kept reading the STALE pre-correction $250.00/$250.00/
+ * $0.01 — actively used by this function's callers (settlement-payrun-close.service.ts's escrow-cap
+ * math, settlement-engine.ts, escrow-forfeit.service.ts's over-draw guard) for real settlement-close
+ * decisions. Owner ruling: GL is canonical; driver_finance.escrow_balances/escrow_ledger are demoted to
+ * a RECONCILED PROJECTION of it (still written by settlement-payrun-close.service.ts on every real
+ * contribution, still useful for driver-facing history/timeline UI), never an independent authority for
+ * money decisions. accounting.escrow_accounts.balance_cents is kept current by the audited
+ * trg_apply_escrow_posting_delta trigger on every real accounting.escrow_postings row (the SAME
+ * driver-keyed bridge resolveDriverEscrowLiabilityAccount() above resolves for posting) — reading it
+ * here means the pay-run's cap math and the GL can never disagree again. See
+ * scripts/verify-escrow-balance-reconciles-gl.mjs for the ongoing drift guard.
+ *
+ * Returns 0 (never throws) when the driver has no bound escrow bridge yet — matches this function's
+ * original "no escrow history = 0" contract; a driver with genuinely no escrow activity is not an error.
  * Entity-scoped (caller sets app.operating_company_id). Read-only.
  */
 export async function readDriverEscrowBalanceCents(
@@ -166,29 +183,18 @@ export async function readDriverEscrowBalanceCents(
   operatingCompanyId: string,
   driverId: string
 ): Promise<number> {
-  const bal = await client.query<{ current_balance_cents: number | string | null }>(
+  const res = await client.query<{ balance_cents: number | string | null }>(
     `
-      SELECT current_balance_cents
-      FROM driver_finance.escrow_balances
-      WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid
+      SELECT ea.balance_cents
+      FROM accounting.escrow_accounts ea
+      WHERE ea.operating_company_id = $1::uuid
+        AND ea.holder_id = $2::uuid
+        AND ea.holder_type = 'driver'
       LIMIT 1
     `,
     [operatingCompanyId, driverId]
   );
-  if (bal.rows[0] != null) return Math.max(0, Math.round(Number(bal.rows[0].current_balance_cents ?? 0)));
-
-  // No summary row yet — derive from the latest ledger entry's running balance (the detailed history).
-  const led = await client.query<{ running_balance_cents: number | string | null }>(
-    `
-      SELECT running_balance_cents
-      FROM driver_finance.escrow_ledger
-      WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid
-      ORDER BY created_at DESC
-      LIMIT 1
-    `,
-    [operatingCompanyId, driverId]
-  );
-  return Math.max(0, Math.round(Number(led.rows[0]?.running_balance_cents ?? 0)));
+  return Math.max(0, Math.round(Number(res.rows[0]?.balance_cents ?? 0)));
 }
 
 /**

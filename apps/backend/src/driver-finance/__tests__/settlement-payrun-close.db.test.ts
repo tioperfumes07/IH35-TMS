@@ -180,7 +180,16 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     );
     await mkAcct(s.escrowSub, `${s.displayId} — Driver Escrow`, "Liability", escrowParent, escrowQbo(s.displayId));
     await upsertDriverEscrowAccountLink(db, { operatingCompanyId: companyId, driverId: s.driverId, coaAccountId: s.escrowSub });
-    // running escrow balance (drives the cap check)
+    // ACCT-ESCROW-BALANCES-STALE-VS-GO19 (owner ruling 2026-09-05): readDriverEscrowBalanceCents now
+    // reads the GL (accounting.escrow_accounts.balance_cents), not driver_finance.escrow_balances --
+    // seed BOTH so the cap-check scenarios below (which assert escrow_balance_before_cents) still test
+    // the real starting balance the resolver actually reads.
+    await db.query(
+      `UPDATE accounting.escrow_accounts SET balance_cents = $3 WHERE operating_company_id = $1::uuid AND holder_id = $2::uuid AND holder_type = 'driver'`,
+      [companyId, s.driverId, escrowBalanceCents]
+    );
+    // running escrow balance (driver-facing projection; kept in sync by the real close path, no longer
+    // the resolver's read source)
     await db.query(
       `INSERT INTO driver_finance.escrow_balances (operating_company_id, driver_id, total_held_cents, current_balance_cents)
        VALUES ($1::uuid,$2::uuid,$3,$3)
