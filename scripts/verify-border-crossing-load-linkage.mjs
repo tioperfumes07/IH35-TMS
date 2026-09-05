@@ -30,6 +30,10 @@ function audit(s) {
   if (!/disabled=\{brokersQuery\.isError\}/.test(s.customs)) failures.push("customs broker picker must fail closed when its catalog fails");
   if (!/kind=["']border_crossing["']/.test(s.customs) || !/row\.id === deepLinkCrossingId/.test(s.history)) failures.push("reverse drill must select canonical history row");
   if (!/<CustomsTab loadId=\{load\.id\} operatingCompanyId=\{load\.operating_company_id\}/.test(s.drawer)) failures.push("load drawer customs mount missing");
+  if (!/\/api\/v1\/border-crossing\/loads\/:id\/driver-instructions/.test(s.historyRoute)) failures.push("driver instruction sheet load contract route missing");
+  if (!/l\.operating_company_id = \$2::uuid[\s\S]{0,120}l\.soft_deleted_at IS NULL/.test(s.historyRoute)) failures.push("driver instruction sheet load contract must be entity-scoped and active");
+  if (!/LEFT JOIN LATERAL[\s\S]{0,500}FROM mdata\.unit_border_crossings instruction_crossing[\s\S]{0,260}instruction_crossing\.load_id = l\.id[\s\S]{0,180}instruction_crossing\.operating_company_id = l\.operating_company_id/.test(s.historyRoute)) failures.push("driver instruction sheet must source the load-linked crossing in the same entity");
+  if (!/port_of_entry[\s\S]{0,260}cbp_port_code[\s\S]{0,360}customs_broker_name[\s\S]{0,220}customs_broker_phone[\s\S]{0,220}customs_broker_email[\s\S]{0,300}pedimento_entry_number[\s\S]{0,300}crossing_instructions/.test(s.historyRoute)) failures.push("driver instruction sheet response fields are incomplete");
   if (/drawer-customs-tab-stub|content ships in Block 8/.test(s.customs)) failures.push("customs tab must not remain a stub");
   return failures;
 }
@@ -47,6 +51,10 @@ if (process.argv.includes("--selftest")) {
     ["broker fail closed", "customs", /disabled=\{brokersQuery\.isError\}/, "disabled={false}"],
     ["drill", "customs", /kind=["']border_crossing["']/, 'kind="load"'],
     ["mount", "drawer", /<CustomsTab loadId=\{load\.id\}/, "<CustomsTab loadId={undefined}"],
+    ["instruction route", "historyRoute", /\/api\/v1\/border-crossing\/loads\/:id\/driver-instructions/, "/api/v1/border-crossing/loads/:id/missing"],
+    ["instruction scope", "historyRoute", /l\.operating_company_id = \$2::uuid/, "TRUE"],
+    ["instruction crossing link", "historyRoute", /instruction_crossing\.load_id = l\.id/, "TRUE"],
+    ["instruction payload", "historyRoute", /pedimento_entry_number/, "missing_entry_number"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };

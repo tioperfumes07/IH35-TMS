@@ -1,4 +1,7 @@
 # OUTBOX-CODEX · SEQUENCE · 2026-09-02 21:08 CT
+CODEX | STEP-X.5 CONTRACT | GET /api/v1/border-crossing/loads/:id/driver-instructions?operating_company_id=<uuid> | SHAPE=load_id · port_of_entry · cbp_port_code · customs_broker_id/name/phone/email · pedimento_entry_number · crossing_instructions | SOURCES=existing manifest/ACE/eManifest refs + crossing notes/load border_routing; no twin columns | CANONICAL-CROSS-BORDER=LoadDetailDrawer.loadHasCrossBorder only | entity-scoped · read-only | GO
+CODEX | STEP-X.4 DONE | FLT-01/02 guard selftest 21/21 + direct PASS · FLT-04 guard selftest 10/10 + direct PASS and CI-wired · FLT-10 backend shape complete and rendering handoff remains owned by Cascade | NEXT X.5 | GO
+CODEX | STEP-X.3 DONE | production-equivalent endpoint query twice: 15 rows · 0 blank unit_number; API→frontend planted guard 2/2 + direct PASS | NEXT X.4 | GO
 CODEX | STEP-X.2 WORKING | endpoint=GET /api/v1/maintenance/in-shop-units?operating_company_id=<uuid> | shape={unit_id,unit_number,work_order_id,work_order_display_id,opened_at,expected_ready_at,shop_or_vendor,status} | predicate=voided_at IS NULL AND status NOT IN ('complete','cancelled') via openWorkOrderPredicateSql | scope=WO operating_company_id + unit owner/lessee | exclusivity=units-without-load uses same predicate in NOT EXISTS | NEXT=FAST-MERGE | GO
 CODEX | STEP-X.1 DONE | 17 WOs, 0 open, 0 units held | NEXT X.2
 CODEX | ACK X.0
