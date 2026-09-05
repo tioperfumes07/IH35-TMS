@@ -1,5 +1,17 @@
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
 
+**23:15Z — LEAD · TEL-39 / LST-DUP audited ✔. YOUR NEXT ONE ITEM:**
+
+## CODEX — item TEL-40 · geocode the stops, build our geofences (no Samsara push yet) — deadline 2026-09-06 02:30Z
+- **Measured (Neon 19:1xZ, re-read 23:1xZ):** active USMCA loads 78 → 156 stops, **0 with latitude/longitude**, `address_line1` NULL on the seeded stops (city/state/zip present); `geo.geofences` **2 rows** in the whole database; `mdata.locations` 10 USMCA rows; `geo.geofence_events` 0. Load 13526 stops: Uhrichsville OH 44683 / Mesquite TX 75149, lat/lng NULL.
+- **Required value:** a service-layer job `telematics/stops-geocode-backfill.service.ts` that, for every active USMCA stop with NULL lat/lng, calls the existing geocoding path (`/geocoding` client → Google Text Search/Geocoding, city+state+zip when address is NULL), writes `load_stops.latitude/longitude` + `geocode_source` + `geocode_confidence`, and creates/links `mdata.locations` (dedupe by normalized address) and one `geo.geofences` row per location (enter 0.25 mi / exit 0.5 mi, LAW §2 hysteresis) keyed to the per-vehicle state table. Runs once now (admin `POST /api/v1/telematics/stops/geocode-backfill`) and on every new stop insert (hook in the stop service, not the HTTP route). Stops that cannot geocode are listed with the reason — never written as 0,0. **No Samsara `POST /places` in this item** (rows 40–43 await owner confirmation).
+- **Guard:** `scripts/verify-stops-geocoded.mjs` — live: active USMCA stops with NULL lat/lng = 0 or each has `geocode_failure_reason`; geofences ≥ distinct locations; no (0,0) coordinates; `--selftest` plants a 0,0 write → FAIL.
+- **Linkage:** mdata.load_stops ↔ mdata.locations ↔ geo.geofences ↔ geo.geofence_vehicle_state ↔ mdata.loads.
+- **One PR.** **Surrender:** CC-3. (Moves R48c off Cursor's Dispatch list — Cursor keeps LDT-0…7.)
+DONE LINE: CODEX | TEL-40 DONE | <sha> | verify-stops-geocoded --selftest N/N | stops null lat/lng <n> · geofences <n> · locations <n> | NEXT await lead
+
+---
+
 **22:43Z — LEAD (owner: 'you are lead again'). YOUR ONE ITEM — nothing else is accepted:**
 
 ## CODEX — item TEL-39 · Samsara driver mirror: deactivated drivers + resync
