@@ -1,0 +1,99 @@
+{
+  "settlement_number": 5795,
+  "start_date": "2026-08-29",
+  "end_date": "2026-08-31",
+  "driver_name": "LUIS ARMANDO SOSA PEREZ",
+  "unit": "T170",
+  "trailer": "10224",
+  "_note": "Source files used: the plain-named ~/Downloads/Company_Settlement_5795.pdf and ~/Downloads/Driver_Settlement_5795.pdf. The '(1)' duplicate-download copies in the same folder were NOT used. Both source PDFs print an 'Empty 2026-08-27, CONLEY, GA 30288' leg for Load 13567 — a date that precedes this settlement's own Start Date (2026-08-29); transcribed exactly as printed, not corrected.",
+  "loads": [
+    {
+      "load_number": "13561",
+      "customer_name": "Refrigerx Transportation LLC",
+      "trailer": "10224",
+      "pickup": {"location_name": "Cold Chain Solutions", "city": "Laredo", "state": "TX", "zip": "78045", "date": "2026-08-29"},
+      "delivery": {"location_name": "F and S Fresh Foods", "city": "CONLEY", "state": "GA", "zip": "30288", "date": "2026-08-31"},
+      "linehaul_miles_doc": 1137.4,
+      "linehaul_rate": 3.033,
+      "linehaul_amount": 3450.00,
+      "loaded_miles": 1111.6,
+      "loaded_rate": 0.45,
+      "loaded_amount": 500.22,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-30", "vendor": "LOVES", "location": "21548FM471SNATALIA,TX, TX", "invoice": "2886913", "gallons": 62.016, "cpg": 5.489, "receipt": 340.41, "actual": 340.41},
+        {"date": "2026-08-31", "vendor": "LOVES", "location": "612PADERSON ROAD KATY,TX, TX", "invoice": "1644390", "gallons": 119.333, "cpg": 5.549, "receipt": 662.18, "actual": 662.18}
+      ],
+      "expense_rows": [],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-09-03", "description": "Driver-Escrow For Claims - Driver-Escrow For Claims", "amount": -25.00}
+      ],
+      "_note": "No DEF/expense rows on the Company Settlement matched this load's two diesel fuel invoices (2886913, 1644390) — neither appears in the flat EXPENSES section, unlike the paired DEF lines seen elsewhere in this batch. No empty-miles leg is recorded for Load 13561 in DRIVER PAYMENT/Driver Settlement, so empty_miles=0."
+    },
+    {
+      "load_number": "13567",
+      "customer_name": "AB Global Logistics , Inc",
+      "trailer": "10224",
+      "pickup": {"location_name": "marjac poultry", "city": "GAINSVILLE", "state": "GA", "zip": "30501", "date": "2026-08-28"},
+      "delivery": {"location_name": "ESQUIVELS FORWARDING", "city": "LAREDO", "state": "TX", "zip": "78045", "date": "2026-08-31"},
+      "linehaul_miles_doc": 1257.0,
+      "linehaul_rate": 1.671,
+      "linehaul_amount": 2100.00,
+      "loaded_miles": 1164.9,
+      "loaded_rate": 0.45,
+      "loaded_amount": 524.21,
+      "empty_miles": 59.1,
+      "empty_rate": 0.45,
+      "empty_amount": 26.60,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-09-01", "vendor": "LOVES", "location": "1621BASSCROSS RD HOGANSVILLE, GA", "invoice": "99645028", "gallons": 137.143, "cpg": 5.489, "receipt": 752.78, "actual": 752.78},
+        {"date": "2026-09-02", "vendor": "LOVES", "location": "66595WADSWORTH PKWY MANDEVILLE, LA", "invoice": "99143295", "gallons": 158.828, "cpg": 5.849, "receipt": 928.98, "actual": 928.98}
+      ],
+      "expense_rows": [
+        {"date": "2026-09-01", "vendor": "LOVES", "location": "1621BASSCROSS RD HOGANSVILLE", "invoice": "99645028", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 72.03},
+        {"date": "2026-09-01", "vendor": "LOVES", "location": "1621BASSCROSS RD HOGANSVILLE", "invoice": "99645028", "description": "Fuel-Reefer Diesel", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 10.37},
+        {"date": "2026-08-31", "vendor": "LOVES", "location": "900SEAGLE ST WEIMAR,TX", "invoice": "8130337", "description": "Road Service-Truck Repair", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 617.17}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-09-03", "description": "Driver-Escrow For Claims - Driver-Escrow For Claims", "amount": -25.00},
+        {"date": "2026-09-03", "description": "Admin fee - GAS", "amount": -10.00},
+        {"date": "2026-09-03", "description": "CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER", "amount": -201.99}
+      ],
+      "_note": "Unlike the FUEL PURCHASES section, the Company Settlement's EXPENSES section for this settlement carries NO 'Load NNNNN / driver' sub-headers — all 3 expense rows are printed as one flat list. The first two rows (invoice 99645028, Fuel-DEF and Fuel-Reefer Diesel) are confidently matched to Load 13567 via the matching fuel-purchase invoice number. The third row ('Road Service-Truck Repair', invoice 8130337, $617.17, 2026-08-31, WEIMAR,TX) has NO matching invoice in either load's fuel purchases and is not referenced on the Driver Settlement (it is a non-reimbursed company expense) — its load assignment here is inferred only from truck routing/date (WEIMAR, TX sits on the return path toward Laredo, TX, matching Load 13567's 2026-08-31 delivery to Laredo) and should be confirmed with dispatch/accounting before being treated as certain."
+    }
+  ],
+  "company_settlement_totals": {
+    "invoiced": 5550.00,
+    "quick_pay_pct": 1.5,
+    "quick_pay_amount": -83.25,
+    "driver_salary": -1051.03,
+    "fuel": -2684.35,
+    "company_expenses": -699.57,
+    "net_revenue": 1031.80,
+    "total_miles": 2394.4,
+    "mpg": 5.016
+  },
+  "driver_settlement_totals": {
+    "total_loaded_miles": 2276.5,
+    "total_empty_miles": 59.1,
+    "total_miles": 2335.6,
+    "salary": 1051.03,
+    "deductions_total": -261.99,
+    "total_due": 789.04,
+    "mpg": 5.016
+  }
+}

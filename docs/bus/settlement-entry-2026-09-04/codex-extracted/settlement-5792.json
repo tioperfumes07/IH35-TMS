@@ -1,0 +1,266 @@
+{
+  "settlement_number": 5792,
+  "start_date": "2026-08-26",
+  "end_date": "2026-09-02",
+  "driver_name": "Genaro Guerrero Chavez",
+  "unit": "T152",
+  "trailer": null,
+  "loads": [
+    {
+      "load_number": "13547",
+      "customer_name": "John J. Jerue Truck Broker, Inc",
+      "pickup": {
+        "location_name": "Librado Pina Inc",
+        "city": "Laredo",
+        "state": "TX",
+        "zip": "78045",
+        "date": "2026-08-26"
+      },
+      "delivery": {
+        "location_name": "Calavo Growers Inc",
+        "city": "Swedesboro",
+        "state": "NJ",
+        "zip": "08085",
+        "date": "2026-08-29"
+      },
+      "linehaul_miles_doc": 1875.7,
+      "linehaul_rate": 2.559,
+      "linehaul_amount": 4800.0,
+      "loaded_miles": 1820.1,
+      "loaded_rate": 0.45,
+      "loaded_amount": 819.05,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": 1,
+      "picks_amount": 0.0,
+      "drops_count": 1,
+      "drops_amount": 0.0,
+      "fuel_rows": [
+        {
+          "date": "2026-08-26",
+          "vendor": "LOVES",
+          "location": "21548 FM471S, NATALIA, TX",
+          "invoice": "1848853",
+          "gallons": 105.489,
+          "cpg": 5.549,
+          "receipt": 585.36,
+          "actual": 585.36
+        },
+        {
+          "date": "2026-08-27",
+          "vendor": "LOVES",
+          "location": "182 CLAIBORNE ROAD, MS",
+          "invoice": "99493735",
+          "gallons": 181.244,
+          "cpg": 5.589,
+          "receipt": 1012.97,
+          "actual": 1012.97
+        },
+        {
+          "date": "2026-08-28",
+          "vendor": "LOVES",
+          "location": "I-81 EXIT 24, MEADOWVIEW, VA",
+          "invoice": "99440842",
+          "gallons": 109.65,
+          "cpg": 6.049,
+          "receipt": 663.27,
+          "actual": 663.27
+        }
+      ],
+      "expense_rows": [
+        {
+          "date": "2026-08-26",
+          "vendor": "LOVES",
+          "location": "21548 FM471S, NATALIA, TX",
+          "invoice": "1848853",
+          "description": "Fuel-DEF-Diesel Exhaust Fluid",
+          "reimb_flag": null,
+          "comp_exp_flag": "Y",
+          "amount": 29.43
+        },
+        {
+          "date": "2026-08-27",
+          "vendor": "LOVES",
+          "location": "182 CLAIBORNE ROAD, SANDERSVILLE",
+          "invoice": "99493735",
+          "description": "Fuel-DEF-Diesel Exhaust Fluid",
+          "reimb_flag": null,
+          "comp_exp_flag": "Y",
+          "amount": 35.94
+        },
+        {
+          "date": "2026-08-28",
+          "vendor": "LOVES",
+          "location": "I-81 EXIT 24, MEADOWVIEW, VA",
+          "invoice": "99440842",
+          "description": "Fuel-DEF-Diesel Exhaust Fluid",
+          "reimb_flag": null,
+          "comp_exp_flag": "Y",
+          "amount": 17.86
+        }
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {
+          "date": "2026-09-01",
+          "description": "Driver-Escrow For Claims",
+          "amount": -25.0
+        }
+      ],
+      "trailer": "10870"
+    },
+    {
+      "load_number": "13559",
+      "customer_name": "SFL Companies",
+      "pickup": {
+        "location_name": "Johanna Foods/Tree Top",
+        "city": "Flemington",
+        "state": "NJ",
+        "zip": "08822",
+        "date": "2026-08-29"
+      },
+      "delivery": {
+        "location_name": "WAL MART (TEXAS) - LANCASTER",
+        "city": "LANCASTER",
+        "state": "TX",
+        "zip": "75146",
+        "date": "2026-09-01"
+      },
+      "linehaul_miles_doc": 1597.4,
+      "linehaul_rate": 2.379,
+      "linehaul_amount": 3800.0,
+      "loaded_miles": 1508.1,
+      "loaded_rate": 0.45,
+      "loaded_amount": 678.65,
+      "empty_miles": 68.8,
+      "empty_rate": 0.45,
+      "empty_amount": 30.96,
+      "picks_count": 1,
+      "picks_amount": 0.0,
+      "drops_count": 1,
+      "drops_amount": 0.0,
+      "fuel_rows": [
+        {
+          "date": "2026-08-30",
+          "vendor": "LOVES",
+          "location": "2050 HWY 70E, JACKSON, TN",
+          "invoice": "99478043",
+          "gallons": 103.854,
+          "cpg": 5.689,
+          "receipt": 590.83,
+          "actual": 590.83
+        },
+        {
+          "date": "2026-09-01",
+          "vendor": "LOVES",
+          "location": "2500 S IH-45, HUTCHINS, TX",
+          "invoice": "99378673",
+          "gallons": 171.3,
+          "cpg": 5.489,
+          "receipt": 940.27,
+          "actual": 940.27
+        }
+      ],
+      "expense_rows": [
+        {
+          "date": "2026-09-01",
+          "vendor": "LOVES",
+          "location": "2500 S IH-45, HUTCHINS, TX",
+          "invoice": "99378673",
+          "description": "Fuel-DEF-Diesel Exhaust Fluid",
+          "reimb_flag": null,
+          "comp_exp_flag": "Y",
+          "amount": 55.76
+        }
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {
+          "date": "2026-09-01",
+          "description": "Driver-Escrow For Claims",
+          "amount": -25.0
+        }
+      ],
+      "_note": "Route has an intermediate empty repositioning leg not captured in pickup/delivery: Empty 2026-08-29, Swedesboro, NJ 08085 (repositioning after Load 13547's delivery, before this load's pickup). Fuel invoice 99478043 (LOVES, Jackson, TN, 2026-08-30) has no matching DEF expense row printed on the Company Settlement -- transcribed as printed, no pairing invented.",
+      "trailer": "10380"
+    },
+    {
+      "load_number": "13562",
+      "customer_name": "Premium Express",
+      "pickup": {
+        "location_name": "United States Cold Storage",
+        "city": "Forth Worth",
+        "state": "TX",
+        "zip": "76106",
+        "date": "2026-09-01"
+      },
+      "delivery": {
+        "location_name": "Longhorn Warehouse, Inc",
+        "city": "Laredo",
+        "state": "TX",
+        "zip": "78045",
+        "date": "2026-09-02"
+      },
+      "linehaul_miles_doc": 472.9,
+      "linehaul_rate": 2.115,
+      "linehaul_amount": 1000.0,
+      "loaded_miles": 420.4,
+      "loaded_rate": 0.45,
+      "loaded_amount": 189.18,
+      "empty_miles": 44.9,
+      "empty_rate": 0.45,
+      "empty_amount": 20.21,
+      "picks_count": 1,
+      "picks_amount": 0.0,
+      "drops_count": 1,
+      "drops_amount": 0.0,
+      "fuel_rows": [],
+      "expense_rows": [],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {
+          "date": "2026-09-02",
+          "description": "Driver-Escrow For Claims",
+          "amount": -25.0
+        },
+        {
+          "date": "2026-09-02",
+          "description": "Admin fee - GAS",
+          "amount": -10.0
+        },
+        {
+          "date": "2026-09-02",
+          "description": "Admin fee - VUELO",
+          "amount": -267.0
+        }
+      ],
+      "_note": "No fuel purchases or expense (DEF) rows are printed on the Company Settlement for this load -- the Fuel Purchases and Expenses tables' printed Totals fully reconcile to the rows captured under Loads 13547 and 13559 only, so this is not a missed pairing, it is genuinely absent. Route has an intermediate empty repositioning leg not captured in pickup/delivery: Empty 2026-09-01, LANCASTER, TX 75146 (repositioning after Load 13559's delivery, before this load's pickup). Pickup city is printed as 'Forth Worth' (as printed, likely a typo for 'Fort Worth') -- transcribed exactly as shown on the source document. This load also carries an unusually large 'Admin fee - VUELO' deduction of -267.00 (Spanish for 'flight'), transcribed as printed.",
+      "trailer": "10380"
+    }
+  ],
+  "company_settlement_totals": {
+    "invoiced": 9600.0,
+    "quick_pay_pct": 3.0,
+    "quick_pay_amount": -288.0,
+    "driver_salary": -1738.05,
+    "fuel": -3792.7,
+    "company_expenses": -138.99,
+    "net_revenue": 3642.26,
+    "total_miles": 3946.0,
+    "mpg": 5.876
+  },
+  "driver_settlement_totals": {
+    "total_loaded_miles": 3748.6,
+    "total_empty_miles": 113.7,
+    "total_miles": 3862.3,
+    "salary": 1738.05,
+    "deductions_total": -352.0,
+    "total_due": 1386.05,
+    "mpg": 5.876
+  },
+  "_note": "The Trailer changes mid-settlement on the Company Settlement's load-stop header lines: Trailer 10870 for Load 13547, then Trailer 10380 for Loads 13559 and 13562. The top-level 'trailer' field is recorded as null (rather than picking one) since a single value would misrepresent the source document; the load-specific trailer numbers are noted here instead."
+}

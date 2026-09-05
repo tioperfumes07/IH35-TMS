@@ -1,0 +1,102 @@
+{
+  "settlement_number": 5790,
+  "start_date": "2026-08-25",
+  "end_date": "2026-09-01",
+  "driver_name": "Leonel Antonio Morales",
+  "unit": "T175",
+  "trailer": "FB-56704",
+  "loads": [
+    {
+      "load_number": "13542",
+      "customer_name": "SIMPLE LOGISTICS SOLUTIONS",
+      "pickup": {"location_name": "APPLIED LAREDO YARD", "city": "LAREDO", "state": "TX", "zip": "78045", "date": "2026-08-25"},
+      "delivery": {"location_name": "SUPERIOR CRANE", "city": "MORRISVILLE", "state": "NC", "zip": "27560", "date": "2026-08-27"},
+      "linehaul_miles_doc": 1536.4,
+      "linehaul_rate": 2.603,
+      "linehaul_amount": 4000.00,
+      "loaded_miles": 1502.1,
+      "loaded_rate": 0.50,
+      "loaded_amount": 751.05,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-23", "vendor": "LOVES", "location": "101 PINNACLE ROAD, LAREDO, TX", "invoice": "99988777", "gallons": 100.558, "cpg": 5.749, "receipt": 578.11, "actual": 578.11},
+        {"date": "2026-08-26", "vendor": "LOVES", "location": "21548 FM471S, NATALIA, TX", "invoice": "99530096", "gallons": 184.001, "cpg": 5.549, "receipt": 1021.02, "actual": 1021.02},
+        {"date": "2026-08-26", "vendor": "LOVES", "location": "2024A WEST STREET, VINTON, LA", "invoice": "99600926", "gallons": 49.091, "cpg": 5.489, "receipt": 269.46, "actual": 269.46}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-22", "vendor": "DTOPS", "location": null, "invoice": null, "description": "PAGO DE CRUCE T174", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 20.80},
+        {"date": "2026-08-23", "vendor": "LOVES", "location": "101 PINNACLE ROAD, LAREDO, TX", "invoice": "99988783", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 44.26},
+        {"date": "2026-08-26", "vendor": "LOVES", "location": "21548 FM471S, NATALIA, TX", "invoice": "99530096", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 40.91},
+        {"date": "2026-08-26", "vendor": "LOVES", "location": "2024A WEST STREET, VINTON, LA", "invoice": "99600926", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 10.81}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-09-01", "description": "Driver-Escrow For Claims", "amount": -25.00}
+      ],
+      "_note": "Multiple discrepancies transcribed as printed, not corrected: (1) the first Expenses row is a DTOPS toll charge ('PAGO DE CRUCE T174', $20.80, dated 2026-08-22) that has no invoice number, no location, references Truck T174 (this settlement's truck is T175), and is dated BEFORE this settlement's start date (2026-08-25) -- it is not printed under any load heading in the Expenses table, so its load assignment is ambiguous; it is placed under Load 13542 (the first/earliest load) as a best-effort placement only. (2) The expense row description 'LOVES 101 PINNACLE ROAD LAREDO,TX' carries invoice 99988783 while the matching fuel row for the same date/location/vendor carries invoice 99988777 -- the invoice numbers do not match between the two documents; both are transcribed exactly as printed. The Expenses table on the Company Settlement PDF is not printed with per-load section headers (unlike the Fuel Purchases table); expense_rows were assigned to loads by matching invoice numbers (or best-effort placement, as above) to the fuel_rows load groupings."
+    },
+    {
+      "load_number": "13554",
+      "customer_name": null,
+      "pickup": {"location_name": "COMMSCOPE CATAWBA", "city": "CATTAWBA", "state": "NC", "zip": "28609", "date": "2026-08-28"},
+      "delivery": {"location_name": "QUANTA JOINT TRENCH", "city": "HOUSTON", "state": "TX", "zip": "77093", "date": "2026-08-31"},
+      "linehaul_miles_doc": null,
+      "linehaul_rate": null,
+      "linehaul_amount": null,
+      "loaded_miles": 1046.8,
+      "loaded_rate": 0.50,
+      "loaded_amount": 523.40,
+      "empty_miles": 476.6,
+      "empty_rate": 0.50,
+      "empty_amount": 238.30,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-28", "vendor": "LOVES", "location": "1217 TROLLINGWOOD HAWFIELDS RD, NC", "invoice": "2051327", "gallons": 70.071, "cpg": 5.169, "receipt": 362.20, "actual": 362.20},
+        {"date": "2026-08-29", "vendor": "LOVES", "location": "1127 TYSON ROAD, HOPE HULL, AL", "invoice": "99037285", "gallons": 118.097, "cpg": 5.769, "receipt": 681.30, "actual": 681.30},
+        {"date": "2026-08-31", "vendor": "LOVES", "location": "612 PODERSON ROAD, KATY, TX", "invoice": "99110970", "gallons": 161.216, "cpg": 5.549, "receipt": 894.59, "actual": 894.59}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-29", "vendor": "LOVES", "location": "1127 TYSON ROAD, HOPE HULL, AL", "invoice": "99037285", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 8.70},
+        {"date": "2026-08-31", "vendor": "LOVES", "location": "612 PODERSON ROAD, KATY, TX", "invoice": "99110970", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 63.94}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-09-01", "description": "Driver-Escrow For Claims", "amount": -25.00},
+        {"date": "2026-09-01", "description": "Admin fee - GAS", "amount": -10.00}
+      ],
+      "_note": "The Company Settlement's CUSTOMER CHARGES / Line Haul table has NO entry for Load 13554 (only Load 13542 appears there, and 'Total Line Haul' equals Load 13542 alone) -- customer_name and all linehaul_* fields are genuinely absent from the source document and are recorded as null rather than guessed. Driver payment (loaded/empty miles) and fuel/expense data for this load ARE present and are transcribed normally. Route also has an intermediate empty repositioning leg not captured in pickup/delivery: Empty 2026-09-01, Laredo, TX 78045 (return leg after this load's delivery). Fuel invoice 2051327 has no matching DEF expense row printed on the Company Settlement -- transcribed as printed, no pairing invented."
+    }
+  ],
+  "company_settlement_totals": {
+    "invoiced": 4000.00,
+    "quick_pay_pct": 0.0,
+    "quick_pay_amount": 0.00,
+    "driver_salary": -1512.75,
+    "fuel": -3806.68,
+    "company_expenses": -189.42,
+    "net_revenue": -1508.85,
+    "total_miles": 3098.7,
+    "mpg": 4.537,
+    "_note": "No 'Quick Pay' line is printed in this settlement's REVENUE section (unlike 5789/5791/5792); the per-load CUSTOMER CHARGES table shows Load 13542's QP column as '0.00', consistent with no quick pay being applied here -- recorded as 0.0%/$0.00 rather than null. Also: the printed total_miles (3,098.7, consistent with printed MPG 4.537 x total gallons 683.034) does not equal the sum of the driver settlement's own loaded+empty miles (1,502.1 + 1,046.8 + 476.6 = 3,025.5) -- a difference of 73.2 miles. Both figures are transcribed exactly as printed on their respective documents; the discrepancy is not resolved here."
+  },
+  "driver_settlement_totals": {
+    "total_loaded_miles": 2548.9,
+    "total_empty_miles": 476.6,
+    "total_miles": 3025.5,
+    "salary": 1512.75,
+    "deductions_total": -60.00,
+    "total_due": 1452.75,
+    "mpg": 4.537
+  }
+}

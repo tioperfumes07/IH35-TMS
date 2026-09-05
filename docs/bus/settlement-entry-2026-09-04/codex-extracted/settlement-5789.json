@@ -1,0 +1,102 @@
+{
+  "settlement_number": 5789,
+  "start_date": "2026-08-26",
+  "end_date": "2026-09-01",
+  "driver_name": "Jorge Luis Infante Corona",
+  "unit": "T177",
+  "trailer": "FB-56713",
+  "loads": [
+    {
+      "load_number": "13550",
+      "customer_name": "Semares Forwarding Services",
+      "pickup": {"location_name": "Semares", "city": "Laredo", "state": "TX", "zip": "78040", "date": "2026-08-26"},
+      "delivery": {"location_name": "Global Manufacturing, Inc", "city": "EDISON", "state": "NJ", "zip": "08817", "date": "2026-08-28"},
+      "linehaul_miles_doc": 1958.9,
+      "linehaul_rate": 2.501,
+      "linehaul_amount": 4900.00,
+      "loaded_miles": 1890.2,
+      "loaded_rate": 0.50,
+      "loaded_amount": 945.10,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-26", "vendor": "LOVES", "location": "2024A WEST STREET, VINTON, LA", "invoice": "99600966", "gallons": 41.036, "cpg": 5.489, "receipt": 225.25, "actual": 225.25},
+        {"date": "2026-08-26", "vendor": "LOVES", "location": "21548 FM471S, NATALIA, TX", "invoice": "99530124", "gallons": 157.367, "cpg": 5.549, "receipt": 873.23, "actual": 873.23},
+        {"date": "2026-08-27", "vendor": "LOVES", "location": "10465 LONESOME PINE TRAIL, M, TN", "invoice": "99460605", "gallons": 148.502, "cpg": 5.759, "receipt": 855.22, "actual": 855.22}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-26", "vendor": "LOVES", "location": "21548 FM471S, NATALIA, TX", "invoice": "99530124", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 43.43},
+        {"date": "2026-09-27", "vendor": "LOVES", "location": "10465 LONESOME PINE TRAIL M, TN", "invoice": "99460605", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 42.38}
+      ],
+      "additional_pay_rows": [
+        {"date": null, "description": "Driver Pay-Enlonada", "amount": 25.00},
+        {"date": null, "description": "Driver Pay-Desenlonada", "amount": 25.00}
+      ],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [],
+      "_note": "Fuel invoice 99600966 (LOVES, Vinton, LA, 2026-08-26) has no matching DEF expense row printed on the Company Settlement -- transcribed as printed, no pairing invented. Also: the expense row for invoice 99460605 (DEF, $42.38) is printed with date 2026-09-27, while the matching fuel row for the SAME invoice is printed with date 2026-08-27 -- this discrepancy is transcribed exactly as printed and was NOT corrected (this is NOT the authorized 99462408/2026-09-29 correction, which is scoped only to Load 13557). The Expenses table on the Company Settlement PDF is not printed with per-load section headers (unlike the Fuel Purchases table); expense_rows were assigned to loads by matching invoice numbers to the fuel_rows load groupings."
+    },
+    {
+      "load_number": "13557",
+      "customer_name": "DGL Freight Broker",
+      "pickup": {"location_name": "Elkton", "city": "ELKTON", "state": "MD", "zip": "21921", "date": "2026-08-28"},
+      "delivery": {"location_name": "IRVING", "city": "IRVING", "state": "TX", "zip": "75063", "date": "2026-08-31"},
+      "linehaul_miles_doc": 1986.5,
+      "linehaul_rate": 1.963,
+      "linehaul_amount": 3900.00,
+      "loaded_miles": 1415.9,
+      "loaded_rate": 0.50,
+      "loaded_amount": 707.95,
+      "empty_miles": 545.6,
+      "empty_rate": 0.50,
+      "empty_amount": 272.80,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-29", "vendor": "LOVES", "location": "10465 LONESOME PINE TRAIL M, TN", "invoice": "99462408", "gallons": 146.879, "cpg": 5.719, "receipt": 840.00, "actual": 840.00,
+         "_note": "Printed date 2026-09-29 corrected to 2026-08-29 per owner-authorized correction (settlement feed order 2026-09-05)."},
+        {"date": "2026-08-31", "vendor": "LOVES", "location": "1610 COTTON GIN ROAD, TROY, TX", "invoice": "99794138", "gallons": 179.923, "cpg": 5.589, "receipt": 1005.59, "actual": 1005.59}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-31", "vendor": "LOVES", "location": "1610 COTTON GIN ROAD, TROY, TX", "invoice": "99794138", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 70.61}
+      ],
+      "additional_pay_rows": [
+        {"date": null, "description": "Driver Pay-Enlonada", "amount": 25.00},
+        {"date": null, "description": "Driver Pay-Desenlonada", "amount": 25.00}
+      ],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-09-01", "description": "Admin fee - Gas", "amount": -10.00}
+      ],
+      "_note": "SPECIAL CORRECTION APPLIED: fuel invoice 99462408 was printed on the Company Settlement PDF with date 2026-09-29; per the owner-authorized correction (the only authorized correction in this feed), the date has been recorded here as 2026-08-29 (see the fuel_rows entry's own _note). Route has intermediate empty repositioning legs not captured in the pickup/delivery fields above: Empty 2026-08-28, EDISON, NJ 08817 (repositioning after Load 13550's delivery, before this load's pickup) and Empty 2026-09-01, Laredo, TX 78045 (return leg after this load's delivery). Pickup/delivery above reflect this load's actual first pickup (Elkton, MD) and last delivery (Irving, TX) only. Fuel invoice 99462408 has no matching DEF expense row printed on the Company Settlement -- transcribed as printed, no pairing invented."
+    }
+  ],
+  "company_settlement_totals": {
+    "invoiced": 8800.00,
+    "quick_pay_pct": 2.16,
+    "quick_pay_amount": -190.50,
+    "driver_salary": -1925.85,
+    "fuel": -3799.29,
+    "company_expenses": -156.42,
+    "net_revenue": 2627.94,
+    "total_miles": 3945.4,
+    "mpg": 5.856,
+    "_note": "Company Settlement also prints an 'Additional Driver Pay' line (1.14%, 0.025 p/m, -100.00) which has no dedicated field in this schema; it is fully accounted for by the four additional_pay_rows (Driver Pay-Enlonada/Desenlonada, $25.00 each = $100.00) captured under loads 13550 and 13557."
+  },
+  "driver_settlement_totals": {
+    "total_loaded_miles": 3306.1,
+    "total_empty_miles": 545.6,
+    "total_miles": 3851.7,
+    "salary": 1925.85,
+    "deductions_total": -10.00,
+    "total_due": 2015.85,
+    "mpg": 5.856
+  }
+}

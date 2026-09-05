@@ -1,0 +1,74 @@
+{
+  "settlement_number": 5786,
+  "start_date": "2026-08-19",
+  "end_date": "2026-08-26",
+  "driver_name": "Concepcion Cordova Dominguez",
+  "unit": "T163",
+  "trailer": "10224",
+  "loads": [
+    {
+      "load_number": "13533",
+      "customer_name": "Refrigerx Transportation LLC",
+      "pickup": {"location_name": "Cold Chain Solutions", "city": "Laredo", "state": "TX", "zip": "78045", "date": "2026-08-19"},
+      "delivery": {"location_name": "F and S Fresh Foods", "city": "CONLEY", "state": "GA", "zip": "30288", "date": "2026-08-21"},
+      "linehaul_miles_doc": 1137.4,
+      "linehaul_rate": 3.033,
+      "linehaul_amount": 3450.00,
+      "loaded_miles": 1111.6,
+      "loaded_rate": 0.45,
+      "loaded_amount": 500.22,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-20", "vendor": "LOVES", "location": "21548FM471S NATALIA,TX, TX", "invoice": "99530579", "gallons": 92.018, "cpg": 5.549, "receipt": 510.61, "actual": 510.61},
+        {"date": "2026-08-21", "vendor": "LOVES", "location": "16101HWY84 EVERGREEN,AL, AL", "invoice": "99222422", "gallons": 130.069, "cpg": 5.789, "receipt": 752.97, "actual": 752.97}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-21", "vendor": "LOVES", "location": "16101HWY84 EVERGREEN,AL", "invoice": "99222422", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 32.69},
+        {"date": "2026-08-20", "vendor": "LOVES", "location": "900SEAGLESTWEIMAR,TX", "invoice": "1107881", "description": "Scale Expense:OTR-Scale Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 15.25}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [],
+      "_note": "Fuel purchase dated 2026-08-20, invoice 99530579 (LOVES, 21548FM471S NATALIA,TX, 92.018 gal, $510.61) is IDENTICAL in invoice number, gallons, CPG, and receipt amount to a fuel row printed under Load 13548 dated 2026-08-26 (see that load's fuel_rows) -- same invoice number used twice across two different loads/dates on the Company Settlement. Transcribed exactly as printed on each load's section; not merged or corrected. Also: expense row 'Scale Expense:OTR-Scale Expense' (invoice 1107881, $15.25) does not correspond to any fuel-purchase invoice for this load; assigned here by date proximity (2026-08-20, within Load 13533's pickup/delivery window) since the Expenses table has no per-load headers."
+    },
+    {
+      "load_number": "13548",
+      "customer_name": "MPH CARRIER SERVICES, INC",
+      "pickup": {"location_name": "PILGRIM'S PRIDE CORPORATION AL", "city": "GUNTERSVILLE", "state": "AL", "zip": "35976", "date": "2026-08-24"},
+      "delivery": {"location_name": "MS WORLDWIDE", "city": "LAREDO", "state": "TX", "zip": "78045", "date": "2026-08-26"},
+      "linehaul_miles_doc": 1272.3,
+      "linehaul_rate": 1.808,
+      "linehaul_amount": 2300.00,
+      "loaded_miles": 1043.4,
+      "loaded_rate": 0.45,
+      "loaded_amount": 469.53,
+      "empty_miles": 154.0,
+      "empty_rate": 0.45,
+      "empty_amount": 69.30,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-25", "vendor": "LOVES", "location": "7561MESOPOTAMIA STREET EUTAW,, AL", "invoice": "99906385", "gallons": 113.210, "cpg": 5.689, "receipt": 644.05, "actual": 644.05},
+        {"date": "2026-08-26", "vendor": "LOVES", "location": "21548FM471S NATALIA,TX, TX", "invoice": "99530579", "gallons": 92.018, "cpg": 5.549, "receipt": 510.61, "actual": 510.61}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-25", "vendor": "LOVES", "location": "7561MESOPOTAMIA STREET EUTAW,", "invoice": "99906385", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 28.20},
+        {"date": "2026-08-25", "vendor": "LOVES", "location": "7561MESOPOTAMIA STREET EUTAW,", "invoice": "1230441", "description": "Scale Expense:OTR-Scale Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 15.25}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [],
+      "_note": "This load's second fuel purchase (2026-08-26, invoice 99530579, LOVES 21548FM471S NATALIA,TX, 92.018 gal, $510.61) is IDENTICAL in every figure to the fuel row printed under Load 13533 dated 2026-08-20 (same invoice number) -- see that load's note. Transcribed exactly as printed under this load's Company Settlement section. Also: expense row 'Scale Expense:OTR-Scale Expense' (invoice 1230441, $15.25, same date/location as the DEF row) does not correspond to a fuel invoice; assigned by date/location match to this load."
+    }
+  ],
+  "company_settlement_totals": {"invoiced": 5750.00, "quick_pay_pct": 0.90, "quick_pay_amount": -51.75, "driver_salary": -1039.05, "fuel": -2418.24, "company_expenses": -91.39, "net_revenue": 2149.57, "total_miles": 2409.7, "mpg": 5.639},
+  "driver_settlement_totals": {"total_loaded_miles": 2155.0, "total_empty_miles": 154.0, "total_miles": 2309.0, "salary": 1039.05, "deductions_total": 0.00, "total_due": 1039.05, "mpg": 5.639}
+}
