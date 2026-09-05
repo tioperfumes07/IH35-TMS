@@ -41,6 +41,7 @@ function makeClient(overrides: { openSettlement?: { id: string; display_id: stri
           ],
         };
       }
+      if (/COALESCE\(\s*\(SELECT ls\.scheduled_arrival_at/.test(sql)) return { rows: [{ trip_started_at: "2026-07-03T08:00:00.000Z", is_sample_data: false }] };
       if (/SELECT EXISTS \(SELECT 1 FROM lib\.trace_counters/.test(sql)) return { rows: [{ exists: true }] };
       if (/SELECT lib\.next_trace_no/.test(sql)) return { rows: [{ seq: "1" }] };
       if (/INSERT INTO driver_finance\.driver_settlements/.test(sql)) return { rows: [{ id: "new-settlement-id" }] };
@@ -121,6 +122,25 @@ describe("presettlement link — GO-22", () => {
     expect(result.settlement_id).toBe("new-settlement-id");
     expect(calls.some((c) => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql))).toBe(true);
     expect(calls.some((c) => /UPDATE mdata\.loads SET presettlement_link_id/.test(c.sql))).toBe(true);
+  });
+
+  it("GAP-PRESETTLEMENT-PERIOD-NULL: create_new derives period_start/period_end from the load's own trip-start date, never leaves them NULL", async () => {
+    const { client, calls } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "S-1" } });
+    await confirmPresettlementLink(client as never, {
+      operating_company_id: OPCO,
+      suggestion_id: SUGGESTION_ID,
+      action: "create_new",
+      actor_user_id: USER_ID,
+    });
+    const insertCall = calls.find((c) => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql));
+    expect(insertCall).toBeTruthy();
+    expect(insertCall!.sql).toMatch(/period_start/);
+    expect(insertCall!.sql).toMatch(/period_end/);
+    // Both bound to the SAME $6 placeholder (period_start = period_end = trip-start date,
+    // matching openLoadBookendedSettlement's initial-value pattern) — the mocked trip-start
+    // query returns 2026-07-03, so both params must carry that date, not undefined/null.
+    expect(insertCall!.values).toContain("2026-07-03");
+    expect(insertCall!.values.some((v) => v == null)).toBe(false);
   });
 
   it("confirmPresettlementLink link_existing refuses when there is no target settlement at all", async () => {
