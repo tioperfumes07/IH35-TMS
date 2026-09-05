@@ -18,6 +18,7 @@ export type AccountingMetadataField = {
   type: "text" | "number" | "select";
   required?: boolean;
   options?: Array<{ value: string; label: string }>;
+  sortable?: boolean;
 };
 
 export type AccountingCatalogSavedResult = { id: string; label: string };

@@ -16,6 +16,7 @@ export type CatalogFieldConfig = {
     labelField: string;
     valueField: string;
   };
+  sortable?: boolean;
 };
 
 export type CatalogColumnConfig = {

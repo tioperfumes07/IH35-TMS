@@ -112,6 +112,7 @@ export function MaintenanceCostPerUnitPage() {
       {
         key: "flags",
         label: "Flags",
+        sortable: true,
         render: (r) => (
           <div className="flex flex-wrap gap-1">
             {(r.flags ?? []).map((f) => {

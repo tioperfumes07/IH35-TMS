@@ -15,6 +15,7 @@ export type DomainConfig = {
   label: string;
   pillClass: string;
   catalogs: CatalogItem[];
+  sortable?: boolean;
 };
 
 // Single source of truth for the Lists domain map. Both AllCatalogsMap (main hub) and
@@ -24,6 +25,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
   {
     key: "safety",
     label: "Safety",
+    sortable: true,
     pillClass: "bg-red-50 text-red-700",
     catalogs: [
       { name: "Accident Types", description: "Accident classification codes", live: true, catalogKey: "accident-types" },
@@ -39,6 +41,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
   {
     key: "dispatch",
     label: "Dispatch",
+    sortable: true,
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
       { name: "Dispatch Flag Colors", description: "Board flag colours and their severity order", live: true, catalogKey: "dispatch-flag-colors" },
@@ -59,6 +62,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
   {
     key: "drivers",
     label: "Drivers",
+    sortable: true,
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
       { name: "Termination Reasons", description: "Driver separation reason codes", live: true, catalogKey: "termination-reasons" },
@@ -83,6 +87,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
   {
     key: "maintenance",
     label: "Maintenance",
+    sortable: true,
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
       { name: "Labor Rates", description: "Billable and internal labor rate codes", live: true, catalogKey: "labor-rates" },
@@ -113,6 +118,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
   {
     key: "fuel",
     label: "Fuel",
+    sortable: true,
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
       { name: "DEF Stations", description: "DEF fill locations", live: true, catalogKey: "def-stations" },
@@ -136,6 +142,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
   {
     key: "fleet",
     label: "Fleet",
+    sortable: true,
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
       { name: "Tractor Statuses", description: "Lifecycle statuses for tractor units", live: true, catalogKey: "tractor-statuses" },
@@ -153,6 +160,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
   {
     key: "accounting",
     label: "Accounting",
+    sortable: true,
     pillClass: "bg-slate-200 text-slate-800",
     catalogs: [
       { name: "Account Types", description: "Chart-of-accounts type lookup", live: true, catalogKey: "account-types-lookup" },
@@ -197,6 +205,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
   {
     key: "vendors",
     label: "Vendors",
+    sortable: true,
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
       // C-02 — enter the canonical vendor roster from Lists so +Create writes mdata.vendors rows
@@ -211,6 +220,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
   {
     key: "names_master",
     label: "Names master",
+    sortable: true,
     pillClass: "bg-orange-50 text-orange-700",
     catalogs: [
       { name: "Shippers", description: "Canonical shipper naming set", live: false },

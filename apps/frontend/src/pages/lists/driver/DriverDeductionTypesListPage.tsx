@@ -9,11 +9,11 @@ export function DriverDeductionTypesListPage() {
       displayName="Driver Deduction Types"
       breadcrumbPath="Lists & Catalogs / Driver / Driver Deduction Types"
       optionalBooleans={[
-        { key: "may_draw_escrow", label: "May draw escrow" },
-        { key: "survives_separation", label: "Survives separation" },
+        { key: "may_draw_escrow", label: "May draw escrow", sortable: true },
+        { key: "survives_separation", label: "Survives separation", sortable: true },
       ]}
       optionalEnums={[
-        { key: "default_recovery_rail", label: "Default recovery rail", options: INSURANCE_CLAIM_RECOVERY_RAIL_VALUES },
+        { key: "default_recovery_rail", label: "Default recovery rail", sortable: true, options: INSURANCE_CLAIM_RECOVERY_RAIL_VALUES },
       ]}
     />
   );

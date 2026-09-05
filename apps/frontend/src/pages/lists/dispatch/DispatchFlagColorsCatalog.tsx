@@ -42,10 +42,10 @@ const DISPLAY_NAME = "Dispatch Flag Colors";
 const COLUMNS: CatalogColumnConfig[] = [
   { key: "code", label: "Code", sortable: true, filterable: true },
   { key: "display_name", label: "Flag", sortable: true, filterable: true },
-  { key: "hex_color", label: "Color", sortable: false, filterable: false },
-  { key: "icon_emoji", label: "Icon", sortable: false, filterable: false },
+  { key: "hex_color", label: "Color", sortable: true, filterable: false },
+  { key: "icon_emoji", label: "Icon", sortable: true, filterable: false },
   { key: "severity_order", label: "Severity", sortable: true, filterable: false },
-  { key: "description", label: "Description", sortable: false, filterable: false },
+  { key: "description", label: "Description", sortable: true, filterable: false },
   { key: "is_active", label: "Status", sortable: true, filterable: false },
 ];
 
@@ -54,13 +54,13 @@ const COLUMNS: CatalogColumnConfig[] = [
  * through empty would submit a create the API must reject. All 24 live rows are #RRGGBB.
  */
 const FIELDS: CatalogFieldConfig[] = [
-  { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true, placeholder: "RED" },
-  { key: "display_name", label: "Flag", type: "text", required: true },
-  { key: "hex_color", label: "Color (#RRGGBB)", type: "color", required: true, placeholder: "#ef4444" },
-  { key: "icon_emoji", label: "Icon", type: "text", required: false },
-  { key: "severity_order", label: "Severity Order", type: "number", required: false },
-  { key: "description", label: "Description", type: "text", required: false },
-  { key: "sort_order", label: "Sort Order", type: "number", required: false },
+  { key: "code", label: "Code", sortable: true, type: "text", required: true, readOnlyOnEdit: true, placeholder: "RED" },
+  { key: "display_name", label: "Flag", sortable: true, type: "text", required: true },
+  { key: "hex_color", label: "Color (#RRGGBB)", sortable: true, type: "color", required: true, placeholder: "#ef4444" },
+  { key: "icon_emoji", label: "Icon", sortable: true, type: "text", required: false },
+  { key: "severity_order", label: "Severity Order", sortable: true, type: "number", required: false },
+  { key: "description", label: "Description", sortable: true, type: "text", required: false },
+  { key: "sort_order", label: "Sort Order", sortable: true, type: "number", required: false },
 ];
 
 /**

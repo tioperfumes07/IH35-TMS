@@ -55,6 +55,7 @@ export function IFTAStepGallons({ operatingCompanyId, preparationId, quarter, ye
       {
         key: "breakdown",
         label: "Breakdown",
+        sortable: true,
         sortValue: (row) =>
           Array.isArray(row.source_records)
             ? row.source_records.map((record) => record.source).join(", ")

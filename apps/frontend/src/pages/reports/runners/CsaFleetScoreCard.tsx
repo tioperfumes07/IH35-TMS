@@ -2,14 +2,14 @@ type Props = {
   value: Record<string, unknown>;
 };
 
-const BASICS: Array<{ key: string; label: string }> = [
-  { key: "basic_unsafe_driving", label: "Unsafe Driving" },
-  { key: "basic_hos_compliance", label: "HOS Compliance" },
-  { key: "basic_drug_alcohol", label: "Drug/Alcohol" },
-  { key: "basic_vehicle_maintenance", label: "Vehicle Maintenance" },
-  { key: "basic_hazmat", label: "Hazmat" },
-  { key: "basic_crash_indicator", label: "Crash Indicator" },
-  { key: "basic_driver_fitness", label: "Driver Fitness" },
+const BASICS: Array<{ key: string; label: string; sortable?: boolean }> = [
+  { key: "basic_unsafe_driving", label: "Unsafe Driving", sortable: true },
+  { key: "basic_hos_compliance", label: "HOS Compliance", sortable: true },
+  { key: "basic_drug_alcohol", label: "Drug/Alcohol", sortable: true },
+  { key: "basic_vehicle_maintenance", label: "Vehicle Maintenance", sortable: true },
+  { key: "basic_hazmat", label: "Hazmat", sortable: true },
+  { key: "basic_crash_indicator", label: "Crash Indicator", sortable: true },
+  { key: "basic_driver_fitness", label: "Driver Fitness", sortable: true },
 ];
 
 export function CsaFleetScoreCard({ value }: Props) {

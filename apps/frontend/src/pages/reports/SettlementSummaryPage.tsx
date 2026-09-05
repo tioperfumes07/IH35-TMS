@@ -103,7 +103,7 @@ export function SettlementSummaryPage() {
       { key: "load_count", label: "Loads", sortable: true, className: "text-right", cellClass: "text-right" },
       { key: "settlement_count", label: "Settlements", sortable: true, className: "text-right", cellClass: "text-right" },
       { key: "gross_pay_cents", label: "Gross", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.gross_pay_cents) },
-      { key: "deduction_cents", label: "Deductions", className: "text-right", cellClass: "text-right", render: (r) => money(r.deduction_cents) },
+      { key: "deduction_cents", label: "Deductions", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.deduction_cents) },
       { key: "chargeback_cents", label: "Chargebacks", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.chargeback_cents) },
       { key: "net_pay_cents", label: "Net", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.net_pay_cents) },
       { key: "avg_per_load_cents", label: "Avg/Load", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.avg_per_load_cents) },

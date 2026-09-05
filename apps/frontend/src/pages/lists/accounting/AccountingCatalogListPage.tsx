@@ -108,6 +108,7 @@ export function AccountingCatalogListPage({
       {
         key: "details",
         label: "Details",
+        sortable: true,
         render: (row) => (
           <span className="text-xs text-slate-600">{metadataSummary ? metadataSummary(row) : row.description || "—"}</span>
         ),
