@@ -18,7 +18,7 @@ No seat starts step N+1 before posting step N's DONE with measurements. Silence 
 | Dispatch board + Banking + design tokens | CC-2 | /Users/jorgemunoz/IH35-TMS-cc2-live |
 | Seed + Customers/Vendors roll-ups + Company settlements backend | CC-3 | /Users/jorgemunoz/IH35-TMS-cc3 |
 | Telematics/Samsara (active-set + USMCA re-scope) — Maintenance DONE 3/3 | CODEX | /Users/jorgemunoz/IH35-TMS-codex-seat |
-| Lists / Reports / Planners + Customers/Vendors landing filters | **DEVIN** | **/Users/jorgemunoz/IH35-TMS-devin** |
+| Lists / Reports / Planners + Customers/Vendors landing filters | **DEVIN/CASCADE** | **/Users/jorgemunoz/IH35-TMS-cascade** |
 
 ---
 
@@ -58,20 +58,20 @@ No seat starts step N+1 before posting step N's DONE with measurements. Silence 
 6. (Telematics MOVED to Codex — Love's 604 import stays under Codex's telematics vertical.)
 
 ## CODEX (Telematics/Samsara — USMCA) — M=5   [folder /Users/jorgemunoz/IH35-TMS-codex-seat]
-> Maintenance X.7 (#20538 4427c966) · X.8 (#20548 8103343b) · X.9 (e272e9c) DONE 3/3. Owns integrations/samsara/**, telematics/**, active-driver-set/**, drivers.routes.ts (active_only), Drivers.tsx default. RULE 49 + §3b.
-1. Reliable active-set engine — source telematics.vehicle_latest_position (captured_at ≤15d) + vehicle_driver_assignments window-overlap, scoped by units.currently_leased_to_company_id=USMCA; STOP using dead samsara_drivers.last_seen_at. Prove 16 units / 17–20 drivers.
-2. Driver LIST + profile lists DEFAULT active-only (active_only param, Show-all toggle; 264-row DB retained). Units list default = 16 USMCA-leased in-service.
-3. RE-SCOPE Samsara data to USMCA — idempotent CREATE-only migration re-tags telematics rows for USMCA-leased units 91e0bf0a→5c854333; point samsara_config ingestion at USMCA; RE-TAG never DELETE (WORM).
+> Maintenance X.7 (#20538 4427c966) · X.8 (#20548 8103343b) · X.9 (e272e9c) DONE 3/3. Owns integrations/samsara/**, telematics/**, active-driver-set/**, drivers.routes.ts (active_only), Drivers.tsx default, units.routes.ts (in-service). RULE 49 + §3b.
+1. DONE — active-set engine (vehicle_latest_position ≤15d + vehicle_driver_assignments overlap, lease-scoped USMCA).
+2. DONE #20568 — drivers.routes.ts + units.routes.ts default to canonical active sets + verify-active-entity-hardline guard.
+3. NOW — RE-SCOPE Samsara data to USMCA — idempotent CREATE-only migration re-tags telematics rows for USMCA-leased units 91e0bf0a→5c854333; point samsara_config ingestion at USMCA; RE-TAG never DELETE (WORM).
 4. Reliable last_seen_at fix — keep fresh from the position ingestion path (not a one-off backfill); mark samsara_drivers with no USMCA unit link inactive (void, not delete).
-5. verify-step guards (15d window join, lease-scope, count band 10–40) + deploy backend + healthz git_sha + live count proof.
+5. verify-step guards (15d window join, lease-scope, count band 10–40) + deploy backend (srv-d7rpem7avr4c73fhp4n0) + healthz git_sha + **LIVE COUNT PROOF: 16 units / 17–20 drivers** pasted.
+6. Then Maintenance re-measure: FLT-02 in-shop vs OOS visually distinct; FLT-03/04/05/06/07 re-measure CLAIMED-UNVERIFIED rows live; BOR-01 border-crossing manifest.
 
-## DEVIN (lists/reports/planners + counterparty landing) — M=5   [folder /Users/jorgemunoz/IH35-TMS-devin]
-0. SETUP: `cd /Users/jorgemunoz/IH35-TMS-devin && git stash && git checkout main && git pull --ff-only origin main`. (currently on fix/stale-mileage-lane-change, 1 dirty, 6 behind)
-1. K.9 — restore Customers & Vendors landing FILTER BAR from `git show 1e4a6282d7^:apps/frontend/src/pages/Customers.tsx` (and Vendors.tsx): inline, visible on first load, live-applied; keep later genuine fixes; guard = ≥5 visible filter controls above list at first load, 0 clicks. (#17)
-2. K.4 — BRD-19 planners.
-3. K.5 — BRD-20 planners.
-4. K.6 — BRD-21 planners.
-5. K.7 — BRD-23 planners.
+## DEVIN / CASCADE (lists/reports/planners + counterparty landing) — M=4   [folder /Users/jorgemunoz/IH35-TMS-cascade]
+> DONE 3/3+: K.9 filter bar (#20550) · K.4/K.5/K.6/K.7 planners (#20457/#20551/#20552/#20554) · K.8 dash-never-zero (#20566) + design-law sweep guard (#20567). Owns pages/reports/**, pages/lists/**, planners, Customers/Vendors landing.
+1. DRV-14 DRIVER REPORT — render the FULL driver qualification file (CDL, DOT medical, MVR, Clearinghouse — value + expiry + renewal cadence) as a report page under pages/reports via shared ParityTable; active-only default; MMM-DD dates; guard. (Not produced today.)
+2. LFI-11 / INV-SEARCH-01 — invoice search via the shared server-side query builder; sortable; MMM-DD; guard.
+3. LFI-18/19 — sort-law sweep: every list column server-paginated + sortable; guard verify-sortable-columns.
+4. GLB-08 — app-wide MMM-DD date-format sweep across list/report consumers; guard.
 
 ---
 DONE line format (all seats): `SEAT | STEP N of M DONE | <sha> | <live sha> | <measurements> | NEXT (N+1) of M`
