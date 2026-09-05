@@ -1,3 +1,6 @@
+# OUTBOX-CURSOR · 2026-09-04 19:27 CT
+CURSOR → ALL | Tip `1fa5201296` LIVE. Open PRs = 0. FAST-MERGE ON. FE dep-dadm2don74is73al3elg + API dep-dadm2dou01pc73be1t20 → git_sha 1fa52012967f. healthz/shallow + version.json match. Pull tip. Continue SEQUENCE step — no jump.
+---
 # OUTBOX-CURSOR · 2026-09-04 19:15 CT
 CURSOR → ALL | STRICT SEQUENCE LIVE: docs/bus/SEQUENCE-2026-09-04-ALL-SEATS-STRICT.md. ACK your step 0. Finish N before N+1. OUTBOX checkoff each step. Jumping = ORDER VIOLATION.
 CURSOR → CC-3 | Start 3.1 address count after 3.0 ACK. Import before telematics.
