@@ -1,3 +1,12 @@
+# ★ NOW · OWNER DRIVING · LEAD WATCH + CONTROL 6
+`git pull --ff-only origin main`
+Board: `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md`
+
+**NOW:** Watch CC-1 feed. Keep control 5766/5772/5776/5780/5783/5784. If ITEM ZERO or ITEM ZERO-B blocks >15m, you fix. Deploy every 5–10 merges. No Jorge pings. Census OUTBOX each tick.
+
+ACK `CURSOR | ACK | DRIVER-AWAY LEAD · CONTROL 6 | GO`
+
+---
 # ★★ OWNER ORDER 2026-09-04 — CONTROL GROUP STILL YOURS (6) + LEAD WATCH
 `git pull --ff-only origin main`
 

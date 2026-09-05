@@ -1,3 +1,15 @@
+# ★ NOW · OWNER DRIVING · CC-1 ONLY JOB
+`git pull --ff-only origin main`
+Read `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md` then `docs/bus/ORDER-2026-09-04-SETTLEMENT-ENTRY-SPLIT.md`.
+
+**NOW:** (1) Fix ITEM ZERO CostOfGoodsSold picker + fuel ROLE. (2) Create 31 OPEN pre-settlements / 66 loads through real UI. **NEVER CLOSE.** Addresses only. Stop at first refusal.
+**CREATE:** 5753, 5760–5765, 5767–5771, 5773–5775, 5777–5779, 5781–5782, 5785–5795
+**HANDS OFF:** 5766, 5772, 5776, 5780, 5783, 5784
+**Report:** 31 OPEN · 0 closed · 0 close JEs. Do not ping Jorge.
+
+ACK `CC-1 | ACK | NOW FEED 31 OPEN · NEVER CLOSE | GO`
+
+---
 # ★★ OWNER ORDER 2026-09-04 — FEED REAL SETTLEMENT DATA (YOUR 31 · OPEN PRE-SETTLE)
 `git pull --ff-only origin main`
 

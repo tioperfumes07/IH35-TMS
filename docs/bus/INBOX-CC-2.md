@@ -1,3 +1,10 @@
+# ★ NOW · OWNER DRIVING · YOUR ORDER SECTION ONLY
+`git pull --ff-only origin main`
+Board: `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md`
+Settlement feed is CC-1+Cursor only. Continue ORDER-2026-09-04. Do not ping Jorge.
+ACK `CC-2 | ACK | CONTINUE ORDER · NO SETTLEMENT FEED | GO`
+
+---
 # ★ NOTICE 2026-09-04 — SETTLEMENT FEED IS CC-1 + CURSOR ONLY
 `git pull --ff-only origin main`
 
