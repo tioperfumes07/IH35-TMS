@@ -419,6 +419,7 @@ import { initializeSamsaraPositionsCron } from "./cron/samsara-positions-cron.js
 import { initializeReeferHoursPollCron } from "./cron/reefer-hours-poll.cron.js";
 import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
 import { initializeBankReconAutoMatchCron } from "./cron/bank-recon-auto-match.cron.js";
+import { initializeDraftCrewStatusSelfHealCron } from "./cron/draft-crew-status-selfheal.cron.js";
 import { initializeGeofenceBreachDetectorCron } from "./cron/geofence-breach-detector.cron.js";
 import { initializeDriverLeaveAdvanceReminderCron } from "./cron/driver-leave-advance-reminder.cron.js";
 import { initializeDriverLeaveBalanceRolloverCron } from "./cron/driver-leave-balance-rollover.cron.js";
@@ -1439,6 +1440,7 @@ async function main() {
     try {
       initializeFuelGpsMatchCron(app);
       initializeBankReconAutoMatchCron(app);
+      initializeDraftCrewStatusSelfHealCron(app);
       app.log.info("[STARTUP] fuel-gps-match-cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] fuel-gps-match-cron failed");

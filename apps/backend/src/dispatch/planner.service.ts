@@ -2,6 +2,7 @@ import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { getCurrentClocks, getCurrentClocksForDrivers } from "../telematics/hos-clocks.service.js";
 import { assertDriverQualifiedForLoad } from "./driver-qualification.service.js";
+import { advanceDraftStatusIfCrewed } from "./draft-crew-status-advance.js";
 import { addBusinessDateDays, companyBusinessDate, companyBusinessDateStartIso } from "../lib/company-business-date.js";
 
 const CONFLICT_WINDOW_MS = 4 * 60 * 60 * 1000;
@@ -397,6 +398,11 @@ export async function reschedulePlannerLoad(
         [driverId, loadId, operatingCompanyId]
       );
       if (!driverUpdate.rows[0]?.id) return { ok: false, error: "load_not_found" };
+
+      // WIZ-STATUS-01 DURABLE FIX (owner order 2026-09-05) — this write path assigns a primary
+      // driver straight to mdata.loads without going through updateDispatchLoad()'s own status
+      // advance; a draft load re-crewed here via a planner reschedule would otherwise stay draft.
+      await advanceDraftStatusIfCrewed(client, loadId, operatingCompanyId);
     }
 
     const refreshed = await client.query(

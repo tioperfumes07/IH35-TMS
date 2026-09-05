@@ -10,6 +10,7 @@ import {
   fromMdataStatus,
   toMdataStatus,
   validateLoadStatusTransition,
+  describeInvalidTransition,
 } from "./load-state-machine.js";
 import {
   updateDispatchLoad,
@@ -1929,7 +1930,15 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
     if ("error" in result) {
       if (result.error === "not_found") return reply.code(404).send({ error: "dispatch_load_not_found" });
-      return reply.code(400).send({ error: "invalid_transition", from_status: result.from, to_status: result.to });
+      // Owner order 2026-09-05: "refuse LOUDLY with the reason on screen. Silent no-op is a defect."
+      const from = result.from;
+      const to = result.to;
+      return reply.code(400).send({
+        error: "invalid_transition",
+        from_status: from,
+        to_status: to,
+        message: from && to ? describeInvalidTransition(from, to) : "This status change is not allowed from the load's current state.",
+      });
     }
     return result;
   });

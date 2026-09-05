@@ -3,6 +3,7 @@ import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { assertDriverQualifiedForLoad, DriverNotQualifiedError } from "../driver-qualification.service.js";
+import { advanceDraftStatusIfCrewed } from "../draft-crew-status-advance.js";
 
 type LoadRow = {
   id: string;
@@ -199,6 +200,10 @@ export async function reassignUnit(
       );
       if (!unitUpdate.rows[0]) throw new Error("E_LOAD_NOT_FOUND");
 
+      // WIZ-STATUS-01 DURABLE FIX (owner order 2026-09-05) — re-checks the load's own current row;
+      // only advances if a driver/team was ALREADY on the load (this call only touched the unit).
+      await advanceDraftStatusIfCrewed(client, input.load_uuid, input.operating_company_id);
+
       // DISP-F6157: unit reassignment doesn't touch the trailer — carry the canonical current
       // trailer through unchanged rather than the co-driver uuid.
       const canonicalTrailerId = await resolveCanonicalTrailerId(client, input.load_uuid);
@@ -316,6 +321,11 @@ export async function reassignDriver(
         [input.load_uuid, input.driver_uuid, input.operating_company_id]
       );
       if (!driverUpdate.rows[0]) throw new Error("E_LOAD_NOT_FOUND");
+
+      // WIZ-STATUS-01 DURABLE FIX (owner order 2026-09-05) — this write path assigns a primary
+      // driver straight to mdata.loads without going through updateDispatchLoad()'s own status
+      // advance; a draft load reassigned a driver here would otherwise stay draft forever.
+      await advanceDraftStatusIfCrewed(client, input.load_uuid, input.operating_company_id);
 
       // DISP-F6157: driver reassignment doesn't touch the trailer — carry the canonical current
       // trailer through unchanged rather than the co-driver uuid.

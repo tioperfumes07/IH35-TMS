@@ -87,6 +87,40 @@ export function isTerminalLoadStatus(currentMdataStatus: string): boolean {
 }
 
 /**
+ * Owner order 2026-09-05 (spec §1, "Silent no-op is a defect"): the /transition endpoint's 400 for
+ * an invalid transition carried no human-readable guidance, only the bare `from`/`to` status codes
+ * -- a dispatcher dragging a `draft` load straight into the Dispatched Kanban lane saw
+ * "invalid_transition" with no instruction that the load must go through Assigned first. Exposes the
+ * from-state's own legal next steps so a route/toast can say WHY, not just THAT.
+ */
+export function allowedNextStatuses(currentMdataStatus: string): DispatchStatus[] {
+  return allowedTransitions[fromMdataStatus(currentMdataStatus)];
+}
+
+const STATUS_LABEL: Record<DispatchStatus, string> = {
+  unassigned: "Unassigned",
+  assigned_not_dispatched: "Assigned",
+  dispatched: "Dispatched",
+  in_transit: "In transit",
+  delivered_pending_docs: "Delivered (pending docs)",
+  completed_docs_received: "Completed",
+  cancelled: "Cancelled",
+  abandoned: "Abandoned",
+  driver_walkoff: "Driver walkoff",
+  driver_no_show: "Driver no-show",
+};
+
+/** Builds the human-readable reason for an invalid-transition 400 (see allowedNextStatuses above). */
+export function describeInvalidTransition(from: DispatchStatus, to: DispatchStatus): string {
+  const next = allowedTransitions[from];
+  if (next.length === 0) {
+    return `${STATUS_LABEL[from]} is a final state — it cannot move to ${STATUS_LABEL[to]}.`;
+  }
+  const options = next.map((s) => STATUS_LABEL[s]).join(" or ");
+  return `Cannot move directly from ${STATUS_LABEL[from]} to ${STATUS_LABEL[to]} — move it to ${options} first.`;
+}
+
+/**
  * Guards raw driver-PWA stop arrival/departure writes to `mdata.loads.status`.
  *
  * `at_pickup`/`at_delivery` are stop micro-states that both live inside the `dispatched`/`in_transit`

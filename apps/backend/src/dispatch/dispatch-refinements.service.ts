@@ -9,6 +9,7 @@ import {
   type DriverQualificationBlock,
 } from "./driver-qualification.service.js";
 import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.js";
+import { advanceDraftStatusIfCrewed } from "./draft-crew-status-advance.js";
 
 export type ReassignBody = {
   operating_company_id: string;
@@ -199,6 +200,11 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
         [input.load_id, input.new_driver_id, input.operating_company_id]
       );
       if (!reassignmentUpdate.rows[0]?.id) throw new Error("E_LOAD_NOT_FOUND");
+
+      // WIZ-STATUS-01 DURABLE FIX (owner order 2026-09-05) — this write path assigns a primary
+      // driver straight to mdata.loads without going through updateDispatchLoad()'s own status
+      // advance; a draft load manually reassigned a driver here would otherwise stay draft forever.
+      await advanceDraftStatusIfCrewed(client, input.load_id, input.operating_company_id);
 
       const assignmentHistory = await client.query<{ id: string }>(
         `
