@@ -1,6 +1,6 @@
 {
   "healthzSha": "62d819e",
-  "generated_at": "2026-09-05T15:01:09.978Z",
+  "generated_at": "2026-09-05T15:08:10.279Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
@@ -2123,6 +2123,33 @@
   },
   "recentActivity": [
     {
+      "number": 20558,
+      "title": "CC-2-dispatch: STEP 2 of 8 partial — L.4a-fix truncation/initials/frame + build fix",
+      "state": "merged",
+      "mergedAtCt": "09/05/2026, 10:07 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20558",
+      "sha": "789e794603",
+      "committedAtIso": "2026-09-05T10:07:18-05:00"
+    },
+    {
+      "number": 20557,
+      "title": "Claude-3-docs: STEP 1 of 6 DONE report + scoreboard regen",
+      "state": "merged",
+      "mergedAtCt": "09/05/2026, 10:05 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20557",
+      "sha": "1c001fa960",
+      "committedAtIso": "2026-09-05T10:05:27-05:00"
+    },
+    {
+      "number": 20556,
+      "title": "FINDING: TEL-F01 — Samsara driver mirror is active-only (78 rows) and 3 months stale; owner reports 732 deactivated drivers in Samsara (inventory row 39, CC-3)",
+      "state": "merged",
+      "mergedAtCt": "09/05/2026, 10:05 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20556",
+      "sha": "6af77fd20d",
+      "committedAtIso": "2026-09-05T10:05:13-05:00"
+    },
+    {
       "number": 20555,
       "title": "Claude-3-feat(seed): STEP 1 of 6 — seed 18 missing USMCA loads + 08/07 floor + R1/R2 rulings",
       "state": "merged",
@@ -2184,33 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20548",
       "sha": "8103343b36",
       "committedAtIso": "2026-09-05T09:51:37-05:00"
-    },
-    {
-      "number": 20538,
-      "title": "FINDING: MAINT-X7-01 fleet table header cells break the ParityTable design contract (#20536/row 21)",
-      "state": "merged",
-      "mergedAtCt": "09/05/2026, 09:51 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20538",
-      "sha": "4427c966cf",
-      "committedAtIso": "2026-09-05T09:51:34-05:00"
-    },
-    {
-      "number": 20550,
-      "title": "FINDING: K.9 — Customers/Vendors roster filter bar hidden behind CHROME-04 Filters popover (1 click to see Status/Type/Credit-status/Category). Restored inline from 1e4a6282d7^ (visible first load, 0 clicks).",
-      "state": "merged",
-      "mergedAtCt": "09/05/2026, 09:51 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20550",
-      "sha": "ece6191004",
-      "committedAtIso": "2026-09-05T09:51:08-05:00"
-    },
-    {
-      "number": 20547,
-      "title": "FINDING: N/A (docs only) — lead tick 14:47Z: seats on Cursor sequence; void 21/29; FE deploy triggered; lead = inventory + verdicts only",
-      "state": "merged",
-      "mergedAtCt": "09/05/2026, 09:47 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20547",
-      "sha": "c971850ec4",
-      "committedAtIso": "2026-09-05T09:47:14-05:00"
     }
   ]
 }
