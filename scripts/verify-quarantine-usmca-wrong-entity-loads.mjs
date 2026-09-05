@@ -6,8 +6,11 @@ const source = fs.readFileSync(file, "utf8");
 const failures = [];
 const requireText = (text, message) => { if (!source.includes(text)) failures.push(message); };
 
-requireText("cancelLoadInClientTx", "runner must reuse the canonical load cancellation/void cascade");
-requireText("for (const loadNumber of LOAD_NUMBERS)", "runner must process the fixed reconciliation list");
+requireText('executeVoidCancel("expense"', "runner must reuse the canonical expense void executor");
+requireText('executeVoidCancel("invoice"', "runner must reuse the canonical invoice void executor");
+requireText("settlement_lines", "runner must void settlement rows at load-line grain");
+requireText("leave every shared parent open", "runner must preserve shared pre-settlements");
+requireText("for (const loadNumber of selected)", "runner must process the selected fixed reconciliation list");
 requireText('await client.query("BEGIN")', "each load family must start its own transaction");
 requireText('if (APPLY) await client.query("COMMIT")', "writes must require explicit --commit");
 requireText("unvoidable_money", "runner must fail closed on paid/factored money");
@@ -25,4 +28,4 @@ if (failures.length) {
   for (const failure of failures) console.error(`- ${failure}`);
   process.exit(1);
 }
-console.log("verify-quarantine-usmca-wrong-entity-loads: PASS (29 unique loads, canonical cascade, per-load tx, fail-closed, never delete)");
+console.log("verify-quarantine-usmca-wrong-entity-loads: PASS (29 unique loads, canonical document executors, load-line settlement grain, per-load tx, never delete)");
