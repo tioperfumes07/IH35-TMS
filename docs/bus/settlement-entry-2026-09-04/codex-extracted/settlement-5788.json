@@ -1,0 +1,117 @@
+{
+  "settlement_number": 5788,
+  "start_date": "2026-08-20",
+  "end_date": "2026-08-31",
+  "driver_name": "Angel Alfonso Sosa Perez",
+  "unit": "T156",
+  "trailer": "10219",
+  "loads": [
+    {
+      "load_number": "13539",
+      "customer_name": "Refrigerx Transportation LLC",
+      "pickup": {"location_name": "Cold Chain", "city": "Nuevo Laredo, Tam.", "state": null, "zip": "88299", "date": "2026-08-20"},
+      "delivery": {"location_name": "Quirch Foods", "city": "Medley F", "state": "FL", "zip": "33166", "date": "2026-08-23"},
+      "linehaul_miles_doc": 1551.0,
+      "linehaul_rate": 3.133,
+      "linehaul_amount": 4860.00,
+      "loaded_miles": 1490.4,
+      "loaded_rate": 0.45,
+      "loaded_amount": 670.68,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-21", "vendor": "LOVES", "location": "LOVES 471 NATALIA,TX, TX", "invoice": "2882806", "gallons": 197.907, "cpg": 5.589, "receipt": 1106.10, "actual": 1106.10},
+        {"date": "2026-08-22", "vendor": "LOVES", "location": "265 Opportunity Way, Gretna,FL, FL", "invoice": "2247170", "gallons": 198.000, "cpg": 5.189, "receipt": 1027.42, "actual": 1027.42}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-21", "vendor": "LOVES", "location": "LOVES 471 NATALIA,TX", "invoice": null, "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 31.66},
+        {"date": "2026-08-22", "vendor": "LOVES", "location": "265 Opportunity Way, Gretna,FL", "invoice": null, "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 21.12},
+        {"date": "2026-08-18", "vendor": "DTOPS", "location": null, "invoice": null, "description": "OTR-Mexico Tolls & Intl Bridge Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 20.80},
+        {"date": "2026-08-20", "vendor": "FUEL AMERICA", "location": "13602MINES ROAD LAREDO,TX", "invoice": "01041382", "description": "Reefer Trailer-Washout Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 51.96}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-31", "description": "Driver-Escrow For Claims", "amount": -25.00}
+      ],
+      "_note": "This Company Settlement's Expenses table has no per-load headers and, unlike the other three settlements in this batch, mostly omits invoice numbers (only the FUEL AMERICA row carries one). Rows here were assigned to this load by date/vendor/location match to this load's fuel purchases and pickup window (the 2026-08-18 Mexico-toll and 2026-08-20 reefer-washout rows predate/coincide with the 2026-08-20 Nuevo Laredo pickup)."
+    },
+    {
+      "load_number": "13546",
+      "customer_name": "John J. Jerue Truck Broker, Inc",
+      "pickup": {"location_name": "VEGPRO INTERNATIONAL INC", "city": "BELLE GLADE", "state": "FL", "zip": "33430", "date": "2026-08-26"},
+      "delivery": {"location_name": "PUBLIX PRODUCE WHS - GRB - 4511", "city": "MC LEANSVILLE", "state": "NC", "zip": "27301", "date": "2026-08-27"},
+      "linehaul_miles_doc": 829.0,
+      "linehaul_rate": 1.327,
+      "linehaul_amount": 1100.00,
+      "loaded_miles": 750.5,
+      "loaded_rate": 0.45,
+      "loaded_amount": 337.73,
+      "empty_miles": 71.4,
+      "empty_rate": 0.45,
+      "empty_amount": 32.13,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-25", "vendor": "LOVES", "location": "200 S Kings Hwy, Fort Pierce, FL", "invoice": "99579121", "gallons": 90.750, "cpg": 5.549, "receipt": 503.57, "actual": 503.57},
+        {"date": "2026-08-26", "vendor": "LOVES", "location": "200 S Kings Hwy, Fort Pierce,, FL", "invoice": "99579865", "gallons": 48.000, "cpg": 5.589, "receipt": 268.27, "actual": 268.27},
+        {"date": "2026-08-26", "vendor": "LOVES", "location": "200 S Kings Hwy, Fort Pierce,, FL", "invoice": null, "gallons": 115.240, "cpg": 5.420, "receipt": 624.60, "actual": 624.60}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-26", "vendor": "LOVES", "location": "200 S Kings Hwy, Fort Pierce,", "invoice": null, "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 56.58}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-31", "description": "Driver-Escrow For Claims", "amount": -25.00},
+        {"date": "2026-08-24", "description": "Admin fee - PAGO DE TELEFONO PERSONAL", "amount": -165.00},
+        {"date": "2026-08-25", "description": "CASH ADVANCE WIRE TRANSFER", "amount": -201.99}
+      ],
+      "_note": "This load has THREE diesel fuel purchases at the same 200 S Kings Hwy, Fort Pierce, FL LOVES location (2026-08-25 invoice 99579121; 2026-08-26 invoice 99579865; and a third 2026-08-26 row with NO invoice number printed at all, 115.240 gal/$624.60) but only ONE Fuel-DEF-Diesel Exhaust Fluid expense row exists for this location (dated 2026-08-26, $56.58, also with no invoice printed). Cannot determine from the source documents which specific diesel purchase(s) this single DEF line pairs with, or whether DEF lines for the other two purchases are simply missing from this Expenses table. Transcribed exactly as printed; not merged or invented."
+    },
+    {
+      "load_number": "13552",
+      "customer_name": "Del-Can Logistics LLC",
+      "pickup": {"location_name": "PRESTAGE FAMRS", "city": "CAMDEN", "state": "SC", "zip": "29020", "date": "2026-08-28"},
+      "delivery": {"location_name": "Continental Forwarding", "city": "Laredo", "state": "TX", "zip": "78045", "date": "2026-08-31"},
+      "linehaul_miles_doc": 1564.8,
+      "linehaul_rate": 1.917,
+      "linehaul_amount": 3000.00,
+      "loaded_miles": 1349.2,
+      "loaded_rate": 0.45,
+      "loaded_amount": 607.14,
+      "empty_miles": 173.8,
+      "empty_rate": 0.45,
+      "empty_amount": 78.21,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-28", "vendor": "LOVES", "location": "1500 Monticello Road, Madison, GA", "invoice": "99739249", "gallons": 104.994, "cpg": 5.429, "receipt": 570.01, "actual": 570.01},
+        {"date": "2026-08-28", "vendor": "LOVES", "location": "1500 Monticello Road, Madison,, GA", "invoice": "99739274", "gallons": 78.988, "cpg": 5.429, "receipt": 428.83, "actual": 428.83},
+        {"date": "2026-08-29", "vendor": "LOVES", "location": "101PINNACLE ROAD LAREDO,TX, TX", "invoice": "99991607", "gallons": 25.489, "cpg": 5.589, "receipt": 142.46, "actual": 142.46}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-29", "vendor": "LOVES", "location": "101PINNACLE ROAD LAREDO,TX", "invoice": null, "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 47.36},
+        {"date": "2026-08-28", "vendor": "FRONTIER TRUCK WASH", "location": "107PLUMBERS", "invoice": null, "description": "Reefer Trailer-Washout Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 42.23}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-31", "description": "Driver-Escrow For Claims", "amount": -25.00},
+        {"date": "2026-08-31", "description": "Admin fee - Gas", "amount": -10.00}
+      ],
+      "_note": "The two 2026-08-28 Madison, GA diesel purchases (invoices 99739249 and 99739274) have NO matching Fuel-DEF-Diesel Exhaust Fluid expense row at all; only the smaller 2026-08-29 Laredo, TX purchase (invoice 99991607) has a paired DEF line ($47.36). Transcribed exactly as printed; not invented."
+    }
+  ],
+  "company_settlement_totals": {"invoiced": 8960.00, "quick_pay_pct": 1.68, "quick_pay_amount": -150.90, "driver_salary": -1725.89, "fuel": -4671.26, "company_expenses": -271.71, "net_revenue": 2140.24, "total_miles": 3944.8, "mpg": 4.590},
+  "driver_settlement_totals": {"total_loaded_miles": 3590.1, "total_empty_miles": 245.2, "total_miles": 3835.3, "salary": 1725.89, "deductions_total": -451.99, "total_due": 1273.90, "mpg": 4.590}
+}

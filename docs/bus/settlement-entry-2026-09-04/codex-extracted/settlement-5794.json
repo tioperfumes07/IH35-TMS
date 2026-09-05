@@ -1,0 +1,318 @@
+{
+  "settlement_number": 5794,
+  "start_date": "2026-08-28",
+  "end_date": "2026-09-03",
+  "driver_name": "JOSE ANTONIO VICENTE MARTINEZ",
+  "unit": "T171",
+  "trailer": "10870",
+  "_note": "Trailer changes mid-settlement: Load 13558 used Trlr 10870; Load 13568 used Trlr 10224 (see per-load trailer field). Top-level 'trailer' reflects the first load's trailer.",
+  "loads": [
+    {
+      "load_number": "13558",
+      "customer_name": "AB Global Logistics , Inc",
+      "trailer": "10870",
+      "pickup": {
+        "location_name": "Cold Chain Solutions",
+        "city": "Laredo",
+        "state": "TX",
+        "zip": "78045",
+        "date": "2026-08-28"
+      },
+      "delivery": {
+        "location_name": "Castellini Company, LLC",
+        "city": "WILDER",
+        "state": "KY",
+        "zip": "41076",
+        "date": "2026-08-31"
+      },
+      "linehaul_miles_doc": 1360.5,
+      "linehaul_rate": 2.573,
+      "linehaul_amount": 3500.0,
+      "loaded_miles": 1312.6,
+      "loaded_rate": 0.43,
+      "loaded_amount": 564.42,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": 1,
+      "picks_amount": 0.0,
+      "drops_count": 1,
+      "drops_amount": 0.0,
+      "fuel_rows": [
+        {
+          "date": "2026-08-29",
+          "vendor": "LOVES",
+          "location": "2024A WEST STREET VINTON,LA, LA",
+          "invoice": "99602755",
+          "gallons": 157.147,
+          "cpg": 5.549,
+          "receipt": 872.01,
+          "actual": 872.01
+        },
+        {
+          "date": "2026-08-30",
+          "vendor": "LOVES",
+          "location": "1624BEAR CREEKPIKE COLUMBIA TN, TN",
+          "invoice": "99912182",
+          "gallons": 95.229,
+          "cpg": 5.489,
+          "receipt": 522.71,
+          "actual": 522.71
+        }
+      ],
+      "expense_rows": [
+        {
+          "date": "2026-08-29",
+          "vendor": "LOVES",
+          "location": "21548FM471SNATALIA,TX",
+          "invoice": "2885954",
+          "description": "Fuel-DEF-Diesel Exhaust Fluid",
+          "reimb_flag": null,
+          "comp_exp_flag": "Y",
+          "amount": 30.3
+        },
+        {
+          "date": "2026-08-29",
+          "vendor": "LOVES",
+          "location": "2024A WEST ST VINTON,LA",
+          "invoice": "4110126",
+          "description": "1ASC 19PREMIUM",
+          "reimb_flag": null,
+          "comp_exp_flag": "Y",
+          "amount": 22.14
+        },
+        {
+          "date": "2026-08-29",
+          "vendor": "LOVES",
+          "location": "2024A WEST STREET VINTON,LA",
+          "invoice": "99602755",
+          "description": "Fuel-DEF-Diesel Exhaust Fluid",
+          "reimb_flag": null,
+          "comp_exp_flag": "Y",
+          "amount": 17.99
+        },
+        {
+          "date": "2026-08-30",
+          "vendor": "LOVES",
+          "location": "1624BEAR CREEKPIKE COLUMBIA TN",
+          "invoice": "99912182",
+          "description": "Fuel-DEF-Diesel Exhaust Fluid",
+          "reimb_flag": null,
+          "comp_exp_flag": "Y",
+          "amount": 17.29
+        },
+        {
+          "date": "2026-08-29",
+          "vendor": "LOVES",
+          "location": "21548FM471SNATALIA,TX",
+          "invoice": "2885954",
+          "description": "Driver Reimbursement-Fuel-Def",
+          "reimb_flag": "Drv",
+          "comp_exp_flag": "Y",
+          "amount": 30.3
+        },
+        {
+          "date": "2026-08-29",
+          "vendor": "LOVES",
+          "location": "2024A WEST ST VINTON,LA",
+          "invoice": "4110126",
+          "description": "1ASC ''19 PREMIUM",
+          "reimb_flag": "Drv",
+          "comp_exp_flag": "Y",
+          "amount": 22.14
+        }
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [
+        {
+          "date": null,
+          "vendor": "LOVES",
+          "description": "Driver Reimbursement-Fuel-Def",
+          "amount": 30.3
+        },
+        {
+          "date": null,
+          "vendor": "LOVES",
+          "description": "1ASC ''19 PREMIUM",
+          "amount": 22.14
+        }
+      ],
+      "deduction_rows_from_driver_settlement": [
+        {
+          "date": "2026-09-04",
+          "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
+          "amount": -25.0
+        }
+      ],
+      "_note": "Expense invoice 2885954 (LOVES, '21548FM471SNATALIA,TX' \u2014 a Natalia, TX location) is printed with no corresponding diesel purchase at that same location in this load's FUEL PURCHASES rows (which are at VINTON, LA and COLUMBIA, TN); it does not obviously pair with either diesel fill. Attributed to Load 13558 per the Driver Settlement's explicit 'Load 13558 LOVES Driver Reimbursement-Fuel-Def 30.30' line, but the location mismatch is transcribed as printed, not reconciled. No empty-miles leg is recorded for Load 13558 (first load of the settlement period), so empty_miles=0."
+    },
+    {
+      "load_number": "13568",
+      "customer_name": "AB Global Logistics , Inc",
+      "trailer": "10224",
+      "pickup": {
+        "location_name": "Clemens",
+        "city": "Coldwater",
+        "state": "MI",
+        "zip": "49036",
+        "date": "2026-08-31"
+      },
+      "delivery": {
+        "location_name": "Pacific Start -MS worldwide logistics",
+        "city": "Laredo",
+        "state": "TX",
+        "zip": "78045",
+        "date": "2026-09-03"
+      },
+      "linehaul_miles_doc": 1768.7,
+      "linehaul_rate": 2.262,
+      "linehaul_amount": 4000.0,
+      "loaded_miles": 1464.7,
+      "loaded_rate": 0.43,
+      "loaded_amount": 629.82,
+      "empty_miles": 220.0,
+      "empty_rate": 0.43,
+      "empty_amount": 94.6,
+      "picks_count": 1,
+      "picks_amount": 0.0,
+      "drops_count": 1,
+      "drops_amount": 0.0,
+      "fuel_rows": [
+        {
+          "date": "2026-08-31",
+          "vendor": "LOVES",
+          "location": "LOVES 323, IN",
+          "invoice": "99294159",
+          "gallons": 60.15,
+          "cpg": 5.789,
+          "receipt": 348.21,
+          "actual": 348.21
+        },
+        {
+          "date": "2026-09-01",
+          "vendor": "LOVES",
+          "location": "2461EMARSHALL ST CHARLESTON,MO, MO",
+          "invoice": "99264204",
+          "gallons": 35.128,
+          "cpg": 5.989,
+          "receipt": 210.38,
+          "actual": 210.38
+        },
+        {
+          "date": "2026-09-01",
+          "vendor": "LOVES",
+          "location": "1010N.MAIN PALESTINE,AR, AR",
+          "invoice": "99114360",
+          "gallons": 162.644,
+          "cpg": 5.889,
+          "receipt": 957.81,
+          "actual": 957.81
+        },
+        {
+          "date": "2026-09-02",
+          "vendor": "LOVES",
+          "location": "3158WIH-10SEGUIN,TX, TX",
+          "invoice": "99407649",
+          "gallons": 135.302,
+          "cpg": 5.889,
+          "receipt": 796.79,
+          "actual": 796.79
+        }
+      ],
+      "expense_rows": [
+        {
+          "date": "2026-08-31",
+          "vendor": "LOVES",
+          "location": "2241FAIR ROAD SIDNEY,OH",
+          "invoice": "11012948",
+          "description": "Reefer Trailer-Washout Expense",
+          "reimb_flag": null,
+          "comp_exp_flag": "Y",
+          "amount": 49.32
+        },
+        {
+          "date": "2026-08-31",
+          "vendor": "LOVES",
+          "location": "99294159",
+          "invoice": "99294159",
+          "description": "Fuel-DEF-Diesel Exhaust Fluid",
+          "reimb_flag": null,
+          "comp_exp_flag": "Y",
+          "amount": 38.35
+        },
+        {
+          "date": "2026-08-31",
+          "vendor": "LOVES",
+          "location": "LOVES323",
+          "invoice": "1618908",
+          "description": "Driver Reimbursement-TPE-Scale Expense",
+          "reimb_flag": null,
+          "comp_exp_flag": "Y",
+          "amount": 15.25
+        },
+        {
+          "date": "2026-09-01",
+          "vendor": "LOVES",
+          "location": "1010N.MAIN PALESTINE,AR",
+          "invoice": "99114360",
+          "description": "Fuel-DEF-Diesel Exhaust Fluid",
+          "reimb_flag": null,
+          "comp_exp_flag": "Y",
+          "amount": 20.5
+        },
+        {
+          "date": "2026-09-02",
+          "vendor": "LOVES",
+          "location": "3158WIH-10SEGUIN,TX",
+          "invoice": "99407649",
+          "description": "Fuel-DEF-Diesel Exhaust Fluid",
+          "reimb_flag": null,
+          "comp_exp_flag": "Y",
+          "amount": 23.98
+        }
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [
+        {
+          "date": null,
+          "vendor": "LOVES",
+          "description": "Reefer Trailer-Washout Expense",
+          "amount": 49.32
+        }
+      ],
+      "deduction_rows_from_driver_settlement": [
+        {
+          "date": "2026-09-04",
+          "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
+          "amount": -25.0
+        },
+        {
+          "date": "2026-09-04",
+          "description": "Admin fee - GAS",
+          "amount": -10.0
+        }
+      ],
+      "_note": "Fuel purchase invoice 99264204 (2026-09-01, LOVES, 2461EMARSHALL ST CHARLESTON,MO) has NO matching 'Fuel-DEF' row in the EXPENSES section, unlike this load's other three diesel fills \u2014 printed as-is, not invented. Separately, expense invoice 1618908 ('LOVES323', 'Driver Reimbursement-TPE-Scale Expense', $15.25) is printed on the Company Settlement with Comp.Exp=Y but its Reimb. column is BLANK (not marked 'Drv') despite the 'Driver Reimbursement' wording in its description, AND this $15.25 line does NOT appear anywhere in the Driver Settlement's Reimbursed Expenses section (which totals exactly 101.76 across only 3 other lines). Transcribed into expense_rows with reimb_flag=null as printed; NOT added to reimbursement_rows since the Driver Settlement does not carry it. Empty leg 2026-08-31 from Castellini Company, LLC, WILDER, KY (prior delivery) to this load's pickup is a same-day repositioning move, noted here per instructions. | GAP-FIX (CC-3, seeding): the Company Settlement PDF printed \"Reefer Trailer-Washout Expense\" invoice 11012948 as TWO identical rows (.32 each, one plain, one reimb_flag=Drv) -- the printed 336.88 company-expenses total sums both, but this is the same real event counted from two angles (company cost + driver reimbursement), same convention as the DEF-fuel/1ASC-premium Drv pairs elsewhere in this settlement. Recorded as ONE expense_rows line (the real GL cost) + one reimbursement_rows line (the driver payback), not two expense rows, to avoid inflating the real company expense."
+    }
+  ],
+  "company_settlement_totals": {
+    "invoiced": 7500.0,
+    "quick_pay_pct": 1.5,
+    "quick_pay_amount": -112.5,
+    "driver_salary": -1288.84,
+    "fuel": -3707.91,
+    "company_expenses": -336.88,
+    "net_revenue": 2053.87,
+    "total_miles": 3129.2,
+    "mpg": 4.847
+  },
+  "driver_settlement_totals": {
+    "total_loaded_miles": 2777.3,
+    "total_empty_miles": 220.0,
+    "total_miles": 2997.3,
+    "salary": 1288.84,
+    "deductions_total": -60.0,
+    "total_due": 1330.6,
+    "mpg": 4.847
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "settlement_number": 5787,
+  "start_date": "2026-08-22",
+  "end_date": "2026-08-22",
+  "driver_name": "ALFONSO HIDALGO CHAVEZ",
+  "unit": "T164",
+  "trailer": "0510",
+  "loads": [
+    {
+      "load_number": "13549",
+      "customer_name": "R2X LLC",
+      "pickup": {"location_name": "SAFEWAY, INC. - SAFEWAY, INC.", "city": "DENVER", "state": "CO", "zip": "80216", "date": "2026-08-25"},
+      "delivery": {"location_name": "SAFEWAY, INC. - SAFEWAY, INC.", "city": "ROANOKE", "state": "TX", "zip": "76262", "date": "2026-08-27"},
+      "linehaul_miles_doc": 1294.8,
+      "linehaul_rate": 0.772,
+      "linehaul_amount": 1000.00,
+      "loaded_miles": 745.5,
+      "loaded_rate": 0.45,
+      "loaded_amount": 335.48,
+      "empty_miles": 520.2,
+      "empty_rate": 0.45,
+      "empty_amount": 234.09,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-26", "vendor": "LOVES", "location": "239BYKIN DRIVE MENOHIS,TX, TX", "invoice": "1515248", "gallons": 127.239, "cpg": 5.789, "receipt": 736.59, "actual": 736.59}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-22", "vendor": "FLYING", "location": "16751 EAST 32ND AVE AURORA,CA", "invoice": "5320194", "description": "Bridge & Toll Expenses:OTR-Parking Expense", "reimb_flag": "Drv", "comp_exp_flag": "Y", "amount": 22.00},
+        {"date": "2026-08-25", "vendor": "FLYING", "location": "2495WILLAMS AVE LIMON,CO", "invoice": "1106179", "description": "Scale Expense:OTR-Scale Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 15.25},
+        {"date": "2026-08-26", "vendor": "LOVES", "location": "239BYKIN DRIVE MENOHIS,TX", "invoice": "1515248", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 24.51}
+      ],
+      "additional_pay_rows": [
+        {"date": null, "description": "Driver Pay-Layover-Estancia 22,23,24 De Agosto", "amount": 75.00}
+      ],
+      "reimbursement_rows": [
+        {"date": "2026-08-22", "vendor": "FLYING", "description": "Bridge & Toll Expenses:OTR-Parking Expense", "amount": 22.00}
+      ],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-28", "description": "Driver-Escrow For Claims", "amount": -25.00},
+        {"date": "2026-08-24", "description": "CASH ADVANCE WIRE TRANSFER", "amount": -151.99}
+      ],
+      "_note": "Empty leg dates bracket this load: Empty 2026-08-22 (Fountain, CO) precedes Pickup 2026-08-25 (Denver, CO), and an Empty 2026-08-28 (Laredo, TX) follows Deliver 2026-08-27 (Roanoke, TX). Expense-table rows have no per-load headers in this document; the FLYING 'Bridge & Toll' and 'Scale Expense' rows were assigned to this load by date (2026-08-22, 2026-08-25) and Colorado location matching this load's route."
+    },
+    {
+      "load_number": "13555",
+      "customer_name": "2EMS TRANSPORTATION",
+      "pickup": {"location_name": "2EMS TRANSPORTATION", "city": "LAREDO", "state": "TX", "zip": "78045", "date": "2026-08-19"},
+      "delivery": {"location_name": "Kroger - Peytons Fountain", "city": "Fountain", "state": "CO", "zip": "80817", "date": "2026-08-22"},
+      "linehaul_miles_doc": 1008.9,
+      "linehaul_rate": 3.152,
+      "linehaul_amount": 3180.00,
+      "loaded_miles": 958.1,
+      "loaded_rate": 0.45,
+      "loaded_amount": 431.15,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-20", "vendor": "PILOT", "location": "1101UNIROYAL DRIVE LAREDO,TX, TX", "invoice": "6610677", "gallons": 113.135, "cpg": 5.699, "receipt": 644.76, "actual": 644.76},
+        {"date": "2026-08-21", "vendor": "LOVES", "location": "1001EL MORO RD TRINIDAD,CO, CO", "invoice": "2244651", "gallons": 109.000, "cpg": 5.589, "receipt": 609.20, "actual": 609.20}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-18", "vendor": "DTOPS", "location": null, "invoice": null, "description": "Driver Reimbursement-TPE-Toll Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 13.45},
+        {"date": "2026-08-20", "vendor": "PILOT", "location": "1101UNIROYAL DRIVE LAREDO,TX", "invoice": "6610677", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 24.92},
+        {"date": "2026-08-20", "vendor": "PILOT", "location": "1101UNIROYAL DRIVE LAREDO,TX", "invoice": "6232741", "description": "Scale Expense:OTR-Scale Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 15.25},
+        {"date": "2026-08-21", "vendor": "LOVES", "location": "1001EL MORO RD TRINIDAD,CO", "invoice": "2244651", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 24.82}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [
+        {"date": "2026-08-18", "vendor": "DTOPS", "description": "Driver Reimbursement-TPE-Toll Expense", "amount": 13.45}
+      ],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-28", "description": "Driver-Escrow For Claims", "amount": -25.00},
+        {"date": "2026-08-28", "description": "Admin fee - GAS", "amount": -10.00}
+      ],
+      "_note": "DISCREPANCY: the Company Settlement Expenses table carries a row explicitly described as 'Driver Reimbursement-TPE-Toll Expense' (DTOPS, 2026-08-18, $13.45), which by this schema's Rule 2 qualifies as a driver reimbursement -- but the Driver Settlement's own 'Reimbursed Expenses' section lists ONLY the $22.00 FLYING parking expense (see Load 13549) and totals exactly $22.00, NOT including this $13.45 line. This $13.45 may be an un-paid-out driver reimbursement, or may not actually be owed to the driver; transcribed as printed on both documents without correction. Also: the Expenses table has no per-load headers in this document; all four rows here were assigned to Load 13555 by invoice-number match to this load's fuel purchases (6610677, 2244651) or by date proximity (2026-08-18, immediately before this load's 2026-08-19 pickup)."
+    }
+  ],
+  "company_settlement_totals": {"invoiced": 4180.00, "quick_pay_pct": 0.72, "quick_pay_amount": -30.00, "driver_salary": -1000.72, "fuel": -1990.55, "company_expenses": -140.20, "net_revenue": 943.53, "total_miles": 2303.7, "mpg": 6.594},
+  "driver_settlement_totals": {"total_loaded_miles": 1703.6, "total_empty_miles": 520.2, "total_miles": 2223.8, "salary": 1000.72, "deductions_total": -211.99, "total_due": 885.73, "mpg": 6.594},
+  "_note": "Company Settlement header prints Start Date and End Date as the SAME single day (2026-08-22), but the two loads on this settlement actually span 2026-08-19 (Load 13555 pickup) through 2026-08-28 (Load 13549 final empty/deduction dates) -- the header date range does not cover the full activity on the document. Transcribed the header dates exactly as printed (used here as start_date/end_date) without correction. Separately: Company_Settlement_5787.pdf's own footer is dated 2026-08-30, while its paired Driver_Settlement_5787.pdf and all other settlements in this batch are footer-dated 2026-09-04 -- worth confirming this Company Settlement PDF is the current/final version and not an older regeneration."
+}

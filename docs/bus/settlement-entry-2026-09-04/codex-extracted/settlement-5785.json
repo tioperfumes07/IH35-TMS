@@ -1,0 +1,119 @@
+{
+  "settlement_number": 5785,
+  "start_date": "2026-08-17",
+  "end_date": "2026-08-26",
+  "driver_name": "Genaro Guerrero Chavez",
+  "unit": "T152",
+  "trailer": "10870",
+  "loads": [
+    {
+      "load_number": "13531",
+      "customer_name": "Refrigerx Transportation LLC",
+      "pickup": {"location_name": "Cold Chain Solutions", "city": "Laredo", "state": "TX", "zip": "78045", "date": "2026-08-17"},
+      "delivery": {"location_name": "Metafoods, LLC/ Freezpack Logistics", "city": "Hialeah", "state": "FL", "zip": "33018", "date": "2026-08-19"},
+      "linehaul_miles_doc": 1528.9,
+      "linehaul_rate": 2.812,
+      "linehaul_amount": 4300.00,
+      "loaded_miles": 1481.8,
+      "loaded_rate": 0.45,
+      "loaded_amount": 666.81,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-17", "vendor": "LOVES", "location": "21548FM471S NATALIA,TX, TX", "invoice": "1845295", "gallons": 193.631, "cpg": 5.489, "receipt": 1062.84, "actual": 1062.84},
+        {"date": "2026-08-19", "vendor": "LOVES", "location": "2615WC-48 BUSHNELL,FL, FL", "invoice": "1045960", "gallons": 172.554, "cpg": 5.689, "receipt": 981.66, "actual": 981.66}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-17", "vendor": "LOVES", "location": "21548FM471S NATALIA,TX", "invoice": "1845295", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 20.60}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-26", "description": "Driver-Escrow For Claims", "amount": -25.00},
+        {"date": "2026-08-18", "description": "CASH ADVANCE WIRE TRANSFER", "amount": -301.99}
+      ],
+      "_note": "Company Settlement fuel table lists a second diesel purchase for this load (2026-08-19, LOVES, BUSHNELL,FL, invoice 1045960, $981.66) but no matching Fuel-DEF-Diesel Exhaust Fluid expense line exists for that invoice on the Expenses table (only invoice 1845295 has a paired DEF row). Transcribed as printed; not invented."
+    },
+    {
+      "load_number": "13538",
+      "customer_name": "Jericho freight LLC",
+      "pickup": {"location_name": "Feek Family", "city": "FORT PIERCE", "state": "FL", "zip": "34945", "date": "2026-08-21"},
+      "delivery": {"location_name": "Mountain Tomato", "city": "FOREST PARK", "state": "GA", "zip": "30297", "date": "2026-08-22"},
+      "linehaul_miles_doc": 689.9,
+      "linehaul_rate": 1.160,
+      "linehaul_amount": 800.00,
+      "loaded_miles": 561.1,
+      "loaded_rate": 0.45,
+      "loaded_amount": 252.50,
+      "empty_miles": 126.9,
+      "empty_rate": 0.45,
+      "empty_amount": 57.11,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 2,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-21", "vendor": "LOVES", "location": "I-75& SOUTHWELL BULEVARD TIFTO, GA", "invoice": "99389982", "gallons": 155.015, "cpg": 5.359, "receipt": 830.73, "actual": 830.73},
+        {"date": "2026-08-18", "vendor": "LOVES", "location": "2510HWY 231 COTTONDALE,FL, FL", "invoice": "2466361", "gallons": 41.071, "cpg": 5.289, "receipt": 217.22, "actual": 217.22}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-21", "vendor": null, "location": null, "invoice": null, "description": "Warehouse-Lumper Fee Expense COBRO POR ENTRAR A DESCARGA", "reimb_flag": "Drv", "comp_exp_flag": "Y", "amount": 10.00},
+        {"date": "2026-08-21", "vendor": "LOVES", "location": "I-75& SOUTHWELL BULEVARD TIFTO", "invoice": "99389982", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 29.67},
+        {"date": "2026-08-18", "vendor": "LOVES", "location": "2510HWY 231 COTTONDALE,FL", "invoice": "2466361", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 26.51}
+      ],
+      "additional_pay_rows": [
+        {"date": null, "description": "Driver Pay-Extra Delivery/Drop", "amount": 25.00}
+      ],
+      "reimbursement_rows": [
+        {"date": "2026-08-21", "vendor": null, "description": "Warehouse-Lumper Fee Expense COBRO POR ENTRAR A DESCARGA", "amount": 10.00}
+      ],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-26", "description": "Driver-Escrow For Claims", "amount": -25.00}
+      ],
+      "_note": "Multi-stop load: one pickup (FORT PIERCE, FL) followed by TWO deliveries per the Driver Settlement (PLANT CITY, FL 125.5mi. then FOREST PARK, GA 435.6mi.) matching the '2 Drops' on the Company Settlement; primary delivery endpoint captured here is the LAST delivery (FOREST PARK, GA). Also: the LOVES/COTTONDALE,FL fuel purchase is dated 2026-08-18, which precedes this load's own Empty date (2026-08-19, Hialeah FL) and Pickup date (2026-08-21) as printed; transcribed exactly as shown, not corrected."
+    },
+    {
+      "load_number": "13543",
+      "customer_name": "PFL Logistics CO.",
+      "pickup": {"location_name": "AMERICOLD", "city": "ALBERTIVILLE", "state": "AL", "zip": "35950", "date": "2026-08-24"},
+      "delivery": {"location_name": "Performance Food Group", "city": "Temple", "state": "TX", "zip": "76504", "date": "2026-08-26"},
+      "linehaul_miles_doc": 1251.2,
+      "linehaul_rate": 1.998,
+      "linehaul_amount": 2500.00,
+      "loaded_miles": 776.3,
+      "loaded_rate": 0.45,
+      "loaded_amount": 349.34,
+      "empty_miles": 439.8,
+      "empty_rate": 0.45,
+      "empty_amount": 197.91,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-26", "vendor": "LOVES", "location": "21548FM471S NATALIA,TX, TX", "invoice": "1848853", "gallons": 105.489, "cpg": 5.549, "receipt": 585.36, "actual": 585.36},
+        {"date": "2026-08-25", "vendor": "LOVES", "location": "6138LAKE NORRIS ROAD LAKE MS, MS", "invoice": "99554605", "gallons": 157.962, "cpg": 5.649, "receipt": 892.33, "actual": 892.33}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-26", "vendor": "LOVES", "location": "21548FM471S NATALIA,TX", "invoice": "1848853", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 29.43},
+        {"date": "2026-08-25", "vendor": "LOVES", "location": "6138LAKE NORRIS ROAD LAKE MS", "invoice": "99554605", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 29.39}
+      ],
+      "additional_pay_rows": [
+        {"date": null, "description": "Driver Pay-Layover-Estancia 22,23y24 de Agosto", "amount": 75.00}
+      ],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-26", "description": "Driver-Escrow For Claims", "amount": -25.00},
+        {"date": "2026-08-26", "description": "Admin fee - GAS", "amount": -10.00}
+      ]
+    }
+  ],
+  "company_settlement_totals": {"invoiced": 7600.00, "quick_pay_pct": 0.85, "quick_pay_amount": -64.50, "driver_salary": -1523.67, "fuel": -4570.14, "company_expenses": -145.60, "net_revenue": 1196.09, "total_miles": 3470.0, "mpg": 4.202},
+  "driver_settlement_totals": {"total_loaded_miles": 2819.2, "total_empty_miles": 566.7, "total_miles": 3385.9, "salary": 1523.67, "deductions_total": -386.99, "total_due": 1246.68, "mpg": 4.202},
+  "_note": "Company Settlement Revenue section shows 'Additional Driver Pay 1.32% -100.00' which is not a field in this schema's company_settlement_totals; it is fully captured via the additional_pay_rows on Load 13538 ($25.00) and Load 13543 ($75.00), which sum to $100.00, matching."
+}
