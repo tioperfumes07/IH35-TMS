@@ -51,6 +51,7 @@ describe("SamsaraCreateGeofenceHandler", () => {
   it("POSTs WF-051 radius address when Samsara is configured", async () => {
     const { SamsaraCreateGeofenceHandler } = await import("../samsara-create-geofence.handler.js");
     const handler = new SamsaraCreateGeofenceHandler();
+    const query = vi.fn().mockResolvedValue({ rows: [{ id: GEOFENCE }] });
     const result = await handler.deliver(
       {
         operating_company_id: OPCO,
@@ -61,7 +62,7 @@ describe("SamsaraCreateGeofenceHandler", () => {
         label: "Laredo, TX",
         actor_user_id: ACTOR,
       },
-      { client: { query: vi.fn() } as never, eventId: "e1", instanceId: "t", log: () => {} }
+      { client: { query } as never, eventId: "e1", instanceId: "t", log: () => {} }
     );
     expect(result?.message).toBe("samsara_geofence_created:samsara-addr-1");
     expect(createAddress).toHaveBeenCalledWith(
@@ -72,7 +73,28 @@ describe("SamsaraCreateGeofenceHandler", () => {
         radiusMeters: 76,
       })
     );
+    expect(query).toHaveBeenCalledWith(
+      expect.stringContaining("UPDATE geo.geofences"),
+      [GEOFENCE, OPCO, "samsara-addr-1", 27.5, -99.5, 76]
+    );
     expect(appendCrudAudit).toHaveBeenCalled();
+  });
+
+  it("fails delivery when the company-scoped external-id projection is not persisted", async () => {
+    const { SamsaraCreateGeofenceHandler } = await import("../samsara-create-geofence.handler.js");
+    const handler = new SamsaraCreateGeofenceHandler();
+    await expect(handler.deliver(
+      {
+        operating_company_id: OPCO,
+        geofence_id: GEOFENCE,
+        latitude: 27.5,
+        longitude: -99.5,
+        label: "Laredo, TX",
+        actor_user_id: ACTOR,
+      },
+      { client: { query: vi.fn().mockResolvedValue({ rows: [] }) } as never, eventId: "e3", instanceId: "t", log: () => {} }
+    )).rejects.toThrow("samsara_geofence_projection_not_persisted");
+    expect(appendCrudAudit).not.toHaveBeenCalled();
   });
 
   it("skips when Samsara is not configured", async () => {

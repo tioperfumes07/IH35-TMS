@@ -70,6 +70,30 @@ export class SamsaraCreateGeofenceHandler implements OutboxEventHandler {
         radiusMeters: SAMSARA_GEOFENCE_RADIUS_METERS,
         geofenceId,
       });
+      const projection = await ctx.client.query<{ id: string }>(
+        `UPDATE geo.geofences
+         SET samsara_address_id = $3,
+             external_source = 'samsara',
+             external_ref = $3,
+             center_lat = $4,
+             center_lng = $5,
+             radius_m = $6,
+             updated_at = now()
+         WHERE id = $1::uuid
+           AND operating_company_id = $2::uuid
+         RETURNING id::text AS id`,
+        [
+          geofenceId,
+          operatingCompanyId,
+          created.id,
+          latitude,
+          longitude,
+          SAMSARA_GEOFENCE_RADIUS_METERS,
+        ]
+      );
+      if (!projection.rows[0]?.id) {
+        throw new Error("samsara_geofence_projection_not_persisted");
+      }
       const actorRaw = String(payload.actor_user_id ?? "").trim();
       const actorUserId = /^[0-9a-fA-F-]{36}$/.test(actorRaw)
         ? actorRaw
