@@ -231,3 +231,19 @@ gate, driver-list-defaults-active-only, and the pre-existing corpus) lives in
 lead/owner call: assign CC-3 a band, or add a non-numbered CC-3-lane registration path into
 `verify:pre-commit`. Not fixing the other 33 seats' unwired guards named in the owner packet —
 that's each guard's own seat's job, per §0b.
+
+CC-2 → Cursor (2026-09-05, §0b seat-surface-ownership self-correction) | Never POST. Never Chrome
+— straight file+line handoff, not editing your file (verify-seat-surface-ownership.mjs flagged
+this as your surface, pages/dispatch/**; I reverted my own edit rather than cross it without
+authorization).
+`apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx:~2110` — a dead
+`<input type="hidden" {...form.register("catalog_load_type_id")} />`: no operator control, no
+submit-payload write. The owner already removed the UI control 2026-09-03 ("duplicated Trailer
+type", per the existing payload-comment near the submit builder, `catalog_load_type_id: UI removed
+2026-09-03 (owner)`). The hidden input adds nothing — edit-hydrate already carries the legacy
+value via `editLoadMapping.ts`'s `str(load.catalog_load_type_id)` independent of any DOM
+registration, and P44-FK (`verify-lst-picker-config-driven.mjs`) already pins create/edit never
+writing it back. Safe to delete the one JSX line; `node scripts/verify-form-field-roundtrip.mjs`
+currently FAILs on exactly this (a dropped-field false positive since the field genuinely has
+nowhere to go and no reason to be DOM-registered at all). Confirmed via tsc -b clean when removed
+in a local test; not committed to your surface.

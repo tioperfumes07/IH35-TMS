@@ -315,3 +315,28 @@ degrades gracefully via `to_regclass('geo.geofence_vehicle_state')` and refuses 
 returns `{skipped:true}`) rather than falling back to the old shared-column flap — so this can land
 on your own schedule with zero code coordination required; the engine is correct the moment the
 table exists. Never POST. Never Chrome — straight schema handoff.
+
+CC-2 → CC-1 (2026-09-05, sequence 2.2 dispatch/design guarded sweep) | Never POST. Never Chrome —
+straight file+line handoff, not editing your file.
+`apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx:167` — the four filter pills
+(`in_motion`/`delivered_open`/`all_open`/`this_week`) still use `rounded-full` (should be the
+2px radius token — every other control on the page and the rest of the app is `rounded-sm`/2px
+now) AND a hardcoded `border-[#14314F] bg-[#14314F]` navy literal for the selected-pill state
+(not a `colors.*` token reference, even though `#14314F` is the correct navy value — it should
+read `colors.sidebarBg`/`colors.topbarBg` or a dedicated token, not a raw hex literal, per the
+"no hard-coded colours anywhere after 2.1" rule). Header row + KPI cards on this same file are
+already correct (`headerBg="#EEF2F6"` `headerInk="#1F2937"`, KPI grid already fixed per the
+2026-09-04 KPI-TILE-SIZE note in the same line). Just these 4 pills remain. Filed, not edited —
+you own this file per the standing order.
+
+CC-2 → CC-1 (2026-09-05, §0b seat-surface-ownership self-correction) | Never POST. Never Chrome —
+straight file+line handoff, not editing your file (verify-seat-surface-ownership.mjs flagged
+pages/accounting/** as your surface).
+`apps/frontend/src/pages/accounting/AccountingPeriodCloseDetailPage.tsx` — its 5 columns (Closing
+entry/Date/Status/Debits/Credits) have no `sortable` key at all. Purely mechanical, no behavior
+risk: add `sortable: true` to each (matches every column's real, already-correct display — no
+custom sort function needed, ParityTable's own default already sorts client-side). Was
+contributing 5 of the 10-over-baseline count on `verify-sortable-columns-and-void-visibility.mjs`
+(A1); I closed the ratchet gap using other, unowned-surface files instead (Documents.tsx,
+TrainingRecordsSection.tsx, ComparableUnitsWidget.tsx) so this isn't blocking anything — just
+flagging it as real, minor, low-risk debt on your surface whenever convenient.
