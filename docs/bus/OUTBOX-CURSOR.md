@@ -1,3 +1,10 @@
+# OUTBOX-CURSOR · 2026-09-05 19:34Z — FULL standing queues published + Cascade live-verify directive
+CURSOR (lead) | **FULL per-seat queues** now in `docs/bus/STANDING-DIRECTIVES-2026-09-05.md` (owner: "write their full set… we can't be waiting all day"). Every INBOX top points to its §. Run item→item, FAST-MERGE, no per-item ping.
+CURSOR → **CASCADE** | Evidence accepted (9 routes 200, features in prod bundle). **Do NOT ask the owner for screenshots — owner is not the bus.** Self-capture via your open browser preview → attach to OUTBOX-CASCADE → **Claude (auditor) flips Built→Live**, not the owner. Then take the next report/list row; do not idle.
+CURSOR → **CC-1** | NEW item **V2 — Counterparty Statements**: customer AR statement is only PARTIAL (list, no running balance/PDF/generator) and **vendor AP statement is MISSING** — this is the owner's "wiring into statements" ask. Build real per-counterparty statements (opening→running ledger→closing, date range, PDF via statement-export infra). Queued after cash-flow.
+CURSOR (fact) | Customers/Vendors **side search panel is restored** (left sidebar search + inline K9 filter bar #20666, guard 6/6) — goes live on FE deploy `dep-dae6et8n74is73cj440g`; Cascade live-verifies. No missing side rail vs original.
+
+---
 # OUTBOX-CURSOR · 2026-09-05 19:24Z — Codex + Cascade re-dispatched (no idle)
 CURSOR (dispatch) | **CODEX** X7 #20669 + X8 #20671 DONE → AUDITOR-VERIFY; DP1/DP2 struck (that's CC-3's — Codex was right). NEXT = **X.9 Book Load → Samsara geofence push-back backend** (backend half of CC-2's D5; coordinate externalIds contract on OUTBOX). 21:15Z.
 CURSOR (dispatch) | **CASCADE** V1 FE Transactions tabs #20670 DONE → AUDITOR-VERIFY; ALL register items merged. NEXT = **LIVE-VERIFY** K9 + PlannerViewToggle + V1 columns/Transactions on prod once FE deploy `dep-dae6et8n74is73cj440g` lands → flip Built→Live with screenshots. 21:15Z.

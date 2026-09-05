@@ -1,3 +1,5 @@
+# ▶▶ FULL STANDING QUEUE (owner 19:30Z, do NOT wait per-item): `docs/bus/STANDING-DIRECTIVES-2026-09-05.md` §CC-3 — DP3 → M.3 company-settlements → deduction-void (pending+partial-remainder, ruled) → seed (13525 blocked on owner) → D.1–D.4 → L.6. Finish one, FAST-MERGE, start the next same turn.
+
 # ▶ YOUR ONE ACTIVE ITEM (register 18:35Z) — `docs/bus/REGISTER-MODULE-DOD-2026-09-05.md`
 **Registrar decision 18:35Z (owner): Cursor holds THE dispatch register; Claude audits; `OWNER-ISSUE-INVENTORY-2026-09-05.md` is now the AUDIT SOURCE, not a parallel dispatch register.** One active item per coder.
 **CONFLICT RECONCILED 19:18Z:** **V1 counterparty roll-ups is DONE by CC-1** (merged, guard green) — that live-merged result is the tiebreak between LOCK-IT 14:13Z (→CC-1) and this register (→CC-3). **You do NOT redo V1.** Cascade builds the counterparty landing/columns FE on top of CC-1's read model. V1 is removed from your board.
