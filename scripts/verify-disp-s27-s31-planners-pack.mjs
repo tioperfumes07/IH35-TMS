@@ -116,7 +116,7 @@ if (SELFTEST) {
   ];
   for (const [relativePath, needle] of cases) {
     const orig = read(relativePath);
-    const planted = orig.replace(needle, "__PLANTED_PLANNER_DEFECT__");
+    const planted = orig.replaceAll(needle, "__PLANTED_PLANNER_DEFECT__");
     if (planted === orig) {
       console.error(`${LABEL} SELFTEST FAILED: inert mutation ${relativePath}`);
       process.exit(1);

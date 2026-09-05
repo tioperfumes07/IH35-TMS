@@ -151,9 +151,15 @@ export function UnifiedTimelinePlanner() {
         idle,
         name: <EntityLink kind="driver" id={driver.id} label={entityLabel(driver.name, driver.id, "Driver")} />,
         secondary: sorted[0] ? <LoadCustomerLink load={sorted[0]} /> : null,
-        unit: driver.unit_number ? (
-          <EntityLinkOrTombstone kind="unit" id={driver.unit_id} name={driver.unit_number} noun="Unit" />
-        ) : null,
+        unit: (
+          <span data-testid={`timeline-util-${driver.id}`}>
+            {driver.unit_number ? (
+              <EntityLinkOrTombstone kind="unit" id={driver.unit_id} name={driver.unit_number} noun="Unit" />
+            ) : (
+              "—"
+            )}
+          </span>
+        ),
         action: driver.unit_id ? (
           <button
             type="button"
