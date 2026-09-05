@@ -18,6 +18,12 @@ import { reverseSettlementBillPaymentInClientTx } from "../accounting/settlement
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { canVoid, unmatchBankTransactionById } from "../accounting/void.service.js";
 import { postNegativeSettlementLiabilityIfNeeded } from "./negative-settlement-liability.service.js";
+import {
+  settlementEarningsSumSql,
+  settlementDeductionsSumSql,
+  settlementReimbursementsSumSql,
+  isPreCloseStatus,
+} from "./settlement-line-buckets.js";
 
 const settlementStatusSchema = z.enum([
   "draft",
@@ -246,7 +252,28 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
               JOIN mdata.loads l
                 ON l.id = linked.load_id
                AND l.operating_company_id = s.operating_company_id
-            ) AS load_links
+            ) AS load_links,
+            -- SET-ACCRUAL (owner 2026-09-05): while a settlement is still open the header's gross_pay
+            -- is 0 (it is only written on close by aggregateSettlementTotals). The list read must show
+            -- the line-derived ACCRUAL so the owner sees real money ($34,356.30 across 10 open settlements
+            -- on USMCA, not $0.00) before deciding to close each one. Same canonical buckets as the
+            -- close aggregation (./settlement-line-buckets.ts), so the open accrual equals the number
+            -- committed on close. is_active = true mirrors the close's own soft-delete filter.
+            (
+              SELECT ${settlementEarningsSumSql("sl")}
+              FROM driver_finance.settlement_lines sl
+              WHERE sl.settlement_id = s.id AND sl.is_active = true
+            ) AS accrued_gross,
+            (
+              SELECT ${settlementDeductionsSumSql("sl")}
+              FROM driver_finance.settlement_lines sl
+              WHERE sl.settlement_id = s.id AND sl.is_active = true
+            ) AS accrued_deductions,
+            (
+              SELECT ${settlementReimbursementsSumSql("sl")}
+              FROM driver_finance.settlement_lines sl
+              WHERE sl.settlement_id = s.id AND sl.is_active = true
+            ) AS accrued_reimbursements
           FROM views.driver_settlement_with_debt v
           -- CLS-JOIN-ENTITY-UNSCOPED: same "where[0] already scopes s, guard can't see the array"
           -- note as the count query above; redundant AND s.operating_company_id = $1::uuid added
@@ -263,8 +290,23 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       const rows = await Promise.all(
         rowsRes.rows.map(async (row: any) => {
           const debt = await recomputeDebtSync(client, String(row.driver_id));
+          // SET-ACCRUAL: for a still-open settlement, show the line-derived accrual (the stored header
+          // gross_pay is 0 until close); for a closed/paid one, keep the committed stored value.
+          const preClose = isPreCloseStatus(row.status);
+          const accruedGross = Number(row.accrued_gross ?? 0);
+          const accruedDeductions = Number(row.accrued_deductions ?? 0);
+          const accruedReimbursements = Number(row.accrued_reimbursements ?? 0);
+          const grossPay = preClose ? accruedGross : Number(row.gross_pay ?? 0);
+          const deductionsTotal = preClose ? accruedDeductions : Number(row.deductions_total ?? 0);
+          const reimbursementsTotal = preClose ? accruedReimbursements : Number(row.reimbursements_total ?? 0);
+          const netPay = preClose ? grossPay - deductionsTotal + reimbursementsTotal : Number(row.net_pay ?? 0);
           return {
             ...row,
+            gross_pay: grossPay,
+            deductions_total: deductionsTotal,
+            reimbursements_total: reimbursementsTotal,
+            net_pay: netPay,
+            accrued: preClose,
             display_id: row.display_id ?? null,
             load_count: Number(row.load_count ?? 0),
             load_ids: Array.isArray(row.load_ids) ? (row.load_ids as unknown[]).map(String) : [],
@@ -388,7 +430,28 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
               JOIN mdata.loads l
                 ON l.id = linked.load_id
                AND l.operating_company_id = s.operating_company_id
-            ) AS load_links
+            ) AS load_links,
+            -- SET-ACCRUAL (owner 2026-09-05): while a settlement is still open the header's gross_pay
+            -- is 0 (it is only written on close by aggregateSettlementTotals). The list read must show
+            -- the line-derived ACCRUAL so the owner sees real money ($34,356.30 across 10 open settlements
+            -- on USMCA, not $0.00) before deciding to close each one. Same canonical buckets as the
+            -- close aggregation (./settlement-line-buckets.ts), so the open accrual equals the number
+            -- committed on close. is_active = true mirrors the close's own soft-delete filter.
+            (
+              SELECT ${settlementEarningsSumSql("sl")}
+              FROM driver_finance.settlement_lines sl
+              WHERE sl.settlement_id = s.id AND sl.is_active = true
+            ) AS accrued_gross,
+            (
+              SELECT ${settlementDeductionsSumSql("sl")}
+              FROM driver_finance.settlement_lines sl
+              WHERE sl.settlement_id = s.id AND sl.is_active = true
+            ) AS accrued_deductions,
+            (
+              SELECT ${settlementReimbursementsSumSql("sl")}
+              FROM driver_finance.settlement_lines sl
+              WHERE sl.settlement_id = s.id AND sl.is_active = true
+            ) AS accrued_reimbursements
           FROM views.driver_settlement_with_debt v
           -- CLS-JOIN-ENTITY-UNSCOPED: same "where[0] already scopes s, guard can't see the array"
           -- note as the count query above; redundant AND s.operating_company_id = $1::uuid added
@@ -403,8 +466,23 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       const rows = await Promise.all(
         rowsRes.rows.map(async (row: any) => {
           const debt = await recomputeDebtSync(client, String(row.driver_id));
+          // SET-ACCRUAL: for a still-open settlement, show the line-derived accrual (the stored header
+          // gross_pay is 0 until close); for a closed/paid one, keep the committed stored value.
+          const preClose = isPreCloseStatus(row.status);
+          const accruedGross = Number(row.accrued_gross ?? 0);
+          const accruedDeductions = Number(row.accrued_deductions ?? 0);
+          const accruedReimbursements = Number(row.accrued_reimbursements ?? 0);
+          const grossPay = preClose ? accruedGross : Number(row.gross_pay ?? 0);
+          const deductionsTotal = preClose ? accruedDeductions : Number(row.deductions_total ?? 0);
+          const reimbursementsTotal = preClose ? accruedReimbursements : Number(row.reimbursements_total ?? 0);
+          const netPay = preClose ? grossPay - deductionsTotal + reimbursementsTotal : Number(row.net_pay ?? 0);
           return {
             ...row,
+            gross_pay: grossPay,
+            deductions_total: deductionsTotal,
+            reimbursements_total: reimbursementsTotal,
+            net_pay: netPay,
+            accrued: preClose,
             display_id: row.display_id ?? null,
             load_count: Number(row.load_count ?? 0),
             load_ids: Array.isArray(row.load_ids) ? (row.load_ids as unknown[]).map(String) : [],
