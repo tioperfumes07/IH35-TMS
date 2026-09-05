@@ -3,6 +3,7 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { syncSamsaraDriversMaster, syncSamsaraVehiclesMaster, syncSamsaraTrailersMaster } from "../integrations/samsara/samsara-master-sync.service.js";
+import { listSamsaraIngestionTenantIds } from "../integrations/samsara/ingestion-tenants.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 
 let initialized = false;
@@ -27,16 +28,7 @@ async function appendCronAuditEvent(
 }
 
 async function listActiveTenantIds(client: DbClient): Promise<string[]> {
-  const res = await client.query<{ operating_company_id: string }>(
-    `
-      SELECT id::text AS operating_company_id
-      FROM org.companies
-      WHERE is_active = true
-        AND deactivated_at IS NULL
-      ORDER BY id
-    `
-  );
-  return res.rows.map((row) => row.operating_company_id);
+  return listSamsaraIngestionTenantIds(client);
 }
 
 async function isSamsaraEnabledForTenant(client: DbClient, operatingCompanyId: string): Promise<boolean> {
