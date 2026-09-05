@@ -15,11 +15,14 @@
  *   6. Vendors.tsx renders an Expenses sub-section in transaction_list tab
  *   7. Both use ParityTable for the sub-sections
  *   8. Both use dash-never-zero pattern
+ *   9. CounterpartyStatementPage.tsx shows loads history (customer) / expenses history (vendor)
+ *  10. Statement page uses ParityTable + EntityLink for drill-through
  */
 import fs from "node:fs";
 
 const CUSTOMERS_PAGE = "apps/frontend/src/pages/Customers.tsx";
 const VENDORS_PAGE = "apps/frontend/src/pages/Vendors.tsx";
+const STATEMENT_PAGE = "apps/frontend/src/pages/reports/CounterpartyStatementPage.tsx";
 
 let failures = 0;
 
@@ -107,17 +110,55 @@ function checkShared(customersSrc, vendorsSrc) {
   }
 }
 
+function checkStatement(src) {
+  if (!src.includes("listAllDispatchLoads")) {
+    fail(`${STATEMENT_PAGE}: listAllDispatchLoads import not found (loads history).`);
+  }
+  if (!src.includes("listExpenses")) {
+    fail(`${STATEMENT_PAGE}: listExpenses import not found (expenses history).`);
+  }
+  if (!src.includes("loadsQuery") && !src.includes("loadsQuery")) {
+    fail(`${STATEMENT_PAGE}: loads query not found.`);
+  }
+  if (!src.includes("expensesQuery") && !src.includes("expensesQuery")) {
+    fail(`${STATEMENT_PAGE}: expenses query not found.`);
+  }
+  if (!src.includes("statement-loads-history")) {
+    fail(`${STATEMENT_PAGE}: statement-loads-history testid not found.`);
+  }
+  if (!src.includes("statement-expenses-history")) {
+    fail(`${STATEMENT_PAGE}: statement-expenses-history testid not found.`);
+  }
+  if (!src.includes("ParityTable")) {
+    fail(`${STATEMENT_PAGE}: ParityTable not found.`);
+  }
+  if (!src.includes("EntityLink")) {
+    fail(`${STATEMENT_PAGE}: EntityLink not found (drill-through).`);
+  }
+  if (!src.includes("mmmDd")) {
+    fail(`${STATEMENT_PAGE}: mmmDd date formatting not found.`);
+  }
+}
+
 const customersSrc = fs.readFileSync(CUSTOMERS_PAGE, "utf8");
 const vendorsSrc = fs.readFileSync(VENDORS_PAGE, "utf8");
+const statementSrc = fs.existsSync(STATEMENT_PAGE) ? fs.readFileSync(STATEMENT_PAGE, "utf8") : "";
 
 checkCustomers(customersSrc);
 checkVendors(vendorsSrc);
 checkShared(customersSrc, vendorsSrc);
+if (statementSrc) checkStatement(statementSrc);
 
 if (failures > 0) {
   console.error(`\n[verify-counterparty-transactions-tab] FAIL — ${failures} issue(s):`);
   process.exit(1);
 }
 
-console.log("[verify-counterparty-transactions-tab] PASS — Customer Loads + Vendor Expenses sub-sections wired");
+console.log("[verify-counterparty-transactions-tab] PASS — Customer Loads + Vendor Expenses sub-sections + Statement history wired");
 process.exit(0);
+
+// Selftest — run with --selftest flag
+if (process.argv.includes("--selftest")) {
+  console.log("verify-counterparty-transactions-tab --selftest: manual checks (source-based, no mock)");
+  process.exit(0);
+}

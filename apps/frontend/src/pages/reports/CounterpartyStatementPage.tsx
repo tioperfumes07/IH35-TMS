@@ -6,6 +6,10 @@ import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getCustomerStatementOfAccount, getVendorStatementOfAccount, type CounterpartyStatementLine } from "../../api/reports";
+import { listAllDispatchLoads, type DispatchLoad } from "../../api/dispatch";
+import { listExpenses, type ExpenseListRow } from "../../api/accounting";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
 import { formatUsdCents } from "../../lib/money";
 import { mmmDd } from "../../lib/formatDate";
@@ -49,6 +53,50 @@ function typeLabel(type: CounterpartyStatementLine["type"]) {
   }
 }
 
+type LoadRow = Pick<DispatchLoad, "id" | "load_number" | "status" | "pickup_scheduled_at" | "scheduled_delivery_date" | "rate_total_cents">;
+
+const loadColumns: Array<ParityColumn<LoadRow>> = [
+  {
+    key: "load_number",
+    label: "Load #",
+    render: (load) => <EntityLink kind="load" id={load.id} label={load.load_number ?? "—"} />,
+  },
+  { key: "status", label: "Status", render: (load) => load.status ?? "—" },
+  {
+    key: "pickup_scheduled_at",
+    label: "Pickup",
+    render: (load) => load.pickup_scheduled_at ? mmmDd(load.pickup_scheduled_at) : "—",
+  },
+  {
+    key: "scheduled_delivery_date",
+    label: "Delivery",
+    render: (load) => load.scheduled_delivery_date ? mmmDd(load.scheduled_delivery_date) : "—",
+  },
+  {
+    key: "rate_total_cents",
+    label: "Rate",
+    render: (load) => load.rate_total_cents != null ? formatUsdCents(load.rate_total_cents) : "—",
+  },
+];
+
+type ExpenseRow = Pick<ExpenseListRow, "id" | "transaction_date" | "memo" | "total_amount_cents" | "status" | "load_number">;
+
+const expenseColumns: Array<ParityColumn<ExpenseRow>> = [
+  {
+    key: "transaction_date",
+    label: "Date",
+    render: (exp) => exp.transaction_date ? mmmDd(exp.transaction_date) : "—",
+  },
+  { key: "memo", label: "Description", render: (exp) => exp.memo ?? "—" },
+  { key: "load_number", label: "Load", render: (exp) => exp.load_number ?? "—" },
+  {
+    key: "total_amount_cents",
+    label: "Amount",
+    render: (exp) => exp.total_amount_cents != null ? formatUsdCents(Number(exp.total_amount_cents)) : "—",
+  },
+  { key: "status", label: "Status", render: (exp) => exp.status ?? "—" },
+];
+
 export function CounterpartyStatementView({ kind }: { kind: "customer" | "vendor" }) {
   const { id } = useParams<{ id: string }>();
   const counterpartyId = id ?? "";
@@ -64,6 +112,21 @@ export function CounterpartyStatementView({ kind }: { kind: "customer" | "vendor
         ? getCustomerStatementOfAccount({ operating_company_id: companyId, customer_id: counterpartyId, from_date: range.start, to_date: range.end })
         : getVendorStatementOfAccount({ operating_company_id: companyId, vendor_id: counterpartyId, from_date: range.start, to_date: range.end }),
     enabled: Boolean(companyId) && Boolean(counterpartyId),
+    retry: false,
+  });
+
+  // Transaction history — loads for customers, expenses for vendors
+  const loadsQuery = useQuery({
+    queryKey: ["reports", "counterparty-statement", "loads", companyId, counterpartyId],
+    queryFn: () => listAllDispatchLoads({ operating_company_id: companyId, view: "home", status: [], customer: counterpartyId }),
+    enabled: Boolean(companyId) && Boolean(counterpartyId) && kind === "customer",
+    retry: false,
+  });
+
+  const expensesQuery = useQuery({
+    queryKey: ["reports", "counterparty-statement", "expenses", companyId, counterpartyId],
+    queryFn: () => listExpenses(companyId, { vendor_uuid: counterpartyId }),
+    enabled: Boolean(companyId) && Boolean(counterpartyId) && kind === "vendor",
     retry: false,
   });
 
@@ -152,6 +215,34 @@ export function CounterpartyStatementView({ kind }: { kind: "customer" | "vendor
         </div>
       ) : query.isLoading ? (
         <p className="text-xs text-gray-500">Loading…</p>
+      ) : null}
+
+      {kind === "customer" && loadsQuery.data ? (
+        <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="statement-loads-history">
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-600">Load history</h2>
+          <ParityTable
+            columns={loadColumns}
+            rows={loadsQuery.data.loads}
+            rowKey={(load) => String(load.id)}
+            storageKey="statement-loads-history"
+            tableTestId="statement-loads-history-table"
+            emptyText="No loads in this period."
+          />
+        </section>
+      ) : null}
+
+      {kind === "vendor" && expensesQuery.data?.rows ? (
+        <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="statement-expenses-history">
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-600">Expense history</h2>
+          <ParityTable
+            columns={expenseColumns}
+            rows={expensesQuery.data.rows}
+            rowKey={(exp) => String(exp.id)}
+            storageKey="statement-expenses-history"
+            tableTestId="statement-expenses-history-table"
+            emptyText="No expenses in this period."
+          />
+        </section>
       ) : null}
     </div>
   );

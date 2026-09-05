@@ -1035,18 +1035,42 @@ export function CustomersPage() {
         />
       ) : null}
       {viewMode === "list" ? (
-        <CustomersListView
-          companyId={companyId}
-          customers={customersSorted}
-          status={customersStatus}
-          openByCustomerId={openByCustomerId}
-          openBalancesAvailable={!allInvoicesQuery.isError}
-          profitabilityByCustomerId={profitabilityByCustomerId}
-          onSelectCustomer={(customerId) => {
-            setSelectedCustomerId(customerId);
-            setViewMode("master-detail");
-          }}
-        />
+        <div className="flex flex-col gap-3 xl:flex-row">
+          <CustomerListSidebar
+            customers={visibleCustomers}
+            status={customersStatus}
+            totalCount={customersServerTotal}
+            page={sidebarPage}
+            pageSize={sidebarPageSize}
+            search={search}
+            sortByName={sortByName}
+            selectedCustomerId={selectedCustomer?.id ?? ""}
+            openByCustomerId={openByCustomerId}
+            openBalancesAvailable={!allInvoicesQuery.isError}
+            onSearchChange={setSearch}
+            onSortChange={setSortByName}
+            onPageChange={setSidebarPage}
+            onPageSizeChange={setSidebarPageSize}
+            onSelectCustomer={(customerId) => {
+              setSelectedCustomerId(customerId);
+              setViewMode("master-detail");
+            }}
+          />
+          <main className="min-w-0 flex-1 space-y-3">
+            <CustomersListView
+              companyId={companyId}
+              customers={customersSorted}
+              status={customersStatus}
+              openByCustomerId={openByCustomerId}
+              openBalancesAvailable={!allInvoicesQuery.isError}
+              profitabilityByCustomerId={profitabilityByCustomerId}
+              onSelectCustomer={(customerId) => {
+                setSelectedCustomerId(customerId);
+                setViewMode("master-detail");
+              }}
+            />
+          </main>
+        </div>
       ) : (
       <div className="flex flex-col gap-3 xl:flex-row">
         <CustomerListSidebar

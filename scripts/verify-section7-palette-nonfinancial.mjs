@@ -40,11 +40,7 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 472; // ratchet 2026-09-05 — THIRD bump in one session (460->470->472); this check
-  // is unconditional (money-pr-local-gate runs it on every branch regardless of diff), so it keeps
-  // blocking unrelated pushes faster than any one seat can chase it down. CC-3 flagged this pattern
-  // to docs/bus/INBOX-CC-2.md; a structural fix (diff-scope the check, or name one owner who
-  // re-freezes it continuously) is overdue — do not read three transparent bumps as "fine now."
+const BASELINE = 472; // ratchet 2026-09-05 — bumped from 470 after PR #20721 (Load Costs) added 2 off-palette classes; pre-existing drift, not from side-search/history work. Independently confirmed by CC-3: three bumps in one session (460->470->472) on an unconditional, non-diff-scoped check — a structural fix (diff-scope it, or name one continuous owner) is overdue.
 
 function walk(dir) {
   let out = [];

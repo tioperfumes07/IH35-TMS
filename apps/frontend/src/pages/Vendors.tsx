@@ -627,17 +627,40 @@ export function VendorsPage() {
         </div>
       ) : null}
       {viewMode === "list" ? (
-        <VendorsListView
-          companyId={companyId}
-          vendors={vendorsSorted}
-          status={vendorsStatus}
-          openByVendorId={openByVendorId}
-          rollupByVendorId={rollupByVendorId}
-          onSelectVendor={(vendorId) => {
-            setSelectedVendorId(vendorId);
-            setViewMode("master-detail");
-          }}
-        />
+        <div className="flex flex-col gap-3 xl:flex-row">
+          <VendorListSidebar
+            vendors={visibleVendors}
+            status={vendorsStatus}
+            totalCount={vendorsServerTotal}
+            page={sidebarPage}
+            pageSize={sidebarPageSize}
+            search={search}
+            sortByName={sortByName}
+            selectedVendorId={selectedVendor?.id ?? ""}
+            openByVendorId={openByVendorId}
+            onSearchChange={setSearch}
+            onSortChange={setSortByName}
+            onPageChange={setSidebarPage}
+            onPageSizeChange={setSidebarPageSize}
+            onSelectVendor={(vendorId) => {
+              setSelectedVendorId(vendorId);
+              setViewMode("master-detail");
+            }}
+          />
+          <main className="min-w-0 flex-1 space-y-3">
+            <VendorsListView
+              companyId={companyId}
+              vendors={vendorsSorted}
+              status={vendorsStatus}
+              openByVendorId={openByVendorId}
+              rollupByVendorId={rollupByVendorId}
+              onSelectVendor={(vendorId) => {
+                setSelectedVendorId(vendorId);
+                setViewMode("master-detail");
+              }}
+            />
+          </main>
+        </div>
       ) : (
       <div className="flex flex-col gap-3 xl:flex-row">
         <VendorListSidebar

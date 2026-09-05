@@ -76,3 +76,5 @@ L5 settlement detail 5 section tables merged (#20695, sha c216a767e3). Guard ver
 All Cascade register items now DONE: LH, K9, K4-7, V1-FE, L5.
 No open report/list/planner rows assigned to Cascade in OWNER-ISSUE-INVENTORY (#9/#10 CC-2, #21 Codex, #22 CC-2).
 Requesting next assignment from lead — do not invent scope.
+
+CASCADE | SIDE-SEARCH+HISTORY DONE | 83368160b5 | origin/main | rows=real (listAllDispatchLoads + listExpenses, scoped by customer/vendor UUID) | guard=verify-counterparty-side-search.mjs + verify-counterparty-transactions-tab.mjs (extended) | NEXT next report row
