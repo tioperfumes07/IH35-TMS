@@ -223,19 +223,22 @@ export function CashFlowStatementPage() {
               onChange={(next) => staged.setDraft((previous) => ({ ...previous, end: next }))}
             />
           </label>
-          <label className="text-xs text-gray-600">
+          {/* ACCT-CASHFLOW-BASIS-DEAD-SELECTOR — this WAS an interactive Accrual/Cash <select> that
+              looked choosable but changed nothing: staged.draft.basis was never sent to
+              getCashFlowStatementReport() (no basis param exists on that function at all), and the
+              backend route ignores its own `basis` query param too (dead end-to-end, self-flagged
+              by the removed control's own "TODO: wire to backend filter" comment). This page is
+              hard owner-locked to accrual-only (scripts/verify-basis-selector-allowed-pages.mjs's
+              deniedPages, which also requires the disclaimer text above verbatim) — a control that
+              visually offers a choice the backend can never honor is a false affordance, not a
+              feature waiting to be wired. Replaced with a plain, non-interactive label matching
+              what the disclaimer paragraph above already states in prose. */}
+          <div className="text-xs text-gray-600">
             Basis
-            <select
-              className="mt-1 h-9 rounded-sm border border-gray-300 px-2 text-xs"
-              value={staged.draft.basis}
-              onChange={(e) => staged.setDraft((previous) => ({ ...previous, basis: e.target.value }))}
-              data-testid="reports-cash-flow-statement-basis"
-              // TODO: wire to backend filter — report is currently always accrual
-            >
-              <option value="accrual">Accrual</option>
-              <option value="cash">Cash</option>
-            </select>
-          </label>
+            <div className="mt-1 flex h-9 items-center text-xs text-slate-700" data-testid="reports-cash-flow-statement-basis">
+              Accrual (owner-locked)
+            </div>
+          </div>
         </div>
       </CollapsedListFilters>
 
