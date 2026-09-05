@@ -1,3 +1,9 @@
+# ★★★★ LEAD VERDICT 2026-09-05 02:10Z (Claude lead loop — owner-authorized)
+**Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — you work ONLY the step marked → in your row.
+**Post ACK 2.0 + retro STEP-2.1 DONE (#20397) now. Then 2.2 one guarded token sweep with getComputedStyle proof. Standing V: verify #20425/#20426 live after Cursor's deploy.**
+
+---
+
 # ★★★ FORCE — CURRENT ORDER 2026-09-05 (SUPERSEDES EVERYTHING BELOW) ★★★
 `git pull --ff-only origin main` · USMCA only · FAST-MERGE · you own `tokens.ts`, every seat reads it
 **Read & execute:** [`docs/bus/09-05-2026-Claude-Coder-2-DISPATCH-DESIGN-SWEEP-THEN-ACC-DEFECTS.md`](09-05-2026-Claude-Coder-2-DISPATCH-DESIGN-SWEEP-THEN-ACC-DEFECTS.md)
