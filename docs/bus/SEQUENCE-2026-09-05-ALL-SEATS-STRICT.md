@@ -1,0 +1,92 @@
+# SEQUENCE LAW 2026-09-05 — ALL SEATS · STRICT NUMBERED ORDER · LEAD-CONTROLLED
+**Status: BINDING.** Owner 2026-09-05: *"Number the sequences … strict control … so they continue working in that order."*
+Supersedes SEQUENCE-2026-09-04 where the two differ. Claude (lead loop, owner-authorized) reads every
+OUTBOX every 20 minutes, marks this board, and rewrites each INBOX TOP. Cursor deploys and enforces.
+
+## CONTROL RULES
+1. A seat works ONLY the step marked `→` in its row. It may not touch step N+1 until `SEAT | STEP-N DONE | <sha> | <proof>` is on its OUTBOX and the lead has marked it `✔` here.
+2. Posting work on a later step = `ORDER VIOLATION` — lead reverts it to N; the work is not merged into the board until N is done.
+3. A blocked step is declared in writing on the OUTBOX (`STEP-N BLOCKED | <exact blocker> | <who unblocks>`). Only then may the seat take the next UNGATED step in its own row — never another seat's.
+4. Cross-seat gates are hard stops (table below). Nobody closes a pre-settlement. Nobody but Cursor deploys. Nobody POSTs Book Load as a probe. USMCA only.
+5. Full order per seat: `docs/bus/09-05-2026-<Seat>-*.md`. This board is the index; the order file is the text.
+
+## CROSS-SEAT GATES
+| Gate | Blocks | Opens when |
+|---|---|---|
+| CC-1 STEP 0 (CC-3 migrations applied) | CC-3 3.3–3.5 · Cursor C.6 · CC-1 1.11 | CC-1 sha on OUTBOX-CC-1 (Cursor applies under C.3 if CC-1 silent by 02:30Z) |
+| CC-3 3.2b (flap fix merged) | any Samsara projection or Loves import | CC-3 STEP-3.2b DONE |
+| CC-3 3.5 (guards green) | CC-1 1.11 actual miles · Cursor C.6 push-back | CC-3 STEP-3.5 DONE |
+| CC-3 API shapes published | Cursor driver-prompt UI + live-progress board | shapes on OUTBOX-CC-3 |
+| Cursor API deploy | live proof of every backend merge since 1fa5201 | healthz sha on OUTBOX-CURSOR |
+| Owner closes pre-settlements | everyone | owner says so |
+
+## THE BOARD (lead marks ✔ / → / ✖ / ⛔)
+### CURSOR — lead · deploys · `docs/bus/09-05-2026-Cursor-LEAD-DEPLOY-BUS-AND-DISPATCH-FINISH.md`
+| # | Step | Mark |
+|---|---|---|
+| C.1 | Deploy API to tip; healthz sha to OUTBOX | → |
+| C.2 | Census each 20-min tick; STATUS-NOW step numbers; ORDER VIOLATION calls | standing |
+| C.3 | Apply CC-3 drafts if CC-1 silent by 02:30Z | conditional |
+| C.4 | Unit picker excludes Sold/deactivated/non-entity units (U-156-provisional) + guard | |
+| C.5 | Dispatch on a draft shows the 400 reason on screen | |
+| C.6 | 09-04 dispatch cleanliness leftovers (Kanban width+drag, Assignment draggable cols, Round Trips missing trips, Detention one-liner) | |
+| C.7 | Driver Instruction Sheet per FINAL-No-Pay render; house PDF template guard | |
+| C.8 | Tour-close = Laredo delivery OR yard geofence | |
+| C.9 | Book Load → Samsara push-back — ⛔ until CC-3 3.6 | ⛔ |
+| C.10 | Driver prompt UI + live-progress board — ⛔ until CC-3 shapes | ⛔ |
+
+### CC-1 — money · `docs/bus/09-05-2026-Claude-Coder-1-LOAD-COSTS-COMPLETE-VERTICAL-Updated.md`
+| # | Step | Mark |
+|---|---|---|
+| 1.0 | Apply CC-3 migration drafts (batch) on Neon; sha to both OUTBOXes | → (SKIPPED — do now) |
+| 1.1 | Durable draft advance: book/assign path + service self-heal + guard 10377 (guard ✔ #20429; fix + self-heal owed) | half |
+| 1.2 | CoGS picker + fuel by role + operating_bank by role (#20425 #20426) | ✔ |
+| 1.3 | Costs-tab register (NUMBER empty & editable, 12 cols, KPI cards, 28px actions, comboboxes, ≥480px) | |
+| 1.4 | Board tab row; square pills; remove Margin column | |
+| 1.5 | Pre-settlements/Settlements consolidated-expand in Dispatch; escrow $25/load conditional; 404→200; 5 guards | |
+| 1.6 | 31-settlement feed via real UI; never close; hands off 5766/5772/5776/5780/5783/5784 | |
+| 1.7 | Three-mile schema + CPM; 1.11 actual miles ⛔ until CC-3 3.5 | |
+
+### CC-2 — design + verify-live · `docs/bus/09-05-2026-Claude-Coder-2-DISPATCH-DESIGN-SWEEP-THEN-ACC-DEFECTS.md`
+| # | Step | Mark |
+|---|---|---|
+| 2.0 | ACK + retro STEP-2.1 DONE (#20397) | → |
+| 2.1 | Tokens landed | ✔ |
+| 2.2 | Dispatch token sweep, one guarded PR, getComputedStyle proof, ratchet fails on navy header | |
+| 2.3 | J1 to 0/0 + GLB-05/07/09/10 | |
+| 2.4+ | ACC-01.. one vertical each, USMCA-filtered | |
+| V | Standing: verify-live every Cursor deploy (#20425/#20426 first) | standing |
+
+### CC-3 — telematics · `docs/bus/09-05-2026-Claude-Coder-3-GEOFENCE-ENGINE-REBUILD-LOVES-604-AND-ARRIVAL-ALERT-CHAIN-Updated.md`
+| # | Step | Mark |
+|---|---|---|
+| 3.1 | Address count wiring | ✔ #20411 |
+| 3.2a | samsara_addresses draft handed | ✔ #20412 |
+| 3.2b | Engine flap fix code + no-terminal-state test + speed departure + USMCA watcher + bbox + warn; migration #4 bundle drafted; API shapes published; TEST geofence archived | → |
+| 3.3 | Import/projection service — RUN ⛔ until 1.0 tables live AND 3.2b merged | ⛔ |
+| 3.4 | Match proximity+name, collision report | |
+| 3.5 | Three guards green | |
+| 3.6 | ACK push-back contract | |
+| 3.7–3.9 | Telematics defects (dup latest_position, NULL geocode, T144) | |
+| 3.10–3.12 | DRV-03 / samsara links / accident VOID FE — post retro checkoffs | |
+| 3.13 | Loves 604 import (dry-run → apply after §7.2 flap proof) | ⛔ |
+| 3.14 | Alert chain stages 1–4 + live-progress API | |
+
+### CODEX — maintenance · `docs/bus/09-05-2026-Codex-IN-SHOP-FEED-FLEET-QUEUE-BORDER-CONTRACT.md`
+| # | Step | Mark |
+|---|---|---|
+| X.1 | Units held in maintenance report | ✔ (0 held) |
+| X.2 | In-shop feed endpoint + shape | ✔ #20430 (deploy pending) |
+| X.3 | unit_number on every units-without-load row | → |
+| X.4 | FLT-01 → FLT-02 → FLT-04 → FLT-10 | |
+| X.5 | Border contract endpoint to Cursor | |
+
+### CASCADE — lists/reports · `docs/bus/09-05-2026-Cascade-LAW-MIRROR-THEN-LISTS-AND-REPORTS.md`
+| # | Step | Mark |
+|---|---|---|
+| L | docs/LAW.md = 09-05 revision + MIRROR header; squash-merge | → |
+| K.0 | ACK; push 65762353 or declare dead | |
+| K.4–K.27 | BRD-01..24 one PR each, guard in same PR | |
+
+## LEAD LOG (newest first)
+- 02:00Z — board created. CC-1 skipped 1.0; reverted to 1.0. Codex X.2 accepted. Cascade L stale copy rejected, current text supplied.

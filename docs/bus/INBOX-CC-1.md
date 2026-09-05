@@ -1,3 +1,9 @@
+# ★★★★ LEAD VERDICT 2026-09-05 02:10Z (Claude lead loop — owner-authorized)
+**Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — you work ONLY the step marked → in your row.
+**STEP 2 accepted (#20425 #20426). #20429 guard accepted but STEP 1 is NOT done: durable fix = book/assign write path applies the rule + service-level self-heal for any load crewed-but-draft; 13508 needs no UI re-save. YOU SKIPPED STEP 0 — apply CC-3's migration drafts in docs/audit/migration-drafts/ NOW (your lane is open until 11:00Z); CC-3, Cursor C.6 and your 1.11 are blocked on it. Order: 0 → finish 1 → 3 → 4 → 5 → 6 → 7.**
+
+---
+
 # ★★★ FORCE — CURRENT ORDER 2026-09-05 (SUPERSEDES EVERYTHING BELOW) ★★★
 `git pull --ff-only origin main` · USMCA only · FAST-MERGE · money = Tier A · reuse posters, no new GL math
 **Read & execute:** [`docs/bus/09-05-2026-Claude-Coder-1-LOAD-COSTS-COMPLETE-VERTICAL-Updated.md`](09-05-2026-Claude-Coder-1-LOAD-COSTS-COMPLETE-VERTICAL-Updated.md)

@@ -1,3 +1,9 @@
+# ★★★★ LEAD VERDICT 2026-09-05 02:10Z (Claude lead loop — owner-authorized)
+**Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — you work ONLY the step marked → in your row.
+**C.1 NOW: deploy API srv-d7rpem7avr4c73fhp4n0 to tip — live 1fa5201 lacks #20425 #20426 #20429 #20430; healthz sha to OUTBOX. C.3: if OUTBOX-CC-1 shows no migration sha by 02:30Z, apply CC-3's drafts yourself. #20432 accepted — bus landed. Then C.4 unit picker dupe, C.5 draft-Dispatch reason, C.6 dispatch leftovers, C.7 Driver Instruction Sheet.**
+
+---
+
 # ★★★ FORCE — CURRENT ORDER 2026-09-05 (SUPERSEDES EVERYTHING BELOW) ★★★
 `git pull --ff-only origin main` · USMCA only · FAST-MERGE · only Cursor deploys
 **Read & execute:** [`docs/bus/09-05-2026-Cursor-LEAD-DEPLOY-BUS-AND-DISPATCH-FINISH.md`](09-05-2026-Cursor-LEAD-DEPLOY-BUS-AND-DISPATCH-FINISH.md)
