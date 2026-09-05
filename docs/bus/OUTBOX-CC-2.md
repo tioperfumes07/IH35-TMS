@@ -473,3 +473,21 @@ scanners) with one known gap flagged honestly (Dispatch board's true 25-column c
 (it still protects whatever it captures from shrinking), and the separate L.4a
 verify-dispatch-board-preview-contract.mjs guard already covers the Dispatch board's full model
 precisely. | NEXT=L.4c Round Trips recovery (deadline 16:30Z) | GO
+
+CC-2 | L.4c DONE | 988fdb73 | verify-roundtrips-timeline-restored PASS (all assertions, old +
+4 new) · verify-round-trips-deep-link-timeline-and-empty-copy PASS · verify-roundtrips-quality-
+load-entitylink PASS · tsc -b clean · verify-seat-surface-ownership OK
+Live re-verify found the bulk of §C already fixed by prior commits (colours/grid/long-leg-logic/
+mounting all already restored+guarded) -- only the long-leg VISUAL outline (data attribute existed,
+no paint) and the legend row were genuinely missing. Both fixed, minimal surgical change, not a
+full history-recovery rebuild. | NEXT=L.4a/L.4g/L.4c all complete -- awaiting next assignment | GO
+
+CC-2 | SEQUENCE CHECKPOINT (2026-09-05, LEAD RESET 12:45Z) | GO
+All three surrendered pieces complete and merged: L.4a (#20517, dispatch board columns restored+
+grouped+draggable), L.4g (#20522, verify-additive-only law guard), L.4c (#20525, Round Trips
+long-leg outline + legend). Also this session: LAW-TRANSACTION-HEALTH-REGISTER re-score, GLB-15/16/17
+(design tokens + 3 guard-rot fixes + design-contract body-rule fix), J1 confirmed closed 0/0,
+ACC-01..20 comprehensively re-verified (ACC-08 filed, ACC-15 fixed, ACC-17 partial finding),
+frontend build-outage diagnosed (fixed independently by another seat moments before my own fix
+would have shipped -- discarded the duplicate). 13 PRs merged this session total. | NEXT=awaiting
+next assignment (ACC-17 full consumer audit, ACC-20 code-path check, or new INBOX top) | GO
