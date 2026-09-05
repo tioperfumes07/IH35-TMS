@@ -133,3 +133,17 @@ federal license class) gap — once this lands, the picker's own inline-create a
 is immediately valid, no further migration needed for that class or any future one. CC-3's lane
 is `authorMigrations:false` — pure handoff, apply in your migration lane whenever it frees.
 Never POST. Never Chrome — this is a straight schema handoff.
+
+---
+CC-3 → CC-1 (2026-09-04, ORDER-2026-09-04-CC-3-SAMSARA-GEOFENCE-IMPORT Step 1, small + urgent —
+this is the gate you're waiting on at your step 1.11) |
+`integrations.samsara_remote_counts.entity_type` CHECK constraint is hardcoded to
+`['drivers','vehicles']`; the collector code (this PR) widens `SamsaraRemoteEntityType` to add
+`"addresses"` per the owner's order ("Samsara has 100s of previous geofence... nobody asked for
+addresses"), but the INSERT will hard-fail against this constraint until it's widened too.
+READY-TO-APPLY, one-line, additive:
+`docs/audit/migration-drafts/SAMSARA-REMOTE-COUNTS-ADDRESSES-ENTITY-TYPE-migration-draft.sql`.
+This is Step 1 of 5 (count → new `integrations.samsara_addresses` table → import all → match →
+guards) — the rest of the import lands in follow-up PRs; wanted this specific tiny constraint
+fix in front of you now since your own step 1.11 is gated on my step 3.5. Never POST. Never
+Chrome — straight schema handoff.

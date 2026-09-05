@@ -14,6 +14,7 @@ export type SamsaraConfig = {
 export type SamsaraDriver = { id: string; raw: Record<string, unknown> };
 export type SamsaraVehicle = { id: string; raw: Record<string, unknown> };
 export type SamsaraTrailer = { id: string; raw: Record<string, unknown> };
+export type SamsaraAddress = { id: string; raw: Record<string, unknown> };
 export type SamsaraHosLog = { startedAt: string; endedAt: string | null; hosStatusType: string };
 export type SamsaraHosDriverLogs = { driverId: string; logs: SamsaraHosLog[] };
 // Samsara's COMPUTED HOS clocks (GET /fleet/hos/clocks) — DOT-certified remaining, displayed verbatim (Blueprint
@@ -62,7 +63,7 @@ export type SamsaraVehicleStat = {
   raw: Record<string, unknown>;
 };
 export type HosLog = Record<string, unknown>;
-export type SamsaraRemoteEntityType = "drivers" | "vehicles";
+export type SamsaraRemoteEntityType = "drivers" | "vehicles" | "addresses";
 export type DashcamFacing = "road" | "in_cab" | "both";
 
 export class SamsaraApiError extends Error {
@@ -402,7 +403,7 @@ async function fetchSamsaraStatsPage(token: string, after: string | null): Promi
   return { data, hasNextPage, cursor };
 }
 
-async function fetchSamsaraPage(token: string, endpoint: "/fleet/drivers" | "/fleet/vehicles" | "/fleet/trailers", after: string | null): Promise<{
+async function fetchSamsaraPage(token: string, endpoint: "/fleet/drivers" | "/fleet/vehicles" | "/fleet/trailers" | "/addresses", after: string | null): Promise<{
   data: Record<string, unknown>[];
   hasNextPage: boolean;
   cursor: string | null;
@@ -663,7 +664,8 @@ export class SamsaraClient {
     if (!token) {
       throw new SamsaraApiError("samsara_not_configured", null, null, false);
     }
-    const endpoint: "/fleet/drivers" | "/fleet/vehicles" = entityType === "drivers" ? "/fleet/drivers" : "/fleet/vehicles";
+    const endpoint: "/fleet/drivers" | "/fleet/vehicles" | "/addresses" =
+      entityType === "drivers" ? "/fleet/drivers" : entityType === "vehicles" ? "/fleet/vehicles" : "/addresses";
     let total = 0;
     let after: string | null = null;
     for (let page = 0; page < 500; page += 1) {
@@ -681,6 +683,32 @@ export class SamsaraClient {
 
   async countVehicles(): Promise<number> {
     return this.countEntity("vehicles");
+  }
+
+  async countAddresses(): Promise<number> {
+    return this.countEntity("addresses");
+  }
+
+  /** ORDER-2026-09-04-CC-3-SAMSARA-GEOFENCE-IMPORT Step 2 — full address list, junk included (the
+      order is explicit: import everything, deactivate later on evidence, never on a guess). Each
+      row carries Samsara's own geofence shape (circle radius or polygon vertices) verbatim — bring
+      it, never redraw it. */
+  async listAddresses(): Promise<SamsaraAddress[]> {
+    const token = this._token();
+    if (!token) return [];
+    const out: SamsaraAddress[] = [];
+    let after: string | null = null;
+    for (let page = 0; page < 500; page += 1) {
+      const { data, hasNextPage, cursor } = await fetchSamsaraPage(token, "/addresses", after);
+      for (const row of data) {
+        if (typeof row.id === "string" && row.id.trim().length > 0) {
+          out.push({ id: row.id.trim(), raw: row });
+        }
+      }
+      if (!hasNextPage || !cursor) break;
+      after = cursor;
+    }
+    return out;
   }
 
   async getHosLogs(driverId: string, range: { start: string; end: string }): Promise<HosLog[]> {
