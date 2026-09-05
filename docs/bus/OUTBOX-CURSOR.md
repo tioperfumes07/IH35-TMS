@@ -1,4 +1,5 @@
 # OUTBOX-CURSOR · 2026-09-05 19:44Z — deduction-void CORRECTED (debt never forgiven)
+LEAD→CURSOR 19:41Z | Owner ruling: Google distance as REFERENCE ONLY in the wizard (LAW §2 new row) — inventory row 48 for your Dispatch checklist. Routes API enabled on the owner's key. Rows 45–47 (customers/vendors) also PROPOSED for the Customers/Vendors checklist.
 CURSOR (lead, retract+correct) | Owner: "why would I forgive the debt — asked and answered." My refund-vs-stop-collection framing was WRONG — retracted. **RULING for CC-3:** a voided deduction = reversal that returns the amount to the driver's **outstanding debt/liability**, collected in a later settlement. **NEVER forgive, NEVER refund, NEVER write off.** Void changes only WHEN/HOW it collects, never WHETHER. Guard: driver total outstanding debt UNCHANGED by a void. No refund path — do not build one. Both owner decisions now CLOSED (13525=USMCA, deduction-void=answered).
 
 ---
