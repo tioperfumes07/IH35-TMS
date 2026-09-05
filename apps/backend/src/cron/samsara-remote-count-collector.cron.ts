@@ -5,6 +5,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { collectSamsaraRemoteCounts } from "../integrations/samsara/remote-count-collector.js";
+import { collectSamsaraDriverMirror } from "../integrations/samsara/driver-mirror-collector.js";
 
 let initialized = false;
 const CRON_NAME = "samsara.remote_count_collector";
@@ -102,6 +103,30 @@ export function initializeSamsaraRemoteCountCollectorCron(app: FastifyInstance) 
                 },
                 "[SAMSARA_REMOTE_COUNT_COLLECTOR] company tick finished"
               );
+
+              // ROW-39 (owner 2026-09-05 15:04Z) — reuses this SAME every-12h tick per the order's own
+              // wording ("runs on the existing 5 */12 * * * schedule and on demand"), isolated in its
+              // own try/catch so a driver-mirror failure never breaks the remote-count collection above.
+              try {
+                const mirrorResult = await collectSamsaraDriverMirror(operatingCompanyId, {
+                  collectionRunId: randomUUID(),
+                });
+                app.log.info(
+                  {
+                    operating_company_id: mirrorResult.operating_company_id,
+                    collection_run_id: mirrorResult.collection_run_id,
+                    fetched_count: mirrorResult.fetched_count,
+                    upserted_count: mirrorResult.upserted_count,
+                    linked_count: mirrorResult.linked_count,
+                  },
+                  "[SAMSARA_DRIVER_MIRROR_COLLECTOR] company tick finished"
+                );
+              } catch (mirrorError) {
+                app.log.error(
+                  { operating_company_id: operatingCompanyId, error: String((mirrorError as Error)?.message ?? mirrorError) },
+                  "[SAMSARA_DRIVER_MIRROR_COLLECTOR] company tick FAILED"
+                );
+              }
             }
           });
         },
