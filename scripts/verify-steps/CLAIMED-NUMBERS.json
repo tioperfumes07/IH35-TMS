@@ -1,4 +1,9 @@
 {
+  "10419": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "cc-2",
+    "purpose": "verify-booking-stop-geocode"
+  },
   "10415": {
     "claimed_at": "2026-09-05",
     "claimed_by": "cc-2",
