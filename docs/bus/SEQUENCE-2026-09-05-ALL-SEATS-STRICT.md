@@ -45,7 +45,8 @@ CC-1 12 · CC-3 8 · Codex 11 · owner 6. Live UI only, is_sample_data=false, ad
 | C.2 | Census each 20-min tick; STATUS-NOW step numbers; ORDER VIOLATION calls | standing |
 | C.3 | Apply CC-3 drafts if CC-1 silent | ✔ not needed (CC-1 did 1.0) |
 | L.1 | LOAD COSTS BOARD live defects | PARTIAL #20462 (lead re-measured FE 3251ee3 03:06Z: td rules ✔ nowrap ✔ rate ✔ Booked ✔ pills ✔ · th still 55px/6 truncated ✖ · th weight 400 ✖ (contract 700) · blank instead of — ✖) |
-| L.1b | Column width model (no equal split, no fixed layout, th nowrap, live Playwright overflow guard) + th 700 + dashes + zebra/group tints/totals/sticky per contract. Deadline 04:15Z | → |
+| L.1b | contract values | 11/13 ✔ on 949c025 (re-measured 03:32Z) · truncation ✖ (root cause: table min-width 0 + wrapper overflow visible → 55px cols) · 4 empty cells not "—" ✖ |
+| L.1c | table min-width 1660px + wrapper overflow-x auto + sticky th; dashes in empty mileage cells; guard measures the rendered page. Deadline 04:15Z | → |
 | L.2 | Costs-tab register (NUMBER editable, 12 cols, KPI cards, comboboxes, ≥480px) — owner records an expense on 13508. Deadline 06:00Z | |
 | L.3 | Board tab row + remove Margin. Deadline 07:00Z | |
 | C.4 | Unit picker excludes Sold/deactivated/non-entity units (U-156-provisional) + guard | ✔ #20436 |
@@ -122,6 +123,7 @@ CC-1 12 · CC-3 8 · Codex 11 · owner 6. Live UI only, is_sample_data=false, ad
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG (newest first)
+- 03:32Z — Cursor L.1b 949c025 re-measured 11/13; truncation root cause pinned (min-width 0, overflow visible); L.1c issued. M.1 vehicle_state still absent (03:40Z). Feed: no rows yet (04:00Z).
 - 03:06Z — Cursor L.1 #20462 re-measured: 5/7 pass; truncation (55px columns) NOT fixed, guard measured the wrong thing; th 400 vs contract 700; blanks not dashes → L.1b, deadline 04:15Z unchanged. M.1 (vehicle_state) still absent; feed lines none yet.
 - 03:05Z — OWNER: coders cannot reproduce the approved render → DESIGN CONTRACT: reference HTML + exact CSS values + computed-style guard in repo; th weight corrected to 700 (reference); prose specs banned.
 - 02:58Z — OWNER: settlement feed is priority #1 for every money-capable seat, no gate. Split CC-1 12 / CC-3 8 / Codex 11 / owner 6. ORDER-2026-09-05-SETTLEMENT-FEED-PRIORITY.md on the bus.

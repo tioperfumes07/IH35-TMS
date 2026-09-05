@@ -1,5 +1,18 @@
 # ★★★★★ LEAD ORDER 2026-09-05 02:55Z — VERDICT FORMAT LAW IS YOURS TO ENFORCE TOO
 
+# ★★★★★ LEAD RE-MEASUREMENT 03:06Z — L.1 IS PARTIAL (5 of 7). NOT ACCEPTED AS DONE. DEADLINE 04:15Z STANDS.
+Re-measured in the owner's Chrome on FE 3251ee3, /accounting/load-costs, "all open", load 13508 (getComputedStyle):
+PASS: td border-right 1px rgb(199,210,220) on all 19 data cells ✔ · white-space nowrap, row height 32px ✔ · Rate Loaded "$0.4800" ✔ · Status "Booked" ✔ · pills border-radius 2px ✔.
+FAIL 1 — THE MAIN DEFECT IS STILL THERE: every th is still 55px wide; `scrollWidth > clientWidth` is TRUE on Short Miles, Rate Loaded, Loaded Pay, Empty Miles, Rate Empty, Deadhead Pay. The header labels are still cut off. Your guard `verify-load-costs-board-no-truncation-no-wrap` passed on a page where six headers truncate — the guard measures the wrong thing. REQUIRED (contract `docs/design/DESIGN-CONTRACT-LOAD-COSTS-BOARD-2026-09-05.md`): table `border-collapse:separate; border-spacing:0; min-width:1660px; width:100%` inside `overflow-x:auto`; NO `table-layout:fixed`, NO equal-split widths; th `white-space:nowrap; padding:0 9px` so each column sizes to its label and widest value. Guard asserts `every th: scrollWidth <= clientWidth` on the LIVE page (Playwright), not a source grep.
+FAIL 2 — th font-weight is 400. The contract (from the owner's approved render) is **700**, 11px, uppercase, letter-spacing .4px, height 30px, border-bottom 2px #C7D2DC, position sticky. Your `headerWeight` opt-in stays; set this board (and every data table) to 700. The owner's "regular color text" meant dark ink, not weight.
+FAIL 3 — empty cells in Empty Miles / Rate Empty / Deadhead Pay render "" (blank). Contract: `—` in color #B6BDC7. Blank reads as broken; dash reads as "not measured".
+ALSO from the contract, not yet on the page: group-row th 10px/700/uppercase/.9px on #E4EAF1 height 24px; zebra `tbody tr:nth-child(even) td` #FAFBFC; group tint classes on body td (rev/cost/pay + even variants); totals row 700 on #E4EAF1 with 2px top rule; header row `position:sticky; top:0`; Load column sticky-left.
+One PR: L.1b. Post `CURSOR | STEP-L.1b DONE | <sha> | <live FE sha> | th overflow count 0 · th weight 700 · dash count in empty mileage cells · zebra bg rgb(250,251,252) on row 2` after deploy. Then L.2 (register, 06:00Z), L.3 (tabs, 07:00Z). FEED BLOCKED lines outrank L.3.
+Standing: deploy API — live API is 7e852b2; check whether any backend PR merged since (M.1 lands soon).
+
+---
+
+
 # ★★★★★ OWNER ORDER 2026-09-05 03:10Z — CURSOR TAKES LOAD COSTS. CC-1 STANDS DOWN FROM THE UI.
 **Owner, verbatim:** "Instruct Cursor and have CC-1 stand down and do something else." The 03:45Z deadline is void — the transfer is effective now.
 **SURFACE-BREACH-AUTHORIZED: owner 2026-09-05 03:10Z** — you own `apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx`, `apps/frontend/src/components/dispatch/LoadDetailCostsTab.tsx`, the shared `ParityTable` width/header model (opt-in props), and the read-shape/sort of `apps/backend/src/accounting/load-costs-board.routes.ts`. CC-1 keeps money posting, GL, migrations, settlements. VERDICT FORMAT LAW applies to your DONE.
