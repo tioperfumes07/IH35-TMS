@@ -97,6 +97,21 @@
   padding-left: 8px;
   text-align: center;
 }
+/* Planners lists, item 3 — sortable frozen columns. Inherits the header's own font/weight/case;
+   the button exists only to make the label clickable, never a second visual style. */
+.planner-grid-canonical .pg-sort-btn {
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.planner-grid-canonical .pg-sort-btn:hover {
+  text-decoration: underline;
+}
 .planner-grid-canonical .pg-mon {
   flex: 0 0 auto;
   font-size: 11px;

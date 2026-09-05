@@ -65,6 +65,12 @@ export type PlannerGridRow = {
   idle?: boolean;
   bars: PlannerGridBar[];
   dwells?: PlannerGridDwell[];
+  /** Planners lists (owner order 2026-09-05, item 3): plain-text sort keys alongside the
+   *  rendered `name`/`status` nodes (which are ReactNode — e.g. an EntityLinkOrTombstone — and
+   *  can't be compared directly). Omitting either keeps today's caller-supplied row order
+   *  unchanged; a caller that wants the frozen-column header sortable supplies these. */
+  sortKey?: string;
+  statusSortKey?: string;
 };
 
 type Props = {
@@ -228,6 +234,34 @@ export function PlannerGrid({
   const hasActionColumn = actionLabel != null || rows.some((row) => row.action !== undefined);
   const hasStatusColumn = statusLabel != null || rows.some((row) => row.status !== undefined);
 
+  // Planners lists, item 3 — sortable frozen columns. Only offered when the caller supplied the
+  // plain-text key the column needs (sortKey for name, statusSortKey for status); a caller that
+  // doesn't is completely unaffected — no header becomes clickable, rows render in the order the
+  // caller passed them, exactly as before this feature existed.
+  const nameSortable = rows.some((r) => r.sortKey !== undefined);
+  const statusSortable = hasStatusColumn && rows.some((r) => r.statusSortKey !== undefined);
+  const [sort, setSort] = useState<{ by: "name" | "status"; dir: "asc" | "desc" } | null>(null);
+  const toggleSort = (by: "name" | "status") => {
+    setSort((prev) => {
+      if (!prev || prev.by !== by) return { by, dir: "asc" };
+      if (prev.dir === "asc") return { by, dir: "desc" };
+      return null;
+    });
+  };
+  const sortedRows = useMemo(() => {
+    if (!sort) return rows;
+    const key = sort.by === "name" ? "sortKey" : "statusSortKey";
+    const withKey = rows.filter((r) => r[key] !== undefined);
+    const withoutKey = rows.filter((r) => r[key] === undefined);
+    const sorted = [...withKey].sort((a, b) => {
+      const cmp = String(a[key]).localeCompare(String(b[key]), undefined, { numeric: true, sensitivity: "base" });
+      return sort.dir === "asc" ? cmp : -cmp;
+    });
+    // Rows missing the sort key (a caller can mix sortable + unsortable rows) stay at the end,
+    // in their original relative order, rather than silently vanishing or scrambling.
+    return [...sorted, ...withoutKey];
+  }, [rows, sort]);
+
   const dayPx = useMemo(() => {
     if (!measuredWidth || days.length === 0) return PLANNER_DAY_PX;
     const available = Math.max(0, measuredWidth - frozenPx);
@@ -346,9 +380,39 @@ export function PlannerGrid({
                 }}
               >
                 <span style={{ gridColumn: `1 / span ${1 + Number(rows.some((r) => r.secondary !== undefined)) + Number(rows.some((r) => r.unit !== undefined))}` }}>
-                  {frozenLabel}
+                  {nameSortable ? (
+                    <button
+                      type="button"
+                      className="pg-sort-btn"
+                      data-testid="planner-grid-sort-name"
+                      onClick={() => toggleSort("name")}
+                      aria-label={`Sort by ${frozenLabel}`}
+                    >
+                      {frozenLabel}
+                      {sort?.by === "name" ? (sort.dir === "asc" ? " ▲" : " ▼") : ""}
+                    </button>
+                  ) : (
+                    frozenLabel
+                  )}
                 </span>
-                {hasStatusColumn ? <span className="pg-frz-status">{statusLabel ?? "Status"}</span> : null}
+                {hasStatusColumn ? (
+                  <span className="pg-frz-status">
+                    {statusSortable ? (
+                      <button
+                        type="button"
+                        className="pg-sort-btn"
+                        data-testid="planner-grid-sort-status"
+                        onClick={() => toggleSort("status")}
+                        aria-label={`Sort by ${statusLabel ?? "Status"}`}
+                      >
+                        {statusLabel ?? "Status"}
+                        {sort?.by === "status" ? (sort.dir === "asc" ? " ▲" : " ▼") : ""}
+                      </button>
+                    ) : (
+                      statusLabel ?? "Status"
+                    )}
+                  </span>
+                ) : null}
                 {hasActionColumn ? <span className="pg-frz-action">{actionLabel ?? "Action"}</span> : null}
               </div>
               {bands.map((b) => (
@@ -378,10 +442,10 @@ export function PlannerGrid({
               })}
             </div>
           </div>
-          {rows.length === 0 ? (
+          {sortedRows.length === 0 ? (
             <div className="pg-empty">{empty}</div>
           ) : (
-            rows.map((row) => (
+            sortedRows.map((row) => (
               <div key={row.id} className={`pg-r${row.idle ? " idle" : ""}`}>
                 <FrozenName row={row} hasStatusColumn={hasStatusColumn} hasActionColumn={hasActionColumn} />
                 <div
