@@ -25,6 +25,19 @@ import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 import { EntityLink } from "../shared/EntityLink";
 import { formatMoneyCents } from "./constants";
+import { PreSettlementPanel } from "./PreSettlementPanel";
+import { LoadDetailSettlementTab } from "./LoadDetailSettlementTab";
+
+// Owner 2026-09-05: the pre-settlement + settlement views must live WITHIN Load Costs, not only as
+// separate drawer tabs. These reuse the existing PreSettlementPanel / LoadDetailSettlementTab — no
+// duplicate settlement math — surfaced as sub-tabs so the operator sees costs → pre-settlement →
+// settlement in one place. The create (+ New) stays inside the Costs sub-view only.
+type CostsView = "costs" | "pre_settlement" | "settlement";
+const COSTS_VIEWS: Array<{ id: CostsView; label: string }> = [
+  { id: "costs", label: "Costs" },
+  { id: "pre_settlement", label: "Pre-Settlement" },
+  { id: "settlement", label: "Settlement" },
+];
 
 type CostChoice = "expense" | "bill" | "advance" | "fuel_advance";
 type Bucket = "late_fee" | "lumper" | "fuel" | "repairs_maintenance" | "other";
@@ -100,6 +113,7 @@ function blankDraft(kind: CostChoice = "expense"): Draft {
 
 export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: LoadDetail; canEdit: boolean; canEditReason?: string }) {
   const [drafts, setDrafts] = useState<Draft[]>([blankDraft()]);
+  const [costsView, setCostsView] = useState<CostsView>("costs");
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const opco = load.operating_company_id;
@@ -216,6 +230,38 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
       <span data-testid="load-costs-status-badge" className={`ml-auto inline-flex h-[22px] items-center rounded-sm border px-2 font-semibold uppercase ${statusBadge.className}`}>{statusBadge.label}</span>
     </section>
 
+    {/* Sub-tabs WITHIN Load Costs (owner 2026-09-05): Costs · Pre-Settlement · Settlement. Reuses the
+        existing panels — no duplicate settlement logic. The create (+ New) lives only in Costs. */}
+    <div data-testid="load-costs-subtabs" className="flex flex-wrap gap-1">
+      {COSTS_VIEWS.map((v) => (
+        <button
+          key={v.id}
+          type="button"
+          data-testid={`load-costs-subtab-${v.id}`}
+          aria-selected={costsView === v.id}
+          onClick={() => setCostsView(v.id)}
+          className={`inline-flex h-[28px] items-center rounded-sm border px-2 text-xs font-semibold ${costsView === v.id ? "border-[#14314F] bg-[#14314F] text-white" : "border-[#C7D2DC] bg-white text-[#4B5563] hover:bg-gray-50"}`}
+        >
+          {v.label}
+        </button>
+      ))}
+    </div>
+
+    {costsView === "settlement" ? (
+      <div data-testid="load-costs-view-settlement">
+        <LoadDetailSettlementTab loadId={load.id} operatingCompanyId={opco} currencyCode={currency} />
+      </div>
+    ) : null}
+
+    {costsView === "pre_settlement" ? (
+      <div data-testid="load-costs-view-pre-settlement">
+        {load.assigned_primary_driver_id
+          ? <PreSettlementPanel driverId={load.assigned_primary_driver_id} operatingCompanyId={opco} />
+          : <p className="text-xs text-gray-500">No driver assigned to this load — assign a driver to see the pre-settlement.</p>}
+      </div>
+    ) : null}
+
+    {costsView === "costs" ? <>
     {/* Four KPI cards — light bg, darker border, centered */}
     <section data-testid="load-costs-kpis" className="grid grid-cols-2 gap-2 lg:grid-cols-4">
       <Kpi label="Line haul revenue" value={formatMoneyCents(revenue, currency)} />
@@ -316,6 +362,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
       </table>
     </div>
     {savedCount || savedAdvances.length ? <Link className="inline-block text-xs font-semibold text-slate-700 underline" to={`/accounting/expenses?load_id=${encodeURIComponent(load.id)}`}>Open saved costs</Link> : null}
+    </> : null}
   </div>;
 }
 
