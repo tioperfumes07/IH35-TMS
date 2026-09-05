@@ -68,3 +68,5 @@ Open report/list/planner rows in OWNER-ISSUE-INVENTORY:
 - #47 (Customers/Vendors side search panel) — PROPOSED, not assigned
 No other open report/list/planner rows found.
 Requesting next assignment from lead — do not invent scope.
+
+DEVIN | L5 DONE | c216a767e3 | origin/main | 5 settlement detail section tables (Earnings, Empty miles, Additional pay, Reimbursements, Deductions) rebuilt per reference with S.1b fields (origin/dest city/state, line_date, reimbursement_type, deduction_type, posting_account_number/name); + Add buttons disabled when locked; guard verify-settlement-detail-sections.mjs PASS | NEXT (await register)
