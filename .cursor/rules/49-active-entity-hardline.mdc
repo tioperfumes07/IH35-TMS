@@ -23,15 +23,24 @@ A driver is **ACTIVE** iff ALL hold:
 - `status='Active'` alone is **NOT** active — it is a stale HR flag (103 rows). Never key a count or a default list off it.
 - Regression ceiling: the default driver list active count must be in the low tens (measured 20). A change that makes it render ≥ 40 by dropping the movement filter is a REGRESSION and the guard fails.
 
-## 2. CANONICAL ACTIVE / IN-SERVICE UNIT
+## 2. CANONICAL ACTIVE / IN-SERVICE UNIT (owner: "we only have 16 units in service at USMCA")
 
-A unit is **IN SERVICE** iff `status='InService' AND is_sample_data IS NOT TRUE AND deactivated_at IS NULL AND sold_date IS NULL AND disposed_date IS NULL AND is_oos IS NOT TRUE`. **Measured: 31.**
-A unit is **ACTIVELY MOVING** iff in-service AND its `telematics.vehicle_latest_position.captured_at >= now() - interval '15 days'`. **Measured: 16.**
-- Sold / disposed / deactivated / OOS / sample units NEVER count as active and NEVER appear in the dispatch unit picker.
+USMCA scope for a unit is `currently_leased_to_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'` — **NOT** `owner_company_id` (the owner is the asset-holder `b49a737b` or Transportation `91e0bf0a`). Scoping by owner is wrong and inflates the count.
+
+A unit is **USMCA IN SERVICE** iff `currently_leased_to_company_id = USMCA AND status='InService' AND is_sample_data IS NOT TRUE AND deactivated_at IS NULL AND sold_date IS NULL AND disposed_date IS NULL AND is_oos IS NOT TRUE`. **Measured: 16** (13 owned by `b49a737b` + 3 owned by `91e0bf0a`, all leased to USMCA). The 15 other InService units are leased to Transportation and are NOT USMCA in-service. `status='InService'` alone (31) is stale — scope by lease.
+- Sold / disposed / deactivated / OOS / sample / non-USMCA-leased units NEVER count and NEVER appear in the dispatch unit picker.
 
 ## 3. REAL INVOICE (USMCA)
 
 A real invoice is `is_sample_data IS NOT TRUE` **and** USMCA-scoped. `mdata.qbo_ar_invoices` (12,087 rows, all under Transportation realm `91e0bf0a-133f-4ce8-a734-2586cfa66d96`) is the **commingled Transportation mirror, NOT USMCA truth** — never present it as the USMCA invoice count. USMCA invoices live in `accounting.invoices` (`is_sample_data=false`), scoped to `5c854333-6ea5-4faa-af31-67cb272fef80`.
+
+## 3b. SAMSARA IS NOW USMCA (owner ruling 2026-09-05: "we are using transportation samsara now with usmca, so it must now be in usmca")
+
+The Samsara account was Transportation's (`integrations.samsara_config` under `91e0bf0a`) and is now used to track the USMCA fleet. Telematics data must be attributed to USMCA. Reliable solution, no patch:
+- **Scope USMCA telematics reads by the UNIT'S lease** (`mdata.units.currently_leased_to_company_id = USMCA`), joining `telematics.vehicle_latest_position`/`vehicle_driver_assignments` to units — correct regardless of the row's OCI tag.
+- **Re-scope existing telematics rows for USMCA-leased units** from `91e0bf0a` → USMCA via idempotent CREATE-only migration, RE-TAG never DELETE (WORM), and point `samsara_config` ingestion at USMCA going forward.
+- `samsara_drivers.last_seen_at` is a DEAD signal (max 2026-05-23) — never gate "active" on it; keep it fresh from the position ingestion path or derive freshness from `vehicle_latest_position.captured_at`.
+- Owner of this vertical: the Telematics/Samsara seat (Codex). Full DB retained; stale Samsara rows are marked inactive, never deleted.
 
 ## 4. NON-REGRESSION INVARIANTS (never violate, any seat, any script)
 
