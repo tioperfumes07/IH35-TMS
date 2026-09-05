@@ -27,6 +27,9 @@ No design instruction ships without reference file + exact values + computed-sty
 ## SETTLEMENT FEED — OWNER PRIORITY #1 (02:58Z) · `docs/bus/ORDER-2026-09-05-SETTLEMENT-FEED-PRIORITY.md`
 CC-1 12 · CC-3 8 · Codex 11 · owner 6. Live UI only, is_sample_data=false, addresses only, never close, stop at first refusal. Cursor fixes every FEED BLOCKED on its surface ahead of L.3.
 
+## DISPATCH (owner 04:08Z) · `docs/bus/ORDER-2026-09-05-CURSOR-IS-DISPATCHER.md`
+CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes now (04:20Z) · D.1 wake-seat.sh (04:40Z) · D.2 lead-dispatch-loop every 10 min (05:00Z). A seat silent 15 min after its INBOX changed = Cursor wakes it. The owner pastes nothing.
+
 ## CROSS-SEAT GATES
 | Gate | Blocks | Opens when |
 |---|---|---|
@@ -124,6 +127,7 @@ CC-1 12 · CC-3 8 · Codex 11 · owner 6. Live UI only, is_sample_data=false, ad
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG (newest first)
+- 04:08Z — OWNER: Cursor is the dispatcher — wakes CC-1/CC-3/Codex/Cascade sessions with their INBOX tops (D.1–D.4); root cause of the silent feed = seats are prompt-driven and nobody prompted them.
 - 03:58Z — L.1c re-measured: table-fixed equal 83px + SECTION clip → L.1d (04:30Z final, surrender CC-2). CC-1 missed M.1 → Cursor C.3 applies migration #4 (04:20Z). Feed: still 1 load / 0 expenses on Neon; 04:00Z deadline imminent, no seeder has posted.
 - 03:32Z — Cursor L.1b 949c025 re-measured 11/13; truncation root cause pinned (min-width 0, overflow visible); L.1c issued. M.1 vehicle_state still absent (03:40Z). Feed: no rows yet (04:00Z).
 - 03:06Z — Cursor L.1 #20462 re-measured: 5/7 pass; truncation (55px columns) NOT fixed, guard measured the wrong thing; th 400 vs contract 700; blanks not dashes → L.1b, deadline 04:15Z unchanged. M.1 (vehicle_state) still absent; feed lines none yet.
