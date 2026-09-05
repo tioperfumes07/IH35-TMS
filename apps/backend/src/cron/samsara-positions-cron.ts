@@ -3,6 +3,7 @@ import type { PoolClient } from "pg";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { syncSamsaraVehicleLocations, syncSamsaraVehicleStats } from "../integrations/samsara/samsara-positions.service.js";
+import { listSamsaraIngestionTenantIds } from "../integrations/samsara/ingestion-tenants.service.js";
 import { syncFromSamsara } from "../integrations/samsara/vehicle-driver-pairing/pairing.service.js";
 import { syncSamsaraHosLogs } from "../integrations/samsara/samsara-hos-pull.service.js";
 import { syncSamsaraHosClocks } from "../integrations/samsara/samsara-hos-clocks-pull.service.js";
@@ -31,16 +32,7 @@ async function appendCronAuditEvent(
 }
 
 async function listActiveTenantIds(client: DbClient): Promise<string[]> {
-  const res = await client.query<{ operating_company_id: string }>(
-    `
-      SELECT id::text AS operating_company_id
-      FROM org.companies
-      WHERE is_active = true
-        AND deactivated_at IS NULL
-      ORDER BY id
-    `
-  );
-  return res.rows.map((row) => row.operating_company_id);
+  return listSamsaraIngestionTenantIds(client);
 }
 
 async function isSamsaraEnabledForTenant(client: DbClient, operatingCompanyId: string): Promise<boolean> {
