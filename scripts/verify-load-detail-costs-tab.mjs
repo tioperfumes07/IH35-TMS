@@ -48,7 +48,7 @@ function violations(drawer, costs, board, routes, backend, finance, sidebar, dis
   // include Advance received and Fuel advance -- this check was rewritten in the same commit that
   // shipped "+ Fuel advance" (LoadDetailCostsTab.tsx), matching the real, current CostChoice union
   // and its no-default fallback hint text, rather than pinning the pre-SET-15 two-choice shape.
-  if (!costs.includes('type CostChoice = "expense" | "bill" | "advance" | "fuel_advance" | null') || !costs.includes("Choose whether this cost was paid now, is owed, a fuel advance, or a broker advance received.")) errors.push("Expense/Bill/Advance/Fuel-advance choice no longer starts with no default");
+  if (!costs.includes('type CostChoice = "expense" | "bill" | "advance" | "fuel_advance"') || !costs.includes('data-testid="load-costs-new-menu"')) errors.push("Costs tab lost the four-way expense/bill/advance/fuel-advance register or the single + New dropdown");
   if (!costs.includes("createExpense(") || !costs.includes("createVendorBill(") || costs.includes("dispatch.load_costs")) errors.push("Costs tab is not using the canonical expense and bill writers");
   if (!costs.includes("Approximate · before settlement") || !costs.includes("No costs on this load yet.")) errors.push("honest margin or empty-state copy is missing");
   if (!board.includes('data-testid="load-costs-title"') || !board.includes('?tab=Costs`')) errors.push("Accounting Costs board or canonical Costs-tab drill is missing");
@@ -123,7 +123,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     [drawer.replace('"Costs",', '"Former costs",'), costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs.replace('data-cost-driver-column="driver_id"', 'data-cost-driver-column="driver_uuid"'), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
-    [drawer, costs.replace('type CostChoice = "expense" | "bill" | "advance" | "fuel_advance" | null', 'type CostChoice = "expense" | "bill" | "advance" | "fuel_advance"'), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
+    [drawer, costs.replace('data-testid="load-costs-new-menu"', 'data-testid="load-costs-no-menu"'), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs.replaceAll("No costs on this load yet.", "No rows."), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs, board.replaceAll("/api/v1/accounting/load-costs-board", "/api/v1/accounting/parallel-costs"), routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs, board, routes.replace('path="/accounting/load-costs"', 'path="/accounting/costs"'), backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],

@@ -226,12 +226,14 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
     <p className="text-xs text-gray-500">Approximate · before settlement. Nothing here has posted to the general ledger — this tour is open.</p>
 
     {canEdit ? <>
-      {/* Action row — 28px square buttons */}
-      <div className="flex flex-wrap gap-2" data-testid="load-costs-actions">
-        <ActionButton testId="load-costs-add-top" primary onClick={() => addDraft("expense")}>+ Add another cost</ActionButton>
-        <ActionButton testId="load-costs-add-fuel-advance-top" onClick={() => addDraft("fuel_advance")}>+ Fuel advance</ActionButton>
-        <Link data-testid="load-costs-receipt-photo" className="inline-flex h-[28px] items-center rounded-sm border border-gray-300 bg-white px-2 text-xs font-semibold text-gray-700 hover:bg-gray-50" to={`/accounting/receipts?load_id=${encodeURIComponent(load.id)}`}>+ From a receipt photo</Link>
-        <ActionButton testId="load-costs-add-advance-top" onClick={() => addDraft("advance")}>Advance received · from broker</ActionButton>
+      {/* Action row — ONE QuickBooks-style "+ New" dropdown + Save (owner 2026-09-05: one button, a
+          drop-down, so we do not have many buttons). Every menu item opens a real create flow. */}
+      <div className="flex flex-wrap items-center gap-2" data-testid="load-costs-actions">
+        <NewCostMenu
+          onPick={(kind) => addDraft(kind)}
+          receiptHref={`/accounting/receipts?load_id=${encodeURIComponent(load.id)}`}
+          billsHref={`/accounting/bills?load_id=${encodeURIComponent(load.id)}`}
+        />
         <ActionButton testId="load-costs-save-all" onClick={() => save.mutate()} disabled={save.isPending}>Save</ActionButton>
       </div>
 
@@ -339,6 +341,47 @@ function Kpi({ label, value, strong = false }: { label: string; value: string; s
 
 function ActionButton({ testId, children, onClick, primary = false, disabled = false }: { testId: string; children: ReactNode; onClick: () => void; primary?: boolean; disabled?: boolean }) {
   return <button data-testid={testId} type="button" disabled={disabled} onClick={onClick} className={`inline-flex h-[28px] items-center rounded-sm border px-2 text-xs font-semibold disabled:opacity-50 ${primary ? "border-[#14314F] bg-[#14314F] text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}>{children}</button>;
+}
+
+/** ONE QuickBooks "+ New" button with a drop-down (owner 2026-09-05: "1 button with drop down, just
+ *  like quickbooks so we do not have many buttons"). Each item opens a real create flow — the four the
+ *  owner named (Expense · Bill · Bill payment · Cash advance) plus Fuel advance and a receipt import.
+ *  Expense / Bill / Fuel advance / Cash advance seed a register row of that kind (Save writes it);
+ *  Bill payment routes to the real pay-a-bill surface scoped to this load (never a fabricated posting).
+ *  Dismisses on outside click (owner picker law). */
+function NewCostMenu({ onPick, receiptHref, billsHref }: { onPick: (kind: CostChoice) => void; receiptHref: string; billsHref: string }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => { if (rootRef.current && e.target instanceof Node && !rootRef.current.contains(e.target)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, []);
+  const pick = (kind: CostChoice) => { onPick(kind); setOpen(false); };
+  const itemClass = "block w-full px-3 py-1.5 text-left text-xs text-gray-700 hover:bg-slate-100";
+  return <div ref={rootRef} className="relative">
+    <button
+      type="button"
+      data-testid="load-costs-add-top"
+      aria-haspopup="menu"
+      aria-expanded={open}
+      onClick={() => setOpen((v) => !v)}
+      className="inline-flex h-[28px] items-center gap-1 rounded-sm border border-[#14314F] bg-[#14314F] px-2 text-xs font-semibold text-white"
+    >
+      + New <span aria-hidden>▾</span>
+    </button>
+    {open ? <div role="menu" data-testid="load-costs-new-menu" className="absolute left-0 z-50 mt-1 w-56 rounded-sm border border-gray-200 bg-white py-1 shadow-md">
+      <button type="button" role="menuitem" data-testid="load-costs-menu-expense" className={itemClass} onClick={() => pick("expense")}>Expense · paid now</button>
+      <button type="button" role="menuitem" data-testid="load-costs-menu-bill" className={itemClass} onClick={() => pick("bill")}>Bill · owed</button>
+      <Link role="menuitem" data-testid="load-costs-menu-bill-payment" className={itemClass} to={billsHref} onClick={() => setOpen(false)}>Bill payment · pay a bill</Link>
+      <button type="button" role="menuitem" data-testid="load-costs-add-advance-top" className={itemClass} onClick={() => pick("advance")}>Cash advance · from broker</button>
+      <button type="button" role="menuitem" data-testid="load-costs-add-fuel-advance-top" className={itemClass} onClick={() => pick("fuel_advance")}>Fuel advance · to driver</button>
+      <div className="my-1 border-t border-gray-100" />
+      <Link role="menuitem" data-testid="load-costs-receipt-photo" className={itemClass} to={receiptHref} onClick={() => setOpen(false)}>From a receipt photo</Link>
+    </div> : null}
+  </div>;
 }
 
 /** Local typed-filter combobox over an in-memory option list, with a "+ Create" link when nothing matches
