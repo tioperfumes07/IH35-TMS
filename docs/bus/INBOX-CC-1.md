@@ -1,5 +1,23 @@
 **VERDICT FORMAT LAW (owner 2026-09-05 02:50Z) is in force — see the board. Every DONE line you post must be re-measurable: sha · live sha · the measurements now passing. Deadlines are hard; silence = surrender.**
 
+# ★★★★★ LEAD VERDICT 2026-09-05 02:45Z — OWNER IS LOOKING AT THE LIVE BOARD. IT IS NOT ACCEPTABLE. HARD DEADLINE.
+**Owner, verbatim:** "IF CC1 CANT COMPLETE THE TASK SURRENDER IT, I'LL HAVE CURSOR DO IT. IT'S BEEN TOO LONG WAITING FOR CC1."
+**DEADLINE: 03:45Z.** If `CC-1 | STEP-1.3a DONE | <sha> | DEPLOY-REQUEST` is not on OUTBOX-CC-1 by then, the Load Costs board AND the Costs tab pass to Cursor (owner order) and you go to 1.5 settlements only.
+
+**MEASURED LIVE by the lead in the owner's Chrome on API/FE 61f1967, /accounting/load-costs, filter "all open", load 13508 — getBoundingClientRect + getComputedStyle, not eyeballed:**
+1. ALL 20 COLUMNS ARE FORCED TO 55px (equal split / fixed layout). Six header labels overflow (Short Miles, Rate Loaded, Loaded Pay, Empty Miles, Rate Empty, Deadhead Pay — scrollWidth > clientWidth). "$2,500.00" wraps to two lines, "$633.46" wraps, the driver name wraps to FOUR lines, the REVENUE band label breaks mid-word. LAW: a column sizes to its label and its widest value; money and mileage cells never wrap (nowrap, tabular-nums); the table scrolls horizontally INSIDE its container, sticky header, sticky Load column. ParityTable is shared: make the width model opt-in via props (per-column minWidth / auto layout) so no other list changes; post one line to CC-2 and Cursor.
+2. Header font-weight is 700 on every th in both rows. Owner ruling 09-04: REGULAR weight (400), centered, light bg.
+3. Body td border-right = 0px. NO vertical column rules below the header — that is the owner's "outlines look like shit, not all outlined". Every body cell carries the 1px --th-border rule; the group tint runs header AND body (tint is there, rules are not).
+4. Rate Loaded renders "0.48¢/mi". Wrong unit, wrong format. Spec: 0.4800 (dollars per mile, four decimals); Rate Empty identical.
+5. Status shows IN TRANSIT on a load that has not been dispatched (assigned_not_dispatched, no pickup departure). A truck that has not left cannot be in transit. Add the branch: no actual pickup departure → "Booked". Extend guard verify-load-costs-on-time-requires-appointment with this case.
+6. Row height ~90px from wrapping. Spec: one line per row, 12px body.
+7. Filter pills still rounded-full navy. Square 2px token, light treatment.
+
+**ORDER — STEP 1.3a, before anything else.** One PR: fixes 1–7 + guard `verify-load-costs-board-no-truncation-no-wrap` (asserts: no th overflow, no wrap on money/mileage td, td border-right present, th weight 400, rate format 0.0000) wired in scripts/verify-steps/ → FAST-MERGE → `DEPLOY-REQUEST: <sha>` to OUTBOX-CURSOR → after deploy a live screenshot on OUTBOX-CC-1. Then 1.1 remainder (durable draft fix + self-heal), then 1.3 the Costs-tab register (NUMBER empty & editable, 12 columns, KPI cards, 28px actions, comboboxes, ≥480px), then 4, 5, 6, 7. Nothing else. Checkoff line per item. Silence = surrender.
+
+---
+
+
 **ADDENDUM 03:00Z — STEP 0b (after 1.3a merges, one permitted interruption, 10 min):** apply `docs/audit/migration-drafts/GEOFENCE-ENGINE-REBUILD-migration-4-draft.sql` (geo.geofence_vehicle_state · geofence_state_transitions.is_superseded/superseded_reason + the 188cf90c supersede UPDATE · pwa.driver_prompts · telematics.load_odometer_segments · geo.geofences kind/source/center/radius/approach/requires_driver_response). Review the RLS policy pattern the way you fixed CC-3's first draft. Post sha to OUTBOX-CC-1 and one line to OUTBOX-CC-3. If you miss 03:45Z on 1.3a, Cursor applies this too.
 
 

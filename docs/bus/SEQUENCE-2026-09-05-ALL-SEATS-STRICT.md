@@ -38,7 +38,9 @@ Silence past a deadline = surrender. "Blocked" must quote the blocker and name w
 | C.1 | Deploy API to tip; healthz sha to OUTBOX | ✔ 683717b live 02:05Z |
 | C.2 | Census each 20-min tick; STATUS-NOW step numbers; ORDER VIOLATION calls | standing |
 | C.3 | Apply CC-3 drafts if CC-1 silent | ✔ not needed (CC-1 did 1.0) |
-| C.3b | 03:45Z: if CC-1 has no 1.3a sha, take Load Costs board + Costs tab (owner order) | conditional |
+| L.1 | LOAD COSTS BOARD live defects (owner transferred 03:10Z): 55px cols, 6 truncated th, wrapping money td, th 700→400, td border-right 0→1px, rate 0.4800, status Booked, rows one line, square pills. Deadline 04:15Z | → |
+| L.2 | Costs-tab register (NUMBER editable, 12 cols, KPI cards, comboboxes, ≥480px) — owner records an expense on 13508. Deadline 06:00Z | |
+| L.3 | Board tab row + remove Margin. Deadline 07:00Z | |
 | C.4 | Unit picker excludes Sold/deactivated/non-entity units (U-156-provisional) + guard | ✔ #20436 |
 | C.5 | Dispatch on a draft shows the 400 reason on screen | ✔ fe2e8976 |
 | C.6 | 09-04 dispatch cleanliness leftovers (Kanban width+drag, Assignment draggable cols, Round Trips missing trips, Detention one-liner) + reconcile BRD-01..18/22/24 status on this board (they are your surface) | → |
@@ -51,15 +53,14 @@ Silence past a deadline = surrender. "Blocked" must quote the blocker and name w
 | # | Step | Mark |
 |---|---|---|
 | 1.0 | Apply CC-3 migration drafts (batch) on Neon; sha to both OUTBOXes | ✔ 3c3c4321 (Neon-verified) |
-| 0b | Apply migration #4 (GEOFENCE-ENGINE-REBUILD-migration-4-draft.sql) after 1.3a; Cursor applies if 03:45Z missed | next |
-| 1.3a | LIVE BOARD DEFECTS (lead-measured 02:40Z): 55px forced columns, 6 truncated headers, wrapping money cells, th 700, td border-right 0, Rate Loaded '0.48¢/mi', IN TRANSIT on undispatched load, ~90px rows, rounded pills — one PR + guard + deploy + screenshot. DEADLINE 03:45Z or the board + Costs tab pass to Cursor (owner order) | → |
-| 1.1 | Durable draft advance: book/assign path + service self-heal + guard 10377 (guard ✔ #20429; fix + self-heal owed) | next |
+| M.1 | Apply migration #4 (geofence_vehicle_state, supersede, driver_prompts, odometer segments, geofences cols). Deadline 03:40Z | → |
+| 1.3a | TRANSFERRED TO CURSOR L.1 (owner 03:10Z) | ✖ stood down |
+| M.2 | Durable draft advance, backend only + 400 reason body. Deadline 04:30Z | next |
 | 1.2 | CoGS picker + fuel by role + operating_bank by role (#20425 #20426) | ✔ |
-| 1.3 | Costs-tab register (NUMBER empty & editable, 12 cols, KPI cards, 28px actions, comboboxes, ≥480px) | |
-| 1.4 | Board tab row; square pills; remove Margin column | |
-| 1.5 | Pre-settlements/Settlements consolidated-expand in Dispatch; escrow $25/load conditional; 404→200; 5 guards | |
-| 1.6 | 31-settlement feed via real UI; never close; hands off 5766/5772/5776/5780/5783/5784 | |
-| 1.7 | Three-mile schema + CPM; 1.11 actual miles ⛔ until CC-3 3.5 | |
+| 1.3/1.4 | → Cursor L.2 / L.3 | ✖ transferred |
+| M.3 | Pre-settlement BACKEND: 404→200, escrow $25/load conditional, consolidated read model endpoint (shape to Cursor). Deadline 06:00Z | |
+| M.4 | 31-settlement feed via real UI; never close; hands off 5766/5772/5776/5780/5783/5784 | |
+| M.5 | Three-mile schema + CPM; 1.11 actual miles ⛔ until CC-3 3.5 | |
 
 ### CC-2 — design + verify-live · `docs/bus/09-05-2026-Claude-Coder-2-DISPATCH-DESIGN-SWEEP-THEN-ACC-DEFECTS.md`
 | # | Step | Mark |
@@ -110,6 +111,7 @@ Silence past a deadline = surrender. "Blocked" must quote the blocker and name w
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG (newest first)
+- 03:10Z — OWNER: Cursor takes Load Costs (board L.1, register L.2, tabs L.3); CC-1 stands down from UI → M.1 migration #4 (03:40Z), M.2 draft backend, M.3 pre-settlement backend, M.4 feed, M.5 mileage.
 - 03:00Z — CC-3 3.2b ✔ verified (code live in 7e852b2, TEST geofence archived on Neon); geofence_vehicle_state still absent → migration #4 = CC-1 0b after 1.3a, Cursor fallback. CC-3 → 3.3 code, deadline 04:30Z. VERDICT FORMAT LAW merged c9d81dcf (.cursor rule + LAW doc + board).
 - 02:45Z — Owner viewed the live board; lead measured it in the owner's Chrome (61f1967). CC-1 → 1.3a with a 03:45Z deadline; miss = Cursor takes the board + Costs tab (owner order). Codex → X.6/X.7/X.8.
 - 02:25Z — Cascade L ✔ bc099ea7 (LAW.md 477 lines), K.0 ✔; BRD rows split: planners (19/20/21/23) = Cascade K.4–K.7, dispatch-board rows = Cursor reconciles. Cascade OUTBOX local-ignore defect ordered fixed.
