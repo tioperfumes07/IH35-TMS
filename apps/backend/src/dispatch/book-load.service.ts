@@ -25,7 +25,7 @@ import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.js";
 import { buildLoadSaveProof } from "./load-save-proof.js";
 import { linkLoadToPresettlementAtBookingInClientTx } from "./presettlement-link.service.js";
-import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
+import { geocodeStopsBackfill } from "../telematics/stops-geocode-backfill.service.js";
 import { computeAndPersistGoogleReferenceMilesForLoad } from "./google-reference-miles.service.js";
 
 type BookLoadStop = {
@@ -1047,10 +1047,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
   if (result.kind === "ok") {
     const createdLoadId = String(result.row.id ?? "");
     if (createdLoadId) {
-      void autoCreateGeofencesForLoad(input.requestingUserUuid, {
-        operating_company_id: input.operating_company_id,
-        load_id: createdLoadId,
-      }).catch((err) => {
+      void geocodeStopsBackfill(input.requestingUserUuid, input.operating_company_id, createdLoadId).catch((err) => {
         console.error("auto_geofence_post_book_failed", { err, load_id: createdLoadId });
       });
       // DSP-48 (owner ruling 2026-09-05, "Google distance = REFERENCE ONLY"): quotes + persists

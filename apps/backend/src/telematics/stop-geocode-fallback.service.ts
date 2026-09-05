@@ -20,6 +20,13 @@ export type GeocodableAddress = {
 };
 
 export type LatLng = { latitude: number; longitude: number };
+export type GeocodeEvidence = LatLng & {
+  source: "trimble" | "google";
+  confidence: number;
+};
+export type GeocodeOutcome =
+  | ({ ok: true } & GeocodeEvidence)
+  | { ok: false; reason: "provider_unavailable" | "address_missing" | "no_result" | "provider_error" };
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -51,19 +58,29 @@ function addressQuery(a: GeocodableAddress): string | null {
  * same way a missing address always has, not surface as a 500.
  */
 export async function geocodeAddress(address: GeocodableAddress): Promise<LatLng | null> {
+  const outcome = await geocodeAddressWithEvidence(address);
+  return outcome.ok ? { latitude: outcome.latitude, longitude: outcome.longitude } : null;
+}
+
+/** Evidence-preserving variant used by durable backfills. Provider results do not expose a
+ * numeric confidence score, so 1 means "provider returned a coordinate pair" (not a guessed
+ * address-quality score). */
+export async function geocodeAddressWithEvidence(address: GeocodableAddress): Promise<GeocodeOutcome> {
   const provider = activeGeocodeProvider();
-  if (!provider) return null;
+  if (!provider) return { ok: false, reason: "provider_unavailable" };
   const query = addressQuery(address);
-  if (!query) return null;
+  if (!query) return { ok: false, reason: "address_missing" };
   try {
     const results = provider === "trimble" ? await singleSearchGeocode(query, 1) : await searchAddress(query, 1);
     const first = results[0];
-    if (!first || typeof first.lat !== "number" || typeof first.lon !== "number") return null;
-    return { latitude: first.lat, longitude: first.lon };
+    if (!first || typeof first.lat !== "number" || typeof first.lon !== "number") {
+      return { ok: false, reason: "no_result" };
+    }
+    return { ok: true, latitude: first.lat, longitude: first.lon, source: provider, confidence: 1 };
   } catch {
     // Never log the key/url (same discipline as geocoding.routes.ts); a transient provider
     // failure degrades to "no coordinates yet", not an error surfaced to the caller.
-    return null;
+    return { ok: false, reason: "provider_error" };
   }
 }
 

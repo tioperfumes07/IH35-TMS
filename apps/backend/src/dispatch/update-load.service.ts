@@ -10,6 +10,7 @@
 // No migration: every column already exists. This file writes only mdata.loads + mdata.load_stops.
 import { resyncProformaInvoiceFromLoadRate } from "../accounting/resync-proforma-from-load-rate.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { geocodeStopsWithClient } from "../telematics/stops-geocode-backfill.service.js";
 import { bookLoadRateTotalCents } from "./book-load-accessorial.js";
 import {
   assertDriverQualifiedForLoad,
@@ -792,6 +793,9 @@ export async function updateDispatchLoad(
   let stopSummary: { updated: number; inserted: number; archived: number } | null = null;
   if (input.stops) {
     stopSummary = await replaceStops(client, loadId, input.stops);
+    if (stopSummary.inserted > 0) {
+      await geocodeStopsWithClient(client, requestingUserUuid, operatingCompanyId, loadId);
+    }
   }
 
   // 5) Re-read load + active stops.
