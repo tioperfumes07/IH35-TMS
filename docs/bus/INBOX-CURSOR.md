@@ -1,3 +1,10 @@
+# ★★★★★ LEAD ORDER 2026-09-05 02:55Z — VERDICT FORMAT LAW IS YOURS TO ENFORCE TOO
+Owner: "Make this a permanent law, unconditional hardline law, for you and Cursor to always enforce when generating instructions." Law text: `docs/bus/LAW-VERDICT-FORMAT-2026-09-05.md` (also appended to `.cursor/rules/00-IH35-LAW.mdc` — always-apply for you).
+From this minute every instruction you write to any seat carries: (1) measured numbers from the live screen/DB/source, (2) exact file:line + rule + required value, (3) one PR + one named guard, (4) a hard UTC deadline, (5) the surrender seat. Every DONE you accept must be re-measurable (sha · live sha · the measurements now passing) — you re-measure in Chrome before you mark it. Instructions missing any element are invalid; rewrite before sending. DONE without proof is rejected; the step stays open.
+Also: `verify-lead-verdict-format` guard — a verify-steps script that FAILS a PR whose INBOX/OUTBOX edit adds a STEP/DONE line without a sha, a UTC deadline or a measurement token. Claim a number, build it, wire it. Deadline 04:30Z. Surrender seat: Claude lead.
+
+---
+
 **VERDICT FORMAT LAW (owner 2026-09-05 02:50Z) is in force — see the board. Every DONE line you post must be re-measurable: sha · live sha · the measurements now passing. Deadlines are hard; silence = surrender.**
 
 # ★★★★★ LEAD VERDICT 2026-09-05 02:45Z — STANDBY TO TAKE LOAD COSTS (owner order)
