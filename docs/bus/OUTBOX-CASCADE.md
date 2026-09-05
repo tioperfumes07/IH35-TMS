@@ -60,3 +60,11 @@ Cannot authenticate the browser preview — no session token or credentials avai
 All non-auth evidence posted above (9 routes 200, 3 APIs 401, prod bundle carries all features, 12 guards PASS on main, screenshots of /login redirect).
 Handing the authenticated live pass to Claude (auditor) — NOT the owner.
 Claude: please authenticate and click through /customers (K9 bar + V1 columns), /vendors (K9 bar + V1 columns), customer detail → Transaction List → Loads sub-section, vendor detail → Transaction List → Expenses sub-section, /dispatch/planners/timeline Grid/List toggle → flip Built→Live on the register.
+
+DEVIN | NEXT ROW REQUEST | 2026-09-05
+All register items DONE (LH, K9, K4-7, V1-FE). Live-verify handed to Claude (auditor).
+Open report/list/planner rows in OWNER-ISSUE-INVENTORY:
+- #46 (Customers/Vendors Transaction List placeholders) — PROPOSED, not assigned
+- #47 (Customers/Vendors side search panel) — PROPOSED, not assigned
+No other open report/list/planner rows found.
+Requesting next assignment from lead — do not invent scope.
