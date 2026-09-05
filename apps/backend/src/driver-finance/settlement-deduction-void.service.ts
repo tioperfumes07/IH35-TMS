@@ -1,29 +1,30 @@
-// ACCT-SETL-DEDUCTION-VOID-DESIGN — owner ruling (docs/bus/OUTBOX-CURSOR.md, CURSOR -> CC-1, "RULINGS
-// (settled law — build on them, no wait)"): driver_finance.driver_settlement_deductions void is ONE
-// route, THREE branches keyed off status. "Void is a reversal, never a delete."
+// ACCT-SETL-DEDUCTION-VOID-DESIGN — OWNER RULING 2026-09-05 19:44Z ("why would I forgive the
+// debt"), superseding the earlier docs/bus/OUTBOX-CURSOR.md design this file originally built to
+// (retracted there too — "my earlier 'refund vs stop-collection' framing was wrong"):
+// driver_finance.driver_settlement_deductions void is ONE route, THREE branches keyed off status,
+// and NONE of them ever forgive, refund, or write off the debt. A void changes only WHEN/HOW an
+// amount is collected, never WHETHER.
 //
 //   PENDING (nothing collected)  -> void the row (voided_at/void_reason/voided_by), no money moved.
+//                                   The uncollected amount is carried forward to be re-collected in
+//                                   a later settlement (this row's own remaining_balance_cents is
+//                                   the scheduling artifact for THIS attempt only — the underlying
+//                                   debt source, e.g. the cash-advance/escrow balance this deduction
+//                                   was drawing down, is untouched by this UPDATE, so the next
+//                                   settlement build still sees the debt and schedules it again).
 //   PARTIAL (some collected)     -> NEVER touch the collected portion; void/close only the
 //                                   uncollected REMAINING schedule going forward; the collected
 //                                   amount stays posted (real history); void_reason notes exactly
 //                                   how much was already collected and retained.
-//   APPLIED (fully collected)    -> NOT a void — a reversing JE that credits the driver back,
-//                                   routed through journal-entries.service, never a silent void of
-//                                   posted money.
-//
-// The reversing JE for APPLIED reuses the SAME account-resolution primitives the canonical posting
-// engine (settlement-bill-payment-posting.service.ts) uses for the ORIGINAL entry — never a second,
-// independently-derived lookup for the same account. Mirrors that entry exactly, scoped to just this
-// one deduction's amount: the original posts Dr ap_control / Cr <deduction's resolved account>; the
-// reversal posts Dr <that same account> / Cr ap_control, crediting the driver (modeled as a VENDOR
-// via A/P, per that engine's own header comment) back by exactly what this one row took.
+//   APPLIED (fully collected)    -> RECORD-ONLY void. No reversing JE, no money moves, the driver
+//                                   is NEVER credited back — "any already-collected portion stays
+//                                   correctly applied (it really did pay down the debt)". The
+//                                   earlier version of this file posted a reversing JE crediting
+//                                   the driver via A/P control for a fully-applied deduction — that
+//                                   IS the refund the owner explicitly rejected; do not rebuild it.
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { createJournalEntryOnClient, type QueryableClient } from "../accounting/journal-entries.service.js";
-import { resolveRoleAccountOptional, isCoaRole } from "../accounting/coa-roles/resolver.service.js";
-import { resolveDriverOwnAccount } from "../accounting/settlement-posting/settlement-bill-payment-posting.service.js";
-import { classifyDeductionTarget, bucketRecoveryRoleKey } from "../accounting/settlement-posting/settlement-bill-payment.math.js";
-import { companyBusinessDate } from "../lib/company-business-date.js";
+import type { QueryableClient } from "../accounting/journal-entries.service.js";
 
 export class DeductionVoidError extends Error {
   constructor(
@@ -45,7 +46,7 @@ export type VoidDeductionInput = {
 export type VoidDeductionResult = {
   id: string;
   status_seen: "pending" | "partial" | "applied";
-  outcome: "voided_pending" | "voided_partial_remainder" | "reversed_applied";
+  outcome: "voided_pending" | "voided_partial_remainder" | "voided_applied_retained";
   collected_cents: number;
   reversed_cents: number;
   journal_entry_id: string | null;
@@ -147,100 +148,37 @@ export async function voidSettlementDeduction(
   }
 
   if (d.status === "applied") {
-    if (amountCents <= 0) throw new DeductionVoidError("deduction_zero_amount", "Applied deduction has no amount to reverse.");
+    if (amountCents <= 0) throw new DeductionVoidError("deduction_zero_amount", "Applied deduction has no amount to void.");
 
-    const bucketRes = d.bucket_id
-      ? await client.query<{ bucket_type: string | null }>(
-          `SELECT bucket_type FROM driver_finance.driver_deduction_buckets WHERE id = $1::uuid LIMIT 1`,
-          [d.bucket_id]
-        )
-      : { rows: [] as Array<{ bucket_type: string | null }> };
-    const bucketType = bucketRes.rows[0]?.bucket_type ?? null;
-    const target = classifyDeductionTarget(d.deduction_type, bucketType);
-
-    const driverRes = await client.query<{ driver_name: string; hire_date: string | null }>(
-      `SELECT concat_ws(' ', first_name, last_name) AS driver_name, hire_date::text AS hire_date
-         FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
-      [d.driver_id, input.operating_company_id]
-    );
-    const driverName = String(driverRes.rows[0]?.driver_name ?? "").trim();
-    const driverHireDate = driverRes.rows[0]?.hire_date ?? null;
-
-    let deductionAccountId: string | null;
-    if (target === "advance") {
-      deductionAccountId = await resolveDriverOwnAccount(client, input.operating_company_id, d.driver_id, driverName, "advance");
-      if (!deductionAccountId) {
-        throw new DeductionVoidError(
-          "driver_advance_account_missing",
-          `Driver ${d.driver_id} has no provisioned Cash-Advance ASSET sub-account to reverse this deduction against`
-        );
-      }
-    } else if (target === "escrow") {
-      deductionAccountId = await resolveDriverOwnAccount(client, input.operating_company_id, d.driver_id, driverName, "escrow", driverHireDate);
-      if (!deductionAccountId) {
-        throw new DeductionVoidError(
-          "driver_escrow_account_missing",
-          `Driver ${d.driver_id} has no provisioned Driver-Escrow LIABILITY sub-account to reverse this deduction against`
-        );
-      }
-    } else {
-      const roleKey = bucketRecoveryRoleKey(d.deduction_type);
-      deductionAccountId = isCoaRole(roleKey) ? await resolveRoleAccountOptional(client, input.operating_company_id, roleKey) : null;
-      if (!deductionAccountId) {
-        throw new DeductionVoidError(
-          "deduction_recovery_account_missing",
-          `No active '${roleKey}' role designation for deduction type '${d.deduction_type}'`
-        );
-      }
-    }
-
-    const apAccountId = await resolveRoleAccountOptional(client, input.operating_company_id, "ap_control");
-    if (!apAccountId) {
-      throw new DeductionVoidError("ap_account_missing", "No A/P control account (ap_control) designated");
-    }
-
-    const je = await createJournalEntryOnClient(
-      client,
-      {
-        operating_company_id: input.operating_company_id,
-        entry_date: companyBusinessDate(),
-        memo: `Settlement deduction reversal — ${reason}`,
-        source: "manual",
-        postings: [
-          // Undo the original credit to the deduction's own account, then credit the driver back
-          // (A/P control — the driver is modeled as a vendor for settlement purposes, matching the
-          // canonical posting engine's own convention).
-          { account_id: deductionAccountId, debit_or_credit: "debit", amount_cents: amountCents },
-          { account_id: apAccountId, debit_or_credit: "credit", amount_cents: amountCents },
-        ],
-      },
-      { userId: input.actor_user_id, role: "Owner" }
-    );
-
+    // OWNER RULING 2026-09-05 19:44Z ("why would I forgive the debt"): a void NEVER forgives,
+    // refunds, or writes off — it only changes WHEN/HOW an amount is collected, never WHETHER. An
+    // APPLIED deduction was already 100% collected — "any already-collected portion stays
+    // correctly applied (it really did pay down the debt)". So voiding one is a RECORD-ONLY
+    // marker: no reversing JE, no money moves, the driver is never credited back. (The earlier
+    // design here posted a reversing JE crediting the driver via A/P control — that IS the refund
+    // the owner explicitly rejected; retracted, not built on.)
     await client.query(
       `
         UPDATE driver_finance.driver_settlement_deductions
         SET voided_at = now(),
             void_reason = $2,
             voided_by_user_id = $3::uuid,
-            void_reversal_entry_id = $4::uuid,
             updated_at = now()
         WHERE id = $1::uuid
       `,
-      [d.id, reason, input.actor_user_id, je.id]
+      [d.id, `${reason} — $${(amountCents / 100).toFixed(2)} already collected, retained (never refunded)`, input.actor_user_id]
     );
-    await auditDeductionVoid(client, input.actor_user_id, d, "applied_reversed", {
+    await auditDeductionVoid(client, input.actor_user_id, d, "applied_retained_no_reversal", {
       reason,
-      reversed_cents: amountCents,
-      journal_entry_id: je.id,
+      collected_cents: amountCents,
     });
     return {
       id: d.id,
       status_seen: "applied",
-      outcome: "reversed_applied",
+      outcome: "voided_applied_retained",
       collected_cents: amountCents,
-      reversed_cents: amountCents,
-      journal_entry_id: je.id,
+      reversed_cents: 0,
+      journal_entry_id: null,
     };
   }
 
