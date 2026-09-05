@@ -253,6 +253,7 @@ const CustomerProfitabilityPage = React.lazy(() => import("../pages/reports/Cust
 const ProfitPerTruckPage = React.lazy(() => import("../pages/reports/ProfitPerTruckPage").then((m) => ({ default: m.ProfitPerTruckPage })));
 const LaneProfitabilityPage = React.lazy(() => import("../pages/reports/LaneProfitabilityPage").then((m) => ({ default: m.LaneProfitabilityPage })));
 const CancellationsReportPage = React.lazy(() => import("../pages/reports/CancellationsReportPage").then((m) => ({ default: m.CancellationsReportPage })));
+const DriverQualificationReportPage = React.lazy(() => import("../pages/reports/DriverQualificationReportPage").then((m) => ({ default: m.DriverQualificationReportPage })));
 const FuelReconciliationPage = React.lazy(() => import("../pages/reports/FuelReconciliationPage").then((m) => ({ default: m.FuelReconciliationPage })));
 const MaintenanceCostPerUnitPage = React.lazy(() => import("../pages/reports/MaintenanceCostPerUnitPage").then((m) => ({ default: m.MaintenanceCostPerUnitPage })));
 const DispatchMarginPage = React.lazy(() => import("../pages/reports/DispatchMarginPage").then((m) => ({ default: m.DispatchMarginPage })));
@@ -3372,6 +3373,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <CancellationsReportPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/driver-qualification"
+          element={
+            <ProtectedRoute>
+              <DriverQualificationReportPage />
             </ProtectedRoute>
           }
         />

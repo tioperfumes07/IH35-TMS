@@ -92,6 +92,7 @@ export const REPORTS_SUB_NAV_ITEMS: NavyPageSubNavItem[] = [
     children: flattenReportRunLinks(),
   },
   { label: "Cancellations", to: "/reports/cancellations" },
+  { label: "Driver Qualification File", to: "/reports/driver-qualification" },
   { label: "Scheduled (custom)", to: "/reports/scheduled-custom" },
   {
     label: "Audit",
@@ -123,6 +124,7 @@ export function reportsSubNavActiveHref(pathname: string): string {
     pathname === "/reports/geofence-dwell" ||
     pathname === "/reports/deadhead" ||
     pathname === "/reports/cancellations" ||
+    pathname === "/reports/driver-qualification" ||
     pathname === "/reports/scheduled"
   ) {
     return pathname;

@@ -238,6 +238,134 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
     return summary;
   });
 
+  // DRV-14: Full DQF roster — every active driver with their DQF items flattened into one row per
+  // driver, showing the key qualification items (CDL, DOT medical, MVR, Clearinghouse) with value,
+  // expiry, and renewal cadence. Used by the Driver Qualification File report page.
+  app.get("/api/v1/safety/driver-qualification/roster", RL_READ, async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const parsed = companyQuerySchema.extend({
+      include_inactive: z.coerce.boolean().default(false),
+    }).safeParse(req.query ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+
+    const roster = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+      const res = await client.query(
+        `
+          WITH scoped_drivers AS (
+            SELECT
+              d.id,
+              d.first_name,
+              d.last_name,
+              d.status::text AS driver_status,
+              d.cdl_number,
+              d.cdl_state,
+              d.cdl_expiry_date
+            FROM mdata.drivers d
+            WHERE (d.operating_company_id = $1::uuid OR EXISTS (
+                    SELECT 1 FROM mdata.driver_company_authorizations dca
+                     WHERE dca.driver_id = d.id
+                       AND dca.company_id = $1::uuid
+                       AND dca.is_authorized = true
+                       AND dca.deactivated_at IS NULL
+                  ))
+              AND ${EXCLUDE_ARCHIVED_DRIVERS_SQL}
+              AND ${EXCLUDE_PSEUDO_DRIVERS_SQL}
+              AND d.is_sample_data IS NOT TRUE
+              AND (${parsed.data.include_inactive} OR d.status = 'Active'::mdata.driver_status)
+          ),
+          dqf_items AS (
+            SELECT
+              f.driver_id,
+              f.required_document_type_id,
+              rdt.code AS doc_code,
+              COALESCE(rdt.label, f.item_name) AS doc_label,
+              f.status,
+              f.effective_date,
+              f.expiry_date,
+              f.executed_at,
+              CASE
+                WHEN f.expiry_date IS NULL THEN NULL
+                ELSE (f.expiry_date - CURRENT_DATE)
+              END AS days_to_expiry
+            FROM safety.driver_qualification_files f
+            LEFT JOIN compliance.required_document_types rdt
+              ON rdt.id = f.required_document_type_id
+             AND rdt.operating_company_id = f.operating_company_id
+             AND rdt.entity_kind = 'driver'
+            WHERE f.operating_company_id = $1::uuid
+              AND f.voided_at IS NULL
+          ),
+          -- Pivot the key DQF items into columns per driver
+          pivoted AS (
+            SELECT
+              sd.id AS driver_id,
+              sd.first_name,
+              sd.last_name,
+              sd.driver_status,
+              sd.cdl_number,
+              sd.cdl_state,
+              sd.cdl_expiry_date,
+              -- CDL from mdata.drivers (structured column) — the DQF item is a secondary record
+              -- DOT medical: from safety.medical_cards or DQF item with code like 'dot_medical'/'medical'
+              (SELECT di.expiry_date FROM dqf_items di WHERE di.driver_id = sd.id AND di.doc_code ILIKE '%medical%' ORDER BY di.expiry_date DESC LIMIT 1) AS dot_medical_expiry,
+              (SELECT di.effective_date FROM dqf_items di WHERE di.driver_id = sd.id AND di.doc_code ILIKE '%medical%' ORDER BY di.effective_date DESC LIMIT 1) AS dot_medical_effective,
+              (SELECT di.status FROM dqf_items di WHERE di.driver_id = sd.id AND di.doc_code ILIKE '%medical%' ORDER BY di.updated_at DESC LIMIT 1) AS dot_medical_status,
+              -- MVR: annual review (§391.25)
+              (SELECT di.expiry_date FROM dqf_items di WHERE di.driver_id = sd.id AND di.doc_code ILIKE '%mvr%' ORDER BY di.expiry_date DESC LIMIT 1) AS mvr_expiry,
+              (SELECT di.effective_date FROM dqf_items di WHERE di.driver_id = sd.id AND di.doc_code ILIKE '%mvr%' ORDER BY di.effective_date DESC LIMIT 1) AS mvr_effective,
+              (SELECT di.status FROM dqf_items di WHERE di.driver_id = sd.id AND di.doc_code ILIKE '%mvr%' ORDER BY di.updated_at DESC LIMIT 1) AS mvr_status,
+              -- Clearinghouse: annual query (§382.701)
+              (SELECT di.expiry_date FROM dqf_items di WHERE di.driver_id = sd.id AND di.doc_code ILIKE '%clearinghouse%' ORDER BY di.expiry_date DESC LIMIT 1) AS clearinghouse_expiry,
+              (SELECT di.effective_date FROM dqf_items di WHERE di.driver_id = sd.id AND di.doc_code ILIKE '%clearinghouse%' ORDER BY di.effective_date DESC LIMIT 1) AS clearinghouse_effective,
+              (SELECT di.status FROM dqf_items di WHERE di.driver_id = sd.id AND di.doc_code ILIKE '%clearinghouse%' ORDER BY di.updated_at DESC LIMIT 1) AS clearinghouse_status,
+              -- Total DQF item count and compliance flags
+              (SELECT count(*) FROM dqf_items di WHERE di.driver_id = sd.id) AS dqf_item_count,
+              (SELECT bool_or(di.status = 'expired') FROM dqf_items di WHERE di.driver_id = sd.id) AS has_expired,
+              (SELECT bool_or(di.status = 'missing') FROM dqf_items di WHERE di.driver_id = sd.id) AS has_missing,
+              (SELECT bool_or(di.expiry_date IS NOT NULL AND di.expiry_date < CURRENT_DATE) FROM dqf_items di WHERE di.driver_id = sd.id) AS has_red_expiry,
+              (SELECT bool_or(di.expiry_date IS NOT NULL AND di.expiry_date >= CURRENT_DATE AND di.expiry_date <= CURRENT_DATE + INTERVAL '30 days') FROM dqf_items di WHERE di.driver_id = sd.id) AS has_amber_expiry
+            FROM scoped_drivers sd
+          )
+          SELECT
+            driver_id::text,
+            first_name,
+            last_name,
+            driver_status,
+            cdl_number,
+            cdl_state,
+            cdl_expiry_date::text,
+            dot_medical_effective::text,
+            dot_medical_expiry::text,
+            dot_medical_status,
+            mvr_effective::text,
+            mvr_expiry::text,
+            mvr_status,
+            clearinghouse_effective::text,
+            clearinghouse_expiry::text,
+            clearinghouse_status,
+            dqf_item_count::int,
+            has_expired,
+            has_missing,
+            has_red_expiry,
+            has_amber_expiry,
+            CASE
+              WHEN dqf_item_count = 0 THEN 'empty'
+              WHEN has_expired OR has_red_expiry THEN 'non_compliant'
+              WHEN has_missing OR has_amber_expiry THEN 'attention'
+              ELSE 'compliant'
+            END AS compliance_level
+          FROM pivoted
+          ORDER BY last_name NULLS LAST, first_name NULLS LAST
+        `,
+        [parsed.data.operating_company_id]
+      );
+      return { drivers: res.rows };
+    });
+
+    return roster;
+  });
+
   app.post("/api/v1/safety/driver-qualification/items", RL_WRITE, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
