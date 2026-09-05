@@ -481,7 +481,7 @@ export function ManagementReportPackagePage() {
               onClick={() => {
                 const lines = [
                   "section,account_code,account_name,amount_cents",
-                  `Package,${pkg.label},${applied.from}-${applied.to},${applied.basis}`,
+                  `Package,${pkg.label},${applied.start}-${applied.end},${applied.basis}`,
                 ];
                 const blob = new Blob([lines.join("\n")], { type: "text/csv" });
                 const url = URL.createObjectURL(blob);
