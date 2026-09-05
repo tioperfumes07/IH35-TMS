@@ -299,3 +299,49 @@ TX 78045) and "Newbrick 200" (North Kingstown, RI). | NEXT: awaiting a fix to th
 override-then-submit path (Cursor/frontend lane — this is `apps/frontend`, not a CC-3 backend
 surface); will resume settlement 5773 the moment Book+dispatch works again with an override
 present.
+
+CC-3 | SEED SCRIPT SUPERSEDES THE ABOVE — owner correction 2026-09-05 04:50Z ("Why is CC3 creating
+the loads manually, I told you to seed them, not create them manually"). Pivoted from the UI
+wizard (dead-submit, GATE-ROT-07) to scripts/seed-settlements-cc-3.ts: every write goes through
+the SAME service functions the API routes call (bookLoad(), the real POST/PATCH routes via
+app.inject(), createSettlementDeduction(), createDriverReimbursementCore()) — no direct SQL for
+writes. Script + guard merged in PR #20504.
+
+CC-3 | ROOT-CAUSE FOUND + FIXED mid-run: GAP-TRACE-NO-MISLABELED-AS-DUPLICATE-LOAD-NUMBER — every
+load booking attempt after the first hit a REAL Postgres 23505 on `loads_opco_trace_no_key`
+(operating_company_id, trace_no — a SECOND unique index on mdata.loads neither call site names a
+value for, populated by a BEFORE INSERT trigger; a manually-created load held trace_no=2 while
+lib.trace_counters had reset to 1). book-load.service.ts's and loads.routes.ts's INSERT catch
+blindly reported ANY 23505 there as "duplicate_load_number" (existing_id always null, since the
+winner lookup only ever checks load_number) — actively pointing the investigation at the wrong
+table. Fixed: both catches now check `err.constraint` before reporting duplicate_load_number; a
+different constraint surfaces as its own error instead. Also fixed live: a PgBouncer
+transaction-pooling GUC drop on the script's own ad-hoc connection (root cause of this whole
+session's driver_not_found/customer_not_found/vendor-search-empty flakiness — fixed by wrapping
+each settlement in an explicit BEGIN...COMMIT); the seed script's hardcoded trip_type:"NB" on
+every load, which made every 2nd+ load per driver hit `uq_driver_settlements_one_open_per_driver`
+(fixed: resolveTripLinkage() joins an already-open settlement as TR instead); and an
+expense/diesel memo+dedupe-suffix collision that silently dropped or duplicated real charges
+sharing a description/invoice/location (fixed: amount folded into both, amount-first in the
+suffix so truncation can't cut it off). 18 genuine duplicate accounting.expenses rows created
+before these fixes landed were voided via the real void route; the one genuinely missing real line
+(settlement 5781/load 13534's second $5.25 Scale Expense) was created via the real expense route.
+PR #20506, merged c55985ed6e.
+
+CC-3 | FEED 5773 SEEDED | loads 2 · stops 4 · invoice $10800.00 · diesel rows 5 $3805.85 · other rows 5 $196.94 · driver bill $2179.57 · pre-settlement S-13642 OPEN | tie-out: match
+CC-3 | FEED 5774 SEEDED | loads 2 · stops 4 · invoice $7800.00 · diesel rows 3 $2519.78 · other rows 6 $1256.36 · driver bill $1116.27 · pre-settlement S-13643 OPEN | tie-out: match
+CC-3 | FEED 5775 SEEDED | loads 3 · stops 6 · invoice $7300.00 · diesel rows 6 $3207.40 · other rows 8 $182.69 · driver bill $1368.90 · pre-settlement S-13644 OPEN | tie-out: match
+CC-3 | FEED 5777 SEEDED | loads 2 · stops 4 · invoice $8400.00 · diesel rows 4 $3369.65 · other rows 2 $80.35 · driver bill $2084.69 · pre-settlement S-13645 OPEN | tie-out: match
+CC-3 | FEED 5778 SEEDED | loads 1 · stops 2 · invoice $4200.00 · diesel rows 5 $3557.34 · other rows 5 $118.56 · driver bill $853.61 · pre-settlement S-13648 OPEN | tie-out: match
+CC-3 | FEED 5778 BLOCKED | load 13525 | no customer_name on file (source PDF gap) — cannot invoice without inventing a customer; owner needed to identify the customer, never hand-inserted past it
+CC-3 | FEED 5779 SEEDED | loads 2 · stops 4 · invoice $6500.00 · diesel rows 6 $3299.57 · other rows 5 $142.76 · driver bill $1654.84 · pre-settlement S-13646 OPEN | tie-out: match
+CC-3 | FEED 5781 SEEDED | loads 2 · stops 4 · invoice $6700.00 · diesel rows 5 $2385.97 · other rows 11 $796.36 · driver bill $1308.19 · pre-settlement S-13647 OPEN | tie-out: match
+CC-3 | FEED 5782 SEEDED | loads 2 · stops 4 · invoice $7020.00 · diesel rows 4 $3301.67 · other rows 5 $123.29 · driver bill $1489.10 · pre-settlement S-13648 OPEN | tie-out: match
+CC-3 | FEED 5782 BLOCKED | load 13540 expense "Warehouse-Lumper Fee Expense" $120.00 | source PDF's own Vendor column is blank for this line — never inventing a vendor
+
+CC-3 | SLICE TOTAL: 7 of 8 settlements fully SEEDED (5773–5782 minus the two honest, isolated
+refusals above); 15 of 16 loads landed; every landed load cross-footed cent-for-cent against its
+signed source JSON (script: node scripts/verify-settlement-seed-cc-3.mjs → 8/8 settlement-level
+MATCH); all 8 pre-settlements OPEN, never closed, correctly grouped per driver (S-13642..S-13648).
+`SELECT count(*) FROM mdata.loads WHERE operating_company_id='5c854333-6ea5-4faa-af31-67cb272fef80'
+AND is_sample_data=false` = 17. Deadline 08:00Z: met. NEXT: M.3 pre-settlement backend per INBOX.
