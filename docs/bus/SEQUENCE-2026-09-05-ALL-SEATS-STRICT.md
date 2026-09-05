@@ -134,6 +134,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG
+- 13:55Z OWNER: banking not wired (355 USMCA bank txns, 0 suggestions/matches; no expense/bill matcher exists; toolbar h-7 vs h-8; type filter single-select; date range not visible) → CC-2 B.1 19:30Z, B.2 18:00Z. Owner demanded ONE inventory + ONE instruction set → docs/bus/OWNER-ISSUE-INVENTORY-2026-09-05.md (23 rows) + Downloads copy.
 - 13:25Z OWNER: customers data not showing → CC-3 V.1 widened to vendors+customers roll-ups, 18:30Z → CC-1.
 - 13:35Z OWNER: customers/vendors landing filter view removed → root commit 1e4a6282d7 (07-22 CHROME-04 #3204), additive breach. Cascade K.9 recover from history, 16:00Z → CC-2.
 - 13:15Z OWNER: Settlements redesign + vendors/bills/invoices wiring. Measured: settlement_lines has no miles/rate (0 of 32 lines); Bills reads accounting.bills only (0) while 17 driver_bills exist; no Factored column; company_settlements 0 rows, no page/route; vendor list Open Balance = bills only ($0) while 85 expenses $28,344.54 invisible; Last Transaction = updated_at. Rows: CC-1 S.1 17:30Z, S.2 18:30Z, S.3 19:00Z; CC-3 V.1 18:00Z, M.3 20:00Z; Cursor L.5 18:00Z, L.6 21:00Z. Reference render filed. Devin inactive today.
