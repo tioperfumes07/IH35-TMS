@@ -154,6 +154,7 @@ import { registerCustomerContractRoutes } from "./customer-contracts/customer-co
 import { registerPreSettlementRoutes } from "./driver-finance/pre-settlement.routes.js";
 import { registerDriverFinanceSettlementHtmlRoutes } from "./driver-finance/settlement-render.routes.js";
 import { registerDriverFinanceDriverBillsRoutes } from "./driver-finance/driver-bills.routes.js";
+import { registerDriverFinanceDriverBillsListRoutes } from "./driver-finance/driver-bills-list.routes.js";
 import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js";
 import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deductions.routes.js";
 import { registerEscrowDeductionPendingRoutes } from "./driver-finance/escrow-deduction-pending.routes.js";
@@ -975,6 +976,7 @@ async function main() {
   await registerAutoDeductionPolicyRoutes(app);
   await registerDriverFinanceSettlementHtmlRoutes(app);
   await registerDriverFinanceDriverBillsRoutes(app);
+  await registerDriverFinanceDriverBillsListRoutes(app);
   await registerDriverFinanceDebtRoutes(app);
   await registerDriverFinanceDeductionRoutes(app);
   await registerEscrowDeductionPendingRoutes(app);

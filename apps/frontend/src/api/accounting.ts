@@ -908,6 +908,40 @@ export function listBills(
   );
 }
 
+// A3 (STANDING-DIRECTIVES-2026-09-05.md §CC-1, inv #13): "Driver bills not appearing in Bills."
+// driver_finance.driver_bills is a completely different table from accounting.bills (own id space,
+// own columns) -- never crammed into the VendorBill shape, which is deeply vendor-specific
+// (vendor_id/vendor_uuid/mdata_vendor_id/journal_entry_id all assume an accounting.bills row and
+// drive Pay/Schedule/Allocate actions that do not apply to a driver bill at all).
+export type DriverBillListRow = {
+  id: string;
+  bill_number: string | null;
+  driver_id: string;
+  driver_name: string | null;
+  load_id: string | null;
+  load_number: string | null;
+  miles_basis: string | number | null;
+  rate_per_mile_cents: number | null;
+  miles_deadhead: string | number | null;
+  rate_empty_per_mile_cents: number | null;
+  gross_amount_cents: number | null;
+  status: string;
+  settled_in_settlement_id: string | null;
+  settlement_display_id: string | null;
+  voided_at: string | null;
+  created_at: string;
+};
+
+export function listDriverBills(operatingCompanyId: string, params: { include_voided?: boolean; limit?: number } = {}) {
+  const query = new URLSearchParams();
+  if (params.include_voided) query.set("include_voided", "true");
+  if (params.limit !== undefined) query.set("limit", String(params.limit));
+  const qs = query.toString();
+  return apiRequest<{ total_count: number; driver_bills: DriverBillListRow[] }>(
+    withCompany(`/api/v1/driver-finance/driver-bills/list${qs ? `?${qs}` : ""}`, operatingCompanyId)
+  );
+}
+
 export function listBillPayments(
   operatingCompanyId: string,
   params: {
