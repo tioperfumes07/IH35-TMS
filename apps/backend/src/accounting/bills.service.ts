@@ -3096,6 +3096,12 @@ export async function voidBillPaymentInClientTx(
         )
       : null;
 
+    // ACCT-SETL-BILLPAY-VOID-MIRROR — owner ruling (docs/bus/OUTBOX-CURSOR.md, CURSOR -> CC-1):
+    // write BOTH column sets in the SAME transaction. revoked_* stays the functional truth (GL
+    // exemption checks, posting-engine.service.ts:1699, still key off it — unchanged); voided_at/
+    // void_reason/voided_by_user_id (GO-22, migration 202613490001 part 2) is mirrored alongside so
+    // one query finds every void everywhere, across every financial table, uniformly. Not a rewrite
+    // of the working revoked_* path — purely additive columns in the same UPDATE.
     await client.query(
       `
         UPDATE accounting.bill_payments
@@ -3103,6 +3109,9 @@ export async function voidBillPaymentInClientTx(
             revoked_at = now(),
             revoked_by_user_id = $3,
             revoked_reason = $4,
+            voided_at = now(),
+            void_reason = $4,
+            voided_by_user_id = $3,
             updated_at = now()
         WHERE id = $1
           AND operating_company_id = $2::uuid
