@@ -14,9 +14,15 @@ mustInclude(service, "l.operating_company_id = $1::uuid", "load stop tenant filt
 mustInclude(service, "g.operating_company_id = $1::uuid", "existing geofence tenant filter");
 mustInclude(service, "operating_company_id,", "insert includes tenant column");
 
-const routePath = "apps/backend/src/dispatch/loads.routes.ts";
-if (!fs.existsSync(routePath)) throw new Error(`Missing dispatch route: ${routePath}`);
-const routes = fs.readFileSync(routePath, "utf8");
-mustInclude(routes, "autoCreateGeofencesForLoad", "route hook call");
+// Inv #40 (2026-09-05, PR #20684): the trigger moved OUT of the HTTP route and into bookLoad()
+// itself (book-load.service.ts) so every caller gets it, not only loads.routes.ts's POST
+// handler -- that PR's own dedicated guard (verify-book-load-geofence-service-layer.mjs) proves
+// the wiring in full, including that the route must NOT call it (double-fire sentinel). This
+// older, more narrowly-scoped check just needs to point at the current call site so it doesn't
+// assert the pre-fix architecture.
+const servicePath2 = "apps/backend/src/dispatch/book-load.service.ts";
+if (!fs.existsSync(servicePath2)) throw new Error(`Missing service: ${servicePath2}`);
+const bookLoadService = fs.readFileSync(servicePath2, "utf8");
+mustInclude(bookLoadService, "autoCreateGeofencesForLoad", "bookLoad() hook call");
 
 console.log("verify-auto-geofence-tenant-scope: ok");
