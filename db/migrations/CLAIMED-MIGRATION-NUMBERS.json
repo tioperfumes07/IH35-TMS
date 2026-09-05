@@ -23,6 +23,11 @@
       "claimed_at": "2026-09-04",
       "purpose": "LOAD-COSTS-COMPLETE-VERTICAL spec 09-04-2026 §1.2: seed accounting.chart_of_accounts_roles for USMCA, role='company_fuel_advance_expense' -> catalogs.accounts id 353fbd5b-d39c-4709-ac19-60cae52018f7 (account 5000 'Fuel & Diesel', CostOfGoodsSold, postable, active), resolved by org.companies.code='USMCA' (never a hardcoded UUID), idempotent ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE, matching the 202612880000 pattern. Depends on 202613740001 landing first (the CHECK-widen)."
     },
+    "202613760001": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-09-05",
+      "purpose": "STEP 0 of 09-05-2026-Claude-Coder-1-LOAD-COSTS-COMPLETE-VERTICAL-Updated.md (CC-3's ORDER-2026-09-04-CC-3-SAMSARA-GEOFENCE-IMPORT, three ready-to-apply drafts from docs/audit/migration-drafts/, applied as ONE batch by CC-1 -- CC-3's lane has no migration authority): (1) widen integrations.samsara_remote_counts_entity_type_check to admit 'addresses'; (2) create integrations.samsara_addresses (raw Samsara geofence-address staging mirror, FORCED RLS, void-not-delete); (3) add geo.geofences.samsara_address_id + widen geo_geofences_source_check to admit 'samsara_import' + a CHECK requiring samsara_import rows to carry the id. All three additive/idempotent, reproduced verbatim from CC-3's drafts (root-cause comments preserved), renumbered to this claimed slot."
+    },
     "202613700200": {
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-04",
