@@ -635,6 +635,25 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
     currentBusinessDate
   );
 
+  // SETL-LINES-VOID-GAP: the direct /settlements/:id/reverse route (settlements.routes.ts) already
+  // cascades this exact reversal to the settlement's own settlement_lines (is_active=false +
+  // voided_at/void_reason/voided_by_user_id) — this governance path reversed the SAME settlement
+  // via the SAME reverseSettlementBillPaymentInClientTx engine above but never touched the line
+  // items, leaving them readable as still-active/unvoided after their parent was cancelled. Matches
+  // the direct route's cascade exactly so a settlement reversed through governance leaves the same
+  // trail as one reversed directly.
+  await client.query(
+    `UPDATE driver_finance.settlement_lines
+        SET is_active = false,
+            voided_at = COALESCE(voided_at, now()),
+            void_reason = COALESCE(void_reason, $3),
+            voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
+            updated_at = now()
+      WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid
+        AND (is_active IS DISTINCT FROM false OR voided_at IS NULL)`,
+    [entityId, operatingCompanyId, reason, userId]
+  );
+
   const flipped = await client.query<{ id: string }>(
     `UPDATE driver_finance.driver_settlements
         SET status = 'cancelled',

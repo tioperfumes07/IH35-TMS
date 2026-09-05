@@ -91,4 +91,34 @@ describe("Task #24 — void/cancel executor wiring", () => {
       expect(body).toContain("reversePostedGl: false");
     });
   });
+
+  // SETL-LINES-VOID-GAP — the direct /settlements/:id/reverse route (settlements.routes.ts) already
+  // cascaded its reversal to settlement_lines.is_active; this governance executor reversed the SAME
+  // settlement via the SAME reverseSettlementBillPaymentInClientTx engine but never touched the line
+  // items at all, so a settlement cancelled through governance left its lines readable as still-open.
+  describe("executeDriverSettlement — SETL-LINES-VOID-GAP cascade to settlement_lines", () => {
+    const fnMatch = source.match(/const executeDriverSettlement: EntityExecutor = async \(ctx\) => \{[\s\S]*?\n\};/);
+    it("function body found", () => {
+      expect(fnMatch, "executeDriverSettlement function body not found").toBeTruthy();
+    });
+    const body = fnMatch ? fnMatch[0] : "";
+
+    it("cascades is_active=false to the settlement's own settlement_lines rows", () => {
+      expect(body).toContain("UPDATE driver_finance.settlement_lines");
+      expect(body).toContain("is_active = false");
+    });
+
+    it("also stamps the voided_at/void_reason/voided_by_user_id register GO-22 added, not just is_active", () => {
+      expect(body).toMatch(/voided_at\s*=\s*COALESCE\(voided_at,\s*now\(\)\)/);
+      expect(body).toMatch(/void_reason\s*=\s*COALESCE\(void_reason,\s*\$3\)/);
+      expect(body).toMatch(/voided_by_user_id\s*=\s*COALESCE\(voided_by_user_id,\s*\$4::uuid\)/);
+    });
+
+    it("the settlement_lines cascade runs BEFORE the header flips to cancelled (same ordering as the direct route)", () => {
+      const cascadeIdx = body.indexOf("UPDATE driver_finance.settlement_lines");
+      const flipIdx = body.indexOf("UPDATE driver_finance.driver_settlements");
+      expect(cascadeIdx).toBeGreaterThan(-1);
+      expect(flipIdx).toBeGreaterThan(cascadeIdx);
+    });
+  });
 });
