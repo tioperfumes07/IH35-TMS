@@ -132,7 +132,7 @@
     "Users",
     "VENDORS"
   ],
-  "route_path_count": 580,
+  "route_path_count": 582,
   "dispatch_board_column_keys": [
     "commodity",
     "customer",
@@ -191,13 +191,14 @@
     "Repairs & maintenance"
   ],
   "pattern_scan": {
-    "total": 19,
+    "total": 24,
     "perFile": {
       "apps/frontend/src/pages/Customers.tsx": 5,
       "apps/frontend/src/pages/Vendors.tsx": 5,
       "apps/frontend/src/pages/accounting/BillsPage.tsx": 5,
       "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx": 1,
       "apps/frontend/src/pages/accounting/PaymentsListPage.tsx": 1,
+      "apps/frontend/src/pages/dispatch/DispatchBoard.tsx": 5,
       "apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx": 1,
       "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx": 1
     }
