@@ -7,5 +7,7 @@ export default {
     await ctx.run("node", ["scripts/verify-wo-edit-comboboxes.mjs"]);
     await ctx.run("node", ["scripts/verify-auto-geofence-no-blocking-call.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-auto-geofence-no-blocking-call.mjs"]);
+    await ctx.run("node", ["scripts/verify-active-entity-hardline.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-active-entity-hardline.mjs"]);
   },
 };
