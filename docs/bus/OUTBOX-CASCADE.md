@@ -86,3 +86,5 @@ CASCADE | K.5 BRD-20 DONE | 54a25dc30c | origin/main | planner calendar dates re
 CASCADE | K.6 BRD-21 DONE | ea2bba7fe0 | origin/main | planners filter deactivated drivers (backend d.deactivated_at IS NULL); guard + selftest PASS | NEXT K.7 BRD-23
 
 CASCADE | K.7 BRD-23 DONE | d7700e7101 | origin/main | planner ranges 7d/14d/30d/custom with DatePicker; guard + selftest PASS | NEXT K.8 design law sweep
+
+CASCADE | LST-DUP DONE | a4c2c833cd | verify-duplicate-masters-report --selftest 15/15 PASS | drivers groups 89 | NEXT await lead
