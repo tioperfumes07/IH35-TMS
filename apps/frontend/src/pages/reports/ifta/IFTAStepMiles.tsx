@@ -20,6 +20,7 @@ type StateMilesRow = {
 };
 
 function fmtNum(value: number, digits = 1) {
+  if (!value) return "—";
   return value.toLocaleString(undefined, { maximumFractionDigits: digits });
 }
 
