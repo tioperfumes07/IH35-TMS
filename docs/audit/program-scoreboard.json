@@ -1,10 +1,10 @@
 {
-  "healthzSha": "f9c3a32",
-  "generated_at": "2026-09-04T22:22:44.958Z",
+  "healthzSha": "7e852b2",
+  "generated_at": "2026-09-05T02:26:52.654Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "f9c3a32",
+    "deployedSha": "7e852b2",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 20365,
-      "title": "FINDING: N/A (docs only, OUTBOX entry recording LOAD-COSTS-COMPLETE item 3 merge + Cursor #20360 reconciliation)",
+      "number": 20452,
+      "title": "FINDING: MAINT-DESIGN-X7 Fleet registry bypassed the shared KPI computed-style contract with private white, left-aligned cards and non-token controls.",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 05:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20365",
-      "sha": "db4e9d5ec4",
-      "committedAtIso": "2026-09-04T17:18:01-05:00"
+      "mergedAtCt": "09/04/2026, 09:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20452",
+      "sha": "a8b05da916",
+      "committedAtIso": "2026-09-04T21:26:38-05:00"
     },
     {
-      "number": 20364,
-      "title": "FINDING: ACCT-F25019 (Load costs board rebuilt to the owner's exact column list -- Late Fee/Lumper/Fuel/R&M/Other cost breakdown, Short Miles/Rate Loaded/Loaded Pay/Empty Miles/Rate Empty/Deadhead Pay/Gross driver-pay detail, Status as service performance not lifecycle, drafts-never-shown, voided-hidden-by-default)",
+      "number": 20450,
+      "title": "FINDING: ACCT-F25058 LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 05:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20364",
-      "sha": "9cf3e7da42",
-      "committedAtIso": "2026-09-04T17:16:34-05:00"
+      "mergedAtCt": "09/04/2026, 09:25 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20450",
+      "sha": "b223b6d341",
+      "committedAtIso": "2026-09-04T21:25:58-05:00"
     },
     {
-      "number": 0,
-      "title": "docs: GO-23 ROW 26 close-out finding — tracker DONE vs live broken surfaces",
+      "number": 20449,
+      "title": "FINDING: N/A — CLAIM-RESERVE verify-step 10378 for cascade K.4 BRD-19 planner row columns guard",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 05:15 PM CT",
-      "url": "",
-      "sha": "c5475cf10c",
-      "committedAtIso": "2026-09-04T17:15:04-05:00"
+      "mergedAtCt": "09/04/2026, 09:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20449",
+      "sha": "b605f504bb",
+      "committedAtIso": "2026-09-04T21:24:27-05:00"
     },
     {
-      "number": 20363,
-      "title": "FINDING: DSP-39-GUARD-REGISTRATION — fixed Detention hook order was protected by an unregistered guard",
+      "number": 20448,
+      "title": "Cursor-DSP driver instruction sheet: no pay + Border & customs + documents-to-bring",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 05:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20363",
-      "sha": "e6fd871792",
-      "committedAtIso": "2026-09-04T17:14:42-05:00"
+      "mergedAtCt": "09/04/2026, 09:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20448",
+      "sha": "7e852b2ad3",
+      "committedAtIso": "2026-09-04T21:22:28-05:00"
     },
     {
-      "number": 20362,
-      "title": "FINDING: FLT-IN-SHOP-EXCLUSIVE — awaiting-unit API admitted units owned by the authoritative open-work-order In-Shop feed",
+      "number": 20447,
+      "title": "FINDING: GAP-39 (geofence state-machine flap + departed dead-lock, engine rebuild 3.2b)",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 05:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20362",
-      "sha": "f9c3a32f5d",
-      "committedAtIso": "2026-09-04T17:10:20-05:00"
+      "mergedAtCt": "09/04/2026, 09:19 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20447",
+      "sha": "7cfd2db92f",
+      "committedAtIso": "2026-09-04T21:19:59-05:00"
     },
     {
-      "number": 20361,
-      "title": "FINDING: N/A (docs only — owner corrections to seat bus)",
+      "number": 20446,
+      "title": "FINDING: N/A (docs only) — lead tick 02:45Z: live-measured Load Costs board defects → CC-1 1.3a with 03:45Z deadline; Codex X.6–X.8",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 05:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20361",
-      "sha": "e943bc27e4",
-      "committedAtIso": "2026-09-04T17:07:08-05:00"
+      "mergedAtCt": "09/04/2026, 09:19 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20446",
+      "sha": "70effab4de",
+      "committedAtIso": "2026-09-04T21:19:39-05:00"
     },
     {
-      "number": 0,
-      "title": "chore: canonicalize schema-parity baseline post-merge",
+      "number": 20445,
+      "title": "FINDING: N/A — repair OUTBOX-CASCADE tracking, add K.0/K.4 checkoffs (OWNER-REQUEST-REGISTER #19)",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 05:06 PM CT",
-      "url": "",
-      "sha": "62aba6b430",
-      "committedAtIso": "2026-09-04T17:06:11-05:00"
+      "mergedAtCt": "09/04/2026, 09:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20445",
+      "sha": "b414fb2bc7",
+      "committedAtIso": "2026-09-04T21:18:29-05:00"
     },
     {
-      "number": 20360,
-      "title": "Cursor-load-costs-board-columns",
+      "number": 20444,
+      "title": "Cursor-DSP board-view row + clean top banner + darker Kanban lane borders",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 05:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20360",
-      "sha": "d3d89a6abc",
-      "committedAtIso": "2026-09-04T17:05:57-05:00"
+      "mergedAtCt": "09/04/2026, 09:17 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20444",
+      "sha": "2ad0df3a6a",
+      "committedAtIso": "2026-09-04T21:17:50-05:00"
     },
     {
-      "number": 20359,
-      "title": "FINDING: DSP-16",
+      "number": 20443,
+      "title": "FINDING: N/A (docs only) — lead tick 02:25Z: Cascade L ✔, K.4–K.7 mapped to BRD-19/20/21/23, OUTBOX local-ignore defect",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 04:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20359",
-      "sha": "9326589026",
-      "committedAtIso": "2026-09-04T16:58:17-05:00"
+      "mergedAtCt": "09/04/2026, 09:13 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20443",
+      "sha": "46270b697e",
+      "committedAtIso": "2026-09-04T21:13:21-05:00"
     },
     {
-      "number": 20358,
-      "title": "FINDING: N/A (docs only — bus census + seat re-dispatch)",
+      "number": 20442,
+      "title": "FINDING: N/A (docs only) — lead tick 02:10Z: board marks, INBOX verdicts, owner priority = Load Costs register",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 04:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20358",
-      "sha": "b719b31e8d",
-      "committedAtIso": "2026-09-04T16:51:56-05:00"
+      "mergedAtCt": "09/04/2026, 09:11 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20442",
+      "sha": "62406e1719",
+      "committedAtIso": "2026-09-04T21:11:18-05:00"
     }
   ]
 }
