@@ -5537,6 +5537,11 @@
     "claimed_at": "2026-09-05",
     "purpose": "verify-cost-category-picker-includes-cogs (spec 09-04-2026-Claude-Coder-1-LOAD-COSTS-COMPLETE-VERTICAL.md §1.2). Guards that LoadDetailCostsTab.tsx's category filter matches account_type against the exact set (Expense/OtherExpense/CostOfGoodsSold), never a free-text regex like the stale '/cost of goods/i' (with spaces) that never matched the real 'CostOfGoodsSold' spelling and excluded 10 of 34 real USMCA cost accounts including 5000 Fuel & Diesel."
   },
+  "10367": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-05",
+    "purpose": "verify-dispatch-board-preview-contract (L.4a, LEAD RESET 12:45Z surrender, docs/design/DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05.md §A). Static guard: no dispatch board column hidden by default (BRD-25 removed), the 5 named group bands (Assignment/Hours of service/Load/Telemetry/Status) present in the PDF's order, \"location\" column header renamed \"Live loc\", drag reorder/resize still wired, headers left-aligned via className."
+  },
   "10369": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-05",
