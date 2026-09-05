@@ -286,6 +286,19 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           `(unit_number ILIKE $${idx} OR vin ILIKE $${idx} OR make ILIKE $${idx} OR model ILIKE $${idx})`,
         );
       }
+      // DISPATCH-1 (owner order 2026-09-05): a unit picker must never offer a Sold/Transferred/Damaged
+      // or soft-deleted unit — this is the "U-156-provisional (Sold, deactivated 2026-06-16) shows
+      // beside the live T156" confusion. The unified fleet list already hides these via
+      // fleet-visibility; mirror the contract on this default (picker) path so EntityPicker kind=unit,
+      // Book Load and every inline board picker are clean even if a client forgets its own isLive()
+      // filter. include_inactive=true (Fleet roster's "view archived" toggle) opts back in. Read-only
+      // exclusion — the rows stay in the table (void-not-delete), just hidden from assignable lists.
+      if (!include_inactive) {
+        filters.push("deactivated_at IS NULL");
+        filters.push(
+          "(status IS NULL OR status NOT IN ('Sold', 'Transferred', 'Damaged'))",
+        );
+      }
       // Entity scope (USMCA cross-entity leak fix): mdata.units has no operating_company_id and its
       // RLS is identity/role-scoped, so scope by the owner/leased pair. ALWAYS bind it — resolve the
       // company from the param or user context so units from another entity never leak.
