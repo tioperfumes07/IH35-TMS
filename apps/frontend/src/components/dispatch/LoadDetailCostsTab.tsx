@@ -20,7 +20,6 @@ import type { LoadDetail } from "../../api/loads";
 import { listVendors } from "../../api/mdata";
 import { companyToday } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { Button } from "../Button";
 import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
@@ -118,7 +117,6 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
   const savedExpenses = expenses.data?.rows ?? [];
   const savedBills = bills.data?.rows ?? [];
   const savedAdvances = (advances.data?.rows ?? []).filter((row) => !row.voided_at);
-  const savedAdvanceCents = savedAdvances.reduce((sum, row) => sum + Number(row.amount_cents || 0), 0);
   const savedCount = savedExpenses.length + savedBills.length;
   const currency = load.currency_code === "MXN" ? "MXN" : "USD";
   const savedCosts = savedExpenses.filter((row) => row.status !== "void").reduce((sum, row) => sum + Number(row.total_amount_cents || 0), 0) + savedBills.filter((row) => row.status !== "voided").reduce((sum, row) => sum + Number(row.amount_cents || 0), 0);
