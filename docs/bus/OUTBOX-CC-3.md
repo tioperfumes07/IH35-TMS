@@ -257,3 +257,18 @@ applied (CC-1 lane); §3.5 supersede UPDATE lives inside that same draft; §4 Lo
 Samsara geofence import, §6 alert chain are sequenced AFTER this merges and is proven live, per
 the 2026-09-05 resequencing. NEXT: push + PR + squash-merge this same turn, then watch for CC-1's
 migration #4 apply before starting §4/§5/§6.
+
+2026-09-05 | CC-3 | GAP-39 geofence engine 3.2b MERGED | PR #20447 squash 7cfd2db92f | states.ts
+departed dead-lock fixed + full-cycle no-terminal-state test, engine.ts per-vehicle state
+(geo.geofence_vehicle_state) with speed-gated departure + graceful to_regclass refusal,
+transitions.service.ts bbox prefilter + warn-not-swallow, geofence-state-watcher.ts USMCA-only +
+speed/odometer/captured_at/city/state + stale-skip + heartbeat. Migration #4 drafted + handed to
+CC-1 (docs/audit/migration-drafts/GEOFENCE-ENGINE-REBUILD-migration-4-draft.sql). TEST geofence
+350b9f03 archived is_active=false live. Two new guards green
+(verify-geofence-state-machine-no-terminal-state, verify-geofence-departure-on-speed). Also fixed
+this PR's own verify-regclass-fallback-intent hit (declared intent at the to_regclass probe site)
+and filed GUARD-WORKORDERS CC3-GATE-ROT-06 (spawn-liability route missing, money lane, found
+while investigating the earlier item-1 accident-liabilities-void directive). | NEXT: watch for
+CC-1's migration #4 apply, then §4 Loves 604 import / §5 Samsara geofence import / §6 alert chain
+per the 2026-09-05 resequencing; item-1 accident-liabilities-void FE vertical still open
+(deferred, not abandoned).
