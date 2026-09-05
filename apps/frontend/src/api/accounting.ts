@@ -1843,6 +1843,9 @@ export const COA_ROLE_VALUES = [
   "rent_expense",
   "fuel_overage_receivable",
   "broker_customer_advance_liability",
+  // ACCT-F25053 — company fuel-advance debit account, bound by role instead of name-matched
+  // (LoadDetailCostsTab.tsx's `+ Fuel advance` control). Seeded for USMCA -> 5000 Fuel & Diesel.
+  "company_fuel_advance_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

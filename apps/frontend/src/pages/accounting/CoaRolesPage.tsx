@@ -64,6 +64,7 @@ const ROLE_LABELS: Record<CoaRole, string> = {
   rent_expense: "Rent expense (ASC 842 lessee)",
   fuel_overage_receivable: "Driver fuel-overage receivable",
   broker_customer_advance_liability: "Broker customer advance liability",
+  company_fuel_advance_expense: "Company fuel-advance expense",
 };
 
 export function CoaRolesPage() {

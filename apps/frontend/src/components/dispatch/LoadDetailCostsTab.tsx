@@ -8,6 +8,7 @@ import {
   createVendorBill,
   listBills,
   listBrokerAdvances,
+  listCoaRoles,
   listExpenses,
   type BrokerAdvanceCategory,
 } from "../../api/accounting";
@@ -79,6 +80,11 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
   const vendors = useQuery({ queryKey: ["load-costs", "vendors", opco], queryFn: () => listVendors({ operating_company_id: opco, status: "active", limit: 5000 }) });
   const accounts = useQuery({ queryKey: ["load-costs", "accounts", opco], queryFn: () => listCatalogAccounts({ operating_company_id: opco, status: "active", postable_only: true }) });
   const advances = useQuery({ queryKey: ["load-costs", "advances", opco, load.id], queryFn: () => listBrokerAdvances(opco, { load_id: load.id }) });
+  // ACCT-F25053 (owner ruling 2026-09-04: "bind by role, never by name") -- the fuel-advance debit
+  // account is resolved from accounting.chart_of_accounts_roles, never picked by a /fuel/i name match
+  // (which could resolve to an ASSET receivable like "1250 Driver Fuel-Overage Receivable" instead of
+  // the real expense account -- exactly the outcome the owner ruled must never happen).
+  const coaRoles = useQuery({ queryKey: ["load-costs", "coa-roles", opco], queryFn: () => listCoaRoles(opco) });
   // LOAD-COSTS-COMPLETE items (1)/(5) (owner correction 2026-09-04): a broker advance receipt only
   // gets a real JE (DR bank / CR AR-or-deposit-liability) when the caller says which of OUR real
   // banking.bank_accounts the cash landed in -- required for diesel/repair/other (cash always
@@ -97,7 +103,11 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
   const driverPay = (driverBills.data?.driver_bills ?? []).filter((row) => row.status !== "void").reduce((sum, row) => sum + Number(row.gross_amount_cents || 0), 0);
   const revenue = Number(load.rate_total_cents ?? 0);
   const chart = accounts.data?.accounts ?? [];
-  const categories = chart.filter((row) => /expense|cost of goods/i.test(row.account_type));
+  // ACCT-F25053 -- account_type is the QBO enum spelling exactly ("CostOfGoodsSold", no spaces);
+  // the prior free-text regex (matching a spaced-out "cost of goods" phrase) never matched it,
+  // silently excluding every COGS account
+  // (10 of USMCA's 34 real cost accounts, including 5000 Fuel & Diesel) from the Category dropdown.
+  const categories = chart.filter((row) => row.account_type === "Expense" || row.account_type === "OtherExpense" || row.account_type === "CostOfGoodsSold");
   // QBO/CoA account_type is literally "Bank" for a bank account, never "Asset" -- /asset/i alone
   // silently dropped every real bank account from "Paid with", leaving only cards/other-current-asset
   // rows. Match the same asset-type vocabulary used elsewhere in this app (account-picker-scope.ts).
@@ -105,10 +115,13 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
   // LOAD-COSTS-COMPLETE item (1) -- a fuel advance is cash the company hands a driver on the road to
   // buy fuel. Drivers here are B1 company drivers, never owner-operators, so this is a straight
   // company expense (DR fuel expense / CR bank) -- never a receivable, never a settlement deduction,
-  // never a driver_finance.* write. The category is fixed to the entity's Fuel expense account so it
-  // can never be miscategorized by a dropdown pick, and the payment account is restricted to bank
-  // accounts (never a card) to match the owner's exact instruction.
-  const fuelAccount = categories.find((row) => /fuel/i.test(row.account_name));
+  // never a driver_finance.* write. ACCT-F25053 -- the debit account is resolved by ROLE
+  // (company_fuel_advance_expense), never by a /fuel/i name match, which could silently resolve to an
+  // ASSET receivable ("1250 Driver Fuel-Overage Receivable") on a chart where that sorts first.
+  // Missing/unbound role -> fuelAccount is undefined -> the existing "No Fuel expense account found"
+  // disabled state fires and names the gap, exactly the fail-closed behavior the owner asked for.
+  const fuelRoleRow = (coaRoles.data?.rows ?? []).find((row) => row.role === "company_fuel_advance_expense" && row.is_active && row.account_id);
+  const fuelAccount = fuelRoleRow ? chart.find((row) => row.id === fuelRoleRow.account_id) : undefined;
   const bankAccounts = paymentAccounts.filter((row) => /bank/i.test(row.account_type) || /bank/i.test(row.account_name));
   const fuelAdvancePaymentAccounts = bankAccounts.length ? bankAccounts : paymentAccounts;
   const draftTotal = drafts.reduce((sum, row) => sum + Math.max(0, Math.round(Number(row.amount || 0) * 100)), 0);
