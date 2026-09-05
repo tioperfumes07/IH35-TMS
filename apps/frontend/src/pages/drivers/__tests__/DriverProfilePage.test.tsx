@@ -115,6 +115,14 @@ describe("DriverProfilePage", () => {
       training_records: [],
       border_credentials: {},
       documents: [],
+      // ACCT-ESCROW-VIEW-DRIVER-PROFILE — the shared apiRequest mock below resolves EVERY call
+      // (including DriverDeductionsReverseSection's listSettlementDeductions, which reads
+      // response.deductions) with this one fixture object; without this key the query resolves to
+      // `undefined`, which is the pre-existing failure mode this test already had for 3 OTHER
+      // sibling sections (cash-advances, compliance, vendor-merges-reverse — none fixed here, out
+      // of scope) before this section existed. Adding the key here only prevents THIS new section
+      // from adding a 4th instance of that same pre-existing gap.
+      deductions: [],
     };
     vi.spyOn(mdataApi, "getDriver").mockResolvedValue(sparseDriver as never);
     vi.spyOn(clientApi, "apiRequest").mockResolvedValue(sparseAggregate as never);
