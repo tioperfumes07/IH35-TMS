@@ -815,3 +815,37 @@ export function closeSettlementTrip(settlementId: string, operatingCompanyId: st
     { method: "POST", body: { operating_company_id: operatingCompanyId } }
   );
 }
+
+// ACCT-ESCROW-VIEW-DRIVER-PROFILE — per-driver escrow balance + posting history, reading
+// accounting.escrow_accounts/escrow_postings (the GL-tied, current source), not the older,
+// confirmed-empty driver_finance.escrow_ledger the sibling /escrow-timeline endpoint reads.
+export type DriverEscrowAccount = {
+  id: string;
+  purpose: string;
+  balance_cents: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+export type DriverEscrowPosting = {
+  id: string;
+  escrow_account_id: string;
+  posting_type: string;
+  amount_cents: number;
+  source_type: string | null;
+  source_id: string | null;
+  note: string | null;
+  posted_at: string;
+  linked_journal_entry_id: string | null;
+};
+export type DriverEscrowResponse = {
+  accounts: DriverEscrowAccount[];
+  postings: DriverEscrowPosting[];
+  total_balance_cents: number;
+};
+
+export function getDriverEscrow(driverId: string, operatingCompanyId: string) {
+  return apiRequest<DriverEscrowResponse>(
+    `/api/v1/driver-finance/drivers/${encodeURIComponent(driverId)}/escrow?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}

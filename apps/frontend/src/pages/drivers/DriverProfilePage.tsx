@@ -24,6 +24,8 @@ import { DriverTeamsReverseSection } from "../../components/driver-profile/Drive
 import { DriverTeamSplitConfigReverseSection } from "../../components/driver-profile/DriverTeamSplitConfigReverseSection";
 import { DriverSettlementFinanceReverseSection } from "../../components/driver-profile/DriverSettlementFinanceReverseSection";
 import { DriverCashAdvancesReverseSection } from "../../components/driver-profile/DriverCashAdvancesReverseSection";
+import { DriverDeductionsReverseSection } from "../../components/driver-profile/DriverDeductionsReverseSection";
+import { DriverEscrowReverseSection } from "../../components/driver-profile/DriverEscrowReverseSection";
 import { DriverVendorMergesReverseSection } from "../../components/driver-profile/DriverVendorMergesReverseSection";
 import { DriverPaymentMethodsCard } from "../../components/driver-profile/DriverPaymentMethodsCard";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
@@ -704,6 +706,25 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           operatingCompanyId={companyId}
           driverId={id}
           data-testid="driver-profile-cash-advances-reverse"
+        />
+      </div>
+      {/* ACCT-ESCROW-VIEW-DRIVER-PROFILE — owner order item 3: "Driver Profile > Deductions: list
+          BY DRIVER + add the Escrow view (per-driver escrow balance)". Both backend surfaces
+          (deductions list driver_id filter, escrow account+postings by holder) already existed or
+          were added this session — the gap was that neither rendered anywhere on the driver's own
+          profile. */}
+      <div data-testid="dp-section-deductions-reverse">
+        <DriverDeductionsReverseSection
+          operatingCompanyId={companyId}
+          driverId={id}
+          data-testid="driver-profile-deductions-reverse"
+        />
+      </div>
+      <div data-testid="dp-section-escrow-reverse">
+        <DriverEscrowReverseSection
+          operatingCompanyId={companyId}
+          driverId={id}
+          data-testid="driver-profile-escrow-reverse"
         />
       </div>
       <div data-testid="dp-section-vendor-merges-reverse">

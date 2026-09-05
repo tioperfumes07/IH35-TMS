@@ -360,6 +360,60 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
     }
   });
 
+  // ACCT-ESCROW-VIEW-DRIVER-PROFILE — owner order (item 3): Driver Profile Escrow view, per-driver
+  // balance. Reads accounting.escrow_accounts/escrow_postings (holder_type='driver'), NOT
+  // driver_finance.escrow_ledger (the table the OLD /escrow-timeline route below reads — confirmed
+  // empty, 0 rows, live) and NOT driver_finance.escrow_balances (confirmed STALE live: still reads
+  // $250.00/$250.00/$0.01 for the exact 3 drivers the owner's GO-19-02 ruling zeroed on
+  // accounting.escrow_accounts on 2026-09-01 — a real, separate, filed-not-fixed defect, see
+  // ACCT-ESCROW-BALANCES-STALE-VS-GO19). accounting.escrow_accounts is the one this session's own
+  // GO-19-02 WORM correction wrote to, via the audited trg_apply_escrow_posting_delta trigger — it
+  // is the current, correct, GL-tied source. Read-only; posts nothing.
+  app.get("/api/v1/driver-finance/drivers/:id/escrow", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = deductionIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      const accountsRes = await client.query(
+        `
+          SELECT id::text, purpose, balance_cents::bigint AS balance_cents, status, created_at::text, updated_at::text
+            FROM accounting.escrow_accounts
+           WHERE holder_id = $1::uuid AND holder_type = 'driver' AND operating_company_id = $2::uuid
+           ORDER BY created_at ASC
+        `,
+        [params.data.id, query.data.operating_company_id]
+      );
+      const accountIds = accountsRes.rows.map((r: { id: string }) => r.id);
+      const postingsRes = accountIds.length
+        ? await client.query(
+            `
+              SELECT id::text, escrow_account_id::text, posting_type, amount_cents::bigint AS amount_cents,
+                     source_type, source_id::text, note, posted_at::text, linked_journal_entry_id::text
+                FROM accounting.escrow_postings
+               WHERE escrow_account_id = ANY($1::uuid[]) AND operating_company_id = $2::uuid
+               ORDER BY posted_at DESC
+               LIMIT 200
+            `,
+            [accountIds, query.data.operating_company_id]
+          )
+        : { rows: [] };
+      const totalBalanceCents = accountsRes.rows.reduce(
+        (sum: number, r: { balance_cents: string }) => sum + Number(r.balance_cents ?? 0),
+        0
+      );
+      return { accounts: accountsRes.rows, postings: postingsRes.rows, total_balance_cents: totalBalanceCents };
+    });
+
+    return result;
+  });
+
+  // OLDER route, kept for now (still linked from elsewhere) but reads driver_finance.escrow_ledger,
+  // which is confirmed EMPTY on prod (0 rows, live) — every call returns { timeline: [] }, always.
+  // Not the same defect this PR fixes (that is the balance itself, above); filed separately.
   app.get("/api/v1/driver-finance/drivers/:id/escrow-timeline", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
