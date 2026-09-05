@@ -79,6 +79,30 @@ function problems(src) {
     issues.push(`stickyLeftCount={4} must reach both List and Table ParityTable mounts (found ${stickyMounts})`);
   }
 
+  // 7. L.4a-fix (inventory #7,#37) — real column widths (no more 34px equal-split truncation) and
+  // a Live loc floor wide enough for the GPS city/state + freshness content.
+  const autoLayoutMounts = [...src.matchAll(/<ParityTable[\s\S]{0,500}?columnLayout="auto"/g)].length;
+  if (autoLayoutMounts < 2) {
+    issues.push(`columnLayout="auto" must reach both List and Table ParityTable mounts (found ${autoLayoutMounts})`);
+  }
+  if (!/minWidth:\s*column\.key === "location" \? 180/.test(src)) {
+    issues.push('the "location" (Live loc) column must carry a 180px minWidth floor');
+  }
+
+  // 8. Driver → initials, full name on hover (§37: "Driver → initials").
+  if (!/function driverInitials\(/.test(src)) {
+    issues.push("driverInitials() helper must exist");
+  }
+  if (!/title=\{fullName\}/.test(src)) {
+    issues.push("renderDriverCell must wrap the cell in a title={fullName} hover");
+  }
+
+  // 9. 1px #C7D2DC outer frame (§14) on the board's ParityTable mounts.
+  const frameMounts = [...src.matchAll(/<ParityTable[\s\S]{0,600}?frameColor=\{colors\.tableColumnRule\}/g)].length;
+  if (frameMounts < 2) {
+    issues.push(`frameColor={colors.tableColumnRule} must reach both List and Table ParityTable mounts (found ${frameMounts})`);
+  }
+
   return issues;
 }
 
@@ -94,6 +118,11 @@ function selftest() {
     src.replace("enableColumnReorder\n", "enableColumnReorder={false}\n"),
     src.replace('className: "text-left",\n', ""),
     src.replace(/stickyLeftCount=\{4\}\n/, ""), // only removes the first occurrence — still catches the drop
+    src.replace(/columnLayout="auto"\n/, ""),
+    src.replace('minWidth: column.key === "location" ? 180 : undefined,', ""),
+    src.replace("function driverInitials(", "function driverInitialsRenamed("),
+    src.replace("title={fullName}", "data-name={fullName}"),
+    src.replace(/frameColor=\{colors\.tableColumnRule\}\n/, ""),
   ];
   let caught = 0;
   for (const mutant of mutants) {

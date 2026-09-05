@@ -42,6 +42,10 @@ export type ParityColumn<T> = {
   render?: (row: T) => ReactNode;
   className?: string;
   cellClass?: string;
+  /** Floor for the auto-fit measured width (never shrinks it, only widens) — a user manual
+   *  drag-resize still overrides this completely, same as autoFitWidths always did. Additive:
+   *  omitting it preserves today's pure-measured width for every existing column. */
+  minWidth?: number;
   /** Initial hidden state in the gear column-toggle (still toggleable on). */
   defaultHidden?: boolean;
   /** Exclude from the gear column-toggle list (always shown). */
@@ -133,6 +137,9 @@ export type ParityTableProps<T> = {
    *  (DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §14: "first four columns sticky-left"). Unset/0 =
    *  no sticky columns, every other table's existing behaviour is unchanged. */
   stickyLeftCount?: number;
+  /** Per-instance outer-frame border color override (DESIGN-CONTRACT §14: "1px #C7D2DC outer
+   *  frame"). Unset keeps today's plain gray-200 shell border on every other table. */
+  frameColor?: string;
   /** Drag-a-header-to-move-it column reordering (order persists per storageKey, alongside width).
    * Default true — set false only for a table with a real reason columns must stay fixed (a
    * written reason, per COLUMN LAW). */
@@ -458,6 +465,7 @@ export function ParityTable<T>({
   enableColumnResize = true,
   enableColumnReorder = true,
   stickyLeftCount = 0,
+  frameColor,
   columnOrder: controlledColumnOrder,
   onColumnOrderChange,
   autoFitColumns = true,
@@ -1159,7 +1167,7 @@ export function ParityTable<T>({
   const resolvedHeaderInk = headerInk ?? colors.tableHeaderText;
 
   return (
-    <div className={shellClass} data-testid={tableTestId}>
+    <div className={shellClass} style={frameColor ? { borderColor: frameColor } : undefined} data-testid={tableTestId}>
       {/* Canonical list toolbar: search + applied range filter + optional slot + gear. */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
         <UniversalListToolbar
@@ -1401,7 +1409,11 @@ export function ParityTable<T>({
               // AUTO-FIT — manual resize (colWidths) always wins once the user has dragged a
               // column; until then, size to the column's own content (autoFitWidths) instead of
               // silently truncating under table-fixed's own no-remeasure default.
-              const w = colWidths[key] ?? autoFitWidths[key];
+              const autoFitOrFloor =
+                column.minWidth != null
+                  ? Math.max(autoFitWidths[key] ?? 0, column.minWidth) || undefined
+                  : autoFitWidths[key];
+              const w = colWidths[key] ?? autoFitOrFloor;
               return (
                 <th
                   key={key}

@@ -8,6 +8,17 @@ import { entityLabel } from "../../lib/entity-label";
 import { companyToday } from "../../lib/businessDate";
 import { readDispatchAlertTier, readDispatchBoardDefaultSort } from "../../lib/dispatch-local-settings";
 
+// DESIGN-CONTRACT (owner 13:29Z, inventory #37): "Driver → initials; full name hover" — the board's
+// Driver column is dense enough (33 columns) that a full name truncates; initials read at a glance,
+// the title attribute keeps the full name one hover away. Two-word names -> first+last initial;
+// one-word (or empty) names fall back to the first two characters / an em dash.
+function driverInitials(name: string | null | undefined): string {
+  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "—";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 // Record-cell link: the Customer cell links to the customer's detail page. stopPropagation so it does NOT
 // also trigger the row's onRowClick (which opens the load drawer). Falls back to plain text when no id.
 function renderCustomerCell(load: DispatchLoadRow): ReactNode {
@@ -847,30 +858,45 @@ export function DispatchBoard({
       <EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.assigned_unit_number} noun="Unit" />
     );
 
-  const renderDriverCell = (load: DispatchLoadRow) =>
-    inlineQuicksaveEnabled && companyId ? (
-      <InlineDriverPicker
-        loadId={load.id}
-        operatingCompanyId={companyId}
-        driverId={load.assigned_primary_driver_id}
-        displayLabel={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
-        onAssigned={({ driverId, label }) =>
-          setRowOverrides((prev) => ({
-            ...prev,
-            [load.id]: { ...prev[load.id], driverId, driverLabel: label },
-          }))
-        }
-        onRollback={() =>
-          setRowOverrides((prev) => {
-            const next = { ...prev };
-            delete next[load.id]?.driverId;
-            return next;
-          })
-        }
-      />
-    ) : (
-      <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.assigned_primary_driver_name} noun="Driver" />
+  const renderDriverCell = (load: DispatchLoadRow) => {
+    const rawName = load.assigned_primary_driver_name;
+    const fullName = entityLabel(rawName, load.assigned_primary_driver_id, "Driver");
+    // DESIGN-CONTRACT (owner 13:29Z, #37): initials on the board, full name one hover away.
+    // Only substitute initials when a real name resolved — an unresolved/tombstone driver (id
+    // present, name null) must keep passing the RAW name through so
+    // EntityLinkOrTombstone's own isUnresolvedEntityTombstone check still fires; swapping in a
+    // non-null initials placeholder there would silently defeat that check.
+    const driverDisplay = rawName ? driverInitials(rawName) : rawName;
+    // `display:contents` (via the "contents" class) so the wrapping span carries the title
+    // tooltip without inserting a layout box around the cell's existing content/click handlers.
+    return (
+      <span title={fullName} className="contents">
+        {inlineQuicksaveEnabled && companyId ? (
+          <InlineDriverPicker
+            loadId={load.id}
+            operatingCompanyId={companyId}
+            driverId={load.assigned_primary_driver_id}
+            displayLabel={driverDisplay || fullName}
+            onAssigned={({ driverId, label }) =>
+              setRowOverrides((prev) => ({
+                ...prev,
+                [load.id]: { ...prev[load.id], driverId, driverLabel: label },
+              }))
+            }
+            onRollback={() =>
+              setRowOverrides((prev) => {
+                const next = { ...prev };
+                delete next[load.id]?.driverId;
+                return next;
+              })
+            }
+          />
+        ) : (
+          <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={driverDisplay} noun="Driver" />
+        )}
+      </span>
     );
+  };
 
   const renderTrailerCell = (load: BoardLoad) =>
     inlineQuicksaveEnabled && companyId ? (
@@ -1081,6 +1107,10 @@ export function DispatchBoard({
     // here since the reference explicitly calls out centered dispatch-board headers as wrong.
     className: "text-left",
     render: column.cell,
+    // DESIGN-CONTRACT (owner 13:29Z, #37): "Live loc wider (180)" — the GPS city/state + freshness
+    // content was clipping at the auto-fit width; 180px is a floor, not a fixed width (auto-fit
+    // still widens further for a longer value, per the shared columnLayout="auto" contract).
+    minWidth: column.key === "location" ? 180 : undefined,
     sortable: DISPATCH_SORTABLE_COLS.has(column.key),
     sortValue: DISPATCH_SORTABLE_COLS.has(column.key)
       ? (load: BoardLoad) => dispatchSortValue(load, column.key)
@@ -1246,6 +1276,8 @@ export function DispatchBoard({
                 columns={parityColumns}
                 columnGroups={boardColumnGroups}
                 stickyLeftCount={4}
+                columnLayout="auto"
+                frameColor={colors.tableColumnRule}
                 rows={rows}
                 rowKey={(row) => row.id}
                 loading={sectionLoading}
@@ -1355,6 +1387,8 @@ export function DispatchBoard({
           columns={parityColumns}
           columnGroups={boardColumnGroups}
           stickyLeftCount={4}
+          columnLayout="auto"
+          frameColor={colors.tableColumnRule}
           rows={sortedRows}
           rowKey={(row) => row.id}
           loading={loading}

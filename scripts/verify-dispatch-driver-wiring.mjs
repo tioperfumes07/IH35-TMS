@@ -29,7 +29,12 @@ const CHECKS = [
   ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /EntityLinkOrTombstone kind="driver" id=\{event\.driver_uuid\} name=\{event\.driver_name\} noun="Driver"/],
   ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /EntityLinkOrTombstone kind="load" id=\{event\.load_uuid\} name=\{event\.load_number\} noun="Load"/],
   ["apps/frontend/src/pages/dispatch/DispatchOverview.tsx", /EntityLinkOrTombstone kind="driver" id=\{unit\.driver_id\} name=\{unit\.driver_name\} noun="Driver"/],
-  ["apps/frontend/src/pages/dispatch/DispatchBoard.tsx", /EntityLinkOrTombstone kind="driver" id=\{load\.assigned_primary_driver_id\} name=\{load\.assigned_primary_driver_name\} noun="Driver"/],
+  // DESIGN-CONTRACT #37 (2026-09-05, CC-2): the board now shows driver initials with the full
+  // name on hover, so the literal EntityLinkOrTombstone name= prop is a computed `driverDisplay`
+  // (initials, falling through to the raw name for tombstone detection) rather than the bare
+  // field — this still proves REAL wiring: `rawName` is assigned straight from
+  // `load.assigned_primary_driver_name` and feeds the same EntityLinkOrTombstone kind="driver".
+  ["apps/frontend/src/pages/dispatch/DispatchBoard.tsx", /const rawName = load\.assigned_primary_driver_name;[\s\S]{0,2000}EntityLinkOrTombstone kind="driver" id=\{load\.assigned_primary_driver_id\} name=\{driverDisplay\} noun="Driver"/],
   ["apps/frontend/src/components/dispatch/DispatchKanban.tsx", /kind="driver" id=\{load\.assigned_primary_driver_id\}/],
   ["apps/frontend/src/components/dispatch/DispatchList.tsx", /<InlineDriverPicker/],
   ["apps/backend/src/dispatch/loads.routes.ts", /FROM mdata\.driver_company_authorizations dispatch_list_driver_dca[\s\S]{0,180}dispatch_list_driver_dca\.driver_id = d\.id[\s\S]{0,140}dispatch_list_driver_dca\.company_id = l\.operating_company_id[\s\S]{0,140}dispatch_list_driver_dca\.is_authorized = true[\s\S]{0,140}dispatch_list_driver_dca\.deactivated_at IS NULL/],
