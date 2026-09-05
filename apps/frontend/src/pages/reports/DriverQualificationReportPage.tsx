@@ -43,6 +43,7 @@ export function DriverQualificationReportPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const [includeInactive, setIncludeInactive] = useState(false);
+  const [complianceFilter, setComplianceFilter] = useState("");
 
   const rosterQ = useQuery({
     queryKey: ["safety", "driver-qualification", "roster", operatingCompanyId, includeInactive],
@@ -57,23 +58,17 @@ export function DriverQualificationReportPage() {
   });
 
   const staged = useStagedListFilters({
-    defaultPageSize: 50,
-    fields: {
-      compliance: { label: "Compliance", options: [
-        { value: "compliant", label: "Compliant" },
-        { value: "attention", label: "Needs attention" },
-        { value: "non_compliant", label: "Non-compliant" },
-        { value: "empty", label: "No DQF items" },
-      ] },
-    },
+    applied: { compliance: complianceFilter },
+    empty: { compliance: "" },
+    onApply: (next) => setComplianceFilter(next.compliance),
   });
 
   const rows = useMemo(() => {
     const all = rosterQ.data?.drivers ?? [];
-    const filter = staged.draft.compliance;
+    const filter = complianceFilter;
     if (!filter) return all;
     return all.filter((d) => d.compliance_level === filter);
-  }, [rosterQ.data, staged.draft.compliance]);
+  }, [complianceFilter, rosterQ.data]);
 
   const columns = useMemo<ParityColumn<DqfRosterDriver>[]>(() => [
     {
@@ -117,7 +112,7 @@ export function DriverQualificationReportPage() {
         <span className="text-gray-700">
           {mmmDd(r.dot_medical_expiry)}
           {r.dot_medical_status ? (
-            <span className={`ml-1 rounded-sm px-1 py-0.5 text-[10px] ${statusPill(r.dot_medical_status)}`}>{r.dot_medical_status}</span>
+            <span className={`ml-1 rounded-sm px-1 py-0.5 text-xs ${statusPill(r.dot_medical_status)}`}>{r.dot_medical_status}</span>
           ) : null}
         </span>
       ),
@@ -131,7 +126,7 @@ export function DriverQualificationReportPage() {
         <span className="text-gray-700">
           {mmmDd(r.mvr_expiry)}
           {r.mvr_status ? (
-            <span className={`ml-1 rounded-sm px-1 py-0.5 text-[10px] ${statusPill(r.mvr_status)}`}>{r.mvr_status}</span>
+            <span className={`ml-1 rounded-sm px-1 py-0.5 text-xs ${statusPill(r.mvr_status)}`}>{r.mvr_status}</span>
           ) : null}
         </span>
       ),
@@ -145,7 +140,7 @@ export function DriverQualificationReportPage() {
         <span className="text-gray-700">
           {mmmDd(r.clearinghouse_expiry)}
           {r.clearinghouse_status ? (
-            <span className={`ml-1 rounded-sm px-1 py-0.5 text-[10px] ${statusPill(r.clearinghouse_status)}`}>{r.clearinghouse_status}</span>
+            <span className={`ml-1 rounded-sm px-1 py-0.5 text-xs ${statusPill(r.clearinghouse_status)}`}>{r.clearinghouse_status}</span>
           ) : null}
         </span>
       ),
@@ -195,8 +190,8 @@ export function DriverQualificationReportPage() {
               key={tile.label}
               className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-center"
             >
-              <div className="text-[11px] font-semibold uppercase text-gray-500">{tile.label}</div>
-              <div className="text-lg font-semibold text-gray-900">{tile.value}</div>
+              <div className="text-xs font-semibold uppercase text-gray-500">{tile.label}</div>
+              <div className="text-page-title font-semibold text-gray-900">{tile.value}</div>
             </div>
           ))}
         </div>
@@ -212,7 +207,29 @@ export function DriverQualificationReportPage() {
             />
             Include inactive drivers
           </label>
-          <CollapsedListFilters staged={staged} />
+          <CollapsedListFilters
+            activeFilterCount={complianceFilter ? 1 : 0}
+            onApply={staged.apply}
+            onReset={staged.reset}
+            onCancel={staged.cancel}
+            applyDisabled={!staged.dirty}
+            testIdPrefix="driver-qualification"
+          >
+            <label className="block text-xs font-semibold text-gray-700">
+              Compliance
+              <select
+                value={staged.draft.compliance}
+                onChange={(event) => staged.setDraft({ compliance: event.target.value })}
+                className="mt-1 h-7 w-full rounded-sm border border-gray-300 bg-white px-2 text-xs"
+              >
+                <option value="">All compliance levels</option>
+                <option value="compliant">Compliant</option>
+                <option value="attention">Needs attention</option>
+                <option value="non_compliant">Non-compliant</option>
+                <option value="empty">No DQF items</option>
+              </select>
+            </label>
+          </CollapsedListFilters>
         </div>
 
         {rosterQ.isError ? (
