@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { companyToday } from "../../../lib/businessDate";
 
-export const PLANNER_RANGE_OPTIONS = [7, 14, 30, 40] as const;
+// BRD-23: calendar ranges are 7d / 14d / 30d / custom. The old 40d preset is removed —
+// operators who need a custom span pick Custom and use the date pickers.
+export const PLANNER_RANGE_OPTIONS = [7, 14, 30] as const;
 export type PlannerRangeDays = (typeof PLANNER_RANGE_OPTIONS)[number];
 export const DEFAULT_PLANNER_RANGE_DAYS: PlannerRangeDays = 30;
 
