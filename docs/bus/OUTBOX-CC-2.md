@@ -417,3 +417,31 @@ today (data was reset again since 09-03/09-04, same pattern as B1/C3/ACC-13's ow
 (ACC-08 needs a migration seat, ACC-18 routed to Cursor per the health register's own table,
 neither newly fixed here), 3 remain UNVERIFIED pending a code-level (not data-level) check
 (ACC-15, ACC-17, ACC-20). | NEXT=ACC-15/17/20 code-path checks | GO
+
+CC-2 | ACC-17 partial finding (2026-09-05) | GO
+Live Neon check (bypass_rls, je_control=1785): the driver<->vendor identity join exists but is
+ASYMMETRIC. mdata.vendors.driver_id links 97 of 603 USMCA vendor rows back to a real driver (the
+forward link works). But mdata.drivers.qbo_vendor_id -- the column drivers.routes.ts's own QBO-vendor
+resolution code (lines ~1601/1607) reads to find a driver's vendor identity -- is NULL on all 167
+USMCA drivers, including the 97 who DO have a linked vendor row the other way. Any code path that
+resolves "this driver's vendor/financial identity" via qbo_vendor_id (not vendors.driver_id) would
+silently find nothing for 97 real, already-linked people -- a live, reproducible instance of
+ACC-17's "one person != one financial identity". Not yet fixed: needs a fuller read of every
+consumer of both columns before choosing a fix (backfill qbo_vendor_id from the existing
+vendors.driver_id links vs. picking one column as canonical and updating readers) to avoid
+breaking whichever side currently works. Flagging with numbers rather than rushing an unverified
+fix. | NEXT=full consumer audit of drivers.qbo_vendor_id vs vendors.driver_id before fixing | GO
+
+CC-2 | SESSION CHECKPOINT (2026-09-05) | GO
+Summary of sequence 2.2-2.4 this session, all merged: GLB-15 (DispatchLoadCostsPanel header
+tokens) · GLB-16 (3 guard-rot fixes: sortable-columns 985->973, surface-bar-modal-inventory,
+test-provider-completeness; 3 candidate fixes built-then-reverted per verify-seat-surface-
+ownership.mjs and filed to INBOX-CURSOR/CC-3/CC-1 instead) · GLB-17 (DESIGN-CONTRACT-LOAD-COSTS-
+BOARD tableBodyRule/--line vs --line2 distinction, closing a guard gap too) · J1 confirmed
+CLOSED (off_locked_scale_sizes=0, trapping_picker_total=0, live-verified, both worklists empty) ·
+ACC-01..20 comprehensively re-verified live (12 does-not-reproduce given USMCA's near-empty reset
+state, individually counted; ACC-08 newly filed to the board for a migration seat; ACC-15 fixed
+(units.routes.ts test/sample-name create-guard, LST-F25013); ACC-17 partial finding above; ACC-18
+already confirmed+routed; ACC-20 still needs a code-path check). 8 PRs merged this session
+(#20439,20483,20484,20485,20489,20492,20494,20495). | NEXT=ACC-20 code-path check, or ACC-17 full
+consumer audit, whichever the owner prioritizes | GO
