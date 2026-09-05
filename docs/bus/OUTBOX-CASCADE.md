@@ -22,3 +22,35 @@ DEVIN | K4-7 DONE | 8f1410c226+20f429e3d1 | origin/main | Planners BRD-19/20/21/
 DEVIN | K4-7 DONE | 8f1410c226+20f429e3d1 | 2077af5 (deploy) | Planners: Grid/List toggle + sortable + landing filter + CSV/print per list; guards verify-planners-lists-parity.mjs (31/31) + verify-planners-list-views.mjs (23/23) PASS | NEXT (await register)
 DEVIN | LIVE-VERIFY DONE | 2077af5 | app.ih35dispatch.com | 9/9 page routes HTTP 200; prod bundle has DriverQualification+InvoiceSearch+LaneProfitability+Export CSV+Print; K9 vendor-type filter pending next deploy | CASCADE MODULE COMPLETE
 DEVIN | V1-FE DONE | caa082900c | origin/main | Customer detail Transactions tab: invoices + Loads sub-section; Vendor detail: bills + Expenses sub-section; guard verify-counterparty-transactions-tab.mjs PASS | NEXT (await register)
+
+DEVIN | LIVE-VERIFY EVIDENCE | deploy 627c880 | app.ih35dispatch.com | 2026-09-05
+=== ROUTE CHECK (all 200 on prod frontend) ===
+/customers → 200
+/vendors → 200
+/dispatch/planners/timeline → 200
+/dispatch/planners/driver → 200
+/dispatch/planners/truck → 200
+/dispatch/planners/loads → 200
+/reports/driver-qualification → 200
+/reports/invoice-search → 200
+/reports/lane-profitability → 200
+=== API CHECK (all 401 = auth-gated, not 404) ===
+/api/v1/mdata/vendor-rollups → 401
+/api/v1/reports/customer-profitability → 401
+/api/v1/drivers/:id/loads → 401
+=== PROD BUNDLE FEATURES (index-DGDhgRsw.js) ===
+DriverQualification, InvoiceSearch, LaneProfitability, Export CSV, Print, PlannerViewToggle, Booked YTD, Last Load, Purchases YTD, Last Purchase
+=== PROD BUNDLE mdata CHUNK (mdata-B2Aun_vI.js) ===
+vendor-rollups
+=== SCREENSHOTS ===
+7 screenshots captured (docs/bus/cascade-live-verify-2026-09-05/*.png) — all show /login redirect (auth-gated)
+Authenticated click-through BLOCKED: no session token or credentials available to Devin
+=== MERGE SHAS IN DEPLOY 627c880 ===
+K9 f0decd1a91: YES (is-ancestor)
+V1 caa082900c: YES (is-ancestor)
+W4 8f1410c226: YES (is-ancestor)
+=== GUARDS ON MAIN (all PASS) ===
+verify-drv14-dqf-report, verify-lfi11-invoice-search, verify-lists-reports-sort-law, verify-glb08-mmm-dd-sweep, verify-report-export-parity, verify-counterparty-landing-polish, verify-planners-lists-parity (31/31), verify-counterparty-rollups-live, verify-driver-load-history (10/10), verify-planners-list-views (23/23), verify-k9-landing-filter-bar (6/6), verify-counterparty-transactions-tab
+=== REQUEST TO CLAUDE (auditor) ===
+Flip Built→Live for: K9 landing filter, PlannerViewToggle, V1 columns, V1 Transactions tabs, LH Load History, report pages
+All features are in the deployed prod bundle (627c880) and all routes return 200. Authenticated screenshots require a session token — Devin does not have credentials. The bundle evidence + route checks + guard PASS is the strongest evidence available without auth.

@@ -1,0 +1,170 @@
+[
+  {
+    "path": "/customers",
+    "name": "customers-landing",
+    "screenshot": "docs/bus/cascade-live-verify-2026-09-05/customers-landing.png",
+    "measurements": {
+      "url": "/login",
+      "title": "frontend",
+      "hasBookedYTD": false,
+      "hasLastLoad": false,
+      "hasPurchasesYTD": false,
+      "hasLastPurchase": false,
+      "hasExportCSV": false,
+      "hasPrint": false,
+      "hasPlannerViewToggle": false,
+      "hasFilterToolbar": false,
+      "hasParityTable": false,
+      "hasLogin": true,
+      "bodyTextLength": 224,
+      "scripts": [
+        "https://app.ih35dispatch.com/assets/index-DGDhgRsw.js"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "path": "/vendors",
+    "name": "vendors-landing",
+    "screenshot": "docs/bus/cascade-live-verify-2026-09-05/vendors-landing.png",
+    "measurements": {
+      "url": "/login",
+      "title": "frontend",
+      "hasBookedYTD": false,
+      "hasLastLoad": false,
+      "hasPurchasesYTD": false,
+      "hasLastPurchase": false,
+      "hasExportCSV": false,
+      "hasPrint": false,
+      "hasPlannerViewToggle": false,
+      "hasFilterToolbar": false,
+      "hasParityTable": false,
+      "hasLogin": true,
+      "bodyTextLength": 224,
+      "scripts": [
+        "https://app.ih35dispatch.com/assets/index-DGDhgRsw.js"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "path": "/dispatch/planners/timeline",
+    "name": "planners-timeline",
+    "screenshot": "docs/bus/cascade-live-verify-2026-09-05/planners-timeline.png",
+    "measurements": {
+      "url": "/login",
+      "title": "frontend",
+      "hasBookedYTD": false,
+      "hasLastLoad": false,
+      "hasPurchasesYTD": false,
+      "hasLastPurchase": false,
+      "hasExportCSV": false,
+      "hasPrint": false,
+      "hasPlannerViewToggle": false,
+      "hasFilterToolbar": false,
+      "hasParityTable": false,
+      "hasLogin": true,
+      "bodyTextLength": 224,
+      "scripts": [
+        "https://app.ih35dispatch.com/assets/index-DGDhgRsw.js"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "path": "/dispatch/planners/loads",
+    "name": "planners-loads",
+    "screenshot": "docs/bus/cascade-live-verify-2026-09-05/planners-loads.png",
+    "measurements": {
+      "url": "/login",
+      "title": "frontend",
+      "hasBookedYTD": false,
+      "hasLastLoad": false,
+      "hasPurchasesYTD": false,
+      "hasLastPurchase": false,
+      "hasExportCSV": false,
+      "hasPrint": false,
+      "hasPlannerViewToggle": false,
+      "hasFilterToolbar": false,
+      "hasParityTable": false,
+      "hasLogin": true,
+      "bodyTextLength": 224,
+      "scripts": [
+        "https://app.ih35dispatch.com/assets/index-DGDhgRsw.js"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "path": "/reports/driver-qualification",
+    "name": "report-dqf",
+    "screenshot": "docs/bus/cascade-live-verify-2026-09-05/report-dqf.png",
+    "measurements": {
+      "url": "/login",
+      "title": "frontend",
+      "hasBookedYTD": false,
+      "hasLastLoad": false,
+      "hasPurchasesYTD": false,
+      "hasLastPurchase": false,
+      "hasExportCSV": false,
+      "hasPrint": false,
+      "hasPlannerViewToggle": false,
+      "hasFilterToolbar": false,
+      "hasParityTable": false,
+      "hasLogin": true,
+      "bodyTextLength": 224,
+      "scripts": [
+        "https://app.ih35dispatch.com/assets/index-DGDhgRsw.js"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "path": "/reports/invoice-search",
+    "name": "report-invoice-search",
+    "screenshot": "docs/bus/cascade-live-verify-2026-09-05/report-invoice-search.png",
+    "measurements": {
+      "url": "/login",
+      "title": "frontend",
+      "hasBookedYTD": false,
+      "hasLastLoad": false,
+      "hasPurchasesYTD": false,
+      "hasLastPurchase": false,
+      "hasExportCSV": false,
+      "hasPrint": false,
+      "hasPlannerViewToggle": false,
+      "hasFilterToolbar": false,
+      "hasParityTable": false,
+      "hasLogin": true,
+      "bodyTextLength": 224,
+      "scripts": [
+        "https://app.ih35dispatch.com/assets/index-DGDhgRsw.js"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "path": "/reports/lane-profitability",
+    "name": "report-lane-profitability",
+    "screenshot": "docs/bus/cascade-live-verify-2026-09-05/report-lane-profitability.png",
+    "measurements": {
+      "url": "/login",
+      "title": "frontend",
+      "hasBookedYTD": false,
+      "hasLastLoad": false,
+      "hasPurchasesYTD": false,
+      "hasLastPurchase": false,
+      "hasExportCSV": false,
+      "hasPrint": false,
+      "hasPlannerViewToggle": false,
+      "hasFilterToolbar": false,
+      "hasParityTable": false,
+      "hasLogin": true,
+      "bodyTextLength": 224,
+      "scripts": [
+        "https://app.ih35dispatch.com/assets/index-DGDhgRsw.js"
+      ]
+    },
+    "status": "OK"
+  }
+]
