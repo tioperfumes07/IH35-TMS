@@ -52,6 +52,8 @@ Devin is not active today — nothing routes to Devin.
 
 ---
 
+## B0. OWNERSHIP MAP (owner 'lock it' 14:13Z) — `docs/bus/OWNERSHIP-MAP-2026-09-05.md`. Row owners below are superseded by the transfers in that file: Dispatch → CC-2; Banking [18,19] → Cursor; Load Costs/Accounting/Customers/Vendors [1–3,13–17] → CC-1; Settlements/Escrow/Driver Profile [11,12,24–26,30–36] → CC-3; Seed [5,38] → CC-3; Maintenance → Codex; Planners → Cascade. One lead: Claude. Deploy timer 20 min: Cursor.
+
 ## B. ONE INSTRUCTION SET — read top to bottom, every seat
 
 **Order of the day.** Deploy first, seed second, restore what was deleted third, then the settlements/counterparty/banking wiring. No seat starts row N+1 before posting row N's DONE line with measurements (FINISH LAW §0). Every DONE line: `SEAT | ROW DONE | <sha> | <live sha> | <measurements> | NEXT`. Silence at a deadline = surrender; the lead rewrites both INBOXes at the deadline.

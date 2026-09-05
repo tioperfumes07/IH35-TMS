@@ -1,3 +1,43 @@
+# MODULE OWNERSHIP MAP — owner lock 2026-09-05 14:13Z (docs/bus/OWNERSHIP-MAP-2026-09-05.md). One coder per module, vertical.
+# Seat handles are labels for verify-seat-surface-ownership.mjs; GitHub enforcement is advisory.
+apps/frontend/src/pages/dispatch/**                 @seat-cc-2
+apps/frontend/src/components/dispatch/**            @seat-cc-2
+apps/frontend/src/components/dispatch/LoadDetailCostsTab.tsx  @seat-cc-1
+apps/backend/src/dispatch/**                        @seat-cc-2
+apps/frontend/src/components/parity/**              @seat-cc-2
+apps/frontend/src/components/table/**               @seat-cc-2
+apps/frontend/src/design/tokens.ts                  @seat-cc-2
+apps/frontend/src/components/layout/sidebar-config.ts @seat-cc-2
+docs/design/**                                      @seat-cc-2
+apps/frontend/src/pages/banking/**                  @seat-cursor
+apps/backend/src/banking/**                         @seat-cursor
+apps/frontend/src/pages/accounting/**               @seat-cc-1
+apps/backend/src/accounting/**                      @seat-cc-1
+apps/backend/src/accounting/settlement*             @seat-cc-3
+apps/backend/src/accounting/company-settlement*     @seat-cc-3
+apps/frontend/src/pages/Customers.tsx               @seat-cc-1
+apps/frontend/src/pages/customers/**                @seat-cc-1
+apps/frontend/src/pages/Vendors.tsx                 @seat-cc-1
+apps/frontend/src/pages/vendors/**                  @seat-cc-1
+apps/frontend/src/pages/driver-finance/**           @seat-cc-3
+apps/frontend/src/pages/drivers/**                  @seat-cc-3
+apps/backend/src/driver-finance/**                  @seat-cc-3
+apps/backend/src/drivers/**                         @seat-cc-3
+apps/backend/src/telematics/**                      @seat-cc-3
+apps/backend/src/integrations/samsara/**            @seat-cc-3
+apps/frontend/src/pages/safety/**                   @seat-cc-3
+apps/backend/src/compliance/**                      @seat-cc-3
+scripts/seed-settlements-*                          @seat-cc-3
+apps/frontend/src/pages/maintenance/**              @seat-codex
+apps/backend/src/maintenance/**                     @seat-codex
+apps/frontend/src/pages/lists/**                    @seat-cascade
+apps/frontend/src/pages/reports/**                  @seat-cascade
+docs/LAW.md                                         @seat-lead
+docs/bus/OWNER-ISSUE-INVENTORY-*                    @seat-lead
+docs/bus/SEQUENCE-*                                 @seat-lead
+docs/bus/STATUS-NOW.md                              @seat-lead
+
+# ---- previous entries kept below (additive) ----
 # IH35-TMS — critical path reviewers (CLOSURE-22)
 # OWNER LAW 2026-08-03: no JORGE-APPROVED label / no approval hold.
 # These paths still notify @tioperfumes07 for awareness; coders merge on green with proof + GUARD.
