@@ -5547,6 +5547,11 @@
     "claimed_at": "2026-09-05",
     "purpose": "verify-fuel-advance-account-bound-by-role (spec §1.2, owner ruling: 'bind the fuel account by role, never by name'). Guards that LoadDetailCostsTab.tsx resolves the fuel-advance debit account via accounting.chart_of_accounts_roles (role company_fuel_advance_expense, via listCoaRoles), never via a /fuel/i name match that could resolve to an asset receivable instead of the expense account."
   },
+  "10371": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-05",
+    "purpose": "verify-additive-only (L.4g, LEAD RESET 12:45Z surrender, docs/LAW.md L379 breach guard owner-ordered 05:30Z). Snapshots sidebar entries/labels, route path= count, Dispatch board + HOS_COLUMNS + Load Costs board column keys, Load Costs tab labels to docs/guards/additive-baseline.json; fails on any shrink. Separately ratchets a repo-wide count of the BRD-25 pattern (literal defaultHidden:true / a real DEFAULT_VISIBLE_* declaration) so it can only shrink, never grow. OWNER-REMOVE escape hatch regenerates the baseline."
+  },
   "10373": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-05",
