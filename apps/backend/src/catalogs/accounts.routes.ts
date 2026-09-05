@@ -13,6 +13,8 @@ import {
   mergeAccountsOnClient,
 } from "./account-merge.service.js";
 import { resolveCatalogDescriptionFromName } from "./accounting/factory.js";
+import { looksLikeSampleDataName } from "../mdata/sample-data-name-detection.js";
+import { USMCA_COMPANY_ID } from "../org/companies.routes.js";
 
 const accountTypeSchema = z.enum([
   "Asset",
@@ -289,6 +291,20 @@ export async function registerAccountRoutes(app: FastifyInstance) {
         await assertCompanyMembership(client, authUser.uuid, operatingCompanyId);
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
+        // ACC-13 (owner ruling, "never write test/sample/demo fixtures into USMCA, including for
+        // proof"): catalogs.accounts carries no is_sample_data column to tag-and-allow (unlike
+        // mdata.customers/vendors, which this same looksLikeSampleDataName() already gates via a
+        // tag), so a seat-authored GL account has no honest way to exist here at all — reject
+        // outright rather than silently admit it. 22 pre-existing test/sample-named USMCA accounts
+        // (all $0 balance, 0 postings) archived live 2026-09-05 as the ACC-13 backfill; this is the
+        // going-forward guard so the count stays at zero.
+        if (
+          operatingCompanyId === USMCA_COMPANY_ID &&
+          (looksLikeSampleDataName(b.account_name) || looksLikeSampleDataName(b.account_number ?? null))
+        ) {
+          return { __sample_name_rejected: true } as const;
+        }
+
         let detailTypeId: string | null = b.detail_type_id ?? null;
         let accountSubtype: string | null = b.account_subtype ?? null;
         if (detailTypeId) {
@@ -355,6 +371,9 @@ export async function registerAccountRoutes(app: FastifyInstance) {
       }
       if (created && typeof created === "object" && "__detail_type_error" in created) {
         return reply.code(400).send({ error: (created as { __detail_type_error: string }).__detail_type_error });
+      }
+      if (created && typeof created === "object" && "__sample_name_rejected" in created) {
+        return reply.code(400).send({ error: "test_sample_demo_name_not_allowed_in_usmca" });
       }
       return reply.code(201).send(created);
     } catch (err) {
