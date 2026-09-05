@@ -27,6 +27,11 @@ import pg from "pg";
 
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const KNOWN_MISMATCH_LOAD_NUMBER = "13508";
+const LOAD_MILES_CHECK_MIGRATION =
+  "db/migrations/202613700200_loads_miles_shortest_not_over_practical_check.sql";
+const LOAD_MILES_CHECK_NAME = "loads_miles_shortest_not_over_practical";
+const LOAD_MILES_CHECK_RE =
+  /CHECK\s*\(\s*miles_shortest\s+IS\s+NULL\s+OR\s+miles_practical\s+IS\s+NULL\s+OR\s+miles_shortest\s*<=\s*miles_practical\s*\)/i;
 
 const SCAN_ROOTS = ["apps/backend/src", "apps/frontend/src"];
 const ST_MILES_PATTERN = /st\.?\s*miles/i;
@@ -69,6 +74,17 @@ function scanForStMilesWrite() {
     }
   }
   return hits;
+}
+
+function checkLoadMilesConstraint(migrationSource) {
+  const failures = [];
+  if (!migrationSource.includes(LOAD_MILES_CHECK_NAME)) {
+    failures.push(`missing constraint name ${LOAD_MILES_CHECK_NAME}`);
+  }
+  if (!LOAD_MILES_CHECK_RE.test(migrationSource)) {
+    failures.push("mdata.loads CHECK no longer blocks miles_shortest > miles_practical");
+  }
+  return failures;
 }
 
 async function withClient(fn) {
@@ -127,6 +143,7 @@ async function runLiveChecks() {
 
 if (process.argv.includes("--selftest")) {
   const src = readFileSync(fileURLToPath(import.meta.url), "utf8");
+  const migration = readFileSync(LOAD_MILES_CHECK_MIGRATION, "utf8");
   if (!src.includes(KNOWN_MISMATCH_LOAD_NUMBER)) {
     console.error("verify-mileage-g1-g5-live SELFTEST FAIL — 13508 exception no longer named");
     process.exit(1);
@@ -136,13 +153,24 @@ if (process.argv.includes("--selftest")) {
     console.error(`verify-mileage-g1-g5-live SELFTEST FAIL — G5 flags real source with nothing planted: ${cleanHits.join(" | ")}`);
     process.exit(1);
   }
-  console.log("verify-mileage-g1-g5-live SELFTEST PASS — G5 scanner clean on real source; 13508 exception present");
+  const planted = migration.replace("miles_shortest <= miles_practical", "miles_shortest >= miles_practical");
+  if (planted === migration || checkLoadMilesConstraint(planted).length === 0) {
+    console.error("verify-mileage-g1-g5-live SELFTEST FAIL — planted shortest/practical CHECK inversion escaped");
+    process.exit(1);
+  }
+  const realConstraintFailures = checkLoadMilesConstraint(migration);
+  if (realConstraintFailures.length > 0) {
+    console.error(`verify-mileage-g1-g5-live SELFTEST FAIL — ${realConstraintFailures.join("; ")}`);
+    process.exit(1);
+  }
+  console.log("verify-mileage-g1-g5-live SELFTEST PASS — planted CHECK inversion blocked; G5 scanner clean; 13508 exception present");
   process.exit(0);
 }
 
 async function main() {
   const g5Hits = scanForStMilesWrite();
   const live = await runLiveChecks();
+  const constraintFailures = checkLoadMilesConstraint(readFileSync(LOAD_MILES_CHECK_MIGRATION, "utf8"));
 
   if (live.skipped) {
     console.log(`verify-mileage-g1-g5-live: G1-G4 UNVERIFIED — ${live.reason} (no live DB reachable this run)`);
@@ -164,6 +192,7 @@ async function main() {
     if (live.g4_missing_mileage_source_unexplained > 0) failures.push(`G4 FAIL: ${live.g4_missing_mileage_source_unexplained} unexplained mdata.loads row(s) with miles_practical set but mileage_source NULL`);
   }
   if (g5Hits.length > 0) failures.push(`G5 FAIL: ${g5Hits.length} St.Miles write-shaped hit(s)`);
+  failures.push(...constraintFailures.map((failure) => `G3 CONSTRAINT FAIL: ${failure}`));
 
   if (failures.length > 0) {
     console.error("verify-mileage-g1-g5-live: FAIL");
