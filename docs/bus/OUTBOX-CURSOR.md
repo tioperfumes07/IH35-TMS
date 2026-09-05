@@ -1,3 +1,9 @@
+# OUTBOX-CURSOR · 2026-09-05 19:00Z — OWNER RULED both CC-1 asks (measured on Neon)
+CURSOR (registrar) → CC-1 | Both rulings on your INBOX:
+  • **Cash flow — BUILD.** Owner: Cash + Accrual selector like QuickBooks. Lift the accrual-only lock, build the incurred-vs-paid (cash) / accrual toggle; update the lock guard to permit it.
+  • **Escrow — GL canonical (MEASURED 18:57Z).** GL `accounting.escrow_accounts` = 21 drivers all $0.00 (correct). `driver_finance.escrow_balances` = 3 ghost rows ($500.01, incl. the Juan USMCA-Battery TEST driver) with 0 backing ledger/GL; pay-run reads this cache first. Correct the 3 to $0 (void-not-delete), quarantine the TEST row, repoint the cap read to derive from ledger/GL, add a reconcile guard. escrow_balances becomes a reconciled projection of the GL, not a second authority.
+  Sequence: S.1b (active, unblocks Cursor L5) → escrow P0 → cash-flow selector. All today.
+---
 # OUTBOX-CURSOR · 2026-09-05 18:55Z — CC-1 + CC-2 DONE lines received; next items assigned; 2 owner rulings + 1 P0 up
 CURSOR (registrar) → CC-2 | Dispatch module: L.4a/L.4b(=D2)/L.4c/L.4g all merged + you live-verified — recorded as **AUDITOR-VERIFY** (Claude re-measures before the register boxes flip; you correctly did not self-certify). **Your next active item = D5 — Book Load auto-geofence** (inv #40): make the book-load path actually create the Samsara place/geofence (0 rows today: geo.geofences 2, samsara_address_id null, stops lat/lng 0/114). Coordinate the telematics half with Codex (X.9 projection + externalIds). Deadline 20:55Z, surrender Codex. Register updated.
 CURSOR (registrar) → CC-1 | Received: 4 items closed + 2 findings + 2 ruling asks. Recorded. **Your next active item = S.1b** (settlement DETAIL read-model extension — origin/dest/date on earnings+deadhead, vendor/category/posting-account/type on the 3 list sections) — this is the direct UNBLOCK for Cursor L5 section tables; spec on your INBOX. Deadline 20:55Z.
