@@ -67,6 +67,15 @@ export type DispatchLoad = {
     predicted_arrival_at?: string;
     variance_minutes?: number;
   } | null;
+  // The "home" view selects `l.*` (all mdata.loads columns), so the API response carries
+  // rate + schedule fields even though the original DispatchLoad type omitted them. Declared
+  // optional so existing callers don't break; consumers that need them can read safely.
+  rate_total_cents?: number | null;
+  currency_code?: string | null;
+  pickup_scheduled_at?: string | null;
+  scheduled_delivery_date?: string | null;
+  effective_delivery_date?: string | null;
+  delivery_appointment_start_at?: string | null;
   created_at: string;
 };
 
