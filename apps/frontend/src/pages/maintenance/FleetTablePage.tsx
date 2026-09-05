@@ -10,6 +10,8 @@ import { SelectCombobox } from "../../components/Combobox";
 import { downloadFleetLocationHosXlsx, getFleetLocationHos } from "../../api/reports";
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
+import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
+import { BUTTON_MD_SIZE_CLASS } from "../../design/tokens";
 
 type Props = {
   operatingCompanyId: string;
@@ -79,50 +81,6 @@ const KIND_TABS: Array<{ key: string; label: string }> = [
   { key: "trailer", label: "Trailers" },
   { key: "company", label: "Company Vehicles" },
 ];
-
-function KpiCard({
-  label,
-  value,
-  active,
-  onClick,
-  disabled,
-  disabledReason,
-  tone = "default",
-}: {
-  label: string;
-  value: string | number;
-  active?: boolean;
-  onClick?: () => void;
-  disabled?: boolean;
-  disabledReason?: string;
-  tone?: "default" | "in-shop" | "oos";
-}) {
-  const toneClass = tone === "oos"
-    ? active ? "border-red-400 bg-red-100 text-red-900" : "border-red-200 bg-red-50 text-red-800"
-    : tone === "in-shop"
-      ? active ? "border-[#14314F] bg-[#14314F] text-white" : "border-slate-300 bg-slate-100 text-slate-700"
-      : active ? "border-slate-500 bg-slate-50" : "border-gray-200 bg-white";
-  const cls = `rounded border px-2 py-1 text-left text-[11px] ${toneClass}`;
-  const inner = (
-    <>
-      <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="font-semibold">{value}</div>
-    </>
-  );
-  if (disabled) {
-    return (
-      <div className={`${cls} cursor-not-allowed opacity-70`} aria-disabled="true" title={disabledReason} data-kpi-disabled="true">
-        {inner}
-      </div>
-    );
-  }
-  if (!onClick) return <div className={cls}>{inner}</div>;
-  return (
-    <button type="button" onClick={onClick} aria-pressed={Boolean(active)} className={`${cls} hover:bg-gray-50`}>
-      {inner}
-    </button>
-  );
-}
 
 export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, showMaintenanceColumns = false }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -433,7 +391,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
             role="tab"
             aria-selected={kindFilter === tab.key}
             onClick={() => setKind(tab.key)}
-            className={`rounded border px-2 py-1 text-xs font-semibold ${
+            className={`${BUTTON_MD_SIZE_CLASS} rounded-sm border ${
               kindFilter === tab.key ? "border-slate-500 bg-slate-50 text-slate-800" : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
             }`}
           >
@@ -444,19 +402,19 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
 
       {/* Clickable KPIs — each filters the roster by status; Total clears the status filter. */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5">
-        <KpiCard label="Total Units" value={counters.total} active={effectiveStatus === ""} onClick={() => setStatus("all")} />
-        <KpiCard label="Active" value={counters.active} active={effectiveStatus === "InService"} onClick={() => setStatus("InService")} />
-        <KpiCard label="In-Shop" tone="in-shop" value={counters.inShop} active={effectiveStatus === "InMaintenance"} onClick={() => setStatus("InMaintenance")} />
-        <KpiCard
+        <DrillKpiCard label="Total Units" value={counters.total} active={effectiveStatus === ""} onClick={() => setStatus("all")} />
+        <DrillKpiCard label="Active" value={counters.active} active={effectiveStatus === "InService"} onClick={() => setStatus("InService")} />
+        <DrillKpiCard label="In-Shop" value={counters.inShop} active={effectiveStatus === "InMaintenance"} onClick={() => setStatus("InMaintenance")} />
+        <DrillKpiCard
           label="Out-of-Service"
-          tone="oos"
+          valueTone="critical"
           value={counters.outOfService}
           active={effectiveStatus === "OutOfService"}
           onClick={() => setStatus("OutOfService")}
         />
-        <KpiCard
+        <DrillKpiCard
           label="Avg Age"
-          value={kpis.avg_age_years == null ? "-" : `${Number(kpis.avg_age_years).toFixed(1)} y`}
+          value={kpis.avg_age_years == null ? null : `${Number(kpis.avg_age_years).toFixed(1)} y`}
           active={searchParams.get("sort") === "year" && searchParams.get("dir") === "asc"}
           onClick={() =>
             patchParams((params) => {
@@ -469,25 +427,25 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       </div>
 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4" data-testid="maint-fleet-class-boxes">
-        <KpiCard
+        <DrillKpiCard
           label="Trucks"
           value={classCounters.trucks}
           active={equipmentClass === "trucks"}
           onClick={() => setEquipmentClass("trucks")}
         />
-        <KpiCard
+        <DrillKpiCard
           label="Reefers"
           value={classCounters.reefers}
           active={equipmentClass === "reefers"}
           onClick={() => setEquipmentClass("reefers")}
         />
-        <KpiCard
+        <DrillKpiCard
           label="Flatbeds"
           value={classCounters.flatbeds}
           active={equipmentClass === "flatbeds"}
           onClick={() => setEquipmentClass("flatbeds")}
         />
-        <KpiCard
+        <DrillKpiCard
           label="Other"
           value={classCounters.other}
           active={equipmentClass === "other"}
