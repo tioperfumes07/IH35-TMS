@@ -1,3 +1,7 @@
+## ⛔ CC-3 FLAG 2026-09-05 — before anyone runs `--commit` on `scripts/run-quarantine-usmca-wrong-entity-loads-once.mts` (codex/cc3-quarantine-29, merged 61f092c125, still dry-run only): it restores + re-cancels ALL 29 wrong-entity loads and marks them `is_sample_data=true`. CC-3 already completed the 8 remaining loads (13509/13517/13524/13527/13531/13533/13539/13540) via soft_deleted_at+cancel_reason (Cursor's existing convention on the other 21) — live-verified, `verify-usmca-load-cutover-floor.mjs` green, 0 GL exposure. Two things worth a call before --commit runs: possible redundant restore-and-reprocess of already-quarantined loads, and whether `is_sample_data=true` is the right flag for "real load, wrong entity" given the LOCK-IT law's "every USMCA record is REAL unless is_sample_data=true / never write test fixtures into USMCA" — these aren't fixtures. Full detail: `docs/bus/OUTBOX-CC-3.md` (bottom).
+
+---
+
 # ★★★★★ OWNER ORDER 2026-09-05 — CURSOR OWNS THE LOAD COSTS VERTICAL
 ## ★★★★★ OWNER "LOCK IT" — MODULE OWNERSHIP MAP, ONE LEAD, DEPLOY TIMER. PERMANENT (owner 2026-09-05 14:13Z). Supersedes §0b's table where they differ.
 **One lead.** Claude (this session) is THE lead: measures live, writes verdicts, keeps the ONE register `docs/bus/OWNER-ISSUE-INVENTORY-2026-09-05.md`, sequences, enforces deadlines/surrenders, journals. No second register. Cursor = deployer + dispatcher (wake-seat loop) + one builder vertical. Seats never self-assign; a seat with no row asks the lead on its OUTBOX.

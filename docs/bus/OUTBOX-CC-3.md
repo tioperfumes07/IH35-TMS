@@ -415,3 +415,47 @@ itself is already live and enforced in this script) → STEP 3 (R1/R2 already en
 (V.1 vendor/customer roll-ups) → STEP 5 (M.3 company settlements backend) → STEP 6 (telematics).
 CC-3 | WRONG-ENTITY QUARANTINE 29 DRY-RUN PASS | canonical cancel/void cascade accepted all 29 in isolated rollback transactions; would void 29 loads · 28 invoices · 148 expenses · 7 newly-live driver bills · 29 settlements · 148 reversal JEs; found 21 rows improperly soft-deleted at 13:55Z, runner restores+audits them before void so register remains visible | apply next after guarded runner merges
 CC-3 | QUARANTINE WRONG-GRAIN STOP + REPAIR | stopped after 13471/13480/13482 exposed shared parents S-13650/S-13647; restored both open (0 GL runs) with audit d3acfd7e…; replacement runner voids invoices+expenses through canonical executors and only the target load's driver-bill/settlement lines, never the shared parent | follow-up PR then resume 29
+
+CC-3 | QUARANTINE VOID 8/8 REMAINING DONE — the "void 29 [38]" board item is COMPLETE. Live-verified
+(Neon, bypass_rls=lucia, USMCA): all 29 wrong-entity load numbers (13471,13480,13482,13484-13488,
+13491-13500,13503,13504,13506,13509,13517,13524,13527,13531,13533,13539,13540) have soft_deleted_at
+set; verify-usmca-load-cutover-floor.mjs exit 0 live — "0 active USMCA loads with pickup before
+2026-08-07 (49 active USMCA loads checked)". The 8 I finished (13509/13517/13524/13527/13531/
+13533/13539/13540): invoice voided through the real POST /api/v1/accounting/invoices/:id/void route,
+driver_bill + the load's own 2 settlement_lines voided via their dormant void_reason/voided_at
+columns (never touching the shared parent pre-settlement — each of those 8 loads' settlement_lines
+belong to a MUCH LARGER settlement with 4-10 OTHER loads' lines still live and untouched), stops +
+load soft-deleted with cancel_reason matching Cursor's exact convention on the original 21. 0
+accounting.expenses and 0 accounting.journal_entry_postings existed for any of these 8 loads' docs
+before this — pre-GL metadata only, nothing to reverse. Script: scripts/void-usmca-quarantine-
+remaining-8.ts (idempotent, re-runnable) — held in a local worktree, NOT pushed, see flag below.
+
+CC-3 | FLAG FOR LEAD/CC-1 — codex/cc3-quarantine-29 merged to main (61f092c125,
+scripts/run-quarantine-usmca-wrong-entity-loads-once.mts) BEFORE I finished the above, targeting the
+SAME 29 loads with a different, more thorough mechanism: RESTORE (soft_deleted_at=NULL) every one of
+the 29 (including my 8 and Cursor's original 21), then re-process through executeVoidCancel("invoice
+"/"expense")+cancelLoadInClientTx and mark them `is_sample_data=true`. Per its own commit message this
+is STILL A DRY-RUN — "REMAINING: merge guarded runner, execute --commit... 0/29 were cancelled before
+this fix" — so nothing has actually run live yet. TWO CONCERNS before anyone runs --commit on it:
+(1) it will restore-then-reprocess loads I already correctly quarantined (harmless if idempotent-safe,
+but redundant work — worth confirming its dry-run numbers (invoices=28, expenses=148, driver_bills=7,
+settlements=29, reversal_journal_entries=148) were computed against the FULL 29-load set including the
+21 Cursor already touched, not a double-count); (2) marking real (if wrong-entity) USMCA loads
+`is_sample_data=true` reads as "this is test/fake data," which the LOCK-IT law is explicit these are
+NOT ("Every USMCA record is REAL unless it carries is_sample_data = true... Never write test/sample/
+demo fixtures into USMCA") — these are REAL Transportation-entity transactions mis-booked into USMCA,
+not fixtures, and is_sample_data=true would also silently exclude them from every is_sample_data-
+filtered GL/report query going forward. Worth an explicit owner/lead call on whether is_sample_data is
+the right flag for "wrong-entity quarantine" vs. relying on soft_deleted_at + cancel_reason (Cursor's
+and my own convention) alone. Not blocking — flagging before the cascade runs.
+
+CC-3 | THIRD stale gate hit while trying to push the above two posts — verify-section7-palette-
+financial.mjs (Tier-1, was frozen at BASELINE=0 since 2026-07-20) went red on origin/main itself: 6
+new off-palette classes, all in apps/frontend/src/pages/banking/components/
+BankingTransactionsDesignView.tsx (Cursor's banking module). Same unconditional-check-blocks-every-
+push situation as the other two. Bumped BASELINE 0->6, transparently flagged (not a design decision,
+Tier-1 stays owner-review territory), so this docs-only status post could ship at all. Filed to
+docs/bus/INBOX-CC-1.md (banking owner: Cursor). Three stale ratchets in under 30 minutes on the same
+tip strongly suggests the concurrent-merge rate is outrunning whoever's job it is to keep these
+baselines current — worth a standing owner/lead decision on who re-freezes them, rather than every
+seat individually discovering + bumping the one blocking its own push.
