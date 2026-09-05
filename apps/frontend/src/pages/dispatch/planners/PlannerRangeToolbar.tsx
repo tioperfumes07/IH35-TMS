@@ -1,7 +1,7 @@
 import { PLANNER_RANGE_OPTIONS } from "./planner-range";
 import "./planner-design-tokens.css";
 import { usePlannerRange } from "./PlannerRangeContext";
-import { DatePicker } from "../../forms/DatePicker";
+import { DatePicker } from "../../../components/forms/DatePicker";
 
 export function PlannerRangeToolbar() {
   const { windowDays, setWindowDays, range, setRange } = usePlannerRange();
@@ -41,13 +41,13 @@ export function PlannerRangeToolbar() {
           <DatePicker
             value={range.start}
             onChange={(value) => setRange({ ...range, start: value })}
-            ariaLabel="Custom range start"
+            aria-label="Custom range start"
           />
           <span className="text-gray-500">to</span>
           <DatePicker
             value={range.end}
             onChange={(value) => setRange({ ...range, end: value })}
-            ariaLabel="Custom range end"
+            aria-label="Custom range end"
           />
         </div>
       ) : null}
