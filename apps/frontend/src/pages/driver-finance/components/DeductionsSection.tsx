@@ -10,7 +10,6 @@
  * Keeps the existing Hold/Resume functionality (HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID).
  */
 import { Button } from "../../../components/Button";
-import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { mmmDd } from "../../../lib/formatDate";
 
