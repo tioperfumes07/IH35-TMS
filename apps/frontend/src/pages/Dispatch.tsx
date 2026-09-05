@@ -190,6 +190,23 @@ export function DispatchPage({
     setSearchParams(next, { replace: true });
   }, [boardScope, view, searchParams, setSearchParams]);
 
+  // L.4b — defensive default: the "Loads history" button's onClick already sets a 30-day default
+  // range when it flips board_scope to history, but that is the ONLY entry point that does — a
+  // direct/bookmarked URL with ?board_scope=history and no date_from/date_to (e.g. a saved link,
+  // or a future nav item that only sets board_scope) would silently render an UNBOUNDED history
+  // list with no date filter at all. This effect closes that gap at the state level rather than
+  // per-entry-point, using the exact same default the button already computes.
+  useEffect(() => {
+    if (boardScope !== "history") return;
+    if (searchParams.get("date_from") || searchParams.get("date_to")) return;
+    const next = new URLSearchParams(searchParams);
+    if (!next.get("date_mode")) next.set("date_mode", "delivery");
+    const today = companyToday();
+    next.set("date_from", addDaysIso(today, -30));
+    next.set("date_to", today);
+    setSearchParams(next, { replace: true });
+  }, [boardScope, searchParams, setSearchParams]);
+
   const loadsQuery = useLoadsList({
     limit,
     offset,
@@ -309,10 +326,15 @@ export function DispatchPage({
         title="Dispatch"
         actions={
           <div className="flex min-w-0 gap-2 overflow-x-auto">
+            {/* L.4b (DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05.md §B): "+ Book Load" is the ONLY
+            filled (primary) button on the page. Home/Live/Loads history/Planners are scope/landing
+            controls, not the page's call to action — their ACTIVE state is a bottom-border accent,
+            never the primary fill, so a second "filled" button can't reappear here. */}
             <Button
               type="button"
-              variant={view === "overview" ? "primary" : "secondary"}
+              variant="secondary"
               size="sm"
+              className={view === "overview" ? "border-b-2 border-b-[#1f2a44] font-semibold" : ""}
               data-testid="dispatch-view-overview"
               disabled={boardScope === "history"}
               title={boardScope === "history" ? "Home is live-board only — switch to Live" : undefined}
@@ -331,8 +353,9 @@ export function DispatchPage({
                 Load) so the header reads clean. */}
             <Button
               type="button"
-              variant={boardScope === "live" ? "primary" : "secondary"}
+              variant="secondary"
               size="sm"
+              className={boardScope === "live" ? "border-b-2 border-b-[#1f2a44] font-semibold" : ""}
               data-testid="dispatch-board-scope-live"
               onClick={() => {
                 const next = new URLSearchParams(searchParams);
@@ -349,8 +372,9 @@ export function DispatchPage({
             </Button>
             <Button
               type="button"
-              variant={boardScope === "history" ? "primary" : "secondary"}
+              variant="secondary"
               size="sm"
+              className={boardScope === "history" ? "border-b-2 border-b-[#1f2a44] font-semibold" : ""}
               data-testid="dispatch-board-scope-history"
               onClick={() => {
                 const next = new URLSearchParams(searchParams);
@@ -387,14 +411,17 @@ export function DispatchPage({
 
       <DispatchSubnav operatingCompanyId={defaultCompanyIds[0] ?? ""} />
 
-      {/* DSP-BOARD-VIEW-ROW (owner 2026-09-04): the single "Board view" row — Kanban / List / Round
-          Trips / Trip Pairing, the load-board VIEW selector the owner asked to move OFF the top banner
-          and "back to the board view row". Only shown on the load board (not on the settlements /
-          assignments subtabs). 28px clickable boxes, 2px radius, centered — CLICKABLE-BOX-SIZE LAW. */}
+      {/* L.4b (DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05.md §B) — TOOLBAR: "ONE segmented control
+          List | Kanban | Round Trips (one height, 32px)". Was 4 buttons incl. "Trip Pairing", a
+          literal duplicate of DispatchSubnav's own "Trip Pairing" nav item (the owner's "duplicate
+          tabs" complaint) — removed here, still fully reachable from the nav row, nothing deleted
+          from routes/pages. role="group" (a toggle group, not a tabpanel switcher) per the
+          contract; only shown on the load board (not on the settlements/assignments subtabs).
+          28px clickable boxes, 2px radius, centered — CLICKABLE-BOX-SIZE LAW. */}
       {subTab === "load_board" ? (
         <div
           className="flex flex-wrap items-center gap-1 px-2"
-          role="tablist"
+          role="group"
           aria-label="Board view"
           data-testid="dispatch-board-view-row"
         >
@@ -415,7 +442,6 @@ export function DispatchPage({
                 next.set("view", "units");
                 setSearchParams(next);
               } },
-              { id: "trip-pairing", label: "Trip Pairing", active: location.pathname === "/dispatch/trip-pairing", liveOnly: false, onClick: () => navigate("/dispatch/trip-pairing") },
             ] as const
           ).map((tab) => {
             const disabled = tab.liveOnly && boardScope === "history";
@@ -423,8 +449,7 @@ export function DispatchPage({
               <button
                 key={tab.id}
                 type="button"
-                role="tab"
-                aria-selected={tab.active}
+                aria-pressed={tab.active}
                 disabled={disabled}
                 data-testid={`dispatch-view-${tab.id}`}
                 title={disabled ? `${tab.label} is live-board only — switch to Live` : undefined}
