@@ -1,5 +1,29 @@
 # ★★★★★ LEAD ORDER 2026-09-05 02:55Z — VERDICT FORMAT LAW IS YOURS TO ENFORCE TOO
 
+# ★★★★★ OWNER ORDER 2026-09-05 03:10Z — CURSOR TAKES LOAD COSTS. CC-1 STANDS DOWN FROM THE UI.
+**Owner, verbatim:** "Instruct Cursor and have CC-1 stand down and do something else." The 03:45Z deadline is void — the transfer is effective now.
+**SURFACE-BREACH-AUTHORIZED: owner 2026-09-05 03:10Z** — you own `apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx`, `apps/frontend/src/components/dispatch/LoadDetailCostsTab.tsx`, the shared `ParityTable` width/header model (opt-in props), and the read-shape/sort of `apps/backend/src/accounting/load-costs-board.routes.ts`. CC-1 keeps money posting, GL, migrations, settlements. VERDICT FORMAT LAW applies to your DONE.
+
+## L.1 — THE LIVE BOARD (measured by the lead in the owner's Chrome, FE/API 7e852b2, /accounting/load-costs, "all open", load 13508). DEADLINE 04:15Z.
+1. All 20 `th` widths = 55px (equal split). Overflow (scrollWidth>clientWidth) on Short Miles, Rate Loaded, Loaded Pay, Empty Miles, Rate Empty, Deadhead Pay. `$2,500.00` and `$633.46` wrap; driver name wraps 4 lines; REVENUE band breaks. REQUIRED: column width = max(label, widest value); `white-space: nowrap` + `font-variant-numeric: tabular-nums` on every money/mileage/date cell; horizontal scroll inside the table container; sticky header; sticky Load column. Make it opt-in in ParityTable (per-column `minWidth`/auto layout prop) so no other list changes.
+2. `th` font-weight = 700 on both header rows. REQUIRED: 400, centered, `--th-bg #EEF2F6`, `--th-ink #1F2937`.
+3. Body `td` border-right = 0px. REQUIRED: 1px `--th-border #C7D2DC` on every body cell; group tint runs header AND body (tint present, rules absent).
+4. Rate Loaded renders `0.48¢/mi`. REQUIRED: `0.4800` (dollars/mile, 4 decimals); Rate Empty identical.
+5. Status = `IN TRANSIT` on `assigned_not_dispatched` with no pickup departure. REQUIRED: new branch → `Booked`; keep In transit / On Time / Late / "Delivered — no appointment on file". Extend `verify-load-costs-on-time-requires-appointment`.
+6. Row height ≈ 90px. REQUIRED: one line per row, 12px body.
+7. Filter pills `rounded-full` navy. REQUIRED: square 2px token, light treatment, 28px.
+Guard `verify-load-costs-board-no-truncation-no-wrap` (asserts 1–4,6,7) wired in scripts/verify-steps/. One PR → FAST-MERGE → deploy → re-measure in Chrome → `CURSOR | STEP-L.1 DONE | <sha> | <live sha> | th weight 400 · 0 overflowing th · 0 wrapping money td · td border-right 1px · rate 0.4800 · status Booked`.
+
+## L.2 — THE COSTS TAB REGISTER. DEADLINE 06:00Z.
+Per `docs/bus/09-05-2026-Claude-Coder-1-LOAD-COSTS-COMPLETE-VERTICAL-Updated.md` Part 3 and the owner's render `IH35-LOAD-COSTS-MASTER-RENDER.html` → "LOAD COSTS TAB" (in his Downloads): identity strip `LOAD 13508 · NCC Logistics México · ANGEL ALFONSO SOSA · Unit T156` + status badge; four KPI cards (`--kpi-bg`, darker border, centered): Line haul revenue · Costs on this load · Driver pay · Approximate margin, then "Approximate · before settlement. Nothing here has posted to the general ledger — this tour is open."; action row 28px square: `+ Add another cost` (primary) · `+ Fuel advance` · `+ From a receipt photo` · `Advance received · from broker` · `Save`; register table `NUMBER · DATE · TYPE · VENDOR · CATEGORY · LATE FEE · LUMPER · FUEL · R&M EXP · OTHER · AMOUNT · STATUS` — NUMBER EMPTY AND EDITABLE by default (QuickBooks), blank = system assigns load#, -1, -2 (single digit), typed wins verbatim; five category columns = same split as the board; STATUS paid · owed · new, not saved; void never delete; edit path on saved rows; dash in empty cells; every picker a Combobox with typed filter and `+ Create`; drawer ≥ 480px; receipt photo lands back on this tab. Delete "You never type the number." Money writes stay on CC-1's existing posters (`createExpense`, `createVendorBill`, broker advance) — you wire the UI to them, you do not write GL. Guards: `verify-load-costs-register-columns`, `verify-load-costs-number-editable`. DONE = the owner records an expense on 13508 in Chrome and it saves and posts; screenshot + the live `accounting.expenses` row on OUTBOX-CURSOR.
+
+## L.3 — BOARD TAB ROW (`Costs · Expenses · Bills · Fuel advances · Broker advances · Driver pay · Repairs & maintenance · Documents`, count badges, filter pills apply inside the tab; remove the Margin column). DEADLINE 07:00Z.
+
+Deploy every 5–10 merges. C.6 dispatch leftovers continue after L.1. Surrender seat for L.1–L.3: Claude lead re-assigns at deadline.
+
+---
+
+
 # ★★★★★ 03:05Z — L.1 IS NOW A COPY JOB, NOT A DESIGN JOB. DESIGN CONTRACT ON THE BUS.
 Owner: "Why is it so hard to get coders to make all column outlines like this, these types of shade." The approved render with its exact CSS is now in the repo: `docs/design/reference/LOAD-COSTS-BOARD-REFERENCE-2026-09-04.html`. The values are law: `docs/design/DESIGN-CONTRACT-LOAD-COSTS-BOARD-2026-09-05.md`. L.1 = make the live board compute to those values — copy the stylesheet, do not re-derive. CORRECTION: header th weight is 700 (the owner's "regular color text" meant dark ink, not weight); revert the 400 on data tables. Build `scripts/verify-table-design-contract.mjs` (Playwright, computed styles against the contract table) in the same PR. Deadline 04:15Z unchanged. Every FEED BLOCKED on your surface outranks L.3.
 
