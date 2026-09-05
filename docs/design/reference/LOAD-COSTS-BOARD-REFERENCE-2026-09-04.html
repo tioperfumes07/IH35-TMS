@@ -1,0 +1,178 @@
+<title>Load Costs Board</title><style>
+:root{
+ --ink:#1F2937; --mut:#6B7280; --line:#D8DEE6; --line2:#C7D2DC; --ground:#F4F5F7; --card:#FFF;
+ --th-bg:#EEF2F6; --th-ink:#1F2937; --grp-bg:#E4EAF1;
+ --kpi-bg:#F4F7FA; --kpi-bd:#C7D2DC;
+ --rev:#EEF4FA; --cost:#FDF6F3; --pay:#F4F1FA;
+ --rev2:#E4EDF6; --cost2:#F8EDE8; --pay2:#EDE7F5;
+ --pos:#166534; --posbg:#F0FDF4; --posbd:#86EFAC; --neg:#991B1B; --negbg:#FEF2F2; --negbd:#FCA5A5;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:12px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1760px;margin:0 auto;padding:18px 14px 50px}
+h1{font-size:22px;margin:0 0 2px;font-weight:600;letter-spacing:-.2px}
+.sub{color:var(--mut);margin:0 0 14px;font-size:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:2px;margin-bottom:12px}
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);padding:0 10px;background:#FBFCFD}
+.tabs button{appearance:none;border:0;background:transparent;font:inherit;font-size:12px;color:var(--mut);
+ padding:9px 13px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button.on{color:var(--ink);font-weight:600;border-bottom-color:#14314F}
+.tabs .count{display:inline-block;margin-left:6px;background:var(--th-bg);border:1px solid var(--line2);
+ border-radius:9px;padding:0 6px;font-size:10px;font-weight:600;color:var(--mut)}
+/* BAR */
+.bar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line);background:#FAFBFC}
+.lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--mut)}
+.chip{border:1px solid var(--line2);background:#fff;border-radius:2px;padding:2px 8px;font-size:11px;color:var(--mut);height:22px;display:inline-flex;align-items:center}
+.chip b{color:var(--ink);margin-left:4px}
+.chip.on{background:#14314F;border-color:#14314F;color:#fff}
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:8px 10px;border-bottom:1px solid var(--line)}
+.kpi{background:var(--kpi-bg);border:1px solid var(--kpi-bd);border-radius:2px;padding:8px 10px;text-align:center;height:93px;display:flex;flex-direction:column;justify-content:center}
+.kpi .k{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mut)}
+.kpi .v{font-size:19px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.kpi .h{font-size:10px;color:var(--mut);margin-top:1px}
+/* TABLE */
+.scroll{overflow-x:auto}
+table{border-collapse:separate;border-spacing:0;font-size:12px;min-width:1660px;width:100%}
+thead tr.grp th{background:var(--grp-bg);color:var(--mut);font-size:10px;font-weight:700;
+ text-transform:uppercase;letter-spacing:.9px;height:24px;text-align:center;
+ border-right:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+thead tr.hdr th{background:var(--th-bg);color:var(--th-ink);font-size:11px;font-weight:700;
+ text-transform:uppercase;letter-spacing:.4px;height:30px;padding:0 9px;text-align:center;
+ white-space:nowrap;border-right:1px solid var(--line2);border-bottom:2px solid var(--line2);position:sticky;top:0}
+td{padding:6px 9px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);white-space:nowrap}
+tbody tr:nth-child(even) td{background:#FAFBFC}
+tbody tr:hover td{background:#F1F5F9}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.c{text-align:center}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:600}
+.drv{font-size:11.5px}
+.b-rev{background:var(--rev)} .b-cost{background:var(--cost)} .b-pay{background:var(--pay)}
+tbody tr:nth-child(even) .b-rev{background:var(--rev2)}
+tbody tr:nth-child(even) .b-cost{background:var(--cost2)}
+tbody tr:nth-child(even) .b-pay{background:var(--pay2)}
+.tot-c{background:#EDF1F5;font-weight:700}
+tbody tr:nth-child(even) .tot-c{background:#E6EBF1}
+tr.tot td{font-weight:700;background:#E4EAF1 !important;border-top:2px solid var(--line2);border-bottom:0}
+.pill{display:inline-block;padding:1px 8px;border-radius:9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.ontime{background:var(--posbg);color:var(--pos);border:1px solid var(--posbd)}
+.late{background:var(--negbg);color:var(--neg);border:1px solid var(--negbd)}
+.dash{color:#B6BDC7}
+.note{font-size:11px;color:var(--mut);padding:9px 11px;border-top:1px solid var(--line);background:#FAFBFC;line-height:1.65}
+.note b{color:var(--ink)}
+</style>
+<div class="wrap">
+<h1>Load costs</h1>
+<p class="sub">Live loads, recorded costs, and driver pay. This board reads; it never posts. · USMCA Freight Solutions</p>
+<div class="card">
+ <div class="tabs"><button class="on">Costs<span class=count>8</span></button><button class="">Expenses</button><button class="">Bills</button><button class="">Fuel advances</button><button class="">Broker advances</button><button class="">Driver pay<span class=count>8</span></button><button class="">Repairs & maintenance</button><button class="">Documents</button></div>
+ <div class="kpis">
+  <div class="kpi"><div class="k">Loads in motion</div><div class="v">8</div><div class="h">8 rows</div></div>
+  <div class="kpi"><div class="k">Revenue booked</div><div class="v">$28,178</div><div class="h">8 loads</div></div>
+  <div class="kpi"><div class="k">Costs recorded</div><div class="v">$21,905</div><div class="h">31 entries</div></div>
+  <div class="kpi"><div class="k">Driver pay accruing</div><div class="v">$6,447</div><div class="h">8 loads</div></div>
+  <div class="kpi"><div class="k">Approximate margin</div><div class="v">-0.6%</div><div class="h">-$174</div></div>
+  <div class="kpi"><div class="k">Bank items unmatched</div><div class="v">366</div><div class="h">Open bank items</div></div>
+ </div>
+ <div class="bar">
+  <span class="lbl">Period</span><span class="chip">Jul 24 – Sep 3, 2026</span>
+  <span class="chip on">In motion</span><span class="chip">Delivered open</span><span class="chip">All open</span><span class="chip">This week</span>
+  <span class="chip">Live loads<b>8</b></span><span class="chip">On time<b>8</b></span>
+  <span class="chip" style="margin-left:auto">Drafts excluded<b>1</b></span>
+ </div>
+ <div class="scroll"><table>
+  <thead>
+   <tr class="grp">
+    <th colspan="6">The trip</th>
+    <th class="b-rev">Revenue</th>
+    <th colspan="5" class="b-cost">Trip expense</th>
+    <th colspan="6" class="b-pay">Driver pay</th>
+    <th></th>
+   </tr>
+   <tr class="hdr">
+    <th>Load</th><th>Unit</th><th>Driver</th><th>PU Date</th><th>Del Date</th><th>Status</th>
+    <th class="b-rev">Revenue</th>
+    <th class="b-cost">Late Fee</th><th class="b-cost">Lumper</th><th class="b-cost">Fuel</th><th class="b-cost">R&amp;M Exp</th><th class="b-cost">Other</th>
+    <th class="b-pay">Short Miles</th><th class="b-pay">Rate Loaded</th><th class="b-pay">Loaded Pay</th><th class="b-pay">Empty Miles</th><th class="b-pay">Rate Empty</th><th class="b-pay">Deadhead Pay</th>
+    <th>Gross</th>
+   </tr>
+  </thead>
+  <tbody>
+<tr>
+ <td class="mono">13471</td><td>T175</td><td class="drv">NEFTALI CORONADO URBANO</td>
+ <td class="c">07/24/26</td><td class="c">07/27/26</td>
+ <td class="c"><span class="pill ontime">On time</span></td>
+ <td class="num b-rev">3,200.00</td>
+ <td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost">2,153.17</td><td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost">50.00</td>
+ <td class="num b-pay">1,520.9</td><td class="num b-pay">0.5000</td><td class="num b-pay">760.45</td><td class="num b-pay">384.8</td><td class="num b-pay">0.5000</td><td class="num b-pay">192.40</td>
+ <td class="num tot-c">952.85</td></tr>
+<tr>
+ <td class="mono">13480</td><td>T176</td><td class="drv">NEFTALI CORONADO URBANO</td>
+ <td class="c">07/21/26</td><td class="c">07/24/26</td>
+ <td class="c"><span class="pill ontime">On time</span></td>
+ <td class="num b-rev">4,900.00</td>
+ <td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost">1,338.75</td><td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost">50.00</td>
+ <td class="num b-pay">1,890.2</td><td class="num b-pay">0.5000</td><td class="num b-pay">945.10</td><td class="num b-pay"><span class="dash">&mdash;</span></td><td class="num b-pay"><span class="dash">&mdash;</span></td><td class="num b-pay"><span class="dash">&mdash;</span></td>
+ <td class="num tot-c">945.10</td></tr>
+<tr>
+ <td class="mono">13481</td><td>T144</td><td class="drv">JORGE FLORES VALADEZ</td>
+ <td class="c">07/27/26</td><td class="c">07/29/26</td>
+ <td class="c"><span class="pill ontime">On time</span></td>
+ <td class="num b-rev">3,920.00</td>
+ <td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost">913.18</td><td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost"><span class="dash">&mdash;</span></td>
+ <td class="num b-pay">1,421.3</td><td class="num b-pay">0.4500</td><td class="num b-pay">639.59</td><td class="num b-pay"><span class="dash">&mdash;</span></td><td class="num b-pay"><span class="dash">&mdash;</span></td><td class="num b-pay"><span class="dash">&mdash;</span></td>
+ <td class="num tot-c">639.59</td></tr>
+<tr>
+ <td class="mono">13489</td><td>T144</td><td class="drv">JORGE FLORES VALADEZ</td>
+ <td class="c">07/29/26</td><td class="c">07/31/26</td>
+ <td class="c"><span class="pill ontime">On time</span></td>
+ <td class="num b-rev">2,800.00</td>
+ <td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost">1,748.54</td><td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost"><span class="dash">&mdash;</span></td>
+ <td class="num b-pay">1,150.5</td><td class="num b-pay">0.4500</td><td class="num b-pay">517.73</td><td class="num b-pay">363.5</td><td class="num b-pay">0.4500</td><td class="num b-pay">163.58</td>
+ <td class="num tot-c">681.31</td></tr>
+<tr>
+ <td class="mono">13482</td><td>T171</td><td class="drv">LEONEL ANTONIO MORALES</td>
+ <td class="c">07/28/26</td><td class="c">07/30/26</td>
+ <td class="c"><span class="pill ontime">On time</span></td>
+ <td class="num b-rev">4,100.00</td>
+ <td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost">1,012.74</td><td class="num b-cost">15.25</td><td class="num b-cost">5.00</td>
+ <td class="num b-pay">1,421.3</td><td class="num b-pay">0.4500</td><td class="num b-pay">639.59</td><td class="num b-pay"><span class="dash">&mdash;</span></td><td class="num b-pay"><span class="dash">&mdash;</span></td><td class="num b-pay"><span class="dash">&mdash;</span></td>
+ <td class="num tot-c">639.59</td></tr>
+<tr>
+ <td class="mono">13485</td><td>T171</td><td class="drv">LEONEL ANTONIO MORALES</td>
+ <td class="c">07/31/26</td><td class="c">08/03/26</td>
+ <td class="c"><span class="pill ontime">On time</span></td>
+ <td class="num b-rev">2,039.00</td>
+ <td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost">100.00</td><td class="num b-cost">2,088.62</td><td class="num b-cost">70.50</td><td class="num b-cost"><span class="dash">&mdash;</span></td>
+ <td class="num b-pay">1,464.7</td><td class="num b-pay">0.4500</td><td class="num b-pay">659.12</td><td class="num b-pay">223.3</td><td class="num b-pay">0.4500</td><td class="num b-pay">100.49</td>
+ <td class="num tot-c">759.61</td></tr>
+<tr>
+ <td class="mono">13484</td><td>T174</td><td class="drv">RUBEN PEDRO PEREZ GARCIA</td>
+ <td class="c">07/31/26</td><td class="c">08/03/26</td>
+ <td class="c"><span class="pill ontime">On time</span></td>
+ <td class="num b-rev">1,939.00</td>
+ <td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost">1,929.59</td><td class="num b-cost">45.85</td><td class="num b-cost"><span class="dash">&mdash;</span></td>
+ <td class="num b-pay">1,190.6</td><td class="num b-pay">0.4500</td><td class="num b-pay">535.77</td><td class="num b-pay">333.7</td><td class="num b-pay">0.4500</td><td class="num b-pay">150.17</td>
+ <td class="num tot-c">685.94</td></tr>
+<tr>
+ <td class="mono">13491</td><td>T174</td><td class="drv">RUBEN PEDRO PEREZ GARCIA</td>
+ <td class="c">07/28/26</td><td class="c">07/30/26</td>
+ <td class="c"><span class="pill ontime">On time</span></td>
+ <td class="num b-rev">5,500.00</td>
+ <td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost"><span class="dash">&mdash;</span></td><td class="num b-cost">2,290.65</td><td class="num b-cost">15.25</td><td class="num b-cost"><span class="dash">&mdash;</span></td>
+ <td class="num b-pay">1,496.3</td><td class="num b-pay">0.4500</td><td class="num b-pay">673.34</td><td class="num b-pay"><span class="dash">&mdash;</span></td><td class="num b-pay"><span class="dash">&mdash;</span></td><td class="num b-pay"><span class="dash">&mdash;</span></td>
+ <td class="num tot-c">673.34</td></tr>
+<tr class="tot"><td colspan="6">8 live loads</td>
+ <td class="num">28,398.00</td><td class="num">&mdash;</td><td class="num">100.00</td><td class="num">13,475.24</td><td class="num">146.85</td><td class="num">105.00</td>
+ <td class="num">11,555.8</td><td class="num"></td><td class="num">5,370.69</td><td class="num">1,305.3</td><td class="num"></td><td class="num">606.64</td>
+ <td class="num">5,977.33</td></tr>
+  </tbody>
+ </table></div>
+ <div class="note">
+  <b>Real rows.</b> Eight loads read off the signed AlwaysTrack settlements 5753–5764 — real drivers, real units, real miles, real diesel. Nothing on this screen is invented.<br>
+  <b>A dash is not a zero.</b> Late Fee, Lumper, R&amp;M and Other render blank when nothing of that kind was recorded. A zero would assert the cost was measured and found to be nothing.<br>
+  <b>Two pay lines, always.</b> Loaded pay = short miles × rate loaded. Deadhead pay = empty miles × rate empty. <code>rate_empty_per_mile_cents</code> is its own configured value.
+ </div>
+</div>
+</div>
