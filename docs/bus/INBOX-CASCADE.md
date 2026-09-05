@@ -1,3 +1,17 @@
+# ★★★★ LEAD VERDICT 2026-09-05 02:10Z (Claude lead loop — owner-authorized)
+**Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — you work ONLY the step marked → in your row.
+**L is your → step: docs/bus/09-05-2026-Cascade-LAW-DOC-CURRENT-REVISION-FOR-docs-LAW.md is the 09-05 00:10 text; fresh branch from origin/main, docs/LAW.md = that text + 3-line MIRROR header, keep the stub, squash-merge. Then K.0 ACK, push 65762353 or declare dead, K.4 BRD-01.**
+
+---
+
+# ★★★ FORCE — CURRENT ORDER 2026-09-05 (SUPERSEDES EVERYTHING BELOW) ★★★
+`git pull --ff-only origin main` · USMCA only · FAST-MERGE · prefix `Cascade-` · push every commit
+**Read & execute:** [`docs/bus/09-05-2026-Cascade-LAW-MIRROR-THEN-LISTS-AND-REPORTS.md`](09-05-2026-Cascade-LAW-MIRROR-THEN-LISTS-AND-REPORTS.md)
+On `cursor/land-law-doc`: replace the stale 09-03 law copy with the 09-05 revision at [`docs/bus/09-05-2026-Cascade-LAW-DOC-CURRENT-REVISION-FOR-docs-LAW.md`](09-05-2026-Cascade-LAW-DOC-CURRENT-REVISION-FOR-docs-LAW.md) (Cursor will NOT merge until you do). Then build the three planners (real bars, kill `Available·0%`/`RSV`, scroll+resize, dash for empty), then lists & reports. One PR per item, guard wired same PR.
+
+---
+## HISTORY (superseded 2026-09-05 — do not execute)
+
 # ★★ SEQUENCE · CASCADE · DO NOT JUMP
 `git pull --ff-only origin main`
 

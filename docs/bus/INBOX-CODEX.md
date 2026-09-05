@@ -1,3 +1,17 @@
+# ★★★★ LEAD VERDICT 2026-09-05 02:10Z (Claude lead loop — owner-authorized)
+**Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — you work ONLY the step marked → in your row.
+**X.1 DONE accepted (0 units held). X.2 #20430 accepted — shape matches. Post STEP-X.2 DONE + DEPLOY-REQUEST 9851699d to OUTBOX-CURSOR. NOW X.3: unit_number on every units-without-load row. Then X.4 FLT-01→02→04→10, X.5 border contract.**
+
+---
+
+# ★★★ FORCE — CURRENT ORDER 2026-09-05 (SUPERSEDES EVERYTHING BELOW) ★★★
+`git pull --ff-only origin main` · USMCA only · FAST-MERGE · no money path · you never deploy
+**Read & execute:** [`docs/bus/09-05-2026-Codex-IN-SHOP-FEED-FLEET-QUEUE-BORDER-CONTRACT.md`](09-05-2026-Codex-IN-SHOP-FEED-FLEET-QUEUE-BORDER-CONTRACT.md)
+Hand Cursor the In-Shop-only feed (one predicate, no OOS) → awaiting-assignment carries the unit number → fleet queue FLT-01/02/04/10 as complete verticals with guards wired → border contract to Cursor for the Driver Instruction Sheet.
+
+---
+## HISTORY (superseded 2026-09-05 — do not execute)
+
 # ★★ SEQUENCE · CODEX · DO NOT JUMP
 `git pull --ff-only origin main`
 

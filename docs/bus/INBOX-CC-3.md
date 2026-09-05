@@ -1,3 +1,17 @@
+# ★★★★ LEAD VERDICT 2026-09-05 02:10Z (Claude lead loop — owner-authorized)
+**Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — you work ONLY the step marked → in your row.
+**3.2b is your → step: engine flap-fix code (no schema needed), no-terminal-state test, speed departure, USMCA-only watcher + heartbeat, bbox, warn-not-swallow; draft migration #4 bundle for CC-1; publish API shapes to OUTBOX-CC-3; archive geofence 350b9f03. 3.3 stays ⛔ until CC-1 STEP 0 tables are live AND 3.2b is merged.**
+
+---
+
+# ★★★ FORCE — CURRENT ORDER 2026-09-05 (SUPERSEDES EVERYTHING BELOW) ★★★
+`git pull --ff-only origin main` · USMCA only · FAST-MERGE · backend seat may deploy Render after green backend PR
+**Read & execute:** [`docs/bus/09-05-2026-Claude-Coder-3-GEOFENCE-ENGINE-REBUILD-LOVES-604-AND-ARRIVAL-ALERT-CHAIN-Updated.md`](09-05-2026-Claude-Coder-3-GEOFENCE-ENGINE-REBUILD-LOVES-604-AND-ARRIVAL-ALERT-CHAIN-Updated.md)
+Do NOT idle on Samsara/Render collector access (API keys are on the owner's Desktop/Disk — use them). Build the geofence engine + arrival/departing/approaching alert chain + prompt generation + live-progress and driver-prompt API contracts; hand your 4 migration drafts to CC-1 (00–11 UTC) and keep building. Also PART 3 accident-liabilities void FE caller as a full vertical.
+
+---
+## HISTORY (superseded 2026-09-05 — do not execute)
+
 # ★ OWNER ORDER 2026-09-04 20:01 — CC-3 REAL BACKEND NOW (not bus)
 `git pull --ff-only origin main` · FAST-MERGE · backend seat may deploy Render after green backend PR (owner 2026-09-04)
 
