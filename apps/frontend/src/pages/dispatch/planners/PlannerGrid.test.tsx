@@ -62,4 +62,30 @@ describe("PlannerGrid", () => {
     expect(plannerBarLabelTier("LUSMCAFREIGHT-20260806-0001", 100)).toBe("0001");
     expect(plannerBarLabelTier("LUSMCAFREIGHT-20260806-0001", 20)).toBe("");
   });
+
+  it("renders status and action columns when rows supply them", () => {
+    cleanup();
+    render(
+      <PlannerGrid
+        days={["2026-08-22", "2026-08-23"]}
+        frozenLabel="Unit"
+        statusLabel="Status"
+        actionLabel="Action"
+        rows={[
+          {
+            id: "u1",
+            name: "T171",
+            status: "Available",
+            action: <a href="/book">Book</a>,
+            bars: [],
+          },
+        ]}
+        empty="none"
+      />
+    );
+    expect(screen.getByText("Status")).toBeTruthy();
+    expect(screen.getByText("Action")).toBeTruthy();
+    expect(screen.getByTestId("planner-row-status").textContent).toBe("Available");
+    expect(screen.getByTestId("planner-row-action").textContent).toBe("Book");
+  });
 });

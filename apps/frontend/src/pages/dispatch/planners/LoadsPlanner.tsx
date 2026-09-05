@@ -78,6 +78,7 @@ export function LoadsPlanner() {
           days={days}
           frozenLabel="Load"
           frozenPx={260}
+          statusLabel="Status"
           rows={rows.map((load) => {
             const start = toDayKey(load.start_at) ?? days[0];
             const end = toDayKey(load.end_at) ?? start;
@@ -91,6 +92,7 @@ export function LoadsPlanner() {
                   <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" />
                 </>
               ),
+              status: load.status,
               bars: [
                 {
                   id: `${load.id}-bar`,

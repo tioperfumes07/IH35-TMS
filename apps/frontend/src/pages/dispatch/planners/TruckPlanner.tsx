@@ -12,6 +12,7 @@ import { usePlannerRange } from "./PlannerRangeContext";
 import { PlannerAxisHead } from "./PlannerAxisHead";
 import { PlannerGrid } from "./PlannerGrid";
 import { groupPlannerBarsByKey, usePlannerLoads } from "./planner-bars";
+import { PlannerAction, PlannerActionDisabled } from "./PlannerRowActions";
 
 void PlannerAxisHead;
 
@@ -170,6 +171,8 @@ export function TruckPlanner() {
           days={days}
           frozenLabel="Unit"
           frozenPx={320}
+          statusLabel="Status"
+          actionLabel="Action"
           rows={truckRows
             .filter((row) => row.status !== "in-shop")
             .map((row) => ({
@@ -179,6 +182,10 @@ export function TruckPlanner() {
               unit: row.driverName ? (
                 <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
               ) : null,
+              status: row.status === "assigned" ? "In Use" : row.status === "available" ? "Available" : "Reserved",
+              action: (
+                <PlannerAction to={`/dispatch/loads?unit_id=${encodeURIComponent(row.unitId)}`} label="Book" />
+              ),
               bars: loadBarsByUnit.get(row.unitId) ?? [],
             }))}
           empty={
@@ -197,6 +204,8 @@ export function TruckPlanner() {
             days={days}
             frozenLabel="In shop"
             frozenPx={320}
+            statusLabel="Status"
+            actionLabel="Action"
             rows={truckRows
               .filter((row) => row.status === "in-shop")
               .map((row) => ({
@@ -206,6 +215,10 @@ export function TruckPlanner() {
                 unit: row.driverName ? (
                   <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
                 ) : null,
+                status: "In Shop",
+                action: (
+                  <PlannerActionDisabled label="Book" title="Cannot book a load onto a unit that is in the shop" />
+                ),
                 bars: loadBarsByUnit.get(row.unitId) ?? [],
               }))}
             empty={null}
