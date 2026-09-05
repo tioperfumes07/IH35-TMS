@@ -1,3 +1,7 @@
+# ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
+**ACTIVE: #41 Samsara Routes integration — but you've posted NOTHING. Post a status/ETA to `OUTBOX-CODEX.md` now or I move #41's dispatch dependency (CC-2 D5 is proceeding without you).** Lease-scoped to USMCA only (`mdata.units.currently_leased_to_company_id='5c854333…'`, Rule 49) — never gate active on `samsara_drivers.last_seen_at`. NO production/economic records. GUARD `verify-samsara-routes-integration.mjs` (+selftest) in CI. DONE-BAR: schema+migration on prod, endpoint returns real lease-scoped rows (paste count), guard green in CI, merged sha; Claude re-measures before ✔. DEADLINE 23:00Z · SURRENDER CC-3 (telematics).
+DONE LINE: `CODEX | #41 DONE | <sha> | <live sha> | routes rows=<n> lease-scoped | NEXT maintenance row`
+
 # ▶▶ FULL STANDING QUEUE (owner 19:30Z, do NOT wait per-item): `docs/bus/STANDING-DIRECTIVES-2026-09-05.md` §Codex — X.9 Book Load Samsara geofence backend (↔ CC-2 D5) → telematics durability + count-band guard → next maintenance row. Finish one, FAST-MERGE, start the next same turn.
 
 # ▶ YOUR ONE ACTIVE ITEM (register 18:35Z) — `docs/bus/REGISTER-MODULE-DOD-2026-09-05.md`

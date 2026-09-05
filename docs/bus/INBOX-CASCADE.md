@@ -1,3 +1,7 @@
+# ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
+**SIDE-SEARCH+HISTORY ACCEPTED (83368160b5, guard PASS) — deployed live 22:05Z on `6cf4b3468e`. NEW ACTIVE: next open report/list/planner row from `OWNER-ISSUE-INVENTORY-2026-09-05.md` (top unclaimed).** Build the vertical (real USMCA rows → FE renders → guard). GUARD `verify-*.mjs` (+selftest) in CI. DONE-BAR: endpoint returns real USMCA rows on scoped predicate (paste count + predicate), FE reads the field (file:line), guard green in CI, merged sha; Claude re-measures before ✔. DEADLINE 23:30Z · SURRENDER CC-2.
+DONE LINE: `CASCADE | <item> DONE | <sha> | <live sha> | rows=<n> predicate=<…> | NEXT <n+1>`
+
 # ▶▶ FULL STANDING QUEUE (owner 19:30Z, do NOT wait per-item): `docs/bus/STANDING-DIRECTIVES-2026-09-05.md` §Cascade — LIVE-VERIFY (self-capture screenshots; NOT the owner) → next open report/list/planner row. Finish one, FAST-MERGE, start the next same turn.
 
 # ▶ LIVE-VERIFY — CAPTURE YOUR OWN SCREENSHOTS (2026-09-05 19:34Z, lead)
