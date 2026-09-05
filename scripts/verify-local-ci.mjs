@@ -144,9 +144,34 @@ function stopOwnedPg(pg) {
   }
 }
 
+function runFrontendBuildParitySteps() {
+  // L.0 (OWNER-ISSUE-INVENTORY-2026-09-05.md #3): this function existed as a comment only — the
+  // CI job's "Frontend tsc -b" and "Frontend vite build" steps run BEFORE verify:pre-commit and
+  // are NOT part of it, so this script's own claim of "full build-typecheck reproduced" was
+  // incomplete: a pure Vite/Rollup failure (or a tsc error masked by a stale local .tsbuildinfo,
+  // the exact #20486 class) could pass here and still fail Render. Runs both steps in CI's own
+  // order, first, so a failure here is reported before the long guard chain even starts.
+  console.log(`[${LABEL}] Frontend tsc -b (match CI + Render)`);
+  const tscRes = spawnSync(
+    "bash",
+    ["-lc", "node scripts/generate-module-completion-data.mjs && cd apps/frontend && npx tsc -b --pretty false"],
+    { cwd: ROOT, stdio: "inherit" }
+  );
+  if ((tscRes.status ?? 1) !== 0) return tscRes.status ?? 1;
+
+  console.log(`[${LABEL}] Frontend vite build (Render build-command parity)`);
+  const viteRes = spawnSync("bash", ["-lc", "cd apps/frontend && npx vite build"], { cwd: ROOT, stdio: "inherit" });
+  return viteRes.status ?? 1;
+}
+
 function runPrecommit(session, pgBin) {
   const url = session.record.url;
   const port = session.record.port;
+  const buildParityStatus = runFrontendBuildParitySteps();
+  if (buildParityStatus !== 0) {
+    console.error(`[${LABEL}] frontend build-parity step FAILED (exit ${buildParityStatus}) — not running verify:pre-commit`);
+    return buildParityStatus;
+  }
   console.log(`[${LABEL}] running the exact CI command — npm run verify:pre-commit`);
   console.log(`[${LABEL}] (full build-typecheck: db-reset → migrate → build → tsc → ~250 guards → db.tests)\n`);
   const childEnv = session.childEnv({
