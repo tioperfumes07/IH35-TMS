@@ -1,4 +1,5 @@
 # STATUS-NOW · 2026-09-05 04:22Z (Claude lead loop)
+**14:40Z — Chrome back: live re-measurement block on INBOX tops (settlement list fake $0 totals, Miles/Rate 0, Bills empty, no Factored column, banking 8 control heights + 0 suggestions, seeded proforma dates = today → CC-3 16:00Z).**
 **14:20Z — Owner rulings R1 (lumper vendor = delivery, cash) / R2 (create missing customer from document) → CC-3 closes 13525/13540 now. CC-1 D.1–D.3 driver deductions/escrow/banner (19:30–21:00Z). Inventory rows 24–27.**
 **13:55Z — ONE INSTRUCTION SET: docs/bus/OWNER-ISSUE-INVENTORY-2026-09-05.md (23 issues, §B per seat). Banking B.1 matcher 19:30Z / B.2 filters+design 18:00Z added for CC-2.**
 **13:35Z — CC-3 V.1 = vendors+customers roll-ups 18:30Z · CASCADE K.9 = restore Customers/Vendors landing filter bar (root 1e4a6282d7) 16:00Z.**

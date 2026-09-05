@@ -134,6 +134,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG
+- 14:40Z Chrome back; live re-measured settlements/bills/invoices/banking; inventory rows 28 (list fake zeros, Loads concat) and 29 (seed invoice dates = today → CC-3 16:00Z).
 - 14:20Z OWNER: deductions by driver, escrow view missing, profile banner misplaced, '0 escrow'. Measured live: card list not grouped; no Escrow subnav; h1 at y=205 under tabs; Neon 38 escrow deductions $950/7 drivers pending, escrow_ledger 0, escrow_balances 3 incl. TEST driver Juan USMCA-Battery. CC-1 D.1–D.3. Rulings R1/R2 close the feed blocks (CC-3).
 - 13:55Z OWNER: banking not wired (355 USMCA bank txns, 0 suggestions/matches; no expense/bill matcher exists; toolbar h-7 vs h-8; type filter single-select; date range not visible) → CC-2 B.1 19:30Z, B.2 18:00Z. Owner demanded ONE inventory + ONE instruction set → docs/bus/OWNER-ISSUE-INVENTORY-2026-09-05.md (23 rows) + Downloads copy.
 - 13:25Z OWNER: customers data not showing → CC-3 V.1 widened to vendors+customers roll-ups, 18:30Z → CC-1.

@@ -36,6 +36,10 @@ Devin is not active today — nothing routes to Devin.
 | 25 | Driver Profile — Escrow | "Missing escrow view and escrow by driver; states 0 escrow." No Escrow entry in the Drivers subnav; only `/banking/driver-escrow`. Neon: 38 pending escrow deductions $950 / 7 drivers; `escrow_ledger` 0 rows; `escrow_balances` 3 rows incl. TEST driver "Juan USMCA-Battery" (quarantine) and a 1¢ row. | read model + new `/drivers/escrow` | CC-1 D.2 | 21:00Z | CC-3 |
 | 26 | Driver Profile — banner | "Top row banner in the wrong place." Live: `h1 Drivers` at y=205 under the status-tab strip and paragraph. | `pages/drivers` layout | CC-1 D.3 | 19:30Z | CC-3 |
 | 27 | Feed rulings (owner 14:15Z) | Lumper vendor = the delivery location, cash; missing customer = create from the document. Closes 13540 and 13525. | seed scripts rule | CC-3 | now | — |
+| 28 | Settlements list | Live: S-13646 Gross/Deductions/Net all $0.00 while lines total $958+; Loads cell "1352613527" (no separator); 7 button heights. | list read model | CC-1 S.1 (extend) | 17:30Z | CC-3 |
+| 29 | Seed — invoice dates | Live: seeded proformas carry Issue = 09/05/2026 (today), Due +30. Must be the load's pickup date from the document. | seed script | CC-3 | 16:00Z | CC-1 |
+
+**Live re-measurement 14:40Z (Chrome back):** settlement detail Miles `0`/Rate `0` (fake zeros), 0 Add buttons, 0 inputs, first money section at y=756; Bills "No bills found." with 30 driver bills live; Invoices 38 rows, no Factored column; Banking toolbar 8 distinct control heights (20–36px), "All dates" duplicated, type filter is a text input, 0 date inputs visible, 0 suggestions on 355 rows.
 
 ---
 
