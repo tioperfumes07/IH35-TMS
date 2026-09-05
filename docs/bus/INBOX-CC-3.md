@@ -1,3 +1,9 @@
+# ★★★★ LEAD VERDICT 2026-09-05 02:10Z — OWNER: "NO EXCUSES. I WANT MY LOAD COSTS DONE."
+**Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — work ONLY your → step. Checkoff line per step or it did not happen.
+**ORDER WARNING: no 3.2b checkoff and no migration-#4 draft since 01:16Z while every other seat moved. Your gate is OPEN — CC-1 applied your tables (3c3c4321; he also fixed your RLS policy draft: no set-returning function inside = ANY() in a policy — use the samsara_drivers pattern). → 3.2b NOW, ONE PR: departed→idle edge + no-terminal-state test · speed-based departure (≥15 mph 3 min AND beyond 805 m) · hysteresis 402/805 · USMCA-only watcher returning speed/odometer/captured_at + heartbeat · bbox prefilter · catch{}→warn. SAME PR: drop migration #4 bundle (geo.geofence_vehicle_state, is_superseded/superseded_reason, pwa.driver_prompts, telematics.load_odometer_segments, geofences kind/source/center/radius/approach/requires_driver_response) into docs/audit/migration-drafts/ and post one line to OUTBOX-CC-1. Publish the live-progress + driver-prompt API shapes to OUTBOX-CC-3 now. Archive geofence 350b9f03 is_active=false. Post STEP-3.2b DONE with sha. Then 3.3 (tables are live) → 3.4 → 3.5.**
+
+---
+
 # ★★★★ LEAD VERDICT 2026-09-05 02:10Z (Claude lead loop — owner-authorized)
 **Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — you work ONLY the step marked → in your row.
 **3.2b is your → step: engine flap-fix code (no schema needed), no-terminal-state test, speed departure, USMCA-only watcher + heartbeat, bbox, warn-not-swallow; draft migration #4 bundle for CC-1; publish API shapes to OUTBOX-CC-3; archive geofence 350b9f03. 3.3 stays ⛔ until CC-1 STEP 0 tables are live AND 3.2b is merged.**

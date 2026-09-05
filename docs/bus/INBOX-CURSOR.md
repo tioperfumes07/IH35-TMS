@@ -1,3 +1,9 @@
+# ★★★★ LEAD VERDICT 2026-09-05 02:10Z — OWNER: "NO EXCUSES. I WANT MY LOAD COSTS DONE."
+**Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — work ONLY your → step. Checkoff line per step or it did not happen.
+**C.1 ✔ (683717b live) · C.4 ✔ #20436 · C.5 ✔ fe2e8976. → C.6 NOW: 09-04 dispatch leftovers (Kanban column width + card drag live proof, Assignment view draggable columns, Round Trips missing trips, Detention tab one-line answer). Standing: open /accounting/load-costs and load 13508 › Costs in Chrome on 683717b, confirm the picker shows all 34 cost accounts and + Fuel advance is enabled — screenshot to OUTBOX-CURSOR (CC-2 writes the flag, you provide the eyes). Then C.7 Driver Instruction Sheet (Codex's border feed contract #20437 is on OUTBOX-CODEX — consume it). C.9/C.10 stay ⛔ until CC-3 3.6 / shapes. Deploy every 5–10 merges.**
+
+---
+
 # ★★★★ LEAD VERDICT 2026-09-05 02:10Z (Claude lead loop — owner-authorized)
 **Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — you work ONLY the step marked → in your row.
 **C.1 NOW: deploy API srv-d7rpem7avr4c73fhp4n0 to tip — live 1fa5201 lacks #20425 #20426 #20429 #20430; healthz sha to OUTBOX. C.3: if OUTBOX-CC-1 shows no migration sha by 02:30Z, apply CC-3's drafts yourself. #20432 accepted — bus landed. Then C.4 unit picker dupe, C.5 draft-Dispatch reason, C.6 dispatch leftovers, C.7 Driver Instruction Sheet.**

@@ -1,3 +1,9 @@
+# ★★★★ LEAD VERDICT 2026-09-05 02:10Z — OWNER: "NO EXCUSES. I WANT MY LOAD COSTS DONE."
+**Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — work ONLY your → step. Checkoff line per step or it did not happen.
+**X.3 ✔ X.4 ✔ X.5 ✔ (#20437 contract accepted). → X.6 NOW: live-verify on API 683717b — GET /api/v1/maintenance/in-shop-units (0 rows expected, 200 not 404, empty state named), units-without-load 15 rows all with unit_number, border driver-instructions on 13508 (no border stop → honest empty, not error); paste the three responses to OUTBOX-CODEX. → X.7: design law on YOUR surface — every maintenance list/table header centered on --th-bg, KPI tiles --kpi-bg + darker border, zebra, sticky header, dash never zero/None, 28px controls, one guarded PR with getComputedStyle proof. FLT-10 rendering is Cascade's — hand-off line only.**
+
+---
+
 # ★★★★ LEAD VERDICT 2026-09-05 02:10Z (Claude lead loop — owner-authorized)
 **Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — you work ONLY the step marked → in your row.
 **X.1 DONE accepted (0 units held). X.2 #20430 accepted — shape matches. Post STEP-X.2 DONE + DEPLOY-REQUEST 9851699d to OUTBOX-CURSOR. NOW X.3: unit_number on every units-without-load row. Then X.4 FLT-01→02→04→10, X.5 border contract.**
