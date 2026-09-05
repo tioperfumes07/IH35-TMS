@@ -21,6 +21,9 @@ Every step the lead hands a seat, and every DONE a seat posts back, carries ALL 
 6. **THE DONE LINE** is re-measurable: `SEAT | STEP-N DONE | <sha> | <live sha> | <the same measurements, now passing> | NEXT N+1`. The lead re-measures before marking ✔.
 Silence past a deadline = surrender. "Blocked" must quote the blocker and name who unblocks it, in writing, before the deadline.
 
+## DESIGN CONTRACT (owner 03:05Z) · `docs/design/DESIGN-CONTRACT-LOAD-COSTS-BOARD-2026-09-05.md` + reference HTML in `docs/design/reference/`
+No design instruction ships without reference file + exact values + computed-style guard. th weight = 700 (correction). Cursor L.1 = copy the contract; CC-2 encodes it in tokens + ratchet (05:00Z).
+
 ## SETTLEMENT FEED — OWNER PRIORITY #1 (02:58Z) · `docs/bus/ORDER-2026-09-05-SETTLEMENT-FEED-PRIORITY.md`
 CC-1 12 · CC-3 8 · Codex 11 · owner 6. Live UI only, is_sample_data=false, addresses only, never close, stop at first refusal. Cursor fixes every FEED BLOCKED on its surface ahead of L.3.
 
@@ -70,7 +73,7 @@ CC-1 12 · CC-3 8 · Codex 11 · owner 6. Live UI only, is_sample_data=false, ad
 |---|---|---|
 | 2.0 | ACK + retro STEP-2.1 DONE (#20397) | ✔ |
 | 2.1 | Tokens landed | ✔ |
-| 2.2 | Dispatch token sweep, one guarded PR, getComputedStyle proof, ratchet fails on navy header | → (V first: verify #20425 live) |
+| 2.2 | Encode DESIGN CONTRACT values in tokens.ts + ratchet (th 700/#EEF2F6/#C7D2DC rules, td #D8DEE6 rules, zebra, tints, KPI 93px), then dispatch sweep. Deadline 05:00Z | → |
 | 2.3 | J1 to 0/0 + GLB-05/07/09/10 | |
 | 2.4+ | ACC-01.. one vertical each, USMCA-filtered | |
 | V | Standing: verify-live every Cursor deploy (#20425/#20426 first) | standing |
@@ -118,6 +121,7 @@ CC-1 12 · CC-3 8 · Codex 11 · owner 6. Live UI only, is_sample_data=false, ad
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG (newest first)
+- 03:05Z — OWNER: coders cannot reproduce the approved render → DESIGN CONTRACT: reference HTML + exact CSS values + computed-style guard in repo; th weight corrected to 700 (reference); prose specs banned.
 - 02:58Z — OWNER: settlement feed is priority #1 for every money-capable seat, no gate. Split CC-1 12 / CC-3 8 / Codex 11 / owner 6. ORDER-2026-09-05-SETTLEMENT-FEED-PRIORITY.md on the bus.
 - 02:50Z (real clock; earlier labels 02:45–03:10Z ran ~25 min ahead) — OWNER: CC-1 unreliable → CC-3 is money coder #2 (M.3 pre-settlement backend, M.4b feed half); Codex takes Samsara import as X.9; both were idle >10 min.
 - 03:10Z — OWNER: Cursor takes Load Costs (board L.1, register L.2, tabs L.3); CC-1 stands down from UI → M.1 migration #4 (03:40Z), M.2 draft backend, M.3 pre-settlement backend, M.4 feed, M.5 mileage.

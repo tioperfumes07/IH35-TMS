@@ -1,5 +1,9 @@
 # ★★★★★ LEAD ORDER 2026-09-05 02:55Z — VERDICT FORMAT LAW IS YOURS TO ENFORCE TOO
 
+# ★★★★★ 03:05Z — L.1 IS NOW A COPY JOB, NOT A DESIGN JOB. DESIGN CONTRACT ON THE BUS.
+Owner: "Why is it so hard to get coders to make all column outlines like this, these types of shade." The approved render with its exact CSS is now in the repo: `docs/design/reference/LOAD-COSTS-BOARD-REFERENCE-2026-09-04.html`. The values are law: `docs/design/DESIGN-CONTRACT-LOAD-COSTS-BOARD-2026-09-05.md`. L.1 = make the live board compute to those values — copy the stylesheet, do not re-derive. CORRECTION: header th weight is 700 (the owner's "regular color text" meant dark ink, not weight); revert the 400 on data tables. Build `scripts/verify-table-design-contract.mjs` (Playwright, computed styles against the contract table) in the same PR. Deadline 04:15Z unchanged. Every FEED BLOCKED on your surface outranks L.3.
+
+
 **02:58Z FEED PRIORITY (owner):** CC-1, CC-3 and Codex are entering the 31 real settlements through the live UI starting now. Every refusal they post lands on your board within the hour — they are the live test of Book Load, stops, invoices, driver bills and the Costs tab. Deploy every 5–10 merges without being asked; a FEED BLOCKED line naming a Cursor surface is your next step ahead of L.3.
 
 

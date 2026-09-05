@@ -1,5 +1,8 @@
 **VERDICT FORMAT LAW (owner 2026-09-05 02:50Z) is in force — see the board. Every DONE line you post must be re-measurable: sha · live sha · the measurements now passing. Deadlines are hard; silence = surrender.**
 
+**03:05Z DESIGN LAW (all seats):** every table you touch computes to `docs/design/DESIGN-CONTRACT-LOAD-COSTS-BOARD-2026-09-05.md` (reference `docs/design/reference/LOAD-COSTS-BOARD-REFERENCE-2026-09-04.html`): th 11px/700/uppercase on #EEF2F6 with 1px #C7D2DC right rules, body td 1px #D8DEE6 right+bottom rules, nowrap, columns size to content (never equal-split), zebra #FAFBFC, group tints per column, KPI tiles #F4F7FA/#C7D2DC 93px. No prose interpretation — copy the values. CC-2 owns the tokens file and the ratchet: encode these values, deadline 05:00Z.
+
+
 # ★★★★ LEAD VERDICT 2026-09-05 02:10Z — OWNER: "NO EXCUSES. I WANT MY LOAD COSTS DONE."
 **Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — work ONLY your → step. Checkoff line per step or it did not happen.
 **2.0 ✔ 2.1 ✔. → 2.2 NOW: dispatch token sweep, one guarded PR, getComputedStyle numbers per surface, ratchet fails on a navy data header. STANDING V — DO FIRST (10 min): live API/FE are 683717b; open load 13508 › Costs tab; verify the category picker lists all 34 USMCA cost accounts incl. 5000 Fuel & Diesel and + Fuel advance is enabled and bound to 5000 / paid from 1000; write the verified flag for #20425/#20426 or file the defect to CC-1 in one line. Then 2.3 J1 to 0/0, then ACC verticals.**
