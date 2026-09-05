@@ -84,6 +84,7 @@ export function PostingTemplatesListPage() {
       {
         key: "accounts",
         label: "Debit / Credit",
+        sortable: true,
         render: (row) => {
           const debit = accountLabel.get(String(row.metadata.debit_account_id ?? "")) ?? "—";
           const credit = accountLabel.get(String(row.metadata.credit_account_id ?? "")) ?? "—";
@@ -93,6 +94,7 @@ export function PostingTemplatesListPage() {
       {
         key: "details",
         label: "Details",
+        sortable: true,
         render: (row) => <span className="text-xs text-slate-600">{row.description || "Code-managed posting template"}</span>,
       },
       {

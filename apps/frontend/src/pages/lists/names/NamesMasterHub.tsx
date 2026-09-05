@@ -16,13 +16,13 @@ import { entityLabel, isUnresolvedEntityTombstone } from "../../../lib/entity-la
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListsSubNav } from "../ListsSubNav";
 
-const TYPE_FILTERS: Array<{ key: "all" | NamesEntityType; label: string }> = [
-  { key: "all", label: "All" },
-  { key: "customer", label: "Customers" },
-  { key: "vendor", label: "Vendors" },
-  { key: "driver", label: "Drivers" },
-  { key: "contact", label: "Contacts" },
-  { key: "company", label: "Companies" },
+const TYPE_FILTERS: Array<{ key: "all" | NamesEntityType; label: string; sortable?: boolean }> = [
+  { key: "all", label: "All", sortable: true },
+  { key: "customer", label: "Customers", sortable: true },
+  { key: "vendor", label: "Vendors", sortable: true },
+  { key: "driver", label: "Drivers", sortable: true },
+  { key: "contact", label: "Contacts", sortable: true },
+  { key: "company", label: "Companies", sortable: true },
 ];
 
 const LINKABLE_NAME_KINDS: Partial<Record<NamesEntityType, EntityKind>> = {

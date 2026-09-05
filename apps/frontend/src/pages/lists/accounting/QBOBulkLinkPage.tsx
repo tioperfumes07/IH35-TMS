@@ -117,6 +117,7 @@ export function QBOBulkLinkPage() {
       {
         key: "qbo_vendor_id",
         label: "QBO vendor",
+        sortable: true,
         render: (r) =>
           r.entity_kind === "equipment" ? (
             <span className="text-gray-400">—</span>
@@ -138,6 +139,7 @@ export function QBOBulkLinkPage() {
       {
         key: "qbo_class_id",
         label: "QBO class",
+        sortable: true,
         render: (r) => (
           <QboCombobox
             entityType="account"

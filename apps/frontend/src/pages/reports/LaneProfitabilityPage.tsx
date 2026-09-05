@@ -107,6 +107,7 @@ export function LaneProfitabilityPage() {
       {
         key: "lane",
         label: "Lane",
+        sortable: true,
         alwaysVisible: true,
         render: (lane) => `${lane.origin_city}, ${lane.origin_state} → ${lane.destination_city}, ${lane.destination_state}`,
       },
@@ -115,6 +116,7 @@ export function LaneProfitabilityPage() {
       {
         key: "costs",
         label: "Costs",
+        sortable: true,
         className: "text-right",
         cellClass: "text-right",
         render: (lane) => money(lane.total_driver_pay_cents + lane.total_fuel_cost_cents + lane.total_maintenance_cost_cents),

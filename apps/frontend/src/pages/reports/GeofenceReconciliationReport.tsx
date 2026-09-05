@@ -84,18 +84,20 @@ export function GeofenceReconciliationReport() {
       {
         key: "anomaly_class",
         label: "Class",
+        sortable: true,
         render: (f) => (
           <span className={`inline-block px-2 py-0.5 rounded-sm text-xs font-medium ${ANOMALY_COLORS[f.anomaly_class] ?? "bg-slate-100 text-slate-700"}`}>
             {ANOMALY_LABELS[f.anomaly_class] ?? f.anomaly_class}
           </span>
         ),
       },
-      { key: "unit_id", label: "Unit", render: (f) => <EntityLink kind="unit" id={f.unit_id ?? undefined} label={f.unit_id ? entityLabel(f.unit_number, f.unit_id, "Unit") : "—"} /> },
-      { key: "geofence_id", label: "Geofence", render: (f) => <EntityLink kind="geofence" id={f.geofence_id ?? undefined} label={entityLabel(f.geofence_label, f.geofence_id, "Geofence")} /> },
+      { key: "unit_id", label: "Unit", sortable: true, render: (f) => <EntityLink kind="unit" id={f.unit_id ?? undefined} label={f.unit_id ? entityLabel(f.unit_number, f.unit_id, "Unit") : "—"} /> },
+      { key: "geofence_id", label: "Geofence", sortable: true, render: (f) => <EntityLink kind="geofence" id={f.geofence_id ?? undefined} label={entityLabel(f.geofence_label, f.geofence_id, "Geofence")} /> },
       { key: "occurred_at", label: "Time", sortable: true, render: (f) => (f.occurred_at ? `${formatDateTimeUS(f.occurred_at)} CT` : "—") },
       {
         key: "resolved",
         label: "Status",
+        sortable: true,
         render: (f) => (f.resolved ? <span className="text-green-600">Resolved</span> : <span className="text-yellow-600">Open</span>),
       },
     ],
