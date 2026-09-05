@@ -71,6 +71,14 @@ function problems(src) {
     issues.push("parityColumns must set className: \"text-left\" (headers left-aligned, not centered)");
   }
 
+  // 6. First four columns sticky-left (§14: "first four columns sticky-left"). ASSIGNMENT
+  // (Unit/Trailer/Load #/Driver) is the leading group in boardColumns, so stickyLeftCount={4}
+  // sticks exactly that group.
+  const stickyMounts = [...src.matchAll(/<ParityTable[\s\S]{0,400}?stickyLeftCount=\{4\}/g)].length;
+  if (stickyMounts < 2) {
+    issues.push(`stickyLeftCount={4} must reach both List and Table ParityTable mounts (found ${stickyMounts})`);
+  }
+
   return issues;
 }
 
@@ -85,6 +93,7 @@ function selftest() {
     src.replace('key: "location",\n      header: "Live loc",', 'key: "location",\n      header: "Location",'),
     src.replace("enableColumnReorder\n", "enableColumnReorder={false}\n"),
     src.replace('className: "text-left",\n', ""),
+    src.replace(/stickyLeftCount=\{4\}\n/, ""), // only removes the first occurrence — still catches the drop
   ];
   let caught = 0;
   for (const mutant of mutants) {
