@@ -7,6 +7,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getGeofenceDwellReport, listGeofences, type GeofenceDwellRow, type GeofenceLocationKind } from "../../api/geofencing";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { mmmDdTime } from "../../lib/formatDate";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -39,6 +40,7 @@ export function GeofenceDwellReport() {
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const emptyFilters = { periodStart: monthStart(), periodEnd: today(), geofenceId: "", locationKind: "" as GeofenceLocationKind | "" };
   const [applied, setApplied] = useState(emptyFilters);
+  const [reportSearch, setReportSearch] = useState("");
   const staged = useStagedListFilters({
     applied,
     empty: emptyFilters,
@@ -141,6 +143,17 @@ export function GeofenceDwellReport() {
             </button>
           </div>
         }
+      />
+
+      <ReportFilterBar
+        testIdPrefix="reports-geofence-dwell"
+        fromDate={applied.periodStart}
+        toDate={applied.periodEnd}
+        onFromDateChange={(d) => setApplied((p) => ({ ...p, periodStart: d ?? "" }))}
+        onToDateChange={(d) => setApplied((p) => ({ ...p, periodEnd: d ?? "" }))}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
       />
 
       <CollapsedListFilters

@@ -24,6 +24,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LaneDetailModal } from "../../components/reports/LaneDetailModal";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { SelectCombobox } from "../../components/Combobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -55,6 +56,9 @@ export function LaneProfitabilityPage() {
   const companyId = selectedCompanyId ?? "";
   const emptyFilters = { period: "YTD" as LaneProfitabilityPeriod, customStart: "", customEnd: "", minRevenue: "", minLoads: "" };
   const [applied, setApplied] = useState(emptyFilters);
+  const [reportFromDate, setReportFromDate] = useState<string | null>(null);
+  const [reportToDate, setReportToDate] = useState<string | null>(null);
+  const [reportSearch, setReportSearch] = useState("");
   const staged = useStagedListFilters({
     applied,
     empty: emptyFilters,
@@ -196,7 +200,18 @@ export function LaneProfitabilityPage() {
       {!companyId ? <p className="text-xs text-red-600">Select operating company.</p> : null}
 
       <div className="flex flex-wrap items-end gap-3">
-        <CollapsedListFilters
+        <ReportFilterBar
+        testIdPrefix="reports-lane-profitability"
+        fromDate={reportFromDate}
+        toDate={reportToDate}
+        onFromDateChange={setReportFromDate}
+        onToDateChange={setReportToDate}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
+      />
+
+      <CollapsedListFilters
           activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
           defaultOpen={true}
           onApply={staged.apply}

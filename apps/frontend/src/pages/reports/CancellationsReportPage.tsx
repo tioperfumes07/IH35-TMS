@@ -12,6 +12,7 @@ import { EntityLink, type EntityKind } from "../../components/shared/EntityLink"
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { mmmDd } from "../../lib/formatDate";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 
 import { formatUsdCents } from "../../lib/money";
 
@@ -135,6 +136,7 @@ export function CancellationsReportPage() {
   // From/To must stage until Apply; Cancel restores draft; Reset clears both draft + applied.
   const emptyFilters = { from: "", to: "", reason: "" };
   const [applied, setApplied] = useState(emptyFilters);
+  const [reportSearch, setReportSearch] = useState("");
   const staged = useStagedListFilters({
     applied,
     empty: emptyFilters,
@@ -177,6 +179,17 @@ export function CancellationsReportPage() {
           Print
         </button>
       </div>
+
+      <ReportFilterBar
+        testIdPrefix="reports-cancellations"
+        fromDate={applied.from || null}
+        toDate={applied.to || null}
+        onFromDateChange={(d) => setApplied((p) => ({ ...p, from: d ?? "" }))}
+        onToDateChange={(d) => setApplied((p) => ({ ...p, to: d ?? "" }))}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
+      />
 
       <CollapsedListFilters
         activeFilterCount={activeFilterCount}

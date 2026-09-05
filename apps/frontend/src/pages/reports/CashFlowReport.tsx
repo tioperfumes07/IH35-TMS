@@ -7,6 +7,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { companyToday } from "../../lib/businessDate";
 
 type CashFlowReportResponse = {
@@ -30,6 +31,9 @@ export function CashFlowReport() {
   const companyId = selectedCompanyId ?? "";
   const today = companyToday();
   const [appliedAsOf, setAppliedAsOf] = useState(today);
+  const [reportFromDate, setReportFromDate] = useState<string | null>(null);
+  const [reportToDate, setReportToDate] = useState<string | null>(null);
+  const [reportSearch, setReportSearch] = useState("");
   const staged = useStagedListFilters({
     applied: { asOfDate: appliedAsOf, basis: "accrual", groupBy: "month" },
     empty: { asOfDate: today, basis: "accrual", groupBy: "month" },
@@ -86,6 +90,17 @@ export function CashFlowReport() {
           Print
         </button>
       </div>
+      <ReportFilterBar
+        testIdPrefix="reports-cash-flow"
+        fromDate={reportFromDate}
+        toDate={reportToDate}
+        onFromDateChange={setReportFromDate}
+        onToDateChange={setReportToDate}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
+      />
+
       <CollapsedListFilters
         activeFilterCount={appliedAsOf !== today ? 1 : 0}
         defaultOpen={true}

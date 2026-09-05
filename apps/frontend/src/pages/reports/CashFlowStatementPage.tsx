@@ -13,6 +13,7 @@ import {
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
 import { formatCashFlowCompoundLabel } from "../../lib/formatCashFlowCompoundLabel";
 import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
@@ -53,6 +54,7 @@ export function CashFlowStatementPage() {
     onApply: setApplied,
   });
   const exportAction = useExportAction();
+  const [reportSearch, setReportSearch] = useState("");
 
   const query = useQuery({
     queryKey: ["reports", "cash-flow-statement", companyId, applied.start, applied.end, applied.basis],
@@ -212,6 +214,17 @@ export function CashFlowStatementPage() {
           {exportAction.error}
         </p>
       ) : null}
+
+      <ReportFilterBar
+        testIdPrefix="reports-cash-flow-statement"
+        fromDate={applied.start}
+        toDate={applied.end}
+        onFromDateChange={(d) => setApplied((p) => ({ ...p, start: d ?? "" }))}
+        onToDateChange={(d) => setApplied((p) => ({ ...p, end: d ?? "" }))}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
+      />
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(applied) !== JSON.stringify({ ...defaultRange, basis: "accrual" as AccountingBasis }) ? 1 : 0}

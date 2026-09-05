@@ -6,6 +6,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -71,6 +72,9 @@ export function DeadheadReportPage() {
   const companyId = selectedCompanyId ?? "";
   const [appliedPeriod, setAppliedPeriod] = useState<DeadheadPeriod>("last_4_weeks");
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
+  const [reportFromDate, setReportFromDate] = useState<string | null>(null);
+  const [reportToDate, setReportToDate] = useState<string | null>(null);
+  const [reportSearch, setReportSearch] = useState("");
   const staged = useStagedListFilters({
     applied: { period: appliedPeriod, groupBy: "week", minDeadheadMiles: "" },
     empty: { period: "last_4_weeks" as DeadheadPeriod, groupBy: "week", minDeadheadMiles: "" },
@@ -138,6 +142,17 @@ export function DeadheadReportPage() {
       </div>
 
       {!companyId ? <p className="text-xs text-red-600">Select operating company.</p> : null}
+
+      <ReportFilterBar
+        testIdPrefix="reports-deadhead"
+        fromDate={reportFromDate}
+        toDate={reportToDate}
+        onFromDateChange={setReportFromDate}
+        onToDateChange={setReportToDate}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
+      />
 
       <CollapsedListFilters
         activeFilterCount={appliedPeriod !== "last_4_weeks" ? 1 : 0}
