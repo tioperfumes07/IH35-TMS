@@ -20,6 +20,10 @@ const LEGACY_ALLOWED_FILES = new Set([
   "202606072351_recurring_bills.sql",            // accounting.recurring_bill_templates(uuid)
   "202606080206_scheduled_report_subscriptions.sql", // reports.scheduled_subscriptions(uuid)
   "202606080211_anomaly_alert_rules.sql",        // safety.anomaly_alert_rules(uuid)
+  "202613390002_go20_d_cargo_sensor_incidents.sql", // dispatch.cargo_sensor_readings(uuid) --
+  // verified against 202606080219_cargo_sensor_readings.sql line 5: `uuid uuid PRIMARY KEY`.
+  // Its own PK (this file's incidents table) is `id`; only the two FKs into the sensor-readings
+  // parent name that parent's real PK column, same pattern as the four files above.
 ]);
 
 function fail(messages) {
