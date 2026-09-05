@@ -20,6 +20,8 @@ import { registerUnitPlatesRoutes } from "./unit-plates.routes.js";
 import { registerUnitTripCostRoutes } from "./unit-trip-cost.routes.js";
 import { registerUnitFinanceLinkageRoutes } from "./unit-finance-linkage.routes.js";
 import { emitMasterDataCreatedSpineEvent } from "./master-data-spine-emit.js";
+import { looksLikeSampleDataName } from "./sample-data-name-detection.js";
+import { USMCA_COMPANY_ID } from "../org/companies.routes.js";
 import {
   getUnitFinancialYTD,
   type FinancialPeriod,
@@ -466,6 +468,18 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           throw new Error("owner_company_id_required");
         }
         const operatingCompanyId = resolvedLeasedId ?? resolvedOwnerId;
+          // ACC-15: is_sample_data was never set (or checked) by this create path at all -- the
+          // column silently relies on its DB default (false), and a TEST-U01-style fixture name
+          // (already a known live category per the excludeDemoPhantomSql read-side comment below)
+          // could otherwise land in USMCA indistinguishable from a real unit. Same pattern as
+          // ACC-13's accounts.routes.ts fix: reject a test/sample/demo-named unit in USMCA at
+          // create time, going forward only.
+          if (
+            operatingCompanyId === USMCA_COMPANY_ID &&
+            (looksLikeSampleDataName(b.unit_number) || looksLikeSampleDataName(b.vin))
+          ) {
+            throw new Error("test_sample_demo_name_not_allowed_in_usmca");
+          }
           // mdata.assets is FORCE-RLS and scopes writes through app.operating_company_id.
           // Bind one validated company inside the same transaction as unit + asset + audit + spine.
           await setScopedCompanyContext(
@@ -599,6 +613,9 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
       }
       if ((err as Error).message === "owner_company_id_required") {
         return reply.code(400).send({ error: "owner_company_id_required" });
+      }
+      if ((err as Error).message === "test_sample_demo_name_not_allowed_in_usmca") {
+        return reply.code(400).send({ error: "test_sample_demo_name_not_allowed_in_usmca" });
       }
       throw err;
     }
