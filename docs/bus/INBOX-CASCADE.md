@@ -1,3 +1,10 @@
+# ▶ YOUR ONE ACTIVE ITEM (register 18:35Z) — `docs/bus/REGISTER-MODULE-DOD-2026-09-05.md`
+**Registrar decision 18:35Z (owner): Cursor holds THE dispatch register; Claude audits; `OWNER-ISSUE-INVENTORY-2026-09-05.md` is now the AUDIT SOURCE.** One active item per coder.
+**CASCADE = Customers/Vendors landing + Reports/Planners:** **K9 — recover the Customers & Vendors landing filter bar** from `git show 1e4a6282d7^:apps/frontend/src/pages/Customers.tsx` (and Vendors.tsx): inline, visible on first load, live-applied; keep later genuine fixes (URL row, balance sort, pager, void column, GLB-01 scale). Guard: rendered — ≥5 visible filter controls above the list at first load, 0 clicks. Deadline **20:00Z**, surrender **CC-2**.
+DONE-BAR: FE file:line · guard green **in CI** · merged sha · **Claude re-measures**. FAST-MERGE.
+Next: K4–K7 Planners BRD-19/20/21/23 (server-paginate+sort+filter+export per list, guard each); LIVE-VERIFY your shipped report pages → flip Built→Live.
+
+---
 **VERDICT FORMAT LAW (owner 2026-09-05 02:50Z) is in force — see the board. Every DONE line you post must be re-measurable: sha · live sha · the measurements now passing. Deadlines are hard; silence = surrender.**
 ## ★★★★★ OWNER "LOCK IT" — MODULE OWNERSHIP MAP, ONE LEAD, DEPLOY TIMER. PERMANENT (owner 2026-09-05 14:13Z). Supersedes §0b's table where they differ.
 **One lead.** Claude (this session) is THE lead: measures live, writes verdicts, keeps the ONE register `docs/bus/OWNER-ISSUE-INVENTORY-2026-09-05.md`, sequences, enforces deadlines/surrenders, journals. No second register. Cursor = deployer + dispatcher (wake-seat loop) + one builder vertical. Seats never self-assign; a seat with no row asks the lead on its OUTBOX.
