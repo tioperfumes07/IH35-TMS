@@ -29,7 +29,7 @@ import { properPersonOrPlaceName } from "../../../lib/properDisplayText";
 import { companyToday } from "../../../lib/businessDate";
 import { BILL_TERMS_OPTIONS } from "../../../lib/billTermsLabel";
 import { Button } from "../../../components/Button";
-import { SimpleCombobox as Combobox } from "../../../components/Combobox";
+import { SimpleCombobox as Combobox, SelectCombobox } from "../../../components/Combobox";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { ParityTable } from "../../../components/parity/ParityTable";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
@@ -905,35 +905,55 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                 />
               </FieldV5>
               <FieldV5 label="Priority">
-                <select value={editHeader.wo_priority ?? ""} onChange={(e) => patchEditHeader({ wo_priority: (e.target.value || undefined) as UpdateWorkOrderPayload["wo_priority"] })} className={FLD}>
+                <SelectCombobox
+                  data-testid="edit-wo-priority"
+                  value={editHeader.wo_priority ?? ""}
+                  onChange={(e) => patchEditHeader({ wo_priority: (e.target.value || undefined) as UpdateWorkOrderPayload["wo_priority"] })}
+                  className={FLD}
+                >
                   <option value="">—</option>
                   <option value="routine">Routine</option>
                   <option value="urgent">Urgent</option>
                   <option value="immediate">OOS / Immediate</option>
-                </select>
+                </SelectCombobox>
               </FieldV5>
               <FieldV5 label="Bucket">
-                <select value={editHeader.bucket ?? ""} onChange={(e) => patchEditHeader({ bucket: (e.target.value || undefined) as UpdateWorkOrderPayload["bucket"] })} className={FLD}>
+                <SelectCombobox
+                  data-testid="edit-wo-bucket"
+                  value={editHeader.bucket ?? ""}
+                  onChange={(e) => patchEditHeader({ bucket: (e.target.value || undefined) as UpdateWorkOrderPayload["bucket"] })}
+                  className={FLD}
+                >
                   <option value="">—</option>
                   <option value="in_house">In-house</option>
                   <option value="external">External</option>
                   <option value="roadside">Roadside</option>
-                </select>
+                </SelectCombobox>
               </FieldV5>
               <FieldV5 label="Repaired by">
-                <select value={editHeader.repaired_by ?? ""} onChange={(e) => patchEditHeader({ repaired_by: (e.target.value || undefined) as UpdateWorkOrderPayload["repaired_by"] })} className={FLD}>
+                <SelectCombobox
+                  data-testid="edit-wo-repaired-by"
+                  value={editHeader.repaired_by ?? ""}
+                  onChange={(e) => patchEditHeader({ repaired_by: (e.target.value || undefined) as UpdateWorkOrderPayload["repaired_by"] })}
+                  className={FLD}
+                >
                   <option value="">—</option>
                   <option value="in_house">In-house</option>
                   <option value="outside_vendor">Outside vendor</option>
-                </select>
+                </SelectCombobox>
               </FieldV5>
               <FieldV5 label="Service location">
-                <select value={editHeader.service_location_type ?? ""} onChange={(e) => patchEditHeader({ service_location_type: (e.target.value || undefined) as UpdateWorkOrderPayload["service_location_type"] })} className={FLD}>
+                <SelectCombobox
+                  data-testid="edit-wo-service-location"
+                  value={editHeader.service_location_type ?? ""}
+                  onChange={(e) => patchEditHeader({ service_location_type: (e.target.value || undefined) as UpdateWorkOrderPayload["service_location_type"] })}
+                  className={FLD}
+                >
                   <option value="">—</option>
                   <option value="shop">Shop</option>
                   <option value="mobile">Mobile</option>
                   <option value="roadside">Roadside</option>
-                </select>
+                </SelectCombobox>
               </FieldV5>
               <FieldV5 label="Out of service?">
                 <SegYesNo value={Boolean(editHeader.out_of_service)} onChange={(v) => patchEditHeader({ out_of_service: v })} />
@@ -986,7 +1006,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                     label: "Type",
                     alwaysVisible: true,
                     render: (row) => (
-                      <select
+                      <SelectCombobox
+                        data-testid={`edit-wo-line-type-${row._idx}`}
                         value={row.line_type}
                         onChange={(e) =>
                           patchEditLine(row._idx, { line_type: e.target.value as EditWorkOrderLine["line_type"] })
@@ -996,7 +1017,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                         <option value="parts">Parts</option>
                         <option value="labor">Labor</option>
                         <option value="other">Other</option>
-                      </select>
+                      </SelectCombobox>
                     ),
                   },
                   {
@@ -1005,6 +1026,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                     alwaysVisible: true,
                     render: (row) => (
                       <input
+                        data-testid={`edit-wo-line-description-${row._idx}`}
                         value={row.description}
                         onChange={(e) => patchEditLine(row._idx, { description: e.target.value })}
                         className={FLD}
