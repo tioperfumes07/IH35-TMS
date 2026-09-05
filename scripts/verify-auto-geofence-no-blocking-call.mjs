@@ -1,15 +1,20 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 
-const routePath = "apps/backend/src/dispatch/loads.routes.ts";
-if (!fs.existsSync(routePath)) throw new Error(`Missing dispatch route: ${routePath}`);
-const content = fs.readFileSync(routePath, "utf8");
+// Inv #40 (2026-09-05, PR #20684): the trigger moved OUT of the HTTP route and into bookLoad()
+// itself (book-load.service.ts) so every caller gets it, not only loads.routes.ts's POST
+// handler -- verify-book-load-geofence-service-layer.mjs proves that wiring in full, including
+// that the route must NOT call it (double-fire sentinel). This guard's non-blocking check just
+// needs to point at the current call site.
+const servicePathForCall = "apps/backend/src/dispatch/book-load.service.ts";
+if (!fs.existsSync(servicePathForCall)) throw new Error(`Missing service: ${servicePathForCall}`);
+const content = fs.readFileSync(servicePathForCall, "utf8");
 
 if (!content.includes("void autoCreateGeofencesForLoad")) {
-  throw new Error("CAP-2 requires non-blocking hook: expected `void autoCreateGeofencesForLoad` in dispatch load route");
+  throw new Error("CAP-2 requires non-blocking hook: expected `void autoCreateGeofencesForLoad` in bookLoad()");
 }
 if (content.includes("await autoCreateGeofencesForLoad")) {
-  throw new Error("CAP-2 requires non-blocking hook: found awaited auto-geofence call in request path");
+  throw new Error("CAP-2 requires non-blocking hook: found awaited auto-geofence call in the booking path");
 }
 
 const servicePath = "apps/backend/src/telematics/auto-geofence.service.ts";
