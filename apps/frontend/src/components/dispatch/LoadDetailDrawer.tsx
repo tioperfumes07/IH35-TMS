@@ -445,8 +445,16 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
     <>
       <div className="fixed inset-0 z-[200] bg-black/30" onClick={onClose} data-testid="load-detail-drawer-backdrop" />
       <aside
-        className="fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[600px]"
+        className={
+          // The Costs tab hosts the 12-column QuickBooks register (natural width ~1365px). At the
+          // default 600px it is crammed behind a horizontal scrollbar and reads as "no creator", so
+          // the drawer widens for that tab only, capped at the viewport on smaller screens.
+          activeTab === "Costs"
+            ? "fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[92vw] xl:w-[1400px]"
+            : "fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[600px]"
+        }
         data-testid="load-detail-drawer"
+        data-drawer-tab={activeTab}
         data-load-id={loadId}
         role="dialog"
         aria-modal="true"
