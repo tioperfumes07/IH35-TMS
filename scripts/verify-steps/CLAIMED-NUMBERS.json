@@ -5542,6 +5542,11 @@
     "claimed_at": "2026-09-05",
     "purpose": "verify-no-gl-account-picked-by-name (spec §1.2: 'audit every other account pick on a money path -- grep for account_name inside a .find( or .filter(. Every hit is this defect.'). Scoped to LoadDetailCostsTab.tsx this pass: asserts no .find(...) resolves a specific GL account by a NAME match."
   },
+  "10377": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-05",
+    "purpose": "verify-load-with-crew-is-not-draft (spec §1.1, owner step 1 of the 2026-09-05 strict-sequence order). Named exactly as the owner requested and wired into scripts/verify-steps/, formalizing (never-delete-only-add) the equivalent WIZ-STATUS-01 check already sitting unwired in scripts/verify-edit-load-assigned-driver-not-draft.mjs. Asserts update-load.service.ts advances a load ending an edit with a committed driver/team from draft -> assigned_not_dispatched (never dispatched)."
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
