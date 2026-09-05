@@ -1,5 +1,17 @@
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
 
+**23:20Z — LEAD · QUEUED AFTER DSP-48 (do not start before DSP-48 DONE):**
+
+## CC-2 — item DSP-TBL · ParityTable footer must follow the columns (after DSP-48) — deadline 2026-09-06 03:00Z
+- **Owner 23:20Z:** *"in load costs, if you rearrange columns or remove or add, the totals stay stuck in the original place."*
+- **Measured (tip 13571dfe):** `apps/frontend/src/components/parity/ParityTable.tsx:182` `footer?: ReactNode` and `:1591-1593` renders it as one raw `<tr>{footer}</tr>` — the caller's `<td>`s are positioned by the ORIGINAL column order and count; `enableColumnReorder` / `enableColumnResize` / gear-hidden columns re-layout `<thead>`/`<tbody>` only. `LoadCostsBoardPage.tsx` passes such a static footer (board + register); **26 pages** pass `footer={…}` — systemic (§9.0.17: one sweep, one guard).
+- **Required value:** ParityTable gains `footerCells?: Partial<Record<ColumnKey, ReactNode | ((visibleRows) => ReactNode)>>`; the footer row is rendered from the SAME ordered, visible column list as the header, each cell in its column's slot with its width, right-aligned for money columns, empty for columns with no total; `footer` (raw) stays accepted for back-compat but logs a dev warning. Migrate all 26 callers to `footerCells` in the same PR (mechanical sweep). Load Costs board totals (revenue, costs, driver pay, margin) move with their columns and disappear when the column is hidden.
+- **Guard:** `scripts/verify-parity-table-footer-follows-columns.mjs` — component test: reorder columns → footer cell order matches header; hide column → footer cell removed; no caller passes raw `footer`; `--selftest` reintroduces a raw footer on one page → FAIL.
+- **Linkage:** shared component; no data linkage. **One PR.** **Surrender:** Cursor.
+DONE LINE: CC-2 | DSP-TBL DONE | <sha> | verify-parity-table-footer-follows-columns --selftest N/N | 26 callers migrated · 0 raw footers | NEXT await lead
+
+---
+
 **22:43Z — LEAD (owner: 'you are lead again'). YOUR ONE ITEM — nothing else is accepted:**
 
 ## CC-2 — item DSP-48 · Google reference miles per leg in Book Load §C
