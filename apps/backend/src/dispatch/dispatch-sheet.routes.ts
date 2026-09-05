@@ -302,11 +302,23 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
         trailerSub: load.trailer_equipment_type ? String(load.trailer_equipment_type) : "No trailer assigned",
         stopsSummaryRight: `${stops.length} stops · ${pickups} pickup · ${deliveries} delivery`,
         stops,
-        commodityRight: load.customer_wo_number
-          ? `Customer WO# ${String(load.customer_wo_number)}`
-          : load.live_load_number
-            ? `Live # ${String(load.live_load_number)}`
-            : "Customer reference on file",
+        // STANDING-DIRECTIVES-2026-09-05.md §CC-2 item 2 ("rate confirm" reference on the
+        // driver instruction sheet): customer_wo_number and customer_po_number are two DISTINCT
+        // columns (0140_p6_t11171_book_load_v4_wizard_fields.sql vs
+        // 202606221000_block7_loads_piece_po.sql) -- a load can carry both, from different
+        // customer systems, and a shipper/receiver gate can ask for either one. The prior
+        // fallback chain showed only WO# (or Live#) and silently dropped the PO# even when it
+        // was on file. Join every reference actually present instead of picking one. NEVER a
+        // dollar figure here (DRIVER-SHEET-NO-PAY, owner order 2026-09-04) -- these are document
+        // reference numbers only, same category as the per-stop `reference` field already shown.
+        commodityRight:
+          [
+            load.customer_wo_number ? `Customer WO# ${String(load.customer_wo_number)}` : null,
+            load.customer_po_number ? `PO# ${String(load.customer_po_number)}` : null,
+            load.customer_wo_number || load.customer_po_number ? null : load.live_load_number ? `Live # ${String(load.live_load_number)}` : null,
+          ]
+            .filter(Boolean)
+            .join(" · ") || "Customer reference on file",
         commodityDescription: commodity,
         commodityWeight: weight,
         commodityPieces: pieces,
