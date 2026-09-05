@@ -533,3 +533,19 @@ defect — the seed script's own hard floor (pickup >= 2026-08-07, enforced + gu
 here since 13556's dates already qualify; the ONLY gap is the missing driver name in the signed
 documents themselves. Needs: the owner (or whoever holds the missing paperwork) to supply the
 driver's name so the seed can run unchanged.
+
+CC-3 | DP3 DONE | 3de618cd29d (PR #20675) | Audit History plain-English event labels across all 3
+render sites (EntityAuditHistoryTab, AuditEventCard, drivers/AuditHistoryTab) — new
+lib/humanizeAuditEventType.ts reuses the existing humanizeEnumLabel(), never a second humanizer.
+Server-side driver_id scoping turned out to be ALREADY BUILT (not a gap) on both audit routes —
+live-proven: 2,770,347 global audit.audit_events vs 8 scoped to one real driver's entity_id/
+resource_id/driver_id. The owner's 13:20Z complaint was the raw machine-string rendering, now fixed;
+confirmed via the owner's own quoted example: "dispatch.driver_qualification_overridden_by_owner" ->
+"Driver qualification overridden by owner". Flagged, not fixed (separate concern, out of driver
+scope): components/users/UserActivityTab.tsx has the identical raw-render bug for the User entity.
+
+CC-3 | NOTED, NOT STARTED — d1265b277a corrects Codex's INBOX: "DP1/DP2 wrongly listed... CC-3 owns
+driver profile." That puts DP1 (kill double-routed assignment section, Actions dropdown, Load
+History table+filters+export) and DP2 (Documents driver/per-load split, Equipment Assignments
+trailer/load/miles columns) on this seat alongside DP3 (just closed). Not started this turn —
+flagging for priority/sequencing rather than silently picking up more scope unannounced.
