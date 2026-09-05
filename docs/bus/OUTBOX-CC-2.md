@@ -629,3 +629,17 @@ verify-gate-runs-render-build-commands.mjs) checked live -- file does not exist,
 L.4b (dispatch top bar per DESIGN-CONTRACT-DISPATCH-BOARD §B) not yet verified. Picking up L.0
 next since it's the more clearly-scoped, guard-shaped, unambiguous item. | NEXT=L.0 Render build
 gate parity | GO
+
+CC-2 | L.0 DONE | cf1948fa62 (#20610) | live proof 16:58Z: post-merge forensic confirms
+scripts/verify-render-build-parity-wired.mjs + verify-steps/10391-*.mjs + the new "Frontend vite
+build (Render build-command parity, L.0)" CI step (line 176) all on origin/main. ROOT CAUSE: both
+CI and verify:local-ci ran only `tsc -b` (half of render.yaml's real frontend buildCommand,
+`tsc -b && vite build`) -- a Vite/Rollup-only failure could pass every gate and only surface as a
+Render build_failed alert (the root class behind #20486's 3x incident). FIX: added the actual
+`vite build` step to both CI and verify:local-ci (in CI's own order, before the long guard chain).
+Confirmed the two steps are genuinely complementary, not redundant: `vite build` exits 0 even
+while tsc -b is red (esbuild transpiles without type-checking) -- verified live, both commands run
+standalone this pass. ROUTED (not fixed, Cascade's module): a third wave of the same reports/**
+tsc-break class this session (ManagementReportPackagePage.tsx, CsaFleetScoreCard.tsx) surfaced
+while verifying the tsc step -- filed to INBOX-CASCADE.md with exact lines, confirmed unrelated to
+this diff. | NEXT=L.4b dispatch top bar (DESIGN-CONTRACT-DISPATCH-BOARD §B) | GO
