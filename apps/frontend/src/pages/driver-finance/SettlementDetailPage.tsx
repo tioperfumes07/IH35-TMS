@@ -269,8 +269,12 @@ export function SettlementDetailPage() {
           ? line.source_table.replace(/^driver_finance\./, "")
           : null,
     description: String(line.description ?? ""),
+    // S.1 — miles/rate_cents now come from the backend's driver_bills join (settlements.routes.ts);
+    // rate is dollars-per-mile at 4-decimal precision, so divide cents by 100 without rounding away
+    // the sub-cent (e.g. $0.4800/mi is 48 cents exactly, but a rate like $0.485 would round to 2
+    // decimals under a naive cents formatter — keep the raw quotient, format at render time).
     miles: Number(line.miles ?? 0),
-    rate: Number(line.rate ?? 0),
+    rate: Number(line.rate_cents ?? 0) / 100,
     amount: Number(line.amount ?? 0),
   }));
   // 25-task #12 — deadhead_pay is its own settlement_lines row (MILES SPEC), rendered as its own
@@ -288,8 +292,10 @@ export function SettlementDetailPage() {
           ? line.source_table.replace(/^driver_finance\./, "")
           : null,
     description: String(line.description ?? ""),
+    // S.1 — same backend-join source as Earnings above; the SELECT's own CASE picks miles_deadhead/
+    // rate_empty_per_mile_cents for a deadhead_pay line, so this is the same field names, different data.
     miles: Number(line.miles ?? 0),
-    rate: Number(line.rate ?? 0),
+    rate: Number(line.rate_cents ?? 0) / 100,
     amount: Number(line.amount ?? 0),
   }));
   const extra = lines.filter((line) => String(line.line_type) === "extra_pay").map((line) => ({

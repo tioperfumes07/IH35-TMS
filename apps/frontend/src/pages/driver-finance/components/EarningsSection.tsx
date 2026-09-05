@@ -51,8 +51,21 @@ const COLUMNS: Array<ParityColumn<Line>> = [
     render: (line) => line.source_label ?? "—",
   },
   { key: "description", label: "Description" },
-  { key: "miles", label: "Miles", render: (line) => <>{line.miles ?? "—"}</> },
-  { key: "rate", label: "Rate", render: (line) => <>{line.rate ?? "—"}</> },
+  // S.1 — miles/rate now arrive real (driver_bills join, settlements.routes.ts) instead of always
+  // 0/blank; format to the design contract: miles 1-decimal + thousands separator (design ref
+  // "1,319.7"), rate 4-decimal dollars-per-mile (design ref "$0.4800") — a bare rate like 0.48
+  // read as "0.48" elsewhere in this app, but the driver-settlement register specifically prints
+  // the full printed-document precision, matching LoadCostsBoardPage.tsx's own fmtRate pattern.
+  {
+    key: "miles",
+    label: "Miles",
+    render: (line) => <>{line.miles != null ? line.miles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : "—"}</>,
+  },
+  {
+    key: "rate",
+    label: "Rate",
+    render: (line) => <>{line.rate != null ? `$${line.rate.toFixed(4)}` : "—"}</>,
+  },
   {
     key: "amount",
     label: "Amount",

@@ -572,11 +572,23 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           -- PR). Joined here, entity-pinned via dsd.operating_company_id = $2, so the UI's Hold
           -- action can target the real deduction id instead of this line's own id, and can show its
           -- REAL held state (dsd.is_held) instead of a column that never existed on this table.
+          -- S.1 MILES-RATE-BLANK (owner-measured 2026-09-05, CODER-SEQUENCE §CC-1 item 1): settlement_lines
+          -- has no miles/rate column (verified across every migration that ever touched the table) — the
+          -- real per-line miles/rate/pay live on driver_bills (miles_basis/rate_per_mile_cents/
+          -- loaded_pay_cents for the loaded leg, miles_deadhead/rate_empty_per_mile_cents/deadhead_pay_cents
+          -- for the deadhead leg, added by 202613510001_miles_spec_deadhead_driver_pay.sql), reachable
+          -- through the SAME db join already used two lines below for bill_number/load_id. Read-only,
+          -- additive SELECT columns; picks the loaded vs. deadhead column pair by the line's own
+          -- line_type so a single miles/rate_cents/pay_cents triple is correct for both earnings
+          -- and deadhead_pay rows without the frontend needing to know which bill column backs which.
           SELECT
             sl.*,
             l.load_number,
             db.bill_number AS source_driver_bill_number,
             COALESCE(db.load_id, sl.load_id) AS load_id,
+            CASE WHEN sl.line_type = 'deadhead_pay' THEN db.miles_deadhead ELSE db.miles_basis END AS miles,
+            CASE WHEN sl.line_type = 'deadhead_pay' THEN db.rate_empty_per_mile_cents ELSE db.rate_per_mile_cents END AS rate_cents,
+            CASE WHEN sl.line_type = 'deadhead_pay' THEN db.deadhead_pay_cents ELSE db.loaded_pay_cents END AS pay_cents,
             dsd.id AS source_deduction_id,
             dsd.is_held AS deduction_is_held,
             dsd.hold_until_period AS deduction_hold_until_period,
