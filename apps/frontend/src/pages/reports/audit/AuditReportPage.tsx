@@ -199,9 +199,18 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
           pageSize={PAGE_SIZE}
           hidePager
           toolbar={
-            <Button size="sm" variant="secondary" onClick={handleCsvExport} disabled={rows.length === 0}>
-              Export CSV
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="secondary" onClick={handleCsvExport} disabled={rows.length === 0}>
+                Export CSV
+              </Button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Print
+              </button>
+            </div>
           }
           filterBar={
             <div className="flex flex-wrap gap-2">

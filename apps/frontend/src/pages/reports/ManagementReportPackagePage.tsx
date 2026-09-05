@@ -475,6 +475,26 @@ export function ManagementReportPackagePage() {
         breadcrumb={["Reports", "Management reports", pkg.label]}
         actions={
           <div className="no-print flex gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                const lines = [
+                  "section,account_code,account_name,amount_cents",
+                  `Package,${pkg.label},${applied.from}-${applied.to},${applied.basis}`,
+                ];
+                const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `management-report-${pkgType}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              disabled={!companyId}
+            >
+              Export CSV
+            </Button>
             <Button size="sm" variant="secondary" onClick={printLetter} disabled={!companyId}>
               Print / Save PDF
             </Button>

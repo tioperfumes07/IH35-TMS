@@ -235,6 +235,13 @@ export function LaneProfitabilityPage() {
         <Button type="button" variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>
           Export CSV
         </Button>
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Print
+        </button>
       </div>
 
       {query.isError ? (

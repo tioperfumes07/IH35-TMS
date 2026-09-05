@@ -182,6 +182,15 @@ export function DriverQualificationReportPage() {
         title="Driver Qualification File"
         subtitle="49 CFR §391 — CDL, DOT medical, MVR, Clearinghouse: value, expiry, renewal cadence"
       />
+      <div className="flex justify-end px-4">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Print
+        </button>
+      </div>
       <div className="px-4 pb-6">
         {/* KPI tiles */}
         <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
@@ -248,6 +257,7 @@ export function DriverQualificationReportPage() {
             storageKey="driver-qualification-report"
             tableTestId="driver-qualification-report-table"
             emptyText="No drivers found — adjust filters or check operating company."
+            exportFilename="driver-qualification-report.csv"
           />
         )}
       </div>

@@ -97,6 +97,16 @@ export function DispatchMarginPage() {
         breadcrumb={["Reports", "Dispatch Margin"]}
       />
 
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Print
+        </button>
+      </div>
+
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
         onApply={staged.apply}
@@ -166,6 +176,7 @@ export function DispatchMarginPage() {
             loading={query.isPending || (query.isFetching && sorted.length === 0)}
             storageKey="dispatch-margin"
             emptyText="No loads in this period."
+            exportFilename="dispatch-margin.csv"
           />
         </>
       ) : null}
