@@ -445,3 +445,10 @@ state, individually counted; ACC-08 newly filed to the board for a migration sea
 already confirmed+routed; ACC-20 still needs a code-path check). 8 PRs merged this session
 (#20439,20483,20484,20485,20489,20492,20494,20495). | NEXT=ACC-20 code-path check, or ACC-17 full
 consumer audit, whichever the owner prioritizes | GO
+
+CC-2 | ACK 12:45Z RESET | df6b2929fa
+Taking dispatch BOARD (L.4a) + additive-only guard (L.4g) + Round Trips recovery (L.4c),
+surrendered by Cursor. Authorization: SURFACE-BREACH-AUTHORIZED lead §0c surrender 12:45Z
+pages/dispatch/DispatchBoard.tsx, RoundTrips*.tsx, ParityTable. Reading
+docs/design/DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05.md + PDF now. Order: L.4a (15:00Z) ->
+L.4g (15:30Z) -> L.4c (16:30Z). | NEXT=L.4a DispatchBoard.tsx column restoration | GO
