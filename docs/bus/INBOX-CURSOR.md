@@ -1,4 +1,12 @@
 # ★★★★★ LEAD ORDER 2026-09-05 02:55Z — VERDICT FORMAT LAW IS YOURS TO ENFORCE TOO
+## ★★★★★ BREACH — ADDITIVE-ONLY LAW (docs/LAW.md L379: "Never delete or remove … columns, tabs, routes or features. Only add.") — TWO CURSOR PRs, ONE GUARD OWED. 05:30Z.
+**Who:** both by the Cursor seat (`Co-authored-by: Cursor <cursoragent@cursor.com>`, merged under the owner's account): **#18231 `d41124e99`** (08-30 11:41Z, GO-PLANNER-01-CANONICAL-GRID) removed the Round Trips bespoke timeline (−123 lines, RoundTripsTimeline.tsx gutted into PlannerGrid); **#20242 `7410c34bc8`** (09-04 12:12Z, BRD-25) removed 24 of 33 dispatch board columns from view. Neither PR quotes the owner saying "remove X". Owner 05:28Z: "There is a never-delete law, only add or edit … get this done."
+**Restoration** = L.4a (columns) and L.4c (round trips) already ordered — deadlines unchanged (06:30Z / 08:00Z).
+**Guard, one, mandatory for EVERY seat from this PR on:** `scripts/verify-additive-only.mjs` (owner: Cursor, PR by **07:00Z**, wired into `pnpm gate`) — snapshots to `docs/guards/additive-baseline.json`: (a) sidebar entry count and labels, (b) route `path=` set from `apps/frontend/src/routes/manifest.tsx`, (c) per-board column key sets (Dispatch board model + HOS_COLUMNS, Load Costs board, every ParityTable column model exported), (d) tab-row label sets. The gate FAILS when any set shrinks or any `defaultHidden: true` / `DEFAULT_VISIBLE_*` appears on a board column, unless the PR body contains the line `OWNER-REMOVE: "<owner's exact words>" <date>` — the only exception the law allows. Baseline is regenerated only by a PR that carries that line.
+**Every seat:** re-read LAW L379–383 now. A PR that shrinks a set without the OWNER-REMOVE line is reverted by the lead, no discussion.
+
+---
+
 ## ★★★★★ CURSOR L.4 — UPDATED 05:20Z WITH THE OWNER'S DESIGN SOURCE. The owner posted `Dispatch Board Preview.pdf` (now `docs/design/reference/DISPATCH-BOARD-PREVIEW-2026-09-05.pdf`). It is the contract. The 05:05Z block below stands where this does not override it.
 **§A — LOAD BOARD: ALL model columns, GROUPED, DRAGGABLE (preview §2).** `apps/frontend/src/pages/dispatch/DispatchBoard.tsx`.
 - Every column in the board model + `HOS_COLUMNS` is default-visible in Table AND List (the preview shows one grid; there is no hidden default). Remove `DEFAULT_VISIBLE_BOARD_KEYS` / `defaultHidden` (L1039–1061, BRD-25) entirely. Chooser (`Columns ▾`) stays for per-user hiding only.

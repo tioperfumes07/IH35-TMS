@@ -382,6 +382,8 @@ owner saying "remove X" in words. *(He has: Load from template, Legacy load refe
 Class T120-SMITH, the trip-type classification banner, and the ranked driver / next-load deadhead
 suggestions — all ordered removed 2026-09-03.)*
 
+**Additive-only is GUARDED (owner 2026-09-05 05:28Z).** `scripts/verify-additive-only.mjs` in `pnpm gate` fails any PR that shrinks the sidebar, route, board-column or tab-row sets, or hides a board column by default, unless the PR body carries `OWNER-REMOVE: "<owner's exact words>" <date>`. Breaches on record: #18231 (Round Trips timeline → PlannerGrid) and #20242 (24 of 33 dispatch columns hidden) — both Cursor, both ordered restored (L.4a, L.4c).
+
 **Maker is not checker on the general ledger.** The coder builds and tests; an independent seat
 verifies live. No approval gate — proof is the safeguard.
 
