@@ -1,4 +1,4 @@
-import { escapeHtml, formatMoney } from "./pdf-template.js";
+import { escapeHtml } from "./pdf-template.js";
 
 export type DispatchSheetStop = {
   seqLabel: string;
@@ -21,6 +21,14 @@ export type DispatchPayRow = {
   basis: string;
   rate: string;
   amountCents: number;
+};
+
+/** DRIVER-SHEET-NO-PAY (owner order 2026-09-04): a row of the "Documents you must bring back"
+ * checklist — the trip does not close without all of them. */
+export type DispatchDocumentRow = {
+  label: string;
+  when: string;
+  note: string;
 };
 
 export type DispatchSheetModel = {
@@ -47,10 +55,19 @@ export type DispatchSheetModel = {
   commodityPieces: string;
   equipmentPrimary: string;
   equipmentSecondary: string;
-  autoBillId: string;
-  payRows: DispatchPayRow[];
-  grossFootnote: string;
-  grossFootnoteCents: number;
+  // DRIVER-SHEET-NO-PAY (owner order 2026-09-04): the driver instruction sheet carries NO pay. The
+  // pay fields stay OPTIONAL on the model (Rule 07 — never delete a capability; a company-facing
+  // variant may still populate them) but the driver document never renders them.
+  autoBillId?: string;
+  payRows?: DispatchPayRow[];
+  grossFootnote?: string;
+  grossFootnoteCents?: number;
+  // Border & customs — shown on every sheet; reads "Not a border load" when the load does not cross.
+  isBorderLoad: boolean;
+  borderPortOfEntry: string;
+  borderCustomsBroker: string;
+  // Documents the driver must bring back — the trip does not close without them.
+  documents: DispatchDocumentRow[];
   instructionsRight: string;
   instructionsFrom: string;
   instructionsBody: string;
@@ -92,11 +109,8 @@ export function renderDispatchSheetBody(model: DispatchSheetModel): string {
     })
     .join("");
 
-  const payRowsHtml = model.payRows
-    .map(
-      (row) =>
-        `<tr><td>${escapeHtml(row.component)}</td><td class="num">${escapeHtml(row.basis)}</td><td class="num">${escapeHtml(row.rate)}</td><td class="num">${escapeHtml(formatMoney(row.amountCents))}</td></tr>`
-    )
+  const documentsHtml = model.documents
+    .map((doc) => lv(`\u2610 ${doc.label}`, doc.when, doc.note))
     .join("");
 
   const issuedHtml = model.issuedLines.map((line) => escapeHtml(line)).join("<br/>");
@@ -146,25 +160,21 @@ export function renderDispatchSheetBody(model: DispatchSheetModel): string {
   </div>
 
   <div class="sec-head">
-    <span class="title">Driver pay summary</span>
-    <span class="right">Auto-created bill <span class="mono">${escapeHtml(model.autoBillId)}</span></span>
+    <span class="title">Border and customs</span>
+    <span class="right">${model.isBorderLoad ? "Cross-border load" : "Domestic load"}</span>
   </div>
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th style="width: 48%;">Component</th>
-        <th class="num">Basis</th>
-        <th class="num">Rate</th>
-        <th class="num" style="width: 20%;">Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${payRowsHtml}
-    </tbody>
-    <tfoot>
-      <tr><td colspan="3">${escapeHtml(model.grossFootnote)}</td><td class="num">${escapeHtml(formatMoney(model.grossFootnoteCents))}</td></tr>
-    </tfoot>
-  </table>
+  <div class="lv-grid cols-2">
+    ${lv("Port of entry", model.isBorderLoad ? model.borderPortOfEntry : "Not a border load", model.isBorderLoad ? "" : "World Trade Bridge / Colombia when it is")}
+    ${lv("Customs broker", model.borderCustomsBroker)}
+  </div>
+
+  <div class="sec-head">
+    <span class="title">Documents you must bring back</span>
+    <span class="right">The trip does not close without all of them</span>
+  </div>
+  <div class="lv-grid cols-2">
+    ${documentsHtml}
+  </div>
 
   <div class="sec-head">
     <span class="title">Driver instructions</span>

@@ -3,14 +3,13 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import {
-  docIdFromLoadNumber,
   formatDate,
   formatDateTime,
   formatMoney,
   joinBrandAddrLines,
   wrapPdfDocument,
 } from "../render/pdf-template.js";
-import { renderDispatchSheetBody, type DispatchPayRow, type DispatchSheetModel, type DispatchSheetStop } from "../render/dispatch-sheet.template.js";
+import { renderDispatchSheetBody, type DispatchDocumentRow, type DispatchSheetModel, type DispatchSheetStop } from "../render/dispatch-sheet.template.js";
 
 const paramsSchema = z.object({ loadId: z.string().uuid() });
 
@@ -207,18 +206,63 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
         ? `${truckMetaParts.join(" ")}${load.truck_unit_type ? ` · ${String(load.truck_unit_type)}` : ""}`
         : "—";
 
-      const payRows: DispatchPayRow[] = [
-        {
-          component: "Estimated trip pay",
-          basis: "Booking total",
-          rate: "—",
-          amountCents: Number(load.rate_total_cents ?? 0),
-        },
-        { component: "Fuel advance (if issued)", basis: "EFS / Comcheck", rate: "—", amountCents: 0 },
-        { component: "Cash advance", basis: "—", rate: "—", amountCents: 0 },
-      ];
+      // DRIVER-SHEET-NO-PAY (owner order 2026-09-04): the driver instruction sheet carries NO pay.
+      // Replace the pay summary with Border & customs + a "Documents you must bring back" checklist.
+      //
+      // Border & customs — mirror the canonical cross-border shape used by the border driver-
+      // instructions endpoint (unit_border_crossings + a stop_type='border' stop). The cross-border
+      // PREDICATE stays owned by that data (a crossing row or a border stop), never re-derived here.
+      const borderRes = await client.query(
+        `
+          SELECT
+            COALESCE(port.name, ubc.port_of_entry, bstop.city) AS port_of_entry,
+            broker.vendor_name AS customs_broker_name,
+            (ubc.load_id IS NOT NULL OR bstop.id IS NOT NULL) AS is_border_load
+          FROM mdata.loads l
+          LEFT JOIN LATERAL (
+            SELECT c.load_id, c.port_of_entry, c.port_of_entry_id, c.customs_broker_id
+            FROM mdata.unit_border_crossings c
+            WHERE c.load_id = l.id
+              AND c.operating_company_id = l.operating_company_id
+            ORDER BY c.wizard_completed_at DESC NULLS LAST, c.crossing_date DESC
+            LIMIT 1
+          ) ubc ON true
+          LEFT JOIN LATERAL (
+            SELECT s.id, s.city
+            FROM mdata.load_stops s
+            WHERE s.load_id = l.id
+              AND s.stop_type = 'border'
+              AND s.soft_deleted_at IS NULL
+            ORDER BY s.sequence_number, s.id
+            LIMIT 1
+          ) bstop ON true
+          LEFT JOIN reference.ports_of_entry port ON port.id = ubc.port_of_entry_id
+          LEFT JOIN mdata.vendors broker
+            ON broker.id = ubc.customs_broker_id
+           AND broker.operating_company_id = l.operating_company_id
+           AND broker.deactivated_at IS NULL
+          WHERE l.id = $1
+            AND l.operating_company_id = $2::uuid
+          LIMIT 1
+        `,
+        [params.data.loadId, query.data.operating_company_id]
+      );
+      const borderRow = borderRes.rows[0] ?? {};
+      const isBorderLoad = Boolean(borderRow.is_border_load);
+      const borderPortOfEntry = borderRow.port_of_entry ? String(borderRow.port_of_entry) : "Confirm at dispatch";
+      const borderCustomsBroker = borderRow.customs_broker_name ? String(borderRow.customs_broker_name) : "—";
 
-      const grossCents = Number(load.rate_total_cents ?? 0);
+      const lumperCentsForDocs = Number(load.lumper_amount_cents ?? 0);
+      const documents: DispatchDocumentRow[] = [
+        { label: "Signed BOL", when: "At pickup", note: "Photograph it before you leave the shipper" },
+        { label: "Signed POD", when: "At delivery", note: "Name and time legible" },
+        { label: "Scale ticket", when: "If you scale", note: "Upload the same day" },
+        {
+          label: "Lumper receipt",
+          when: lumperCentsForDocs !== 0 ? "You pay" : "If you pay a lumper",
+          note: "You are reimbursed on your settlement",
+        },
+      ];
 
       const commodity = String(load.commodity_description ?? load.commodity ?? "Freight");
       const weight = load.weight_lbs != null ? `${Number(load.weight_lbs).toLocaleString("en-US")} lbs` : "—";
@@ -229,7 +273,6 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
       );
 
       const docNum = String(load.load_number ?? params.data.loadId);
-      const billId = docIdFromLoadNumber("B", String(load.load_number ?? "")) ?? "—";
 
       const brandName = String(company.legal_name ?? company.short_name ?? "Carrier");
       const brandSubPieces = [company.tax_id ? `EIN ${String(company.tax_id)}` : null].filter(Boolean);
@@ -245,7 +288,7 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
         brandName,
         brandSub,
         brandAddrHtml: joinBrandAddrLines(brandAddrLines),
-        docType: "Driver dispatch sheet",
+        docType: "Driver instruction sheet",
         loadDocNum: docNum,
         issuedLines: [`Issued ${issuedNow}`, `by dispatcher ${dispatcherLabel}`],
         statusLine: `Dispatch · ${String(load.status ?? "").replaceAll("_", " ")}`,
@@ -269,10 +312,10 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
         commodityPieces: pieces,
         equipmentPrimary: load.requires_tarps ? `Tarped (${String(load.tarp_type ?? "tarps")})` : "Dry / standard",
         equipmentSecondary: load.hazmat ? "Hazmat — verify placards" : "Non-hazmat",
-        autoBillId: billId,
-        payRows,
-        grossFootnote: "Estimated driver bill — final pay determined at settlement",
-        grossFootnoteCents: grossCents,
+        isBorderLoad,
+        borderPortOfEntry,
+        borderCustomsBroker,
+        documents,
         instructionsRight: "Visible to driver · mark read on receipt",
         instructionsFrom: `From dispatcher ${dispatcherLabel}`,
         instructionsBody: instructions,
