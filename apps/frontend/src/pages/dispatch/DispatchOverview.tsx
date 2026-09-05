@@ -84,10 +84,14 @@ function KpiCard({
   disabledReason?: string;
 }) {
   const testId = `dispatch-overview-kpi-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  // KPI tiles: centered content, light tile bg + darker border (owner ruling 2026-09-04 — no
+  // white-on-white, all KPI values centered). Tokens transcribed from GLOBAL-TYPE-SIZE-BASELINE.
   const style: CSSProperties = {
-    border: `1px solid ${colors.cardBorder}`,
+    border: `1px solid ${colors.kpiTileBorder}`,
+    backgroundColor: colors.kpiTileBg,
     borderRadius: spacing.radiusCard,
     padding: `${spacing.panelPaddingY}px ${spacing.panelPaddingX}px`,
+    textAlign: "center",
     opacity: disabled ? 0.72 : 1,
   };
   const body = (
@@ -112,7 +116,7 @@ function KpiCard({
   if (disabled) {
     return (
       <div
-        className="cursor-not-allowed bg-white"
+        className="cursor-not-allowed"
         style={style}
         data-testid={testId}
         aria-disabled="true"
@@ -125,13 +129,13 @@ function KpiCard({
   }
   if (to) {
     return (
-      <Link to={to} data-testid={testId} className="block bg-white transition hover:shadow-xs" style={style}>
+      <Link to={to} data-testid={testId} className="block transition hover:shadow-xs" style={style}>
         {body}
       </Link>
     );
   }
   return (
-    <div className="bg-white" style={style} data-testid={testId}>
+    <div style={style} data-testid={testId}>
       {body}
     </div>
   );
