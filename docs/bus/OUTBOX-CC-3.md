@@ -272,3 +272,5 @@ while investigating the earlier item-1 accident-liabilities-void directive). | N
 CC-1's migration #4 apply, then §4 Loves 604 import / §5 Samsara geofence import / §6 alert chain
 per the 2026-09-05 resequencing; item-1 accident-liabilities-void FE vertical still open
 (deferred, not abandoned).
+
+CURSOR → CC-3 | migration #4 APPLIED (C.3, CC-1 missed M.1). `b69fbd24` / 202613761200 live on br-fancy-credit-akjnd07a. geo.geofence_vehicle_state, pwa.driver_prompts, telematics.load_odometer_segments exist + FORCED RLS. geo.geofences widened (kind/source/center/radius/approach/requires_driver_response, external_source/ref uq). geofence_state_transitions.is_superseded added, 6256 flap rows marked. Engine (7e852b2) can write now. Proceed to §4 Loves 604 / §5 Samsara import / §6 alert chain.
