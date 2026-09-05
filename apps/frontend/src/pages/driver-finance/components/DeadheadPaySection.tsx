@@ -15,15 +15,25 @@
  * Mirrors EarningsSection's exact column/subtotal shape (same data source, same settlement_lines
  * table) so a reader sees identical Load/Description/Miles/Rate/Amount columns for both — only
  * the section title and line_type filter differ.
+ *
+ * Columns per reference: Number, Load #, Date, From (prev. delivery), To (pickup), Empty mi,
+ * Rate, Amount, Driver bill.
  */
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { mmmDd } from "../../../lib/formatDate";
 
 type Line = {
   id: string;
   load_id?: string | null;
   load_number?: string | null;
+  /** S.1b — line_date, origin/dest city+state from load_stops. */
+  line_date?: string | null;
+  origin_city?: string | null;
+  origin_state?: string | null;
+  dest_city?: string | null;
+  dest_state?: string | null;
   source_driver_bill_id?: string | null;
   source_label?: string | null;
   description: string;
@@ -34,12 +44,18 @@ type Line = {
 
 type Props = {
   lines: Line[];
+  isOpen?: boolean;
 };
 
 const COLUMNS: Array<ParityColumn<Line>> = [
   {
+    key: "source_label",
+    label: "Number",
+    render: (line) => line.source_label ?? "—",
+  },
+  {
     key: "load_id",
-    label: "Load",
+    label: "Load #",
     render: (line) =>
       line.load_id ? (
         <EntityLink kind="load" id={line.load_id} label={entityLabel(line.load_number, line.load_id, "Load")} />
@@ -48,18 +64,36 @@ const COLUMNS: Array<ParityColumn<Line>> = [
       ),
   },
   {
-    key: "source_label",
-    label: "Source",
+    key: "line_date",
+    label: "Date",
     sortable: true,
-    sortValue: (line) => line.source_label ?? "",
-    render: (line) => line.source_label ?? "—",
+    sortValue: (line) => line.line_date ?? "",
+    render: (line) => {
+      const d = mmmDd(line.line_date);
+      return d || "—";
+    },
   },
-  { key: "description", label: "Description" },
+  {
+    key: "origin_city",
+    label: "From (prev. delivery)",
+    render: (line) => {
+      if (!line.origin_city && !line.origin_state) return "—";
+      return [line.origin_city, line.origin_state].filter(Boolean).join(", ") || "—";
+    },
+  },
+  {
+    key: "dest_city",
+    label: "To (pickup)",
+    render: (line) => {
+      if (!line.dest_city && !line.dest_state) return "—";
+      return [line.dest_city, line.dest_state].filter(Boolean).join(", ") || "—";
+    },
+  },
   // S.1 — same real-data + formatting fix as EarningsSection.tsx (driver_bills join, design-contract
   // precision: miles 1-decimal + thousands separator, rate 4-decimal dollars-per-mile).
   {
     key: "miles",
-    label: "Miles",
+    label: "Empty mi",
     render: (line) => <>{line.miles != null ? line.miles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : "—"}</>,
   },
   {
@@ -72,23 +106,38 @@ const COLUMNS: Array<ParityColumn<Line>> = [
     label: "Amount",
     render: (line) => <>${Number(line.amount).toFixed(2)}</>,
   },
+  {
+    key: "source_driver_bill_id",
+    label: "Driver bill",
+    render: (line) =>
+      line.source_driver_bill_id ? (
+        <EntityLink kind="driver_bill" id={line.source_driver_bill_id} label={line.source_label ?? "—"} />
+      ) : (
+        line.source_label ?? "—"
+      ),
+  },
 ];
 
-export function DeadheadPaySection({ lines }: Props) {
+export function DeadheadPaySection({ lines, isOpen: _isOpen }: Props) {
   if (lines.length === 0) return null;
   const subtotal = lines.reduce((sum, line) => sum + Number(line.amount || 0), 0);
   const totalMiles = lines.reduce((sum, line) => sum + Number(line.miles || 0), 0);
   return (
-    <section className="rounded-sm border border-slate-200 bg-slate-50 p-2" data-testid="deadhead-pay-section">
-      <h3 className="mb-1 text-xs font-semibold uppercase text-slate-800">Empty Miles</h3>
+    <section className="rounded-sm border border-gray-200 bg-white" data-testid="deadhead-pay-section">
+      <header className="flex items-center border-b border-gray-200 px-2.5 py-1.5">
+        <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-slate-600">Empty miles</h2>
+        <span className="ml-2 text-xs text-slate-500">deadhead to the pickup · same rate today, never hardcoded</span>
+      </header>
       <ParityTable
         columns={COLUMNS}
         rows={lines}
         rowKey={(line) => line.id}
         storageKey="driver-finance-deadhead-pay-section"
         tableTestId="deadhead-pay-section-table"
+        embedded
+        hidePager
       />
-      <div className="mt-1 text-xs font-semibold">Subtotal: ${subtotal.toFixed(2)} · Miles: {totalMiles}</div>
+      <div className="mt-1 px-2.5 py-1 text-xs font-semibold">Subtotal: ${subtotal.toFixed(2)} · Miles: {totalMiles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</div>
     </section>
   );
 }

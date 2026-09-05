@@ -64,6 +64,13 @@ function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] 
     .map((line) => ({
       id: String(line.id),
       description: String(line.description ?? "Deduction"),
+      // S.1b — line_date (COALESCE of created_at), load_number, deduction_type, and posting
+      // account fields from the driver_settlement_deductions + catalogs.accounts joins.
+      line_date: typeof line.line_date === "string" ? line.line_date : null,
+      load_number: typeof line.load_number === "string" ? line.load_number : null,
+      deduction_type: typeof line.deduction_type === "string" ? line.deduction_type : null,
+      posting_account_number: typeof line.posting_account_number === "string" ? line.posting_account_number : null,
+      posting_account_name: typeof line.posting_account_name === "string" ? line.posting_account_name : null,
       balance_left: Number(line.balance_left ?? line.amount ?? 0),
       this_period_amount: Number(line.amount ?? 0),
       // HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: is_held/held_by are now the REAL state joined
@@ -261,6 +268,12 @@ export function SettlementDetailPage() {
     // "Load" column had nothing but the line id to show.
     load_id: typeof line.load_id === "string" ? line.load_id : null,
     load_number: typeof line.load_number === "string" ? line.load_number : null,
+    // S.1b — line_date (COALESCE of delivery-stop arrival), origin/dest city+state from load_stops.
+    line_date: typeof line.line_date === "string" ? line.line_date : null,
+    origin_city: typeof line.origin_city === "string" ? line.origin_city : null,
+    origin_state: typeof line.origin_state === "string" ? line.origin_state : null,
+    dest_city: typeof line.dest_city === "string" ? line.dest_city : null,
+    dest_state: typeof line.dest_state === "string" ? line.dest_state : null,
     source_driver_bill_id:
       typeof line.source_driver_bill_id === "string" ? line.source_driver_bill_id : null,
     source_label:
@@ -284,6 +297,12 @@ export function SettlementDetailPage() {
     id: String(line.id),
     load_id: typeof line.load_id === "string" ? line.load_id : null,
     load_number: typeof line.load_number === "string" ? line.load_number : null,
+    // S.1b — line_date (COALESCE of delivery-stop arrival), origin/dest city+state from load_stops.
+    line_date: typeof line.line_date === "string" ? line.line_date : null,
+    origin_city: typeof line.origin_city === "string" ? line.origin_city : null,
+    origin_state: typeof line.origin_state === "string" ? line.origin_state : null,
+    dest_city: typeof line.dest_city === "string" ? line.dest_city : null,
+    dest_state: typeof line.dest_state === "string" ? line.dest_state : null,
     source_driver_bill_id:
       typeof line.source_driver_bill_id === "string" ? line.source_driver_bill_id : null,
     source_label:
@@ -301,15 +320,27 @@ export function SettlementDetailPage() {
   }));
   const extra = lines.filter((line) => String(line.line_type) === "extra_pay").map((line) => ({
     id: String(line.id),
+    // S.1b — load linkage, line_date, and approval_status for the Additional pay section.
+    load_id: typeof line.load_id === "string" ? line.load_id : null,
+    load_number: typeof line.load_number === "string" ? line.load_number : null,
+    line_date: typeof line.line_date === "string" ? line.line_date : null,
+    approval_status: typeof line.approval_status === "string" ? line.approval_status : null,
     code: String(line.code ?? "EXTRA"),
     description: String(line.description ?? ""),
     amount: Number(line.amount ?? 0),
   }));
   const reimbursements = lines.filter((line) => String(line.line_type) === "reimbursement").map((line) => ({
     id: String(line.id),
-    date: String(line.created_at ?? ""),
+    // S.1b — load linkage, line_date (COALESCE of posting_date), reimbursement_type/reason,
+    // vendor fields, and receipt_number from the driver_reimbursements join.
+    load_id: typeof line.load_id === "string" ? line.load_id : null,
+    load_number: typeof line.load_number === "string" ? line.load_number : null,
+    line_date: typeof line.line_date === "string" ? line.line_date : null,
     description: String(line.description ?? ""),
-    receipt: String(line.receipt_number ?? "receipt"),
+    reimbursement_type: typeof line.reimbursement_type === "string" ? line.reimbursement_type : null,
+    vendor_name: typeof line.vendor_name === "string" ? line.vendor_name : null,
+    vendor_invoice_number: typeof line.vendor_invoice_number === "string" ? line.vendor_invoice_number : null,
+    receipt_number: typeof line.receipt_number === "string" ? line.receipt_number : null,
     amount: Number(line.amount ?? 0),
   }));
   const deductions = toDeductionRows(lines);
@@ -614,14 +645,15 @@ export function SettlementDetailPage() {
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1.5fr_1fr]">
         <div className="space-y-2">
-          <EarningsSection lines={earnings} />
-          <DeadheadPaySection lines={deadhead} />
-          <ExtraPaySection lines={extra} />
-          <ReimbursementsSection lines={reimbursements} />
+          <EarningsSection lines={earnings} isOpen={!settlementIsLocked} />
+          <DeadheadPaySection lines={deadhead} isOpen={!settlementIsLocked} />
+          <ExtraPaySection lines={extra} isOpen={!settlementIsLocked} />
+          <ReimbursementsSection lines={reimbursements} isOpen={!settlementIsLocked} />
           <DeductionsSection
             rows={deductions}
             onHold={(row) => setHoldTarget(row)}
             onResume={(row) => void handleResumeDeduction(row)}
+            isOpen={!settlementIsLocked}
           />
           {/* Settlement payout poster creates a real accounting.bills row + journal entry per
               load this settlement pays out — drill-through into that posting. Empty when no
