@@ -7513,5 +7513,20 @@
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-04",
     "purpose": "verify-coa-role-values-registered-in-check-constraint. Prevents the detention_pay_expense-class drift found 2026-09-04 (a role admitted into resolver.service.ts's COA_ROLE_VALUES/CoaRole union but never widened into the live accounting.chart_of_accounts_roles_role_check DB CHECK constraint, so designating it would fail INSERT even though the TS type accepts it). Asserts every value in COA_ROLE_VALUES appears in the highest-numbered db/migrations/*.sql file that widens chart_of_accounts_roles_role_check."
+  },
+  "10365": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-05",
+    "purpose": "verify-cost-category-picker-includes-cogs (spec 09-04-2026-Claude-Coder-1-LOAD-COSTS-COMPLETE-VERTICAL.md §1.2). Guards that LoadDetailCostsTab.tsx's category filter matches account_type against the exact set (Expense/OtherExpense/CostOfGoodsSold), never a free-text regex like the stale '/cost of goods/i' (with spaces) that never matched the real 'CostOfGoodsSold' spelling and excluded 10 of 34 real USMCA cost accounts including 5000 Fuel & Diesel."
+  },
+  "10369": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-05",
+    "purpose": "verify-fuel-advance-account-bound-by-role (spec §1.2, owner ruling: 'bind the fuel account by role, never by name'). Guards that LoadDetailCostsTab.tsx resolves the fuel-advance debit account via accounting.chart_of_accounts_roles (role company_fuel_advance_expense, via listCoaRoles), never via a /fuel/i name match that could resolve to an asset receivable instead of the expense account."
+  },
+  "10373": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-05",
+    "purpose": "verify-no-gl-account-picked-by-name (spec §1.2: 'audit every other account pick on a money path -- grep for account_name inside a .find( or .filter(. Every hit is this defect.'). Scoped to LoadDetailCostsTab.tsx this pass: asserts no .find(...) resolves a specific GL account by a NAME match."
   }
 }
