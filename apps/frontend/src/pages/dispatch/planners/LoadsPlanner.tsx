@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getDispatchPlannerWeek, type PlannerLoadEvent } from "../../../api/dispatch";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
@@ -10,8 +11,22 @@ import { usePlannerRange } from "./PlannerRangeContext";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { PlannerAxisHead } from "./PlannerAxisHead";
 import { PlannerGrid } from "./PlannerGrid";
+import { usePlannerLoads } from "./planner-bars";
+import { PlannerViewToggle, type PlannerViewMode } from "./PlannerViewToggle";
 
 void PlannerAxisHead;
+
+type LoadListRow = {
+  id: string;
+  loadNumber: string;
+  driver: string;
+  unit: string;
+  customer: string;
+  status: string;
+  pickupDate: string;
+  deliveryDate: string;
+  rate: string;
+};
 
 function toDayKey(iso: string | null | undefined): string | null {
   if (!iso) return null;
@@ -43,12 +58,16 @@ export function LoadsPlanner() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const { range, days } = usePlannerRange();
+  const [viewMode, setViewMode] = useState<PlannerViewMode>("grid");
 
   const loadsQuery = useQuery({
     queryKey: ["dispatch", "planners", "loads", operatingCompanyId, range.start, range.end],
     enabled: Boolean(operatingCompanyId),
     queryFn: () => fetchLoadsForRange(operatingCompanyId, range.start, range.end),
   });
+
+  // Richer load rows (DispatchLoadRow) for the list view — includes driver name, unit, rate.
+  const listLoadsQuery = usePlannerLoads(operatingCompanyId, range.start, range.end);
 
   const rows = useMemo(() => loadsQuery.data ?? [], [loadsQuery.data]);
 
@@ -65,6 +84,9 @@ export function LoadsPlanner() {
 
   return (
     <div data-testid="dispatch-loads-planner-page" className="space-y-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <PlannerViewToggle viewMode={viewMode} onChange={setViewMode} />
+      </div>
       {loadsQuery.isLoading ? <div className="text-xs text-gray-500">Loading loads timeline…</div> : null}
       {loadsQuery.isError ? (
         <ListErrorBanner
@@ -73,7 +95,48 @@ export function LoadsPlanner() {
         />
       ) : null}
 
-      {!loadsQuery.isLoading && !loadsQuery.isError ? (
+      {!loadsQuery.isLoading && !loadsQuery.isError && viewMode === "list" ? (
+        (() => {
+          const listRows: LoadListRow[] = (listLoadsQuery.data ?? []).map((load) => ({
+            id: load.id,
+            loadNumber: load.load_number,
+            driver: load.assigned_primary_driver_name ?? "—",
+            unit: load.assigned_unit_number ?? "—",
+            customer: load.customer_name ?? "—",
+            status: load.status,
+            pickupDate: load.pickup_scheduled_at ? load.pickup_scheduled_at.slice(0, 10) : "—",
+            deliveryDate: load.scheduled_delivery_date ?? (load.delivery_appointment_start_at ? load.delivery_appointment_start_at.slice(0, 10) : "—"),
+            rate: load.rate_total_cents != null
+              ? `${load.currency_code === "MXN" ? "$" : "$"}${(load.rate_total_cents / 100).toFixed(2)}`
+              : "—",
+          }));
+          const columns: Array<ParityColumn<LoadListRow>> = [
+            { key: "loadNumber", label: "Load #", sortable: true },
+            { key: "driver", label: "Driver", sortable: true },
+            { key: "unit", label: "Unit", sortable: true },
+            { key: "customer", label: "Customer", sortable: true },
+            { key: "status", label: "Status", sortable: true },
+            { key: "pickupDate", label: "Pickup Date", sortable: true },
+            { key: "deliveryDate", label: "Delivery Date", sortable: true },
+            { key: "rate", label: "Rate", sortable: true },
+          ];
+          return (
+            <div data-testid="dispatch-loads-planner-list">
+              <ParityTable<LoadListRow>
+                columns={columns}
+                rows={listRows}
+                rowKey={(row) => row.id}
+                loading={listLoadsQuery.isLoading}
+                emptyText="No loads with a start_at in this range for this company."
+                storageKey="dispatch-loads-planner-list"
+                exportFilename="loads-planner"
+              />
+            </div>
+          );
+        })()
+      ) : null}
+
+      {!loadsQuery.isLoading && !loadsQuery.isError && viewMode === "grid" ? (
         <PlannerGrid
           days={days}
           frozenLabel="Load"

@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { listUnitsWithoutLoad } from "../../../api/dispatch";
 import { listAllUnits } from "../../../api/mdata";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { isOperatorVisibleUnit } from "../../../lib/operator-fleet-visibility";
@@ -13,6 +14,7 @@ import { PlannerAxisHead } from "./PlannerAxisHead";
 import { PlannerGrid } from "./PlannerGrid";
 import { groupPlannerBarsByKey, usePlannerLoads } from "./planner-bars";
 import { PlannerAction, PlannerActionDisabled } from "./PlannerRowActions";
+import { PlannerViewToggle, type PlannerViewMode } from "./PlannerViewToggle";
 
 void PlannerAxisHead;
 
@@ -33,10 +35,20 @@ type TruckRow = {
   status: TruckStatus;
 };
 
+type TruckListRow = {
+  unitId: string;
+  unitNumber: string;
+  driver: string;
+  currentLoad: string;
+  status: string;
+  nextAvailable: string;
+};
+
 export function TruckPlanner() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const { range, days } = usePlannerRange();
+  const [viewMode, setViewMode] = useState<PlannerViewMode>("grid");
 
   const gridQuery = useQuery({
     queryKey: ["driver-scheduler", "grid", operatingCompanyId, range.start, range.end],
@@ -153,6 +165,9 @@ export function TruckPlanner() {
 
   return (
     <div data-testid="dispatch-truck-planner-page" className="space-y-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <PlannerViewToggle viewMode={viewMode} onChange={setViewMode} />
+      </div>
       {isLoading ? <div className="text-xs text-gray-500">Loading truck grid…</div> : null}
       {isError ? (
         <ListErrorBanner
@@ -166,7 +181,46 @@ export function TruckPlanner() {
         />
       ) : null}
 
-      {!isLoading && !isError ? (
+      {!isLoading && !isError && viewMode === "list" ? (
+        (() => {
+          const listRows: TruckListRow[] = truckRows.map((row) => {
+            const bars = loadBarsByUnit.get(row.unitId) ?? [];
+            const statusLabel =
+              row.status === "assigned" ? "In Use" :
+              row.status === "available" ? "Available" :
+              row.status === "in-shop" ? "In Shop" : "Reserved";
+            return {
+              unitId: row.unitId,
+              unitNumber: row.unitNumber,
+              driver: row.driverName ?? "—",
+              currentLoad: bars.length > 0 ? bars[0].label : "—",
+              status: statusLabel,
+              nextAvailable: bars.length > 0 ? String(bars[0].endYmd) : "—",
+            };
+          });
+          const columns: Array<ParityColumn<TruckListRow>> = [
+            { key: "unitNumber", label: "Unit Number", sortable: true },
+            { key: "driver", label: "Driver", sortable: true },
+            { key: "currentLoad", label: "Current Load", sortable: true },
+            { key: "status", label: "Status", sortable: true },
+            { key: "nextAvailable", label: "Next Available", sortable: true },
+          ];
+          return (
+            <div data-testid="dispatch-truck-planner-list">
+              <ParityTable<TruckListRow>
+                columns={columns}
+                rows={listRows}
+                rowKey={(row) => row.unitId}
+                emptyText="No units for this company in the planner range."
+                storageKey="dispatch-truck-planner-list"
+                exportFilename="truck-planner"
+              />
+            </div>
+          );
+        })()
+      ) : null}
+
+      {!isLoading && !isError && viewMode === "grid" ? (
         <PlannerGrid
           days={days}
           frozenLabel="Unit"
@@ -198,7 +252,7 @@ export function TruckPlanner() {
           }
         />
       ) : null}
-      {!isLoading && !isError && truckRows.some((row) => row.status === "in-shop") ? (
+      {!isLoading && !isError && viewMode === "grid" && truckRows.some((row) => row.status === "in-shop") ? (
         <div className="mt-3">
           <PlannerGrid
             days={days}
