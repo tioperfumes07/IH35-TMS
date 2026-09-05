@@ -14,6 +14,7 @@ import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
 import { mmmDd } from "../../lib/formatDate";
+import { humanizeAuditEventType } from "../../lib/humanizeAuditEventType";
 
 type Props = {
   driverId: string;
@@ -114,7 +115,13 @@ const HISTORY_COLUMNS: Array<ParityColumn<DispatchAssignmentHistoryRow>> = [
     sortable: true,
     render: (row) => (row.assigned_at ? mmmDd(row.assigned_at) : "—"),
   },
-  { key: "assignment_method", label: "Method", sortable: true },
+  {
+    key: "assignment_method",
+    label: "Method",
+    sortable: true,
+    // OWNER 13:20Z: "Method renders the machine value full_form" — plain-English law.
+    render: (row) => (row.assignment_method ? humanizeAuditEventType(row.assignment_method) : "—"),
+  },
   {
     key: "previous_driver_name",
     label: "Previous Driver",
