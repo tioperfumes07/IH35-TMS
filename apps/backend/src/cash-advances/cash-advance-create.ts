@@ -674,24 +674,39 @@ export async function reverseDriverAdvanceInClientTx(
   companyId: string,
   input: { advanceId: string; liabilityId: string | null; linkedBillPaymentId?: string | null; linkedBillId?: string | null; reason: string }
 ): Promise<void> {
+  // ACCT-SETL-ADV-VOID-GAP: driver_advances/driver_liabilities have carried a full void register
+  // (voided_at/void_reason/voided_by_user_id) since GO-22 (migration 202613490001), but this
+  // pre-existing reversal path — the only real "undo an advance" action in the codebase, already
+  // wired to a route (PATCH /api/v1/cash-advances/:id/reverse) and reused by the load-cancellation
+  // cascade — predates GO-22 and only ever set the OLDER disbursement_status='reversed' /
+  // current_balance=0 signals. Stamping the register here too (COALESCE-guarded, so a row already
+  // voided by some other path is never clobbered) closes the gap with zero new logic: no new route,
+  // no new UI, no change to WHEN/WHY this fires, just what it records when it does.
   await client.query(
     `
       UPDATE driver_finance.driver_advances
       SET disbursement_status = 'reversed',
+          voided_at = COALESCE(voided_at, now()),
+          void_reason = COALESCE(void_reason, $2),
+          voided_by_user_id = COALESCE(voided_by_user_id, $3::uuid),
           updated_at = now()
       WHERE id = $1
     `,
-    [input.advanceId]
+    [input.advanceId, input.reason, actorUserUuid]
   );
   if (input.liabilityId) {
     await client.query(
       `
         UPDATE driver_finance.driver_liabilities
         SET current_balance = 0,
-            paid_to_date = original_amount
+            paid_to_date = original_amount,
+            status = 'reversed',
+            voided_at = COALESCE(voided_at, now()),
+            void_reason = COALESCE(void_reason, $2),
+            voided_by_user_id = COALESCE(voided_by_user_id, $3::uuid)
         WHERE id = $1
       `,
-      [input.liabilityId]
+      [input.liabilityId, input.reason, actorUserUuid]
     );
     await client.query(
       `
