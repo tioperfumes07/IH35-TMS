@@ -20,6 +20,7 @@ const ACTIVE_SET_SERVICE = "apps/backend/src/integrations/samsara/active-driver-
 const ACTIVE_SET_QUERY = "apps/backend/src/integrations/samsara/active-driver-set/query.service.ts";
 const ACTIVE_SET_ROUTES = "apps/backend/src/integrations/samsara/active-driver-set/routes.ts";
 const UNITS_ROUTE = "apps/backend/src/mdata/units.routes.ts";
+const SAMSARA_POSITIONS = "apps/backend/src/integrations/samsara/samsara-positions.service.ts";
 const INGESTION_TENANTS = "apps/backend/src/integrations/samsara/ingestion-tenants.service.ts";
 const INGESTION_CRONS = [
   "apps/backend/src/cron/samsara-positions-cron.ts",
@@ -27,7 +28,7 @@ const INGESTION_CRONS = [
   "apps/backend/src/cron/samsara-hos-pull.cron.ts",
 ];
 
-function audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, ingestionSrc, cronSources) {
+function audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, positionsSrc, ingestionSrc, cronSources) {
   const f = [];
   if (!ruleExists) f.push(`${RULE_DOC}: RULE 49 hardline doc must exist (canonical active definition)`);
 
@@ -61,6 +62,10 @@ function audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, unitsS
     f.push(`${DRIVERS_ROUTE}: active driver list must bind only the resolved movement UUIDs`);
   if (!/status === "InService"[\s\S]*currently_leased_to_company_id = \$\$\{ociIdx\}::uuid[\s\S]*is_oos IS NOT TRUE/.test(unitsSrc))
     f.push(`${UNITS_ROUTE}: status=InService list requests must use canonical lease scope and exclude OOS units`);
+  if (!/INSERT INTO integrations\.samsara_drivers[\s\S]*ON CONFLICT \(operating_company_id, samsara_driver_id\) DO UPDATE[\s\S]*last_seen_at = GREATEST\(/.test(positionsSrc))
+    f.push(`${SAMSARA_POSITIONS}: observed current drivers must upsert entity-scoped monotonic last_seen_at`);
+  if (!/pairCurrentDriver\(client, operatingCompanyId, unitId, stat\.id, stat\.current_driver, stat\.captured_at\)/.test(positionsSrc))
+    f.push(`${SAMSARA_POSITIONS}: freshness must use the physical position capture time`);
 
   if (!ingestionSrc.includes(`USMCA_OPERATING_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80"`))
     f.push(`${INGESTION_TENANTS}: ingestion owner must be USMCA`);
@@ -83,9 +88,10 @@ function main() {
   const querySrc = readFileSync(ACTIVE_SET_QUERY, "utf8");
   const routesSrc = readFileSync(ACTIVE_SET_ROUTES, "utf8");
   const unitsSrc = readFileSync(UNITS_ROUTE, "utf8");
+  const positionsSrc = readFileSync(SAMSARA_POSITIONS, "utf8");
   const ingestionSrc = readFileSync(INGESTION_TENANTS, "utf8");
   const cronSources = INGESTION_CRONS.map((file) => readFileSync(file, "utf8"));
-  const failures = audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, ingestionSrc, cronSources);
+  const failures = audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, positionsSrc, ingestionSrc, cronSources);
   if (failures.length) {
     console.error("FAIL verify-active-entity-hardline:");
     for (const x of failures) console.error(`  - ${x}`);
@@ -94,10 +100,10 @@ function main() {
 
   if (selftest) {
     const m1 = driversSrc.replaceAll(`filters.push("is_sample_data IS NOT TRUE")`, `filters.push("1=1")`);
-    if (audit(m1, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, ingestionSrc, cronSources).length === 0) { console.error("SELFTEST FAIL: dropping is_sample_data filter did not trip"); process.exit(1); }
+    if (audit(m1, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, positionsSrc, ingestionSrc, cronSources).length === 0) { console.error("SELFTEST FAIL: dropping is_sample_data filter did not trip"); process.exit(1); }
     const m2 = driversSrc.replaceAll(`filters.push("deactivated_at IS NULL")`, `filters.push("1=1")`);
-    if (audit(m2, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, ingestionSrc, cronSources).length === 0) { console.error("SELFTEST FAIL: dropping deactivated filter did not trip"); process.exit(1); }
-    if (audit(driversSrc, false, activeSetSrc, querySrc, routesSrc, unitsSrc, ingestionSrc, cronSources).length === 0) { console.error("SELFTEST FAIL: missing rule doc did not trip"); process.exit(1); }
+    if (audit(m2, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, positionsSrc, ingestionSrc, cronSources).length === 0) { console.error("SELFTEST FAIL: dropping deactivated filter did not trip"); process.exit(1); }
+    if (audit(driversSrc, false, activeSetSrc, querySrc, routesSrc, unitsSrc, positionsSrc, ingestionSrc, cronSources).length === 0) { console.error("SELFTEST FAIL: missing rule doc did not trip"); process.exit(1); }
     const mutations = [
       activeSetSrc.replace("DEFAULT_THRESHOLD_DAYS = 15", "DEFAULT_THRESHOLD_DAYS = 7"),
       activeSetSrc.replace("JOIN telematics.vehicle_latest_position p", "JOIN integrations.samsara_drivers p"),
@@ -105,7 +111,7 @@ function main() {
       activeSetSrc.replace("p.captured_at >=", "p.captured_at <"),
     ];
     for (const mutation of mutations) {
-      if (audit(driversSrc, ruleExists, mutation, querySrc, routesSrc, unitsSrc, ingestionSrc, cronSources).length === 0) {
+      if (audit(driversSrc, ruleExists, mutation, querySrc, routesSrc, unitsSrc, positionsSrc, ingestionSrc, cronSources).length === 0) {
         console.error("SELFTEST FAIL: planted active-set mutation escaped");
         process.exit(1);
       }
@@ -114,19 +120,29 @@ function main() {
       driversSrc.replace("getActiveDrivers(client, scopedCompanyId, 15, 15)", "getActiveDrivers(client, scopedCompanyId, 7, 15)"),
       unitsSrc.replace("is_oos IS NOT TRUE", "is_oos IS TRUE"),
     ];
-    if (audit(listMutations[0], ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, ingestionSrc, cronSources).length === 0) {
+    if (audit(listMutations[0], ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, positionsSrc, ingestionSrc, cronSources).length === 0) {
       console.error("SELFTEST FAIL: planted active-driver list mutation escaped"); process.exit(1);
     }
-    if (audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, listMutations[1], ingestionSrc, cronSources).length === 0) {
+    if (audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, listMutations[1], positionsSrc, ingestionSrc, cronSources).length === 0) {
       console.error("SELFTEST FAIL: planted active-unit list mutation escaped"); process.exit(1);
     }
+    const freshnessMutations = [
+      positionsSrc.replace("last_seen_at = GREATEST(", "last_seen_at = EXCLUDED.last_seen_at + (") ,
+      positionsSrc.replace("stat.current_driver, stat.captured_at", "stat.current_driver, new Date().toISOString()"),
+    ];
+    for (const mutation of freshnessMutations) {
+      if (audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, mutation, ingestionSrc, cronSources).length === 0) {
+        console.error("SELFTEST FAIL: planted observed-driver freshness mutation escaped");
+        process.exit(1);
+      }
+    }
     const ingestionMutation = ingestionSrc.replace("usmca_cfg.is_enabled = true", "usmca_cfg.is_enabled = false");
-    if (audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, ingestionMutation, cronSources).length === 0) {
+    if (audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, positionsSrc, ingestionMutation, cronSources).length === 0) {
       console.error("SELFTEST FAIL: planted duplicate-ingestion mutation escaped"); process.exit(1);
     }
     const cronMutation = [...cronSources];
     cronMutation[0] = cronMutation[0].replace("listSamsaraIngestionTenantIds(client)", "[]");
-    if (audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, ingestionSrc, cronMutation).length === 0) {
+    if (audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, positionsSrc, ingestionSrc, cronMutation).length === 0) {
       console.error("SELFTEST FAIL: planted cron-consumer mutation escaped"); process.exit(1);
     }
     console.log("SELFTEST OK: guard trips on driver exclusions + 4 active-set mutations");

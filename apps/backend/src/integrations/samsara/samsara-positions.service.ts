@@ -216,6 +216,31 @@ async function resolveLocalDriverId(
   return row?.driver_id ?? null;
 }
 
+export async function touchObservedSamsaraDriver(
+  client: PgClient,
+  operatingCompanyId: string,
+  samsaraDriverId: string,
+  localDriverId: string,
+  observedAt: string
+): Promise<void> {
+  await client.query(
+    `
+      INSERT INTO integrations.samsara_drivers (
+        operating_company_id, samsara_driver_id, local_driver_id, raw_payload, last_seen_at
+      )
+      VALUES ($1::uuid, $2, $3::uuid, jsonb_build_object('id', $2::text), $4::timestamptz)
+      ON CONFLICT (operating_company_id, samsara_driver_id) DO UPDATE
+      SET local_driver_id = EXCLUDED.local_driver_id,
+          last_seen_at = GREATEST(
+            COALESCE(integrations.samsara_drivers.last_seen_at, '-infinity'::timestamptz),
+            EXCLUDED.last_seen_at
+          ),
+          updated_at = now()
+    `,
+    [operatingCompanyId, samsaraDriverId, localDriverId, observedAt]
+  );
+}
+
 // Make the current Samsara driver the unit's single OPEN assignment in telematics.vehicle_driver_assignments
 // (the table fleet-location-hos reads). End any stale open for the unit, then insert the current one.
 // Append-only/immutable trigger allows setting ended_at; reuses the deterministic samsara_assignment_id
@@ -225,10 +250,18 @@ async function pairCurrentDriver(
   operatingCompanyId: string,
   unitId: string,
   samsaraVehicleId: string,
-  current: NonNullable<SamsaraVehicleStat["current_driver"]>
+  current: NonNullable<SamsaraVehicleStat["current_driver"]>,
+  observedAt: string
 ): Promise<boolean> {
   const localDriverId = await resolveLocalDriverId(client, operatingCompanyId, current.samsara_driver_id);
   if (!localDriverId) return false;
+  await touchObservedSamsaraDriver(
+    client,
+    operatingCompanyId,
+    current.samsara_driver_id,
+    localDriverId,
+    observedAt
+  );
   const assignmentId = buildSamsaraAssignmentId(samsaraVehicleId, current.samsara_driver_id, current.started_at);
 
   // Close any other open assignment on this unit (driver handoff) — keeps exactly one open = current.
@@ -341,7 +374,7 @@ export async function syncSamsaraVehicleStats(
 
     if (stat.current_driver) {
       try {
-        if (await pairCurrentDriver(client, operatingCompanyId, unitId, stat.id, stat.current_driver)) {
+        if (await pairCurrentDriver(client, operatingCompanyId, unitId, stat.id, stat.current_driver, stat.captured_at)) {
           driversPaired += 1;
         }
       } catch (error) {
