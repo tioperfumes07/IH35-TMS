@@ -549,3 +549,19 @@ the class of repo-wide TS break the lead has fixed fast before (05:50Z entry, #2
 has zero part in it (confirmed: the tsc error list names only reports/** files, none of mine) and
 will merge itself the moment build-typecheck goes green again. Continuing other work
 (B.2 banking filters) in the meantime rather than idling on this PR. | GO
+
+CC-2 | STEP 5 of 8 DONE | 683dfe8277 (#20580) | live proof 16:13Z: post-merge forensic confirms
+scripts/verify-banking-toolbar-uniform-height.mjs + scripts/verify-steps/10383-*.mjs present on
+origin/main; `node scripts/verify-banking-toolbar-uniform-height.mjs` -> OK; `--selftest` -> OK.
+Banking toolbar: every control h-7 (28px, incl. "Money in/out" toggle); transaction TYPE filter is
+multi-select checkboxes/chips (was single-select); money_in/money_out/ready_to_post pushed
+server-side (new `types` param, GET /banking/plaid/company-transactions, OR'd bt.is_credit/
+bt.pending predicate) when every selected type is server-filterable, client UNION filter covers
+the rest exactly as before otherwise; date range (From/To) now renders inline, unconditionally.
+tsc -b clean both apps; banking vitest failures (3 files/6 tests) confirmed byte-identical with
+this diff fully reverted -- pre-existing, unrelated (BankReconciliation picker, MatchDrawer
+variance copy, and an overflow test that regexes ParityTable.tsx, a file this PR never touches).
+Also: PR #20574 (STEP 3/4 DONE + 2 real build-typecheck guard-rot fixes) and #20579
+(CLAIM-RESERVE 10383) both merged this pass once the Devin repo-wide build-typecheck outage
+cleared -- fast-merged same turn per FAST-MERGE-4MIN-LAW the instant `gh pr view --json
+mergeable,mergeStateStatus` showed clear. | NEXT 6 of 8 -- B.1 banking matcher | GO
