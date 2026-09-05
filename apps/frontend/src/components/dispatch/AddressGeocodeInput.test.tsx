@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AddressGeocodeInput } from "./AddressGeocodeInput";
 import { geocodeSearch } from "../../api/geocoding";
 
-vi.mock("../../hooks/useFeatureFlag", () => ({ useFeatureFlag: () => ({ enabled: true }) }));
 vi.mock("../../api/geocoding", () => ({ geocodeSearch: vi.fn() }));
 
 describe("AddressGeocodeInput geocode failure recovery", () => {

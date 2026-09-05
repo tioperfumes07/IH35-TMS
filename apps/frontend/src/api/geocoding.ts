@@ -1,7 +1,7 @@
 import { apiRequest } from "./client";
 
-// PC*MILER/Trimble geocoding — the frontend ONLY ever calls our own backend proxy; the Trimble API key is
-// server-side only and never reaches the browser.
+// Address geocoding — the frontend ONLY ever calls our own backend proxy, which chooses the provider
+// (Trimble/PC*MILER or Google). Provider API keys are server-side only and never reach the browser.
 export type GeocodeResult = {
   formatted: string;
   address_line1: string;
@@ -14,7 +14,7 @@ export type GeocodeResult = {
 };
 
 export function geocodeSearch(q: string) {
-  return apiRequest<{ enabled: boolean; results: GeocodeResult[]; cached?: boolean }>(
+  return apiRequest<{ enabled: boolean; provider?: "trimble" | "google"; results: GeocodeResult[]; cached?: boolean }>(
     `/api/v1/geocoding/search?q=${encodeURIComponent(q)}`
   );
 }
