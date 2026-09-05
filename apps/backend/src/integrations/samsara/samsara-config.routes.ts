@@ -17,6 +17,10 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+const rosterQuerySchema = companyQuerySchema.extend({
+  status: z.enum(["all", "active", "deactivated"]).default("active"),
+});
+
 const saveBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   api_token: z.string().min(1),
@@ -41,6 +45,41 @@ function normalizeOrgId(raw: string | null | undefined): string | null {
 }
 
 export async function registerSamsaraConfigRoutes(app: FastifyInstance) {
+  app.get("/api/v1/integrations/samsara/drivers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentOwner(req, reply);
+    if (!user) return;
+    const parsed = rosterQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    const { operating_company_id: oc, status } = parsed.data;
+    return withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
+      const values: unknown[] = [oc];
+      const activation = `lower(COALESCE(sd.raw_payload->>'driverActivationStatus', sd.raw_payload->>'driver_activation_status', 'active'))`;
+      const statusSql = status === "all" ? "" : `AND ${activation} = $2`;
+      if (status !== "all") values.push(status);
+      const result = await client.query(
+        `SELECT sd.id::text,
+                sd.samsara_driver_id,
+                sd.local_driver_id::text,
+                COALESCE(NULLIF(sd.raw_payload->>'name', ''),
+                         NULLIF(concat_ws(' ', sd.raw_payload->>'firstName', sd.raw_payload->>'lastName'), ''),
+                         'Unnamed Samsara driver') AS name,
+                ${activation} AS activation_status,
+                sd.last_seen_at::text,
+                CASE WHEN d.id IS NULL THEN NULL ELSE concat_ws(' ', d.first_name, d.last_name) END AS local_driver_name
+           FROM integrations.samsara_drivers sd
+           LEFT JOIN mdata.drivers d
+             ON d.id = sd.local_driver_id
+            AND d.operating_company_id = $1::uuid
+          WHERE sd.operating_company_id = $1::uuid
+            ${statusSql}
+          ORDER BY name ASC, sd.samsara_driver_id ASC`,
+        values
+      );
+      return { status, rows: result.rows, total: result.rows.length };
+    });
+  });
+
   app.get("/api/v1/integrations/samsara/config", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentOwner(req, reply);
     if (!user) return;

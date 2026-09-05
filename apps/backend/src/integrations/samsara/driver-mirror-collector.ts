@@ -146,11 +146,10 @@ export async function collectSamsaraDriverMirror(
       const res = await client.query<{ inserted: boolean }>(
         `
           INSERT INTO integrations.samsara_drivers (operating_company_id, samsara_driver_id, local_driver_id, raw_payload, last_seen_at)
-          VALUES ($1::uuid, $2, $3::uuid, $4::jsonb, now())
+          VALUES ($1::uuid, $2, $3::uuid, $4::jsonb, '-infinity'::timestamptz)
           ON CONFLICT (operating_company_id, samsara_driver_id) DO UPDATE
             SET raw_payload = EXCLUDED.raw_payload,
                 local_driver_id = COALESCE(integrations.samsara_drivers.local_driver_id, EXCLUDED.local_driver_id),
-                last_seen_at = now(),
                 updated_at = now()
           RETURNING (xmax = 0) AS inserted
         `,

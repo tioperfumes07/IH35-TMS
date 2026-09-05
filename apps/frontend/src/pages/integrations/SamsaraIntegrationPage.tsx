@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { disableSamsaraIntegration, getSamsaraOwnerConfig, saveSamsaraOwnerConfig } from "../../api/samsara";
+import { disableSamsaraIntegration, getSamsaraDriverRoster, getSamsaraOwnerConfig, saveSamsaraOwnerConfig, type SamsaraDriverRosterRow } from "../../api/samsara";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -15,12 +16,24 @@ export function SamsaraIntegrationPage() {
   const [apiToken, setApiToken] = useState("");
   const [webhookSecret, setWebhookSecret] = useState("");
   const [orgId, setOrgId] = useState("");
+  const [rosterStatus, setRosterStatus] = useState<"all" | "active" | "deactivated">("active");
 
   const configQuery = useQuery({
     queryKey: ["integrations", "samsara", "config", companyId],
     queryFn: () => getSamsaraOwnerConfig(companyId),
     enabled: Boolean(companyId),
   });
+  const rosterQuery = useQuery({
+    queryKey: ["integrations", "samsara", "drivers", companyId, rosterStatus],
+    queryFn: () => getSamsaraDriverRoster(companyId, rosterStatus),
+    enabled: Boolean(companyId),
+  });
+  const rosterColumns = useMemo<Array<ParityColumn<SamsaraDriverRosterRow>>>(() => [
+    { key: "name", label: "Samsara driver", sortable: true },
+    { key: "activation_status", label: "Status", sortable: true },
+    { key: "local_driver_name", label: "Linked driver", sortable: true, render: (row) => row.local_driver_name ?? "—" },
+    { key: "last_seen_at", label: "Last movement", sortable: true, render: (row) => row.last_seen_at ? new Date(row.last_seen_at).toLocaleString() : "—" },
+  ], []);
 
   const publicHealth = useMemo(() => {
     const d = configQuery.data;
@@ -94,7 +107,7 @@ export function SamsaraIntegrationPage() {
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-4">
+    <div className="mx-auto max-w-6xl space-y-4">
       <PageHeader title="Samsara" subtitle="Telematics integration (MVP foundation — API wired post-MVP)" />
 
       <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs text-slate-700">
@@ -195,6 +208,23 @@ export function SamsaraIntegrationPage() {
           </button>
         </div>
       </div>
+
+      <section className="rounded-sm border border-slate-200 bg-white p-4" data-testid="samsara-driver-roster">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-xs font-semibold text-slate-900">Samsara driver roster</h2>
+          <div className="flex gap-1" role="group" aria-label="Samsara driver status">
+            {(["active", "deactivated", "all"] as const).map((status) => (
+              <button key={status} type="button" data-testid={`samsara-roster-filter-${status}`} onClick={() => setRosterStatus(status)}
+                className={`h-7 rounded-sm border px-2 text-xs font-medium capitalize ${rosterStatus === status ? "border-slate-800 bg-slate-800 text-white" : "border-slate-300 bg-white text-slate-700"}`}>
+                {status}
+              </button>
+            ))}
+          </div>
+        </div>
+        {rosterQuery.isError ? <p className="text-xs text-red-700">Samsara roster could not be loaded.</p> : null}
+        <ParityTable columns={rosterColumns} rows={rosterQuery.data?.rows ?? []} rowKey={(row) => row.id}
+          loading={rosterQuery.isLoading} emptyText={`No ${rosterStatus} Samsara drivers`} storageKey="integrations:samsara:driver-roster" />
+      </section>
     </div>
   );
 }

@@ -12,6 +12,16 @@ export type SamsaraOwnerConfig = SamsaraPublicHealth & {
   samsara_org_id: string | null;
 };
 
+export type SamsaraDriverRosterRow = {
+  id: string;
+  samsara_driver_id: string;
+  local_driver_id: string | null;
+  name: string;
+  activation_status: "active" | "deactivated" | string;
+  last_seen_at: string | null;
+  local_driver_name: string | null;
+};
+
 function q(operatingCompanyId: string) {
   return `operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
 }
@@ -22,6 +32,12 @@ export async function getSamsaraHealth(operatingCompanyId: string): Promise<Sams
 
 export async function getSamsaraOwnerConfig(operatingCompanyId: string): Promise<SamsaraOwnerConfig> {
   return apiRequest<SamsaraOwnerConfig>(`/api/v1/integrations/samsara/config?${q(operatingCompanyId)}`);
+}
+
+export async function getSamsaraDriverRoster(operatingCompanyId: string, status: "all" | "active" | "deactivated") {
+  return apiRequest<{ status: string; rows: SamsaraDriverRosterRow[]; total: number }>(
+    `/api/v1/integrations/samsara/drivers?${q(operatingCompanyId)}&status=${status}`
+  );
 }
 
 export async function saveSamsaraOwnerConfig(body: {
