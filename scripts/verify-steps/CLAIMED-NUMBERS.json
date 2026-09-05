@@ -1,4 +1,9 @@
 {
+  "10407": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "cc-2",
+    "purpose": "verify-book-load-geofence-service-layer"
+  },
   "2426": {
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
