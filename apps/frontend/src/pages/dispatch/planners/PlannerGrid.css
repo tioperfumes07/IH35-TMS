@@ -5,7 +5,7 @@
   --grp-bg: var(--planner-grp-bg, #e4eaf1);
   --slate: #1f2a44;
   --mute: #6b7280;
-  --rule-day: var(--planner-th-border, #c7d2dc);
+  --rule-day: var(--planner-rule-day, #94a3b8);
   --rule-week: var(--planner-th-border, #c7d2dc);
   --rule-month: var(--planner-th-border, #c7d2dc);
   --row: var(--planner-th-border, #c7d2dc);
@@ -115,7 +115,7 @@
   flex: 0 0 var(--day);
   text-align: center;
   padding: 2px 0 3px;
-  border-left: 1px solid var(--th-border);
+  border-left: 1px solid var(--rule-day);
 }
 .planner-grid-canonical .pg-dh.wk {
   border-left: 1px solid var(--th-border);
