@@ -134,6 +134,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG
+- 12:45Z RESET: 7h silence from Cursor/CC-2/Codex/Cascade. Surrenders: L.4a/L.4c/L.4g → CC-2; Codex feed → CC-3; CC-1 feed surrenders to CC-3 at 14:30Z. Cursor keeps API deploy (0a9d3956, carries #20505 booking crash fix), L.0 + #20508 gate rot, L.4b, L.1d sticky. Live: loads 17, invoices 17, expenses 85, driver_bills 17, JEs 135. Full block at every INBOX top.
 - 05:50Z OWNER: deploys failing. FE build_failed x3 (TS6133 in LoadDetailCostsTab from #20486; gated with the wrong tsc). Lead fixed #20502 5155d48d, deploy dep-dadqbf1t0dsc73fl6hig. API is live 836f4478 (05:14Z). Cursor L.0 gate-parity row 06:15Z.
 - 05:30Z OWNER: additive-only law breached (#18231 Round Trips → PlannerGrid; #20242 hid 24 columns; both Cursor). Restoration = L.4a/L.4c; new L.4g additive-only guard 07:00Z; LAW.md amended; all six INBOXes notified.
 - 05:20Z OWNER posted Dispatch Board Preview PDF → docs/design/reference + DESIGN-CONTRACT-DISPATCH-BOARD. L.4 split L.4a/b/c (06:30/07:15/08:00Z).
