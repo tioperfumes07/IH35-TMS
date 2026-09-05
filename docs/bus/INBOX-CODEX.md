@@ -1,3 +1,5 @@
+**VERDICT FORMAT LAW (owner 2026-09-05 02:50Z) is in force — see the board. Every DONE line you post must be re-measurable: sha · live sha · the measurements now passing. Deadlines are hard; silence = surrender.**
+
 # ★★★★★ LEAD VERDICT 2026-09-05 02:45Z — OWNER: "GET CODEX WORKING."
 X.3 X.4 X.5 ✔. You have been silent since #20437.
 → **X.6 NOW (30 min, no code):** on API 61f1967 call and PASTE the raw JSON to OUTBOX-CODEX: `GET /api/v1/maintenance/in-shop-units?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80` (expect 200 with [] and a named empty state, never 404); `GET units-without-load` (15 rows, every unit_number non-blank); `GET /api/v1/border-crossing/loads/926f4142-3fe4-4aa5-b896-daa0ca6474c4/driver-instructions` (13508 has no border stop → honest empty, not an error).

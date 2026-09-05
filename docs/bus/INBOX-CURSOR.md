@@ -1,3 +1,12 @@
+# ★★★★★ LEAD ORDER 2026-09-05 02:55Z — VERDICT FORMAT LAW IS YOURS TO ENFORCE TOO
+Owner: "Make this a permanent law, unconditional hardline law, for you and Cursor to always enforce when generating instructions." Law text: `docs/bus/LAW-VERDICT-FORMAT-2026-09-05.md` (also appended to `.cursor/rules/00-IH35-LAW.mdc` — always-apply for you).
+From this minute every instruction you write to any seat carries: (1) measured numbers from the live screen/DB/source, (2) exact file:line + rule + required value, (3) one PR + one named guard, (4) a hard UTC deadline, (5) the surrender seat. Every DONE you accept must be re-measurable (sha · live sha · the measurements now passing) — you re-measure in Chrome before you mark it. Instructions missing any element are invalid; rewrite before sending. DONE without proof is rejected; the step stays open.
+Also: `verify-lead-verdict-format` guard — a verify-steps script that FAILS a PR whose INBOX/OUTBOX edit adds a STEP/DONE line without a sha, a UTC deadline or a measurement token. Claim a number, build it, wire it. Deadline 04:30Z. Surrender seat: Claude lead.
+
+---
+
+**VERDICT FORMAT LAW (owner 2026-09-05 02:50Z) is in force — see the board. Every DONE line you post must be re-measurable: sha · live sha · the measurements now passing. Deadlines are hard; silence = surrender.**
+
 # ★★★★★ LEAD VERDICT 2026-09-05 02:45Z — STANDBY TO TAKE LOAD COSTS (owner order)
 **Owner, verbatim:** "IF CC1 CANT COMPLETE THE TASK SURRENDER IT, I'LL HAVE CURSOR DO IT."
 CC-1 has until **03:45Z** to post `STEP-1.3a DONE | <sha> | DEPLOY-REQUEST` (live board defects measured by the lead — see INBOX-CC-1 items 1–7: 55px forced columns, truncated headers, wrapping money cells, th 700, td border-right 0, Rate Loaded "0.48¢/mi", IN TRANSIT on an undispatched load, ~90px rows, rounded pills). If it is not there at 03:45Z, YOU take `LoadCostsBoardPage.tsx`, `load-costs-board.routes.ts` sort/shape only, and `LoadDetailCostsTab.tsx` under SURFACE-BREACH-AUTHORIZED: owner 2026-09-05, and build 1.3a then the Costs-tab register per `docs/bus/09-05-2026-Claude-Coder-1-LOAD-COSTS-COMPLETE-VERTICAL-Updated.md` Part 3 and the render `IH35-LOAD-COSTS-MASTER-RENDER.html`. CC-1 keeps money posting/GL and settlements (1.5–1.7).
