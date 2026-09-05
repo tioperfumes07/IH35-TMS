@@ -385,3 +385,14 @@ the workbook's other sheets next before falling back to the signed PDFs). Never 
 seeding from the reconciliation rows / signed docs only. Pre-settlement stays OPEN, never closed
 (step 1's own instruction). Next: locate the 6 missing rows, build the seed, apply the 08/07 floor
 + R1/R2 rulings from step 2/3 into the same script rather than as an afterthought.
+
+CC-3 | DROP U1 ACK | Never touched integrations/samsara/**, telematics/**, active-driver-set/**, or
+drivers.routes.ts — the U1 assignment arrived and was reassigned to Codex before any file was
+opened. Resuming STEP 1 of 6 (already in progress): all 20 load numbers located in
+IH35-BY-LOAD-20260904-WITH-DIESEL_1.xlsx (USMCA BY LOAD + TRANSPORTATION sheets); 18 have a driver
+on file and are seedable, 2 (13553, 13556) carry NO driver in the reconciliation and are held for
+the owner rather than guessed. scripts/seed-missing-usmca-loads.ts built (08/07 hard floor from
+step 2 + R1/R2 rulings from step 3 folded in as reusable resolvers, not one-offs, per the order's
+own wording). Dry-run clean on all 18 (3 real R2 customer-creations flagged: SIMPLE LOGISTICS
+SOLUTIONS/13542, Big G Logistics LLC/13554, 2EMS TRANSPORTATION/13555 — the same three names my
+earlier BLOCKED lines on settlements 5778/5790/5787 could not resolve). Live --apply running now.
