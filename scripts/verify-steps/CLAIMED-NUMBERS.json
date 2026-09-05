@@ -7508,5 +7508,10 @@
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-04",
     "purpose": "verify-load-costs-on-time-requires-appointment (spec \u00a75.5 / \u00a72.2). Asserts the fourth serviceStatus() branch exists (delivered with no scheduled appointment renders 'Delivered \u2014 no appointment on file', never 'On Time')."
+  },
+  "10361": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-04",
+    "purpose": "verify-coa-role-values-registered-in-check-constraint. Prevents the detention_pay_expense-class drift found 2026-09-04 (a role admitted into resolver.service.ts's COA_ROLE_VALUES/CoaRole union but never widened into the live accounting.chart_of_accounts_roles_role_check DB CHECK constraint, so designating it would fail INSERT even though the TS type accepts it). Asserts every value in COA_ROLE_VALUES appears in the highest-numbered db/migrations/*.sql file that widens chart_of_accounts_roles_role_check."
   }
 }
