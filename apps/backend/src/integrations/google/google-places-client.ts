@@ -45,6 +45,17 @@ export type AddressResult = {
   lat: number | null;
   lon: number | null;
   name?: string;
+  /** Address descriptor landmarks from Place Details (New) when Google returns them — e.g. "Love's Travel Stop (across the road, 120 m)". */
+  landmarks?: string[];
+};
+
+/** One Autocomplete (New) prediction. `placeId` resolves through placeDetails(). */
+export type AddressSuggestion = {
+  placeId: string;
+  text: string;
+  mainText: string;
+  secondaryText: string;
+  types: string[];
 };
 
 type GoogleAddressComponent = { long_name: string; short_name: string; types: string[] };
@@ -98,6 +109,112 @@ type PlacesNewPlace = {
 const PLACES_FIELD_MASK =
   "places.id,places.displayName,places.formattedAddress,places.addressComponents,places.location,places.types";
 
+// Rectangle covering the continental US + Mexico (our lanes). Bias only — never a hard filter.
+const US_MX_BIAS = {
+  rectangle: {
+    low: { latitude: 14.0, longitude: -125.0 },
+    high: { latitude: 49.5, longitude: -66.0 },
+  },
+};
+
+type PlacesNewPrediction = {
+  placePrediction?: {
+    placeId?: string;
+    text?: { text?: string };
+    structuredFormat?: { mainText?: { text?: string }; secondaryText?: { text?: string } };
+    types?: string[];
+  };
+};
+
+/** Places Autocomplete (New) — per-keystroke predictions. `sessionToken` groups the keystrokes and the
+ *  following placeDetails() call into ONE billable session (Google's documented pattern). */
+export async function autocomplete(input: string, sessionToken: string, maxResults = 6): Promise<AddressSuggestion[]> {
+  const cfg = loadConfig();
+  if (!cfg) throw new Error("google_places_not_configured");
+  const res = await fetch("https://places.googleapis.com/v1/places:autocomplete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Goog-Api-Key": cfg.apiKey },
+    body: JSON.stringify({
+      input,
+      sessionToken,
+      languageCode: "en",
+      includedRegionCodes: ["us", "mx"],
+      includeQueryPredictions: false,
+      locationBias: US_MX_BIAS,
+    }),
+  });
+  if (!res.ok) throw new Error(`google_places_autocomplete_http_${res.status}`);
+  const data = (await res.json()) as { suggestions?: PlacesNewPrediction[] };
+  const out: AddressSuggestion[] = [];
+  for (const s of data.suggestions ?? []) {
+    const pp = s.placePrediction;
+    if (!pp?.placeId) continue;
+    out.push({
+      placeId: pp.placeId,
+      text: pp.text?.text ?? "",
+      mainText: pp.structuredFormat?.mainText?.text ?? pp.text?.text ?? "",
+      secondaryText: pp.structuredFormat?.secondaryText?.text ?? "",
+      types: pp.types ?? [],
+    });
+    if (out.length >= maxResults) break;
+  }
+  return out;
+}
+
+type PlacesNewDescriptor = {
+  landmarks?: Array<{
+    displayName?: { text?: string };
+    straightLineDistanceMeters?: number;
+    spatialRelationship?: string;
+  }>;
+};
+
+function landmarksOf(d: PlacesNewDescriptor | undefined): string[] | undefined {
+  const rows = (d?.landmarks ?? [])
+    .map((l) => {
+      const n = l.displayName?.text?.trim();
+      if (!n) return "";
+      const rel = (l.spatialRelationship ?? "").toLowerCase().replace(/_/g, " ");
+      const dist = typeof l.straightLineDistanceMeters === "number" ? `${Math.round(l.straightLineDistanceMeters)} m` : "";
+      const tail = [rel && rel !== "near" ? rel : "", dist].filter(Boolean).join(", ");
+      return tail ? `${n} (${tail})` : n;
+    })
+    .filter(Boolean)
+    .slice(0, 5);
+  return rows.length ? rows : undefined;
+}
+
+/** Place Details (New) for one prediction — the "address selection" step. Same sessionToken as the
+ *  autocomplete calls closes the session. Field mask kept to address fields + addressDescriptor
+ *  (landmarks for driver instructions); never photos/reviews/hours. */
+export async function placeDetails(placeId: string, sessionToken?: string): Promise<AddressResult | null> {
+  const cfg = loadConfig();
+  if (!cfg) throw new Error("google_places_not_configured");
+  const qs = sessionToken ? `?sessionToken=${encodeURIComponent(sessionToken)}` : "";
+  const res = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}${qs}`, {
+    headers: {
+      "X-Goog-Api-Key": cfg.apiKey,
+      "X-Goog-FieldMask": "id,displayName,formattedAddress,addressComponents,location,types,addressDescriptor",
+    },
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`google_places_details_http_${res.status}`);
+  const pl = (await res.json()) as PlacesNewPlace & { addressDescriptor?: PlacesNewDescriptor };
+  const comps: GoogleAddressComponent[] = (pl.addressComponents ?? []).map((c) => ({
+    long_name: c.longText ?? "",
+    short_name: c.shortText ?? c.longText ?? "",
+    types: c.types ?? [],
+  }));
+  const lat = typeof pl.location?.latitude === "number" ? pl.location.latitude : null;
+  const lon = typeof pl.location?.longitude === "number" ? pl.location.longitude : null;
+  const name = pl.displayName?.text?.trim();
+  const formatted = pl.formattedAddress ?? "";
+  const keepName = name && formatted && !formatted.toLowerCase().startsWith(name.toLowerCase()) ? name : undefined;
+  const r = fromComponents(comps, formatted, lat, lon, keepName);
+  const lm = landmarksOf(pl.addressDescriptor);
+  return lm ? { ...r, landmarks: lm } : r;
+}
+
 async function textSearch(query: string, maxResults: number, apiKey: string): Promise<AddressResult[]> {
   const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
@@ -110,13 +227,7 @@ async function textSearch(query: string, maxResults: number, apiKey: string): Pr
       textQuery: query,
       pageSize: Math.min(Math.max(maxResults, 1), 20),
       languageCode: "en",
-      // Rectangle covering the continental US + Mexico. Bias only (never a filter).
-      locationBias: {
-        rectangle: {
-          low: { latitude: 14.0, longitude: -125.0 },
-          high: { latitude: 49.5, longitude: -66.0 },
-        },
-      },
+      locationBias: US_MX_BIAS,
     }),
   });
   if (!res.ok) throw new Error(`google_places_text_http_${res.status}`);
