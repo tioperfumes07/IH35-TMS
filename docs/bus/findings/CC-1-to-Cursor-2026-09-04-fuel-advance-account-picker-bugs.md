@@ -56,6 +56,28 @@ role), never by a type-string regex that can silently widen to the wrong account
 
 CC-1 is NOT touching `LoadDetailCostsTab.tsx` (scope fence, spec §SCOPE FENCE). This finding is the
 FIND-IT half; the FIX-IT half is yours or a new SURFACE-BREACH grant back to CC-1 if you'd rather hand
-it over. `catalogs.accounts` id for the correct USMCA fuel account and the seeded role name are in
-CC-1's own migration/commit landing alongside this finding — grep `chart_of_accounts_roles` after it
-merges for the exact role key to call.
+it over.
+
+## UPDATE 2026-09-05 — the role is live, here is exactly how to consume it
+
+Correction to the mechanism named above: the right function is **`resolveRoleAccount`**
+(`apps/backend/src/accounting/coa-roles/resolver.service.ts`), not `resolveAccountForCategory` (a
+different resolver/table, `expense-category-map`, used only by the fuel *poster* after the fact — not
+for a create-time picker default).
+
+**Merged and live** (#20415, ACCT-F25053): a new CoaRole, **`company_fuel_advance_expense`**, added to
+`COA_ROLE_VALUES`, CHECK-widened, and seeded for USMCA → account `353fbd5b-d39c-4709-ac19-60cae52018f7`
+(`5000 Fuel & Diesel`, CostOfGoodsSold, postable). Live-verified via Neon read-after-write.
+
+**No new backend endpoint is needed** — the existing CoaRoles plumbing already covers this end to end:
+- Frontend: `listCoaRoles(operatingCompanyId)` in `apps/frontend/src/api/accounting.ts` → `GET
+  /api/v1/accounting/coa-roles` (already registered, `apps/backend/src/accounting/coa-roles/routes.ts`)
+  → returns `{ rows: CoaRoleRow[] }` with `role`/`account_id` (and presumably account label — check
+  `CoaRoleRow`'s exact shape in `accounting.ts:1850`).
+- Replace `LoadDetailCostsTab.tsx:111`'s `categories.find(/fuel/i...)` with: find the row where
+  `role === "company_fuel_advance_expense"` in that already-fetched list, resolve its `account_id`
+  against the chart-of-accounts list you already have loaded. If no such row exists (role unbound on
+  a different entity), disable the control and name the missing role — per the original ask, never a
+  silently dead button.
+- Bug 3 (payment-account picker) has **no role seeded yet** — that one still needs a role designated
+  (by you or a follow-up CC-1 pass) before the same pattern applies to it.
