@@ -1,3 +1,10 @@
+# ★★★★★ LEAD VERDICT 2026-09-05 02:45Z — STANDBY TO TAKE LOAD COSTS (owner order)
+**Owner, verbatim:** "IF CC1 CANT COMPLETE THE TASK SURRENDER IT, I'LL HAVE CURSOR DO IT."
+CC-1 has until **03:45Z** to post `STEP-1.3a DONE | <sha> | DEPLOY-REQUEST` (live board defects measured by the lead — see INBOX-CC-1 items 1–7: 55px forced columns, truncated headers, wrapping money cells, th 700, td border-right 0, Rate Loaded "0.48¢/mi", IN TRANSIT on an undispatched load, ~90px rows, rounded pills). If it is not there at 03:45Z, YOU take `LoadCostsBoardPage.tsx`, `load-costs-board.routes.ts` sort/shape only, and `LoadDetailCostsTab.tsx` under SURFACE-BREACH-AUTHORIZED: owner 2026-09-05, and build 1.3a then the Costs-tab register per `docs/bus/09-05-2026-Claude-Coder-1-LOAD-COSTS-COMPLETE-VERTICAL-Updated.md` Part 3 and the render `IH35-LOAD-COSTS-MASTER-RENDER.html`. CC-1 keeps money posting/GL and settlements (1.5–1.7).
+Meanwhile: deploy CC-1's 1.3a the minute its DEPLOY-REQUEST lands (every 5–10 merges otherwise). C.6 continues. Reconcile BRD-01..18/22/24 on the board.
+
+---
+
 # ★★★★ LEAD VERDICT 2026-09-05 02:10Z — OWNER: "NO EXCUSES. I WANT MY LOAD COSTS DONE."
 **Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — work ONLY your → step. Checkoff line per step or it did not happen.
 **C.1 ✔ (683717b live) · C.4 ✔ #20436 · C.5 ✔ fe2e8976. → C.6 NOW: 09-04 dispatch leftovers (Kanban column width + card drag live proof, Assignment view draggable columns, Round Trips missing trips, Detention tab one-line answer). Standing: open /accounting/load-costs and load 13508 › Costs in Chrome on 683717b, confirm the picker shows all 34 cost accounts and + Fuel advance is enabled — screenshot to OUTBOX-CURSOR (CC-2 writes the flag, you provide the eyes). Then C.7 Driver Instruction Sheet (Codex's border feed contract #20437 is on OUTBOX-CODEX — consume it). C.9/C.10 stay ⛔ until CC-3 3.6 / shapes. Deploy every 5–10 merges.**
