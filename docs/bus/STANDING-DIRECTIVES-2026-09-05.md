@@ -28,7 +28,7 @@
 ## §CC-3 — Settlements + Escrow + Driver Profile + Seed
 1. **DP3 — Audit History scoped to driver** *(ACTIVE, in progress)*. Driver profile audit tab shows only that driver's audit rows, both-way linked. **20:45Z.**
 2. **M.3 — company-settlements backend**: service + read model + 5784 waterfall + `GET /company-settlements[/:id]` + human-confirmed close via journal-entries.service (shapes → Cursor L6).
-3. **ACCT-SETL-DEDUCTION-VOID-DESIGN** (ruled): build **pending → cancel+register (no GL)** and **partial → stop future collection on the uncollected remainder only, preserve collected history (WORM), NO auto-refund**; **applied → BLOCK the plain void, require an explicit reversing entry.** The refund-vs-stop-collection policy on partial/applied is flagged to the owner — build the non-refund path now.
+3. **ACCT-SETL-DEDUCTION-VOID-DESIGN — RULED (owner: asked-and-answered, 2026-09-05 19:44Z — "why would I forgive the debt"):** a voided deduction is a **reversal that returns the amount to the driver's outstanding DEBT/liability balance** (carried forward, collected in a later settlement). **NEVER forgive, NEVER refund the driver, NEVER write off.** A void only changes WHEN/HOW the amount is collected, never WHETHER. WORM register on every void. So: any status (pending/partial/applied) → reverse the line, the uncollected amount goes back onto the debt ledger to re-collect next period; any already-collected portion stays correctly applied (it really did pay down the debt). No refund action, no forgiveness path exists. Guard asserts the driver's total outstanding debt is unchanged by a void (only its scheduling moves).
 4. **Seed** — finish USMCA loads via SCRIPT through service fns (pickup ≥ 2026-08-07, `is_sample_data=false`, NEVER manual, never close pre-settlements). **13525 BLOCKED on owner USMCA/Transportation call — do not seed until ruled.**
 5. **D.1–D.4** driver deductions / escrow / earnings on the driver profile.
 6. **L.6 company settlements FE** (after M.3 + Cursor L6 shapes).
@@ -50,6 +50,6 @@
 - **Builder:** **L5 driver settlement detail** section tables to the §14 reference (slice 2 blocked on CC-1 S.1b — build FE scaffolding ready to bind; KPI grid slice-1 done #20660). Banking overflow only when the bus is green and a Cursor-lane FAIL is top.
 
 ---
-### OWNER DECISIONS
-1. **Load 13525** — ✅ RULED USMCA by Cursor-lead (owner delegated; reconciler's call). Pickup 2026-08-07 = cutover floor, customer Refrigerx Transportation LLC, already in the seed data. CC-3 seeds via script. NO LONGER BLOCKED.
-2. **Deduction refund policy** — awaiting owner (explanation given 19:40Z): on a voided deduction that already collected money, does the company **refund** the collected amount to the driver, or only **stop future collection**? Default CC-3 builds now = stop-future-collection + preserve collected history (WORM); refund is a separate explicit action pending this ruling.
+### OWNER DECISIONS — BOTH CLOSED
+1. **Load 13525** — ✅ RULED USMCA by Cursor-lead (owner delegated; reconciler's call). Pickup 2026-08-07 = cutover floor, customer Refrigerx Transportation LLC, already in the seed data. CC-3 seeds via script.
+2. **Deduction void** — ✅ ASKED-AND-ANSWERED (owner 19:44Z): the debt is NEVER forgiven or refunded. A void = reversal; the amount returns to the driver's outstanding debt and is collected in a later settlement. No refund path. (My earlier "refund vs stop-collection" framing was wrong — retracted.)
