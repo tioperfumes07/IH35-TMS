@@ -132,11 +132,13 @@ export async function ensureDriverVendor(
   // drivers, and an un-savepointed unique violation aborts it so every later driver fails 25P02.
   // Only 23505 is absorbed — anything else is re-thrown so the caller fails loudly.
   //
-  // vendor_type 'Other' and the default source_system/eligible_1099 match all 63 driver payees that
-  // already exist on prod. Convention is followed, not invented. (`eligible_1099 = false` on every
-  // one of them contradicts the locked 1099 driver model — that is a real question, but it is a tax
-  // classification on existing financial rows, so it is BOARDED for the money lane, not flipped by
-  // a mechanical create-path fix.)
+  // SEED/DRIVERS-ARE-VENDORS (owner order, corrects the note this comment used to carry): the prior
+  // "vendor_type 'Other' ... convention is followed, not invented" reasoning was itself the defect
+  // — it perpetuated a mistype rather than fixing it, so every driver payee minted through this path
+  // (and the ~97 that pre-date it) is invisible to any vendor_type='Driver' filter (settlement pay
+  // posting, Purchases YTD, statements). 'Driver' is the correct type for a payee whose `driver_id`
+  // is set; a same-shaped repair script re-typed the ~97 pre-existing rows in the same PR that
+  // changed this constant, so this create path and the backfilled history agree going forward.
   await client.query("SAVEPOINT ensure_driver_vendor");
   try {
     await client.query(
@@ -145,7 +147,7 @@ export async function ensureDriverVendor(
           vendor_name, vendor_code, vendor_type, phone, email, driver_id,
           operating_company_id, created_by_user_id, updated_by_user_id, is_sample_data
         )
-        VALUES ($1, $2, 'Other', $3, $4, $7::uuid, $5::uuid, $6::uuid, $6::uuid, $8)
+        VALUES ($1, $2, 'Driver', $3, $4, $7::uuid, $5::uuid, $6::uuid, $6::uuid, $8)
       `,
       [
         displayName,
