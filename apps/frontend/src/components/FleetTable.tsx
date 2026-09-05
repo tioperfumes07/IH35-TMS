@@ -1,3 +1,4 @@
+import { colors, typography } from "../design/tokens";
 import { humanizeEnumLabel } from "../lib/humanizeEnumLabel";
 import { entityLabel } from "../lib/entity-label";
 import { userFacingApiError } from "../lib/api-error-message";
@@ -675,9 +676,23 @@ export function FleetTable({
         {(selectCtx) => (
           <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="w-full table-fixed text-left text-xs">
-              <thead className="bg-gray-50 text-[11px] uppercase text-gray-600">
+              {/* FLEET-TABLE-DESIGN-PARITY-01 (Codex X.7): the header row must match ParityTable's
+                  design-contract tokens everywhere, not just on the columns TableHeaderCell renders.
+                  The checkbox + Edit header cells previously fell back to Tailwind bg-gray-50/text-gray-600
+                  (no weight set), a visibly different shade/weight than the token-driven cells beside them. */}
+              <thead>
                 <tr>
-                  <th className="w-8 px-2 py-1">
+                  <th
+                    className="w-8 px-2 py-1 text-left"
+                    style={{
+                      backgroundColor: colors.tableHeaderBg,
+                      color: colors.tableHeaderText,
+                      fontSize: typography.panelHeader,
+                      fontWeight: 700,
+                      letterSpacing: typography.tightUpper,
+                      textTransform: "uppercase",
+                    }}
+                  >
                     <TableSelectionHeader
                       selectedIds={selection.selectedIds}
                       pageRowIds={pageRowIds}
@@ -703,14 +718,27 @@ export function FleetTable({
                       dragOver={dragOverId === c.key}
                     />
                   ))}
-                  <th className="w-14 px-2 py-1">Edit</th>
+                  <th
+                    className="w-14 px-2 py-1 text-left"
+                    style={{
+                      backgroundColor: colors.tableHeaderBg,
+                      color: colors.tableHeaderText,
+                      fontSize: typography.panelHeader,
+                      fontWeight: 700,
+                      letterSpacing: typography.tightUpper,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Edit
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {pageRows.map((row) => (
                   <tr
                     key={row.id}
-                    className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
+                    className="cursor-pointer hover:bg-gray-50"
+                    style={{ borderTop: `1px solid ${colors.tableBodyRule}` }}
                     onClick={() => navigate(fleetProfilePath(row))}
                   >
                     <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
