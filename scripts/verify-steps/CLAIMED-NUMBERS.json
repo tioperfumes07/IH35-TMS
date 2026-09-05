@@ -5597,6 +5597,11 @@
     "claimed_by": "cc-2",
     "purpose": "verify-dispatch-trip-pairing-in-board-view-row (owner 2026-09-04, DISPATCH item #2; fixed + wired 2026-09-05 after L.4a discovered it pre-existing broken and unwired). Corrects 10395's own mistaken premise: Trip Pairing IS a deliberate, owner-authorized peer in the board-view row alongside Kanban/List/Round Trips (additive to, not a duplicate of, DispatchSubnav's separate Trip Pairing nav item) -- restored after being wrongly removed, guard's stale <Button>-tag assumption updated to match the real .map()-array structure, and finally wired (it shipped unwired by its own design note pending a Rule-37 claim)."
   },
+  "10403": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "cc-2",
+    "purpose": "verify-planner-grid-sortable-frozen-columns (owner order 2026-09-05, item 3 'Planners lists: server-paginated + sortable + landing filter + export'). Landing filter + export were already shipped (verify-planners-lists-parity.mjs); this covers sortable: PlannerGrid's shared Name/Status frozen-column headers are now click-to-sort, and Driver/Truck/Loads planners all supply plain-text sortKey/statusSortKey. server-paginated deliberately not attempted -- coordination note filed to Cascade on the architecture mismatch (a calendar/timeline grid needs the full roster on screen per visible date range, not a paginated page of it)."
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
