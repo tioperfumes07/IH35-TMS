@@ -700,3 +700,29 @@ improved 1287->1284 from an unrelated fix, not banked), `verify-roundtrips-timel
 `verify-round-trips-deep-link-timeline-and-empty-copy` both PASS (988fdb73). Full re-assigned
 sequence (L.4a -> 2.2 -> L.4c) closed. | NEXT=the 9-item pre-existing dispatch guard backlog filed
 above, or awaiting next assignment | GO
+
+CC-2 | L.4a LIVE CHROME PROOF 18:26Z (app.ih35dispatch.com/dispatch/loads?view=list, USMCA, live
+FE just deployed) | getComputedStyle/DOM proof, not screenshots-only:
+- OWNER-REMOVE: header scan of all 81 leaf `<th>` on the List board finds ZERO "Commodity",
+  "Linehaul", or "Pre-settlement" leaf columns, and "Status" appears exactly 3 times = the 3
+  section GROUP headers (Awaiting/Booked/In-shop), zero leaf Status instances. Opened the gear
+  (`[data-testid="dispatch-board-column-chooser"]`, confirmed present at 32x28px) -> all four
+  (Commodity/Linehaul/Status/Pre-settlement) checkboxes present and UNCHECKED, distinct
+  "Driver Status"/"Status signal" untouched and still checked. Toggled Commodity's checkbox live
+  -> checked flips true (chooser is live-wired, not decorative).
+- Truncation: 0 of 81 leaf `<th>` have `scrollWidth > clientWidth`; `table` computed
+  `table-layout: auto`. Zero truncation, live-measured.
+- 1px frame: `[data-testid="dispatch-board-section-table-booked"]` computed
+  `border: 1px solid rgb(199, 210, 220)` = exactly #C7D2DC.
+While there, also live-verified L.4c (Round Trips Timeline, /dispatch/loads?view=units, Timeline
+toggle): day-header grid AUG-23..SEPT-05 rendered; trip block computed backgroundColor sampled at
+rgb(31,42,68)=#1f2a44 (NB), rgb(180,83,9)=#b45309 (TR), rgb(71,85,105)=#475569 (SB) -- all three
+exact; page text contains "Northbound"/"Triangulation"/"Southbound" (legend) and a 7+-day leg
+warning string; exactly 1 element renders the long-leg outline color rgb(220,38,38)=#dc2626 with
+a non-none outline style. L.4c fully live-confirmed, matches the static guard proof already on
+record (988fdb73) -- no code change needed.
+2.2 design tokens: static guard proof already on record this session (verify-table-design-contract
+PASS, verify-ui-design-system-ratchet PASS) -- not re-walked live this pass since L.4a/L.4c
+consumed the live-check budget; will spot-check on the Load Costs board if asked specifically.
+| NEXT=Planners lists (server-paginated + sortable + landing filter + export, coordinate w/
+Cascade) | GO
