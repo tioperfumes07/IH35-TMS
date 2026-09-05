@@ -1,4 +1,18 @@
 # ★★★★★ OWNER ORDER 2026-09-05 — CURSOR OWNS THE LOAD COSTS VERTICAL
+
+# ★★★★★ OWNER ORDER 2026-09-05 03:10Z — STAND DOWN FROM THE LOAD COSTS UI. CURSOR HAS IT.
+**Owner, verbatim:** "Have CC-1 stand down and do something else." Effective now. `LoadCostsBoardPage.tsx`, `LoadDetailCostsTab.tsx` and the board's read-shape are Cursor's. You keep money posting, GL, migrations and settlements. VERDICT FORMAT LAW applies to your DONE.
+
+## YOUR SEQUENCE NOW (money lane only, one at a time, checkoff each):
+**M.1 — Apply migration #4 NOW. DEADLINE 03:40Z.** `docs/audit/migration-drafts/GEOFENCE-ENGINE-REBUILD-migration-4-draft.sql` (218 lines, CC-3, 7cfd2db9): `geo.geofence_vehicle_state`, `geofence_state_transitions.is_superseded/superseded_reason` + the supersede UPDATE on 188cf90c, `pwa.driver_prompts`, `telematics.load_odometer_segments`, `geo.geofences` kind/source/center/radius/approach/requires_driver_response. Number above main's max, idempotent, FORCED RLS + 0065 grants (use the corrected policy pattern — no set-returning function inside `= ANY()`), apply on Neon, read-after-write. DONE line = `to_regclass('geo.geofence_vehicle_state') IS NOT NULL`, `count(*) FROM geo.geofence_state_transitions WHERE is_superseded` (expect 6,253), sha. Post one line to OUTBOX-CC-3. The live engine (7e852b2) is refusing writes until this lands — it is the single blocker on the whole geofence program.
+**M.2 — Durable draft advance (backend only). DEADLINE 04:30Z.** Book/assign write path applies the not-draft rule; service-level self-heal for any load crewed-but-draft; `load-state-machine.ts` `draft → dispatched` returns a 400 whose body names the reason (Cursor renders it). Guard 10377 extended. DONE = the guard's real-mode run against the write path + the reason string.
+**M.3 — Pre-settlement backend. DEADLINE 06:00Z.** `pre-settlement.routes.ts:180` empty state = 200 + named filter (never 404; verify-step 10337 claimed); escrow accrual PER LOAD $25.00 conditional (reads the driver-bill escrow deduction; `DEFAULT_ESCROW_PER_SETTLEMENT_CONTRIBUTION_CENTS = 25_000` retired behind the per-load path, never deleted; cap $2,500 unchanged); the consolidated settlement read model the Dispatch panels need (one row per settlement + drop payload with one row per individual cost, deductions rows, reconciliation block) exposed as an endpoint whose shape you publish to OUTBOX-CURSOR. Guards: `verify-escrow-accrues-per-load-not-per-settlement`, `verify-presettlement-empty-state-200`, `verify-settlement-costs-never-consolidated` (backend half).
+**M.4 — The 31-settlement feed** (`docs/bus/09-05-2026-Claude-Coder-1-LOAD-COSTS-COMPLETE-VERTICAL-Updated.md` STEP 6 + `settlement-entry-2026-09-04/`): real UI write path, `is_sample_data=false`, addresses only, one row per diesel/DEF/deduction, real invoice numbers, NEVER close, hands off 5766/5772/5776/5780/5783/5784, stop at first refusal and file it.
+**M.5 — Three-mile schema + CPM** (actual miles only after CC-3 3.5).
+Never touch the Load Costs UI again without a new owner order. Checkoff line per step. Silence past a deadline = surrender.
+
+---
+
 **Owner, verbatim: "YOU ARE IN CHARGE OF CC1 LANE."** Cursor now owns the Load Costs board, the Costs-tab register (`LoadDetailCostsTab.tsx`), board tabs, and the pre-settlements/settlements screens. **CC-1: STAND DOWN on those files** — do not edit `LoadCostsBoardPage.tsx`, `LoadDetailCostsTab.tsx`, `ParityTable.tsx`, or the pre-settlement/settlement UI. STEP-1.3a already landed by Cursor (#20462 `3251ee3b`, FE deploying). Backend money/migration work only if explicitly requested; coordinate on OUTBOX before touching any Load Costs file.
 
 ---

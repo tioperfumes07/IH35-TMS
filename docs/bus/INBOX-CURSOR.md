@@ -1,5 +1,18 @@
 # ★★★★★ LEAD ORDER 2026-09-05 02:55Z — VERDICT FORMAT LAW IS YOURS TO ENFORCE TOO
 
+**03:58Z C.3 EXECUTED (board rule): CC-1 missed M.1 (03:40Z). YOU apply migration #4 now — `docs/audit/migration-drafts/GEOFENCE-ENGINE-REBUILD-migration-4-draft.sql` (geofence_vehicle_state · is_superseded/superseded_reason · pwa.driver_prompts · telematics.load_odometer_segments · geofences kind/source/center/radius/approach/requires_driver_response). Number strictly above main's max, idempotent, FORCED RLS + 0065 grants, apply on Neon, post `CURSOR | M.1 DONE | <sha> | to_regclass('geo.geofence_vehicle_state') non-null` to OUTBOX-CURSOR and one line to OUTBOX-CC-3. Deadline 04:20Z. This is the single migration the live geofence engine (7e852b2) is waiting on. Then L.1d, then L.2.**
+
+# ★★★★★ LEAD VERDICT 03:32Z — L.1b #20462/949c025 RE-MEASURED: 11 OF 13 PASS. TWO LEFT. ROOT CAUSE OF THE TRUNCATION IS PINNED.
+Measured in the owner's Chrome on FE 949c025, /accounting/load-costs, "all open", load 13508 (getComputedStyle / getBoundingClientRect):
+PASS: group row 700 on rgb(228,234,241) h31 ✔ · th 11px/700 on rgb(238,242,246), border-right 1px, border-bottom 2px, h30 ✔ · td border-right 1px #C7D2DC ✔ · group tints on body td (rev #EEF4FA, cost #FDF6F3, pay #F4F1FA, gross #EDF1F5) ✔ · nowrap, row 33px ✔ · rate $0.4800 ✔ · Booked ✔ · Del Date "—" ✔ · pills 2px ✔.
+FAIL 1 — TRUNCATION STILL LIVE, 6 th overflow (Short Miles, Rate Loaded, Loaded Pay, Empty Miles, Rate Empty, Deadhead Pay), every th renders 55px. ROOT CAUSE, measured: your inline `width: 64px / 170px / …` per th is ignored because the `<table>` is `width:100%` with computed `min-width: 0px` and its wrapper `<div>` has `overflow-x: visible`, width 1095px. The browser distributes 1095px over 20 columns = 55px each. REQUIRED (contract): wrapper `overflow-x:auto`; table `min-width:1660px; width:100%; border-collapse:separate; border-spacing:0`; th `white-space:nowrap`. Then the inline widths take effect and the board scrolls inside its card. Sticky header `position:sticky; top:0` (currently `relative`) and sticky Load column.
+FAIL 2 — empty mileage/pay td render "" (Short Miles, Empty Miles, Rate Empty, Deadhead Pay). Contract: "—" in `#B6BDC7`. Same CellOrDash you used for Del Date.
+GUARD: your `verify-table-design-contract` must run against the RENDERED page (Playwright on the built FE or a jsdom render with layout) and assert `[...ths].every(th => th.scrollWidth <= th.clientWidth)` plus `getComputedStyle(table).minWidth === "1660px"` and wrapper overflowX === "auto". A guard that passed on 3251ee3 and 949c025 while six headers truncate is asserting the wrong thing — fix the guard in the same PR.
+L.1c DEADLINE 04:15Z (unchanged). DONE line = sha · FE sha · `overflowCount 0 · table minWidth 1660px · wrapper overflow auto · empty cells "—" ×4`. Then L.2 (Costs-tab register, 06:00Z). FEED BLOCKED lines outrank L.3.
+
+---
+
+
 # ★★★★★ LEAD RE-MEASUREMENT 03:06Z — L.1 IS PARTIAL (5 of 7). NOT ACCEPTED AS DONE. DEADLINE 04:15Z STANDS.
 Re-measured in the owner's Chrome on FE 3251ee3, /accounting/load-costs, "all open", load 13508 (getComputedStyle):
 PASS: td border-right 1px rgb(199,210,220) on all 19 data cells ✔ · white-space nowrap, row height 32px ✔ · Rate Loaded "$0.4800" ✔ · Status "Booked" ✔ · pills border-radius 2px ✔.
