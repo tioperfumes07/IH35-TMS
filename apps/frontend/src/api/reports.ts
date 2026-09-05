@@ -522,6 +522,54 @@ export async function exportCashFlowStatementReport(params: {
   return downloadBinaryExport(withCompany(`/api/v1/accounting/cash-flow/export/${params.format}${suffix}`, params.operating_company_id));
 }
 
+// V2 — Counterparty Statements (STANDING-DIRECTIVES-2026-09-05.md §CC-1 item 5): a real per-customer
+// AR statement of account, and a net-new per-vendor AP statement of account.
+export type CounterpartyStatementLine = {
+  date: string;
+  type: "invoice" | "payment" | "credit_memo" | "bill" | "bill_payment" | "vendor_credit";
+  reference: string;
+  description: string;
+  debit_cents: number;
+  credit_cents: number;
+  running_balance_cents: number;
+  link_kind: "invoice" | "payment" | "credit_memo" | "bill" | "bill_payment" | "vendor_credit";
+  link_id: string;
+};
+
+export type CounterpartyStatementResponse = {
+  counterparty_id: string;
+  counterparty_name: string;
+  from_date: string;
+  to_date: string;
+  opening_balance_cents: number;
+  lines: CounterpartyStatementLine[];
+  closing_balance_cents: number;
+};
+
+export async function getCustomerStatementOfAccount(params: {
+  operating_company_id: string;
+  customer_id: string;
+  from_date: string;
+  to_date: string;
+}): Promise<CounterpartyStatementResponse> {
+  const query = new URLSearchParams({ from_date: params.from_date, to_date: params.to_date });
+  return apiRequest<CounterpartyStatementResponse>(
+    withCompany(`/api/v1/accounting/customers/${params.customer_id}/statement?${query.toString()}`, params.operating_company_id)
+  );
+}
+
+export async function getVendorStatementOfAccount(params: {
+  operating_company_id: string;
+  vendor_id: string;
+  from_date: string;
+  to_date: string;
+}): Promise<CounterpartyStatementResponse> {
+  const query = new URLSearchParams({ from_date: params.from_date, to_date: params.to_date });
+  return apiRequest<CounterpartyStatementResponse>(
+    withCompany(`/api/v1/accounting/vendors/${params.vendor_id}/statement?${query.toString()}`, params.operating_company_id)
+  );
+}
+
 export async function exportArAging(params: {
   operating_company_id: string;
   as_of_date?: string;
