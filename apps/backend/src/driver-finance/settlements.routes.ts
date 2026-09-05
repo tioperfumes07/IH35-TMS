@@ -1068,13 +1068,21 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         );
 
         // Cascade: this settlement's own line items are historical once the settlement is reversed —
-        // void-never-delete, so deactivate (is_active=false), never hard-delete.
+        // void-never-delete, so deactivate (is_active=false), never hard-delete. SETL-LINES-VOID-GAP:
+        // also stamp the voided_at/void_reason/voided_by_user_id register GO-22 added
+        // (202613490001) — is_active alone made these lines invisible to legacy readers but did not
+        // satisfy the owner's void-with-reason-and-author law; a line reversed here now carries the
+        // SAME reason/actor/timestamp as the settlement header it belongs to, not a separate guess.
         await client.query(
           `UPDATE driver_finance.settlement_lines
-              SET is_active = false, updated_at = now()
+              SET is_active = false,
+                  voided_at = COALESCE(voided_at, now()),
+                  void_reason = COALESCE(void_reason, $3),
+                  voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
+                  updated_at = now()
             WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid
-              AND is_active IS DISTINCT FROM false`,
-          [params.data.id, companyId]
+              AND (is_active IS DISTINCT FROM false OR voided_at IS NULL)`,
+          [params.data.id, companyId, body.data.reason, user.uuid]
         );
 
         const flipped = await client.query(
