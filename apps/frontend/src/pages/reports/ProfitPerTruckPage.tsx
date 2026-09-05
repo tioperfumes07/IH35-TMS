@@ -19,7 +19,7 @@ import {
   formatProfitPerTruckFlagLabel,
   PROFIT_PER_TRUCK_FLAG_LABELS,
 } from "../../lib/formatProfitPerTruckFlagLabel";
-import { formatDateUS } from "../../lib/formatDate";
+import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 /** API may send sentinel "unknown" for missing unit type — never show raw lowercase to operators. */
@@ -250,8 +250,8 @@ export function ProfitPerTruckPage() {
       title: `Profit per truck ${applied.start}_${applied.end}`,
       bodyHtml: `
         <h1>Per-truck CPM dashboard</h1>
-        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · printed ${esc(
-          new Date().toLocaleString(),
+        <div class="meta">${esc(mmmDd(applied.start))} → ${esc(mmmDd(applied.end))} · printed ${esc(
+          mmmDdTime(new Date()),
         )}</div>
         <table>
           <tbody>

@@ -22,7 +22,7 @@ import {
   formatMaintCostFlagLabel,
   MAINT_COST_FLAG_LABELS,
 } from "../../lib/formatMaintCostFlagLabel";
-import { formatDateUS } from "../../lib/formatDate";
+import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 import { formatUsdCents } from "../../lib/money";
@@ -181,9 +181,9 @@ export function MaintenanceCostPerUnitPage() {
       title: `Maintenance cost per unit ${applied.start}_${applied.end}`,
       bodyHtml: `
         <h1>Maintenance cost per unit</h1>
-        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · ${esc(
+        <div class="meta">${esc(mmmDd(applied.start))} → ${esc(mmmDd(applied.end))} · ${esc(
           data.basis,
-        )} · printed ${esc(new Date().toLocaleString())}</div>
+        )} · printed ${esc(mmmDdTime(new Date()))}</div>
         <table>
           <tbody>
             <tr><th>Trucks</th><td>${esc(totals.truck_count)}</td></tr>

@@ -18,7 +18,7 @@ import {
   type FrequentlyRunReport,
   type ReportCategory,
 } from "../../api/reports";
-import { formatDateUS } from "../../lib/formatDate";
+import { mmmDd } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
@@ -113,7 +113,7 @@ export function ReportsHomePage() {
       ? {
           label: `IFTA ${ifta.quarter} due`,
           value: `${ifta.daysUntilDue}d`,
-          meta: `${formatDateUS(ifta.dueAt)} — file before`,
+          meta: `${mmmDd(ifta.dueAt)} — file before`,
           warn: true,
         }
       : { label: "IFTA due", value: "—", meta: iftaQuery.isError ? "Failed to load" : "Loading…", warn: false },

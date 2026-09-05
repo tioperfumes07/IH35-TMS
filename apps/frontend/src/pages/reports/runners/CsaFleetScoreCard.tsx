@@ -2,6 +2,8 @@ type Props = {
   value: Record<string, unknown>;
 };
 
+import { mmmDdTime } from "../../../lib/formatDate";
+
 const BASICS: Array<{ key: string; label: string; sortable?: boolean }> = [
   { key: "basic_unsafe_driving", label: "Unsafe Driving", sortable: true },
   { key: "basic_hos_compliance", label: "HOS Compliance", sortable: true },
@@ -73,7 +75,7 @@ export function CsaFleetScoreCard({ value }: Props) {
           );
         })}
       </div>
-      <div className="mt-3 text-xs text-slate-500">Last computed: {value.computed_at ? new Date(String(value.computed_at)).toLocaleString() : "—"}</div>
+      <div className="mt-3 text-xs text-slate-500">Last computed: {value.computed_at ? mmmDdTime(value.computed_at) : "—"}</div>
     </section>
   );
 }

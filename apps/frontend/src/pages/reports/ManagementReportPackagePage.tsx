@@ -11,7 +11,7 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { formatDateUS } from "../../lib/formatDate";
+import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 type PackageType = "company-overview" | "sales-performance" | "expenses-performance";
@@ -417,7 +417,7 @@ export function ManagementReportPackagePage() {
     onApply: setApplied,
   });
 
-  const preparedDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  const preparedDate = mmmDd(new Date());
 
   function printLetter() {
     if (!companyId) return;
@@ -439,10 +439,10 @@ export function ManagementReportPackagePage() {
         <table>
           <tbody>
             <tr><th>Entity</th><td>${esc(entityName)}</td></tr>
-            <tr><th>Period</th><td>${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))}</td></tr>
+            <tr><th>Period</th><td>${esc(mmmDd(applied.start))} → ${esc(mmmDd(applied.end))}</td></tr>
             <tr><th>Basis</th><td>${esc(applied.basis === "cash" ? "Cash" : "Accrual")}</td></tr>
             <tr><th>Prepared</th><td>${esc(preparedDate)}</td></tr>
-            <tr><th>Printed</th><td>${esc(new Date().toLocaleString())}</td></tr>
+            <tr><th>Printed</th><td>${esc(mmmDdTime(new Date()))}</td></tr>
           </tbody>
         </table>
         <h1 style="margin-top:16px">Table of contents</h1>

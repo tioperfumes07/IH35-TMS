@@ -15,7 +15,7 @@ import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
-import { formatDateUS } from "../../lib/formatDate";
+import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { getShowAccountNumbers } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
@@ -116,9 +116,9 @@ export function ProfitLossPage() {
       title: `Profit & loss ${applied.start}_${applied.end}`,
       bodyHtml: `
         <h1>Profit &amp; loss</h1>
-        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · ${esc(
+        <div class="meta">${esc(mmmDd(applied.start))} → ${esc(mmmDd(applied.end))} · ${esc(
           applied.basis === "cash" ? "Cash" : "Accrual",
-        )} · printed ${esc(new Date().toLocaleString())}</div>
+        )} · printed ${esc(mmmDdTime(new Date()))}</div>
         <table>
           <tbody>
             <tr><th>Revenue total</th><td>${esc(money(data.revenue.total))}</td></tr>

@@ -10,7 +10,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
-import { formatDateUS } from "../../lib/formatDate";
+import { mmmDd } from "../../lib/formatDate";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
 import { formatUsdCents } from "../../lib/money";
@@ -38,7 +38,7 @@ function entityNoun(kind: EntityKind): string {
 /** Display-only: By date bucket labels are ISO YYYY-MM-DD keys — never mutate row.key / sort / API. */
 function cancellationsByDateLabel(row: CancellationBucket): string {
   const raw = (row.label || row.key || "").trim();
-  return formatDateUS(raw) || raw;
+  return mmmDd(raw) || raw;
 }
 
 function bucketColumns(

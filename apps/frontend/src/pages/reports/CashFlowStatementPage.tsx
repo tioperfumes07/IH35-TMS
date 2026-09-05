@@ -15,7 +15,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
 import { formatCashFlowCompoundLabel } from "../../lib/formatCashFlowCompoundLabel";
 import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
-import { formatDateUS } from "../../lib/formatDate";
+import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { useExportAction } from "../../hooks/useExportAction";
 
@@ -100,8 +100,8 @@ export function CashFlowStatementPage() {
       title: `Cash flow statement ${applied.start}_${applied.end}`,
       bodyHtml: `
         <h1>Cash flow statement</h1>
-        <div class="meta">${esc(formatDateUS(applied.start))} → ${esc(formatDateUS(applied.end))} · Accrual · printed ${esc(
-          new Date().toLocaleString(),
+        <div class="meta">${esc(mmmDd(applied.start))} → ${esc(mmmDd(applied.end))} · Accrual · printed ${esc(
+          mmmDdTime(new Date()),
         )}</div>
         <table>
           <tbody>

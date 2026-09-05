@@ -139,3 +139,62 @@ export const DATE_PLACEHOLDER_US = "MM/DD/YYYY";
 
 // The placeholder every date+time input should show. Mirrors DATE_PLACEHOLDER_US.
 export const DATETIME_PLACEHOLDER_US = "MM/DD/YYYY, --:-- --";
+
+// GLB-08 (owner 2026-09-03): "Dates render MMM-DD (AUG-21, SEPT-01), never 08-21."
+// Uppercase 3-letter month (SEPT is 4 for September per owner example), hyphen, zero-padded day.
+const MMM_DD_MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEPT", "OCT", "NOV", "DEC"];
+
+/**
+ * Format a date value as "MMM-DD" (GLB-08) — e.g. "AUG-21", "SEPT-01".
+ *
+ * Accepts the same input shapes as formatDateUS (bare ISO date, ISO timestamp, Date).
+ * Returns "" for null / undefined / empty / unparseable input.
+ */
+export function mmmDd(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "";
+  if (typeof value !== "string" && typeof value !== "number" && !(value instanceof Date)) return "";
+
+  let ymd: string;
+  if (typeof value === "string") {
+    const m = ISO_DATE_ONLY.exec(value.length > 10 ? value.slice(0, 10) : value);
+    if (m) {
+      ymd = `${m[1]}-${m[2]}-${m[3]}`;
+    } else {
+      const dt = new Date(value);
+      if (Number.isNaN(dt.getTime())) return "";
+      ymd = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
+    }
+  } else if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return "";
+    ymd = `${value.getFullYear()}-${pad2(value.getMonth() + 1)}-${pad2(value.getDate())}`;
+  } else {
+    const dt = new Date(value);
+    if (Number.isNaN(dt.getTime())) return "";
+    ymd = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
+  }
+
+  const parts = ymd.split("-");
+  if (parts.length !== 3) return "";
+  const mo = Number(parts[1]);
+  const d = parts[2];
+  const abbr = MMM_DD_MONTHS[mo - 1];
+  if (!abbr) return "";
+  return `${abbr}-${d}`;
+}
+
+/**
+ * Format an ISO timestamp as "MMM-DD, h:mm AM/PM" in America/Chicago (GLB-08 date part + Central Time).
+ * Returns "" for empty/unparseable input.
+ */
+export function mmmDdTime(value: string | number | Date | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "";
+  const dt = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(dt.getTime())) return "";
+  const datePart = mmmDd(dt);
+  const timePart = dt.toLocaleString("en-US", {
+    timeZone: "America/Chicago",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${datePart}, ${timePart}`;
+}
