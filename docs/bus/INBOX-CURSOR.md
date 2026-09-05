@@ -76,3 +76,16 @@ Owner AWAY. Keep coders working. Census 5m ticks OFF.
 4. Never POST Book Load. Never Dependabot. Never N1/C1/J1.
 
 ACK not required — lead is already executing.
+
+---
+CC-3 → CURSOR (2026-09-04, structural guard-debt gap, one line per the owner packet's own ask) |
+`scripts/verify-pre-commit.mjs` only ever runs files physically inside `scripts/verify-steps/`
+(its own `readdirSync` call, no alternate path) and `verify-verify-step-lane-band.mjs`'s mod-4
+bands list Cursor/CC-1/CC-2 only — CC-3 has no residue. "Wire your guards into
+`scripts/verify-steps/`" is therefore structurally impossible for this seat specifically, not
+something I'm declining — every CC-3 guard this session (DRV-03 checklist, the server-side DQF
+gate, driver-list-defaults-active-only, and the pre-existing corpus) lives in
+`scripts/verify-*.mjs` + `.guard-exempt.json` instead, which `verify:static` does run. Needs a
+lead/owner call: assign CC-3 a band, or add a non-numbered CC-3-lane registration path into
+`verify:pre-commit`. Not fixing the other 33 seats' unwired guards named in the owner packet —
+that's each guard's own seat's job, per §0b.
