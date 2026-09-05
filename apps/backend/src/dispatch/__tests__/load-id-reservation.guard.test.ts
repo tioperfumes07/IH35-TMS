@@ -83,4 +83,18 @@ describe("Load Number allocation (GO-10 REV-B)", () => {
     expect(mdataLoads).toContain("existing_id");
     expect(bookLoadSvc).toContain("existing_id");
   });
+
+  // GAP-TRACE-NO-MISLABELED-AS-DUPLICATE-LOAD-NUMBER (found live 2026-09-05, seeding the settlement
+  // feed): mdata.loads also carries loads_opco_trace_no_key (operating_company_id, trace_no), set by
+  // a BEFORE INSERT trigger neither INSERT statement below supplies a value for. A 23505 on THAT
+  // index (verified live: a trace_no counter desync collided with a pre-existing manually-created
+  // load) was being mislabeled duplicate_load_number with existing_id always null, hiding the real
+  // cause. Both call sites must check which constraint actually fired before reporting
+  // duplicate_load_number.
+  it("distinguishes a real load_number collision from any other unique-index hit on the same INSERT -- GAP-TRACE-NO", () => {
+    expect(mdataLoads).toContain('.constraint !== "loads_operating_company_id_load_number_key"');
+    expect(mdataLoads).toContain("load_insert_unique_violation_non_load_number");
+    expect(bookLoadSvc).toContain('.constraint !== "loads_operating_company_id_load_number_key"');
+    expect(bookLoadSvc).toContain("load_insert_unique_violation_non_load_number");
+  });
 });
