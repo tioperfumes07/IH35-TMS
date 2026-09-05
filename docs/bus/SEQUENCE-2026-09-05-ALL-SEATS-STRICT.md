@@ -51,6 +51,7 @@ Silence past a deadline = surrender. "Blocked" must quote the blocker and name w
 | # | Step | Mark |
 |---|---|---|
 | 1.0 | Apply CC-3 migration drafts (batch) on Neon; sha to both OUTBOXes | ✔ 3c3c4321 (Neon-verified) |
+| 0b | Apply migration #4 (GEOFENCE-ENGINE-REBUILD-migration-4-draft.sql) after 1.3a; Cursor applies if 03:45Z missed | next |
 | 1.3a | LIVE BOARD DEFECTS (lead-measured 02:40Z): 55px forced columns, 6 truncated headers, wrapping money cells, th 700, td border-right 0, Rate Loaded '0.48¢/mi', IN TRANSIT on undispatched load, ~90px rows, rounded pills — one PR + guard + deploy + screenshot. DEADLINE 03:45Z or the board + Costs tab pass to Cursor (owner order) | → |
 | 1.1 | Durable draft advance: book/assign path + service self-heal + guard 10377 (guard ✔ #20429; fix + self-heal owed) | next |
 | 1.2 | CoGS picker + fuel by role + operating_bank by role (#20425 #20426) | ✔ |
@@ -75,8 +76,8 @@ Silence past a deadline = surrender. "Blocked" must quote the blocker and name w
 |---|---|---|
 | 3.1 | Address count wiring | ✔ #20411 |
 | 3.2a | samsara_addresses draft handed | ✔ #20412 |
-| 3.2b | Engine flap fix code + no-terminal-state test + speed departure + USMCA watcher + bbox + warn; migration #4 bundle drafted; API shapes published; TEST geofence archived | → |
-| 3.3 | Import/projection service — RUN ⛔ until 3.2b merged (1.0 tables ARE live) | ⛔ (gate half open) |
+| 3.2b | Engine flap fix code + guards + migration #4 drafted + TEST geofence archived | ✔ #20447, live in 7e852b2 (lead re-measured). API shapes still owed inside 3.3 |
+| 3.3 | Samsara import/projection service — CODE now against live tables; `--apply` ⛔ until geofence_vehicle_state exists + flap proof started. Deadline 04:30Z | → |
 | 3.4 | Match proximity+name, collision report | |
 | 3.5 | Three guards green | |
 | 3.6 | ACK push-back contract | |
@@ -109,6 +110,7 @@ Silence past a deadline = surrender. "Blocked" must quote the blocker and name w
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG (newest first)
+- 03:00Z — CC-3 3.2b ✔ verified (code live in 7e852b2, TEST geofence archived on Neon); geofence_vehicle_state still absent → migration #4 = CC-1 0b after 1.3a, Cursor fallback. CC-3 → 3.3 code, deadline 04:30Z. VERDICT FORMAT LAW merged c9d81dcf (.cursor rule + LAW doc + board).
 - 02:45Z — Owner viewed the live board; lead measured it in the owner's Chrome (61f1967). CC-1 → 1.3a with a 03:45Z deadline; miss = Cursor takes the board + Costs tab (owner order). Codex → X.6/X.7/X.8.
 - 02:25Z — Cascade L ✔ bc099ea7 (LAW.md 477 lines), K.0 ✔; BRD rows split: planners (19/20/21/23) = Cascade K.4–K.7, dispatch-board rows = Cursor reconciles. Cascade OUTBOX local-ignore defect ordered fixed.
 - 02:10Z — Cursor C.1/C.4/C.5 ✔ (683717b live). CC-1 1.0 ✔ Neon-verified; → 1.1 remainder then 1.3 Load Costs register (owner: no excuses). Codex X.3–X.5 ✔ → X.6/X.7. CC-2 2.0 ✔ → V + 2.2. CC-3 and Cascade: ORDER WARNING — silent since 01:16Z.
