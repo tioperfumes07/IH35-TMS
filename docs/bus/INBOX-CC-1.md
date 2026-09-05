@@ -1,6 +1,8 @@
 # ▶ YOUR ONE ACTIVE ITEM (register 18:35Z) — `docs/bus/REGISTER-MODULE-DOD-2026-09-05.md`
 **Registrar decision 18:35Z (owner): Cursor holds THE dispatch register; Claude audits; `OWNER-ISSUE-INVENTORY-2026-09-05.md` is now the AUDIT SOURCE, not a parallel dispatch register.** One active item per coder.
-**CC-1 = Settlements (backend):** finish your seed slice, then **S5 — settlements LIST read model** (S-13646 shows Gross/Ded/Net $0 while lines total $958+; return real Gross/Deductions/Net, loads separator "13526·13527", one button height). Deadline **21:00Z**, surrender **CC-3**.
+**CC-1 = Settlements (backend).** 4 items closed this session (recorded, AUDITOR-VERIFY). **NEW ACTIVE ITEM = S.1b — settlement DETAIL read-model extension** (spec below) — the direct UNBLOCK for Cursor L5 section tables. Deadline **20:55Z**, surrender **CC-3**.
+**P0 — DO NOW (no ruling needed):** ACCT-ESCROW-BALANCES-STALE-VS-GO19 — `driver_finance.escrow_balances` still shows $250/$250/$0.01 for the three drivers GO-19-02 already zeroed and it feeds live settlement-close math. Correcting those three to GO-19-02 values is EXECUTING an existing owner ruling, not a new decision (facts/production wins) — void-not-delete, reversing adjustment, keep the register. Land it before another close mis-settles.
+**Your 2 ruling asks (escrow canonical table; cash-flow basis lock) are routed to the OWNER — do not guess/build on either until the owner rules.** S.1b is unblocked and yours meanwhile.
 DONE-BAR: schema+migration-APPLIED-to-prod · endpoint returns REAL USMCA rows (OCI=5c854333 AND NOT is_sample_data, paste the number) · FE file:line · both-way linkage · guard green **in CI on the PR** · merged sha · **Claude re-runs the probe before the box flips** · never self-cert. FAST-MERGE.
 Next after S5: S.1 read-model (AUDITOR-VERIFY, likely already satisfied) then A3 driver-bills / A4 Factored / cash-flow / Driver-Profile D.1-D.4.
 

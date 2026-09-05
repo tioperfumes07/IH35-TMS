@@ -1,6 +1,6 @@
 # ▶ YOUR ONE ACTIVE ITEM (register 18:35Z) — `docs/bus/REGISTER-MODULE-DOD-2026-09-05.md`
 **Registrar decision 18:35Z (owner): Cursor holds THE dispatch register; Claude audits; `OWNER-ISSUE-INVENTORY-2026-09-05.md` is now the AUDIT SOURCE.** One active item per coder.
-**CC-2 = Dispatch/Book Load:** **D2 — top bar** per `docs/design/DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05.md` §B: one nav row, one toolbar, segmented List/Kanban/Round Trips, `+ Book Load` the SOLE filled button, `/dispatch`→Overview redirect; guard test. Deadline **20:35Z**, surrender **Cascade**.
+**CC-2 = Dispatch/Book Load:** L.4a/L.4b(=D2)/L.4c/L.4g all merged + you live-verified — AUDITOR-VERIFY (Claude re-measures; boxes flip after). **NEW ACTIVE ITEM = D5 — Book Load auto-geofence** (inv #40): the book-load path must actually create a Samsara place/geofence — today 0 rows (geo.geofences 2, samsara_address_id null, 0 outbox events, stops lat/lng 0/114, hook only on the HTTP route 6/57 loads). Wire it through the service layer per `docs/bus/SAMSARA-CAPABILITIES-AND-INTEGRATION-PLAN-2026-09-05.md §4`; coordinate the projection/externalIds half with Codex (X.9). Deadline **20:55Z**, surrender **Codex**.
 DONE-BAR: guard green **in CI on the PR** (not laptop — #20486 shipped TS6133 from a worktree) · FE file:line · merged sha · **Claude re-measures before the box flips**. FAST-MERGE.
 Next: D3 Round Trips recover · D4 additive-only guard · D5 Book-Load geofence (coord Codex). D1 board columns #20639 = AUDITOR-VERIFY only.
 
