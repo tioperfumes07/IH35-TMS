@@ -16,6 +16,7 @@ import {
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { getShowAccountNumbers } from "../../lib/show-account-numbers";
 import { useExportAction } from "../../hooks/useExportAction";
@@ -44,6 +45,9 @@ export function BalanceSheetPage() {
   const today = companyToday();
   const emptyFilters = { asOfDate: today, basis: "accrual" as AccountingBasis, compareToDate: "" };
   const [applied, setApplied] = useState(emptyFilters);
+  const [reportFromDate, setReportFromDate] = useState<string | null>(null);
+  const [reportToDate, setReportToDate] = useState<string | null>(null);
+  const [reportSearch, setReportSearch] = useState("");
   const exportAction = useExportAction();
   const staged = useStagedListFilters({
     applied,
@@ -198,6 +202,17 @@ export function BalanceSheetPage() {
           {exportAction.error}
         </p>
       ) : null}
+
+      <ReportFilterBar
+        testIdPrefix="reports-balance-sheet"
+        fromDate={reportFromDate}
+        toDate={reportToDate}
+        onFromDateChange={setReportFromDate}
+        onToDateChange={setReportToDate}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
+      />
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}

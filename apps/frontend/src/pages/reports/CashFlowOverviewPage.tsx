@@ -22,6 +22,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
@@ -98,6 +99,9 @@ export function CashFlowOverviewPage() {
   const companyId = selectedCompanyId ?? "";
   const today = companyToday();
   const [appliedAsOf, setAppliedAsOf] = useState(today);
+  const [reportFromDate, setReportFromDate] = useState<string | null>(null);
+  const [reportToDate, setReportToDate] = useState<string | null>(null);
+  const [reportSearch, setReportSearch] = useState("");
   const staged = useStagedListFilters({
     applied: { asOfDate: appliedAsOf, basis: "accrual", groupBy: "month" },
     empty: { asOfDate: today, basis: "accrual", groupBy: "month" },
@@ -225,6 +229,17 @@ export function CashFlowOverviewPage() {
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
 
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
+
+      <ReportFilterBar
+        testIdPrefix="reports-cash-flow-overview"
+        fromDate={reportFromDate}
+        toDate={reportToDate}
+        onFromDateChange={setReportFromDate}
+        onToDateChange={setReportToDate}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
+      />
 
       <CollapsedListFilters
         activeFilterCount={appliedAsOf !== today ? 1 : 0}

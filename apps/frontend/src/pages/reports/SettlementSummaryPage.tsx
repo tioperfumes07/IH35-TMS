@@ -15,6 +15,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -57,6 +58,7 @@ export function SettlementSummaryPage() {
   const companyId = selectedCompanyId ?? "";
   const emptyRange = defaultRange();
   const [applied, setApplied] = useState({ ...emptyRange, driverFilter: "" });
+  const [reportSearch, setReportSearch] = useState("");
   const staged = useStagedListFilters({
     applied,
     empty: { ...emptyRange, driverFilter: "" },
@@ -222,6 +224,17 @@ export function SettlementSummaryPage() {
 
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
+
+      <ReportFilterBar
+        testIdPrefix="reports-settlement-summary"
+        fromDate={applied.start}
+        toDate={applied.end}
+        onFromDateChange={(d) => setApplied((p) => ({ ...p, start: d ?? "" }))}
+        onToDateChange={(d) => setApplied((p) => ({ ...p, end: d ?? "" }))}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
+      />
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(applied) !== JSON.stringify({ ...emptyRange, driverFilter: "" }) ? 1 : 0}

@@ -8,6 +8,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatPlannerDayLabel } from "../dispatch/planners/plannerDayLabel";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 
 function mmmDd(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -44,6 +45,9 @@ export function DriverQualificationReportPage() {
   const operatingCompanyId = selectedCompanyId ?? "";
   const [includeInactive, setIncludeInactive] = useState(false);
   const [complianceFilter, setComplianceFilter] = useState("");
+  const [reportFromDate, setReportFromDate] = useState<string | null>(null);
+  const [reportToDate, setReportToDate] = useState<string | null>(null);
+  const [reportSearch, setReportSearch] = useState("");
 
   const rosterQ = useQuery({
     queryKey: ["safety", "driver-qualification", "roster", operatingCompanyId, includeInactive],
@@ -206,6 +210,18 @@ export function DriverQualificationReportPage() {
         </div>
 
         {/* Filter bar */}
+        <div className="mb-3">
+          <ReportFilterBar
+            testIdPrefix="reports-driver-qualification"
+            fromDate={reportFromDate}
+            toDate={reportToDate}
+            onFromDateChange={setReportFromDate}
+            onToDateChange={setReportToDate}
+            onPresetSelect={(_preset: ReportPreset) => {}}
+            search={reportSearch}
+            onSearchChange={setReportSearch}
+          />
+        </div>
         <div className="mb-3 flex items-center gap-3">
           <label className="flex items-center gap-1.5 text-xs text-gray-700">
             <input

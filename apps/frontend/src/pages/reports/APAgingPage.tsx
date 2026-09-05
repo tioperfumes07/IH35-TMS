@@ -13,6 +13,7 @@ import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/Combobox";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { apAgingBillsListHref, apAgingVendorProfileHref } from "./agingDrillThrough";
@@ -58,6 +59,9 @@ export function APAgingPage() {
   const deepLinkVendorId = searchParams.get("vendor_id")?.trim() ?? "";
   const emptyFilters: APAgingFilters = { asOfDate: today, minBal: "", bucketFilter: "all", vendorId: "" };
   const [appliedFilters, setAppliedFilters] = useState<APAgingFilters>({ ...emptyFilters, vendorId: deepLinkVendorId });
+  const [reportFromDate, setReportFromDate] = useState<string | null>(null);
+  const [reportToDate, setReportToDate] = useState<string | null>(null);
+  const [reportSearch, setReportSearch] = useState("");
   const exportAction = useExportAction();
   useEffect(() => {
     setAppliedFilters((prev) => ({ ...prev, vendorId: deepLinkVendorId }));
@@ -261,6 +265,17 @@ export function APAgingPage() {
           {exportAction.error}
         </p>
       ) : null}
+
+      <ReportFilterBar
+        testIdPrefix="reports-ap-aging"
+        fromDate={reportFromDate}
+        toDate={reportToDate}
+        onFromDateChange={setReportFromDate}
+        onToDateChange={setReportToDate}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
+      />
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(appliedFilters) !== JSON.stringify(emptyFilters) ? 1 : 0}

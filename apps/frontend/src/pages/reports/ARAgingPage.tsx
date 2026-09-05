@@ -12,6 +12,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/Combobox";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { arAgingCustomerProfileHref, arAgingInvoiceListHref } from "./agingDrillThrough";
 import { entityLabel } from "../../lib/entity-label";
@@ -48,6 +49,9 @@ export function ARAgingPage() {
   const deepLinkCustomerId = searchParams.get("customer_id")?.trim() ?? "";
   const emptyFilters: ARAgingFilters = { asOfDate: today, minBal: "", bucketFilter: "all", customerId: "" };
   const [appliedFilters, setAppliedFilters] = useState<ARAgingFilters>({ ...emptyFilters, customerId: deepLinkCustomerId });
+  const [reportFromDate, setReportFromDate] = useState<string | null>(null);
+  const [reportToDate, setReportToDate] = useState<string | null>(null);
+  const [reportSearch, setReportSearch] = useState("");
   const exportAction = useExportAction();
   useEffect(() => {
     setAppliedFilters((prev) => ({ ...prev, customerId: deepLinkCustomerId }));
@@ -251,6 +255,17 @@ export function ARAgingPage() {
           {exportAction.error}
         </p>
       ) : null}
+
+      <ReportFilterBar
+        testIdPrefix="reports-ar-aging"
+        fromDate={reportFromDate}
+        toDate={reportToDate}
+        onFromDateChange={setReportFromDate}
+        onToDateChange={setReportToDate}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
+      />
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(appliedFilters) !== JSON.stringify(emptyFilters) ? 1 : 0}

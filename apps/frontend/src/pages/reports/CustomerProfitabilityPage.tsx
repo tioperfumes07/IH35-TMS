@@ -26,6 +26,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -94,6 +95,7 @@ export function CustomerProfitabilityPage() {
   const companyId = selectedCompanyId ?? "";
   const emptyFilters = { ...currentQuarterRange(), minRevDollars: "1000" };
   const [applied, setApplied] = useState(emptyFilters);
+  const [reportSearch, setReportSearch] = useState("");
   const staged = useStagedListFilters({
     applied,
     empty: emptyFilters,
@@ -316,6 +318,17 @@ export function CustomerProfitabilityPage() {
 
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
+
+      <ReportFilterBar
+        testIdPrefix="reports-customer-profitability"
+        fromDate={applied.start}
+        toDate={applied.end}
+        onFromDateChange={(d) => setApplied((p) => ({ ...p, start: d ?? "" }))}
+        onToDateChange={(d) => setApplied((p) => ({ ...p, end: d ?? "" }))}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
+      />
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}

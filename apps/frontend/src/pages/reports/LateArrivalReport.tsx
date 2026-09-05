@@ -7,6 +7,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
@@ -58,6 +59,7 @@ export function LateArrivalReport() {
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const emptyFilters = { from: monthStart(), to: today(), groupBy: "driver" as GroupBy, minDelayHours: "" };
   const [applied, setApplied] = useState(emptyFilters);
+  const [reportSearch, setReportSearch] = useState("");
   const staged = useStagedListFilters({
     applied,
     empty: emptyFilters,
@@ -107,6 +109,17 @@ export function LateArrivalReport() {
           Print
         </button>
       </div>
+
+      <ReportFilterBar
+        testIdPrefix="reports-late-arrival"
+        fromDate={applied.from}
+        toDate={applied.to}
+        onFromDateChange={(d) => setApplied((p) => ({ ...p, from: d ?? "" }))}
+        onToDateChange={(d) => setApplied((p) => ({ ...p, to: d ?? "" }))}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
+      />
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}

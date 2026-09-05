@@ -9,6 +9,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getProfitLossReport, getBalanceSheetReport, getArAgingReport, getApAgingReport, getCustomerProfitability } from "../../api/reports";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { mmmDd, mmmDdTime } from "../../lib/formatDate";
@@ -411,6 +412,7 @@ export function ManagementReportPackagePage() {
 
   const emptyFilters = { ...currentMonthRange(), basis: "accrual" as AccountingBasis };
   const [applied, setApplied] = useState(emptyFilters);
+  const [reportSearch, setReportSearch] = useState("");
   const staged = useStagedListFilters({
     applied,
     empty: emptyFilters,
@@ -503,6 +505,17 @@ export function ManagementReportPackagePage() {
       />
 
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
+
+      <ReportFilterBar
+        testIdPrefix="reports-management-package"
+        fromDate={applied.start}
+        toDate={applied.end}
+        onFromDateChange={(d) => setApplied((p) => ({ ...p, start: d ?? "" }))}
+        onToDateChange={(d) => setApplied((p) => ({ ...p, end: d ?? "" }))}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
+      />
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}

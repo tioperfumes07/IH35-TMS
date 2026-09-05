@@ -6,6 +6,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -51,6 +52,7 @@ export function PerTruckCpmReport() {
   const companyId = selectedCompanyId ?? "";
   const defaultRange = currentQuarterRange();
   const [applied, setApplied] = useState({ ...defaultRange, minMiles: "" });
+  const [reportSearch, setReportSearch] = useState("");
   const staged = useStagedListFilters({
     applied,
     empty: { ...defaultRange, minMiles: "" },
@@ -98,6 +100,17 @@ export function PerTruckCpmReport() {
           Print
         </button>
       </div>
+      <ReportFilterBar
+        testIdPrefix="reports-per-truck-cpm"
+        fromDate={applied.from}
+        toDate={applied.to}
+        onFromDateChange={(d) => setApplied((p) => ({ ...p, from: d ?? "" }))}
+        onToDateChange={(d) => setApplied((p) => ({ ...p, to: d ?? "" }))}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
+      />
+
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(applied) !== JSON.stringify({ ...defaultRange, minMiles: "" }) ? 1 : 0}
         defaultOpen={true}

@@ -4,6 +4,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { mmmDdTime, mmmDd } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -47,6 +48,9 @@ export function GeofenceReconciliationReport() {
   const today = companyToday();
   const yesterday = addDaysIso(today, -1);
   const [appliedDate, setAppliedDate] = useState(yesterday);
+  const [reportFromDate, setReportFromDate] = useState<string | null>(null);
+  const [reportToDate, setReportToDate] = useState<string | null>(null);
+  const [reportSearch, setReportSearch] = useState("");
   const staged = useStagedListFilters({
     applied: { reportDate: appliedDate, geofenceFilter: "", kindFilter: "" },
     empty: { reportDate: yesterday, geofenceFilter: "", kindFilter: "" },
@@ -122,6 +126,17 @@ export function GeofenceReconciliationReport() {
           Print
         </button>
       </div>
+
+      <ReportFilterBar
+        testIdPrefix="reports-geofence-recon"
+        fromDate={reportFromDate}
+        toDate={reportToDate}
+        onFromDateChange={setReportFromDate}
+        onToDateChange={setReportToDate}
+        onPresetSelect={(_preset: ReportPreset) => {}}
+        search={reportSearch}
+        onSearchChange={setReportSearch}
+      />
 
       <CollapsedListFilters
         activeFilterCount={appliedDate !== yesterday ? 1 : 0}
