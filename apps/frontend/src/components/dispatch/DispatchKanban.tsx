@@ -751,31 +751,24 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
         isDragging ? "opacity-60" : ""
       } ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
     >
-      <div className="flex items-center justify-between gap-2">
+      {/* Owner ruling 2026-09-04: the vehicle number is the awaiting card's IDENTITY and must ALWAYS
+          be fully visible. It used to share one flex row with the "+ Book load" button under min-w-0
+          truncate, so a narrow lane collapsed "T171" to "T.". Unit number is now its own no-truncate
+          line; the book button drops to a full-width line below it. */}
+      <div className="flex items-center gap-2">
         {load.assigned_unit_id ? (
           <EntityLinkOrTombstone
             kind="unit"
             id={load.assigned_unit_id}
             name={load.assigned_unit_number}
             noun="Unit"
-            className="min-w-0 truncate text-xs font-semibold text-gray-900"
+            className="whitespace-nowrap text-xs font-semibold text-gray-900"
             data-testid="awaiting-truck-unit-link"
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
-          <span className="min-w-0 truncate text-xs font-semibold text-gray-900">{unitLabel}</span>
+          <span className="whitespace-nowrap text-xs font-semibold text-gray-900">{unitLabel}</span>
         )}
-        <button
-          type="button"
-          data-testid={`awaiting-truck-book-${load.id}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onBook(load.id);
-          }}
-          className="shrink-0 rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white hover:bg-[#2a3656]"
-        >
-          + Book load
-        </button>
       </div>
       <div className="mt-0.5 truncate text-[11px] text-gray-500">
         {load.assigned_primary_driver_id ? (
@@ -791,6 +784,17 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
           driverLabel ?? "No driver assigned"
         )}
       </div>
+      <button
+        type="button"
+        data-testid={`awaiting-truck-book-${load.id}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onBook(load.id);
+        }}
+        className="mt-1 w-full rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white hover:bg-[#2a3656]"
+      >
+        + Book load
+      </button>
     </div>
   );
 }
