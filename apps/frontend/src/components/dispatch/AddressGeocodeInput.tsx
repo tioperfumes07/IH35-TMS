@@ -52,6 +52,21 @@ export function AddressGeocodeInput({
   const timerRef = useRef<number | null>(null);
   const sessionRef = useRef<string>(newSession());
   const skipNextLookupRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // J1 design law (verify-ui-design-system-ratchet.mjs's own picker-dismiss ratchet) + the shared
+  // Combobox's own contract: an open dropdown must dismiss on an outside click, not only on
+  // input blur (which the 150ms setTimeout below already handles, but a real document listener is
+  // the governed pattern every other picker in this repo uses).
+  useEffect(() => {
+    if (!open) return;
+    const onDocumentClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (!containerRef.current?.contains(target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocumentClick);
+    return () => document.removeEventListener("mousedown", onDocumentClick);
+  }, [open]);
 
   useEffect(() => {
     if (!enabled) {
@@ -141,7 +156,7 @@ export function AddressGeocodeInput({
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <input
         {...(dataAttrs ?? {})}
         value={value}

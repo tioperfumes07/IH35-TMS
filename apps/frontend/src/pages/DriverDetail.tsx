@@ -6,7 +6,7 @@ import { FORM_INPUT_CLASS, FORM_TEXTAREA_CLASS } from "../components/forms/input
 import { companyToday } from "../lib/businessDate";
 import { History, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiRequest, ApiError } from "../api/client";
 import { W8BenSection } from "../components/driver-profile/W8BenSection";
 import { W8BenModal } from "../components/drivers/W8BenModal";
@@ -55,6 +55,7 @@ import { SafetyAlertsReverseSection } from "../components/safety/SafetyAlertsRev
 import { BackgroundChecksSection } from "../components/safety/BackgroundChecksSection";
 import { MedicalCardsHistorySection } from "../components/safety/MedicalCardsHistorySection";
 import { Button } from "../components/Button";
+import { ActionsDropdown } from "../components/shared/ActionsDropdown";
 import { ListErrorState } from "../components/ListErrorState";
 import { EntityLink } from "../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
@@ -894,16 +895,38 @@ export function DriverDetailPage() {
             </span>
             <StatusBadge status={driver.status} />
             <MissingRequiredChip operatingCompanyId={driver.operating_company_id} entityKind="driver" entityId={driver.id} />
-            <Link to={`/drivers/${driver.id}/hos`} className="rounded-sm border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700">
-              HOS Detail
-            </Link>
-            <Button
-              variant="secondary"
-              onClick={() => onboardingLaunchMutation.mutate()}
-              loading={onboardingLaunchMutation.isPending}
-            >
-              Start / Resume Onboarding
-            </Button>
+            <ActionsDropdown
+              items={[
+                { key: "hos-detail", label: "HOS Detail", onClick: () => {}, href: `/drivers/${driver.id}/hos` },
+                {
+                  key: "onboarding",
+                  label: "Start / Resume Onboarding",
+                  onClick: () => onboardingLaunchMutation.mutate(),
+                  loading: onboardingLaunchMutation.isPending,
+                },
+                ...(driver.status !== "Terminated"
+                  ? [
+                      {
+                        key: "deactivate",
+                        label: "Deactivate",
+                        onClick: () => setDeactivateConfirmOpen(true),
+                        loading: deactivateMutation.isPending,
+                      },
+                    ]
+                  : []),
+                ...(canResendInvite
+                  ? [
+                      {
+                        key: "resend-invite",
+                        label: "Resend Invite",
+                        onClick: () => resendInviteMutation.mutate(),
+                        loading: resendInviteMutation.isPending,
+                        disabled: !driver.email,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
             {!editMode ? (
               <Button onClick={() => setEditMode(true)}>Edit</Button>
             ) : (
@@ -911,25 +934,6 @@ export function DriverDetailPage() {
                 Save
               </Button>
             )}
-            {driver.status !== "Terminated" ? (
-              <Button
-                variant="danger"
-                onClick={() => setDeactivateConfirmOpen(true)}
-                loading={deactivateMutation.isPending}
-              >
-                Deactivate
-              </Button>
-            ) : null}
-            {canResendInvite ? (
-              <Button
-                variant="secondary"
-                onClick={() => resendInviteMutation.mutate()}
-                loading={resendInviteMutation.isPending}
-                disabled={!driver.email}
-              >
-                Resend Invite
-              </Button>
-            ) : null}
           </div>
         }
       />
@@ -941,7 +945,9 @@ export function DriverDetailPage() {
         itemIds={visibleTabs}
       />
 
-      {driver.operating_company_id ? <UnitDriverHistoryStrip operatingCompanyId={driver.operating_company_id} driverId={driver.id} /> : null}
+      {activeTab === "Equipment Assignments" && driver.operating_company_id ? (
+        <UnitDriverHistoryStrip operatingCompanyId={driver.operating_company_id} driverId={driver.id} />
+      ) : null}
 
       {activeTab === "Operations" ? (
         (() => {
