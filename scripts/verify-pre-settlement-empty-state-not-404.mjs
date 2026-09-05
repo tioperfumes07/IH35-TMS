@@ -26,8 +26,8 @@ export function collectFailures(src = loadSource()) {
   if (/reply\.code\(404\)\.send\(\{ error: "no_active_pre_settlement" \}\)/.test(src)) {
     failures.push("the by-driver route still returns a raw 404 for the ordinary no-active-pre-settlement state");
   }
-  if (!/if \(!settlement\) return \{ settlement: null, lines: \[\] \};/.test(src)) {
-    failures.push("the by-driver route no longer returns the honest { settlement: null, lines: [] } empty payload for this state");
+  if (!/if \(!settlement\) \{[\s\S]{0,260}settlement: null,[\s\S]{0,80}lines: \[\],[\s\S]{0,80}deductions: \[\],[\s\S]{0,260}reconciliation:/.test(src)) {
+    failures.push("the by-driver route no longer returns the honest 200 empty payload with settlement, lines, deductions, and reconciliation");
   }
   // "schema_absent" is the ONLY case allowed to still return a non-200 (501, a real config gap) --
   // it must stay distinct from the ordinary empty-tour case above, never collapsed back into a 404.
@@ -48,10 +48,7 @@ if (process.argv.includes("--selftest")) {
 
   const escaped = [];
 
-  const bad404 = src.replace(
-    "if (!settlement) return { settlement: null, lines: [] };",
-    'if (!settlement) return reply.code(404).send({ error: "no_active_pre_settlement" });'
-  );
+  const bad404 = src.replace(/if \(!settlement\) \{[\s\S]*?\n      \}/, 'if (!settlement) return reply.code(404).send({ error: "no_active_pre_settlement" });');
   if (bad404 === src || collectFailures(bad404).length === 0) {
     escaped.push("reintroduced raw 404 not caught");
   }

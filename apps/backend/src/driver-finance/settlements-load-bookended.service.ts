@@ -5,7 +5,7 @@ import { applyApprovedAbandonmentChargebacksToSettlement } from "./abandonment.s
 import { applyPendingDeductionsToSettlementWithNetFloor } from "./settlement-deduction-cap.service.js";
 import { applyAutoDeductionsToSettlement } from "../settlements/auto-deductions/apply.js";
 import { computeSettlementContractTerms, SETTLEMENT_CONTRACT_TERMS_FLAG } from "./settlement-contract-terms.service.js";
-import { appendSettlementLineFromDriverBillIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
+import { appendSettlementLineFromDriverBillIfMissing, appendEscrowContributionLineIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
 import { fromMdataStatus } from "../dispatch/load-state-machine.js";
 import {
   settlementEarningsSumSql,
@@ -259,11 +259,13 @@ export async function aggregateSettlementTotals(
   deductions_total: number;
   reimbursements_total: number;
   net_pay: number;
+  escrow_contribution_total: number;
 }> {
   const totalsRes = await client.query<{
     earnings: string | number | null;
     deductions: string | number | null;
     reimbursements: string | number | null;
+    escrow_contribution: string | number | null;
   }>(
     `
       SELECT
@@ -282,7 +284,8 @@ export async function aggregateSettlementTotals(
         -- does NOT claim the amount was disbursed; see the OPEN board finding
         -- SETTLEMENT-DISPUTE-APPROVAL-HAS-NO-DISBURSEMENT-PATH for the still-unresolved cash
         -- question, deliberately left untouched here pending an owner accounting-treatment decision.
-        ${settlementReimbursementsSumSql()} AS reimbursements
+        ${settlementReimbursementsSumSql()} AS reimbursements,
+        COALESCE(SUM(CASE WHEN line_type = 'escrow_contribution' THEN amount ELSE 0 END), 0) AS escrow_contribution
       FROM driver_finance.settlement_lines
       WHERE settlement_id = $1
         -- ACCT-F156: settlement_lines soft-deletes via is_active, so an inactive line stays here with
@@ -297,6 +300,7 @@ export async function aggregateSettlementTotals(
   const gross = Number(totalsRes.rows[0]?.earnings ?? 0);
   const deductions = Number(totalsRes.rows[0]?.deductions ?? 0);
   const reimbursements = Number(totalsRes.rows[0]?.reimbursements ?? 0);
+  const escrowContribution = Number(totalsRes.rows[0]?.escrow_contribution ?? 0);
   const net = gross - deductions + reimbursements;
 
   await client.query(
@@ -386,7 +390,13 @@ export async function aggregateSettlementTotals(
     [settlementId, operatingCompanyId]
   );
 
-  return { gross_pay: gross, deductions_total: deductions, reimbursements_total: reimbursements, net_pay: net };
+  return {
+    gross_pay: gross,
+    deductions_total: deductions,
+    reimbursements_total: reimbursements,
+    net_pay: net,
+    escrow_contribution_total: escrowContribution,
+  };
 }
 
 async function closeLoadBookendedSettlementForDriver(
@@ -510,6 +520,15 @@ async function closeLoadBookendedSettlementForDriver(
     loadId: opts.load.id,
     teamId: opts.team?.teamId ?? null,
     lineType,
+    actorUserId: opts.actorUserId ?? null,
+  });
+  // M.3 (owner order 2026-09-05, transferred CC-1 -> CC-3): the closing/return load accrues its own
+  // per-load escrow line same as every other load in the tour.
+  await appendEscrowContributionLineIfMissing(client, {
+    settlementId,
+    operatingCompanyId: opts.operatingCompanyId,
+    driverId: opts.driverId,
+    loadId: opts.load.id,
     actorUserId: opts.actorUserId ?? null,
   });
 
@@ -790,6 +809,16 @@ export async function stampTripClosedForBookendedSettlement(
         actorUserId: opts.actorUserId,
       });
     }
+    // M.3 (owner order 2026-09-05, transferred CC-1 -> CC-3): escrow is a driver-level (not a
+    // team-split) contribution, tied to the settlement's own driver_id regardless of whether the
+    // anchor load's earnings were team-split above.
+    await appendEscrowContributionLineIfMissing(client, {
+      settlementId: opts.settlementId,
+      operatingCompanyId: opts.operatingCompanyId,
+      driverId: row.driver_id,
+      loadId: anchorLoadId,
+      actorUserId: opts.actorUserId,
+    });
     await aggregateSettlementTotals(client, opts.settlementId, opts.operatingCompanyId);
   };
 
@@ -1000,6 +1029,14 @@ export async function pingSettlementOnLoadEvent(
         loadId: opts.loadId,
         teamId: team?.teamId ?? null,
         lineType,
+        actorUserId: opts.actorUserId ?? null,
+      });
+      // M.3 (owner order 2026-09-05, transferred CC-1 -> CC-3).
+      await appendEscrowContributionLineIfMissing(client, {
+        settlementId: String(settlementId),
+        operatingCompanyId: opts.operatingCompanyId,
+        driverId,
+        loadId: opts.loadId,
         actorUserId: opts.actorUserId ?? null,
       });
     }

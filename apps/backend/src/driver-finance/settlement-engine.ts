@@ -4,6 +4,7 @@
 import type { TeamSplitMethod } from "../mdata/driver-team.service.js";
 import { normalizeShares } from "../mdata/driver-team.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { computeCappedEscrowContributionCents, readDriverEscrowBalanceCents } from "./escrow-resolver.service.js";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -113,6 +114,7 @@ export async function appendSettlementLineFromDriverBillIfMissing(
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
       LIMIT 1
+      FOR UPDATE
     `,
     [input.settlementId, input.operatingCompanyId]
   );
@@ -325,4 +327,142 @@ export async function appendSettlementLineFromDriverBillIfMissing(
       [input.settlementId, entry.lineType, entry.description, entry.dollars, ...loadParam, settlement.is_sample_data]
     );
   }
+}
+
+/**
+ * M.3 — PER-LOAD escrow accrual (owner order 2026-09-05, transferred CC-1 → CC-3). REUSE-AND-EXTEND
+ * (escrow-resolver.service.ts's own header law): reuses readDriverEscrowBalanceCents +
+ * computeCappedEscrowContributionCents unchanged — this only changes WHEN and how OFTEN the
+ * contribution is computed, never the cap math itself.
+ *
+ * Every real settlement PDF this session (settlements 5773-5782, seeded live) prints escrow as its
+ * own $25.00 line PER LOAD, not one flat charge per settlement — DEFAULT_ESCROW_PER_SETTLEMENT_
+ * CONTRIBUTION_CENTS (settlement-payrun-close.service.ts's $250.00 flat-per-close amount) never
+ * matched that. This appends one 'escrow_contribution' settlement_lines row per load, capped at
+ * $2,500 total (ESCROW_CAP_CENTS) same as the flat path, computed against the driver's POSTED escrow
+ * balance PLUS whatever this same still-open settlement has already accrued (so three loads in one
+ * settlement correctly taper off near the cap instead of each independently re-checking only the
+ * posted balance and over-committing). Idempotent per driver_bills row via the same
+ * (source_driver_bill_id, line_type) unique constraint appendSettlementLineFromDriverBillIfMissing's
+ * own INSERT relies on above — calling this twice for the same load is always a no-op the second
+ * time. Contributes $0 (skips the insert) once the cap is reached; never a negative line, never a
+ * release. settlement-payrun-close.service.ts's closeSettlementPayRun reads the SUM of these lines
+ * as the load_bookended settlement's real escrow contribution at final close, instead of applying
+ * its own flat DEFAULT_ESCROW_PER_SETTLEMENT_CONTRIBUTION_CENTS on top (which would double-count) —
+ * that constant stays live, unchanged, for the OTHER settlement model that never accrues per load.
+ */
+export const ESCROW_PER_LOAD_CONTRIBUTION_CENTS = 2_500;
+
+export async function appendEscrowContributionLineIfMissing(
+  client: DbClient,
+  input: {
+    settlementId: string;
+    operatingCompanyId: string;
+    driverId: string;
+    loadId: string;
+    actorUserId?: string | null;
+  }
+): Promise<void> {
+  const reg = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.settlement_lines') IS NOT NULL AS ok`);
+  if (!reg.rows[0]?.ok) return;
+
+  const settlementRes = await client.query<{ is_sample_data: boolean }>(
+    `
+      SELECT is_sample_data
+      FROM driver_finance.driver_settlements
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
+      LIMIT 1
+    `,
+    [input.settlementId, input.operatingCompanyId]
+  );
+  const settlement = settlementRes.rows[0];
+  if (!settlement) return;
+
+  const billRes = await client.query<{ id: string; load_number: string | null }>(
+    `
+      SELECT id, load_number
+      FROM driver_finance.driver_bills
+      WHERE load_id = $1
+        AND driver_id = $2
+        AND status <> 'void'
+      ORDER BY created_at DESC
+      LIMIT 1
+    `,
+    [input.loadId, input.driverId]
+  );
+  const bill = billRes.rows[0];
+  // Mirrors ACCT-F206 above: no eligible driver_bills row means no earnings line either, so there is
+  // nothing to accrue escrow against yet. Not an error — the earnings-line append already records the
+  // skip; escrow simply has nothing to hang off of until a bill exists.
+  if (!bill?.id) return;
+
+  // Already-accrued-but-not-yet-posted lines on THIS still-open settlement count toward the cap the
+  // same as the posted balance -- otherwise three loads in one settlement would each independently
+  // see the same pre-settlement posted balance and all three would contribute the full $25, blowing
+  // past the cap the moment the settlement finally closes and posts the real GL entry.
+  const alreadyAccruedRes = await client.query<{ total: string | number | null }>(
+    `
+      SELECT COALESCE(SUM(amount), 0) AS total
+      FROM driver_finance.settlement_lines
+      WHERE settlement_id = $1::uuid
+        AND line_type = 'escrow_contribution'
+        AND is_active = true
+    `,
+    [input.settlementId]
+  );
+  const alreadyAccruedCents = Math.round(Number(alreadyAccruedRes.rows[0]?.total ?? 0) * 100);
+
+  const postedBalanceCents = await readDriverEscrowBalanceCents(client, input.operatingCompanyId, input.driverId);
+  const contributionCents = computeCappedEscrowContributionCents({
+    currentBalanceCents: postedBalanceCents + alreadyAccruedCents,
+    standardPerSettlementContributionCents: ESCROW_PER_LOAD_CONTRIBUTION_CENTS,
+  });
+  if (contributionCents <= 0 && input.actorUserId) {
+    await appendCrudAudit(
+      client as never,
+      input.actorUserId,
+      "driver_finance.settlement_line.escrow_contribution_skipped_at_cap",
+      {
+        resource_type: "driver_finance.settlement_lines",
+        settlement_id: input.settlementId,
+        driver_id: input.driverId,
+        load_id: input.loadId,
+        posted_balance_cents: postedBalanceCents,
+        already_accrued_this_settlement_cents: alreadyAccruedCents,
+      },
+      "info",
+      "M3-ESCROW-PER-LOAD"
+    );
+  }
+  if (contributionCents <= 0) return;
+
+  const loadLabel = String(bill.load_number ?? input.loadId);
+  const hasLoadCol = await client.query<{ ok: boolean }>(
+    `
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'driver_finance'
+          AND table_name = 'settlement_lines'
+          AND column_name = 'load_id'
+      ) AS ok
+    `
+  );
+  const loadCols = hasLoadCol.rows[0]?.ok ? ", load_id" : "";
+  const loadColPlaceholder = hasLoadCol.rows[0]?.ok ? ",$6::uuid" : "";
+  const loadParam = hasLoadCol.rows[0]?.ok ? [input.loadId] : [];
+
+  await client.query(
+    `
+      INSERT INTO driver_finance.settlement_lines (
+        settlement_id, line_type, description, amount, source_driver_bill_id${loadCols}, is_sample_data
+      )
+      VALUES ($1,$2,$3,$4,$5::uuid${loadColPlaceholder},$${hasLoadCol.rows[0]?.ok ? 7 : 6}::boolean)
+      -- Same (source_driver_bill_id, line_type) uniqueness the earnings/deadhead lines rely on above
+      -- (MILES SPEC 202613510001) — a re-run for a load whose escrow line already landed is a no-op.
+      ON CONFLICT (source_driver_bill_id, line_type) WHERE source_driver_bill_id IS NOT NULL DO NOTHING
+    `,
+    [input.settlementId, "escrow_contribution", `Load ${loadLabel} — Escrow Contribution`, contributionCents / 100, bill.id, ...loadParam, settlement.is_sample_data]
+  );
 }

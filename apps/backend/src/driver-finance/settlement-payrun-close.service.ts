@@ -248,6 +248,28 @@ async function loadChargebacksCents(client: DbClient, operatingCompanyId: string
 }
 
 /**
+ * M.3 (owner order 2026-09-05, transferred CC-1 -> CC-3): SUM of this settlement's own PER-LOAD
+ * escrow_contribution settlement_lines rows (cents, positive magnitude) -- what
+ * settlement-engine.ts's appendEscrowContributionLineIfMissing already accrued and capped over the
+ * settlement's open life, one $25.00 line per load. This is the real, final escrow contribution a
+ * load_bookended settlement posts at close -- never a fresh flat DEFAULT_ESCROW_PER_SETTLEMENT_
+ * CONTRIBUTION_CENTS on top, which would double-charge the driver.
+ */
+async function loadAccruedEscrowContributionCents(client: DbClient, settlementId: string): Promise<number> {
+  const res = await client.query<{ total: string | null }>(
+    `
+      SELECT COALESCE(SUM(amount), 0)::text AS total
+      FROM driver_finance.settlement_lines
+      WHERE settlement_id = $1::uuid
+        AND line_type = 'escrow_contribution'
+        AND is_active = true
+    `,
+    [settlementId]
+  );
+  return dollarsToCents(res.rows[0]?.total ?? 0);
+}
+
+/**
  * ACCT-F5613 — SUM of active reimbursement settlement lines (cents, positive magnitude).
  * aggregateSettlementTotals (settlements-load-bookended.service.ts) already adds reimbursements INTO
  * driver_settlements.net_pay (`net = gross - deductions + reimbursements`), and
@@ -517,14 +539,24 @@ export async function closeSettlementPayRun(
         : advanceRecoveriesCents;
 
     const escrowBalanceBeforeCents = await readDriverEscrowBalanceCents(client, opco, settlement.driver_id);
-    const standardEscrow =
-      input.standardEscrowContributionCents != null && input.standardEscrowContributionCents > 0
-        ? Math.round(input.standardEscrowContributionCents)
-        : DEFAULT_ESCROW_PER_SETTLEMENT_CONTRIBUTION_CENTS;
-    const escrowContributionCents = computeCappedEscrowContributionCents({
-      currentBalanceCents: escrowBalanceBeforeCents,
-      standardPerSettlementContributionCents: standardEscrow,
-    });
+    // M.3 (owner order 2026-09-05, transferred CC-1 -> CC-3): a load_bookended settlement already
+    // accrued its escrow PER LOAD during its open life (settlement-engine.ts's
+    // appendEscrowContributionLineIfMissing, called at every book-time/add-load/close-anchor point,
+    // each capped against the balance-so-far). Applying computeCappedEscrowContributionCents's flat
+    // DEFAULT_ESCROW_PER_SETTLEMENT_CONTRIBUTION_CENTS on top here would double-charge the driver —
+    // this settlement model contributes the SUM of what it already accrued, never a fresh flat
+    // amount. The flat per-settlement path stays live, unchanged, for every OTHER settlement_model
+    // (never deleted, per the order's own wording).
+    const escrowContributionCents =
+      settlement.settlement_model === "load_bookended"
+        ? await loadAccruedEscrowContributionCents(client, settlementId)
+        : computeCappedEscrowContributionCents({
+            currentBalanceCents: escrowBalanceBeforeCents,
+            standardPerSettlementContributionCents:
+              input.standardEscrowContributionCents != null && input.standardEscrowContributionCents > 0
+                ? Math.round(input.standardEscrowContributionCents)
+                : DEFAULT_ESCROW_PER_SETTLEMENT_CONTRIBUTION_CENTS,
+          });
 
     const netCents =
       grossCents +
