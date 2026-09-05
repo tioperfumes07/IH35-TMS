@@ -31,7 +31,7 @@ export function geocodeSearch(q: string) {
 
 /** Places Autocomplete (New) predictions. `session` = one UUID per typing session (regenerate after a pick). */
 export function geocodeSuggest(q: string, session: string) {
-  return apiRequest<{ enabled: boolean; provider?: "trimble" | "google"; suggestions: AddressSuggestion[] }>(
+  return apiRequest<{ enabled: boolean; provider?: "trimble" | "google"; suggestions: AddressSuggestion[]; results?: GeocodeResult[] }>(
     `/api/v1/geocoding/suggest?q=${encodeURIComponent(q)}&session=${encodeURIComponent(session)}`
   );
 }

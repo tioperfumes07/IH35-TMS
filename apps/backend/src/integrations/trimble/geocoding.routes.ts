@@ -94,8 +94,22 @@ export async function registerGeocodingRoutes(app: FastifyInstance) {
       return { enabled: true, provider, suggestions: [] as AddressSuggestion[] };
     }
     try {
-      const suggestions = await googleAutocomplete(q, session);
-      return { enabled: true, provider, suggestions };
+      // Owner 2026-09-05: "when we search we need to search for names of warehouses, companies". Autocomplete is a
+      // prefix matcher for ADDRESSES ("1424 alameda lar" → Laredo); Places Text Search is the BUSINESS finder
+      // ("tyson" → Tyson Foods plants, "loves 604" → the store). Run both; the field merges them, businesses first
+      // when the query starts with letters, addresses first when it starts with a number.
+      const [suggestions, businesses] = await Promise.all([
+        googleAutocomplete(q, session),
+        googleSearchAddress(q, 5).catch((e: unknown) => {
+          req.log?.warn({ err: e instanceof Error ? e.message : String(e) }, "google_text_search_in_suggest_failed");
+          return [] as GeocodeResult[];
+        }),
+      ]);
+      // Drop Text Search rows that duplicate a prediction's address, and rows with no business name (pure addresses
+      // are Autocomplete's job).
+      const predicted = new Set(suggestions.map((s) => s.text.toLowerCase()));
+      const results = businesses.filter((r) => r.name && !predicted.has(r.formatted.toLowerCase()));
+      return { enabled: true, provider, suggestions, results };
     } catch (e) {
       req.log?.error({ err: e instanceof Error ? e.message : String(e) }, "google_autocomplete_failed");
       return reply.code(502).send({ enabled: true, provider, suggestions: [] as AddressSuggestion[], error: "suggest_failed" });
