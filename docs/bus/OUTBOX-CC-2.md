@@ -452,3 +452,13 @@ surrendered by Cursor. Authorization: SURFACE-BREACH-AUTHORIZED lead §0c surren
 pages/dispatch/DispatchBoard.tsx, RoundTrips*.tsx, ParityTable. Reading
 docs/design/DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05.md + PDF now. Order: L.4a (15:00Z) ->
 L.4g (15:30Z) -> L.4c (16:30Z). | NEXT=L.4a DispatchBoard.tsx column restoration | GO
+
+CC-2 | L.4a DONE | 25ea6905 | verify-dispatch-board-preview-contract PASS (5/5 selftest) ·
+verify-dispatch-board-default-columns-fit PASS · verify-dispatch-awaiting-unassigned-not-uuid
+PASS (5/5 selftest) · verify-dispatch-board-hos-columns PASS · tsc -b clean · verify-seat-surface-
+ownership OK (SURFACE-BREACH-AUTHORIZED cited) | dep-<pending, not triggered by this seat>
+All board columns restored+grouped+draggable per DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §A.
+REMAINING flagged honestly in the PR: sticky-left-4-columns (new ParityTable capability, deferred
+for a careful follow-up, not rushed into a ~130-call-site shared component) +
+verify-dispatch-board-sections-and-columns.mjs's other pre-existing sectionControlIssues rot
+(unrelated to this fix). | NEXT=L.4g additive-only guard (deadline 15:30Z) | GO
