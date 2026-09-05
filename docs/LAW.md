@@ -380,7 +380,7 @@ Vendors, Legal, Documents, Users, Help — may be iterated on, additive-only.
 columns, tabs, routes or features. Only add. Sidebar locked at 18 items. The only exception is the
 owner saying "remove X" in words. *(He has: Load from template, Legacy load reference #,
 Class T120-SMITH, the trip-type classification banner, and the ranked driver / next-load deadhead
-suggestions — all ordered removed 2026-09-03.)*
+suggestions — all ordered removed 2026-09-03; dispatch board default columns Commodity, Linehaul, Pre-settlement, Status — ordered removed from the default set 2026-09-05 13:29Z, kept in the chooser.)*
 
 **Additive-only is GUARDED (owner 2026-09-05 05:28Z).** `scripts/verify-additive-only.mjs` in `pnpm gate` fails any PR that shrinks the sidebar, route, board-column or tab-row sets, or hides a board column by default, unless the PR body carries `OWNER-REMOVE: "<owner's exact words>" <date>`. Breaches on record: #18231 (Round Trips timeline → PlannerGrid) and #20242 (24 of 33 dispatch columns hidden) — both Cursor, both ordered restored (L.4a, L.4c).
 

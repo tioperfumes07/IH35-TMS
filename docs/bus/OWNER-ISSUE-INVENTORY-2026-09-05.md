@@ -45,6 +45,7 @@ Devin is not active today — nothing routes to Devin.
 | 34 | Driver Profile — Documents | 9 docs for a 6-load driver incl. legacy `L-20260830-00xx` instruction PDFs; per-load PDFs mixed with driver documents; Doc Date `-`. | Documents tab + docs.files | Codex DP.2 | 19:30Z | Cascade |
 | 35 | Driver Profile — Equipment | Unit only; no Trailer, no Load, no miles. | Equipment tab | Codex DP.2 | 19:30Z | Cascade |
 | 36 | Driver Profile — Earnings & Debt | 1 settlement row at $0.00/$0.00/$0.00 (6 bills exist); no per-load earnings, no debt history. | read model | CC-1 D.4 | 21:30Z | CC-3 |
+| 37 | Dispatch board columns | Owner 13:29Z: Driver → initials; Driver Status short codes (Off/UA…); Live loc wider (180); Unit + last column full outline; REMOVE Commodity · Linehaul · Pre-settlement · Status from defaults (OWNER-REMOVE). Live: all 32 cols at 34px equal split, "Off DutyNo ping" and GPS strings glued, Pre-settlement blank. | DispatchBoard.tsx / ParityTable | CC-2 L.4a-fix | 15:00Z | Cascade |
 
 **Live re-measurement 14:40Z (Chrome back):** settlement detail Miles `0`/Rate `0` (fake zeros), 0 Add buttons, 0 inputs, first money section at y=756; Bills "No bills found." with 30 driver bills live; Invoices 38 rows, no Factored column; Banking toolbar 8 distinct control heights (20–36px), "All dates" duplicated, type filter is a text input, 0 date inputs visible, 0 suggestions on 355 rows.
 

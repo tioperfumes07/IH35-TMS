@@ -134,6 +134,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG
+- 13:29Z OWNER board column orders (initials, Off/UA codes, Live loc wider, outer frame, OWNER-REMOVE 4 default columns). Live: 34px equal split on all 32 cols, glued strings. → CC-2 L.4a-fix 15:00Z; LAW.md exception list updated.
 - 13:20Z OWNER: driver profile tabs not wired. Live: assignment tables on all 11 tabs; 5 action buttons; Load History 5 cols, row click → dispatch board; audit global + machine names; Documents 9 for 6 loads incl. L-2026… legacy; Equipment no trailer; Earnings 1 row $0. Codex DP.1/DP.2, CC-3 DP.3, CC-1 D.4.
 - 13:15Z (real) tick: clock correction (labels ran ahead; deadlines unchanged). CC-2 L.4a merged+live partial (31 cols/5 groups/Live loc/drag ✔; overflow 30/32, min-width 0, no sticky, no gear ✖ → L.4a-fix 15:00Z), L.4g ✔. FE live c16dccedf2 13:12Z (Cursor #20520 drawer). API still 836f4478 — deploy owed. ACKs: CC-2, CC-3.
 - 14:40Z Chrome back; live re-measured settlements/bills/invoices/banking; inventory rows 28 (list fake zeros, Loads concat) and 29 (seed invoice dates = today → CC-3 16:00Z).
