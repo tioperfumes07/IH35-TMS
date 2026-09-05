@@ -17,6 +17,7 @@ import { registerQboWebhookRoutes } from "./integrations/qbo/qbo-webhook.routes.
 import { registerSamsaraConfigRoutes } from "./integrations/samsara/samsara-config.routes.js";
 import { registerSamsaraMasterSyncRoutes } from "./integrations/samsara/samsara-master-sync.routes.js";
 import { registerSamsaraLivePositionRoutes } from "./integrations/samsara/positions/live-position.routes.js";
+import { registerSamsaraRoutesIntegration } from "./integrations/samsara/routes-integration.routes.js";
 import { registerTriSignalRoutes } from "./dispatch/load-status-signal/tri-signal.routes.js";
 import { initializeSamsaraPositionPollWorker } from "./jobs/samsara-position-poll-worker.js";
 import { registerSamsaraHealthRoutes } from "./integrations/samsara/samsara-health.routes.js";
@@ -756,6 +757,7 @@ async function main() {
   // drivers/assets endpoints 404'd live despite existing in the repo and being fully implemented.
   await registerSamsaraMasterSyncRoutes(app);
   await registerSamsaraLivePositionRoutes(app);
+  await registerSamsaraRoutesIntegration(app);
   await registerTriSignalRoutes(app);
   await registerSamsaraHealthRoutes(app);
   await registerSamsaraStatsProbeRoutes(app);

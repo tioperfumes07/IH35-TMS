@@ -2,6 +2,7 @@ import { assertTenantContext } from "../../cron/_helpers/tenant-context-guard.js
 import { projectDriverEvent } from "./webhook-projectors/driver-projector.js";
 import { projectHosEvent } from "./webhook-projectors/hos-projector.js";
 import { projectVehicleEvent } from "./webhook-projectors/vehicle-projector.js";
+import { projectRouteStopEvent } from "./routes-integration.service.js";
 import type {
   DbClient,
   ProjectionErrorClass,
@@ -99,10 +100,11 @@ function classifyThrownError(error: unknown): {
   };
 }
 
-function routeProjector(eventType: string): "driver" | "vehicle" | "hos" | "missing_mirror" | "unsupported" {
+function routeProjector(eventType: string): "driver" | "vehicle" | "hos" | "route_stop" | "missing_mirror" | "unsupported" {
   const normalized = eventType.trim().toLowerCase();
   if (normalized.length === 0 || normalized === "unknown") return "unsupported";
   if (normalized.includes("hos") || normalized.includes("eld") || normalized.includes("duty_status")) return "hos";
+  if (normalized === "routestoparrival" || normalized === "routestopdeparture") return "route_stop";
   if (normalized.includes("gps") || normalized.includes("location") || normalized.includes("position")) return "vehicle";
   if (normalized.includes("harsh") || normalized.includes("speeding") || normalized.includes("distracted")) return "vehicle";
   if (normalized.includes("mobile_use") || normalized.includes("seatbelt")) return "vehicle";
@@ -147,6 +149,19 @@ async function projectEvent(client: DbClient, event: SamsaraWebhookEvent): Promi
   if (route === "driver") return projectDriverEvent(client, event);
   if (route === "vehicle") return projectVehicleEvent(client, event);
   if (route === "hos") return projectHosEvent(client, event);
+  if (route === "route_stop") {
+    const result = await projectRouteStopEvent(client, {
+      operatingCompanyId: event.operating_company_id,
+      eventType: event.event_type,
+      payload: event.payload,
+    });
+    return result.success ? result : {
+      success: false,
+      classification: "permanent",
+      error_class: "malformed_payload",
+      error_message: result.error,
+    };
+  }
   if (route === "unsupported") {
     return {
       success: false,
