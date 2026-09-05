@@ -81,8 +81,35 @@ type Props = {
   canEditReason?: string;
   operatingCompanyId?: string;
   initialTab?: DrawerTab;
+  /** LDT-0 — when the drawer is opened from Accounting → Load costs the `More ▾` group
+   * (Documents, Cargo Sensors, Geofence Timeline, Assignment History) is hidden entirely:
+   * those are not part of the load-costs context (owner order 2026-09-05). Callers on
+   * /accounting/** may omit this; it is inferred from the pathname as a fallback. */
+  openedFrom?: "accounting" | "dispatch";
   onClose: () => void;
 };
+
+// LDT-0 (register CURSOR-LOAD-DETAIL-TABS-BUILD-2026-09-05.md · deadline 01:30Z) — the tab bar has
+// a fixed primary order; the four non-cost tabs collapse under a `More ▾` group and are hidden when
+// the drawer is opened from Accounting. Customs is NOT a primary tab (owner) — it stays reachable
+// under More for cross-border loads only, never on the main bar. Order here is the guard's contract
+// (verify-ldt-0-tabbar-header.mjs asserts it verbatim); reordering trips the selftest.
+const LDT0_MAIN_TAB_ORDER = [
+  "Overview",
+  "Stops",
+  "Costs",
+  "Driver Pay",
+  "Factoring",
+  "Settlement",
+  "Pre-Settlement",
+  "Audit",
+] as const;
+const LDT0_MORE_TAB_ORDER = [
+  "Documents",
+  "Cargo Sensors",
+  "Geofence Timeline",
+  "Assignment History",
+] as const;
 
 // RENDER-load-side-panel B1a: the Overview mirrors the Book Load wizard sections (read-only) so the
 // dispatcher sees the load the way it was booked, with a per-section "Edit ▸" into the prefilled wizard.
@@ -153,7 +180,7 @@ function serializeFactoringPackageNotes(meta: FactoringPackageMeta, visibleNotes
   return `${FACTORING_PACKAGE_META_PREFIX}${JSON.stringify(meta)}\n${visibleNotes.trim()}`.trim();
 }
 
-export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, operatingCompanyId, initialTab = "Overview", onClose }: Props) {
+export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, operatingCompanyId, initialTab = "Overview", openedFrom, onClose }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<DrawerTab>(initialTab);
@@ -398,15 +425,107 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
   });
   const isPackageEligible = Boolean(load && ["delivered", "invoiced", "paid", "closed"].includes(load.status));
   const showCustomsTab = Boolean(load && loadHasCrossBorder(load));
-  const visibleTabs = useMemo(
-    () => tabs.filter((tab) => tab !== "Customs" || showCustomsTab),
-    [showCustomsTab]
+  // LDT-0 — Accounting context hides the More group. Prop wins; pathname is the fallback for the
+  // /accounting/load-costs entry that opens the drawer at ?tab=Costs.
+  const fromAccounting = useMemo(
+    () => openedFrom === "accounting" || (typeof window !== "undefined" && window.location.pathname.startsWith("/accounting")),
+    [openedFrom]
   );
+  const mainTabs = useMemo<DrawerTab[]>(() => [...LDT0_MAIN_TAB_ORDER], []);
+  const moreTabs = useMemo<DrawerTab[]>(
+    () =>
+      fromAccounting
+        ? []
+        : [...LDT0_MORE_TAB_ORDER, ...(showCustomsTab ? (["Customs"] as DrawerTab[]) : [])],
+    [fromAccounting, showCustomsTab]
+  );
+  const [moreOpen, setMoreOpen] = useState(false);
+  // LDT-0 — every header stat is a drill-down pop-up (register ADDENDUM: build the P{} contents).
+  const [statPop, setStatPop] = useState<string | null>(null);
   useEffect(() => {
+    if (!statPop) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setStatPop(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [statPop]);
+  useEffect(() => {
+    // A tab that is no longer reachable (Customs on a domestic load, or a More tab while in the
+    // Accounting context) falls back to Overview.
     if (activeTab === "Customs" && !showCustomsTab) {
       setActiveTab("Overview");
+      return;
     }
-  }, [activeTab, showCustomsTab]);
+    if (fromAccounting && (LDT0_MORE_TAB_ORDER as readonly string[]).includes(activeTab)) {
+      setActiveTab("Costs");
+    }
+  }, [activeTab, showCustomsTab, fromAccounting]);
+
+  // LDT-0 — the seven header stats and their drill-down pop-ups. Every value is a real field off the
+  // load detail or an honest "—" with a reason; Real driven is NEVER rendered as 0 (telematics
+  // odometer delta at fence entry/exit; blank with a reason until fences fire).
+  const ldt0 = useMemo(() => {
+    const currency = load?.currency_code ?? "USD";
+    const practical = load?.miles_practical ?? null;
+    const short = load?.miles_shortest ?? null;
+    const rateCents = load?.rate_total_cents ?? null;
+    const revPerMile = rateCents != null && practical != null && practical > 0 ? rateCents / 100 / practical : null;
+    const num = (n: number | null | undefined, dp = 1) => (n != null ? n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp }) : null);
+    const driverName = load?.assigned_primary_driver_name ?? null;
+    const unit = load?.assigned_unit_number ?? null;
+    const trailer = load?.trailer_number ?? null;
+    const trailerType = load?.trailer_equipment_type ?? null;
+    const stats = [
+      { id: "rate", label: "Rate", value: rateCents != null ? formatMoneyCents(rateCents, currency) : "—", sub: load?.load_number ? `pro forma ${load.load_number}` : "no invoice yet" },
+      { id: "practical", label: "Practical mi", value: num(practical) ?? "—", sub: "source: History" },
+      { id: "short", label: "Short mi", value: short != null ? (num(short) ?? "—") : "— NULL", sub: "pays the driver" },
+      // Real driven: blank-with-reason, never 0 (guard asserts this).
+      { id: "real", label: "Real driven", value: "—", sub: "captured at tour close" },
+      { id: "revmi", label: "Rev / mi", value: revPerMile != null ? formatMoneyCents(Math.round(revPerMile * 100), currency) : "—", sub: "on practical" },
+      { id: "driver", label: "Driver", value: driverName ?? "—", sub: "opens Driver Pay" },
+      { id: "unit", label: "Truck · Trailer", value: `${unit ?? "—"} · ${trailer ?? "—"}`, sub: trailerType ?? "—" },
+    ] as const;
+    const popups: Record<string, { title: string; rows: Array<[string, string]> }> = {
+      rate: {
+        title: `Rate · pro forma invoice ${load?.load_number ?? ""}`.trim(),
+        rows: [
+          ["Total", rateCents != null ? formatMoneyCents(rateCents, currency) : "—"],
+          ["Revenue per mile", revPerMile != null ? `${formatMoneyCents(rateCents ?? 0, currency)} / ${num(practical) ?? "—"} = ${formatMoneyCents(Math.round(revPerMile * 100), currency)}` : "— (needs practical miles)"],
+          ["Opens", "accounting.invoices → Invoice page"],
+        ],
+      },
+      miles: {
+        title: "Mileage on this load",
+        rows: [
+          ["Practical", `${num(practical) ?? "—"} · loads.miles_practical`],
+          ["Short", short != null ? `${num(short)} · loads.miles_shortest` : "— NULL · not computed on this load"],
+          ["Real driven", "— · telematics odometer at fence entry/exit (blank until fences fire)"],
+        ],
+      },
+      driver: {
+        title: driverName ? `Driver · ${driverName}` : "Driver",
+        rows: [
+          ["Driver", driverName ?? "—"],
+          ["Opens", "Driver Profile → Earnings & Debt · Driver Pay tab"],
+        ],
+      },
+      unit: {
+        title: `Truck ${unit ?? "—"} · Trailer ${trailer ?? "—"}`,
+        rows: [
+          ["Unit", unit ?? "—"],
+          ["Trailer", `${trailer ?? "—"}${trailerType ? ` · ${trailerType}` : ""}`],
+          ["Opens", "Fleet → unit detail · Maintenance → work orders"],
+        ],
+      },
+    };
+    // Practical / Short / Real driven all open the shared mileage pop-up.
+    popups.practical = popups.miles;
+    popups.short = popups.miles;
+    popups.real = popups.miles;
+    popups.revmi = popups.rate;
+    return { stats, popups };
+  }, [load]);
 
   async function persistPackageMeta(nextMeta: FactoringPackageMeta) {
     if (!loadId || !load?.operating_company_id) return;
@@ -511,6 +630,13 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                 <EntityLinkOrTombstone kind="load" id={load?.id ?? loadId} name={load?.load_number} noun="Load" />
               </h2>
               <p className="text-xs text-gray-500">{routeSummary}</p>
+              {load ? (
+                <div className="mt-1 flex flex-wrap items-center gap-1.5" data-testid="ldt0-header-chips">
+                  <span className="inline-block rounded-sm border border-gray-300 bg-gray-50 px-1.5 py-px text-xs font-semibold uppercase text-[#4B5563]">
+                    {load.status}
+                  </span>
+                </div>
+              ) : null}
             </div>
             <div className="flex items-center gap-2">
               {/* N1: ExpenseCreatePage at /accounting/expenses/new plus RecordExpenseModal, both load-scoped. */}
@@ -535,14 +661,89 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
               </Button>
             </div>
           </div>
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-            {visibleTabs.map((tab) => (
+          {load ? (
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7" data-testid="ldt0-header-stats">
+              {ldt0.stats.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  data-testid={`ldt0-stat-${s.id}`}
+                  {...(s.id === "real" ? { "data-ldt0-real-driven": "blank" } : {})}
+                  onClick={() => setStatPop(s.id)}
+                  className="flex flex-col items-center rounded-sm border border-gray-200 bg-white px-2 py-1 text-center hover:bg-gray-50"
+                  title="Click to open its source"
+                >
+                  <span className="text-xs font-semibold uppercase text-[#4B5563]">{s.label}</span>
+                  <span className="text-xs font-semibold text-[#0F1219]">{s.value}</span>
+                  <span className="text-xs text-gray-400">{s.sub}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+          <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1" data-testid="ldt0-tabbar">
+            {mainTabs.map((tab) => (
               <Button key={tab} type="button" size="sm" variant={activeTab === tab ? "primary" : "secondary"} onClick={() => setActiveTab(tab)} style={{ whiteSpace: "nowrap" }}>
                 {tab}
               </Button>
             ))}
+            {moreTabs.length > 0 ? (
+              <div className="relative" data-testid="ldt0-more-group">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={(LDT0_MORE_TAB_ORDER as readonly string[]).includes(activeTab) || activeTab === "Customs" ? "primary" : "secondary"}
+                  onClick={() => setMoreOpen((v) => !v)}
+                  style={{ whiteSpace: "nowrap" }}
+                  aria-haspopup="menu"
+                  aria-expanded={moreOpen}
+                >
+                  More ▾
+                </Button>
+                {moreOpen ? (
+                  <>
+                    <div className="fixed inset-0 z-[215]" onClick={() => setMoreOpen(false)} aria-hidden="true" />
+                    <div className="absolute right-0 z-[216] mt-1 min-w-[190px] rounded-sm border border-gray-200 bg-white py-1 shadow-lg" role="menu">
+                      {moreTabs.map((tab) => (
+                        <button
+                          key={tab}
+                          type="button"
+                          role="menuitem"
+                          className={`block w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 ${activeTab === tab ? "font-semibold text-[#14314F]" : "text-[#4B5563]"}`}
+                          onClick={() => {
+                            setActiveTab(tab);
+                            setMoreOpen(false);
+                          }}
+                        >
+                          {tab}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </header>
+        {statPop && ldt0.popups[statPop] ? (
+          <div className="fixed inset-0 z-[220] flex items-start justify-center bg-black/30 p-6" onClick={() => setStatPop(null)} data-testid="ldt0-stat-popup">
+            <div className="mt-16 w-full max-w-md rounded-sm border border-gray-200 bg-white shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+              <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2">
+                <h3 className="text-xs font-semibold uppercase text-[#4B5563]">{ldt0.popups[statPop].title}</h3>
+                <button type="button" className="text-gray-400 hover:text-gray-700" onClick={() => setStatPop(null)} aria-label="Close">×</button>
+              </div>
+              <table className="w-full text-xs">
+                <tbody>
+                  {ldt0.popups[statPop].rows.map(([k, v]) => (
+                    <tr key={k} className="border-b border-gray-100 last:border-0">
+                      <td className="px-4 py-1.5 text-gray-500">{k}</td>
+                      <td className="px-4 py-1.5 text-right font-medium text-[#0F1219]">{v}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : null}
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4" data-testid="load-detail-drawer-scroll-body">
           {activeTab === "Overview" ? (
