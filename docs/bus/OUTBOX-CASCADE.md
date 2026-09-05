@@ -82,3 +82,5 @@ CASCADE | SIDE-SEARCH+HISTORY DONE | 83368160b5 | origin/main | rows=real (listA
 CASCADE | K.4 BRD-19 DONE | 7987870b7f | origin/main | S30 timeline util column testid present; selftest 10/10 PASS; guard OK | NEXT K.5 BRD-20
 
 CASCADE | K.5 BRD-20 DONE | 54a25dc30c | origin/main | planner calendar dates render MMM-DD via formatPlannerDayLabel; guard + selftest PASS | NEXT K.6 BRD-21
+
+CASCADE | K.6 BRD-21 DONE | ea2bba7fe0 | origin/main | planners filter deactivated drivers (backend d.deactivated_at IS NULL); guard + selftest PASS | NEXT K.7 BRD-23
