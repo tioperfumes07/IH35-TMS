@@ -17,10 +17,12 @@ type Props = {
 type StateTaxRow = NonNullable<IftaPreparation["state_taxes"]>[number];
 
 function fmtNum(value: number, digits = 2) {
+  if (!value) return "—";
   return value.toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: digits });
 }
 
 function fmtMoney(value: number) {
+  if (!value) return "—";
   return formatUsd(value);
 }
 

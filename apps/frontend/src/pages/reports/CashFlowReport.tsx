@@ -21,6 +21,7 @@ import { formatUsdCents } from "../../lib/money";
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
 function money(cents: number) {
+  if (!cents) return "—";
   return formatUsdCents(cents);
 }
 

@@ -16,6 +16,7 @@ type Props = {
 type StateGallonsRow = NonNullable<IftaPreparation["state_gallons"]>[number];
 
 function fmtNum(value: number, digits = 1) {
+  if (!value) return "—";
   return value.toLocaleString(undefined, { maximumFractionDigits: digits });
 }
 
