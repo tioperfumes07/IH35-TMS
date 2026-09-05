@@ -38,6 +38,12 @@ export type EntityKind =
   | "factoring_batch"
   | "payment"
   | "bill_payment"
+  // S.1b/L5 (2026-09-05): settlement earnings/deadhead lines' source driver bill
+  // (driver_finance.driver_bills) — a DIFFERENT table from accounting.bills (see
+  // driver-finance-driver-bills-not-accounting-bills landmine: kind="bill" 404s here). No dedicated
+  // driver_bills/:id detail page/route exists yet — falls through to the resolver's own documented
+  // default (plain text, never a fabricated route), same as every other not-yet-linked kind.
+  | "driver_bill"
   | "transfer"
   | "work_order"
   | "bank_transaction"
