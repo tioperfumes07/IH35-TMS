@@ -47,6 +47,15 @@ function auditBoard(src) {
   // it scrolls horizontally in the overflow-x wrapper instead of truncating columns.
   if (!/minWidthPx=\{1660\}/.test(src))
     f.push(`${BOARD}: ParityTable must be given minWidthPx={1660} so wide columns scroll, not truncate`);
+  // FAIL-3 (lead 03:06Z / DESIGN-CONTRACT §20): an UNTRACKED mileage/rate/deadhead cell renders a
+  // dash, never blank. fmtMiles/fmtRate return DASH on null; deadhead_pay renders DASH on null.
+  if (!/const fmtMiles =[^\n]*m == null \? DASH/.test(src))
+    f.push(`${BOARD}: fmtMiles must render a dash (not "") when mileage is untracked (null)`);
+  if (!/const fmtRate =[^\n]*c == null \? DASH/.test(src))
+    f.push(`${BOARD}: fmtRate must render a dash (not "") when the rate is untracked (null)`);
+  const deadheadLine = src.split("\n").find((l) => l.includes('key: "deadhead_pay"')) ?? "";
+  if (!/deadhead_pay_cents == null \? DASH/.test(deadheadLine))
+    f.push(`${BOARD}: deadhead_pay must render a dash (not blank) when untracked (null)`);
   return f;
 }
 
@@ -72,6 +81,10 @@ function main() {
     if (auditBoard(m3).length === 0) { console.error("SELFTEST FAIL: rounded-full pill did not trip"); process.exit(1); }
     const m5 = boardSrc.replace(/minWidthPx=\{1660\}/, "");
     if (auditBoard(m5).length === 0) { console.error("SELFTEST FAIL: removing minWidthPx did not trip"); process.exit(1); }
+    const m6 = boardSrc.replace(/const fmtMiles = \(m: string \| null\) => \(m == null \? DASH/, "const fmtMiles = (m: string | null) => (m == null ? \"\"");
+    if (auditBoard(m6).length === 0) { console.error("SELFTEST FAIL: reverting fmtMiles dash to blank did not trip"); process.exit(1); }
+    const m7 = boardSrc.replace(/deadhead_pay_cents == null \? DASH/, "deadhead_pay_cents == null ? \"\"");
+    if (auditBoard(m7).length === 0) { console.error("SELFTEST FAIL: reverting deadhead dash to blank did not trip"); process.exit(1); }
     console.log("SELFTEST OK: guard trips on all mutations");
   }
 

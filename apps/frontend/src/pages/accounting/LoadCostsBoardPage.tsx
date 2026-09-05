@@ -43,11 +43,14 @@ const fmtBlank = (c: string | null) => (c == null ? "" : fmt(Number(c)));
 // and Gross are always numbers (0 revenue is a fact); this is only for the recorded-cost columns.
 const DASH = "—";
 const fmtDash = (c: number) => (c ? fmt(c) : DASH);
-const fmtMiles = (m: string | null) => (m == null ? "" : `${Number(m).toLocaleString("en-US", { maximumFractionDigits: 1 })} mi`);
+// DESIGN-CONTRACT §20 / lead 03:06Z FAIL-3: an UNTRACKED mileage cell (null) shows a dash, never a
+// blank ("blank reads as broken; dash reads as not-measured") and never 0 (honesty rule — a 0 would
+// claim he ran no empty miles and underpay him). A genuine tracked 0 still renders "0 mi".
+const fmtMiles = (m: string | null) => (m == null ? DASH : `${Number(m).toLocaleString("en-US", { maximumFractionDigits: 1 })} mi`);
 // STEP-1.3a defect 4 (lead 2026-09-05, live-measured): Rate Loaded/Empty rendered "0.48¢/mi" — wrong
 // unit + wrong precision. Spec: dollars per mile, four decimals (0.4800). rate_*_cents is
 // cents-per-mile, so /100 gives dollars-per-mile.
-const fmtRate = (c: string | null) => (c == null ? "" : `$${(Number(c) / 100).toFixed(4)}`);
+const fmtRate = (c: string | null) => (c == null ? DASH : `$${(Number(c) / 100).toFixed(4)}`);
 // STEP-1.3a defect 1/6: money & mileage cells must never wrap (ParityTable's td carries
 // wrap-break-word). nowrap + tabular-nums; the column auto-fits to its widest value.
 const NUM = "text-center whitespace-nowrap [font-variant-numeric:tabular-nums]";
@@ -168,7 +171,7 @@ export function LoadCostsBoardPage() {
     // config, never hardcoded here -- see load-costs-board.routes.ts driver_pay_detail CTE).
     { key: "empty_miles", label: "Empty Miles", testId: "col-empty-miles", sortable: true, className: NUM, sortValue: r => r.empty_miles == null ? -1 : Number(r.empty_miles), render: r => fmtMiles(r.empty_miles) },
     { key: "rate_empty", label: "Rate Empty", testId: "col-rate-empty", sortable: true, className: NUM, sortValue: r => r.rate_empty_cents == null ? -1 : Number(r.rate_empty_cents), render: r => fmtRate(r.rate_empty_cents) },
-    { key: "deadhead_pay", label: "Deadhead Pay", testId: "col-deadhead-pay", sortable: true, className: NUM, sortValue: r => r.deadhead_pay_cents == null ? -1 : Number(r.deadhead_pay_cents), render: r => fmtBlank(r.deadhead_pay_cents) },
+    { key: "deadhead_pay", label: "Deadhead Pay", testId: "col-deadhead-pay", sortable: true, className: NUM, sortValue: r => r.deadhead_pay_cents == null ? -1 : Number(r.deadhead_pay_cents), render: r => (r.deadhead_pay_cents == null ? DASH : fmtBlank(r.deadhead_pay_cents)) },
     { key: "gross", label: "Gross", testId: "col-gross", sortable: true, className: NUM, sortValue: r => rowPay(r), render: r => fmt(rowPay(r)) },
     // Kept as an opt-in extra (never in the owner's exact default list) rather than deleted --
     // additive-only law (Rule 07): hidden by default, still reachable from the gear chooser.
