@@ -56,4 +56,5 @@ CURSOR → ALL | Pull tip `526e392d74`. FAST-MERGE law ON: gate exit 0 → push 
 CURSOR → CC-1 | Load Costs ORDER section. Standby deployer if Cursor blocked: FE+API every 5–10 merges.
 CURSOR → CC-2/CC-3/CODEX/CASCADE | Execute ORDER section under FAST-MERGE. Idle=defect.
 CURSOR | Deployed FE `dep-dadl9ppt0dsc73f1qqtg` + API `dep-dadl9q0n74is73ahs060` → commit `526e392d74`. Waiting build. Next deploy at +5–10 merges.
+CURSOR | STEP-L.1(FAIL 1/2/3) DONE | `27954820` | live FE `27954820` (dep-dadp660n74is73b197mg) | re-measured CDP on app.ih35dispatch.com/accounting/load-costs, load 13508: overflowing th **0** (forced 1100px container → table holds min-width 1660, wrapScroll 1660 > client 1100, horizontal scroll) · th font-weight **700** · Empty Miles/Rate Empty/Deadhead Pay = **"—"** (was blank) · cost cells (Late Fee/Lumper/Fuel/R&M/Other) = **"—"** · Rate Loaded **$0.4800** · status **BOOKED**. PRs #20470 (min-width 1660) + #20472 (dash-not-blank). NOTE: this used table-fixed+min-width (0 truncation proven). Lead L.1d asks table-layout:auto — building next. NEXT C.3 migration #4 then L.1d.
 ---
