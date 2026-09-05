@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { DeductionVoidError, voidSettlementDeduction } from "./settlement-deduction-void.service.js";
 
 const deductionIdParamsSchema = z.object({ id: z.string().uuid() });
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
@@ -18,6 +19,9 @@ const listDeductionsQuerySchema = z.object({
 });
 const holdBodySchema = z.object({
   hold_until_period: z.string(),
+  reason: z.string().trim().min(10),
+});
+const voidBodySchema = z.object({
   reason: z.string().trim().min(10),
 });
 
@@ -318,6 +322,42 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
     });
     if ("notFound" in result) return reply.code(404).send({ error: "settlement_deduction_not_found" });
     return result.row;
+  });
+
+  // ACCT-SETL-DEDUCTION-VOID-DESIGN — owner ruling: ONE route, three branches keyed off the
+  // deduction's current status (pending -> void outright; partial -> void only the uncollected
+  // remainder, collected money is never touched; applied -> a real reversing JE, never a silent
+  // void of posted money). All three live in settlement-deduction-void.service.ts so the route
+  // itself stays a thin auth+txn wrapper, matching the shape of every other money route in this
+  // file.
+  app.patch("/api/v1/driver-finance/settlement-deductions/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = requireDeductionWriteRole(req, reply);
+    if (!user) return;
+    const params = deductionIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = voidBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    try {
+      const result = await withCompany(user.uuid, query.data.operating_company_id, (client) =>
+        voidSettlementDeduction(client, {
+          operating_company_id: query.data.operating_company_id,
+          deduction_id: params.data.id,
+          reason: body.data.reason,
+          actor_user_id: user.uuid,
+        })
+      );
+      return result;
+    } catch (error) {
+      if (error instanceof DeductionVoidError) {
+        if (error.code === "deduction_not_found") return reply.code(404).send({ error: error.code });
+        if (error.code === "deduction_already_voided") return reply.code(409).send({ error: error.code });
+        return reply.code(422).send({ error: error.code, message: error.message });
+      }
+      throw error;
+    }
   });
 
   app.get("/api/v1/driver-finance/drivers/:id/escrow-timeline", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
