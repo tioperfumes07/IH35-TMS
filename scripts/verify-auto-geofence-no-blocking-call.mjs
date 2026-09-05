@@ -37,4 +37,25 @@ if (!client.includes("async createAddress") || !client.includes("${SAMSARA_API_B
   throw new Error("SamsaraClient.createAddress must POST /addresses");
 }
 
+const handlerPath = "apps/backend/src/outbox/handlers/samsara-create-geofence.handler.ts";
+const handler = fs.readFileSync(handlerPath, "utf8");
+for (const token of [
+  "UPDATE geo.geofences",
+  "samsara_address_id = $3",
+  "external_source = 'samsara'",
+  "external_ref = $3",
+  "operating_company_id = $2::uuid",
+  "samsara_geofence_projection_not_persisted",
+]) {
+  if (!handler.includes(token)) throw new Error(`X.9 external-id projection missing: ${token}`);
+}
+
+if (process.argv.includes("--selftest")) {
+  const planted = handler.replace("samsara_address_id = $3", "samsara_address_id = NULL");
+  if (planted.includes("samsara_address_id = $3")) {
+    throw new Error("X.9 selftest failed to plant external-id persistence regression");
+  }
+  console.log("verify-auto-geofence-no-blocking-call: selftest ok — external-id persistence mutation detected");
+}
+
 console.log("verify-auto-geofence-no-blocking-call: ok");
