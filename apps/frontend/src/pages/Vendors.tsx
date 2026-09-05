@@ -158,6 +158,8 @@ export function VendorsPage() {
   // V8 — roster-level Category filter for the LEFT vendor list (distinct from By Category tab).
   // K.9 — roster filters are inline (visible on first load, 0 clicks), not staged behind a popover.
   const [rosterCategory, setRosterCategory] = useState("");
+  // K.9 — roster Vendor Type filter (inline, visible on first load, 0 clicks).
+  const [rosterVendorType, setRosterVendorType] = useState("");
   const [sidebarPage, setSidebarPage] = useState(1);
   const [sidebarPageSize, setSidebarPageSize] = useState(50);
   const createOpen = searchParams.get("create") === "1";
@@ -283,8 +285,14 @@ export function VendorsPage() {
     }
     // V8 roster filter — applied here so the sidebar + count + selection stay in sync.
     if (rosterCategory) all = all.filter((vendor) => (vendor.vendor_category ?? "") === rosterCategory);
+    // K.9 — roster Vendor Type filter (inline, visible on first load).
+    if (rosterVendorType) {
+      const selected = vendorTypes.find((type) => type.value === rosterVendorType);
+      const accepted = new Set([rosterVendorType, selected?.label ?? ""].map((value) => value.toLowerCase()));
+      all = all.filter((vendor) => accepted.has(String(vendor.vendor_type ?? "").toLowerCase()));
+    }
     return all;
-  }, [fullVendorsRoster, listStatus, rosterCategory, categoryFilter, vendorTypes]);
+  }, [fullVendorsRoster, listStatus, rosterCategory, rosterVendorType, categoryFilter, vendorTypes]);
 
   // §7 RESTORE (FE-LIST-SEGMENT-TABS-DELETED-B3690EB68). Counts off full roster BEFORE status filter.
   // ACCT-F5793 — sourced from fullVendorsRoster (active + inactive); was vendorsRoster, which made
@@ -519,6 +527,23 @@ export function VendorsPage() {
                 {categoryOptions.map((category) => (
                   <option key={category} value={category}>
                     {category}
+                  </option>
+                ))}
+              </SelectCombobox>
+            ) : null}
+            {/* K.9 — roster Vendor Type filter (inline, visible on first load, 0 clicks).
+                Options sourced from the same vendors.vendor_types catalog as VendorCreateModal. */}
+            {vendorTypes.length > 0 ? (
+              <SelectCombobox
+                value={rosterVendorType}
+                onChange={(event) => setRosterVendorType(event.target.value)}
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                aria-label="Filter vendors by type"
+              >
+                <option value="">All types</option>
+                {vendorTypes.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
                   </option>
                 ))}
               </SelectCombobox>
