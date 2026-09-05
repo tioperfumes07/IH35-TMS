@@ -53,9 +53,9 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | L.1d | scroller ✔ · dashes ✔ (2795482) · table-layout STILL fixed (20×83px), Deadhead Pay overflows, th not sticky | PARTIAL |
 | L.1d-final | table-layout auto · sticky th + Load col · rendered-page guard. Deadline 04:45Z. Surrender: CC-2 | → |
 | L.3 | TAB ROW Costs·Expenses·Bills·Fuel advances·Broker advances·Driver pay·R&M·Documents wiring existing list components (owner: "I still do not see the rest of the tabs"). MOVED AHEAD OF L.2. Deadline 06:00Z. Surrender: Cascade | next |
-| L.0 | CURSOR | gate = Render build commands (tsc -b); guard verify-gate-runs-render-build-commands.mjs — after #20486 false green failed 3 FE deploys | **06:15Z** | CC-2 06:25Z | OPEN |
+| L.0 | CC-2 (surrendered from Cursor 14:05Z, 15:30Z) | gate = Render build commands (tsc -b); guard verify-gate-runs-render-build-commands.mjs — after #20486 false green failed 3 FE deploys | **06:15Z** | CC-2 06:25Z | OPEN |
 | L.4a | CC-2 (was Cursor) | ✔ PARTIAL 25ea6905 live c16dccedf2 13:12Z: 31 cols, 5 groups, Live loc, draggable 31 · FAIL overflow 30/32, min-width 0, no sticky, no gear → L.4a-fix 15:00Z | Dispatch board per owner PREVIEW PDF: ALL columns, 5 group headers (ASSIGNMENT/HOS/LOAD/TELEMETRY/STATUS), Live loc, draggable via ParityTable, guard dispatch-board-preview-contract.spec.ts | **06:30Z** | CC-2 +10m | OPEN |
-| L.4b | CURSOR | Top bar: one nav, one toolbar, segmented List/Kanban/Round Trips, + Book Load sole filled button, /dispatch → Overview | **07:15Z** | CC-2 +10m | OPEN |
+| L.4b | CC-2 (surrendered from Cursor 14:05Z, 16:30Z) | Top bar: one nav, one toolbar, segmented List/Kanban/Round Trips, + Book Load sole filled button, /dispatch → Overview | **07:15Z** | CC-2 +10m | OPEN |
 | L.4g | CC-2 ✔ da02f0ef | ADDITIVE-ONLY guard scripts/verify-additive-only.mjs + docs/guards/additive-baseline.json wired into pnpm gate | **07:00Z** | CC-2 +10m | OPEN (breach #18231, #20242) |
 | L.4c | CC-2 ✔ 988fdb73 (not yet deployed) | Round Trips bespoke timeline recovered from 22a266132 + 67faa3dcd (keep 82fda7c90) | **08:00Z** | CC-2 +10m | OPEN |
 | L.2 | Costs-tab register — owner records an expense on 13508. Deadline 08:00Z (after L.3) | |
@@ -134,6 +134,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG
+- 14:06Z 14:00Z passed: Cursor L.0/L.1d/L.4b unmerged, no ACK → CC-2 (L.0 15:30Z, L.1d 15:30Z, L.4b 16:30Z). Cursor: FE deploy owed. Journal 30 entries; inventory 38 rows; paths verified for the owner.
 - 13:45Z seed scope reconciled with the seat's 36-load analysis (09-04 four-way wins over 08-31 sheet 4): quarantine 29, keep 22, seed 14, verify 5, hold 4, owner decides 6.
 - 13:40Z tick: API live f387870f ✔ (#20505 booking crash fix shipped). CC-2 L.4c merged 988fdb73 (FE not deployed). Cursor ACCT-F1312 6049a940. Codex-slice seed 85aa885d landed 2 min before the STOP; CC-3 #20531 halted. Neon: 60 loads/60 invoices/315 expenses/61 bills/12 settlements; 27 wrong-entity families still unvoided (15:00Z). No ACK yet: Cursor, CC-1, Codex, Cascade.
 - 13:36Z ⛔ OWNER: seeded loads not all USMCA (cutover 08/07/26). LEAD ERROR: feed split 5753–5795 ignored the entity split in the 08-31 reconciliation. Live: 60 USMCA loads, 27 TRANSPORTATION (18 pre-cutover, 9 Transp-Faro). Void 27 families (CC-3 15:00Z), re-point to sheets 2+4, cutover guard, Faro sheet 5 → factoring. Owner hand list corrected (5766 is TRANSP).

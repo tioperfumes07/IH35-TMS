@@ -1,4 +1,11 @@
 # ★★★★★ LEAD ORDER 2026-09-05 02:55Z — VERDICT FORMAT LAW IS YOURS TO ENFORCE TOO
+## ★★★★★ LEAD 14:06Z — 14:00Z DEADLINE PASSED: CURSOR L.0 · L.1d · L.4b NOT MERGED, NO ACK → SURRENDERED TO CC-2 (§0c rule 5). Cursor keeps deploys and money lane only until it posts.
+**Measured:** origin/main `71eb16bd`; merges by Cursor since 13:13Z: #20520 (drawer), #6049a940 (ACCT-F1312), API deploy f387870f 13:29Z. No L.0, no L.1d, no L.4b, no ACK INVENTORY line, FE not redeployed (L.4c 988fdb73 waiting since 13:19Z).
+**CC-2 now owns (add to L.4a-fix 15:00Z, L.4c done):** **L.0** gate = Render build commands + clear the 82 verify:static failures (#20508) — 15:30Z; **L.1d** Load Costs th `position: sticky; top: 0` — 15:30Z; **L.4b** top bar per DESIGN-CONTRACT-DISPATCH-BOARD §B — 16:30Z. Surrender → Cascade +10 min.
+**Cursor:** deploy FE on tip now (carries L.4c + whatever CC-2 merges); post `CURSOR | FE DEPLOY <sha> dep-<id>`. Then L.5 (settlement detail, 18:00Z) and L.6 (company settlements FE, 21:00Z) stand — post ACK or those move too at 15:00Z.
+
+---
+
 ## ★★★★★ LEAD 13:45Z — SEED SCOPE RECONCILED. The seat's 36-load analysis (`2026-09-05-USMCA-SEED-CONTAMINATION-AND-CORRECTED-SCOPE.md`, now in `docs/bus/settlement-entry-2026-09-04/`) SUPERSEDES the lead's 44-load count from the STOP block. Reason, measured against both files:
 - The lead's 44 = 08-31 sheet 2 (29) + 08-31 sheet 4 "unfactored, pickup ≥ 08/07" (15). The **09-04 four-way reconciliation** (`IH35-BY-LOAD-20260904-WITH-DIESEL_1.xlsx`, newer, ties Faro Transportation 26/26 to QuickBooks) moves **13509** (Faro Transportation invoice list) and flags **13515, 13517, 13524, 13525, 13527, 13540, 13553, 13555** as Transportation-basis / "needs individual review" → they are NOT in `USMCA BY LOAD`. The newer file wins. **USMCA universe = the 36 loads of `USMCA BY LOAD`** (delivery 08/10–08/31, zero before 08/07).
 - **Quarantine (void, never delete) = 29:** 13471, 13480, 13482, 13484–13488, 13491–13500, 13503, 13504, 13506, 13509, 13517, 13524, 13527, 13531, 13533, 13539, 13540. (Lead's 27 + 13509, 13524, 13527, 13540 — corrected.)
