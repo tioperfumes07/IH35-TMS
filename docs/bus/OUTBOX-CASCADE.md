@@ -70,3 +70,9 @@ No other open report/list/planner rows found.
 Requesting next assignment from lead — do not invent scope.
 
 DEVIN | L5 DONE | c216a767e3 | origin/main | 5 settlement detail section tables (Earnings, Empty miles, Additional pay, Reimbursements, Deductions) rebuilt per reference with S.1b fields (origin/dest city/state, line_date, reimbursement_type, deduction_type, posting_account_number/name); + Add buttons disabled when locked; guard verify-settlement-detail-sections.mjs PASS | NEXT (await register)
+
+DEVIN | L5 DONE + NEXT ROW REQUEST | 2026-09-05
+L5 settlement detail 5 section tables merged (#20695, sha c216a767e3). Guard verify-settlement-detail-sections.mjs PASS.
+All Cascade register items now DONE: LH, K9, K4-7, V1-FE, L5.
+No open report/list/planner rows assigned to Cascade in OWNER-ISSUE-INVENTORY (#9/#10 CC-2, #21 Codex, #22 CC-2).
+Requesting next assignment from lead — do not invent scope.
