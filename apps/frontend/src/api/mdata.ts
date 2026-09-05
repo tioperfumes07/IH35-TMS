@@ -94,18 +94,25 @@ export type DriverAssignedLoad = {
   assigned_unit_number: string | null;
   rate_total_cents: number | null;
   created_at: string | null;
+  first_pickup_city: string | null;
+  pickup_scheduled_at: string | null;
+  first_delivery_city: string | null;
+  delivery_scheduled_at: string | null;
 };
 
 export function listDriverAssignedLoads(
   driverId: string,
   operatingCompanyId: string,
-  opts: { limit?: number; offset?: number } = {}
+  opts: { limit?: number; offset?: number; status?: string } = {}
 ) {
   const query = new URLSearchParams({
     operating_company_id: operatingCompanyId,
     limit: String(opts.limit ?? 50),
     offset: String(opts.offset ?? 0),
   });
+  if (opts.status) {
+    query.set("status", opts.status);
+  }
   return apiRequest<{ loads: DriverAssignedLoad[]; total_count: number }>(
     `/api/v1/drivers/${encodeURIComponent(driverId)}/loads?${query.toString()}`
   );

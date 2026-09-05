@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDispatchPlannerWeek, type PlannerDriverRow, type PlannerLoadEvent } from "../../../api/dispatch";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
@@ -15,8 +16,18 @@ import { BookLoadModalV4 } from "../components/BookLoadModalV4";
 import { PlannerAxisHead } from "./PlannerAxisHead";
 import { formatPlannerDwell } from "./plannerTimeAxis";
 import { dwellsFromDayMap, PlannerGrid, type PlannerGridRow } from "./PlannerGrid";
+import { PlannerViewToggle, type PlannerViewMode } from "./PlannerViewToggle";
 
 void PlannerAxisHead;
+
+type TimelineListRow = {
+  driverId: string;
+  driverName: string;
+  unit: string;
+  hosStatus: string;
+  currentLoad: string;
+  loadCount: number;
+};
 
 function toDayKey(iso: string | null | undefined): string | null {
   return iso ? iso.slice(0, 10) : null;
@@ -67,6 +78,7 @@ export function UnifiedTimelinePlanner() {
   const { range, days } = usePlannerRange();
   const [bookUnitId, setBookUnitId] = useState<string | null>(null);
   const [bookOpen, setBookOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<PlannerViewMode>("grid");
   const closeBook = () => {
     setBookOpen(false);
     setBookUnitId(null);
@@ -190,37 +202,85 @@ export function UnifiedTimelinePlanner() {
 
   return (
     <div data-testid="dispatch-unified-timeline-page" className="space-y-2 [&_.pg-r]:h-[34px]">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <PlannerViewToggle viewMode={viewMode} onChange={setViewMode} />
+      </div>
       {leaveQuery.isError ? (
         <ListErrorBanner
           message={userFacingApiError(leaveQuery.error, "Could not load driver leave and availability")}
           onRetry={() => void leaveQuery.refetch()}
         />
       ) : null}
-      <PlannerGrid
-        days={days}
-        frozenLabel="Driver / Unit"
-        actionLabel="Book"
-        frozenPx={360}
-        rows={toRows(inService)}
-        empty={
-          <span data-testid="dispatch-timeline-honest-empty">
-            No drivers in this range for this company. Active drivers from the dispatch planner week feed appear as
-            rows; book loads or assign drivers to populate the timeline.
-          </span>
-        }
-      />
-      {oos.length > 0 ? (
-        <div className="mt-3" data-testid="planner-oos-group">
+      {viewMode === "list" ? (
+        (() => {
+          const listRows: TimelineListRow[] = drivers.map((driver) => {
+            const driverLoads = loadsByDriver.get(driver.id) ?? [];
+            const sorted = [...driverLoads].sort((a, b) =>
+              String(a.start_at).localeCompare(String(b.start_at))
+            );
+            const hosLabel =
+              driver.hos_status === "ok" ? "OK" :
+              driver.hos_status === "warning_1hr" ? "Warning 1hr" :
+              driver.hos_status === "warning_15min" ? "Warning 15min" :
+              driver.hos_status === "violation" ? "Violation" : "—";
+            return {
+              driverId: driver.id,
+              driverName: entityLabel(driver.name, driver.id, "Driver"),
+              unit: driver.unit_number ?? "—",
+              hosStatus: hosLabel,
+              currentLoad: sorted.length > 0 ? sorted[0].load_number : "—",
+              loadCount: sorted.length,
+            };
+          });
+          const columns: Array<ParityColumn<TimelineListRow>> = [
+            { key: "driverName", label: "Driver Name", sortable: true },
+            { key: "unit", label: "Unit", sortable: true },
+            { key: "hosStatus", label: "HOS Status", sortable: true },
+            { key: "currentLoad", label: "Current Load", sortable: true },
+            { key: "loadCount", label: "Load Count", sortable: true },
+          ];
+          return (
+            <div data-testid="dispatch-unified-timeline-list">
+              <ParityTable<TimelineListRow>
+                columns={columns}
+                rows={listRows}
+                rowKey={(row) => row.driverId}
+                emptyText="No drivers in this range for this company."
+                storageKey="dispatch-unified-timeline-list"
+                exportFilename="unified-timeline-planner"
+              />
+            </div>
+          );
+        })()
+      ) : (
+        <>
           <PlannerGrid
             days={days}
-            frozenLabel="Out of service"
+            frozenLabel="Driver / Unit"
             actionLabel="Book"
             frozenPx={360}
-            rows={toRows(oos)}
-            empty={null}
+            rows={toRows(inService)}
+            empty={
+              <span data-testid="dispatch-timeline-honest-empty">
+                No drivers in this range for this company. Active drivers from the dispatch planner week feed appear as
+                rows; book loads or assign drivers to populate the timeline.
+              </span>
+            }
           />
-        </div>
-      ) : null}
+          {oos.length > 0 ? (
+            <div className="mt-3" data-testid="planner-oos-group">
+              <PlannerGrid
+                days={days}
+                frozenLabel="Out of service"
+                actionLabel="Book"
+                frozenPx={360}
+                rows={toRows(oos)}
+                empty={null}
+              />
+            </div>
+          ) : null}
+        </>
+      )}
       {bookOpen ? (
         <BookLoadModalV4
           open={bookOpen}

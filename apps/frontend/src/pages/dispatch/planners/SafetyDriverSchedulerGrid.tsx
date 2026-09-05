@@ -8,12 +8,14 @@ import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import type { PlannerRange } from "./planner-range";
 import { listPlannerDays } from "./planner-range";
 import { PlannerAxisHead } from "./PlannerAxisHead";
 import { dwellsFromDayMap, PlannerGrid } from "./PlannerGrid";
 import { groupPlannerBarsByKey, usePlannerLoads } from "./planner-bars";
 import { PlannerAction } from "./PlannerRowActions";
+import type { PlannerViewMode } from "./PlannerViewToggle";
 
 void PlannerAxisHead;
 
@@ -21,9 +23,20 @@ type SafetyDriverSchedulerGridProps = {
   operatingCompanyId: string;
   range: PlannerRange;
   testId?: string;
+  viewMode?: PlannerViewMode;
 };
 
-export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = "safety-driver-scheduler-grid" }: SafetyDriverSchedulerGridProps) {
+type DriverListRow = {
+  driverId: string;
+  driverName: string;
+  unit: string;
+  hosStatus: string;
+  currentLoad: string;
+  nextAvailable: string;
+  activeLoadCount: number;
+};
+
+export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = "safety-driver-scheduler-grid", viewMode = "grid" }: SafetyDriverSchedulerGridProps) {
   const days = useMemo(() => listPlannerDays(range), [range.start, range.end]);
 
   const query = useQuery({
@@ -59,6 +72,63 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
   if (!query.data) return null;
 
   const drivers = query.data.drivers ?? [];
+
+  if (viewMode === "list") {
+    const listRows: DriverListRow[] = drivers.map((dr) => {
+      const driverId = String(dr.driver_id);
+      const name = String(dr.driver_name ?? "");
+      const unit = dr.unit_number ? String(dr.unit_number) : "—";
+      const bars = loadBarsByDriver.get(driverId) ?? [];
+      const dwells = dwellsFromDayMap(days, (d) => cellByDriverDay.get(`${driverId}|${d}`), `leave-${driverId}`);
+      const hosStatus = dwells.length > 0 ? "On Leave" : bars.length > 0 ? "In Use" : unit !== "—" ? "Available" : "—";
+      const currentLoad = bars.length > 0 ? bars[0].label : "—";
+      const nextAvailable = dwells.length > 0 ? String(dwells[0]?.startYmd ?? "—") : "—";
+      return {
+        driverId,
+        driverName: name || "—",
+        unit,
+        hosStatus,
+        currentLoad,
+        nextAvailable,
+        activeLoadCount: bars.length,
+      };
+    });
+
+    const columns: Array<ParityColumn<DriverListRow>> = [
+      { key: "driverName", label: "Driver Name", sortable: true },
+      { key: "unit", label: "Unit", sortable: true },
+      { key: "hosStatus", label: "HOS Status", sortable: true },
+      { key: "currentLoad", label: "Current Load", sortable: true },
+      { key: "nextAvailable", label: "Next Available", sortable: true },
+      { key: "activeLoadCount", label: "# Active Loads", sortable: true },
+    ];
+
+    return (
+      <div data-testid={`${testId}-list`} className="space-y-2">
+        <ParityTable<DriverListRow>
+          columns={columns}
+          rows={listRows}
+          rowKey={(row) => row.driverId}
+          loading={query.isLoading || loadsQuery.isLoading}
+          emptyText="No drivers in this company for the selected range."
+          storageKey="dispatch-driver-planner-list"
+          exportFilename="driver-planner"
+        />
+        {query.data.pending_requests?.length ? (
+          <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
+            <div className="font-semibold">Pending in this window</div>
+            <ul className="list-inside list-disc">
+              {query.data.pending_requests.map((p) => (
+                <li key={String(p.id)}>
+                  {String(p.request_number)} · {String(p.leave_type)} · {String(p.start_date)}–{String(p.end_date)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div data-testid={testId} className="space-y-2">
