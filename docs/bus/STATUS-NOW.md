@@ -1,4 +1,5 @@
 # STATUS-NOW · 2026-09-05 04:22Z (Claude lead loop)
+**14:06Z — SURRENDER: Cursor L.0/L.1d/L.4b → CC-2 (15:30/15:30/16:30Z). Cursor: deploy FE now. Next enforcement 14:30Z (CC-1 script) and 15:00Z (CC-3 void 29; CC-2 L.4a-fix; Codex X.7; Cascade K.4).**
 **13:45Z — SEED SCOPE RECONCILED: USMCA = 36 loads (BY-LOAD 09-04). Quarantine 29 · keep 22 · seed 14 · verify 13558–62 · hold 13565–68 · owner decides 6 review loads. Deadlines unchanged.**
 **13:40Z tick — API LIVE f387870f (13:29Z, carries #20505/#20506 ✔). FE live c16dccedf2 (L.4c Round Trips 988fdb73 merged, NOT deployed — Cursor deploy FE). STOP honored (#20531). Neon USMCA: loads 60 · invoices 60 · expenses 315 (25 voided) · driver_bills 61 · settlements 12 · factoring_advances 0 — the 27 wrong-entity families are NOT yet voided (CC-3 15:00Z). Cursor L.0/L.4b/L.1d due 14:00Z.**
 **⛔ 13:36Z STOP THE SEED — 27 of 60 USMCA loads are TRANSPORTATION (lead gave the wrong split). CC-3: void the 27 families by 15:00Z; re-point scripts to the reconciliation sheets 2+4 (≥ 08/07); cutover guard. See INBOX top.**
