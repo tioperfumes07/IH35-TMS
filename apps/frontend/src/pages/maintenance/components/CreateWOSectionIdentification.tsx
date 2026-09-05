@@ -151,6 +151,7 @@ export function CreateWOSectionIdentification({
               <input type="hidden" {...register("unit_id", { required: true })} />
               <EntityPicker
                 kind="unit"
+                allowCreate
                 operatingCompanyId={operatingCompanyId}
                 value={watch("unit_id") || null}
                 onChange={(value) => setValue("unit_id", value ?? "", { shouldDirty: true })}
@@ -170,6 +171,7 @@ export function CreateWOSectionIdentification({
               <input type="hidden" {...register("equipment_id")} />
               <EntityPicker
                 kind="trailer"
+                allowCreate
                 operatingCompanyId={operatingCompanyId}
                 value={watch("equipment_id") || null}
                 onChange={(value) => setValue("equipment_id", value ?? "", { shouldDirty: true })}
@@ -215,6 +217,7 @@ export function CreateWOSectionIdentification({
               <input type="hidden" {...register("load_id", { required: requireLoad })} />
               <EntityPicker
                 kind="load"
+                allowCreate
                 operatingCompanyId={operatingCompanyId}
                 value={watch("load_id") || null}
                 onChange={(value) => setValue("load_id", value ?? "", { shouldDirty: true })}

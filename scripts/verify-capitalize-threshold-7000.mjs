@@ -19,6 +19,8 @@ const SRC = "apps/backend/src/accounting/capitalize-threshold.ts";
 const POSTER_SRC = "apps/backend/src/accounting/maintenance-posting/poster.service.ts";
 const WO_AP = "apps/backend/src/maint/wo-ap-posting.service.ts";
 const WO_AP_TEST = "apps/backend/src/maint/__tests__/wo-ap-posting.service.test.ts";
+const WO_MODAL = "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx";
+const WO_IDENTIFICATION = "apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx";
 
 function read() {
   return fs.readFileSync(path.join(ROOT, SRC), "utf8");
@@ -87,6 +89,27 @@ function woApWiringErrors(woApSrc, testSrc) {
   return errors;
 }
 
+function uiErrors(modalSrc, identificationSrc) {
+  const errors = [];
+  if (!/CAPITALIZE_REPAIR_THRESHOLD_DOLLARS\s*=\s*7_000/.test(modalSrc)) {
+    errors.push("work-order UI must use the owner-locked $7,000 threshold");
+  }
+  if (!modalSrc.includes('data-testid="wo-books-treatment"') || (modalSrc.match(/<BooksTreatmentNotice/g) ?? []).length < 2) {
+    errors.push("create and edit work-order surfaces must both render the books-treatment disclosure");
+  }
+  if (!modalSrc.includes("Fixed Asset – Trucks") || !modalSrc.includes("fixed_asset_default")) {
+    errors.push("capitalized repair disclosure must name Fixed Asset – Trucks and fixed_asset_default");
+  }
+  if (!modalSrc.includes("Heavy Repair Expense") || !modalSrc.includes("heavy_repair_expense")) {
+    errors.push("under-threshold repair disclosure must name Heavy Repair Expense and heavy_repair_expense");
+  }
+  for (const kind of ["unit", "trailer", "load"]) {
+    const block = identificationSrc.match(new RegExp(`<EntityPicker[\\s\\S]{0,220}?kind=["']${kind}["'][\\s\\S]{0,420}?>`))?.[0] ?? "";
+    if (!block.includes("allowCreate")) errors.push(`${kind} picker must explicitly expose + Create`);
+  }
+  return errors;
+}
+
 function selftest() {
   const good = [
     "export const CAPITALIZE_REPAIR_THRESHOLD_CENTS = 700_000;",
@@ -141,6 +164,22 @@ function selftest() {
     process.exit(1);
   }
 
+  const uiGood = [
+    "const CAPITALIZE_REPAIR_THRESHOLD_DOLLARS = 7_000;",
+    'function BooksTreatmentNotice() { return <div data-testid="wo-books-treatment">Fixed Asset – Trucks fixed_asset_default Heavy Repair Expense heavy_repair_expense</div>; }',
+    '<BooksTreatmentNotice totalDollars={1} />',
+    '<BooksTreatmentNotice totalDollars={2} />',
+  ].join("\n");
+  const pickerGood = ['<EntityPicker kind="unit" allowCreate />', '<EntityPicker kind="trailer" allowCreate />', '<EntityPicker kind="load" allowCreate />'].join("\n");
+  if (uiErrors(uiGood, pickerGood).length) {
+    console.error(`${LABEL} --selftest FAIL UI-good:`, uiErrors(uiGood, pickerGood));
+    process.exit(1);
+  }
+  if (!uiErrors(uiGood.replace("7_000", "7_500"), pickerGood).some((e) => e.includes("$7,000"))) {
+    console.error(`${LABEL} --selftest FAIL — planted UI threshold drift escaped`);
+    process.exit(1);
+  }
+
   console.log(`${LABEL}: selftest PASS`);
 }
 
@@ -163,6 +202,13 @@ const woApPath = path.join(ROOT, WO_AP);
 const woApTestPath = path.join(ROOT, WO_AP_TEST);
 if (fs.existsSync(woApPath)) {
   wiring.push(...woApWiringErrors(fs.readFileSync(woApPath, "utf8"), fs.existsSync(woApTestPath) ? fs.readFileSync(woApTestPath, "utf8") : ""));
+}
+const modalPath = path.join(ROOT, WO_MODAL);
+const identificationPath = path.join(ROOT, WO_IDENTIFICATION);
+if (!fs.existsSync(modalPath) || !fs.existsSync(identificationPath)) {
+  wiring.push("work-order create/edit UI sources are missing");
+} else {
+  wiring.push(...uiErrors(fs.readFileSync(modalPath, "utf8"), fs.readFileSync(identificationPath, "utf8")));
 }
 if (errors.length || wiring.length) {
   console.error(`${LABEL}: FAIL`);
