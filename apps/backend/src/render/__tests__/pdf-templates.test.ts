@@ -11,7 +11,7 @@ describe("dispatch-sheet.template", () => {
       brandName: "IH 35 Trucking LLC",
       brandSub: "DOT 4287135 · MC 1684226 · TRK",
       brandAddrHtml: "123 Industrial Way, Laredo, TX 78045<br/>(956) 555-0184 · dispatch@ih35trucking.com",
-      docType: "Driver dispatch sheet",
+      docType: "Driver instruction sheet",
       loadDocNum: "L-13518",
       issuedLines: ["Issued Wed, May 13, 2026 · 8:51 AM CT", "by dispatcher Jorge Munoz"],
       statusLine: "Assigned · awaiting driver confirm",
@@ -31,14 +31,15 @@ describe("dispatch-sheet.template", () => {
       commodityPieces: "24 pallets",
       equipmentPrimary: "Reefer van",
       equipmentSecondary: "Locking jacks + pulp probe",
-      autoBillId: "B-13518",
-      payRows: [
-        { component: "Linehaul pay", basis: "221 short mi", rate: "$0.50 / mi", amountCents: 11050 },
-        { component: "Fuel advance (already issued)", basis: "EFS / Comcheck", rate: "—", amountCents: 20000 },
-        { component: "Cash advance", basis: "—", rate: "—", amountCents: 0 },
+      isBorderLoad: false,
+      borderPortOfEntry: "Confirm at dispatch",
+      borderCustomsBroker: "—",
+      documents: [
+        { label: "Signed BOL", when: "At pickup", note: "Photograph it before you leave the shipper" },
+        { label: "Signed POD", when: "At delivery", note: "Name and time legible" },
+        { label: "Scale ticket", when: "If you scale", note: "Upload the same day" },
+        { label: "Lumper receipt", when: "If you pay a lumper", note: "You are reimbursed on your settlement" },
       ],
-      grossFootnote: "Gross driver bill on completion · advances recovered at settlement",
-      grossFootnoteCents: 11050,
       instructionsRight: "Visible to driver · mark read on receipt",
       instructionsFrom: "From dispatcher Jorge Munoz",
       instructionsBody:
@@ -53,11 +54,16 @@ describe("dispatch-sheet.template", () => {
     const html = renderDispatchSheetBody(model);
     expect(html).toContain("L-13518");
     expect(html).toContain("R. Smith");
-    expect(html).toContain("$110.50");
     expect(html).toContain("Driver assignment");
     expect(html).toContain("Stops");
     expect(html).toContain("Commodity");
-    expect(html).toContain("Driver pay summary");
+    // DRIVER-SHEET-NO-PAY: the driver instruction sheet carries NO pay — the pay summary is gone,
+    // replaced by Border & customs + the documents-to-bring-back checklist.
+    expect(html).not.toContain("Driver pay summary");
+    expect(html).toContain("Border and customs");
+    expect(html).toContain("Not a border load");
+    expect(html).toContain("Documents you must bring back");
+    expect(html).toContain("Signed BOL");
     expect(html).toContain("Driver instructions");
     expect(html.includes("<script>")).toBe(false);
     expect(html).toContain(escapeHtml(malicious));
