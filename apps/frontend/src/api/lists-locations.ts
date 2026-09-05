@@ -15,6 +15,8 @@ export type LocationRow = {
   geocoded_at: string | null;
   geocoding_source: string | null;
   deactivated_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
   geofence_count: number;
   has_active_geofence: boolean;
   geofence_radius_meters: number | null;
