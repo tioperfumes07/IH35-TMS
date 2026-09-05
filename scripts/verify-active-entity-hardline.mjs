@@ -19,8 +19,9 @@ const RULE_DOC = ".cursor/rules/49-active-entity-hardline.mdc";
 const ACTIVE_SET_SERVICE = "apps/backend/src/integrations/samsara/active-driver-set/recompute.service.ts";
 const ACTIVE_SET_QUERY = "apps/backend/src/integrations/samsara/active-driver-set/query.service.ts";
 const ACTIVE_SET_ROUTES = "apps/backend/src/integrations/samsara/active-driver-set/routes.ts";
+const UNITS_ROUTE = "apps/backend/src/mdata/units.routes.ts";
 
-function audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc) {
+function audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc) {
   const f = [];
   if (!ruleExists) f.push(`${RULE_DOC}: RULE 49 hardline doc must exist (canonical active definition)`);
 
@@ -48,6 +49,13 @@ function audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc) {
   if (!/enum\(\["7", "14", "15", "30"\]\)/.test(routesSrc) || !/Number\(v \?\? "15"\)/.test(routesSrc))
     f.push(`${ACTIVE_SET_ROUTES}: API must expose and default the owner-selected 15-day window`);
 
+  if (!/status === "Active"[\s\S]*integrations\.active_driver_set_cache canonical_active_cache/.test(driversSrc))
+    f.push(`${DRIVERS_ROUTE}: status=Active list requests must use the canonical movement-derived cache`);
+  if (!/canonical_active_cache\.operating_company_id = \$\$\{ociIdx\}::uuid[\s\S]*canonical_active_cache\.threshold_days = 15/.test(driversSrc))
+    f.push(`${DRIVERS_ROUTE}: active driver list cache read must be company-scoped at the 15-day window`);
+  if (!/status === "InService"[\s\S]*currently_leased_to_company_id = \$\$\{ociIdx\}::uuid[\s\S]*is_oos IS NOT TRUE/.test(unitsSrc))
+    f.push(`${UNITS_ROUTE}: status=InService list requests must use canonical lease scope and exclude OOS units`);
+
   return f;
 }
 
@@ -59,7 +67,8 @@ function main() {
   const activeSetSrc = readFileSync(ACTIVE_SET_SERVICE, "utf8");
   const querySrc = readFileSync(ACTIVE_SET_QUERY, "utf8");
   const routesSrc = readFileSync(ACTIVE_SET_ROUTES, "utf8");
-  const failures = audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc);
+  const unitsSrc = readFileSync(UNITS_ROUTE, "utf8");
+  const failures = audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc);
   if (failures.length) {
     console.error("FAIL verify-active-entity-hardline:");
     for (const x of failures) console.error(`  - ${x}`);
@@ -68,10 +77,10 @@ function main() {
 
   if (selftest) {
     const m1 = driversSrc.replaceAll(`filters.push("is_sample_data IS NOT TRUE")`, `filters.push("1=1")`);
-    if (audit(m1, ruleExists, activeSetSrc, querySrc, routesSrc).length === 0) { console.error("SELFTEST FAIL: dropping is_sample_data filter did not trip"); process.exit(1); }
+    if (audit(m1, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc).length === 0) { console.error("SELFTEST FAIL: dropping is_sample_data filter did not trip"); process.exit(1); }
     const m2 = driversSrc.replaceAll(`filters.push("deactivated_at IS NULL")`, `filters.push("1=1")`);
-    if (audit(m2, ruleExists, activeSetSrc, querySrc, routesSrc).length === 0) { console.error("SELFTEST FAIL: dropping deactivated filter did not trip"); process.exit(1); }
-    if (audit(driversSrc, false, activeSetSrc, querySrc, routesSrc).length === 0) { console.error("SELFTEST FAIL: missing rule doc did not trip"); process.exit(1); }
+    if (audit(m2, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc).length === 0) { console.error("SELFTEST FAIL: dropping deactivated filter did not trip"); process.exit(1); }
+    if (audit(driversSrc, false, activeSetSrc, querySrc, routesSrc, unitsSrc).length === 0) { console.error("SELFTEST FAIL: missing rule doc did not trip"); process.exit(1); }
     const mutations = [
       activeSetSrc.replace("DEFAULT_THRESHOLD_DAYS = 15", "DEFAULT_THRESHOLD_DAYS = 7"),
       activeSetSrc.replace("JOIN telematics.vehicle_latest_position p", "JOIN integrations.samsara_drivers p"),
@@ -79,10 +88,20 @@ function main() {
       activeSetSrc.replace("p.captured_at >=", "p.captured_at <"),
     ];
     for (const mutation of mutations) {
-      if (audit(driversSrc, ruleExists, mutation, querySrc, routesSrc).length === 0) {
+      if (audit(driversSrc, ruleExists, mutation, querySrc, routesSrc, unitsSrc).length === 0) {
         console.error("SELFTEST FAIL: planted active-set mutation escaped");
         process.exit(1);
       }
+    }
+    const listMutations = [
+      driversSrc.replace("integrations.active_driver_set_cache canonical_active_cache", "integrations.samsara_drivers canonical_active_cache"),
+      unitsSrc.replace("is_oos IS NOT TRUE", "is_oos IS TRUE"),
+    ];
+    if (audit(listMutations[0], ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc).length === 0) {
+      console.error("SELFTEST FAIL: planted active-driver list mutation escaped"); process.exit(1);
+    }
+    if (audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, listMutations[1]).length === 0) {
+      console.error("SELFTEST FAIL: planted active-unit list mutation escaped"); process.exit(1);
     }
     console.log("SELFTEST OK: guard trips on driver exclusions + 4 active-set mutations");
   }
