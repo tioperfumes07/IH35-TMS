@@ -517,3 +517,35 @@ OWNER-REMOVE: "<owner's exact words>" <date> line exists anywhere in the repo fo
 (b) Driver Status short codes Off/On/Drv/SB/Pre/UA -- board only has driver_lifecycle_stage
 (15 values), no canonical 6-code mapping exists; safety-adjacent field, declining to invent one.
 | NEXT 3 of 8 -- verify-usmca-load-cutover-floor.mjs | GO
+
+CC-2 | STEP 3 of 8 DONE | 5e7755274d (#20565) | live proof 15:40Z: Neon tiny-field-89581227,
+current_database=neondb current_user=ih35_app, SET app.bypass_rls='lucia' in a READ ONLY txn ->
+58 active USMCA loads (operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80,
+soft_deleted_at IS NULL), earliest-pickup range 2026-08-07..2026-09-01, ZERO below the
+2026-08-07 cutover floor. scripts/verify-steps/10379-verify-usmca-load-cutover-floor.mjs
+auto-discovered, selftest+live both exit 0. | NEXT 4 of 8 -- L.4g | GO
+
+CC-2 | STEP 4 of 8 DONE | da02f0ef (#20522, merged earlier this session under the pre-numbered
+lettering as L.4g -- catching up the STEP-N report format per the new
+CODER-SEQUENCE-NUMBERED-2026-09-05.md standing rule) | live proof 15:40Z:
+scripts/verify-steps/10371-verify-additive-only.mjs exit 0; underlying
+scripts/verify-additive-only.mjs PASS -- sidebar 29, routes 580, Dispatch board 18+6 HOS,
+Load Costs board 17 cols/8 tabs, defaultHidden/DEFAULT_VISIBLE_* pattern count 19 (baseline 19),
+no shrinkage, no new pattern growth. Guard verified present + wired on origin/main
+(verify-steps/ auto-discovery, no dangling file). L.4c (#8 in the M=8 list) was also already
+merged out-of-strict-order under the old lettering (988fdb73, "L.4c DONE") before this numbered
+file existed -- flagging honestly rather than silently reordering; not re-doing it, moving on to
+the next INCOMPLETE step. | NEXT 5 of 8 -- B.2 banking filters | GO
+
+CC-2 | REPO-WIDE BLOCKER 16:04Z 2026-09-05 | PR #20574 (STEP 3/4 DONE + 2 real guard-rot fixes)
+is MERGEABLE / mergeStateStatus=BLOCKED: GitHub branch protection's required `ci / build-typecheck`
+(frontend tsc -b) is red on tip-of-main right now from #20573 + #20575 (Devin) --
+DriverQualificationReportPage.tsx + InvoiceSearchReportPage.tsx (defaultPageSize / staged.draft /
+pageOffset type errors, full detail routed to docs/bus/INBOX-DEVIN-A.md). This blocks EVERY open
+PR's merge button, not just mine -- confirmed via `gh pr view 20574 --json mergeable,
+mergeStateStatus`. Not touching Devin's files myself (actively mid-iteration, reports/** is
+Devin's module). Flagging here since Cursor's C.2 census reads every OUTBOX -- this is exactly
+the class of repo-wide TS break the lead has fixed fast before (05:50Z entry, #20502). My own PR
+has zero part in it (confirmed: the tsc error list names only reports/** files, none of mine) and
+will merge itself the moment build-typecheck goes green again. Continuing other work
+(B.2 banking filters) in the meantime rather than idling on this PR. | GO

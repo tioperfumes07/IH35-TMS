@@ -69,8 +69,15 @@ export function collectProblems(root = ROOT) {
     problems.push(`${FILE}: persisted driver picker must seed its reader-provided human label`);
   }
   const entityPicker = readRel(root, ENTITY_PICKER);
+  // Widened 2026-09-05 (CC-2): #20192 (WIZ-38) inserted a legitimate `&& heldQuery.data !== false`
+  // guard between `selectedOption` and its `?`, which the old exact-ternary regex could not see past
+  // and turned build-typecheck permanently red on main (same class as CLS-GUARD-LITERAL-GUC — a
+  // guard punishing a correct evolution). The invariant this guard actually protects is unchanged:
+  // a selectedOption, when present, must still be spliced into the option list as
+  // `[selectedOption, ...created]` — any extra `&&`-conditions in between are fine; DROPPING
+  // selectedOption from that array entirely is still caught (mutation-proven below).
   if (!entityPicker || !/selectedOption\?:\s*EntityPickerOption/.test(entityPicker)
-      || !/selectedOption\s*\?\s*\[selectedOption,\s*\.\.\.created\]/.test(entityPicker)) {
+      || !/selectedOption[\s\S]{0,80}\?\s*\[selectedOption,\s*\.\.\.created\]/.test(entityPicker)) {
     problems.push(`${ENTITY_PICKER}: must preserve a human selectedOption outside the active roster`);
   }
   return problems;
