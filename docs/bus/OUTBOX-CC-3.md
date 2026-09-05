@@ -235,3 +235,25 @@ without either (a) CC-1 applying the 3 queued migrations so there's a real table
 (b) a live Samsara address sample to confirm the geofence_json shape and build real match
 thresholds against -- not fabricating either. Holding here rather than guessing. | NEXT
 STEP-3.3 once unblocked
+
+2026-09-05 | CC-3 | GAP-39 geofence engine rebuild 3.2b (departed dead-lock + shared-column flap)
+— code done, tests green, guards green, migration #4 drafted + handed to CC-1, TEST-row archived
+live. states.ts: VALID_TRANSITIONS.departed now has real exits (idle/approaching), the exact
+live dead-lock on geofence 188cf90c is fixed and asserted by test. engine.ts: transitionState()
+targets geo.geofence_vehicle_state (per-vehicle, not per-geofence — closes the flap) with a clean
+to_regclass-guarded refusal until the table lands; departure is now speed-gated (>=15mph
+sustained >=3min AND beyond exit radius, hysteresis 402m/805m) — distance alone never fires it.
+geofence-state-watcher.ts: USMCA-only, returns speed_mph/odometer_mi/captured_at/city/state,
+skips+counts stale (>30min) positions, heartbeat log every tick. 24/24 tests green
+(`npx vitest run .../state-machine/__tests__/`), `tsc -p apps/backend --noEmit` exit 0. Two new
+guards (`verify-geofence-state-machine-no-terminal-state.mjs`,
+`verify-geofence-departure-on-speed.mjs`, `.guard-exempt.json`-registered, CC-3 lane-band
+workaround) both exit 0. Migration #4 drafted + posted to CC-1 INBOX as his STEP 0 per the
+resequencing. Live Neon: `geo.geofences` 350b9f03-d817-44df-978b-47eed5f6f8c9 "TEST CODEX GO0040"
+archived `is_active=false` (never deleted), confirmed persisted by a follow-up read. | FAST-MERGE |
+gate=PASS (money-pr-local-gate) | push=pending | merge=pending | neon=TEST-row archived +
+188cf90c id confirmed live for the migration's supersede UPDATE | REMAINING: migration #4 not yet
+applied (CC-1 lane); §3.5 supersede UPDATE lives inside that same draft; §4 Loves 604 import, §5
+Samsara geofence import, §6 alert chain are sequenced AFTER this merges and is proven live, per
+the 2026-09-05 resequencing. NEXT: push + PR + squash-merge this same turn, then watch for CC-1's
+migration #4 apply before starting §4/§5/§6.
