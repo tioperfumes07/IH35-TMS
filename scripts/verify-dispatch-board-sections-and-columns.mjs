@@ -197,10 +197,14 @@ function fleetOosSortIssues(oosSrc = readFileSync(join(root, "apps/frontend/src/
   return issues;
 }
 
-// 1. One shared column model, List and Table both alias it.
+// 1. One shared column model, List and Table both alias it. `boardColumns` -> `parityColumns`
+// (a single ParityColumn[] derived from boardColumns, pre-existing rename from the original
+// separate listColumns/tableColumns aliases this check used to look for) is passed as
+// `columns={parityColumns}` to both the sectioned List view and the flat Table view.
 if (!src.includes("const boardColumns")) fail("missing shared `boardColumns` model");
-if (!/const listColumns = boardColumns/.test(src)) fail("listColumns must alias boardColumns (List == Table grid)");
-if (!/const tableColumns = boardColumns/.test(src)) fail("tableColumns must alias boardColumns (List == Table grid)");
+if (!/const\s+parityColumns[\s\S]{0,60}=\s*boardColumns\.map/.test(src)) fail("parityColumns must be derived from boardColumns (List == Table grid)");
+const parityTableColumnsUsages = [...src.matchAll(/<ParityTable[\s\S]{0,400}?columns=\{parityColumns\}/g)].length;
+if (parityTableColumnsUsages < 2) fail(`columns={parityColumns} must be passed to both the List and Table ParityTable mounts (found ${parityTableColumnsUsages})`);
 
 // 2. Exact column key order (Lane split into pickup + delivery).
 // Note: the 6 Samsara HOS columns (hos_drive…hos_resumeAt) use template-literal keys and are
@@ -220,13 +224,22 @@ if (!/const tableColumns = boardColumns/.test(src)) fail("tableColumns must alia
 // "samsara_eta", "on_time", "eta_freshness" appended after "driver_status" (LiveEtaColumns).
 // LOCKED COUNT CHANGE 2026-08-31 (Dispatch Board Phase 1, additive): 20 → 24 string-literal columns —
 // "pickup_date", "pickup_time" after "pickup"; "delivery_date", "delivery_time" after "delivery".
-// This 24-column order is the contract going forward.
+// REORDER 2026-09-05 (LEAD RESET, L.4a, docs/design/DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05.md
+// §A — same 25 string-literal columns (now including "pre_settlement", which this guard's regex
+// always matched but expectedOrder had never listed — a pre-existing gap, closed here), grouped
+// per the owner's reference PDF: ASSIGNMENT (unit/trailer/load/driver, unchanged) → HOURS OF
+// SERVICE (template-literal hos_* keys, unaffected, tracked by verify-dispatch-board-hos-columns)
+// → LOAD (customer/commodity/wo/pickup.../linehaul — "wo" moved up to right after "commodity";
+// nothing dropped) → TELEMETRY ("location" renamed "Live loc" in its header only, moved here from
+// right-after-HOS; live_gps/driver_status/samsara_eta/on_time/eta_freshness follow) → STATUS
+// (status_signal/risk/status/pre_settlement, moved to the end as one group). No column removed —
+// position and one display label changed only.
 const expectedOrder = [
-  "unit", "trailer", "load", "driver", "location", "customer",
-  "commodity", "pickup", "pickup_date", "pickup_time", "delivery", "delivery_date", "delivery_time",
-  "wo", "cargo_temp", "linehaul", "status_signal",
-  "live_gps", "risk", "status", "driver_status",
-  "samsara_eta", "on_time", "eta_freshness",
+  "unit", "trailer", "load", "driver",
+  "customer", "commodity", "wo", "pickup", "pickup_date", "pickup_time", "delivery", "delivery_date", "delivery_time",
+  "cargo_temp", "linehaul",
+  "location", "live_gps", "driver_status", "samsara_eta", "on_time", "eta_freshness",
+  "status_signal", "risk", "status", "pre_settlement",
 ];
 const modelStart = src.indexOf("const boardColumns");
 const modelEnd = src.indexOf("];", modelStart);

@@ -31,7 +31,9 @@ if (!/import \{ HOS_COLUMNS \}/.test(board)) fail("DispatchBoard must import HOS
 if (!/\.\.\.HOS_COLUMNS\.map\(/.test(board)) fail("DispatchBoard.boardColumns must spread the 6 HOS_COLUMNS");
 if (!/<DriverHosClockValue\b/.test(board)) fail("DispatchBoard must render <DriverHosClockValue> for the HOS cells");
 if (!/colKey=\{hosCol\.key\}/.test(board)) fail("each HOS board column must bind colKey to the HOS_COLUMNS entry");
-// boardColumns must drive the List grid (not just Table).
-if (!/const listColumns = boardColumns/.test(board)) fail("listColumns must be boardColumns (the 6 cols must show on the List view)");
+// boardColumns must drive the List grid (not just Table) — via the shared parityColumns
+// derivation (pre-existing rename from the separate listColumns/tableColumns aliases this check
+// used to look for).
+if (!/const\s+parityColumns[\s\S]{0,60}=\s*boardColumns\.map/.test(board)) fail("parityColumns must be derived from boardColumns (the 6 HOS cols must show on the List view)");
 
 console.log("PASS verify-dispatch-board-hos-columns");

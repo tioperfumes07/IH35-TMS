@@ -987,22 +987,19 @@ export function DispatchBoard({
         />
       ),
     })),
-    // UX-B: Location (last-known unit city) sits right after the HOS clocks (Resume At).
-    // (DB-6 moved Load # up to immediately after Trailer in the shared column model.)
-    {
-      key: "location",
-      header: "Location",
-      cell: (load) => renderUnitLocationCell(load, locationByUnit, fleetLocationQuery.isError),
-    },
+    // DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §A group order: LOAD group first (Customer ·
+    // Commodity · WO # · then Pickup/PU date/PU time/Delivery/Del date/Del time/Linehaul in the
+    // model's prior order), then TELEMETRY (Live loc · Live GPS · Driver Status · Samsara ETA ·
+    // On-time · Freshness), then STATUS (Status signal · Risk · Status · Pre-settlement).
     { key: "customer", header: "Customer", cell: renderCustomerCell },
     { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—" },
+    { key: "wo", header: "WO #", cell: (load) => load.customer_wo_number ?? "—" },
     { key: "pickup", header: "Pickup", cell: (load) => load.first_pickup_city ?? "—" },
     { key: "pickup_date", header: "PU date", cell: (load) => renderPickupDateCell(load) },
     { key: "pickup_time", header: "PU time", cell: (load) => renderPickupTimeCell(load) },
     { key: "delivery", header: "Delivery", cell: (load) => renderDeliveryCell(load) },
     { key: "delivery_date", header: "Del date", cell: (load) => renderDeliveryDateCell(load) },
     { key: "delivery_time", header: "Del time", cell: (load) => renderDeliveryTimeCell(load) },
-    { key: "wo", header: "WO #", cell: (load) => load.customer_wo_number ?? "—" },
     {
       key: "cargo_temp",
       header: "Cargo temp",
@@ -1015,7 +1012,15 @@ export function DispatchBoard({
       ),
     },
     { key: "linehaul", header: "Linehaul", cell: (load) => formatMoneyCents(linehaulCents(load), load.currency_code) },
-    { key: "status_signal", header: "Status signal", cell: (load) => renderTriSignalCell(load) },
+    // TELEMETRY — "Live loc" (was "Location"): the truck's current GPS position, resolved to a
+    // city/state via the Samsara-fed fleet-location feed. Renamed per the design contract ("it was
+    // sitting in the Load group as a bare Location, reading like a third address next to PU and
+    // Del"). Same key ("location") and same data — a display-label rename, not a column removal.
+    {
+      key: "location",
+      header: "Live loc",
+      cell: (load) => renderUnitLocationCell(load, locationByUnit, fleetLocationQuery.isError),
+    },
     {
       key: "live_gps",
       header: "Live GPS",
@@ -1027,38 +1032,59 @@ export function DispatchBoard({
         />
       ),
     },
-    { key: "risk", header: "Risk", cell: (load) => <RiskCell load={load} /> },
-    { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
     { key: "driver_status", header: "Driver Status", cell: (load) => <DriverStatusColumn load={load} /> },
     { key: "samsara_eta", header: "Samsara ETA", cell: (load) => <SamsaraEtaColumn load={load} /> },
     { key: "on_time", header: "On-time", cell: (load) => <OnTimePredictionColumn load={load} /> },
     { key: "eta_freshness", header: "Freshness", cell: (load) => <LiveEtaFreshnessColumn load={load} /> },
+    // STATUS
+    { key: "status_signal", header: "Status signal", cell: (load) => renderTriSignalCell(load) },
+    { key: "risk", header: "Risk", cell: (load) => <RiskCell load={load} /> },
+    { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
     { key: "pre_settlement", header: "Pre-settlement", cell: (load) => renderPreSettlementPrompt(load) },
   ];
 
-  // BRD-25: default visible columns must keep the board table within a 1280px viewport.
-  // Measured live on index-CPvziJFG.js: 1247 viewport -> clientWidth 1095; all other columns
-  // are reachable through the ParityTable gear column chooser and persisted per BRD-04.
-  const DEFAULT_VISIBLE_BOARD_KEYS = new Set([
-    "unit",
-    "trailer",
-    "load",
-    "driver",
-    "location",
-    "customer",
-    "pickup",
-    "delivery",
-    "status",
-  ]);
+  // DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §A — the 5 named group-header bands, in order,
+  // read straight off the owner's reference PDF. HOS_COLUMNS keys are "hos_<key>" per the
+  // boardColumns spread above.
+  const boardColumnGroups = [
+    { label: "Assignment", keys: ["unit", "trailer", "load", "driver"] },
+    {
+      label: "Hours of service",
+      keys: HOS_COLUMNS.map((hosCol) => `hos_${hosCol.key}`),
+    },
+    {
+      label: "Load",
+      keys: [
+        "customer", "commodity", "wo", "pickup", "pickup_date", "pickup_time",
+        "delivery", "delivery_date", "delivery_time", "cargo_temp", "linehaul",
+      ],
+    },
+    {
+      label: "Telemetry",
+      keys: ["location", "live_gps", "driver_status", "samsara_eta", "on_time", "eta_freshness"],
+    },
+    { label: "Status", keys: ["status_signal", "risk", "status", "pre_settlement"] },
+  ];
+
+  // DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §A — "every column in the board model ... is
+  // default-visible in Table AND List (the preview shows one grid; there is no hidden default)."
+  // BRD-25's DEFAULT_VISIBLE_BOARD_KEYS/defaultHidden restriction (a viewport-width workaround)
+  // is an ADDITIVE-ONLY LAW breach (docs/LAW.md L379: never remove/hide a column) with no
+  // OWNER-REMOVE line in its own PR — removed entirely. The Columns ▾ chooser still exists for
+  // per-user hiding; nothing here is ever forced hidden by default.
   const parityColumns: ParityColumn<BoardLoad>[] = boardColumns.map((column) => ({
     key: column.key,
     label: column.header,
+    // DESIGN-CONTRACT §A: "headers left-aligned over left-aligned data (preview: 'headers
+    // centered over left-aligned data' is a defect)". ParityTable's own table-wide text-center
+    // (CENTER-EVERYTHING LAW, the correct default for every OTHER board) is overridden per-column
+    // here since the reference explicitly calls out centered dispatch-board headers as wrong.
+    className: "text-left",
     render: column.cell,
     sortable: DISPATCH_SORTABLE_COLS.has(column.key),
     sortValue: DISPATCH_SORTABLE_COLS.has(column.key)
       ? (load: BoardLoad) => dispatchSortValue(load, column.key)
       : undefined,
-    defaultHidden: !DEFAULT_VISIBLE_BOARD_KEYS.has(column.key),
   }));
 
   const renderListOrTable = () => {
@@ -1218,6 +1244,7 @@ export function DispatchBoard({
 
               <ParityTable
                 columns={parityColumns}
+                columnGroups={boardColumnGroups}
                 rows={rows}
                 rowKey={(row) => row.id}
                 loading={sectionLoading}
@@ -1325,6 +1352,7 @@ export function DispatchBoard({
 
         <ParityTable
           columns={parityColumns}
+          columnGroups={boardColumnGroups}
           rows={sortedRows}
           rowKey={(row) => row.id}
           loading={loading}
