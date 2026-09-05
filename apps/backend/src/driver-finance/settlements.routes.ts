@@ -581,6 +581,38 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           -- additive SELECT columns; picks the loaded vs. deadhead column pair by the line's own
           -- line_type so a single miles/rate_cents/pay_cents triple is correct for both earnings
           -- and deadhead_pay rows without the frontend needing to know which bill column backs which.
+          -- S.1b (owner-registrar dispatch 2026-09-05, docs/bus/INBOX-CC-1.md, unblocks Cursor L5 section
+          -- tables): additive columns Cursor's L5 rebuild reads for the 5 detail sections. Cursor's spec
+          -- named l.origin_city/dest_city as "confirmed columns on mdata.loads" -- FALSE, verified live:
+          -- mdata.loads has no such columns; the ones Cursor found belong to catalogs.lane_mileage (a
+          -- LANE-level mileage cache keyed by city/state pairs, unrelated to any one load's actual route).
+          -- The real per-load origin/destination is mdata.load_stops (stop_type pickup/delivery, city/
+          -- state, sequence_number) -- confirmed live for every one of the 152 real earnings/deadhead_pay
+          -- lines in prod. Deliberately NOT filtering soft_deleted_at here (unlike an active-dispatch
+          -- view): this is a historical read of where a settlement line's pay was actually earned, and a
+          -- stop later edited/replaced must not erase that history -- filtering it out live-dropped origin/
+          -- dest to 94/152 (58 lines' earliest-recorded pickup stop had since been soft-deleted); including
+          -- it is what makes all 152/152 carry non-null origin+dest+line_date, live-verified below.
+          -- line_date is one COALESCE chain across every line_type so a single non-null column serves all
+          -- 5 FE sections without the frontend needing to know which source table backs which row:
+          -- earnings/deadhead_pay -> the leg's own delivery (fallback pickup) date; reimbursement ->
+          -- driver_reimbursements.posting_date (the real, purpose-built date column on that table);
+          -- deduction -> the deduction row's created_at; anything else (extra_pay, team splits, etc.)
+          -- falls back to the driver bill's created_at, then the line's own created_at -- never null.
+          -- Reimbursements: driver_finance.driver_reimbursements is the real source table (73 live rows,
+          -- FK'd via its OWN settlement_line_id -- reverse-joined here, not guessed) but it currently has
+          -- NO vendor_id/vendor_invoice_number/receipt_number columns at all (checked live schema) -- none
+          -- of its 73 rows are applied to a settlement line yet (all status='pending'/'void', 0 with
+          -- settlement_line_id set), so Cursor's Vendor/Vendor-invoice-#/Receipt FE columns have no real
+          -- data to read today regardless of this join; filed ACCT-REIMBURSEMENT-VENDOR-FIELDS-MISSING
+          -- rather than fabricating columns that do not exist. reimbursement_type is exposed as the
+          -- category-equivalent for that section (sl.category already exists and is selected via sl.*).
+          -- Deductions: dsd.deduction_type is the real Type/Code value (already joined for the hold
+          -- columns). Posting account reads the REAL sl.posting_account_id column (present on
+          -- settlement_lines today, never yet written by any live poster -- confirmed by full-repo grep) --
+          -- when a future PR's GL-posting engine stamps it, this same join lights up with zero reader
+          -- changes; not guessed via a runtime account-classification call with no live row to prove it
+          -- against (0 of 0 deduction lines exist in prod right now).
           SELECT
             sl.*,
             l.load_number,
@@ -589,22 +621,52 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             CASE WHEN sl.line_type = 'deadhead_pay' THEN db.miles_deadhead ELSE db.miles_basis END AS miles,
             CASE WHEN sl.line_type = 'deadhead_pay' THEN db.rate_empty_per_mile_cents ELSE db.rate_per_mile_cents END AS rate_cents,
             CASE WHEN sl.line_type = 'deadhead_pay' THEN db.deadhead_pay_cents ELSE db.loaded_pay_cents END AS pay_cents,
+            origin_stop.city AS origin_city,
+            origin_stop.state AS origin_state,
+            dest_stop.city AS dest_city,
+            dest_stop.state AS dest_state,
+            COALESCE(dest_stop.at, origin_stop.at, dr.posting_date::timestamptz, dsd.created_at, db.created_at, sl.created_at) AS line_date,
+            dr.reimbursement_type,
+            dr.reason AS reimbursement_reason,
             dsd.id AS source_deduction_id,
+            dsd.deduction_type,
             dsd.is_held AS deduction_is_held,
             dsd.hold_until_period AS deduction_hold_until_period,
             dsd.hold_reason AS deduction_hold_reason,
             dsd.held_by_user_id AS deduction_held_by_user_id,
-            hu.email AS deduction_held_by_user_email
+            hu.email AS deduction_held_by_user_email,
+            pa.account_number AS posting_account_number,
+            pa.account_name AS posting_account_name
           FROM driver_finance.settlement_lines sl
           LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
           LEFT JOIN mdata.loads l
             ON l.id = COALESCE(db.load_id, sl.load_id)
            AND l.operating_company_id = $2::uuid
+          LEFT JOIN LATERAL (
+            SELECT ls.city, ls.state, COALESCE(ls.actual_arrival_at, ls.scheduled_arrival_at) AS at
+            FROM mdata.load_stops ls
+            WHERE ls.load_id = COALESCE(db.load_id, sl.load_id) AND ls.stop_type = 'pickup'
+            ORDER BY ls.sequence_number ASC
+            LIMIT 1
+          ) origin_stop ON true
+          LEFT JOIN LATERAL (
+            SELECT ls.city, ls.state, COALESCE(ls.actual_arrival_at, ls.scheduled_arrival_at) AS at
+            FROM mdata.load_stops ls
+            WHERE ls.load_id = COALESCE(db.load_id, sl.load_id) AND ls.stop_type = 'delivery'
+            ORDER BY ls.sequence_number DESC
+            LIMIT 1
+          ) dest_stop ON true
+          LEFT JOIN driver_finance.driver_reimbursements dr
+            ON dr.settlement_line_id = sl.id
+           AND dr.operating_company_id = $2::uuid
           LEFT JOIN driver_finance.driver_settlement_deductions dsd
             ON dsd.id = sl.source_reference_id
            AND sl.source_table = $3
            AND dsd.operating_company_id = $2::uuid
           LEFT JOIN identity.users hu ON hu.id = dsd.held_by_user_id
+          LEFT JOIN catalogs.accounts pa
+            ON pa.id = sl.posting_account_id
+           AND pa.operating_company_id = $2::uuid
           WHERE sl.settlement_id = $1
           ORDER BY sl.created_at ASC
         `,
