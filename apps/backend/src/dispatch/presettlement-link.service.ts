@@ -215,16 +215,45 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
   let settlementId: string;
   if (input.action === "create_new") {
     const displayId = await allocateNextSettlementDisplayId(client, input.operating_company_id);
+    // GAP-PRESETTLEMENT-PERIOD-NULL (found live 2026-09-05, seeding the settlement feed): this
+    // branch never set period_start/period_end (both NOT NULL, no default on
+    // driver_finance.driver_settlements) — every "create_new" confirmation crashed with a NOT
+    // NULL violation. Its sibling writer, driver-finance/settlements-load-bookended.service.ts's
+    // openLoadBookendedSettlement, has always derived both from the load's own trip-start date
+    // (period_start = period_end = trip start; period_end is extended later, at each subsequent
+    // load's docs-received event) — this mirrors that exact pattern rather than inventing a new
+    // one. First pickup stop's scheduled_arrival_at is the load's own trip start (matches
+    // openLoadBookendedSettlement's `pickupAt`); mdata.loads.created_at is the same `?? new
+    // Date().toISOString()`-shaped fallback for a load with no stops yet.
+    // verify-settlement-sample-tag-wired (Gate-B): is_sample_data must be DERIVED off the parent
+    // load, never a literal — the exact class LV-SAMPLE-TAG-DISPATCH-HOLE shipped as, per that
+    // guard's own message. Fetched in the same round trip as trip-start.
+    const loadContext = await client.query<{ trip_started_at: string; is_sample_data: boolean }>(
+      `
+        SELECT
+          COALESCE(
+            (SELECT ls.scheduled_arrival_at FROM mdata.load_stops ls
+              WHERE ls.load_id = $1::uuid AND ls.stop_type = 'pickup' AND ls.soft_deleted_at IS NULL
+              ORDER BY ls.sequence_number ASC LIMIT 1),
+            (SELECT l.created_at FROM mdata.loads l WHERE l.id = $1::uuid),
+            now()
+          )::text AS trip_started_at,
+          COALESCE((SELECT l.is_sample_data FROM mdata.loads l WHERE l.id = $1::uuid), false) AS is_sample_data
+      `,
+      [suggestion.load_id]
+    );
+    const periodDate = String(loadContext.rows[0]!.trip_started_at).slice(0, 10);
+    const isSampleData = Boolean(loadContext.rows[0]!.is_sample_data);
     const insertRes = await client.query<{ id: string }>(
       `
         INSERT INTO driver_finance.driver_settlements (
           operating_company_id, driver_id, status, display_id, tour_id, first_load_id,
-          trip_started_at, created_by_user_id
+          period_start, period_end, trip_started_at, created_by_user_id, is_sample_data
         )
-        VALUES ($1::uuid, $2::uuid, 'open', $3, $4::uuid, $5::uuid, now(), $6::uuid)
+        VALUES ($1::uuid, $2::uuid, 'open', $3, $4::uuid, $5::uuid, $6::date, $6::date, now(), $7::uuid, $8)
         RETURNING id
       `,
-      [input.operating_company_id, suggestion.driver_id, displayId, suggestion.tour_id, suggestion.load_id, input.actor_user_id]
+      [input.operating_company_id, suggestion.driver_id, displayId, suggestion.tour_id, suggestion.load_id, periodDate, input.actor_user_id, isSampleData]
     );
     settlementId = insertRes.rows[0]!.id;
   } else {
