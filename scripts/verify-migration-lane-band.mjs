@@ -66,6 +66,21 @@ const LANES = [
   },
 ];
 
+// Owner order 2026-09-05: Codex must ship the single Samsara USMCA re-tag
+// migration as part of its assigned Telematics vertical.  This is deliberately
+// exact-file + exact-branch authorization, not general migration authority.
+const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  [
+    "codex/samsara-usmca-retag-migration",
+    new Set(["db/migrations/202613761300_samsara_usmca_retag.sql"]),
+  ],
+]);
+
+export function isOwnerAuthorizedOneOff(branch, files) {
+  const allowed = OWNER_AUTHORIZED_ONE_OFFS.get(branch);
+  return Boolean(allowed && files.length > 0 && files.every((file) => allowed.has(file)));
+}
+
 function git(args) {
   const r = spawnSync("git", args, { encoding: "utf8" });
   if (r.status !== 0) throw new Error(`git ${args.join(" ")}: ${r.stderr || r.stdout}`);
@@ -152,6 +167,15 @@ export function run() {
     return { ok: true, message: `verify-migration-lane-band OK — no new migrations on ${branch}` };
   }
 
+  if (isOwnerAuthorizedOneOff(branch, files)) {
+    return {
+      ok: true,
+      lane: "owner-authorized-one-off",
+      files,
+      message: `verify-migration-lane-band OK — direct owner authorization applies only to ${files.join(", ")}`,
+    };
+  }
+
   const problems = checkFiles(files, lane);
   const ok = problems.length === 0;
   return {
@@ -228,6 +252,26 @@ function selftest() {
   }
   if (laneForBranch("cursor/anything")?.lane !== "cursor") {
     console.error("  FAIL: cursor/ branch must still map to the cursor lane (the real prefix, unaffected)");
+    bad += 1;
+  }
+  if (
+    !isOwnerAuthorizedOneOff("codex/samsara-usmca-retag-migration", [
+      "db/migrations/202613761300_samsara_usmca_retag.sql",
+    ])
+  ) {
+    console.error("  FAIL: exact owner-authorized Samsara migration was not recognized");
+    bad += 1;
+  }
+  if (
+    isOwnerAuthorizedOneOff("codex/samsara-usmca-retag-migration", [
+      "db/migrations/202613761300_samsara_usmca_retag.sql",
+      "db/migrations/202613761301_unrelated.sql",
+    ]) ||
+    isOwnerAuthorizedOneOff("codex/another-branch", [
+      "db/migrations/202613761300_samsara_usmca_retag.sql",
+    ])
+  ) {
+    console.error("  FAIL: one-off migration authorization widened beyond the exact branch/file");
     bad += 1;
   }
 
