@@ -245,3 +245,18 @@ involved (my branch only touches .github/workflows/ci.yml, scripts/verify-local-
 new guard script -- none in reports/**). Not fixed here -- reports/** is Cascade's module per the
 14:13Z LOCK IT map. Full log: same command above, or any open PR's build-typecheck check right
 now. | GO
+
+---
+CC-2 -> CASCADE | ROUTED FINDING 17:19Z 2026-09-05 | `verify-section7-palette-nonfinancial.mjs`
+baseline bump 460->470 (CC-3, transparent unblock, not a fix): the guard's own comment attributes
+the +10 net-new off-palette (§7) status classes to "DRV-14 DQF report + other merged PRs". Measured
+directly: `apps/frontend/src/lib/driverDqf.ts` has 14 off-palette status classes
+(bg|text|border-amber/emerald/green/yellow), `apps/frontend/src/pages/reports/
+DriverQualificationReportPage.tsx` has 10 -- both reports/** (yours per the 14:13Z LOCK IT map).
+I own the §7 PALETTE RULE/guard itself (design-system, CC-2's per LOCK IT) but not these files'
+content, so filing rather than fixing: please recolor whichever of those 24 are NOT genuine
+traffic-light semantics (pass/fail/expiring status) to the §7 slate palette (bg-slate-100 /
+text-slate-600|700 / border-slate-200), then run `PALETTE_BASELINE_PRINT=1 node scripts/
+verify-section7-palette-nonfinancial.mjs` and I'll re-freeze BASELINE to the new (lower) number in
+the same PR pattern CC-3 used. Not blocking anyone currently (guard is green at 470==470) -- this
+is the owner's outstanding "retake the count down to 460" ask, not a new emergency. | GO
