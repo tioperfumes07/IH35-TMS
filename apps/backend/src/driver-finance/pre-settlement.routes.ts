@@ -6,7 +6,7 @@ import { enqueueEmail } from "../email/queue.service.js";
 import { dispatchNotification, type NotificationEventType } from "../notifications/dispatcher.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { renderSettlementStatementPdf } from "./settlement-pdf-renderer.service.js";
-import { appendSettlementLineFromDriverBillIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
+import { appendSettlementLineFromDriverBillIfMissing, appendEscrowContributionLineIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
 import { aggregateSettlementTotals } from "./settlements-load-bookended.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { postNegativeSettlementLiabilityIfNeeded } from "./negative-settlement-liability.service.js";
@@ -93,7 +93,14 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
             s.net_pay,
             s.trip_started_at,
             s.period_start,
-            s.period_end
+            s.period_end,
+            -- M.3 (owner order 2026-09-05, transferred CC-1 -> CC-3): "board" read model — one row
+            -- per settlement, escrow broken out on its own (not folded silently into
+            -- deductions_total) so Dispatch can show it as its own board column.
+            COALESCE((
+              SELECT SUM(sl.amount) FROM driver_finance.settlement_lines sl
+              WHERE sl.settlement_id = s.id AND sl.line_type = 'escrow_contribution' AND sl.is_active = true
+            ), 0) AS escrow_contribution_total
           FROM driver_finance.driver_settlements s
           LEFT JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
           WHERE s.operating_company_id = $1::uuid
@@ -166,19 +173,61 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
       // the ORDINARY empty state, not an error. Return an honest empty result -- {settlement: null,
       // lines: []} -- so the caller can render its already-built "No active pre-settlement found"
       // state (PreSettlementPanel.tsx) instead of an error/retry surface.
-      if (!settlement) return { settlement: null, lines: [] };
+      if (!settlement) {
+        return {
+          settlement: null,
+          lines: [],
+          deductions: [],
+          reconciliation: { gross_pay: 0, deductions_total: 0, escrow_contribution_total: 0, reimbursements_total: 0, net_pay: 0 },
+        };
+      }
 
-      const linesRes = await client.query(
+      type SettlementLineRow = { id: string; line_type: string; description: string; amount: string | number; created_at: string };
+      const linesRes = (await client.query(
         `
           SELECT id, line_type, description, amount, created_at
           FROM driver_finance.settlement_lines
           WHERE settlement_id = $1
+            -- ACCT-F156 precedent (aggregateSettlementTotals honors the same filter): a voided/
+            -- inactive line must not appear in the "drop" detail either — it is not part of the
+            -- live cost picture, and verify-settlement-costs-never-consolidated below requires this
+            -- to be the SAME set the reconciliation block is computed from.
+            AND is_active = true
           ORDER BY created_at ASC
         `,
         [(settlement as Record<string, unknown>).id]
-      );
+      )) as { rows: SettlementLineRow[] };
 
-      return { settlement, lines: linesRes.rows };
+      // M.3 (owner order 2026-09-05, transferred CC-1 -> CC-3): "drop" read model — the DETAIL
+      // payload for one settlement. `lines` stays one row per individual cost (never consolidated —
+      // guard: verify-settlement-costs-never-consolidated.mjs); `deductions` is the SAME rows
+      // filtered to the deduction-bearing line_types (a convenience view, not a second source of
+      // truth); `reconciliation` foots gross - deductions + reimbursements = net from those same
+      // lines so the board can show its own math next to the persisted header totals rather than
+      // trusting them blind.
+      const DEDUCTION_LINE_TYPES = new Set(["deduction", "abandonment_chargeback", "escrow_contribution", "advance_recovery", "auto_deduction"]);
+      const EARNINGS_LINE_TYPES = new Set(["earnings", "extra_pay", "team_split_primary", "team_split_secondary", "detention_pay", "deadhead_pay"]);
+      const REIMBURSEMENT_LINE_TYPES = new Set(["reimbursement", "dispute_adjustment"]);
+      const dollars = (v: string | number) => Math.round(Number(v) * 100) / 100;
+
+      const deductions = linesRes.rows.filter((l) => DEDUCTION_LINE_TYPES.has(l.line_type));
+      const escrowContributionTotal = deductions.filter((l) => l.line_type === "escrow_contribution").reduce((sum, l) => sum + dollars(l.amount), 0);
+      const grossFromLines = linesRes.rows.filter((l) => EARNINGS_LINE_TYPES.has(l.line_type)).reduce((sum, l) => sum + dollars(l.amount), 0);
+      const deductionsFromLines = deductions.reduce((sum, l) => sum + dollars(l.amount), 0);
+      const reimbursementsFromLines = linesRes.rows.filter((l) => REIMBURSEMENT_LINE_TYPES.has(l.line_type)).reduce((sum, l) => sum + dollars(l.amount), 0);
+
+      return {
+        settlement,
+        lines: linesRes.rows,
+        deductions,
+        reconciliation: {
+          gross_pay: grossFromLines,
+          deductions_total: deductionsFromLines,
+          escrow_contribution_total: escrowContributionTotal,
+          reimbursements_total: reimbursementsFromLines,
+          net_pay: grossFromLines - deductionsFromLines + reimbursementsFromLines,
+        },
+      };
     });
 
     // "schema_absent" is a real configuration gap (driver_finance.driver_settlements doesn't exist
@@ -273,6 +322,15 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
         loadId: body.load_id,
         teamId: team?.teamId ?? null,
         lineType,
+      });
+      // M.3 (owner order 2026-09-05, transferred CC-1 -> CC-3): manual add-load must accrue the
+      // SAME per-load escrow line the automatic SET-01 book-time path does.
+      await appendEscrowContributionLineIfMissing(client, {
+        settlementId: params.data.id,
+        operatingCompanyId: body.operating_company_id,
+        driverId,
+        loadId: body.load_id,
+        actorUserId: user.uuid,
       });
 
       await client.query(

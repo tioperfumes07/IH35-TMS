@@ -17,6 +17,7 @@ vi.mock("../abandonment.service.js", () => ({
 vi.mock("../settlement-engine.js", () => ({
   fetchTeamDriversForLoad: vi.fn().mockResolvedValue(null),
   appendSettlementLineFromDriverBillIfMissing: vi.fn().mockResolvedValue(undefined),
+  appendEscrowContributionLineIfMissing: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { appendSettlementLineFromDriverBillIfMissing } from "../settlement-engine.js";

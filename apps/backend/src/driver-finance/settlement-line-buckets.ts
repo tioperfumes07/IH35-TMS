@@ -22,7 +22,9 @@ export const SETTLEMENT_EARNINGS_LINE_TYPES = [
   "deadhead_pay",
 ] as const;
 
-export const SETTLEMENT_DEDUCTION_LINE_TYPES = ["deduction", "abandonment_chargeback"] as const;
+// M.3: escrow accrues per load as its own auditable line and reduces net pay like every other
+// deduction. Keep it in the canonical bucket so list-time totals and close-time totals cannot drift.
+export const SETTLEMENT_DEDUCTION_LINE_TYPES = ["deduction", "abandonment_chargeback", "escrow_contribution"] as const;
 
 // dispute_adjustment folded in with reimbursement (both positive-direction corrections owed back to
 // the driver, unrelated to base pay) -- see ACCT-F5619 note in settlements-load-bookended.service.ts.
