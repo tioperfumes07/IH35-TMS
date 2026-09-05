@@ -565,3 +565,16 @@ Also: PR #20574 (STEP 3/4 DONE + 2 real build-typecheck guard-rot fixes) and #20
 (CLAIM-RESERVE 10383) both merged this pass once the Devin repo-wide build-typecheck outage
 cleared -- fast-merged same turn per FAST-MERGE-4MIN-LAW the instant `gh pr view --json
 mergeable,mergeStateStatus` showed clear. | NEXT 6 of 8 -- B.1 banking matcher | GO
+
+CC-2 | STEP 6 of 8 DONE | d070f6b18a (#20591) | live proof 16:28Z: post-merge forensic confirms
+scripts/verify-banking-suggest-matches-wired.mjs + scripts/verify-steps/10387-*.mjs on
+origin/main; guard OK + selftest OK. B.1: POST /api/v1/banking/transactions/suggest (bulk, reuses
+findCandidates verbatim -- zero new matching math) returns the best exact-cents (amount_gap_cents
+== 0), <=5-day, expense/bill candidate per transaction id with confidence high/medium; toolbar
+"Suggest matches" button + a "Suggested" badge per qualifying row that opens the EXISTING Match
+drawer (setMatchDrawerTxId) -- Accept still only ever happens through the already-reviewed
+acceptBankReconMatch, zero new write paths, guard mutation-proves the badge never calls
+accept/post directly. tsc -b clean both apps (Devin's reports/** break is now fixed on main).
+NOT built, reported honestly: many-to-one fuel-card aggregation (different algorithm, own pass)
+and vendor-alias matching (no vendor_alias table exists; needs a migration-capable seat, CC-2
+cannot author migrations). | NEXT 7 of 8 -- 2.2 design tokens encode design-contract values | GO
