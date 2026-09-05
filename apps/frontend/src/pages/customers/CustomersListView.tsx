@@ -15,6 +15,7 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorState } from "../../components/ListErrorState";
 import { companyToday } from "../../lib/businessDate";
+import { mmmDd } from "../../lib/formatDate";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
@@ -43,6 +44,16 @@ type CustomerRow = Customer & {
   health_tier_label: string;
   quality_flag_label: string;
   overdue_label: string;
+  load_count: number | null;
+  booked_ytd_cents: number | null;
+  last_load_iso: string | null;
+};
+
+// CC-3 V.1 roll-up: per-customer profitability merged from the customer-profitability endpoint.
+type CustomerProfitability = {
+  load_count: number;
+  revenue_cents: number;
+  last_load_iso: string | null;
 };
 
 type FilterChip = "all" | "late_pay" | "medium" | "active" | "overdue" | "with_open";
@@ -54,10 +65,12 @@ type Props = {
   status: ListQueryStatus;
   openByCustomerId: Map<string, number>;
   openBalancesAvailable: boolean;
+  /** CC-3 V.1 roll-up: per-customer YTD profitability keyed by customer_id. */
+  profitabilityByCustomerId: Map<string, CustomerProfitability>;
   onSelectCustomer?: (customerId: string) => void;
 };
 
-export function CustomersListView({ companyId, customers, status, openByCustomerId, openBalancesAvailable, onSelectCustomer }: Props) {
+export function CustomersListView({ companyId, customers, status, openByCustomerId, openBalancesAvailable, profitabilityByCustomerId, onSelectCustomer }: Props) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   // Same BULK_WRITE_ROLES gate the old BulkActionBar enforced internally (useBulkPermission) —
@@ -108,18 +121,25 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
 
   const enrichedRows = useMemo<CustomerRow[]>(
     () =>
-      filtered.map((c) => ({
-        ...c,
-        open_balance: openBalancesAvailable ? (openByCustomerId.get(c.id) ?? 0) : null,
-        health_tier_label: relationshipTierBadge(
-          c.relationship_health_tier ?? (atRiskCustomerIds.has(c.id) ? "at_risk" : null),
-          atRiskQuery.isError && !c.relationship_health_tier
-        ).label,
-        quality_flag_label: qualityBadge(c).label,
-        // Promote the heuristic "overdue" chip (open balance + Late-pay) to a real, sortable column.
-        overdue_label: openBalancesAvailable && (openByCustomerId.get(c.id) ?? 0) > 0 && qualityBadge(c).label === "Late-pay" ? "Yes" : "No",
-      })),
-    [filtered, openBalancesAvailable, openByCustomerId, atRiskCustomerIds, atRiskQuery.isError]
+      filtered.map((c) => {
+        const profit = profitabilityByCustomerId.get(c.id) ?? null;
+        return {
+          ...c,
+          open_balance: openBalancesAvailable ? (openByCustomerId.get(c.id) ?? 0) : null,
+          health_tier_label: relationshipTierBadge(
+            c.relationship_health_tier ?? (atRiskCustomerIds.has(c.id) ? "at_risk" : null),
+            atRiskQuery.isError && !c.relationship_health_tier
+          ).label,
+          quality_flag_label: qualityBadge(c).label,
+          // Promote the heuristic "overdue" chip (open balance + Late-pay) to a real, sortable column.
+          overdue_label: openBalancesAvailable && (openByCustomerId.get(c.id) ?? 0) > 0 && qualityBadge(c).label === "Late-pay" ? "Yes" : "No",
+          // CC-3 V.1 roll-up columns — null when the customer has no profitability row (renders "—").
+          load_count: profit?.load_count ?? null,
+          booked_ytd_cents: profit?.revenue_cents ?? null,
+          last_load_iso: profit?.last_load_iso ?? null,
+        };
+      }),
+    [filtered, openBalancesAvailable, openByCustomerId, atRiskCustomerIds, atRiskQuery.isError, profitabilityByCustomerId]
   );
 
   // LIST-EMPTY-1: empty row renders only once the roster fetch settles.
@@ -157,6 +177,9 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
       "Phone",
       "Billing State",
       "Open Balance",
+      "Loads",
+      "Booked YTD",
+      "Last Load",
       "FMCSA Verified",
       "Health Tier",
       "Quality Flag",
@@ -172,11 +195,14 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
         c.phone ?? "",
         c.billing_state ?? "",
         c.open_balance == null ? "Unavailable" : fmtMoney(c.open_balance),
+        c.load_count == null ? "" : String(c.load_count),
+        c.booked_ytd_cents == null ? "" : fmtMoney(c.booked_ytd_cents),
+        c.last_load_iso ? mmmDd(c.last_load_iso) : "",
         c.fmcsa_verified_at ? "Yes" : "No",
         c.health_tier_label,
         c.quality_flag_label,
-        c.updated_at ? new Date(c.updated_at).toLocaleDateString() : "",
-        c.created_at ? new Date(c.created_at).toLocaleDateString() : "",
+        c.updated_at ? mmmDd(c.updated_at) : "",
+        c.created_at ? mmmDd(c.created_at) : "",
       ]
         .map(cell)
         .join(",")
@@ -354,6 +380,31 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             cellClass: "text-right tabular-nums",
             render: (row) => row.open_balance == null ? <span className="text-gray-500">Unavailable</span> : fmtMoney(row.open_balance),
           },
+          // CC-3 V.1 roll-up columns — Loads / Booked YTD / Last Load (dash-never-zero).
+          {
+            key: "load_count",
+            label: "Loads",
+            sortable: true,
+            cellClass: "text-right tabular-nums",
+            render: (row) => (row.load_count == null ? <span className="text-gray-400">—</span> : String(row.load_count)),
+          },
+          {
+            key: "booked_ytd_cents",
+            label: "Booked YTD",
+            sortable: true,
+            cellClass: "text-right tabular-nums",
+            render: (row) => (row.booked_ytd_cents == null ? <span className="text-gray-400">—</span> : fmtMoney(row.booked_ytd_cents)),
+          },
+          {
+            key: "last_load_iso",
+            label: "Last Load",
+            sortable: true,
+            cellClass: "text-right tabular-nums",
+            render: (row) => {
+              const label = row.last_load_iso ? mmmDd(row.last_load_iso) : "";
+              return label ? label : <span className="text-gray-400">—</span>;
+            },
+          },
           {
             key: "overdue_label",
             label: "Overdue",
@@ -395,14 +446,20 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             label: "Last Activity",
             sortable: true,
             cellClass: "text-right tabular-nums",
-            render: (row) => (row.updated_at ? new Date(row.updated_at).toLocaleDateString() : "—"),
+            render: (row) => {
+              const label = row.updated_at ? mmmDd(row.updated_at) : "";
+              return label ? label : <span className="text-gray-400">—</span>;
+            },
           },
           {
             key: "created_at",
             label: "Created",
             sortable: true,
             cellClass: "text-right tabular-nums",
-            render: (row) => (row.created_at ? new Date(row.created_at).toLocaleDateString() : "—"),
+            render: (row) => {
+              const label = row.created_at ? mmmDd(row.created_at) : "";
+              return label ? label : <span className="text-gray-400">—</span>;
+            },
           },
         ]}
       />

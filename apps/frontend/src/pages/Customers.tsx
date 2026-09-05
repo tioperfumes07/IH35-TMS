@@ -10,7 +10,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { listAllInvoices, listAllPayments, type Invoice, type Payment } from "../api/accounting";
 import { listAllAccountingRecurringTemplates } from "../api/accountingRecurringTemplate";
-import { companyToday } from "../lib/businessDate";
+import { companyToday, addDaysIso } from "../lib/businessDate";
 import { ApiError } from "../api/client";
 import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./accounting/InvoicesListPage";
 import { createCustomer, getCustomerBillingSummary, listAllCustomers, listPaymentTermOptions, type Customer, type CustomerBillingSummary } from "../api/mdata";
@@ -43,6 +43,7 @@ import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
 import { customerStatusLabel, customerTypeLabel } from "../lib/customerStatusLabel";
 import { userFacingApiError } from "../lib/api-error-message";
 import { listSpineEvents, type SpineEvent } from "../api/audit";
+import { getCustomerProfitability } from "../api/reports";
 
 type CustomerTabId =
   | "transaction_list"
@@ -703,6 +704,36 @@ export function CustomersPage() {
     return map;
   }, [allInvoicesQuery.data?.invoices]);
 
+  // CC-3 V.1 roll-up columns: fetch customer-profitability for the current calendar year and
+  // merge per-customer load_count / revenue_cents / last-load date into the roster rows by
+  // customer_id. Customers not in the profitability result get null (rendered as "—").
+  const profitabilityYear = companyToday().slice(0, 4);
+  const profitabilityQuery = useQuery({
+    queryKey: ["customers", "profitability-ytd", companyId, profitabilityYear],
+    queryFn: () =>
+      getCustomerProfitability({
+        operating_company_id: companyId,
+        period_start: `${profitabilityYear}-01-01`,
+        period_end: `${profitabilityYear}-12-31`,
+      }),
+    enabled: Boolean(companyId),
+    retry: false,
+  });
+  const profitabilityByCustomerId = useMemo(() => {
+    const map = new Map<string, { load_count: number; revenue_cents: number; last_load_iso: string | null }>();
+    const today = companyToday();
+    for (const row of profitabilityQuery.data?.by_customer ?? []) {
+      const lastLoadIso =
+        row.days_since_last_load == null ? null : addDaysIso(today, -Math.round(row.days_since_last_load));
+      map.set(row.customer_id, {
+        load_count: row.load_count,
+        revenue_cents: row.revenue_cents,
+        last_load_iso: lastLoadIso,
+      });
+    }
+    return map;
+  }, [profitabilityQuery.data?.by_customer]);
+
   const summaryQuery = useQuery({
     queryKey: ["customers", "billing-summary", companyId, selectedCustomer?.id ?? ""],
     queryFn: () => getCustomerBillingSummary(selectedCustomer!.id, companyId),
@@ -979,6 +1010,7 @@ export function CustomersPage() {
           status={customersStatus}
           openByCustomerId={openByCustomerId}
           openBalancesAvailable={!allInvoicesQuery.isError}
+          profitabilityByCustomerId={profitabilityByCustomerId}
           onSelectCustomer={(customerId) => {
             setSelectedCustomerId(customerId);
             setViewMode("master-detail");

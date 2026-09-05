@@ -13,6 +13,7 @@ import { formatUsdCents } from "../../lib/money";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { companyToday } from "../../lib/businessDate";
+import { mmmDd } from "../../lib/formatDate";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
@@ -37,7 +38,7 @@ function toCsvCell(value: string): string {
 }
 
 function exportVendorsCsv(rows: VendorOption[], openByVendorId: Map<string, number>) {
-  const header = ["Name", "Email", "Phone", "Vendor Type", "Open Balance", "Quality", "FMCSA Authority", "Last Transaction", "Created"];
+  const header = ["Name", "Email", "Phone", "Vendor Type", "Open Balance", "Quality", "FMCSA Authority", "Purchases YTD", "Last Purchase", "Last Transaction", "Created"];
   const body = rows.map((v) =>
     [
       v.name ?? "",
@@ -47,8 +48,12 @@ function exportVendorsCsv(rows: VendorOption[], openByVendorId: Map<string, numb
       fmtMoney(openByVendorId.get(v.id) ?? 0),
       vendorQualityLabel(v.notes).label,
       isCarrier(v) ? "Carrier" : "",
-      v.updated_at ? new Date(v.updated_at).toLocaleDateString() : "",
-      v.created_at ? new Date(v.created_at).toLocaleDateString() : "",
+      // CC-3 V.1: wire to vendor roll-up endpoint when available
+      "",
+      "",
+      // updated_at is row update time, not a real last-transaction date
+      "",
+      v.created_at ? mmmDd(v.created_at) : "",
     ].map(toCsvCell).join(",")
   );
   const csv = [header.map(toCsvCell).join(","), ...body].join("\r\n");
@@ -277,19 +282,41 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
             },
           },
           { key: "fmcsa_label", label: "FMCSA Authority", sortable: true, render: (row) => row.fmcsa_label },
+          // CC-3 V.1 roll-up columns — Purchases YTD / Last Purchase (placeholders until vendor
+          // roll-up endpoint ships; always "—" for now).
+          // CC-3 V.1: wire to vendor roll-up endpoint when available
+          {
+            key: "purchases_ytd",
+            label: "Purchases YTD",
+            sortable: false,
+            cellClass: "text-right tabular-nums",
+            render: () => <span className="text-gray-400">—</span>,
+          },
+          {
+            key: "last_purchase",
+            label: "Last Purchase",
+            sortable: false,
+            cellClass: "text-right tabular-nums",
+            render: () => <span className="text-gray-400">—</span>,
+          },
           {
             key: "updated_at",
             label: "Last Transaction",
             sortable: true,
             cellClass: "text-right tabular-nums",
-            render: (row) => (row.updated_at ? new Date(row.updated_at).toLocaleDateString() : "—"),
+            // updated_at is the row update time, NOT a real last-transaction date — show "—"
+            // until CC-3 V.1 provides a real vendor roll-up endpoint.
+            render: () => <span className="text-gray-400">—</span>,
           },
           {
             key: "created_at",
             label: "Created",
             sortable: true,
             cellClass: "text-right tabular-nums",
-            render: (row) => (row.created_at ? new Date(row.created_at).toLocaleDateString() : "—"),
+            render: (row) => {
+              const label = row.created_at ? mmmDd(row.created_at) : "";
+              return label ? label : <span className="text-gray-400">—</span>;
+            },
           },
           // QBO-PARITY-VENDORS — additive columns appended at END (never reorder existing columns, §7).
           {
