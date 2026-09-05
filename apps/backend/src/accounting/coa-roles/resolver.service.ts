@@ -139,6 +139,17 @@ export const COA_ROLE_VALUES = [
   // this is the liability that holds it until buildInvoiceFromLoad reclassifies it into A/R at mint.
   // DELIBERATELY absent from ROLE_FALLBACKS — owner designates; fails closed until then.
   "broker_customer_advance_liability",
+  // LOAD-COSTS-COMPLETE-VERTICAL spec 09-04-2026 §1.2 — owner ruling: "the fuel advance from us to
+  // the driver is a company expense... bind by role, never by name." LoadDetailCostsTab.tsx's
+  // `+ Fuel advance` control previously picked the debit account by NAME regex (`/fuel/i` against
+  // account_name), which can resolve to an ASSET receivable (e.g. "1250 Driver Fuel-Overage
+  // Receivable") instead of the expense account — a company fuel advance posting into a driver
+  // receivable is exactly what the owner ruled must never happen. This role is the fail-closed
+  // replacement: seeded for USMCA (migration 202613750001) to account 5000 "Fuel & Diesel"
+  // (CostOfGoodsSold). DELIBERATELY absent from ROLE_FALLBACKS — a fuel-advance debit account is an
+  // owner designation, never name-matched; fails closed (control disables, names the missing role)
+  // anywhere it is not bound.
+  "company_fuel_advance_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
