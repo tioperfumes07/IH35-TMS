@@ -1,4 +1,12 @@
 {
+  "8054": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-0-tabbar-header" },
+  "8056": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-1-costs-cards" },
+  "8058": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-2-stops-record" },
+  "8060": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-3-driver-pay" },
+  "8062": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-4-factoring-money" },
+  "8064": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-5-presettlement-readout" },
+  "8066": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-6-settlement-frozen" },
+  "8068": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-7-audit-english" },
   "10421": {
     "claimed_at": "2026-09-05",
     "claimed_by": "cc-1",
