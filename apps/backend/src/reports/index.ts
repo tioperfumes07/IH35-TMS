@@ -25,6 +25,7 @@ import { registerReportsIftaRoutes } from "./ifta/routes.js";
 // The module existed, compiled and was never wired, so GET /api/v1/reports/ap-aging 404'd while
 // apps/frontend/src/api/reports.ts called it and the Outstanding A/P KPI drilled into it.
 import { registerReportsApAgingRoutes } from "./ap-aging.routes.js";
+import { registerDuplicateMastersRoutes } from "./duplicate-masters.routes.js";
 
 export async function registerReportsRoutes(app: FastifyInstance) {
   await registerReportsLibraryRoutes(app);
@@ -52,4 +53,5 @@ export async function registerReportsRoutes(app: FastifyInstance) {
   await registerScheduledReportAdminRoutes(app);
   await registerCashFlowReportRouteFix(app);
   await registerPerTruckCpmRoutes(app);
+  await registerDuplicateMastersRoutes(app);
 }

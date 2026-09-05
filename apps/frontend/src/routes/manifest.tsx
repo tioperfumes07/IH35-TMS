@@ -242,6 +242,7 @@ import IftaPreparer from "../pages/reports/tax-regulatory/IftaPreparer";
 const ReportsRunnerPage = React.lazy(() => import("../pages/reports/ReportsRunner").then((m) => ({ default: m.ReportsRunnerPage })));
 const ARAgingPage = React.lazy(() => import("../pages/reports/ARAgingPage").then((m) => ({ default: m.ARAgingPage })));
 const APAgingPage = React.lazy(() => import("../pages/reports/APAgingPage").then((m) => ({ default: m.APAgingPage })));
+const DuplicateMastersReport = React.lazy(() => import("../pages/reports/DuplicateMastersReport").then((m) => ({ default: m.DuplicateMastersReport })));
 const TrialBalancePage = React.lazy(() => import("../pages/reports/TrialBalancePage").then((m) => ({ default: m.TrialBalancePage })));
 const ManagementReportPackagePage = React.lazy(() => import("../pages/reports/ManagementReportPackagePage").then((m) => ({ default: m.ManagementReportPackagePage })));
 const ProfitLossPage = React.lazy(() => import("../pages/reports/ProfitLossPage").then((m) => ({ default: m.ProfitLossPage })));
@@ -3296,6 +3297,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <APAgingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/duplicate-masters"
+          element={
+            <ProtectedRoute>
+              <DuplicateMastersReport />
             </ProtectedRoute>
           }
         />

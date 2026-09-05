@@ -1,10 +1,10 @@
 {
-  "healthzSha": "4b74e42",
-  "generated_at": "2026-09-05T18:10:37.925Z",
+  "healthzSha": "aa69701",
+  "generated_at": "2026-09-05T22:52:28.062Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "4b74e42",
+    "deployedSha": "aa69701",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 20637,
-      "title": "CLAIM-RESERVE 10399",
+      "number": 20754,
+      "title": "docs(law+bus): OWNER — Claude Lead is lead again (registrar+auditor+deployer); ONE-ITEM instructions for all six seats; LAW §0d amended",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 01:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20637",
-      "sha": "2fa686b09a",
-      "committedAtIso": "2026-09-05T13:09:17-05:00"
+      "mergedAtCt": "09/05/2026, 05:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20754",
+      "sha": "aba823bacc",
+      "committedAtIso": "2026-09-05T17:43:24-05:00"
     },
     {
-      "number": 20636,
-      "title": "FINDING: ACCT-F5861",
+      "number": 20753,
+      "title": "docs(bus): AUDIT round 2 — CC-3 backfill ✔ (94/3 measured), Cascade K.4-K.7 code ✔ not live, row 47 cause corrected (Cascade not the cause), deploy stale 3h",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 01:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20636",
-      "sha": "7a03584c7e",
-      "committedAtIso": "2026-09-05T13:08:24-05:00"
+      "mergedAtCt": "09/05/2026, 05:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20753",
+      "sha": "aa69701c30",
+      "committedAtIso": "2026-09-05T17:39:07-05:00"
     },
     {
-      "number": 20635,
-      "title": "FINDING: BANK-F25011 — the For-Review bank-feed UI surfaced NO GL suggestion for Plaid-categorized transactions (suggestionFromPlaidCategory was a hard-coded `return null` placeholder), so 400+ uncategorized USMCA rows had to be categorized blind despite an owner-curated banking.transaction_categories mapping already existing",
+      "number": 20752,
+      "title": "FINDING: N/A (D5 fully-closed DONE line + FleetTable finding routed to Codex)",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 01:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20635",
-      "sha": "a9096f7a10",
-      "committedAtIso": "2026-09-05T13:05:43-05:00"
+      "mergedAtCt": "09/05/2026, 05:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20752",
+      "sha": "428c642a82",
+      "committedAtIso": "2026-09-05T17:37:49-05:00"
     },
     {
-      "number": 20634,
-      "title": "FINDING: N/A (docs only — SEED-14 re-verified as already-done/one legitimately-blocked, M.3 list route status)",
+      "number": 20751,
+      "title": "FINDING: N/A (SELF-CORRECTION — my own PR #20747 just regressed verify-ui-design-system-ratchet.mjs, raw_font_sizes +1)",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 01:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20634",
-      "sha": "bc9fcfbf98",
-      "committedAtIso": "2026-09-05T13:05:22-05:00"
+      "mergedAtCt": "09/05/2026, 05:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20751",
+      "sha": "94092d190b",
+      "committedAtIso": "2026-09-05T17:36:07-05:00"
     },
     {
-      "number": 20633,
-      "title": "feat(dispatch): Book Load address picker — Google Places API (New) Text Search first, Geocoding fallback",
+      "number": 20750,
+      "title": "FINDING: ACCT-F9051 — Load Costs board tabs (Costs/Expenses/Bills/Fuel/Driver pay/R&M) all rendered the same 19-column load board; clicking a tab never showed that type's transactions",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 01:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20633",
-      "sha": "4b74e426d6",
-      "committedAtIso": "2026-09-05T13:05:07-05:00"
+      "mergedAtCt": "09/05/2026, 05:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20750",
+      "sha": "6f432fbaca",
+      "committedAtIso": "2026-09-05T17:35:48-05:00"
     },
     {
-      "number": 20632,
-      "title": "fix: update verify-counterparty-landing-polish guard — vendor roll-ups now wired live (not placeholders)",
+      "number": 20749,
+      "title": "FINDING: N/A (board post — SEED-DRIVERS-ARE-VENDORS backfill DONE, #20748; duplicate-driver-record defect surfaced during it)",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 01:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20632",
-      "sha": "866fa8537c",
-      "committedAtIso": "2026-09-05T13:03:35-05:00"
+      "mergedAtCt": "09/05/2026, 05:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20749",
+      "sha": "be346a52d8",
+      "committedAtIso": "2026-09-05T17:34:05-05:00"
     },
     {
-      "number": 20631,
-      "title": "FINDING: ACCT-F5860 (company-settlement list route missing — PR #20605's own REMAINING said \"company-settlement list/detail vertical remains open\"; the DETAIL half already existed, the LIST half did not)",
+      "number": 20747,
+      "title": "FINDING: N/A (D5 Book Load auto-geofence FE trigger, owner ruling 2026-09-05 — the stop-coordinate geocode fallback, own worktree, BookLoadModalV4.tsx untouched)",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 01:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20631",
-      "sha": "16566c8065",
-      "committedAtIso": "2026-09-05T13:03:26-05:00"
+      "mergedAtCt": "09/05/2026, 05:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20747",
+      "sha": "5e4f67bdbe",
+      "committedAtIso": "2026-09-05T17:33:32-05:00"
     },
     {
-      "number": 20630,
-      "title": "FINDING: WAVE3-2+3 — Planner K.9 filter + CSV/print; dispatch catalog lists sortable+voided+export; vendor roll-up backend + FE wiring",
+      "number": 20748,
+      "title": "Claude-3-SEED-DRIVERS-ARE-VENDORS-BACKFILL: re-type 94/97 driver-vendors, live-verify 0 gaps",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 01:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20630",
-      "sha": "eddc81fa74",
-      "committedAtIso": "2026-09-05T13:02:01-05:00"
+      "mergedAtCt": "09/05/2026, 05:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20748",
+      "sha": "42dfae2d85",
+      "committedAtIso": "2026-09-05T17:31:56-05:00"
     },
     {
-      "number": 20629,
-      "title": "docs(bus): LIVE verdict — Book Load address autocomplete via Google (measured), Places API (New) gap noted",
+      "number": 0,
+      "title": "docs: Cascade K.7 BRD-23 DONE — K.4-K.7 all complete",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 12:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20629",
-      "sha": "e214ec80d3",
-      "committedAtIso": "2026-09-05T12:57:03-05:00"
+      "mergedAtCt": "09/05/2026, 05:20 PM CT",
+      "url": "",
+      "sha": "77c672e633",
+      "committedAtIso": "2026-09-05T17:20:01-05:00"
     },
     {
-      "number": 20628,
-      "title": "FINDING: N/A — Load Costs DONE (live proof) + CC-1 void-treatment rulings recorded on the bus",
+      "number": 20746,
+      "title": "FINDING: K.7 BRD-23 planner ranges 7d/14d/30d/custom — guard verifies existing implementation",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 12:49 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20628",
-      "sha": "eebac27f20",
-      "committedAtIso": "2026-09-05T12:49:28-05:00"
+      "mergedAtCt": "09/05/2026, 05:19 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20746",
+      "sha": "d7700e7101",
+      "committedAtIso": "2026-09-05T17:19:55-05:00"
     }
   ]
 }

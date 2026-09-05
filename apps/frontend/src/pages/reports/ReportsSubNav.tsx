@@ -92,6 +92,7 @@ export const REPORTS_SUB_NAV_ITEMS: NavyPageSubNavItem[] = [
     children: flattenReportRunLinks(),
   },
   { label: "Cancellations", to: "/reports/cancellations" },
+  { label: "Duplicate Masters", to: "/reports/duplicate-masters" },
   { label: "Driver Qualification File", to: "/reports/driver-qualification" },
   { label: "Invoice Search", to: "/reports/invoice-search" },
   { label: "Scheduled (custom)", to: "/reports/scheduled-custom" },
@@ -125,6 +126,7 @@ export function reportsSubNavActiveHref(pathname: string): string {
     pathname === "/reports/geofence-dwell" ||
     pathname === "/reports/deadhead" ||
     pathname === "/reports/cancellations" ||
+    pathname === "/reports/duplicate-masters" ||
     pathname === "/reports/driver-qualification" ||
     pathname === "/reports/invoice-search" ||
     pathname === "/reports/scheduled"
