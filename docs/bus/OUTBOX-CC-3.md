@@ -492,3 +492,44 @@ per standing law, so this is the correct empty state, not a defect). Detail half
 (company-settlement-report.routes.ts, #20605-era). M.3 list/detail vertical is now closed on the
 backend side; Cursor's L.6 (company settlements FE) can consume both routes. NEXT: nothing further
 queued for M.3 from this seat.
+
+CC-3 | THREE-ITEM CONTINUE PACKET RECEIVED — checked live before touching anything, per standing
+practice this session:
+
+1. "Customers/Vendors roll-up + landing filter bar" — NOT CC-3's lane and ALREADY DONE. Owner LOCK
+IT (14:13Z) transferred Customers+Vendors to CC-1 explicitly ("CC-1 keeps: ... takes V.1
+vendors+customers roll-ups [15,16] ... K.9 landing filter bar [17] ... from CC-3/Cascade"). Live-
+verified on current main: STEP-8 (#20621) + WAVE3-2+3 (#20630) + vendor-roll-ups-live fix (#20632)
+already shipped this — `node scripts/verify-counterparty-landing-polish.mjs` PASSES on tip right
+now. Not touching CC-1's exclusive files (pages/Customers.tsx, pages/Vendors.tsx, backend/mdata/
+customer-*/vendor-*) to avoid duplicate/conflicting work on an already-live, already-guarded
+surface. If this reassignment to CC-3 is a deliberate NEW owner decision superseding LOCK IT, say so
+explicitly and I'll pick it up — but nothing here suggests LOCK IT was revoked.
+
+2. M.3 read model + GET endpoints — ALREADY DONE, this session: detail (company-settlement-
+report.routes.ts, pre-existing) + list (company-settlement-list.routes.ts, 16566c8065 / PR #20631,
+live-verified 200 against Neon). Shape for settlements FE (L.6, assigned to CC-3 per the board but
+posting here regardless of who builds it):
+  GET /api/v1/accounting/company-settlements?operating_company_id=<uuid>
+    -> { company_settlements: [{ id, display_id, period_start, period_end, status, closed_at,
+         voided_at, driver_settlement_count, net_revenue_cents }] }  (net_revenue_cents is null,
+         never a fake 0, on a voided row; array is [] when none have closed yet — real empty state)
+  GET /api/v1/accounting/company-settlements/:id/report?operating_company_id=<uuid>
+    -> CompanySettlementReport { company_settlement_id, display_id, period_start, period_end,
+         status, driver_settlement_ids[], sections: { customer_charges, driver_payment,
+         fuel_purchases, expenses, revenue: {invoiced_cents}, pl_rollup: {lines[],
+         net_revenue_cents}, miles_and_mpg } }  — full type in company-settlement-report.service.ts.
+Both routes company-scoped, Owner/Admin/Accountant-auth'd like every other accounting route.
+Nothing further queued on M.3 from this seat unless a real non-empty row shows up to test against.
+
+3. SEED-14 blocker in writing — ALREADY posted (this OUTBOX file, prior entry, and in chat): load
+13556 (Hummingbird Logistix LLC, Laredo TX -> Medley FL, 2026-08-27/28, T176/trailer 2351207,
+1,535.8 mi, $4,000, Faro invoice 036 / QBO ref 401422) cannot be seeded because BOTH authoritative
+reconciliation workbooks (IH35-AUGUST-RECONCILIATION-BOTH-ENTITIES.xlsx and IH35-BY-LOAD-20260904-
+WITH-DIESEL_1.xlsx) show NO DRIVER assigned to it — every other field is fully sourced, only the
+driver is missing from the source data itself. Seeding it would mean inventing a driver, which is
+forbidden (never guess, never invent). This is a standing owner/source-data blocker, not a script
+defect — the seed script's own hard floor (pickup >= 2026-08-07, enforced + guarded) is irrelevant
+here since 13556's dates already qualify; the ONLY gap is the missing driver name in the signed
+documents themselves. Needs: the owner (or whoever holds the missing paperwork) to supply the
+driver's name so the seed can run unchanged.
