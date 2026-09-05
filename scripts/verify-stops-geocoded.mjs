@@ -18,6 +18,7 @@ export function failures(files = canonical) {
   if (!files.service.includes("geocodeAddressWithEvidence") || !files.service.includes("geocode_failure_reason")) out.push("durable evidence/failure reason missing");
   if (!files.service.includes("mdata.locations") || !files.service.includes("location_ref_id=$3::uuid") || !files.service.includes("pg_advisory_xact_lock")) out.push("race-safe location dedupe/link missing");
   if (!files.service.includes("ENTER_RADIUS_M = 402") || !files.service.includes("EXIT_RADIUS_M = 805")) out.push("0.25/0.5 mile radii missing");
+  if (!files.service.includes("location_latitude != null") || !files.service.includes('source: "location_existing"')) out.push("linked canonical location coordinates must precede provider fallback");
   if (files.service.includes("samsara.create_geofence") || files.service.includes("/places")) out.push("Samsara place push forbidden");
   if (!files.route.includes('/api/v1/telematics/stops/geocode-backfill') || !files.route.includes('user.role !== "Owner"')) out.push("admin route missing");
   if (!files.index.includes("registerStopsGeocodeBackfillRoutes(app)")) out.push("route unmounted");
@@ -53,6 +54,7 @@ if (process.argv.includes("--selftest")) {
     { ...canonical, service: canonical.service.replace("ENTER_RADIUS_M = 402", "ENTER_RADIUS_M = 0") },
     { ...canonical, route: canonical.route.replace("/api/v1/telematics/stops/geocode-backfill", "/missing") },
     { ...canonical, edit: canonical.edit.replace("await geocodeStopsWithClient", "void geocodeStopsWithClient") },
+    { ...canonical, service: canonical.service.replace("location_latitude != null", "location_latitude == null") },
   ];
   for (const plant of plants) if (failures(plant).length === 0) throw new Error("planted regression escaped");
   console.log(`PASS verify-stops-geocoded --selftest ${plants.length}/${plants.length}`);
