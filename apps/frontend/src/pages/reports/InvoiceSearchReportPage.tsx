@@ -7,7 +7,6 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatPlannerDayLabel } from "../dispatch/planners/plannerDayLabel";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -57,13 +56,8 @@ export function InvoiceSearchReportPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("active");
 
-  const staged = useStagedListFilters({
-    defaultPageSize: 50,
-    fields: {},
-  });
-
   const invoicesQ = useQuery({
-    queryKey: ["reports", "invoice-search", operatingCompanyId, search, statusFilter, sortKey, sortDirection, staged.draft.pageSize, staged.draft.offset],
+    queryKey: ["reports", "invoice-search", operatingCompanyId, search, statusFilter, sortKey, sortDirection],
     enabled: Boolean(operatingCompanyId),
     queryFn: () =>
       listInvoices(operatingCompanyId, {
@@ -71,8 +65,8 @@ export function InvoiceSearchReportPage() {
         status: statusFilter || undefined,
         sort: sortKey || undefined,
         dir: sortDirection || undefined,
-        limit: staged.draft.pageSize,
-        offset: staged.draft.offset,
+        limit: 100,
+        offset: 0,
       }),
   });
 
@@ -210,10 +204,7 @@ export function InvoiceSearchReportPage() {
             sortKey={sortKey}
             sortDirection={sortDirection}
             onSortChange={onSortChange}
-            pageSize={staged.draft.pageSize}
-            pageOffset={staged.draft.offset}
-            onPageChange={(offset) => staged.setDraft((p) => ({ ...p, offset }))}
-            totalRowCount={total}
+            initialPageSize={50}
           />
         )}
       </div>
