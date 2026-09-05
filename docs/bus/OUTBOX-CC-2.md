@@ -1,5 +1,43 @@
 # OUTBOX-CC-2 · ALL AWAKE · 2026-09-02 21:04 CT
 
+CC-2 | PART 2 started (docs/bus/OWNER-DEFECT-REGISTER-2026-09-03.md, ACC-01..20, register's
+own order). Re-verified live on Neon (bypass_rls, je_control=1785 positive control each time,
+twice per item per the register's own instruction):
+ACC-01 (A/R tie-out $1,215.75) -- does NOT reproduce. Live: ar_gl=$0.00, ar_subledger=$0.00,
+difference=$0.00. USMCA has exactly 1 invoice total and it's proforma/draft (correctly excluded
+from A/R by INV-3's own filter).
+ACC-02 (A/P tie-out $268.77) -- does NOT reproduce. USMCA has 0 bills, period. ap_gl=ap_sub=$0.00.
+ACC-03 ($109,158.50 stranded Unbilled Revenue 1150) -- does NOT reproduce. Live balance on
+account 1150 = $0.00.
+ACC-04 (operating bank -$41,255.43) -- does NOT reproduce. Live active USMCA Bank of America
+account (mask 3224) = +$2,493.68. (Noted, not filed as ACC-04: a duplicate bank_accounts row for
+the same institution/mask exists, one inactive at $92.68 -- looks like historical dedup residue,
+not today's defect.)
+ACC-05 (3 docs POSTED with zero JE) -- does NOT reproduce, count=0 (only 1 invoice exists, it's
+draft).
+ACC-06 (INV-2026-00024 voided no reason) -- that display_id does not exist in USMCA at all
+(out of scope regardless -- USMCA-only law).
+ACC-13 (TEST-named GL account, $1,200.00) -- DOES reproduce, WORSE than reported: 22 ACTIVE
+test/sample-fixture-named accounts in USMCA's live chart of accounts (CC3/CODEX smoke-run
+Driver Cash Advance + Driver Escrow pairs, plus two literal "ZZ-SAMPLE A/B ... GATEB_SAMPLE"
+accounts) -- all $0 balance, 0 postings, confirmed live before touching anything. FIXED
+(#20422, sha 269907ebf9): archived all 22 (deactivated_at, void-not-delete, audit note appended)
+after re-confirming $0/0 postings; re-verified live immediately after -- 0 active test-named
+accounts remain. Also added a create-time guard (apps/backend/src/catalogs/accounts.routes.ts)
+rejecting any NEW test/sample/demo-named account for USMCA outright (catalogs.accounts has no
+is_sample_data column to tag-and-tolerate, unlike mdata.customers/vendors -- reused their
+existing looksLikeSampleDataName() detector verbatim, invented nothing new). Guard registered
+as verify-step 10359 (#20423, sha e9993bef6b) -- claim-reserved first per Rule 37. Backend
+deploy triggered for the create-guard; Live=UNVERIFIED on the guard specifically until it lands
+(the data-fix half is already live-proven independent of any deploy, since it's a direct Neon
+write).
+HONEST PATTERN: 6 of 6 dollar-figure ACC items checked so far came back stale/zero against
+current live data -- USMCA's books are genuinely near-empty right now (1 invoice, 0 bills), so
+most of the register's 2026-09-03 dollar figures likely no longer apply. Not assuming the REST
+of the register (ACC-07..12, 14..20) will follow the same pattern -- re-verifying each on its own
+before building anything, per the register's own instruction.
+| NEXT=re-verify ACC-07 (5 bank txns matched to voided docs), continue register order | GO
+
 CC-2 | Load Costs "Other" NaN item CLOSED, honest final status. Backend deploy landed:
 healthz git_sha 4c9790e258 confirmed (`git merge-base --is-ancestor`) to include #20364 --
 the commit that renames rm_exp_cents->other_cost_cents and adds the driver-pay-detail
