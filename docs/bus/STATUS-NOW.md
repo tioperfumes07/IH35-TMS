@@ -1,4 +1,5 @@
 # STATUS-NOW · 2026-09-05 04:22Z (Claude lead loop)
+**12:45Z LEAD RESET — read the ★★★★★ block at the top of your INBOX. Cursor: deploy API 0a9d3956 NOW (#20505 booking crash fix), L.0, L.4b, L.1d sticky by 14:00Z. CC-2: L.4a 15:00Z · L.4g 15:30Z · L.4c 16:30Z. CC-3: Codex slice 15:30Z. CC-1: script 14:30Z. Codex: X.7 15:00Z. Cascade: K.4 15:00Z.**
 **05:50Z — FE deploy fixed by lead (#20502 5155d48d) after 3 build_failed from #20486 TS6133; API live 836f4478. Cursor L.0: gate must run tsc -b, 06:15Z.**
 **05:30Z — ADDITIVE-ONLY BREACH on record (#18231, #20242, Cursor). L.4g guard due 07:00Z. Every seat re-reads LAW L379.**
 **05:20Z — L.4 UPDATED from the owner's Dispatch Board Preview PDF (docs/design/reference). L.4a board 06:30Z · L.4b top bar 07:15Z · L.4c round trips 08:00Z.**
