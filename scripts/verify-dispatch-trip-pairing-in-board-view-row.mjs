@@ -24,12 +24,17 @@ const original = Object.fromEntries(
 
 const hasAll = (...needles) => (source) => needles.every((n) => source.includes(n));
 
-// The page-header board-view row (PageHeader `actions`) must carry each of the four
-// board views the owner named as sibling toggle buttons.
+// The board-view row must carry each of the four board views the owner named as sibling toggle
+// buttons. Was four individually-hardcoded <Button>Label</Button> elements; the board-view row
+// (data-testid="dispatch-board-view-row") was later refactored (a legitimate DRY improvement,
+// same four buttons) into ONE array of { id, label, ... } objects rendered through a single
+// .map() — so the label now appears as a `label: "Kanban"` string-literal entry inside that
+// array, never as literal JSX text (the render itself uses {tab.label}). Updated 2026-09-05 to
+// check the array entry, matching the actual (correct) structure rather than a stale one.
 function boardViewRowHasButton(source, label) {
-  // Buttons in the row render the bare label between > and </Button>.
-  const re = new RegExp(`>\\s*${label.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}\\s*<\\/Button>`);
-  return re.test(source);
+  const boardViewArray = source.match(/data-testid="dispatch-board-view-row"[\s\S]*?\]\s*as const/)?.[0] ?? "";
+  const re = new RegExp(`label:\\s*"${label.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}"`);
+  return re.test(boardViewArray);
 }
 
 const contracts = [
@@ -37,30 +42,32 @@ const contracts = [
     "board-view row keeps Kanban peer",
     "dispatchPage",
     (s) => boardViewRowHasButton(s, "Kanban"),
-    (s) => s.replace(/>\s*Kanban\s*<\/Button>/, ">Kanban_REMOVED</Button>"),
+    (s) => s.replace('label: "Kanban"', 'label: "Kanban_REMOVED"'),
   ],
   [
     "board-view row keeps List peer",
     "dispatchPage",
     (s) => boardViewRowHasButton(s, "List"),
-    (s) => s.replace(/>\s*List\s*<\/Button>/, ">List_REMOVED</Button>"),
+    (s) => s.replace('label: "List"', 'label: "List_REMOVED"'),
   ],
   [
     "board-view row keeps Round Trips peer",
     "dispatchPage",
     (s) => boardViewRowHasButton(s, "Round Trips"),
-    (s) => s.replace(/>\s*Round Trips\s*<\/Button>/, ">Round_REMOVED</Button>"),
+    (s) => s.replace('label: "Round Trips"', 'label: "Round_REMOVED"'),
   ],
   [
     "board-view row now carries Trip Pairing peer",
     "dispatchPage",
     (s) => boardViewRowHasButton(s, "Trip Pairing"),
-    (s) => s.replace(/>\s*Trip Pairing\s*<\/Button>/, ">TripPairing_REMOVED</Button>"),
+    (s) => s.replace('label: "Trip Pairing"', 'label: "TripPairing_REMOVED"'),
   ],
   [
     "Trip Pairing board-view button navigates to the trip-pairing route",
     "dispatchPage",
-    hasAll('data-testid="dispatch-view-trip-pairing"', 'navigate("/dispatch/trip-pairing")'),
+    // The row templates its testid as `dispatch-view-${tab.id}` (one template covers all four
+    // peers, including trip-pairing) rather than four hardcoded testid strings.
+    hasAll('data-testid={`dispatch-view-${tab.id}`}', 'id: "trip-pairing"', 'navigate("/dispatch/trip-pairing")'),
     (s) => s.replace('navigate("/dispatch/trip-pairing")', 'navigate("/dispatch")'),
   ],
   [

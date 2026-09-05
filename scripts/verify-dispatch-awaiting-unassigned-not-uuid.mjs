@@ -16,11 +16,15 @@ function problems(board, routes) {
   if (!/u\.unit_number/.test(awaitingQuery) || !/unit_number:\s*row\.unit_number/.test(awaitingQuery)) failures.push("API must return unit_number");
   if (!/assigned_unit_number:\s*unit\.unit_number/.test(unitRow)) failures.push("row must map unit_number");
   if (!/\{\s*key:\s*"unit",\s*header:\s*"Unit",\s*cell:\s*\(load\)\s*=>\s*renderUnitCell\(load\)\s*\}/.test(boardColumns)) failures.push("board must render Unit cell");
-  // DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §A: no board column is ever hidden by default
-  // (BRD-25's DEFAULT_VISIBLE_BOARD_KEYS allowlist was removed) — Unit is visible by default
-  // exactly because nothing sets defaultHidden at all.
+  // DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §A, narrowed 2026-09-05 under a real OWNER-REMOVE:
+  // Unit specifically is not one of the four authorized default-hidden columns (commodity/
+  // linehaul/status/pre_settlement — see verify-dispatch-board-default-columns-fit.mjs for the
+  // full authorized-set check), so Unit must stay visible by default regardless of what the
+  // other four do.
   if (!parityMap) failures.push("parityColumns mapping not found");
-  else if (/defaultHidden\s*:/.test(parityMap)) failures.push("Unit must be visible by default (parityColumns must not set defaultHidden on any column)");
+  if (/\{\s*key:\s*"unit"[^}]*defaultHidden\s*:\s*true\b/.test(boardColumns)) {
+    failures.push("Unit must be visible by default (not one of the OWNER-REMOVE authorized columns)");
+  }
   // Dispatch board #17 (owner, 2026-09-04): Load# saying "Unassigned" duplicated the Status
   // column's own "Unassigned" pill on the same row -- "the dash in Load# is enough." Load# now
   // renders "—"; the invariant this guard protects (no raw synthetic unit: UUID, no broken
@@ -39,7 +43,7 @@ function selftest(board, routes) {
     ["API return", board, routes.replace("unit_number: row.unit_number", "unit_number: null")],
     ["row mapping", board.replace("assigned_unit_number: unit.unit_number", "assigned_unit_number: null"), routes],
     ["Unit cell", board.replace('{ key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },', '{ key: "unit", header: "Unit", cell: () => null },'), routes],
-    ["default visibility", board.replace("sortable: DISPATCH_SORTABLE_COLS.has(column.key),", "sortable: DISPATCH_SORTABLE_COLS.has(column.key), defaultHidden: column.key === \"unit\","), routes],
+    ["default visibility", board.replace('{ key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },', '{ key: "unit", header: "Unit", cell: (load) => renderUnitCell(load), defaultHidden: true },'), routes],
     ["synthetic load guard", board.replace('load.id.startsWith("unit:")', 'load.id.startsWith("never:")'), routes],
   ];
   let caught = 0;

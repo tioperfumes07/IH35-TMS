@@ -168,6 +168,12 @@ export type ParityTableProps<T> = {
    */
   tableTestId?: string;
   /**
+   * Optional data-testid for the gear (column-chooser) button (DESIGN-CONTRACT-DISPATCH-BOARD
+   * §A: `data-testid="dispatch-board-column-chooser"`). Additive — omitting it renders no testid;
+   * the gear itself is always present regardless of this prop.
+   */
+  gearButtonTestId?: string;
+  /**
    * Optional per-row data-testid on the rendered `<tr>`. Lets a migrated page preserve existing
    * row-level test/e2e selectors. Additive — omitting it renders no per-row testid.
    */
@@ -471,6 +477,7 @@ export function ParityTable<T>({
   autoFitColumns = true,
   renderExpanded,
   tableTestId,
+  gearButtonTestId,
   rowTestId,
   sortKey: controlledSortKey,
   sortDirection: controlledSortDirection,
@@ -1231,6 +1238,7 @@ export function ParityTable<T>({
               variant="tertiary"
               size="icon"
               aria-label="Table settings"
+              data-testid={gearButtonTestId}
               onClick={() => { if (gearOpen) cancelGear(); else openGear(); }}
             >
               {/* UI CONTROL LAW — was a bare ⚙ Unicode glyph inheriting the button's own

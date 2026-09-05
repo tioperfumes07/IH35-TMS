@@ -409,15 +409,22 @@ export function DispatchPage({
         }
       />
 
-      <DispatchSubnav operatingCompanyId={defaultCompanyIds[0] ?? ""} />
+      {/* verify-dispatch-secondary-nav-depth.mjs (Block B21-D12) expects this exact test-id;
+          DispatchSubnav's own internal root carries "dispatch-queues-subnav" (a later rename) —
+          both are additive, neither replaces the other. */}
+      <div data-testid="dispatch-secondary-nav">
+        <DispatchSubnav operatingCompanyId={defaultCompanyIds[0] ?? ""} />
+      </div>
 
-      {/* L.4b (DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05.md §B) — TOOLBAR: "ONE segmented control
-          List | Kanban | Round Trips (one height, 32px)". Was 4 buttons incl. "Trip Pairing", a
-          literal duplicate of DispatchSubnav's own "Trip Pairing" nav item (the owner's "duplicate
-          tabs" complaint) — removed here, still fully reachable from the nav row, nothing deleted
-          from routes/pages. role="group" (a toggle group, not a tabpanel switcher) per the
-          contract; only shown on the load board (not on the settlements/assignments subtabs).
-          28px clickable boxes, 2px radius, centered — CLICKABLE-BOX-SIZE LAW. */}
+      {/* L.4b (DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05.md §B) toolbar, CORRECTED: an earlier
+          pass here (#20614) removed "Trip Pairing" believing it duplicated DispatchSubnav's own
+          "Trip Pairing" nav item — wrong. verify-dispatch-trip-pairing-in-board-view-row.mjs
+          (owner 2026-09-04, DISPATCH item #2, ADDITIVE) already pins BOTH as deliberate: "Kanban,
+          List, Round Trips AND Trip Pairing belong in the one board-view row ... the queues
+          sub-nav entry is retained (not removed) — a separate contract." Restored; caught by
+          running the full dispatch guard sweep rather than trusting my own duplicate-tab
+          assumption. role="group" (a toggle group, not a tabpanel switcher) per §B; only shown on
+          the load board. 28px clickable boxes, 2px radius, centered — CLICKABLE-BOX-SIZE LAW. */}
       {subTab === "load_board" ? (
         <div
           className="flex flex-wrap items-center gap-1 px-2"
@@ -442,6 +449,7 @@ export function DispatchPage({
                 next.set("view", "units");
                 setSearchParams(next);
               } },
+              { id: "trip-pairing", label: "Trip Pairing", active: location.pathname === "/dispatch/trip-pairing", liveOnly: false, onClick: () => navigate("/dispatch/trip-pairing") },
             ] as const
           ).map((tab) => {
             const disabled = tab.liveOnly && boardScope === "history";
