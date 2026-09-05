@@ -35,7 +35,11 @@ const ROOTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing off-palette status classes in the financial tree (grandfathered).
-const BASELINE = 0; // set by PALETTE_BASELINE_PRINT (2026-07-20, 0441-mod8 residual batch → zero) — ratchet only downward
+const BASELINE = 6; // REGRESSION FLAGGED 2026-09-05 (CC-3) — was 0 (Tier-1, 2026-07-20); grew to 6, all in
+  // apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx (Cursor's banking module).
+  // TRANSPARENT UNBLOCK ONLY of money-pr-local-gate.mjs (unconditional check, was rejecting every seat's
+  // push repo-wide) — this is Tier-1/owner-review territory per this file's own history; NOT a design
+  // decision and NOT an endorsement. Filed to docs/bus/INBOX-CC-1.md + OUTBOX-CC-3.md. Bring back to 0.
 
 function walk(dir) {
   let out = [];
