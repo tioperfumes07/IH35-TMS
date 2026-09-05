@@ -139,7 +139,7 @@ export function CsaFleetScoreCard({ value }: Props) {
           );
         })}
       </div>
-      <div className="mt-3 text-xs text-slate-500">Last computed: {value.computed_at ? mmmDdTime(value.computed_at) : "—"}</div>
+      <div className="mt-3 text-xs text-slate-500">Last computed: {value.computed_at ? mmmDdTime(value.computed_at as string) : "—"}</div>
     </section>
     </section>
   );
