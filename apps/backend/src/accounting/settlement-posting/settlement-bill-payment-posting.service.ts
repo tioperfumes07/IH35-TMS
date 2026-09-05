@@ -154,7 +154,10 @@ async function resolveDipBankAccountId(client: DbClient, operatingCompanyId: str
  * the caller throws). Escrow keeps a canonical-NAME fallback (two-level nesting) for its pre-bridge path;
  * advance is bridge-only (name resolution could shadow the wrong per-driver account).
  */
-async function resolveDriverOwnAccount(
+// Exported (was module-private) for ACCT-SETL-DEDUCTION-VOID-DESIGN — the deduction-void route's
+// 'applied' branch reverses a single deduction's original credit and must resolve the SAME account
+// this engine credited it to, never a second, independently-derived lookup for the same account.
+export async function resolveDriverOwnAccount(
   client: DbClient,
   operatingCompanyId: string,
   driverId: string,
