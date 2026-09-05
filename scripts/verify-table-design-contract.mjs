@@ -47,6 +47,7 @@ function readContract(refSrc) {
   return {
     thBg: tok("th-bg"),
     grpBg: tok("grp-bg"),
+    line: tok("line"),
     line2: tok("line2"),
     kpiBg: tok("kpi-bg"),
     kpiBd: tok("kpi-bd"),
@@ -68,6 +69,7 @@ function auditTokens(src, c) {
   has("tableHeaderBg", c.thBg);
   has("tableGroupBandBg", c.grpBg);
   has("tableColumnRule", c.line2);
+  has("tableBodyRule", c.line);
   has("kpiTileBg", c.kpiBg);
   has("kpiTileBorder", c.kpiBd);
   const kh = src.match(/kpiTileMaxHeight\s*:\s*(\d+)/);
@@ -117,9 +119,10 @@ function auditParity(src) {
   // Even-row group tint support.
   if (!/isEvenRow\s*\?\s*group\.bgEven\s*\?\?\s*group\.bg\s*:\s*group\.bg/.test(src))
     f.push(`${PARITY}: body cells must use the group's even-row variant (group.bgEven ?? group.bg) on even rows`);
-  // Body td 1px right rule.
-  if (!/borderRight:\s*`1px solid \$\{colors\.tableColumnRule\}`/.test(src))
-    f.push(`${PARITY}: body td must carry a 1px right column rule`);
+  // Body td 1px right rule — the lighter --line shade (tableBodyRule), distinct from --line2
+  // (tableColumnRule) which owns the header/group-band rows only.
+  if (!/borderRight:\s*`1px solid \$\{colors\.tableBodyRule\}`/.test(src))
+    f.push(`${PARITY}: body td must carry a 1px right column rule (colors.tableBodyRule, the --line shade)`);
   return f;
 }
 
