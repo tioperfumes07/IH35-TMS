@@ -5,7 +5,16 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { billVendorDrillId, listBills, listPaymentsForBill, type BillPayment, type BillStatus, type VendorBill } from "../../api/accounting";
+import {
+  billVendorDrillId,
+  listBills,
+  listDriverBills,
+  listPaymentsForBill,
+  type BillPayment,
+  type BillStatus,
+  type DriverBillListRow,
+  type VendorBill,
+} from "../../api/accounting";
 import { listVendors } from "../../api/mdata";
 import { BillAllocationPanel } from "../../components/allocation";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -331,6 +340,20 @@ export function BillsPage() {
     enabled: Boolean(companyId),
   });
 
+  // A3 (inv #13) — real driver_finance.driver_bills, a completely different table from
+  // accounting.bills. Shown as its own section (never crammed into the vendor-bill ParityTable's
+  // rows, whose Pay/Schedule/Allocate actions assume an accounting.bills row) whenever the "All
+  // bills" view or the "driver" category chip is active — the union + Source distinction this
+  // page's spec asks for, done honestly rather than faking one shared row shape for two
+  // structurally different tables.
+  const showDriverBills = category === "" || category === "driver";
+  const driverBillsQuery = useQuery({
+    queryKey: ["driver-finance", "driver-bills-list", companyId],
+    queryFn: () => listDriverBills(companyId, { limit: 200 }),
+    enabled: Boolean(companyId) && showDriverBills,
+  });
+  const driverBillRows = driverBillsQuery.data?.driver_bills ?? [];
+
   const rows = useMemo(() => {
     const all = billsQuery.data?.rows ?? [];
     // Keep deep-linked bill visible even when a category chip would filter it out.
@@ -463,6 +486,33 @@ export function BillsPage() {
       { replace: true }
     );
   }
+
+  // A3 (inv #13) — Bill # · Driver · Load · Loaded mi · Rate · Empty mi · Rate · Gross · Status ·
+  // Settlement, exactly the reference's column set for driver_finance.driver_bills.
+  const driverBillColumns = useMemo<ParityColumn<DriverBillListRow>[]>(
+    () => [
+      { key: "bill_number", label: "Bill #", render: (b) => b.bill_number ?? "—" },
+      { key: "driver_name", label: "Driver", render: (b) => <EntityLink kind="driver" id={b.driver_id} label={b.driver_name ?? "—"} /> },
+      { key: "load_number", label: "Load", render: (b) => (b.load_id ? <EntityLink kind="load" id={b.load_id} label={b.load_number ?? "—"} /> : b.load_number ?? "—") },
+      { key: "miles_basis", label: "Loaded mi", render: (b) => (b.miles_basis != null ? Number(b.miles_basis).toLocaleString(undefined, { maximumFractionDigits: 1 }) : "—") },
+      { key: "rate_per_mile_cents", label: "Rate", render: (b) => (b.rate_per_mile_cents != null ? `$${(b.rate_per_mile_cents / 100).toFixed(4)}` : "—") },
+      { key: "miles_deadhead", label: "Empty mi", render: (b) => (b.miles_deadhead != null ? Number(b.miles_deadhead).toLocaleString(undefined, { maximumFractionDigits: 1 }) : "—") },
+      { key: "rate_empty_per_mile_cents", label: "Rate", render: (b) => (b.rate_empty_per_mile_cents != null ? `$${(b.rate_empty_per_mile_cents / 100).toFixed(4)}` : "—") },
+      { key: "gross_amount_cents", label: "Gross", render: (b) => (b.gross_amount_cents != null ? money(b.gross_amount_cents) : "—") },
+      { key: "status", label: "Status", render: (b) => <span className="capitalize">{b.status}</span> },
+      {
+        key: "settlement_display_id",
+        label: "Settlement",
+        render: (b) =>
+          b.settled_in_settlement_id ? (
+            <EntityLink kind="settlement" id={b.settled_in_settlement_id} label={b.settlement_display_id ?? "—"} />
+          ) : (
+            "—"
+          ),
+      },
+    ],
+    []
+  );
 
   const columns = useMemo<ParityColumn<VendorBill>[]>(
     () => [
@@ -890,6 +940,33 @@ export function BillsPage() {
         )}
         emptyText="No bills found."
       />
+
+      {/* A3 (inv #13) — real driver_finance.driver_bills, unioned into this page's view with an
+          explicit Source label rather than crammed into the vendor-bill table above (whose
+          Pay/Schedule/Allocate/Void actions all assume an accounting.bills row). Shown for "All
+          bills" and the "driver" category chip; hidden for the vendor-only categories
+          (maintenance/repair/fuel), which cannot match a driver bill. */}
+      {showDriverBills ? (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold text-gray-900">Driver bills</h2>
+            <span className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600" data-testid="bills-driver-source-label">
+              Source: Driver
+            </span>
+          </div>
+          {driverBillsQuery.isError ? <ListErrorBanner onRetry={() => void driverBillsQuery.refetch()} /> : null}
+          <ParityTable
+            columns={driverBillColumns}
+            rows={driverBillRows}
+            rowKey={(b) => b.id}
+            loading={driverBillsQuery.isPending}
+            exportFilename="driver-bills"
+            storageKey="bills-driver-list"
+            initialPageSize={50}
+            emptyText="No driver bills found."
+          />
+        </div>
+      ) : null}
 
       <VoidReasonModal
         open={batchVoidOpen}
