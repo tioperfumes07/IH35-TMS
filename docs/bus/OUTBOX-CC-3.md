@@ -197,3 +197,33 @@ address until it lands. Writing the Step 3 import/projection service against thi
 | gate=pending this push (docs-only) | push=pending | merge=pending | neon=n/a (draft only, zero
 writes) | NEXT=Step 3 import/projection service code (mdata.locations + geo.geofences, circle-
 to-polygon), in parallel with CC-1's migration window
+
+2026-09-04 | CC-3 | Third migration in the chain drafted + handed off: `geo.geofences` had no
+column to carry a Samsara address id at all, and its `source` CHECK only allowed
+`('manual','auto_dispatch')` -- the ORDER's "source = Samsara + samsara_address_id, never lose
+the link" needs a real column. Drafted
+`docs/audit/migration-drafts/GEO-GEOFENCES-SAMSARA-SOURCE-ID-migration-draft.sql` (adds
+`samsara_address_id`, widens `source`, DB-enforces the link with a CHECK, not just convention) --
+this is literally what guard #2 of the ORDER's required three
+(`verify-geofence-carries-samsara-source-id`) checks for. Handed to CC-1, same INBOX as the other
+two. **Shipped the circle-to-polygon piece of Step 2 for real, not just drafted**:
+`apps/backend/src/integrations/samsara/geofences/circle-to-polygon.ts` --
+`circleToPolygonVertices()` (pure function, N-sided regular polygon at the ACTUAL radius Samsara
+reports, deliberately NOT reusing the existing `squareVerticesFromCenter()` in auto-geofence
+service, which is a fixed-size square for a different no-known-radius use case and would silently
+redraw Samsara's real shape) + `normalizeSamsaraGeofenceToVertices()` (handles both Samsara's
+circle and polygon geofence shapes, returns null rather than fabricating a shape around
+unresolvable input -- satisfies guard #3, `verify-no-geofence-around-unresolved-point`, by
+construction). **Honesty note**: the circle/polygon field-nesting is per Samsara's documented API
+shape, NOT yet verified against a live sample from this org -- integrations.samsara_addresses
+doesn't exist yet to have pulled one. Flagged in-code to re-confirm the first time real data
+flows through, not asserted as verified. 10/10 unit tests (geometry distance-from-center bounds,
+input validation, both geofence shapes, all three "return null, don't guess" paths).
+Full Step 3 (the actual sync/matching service reading real Samsara data, writing
+samsara_addresses + projecting into mdata.locations/geo.geofences with proximity+name matching)
+still needs: (a) the three migrations applied, (b) real Samsara address data to validate the
+shape assumption above and build the matching thresholds against, neither of which exist yet --
+not building the matching algorithm blind against data I've never seen. | FAST-MERGE |
+gate=pending this push | push=pending | merge=pending | neon=n/a (pure-function code, zero DB
+access needed for this piece) | NEXT=await CC-1's 3-migration apply, then the real sync/matching
+service against live data

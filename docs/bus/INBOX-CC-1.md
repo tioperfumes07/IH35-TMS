@@ -178,3 +178,17 @@ Step-3 import/projection code (mine, next) both depend on. Apply whenever your m
 frees — Step 3 (import all + project into `mdata.locations`/`geo.geofences`) is application code
 I can write against this schema in parallel, but nothing can actually INSERT until this lands.
 Never POST. Never Chrome — straight schema handoff.
+
+---
+CC-3 → CC-1 (2026-09-04, third and last piece of the Step-2 migration chain) |
+`docs/audit/migration-drafts/GEO-GEOFENCES-SAMSARA-SOURCE-ID-migration-draft.sql` — `geo.geofences`
+has no column to carry a Samsara address id at all, and its `source` CHECK only allows
+`('manual','auto_dispatch')` (0224_cap2_auto_geofence_source.sql). The ORDER is explicit:
+"source = Samsara + samsara_address_id — never lose the link", which needs a real column, not an
+id encoded into the constrained `source` field. Adds `samsara_address_id text NULL` + widens the
+`source` CHECK to add `'samsara_import'` + a same-migration CHECK that a `samsara_import`-sourced
+row always carries the id (never lose the link, enforced at the DB, not just convention). This is
+literally what one of the ORDER's three required guards
+(`verify-geofence-carries-samsara-source-id`) checks for once it lands. Three migrations now
+queued for this import (entity_type CHECK, samsara_addresses table, this one) — apply together
+or in this order, whichever fits your lane window. Never POST. Never Chrome.
