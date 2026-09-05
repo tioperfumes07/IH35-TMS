@@ -109,11 +109,21 @@ type PlacesNewPlace = {
 const PLACES_FIELD_MASK =
   "places.id,places.displayName,places.formattedAddress,places.addressComponents,places.location,places.types";
 
-// Rectangle covering the continental US + Mexico (our lanes). Bias only — never a hard filter.
+// Bias (never a filter) toward the yard. Measured 2026-09-05 with a continent-wide rectangle: "1424 alameda lar"
+// ranked Chicago/Greensboro above Laredo and "tyson" ranked Tysons Corner, VA above Tyson Foods. Google's guidance
+// is to bias to where the user operates; Autocomplete/Text Search cap a circle bias at 50,000 m. Default is the
+// Laredo yard; override per deployment with GEOCODE_BIAS_LAT / GEOCODE_BIAS_LNG / GEOCODE_BIAS_RADIUS_M.
+function num(v: string | undefined, d: number): number {
+  const n = v == null ? NaN : Number(v);
+  return Number.isFinite(n) ? n : d;
+}
 const US_MX_BIAS = {
-  rectangle: {
-    low: { latitude: 14.0, longitude: -125.0 },
-    high: { latitude: 49.5, longitude: -66.0 },
+  circle: {
+    center: {
+      latitude: num(process.env.GEOCODE_BIAS_LAT, 27.5036),
+      longitude: num(process.env.GEOCODE_BIAS_LNG, -99.5076),
+    },
+    radius: Math.min(50000, Math.max(1000, num(process.env.GEOCODE_BIAS_RADIUS_M, 50000))),
   },
 };
 
