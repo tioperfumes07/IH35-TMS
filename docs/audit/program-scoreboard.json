@@ -1,10 +1,10 @@
 {
-  "healthzSha": "7e852b2",
-  "generated_at": "2026-09-05T02:35:12.161Z",
+  "healthzSha": "62d819e",
+  "generated_at": "2026-09-05T15:05:50.590Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "7e852b2",
+    "deployedSha": "62d819e",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 20456,
-      "title": "Cursor-DSP enable Book and send → distribute driver instructions (WIZ-49d resolved)",
+      "number": 20555,
+      "title": "Claude-3-feat(seed): STEP 1 of 6 — seed 18 missing USMCA loads + 08/07 floor + R1/R2 rulings",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 09:34 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20456",
-      "sha": "0aca76377d",
-      "committedAtIso": "2026-09-04T21:34:15-05:00"
+      "mergedAtCt": "09/05/2026, 09:59 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20555",
+      "sha": "ad2de88c36",
+      "committedAtIso": "2026-09-05T09:59:53-05:00"
     },
     {
-      "number": 20455,
-      "title": "FINDING: N/A (docs only, STEP-1 DONE checkoff)",
+      "number": 20554,
+      "title": "Devin-K.7 BRD-23: planner filters/ranges 7d/14d/30d/custom with date pickers",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 09:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20455",
-      "sha": "84274eaedd",
-      "committedAtIso": "2026-09-04T21:32:01-05:00"
+      "mergedAtCt": "09/05/2026, 09:58 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20554",
+      "sha": "c2b65fe5ef",
+      "committedAtIso": "2026-09-05T09:58:29-05:00"
     },
     {
-      "number": 20454,
-      "title": "FINDING: N/A (docs only) — lead tick 03:00Z: CC-3 3.2b verified ✔, 3.3 ordered with deadline; CC-1 0b migration #4 addendum",
+      "number": 20553,
+      "title": "FINDING: DOCS-BUS-02 register still listed Codex=Maintenance and telematics under CC-3, which caused Codex to file a wrong-lane redirect (#20549, closed).",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 09:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20454",
-      "sha": "21769b4dba",
-      "committedAtIso": "2026-09-04T21:30:15-05:00"
+      "mergedAtCt": "09/05/2026, 09:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20553",
+      "sha": "9135578630",
+      "committedAtIso": "2026-09-05T09:56:40-05:00"
     },
     {
-      "number": 20451,
-      "title": "Claude-lead: VERDICT FORMAT LAW (docs only)",
+      "number": 20552,
+      "title": "Devin-K.6 BRD-21: guard planner grids show active drivers only",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 09:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20451",
-      "sha": "c9d81dcff9",
-      "committedAtIso": "2026-09-04T21:27:46-05:00"
+      "mergedAtCt": "09/05/2026, 09:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20552",
+      "sha": "8088e1877d",
+      "committedAtIso": "2026-09-05T09:56:23-05:00"
     },
     {
-      "number": 20453,
-      "title": "FINDING: N/A (docs only — GAP-39 geofence engine 3.2b merge checkoff)",
+      "number": 20551,
+      "title": "Devin-K.5 BRD-20: pronounced planner calendar column lines; MMM-DD already done",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 09:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20453",
-      "sha": "9f4983d7ee",
-      "committedAtIso": "2026-09-04T21:26:49-05:00"
+      "mergedAtCt": "09/05/2026, 09:55 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20551",
+      "sha": "bbc06d91b0",
+      "committedAtIso": "2026-09-05T09:55:05-05:00"
     },
     {
-      "number": 20452,
-      "title": "FINDING: MAINT-DESIGN-X7 Fleet registry bypassed the shared KPI computed-style contract with private white, left-aligned cards and non-token controls.",
+      "number": 20539,
+      "title": "docs: CODEX bus post — X.7 PR #20538 opened, X.9 deploy-request reposted",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 09:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20452",
-      "sha": "a8b05da916",
-      "committedAtIso": "2026-09-04T21:26:38-05:00"
+      "mergedAtCt": "09/05/2026, 09:51 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20539",
+      "sha": "62d819ea96",
+      "committedAtIso": "2026-09-05T09:51:40-05:00"
     },
     {
-      "number": 20450,
-      "title": "FINDING: ACCT-F25058 LANE: NON-FINANCIAL",
+      "number": 20548,
+      "title": "FINDING: MAINT-X8-01 Edit Work Order modal used native selects instead of the office-standard Combobox",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 09:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20450",
-      "sha": "b223b6d341",
-      "committedAtIso": "2026-09-04T21:25:58-05:00"
+      "mergedAtCt": "09/05/2026, 09:51 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20548",
+      "sha": "8103343b36",
+      "committedAtIso": "2026-09-05T09:51:37-05:00"
     },
     {
-      "number": 20449,
-      "title": "FINDING: N/A — CLAIM-RESERVE verify-step 10378 for cascade K.4 BRD-19 planner row columns guard",
+      "number": 20538,
+      "title": "FINDING: MAINT-X7-01 fleet table header cells break the ParityTable design contract (#20536/row 21)",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 09:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20449",
-      "sha": "b605f504bb",
-      "committedAtIso": "2026-09-04T21:24:27-05:00"
+      "mergedAtCt": "09/05/2026, 09:51 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20538",
+      "sha": "4427c966cf",
+      "committedAtIso": "2026-09-05T09:51:34-05:00"
     },
     {
-      "number": 20448,
-      "title": "Cursor-DSP driver instruction sheet: no pay + Border & customs + documents-to-bring",
+      "number": 20550,
+      "title": "FINDING: K.9 — Customers/Vendors roster filter bar hidden behind CHROME-04 Filters popover (1 click to see Status/Type/Credit-status/Category). Restored inline from 1e4a6282d7^ (visible first load, 0 clicks).",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 09:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20448",
-      "sha": "7e852b2ad3",
-      "committedAtIso": "2026-09-04T21:22:28-05:00"
+      "mergedAtCt": "09/05/2026, 09:51 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20550",
+      "sha": "ece6191004",
+      "committedAtIso": "2026-09-05T09:51:08-05:00"
     },
     {
-      "number": 20447,
-      "title": "FINDING: GAP-39 (geofence state-machine flap + departed dead-lock, engine rebuild 3.2b)",
+      "number": 20547,
+      "title": "FINDING: N/A (docs only) — lead tick 14:47Z: seats on Cursor sequence; void 21/29; FE deploy triggered; lead = inventory + verdicts only",
       "state": "merged",
-      "mergedAtCt": "09/04/2026, 09:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20447",
-      "sha": "7cfd2db92f",
-      "committedAtIso": "2026-09-04T21:19:59-05:00"
+      "mergedAtCt": "09/05/2026, 09:47 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20547",
+      "sha": "c971850ec4",
+      "committedAtIso": "2026-09-05T09:47:14-05:00"
     }
   ]
 }
