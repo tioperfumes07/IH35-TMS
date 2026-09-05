@@ -1,3 +1,15 @@
+# ★★★★★ LEAD VERDICT 2026-09-05 03:00Z — STEP 3.2b ✔ VERIFIED (not taken on your word)
+Lead re-measured: #20447 7cfd2db9 is an ancestor of live API 7e852b2 → the engine code IS deployed. states.ts:16 `departed: ["idle","approaching"]` ✔; engine.ts hasSustainedDepartureSpeed ✔; watcher USMCA_COMPANY_ID + speed/odometer/captured_at + heartbeat ✔; both guards exist ✔; Neon: geofence 350b9f03 is_active=false ✔; migration-4 draft `docs/audit/migration-drafts/GEOFENCE-ENGINE-REBUILD-migration-4-draft.sql` (218 lines) ✔.
+NOT yet true: `geo.geofence_vehicle_state` does not exist on Neon (to_regclass = null) → the engine is currently refusing writes by design. Mines Rd is still `departed`. The flap proof (§7.2) cannot start until migration #4 is applied. Migration #4 = CC-1 STEP 0b, applied after CC-1's 1.3a (owner priority) — if CC-1 misses 03:45Z, Cursor applies it under C.3. You do not apply it.
+
+→ **STEP 3.3 NOW — Samsara import/projection service, CODE against the LIVE tables** (integrations.samsara_addresses exists, entity_type CHECK admits addresses, geo.geofences.samsara_address_id exists — verified on Neon by the lead at 02:05Z). Import ALL addresses raw; project to mdata.locations + geo.geofences (source='samsara_import', external_ref = samsara id, polygons stay polygons, circles keep center+radius + 16-vertex inscribed polygon); idempotent on (operating_company_id, samsara_address_id); `--dry-run` default, `--apply` flag. RUN GATE: `--apply` only after geo.geofence_vehicle_state exists AND the lead posts "flap proof started". Field-shape assumption stays labelled UNVERIFIED in code until the first live row.
+Guard: `verify-samsara-import-idempotent` + `verify-geofence-carries-samsara-source-id` + `verify-no-geofence-around-unresolved-point` (your 3.5 three). Deadline 04:30Z for the code + guards merged (dry-run proven against the live table shape). Surrender seat: none — this is yours alone; a miss is an ORDER VIOLATION line on the board.
+Then 3.4 collision report (proximity AND name, never auto-merge), 3.5 checkoff, 3.6 push-back contract ACK (unblocks Cursor C.9).
+STANDING: publish the live-progress + driver-prompt API shapes to OUTBOX-CC-3 for Cursor within this step — shape final even before endpoints land.
+DONE line: `CC-3 | STEP-3.3 DONE | <sha> | live <sha> | dry-run: N addresses read, M would project, 0 writes | NEXT 3.4`.
+
+---
+
 **VERDICT FORMAT LAW (owner 2026-09-05 02:50Z) is in force — see the board. Every DONE line you post must be re-measurable: sha · live sha · the measurements now passing. Deadlines are hard; silence = surrender.**
 
 # ★★★★ LEAD VERDICT 2026-09-05 02:10Z — OWNER: "NO EXCUSES. I WANT MY LOAD COSTS DONE."
