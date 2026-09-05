@@ -123,6 +123,15 @@ function auditParity(src) {
   // (tableColumnRule) which owns the header/group-band rows only.
   if (!/borderRight:\s*`1px solid \$\{colors\.tableBodyRule\}`/.test(src))
     f.push(`${PARITY}: body td must carry a 1px right column rule (colors.tableBodyRule, the --line shade)`);
+  // COMPLETE-OUTLINE LAW (owner ruling 2026-09-05): every header th gets a full 1px border box on
+  // all four sides (colors.tableColumnRule, --line2), not just a bottom rule — supersedes the
+  // 2026-09-04 ruling's 2px border-bottom width. Matched as ONE contiguous, ordered sequence (not
+  // 4 independent substring checks): the group-band <th> a few lines up already carries its own
+  // borderRight/borderBottom pair at the SAME values, so an independent-substring check for just
+  // those two would stay satisfied even if the real per-column header th's own declarations were
+  // removed entirely — only the full top/right/bottom/left run, in order, is unique to it.
+  if (!/borderTop:\s*`1px solid \$\{colors\.tableColumnRule\}`,\s*\n\s*borderRight:\s*`1px solid \$\{colors\.tableColumnRule\}`,\s*\n\s*borderBottom:\s*`1px solid \$\{colors\.tableColumnRule\}`,\s*\n\s*borderLeft:\s*`1px solid \$\{colors\.tableColumnRule\}`,/.test(src))
+    f.push(`${PARITY}: header th must carry a complete 1px border box on all four sides, in order (borderTop/borderRight/borderBottom/borderLeft, colors.tableColumnRule) — not just a bottom rule, and not the old 2px bottom width`);
   return f;
 }
 
@@ -191,6 +200,32 @@ async function main() {
   if (selftest) {
     if (auditParity(paritySrc.replace(/backgroundColor:\s*colors\.tableGroupBandBg/, "backgroundColor: cell.bg ?? colors.tableGroupBandBg")).length === 0) {
       console.error("SELFTEST FAIL: per-group band bg did not trip"); process.exit(1);
+    }
+    // COMPLETE-OUTLINE LAW selftest — anchored to the unique 4-line th-border block (borderRight/
+    // borderBottom alone are NOT unique in this file; the group-band <th> a few lines up carries
+    // its own borderRight/borderBottom pair, so a bare single-line regex.replace would silently
+    // mutate the WRONG <th> and prove nothing). Each side's removal, and reverting bottom to the
+    // old 2px width, must independently trip the guard.
+    const OUTLINE_BLOCK =
+      "                    borderTop: `1px solid ${colors.tableColumnRule}`,\n" +
+      "                    borderRight: `1px solid ${colors.tableColumnRule}`,\n" +
+      "                    borderBottom: `1px solid ${colors.tableColumnRule}`,\n" +
+      "                    borderLeft: `1px solid ${colors.tableColumnRule}`,\n";
+    if (!paritySrc.includes(OUTLINE_BLOCK)) {
+      console.error("SELFTEST FAIL: could not locate the exact th complete-outline border block to mutate"); process.exit(1);
+    }
+    const mutate = (from, to) => paritySrc.replace(OUTLINE_BLOCK, OUTLINE_BLOCK.replace(from, to));
+    if (auditParity(mutate('                    borderTop: `1px solid ${colors.tableColumnRule}`,\n', "")).length === 0) {
+      console.error("SELFTEST FAIL: missing th border-top did not trip"); process.exit(1);
+    }
+    if (auditParity(mutate('                    borderRight: `1px solid ${colors.tableColumnRule}`,\n', "")).length === 0) {
+      console.error("SELFTEST FAIL: missing th border-right did not trip"); process.exit(1);
+    }
+    if (auditParity(mutate("borderBottom: `1px solid ${colors.tableColumnRule}`", "borderBottom: `2px solid ${colors.tableColumnRule}`")).length === 0) {
+      console.error("SELFTEST FAIL: reverted 2px th border-bottom did not trip"); process.exit(1);
+    }
+    if (auditParity(mutate('                    borderLeft: `1px solid ${colors.tableColumnRule}`,\n', "")).length === 0) {
+      console.error("SELFTEST FAIL: missing th border-left did not trip"); process.exit(1);
     }
     if (auditBoard(boardSrc.replace(/headerBg="#EEF2F6"/i, 'headerBg="#EEF2F6" headerWeight={400}'), c).length === 0) {
       console.error("SELFTEST FAIL: headerWeight={400} did not trip"); process.exit(1);
