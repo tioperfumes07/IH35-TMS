@@ -853,3 +853,21 @@ prior) and the standing-queue doc just hadn't been marked off yet.
 Standing queue: D5 (DONE) -> Driver Instruction Sheet (DONE) -> Draft-Loads dead-end (ALREADY
 DONE, verified) -> Dispatch cleanliness list (NEXT) -> Tour-Close. | NEXT=Dispatch cleanliness
 list (board default view hides cancelled/sample/non-USMCA) | GO
+
+CC-2 | HEADER-OUTLINE DONE | 538de197bf | live sha d988cd3 (PRE-fix, deploy pending -- Cursor's
+timer) | th border computed PRE-fix live = top 0px / right 1px / bottom 2px rgb(199,210,220) /
+left 0px (measured live via Chrome on /accounting/load-costs just now, confirms the OLD rule was
+exactly as documented before this fix) | merged code now sets all 4 sides to
+`1px solid ${colors.tableColumnRule}` (#C7D2DC) in ParityTable.tsx's header th, guard
+verify-table-design-contract.mjs extended + green (selftest 4/4 new mutation cases trip) | LIVE
+RE-MEASUREMENT PENDING next FE deploy -- will re-check getComputedStyle once app.ih35dispatch.com
+serves 538de197bf or later and post the post-fix numbers. Deadline 22:30Z MET (merged 21:3xZ).
+While shipping this hit ANOTHER instance of the same cause class as today's earlier emergencies:
+scripts/verify-auto-geofence-no-blocking-call.mjs (a 3rd guard, unwired-into-verify-steps but
+still globbed by verify-static.mjs, asserting my own D5 PR's pre-fix architecture) -- fixed +
+fast-merged (#20728), full grep confirms no 4th occurrence remains anywhere in scripts/*.mjs.
+NEXT (per this directive): D5 Book Load auto-geofence FE trigger (coordinate Codex #41/geofence)
+-- this is D5's backend+guard+status-surfacing halves already DONE this session (#20684/#20699/
+#20706); the remaining FE piece per this new phrasing is the wizard's Samsara-address-picker
+coordinate work with Codex's #41 (Samsara Routes integration) -- picking this up now.
+| NEXT=D5 FE trigger / Codex #41 coordination | GO
