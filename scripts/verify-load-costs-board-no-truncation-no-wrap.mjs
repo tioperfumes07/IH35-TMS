@@ -47,6 +47,10 @@ function auditBoard(src) {
   // it scrolls horizontally in the overflow-x wrapper instead of truncating columns.
   if (!/minWidthPx=\{1660\}/.test(src))
     f.push(`${BOARD}: ParityTable must be given minWidthPx={1660} so wide columns scroll, not truncate`);
+  // L.1d (lead 03:58Z / DESIGN-CONTRACT §14): the board must use table-layout:auto (columns size to
+  // label + widest value), NOT table-layout:fixed / equal split. columnLayout="auto" opts in.
+  if (!/columnLayout="auto"/.test(src))
+    f.push(`${BOARD}: ParityTable must be given columnLayout="auto" (content-sized columns, no fixed layout)`);
   // FAIL-3 (lead 03:06Z / DESIGN-CONTRACT §20): an UNTRACKED mileage/rate/deadhead cell renders a
   // dash, never blank. fmtMiles/fmtRate return DASH on null; deadhead_pay renders DASH on null.
   if (!/const fmtMiles =[^\n]*m == null \? DASH/.test(src))
@@ -81,6 +85,8 @@ function main() {
     if (auditBoard(m3).length === 0) { console.error("SELFTEST FAIL: rounded-full pill did not trip"); process.exit(1); }
     const m5 = boardSrc.replace(/minWidthPx=\{1660\}/, "");
     if (auditBoard(m5).length === 0) { console.error("SELFTEST FAIL: removing minWidthPx did not trip"); process.exit(1); }
+    const m8 = boardSrc.replace(/columnLayout="auto"/, "");
+    if (auditBoard(m8).length === 0) { console.error("SELFTEST FAIL: removing columnLayout=auto did not trip"); process.exit(1); }
     const m6 = boardSrc.replace(/const fmtMiles = \(m: string \| null\) => \(m == null \? DASH/, "const fmtMiles = (m: string | null) => (m == null ? \"\"");
     if (auditBoard(m6).length === 0) { console.error("SELFTEST FAIL: reverting fmtMiles dash to blank did not trip"); process.exit(1); }
     const m7 = boardSrc.replace(/deadhead_pay_cents == null \? DASH/, "deadhead_pay_cents == null ? \"\"");
