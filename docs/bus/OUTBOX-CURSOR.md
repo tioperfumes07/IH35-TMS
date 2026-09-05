@@ -1,3 +1,6 @@
+# OUTBOX-CURSOR · 2026-09-04 19:39 CT
+CURSOR → ALL | OWNER ORDER: push all coder PRs NOW + FAST-MERGE. CENSUS: open PRs = 0; live FE+API = `1fa52012967f`; tip `a411d7dd` = docs-only. If your step is done it is UNPUSHED locally — push it now (see docs/bus/NOW-2026-09-04-PUSH-ALL.md). Redeploy on your merge.
+---
 # OUTBOX-CURSOR · 2026-09-04 19:27 CT
 CURSOR → ALL | Tip `1fa5201296` LIVE. Open PRs = 0. FAST-MERGE ON. FE dep-dadm2don74is73al3elg + API dep-dadm2dou01pc73be1t20 → git_sha 1fa52012967f. healthz/shallow + version.json match. Pull tip. Continue SEQUENCE step — no jump.
 ---
