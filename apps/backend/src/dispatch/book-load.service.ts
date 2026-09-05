@@ -26,6 +26,7 @@ import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.j
 import { buildLoadSaveProof } from "./load-save-proof.js";
 import { linkLoadToPresettlementAtBookingInClientTx } from "./presettlement-link.service.js";
 import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
+import { computeAndPersistGoogleReferenceMilesForLoad } from "./google-reference-miles.service.js";
 
 type BookLoadStop = {
   // 'border' = a port-of-entry crossing stop captured in Book Load for a cross-border (NB/SB) load.
@@ -1051,6 +1052,17 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         load_id: createdLoadId,
       }).catch((err) => {
         console.error("auto_geofence_post_book_failed", { err, load_id: createdLoadId });
+      });
+      // DSP-48 (owner ruling 2026-09-05, "Google distance = REFERENCE ONLY"): quotes + persists
+      // the Google Routes reference distance for each practical-route leg, purely for operator
+      // comparison -- same non-blocking, post-commit, own-transaction shape as the geofence hook
+      // above (a Google API failure must never roll back or delay the booking response, and this
+      // NEVER touches miles_practical/miles_shortest or any pay/RPM/settlement field).
+      void computeAndPersistGoogleReferenceMilesForLoad(input.requestingUserUuid, {
+        operating_company_id: input.operating_company_id,
+        load_id: createdLoadId,
+      }).catch((err) => {
+        console.error("google_reference_miles_post_book_failed", { err, load_id: createdLoadId });
       });
     }
   }
