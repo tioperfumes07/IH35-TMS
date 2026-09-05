@@ -5592,6 +5592,11 @@
     "claimed_by": "cc-2",
     "purpose": "verify-dispatch-top-bar-single-primary-action (L.4b, DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05.md §B, OWNER-ISSUE-INVENTORY-2026-09-05.md #8, surrendered Cursor -> CC-2 14:00Z). Asserts Home/Live/Loads-history never conditionally render variant=\"primary\" (the double-filled-button bug alongside + Book Load), the board-view toolbar is role=\"group\" with exactly Kanban/List/Round Trips (no duplicate \"Trip Pairing\", already a DispatchSubnav nav item), and the existing Home/Live/Loads-history test-ids survive."
   },
+  "10399": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "cc-2",
+    "purpose": "verify-dispatch-trip-pairing-in-board-view-row (owner 2026-09-04, DISPATCH item #2; fixed + wired 2026-09-05 after L.4a discovered it pre-existing broken and unwired). Corrects 10395's own mistaken premise: Trip Pairing IS a deliberate, owner-authorized peer in the board-view row alongside Kanban/List/Round Trips (additive to, not a duplicate of, DispatchSubnav's separate Trip Pairing nav item) -- restored after being wrongly removed, guard's stale <Button>-tag assumption updated to match the real .map()-array structure, and finally wired (it shipped unwired by its own design note pending a Rule-37 claim)."
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
