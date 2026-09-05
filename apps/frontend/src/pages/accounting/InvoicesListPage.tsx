@@ -101,6 +101,34 @@ export function invoiceStatusBadge(row: Pick<Invoice, "status" | "voided_at">) {
   return <StatusBadge variant={variant}>{row.status}</StatusBadge>;
 }
 
+// A4 (STANDING-DIRECTIVES-2026-09-05.md §CC-1, OWNER-ISSUE-INVENTORY inv #14): "Need a Factored
+// column." factoring_status/factor_profile_id/factoring_advance_id already existed on every real
+// invoice (accounting.invoices) but rendered nowhere. accounting.invoices_factoring_status_check's
+// real live CHECK constraint permits 7 states — richer than a rough "Not factored/Submitted/
+// Advanced/Settled" paraphrase — every one is labeled honestly here rather than force-collapsed.
+// Dash-never-blank: every branch (including an unrecognized future value) returns real text.
+const FACTORING_STATUS_LABEL: Record<string, string> = {
+  not_factored: "Not factored",
+  submitted: "Submitted",
+  advanced: "Advanced",
+  reserve_held: "Reserve held",
+  collected: "Collected",
+  released: "Released",
+  recourse_returned: "Recourse returned",
+};
+
+export function invoiceFactoredBadge(row: Pick<Invoice, "factoring_status" | "factor_profile_name" | "factoring_display_id">) {
+  const status = row.factoring_status ?? "not_factored";
+  const label = FACTORING_STATUS_LABEL[status] ?? status;
+  const variant = status === "not_factored" ? "neutral" : status === "recourse_returned" ? "warn" : "info";
+  return (
+    <span className="inline-flex flex-col gap-0.5">
+      <StatusBadge variant={variant}>{label}</StatusBadge>
+      {row.factor_profile_name ? <span className="text-xs text-slate-500">{row.factor_profile_name}</span> : null}
+    </span>
+  );
+}
+
 function invoiceFilterFromSearchParams(searchParams: URLSearchParams): {
   customerId: string;
   status: InvoiceListFilter;
@@ -390,6 +418,13 @@ export function InvoicesListPage() {
         label: "Status",
         sortable: true,
         render: (row) => invoiceStatusBadge(row),
+      },
+      {
+        // A4 (inv #14) — real factoring_status + factor name, dash-never-blank.
+        key: "factoring_status",
+        label: "Factored",
+        sortable: true,
+        render: (row) => invoiceFactoredBadge(row),
       },
       {
         key: "source_load_chargeback_requested",

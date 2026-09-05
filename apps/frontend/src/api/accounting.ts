@@ -63,6 +63,10 @@ export type Invoice = {
   factoring_advance_id?: string | null;
   factoring_display_id?: string | null;
   factoring_status?: "not_factored" | "submitted" | "advanced" | "reserve_held" | "collected" | "released" | "recourse_returned";
+  /** A4 (inv #14) — accounting.invoices.factor_profile_id -> factoring.factor.id, the factor the
+   * invoice was (or would be) submitted to, independent of whether an advance has happened yet. */
+  factor_profile_id?: string | null;
+  factor_profile_name?: string | null;
   payment_terms_label: string | null;
   payment_terms_days: number | null;
   invoice_type?: "from_load" | "driver_damage" | "driver_misc" | "vendor_chargeback" | "customer_adjustment" | "manual";
