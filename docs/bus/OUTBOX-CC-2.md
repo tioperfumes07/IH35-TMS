@@ -503,3 +503,17 @@ identically on a clean origin/main worktree (zero of this diff), --no-verify use
 codes, Live loc 180px, GPS un-glued, 1px frame). NOT starting the "OWNER-REMOVE Commodity/Linehaul/
 Pre-settlement/Status from defaults" sub-item in that step without a literal OWNER-REMOVE quote --
 flagged, awaiting lead confirmation. | GO
+
+CC-2 | STEP 2 of 8 PARTIAL DONE | 789e794603 | live sha UNVERIFIED (no fresh deploy check yet) |
+columnLayout=auto (real per-column widths, fixes truncation + the "glued" status/GPS strings),
+Live loc 180px min-width floor, 1px #C7D2DC outer frame, Driver shown as initials w/ full-name
+hover (tombstone detection preserved). Bundled a pre-existing tsc -b project-wide build break fix
+(PlannerRangeToolbar.tsx bad DatePicker import + wrong prop) unrelated to this step but blocking
+verification. verify-dispatch-board-preview-contract + verify-dispatch-driver-wiring (re-anchored)
+selftest+normal PASS, verify-additive-only PASS, verify-seat-surface-ownership OK.
+NOT DONE, flagged for lead confirmation (both genuinely ambiguous, declining to guess):
+(a) OWNER-REMOVE Commodity/Linehaul/Pre-settlement/Status from defaults -- no literal
+OWNER-REMOVE: "<owner's exact words>" <date> line exists anywhere in the repo for this yet.
+(b) Driver Status short codes Off/On/Drv/SB/Pre/UA -- board only has driver_lifecycle_stage
+(15 values), no canonical 6-code mapping exists; safety-adjacent field, declining to invent one.
+| NEXT 3 of 8 -- verify-usmca-load-cutover-floor.mjs | GO
