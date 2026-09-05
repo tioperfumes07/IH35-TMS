@@ -2196,4 +2196,79 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       timeline: result.timeline,
     };
   });
+
+  // Inv #40 (STANDING-DIRECTIVES-2026-09-05.md §CC-2 item 1): "On book, fire the geofence create
+  // and show it." bookLoad() now fires the create for every caller (book-load.service.ts); this
+  // read-only endpoint is what the Load Detail drawer polls to show what actually happened, per
+  // stop — a stop can be skipped for a real reason (no coordinates on file yet), which is honest
+  // state, not an error, and must be shown as such rather than a blank/missing row.
+  app.get("/api/v1/dispatch/loads/:id/geofence-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
+    if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
+
+    const result = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
+      const loadRes = await client.query<{ id: string }>(
+        `SELECT id FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        [params.data.id, operatingCompanyId]
+      );
+      if (!loadRes.rows[0]) return null;
+
+      // Same stop/coordinate/geofence-match shape as
+      // telematics/auto-geofence.service.ts's loadStopsForGeofencing + findExistingGeofence,
+      // duplicated here (read-only, additive) rather than exported, to avoid touching that
+      // module's surface under this PR's scope.
+      const stopsRes = await client.query<{
+        stop_id: string;
+        sequence_number: number;
+        stop_type: string;
+        has_coordinates: boolean;
+        geofence_id: string | null;
+        samsara_address_id: string | null;
+      }>(
+        `
+          SELECT
+            s.id::text AS stop_id,
+            s.sequence_number,
+            s.stop_type,
+            (
+              COALESCE(s.latitude, loc.latitude) IS NOT NULL
+              AND COALESCE(s.longitude, loc.longitude) IS NOT NULL
+            ) AS has_coordinates,
+            g.id::text AS geofence_id,
+            g.samsara_address_id
+          FROM mdata.load_stops s
+          JOIN mdata.loads l ON l.id = s.load_id
+          LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+                                        AND loc.operating_company_id = $2::uuid
+          LEFT JOIN geo.geofences g ON g.operating_company_id = $2::uuid
+                                    AND g.location_kind = 'customer_site'
+                                    AND g.is_active = true
+                                    AND g.location_ref_id = l.customer_id
+          WHERE l.operating_company_id = $2::uuid
+            AND l.id = $1::uuid
+            AND s.soft_deleted_at IS NULL
+          ORDER BY s.sequence_number ASC
+        `,
+        [params.data.id, operatingCompanyId]
+      );
+      return stopsRes.rows;
+    });
+
+    if (!result) return reply.code(404).send({ error: "dispatch_load_not_found" });
+    return {
+      load_id: params.data.id,
+      stops: result.map((row) => ({
+        stop_id: row.stop_id,
+        sequence_number: row.sequence_number,
+        stop_type: row.stop_type,
+        has_coordinates: row.has_coordinates,
+        geofence_created: row.geofence_id != null,
+        samsara_address_id: row.samsara_address_id,
+      })),
+    };
+  });
 }

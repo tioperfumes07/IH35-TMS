@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { type LoadDetail, type LoadStatus, updateLoad, useDispatchLoad, useLoad, useLoadAudit, useRemintDriverBill, useUpdateLoadStatus } from "../../api/loads";
 import { createInvoiceFromLoad, listLoadExpenses, listLoadInvoices } from "../../api/accounting";
-import { cancelDispatchLoad, distributeLoadInstructions, getDispatchAssignmentHistory, getRecentAutoStatusSwitches } from "../../api/dispatch";
+import { cancelDispatchLoad, distributeLoadInstructions, getDispatchAssignmentHistory, getDispatchLoadGeofenceStatus, getRecentAutoStatusSwitches } from "../../api/dispatch";
 import { AutoStatusSwitchedBadge } from "./AutoStatusSwitchedBadge";
 import { resolveApiUrl } from "../../api/client";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
@@ -289,6 +289,25 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
     [autoStatusSwitchQuery.data, load?.id]
   );
 
+  // Inv #40 (STANDING-DIRECTIVES-2026-09-05.md §CC-2 item 1) — "On book, fire the geofence
+  // create and show it." bookLoad() fires the create non-blocking, off the booking response, so
+  // there is nothing synchronous to show in the booking modal itself; this is where the result
+  // becomes visible. A stop can be honestly skipped (no coordinates on file) — that is real
+  // state to show plainly, never hidden as if the field were simply empty.
+  const geofenceStatusQuery = useQuery({
+    queryKey: ["dispatch", "load-geofence-status", load?.id, load?.operating_company_id],
+    queryFn: () => getDispatchLoadGeofenceStatus(load!.id, load!.operating_company_id),
+    enabled: Boolean(load?.id && load?.operating_company_id && activeTab === "Overview"),
+    staleTime: 30_000,
+  });
+  const geofenceStatusSummary = useMemo(() => {
+    const stops = geofenceStatusQuery.data?.stops ?? [];
+    if (stops.length === 0) return null;
+    const created = stops.filter((s) => s.geofence_created).length;
+    const missingCoordinates = stops.filter((s) => !s.has_coordinates).length;
+    return { total: stops.length, created, missingCoordinates };
+  }, [geofenceStatusQuery.data]);
+
   const routeSummary = useMemo(() => {
     if (!load) return "-";
     // FIX-2: derive origin/destination from the actual stops (first → last). first_pickup_city /
@@ -549,6 +568,36 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                               />
                             ) : null}
                           </span>
+                        ),
+                      },
+                      {
+                        label: "Geofence",
+                        value: geofenceStatusQuery.isLoading ? (
+                          <span className="text-slate-500">Checking…</span>
+                        ) : geofenceStatusQuery.isError ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700">
+                            Geofence status unavailable
+                            <button type="button" className="underline" onClick={() => void geofenceStatusQuery.refetch()}>
+                              Retry
+                            </button>
+                          </span>
+                        ) : geofenceStatusSummary ? (
+                          <span data-testid="load-detail-geofence-status" className="inline-flex items-center gap-1.5">
+                            {geofenceStatusSummary.created === geofenceStatusSummary.total ? (
+                              <span className="text-emerald-700">
+                                {geofenceStatusSummary.created}/{geofenceStatusSummary.total} stops geofenced
+                              </span>
+                            ) : (
+                              <span className="text-amber-700">
+                                {geofenceStatusSummary.created}/{geofenceStatusSummary.total} stops geofenced
+                                {geofenceStatusSummary.missingCoordinates > 0
+                                  ? ` — ${geofenceStatusSummary.missingCoordinates} missing coordinates`
+                                  : ""}
+                              </span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-slate-500">—</span>
                         ),
                       },
                       {
