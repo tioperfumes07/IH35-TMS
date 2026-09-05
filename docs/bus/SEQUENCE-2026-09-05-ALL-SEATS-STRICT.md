@@ -134,6 +134,7 @@ CC-1/CC-3/Codex/Cascade do not poll the bus. Cursor wakes them: D.3 hand wakes n
 | K.8+ | Design-law sweep pages/lists/** + pages/reports/** | |
 
 ## LEAD LOG
+- 13:45Z seed scope reconciled with the seat's 36-load analysis (09-04 four-way wins over 08-31 sheet 4): quarantine 29, keep 22, seed 14, verify 5, hold 4, owner decides 6.
 - 13:40Z tick: API live f387870f ✔ (#20505 booking crash fix shipped). CC-2 L.4c merged 988fdb73 (FE not deployed). Cursor ACCT-F1312 6049a940. Codex-slice seed 85aa885d landed 2 min before the STOP; CC-3 #20531 halted. Neon: 60 loads/60 invoices/315 expenses/61 bills/12 settlements; 27 wrong-entity families still unvoided (15:00Z). No ACK yet: Cursor, CC-1, Codex, Cascade.
 - 13:36Z ⛔ OWNER: seeded loads not all USMCA (cutover 08/07/26). LEAD ERROR: feed split 5753–5795 ignored the entity split in the 08-31 reconciliation. Live: 60 USMCA loads, 27 TRANSPORTATION (18 pre-cutover, 9 Transp-Faro). Void 27 families (CC-3 15:00Z), re-point to sheets 2+4, cutover guard, Faro sheet 5 → factoring. Owner hand list corrected (5766 is TRANSP).
 - 13:29Z OWNER board column orders (initials, Off/UA codes, Live loc wider, outer frame, OWNER-REMOVE 4 default columns). Live: 34px equal split on all 32 cols, glued strings. → CC-2 L.4a-fix 15:00Z; LAW.md exception list updated.
