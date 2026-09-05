@@ -5587,6 +5587,11 @@
     "claimed_by": "cc-2",
     "purpose": "verify-render-build-parity-wired (OWNER-ISSUE-INVENTORY-2026-09-05.md #3, L.0, surrendered Cursor -> CC-2 14:00Z: 'Gate does not run the Render build command | pnpm gate != tsc -b && vite build'). Asserts both .github/workflows/ci.yml and scripts/verify-local-ci.mjs actually run the frontend `vite build` (not just `tsc -b`), matching render.yaml's real frontend buildCommand, so a Vite/Rollup-only failure cannot pass every gate and only surface as a Render build_failed alert."
   },
+  "10395": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "cc-2",
+    "purpose": "verify-dispatch-top-bar-single-primary-action (L.4b, DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05.md §B, OWNER-ISSUE-INVENTORY-2026-09-05.md #8, surrendered Cursor -> CC-2 14:00Z). Asserts Home/Live/Loads-history never conditionally render variant=\"primary\" (the double-filled-button bug alongside + Book Load), the board-view toolbar is role=\"group\" with exactly Kanban/List/Round Trips (no duplicate \"Trip Pairing\", already a DispatchSubnav nav item), and the existing Home/Live/Loads-history test-ids survive."
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
