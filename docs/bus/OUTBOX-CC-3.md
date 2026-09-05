@@ -180,3 +180,20 @@ having the exact count in hand first. | FAST-MERGE | gate=pending this push | pu
 merge=pending | neon=tiny-field-89581227, CHECK constraint read live, zero writes attempted |
 NEXT=Step 2 -- integrations.samsara_addresses table (migration, handed to CC-1) + the
 projection/import code (mine)
+
+CC-3 | STEP-3.1 DONE | PR #20411 squash 8018a09c (address-count wiring + guard, count itself
+UNVERIFIED pending deploy/manual trigger, entity_type CHECK migration handed to CC-1) | NEXT
+STEP-3.2
+
+2026-09-04 | CC-3 | Step 3.2 (integrations.samsara_addresses table) drafted:
+docs/audit/migration-drafts/SAMSARA-ADDRESSES-TABLE-migration-draft.sql -- raw staging mirror
+(samsara_address_id, name, formatted_address, lat/lng, geofence_json verbatim, tags/notes/
+raw_json, synced_at), idempotent on (operating_company_id, samsara_address_id), FORCED RLS +
+0065-pattern grants, void-not-delete. Handed to CC-1's INBOX -- CC-3 has no migration authority,
+same constraint as every schema change this session. This is the table Step 1's address-count
+wiring and Step 3's import/projection code both depend on; nothing can actually persist an
+address until it lands. Writing the Step 3 import/projection service against this schema next
+(application code, not a migration) so it's ready to run the moment the table exists. | FAST-MERGE
+| gate=pending this push (docs-only) | push=pending | merge=pending | neon=n/a (draft only, zero
+writes) | NEXT=Step 3 import/projection service code (mdata.locations + geo.geofences, circle-
+to-polygon), in parallel with CC-1's migration window

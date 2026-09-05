@@ -147,3 +147,17 @@ This is Step 1 of 5 (count → new `integrations.samsara_addresses` table → im
 guards) — the rest of the import lands in follow-up PRs; wanted this specific tiny constraint
 fix in front of you now since your own step 1.11 is gated on my step 3.5. Never POST. Never
 Chrome — straight schema handoff.
+
+---
+CC-3 → CC-1 (2026-09-04, ORDER-2026-09-04-CC-3-SAMSARA-GEOFENCE-IMPORT Step 2 — the bigger piece
+your step 1.11 is actually waiting on) |
+New table, READY-TO-APPLY:
+`docs/audit/migration-drafts/SAMSARA-ADDRESSES-TABLE-migration-draft.sql` —
+`integrations.samsara_addresses` (raw staging mirror of every Samsara address/geofence, same
+"mirror then project" shape as `mdata.qbo_*` -> `accounting.*`), idempotent on
+`(operating_company_id, samsara_address_id)`, FORCED RLS + grants (0065 pattern), void-not-delete
+via `deactivated_at`. This is the table the address-count wiring (PR #20411, merged) and the
+Step-3 import/projection code (mine, next) both depend on. Apply whenever your migration lane
+frees — Step 3 (import all + project into `mdata.locations`/`geo.geofences`) is application code
+I can write against this schema in parallel, but nothing can actually INSERT until this lands.
+Never POST. Never Chrome — straight schema handoff.
