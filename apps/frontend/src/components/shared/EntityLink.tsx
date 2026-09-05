@@ -19,10 +19,6 @@ import { Link } from "react-router-dom";
 export type EntityKind =
   | "load"
   | "bill"
-  // driver_bill is an accounting.bills row (a 1099 driver bill), same table + same real detail
-  // route as "bill" -- not a separate entity/route, just a caller-side label for where the id
-  // came from (driver settlement lines). See resolveEntityRoute below.
-  | "driver_bill"
   | "invoice"
   | "settlement"
   | "journal_entry"
@@ -312,8 +308,15 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "load":
       return `/dispatch/loads/${id}`;
     case "bill":
-    case "driver_bill":
       return `/accounting/bills/${id}`;
+    // driver_bill is deliberately NOT routed here. ACCT-F5870: a same-day 4th-emergency
+    // compile-error fix wrongly merged `case "bill": case "driver_bill":` sharing this route --
+    // driver_finance.driver_bills (settlement_lines.source_driver_bill_id, S.1b/L5) is a DIFFERENT
+    // table from accounting.bills with a disjoint id space (see the
+    // driver-finance-driver-bills-not-accounting-bills landmine: kind="bill" 404s on a real
+    // driver_finance.driver_bills id). No dedicated driver_bills/:id detail page/route exists yet --
+    // falls through to `default: return null` below (plain text, never a fabricated/wrong route),
+    // same as every other not-yet-linked kind.
     case "invoice":
       return `/accounting/invoices/${id}`;
     case "journal_entry":
