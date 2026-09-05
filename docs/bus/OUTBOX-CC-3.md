@@ -413,3 +413,4 @@ reconciliation (never guessed): 13553 (PAYPA TRANSPORT), 13556 (Hummingbird Logi
 question. NEXT: STEP 2 of 6 (dedicated static guard for the 08/07 floor, if wanted — the floor
 itself is already live and enforced in this script) → STEP 3 (R1/R2 already encoded above) → STEP 4
 (V.1 vendor/customer roll-ups) → STEP 5 (M.3 company settlements backend) → STEP 6 (telematics).
+CC-3 | WRONG-ENTITY QUARANTINE 29 DRY-RUN PASS | canonical cancel/void cascade accepted all 29 in isolated rollback transactions; would void 29 loads · 28 invoices · 148 expenses · 7 newly-live driver bills · 29 settlements · 148 reversal JEs; found 21 rows improperly soft-deleted at 13:55Z, runner restores+audits them before void so register remains visible | apply next after guarded runner merges
