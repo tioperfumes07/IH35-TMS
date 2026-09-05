@@ -16,8 +16,8 @@ No seat starts step N+1 before posting step N's DONE with measurements. Silence 
 | Deploy + Load Costs FE + Dispatch top bar (lead) | CURSOR | /Users/jorgemunoz/IH35-TMS-clean |
 | Money: settlements detail, bills, invoices, driver-profile finance | CC-1 | /Users/jorgemunoz/IH35-TMS-cc3 (cc1 worktrees) |
 | Dispatch board + Banking + design tokens | CC-2 | /Users/jorgemunoz/IH35-TMS-cc2-live |
-| Seed + Customers/Vendors roll-ups + Company settlements backend + Telematics | CC-3 | /Users/jorgemunoz/IH35-TMS-cc3 |
-| Maintenance | CODEX | /Users/jorgemunoz/IH35-TMS-codex-seat |
+| Seed + Customers/Vendors roll-ups + Company settlements backend | CC-3 | /Users/jorgemunoz/IH35-TMS-cc3 |
+| Telematics/Samsara (active-set + USMCA re-scope) — Maintenance DONE 3/3 | CODEX | /Users/jorgemunoz/IH35-TMS-codex-seat |
 | Lists / Reports / Planners + Customers/Vendors landing filters | **DEVIN** | **/Users/jorgemunoz/IH35-TMS-devin** |
 
 ---
@@ -31,7 +31,7 @@ No seat starts step N+1 before posting step N's DONE with measurements. Silence 
 6. L.6 — Company settlements list+detail /accounting/company-settlements on CC-3 M.3 shapes.
 
 ## CC-1 (money read models) — M=7
-1. S.1 — settlement lines read model: join driver_bills on source_driver_bill_id, return miles/rate/pay (earnings + deadhead); FE shows real numbers; guard. (also merge the deadhead-accrual fix already on cursor/step5-deadhead). (#11,#28)
+1. S.1 — settlement lines read model: join driver_bills on source_driver_bill_id, return miles/rate/pay (earnings + deadhead); FE shows real numbers; guard. NOTE: deadhead-accrual (settlement-line-buckets.ts) is ALREADY ON MAIN — do not re-merge; build on it. (#11,#28)
 2. S.2 — /accounting/bills/driver reads driver_finance.driver_bills; All-bills union with Source col; void hidden; guard = screen count == live count. (#13)
 3. S.3 — Invoices Factored column (Not factored/Submitted/Advanced/Settled) + factor name; dash never blank; guard. (#14)
 4. D.3 — driver-profile banner position fix (h1 at top, above status strip). (#26)
@@ -49,18 +49,21 @@ No seat starts step N+1 before posting step N's DONE with measurements. Silence 
 7. 2.2 — design tokens encode design-contract values + ratchet. (#23)
 8. L.4c — Round Trips timeline recovered from 22a266132 + 67faa3dcd, keep 82fda7c90; guard. (#9)
 
-## CC-3 (seed + customers/vendors + company settlements + telematics) — M=6
+## CC-3 (seed + customers/vendors + company settlements) — M=6   [telematics MOVED to Codex 2026-09-05, U1 dropped]
 1. SEED the 20 MISSING USMCA loads: 13512,13513,13515,13520,13522,13525,13528,13530,13532,13535,13536,13537,13541,13542,13544,13551,13553,13554,13555,13556 — pickup dates from signed docs, addresses from docs, NEVER close (leave pre-settlement). (TODAY)
 2. Seed script HARD FLOOR — reject any load pickup < 2026-08-07; fix seeded proforma issue dates (today→pickup date). (#29, TODAY)
 3. Feed rulings R1/R2 — lumper vendor = delivery location (cash); missing customer = create from document. (#27)
 4. V.1 — vendors + customers roll-ups (append-only view cols): vendors Purchases YTD/Last purchase (never updated_at); customers Loads/Booked YTD/Last load; Transactions tab; guard sums foot to live. (#15,#16)
 5. M.3 — company settlements backend (service+read model, 5784 waterfall, GET endpoints, close human-confirmed via journal-entries.service); shapes to Cursor L.6. (#12)
-6. Telematics — Love's 604 import after flap proof; alert chain. (#20)
+6. (Telematics MOVED to Codex — Love's 604 import stays under Codex's telematics vertical.)
 
-## CODEX (maintenance) — M=3   [folder /Users/jorgemunoz/IH35-TMS-codex-seat]
-1. X.7 — maintenance tables/KPIs on ParityTable design contract; one guarded PR.
-2. X.8 — WO create/edit comboboxes, unit-picker rule, ≥$7,000 role routing on screen.
-3. X.9 — Samsara address matching; re-post DEPLOY-REQUEST to Cursor.
+## CODEX (Telematics/Samsara — USMCA) — M=5   [folder /Users/jorgemunoz/IH35-TMS-codex-seat]
+> Maintenance X.7 (#20538 4427c966) · X.8 (#20548 8103343b) · X.9 (e272e9c) DONE 3/3. Owns integrations/samsara/**, telematics/**, active-driver-set/**, drivers.routes.ts (active_only), Drivers.tsx default. RULE 49 + §3b.
+1. Reliable active-set engine — source telematics.vehicle_latest_position (captured_at ≤15d) + vehicle_driver_assignments window-overlap, scoped by units.currently_leased_to_company_id=USMCA; STOP using dead samsara_drivers.last_seen_at. Prove 16 units / 17–20 drivers.
+2. Driver LIST + profile lists DEFAULT active-only (active_only param, Show-all toggle; 264-row DB retained). Units list default = 16 USMCA-leased in-service.
+3. RE-SCOPE Samsara data to USMCA — idempotent CREATE-only migration re-tags telematics rows for USMCA-leased units 91e0bf0a→5c854333; point samsara_config ingestion at USMCA; RE-TAG never DELETE (WORM).
+4. Reliable last_seen_at fix — keep fresh from the position ingestion path (not a one-off backfill); mark samsara_drivers with no USMCA unit link inactive (void, not delete).
+5. verify-step guards (15d window join, lease-scope, count band 10–40) + deploy backend + healthz git_sha + live count proof.
 
 ## DEVIN (lists/reports/planners + counterparty landing) — M=5   [folder /Users/jorgemunoz/IH35-TMS-devin]
 0. SETUP: `cd /Users/jorgemunoz/IH35-TMS-devin && git stash && git checkout main && git pull --ff-only origin main`. (currently on fix/stale-mileage-lane-change, 1 dirty, 6 behind)
