@@ -279,6 +279,32 @@ const DEFAULT_SOURCE_BY_TYPE: Record<WorkOrderType, CreateWOFormValues["source_t
   accident: "AC",
 };
 
+// Owner-locked accounting contract. The backend independently enforces the same 700_000-cent
+// boundary in accounting/capitalize-threshold.ts; this notice makes that write-path decision visible
+// before an operator saves either the create or edit surface.
+const CAPITALIZE_REPAIR_THRESHOLD_DOLLARS = 7_000;
+
+function BooksTreatmentNotice({ totalDollars }: { totalDollars: number }) {
+  const capitalizes = totalDollars >= CAPITALIZE_REPAIR_THRESHOLD_DOLLARS;
+  return (
+    <div
+      data-testid="wo-books-treatment"
+      data-books-treatment={capitalizes ? "capitalize" : "expense"}
+      className="mt-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-700"
+    >
+      {capitalizes ? (
+        <>
+          At $7,000 or above, this repair capitalizes to <b>Fixed Asset – Trucks</b> (role <code>fixed_asset_default</code>).
+        </>
+      ) : (
+        <>
+          Under $7,000, this repair posts to <b>Heavy Repair Expense</b> (role <code>heavy_repair_expense</code>).
+        </>
+      )}
+    </div>
+  );
+}
+
 export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "pm", initialValues, editWorkOrder, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
   const isEdit = Boolean(editWorkOrder);
@@ -1047,6 +1073,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                 ]}
               />
             </div>
+            <BooksTreatmentNotice totalDollars={editLinesTotal} />
             <div className="mt-2 flex items-center gap-2">
               <button type="button" data-testid="edit-wo-add-line" onClick={addEditLine} className="rounded-sm bg-[#1f2a44] px-2.5 py-1 text-[11px] font-semibold text-white">+ Create line</button>
               <span className="ml-auto text-xs font-semibold text-sidebar-active">Total ${editLinesTotal.toFixed(2)}</span>
@@ -1221,6 +1248,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           {/* ===================== C — PARTS & LABOR ===================== */}
           <SectionCard badge="C" title="Parts & Labor" right="from parts catalog" testid="wo-parts-labor">
             <TwoSectionLineEditor mode="wo" initialLines={[]} onChange={setLines} />
+            <BooksTreatmentNotice totalDollars={woGrandTotalDollars} />
             <AssetLocationMap
               parts={serializedParts}
               onAdd={() => setSerializedParts((p) => [...p, { part_type: "tire", part_label: "", serial_number: "", position_code: "" }])}
