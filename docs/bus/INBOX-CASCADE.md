@@ -1,22 +1,20 @@
-# ★ NOTICE — NEW ORDERS ON BUS (NOT YOURS)
-`git pull --ff-only origin main`
-CC-3 = Samsara geofence import (TOP). CC-1 = three-mile/CPM + settlement feed. Do not touch settlements 5753/5760–5795 or geo import. Continue your ORDER section.
-ACK `SEAT | ACK | GEOFENCE+CPM NOT MINE · CONTINUE ORDER | GO`
-
----
-# ★ NOW · OWNER DRIVING · YOUR ORDER SECTION ONLY
-`git pull --ff-only origin main`
-Board: `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md`
-Settlement feed is CC-1+Cursor only. Continue ORDER-2026-09-04. Do not ping Jorge.
-ACK `CASCADE | ACK | CONTINUE ORDER · NO SETTLEMENT FEED | GO`
-
----
-# ★ NOTICE 2026-09-04 — SETTLEMENT FEED IS CC-1 + CURSOR ONLY
+# ★★ SEQUENCE · CASCADE · DO NOT JUMP
 `git pull --ff-only origin main`
 
-Do **not** create/edit/void settlements `5753` / `5760`–`5795`. Continue your ORDER-2026-09-04 section under FAST-MERGE. Law: `docs/bus/ORDER-2026-09-04-SETTLEMENT-ENTRY-SPLIT.md`.
+**Master:** `docs/bus/SEQUENCE-2026-09-04-ALL-SEATS-STRICT.md`  
+**Law:** ALL-SEATS Cascade section
 
-ACK `SEAT | ACK | SETTLEMENT-ENTRY NOT MINE · CONTINUE ORDER | GO`
+| Now | Step | Action |
+|---|---|---|
+| → | **K.0** | ACK |
+| | **K.1** | PR1 planner bars from real loads |
+| | **K.2** | PR2 grid UX |
+| | **K.3** | PR3 design law on your surface |
+| | **K.4+** | BRD-01..24 one PR each |
+
+Build. No findings-only. Push every commit. File CC-1 voided-sum defect in one line — do not fix.
+
+ACK `CASCADE | ACK | SEQUENCE K.0 · BUILD · NO JUMP | GO`
 
 ---
 # ORCHESTRATOR FAST-MERGE WAKE · 2026-09-04 18:32 CT

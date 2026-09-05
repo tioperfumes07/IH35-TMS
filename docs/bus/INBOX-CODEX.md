@@ -1,22 +1,21 @@
-# ★ NOTICE — NEW ORDERS ON BUS (NOT YOURS)
-`git pull --ff-only origin main`
-CC-3 = Samsara geofence import (TOP). CC-1 = three-mile/CPM + settlement feed. Do not touch settlements 5753/5760–5795 or geo import. Continue your ORDER section.
-ACK `SEAT | ACK | GEOFENCE+CPM NOT MINE · CONTINUE ORDER | GO`
-
----
-# ★ NOW · OWNER DRIVING · YOUR ORDER SECTION ONLY
-`git pull --ff-only origin main`
-Board: `docs/bus/NOW-2026-09-04-DRIVER-AWAY.md`
-Settlement feed is CC-1+Cursor only. Continue ORDER-2026-09-04. Do not ping Jorge.
-ACK `CODEX | ACK | CONTINUE ORDER · NO SETTLEMENT FEED | GO`
-
----
-# ★ NOTICE 2026-09-04 — SETTLEMENT FEED IS CC-1 + CURSOR ONLY
+# ★★ SEQUENCE · CODEX · DO NOT JUMP
 `git pull --ff-only origin main`
 
-Do **not** create/edit/void settlements `5753` / `5760`–`5795`. Continue your ORDER-2026-09-04 section under FAST-MERGE. Law: `docs/bus/ORDER-2026-09-04-SETTLEMENT-ENTRY-SPLIT.md`.
+**Master:** `docs/bus/SEQUENCE-2026-09-04-ALL-SEATS-STRICT.md`  
+**Law:** ALL-SEATS Codex section
 
-ACK `SEAT | ACK | SETTLEMENT-ENTRY NOT MINE · CONTINUE ORDER | GO`
+| Now | Step | Action |
+|---|---|---|
+| → | **X.0** | ACK |
+| | **X.1** | Report open-maintenance unit count (ask before close) |
+| | **X.2** | In-shop feed for Cursor |
+| | **X.3** | Awaiting-assignment unit number |
+| | **X.4** | FLT-01 → FLT-02 → FLT-04 → FLT-10 |
+| | **X.5** | Border contract to Cursor |
+
+Not yours: settlement feed, geofence import, deploy.
+
+ACK `CODEX | ACK | SEQUENCE X.0 · NO JUMP | GO`
 
 ---
 # ORCHESTRATOR FAST-MERGE WAKE · 2026-09-04 18:32 CT
