@@ -29,10 +29,16 @@ export function collectProblems({
   requireText(tokens, 'kpiTileBorder: "#C7D2DC"', "--kpi-border token drifted");
   requireText(tokens, 'BUTTON_MD_SIZE_CLASS = "h-7', "28px control token drifted");
 
-  requireText(parity, 'className="w-full table-fixed text-center"', "ParityTable columns are not centered");
+  requireText(
+    parity,
+    'className={`w-full ${columnLayout === "auto" ? "table-auto" : "table-fixed"} text-center`}',
+    "ParityTable columns are not centered across both supported layout modes",
+  );
   requireText(parity, 'stickyHeader ? "sticky top-0 z-10"', "ParityTable header is not sticky by default");
   requireText(parity, "colors.tableRowStripe", "ParityTable zebra rows are not token-backed");
-  requireText(parity, "borderRight: `1px solid ${colors.tableColumnRule}`", "ParityTable body/header column rule missing");
+  requireText(parity, "borderRight: `1px solid ${colors.tableColumnRule}`", "ParityTable header column rule missing");
+  requireText(parity, "borderRight: `1px solid ${colors.tableBodyRule}`", "ParityTable body column rule missing");
+  requireText(parity, "fontWeight: headerWeight ?? 700", "ParityTable header weight no longer defaults to 700");
 
   requireText(drill, "backgroundColor: colors.kpiTileBg", "KPI computed background is not token-backed");
   requireText(drill, "borderColor: active ? colors.navy : colors.kpiTileBorder", "KPI computed border is not token-backed");
@@ -59,7 +65,13 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-maintenance-design-law SELFTEST FAIL — planted KPI token drift escaped");
     process.exit(1);
   }
-  console.log("verify-maintenance-design-law SELFTEST PASS — shared surface and computed-style token mutations caught 2/2");
+  const parity = read("apps/frontend/src/components/parity/ParityTable.tsx");
+  const plantedCenter = collectProblems({ parity: parity.replace("} text-center`}", "} text-left`}") });
+  if (!plantedCenter.includes("ParityTable columns are not centered across both supported layout modes")) {
+    console.error("verify-maintenance-design-law SELFTEST FAIL — planted table-centering drift escaped");
+    process.exit(1);
+  }
+  console.log("verify-maintenance-design-law SELFTEST PASS — shared surface and computed-style token mutations caught 3/3");
   process.exit(0);
 }
 
