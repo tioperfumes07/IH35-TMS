@@ -64,7 +64,12 @@ No seat starts step N+1 before posting step N's DONE with measurements. Silence 
 3. NOW — RE-SCOPE Samsara data to USMCA — idempotent CREATE-only migration re-tags telematics rows for USMCA-leased units 91e0bf0a→5c854333; point samsara_config ingestion at USMCA; RE-TAG never DELETE (WORM).
 4. Reliable last_seen_at fix — keep fresh from the position ingestion path (not a one-off backfill); mark samsara_drivers with no USMCA unit link inactive (void, not delete).
 5. verify-step guards (15d window join, lease-scope, count band 10–40) + deploy backend (srv-d7rpem7avr4c73fhp4n0) + healthz git_sha + **LIVE COUNT PROOF: 16 units / 17–20 drivers** pasted.
-6. Then Maintenance re-measure: FLT-02 in-shop vs OOS visually distinct; FLT-03/04/05/06/07 re-measure CLAIMED-UNVERIFIED rows live; BOR-01 border-crossing manifest.
+6. Maintenance re-measure: FLT-02 in-shop vs OOS visually distinct; FLT-03/04/05/06/07 re-measure CLAIMED-UNVERIFIED rows live; BOR-01 border-crossing manifest.
+### CODEX WAVE 2 (never idle — start when 1-6 merged)
+7. DRV-SAMSARA-LINK (samsara side) — populate/keep-fresh vehicle_driver_assignments from Samsara feed for USMCA-leased units; guard link coverage.
+8. Live last-known-location surface — active-unit map/panel reads telematics.vehicle_latest_position (lease-scoped USMCA); guard freshness ≤15d.
+9. FLT-08/09 remaining fleet rows re-measure live; unit profile telematics tab wired forward+reverse.
+10. Samsara ingestion health monitor — alert if vehicle_latest_position stops updating (dead-signal guard); no silent staleness.
 
 ## DEVIN / CASCADE (lists/reports/planners + counterparty landing) — M=4   [folder /Users/jorgemunoz/IH35-TMS-cascade]
 > DONE 3/3+: K.9 filter bar (#20550) · K.4/K.5/K.6/K.7 planners (#20457/#20551/#20552/#20554) · K.8 dash-never-zero (#20566) + design-law sweep guard (#20567). Owns pages/reports/**, pages/lists/**, planners, Customers/Vendors landing.
@@ -72,6 +77,11 @@ No seat starts step N+1 before posting step N's DONE with measurements. Silence 
 2. LFI-11 / INV-SEARCH-01 — invoice search via the shared server-side query builder; sortable; MMM-DD; guard.
 3. LFI-18/19 — sort-law sweep: every list column server-paginated + sortable; guard verify-sortable-columns.
 4. GLB-08 — app-wide MMM-DD date-format sweep across list/report consumers; guard.
+### DEVIN/CASCADE WAVE 2 (never idle — start when 1-4 merged)
+5. Report EXPORT parity — CSV + print stylesheet on every report page (driver report, invoice search, planners); guard = export present + columns match on-screen.
+6. Report LANDING filter bar — every report page gets a visible-on-first-load date-range + entity filter (K.9 pattern, 0 clicks); guard ≥3 visible controls.
+7. LFI-20+ — remaining catalog lists: centered+sortable headers, gear/column-chooser, voided-hidden default toggle; guard per list.
+8. Counterparty landing polish — Customers/Vendors roll-up columns render live sums (coordinate read model with CC-3 V.1); dash-never-zero; guard sums foot to live.
 
 ---
 DONE line format (all seats): `SEAT | STEP N of M DONE | <sha> | <live sha> | <measurements> | NEXT (N+1) of M`
