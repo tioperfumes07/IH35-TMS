@@ -27,13 +27,22 @@ const EXPECTED_GROUPS = ["Assignment", "Hours of service", "Load", "Telemetry", 
 function problems(src) {
   const issues = [];
 
-  // 1. No column ever hidden by default (§A: "there is no hidden default").
+  // 1. No column hidden by default EXCEPT the four the 2026-09-05 OWNER-REMOVE line covers
+  // (commodity/linehaul/status/pre_settlement) — no blanket allowlist, no unauthorized fifth key.
   if (/\bconst\s+DEFAULT_VISIBLE_BOARD_KEYS\s*=/.test(src)) {
-    issues.push("DEFAULT_VISIBLE_BOARD_KEYS must not exist — every column defaults visible");
+    issues.push("DEFAULT_VISIBLE_BOARD_KEYS must not exist — every column defaults visible except the OWNER-REMOVE four");
   }
   const parityMap = src.match(/const\s+parityColumns[\s\S]*?boardColumns\.map\(\(column\)\s*=>\s*\(\{[\s\S]*?\}\)\)/)?.[0] ?? "";
   if (!parityMap) issues.push("parityColumns mapping not found");
-  else if (/defaultHidden\s*:/.test(parityMap)) issues.push("parityColumns must not set defaultHidden on any column");
+  const OWNER_AUTHORIZED_DEFAULT_HIDDEN_KEYS = new Set(["commodity", "linehaul", "status", "pre_settlement"]);
+  const boardColumnsBlock = src.match(/const\s+boardColumns[\s\S]*?=\s*\[([\s\S]*?)\n\s*\];/)?.[1] ?? "";
+  const defaultHiddenKeys = [...boardColumnsBlock.matchAll(/\{\s*key:\s*"([a-z_]+)"[^}]*\}/g)]
+    .filter((m) => /\bdefaultHidden\s*:\s*true\b/.test(m[0]))
+    .map((m) => m[1]);
+  const unauthorized = defaultHiddenKeys.filter((k) => !OWNER_AUTHORIZED_DEFAULT_HIDDEN_KEYS.has(k));
+  if (unauthorized.length > 0) {
+    issues.push(`boardColumns sets defaultHidden:true on unauthorized key(s): ${unauthorized.join(", ")}`);
+  }
 
   // 2. The 5 group bands, in the PDF's exact order.
   const groupsBlock = src.match(/const\s+boardColumnGroups\s*=\s*\[([\s\S]*?)\n\s*\];/)?.[0] ?? "";
@@ -112,6 +121,11 @@ function selftest() {
     src.replace(
       "const parityColumns: ParityColumn<BoardLoad>[] = boardColumns.map((column) => ({",
       'const DEFAULT_VISIBLE_BOARD_KEYS = new Set(["unit"]);\n  const parityColumns: ParityColumn<BoardLoad>[] = boardColumns.map((column) => ({\n    defaultHidden: !DEFAULT_VISIBLE_BOARD_KEYS.has(column.key),',
+    ),
+    // A fifth, unauthorized defaultHidden key (not covered by the 2026-09-05 OWNER-REMOVE line).
+    src.replace(
+      '{ key: "unit", header: "Unit",',
+      '{ key: "unit", header: "Unit", defaultHidden: true,',
     ),
     src.replace('{ label: "Assignment", keys:', '{ label: "Assignment Renamed", keys:'),
     src.replace('key: "location",\n      header: "Live loc",', 'key: "location",\n      header: "Location",'),

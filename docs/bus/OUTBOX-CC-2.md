@@ -660,3 +660,43 @@ NavItem API extension (Link-only today, Loads-history needs dynamic date default
 the owner's two concrete complaints required; filed as its own follow-up, not silently dropped.
 | NEXT=checking INBOX-CC-2.md for the next open CC-2 row (dispatch backlog / BRD items per LOCK
 IT) | GO
+
+CC-2 | L.4a DONE (re-pass) | 734e4d8e2d (#20639) | live proof 18:12Z: post-merge forensic
+confirms exactly 4 literal `defaultHidden: true` entries on DispatchBoard.tsx (commodity,
+linehaul, status, pre_settlement — verified by name, not just count) + verify-step 10399 present.
+Checked every item in the re-assignment against LIVE code before touching anything: columnLayout=
+"auto", Driver initials, Live-loc minWidth 180, and the frameColor 1px #C7D2DC frame were ALL
+already shipped by earlier L.4a/L.4a-fix work this session (re-verified, not re-done). Two
+genuinely open: gear test-id (added gearButtonTestId prop to ParityTable, wired
+dispatch-board-column-chooser both mounts) and OWNER-REMOVE (literal, not computed, defaultHidden
+on the 4 named columns; verify-additive-only.mjs baseline regenerated 19->24 via its own
+OWNER_REMOVE_LINE escape hatch under this message's exact words).
+CAUGHT MY OWN REGRESSION: ran the full scripts/verify-dispatch-*.mjs sweep before claiming done
+(not just the guards I expected to touch) and found my own earlier, already-merged L.4b PR
+(#20614) wrongly removed "Trip Pairing" from the board-view toolbar -- verify-dispatch-trip-
+pairing-in-board-view-row.mjs (owner 2026-09-04, DISPATCH item #2) already pinned it as
+deliberate + additive. Restored it, corrected the guard (was independently broken pre-existing --
+confirmed via a clean-origin/main worktree, zero of my diff involved -- stale <Button>-tag
+assumption after a legitimate .map() refactor, and never wired), now wired as verify-step 10399.
+Also fixed 3 more guards asserting the OLD absolute "never hidden" rule (now narrowed to the 4
+authorized keys) and one missing test-id (dispatch-secondary-nav, pre-existing broken after a
+rename) -- all independently confirmed pre-existing via the same clean-worktree method before
+being folded into this same PR.
+REMAINING (real backlog, filed honestly, not silently dropped): 9 pre-existing dispatch guard
+failures independently confirmed on a clean origin/main -- verify-dispatch-assignment-optimizer,
+verify-dispatch-board-sections-and-columns, verify-dispatch-cancellation-write-identity,
+verify-dispatch-in-shop-feed-wired, verify-dispatch-load-deeplink-opens-drawer,
+verify-dispatch-primary-inline-reverse-links, verify-dispatch-round-trips-read-recovery,
+verify-dispatch-telemetry-failure-honesty, verify-dispatch-timeline-leave-failure-honesty. None
+touched this pass (out of scope for L.4a specifically); real defects in my own module, queued as
+the next mechanical sweep rather than guessed at under time pressure. Also: no live
+getComputedStyle/Chrome measurement of min-width/truncation yet -- structural-only proof
+(columnLayout="auto") so far. | NEXT=2.2 design tokens (re-verify still green) then L.4c
+round-trips (re-verify still green), then the 9-guard dispatch backlog | GO
+
+CC-2 | 2.2 + L.4c RE-VERIFIED GREEN 18:13Z | no new work needed -- both already merged and still
+live: `verify-table-design-contract` PASS, `verify-ui-design-system-ratchet` PASS (font-size count
+improved 1287->1284 from an unrelated fix, not banked), `verify-roundtrips-timeline-restored` +
+`verify-round-trips-deep-link-timeline-and-empty-copy` both PASS (988fdb73). Full re-assigned
+sequence (L.4a -> 2.2 -> L.4c) closed. | NEXT=the 9-item pre-existing dispatch guard backlog filed
+above, or awaiting next assignment | GO

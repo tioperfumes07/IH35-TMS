@@ -989,7 +989,7 @@ export function DispatchBoard({
   // Order: Unit · Trailer · Driver · [6 Samsara HOS clocks] · Load # · Customer · Commodity · Pickup ·
   // Delivery · WO # · Cargo temp · Linehaul · Status signal · Live GPS · Risk · Status. Lane is split
   // into Pickup (City, ST) + Delivery (City, ST).
-  const boardColumns: Array<{ key: string; header: string; cell: (load: BoardLoad) => ReactNode }> = [
+  const boardColumns: Array<{ key: string; header: string; cell: (load: BoardLoad) => ReactNode; defaultHidden?: boolean }> = [
     { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
     { key: "trailer", header: "Trailer", cell: (load) => renderTrailerCell(load) },
     // DB-6: Load # sits immediately after Trailer in the shared column model (app-wide list + table).
@@ -1018,7 +1018,7 @@ export function DispatchBoard({
     // model's prior order), then TELEMETRY (Live loc · Live GPS · Driver Status · Samsara ETA ·
     // On-time · Freshness), then STATUS (Status signal · Risk · Status · Pre-settlement).
     { key: "customer", header: "Customer", cell: renderCustomerCell },
-    { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—" },
+    { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—", defaultHidden: true },
     { key: "wo", header: "WO #", cell: (load) => load.customer_wo_number ?? "—" },
     { key: "pickup", header: "Pickup", cell: (load) => load.first_pickup_city ?? "—" },
     { key: "pickup_date", header: "PU date", cell: (load) => renderPickupDateCell(load) },
@@ -1037,7 +1037,7 @@ export function DispatchBoard({
         />
       ),
     },
-    { key: "linehaul", header: "Linehaul", cell: (load) => formatMoneyCents(linehaulCents(load), load.currency_code) },
+    { key: "linehaul", header: "Linehaul", cell: (load) => formatMoneyCents(linehaulCents(load), load.currency_code), defaultHidden: true },
     // TELEMETRY — "Live loc" (was "Location"): the truck's current GPS position, resolved to a
     // city/state via the Samsara-fed fleet-location feed. Renamed per the design contract ("it was
     // sitting in the Load group as a bare Location, reading like a third address next to PU and
@@ -1065,8 +1065,8 @@ export function DispatchBoard({
     // STATUS
     { key: "status_signal", header: "Status signal", cell: (load) => renderTriSignalCell(load) },
     { key: "risk", header: "Risk", cell: (load) => <RiskCell load={load} /> },
-    { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
-    { key: "pre_settlement", header: "Pre-settlement", cell: (load) => renderPreSettlementPrompt(load) },
+    { key: "status", header: "Status", cell: (load) => renderStatusCell(load), defaultHidden: true },
+    { key: "pre_settlement", header: "Pre-settlement", cell: (load) => renderPreSettlementPrompt(load), defaultHidden: true },
   ];
 
   // DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §A — the 5 named group-header bands, in order,
@@ -1095,9 +1095,20 @@ export function DispatchBoard({
   // DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §A — "every column in the board model ... is
   // default-visible in Table AND List (the preview shows one grid; there is no hidden default)."
   // BRD-25's DEFAULT_VISIBLE_BOARD_KEYS/defaultHidden restriction (a viewport-width workaround)
-  // is an ADDITIVE-ONLY LAW breach (docs/LAW.md L379: never remove/hide a column) with no
+  // was an ADDITIVE-ONLY LAW breach (docs/LAW.md L379: never remove/hide a column) with no
   // OWNER-REMOVE line in its own PR — removed entirely. The Columns ▾ chooser still exists for
-  // per-user hiding; nothing here is ever forced hidden by default.
+  // per-user hiding; nothing here is ever forced hidden by default EXCEPT the four columns that
+  // now carry a literal `defaultHidden: true` in the boardColumns array above (Commodity,
+  // Linehaul, Status, Pre-settlement) plus a real OWNER-REMOVE line (this PR body):
+  //   OWNER-REMOVE: "owner-remove Commodity/Linehaul/Pre-settlement/Status from defaults" 2026-09-05
+  // — still one click away in the gear ▾ chooser, never deleted from the column model, per the
+  // owner's own 13:29Z reasoning (inventory #37): "if it has been dispatched we know it is
+  // Booked, if not it is in Awaiting Assignment" — Status is redundant with the section bands,
+  // and the other three are low-value defaults on an already-dense 33-column board. Deliberately
+  // LITERAL (not a computed lookup) so `verify-additive-only.mjs`'s pattern-scan actually counts
+  // it — the guard's own baseline is regenerated in this same PR via its OWNER_REMOVE_LINE escape
+  // hatch; a computed expression here would silently escape that count instead of going through
+  // the law's one allowed process.
   const parityColumns: ParityColumn<BoardLoad>[] = boardColumns.map((column) => ({
     key: column.key,
     label: column.header,
@@ -1111,6 +1122,7 @@ export function DispatchBoard({
     // content was clipping at the auto-fit width; 180px is a floor, not a fixed width (auto-fit
     // still widens further for a longer value, per the shared columnLayout="auto" contract).
     minWidth: column.key === "location" ? 180 : undefined,
+    defaultHidden: column.defaultHidden,
     sortable: DISPATCH_SORTABLE_COLS.has(column.key),
     sortValue: DISPATCH_SORTABLE_COLS.has(column.key)
       ? (load: BoardLoad) => dispatchSortValue(load, column.key)
@@ -1278,6 +1290,7 @@ export function DispatchBoard({
                 stickyLeftCount={4}
                 columnLayout="auto"
                 frameColor={colors.tableColumnRule}
+                gearButtonTestId="dispatch-board-column-chooser"
                 rows={rows}
                 rowKey={(row) => row.id}
                 loading={sectionLoading}
@@ -1410,6 +1423,7 @@ export function DispatchBoard({
           enableColumnReorder
           enableColumnResize
           tableTestId="dispatch-board-flat-table"
+          gearButtonTestId="dispatch-board-column-chooser"
           rowTestId={(row) => `dispatch-board-table-row-${row.id}`}
         />
 

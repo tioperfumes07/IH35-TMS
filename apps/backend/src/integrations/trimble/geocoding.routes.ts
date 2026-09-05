@@ -10,6 +10,9 @@ import {
   isGooglePlacesConfigured,
   isGooglePlacesEnabled,
   searchAddress as googleSearchAddress,
+  autocomplete as googleAutocomplete,
+  placeDetails as googlePlaceDetails,
+  type AddressSuggestion,
 } from "../google/google-places-client.js";
 
 // 2026-09-05 owner: "the only flags that are off by law are QBO flags" — this field must return real
@@ -77,4 +80,44 @@ export async function registerGeocodingRoutes(app: FastifyInstance) {
       return reply.code(502).send({ enabled: true, results: [] as GeocodeResult[], error: "geocode_failed" });
     }
   });
+
+  // Places Autocomplete (New): per-keystroke predictions. Only Google offers this; Trimble/none → empty list so
+  // the field falls back to /search (Text Search / Trimble). `session` groups keystrokes + the /place call for billing.
+  app.get("/api/v1/geocoding/suggest", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return reply;
+    const provider = activeProvider();
+    if (!provider) return { enabled: false, suggestions: [] as AddressSuggestion[] };
+    const qy = req.query as { q?: unknown; session?: unknown };
+    const q = String(qy?.q ?? "").trim();
+    const session = String(qy?.session ?? "").trim().slice(0, 64);
+    if (provider !== "google" || q.length < MIN_QUERY || !session) {
+      return { enabled: true, provider, suggestions: [] as AddressSuggestion[] };
+    }
+    try {
+      const suggestions = await googleAutocomplete(q, session);
+      return { enabled: true, provider, suggestions };
+    } catch (e) {
+      req.log?.error({ err: e instanceof Error ? e.message : String(e) }, "google_autocomplete_failed");
+      return reply.code(502).send({ enabled: true, provider, suggestions: [] as AddressSuggestion[], error: "suggest_failed" });
+    }
+  });
+
+  // Place Details (New): resolves a prediction into address_line1/city/state/zip/lat/lon (+ landmarks when present).
+  app.get("/api/v1/geocoding/place/:placeId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return reply;
+    const provider = activeProvider();
+    if (provider !== "google") return reply.code(404).send({ error: "place_lookup_unavailable" });
+    const placeId = String((req.params as { placeId?: unknown })?.placeId ?? "").trim();
+    const session = String((req.query as { session?: unknown })?.session ?? "").trim().slice(0, 64) || undefined;
+    if (!placeId) return reply.code(400).send({ error: "place_id_required" });
+    try {
+      const result = await googlePlaceDetails(placeId, session);
+      if (!result) return reply.code(404).send({ error: "place_not_found" });
+      return { enabled: true, provider, result };
+    } catch (e) {
+      req.log?.error({ err: e instanceof Error ? e.message : String(e) }, "google_place_details_failed");
+      return reply.code(502).send({ error: "place_failed" });
+    }
+  });
+
 }
