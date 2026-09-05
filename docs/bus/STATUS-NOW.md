@@ -1,4 +1,5 @@
 # STATUS-NOW · 2026-09-05 04:22Z (Claude lead loop)
+**05:30Z — ADDITIVE-ONLY BREACH on record (#18231, #20242, Cursor). L.4g guard due 07:00Z. Every seat re-reads LAW L379.**
 **05:20Z — L.4 UPDATED from the owner's Dispatch Board Preview PDF (docs/design/reference). L.4a board 06:30Z · L.4b top bar 07:15Z · L.4c round trips 08:00Z.**
 **05:05Z — CURSOR L.4 (ahead of L.2/L.3 polish): restore the 33-column dispatch Table hidden by BRD-25; 06:00Z; see INBOX-CURSOR top.**
 **04:50Z OWNER CORRECTION — settlement feed is a SEED script per seat (CC-1/CC-3/CODEX), not manual UI. PR 06:30Z, live+tie-out 08:00Z. Owner hands the 6 multi-stop settlements. See INBOX top blocks.**
