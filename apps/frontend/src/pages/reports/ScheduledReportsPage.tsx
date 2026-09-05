@@ -188,16 +188,25 @@ export function ScheduledReportsPage() {
         title={preset?.title ?? "Scheduled reports"}
         subtitle={preset?.subtitle ?? "Automated report delivery via email queue"}
         actions={
-          <Button
-            size="sm"
-            onClick={() => {
-              setEditingRow(null);
-              setModalOpen(true);
-            }}
-            disabled={!companyId}
-          >
-            Schedule a new report
-          </Button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Print
+            </button>
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditingRow(null);
+                setModalOpen(true);
+              }}
+              disabled={!companyId}
+            >
+              Schedule a new report
+            </Button>
+          </div>
         }
       />
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
@@ -209,6 +218,7 @@ export function ScheduledReportsPage() {
         rowKey={(r) => r.id}
         loading={listQuery.isPending || (listQuery.isFetching && rows.length === 0)}
         storageKey="scheduled-reports"
+        exportFilename="scheduled-reports.csv"
         emptyText={preset ? `No ${preset.title.toLowerCase()} schedules exist for this company.` : "No schedules yet. Create one when the backend endpoint is live (P6-T11201)."}
         rowActions={(r) => (
           <div className="flex flex-wrap justify-end gap-1">

@@ -34,9 +34,43 @@ export function CsaFleetScoreCard({ value }: Props) {
           <div className="text-page-title font-semibold text-slate-900">{totalPoints == null ? "—" : totalPoints.toLocaleString()}</div>
           <div className="text-xs text-slate-600">Internal inspection points</div>
         </div>
-        <span className="rounded-full border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700">
-          Not an FMCSA percentile
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700">
+            Not an FMCSA percentile
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              const headers = ["metric", "value"];
+              const lines = [headers.join(",")];
+              for (const basic of BASICS) {
+                const score = basic.key === "basic_hazmat" ? null : toNullableNumber(value[basic.key]);
+                lines.push([basic.label, score == null ? "" : String(score)].join(","));
+              }
+              lines.push(["total_points", totalPoints == null ? "" : String(totalPoints)].join(","));
+              lines.push(["total_inspections", totalInspections == null ? "" : String(totalInspections)].join(","));
+              lines.push(["total_oos", totalOos == null ? "" : String(totalOos)].join(","));
+              lines.push(["computed_at", value.computed_at ?? ""].join(","));
+              const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "csa-fleet-scorecard.csv";
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Export CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Print
+          </button>
+        </div>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
         <div className="rounded-sm border border-slate-200 p-2">

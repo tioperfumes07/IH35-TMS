@@ -99,6 +99,7 @@ function CancellationBucketTable({
   formatAsDate: boolean;
   loading?: boolean;
 }) {
+  const exportFilename = `${storageKey}.csv`;
   const groupLabel = title.replace(/^By /, "");
   const columns = useMemo(
     () => bucketColumns(groupLabel, entityKind, formatAsDate),
@@ -118,6 +119,7 @@ function CancellationBucketTable({
           loading={loading}
           storageKey={storageKey}
           emptyText="No cancellations in range."
+          exportFilename={exportFilename}
         />
       </div>
     </div>
@@ -165,6 +167,16 @@ export function CancellationsReportPage() {
         breadcrumb={["Reports", "Cancellations"]}
       />
       <ReportsSubNav />
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Print
+        </button>
+      </div>
 
       <CollapsedListFilters
         activeFilterCount={activeFilterCount}

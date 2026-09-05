@@ -98,6 +98,16 @@ export function LateArrivalReport() {
         breadcrumb={["Reports", "Late Arrival Analytics"]}
       />
 
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Print
+        </button>
+      </div>
+
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
         onApply={staged.apply}
@@ -152,6 +162,7 @@ export function LateArrivalReport() {
           loading={reportQuery.isPending || (reportQuery.isFetching && rows.length === 0)}
           storageKey="late-arrival-report"
           emptyText="No completed stops with scheduled times in this period."
+          exportFilename="late-arrival-report.csv"
           rowClassName={(row) => (row.chronic_offender ? "bg-slate-50" : "")}
         />
       )}

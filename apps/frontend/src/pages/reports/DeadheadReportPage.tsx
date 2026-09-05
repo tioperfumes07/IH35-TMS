@@ -127,6 +127,16 @@ export function DeadheadReportPage() {
       />
       <ReportsSubNav />
 
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Print
+        </button>
+      </div>
+
       {!companyId ? <p className="text-xs text-red-600">Select operating company.</p> : null}
 
       <CollapsedListFilters
@@ -192,6 +202,7 @@ export function DeadheadReportPage() {
             loading={reportQuery.isPending || (reportQuery.isFetching && sortedUnits.length === 0)}
             storageKey="deadhead-report"
             emptyText="No trucks with deadhead data for this period."
+            exportFilename="deadhead-report.csv"
             rowClassName={(row) => (selectedUnitId === row.unit_id ? "bg-slate-100" : "")}
             onRowClick={(row) => setSelectedUnitId(row.unit_id)}
           />

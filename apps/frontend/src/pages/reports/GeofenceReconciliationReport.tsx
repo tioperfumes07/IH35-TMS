@@ -112,6 +112,17 @@ export function GeofenceReconciliationReport() {
         breadcrumb={["Reports", "Geofence Reconciliation Report"]}
         title="Geofence Reconciliation Report"
       />
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Print
+        </button>
+      </div>
+
       <CollapsedListFilters
         activeFilterCount={appliedDate !== yesterday ? 1 : 0}
         onApply={staged.apply}

@@ -128,9 +128,18 @@ export function GeofenceDwellReport() {
         backHref="/reports"
         breadcrumb={["Reports", "Geofence Dwell Report"]}
         actions={
-          <Button size="sm" variant="secondary" onClick={exportCsv} disabled={!reportQuery.data}>
-            Export CSV
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="secondary" onClick={exportCsv} disabled={!reportQuery.data}>
+              Export CSV
+            </Button>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Print
+            </button>
+          </div>
         }
       />
 

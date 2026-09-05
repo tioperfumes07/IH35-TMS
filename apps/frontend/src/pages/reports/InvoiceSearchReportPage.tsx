@@ -161,6 +161,15 @@ export function InvoiceSearchReportPage() {
         title="Invoice Search"
         subtitle="Server-side search · sortable · MMM-DD dates"
       />
+      <div className="flex justify-end px-4">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Print
+        </button>
+      </div>
       <div className="px-4 pb-6">
         {/* Search + filter bar */}
         <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -201,6 +210,7 @@ export function InvoiceSearchReportPage() {
             storageKey="invoice-search-report"
             tableTestId="invoice-search-report-table"
             emptyText="No invoices match your search."
+            exportFilename="invoice-search-report.csv"
             sortKey={sortKey}
             sortDirection={sortDirection}
             onSortChange={onSortChange}

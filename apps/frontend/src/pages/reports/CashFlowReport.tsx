@@ -56,6 +56,36 @@ export function CashFlowReport() {
         breadcrumb={["Reports", "Cash Flow"]}
       />
       <ReportsSubNav />
+
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            if (!summary) return;
+            const lines = [
+              "operating_company_id,as_of_date,operating_balance_cents,scoped_load_count",
+              `${summary.operating_company_id},${summary.as_of_date},${summary.operating_balance_cents},${summary.scoped_load_count}`,
+            ];
+            const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "cash-flow-report.csv";
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Export CSV
+        </button>
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Print
+        </button>
+      </div>
       <CollapsedListFilters
         activeFilterCount={appliedAsOf !== today ? 1 : 0}
         onApply={staged.apply}
