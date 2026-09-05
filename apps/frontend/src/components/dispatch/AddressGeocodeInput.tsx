@@ -45,6 +45,8 @@ export function AddressGeocodeInput({
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
+  // Keyboard navigation (owner 2026-09-05: "arrows not working"): ArrowDown/ArrowUp move, Enter picks, Escape closes.
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [retryGeneration, setRetryGeneration] = useState(0);
   const cacheRef = useRef<Map<string, Row[]>>(new Map());
   const timerRef = useRef<number | null>(null);
@@ -75,6 +77,7 @@ export function AddressGeocodeInput({
       if (cached) {
         setError(null);
         setRows(cached);
+        setActiveIndex(cached.length > 0 ? 0 : -1);
         setOpen(cached.length > 0);
         return;
       }
@@ -99,6 +102,7 @@ export function AddressGeocodeInput({
         }
         cacheRef.current.set(key, next);
         setRows(next);
+        setActiveIndex(next.length > 0 ? 0 : -1);
         setOpen(next.length > 0);
       } catch {
         setRows([]);
@@ -144,21 +148,56 @@ export function AddressGeocodeInput({
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setOpen(rows.length > 0)}
         onBlur={() => window.setTimeout(() => setOpen(false), 150)}
+        onKeyDown={(e) => {
+          if (!enabled || rows.length === 0) return;
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setOpen(true);
+            setActiveIndex((i) => (i + 1) % rows.length);
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setOpen(true);
+            setActiveIndex((i) => (i <= 0 ? rows.length - 1 : i - 1));
+          } else if (e.key === "Enter" && open && activeIndex >= 0 && activeIndex < rows.length) {
+            e.preventDefault();
+            void pick(rows[activeIndex]);
+          } else if (e.key === "Escape" && open) {
+            e.preventDefault();
+            setOpen(false);
+          }
+        }}
         placeholder={placeholder}
         className={className}
         autoComplete="off"
         aria-busy={resolving || undefined}
+        role="combobox"
+        aria-expanded={open && rows.length > 0}
+        aria-autocomplete="list"
+        aria-controls="address-geocode-listbox"
+        aria-activedescendant={open && activeIndex >= 0 ? `address-geocode-option-${activeIndex}` : undefined}
       />
       {enabled && open && rows.length > 0 ? (
         <ul
+          id="address-geocode-listbox"
+          role="listbox"
           className="absolute z-20 mt-0.5 max-h-56 w-full overflow-auto rounded-sm border border-gray-300 bg-white text-xs shadow-lg"
           data-pcmiler-suggestions="true"
         >
           {rows.map((row, i) => (
-            <li key={row.kind === "suggestion" ? row.s.placeId : `${row.r.formatted}-${i}`}>
+            <li
+              key={row.kind === "suggestion" ? row.s.placeId : `${row.r.formatted}-${i}`}
+              id={`address-geocode-option-${i}`}
+              role="option"
+              aria-selected={i === activeIndex}
+              ref={(el) => {
+                if (el && i === activeIndex) el.scrollIntoView({ block: "nearest" });
+              }}
+            >
               <button
                 type="button"
-                className="block w-full truncate px-2 py-1 text-left hover:bg-slate-100"
+                tabIndex={-1}
+                className={`block w-full truncate px-2 py-1 text-left hover:bg-slate-100 ${i === activeIndex ? "bg-slate-100" : ""}`}
+                onMouseEnter={() => setActiveIndex(i)}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   void pick(row);
