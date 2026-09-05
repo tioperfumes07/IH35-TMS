@@ -41,7 +41,10 @@ export const colors = {
   // ~/Downloads/09-04-2026-Load-Costs-Board-GROUPED-render.html.
   tableHeaderIce: "#EEF2F6", // th-bg, same value as tableHeaderBg — named for the reference doc's own token
   tableHeaderInk: "#1F2937", // th-ink, same value as tableHeaderText
-  tableColumnRule: "#C7D2DC", // th-border — 1px vertical rule between every column, header and body
+  tableColumnRule: "#C7D2DC", // --line2 (th-border) — 1px rule on header/group-band rows
+  tableBodyRule: "#D8DEE6", // --line (body rule) — DESIGN-CONTRACT-LOAD-COSTS-BOARD-2026-09-05.md:
+  // header/group rows are --line2 (#C7D2DC, darker); body td rules are the lighter --line (#D8DEE6)
+  // — two distinct rule shades, not one reused everywhere.
   tableGroupBandBg: "#E4EAF1", // grp-bg — the grouped band row above column headers
   tableRowStripe: "#FAFBFC", // zebra strip on even body rows
   // Column-group tints (odd rows / even rows) — revenue, trip-expense, driver-pay bands.

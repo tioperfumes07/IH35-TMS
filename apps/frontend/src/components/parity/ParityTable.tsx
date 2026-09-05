@@ -1084,7 +1084,10 @@ export function ParityTable<T>({
             style={{
               paddingTop: d.padY,
               paddingBottom: d.padY,
-              borderRight: `1px solid ${colors.tableColumnRule}`,
+              // DESIGN-CONTRACT-LOAD-COSTS-BOARD-2026-09-05.md: body td rules are the lighter
+              // --line shade (tableBodyRule), distinct from the darker --line2 on header/group rows.
+              borderRight: `1px solid ${colors.tableBodyRule}`,
+              borderBottom: `1px solid ${colors.tableBodyRule}`,
               ...(cellBg ? { backgroundColor: cellBg } : {}),
             }}
           >
