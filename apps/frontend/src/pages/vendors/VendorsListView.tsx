@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
-import type { VendorOption } from "../../api/mdata";
+import type { VendorOption, VendorRollup } from "../../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../../lib/quality-badge";
 import { bulkUpdate } from "../../api/bulk";
 import { ParityTable } from "../../components/parity/ParityTable";
@@ -37,10 +37,11 @@ function toCsvCell(value: string): string {
   return /[",\n\r]/.test(s) ? `"${s}"` : s;
 }
 
-function exportVendorsCsv(rows: VendorOption[], openByVendorId: Map<string, number>) {
+function exportVendorsCsv(rows: VendorOption[], openByVendorId: Map<string, number>, rollupByVendorId: Map<string, VendorRollup>) {
   const header = ["Name", "Email", "Phone", "Vendor Type", "Open Balance", "Quality", "FMCSA Authority", "Purchases YTD", "Last Purchase", "Last Transaction", "Created"];
-  const body = rows.map((v) =>
-    [
+  const body = rows.map((v) => {
+    const rollup = rollupByVendorId.get(v.id);
+    return [
       v.name ?? "",
       v.email ?? "",
       v.phone ?? "",
@@ -48,14 +49,12 @@ function exportVendorsCsv(rows: VendorOption[], openByVendorId: Map<string, numb
       fmtMoney(openByVendorId.get(v.id) ?? 0),
       vendorQualityLabel(v.notes).label,
       isCarrier(v) ? "Carrier" : "",
-      // CC-3 V.1: wire to vendor roll-up endpoint when available
-      "",
-      "",
-      // updated_at is row update time, not a real last-transaction date
-      "",
+      fmtMoney(rollup?.purchases_ytd_cents ?? 0),
+      rollup?.last_purchase_date ? mmmDd(rollup.last_purchase_date) : "",
+      rollup?.last_purchase_date ? mmmDd(rollup.last_purchase_date) : "",
       v.created_at ? mmmDd(v.created_at) : "",
-    ].map(toCsvCell).join(",")
-  );
+    ].map(toCsvCell).join(",");
+  });
   const csv = [header.map(toCsvCell).join(","), ...body].join("\r\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -80,10 +79,12 @@ type Props = {
   /** Roster query status so the empty state renders only once the fetch settles. */
   status: ListQueryStatus;
   openByVendorId: Map<string, number>;
+  /** CC-3 V.1 / Wave 3 Step 3 — per-vendor expense roll-up (Purchases YTD / Last Purchase). */
+  rollupByVendorId: Map<string, VendorRollup>;
   onSelectVendor?: (vendorId: string) => void;
 };
 
-export function VendorsListView({ companyId, vendors, status, openByVendorId, onSelectVendor }: Props) {
+export function VendorsListView({ companyId, vendors, status, openByVendorId, rollupByVendorId, onSelectVendor }: Props) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const bulkPermission = useBulkPermission();
@@ -234,7 +235,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
                     pushToast("Select at least one vendor to export.", "info");
                     return;
                   }
-                  exportVendorsCsv(selected, openByVendorId);
+                  exportVendorsCsv(selected, openByVendorId, rollupByVendorId);
                   pushToast(`Exported ${selected.length} vendor(s) to CSV.`, "success");
                 }}
               >
@@ -282,31 +283,40 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
             },
           },
           { key: "fmcsa_label", label: "FMCSA Authority", sortable: true, render: (row) => row.fmcsa_label },
-          // CC-3 V.1 roll-up columns — Purchases YTD / Last Purchase (placeholders until vendor
-          // roll-up endpoint ships; always "—" for now).
-          // CC-3 V.1: wire to vendor roll-up endpoint when available
+          // CC-3 V.1 / Wave 3 Step 3 — roll-up columns wired to the vendor-rollups endpoint.
+          // Purchases YTD shows $0.00 for vendors with no expenses (not "—"); Last Purchase / Last
+          // Transaction show a dash only when the date is null.
           {
             key: "purchases_ytd",
             label: "Purchases YTD",
             sortable: false,
             cellClass: "text-right tabular-nums",
-            render: () => <span className="text-gray-400">—</span>,
+            render: (row) => {
+              const rollup = rollupByVendorId.get(row.id);
+              return fmtMoney(rollup?.purchases_ytd_cents ?? 0);
+            },
           },
           {
             key: "last_purchase",
             label: "Last Purchase",
             sortable: false,
             cellClass: "text-right tabular-nums",
-            render: () => <span className="text-gray-400">—</span>,
+            render: (row) => {
+              const rollup = rollupByVendorId.get(row.id);
+              const date = rollup?.last_purchase_date;
+              return date ? mmmDd(date) : <span className="text-gray-400">—</span>;
+            },
           },
           {
             key: "updated_at",
             label: "Last Transaction",
             sortable: true,
             cellClass: "text-right tabular-nums",
-            // updated_at is the row update time, NOT a real last-transaction date — show "—"
-            // until CC-3 V.1 provides a real vendor roll-up endpoint.
-            render: () => <span className="text-gray-400">—</span>,
+            render: (row) => {
+              const rollup = rollupByVendorId.get(row.id);
+              const date = rollup?.last_purchase_date;
+              return date ? mmmDd(date) : <span className="text-gray-400">—</span>;
+            },
           },
           {
             key: "created_at",

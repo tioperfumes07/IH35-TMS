@@ -45,6 +45,35 @@ function statusPill(isActive: boolean) {
     : "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600";
 }
 
+/** Export the visible cancellation reason rows as CSV. */
+function exportCancellationReasonsCsv(rows: LoadCancellationReason[]) {
+  const headers = ["Code", "Display Name", "Category", "Description", "Order", "Status"];
+  const data = rows.map((r) => [
+    csvCell(r.reason_code),
+    csvCell(r.display_name),
+    csvCell(CATEGORY_LABELS[r.category] ?? r.category),
+    csvCell(r.description ?? ""),
+    String(r.sort_order),
+    r.is_active ? "Active" : "Inactive",
+  ]);
+  const csv = [headers, ...data].map((r) => r.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `load-cancellation-reasons-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Quote a CSV cell if it contains a comma, quote, or newline. */
+function csvCell(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
 // Exported for the LISTS-LOAD-CANCELLATION-REASONS-CREATE-DESCRIPTION-NULL-400 regression test.
 export function parseConflict(error: unknown): string | null {
   if (!(error instanceof ApiError)) return null;
@@ -91,6 +120,7 @@ export function LoadCancellationReasonsListPage() {
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("active");
+  const [showInactive, setShowInactive] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [activeRow, setActiveRow] = useState<LoadCancellationReason | null>(null);
   const [conflictError, setConflictError] = useState<string | null>(null);
@@ -152,13 +182,14 @@ export function LoadCancellationReasonsListPage() {
     return allRows.filter((row) => {
       if (status === "active" && !row.is_active) return false;
       if (status === "inactive" && row.is_active) return false;
+      if (!showInactive && !row.is_active) return false;
       if (!term) return true;
       return (
         row.reason_code.toLowerCase().includes(term) ||
         row.display_name.toLowerCase().includes(term)
       );
     });
-  }, [allRows, search, status]);
+  }, [allRows, search, status, showInactive]);
 
   const isSaving = createMutation.isPending || updateMutation.isPending || deactivateMutation.isPending;
   const breadcrumb = useMemo(() => ["Lists & Catalogs", "Dispatch", "Load Cancellation Reasons"], []);
@@ -181,15 +212,31 @@ export function LoadCancellationReasonsListPage() {
         title="Load Cancellation Reasons"
         countBadge={rows.length}
         actions={
-          <Button
-            onClick={() => {
-              setConflictError(null);
-              setActiveRow(null);
-              setModalMode("create");
-            }}
-          >
-            + Create Entry
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => {
+                setConflictError(null);
+                setActiveRow(null);
+                setModalMode("create");
+              }}
+            >
+              + Create Entry
+            </Button>
+            <button
+              type="button"
+              onClick={() => exportCancellationReasonsCsv(rows)}
+              className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Export CSV
+            </button>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Print
+            </button>
+          </div>
         }
       />
 
@@ -216,6 +263,16 @@ export function LoadCancellationReasonsListPage() {
           </SelectCombobox>
         </label>
       </div>
+
+      <label className="flex items-center gap-1 text-xs text-gray-600">
+        <input
+          type="checkbox"
+          checked={showInactive}
+          onChange={(e) => setShowInactive(e.target.checked)}
+          className="h-3.5 w-3.5 rounded-sm border-gray-300"
+        />
+        Show inactive
+      </label>
 
       {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above
           feed `rows`; row-click → edit modal preserved exactly. */}

@@ -43,6 +43,8 @@ interface UniversalFilterBarProps {
   summaryText?: string;
   /** Preset the page treats as "no filter applied" for the Filters badge count. Defaults to this_month. */
   defaultPeriod?: PeriodPreset;
+  /** Open the filter panel on first render (K.9 pattern — 0 clicks to see controls). */
+  defaultOpen?: boolean;
 }
 
 function getPresetDates(preset: PeriodPreset): { from: string; to: string } {
@@ -174,7 +176,7 @@ const PRESET_LABELS: Record<PeriodPreset, string> = {
   custom: "Custom",
 };
 
-export function UniversalFilterBar({ value, onChange, summaryText, defaultPeriod = "this_month" }: UniversalFilterBarProps) {
+export function UniversalFilterBar({ value, onChange, summaryText, defaultPeriod = "this_month", defaultOpen = false }: UniversalFilterBarProps) {
   const initialDates = getPresetDates(defaultPeriod);
   const staged = useStagedListFilters({
     applied: value,
@@ -204,7 +206,7 @@ export function UniversalFilterBar({ value, onChange, summaryText, defaultPeriod
       className="flex items-center gap-2 border-b bg-gray-50 px-3 py-2"
       data-planner-filter-toolbar="collapsed"
     >
-      <CollapsedListFilters activeFilterCount={activeCount} testIdPrefix="planner" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
+      <CollapsedListFilters activeFilterCount={activeCount} testIdPrefix="planner" defaultOpen={defaultOpen} onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <div className="space-y-1.5">
           <div className="text-xs font-semibold text-gray-600">
             Period <span className="font-normal text-gray-400">— currently {PRESET_LABELS[draft.period]}</span>
