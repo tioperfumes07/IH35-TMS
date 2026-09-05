@@ -70,6 +70,30 @@ describe("transaction-aware canonical bill-payment void", () => {
     expect(calls.some((call) => call.sql.includes("UPDATE banking.bank_accounts") && call.values?.[2] === 7_500)).toBe(true);
   });
 
+  // ACCT-SETL-BILLPAY-VOID-MIRROR — owner ruling: write BOTH revoked_* AND voided_at/void_reason/
+  // voided_by_user_id in the SAME transaction/statement, not a rewrite of the working revoked_*
+  // path. Asserted as its own case so a future edit that drops the mirror is a visible test failure,
+  // not just a silent gap the existing revoked_at-only assertion above would never catch.
+  it("mirrors the GO-22 void register (voided_at/void_reason/voided_by_user_id) in the SAME UPDATE statement as revoked_*, not a second write", async () => {
+    const { client, calls } = paymentClient();
+    const { voidBillPaymentInClientTx } = await import("../bills.service.js");
+    await voidBillPaymentInClientTx(client, {
+      operatingCompanyId: COMPANY, paymentId: PAYMENT, reason: "settlement cancellation",
+      userId: USER, reversePostedGl: true, currentBusinessDate: "2026-07-18",
+    });
+
+    const paymentUpdate = calls.find((call) => call.sql.includes("UPDATE accounting.bill_payments") && call.sql.includes("revoked_at = now()"));
+    expect(paymentUpdate, "expected the bill_payments void UPDATE").toBeTruthy();
+    // Same statement — not a second, separate UPDATE call.
+    expect(paymentUpdate!.sql).toMatch(/revoked_at\s*=\s*now\(\)/);
+    expect(paymentUpdate!.sql).toMatch(/voided_at\s*=\s*now\(\)/);
+    expect(paymentUpdate!.sql).toMatch(/void_reason\s*=\s*\$4/);
+    expect(paymentUpdate!.sql).toMatch(/voided_by_user_id\s*=\s*\$3/);
+    // Only ONE bill_payments UPDATE happened — confirms this is a mirror in the existing statement,
+    // not a rewrite that fires a second query.
+    expect(calls.filter((call) => call.sql.includes("UPDATE accounting.bill_payments")).length).toBe(1);
+  });
+
   it("performs no subledger mutation after a GL reversal failure", async () => {
     const { client, calls } = paymentClient();
     reverseSource.mockRejectedValue(new Error("PERIOD_LOCKED"));
