@@ -1,6 +1,6 @@
 {
   "healthzSha": "7e852b2",
-  "generated_at": "2026-09-05T02:26:52.654Z",
+  "generated_at": "2026-09-05T02:35:12.161Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
@@ -2123,6 +2123,51 @@
   },
   "recentActivity": [
     {
+      "number": 20456,
+      "title": "Cursor-DSP enable Book and send → distribute driver instructions (WIZ-49d resolved)",
+      "state": "merged",
+      "mergedAtCt": "09/04/2026, 09:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20456",
+      "sha": "0aca76377d",
+      "committedAtIso": "2026-09-04T21:34:15-05:00"
+    },
+    {
+      "number": 20455,
+      "title": "FINDING: N/A (docs only, STEP-1 DONE checkoff)",
+      "state": "merged",
+      "mergedAtCt": "09/04/2026, 09:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20455",
+      "sha": "84274eaedd",
+      "committedAtIso": "2026-09-04T21:32:01-05:00"
+    },
+    {
+      "number": 20454,
+      "title": "FINDING: N/A (docs only) — lead tick 03:00Z: CC-3 3.2b verified ✔, 3.3 ordered with deadline; CC-1 0b migration #4 addendum",
+      "state": "merged",
+      "mergedAtCt": "09/04/2026, 09:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20454",
+      "sha": "21769b4dba",
+      "committedAtIso": "2026-09-04T21:30:15-05:00"
+    },
+    {
+      "number": 20451,
+      "title": "Claude-lead: VERDICT FORMAT LAW (docs only)",
+      "state": "merged",
+      "mergedAtCt": "09/04/2026, 09:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20451",
+      "sha": "c9d81dcff9",
+      "committedAtIso": "2026-09-04T21:27:46-05:00"
+    },
+    {
+      "number": 20453,
+      "title": "FINDING: N/A (docs only — GAP-39 geofence engine 3.2b merge checkoff)",
+      "state": "merged",
+      "mergedAtCt": "09/04/2026, 09:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20453",
+      "sha": "9f4983d7ee",
+      "committedAtIso": "2026-09-04T21:26:49-05:00"
+    },
+    {
       "number": 20452,
       "title": "FINDING: MAINT-DESIGN-X7 Fleet registry bypassed the shared KPI computed-style contract with private white, left-aligned cards and non-token controls.",
       "state": "merged",
@@ -2166,51 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20447",
       "sha": "7cfd2db92f",
       "committedAtIso": "2026-09-04T21:19:59-05:00"
-    },
-    {
-      "number": 20446,
-      "title": "FINDING: N/A (docs only) — lead tick 02:45Z: live-measured Load Costs board defects → CC-1 1.3a with 03:45Z deadline; Codex X.6–X.8",
-      "state": "merged",
-      "mergedAtCt": "09/04/2026, 09:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20446",
-      "sha": "70effab4de",
-      "committedAtIso": "2026-09-04T21:19:39-05:00"
-    },
-    {
-      "number": 20445,
-      "title": "FINDING: N/A — repair OUTBOX-CASCADE tracking, add K.0/K.4 checkoffs (OWNER-REQUEST-REGISTER #19)",
-      "state": "merged",
-      "mergedAtCt": "09/04/2026, 09:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20445",
-      "sha": "b414fb2bc7",
-      "committedAtIso": "2026-09-04T21:18:29-05:00"
-    },
-    {
-      "number": 20444,
-      "title": "Cursor-DSP board-view row + clean top banner + darker Kanban lane borders",
-      "state": "merged",
-      "mergedAtCt": "09/04/2026, 09:17 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20444",
-      "sha": "2ad0df3a6a",
-      "committedAtIso": "2026-09-04T21:17:50-05:00"
-    },
-    {
-      "number": 20443,
-      "title": "FINDING: N/A (docs only) — lead tick 02:25Z: Cascade L ✔, K.4–K.7 mapped to BRD-19/20/21/23, OUTBOX local-ignore defect",
-      "state": "merged",
-      "mergedAtCt": "09/04/2026, 09:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20443",
-      "sha": "46270b697e",
-      "committedAtIso": "2026-09-04T21:13:21-05:00"
-    },
-    {
-      "number": 20442,
-      "title": "FINDING: N/A (docs only) — lead tick 02:10Z: board marks, INBOX verdicts, owner priority = Load Costs register",
-      "state": "merged",
-      "mergedAtCt": "09/04/2026, 09:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20442",
-      "sha": "62406e1719",
-      "committedAtIso": "2026-09-04T21:11:18-05:00"
     }
   ]
 }

@@ -13,6 +13,7 @@ import { listPlannerDays } from "./planner-range";
 import { PlannerAxisHead } from "./PlannerAxisHead";
 import { dwellsFromDayMap, PlannerGrid } from "./PlannerGrid";
 import { groupPlannerBarsByKey, usePlannerLoads } from "./planner-bars";
+import { PlannerAction } from "./PlannerRowActions";
 
 void PlannerAxisHead;
 
@@ -65,17 +66,26 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
         days={days}
         frozenLabel="Driver"
         frozenPx={280}
+        statusLabel="Status"
+        actionLabel="Action"
         rows={drivers.map((dr) => {
           const driverId = String(dr.driver_id);
           const name = String(dr.driver_name ?? "");
           const unitId = dr.unit_id ? String(dr.unit_id) : null;
           const unit = dr.unit_number ? String(dr.unit_number) : null;
+          const bars = loadBarsByDriver.get(driverId) ?? [];
+          const dwells = dwellsFromDayMap(days, (d) => cellByDriverDay.get(`${driverId}|${d}`), `leave-${driverId}`);
+          const status = dwells.length > 0 ? "On Leave" : bars.length > 0 ? "In Use" : unit ? "Available" : "—";
           return {
             id: driverId,
             name: <EntityLinkOrTombstone kind="driver" id={driverId} name={name} noun="Driver" />,
             unit: unit ? <EntityLinkOrTombstone kind="unit" id={unitId} name={unit} noun="Unit" /> : null,
-            bars: loadBarsByDriver.get(driverId) ?? [],
-            dwells: dwellsFromDayMap(days, (d) => cellByDriverDay.get(`${driverId}|${d}`), `leave-${driverId}`),
+            status,
+            action: (
+              <PlannerAction to={`/dispatch/loads?driver_id=${encodeURIComponent(driverId)}`} label="Book" />
+            ),
+            bars,
+            dwells,
           };
         })}
         empty={

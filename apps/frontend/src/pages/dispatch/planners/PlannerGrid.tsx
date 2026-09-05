@@ -60,6 +60,7 @@ export type PlannerGridRow = {
   name: ReactNode;
   secondary?: ReactNode;
   unit?: ReactNode;
+  status?: ReactNode;
   action?: ReactNode;
   idle?: boolean;
   bars: PlannerGridBar[];
@@ -70,6 +71,7 @@ type Props = {
   days: string[];
   frozenLabel: string;
   actionLabel?: string;
+  statusLabel?: string;
   frozenPx?: number;
   rows: PlannerGridRow[];
   empty: ReactNode;
@@ -153,16 +155,51 @@ function CellOrDash({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-function FrozenName({ row, hasActionColumn }: { row: PlannerGridRow; hasActionColumn: boolean }) {
+function frozenGridTemplate(
+  hasSecondary: boolean,
+  hasUnit: boolean,
+  hasStatus: boolean,
+  hasAction: boolean
+): string {
+  const cols = ["minmax(100px, 1fr)"];
+  if (hasSecondary) cols.push("minmax(0, 1fr)");
+  if (hasUnit) cols.push("56px");
+  if (hasStatus) cols.push("64px");
+  if (hasAction) cols.push("72px");
+  return cols.join(" ");
+}
+
+function FrozenName({
+  row,
+  hasStatusColumn,
+  hasActionColumn,
+}: {
+  row: PlannerGridRow;
+  hasStatusColumn: boolean;
+  hasActionColumn: boolean;
+}) {
+  const template = frozenGridTemplate(
+    row.secondary !== undefined,
+    row.unit !== undefined,
+    hasStatusColumn,
+    hasActionColumn
+  );
   return (
-    <div className={`pg-name pg-name-cols${hasActionColumn ? " has-action" : ""}`}>
+    <div className="pg-name pg-name-cols" style={{ display: "grid", gridTemplateColumns: template }}>
       <div className="pg-col-name" title={typeof row.name === "string" ? row.name : undefined}>
         <CellOrDash>{row.name}</CellOrDash>
       </div>
-      <div className="pg-col-sec"><CellOrDash>{row.secondary}</CellOrDash></div>
-      <div className="pg-col-unit"><CellOrDash>{row.unit}</CellOrDash></div>
+      {row.secondary !== undefined ? (
+        <div className="pg-col-sec"><CellOrDash>{row.secondary}</CellOrDash></div>
+      ) : null}
+      {row.unit !== undefined ? (
+        <div className="pg-col-unit"><CellOrDash>{row.unit}</CellOrDash></div>
+      ) : null}
+      {hasStatusColumn ? (
+        <div className="pg-col-status" data-testid="planner-row-status"><CellOrDash>{row.status}</CellOrDash></div>
+      ) : null}
       {hasActionColumn ? (
-        <div className="pg-col-action"><CellOrDash>{row.action}</CellOrDash></div>
+        <div className="pg-col-action" data-testid="planner-row-action"><CellOrDash>{row.action}</CellOrDash></div>
       ) : null}
     </div>
   );
@@ -172,6 +209,7 @@ export function PlannerGrid({
   days,
   frozenLabel,
   actionLabel,
+  statusLabel,
   frozenPx = 280,
   rows,
   empty,
@@ -188,6 +226,7 @@ export function PlannerGrid({
   const rangeStart = days[0];
   const rangeEnd = days[days.length - 1];
   const hasActionColumn = actionLabel != null || rows.some((row) => row.action !== undefined);
+  const hasStatusColumn = statusLabel != null || rows.some((row) => row.status !== undefined);
 
   const dayPx = useMemo(() => {
     if (!measuredWidth || days.length === 0) return PLANNER_DAY_PX;
@@ -294,8 +333,22 @@ export function PlannerGrid({
         <div className="pg-grid">
           <div className="pg-axis" data-testid="planner-time-axis">
             <div className="pg-arow" data-testid="planner-axis-month-row">
-              <div className={`pg-frz${hasActionColumn ? " pg-frz-cols has-action" : ""}`}>
-                <span>{frozenLabel}</span>
+              <div
+                className="pg-frz pg-frz-cols"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: frozenGridTemplate(
+                    rows.some((r) => r.secondary !== undefined),
+                    rows.some((r) => r.unit !== undefined),
+                    hasStatusColumn,
+                    hasActionColumn
+                  ),
+                }}
+              >
+                <span style={{ gridColumn: `1 / span ${1 + Number(rows.some((r) => r.secondary !== undefined)) + Number(rows.some((r) => r.unit !== undefined))}` }}>
+                  {frozenLabel}
+                </span>
+                {hasStatusColumn ? <span className="pg-frz-status">{statusLabel ?? "Status"}</span> : null}
                 {hasActionColumn ? <span className="pg-frz-action">{actionLabel ?? "Action"}</span> : null}
               </div>
               {bands.map((b) => (
@@ -330,7 +383,7 @@ export function PlannerGrid({
           ) : (
             rows.map((row) => (
               <div key={row.id} className={`pg-r${row.idle ? " idle" : ""}`}>
-                <FrozenName row={row} hasActionColumn={hasActionColumn} />
+                <FrozenName row={row} hasStatusColumn={hasStatusColumn} hasActionColumn={hasActionColumn} />
                 <div
                   className="pg-track"
                   data-testid="planner-grid-track"
