@@ -1364,7 +1364,9 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       // selectable in real dispatch/scheduling flows. is_sample_data is NOT NULL DEFAULT false, so
       // `IS NOT TRUE` is a total, index-friendly predicate — same pattern as units.routes.ts.
       filters.push("is_sample_data IS NOT TRUE");
-      if (status) {
+      // Rule 49: "Active" is movement-derived, not the stale HR status flag. Other explicit
+      // roster segments retain their stored-status semantics.
+      if (status && status !== "Active") {
         values.push(status);
         filters.push(`status = $${values.length}`);
       }
@@ -1399,6 +1401,20 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       values.push(scopedCompanyId);
       const ociIdx = values.length;
+      if (status === "Active") {
+        // Consume the snapshot built by recomputeActiveDriverSet under Lucia bypass. Reading the
+        // raw assignment table here would incorrectly hide still-Transportation-tagged Samsara
+        // rows before the idempotent re-tag step; the cache is already company-scoped and its
+        // producer is guarded against stale last_seen_at/status logic.
+        filters.push(`mdata.drivers.id = ANY(COALESCE((
+          SELECT canonical_active_cache.active_driver_uuids
+          FROM integrations.active_driver_set_cache canonical_active_cache
+          WHERE canonical_active_cache.operating_company_id = $${ociIdx}::uuid
+            AND canonical_active_cache.threshold_days = 15
+          ORDER BY canonical_active_cache.snapshot_at DESC
+          LIMIT 1
+        ), ARRAY[]::uuid[]))`);
+      }
       // Predicate must appear in the SQL template literal (verify-mdata-entity-scope ratchet) —
       // do not bury operating_company_id only inside an interpolated ${whereClause}.
       const extraAnd = filters.length > 0 ? `AND ${filters.join(" AND ")}` : "";

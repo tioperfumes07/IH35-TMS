@@ -315,10 +315,20 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
         [scopedCompanyId],
       );
       values.push(scopedCompanyId);
-      const ownerLeasedIdx = values.length;
-      filters.push(
-        `(owner_company_id = $${ownerLeasedIdx} OR currently_leased_to_company_id = $${ownerLeasedIdx})`,
-      );
+      const ociIdx = values.length;
+      if (status === "InService") {
+        // Rule 49: the active unit roster is the fleet currently leased to this carrier. Ownership
+        // identifies the asset holder and would pull Transportation-only trucks into USMCA.
+        filters.push(`currently_leased_to_company_id = $${ociIdx}::uuid`);
+        filters.push("is_oos IS NOT TRUE");
+        filters.push("sold_date IS NULL");
+        filters.push("disposed_date IS NULL");
+        filters.push("deactivated_at IS NULL");
+      } else {
+        filters.push(
+          `(owner_company_id = $${ociIdx} OR currently_leased_to_company_id = $${ociIdx})`,
+        );
+      }
       const whereClause =
         filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const countRes = await client.query<{ total: number }>(
