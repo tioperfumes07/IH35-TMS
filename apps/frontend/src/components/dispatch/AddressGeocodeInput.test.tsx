@@ -2,14 +2,18 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AddressGeocodeInput } from "./AddressGeocodeInput";
-import { geocodeSearch } from "../../api/geocoding";
+import { geocodePlace, geocodeSearch, geocodeSuggest } from "../../api/geocoding";
 
-vi.mock("../../api/geocoding", () => ({ geocodeSearch: vi.fn() }));
+vi.mock("../../api/geocoding", () => ({ geocodeSearch: vi.fn(), geocodeSuggest: vi.fn(), geocodePlace: vi.fn() }));
 
 describe("AddressGeocodeInput geocode failure recovery", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.mocked(geocodeSearch).mockReset();
+    vi.mocked(geocodeSuggest).mockReset();
+    vi.mocked(geocodePlace).mockReset();
+    // No Autocomplete predictions → the component falls back to /search (the path under test).
+    vi.mocked(geocodeSuggest).mockResolvedValue({ enabled: true, provider: "google", suggestions: [] });
   });
 
   it("distinguishes an outage from zero matches and retries the exact query", async () => {
