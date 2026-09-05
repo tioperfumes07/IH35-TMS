@@ -91,3 +91,5 @@ CASCADE | K.7 BRD-23 DONE | d7700e7101 | origin/main | planner ranges 7d/14d/30d
 CASCADE | LST-DUP DONE | a4c2c833cd | verify-duplicate-masters-report --selftest 15/15 PASS | drivers groups 89 | NEXT await lead
 
 CASCADE | LST-LOC DONE | 049c547426 | verify-locations-list --selftest PASS | locations 12 · geocoded 9 · geofence 0 | NEXT await lead
+
+CASCADE | RPT-06 DONE | a7fcd6dc98 | verify-report-landing-filter-bar --selftest PASS | 24/24 pages · date range + search + presets | NEXT await lead
