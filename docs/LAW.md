@@ -386,6 +386,8 @@ suggestions — all ordered removed 2026-09-03; dispatch board default columns C
 
 **Additive-only is GUARDED (owner 2026-09-05 05:28Z).** `scripts/verify-additive-only.mjs` in `pnpm gate` fails any PR that shrinks the sidebar, route, board-column or tab-row sets, or hides a board column by default, unless the PR body carries `OWNER-REMOVE: "<owner's exact words>" <date>`. Breaches on record: #18231 (Round Trips timeline → PlannerGrid) and #20242 (24 of 33 dispatch columns hidden) — both Cursor, both ordered restored (L.4a, L.4c).
 
+**MODULE OWNERSHIP MAP (owner 'lock it' 2026-09-05 14:13Z) — supersedes the §0b table where they differ; full text `docs/bus/OWNERSHIP-MAP-2026-09-05.md`.** One lead (Claude): measures, verdicts, one register, sequencing, enforcement. Cursor: deploy every 20 min + dispatcher + Banking vertical. CC-2: Dispatch + frozen shared components (ParityTable, tokens, sidebar, design contracts). CC-1: Load Costs + Accounting read models + Customers/Vendors. CC-3: Settlements/Escrow/Driver Profile + Seed + Telematics/Safety. Codex: Maintenance. Cascade: Lists/Reports/Planners. One coder per module, owned vertically; hard file boundaries in CODEOWNERS.
+
 **Maker is not checker on the general ledger.** The coder builds and tests; an independent seat
 verifies live. No approval gate — proof is the safeguard.
 
