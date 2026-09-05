@@ -34,6 +34,8 @@ vi.mock("../../../audit/crud-audit.js", () => ({
 const OPCO = "aaaaaaaa-aaaa-aaaa-4aaa-aaaaaaaaaaaa";
 const GEOFENCE = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const ACTOR = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+const LOAD = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+const STOP = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 
 describe("SamsaraCreateGeofenceHandler", () => {
   beforeEach(() => {
@@ -56,6 +58,8 @@ describe("SamsaraCreateGeofenceHandler", () => {
       {
         operating_company_id: OPCO,
         geofence_id: GEOFENCE,
+        load_id: LOAD,
+        stop_id: STOP,
         latitude: 27.5,
         longitude: -99.5,
         formatted_address: "Laredo, TX",
@@ -71,6 +75,11 @@ describe("SamsaraCreateGeofenceHandler", () => {
         latitude: 27.5,
         longitude: -99.5,
         radiusMeters: 76,
+        externalIds: {
+          ih35Load: LOAD,
+          ih35Stop: STOP,
+          ih35Site: GEOFENCE,
+        },
       })
     );
     expect(query).toHaveBeenCalledWith(
@@ -87,6 +96,8 @@ describe("SamsaraCreateGeofenceHandler", () => {
       {
         operating_company_id: OPCO,
         geofence_id: GEOFENCE,
+        load_id: LOAD,
+        stop_id: STOP,
         latitude: 27.5,
         longitude: -99.5,
         label: "Laredo, TX",
@@ -105,6 +116,8 @@ describe("SamsaraCreateGeofenceHandler", () => {
       {
         operating_company_id: OPCO,
         geofence_id: GEOFENCE,
+        load_id: LOAD,
+        stop_id: STOP,
         latitude: 27.5,
         longitude: -99.5,
         formatted_address: "Laredo, TX",

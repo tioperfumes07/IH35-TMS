@@ -9,5 +9,7 @@ export default {
     await ctx.run("node", ["scripts/verify-auto-geofence-no-blocking-call.mjs"]);
     await ctx.run("node", ["scripts/verify-active-entity-hardline.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-active-entity-hardline.mjs"]);
+    await ctx.run("node", ["scripts/verify-samsara-external-ids-standard.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-samsara-external-ids-standard.mjs"]);
   },
 };
