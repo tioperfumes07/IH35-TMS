@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
-import { BankingRuleRow, mergeSuggestionPreferHigher, suggestionFromPlaidCategory, suggestionFromRules } from "./suggestion-engine.js";
+import { BankingRuleRow, PlaidCategoryRuleRow, mergeSuggestionPreferHigher, suggestionFromPlaidCategory, suggestionFromRules } from "./suggestion-engine.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { findCandidates } from "../accounting/bank-recon/match.service.js";
 import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
@@ -82,6 +82,18 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
       );
       const rules = rulesRes.rows as BankingRuleRow[];
 
+      // BANK-F25011 — the owner-curated Plaid-category → COA mapping (banking.transaction_categories).
+      // Loaded once here so every review row can surface the SAME account autoCategorize would pick,
+      // via the shared scoreRuleMatch scorer. Suggestion only; Accept is what categorizes/posts.
+      const categoryRulesRes = await client.query(
+        `SELECT plaid_category_pattern, description_pattern, coa_account_id, priority
+         FROM banking.transaction_categories
+         WHERE operating_company_id = $1::uuid AND is_active = true
+         ORDER BY priority ASC, created_at ASC`,
+        [q.operating_company_id]
+      );
+      const categoryRules = categoryRulesRes.rows as PlaidCategoryRuleRow[];
+
       // BANK-ACCOUNT-HIDE: the review/categorization worklist must never surface a transaction on an
       // account hidden for THIS entity (flag OFF by default — see
       // docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
@@ -133,7 +145,11 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
             }),
             null
           ) ?? null;
-        const plaid = suggestionFromPlaidCategory(Array.isArray(row.plaid_category) ? row.plaid_category[0] : null);
+        const plaid = suggestionFromPlaidCategory(
+          categoryRules,
+          Array.isArray(row.plaid_category) ? (row.plaid_category as string[]) : [],
+          (row.description as string | null) ?? null
+        );
         const merged =
           plaid && sug
             ? mergeSuggestionPreferHigher(sug, {

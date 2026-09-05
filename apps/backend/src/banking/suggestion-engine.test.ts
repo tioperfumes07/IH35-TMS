@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { mergeSuggestionPreferHigher, suggestionFromRules } from "./suggestion-engine.js";
+import {
+  mergeSuggestionPreferHigher,
+  suggestionFromPlaidCategory,
+  suggestionFromRules,
+  type PlaidCategoryRuleRow,
+} from "./suggestion-engine.js";
+
+const ACC_FUEL = "ffffffff-ffff-ffff-ffff-ffffffffffff";
+const ACC_TOLL = "cccccccc-cccc-cccc-cccc-cccccccccccc";
 
 describe("suggestion engine tiers", () => {
   it("rule tier yields high confidence", () => {
@@ -41,5 +49,45 @@ describe("suggestion engine tiers", () => {
       source: "y",
     };
     expect(mergeSuggestionPreferHigher(low, high)).toEqual(high);
+  });
+});
+
+describe("suggestionFromPlaidCategory (owner-curated banking.transaction_categories)", () => {
+  const rules: PlaidCategoryRuleRow[] = [
+    { plaid_category_pattern: "TRANSPORTATION", description_pattern: null, coa_account_id: ACC_FUEL, priority: 20 },
+    { plaid_category_pattern: "TRANSPORTATION_TOLLS", description_pattern: null, coa_account_id: ACC_TOLL, priority: 40 },
+  ];
+
+  it("leaf category beats parent — the most-specific rule wins (BANK-F02 inversion fix)", () => {
+    const hit = suggestionFromPlaidCategory(rules, ["TRANSPORTATION", "TRANSPORTATION_TOLLS"], "LAREDO BRIDGE TOLL");
+    expect(hit?.account_id).toBe(ACC_TOLL);
+    expect(hit?.confidence).toBe("medium");
+    expect(hit?.source).toBe("plaid_category");
+  });
+
+  it("parent-only match yields low confidence", () => {
+    const hit = suggestionFromPlaidCategory(rules, ["TRANSPORTATION", "TRANSPORTATION_PUBLIC_TRANSIT"], "FUEL AMERICA");
+    expect(hit?.account_id).toBe(ACC_FUEL);
+    expect(hit?.confidence).toBe("low");
+  });
+
+  it("merchant description pattern is highest specificity (high)", () => {
+    const merchant: PlaidCategoryRuleRow[] = [
+      { plaid_category_pattern: "TRANSPORTATION_GAS", description_pattern: "LOVE'S TIRE", coa_account_id: ACC_TOLL, priority: 10 },
+    ];
+    const hit = suggestionFromPlaidCategory(merchant, ["TRANSPORTATION", "TRANSPORTATION_GAS"], "LOVE'S TIRE CARE #55");
+    expect(hit?.confidence).toBe("high");
+    expect(hit?.account_id).toBe(ACC_TOLL);
+  });
+
+  it("no matching rule returns null", () => {
+    expect(suggestionFromPlaidCategory(rules, ["FOOD_AND_DRINK"], "STARBUCKS")).toBeNull();
+  });
+
+  it("rule without a COA account is skipped", () => {
+    const unmapped: PlaidCategoryRuleRow[] = [
+      { plaid_category_pattern: "TRANSPORTATION_TOLLS", description_pattern: null, coa_account_id: null, priority: 5 },
+    ];
+    expect(suggestionFromPlaidCategory(unmapped, ["TRANSPORTATION", "TRANSPORTATION_TOLLS"], null)).toBeNull();
   });
 });
