@@ -146,6 +146,8 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
         -- mirrors the fix there exactly.
         COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(i.customer_id, i.operating_company_id)) AS customer_name,
         fa.display_id AS factoring_display_id,
+        -- A4 (inv #14) — same factor-name join as the list route above, kept consistent both ways.
+        fp.name AS factor_profile_name,
         COALESCE(l.customer_chargeback_requested, false) AS source_load_chargeback_requested,
         l.customer_chargeback_reason AS source_load_chargeback_reason,
         l.load_number AS source_load_number,
@@ -164,6 +166,8 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
       -- entity could be attached to the invoice's financing view.
       LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
                                                AND fa.operating_company_id = i.operating_company_id
+      LEFT JOIN factoring.factor fp ON fp.id = i.factor_profile_id
+                                    AND fp.operating_company_id = i.operating_company_id
       LEFT JOIN mdata.loads l
         ON l.id = i.source_load_id
        AND l.operating_company_id = i.operating_company_id
@@ -373,6 +377,10 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             -- supply the real name for a HISTORICAL reference, same-company-only, label-only.
             COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(i.customer_id, i.operating_company_id)) AS customer_name,
             fa.display_id AS factoring_display_id,
+            -- A4 (inv #14) — "Need a Factored column": factoring_status/factor_profile_id already
+            -- existed on every invoice via i.* above and were never rendered anywhere. The factor's
+            -- own name needs this join (factor_profile_id has no display value of its own).
+            fp.name AS factor_profile_name,
             l.load_number AS source_load_number,
             COALESCE(l.customer_chargeback_requested, false) AS source_load_chargeback_requested,
             l.customer_chargeback_reason AS source_load_chargeback_reason,
@@ -391,6 +399,8 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       -- entity could be attached to the invoice's financing view.
       LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
                                                AND fa.operating_company_id = i.operating_company_id
+      LEFT JOIN factoring.factor fp ON fp.id = i.factor_profile_id
+                                    AND fp.operating_company_id = i.operating_company_id
           LEFT JOIN mdata.loads l
             ON l.id = i.source_load_id
            AND l.operating_company_id = i.operating_company_id
