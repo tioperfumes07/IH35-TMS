@@ -6221,6 +6221,7 @@
     ],
     "integrations.samsara_drivers": [
       "created_at",
+      "driver_activation_status",
       "id",
       "last_seen_at",
       "local_driver_id",

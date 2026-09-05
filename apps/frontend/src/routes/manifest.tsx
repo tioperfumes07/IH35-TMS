@@ -49,6 +49,7 @@ const DispatchFlagColorsCatalog = React.lazy(() => import("../pages/lists/dispat
 const DetailTypesListPage = React.lazy(() => import("../pages/lists/accounting/DetailTypesListPage").then((m) => ({ default: m.DetailTypesListPage })));
 const NamesMasterHub = React.lazy(() => import("../pages/lists/names/NamesMasterHub").then((m) => ({ default: m.NamesMasterHub })));
 const BrokersListPage = React.lazy(() => import("../pages/lists/names/BrokersListPage").then((m) => ({ default: m.BrokersListPage })));
+const LocationsListPage = React.lazy(() => import("../pages/lists/LocationsListPage").then((m) => ({ default: m.LocationsListPage })));
 const DriverDetailPage = React.lazy(() => import("../pages/DriverDetail").then((m) => ({ default: m.DriverDetailPage })));
 const DriverProfilePage = React.lazy(() => import("../pages/drivers/DriverProfilePage").then((m) => ({ default: m.DriverProfilePage })));
 const DriverLayoverHistoryPage = React.lazy(() => import("../pages/drivers/DriverLayoverHistoryPage").then((m) => ({ default: m.DriverLayoverHistoryPage })));
@@ -2446,6 +2447,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <BrokersListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/locations"
+          element={
+            <ProtectedRoute>
+              <LocationsListPage />
             </ProtectedRoute>
           }
         />

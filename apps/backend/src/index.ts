@@ -355,6 +355,7 @@ import { registerForm425cExhibitsRoutes } from "./reports/form-425c/exhibits/rou
 import { registerTaxDocumentRoutes } from "./tax-documents/tax-documents.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
 import { registerListsCountsRoutes } from "./lists/lists-counts.routes.js";
+import { registerLocationsListRoutes } from "./lists/locations-list.routes.js";
 import { registerDriverCatalogDeprecatedRoutes } from "./lists/driver-catalogs.routes.js";
 import { registerNamesMasterRoutes } from "./lists/names-master.routes.js";
 import { registerDriversReferenceRoutes } from "./lists/drivers-reference.routes.js";
@@ -1189,6 +1190,7 @@ async function main() {
   await registerTaxDocumentRoutes(app);
   await registerListsHubRoutes(app);
   await registerListsCountsRoutes(app);
+  await registerLocationsListRoutes(app);
   await registerDriversReferenceRoutes(app);
   await registerOemPartsRoutes(app);
   await registerNamesMasterRoutes(app);
