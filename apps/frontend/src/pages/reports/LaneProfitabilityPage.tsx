@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
 import {
   Bar,
@@ -52,7 +53,7 @@ function marginClass(margin: number | null) {
 export function LaneProfitabilityPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const emptyFilters = { period: "YTD" as LaneProfitabilityPeriod, customStart: "", customEnd: "" };
+  const emptyFilters = { period: "YTD" as LaneProfitabilityPeriod, customStart: "", customEnd: "", minRevenue: "", minLoads: "" };
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({
     applied,
@@ -197,6 +198,7 @@ export function LaneProfitabilityPage() {
       <div className="flex flex-wrap items-end gap-3">
         <CollapsedListFilters
           activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
+          defaultOpen={true}
           onApply={staged.apply}
           onReset={staged.reset}
           onCancel={staged.cancel}
@@ -230,6 +232,27 @@ export function LaneProfitabilityPage() {
                 </label>
               </>
             ) : null}
+            <label className="text-xs text-slate-600">
+              Min revenue (USD)
+              <MoneyInput
+                valueDollars={staged.draft.minRevenue ? Number(staged.draft.minRevenue) : null}
+                onChangeDollars={(d) => staged.setDraft((p) => ({ ...p, minRevenue: d == null ? "" : String(d) }))}
+                ariaLabel="Min revenue (USD)"
+                className="mt-1 w-28"
+              />
+            </label>
+            <label className="text-xs text-slate-600">
+              Min loads
+              <input
+                type="number"
+                min={0}
+                className="mt-1 block h-9 w-24 rounded-sm border border-gray-300 px-2 text-xs"
+                value={staged.draft.minLoads}
+                onChange={(e) => staged.setDraft((p) => ({ ...p, minLoads: e.target.value }))}
+                data-testid="reports-lane-profitability-min-loads"
+                // TODO: wire to backend filter
+              />
+            </label>
           </div>
         </CollapsedListFilters>
         <Button type="button" variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>

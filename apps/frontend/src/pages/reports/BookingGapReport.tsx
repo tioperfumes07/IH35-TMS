@@ -23,10 +23,18 @@ interface DispatcherStats {
 
 type Period = "week" | "month" | "quarter";
 
+type GroupBy = "day" | "week" | "month";
+
 const PERIOD_LABELS: Record<Period, string> = {
   week: "Week",
   month: "Month",
   quarter: "Quarter",
+};
+
+const GROUP_BY_LABELS: Record<GroupBy, string> = {
+  day: "Day",
+  week: "Week",
+  month: "Month",
 };
 
 const DEFAULT_PERIOD: Period = "week";
@@ -53,7 +61,7 @@ export function BookingGapReport() {
   // report page sources the entity id from the reactive company-switcher context instead.
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
-  const emptyFilters = { period: DEFAULT_PERIOD as Period };
+  const emptyFilters = { period: DEFAULT_PERIOD as Period, groupBy: "week" as GroupBy, minLoads: "" };
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({
     applied,
@@ -144,7 +152,8 @@ export function BookingGapReport() {
       </div>
 
       <CollapsedListFilters
-        activeFilterCount={applied.period !== DEFAULT_PERIOD ? 1 : 0}
+        activeFilterCount={applied.period !== DEFAULT_PERIOD || applied.groupBy !== "week" || applied.minLoads !== "" ? 1 : 0}
+        defaultOpen={true}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -152,24 +161,57 @@ export function BookingGapReport() {
         testIdPrefix="reports-booking-gap"
         className="mb-4"
       >
-        <label className="text-xs text-gray-600">
-          Period
-          <SelectCombobox
-            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
-            value={staged.draft.period}
-            onChange={(event) =>
-              staged.setDraft((p) => ({ ...p, period: event.target.value as Period }))
-            }
-            aria-label="Period"
-            data-testid="reports-booking-gap-period"
-          >
-            {(Object.keys(PERIOD_LABELS) as Period[]).map((p) => (
-              <option key={p} value={p}>
-                {PERIOD_LABELS[p]}
-              </option>
-            ))}
-          </SelectCombobox>
-        </label>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-xs text-gray-600">
+            Period
+            <SelectCombobox
+              className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
+              value={staged.draft.period}
+              onChange={(event) =>
+                staged.setDraft((p) => ({ ...p, period: event.target.value as Period }))
+              }
+              aria-label="Period"
+              data-testid="reports-booking-gap-period"
+            >
+              {(Object.keys(PERIOD_LABELS) as Period[]).map((p) => (
+                <option key={p} value={p}>
+                  {PERIOD_LABELS[p]}
+                </option>
+              ))}
+            </SelectCombobox>
+          </label>
+          <label className="text-xs text-gray-600">
+            Group by
+            <SelectCombobox
+              className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
+              value={staged.draft.groupBy}
+              onChange={(event) =>
+                staged.setDraft((p) => ({ ...p, groupBy: event.target.value as GroupBy }))
+              }
+              aria-label="Group by"
+              data-testid="reports-booking-gap-group-by"
+            >
+              {(Object.keys(GROUP_BY_LABELS) as GroupBy[]).map((g) => (
+                <option key={g} value={g}>
+                  {GROUP_BY_LABELS[g]}
+                </option>
+              ))}
+            </SelectCombobox>
+          </label>
+          <label className="text-xs text-gray-600">
+            Min loads
+            <input
+              type="number"
+              min={0}
+              className="mt-1 block h-9 w-24 rounded-sm border border-gray-300 px-2 text-xs"
+              value={staged.draft.minLoads}
+              onChange={(e) => staged.setDraft((p) => ({ ...p, minLoads: e.target.value }))}
+              aria-label="Min loads"
+              data-testid="reports-booking-gap-min-loads"
+              // TODO: wire to backend filter
+            />
+          </label>
+        </div>
       </CollapsedListFilters>
 
       <p className="text-xs text-gray-500 mb-4">

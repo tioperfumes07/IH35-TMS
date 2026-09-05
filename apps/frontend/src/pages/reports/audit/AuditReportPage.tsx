@@ -138,6 +138,7 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
   const [to, setTo] = useState("");
   const [moduleFilter, setModuleFilter] = useState("");
   const [driverFilter, setDriverFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [offset, setOffset] = useState(0);
 
   const params: AuditReportParams = {
@@ -248,6 +249,22 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
                   />
                 </div>
               )}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-500">Category</label>
+                <select
+                  className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                  value={categoryFilter}
+                  onChange={(e) => { setCategoryFilter(e.target.value); setOffset(0); }}
+                  data-testid="audit-report-category"
+                  // TODO: wire to backend filter
+                >
+                  <option value="">All categories</option>
+                  <option value="financial">Financial</option>
+                  <option value="operational">Operational</option>
+                  <option value="compliance">Compliance</option>
+                  <option value="system">System</option>
+                </select>
+              </div>
             </div>
           }
         />

@@ -31,8 +31,8 @@ export function CashFlowReport() {
   const today = companyToday();
   const [appliedAsOf, setAppliedAsOf] = useState(today);
   const staged = useStagedListFilters({
-    applied: { asOfDate: appliedAsOf },
-    empty: { asOfDate: today },
+    applied: { asOfDate: appliedAsOf, basis: "accrual", groupBy: "month" },
+    empty: { asOfDate: today, basis: "accrual", groupBy: "month" },
     onApply: (next) => setAppliedAsOf(next.asOfDate),
   });
 
@@ -88,6 +88,7 @@ export function CashFlowReport() {
       </div>
       <CollapsedListFilters
         activeFilterCount={appliedAsOf !== today ? 1 : 0}
+        defaultOpen={true}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -95,10 +96,37 @@ export function CashFlowReport() {
         testIdPrefix="reports-cash-flow"
         className="flex flex-wrap items-end gap-3 rounded-sm border bg-white p-4"
       >
-        <label className="text-xs">
-          As of
-          <DatePicker className="ml-2" value={staged.draft.asOfDate} onChange={(next) => staged.setDraft({ asOfDate: next })} />
-        </label>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-xs">
+            As of
+            <DatePicker className="ml-2" value={staged.draft.asOfDate} onChange={(next) => staged.setDraft({ ...staged.draft, asOfDate: next })} />
+          </label>
+          <label className="text-xs">
+            Basis
+            <select
+              className="ml-2 h-9 rounded-sm border border-gray-300 px-2 text-xs"
+              value={staged.draft.basis}
+              onChange={(e) => staged.setDraft({ ...staged.draft, basis: e.target.value })}
+              data-testid="reports-cash-flow-basis"
+            >
+              <option value="accrual">Accrual</option>
+              <option value="cash">Cash</option>
+            </select>
+          </label>
+          <label className="text-xs">
+            Group by
+            <select
+              className="ml-2 h-9 rounded-sm border border-gray-300 px-2 text-xs"
+              value={staged.draft.groupBy}
+              onChange={(e) => staged.setDraft({ ...staged.draft, groupBy: e.target.value })}
+              data-testid="reports-cash-flow-group-by"
+            >
+              <option value="day">Day</option>
+              <option value="week">Week</option>
+              <option value="month">Month</option>
+            </select>
+          </label>
+        </div>
       </CollapsedListFilters>
       {query.isLoading ? <p>Loading…</p> : null}
       {query.isError ? (

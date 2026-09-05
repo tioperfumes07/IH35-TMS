@@ -133,7 +133,7 @@ export function CancellationsReportPage() {
   const companyId = selectedCompanyId ?? "";
   // LV-REPORTS-CANCELLATIONS-FILTER-SILENT-APPLY / CLS-REPORTS-FILTER-APPLY-CANCEL-RESET —
   // From/To must stage until Apply; Cancel restores draft; Reset clears both draft + applied.
-  const emptyFilters = { from: "", to: "" };
+  const emptyFilters = { from: "", to: "", reason: "" };
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({
     applied,
@@ -156,7 +156,7 @@ export function CancellationsReportPage() {
   const data = query.data;
   const total = data?.total ?? { count: 0, total_charge_cents: 0, billable_count: 0 };
   const tableLoading = query.isPending || (query.isFetching && !data);
-  const activeFilterCount = (applied.from ? 1 : 0) + (applied.to ? 1 : 0);
+  const activeFilterCount = (applied.from ? 1 : 0) + (applied.to ? 1 : 0) + (applied.reason ? 1 : 0);
 
   return (
     <div className="space-y-3">
@@ -180,6 +180,7 @@ export function CancellationsReportPage() {
 
       <CollapsedListFilters
         activeFilterCount={activeFilterCount}
+        defaultOpen={true}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -201,6 +202,21 @@ export function CancellationsReportPage() {
               value={staged.draft.to}
               onChange={(next) => staged.setDraft((p) => ({ ...p, to: next }))}
             />
+          </label>
+          <label className="flex flex-col gap-0.5 font-semibold text-gray-700">
+            Reason
+            <select
+              className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
+              value={staged.draft.reason}
+              onChange={(e) => staged.setDraft((p) => ({ ...p, reason: e.target.value }))}
+              data-testid="reports-cancellations-reason"
+            >
+              <option value="">All reasons</option>
+              <option value="customer_cancel">Customer cancel</option>
+              <option value="carrier_cancel">Carrier cancel</option>
+              <option value="weather">Weather</option>
+              <option value="other">Other</option>
+            </select>
           </label>
         </div>
       </CollapsedListFilters>

@@ -58,8 +58,8 @@ export function DriverQualificationReportPage() {
   });
 
   const staged = useStagedListFilters({
-    applied: { compliance: complianceFilter },
-    empty: { compliance: "" },
+    applied: { compliance: complianceFilter, sortBy: "name" },
+    empty: { compliance: "", sortBy: "name" },
     onApply: (next) => setComplianceFilter(next.compliance),
   });
 
@@ -218,26 +218,42 @@ export function DriverQualificationReportPage() {
           </label>
           <CollapsedListFilters
             activeFilterCount={complianceFilter ? 1 : 0}
+            defaultOpen={true}
             onApply={staged.apply}
             onReset={staged.reset}
             onCancel={staged.cancel}
             applyDisabled={!staged.dirty}
             testIdPrefix="driver-qualification"
           >
-            <label className="block text-xs font-semibold text-gray-700">
-              Compliance
-              <select
-                value={staged.draft.compliance}
-                onChange={(event) => staged.setDraft({ compliance: event.target.value })}
-                className="mt-1 h-7 w-full rounded-sm border border-gray-300 bg-white px-2 text-xs"
-              >
-                <option value="">All compliance levels</option>
-                <option value="compliant">Compliant</option>
-                <option value="attention">Needs attention</option>
-                <option value="non_compliant">Non-compliant</option>
-                <option value="empty">No DQF items</option>
-              </select>
-            </label>
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="block text-xs font-semibold text-gray-700">
+                Compliance
+                <select
+                  value={staged.draft.compliance}
+                  onChange={(event) => staged.setDraft({ ...staged.draft, compliance: event.target.value })}
+                  className="mt-1 h-7 w-full rounded-sm border border-gray-300 bg-white px-2 text-xs"
+                >
+                  <option value="">All compliance levels</option>
+                  <option value="compliant">Compliant</option>
+                  <option value="attention">Needs attention</option>
+                  <option value="non_compliant">Non-compliant</option>
+                  <option value="empty">No DQF items</option>
+                </select>
+              </label>
+              <label className="block text-xs font-semibold text-gray-700">
+                Sort by
+                <select
+                  value={staged.draft.sortBy}
+                  onChange={(event) => staged.setDraft({ ...staged.draft, sortBy: event.target.value })}
+                  className="mt-1 h-7 w-full rounded-sm border border-gray-300 bg-white px-2 text-xs"
+                  data-testid="driver-qualification-sort-by"
+                >
+                  <option value="name">Name</option>
+                  <option value="expiry">Expiry</option>
+                  <option value="status">Status</option>
+                </select>
+              </label>
+            </div>
           </CollapsedListFilters>
         </div>
 

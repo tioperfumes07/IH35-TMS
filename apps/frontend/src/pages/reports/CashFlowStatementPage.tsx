@@ -43,10 +43,10 @@ export function CashFlowStatementPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const defaultRange = currentMonthRange();
-  const [applied, setApplied] = useState(defaultRange);
+  const [applied, setApplied] = useState({ ...defaultRange, basis: "accrual" });
   const staged = useStagedListFilters({
     applied,
-    empty: defaultRange,
+    empty: { ...defaultRange, basis: "accrual" },
     onApply: setApplied,
   });
   const exportAction = useExportAction();
@@ -197,7 +197,8 @@ export function CashFlowStatementPage() {
       ) : null}
 
       <CollapsedListFilters
-        activeFilterCount={JSON.stringify(applied) !== JSON.stringify(defaultRange) ? 1 : 0}
+        activeFilterCount={JSON.stringify(applied) !== JSON.stringify({ ...defaultRange, basis: "accrual" }) ? 1 : 0}
+        defaultOpen={true}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -221,6 +222,19 @@ export function CashFlowStatementPage() {
               value={staged.draft.end}
               onChange={(next) => staged.setDraft((previous) => ({ ...previous, end: next }))}
             />
+          </label>
+          <label className="text-xs text-gray-600">
+            Basis
+            <select
+              className="mt-1 h-9 rounded-sm border border-gray-300 px-2 text-xs"
+              value={staged.draft.basis}
+              onChange={(e) => staged.setDraft((previous) => ({ ...previous, basis: e.target.value }))}
+              data-testid="reports-cash-flow-statement-basis"
+              // TODO: wire to backend filter — report is currently always accrual
+            >
+              <option value="accrual">Accrual</option>
+              <option value="cash">Cash</option>
+            </select>
           </label>
         </div>
       </CollapsedListFilters>

@@ -149,6 +149,7 @@ export function GeofenceDwellReport() {
         onReset={staged.reset}
         onCancel={staged.cancel}
         applyDisabled={!staged.dirty}
+        defaultOpen={true}
         testIdPrefix="reports-geofence-dwell"
         className="rounded-sm border border-slate-200 bg-white p-3"
       >

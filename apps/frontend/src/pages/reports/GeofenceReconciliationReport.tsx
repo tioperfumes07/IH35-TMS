@@ -48,8 +48,8 @@ export function GeofenceReconciliationReport() {
   const yesterday = addDaysIso(today, -1);
   const [appliedDate, setAppliedDate] = useState(yesterday);
   const staged = useStagedListFilters({
-    applied: { reportDate: appliedDate },
-    empty: { reportDate: yesterday },
+    applied: { reportDate: appliedDate, geofenceFilter: "", kindFilter: "" },
+    empty: { reportDate: yesterday, geofenceFilter: "", kindFilter: "" },
     onApply: (next) => setAppliedDate(next.reportDate),
   });
   const qc = useQueryClient();
@@ -125,6 +125,7 @@ export function GeofenceReconciliationReport() {
 
       <CollapsedListFilters
         activeFilterCount={appliedDate !== yesterday ? 1 : 0}
+        defaultOpen={true}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -132,9 +133,38 @@ export function GeofenceReconciliationReport() {
         testIdPrefix="reports-geofence-recon"
         className="mb-6"
       >
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-700">Report Date</label>
-          <DatePicker value={staged.draft.reportDate} onChange={(next) => staged.setDraft({ reportDate: next })} max={today} className="" />
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-700">Report Date</label>
+            <DatePicker value={staged.draft.reportDate} onChange={(next) => staged.setDraft({ ...staged.draft, reportDate: next })} max={today} className="" />
+          </div>
+          <label className="block text-xs font-medium text-gray-700">
+            Geofence
+            <input
+              type="text"
+              className="mt-1 block h-9 w-40 rounded-sm border border-gray-300 px-2 text-xs"
+              value={staged.draft.geofenceFilter}
+              onChange={(e) => staged.setDraft({ ...staged.draft, geofenceFilter: e.target.value })}
+              placeholder="All geofences"
+              data-testid="reports-geofence-recon-geofence"
+              // TODO: wire to backend filter
+            />
+          </label>
+          <label className="block text-xs font-medium text-gray-700">
+            Kind
+            <select
+              className="mt-1 block h-9 rounded-sm border border-gray-300 px-2 text-xs"
+              value={staged.draft.kindFilter}
+              onChange={(e) => staged.setDraft({ ...staged.draft, kindFilter: e.target.value })}
+              data-testid="reports-geofence-recon-kind"
+            >
+              <option value="">All kinds</option>
+              <option value="orphan_entry">Entry without Exit</option>
+              <option value="orphan_exit">Exit without Entry</option>
+              <option value="duplicate_fire">Duplicate Fire</option>
+              <option value="expected_missing">Missing Expected Event</option>
+            </select>
+          </label>
         </div>
       </CollapsedListFilters>
       {isError && (

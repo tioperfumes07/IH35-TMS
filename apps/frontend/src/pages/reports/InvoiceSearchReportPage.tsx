@@ -55,6 +55,7 @@ export function InvoiceSearchReportPage() {
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("active");
+  const [dateRange, setDateRange] = useState("all");
 
   const invoicesQ = useQuery({
     queryKey: ["reports", "invoice-search", operatingCompanyId, search, statusFilter, sortKey, sortDirection],
@@ -190,6 +191,18 @@ export function InvoiceSearchReportPage() {
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
+          </select>
+          <select
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            className="h-7 rounded-sm border border-gray-300 px-2 text-xs"
+            data-testid="invoice-search-date-range"
+            // TODO: wire to backend filter
+          >
+            <option value="all">All time</option>
+            <option value="last_30">Last 30 days</option>
+            <option value="last_90">Last 90 days</option>
+            <option value="this_year">This year</option>
           </select>
           <span className="text-xs text-gray-500">{total} result{total === 1 ? "" : "s"}</span>
         </div>
