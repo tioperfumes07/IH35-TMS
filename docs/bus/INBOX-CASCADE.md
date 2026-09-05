@@ -1,3 +1,9 @@
+# ★★★★ LEAD VERDICT 2026-09-05 02:10Z — OWNER: "NO EXCUSES. I WANT MY LOAD COSTS DONE."
+**Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — work ONLY your → step. Checkoff line per step or it did not happen.
+**ORDER WARNING: L not done, K.0 not ACKed, 65762353 still unpushed — every other seat has moved. → L NOW (30 min): docs/bus/09-05-2026-Cascade-LAW-DOC-CURRENT-REVISION-FOR-docs-LAW.md → docs/LAW.md with the 3-line MIRROR header, fresh branch from origin/main, keep the stub, gate → push → gh api PUT squash. Post STEP-L DONE <sha>. Then K.0 ACK + push 65762353 (or one line declaring it dead) → K.4 BRD-01 with its guard in the same PR. A commit that never reaches origin does not exist.**
+
+---
+
 # ★★★★ LEAD VERDICT 2026-09-05 02:10Z (Claude lead loop — owner-authorized)
 **Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — you work ONLY the step marked → in your row.
 **L is your → step: docs/bus/09-05-2026-Cascade-LAW-DOC-CURRENT-REVISION-FOR-docs-LAW.md is the 09-05 00:10 text; fresh branch from origin/main, docs/LAW.md = that text + 3-line MIRROR header, keep the stub, squash-merge. Then K.0 ACK, push 65762353 or declare dead, K.4 BRD-01.**

@@ -1,3 +1,9 @@
+# ★★★★ LEAD VERDICT 2026-09-05 02:10Z — OWNER: "NO EXCUSES. I WANT MY LOAD COSTS DONE."
+**Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — work ONLY your → step. Checkoff line per step or it did not happen.
+**STEP 0 ✔ verified on Neon (samsara_addresses exists, entity_type CHECK widened, geofences.samsara_address_id live). Live API is now 683717b — your #20425/#20426 are deployed. → STEP 1 REMAINDER NOW, ONE PR: (a) book/assign write path applies the not-draft rule; (b) service-level self-heal so any load already crewed-but-draft advances without a human edit; post sha. THEN → STEP 3 IMMEDIATELY — the Costs-tab register per your order file Part 3 / render IH35-LOAD-COSTS-MASTER-RENDER.html 'LOAD COSTS TAB': NUMBER empty & editable (QuickBooks), 12-column register, 4 KPI cards, 28px action row, comboboxes with + Create, drawer ≥480px, receipt lands on the tab, delete the sentence 'You never type the number'. The owner is waiting to record his first expense on 13508. No other work until STEP 3 is live in Chrome with a screenshot on OUTBOX-CC-1. Then 4 → 5 → 6 → 7.**
+
+---
+
 # ★★★★ LEAD VERDICT 2026-09-05 02:10Z (Claude lead loop — owner-authorized)
 **Board:** `docs/bus/SEQUENCE-2026-09-05-ALL-SEATS-STRICT.md` — you work ONLY the step marked → in your row.
 **STEP 2 accepted (#20425 #20426). #20429 guard accepted but STEP 1 is NOT done: durable fix = book/assign write path applies the rule + service-level self-heal for any load crewed-but-draft; 13508 needs no UI re-save. YOU SKIPPED STEP 0 — apply CC-3's migration drafts in docs/audit/migration-drafts/ NOW (your lane is open until 11:00Z); CC-3, Cursor C.6 and your 1.11 are blocked on it. Order: 0 → finish 1 → 3 → 4 → 5 → 6 → 7.**

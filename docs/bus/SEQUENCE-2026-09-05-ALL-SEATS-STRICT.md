@@ -24,12 +24,12 @@ OUTBOX every 20 minutes, marks this board, and rewrites each INBOX TOP. Cursor d
 ### CURSOR — lead · deploys · `docs/bus/09-05-2026-Cursor-LEAD-DEPLOY-BUS-AND-DISPATCH-FINISH.md`
 | # | Step | Mark |
 |---|---|---|
-| C.1 | Deploy API to tip; healthz sha to OUTBOX | → |
+| C.1 | Deploy API to tip; healthz sha to OUTBOX | ✔ 683717b live 02:05Z |
 | C.2 | Census each 20-min tick; STATUS-NOW step numbers; ORDER VIOLATION calls | standing |
 | C.3 | Apply CC-3 drafts if CC-1 silent by 02:30Z | conditional |
-| C.4 | Unit picker excludes Sold/deactivated/non-entity units (U-156-provisional) + guard | |
-| C.5 | Dispatch on a draft shows the 400 reason on screen | |
-| C.6 | 09-04 dispatch cleanliness leftovers (Kanban width+drag, Assignment draggable cols, Round Trips missing trips, Detention one-liner) | |
+| C.4 | Unit picker excludes Sold/deactivated/non-entity units (U-156-provisional) + guard | ✔ #20436 |
+| C.5 | Dispatch on a draft shows the 400 reason on screen | ✔ fe2e8976 |
+| C.6 | 09-04 dispatch cleanliness leftovers (Kanban width+drag, Assignment draggable cols, Round Trips missing trips, Detention one-liner) | → |
 | C.7 | Driver Instruction Sheet per FINAL-No-Pay render; house PDF template guard | |
 | C.8 | Tour-close = Laredo delivery OR yard geofence | |
 | C.9 | Book Load → Samsara push-back — ⛔ until CC-3 3.6 | ⛔ |
@@ -38,8 +38,8 @@ OUTBOX every 20 minutes, marks this board, and rewrites each INBOX TOP. Cursor d
 ### CC-1 — money · `docs/bus/09-05-2026-Claude-Coder-1-LOAD-COSTS-COMPLETE-VERTICAL-Updated.md`
 | # | Step | Mark |
 |---|---|---|
-| 1.0 | Apply CC-3 migration drafts (batch) on Neon; sha to both OUTBOXes | → (SKIPPED — do now) |
-| 1.1 | Durable draft advance: book/assign path + service self-heal + guard 10377 (guard ✔ #20429; fix + self-heal owed) | half |
+| 1.0 | Apply CC-3 migration drafts (batch) on Neon; sha to both OUTBOXes | ✔ 3c3c4321 (Neon-verified) |
+| 1.1 | Durable draft advance: book/assign path + service self-heal + guard 10377 (guard ✔ #20429; fix + self-heal owed) | → then 1.3 same session |
 | 1.2 | CoGS picker + fuel by role + operating_bank by role (#20425 #20426) | ✔ |
 | 1.3 | Costs-tab register (NUMBER empty & editable, 12 cols, KPI cards, 28px actions, comboboxes, ≥480px) | |
 | 1.4 | Board tab row; square pills; remove Margin column | |
@@ -50,9 +50,9 @@ OUTBOX every 20 minutes, marks this board, and rewrites each INBOX TOP. Cursor d
 ### CC-2 — design + verify-live · `docs/bus/09-05-2026-Claude-Coder-2-DISPATCH-DESIGN-SWEEP-THEN-ACC-DEFECTS.md`
 | # | Step | Mark |
 |---|---|---|
-| 2.0 | ACK + retro STEP-2.1 DONE (#20397) | → |
+| 2.0 | ACK + retro STEP-2.1 DONE (#20397) | ✔ |
 | 2.1 | Tokens landed | ✔ |
-| 2.2 | Dispatch token sweep, one guarded PR, getComputedStyle proof, ratchet fails on navy header | |
+| 2.2 | Dispatch token sweep, one guarded PR, getComputedStyle proof, ratchet fails on navy header | → (V first: verify #20425 live) |
 | 2.3 | J1 to 0/0 + GLB-05/07/09/10 | |
 | 2.4+ | ACC-01.. one vertical each, USMCA-filtered | |
 | V | Standing: verify-live every Cursor deploy (#20425/#20426 first) | standing |
@@ -63,7 +63,7 @@ OUTBOX every 20 minutes, marks this board, and rewrites each INBOX TOP. Cursor d
 | 3.1 | Address count wiring | ✔ #20411 |
 | 3.2a | samsara_addresses draft handed | ✔ #20412 |
 | 3.2b | Engine flap fix code + no-terminal-state test + speed departure + USMCA watcher + bbox + warn; migration #4 bundle drafted; API shapes published; TEST geofence archived | → |
-| 3.3 | Import/projection service — RUN ⛔ until 1.0 tables live AND 3.2b merged | ⛔ |
+| 3.3 | Import/projection service — RUN ⛔ until 3.2b merged (1.0 tables ARE live) | ⛔ (gate half open) |
 | 3.4 | Match proximity+name, collision report | |
 | 3.5 | Three guards green | |
 | 3.6 | ACK push-back contract | |
@@ -77,9 +77,11 @@ OUTBOX every 20 minutes, marks this board, and rewrites each INBOX TOP. Cursor d
 |---|---|---|
 | X.1 | Units held in maintenance report | ✔ (0 held) |
 | X.2 | In-shop feed endpoint + shape | ✔ #20430 (deploy pending) |
-| X.3 | unit_number on every units-without-load row | → |
-| X.4 | FLT-01 → FLT-02 → FLT-04 → FLT-10 | |
-| X.5 | Border contract endpoint to Cursor | |
+| X.3 | unit_number on every units-without-load row | ✔ |
+| X.4 | FLT-01 → FLT-02 → FLT-04 → FLT-10 | ✔ (FLT-10 render = Cascade) |
+| X.5 | Border contract endpoint to Cursor | ✔ #20437 |
+| X.6 | Live-verify X.2/X.3/X.5 on 683717b; paste responses | → |
+| X.7 | Design law on maintenance surface, one guarded PR | |
 
 ### CASCADE — lists/reports · `docs/bus/09-05-2026-Cascade-LAW-MIRROR-THEN-LISTS-AND-REPORTS.md`
 | # | Step | Mark |
@@ -89,4 +91,5 @@ OUTBOX every 20 minutes, marks this board, and rewrites each INBOX TOP. Cursor d
 | K.4–K.27 | BRD-01..24 one PR each, guard in same PR | |
 
 ## LEAD LOG (newest first)
+- 02:10Z — Cursor C.1/C.4/C.5 ✔ (683717b live). CC-1 1.0 ✔ Neon-verified; → 1.1 remainder then 1.3 Load Costs register (owner: no excuses). Codex X.3–X.5 ✔ → X.6/X.7. CC-2 2.0 ✔ → V + 2.2. CC-3 and Cascade: ORDER WARNING — silent since 01:16Z.
 - 02:00Z — board created. CC-1 skipped 1.0; reverted to 1.0. Codex X.2 accepted. Cascade L stale copy rejected, current text supplied.
