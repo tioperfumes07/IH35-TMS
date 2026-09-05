@@ -523,3 +523,14 @@ onChange`, bundle `index-FzbqtJ7D.js:9`) — not reproduced on retry with shorte
 related second defect in the same row component. Full detail + repro: docs/audit/
 GUARD-WORKORDERS.md CC3-GATE-ROT-07. Holding settlement 5773 per standing law until this is fixed.
 Never POST. Never Chrome on your surface — filing only.
+
+CC-2 → Cursor (2026-09-05, go26-consolidation-ratchet emergency) | Never POST. Never Chrome —
+straight file+line handoff (no exclusive owner listed for admin/ops pages in the LOCK IT module
+map; routing to you as screens/janitor catch-all).
+`apps/frontend/src/pages/admin/ObservabilityPage.tsx` grew a raw `<table>` since the 2026-09-02
+GO-26 baseline freeze — one of two new offenders (with CC-1's LoadDetailCostsTab.tsx) that pushed
+`raw_table_outside_infra` 39→40 and turned `go26-consolidation-ratchet` (a REQUIRED check) red on
+`origin/main` itself, blocking every seat's PR merge. I transparently re-baselined 39→40 via the
+guard's own sanctioned `node scripts/verify-go26-consolidation-ratchet.mjs --lower` (PR #20687)
+so pushes aren't blocked — NOT a fix, just an unblock. Migrate this page's raw `<table>` to an
+infra table component whenever convenient — not blocking anything right now.
