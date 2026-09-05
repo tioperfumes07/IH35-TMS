@@ -31,7 +31,7 @@ const suggestionsQuerySchema = companyQuerySchema.extend({
 
 const reconcileBodySchema = z.object({
   bank_transaction_id: z.string().uuid(),
-  obligation_type: z.enum(["load", "settlement", "fuel", "work_order", "ar_invoice", "bill", "factoring_batch"]),
+  obligation_type: z.enum(["load", "settlement", "fuel", "work_order", "ar_invoice", "bill", "expense", "factoring_batch"]),
   obligation_id: z.string().uuid(),
 });
 
@@ -252,6 +252,39 @@ async function loadObligationCandidates(
     });
   }
 
+  // B.1 (owner order 2026-09-05) — the matcher suggested bank matches for bills but NOT expenses,
+  // despite the owner's "suggest exact cents ±5d to expenses/bills". A company expense (money paid
+  // now, DR expense / CR bank) is the single most common thing a bank debit reconciles against, so
+  // omitting it left the highest-frequency match off the panel. Mirror the bill block exactly:
+  // posted, non-void, non-draft; amounts are already integer cents on accounting.expenses; the
+  // expense date lives in transaction_date (create path writes it there).
+  const expenses = await withSavepoint(
+    client,
+    "obligation_reconcile_expenses",
+    () =>
+      client.query<{ id: string; expense_number: string | null; total_amount_cents: number | null; transaction_date: string }>(
+        `
+        SELECT id, expense_number, total_amount_cents, transaction_date::text
+        FROM accounting.expenses
+        WHERE operating_company_id = $1::uuid
+          AND status NOT IN ('void', 'draft')
+        ORDER BY transaction_date DESC NULLS LAST
+        LIMIT 200
+      `,
+        [companyId]
+      ),
+    { rows: [] }
+  );
+  for (const r of expenses.rows) {
+    out.push({
+      obligation_type: "expense",
+      obligation_id: r.id,
+      label: r.expense_number ? `Expense ${r.expense_number}` : `Expense ${r.id.slice(0, 8)}`,
+      amount_cents: Math.abs(Math.round(Number(r.total_amount_cents ?? 0))),
+      event_date: String(r.transaction_date).slice(0, 10),
+    });
+  }
+
   return out;
 }
 
@@ -265,6 +298,7 @@ const OBLIGATION_EXISTENCE_SQL: Record<z.infer<typeof reconcileBodySchema.shape.
   work_order: `SELECT 1 FROM maintenance.work_orders WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
   ar_invoice: `SELECT 1 FROM accounting.invoices WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status NOT IN ('void', 'draft')`,
   bill: `SELECT 1 FROM accounting.bills WHERE id = $1::uuid AND operating_company_id = $2::uuid AND revoked_at IS NULL`,
+  expense: `SELECT 1 FROM accounting.expenses WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status NOT IN ('void', 'draft')`,
   // factoring_batch is validated by applyMatch() itself, not this table-existence check.
   factoring_batch: null,
 };
@@ -531,7 +565,14 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
           if (body.data.obligation_type === "load") loadId = body.data.obligation_id;
           if (body.data.obligation_type === "bill") billId = body.data.obligation_id;
           if (body.data.obligation_type === "settlement") settlementId = body.data.obligation_id;
-          if (body.data.obligation_type === "fuel" || body.data.obligation_type === "work_order" || body.data.obligation_type === "ar_invoice") {
+          if (
+            body.data.obligation_type === "fuel" ||
+            body.data.obligation_type === "work_order" ||
+            body.data.obligation_type === "ar_invoice" ||
+            body.data.obligation_type === "expense"
+          ) {
+            // No dedicated matched_*_id column for these — carry them on the generic linked_entity_id +
+            // category_kind pair (Accept marks the txn reconciled; it never posts a JE here).
             linkedId = body.data.obligation_id;
             categoryKind = body.data.obligation_type === "ar_invoice" ? "invoice" : body.data.obligation_type;
           }
