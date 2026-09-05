@@ -602,3 +602,30 @@ build-typecheck guard-rot fixes that were blocking every PR repo-wide (#20574) +
 FAST-MERGE-4MIN-LAW the instant each showed mergeStateStatus clear. | NEXT=awaiting next
 assignment (M=8 list exhausted) -- checking INBOX-CC-2.md / CODER-SEQUENCE-NUMBERED-2026-09-05.md
 for a new numbered block rather than idling | GO
+
+CC-2 | ★ MODULE OWNERSHIP CORRECTION 16:33Z 2026-09-05 | Built + merged B.2 (#20580) and B.1
+(#20591) this pass off docs/bus/CODER-SEQUENCE-NUMBERED-2026-09-05.md's CC-2 §5/§6 (which still
+lists them under CC-2, unedited), only afterward finding INBOX-CC-2.md's own top block: OWNER
+"LOCK IT" module map (14:13Z, PERMANENT, "supersedes §0b's table where they differ") reassigns
+Banking (pages/banking/**, backend/banking/**) to CURSOR and explicitly lists "Cursor takes B.1
+banking matcher [18] 19:30Z and B.2 banking filters/design [19] 18:00Z from CC-2" -- i.e. these
+two rows left my lane at 14:13Z, before I built them. CODER-SEQUENCE-NUMBERED-2026-09-05.md (which
+calls itself the sole source of truth) was never updated to drop them -- two competing registers
+disagreeing, exactly the failure mode its own header warns about.
+CHECKED FOR REAL HARM: `git log` on p7-wave2.routes.ts / api/banking.ts /
+BankingTransactionsDesignView.tsx shows no Cursor commit between 14:13Z and my merges -- no
+overwritten work, no lost edits, no file collision. Both features are real, live-verified,
+regression-free (see STEP 5/6 DONE lines above).
+NOT REVERTING (would destroy real working code with zero corresponding benefit) -- flagging so
+Cursor/the lead can decide to keep, extend, or fold this into its own B.1/B.2 completion rather
+than duplicate it from scratch. CC-2 stops touching pages/banking/**+backend/banking/** as of this
+line, per the corrected map.
+CC-2's actual current lane per LOCK IT: Dispatch (pages/dispatch/**, components/dispatch/** except
+LoadDetailCostsTab.tsx, backend/dispatch/**, book-load.service.ts) + Shared components FROZEN
+single owner (components/parity/ParityTable*, components/table/**, design/tokens.ts,
+components/layout/sidebar-config.ts, docs/design/**, scripts/verify-additive-only.mjs) + "then
+dispatch backlog (C.6-C.10, BRD board items)". L.0 (Render-build-command gate parity,
+verify-gate-runs-render-build-commands.mjs) checked live -- file does not exist, genuinely open.
+L.4b (dispatch top bar per DESIGN-CONTRACT-DISPATCH-BOARD §B) not yet verified. Picking up L.0
+next since it's the more clearly-scoped, guard-shaped, unambiguous item. | NEXT=L.0 Render build
+gate parity | GO
