@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseVehicleStatRow, SamsaraApiError, SamsaraClient } from "./samsara-client.js";
+import { buildIh35SamsaraExternalIds } from "./samsara-external-ids.js";
 
 const originalFetch = globalThis.fetch;
 
@@ -70,6 +71,45 @@ describe("SamsaraClient count methods", () => {
     expect(url.pathname).toBe("/v1/fleet/drivers/driver%2F77/log_edits");
     expect(url.searchParams.get("startMs")).toBe(String(new Date("2026-05-01T00:00:00Z").getTime()));
     expect(url.searchParams.get("endMs")).toBe(String(new Date("2026-05-31T23:59:59Z").getTime()));
+  });
+});
+
+describe("Samsara externalIds standard", () => {
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
+
+  it("sends canonical load, stop, and site ids on address creates", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: { id: "address-1" } }), { status: 201 })
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    const client = new SamsaraClient({ apiToken: "token", samsaraOrgId: "org-1" });
+
+    await client.createAddress({
+      name: "Customer site",
+      formattedAddress: "100 Main St, Laredo, TX",
+      latitude: 27.5,
+      longitude: -99.5,
+      radiusMeters: 76,
+      geofenceId: "site-1",
+      externalIds: { ih35Load: "load-1", ih35Stop: "stop-1", ih35Site: "site-1" },
+    });
+
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(JSON.parse(String(init.body))).toMatchObject({
+      externalIds: {
+        ih35GeofenceId: "site-1",
+        ih35Load: "load-1",
+        ih35Stop: "stop-1",
+        ih35Site: "site-1",
+      },
+    });
+  });
+
+  it("refuses a create correlation with no IH35 external id", () => {
+    expect(() => buildIh35SamsaraExternalIds({})).toThrow("samsara_external_ids_required");
   });
 });
 

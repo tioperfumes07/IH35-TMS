@@ -5,6 +5,10 @@
  */
 
 import { withCircuitBreaker } from "../../lib/circuit-breaker/index.js";
+import {
+  buildIh35SamsaraExternalIds,
+  type Ih35SamsaraExternalIds,
+} from "./samsara-external-ids.js";
 
 export type SamsaraConfig = {
   apiToken: string | null;
@@ -835,6 +839,7 @@ export class SamsaraClient {
     longitude: number;
     radiusMeters: number;
     geofenceId: string;
+    externalIds: Ih35SamsaraExternalIds;
   }): Promise<{ id: string }> {
     const token = this._token();
     if (!token) {
@@ -853,7 +858,11 @@ export class SamsaraClient {
           radiusMeters: Math.round(input.radiusMeters),
         },
       },
-      externalIds: { ih35GeofenceId: input.geofenceId },
+      externalIds: {
+        // Kept for compatibility with addresses created before the #43 standard.
+        ih35GeofenceId: input.geofenceId,
+        ...buildIh35SamsaraExternalIds(input.externalIds),
+      },
     };
     let res: Response;
     try {

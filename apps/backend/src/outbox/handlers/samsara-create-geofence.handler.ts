@@ -36,6 +36,8 @@ export class SamsaraCreateGeofenceHandler implements OutboxEventHandler {
   async deliver(payload: OutboxPayload, ctx: OutboxHandlerContext) {
     const operatingCompanyId = requireUuid(payload.operating_company_id, "operating_company_id");
     const geofenceId = requireUuid(payload.geofence_id, "geofence_id");
+    const loadId = requireUuid(payload.load_id, "load_id");
+    const stopId = requireUuid(payload.stop_id, "stop_id");
     const latitude = requireCoord(payload.latitude, "latitude");
     const longitude = requireCoord(payload.longitude, "longitude");
     const label = String(payload.label ?? payload.formatted_address ?? "").trim() || `geofence ${geofenceId}`;
@@ -69,6 +71,11 @@ export class SamsaraCreateGeofenceHandler implements OutboxEventHandler {
         longitude,
         radiusMeters: SAMSARA_GEOFENCE_RADIUS_METERS,
         geofenceId,
+        externalIds: {
+          ih35Load: loadId,
+          ih35Stop: stopId,
+          ih35Site: geofenceId,
+        },
       });
       const projection = await ctx.client.query<{ id: string }>(
         `UPDATE geo.geofences
@@ -106,8 +113,8 @@ export class SamsaraCreateGeofenceHandler implements OutboxEventHandler {
           operating_company_id: operatingCompanyId,
           geofence_id: geofenceId,
           samsara_address_id: created.id,
-          load_id: payload.load_id ?? null,
-          stop_id: payload.stop_id ?? null,
+          load_id: loadId,
+          stop_id: stopId,
         },
         "info",
         "CAP-2"
