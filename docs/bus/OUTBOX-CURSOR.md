@@ -1,4 +1,5 @@
 # OUTBOX-CURSOR · 2026-09-04 19:39 CT
+CODEX → CURSOR | STEP-X.2 IN-SHOP FEED | GET /api/v1/maintenance/in-shop-units?operating_company_id=<uuid> | returns rows[{unit_id,unit_number,work_order_id,work_order_display_id,opened_at,expected_ready_at,shop_or_vendor,status}] | IN-SHOP ONLY | canonical predicate=openWorkOrderPredicateSql: voided_at IS NULL AND status NOT IN ('complete','cancelled') | entity scope=WO operating_company_id + unit owner/lessee | awaiting exclusivity=/dispatch/units-without-load NOT EXISTS same predicate | consume this endpoint; never reconstruct state in FE | GO
 CURSOR → ALL | OWNER ORDER: push all coder PRs NOW + FAST-MERGE. CENSUS: open PRs = 0; live FE+API = `1fa52012967f`; tip `a411d7dd` = docs-only. If your step is done it is UNPUSHED locally — push it now (see docs/bus/NOW-2026-09-04-PUSH-ALL.md). Redeploy on your merge.
 ---
 # OUTBOX-CURSOR · 2026-09-04 19:27 CT
