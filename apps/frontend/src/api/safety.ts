@@ -164,6 +164,45 @@ export function getDriverQualificationSummary(companyId: string) {
   return apiRequest<DriverQualificationSummary>(`/api/v1/safety/driver-qualification/summary?${q(companyId)}`);
 }
 
+/** DRV-14: Full DQF roster — every active driver with CDL, DOT medical, MVR, Clearinghouse
+ * expiry dates and compliance level. Used by the Driver Qualification File report page. */
+export type DqfRosterDriver = {
+  driver_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  driver_status: string;
+  cdl_number: string | null;
+  cdl_state: string | null;
+  cdl_expiry_date: string | null;
+  dot_medical_effective: string | null;
+  dot_medical_expiry: string | null;
+  dot_medical_status: string | null;
+  mvr_effective: string | null;
+  mvr_expiry: string | null;
+  mvr_status: string | null;
+  clearinghouse_effective: string | null;
+  clearinghouse_expiry: string | null;
+  clearinghouse_status: string | null;
+  dqf_item_count: number;
+  has_expired: boolean;
+  has_missing: boolean;
+  has_red_expiry: boolean;
+  has_amber_expiry: boolean;
+  compliance_level: "compliant" | "attention" | "non_compliant" | "empty";
+};
+
+export type DqfRosterResponse = {
+  drivers: DqfRosterDriver[];
+};
+
+export function getDriverQualificationRoster(companyId: string, includeInactive = false) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (includeInactive) params.set("include_inactive", "true");
+  return apiRequest<DqfRosterResponse>(
+    `/api/v1/safety/driver-qualification/roster?${params.toString()}`
+  );
+}
+
 export function createDriverQualificationItem(
   companyId: string,
   body: {
