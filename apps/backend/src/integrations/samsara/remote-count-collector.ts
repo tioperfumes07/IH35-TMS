@@ -19,7 +19,10 @@ type CollectorResult = {
 };
 
 const AUDIT_SOURCE = "DS-REMEDIATE-9";
-const ENTITY_TYPES: SamsaraRemoteEntityType[] = ["drivers", "vehicles"];
+// ORDER-2026-09-04-CC-3-SAMSARA-GEOFENCE-IMPORT Step 1 — addresses added so the collector sizes
+// the import ("Samsara has 100s of previous geofence" — the owner's own words) instead of nobody
+// ever asking. drivers/vehicles counts are unaffected.
+const ENTITY_TYPES: SamsaraRemoteEntityType[] = ["drivers", "vehicles", "addresses"];
 
 function assertOperatingCompanyId(operatingCompanyId: string): void {
   if (!operatingCompanyId || !operatingCompanyId.trim()) {
@@ -156,7 +159,9 @@ async function countWithRetry(client: SamsaraClient, entityType: SamsaraRemoteEn
   const count =
     entityType === "drivers"
       ? await client.countDrivers()
-      : await client.countVehicles();
+      : entityType === "vehicles"
+        ? await client.countVehicles()
+        : await client.countAddresses();
   return count;
 }
 
