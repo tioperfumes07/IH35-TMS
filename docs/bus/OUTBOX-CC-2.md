@@ -356,3 +356,64 @@ then 2.3 J1-to-zero, then 2.4+ ACC verticals. Currently landing the LAW-TRANSACT
 B1/C3 re-score (#pending push) before starting 2.2. | NEXT=2.2 dispatch guarded sweep | GO
 
 CC-2 | FAST-MERGE | gate=exit0 | push=no-verify-static-ENV-OK | merged #20483 @ d1547101 | neon=N/A (pure FE, no DB write) | Two commits: GLB-15 (DispatchLoadCostsPanel header tokens, owner-named by filename in the 09-05 packet) + GLB-16 (3 guard-rot fixes on unowned/CC-2 surfaces: sortable-columns ratchet 985->973, surface-bar-modal-inventory mapping, test-provider-completeness wrapper). Built-then-reverted 3 candidate fixes (BookLoadModalV4.tsx/Cursor, AccidentLiabilityQueuePanel feature/CC-3, AccountingPeriodCloseDetailPage.tsx/CC-1) after verify-seat-surface-ownership.mjs (§0b) flagged them as other seats' surfaces -- full drop-in specs filed to INBOX-CURSOR.md/INBOX-CC-3.md/INBOX-CC-1.md instead of shipping cross-surface. Pushed --no-verify per FAST-MERGE-4MIN-LAW.md's ENV-VERIFY-STATIC class (focused gate green; remaining verify-static-fallback names confirmed pre-existing/not-this-branch's, several already filed by CC-3). | NEXT=sequence 2.3 (J1 to ZERO) per 09-05-2026-Claude-Coder-2-DISPATCH-DESIGN-SWEEP-THEN-ACC-DEFECTS.md | GO
+
+CC-2 | ACC-01..20 RE-VERIFY (2026-09-05, sequence 2.4) | GO
+Live Neon re-verify (bypass_rls, je_control=1785 discriminator, positive-controlled) of the
+09-03 register against USMCA TODAY. USMCA's dataset is now near-empty (a further reset since
+09-03/09-04): 1 invoice (status=proforma, $2,500), 0 bills, 0 journal entries for USMCA (all 1785
+global JEs belong to other entities), 0 settlements, 2 driver_bills, 1 load (status=
+assigned_not_dispatched, not delivered), 0 expenses, 0 liabilities, 167 drivers. Every
+row-count/dollar-figure item below is re-scored against that live state:
+- ACC-01 (A/R out $1,215.75): DOES NOT REPRODUCE. GL=$0=subledger=$0 (the 1 invoice is proforma,
+  excluded from the open-invoice sum). Same finding as B1 in LAW-TRANSACTION-HEALTH-REGISTER.
+- ACC-02 (A/P out $268.77): DOES NOT REPRODUCE. 0 bills exist for USMCA (confirmed via COUNT(*),
+  not a status filter) -- A/P subledger and GL both $0, nothing to tie out.
+- ACC-03 ($109,158.50 stranded in Unbilled Revenue): DOES NOT REPRODUCE. Same as B4 -- the 1 load
+  is not delivered (assigned_not_dispatched) and rate_total_cents=$2,500, not $0 as previously
+  logged in B4 but still nothing unbilled since it's undelivered.
+- ACC-04 (Operating bank -$41,255.43): DOES NOT REPRODUCE as stated (already flagged STALE in
+  the health register B3 row). Bank activity IS real today, just a different number:
+  355 non-voided bank transactions netting -$686,503.95, still $0 posted to GL -- this is the
+  real, current version of the same underlying defect (B3, routed to CC-1, not re-fixed here).
+- ACC-05 (3 documents claim POSTED with zero JE postings): DOES NOT REPRODUCE. 0 invoices have
+  status='posted' (only status present is 'proforma'); 0 bills exist at all.
+- ACC-06 (INV-2026-00024 voided with no reason): DOES NOT REPRODUCE. That display_id does not
+  exist in accounting.invoices for USMCA today -- 0 rows.
+- ACC-07 (5 bank txns matched to voided documents): DOES NOT REPRODUCE (already re-scored as C3
+  in the health register -- 0 of 355 non-voided bank transactions carry any match reference).
+- ACC-08 (4 parallel void-column conventions): STILL REAL, confirmed structurally (schema fact,
+  not data-count-dependent): accounting.bills alone carries BOTH voided_at AND revoked_at as two
+  separate, independently-nullable void markers on the same table. Not a CC-2 fix (CC-2 cannot
+  author migrations) -- needs a migration-capable seat; not yet filed as its own board row, next.
+- ACC-09 (39 delivered loads no driver bill, 16 real $14,789.50): DOES NOT REPRODUCE. Only 1 load
+  exists total for USMCA and it has not been delivered (assigned_not_dispatched).
+- ACC-10 (0 of 19 settlements PAID): DOES NOT REPRODUCE as stated -- 0 settlements exist at all
+  (no denominator, not "0 of 19").
+- ACC-11 (7 negative settlements no liability entry): DOES NOT REPRODUCE. 0 settlements, 0
+  liabilities exist.
+- ACC-12 (47 of 47 stuck needs_review): DOES NOT REPRODUCE. 0 settlements exist.
+- ACC-13: already fixed and merged (#20422/#20423/#20424, prior session).
+- ACC-14 (6 of 14 drivers missing accounts who moved a 2026 load): DOES NOT REPRODUCE. The only
+  load in USMCA has not moved (assigned_not_dispatched) -- no driver has "moved a 2026 load" yet
+  for this entity to check accounts against.
+- ACC-15 (is_sample_data not set by create paths): UNVERIFIED -- needs a code-path check (every
+  create route for accounts/vendors/units/drivers/locations), not a data-count question; ACC-13's
+  fix covered accounts.routes.ts specifically. Not completed this pass, next up.
+- ACC-16 (129 NULL expense numbers): DOES NOT REPRODUCE. 0 expenses exist for USMCA.
+- ACC-17 (one person != one financial identity): UNVERIFIED -- needs a code-path/join check, not
+  a data-count question. Not completed this pass.
+- ACC-18 (health endpoint zero financial checks): STILL REAL, already confirmed this session via
+  source (apps/backend/src/admin/health-deep.service.ts has no reference to
+  ledger-integrity-detectors/subledger-gl-control-rec) -- code-level fact, unaffected by the data
+  reset. Not CC-2's fix per LAW-TRANSACTION-HEALTH-REGISTER's own remediation table (routed to
+  Cursor).
+- ACC-19: already fully answered by the pre-existing LAW-TRANSACTION-HEALTH-REGISTER-2026-09-01.md
+  (39-check register, re-scored this session).
+- ACC-20 (no auto-uncategorize on match reversal): UNVERIFIED -- needs a code-path check on the
+  match-reversal handler, not a data-count question. Not completed this pass.
+Net: of the 18 remaining register items, 12 are confirmed DOES NOT REPRODUCE against live USMCA
+today (data was reset again since 09-03/09-04, same pattern as B1/C3/ACC-13's own prior findings
+-- not glossed over, individually re-verified with counts above), 2 are confirmed STILL REAL
+(ACC-08 needs a migration seat, ACC-18 routed to Cursor per the health register's own table,
+neither newly fixed here), 3 remain UNVERIFIED pending a code-level (not data-level) check
+(ACC-15, ACC-17, ACC-20). | NEXT=ACC-15/17/20 code-path checks | GO
