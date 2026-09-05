@@ -643,3 +643,20 @@ standalone this pass. ROUTED (not fixed, Cascade's module): a third wave of the 
 tsc-break class this session (ManagementReportPackagePage.tsx, CsaFleetScoreCard.tsx) surfaced
 while verifying the tsc step -- filed to INBOX-CASCADE.md with exact lines, confirmed unrelated to
 this diff. | NEXT=L.4b dispatch top bar (DESIGN-CONTRACT-DISPATCH-BOARD §B) | GO
+
+CC-2 | L.4b DONE | 0beacd50e4 (#20614) | live proof 17:17Z: post-merge forensic confirms
+scripts/verify-dispatch-top-bar-single-primary-action.mjs + verify-steps/10395-*.mjs on
+origin/main; guard OK + selftest OK. TWO concrete defects fixed: (1) double-filled-button bug --
++ Book Load was always variant=primary, and whichever of Home/Live/Loads-history was active was
+ALSO primary at the same time; all three now hardcode variant=secondary with a bottom-border
+active accent, Book Load is the only filled control. (2) exact duplicate -- board-view toolbar's
+4th "Trip Pairing" button duplicated DispatchSubnav's own pre-existing nav item; removed from the
+toolbar (still fully reachable via the nav, nothing deleted from routes), toolbar wrapper role
+tablist -> group per the contract. Zero behavior change verified: DispatchSecondaryNav (3) +
+DispatchKanbanRealBoard + DispatchKanbanView (6) = 9 tests pass unmodified; tsc -b clean (only the
+pre-existing, routed Cascade reports/** break present, unrelated). NOT attempted, reported
+honestly: fully collapsing PageHeader's row + DispatchSubnav into one literal DOM row -- needs a
+NavItem API extension (Link-only today, Loads-history needs dynamic date defaulting) beyond what
+the owner's two concrete complaints required; filed as its own follow-up, not silently dropped.
+| NEXT=checking INBOX-CC-2.md for the next open CC-2 row (dispatch backlog / BRD items per LOCK
+IT) | GO
