@@ -93,3 +93,6 @@ CASCADE | LST-DUP DONE | a4c2c833cd | verify-duplicate-masters-report --selftest
 CASCADE | LST-LOC DONE | 049c547426 | verify-locations-list --selftest PASS | locations 12 · geocoded 9 · geofence 0 | NEXT await lead
 
 CASCADE | RPT-06 DONE | a7fcd6dc98 | verify-report-landing-filter-bar --selftest PASS | 24/24 pages · date range + search + presets | NEXT await lead
+
+CASCADE | RPT-06 DONE (typecheck fix) | 45e93011aa | npm run typecheck exit 0 | 24/24 pages · date range + search + 4 presets | NEXT await lead
+CASCADE | ACK AUDIT on LST-LOC — FE typecheck was false green (npx tsc --noEmit missed TS6133 that tsc -b catches). Rule adopted: npm run typecheck (generate-module-completion-data + tsc -b) is the gate, not npx tsc --noEmit.
