@@ -324,57 +324,11 @@ export function DispatchPage({
             >
               Home
             </Button>
-            <Button
-              type="button"
-              variant={view === "kanban" ? "primary" : "secondary"}
-              size="sm"
-              disabled={boardScope === "history"}
-              title={boardScope === "history" ? "Kanban is live-board only — switch to Live" : undefined}
-              onClick={() => {
-                const next = new URLSearchParams(searchParams);
-                next.set("view", "kanban");
-                setSearchParams(next);
-              }}
-            >
-              Kanban
-            </Button>
-            <Button
-              type="button"
-              variant={view === "list" ? "primary" : "secondary"}
-              size="sm"
-              onClick={() => {
-                const next = new URLSearchParams(searchParams);
-                next.set("view", "list");
-                setSearchParams(next);
-              }}
-            >
-              List
-            </Button>
-            <Button
-              type="button"
-              variant={view === "units" ? "primary" : "secondary"}
-              size="sm"
-              data-testid="dispatch-view-round-trips"
-              disabled={boardScope === "history"}
-              title={boardScope === "history" ? "Round trips is live-board only — switch to Live" : undefined}
-              onClick={() => {
-                const next = new URLSearchParams(searchParams);
-                next.set("view", "units");
-                setSearchParams(next);
-              }}
-            >
-              Round Trips
-            </Button>
-            <Button
-              type="button"
-              variant={location.pathname === "/dispatch/trip-pairing" ? "primary" : "secondary"}
-              size="sm"
-              data-testid="dispatch-view-trip-pairing"
-              title="Trip Pairing — match empty return trucks to loads"
-              onClick={() => navigate("/dispatch/trip-pairing")}
-            >
-              Trip Pairing
-            </Button>
+            {/* DSP-BOARD-VIEW-ROW (owner 2026-09-04): Kanban / List / Round Trips / Trip Pairing were
+                crowding the top banner. They are the load-board VIEW selector, so they moved down into a
+                dedicated "Board view" row rendered under the queue subnav (see boardViewRow below). The top
+                banner keeps only the scope/landing controls (Home, Live, Loads history, Planners, + Book
+                Load) so the header reads clean. */}
             <Button
               type="button"
               variant={boardScope === "live" ? "primary" : "secondary"}
@@ -424,7 +378,7 @@ export function DispatchPage({
             >
               Planners
             </Button>
-            <Button type="button" onClick={() => openBookLoadModal()}>
+            <Button type="button" size="sm" onClick={() => openBookLoadModal()}>
               + Book Load
             </Button>
           </div>
@@ -432,6 +386,62 @@ export function DispatchPage({
       />
 
       <DispatchSubnav operatingCompanyId={defaultCompanyIds[0] ?? ""} />
+
+      {/* DSP-BOARD-VIEW-ROW (owner 2026-09-04): the single "Board view" row — Kanban / List / Round
+          Trips / Trip Pairing, the load-board VIEW selector the owner asked to move OFF the top banner
+          and "back to the board view row". Only shown on the load board (not on the settlements /
+          assignments subtabs). 28px clickable boxes, 2px radius, centered — CLICKABLE-BOX-SIZE LAW. */}
+      {subTab === "load_board" ? (
+        <div
+          className="flex flex-wrap items-center gap-1 px-2"
+          role="tablist"
+          aria-label="Board view"
+          data-testid="dispatch-board-view-row"
+        >
+          {(
+            [
+              { id: "kanban", label: "Kanban", active: view === "kanban", liveOnly: true, onClick: () => {
+                const next = new URLSearchParams(searchParams);
+                next.set("view", "kanban");
+                setSearchParams(next);
+              } },
+              { id: "list", label: "List", active: view === "list", liveOnly: false, onClick: () => {
+                const next = new URLSearchParams(searchParams);
+                next.set("view", "list");
+                setSearchParams(next);
+              } },
+              { id: "round-trips", label: "Round Trips", active: view === "units", liveOnly: true, onClick: () => {
+                const next = new URLSearchParams(searchParams);
+                next.set("view", "units");
+                setSearchParams(next);
+              } },
+              { id: "trip-pairing", label: "Trip Pairing", active: location.pathname === "/dispatch/trip-pairing", liveOnly: false, onClick: () => navigate("/dispatch/trip-pairing") },
+            ] as const
+          ).map((tab) => {
+            const disabled = tab.liveOnly && boardScope === "history";
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={tab.active}
+                disabled={disabled}
+                data-testid={`dispatch-view-${tab.id}`}
+                title={disabled ? `${tab.label} is live-board only — switch to Live` : undefined}
+                onClick={tab.onClick}
+                className={`inline-flex h-7 items-center justify-center border px-3 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                  tab.active
+                    ? "border-[#14314F] bg-[#14314F] text-white"
+                    : "border-gray-300 bg-white text-[#0F1219] hover:bg-gray-50"
+                }`}
+                style={{ borderRadius: 2 }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
       {subTab === "load_board" && view === "overview" ? (
         <DispatchOverview
