@@ -5,6 +5,7 @@ import {
   plannerWeekdayShort,
   todayYmdAmericaChicago,
 } from "./plannerTimeAxis";
+import { formatPlannerDayLabel } from "./plannerDayLabel";
 
 const FROZEN =
   "sticky left-0 z-20 border-b border-r-2 border-slate-400 bg-gray-50 px-2 py-1 text-left text-[11px] font-semibold text-slate-700";
@@ -36,8 +37,8 @@ export function PlannerAxisHead({ days, frozenColSpan, frozenDayCells }: Planner
         {frozenDayCells}
         {days.map((d) => (
           <th key={d} className={plannerDayHeadClass(d, today)}>
-            <span className="block text-xs leading-none">{plannerWeekdayShort(d)}</span>
-            <span className="block text-xs leading-tight">{Number(d.slice(8, 10))}</span>
+            <span className="block text-xs leading-none text-slate-500">{plannerWeekdayShort(d)}</span>
+            <span className="block text-xs font-semibold leading-tight text-slate-700">{formatPlannerDayLabel(d)}</span>
           </th>
         ))}
       </tr>
