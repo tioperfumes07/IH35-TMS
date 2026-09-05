@@ -513,25 +513,20 @@ export class SamsaraClient {
     const out: SamsaraDriver[] = [];
     for (const activationStatus of ["active", "deactivated"] as const) {
       let after: string | null = null;
-      try {
-        for (let page = 0; page < 50; page += 1) {
-          const { data, hasNextPage, cursor } = await fetchSamsaraPage(token, "/fleet/drivers", after, {
-            driverActivationStatus: activationStatus,
-          });
-          for (const row of data) {
-            if (typeof row.id === "string" && row.id.trim().length > 0) {
-              out.push({
-                id: row.id.trim(),
-                raw: { ...row, driverActivationStatus: row.driverActivationStatus ?? activationStatus },
-              });
-            }
+      for (let page = 0; page < 50; page += 1) {
+        const { data, hasNextPage, cursor } = await fetchSamsaraPage(token, "/fleet/drivers", after, {
+          driverActivationStatus: activationStatus,
+        });
+        for (const row of data) {
+          if (typeof row.id === "string" && row.id.trim().length > 0) {
+            out.push({
+              id: row.id.trim(),
+              raw: { ...row, driverActivationStatus: row.driverActivationStatus ?? activationStatus },
+            });
           }
-          if (!hasNextPage || !cursor) break;
-          after = cursor;
         }
-      } catch {
-        // one status pass failing (transient network etc.) must not drop what the OTHER pass already
-        // collected — never turn a partial success into an empty result for both.
+        if (!hasNextPage || !cursor) break;
+        after = cursor;
       }
     }
     return out;

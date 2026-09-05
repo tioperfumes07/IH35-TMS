@@ -1237,3 +1237,43 @@ export async function getDispatchMargin(params: {
     withCompany(`/api/v1/reports/dispatch-margin?${q.toString()}`, params.operating_company_id),
   );
 }
+
+// DUPLICATE-MASTERS — read-only duplicate master-records report (drivers / customers / vendors).
+export type DuplicateMastersRow = {
+  id: string;
+  name: string;
+  secondary_value: string | null;
+  created_at: string;
+  deactivated_at: string | null;
+  is_newest: boolean;
+  money: {
+    driver_bills?: number;
+    settlements?: number;
+    invoices?: number;
+    bills?: number;
+    total: number;
+  };
+};
+
+export type DuplicateMastersGroup = {
+  group_key: string;
+  display_name: string;
+  secondary_key: string | null;
+  row_count: number;
+  rows: DuplicateMastersRow[];
+};
+
+export type DuplicateMastersPayload = {
+  entity: "drivers" | "customers" | "vendors";
+  group_count: number;
+  groups: DuplicateMastersGroup[];
+};
+
+export async function getDuplicateMasters(
+  operatingCompanyId: string,
+  entity: "drivers" | "customers" | "vendors",
+): Promise<DuplicateMastersPayload> {
+  return apiRequest<DuplicateMastersPayload>(
+    withCompany(`/api/v1/reports/duplicate-masters?entity=${entity}`, operatingCompanyId),
+  );
+}

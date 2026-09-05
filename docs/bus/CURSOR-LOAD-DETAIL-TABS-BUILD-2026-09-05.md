@@ -1,0 +1,67 @@
+# CURSOR — LOAD DETAIL TABS, BUILT AS DESIGNED — 2026-09-05 23:00Z
+Owner order 22:5xZ: *"give instructions to cursor to build each tab as it is supposed to be. the current format is bullshit … customs does not need to be within load costs, nor documents, and for every expense creator or bill etc we must always be able to upload the expense picture, receipt etc."*
+Design sources (the only two): **Load Costs Tab proposal 2026-09-02** (`docs/design/reference/LOAD-COSTS-TAB-PROPOSAL-2026-09-02.html`, owner's file `loadcoststab.html`) and **LOAD-DETAIL-TABS-RENDERS-2026-09-05.html** (this session; Stops, Driver Pay, Factoring, Pre-Settlement, Settlement, Audit). Both committed under `docs/design/reference/`.
+
+**Surface:** `apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx` and its tab components; backend read models under `apps/backend/src/accounting/` and `dispatch/`. Owner assigns this build to **Cursor**. Surrender seat on any missed deadline: **CC-2**. Strictly serial — LDT-1 before LDT-2, one PR per item, one guard per item, lead audits each on Neon + tip + live before the next item unlocks.
+
+**Live measured 22:55Z (FE 4730d5ac, load 13526, USMCA) — what is wrong today, tab by tab:**
+- Tab bar: 12 tabs `Overview, Stops, Driver Pay, Documents, Factoring, Cargo Sensors, Settlement, Geofence Timeline, Assignment History, Audit, Pre-Settlement, Costs`.
+- Header: `LOAD 13526 · JRAYL TRANSPORT · LUIS ARMANDO SOSA PEREZ · Unit T170 · DISPATCHED` — no rate, no miles (practical/short/real), no rev/mi, no trailer.
+- Costs: KPI tiles; spreadsheet entry row with columns Number/Date/Type/Vendor/Category/Late Fee/Lumper/Fuel/R&M Exp/Other/Amount/Status (horizontal scroll); "Paid with" select lists `1240 Freight Claims Receivable`, `1296 Faro Factoring`, `Driver Cash Advance …` — not bank/card accounts; saved list shows Number/Type/Amount/Status only; no per-row Expense·Bill chips, no posting hint, no vendor invoice no. box on bills, no receipt attachment, no margin footer, no bank-match section.
+- Stops: the wizard edit form (`:: #1 Type Remove … Window start 12:00 AM …`), no arrivals/departures/geofence/miles/detention.
+- Driver Pay: one line `1610.0 practical mi × $0.60/mi · $958.69` — 1,610 × 0.60 = 966.00 ≠ 958.69; law = short miles, two lines.
+- Settlement: `S-13646 Open (pre-settlement) … Gross $0.00 … Fuel $0.00 … Net profit $2,541.31 72.6%` vs Costs tab `costs $1,482.31 · margin $1,059.00` — same load, two numbers; period start = end = 8/17.
+- Pre-Settlement: `No active pre-settlement found for this driver` while Settlement says "Open (pre-settlement)".
+- Factoring: pipeline chips + checklist "Upload under Documents tab"; no advance/reserve/fee money.
+- Audit: When/Who/Action/Summary/Source; rows are codes `dispatch.load_created`, `P6-D3`.
+
+**Done bar (LAW §0d) for every item:** schema + migration on prod · endpoint returns real USMCA rows (count + predicate pasted) · FE reads (file:line) · both-way linkage · one guard `scripts/verify-ldt-*.mjs` with `--selftest`, wired in `scripts/verify-steps/`, green in CI · merged sha · lead re-measures.
+**DONE LINE:** `CURSOR | LDT-n DONE | <sha> | verify-ldt-n --selftest N/N | <measurements> | NEXT LDT-n+1`
+
+---
+
+## LDT-0 · Tab bar + header (the frame every tab shares) — deadline 2026-09-06 01:30Z
+- **Required:** tab order `Overview · Stops · Costs · Driver Pay · Factoring · Settlement · Pre-Settlement · Audit`. `Documents`, `Cargo Sensors`, `Geofence Timeline`, `Assignment History` stay as tabs (additive-only) but move after Audit and are collapsed under a `More ▾` group; when the drawer is opened from **Accounting → Load costs** (`?tab=Costs` from `/accounting/load-costs`) the `More` group is hidden entirely — Documents and Customs are not part of the load-costs context (owner). Customs is not a tab and must not become one.
+- Header (renders §"Shared header"): load number (mono 24px) · route · customer · chips `In transit` + tour state (`Tour open · pre-settlement` / `Closed · settled`) · stats **Rate · Practical mi · Short mi · Real driven · Rev/mi · Driver · Truck·Trailer**. Real driven = odometer delta from `telematics.vehicle_locations` between first fence entry and last fence exit; blank with reason while in transit — never 0. Under each miles stat a grey `Google ref n.n` when `load_stop_legs.google_reference_miles` exists (DSP-48).
+- **Guard:** `verify-ldt-0-tabbar-header.mjs` — tab order exact; `More` hidden when `from=accounting`; header has the 7 stats; no "0" rendered for unknown real miles; `--selftest` reorders tabs → FAIL.
+- **Linkage:** mdata.loads ↔ load_stop_legs ↔ telematics.vehicle_locations ↔ mdata.units/drivers.
+
+## LDT-1 · Costs tab exactly as the 2026-09-02 proposal + receipt on every row — deadline 2026-09-06 04:00Z
+- **Required:** replace the spreadsheet row with the proposal's **entry cards**: head = number (`13526`, `13526-1`, …, derived, never typed) · `Expense · paid now | Bill · owed` toggle · state (`saved · matched to bank` / `saved · waiting for the bank` / `new — not saved`); fields = Date · Vendor (picker, + create) · Category (account picker, load-required categories enforced) · Paid with (Expense: **bank and card accounts only**, chart roles `bank`/`credit_card`/`fuel_card` — never receivables, factoring or driver advance accounts) **or** Vendor invoice no. (Bill: free text, never pre-filled) · Amount (mono, right) · **Receipt** (attachment control on every card: upload photo/PDF → `docs.files` linked `expense_id`/`bill_id`, thumbnail + count; `+ Add from a receipt photo` pre-fills a card from the receipt). Hint line under each card states the posting in English (`Posts debit Diesel expense, credit Relay card`). Buttons `Save all`, `+ Add another cost`, `+ Add from a receipt photo`. Footer totals: Line haul revenue · Costs (n entries) · Driver pay (short mi × rate) · **Margin $ · %**. Section **What the bank will do with these**: each cost's bank status (`Matched to 13526` / `Will be offered when it lands` / `Matches on the bill payment, not now`) from `banking.bank_transactions.matched_*`.
+- One write path: the existing expense and bill creation services (`accounting/expenses`, `accounting/bills`), never a new endpoint. A card that cannot post says why on the card (missing account / payment source / vendor) in English; Save is disabled for that card only.
+- The same **Receipt** control is added to every other expense/bill creator in the app: `components/accounting/VendorBillForm.tsx`, `pages/accounting/CreateMultipleBillsPage.tsx`, `/accounting/expenses/new`, the Book Load lumper/accessorial rows. Existing `docs.files` upload service; no new storage path.
+- **Guard:** `verify-ldt-1-costs-cards.mjs` — Paid-with options exclude non-bank roles; every creator renders the receipt control; card count = live expense+bill count for the load; footer margin = revenue − costs − driver pay; `--selftest` adds a receivable to Paid-with → FAIL.
+- **Linkage:** accounting.expenses/bills ↔ mdata.loads ↔ mdata.vendors ↔ catalogs.accounts ↔ banking.bank_transactions ↔ docs.files ↔ accounting.journal_entries.
+
+## LDT-2 · Stops tab = record of what happened (renders §Stops) — deadline 2026-09-06 06:00Z
+- **Required:** read-only table per stop: # · Type · Location (name, address, fence radii, landmarks) · Appointment · Arrived · Departed · Dwell · Detention (minutes past free time → pending $) · Source (`Geofence + driver` / `Driver only` / `Manual`) · Docs (BOL/POD attachment chips). Cards: **Leg miles** (practical · short · real · Google ref per leg incl. deadhead attributed to the pickup) and **Arrival & departure events** timeline from `geo.geofence_events` with odometer at entry/exit. `Edit stops` opens the wizard §C — no inline editing here. Missing coordinates → `Geocode missing` runs the picker's geocoding path (DSP-48/geo), never manual lat/lng.
+- **Guard:** `verify-ldt-2-stops-record.mjs` — no `<input>` in the Stops tab body; events read from geo.geofence_events; miles from load_stop_legs; `--selftest` renders 0.0 for unknown miles → FAIL.
+- **Linkage:** mdata.load_stops ↔ geo.geofence_events ↔ geo.geofence_vehicle_state ↔ telematics.vehicle_locations ↔ load_stop_legs ↔ docs.files.
+
+## LDT-3 · Driver Pay tab (renders §Driver Pay) — deadline 2026-09-06 08:00Z
+- **Required:** lines = Loaded miles (short, pickup→delivery) × `rate_loaded_per_mile_cents` · Empty miles (short, deadhead attributed to this pickup) × `rate_empty_per_mile_cents` · Detention/accessorials (pending approval chips) · Gross. Amount is ALWAYS miles × stored rate (SET-RATE law) — the $0.60 × 1,610 ≠ $958.69 class of defect is impossible by construction. Cards: **Deductions & advances touching this load** (fuel advance = company expense, broker advance to driver = bill payment linked by instrument, escrow contribution with cap/balance) and **Posting** preview (Debit/Credit columns, in balance) marked "when the tour closes". Rate card version + effective date shown.
+- **Guard:** `verify-ldt-3-driver-pay.mjs` — two mileage lines present; |amount − miles×rate| ≤ 1¢ for every line live; posting preview balances; `--selftest` plants practical miles as the basis → FAIL.
+- **Linkage:** driver_finance.driver_bills/settlement_lines ↔ mdata.drivers (rate card) ↔ load_stop_legs ↔ accounting.journal_entries ↔ broker_advances.
+
+## LDT-4 · Factoring tab (renders §Factoring) — deadline 2026-09-06 10:00Z
+- **Required:** step bar Pro forma → In transit → POD → Submitted → Advance received → Reserve released; **The money** card: invoice face · broker advance applied · amount purchased · advance % (Factoring Advance liability) · reserve % (Factoring Reserves asset) · fee % (Factoring Fee expense numbered `<load>-F`) · net cash — all from the Faro vendor terms and `factoring_advances`; **Packet** card with real attachment chips (rate con, BOL from Stops #1, POD from Stops #2, invoice PDF) — attachments live here, no "upload under Documents tab" text. Submit disabled until POD; chargebacks listed only when driver-caused and approved.
+- **Guard:** `verify-ldt-4-factoring-money.mjs` — advance+reserve+fee reconcile to purchased amount; no derecognition (A/R row unchanged after submission); `--selftest` sets reserve+advance ≠ purchased → FAIL.
+- **Linkage:** accounting.invoices ↔ factoring_advances ↔ broker_advances ↔ mdata.vendors (Faro) ↔ journal_entries ↔ docs.files.
+
+## LDT-5 · Pre-Settlement tab (renders §Pre-Settlement) — deadline 2026-09-06 12:00Z
+- **Required:** the open **tour** (NB · TR* · SB) this load belongs to: per-leg Revenue · Costs · Driver pay · Margin, tour totals; **Costs on this tour** with rung chips; **Ready to close?** checklist (SB delivered at Laredo · all PODs · every cost has account+vendor+receipt · pay lines complete · real miles captured) and `Close tour → Settlement (human confirms)`. If no tour exists for the load the tab says why (`load not assigned to a tour — assignment is automatic at dispatch; see Audit`) — never "No active pre-settlement found". **One read model** shared with Costs and Settlement: `GET /api/v1/tours/:id/readout`; the Costs footer, this tab and the Settlement tab render the same numbers from it.
+- **Guard:** `verify-ldt-5-presettlement-readout.mjs` — live: for every open USMCA tour, Costs footer margin == Pre-Settlement leg margin == readout; `--selftest` diverges one → FAIL.
+- **Linkage:** driver_finance tours/settlements ↔ mdata.loads (legs) ↔ expenses/bills ↔ driver_bills ↔ journal_entries.
+
+## LDT-6 · Settlement tab (renders §Settlement) — deadline 2026-09-06 14:00Z
+- **Required:** when the tour is open: one sentence + the previous closed settlement of this driver as the shape. When closed: **Driver settlement** (loaded × rate · empty × rate · detention · gross · escrow · recoveries · net with 5% floor · PDF · open JE) and **Company settlement** (revenue · costs · driver pay · factoring fee · margin · $/mi on practical AND on real driven). Frozen: no editable field; corrections = reversing entry. Numbers from the same readout as LDT-5.
+- **Guard:** `verify-ldt-6-settlement-frozen.mjs` — no `<input>` on a closed tour; both readouts sum to the readout; `--selftest` edits a closed amount → FAIL.
+- **Linkage:** driver_finance.driver_settlements ↔ accounting.company_settlements ↔ company_settlement_driver_settlements ↔ journal_entries ↔ docs.files (PDF).
+
+## LDT-7 · Audit tab in English (renders §Audit) — deadline 2026-09-06 16:00Z
+- **Required:** rows from `audit.row_changes` for this load only, columns When · Who · What happened · Money · Opens; a template dictionary turns event codes into sentences (`dispatch.load_created` → "Load 13526 booked — Uhrichsville → Mesquite, JRAYL, driver Sosa Perez, T170"); every row links to the record it describes; filters Range · Type · Who; CSV keeps the machine codes. No code or block id (`P6-D3`) on screen.
+- **Guard:** `verify-ldt-7-audit-english.mjs` — no row text matches `/^[a-z_.]+$/` or `/[A-Z]+-\d+-/`; every row has an `Opens` target; `--selftest` injects a raw code → FAIL.
+- **Linkage:** audit.row_changes ↔ every hub table.
+
+---
+Lead re-measures each LDT on Neon + tip + live within 30 min of the DONE line. Anything outside LDT-n while LDT-n is open is closed unmerged. Design questions → the two reference files; anything not in them → ask the lead before building, never invent.

@@ -1,10 +1,10 @@
 {
-  "healthzSha": "aa69701",
-  "generated_at": "2026-09-05T23:02:37.606Z",
+  "healthzSha": "35a3eec",
+  "generated_at": "2026-09-05T23:03:53.710Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "aa69701",
+    "deployedSha": "35a3eec",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,6 +2123,60 @@
   },
   "recentActivity": [
     {
+      "number": 20759,
+      "title": "FINDING: N/A (CLAIM-RESERVE 10423 for verify-google-reference-miles, Rule 37)",
+      "state": "merged",
+      "mergedAtCt": "09/05/2026, 06:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20759",
+      "sha": "9d13f78aca",
+      "committedAtIso": "2026-09-05T18:02:50-05:00"
+    },
+    {
+      "number": 20758,
+      "title": "docs(bus+design): OWNER ORDER — load detail tabs built as designed: Cursor LDT-0..7 register, renders for Stops/Driver Pay/Factoring/Pre-Settlement/Settlement/Audit, Load Costs proposal committed as reference",
+      "state": "merged",
+      "mergedAtCt": "09/05/2026, 06:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20758",
+      "sha": "c8fd72d0fe",
+      "committedAtIso": "2026-09-05T18:00:16-05:00"
+    },
+    {
+      "number": 20757,
+      "title": "FINDING: Samsara driver mirror omitted deactivated drivers",
+      "state": "merged",
+      "mergedAtCt": "09/05/2026, 05:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20757",
+      "sha": "35a3eec78c",
+      "committedAtIso": "2026-09-05T17:57:58-05:00"
+    },
+    {
+      "number": 0,
+      "title": "docs: Cascade LST-DUP DONE — 89 driver groups on live USMCA",
+      "state": "merged",
+      "mergedAtCt": "09/05/2026, 05:55 PM CT",
+      "url": "",
+      "sha": "9a1f9af830",
+      "committedAtIso": "2026-09-05T17:55:15-05:00"
+    },
+    {
+      "number": 20756,
+      "title": "FINDING: LST-DUP duplicate master-records report (drivers/customers/vendors)",
+      "state": "merged",
+      "mergedAtCt": "09/05/2026, 05:53 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20756",
+      "sha": "a4c2c833cd",
+      "committedAtIso": "2026-09-05T17:53:27-05:00"
+    },
+    {
+      "number": 20755,
+      "title": "FINDING: N/A (URGENT migration handoff to CC-1 for DSP-48, deadline 01:00Z)",
+      "state": "merged",
+      "mergedAtCt": "09/05/2026, 05:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20755",
+      "sha": "81535587f1",
+      "committedAtIso": "2026-09-05T17:51:01-05:00"
+    },
+    {
       "number": 20754,
       "title": "docs(law+bus): OWNER — Claude Lead is lead again (registrar+auditor+deployer); ONE-ITEM instructions for all six seats; LAW §0d amended",
       "state": "merged",
@@ -2157,60 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20751",
       "sha": "94092d190b",
       "committedAtIso": "2026-09-05T17:36:07-05:00"
-    },
-    {
-      "number": 20750,
-      "title": "FINDING: ACCT-F9051 — Load Costs board tabs (Costs/Expenses/Bills/Fuel/Driver pay/R&M) all rendered the same 19-column load board; clicking a tab never showed that type's transactions",
-      "state": "merged",
-      "mergedAtCt": "09/05/2026, 05:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20750",
-      "sha": "6f432fbaca",
-      "committedAtIso": "2026-09-05T17:35:48-05:00"
-    },
-    {
-      "number": 20749,
-      "title": "FINDING: N/A (board post — SEED-DRIVERS-ARE-VENDORS backfill DONE, #20748; duplicate-driver-record defect surfaced during it)",
-      "state": "merged",
-      "mergedAtCt": "09/05/2026, 05:34 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20749",
-      "sha": "be346a52d8",
-      "committedAtIso": "2026-09-05T17:34:05-05:00"
-    },
-    {
-      "number": 20747,
-      "title": "FINDING: N/A (D5 Book Load auto-geofence FE trigger, owner ruling 2026-09-05 — the stop-coordinate geocode fallback, own worktree, BookLoadModalV4.tsx untouched)",
-      "state": "merged",
-      "mergedAtCt": "09/05/2026, 05:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20747",
-      "sha": "5e4f67bdbe",
-      "committedAtIso": "2026-09-05T17:33:32-05:00"
-    },
-    {
-      "number": 20748,
-      "title": "Claude-3-SEED-DRIVERS-ARE-VENDORS-BACKFILL: re-type 94/97 driver-vendors, live-verify 0 gaps",
-      "state": "merged",
-      "mergedAtCt": "09/05/2026, 05:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20748",
-      "sha": "42dfae2d85",
-      "committedAtIso": "2026-09-05T17:31:56-05:00"
-    },
-    {
-      "number": 0,
-      "title": "docs: Cascade K.7 BRD-23 DONE — K.4-K.7 all complete",
-      "state": "merged",
-      "mergedAtCt": "09/05/2026, 05:20 PM CT",
-      "url": "",
-      "sha": "77c672e633",
-      "committedAtIso": "2026-09-05T17:20:01-05:00"
-    },
-    {
-      "number": 20746,
-      "title": "FINDING: K.7 BRD-23 planner ranges 7d/14d/30d/custom — guard verifies existing implementation",
-      "state": "merged",
-      "mergedAtCt": "09/05/2026, 05:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20746",
-      "sha": "d7700e7101",
-      "committedAtIso": "2026-09-05T17:19:55-05:00"
     }
   ]
 }
