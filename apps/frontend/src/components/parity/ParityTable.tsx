@@ -256,7 +256,16 @@ export type ParityTableProps<T> = {
    * from the real header row below it). Any visible column not named in any group's `keys` gets its
    * own 1-colspan, untinted cell so the two header rows always carry the same total column count.
    */
-  columnGroups?: Array<{ label: string; keys: string[]; bg?: string }>;
+  columnGroups?: Array<{
+    label: string;
+    keys: string[];
+    /** Odd-row body tint for this group's columns (DESIGN-CONTRACT: .b-rev/.b-cost/.b-pay). The band
+     * row itself is always the uniform group-band bg — this colour tints the BODY cells only. */
+    bg?: string;
+    /** Even-row body tint (DESIGN-CONTRACT even variants: --rev2/--cost2/--pay2). Falls back to `bg`
+     * when omitted (a group with no zebra variant). */
+    bgEven?: string;
+  }>;
   /**
    * OPTIONAL per-instance header re-theme (owner design law 2026-09-04: "the navy table header is
    * RETIRED... light background, regular ink, never white -- this is system wide"). The system-wide
@@ -602,8 +611,8 @@ export function ParityTable<T>({
   // membership doesn't depend on its current position — only the header band row's colSpans do.
   const columnBg = useMemo(() => {
     if (!columnGroups) return null;
-    const map = new Map<string, string | undefined>();
-    for (const g of columnGroups) for (const k of g.keys) map.set(k, g.bg);
+    const map = new Map<string, { bg?: string; bgEven?: string }>();
+    for (const g of columnGroups) for (const k of g.keys) map.set(k, { bg: g.bg, bgEven: g.bgEven ?? g.bg });
     return map;
   }, [columnGroups]);
 
@@ -1041,7 +1050,11 @@ export function ParityTable<T>({
           // COLUMNS-MUST-DISTINGUISH LAW (owner ruling 2026-09-04) — a grouped column's own tint
           // always wins over plain zebra striping (ungrouped columns still zebra-stripe); selection
           // wins over both.
-          const groupBg = columnBg?.get(String(column.key));
+          const group = columnBg?.get(String(column.key));
+          // DESIGN-CONTRACT even/odd group tints (--rev/--rev2 etc): a grouped column paints its own
+          // odd tint on odd rows and its darker even variant on even rows; ungrouped columns fall
+          // back to plain zebra. Selection wins over both.
+          const groupBg = group ? (isEvenRow ? group.bgEven ?? group.bg : group.bg) : undefined;
           const cellBg = selected.has(id)
             ? colors.accentTint
             : groupBg
@@ -1291,9 +1304,12 @@ export function ParityTable<T>({
                     className="text-center font-bold uppercase"
                     style={{
                       fontSize: 10,
-                      fontWeight: headerWeight ?? 700,
+                      fontWeight: 700,
                       letterSpacing: 0.9,
-                      backgroundColor: cell.bg ?? colors.tableGroupBandBg,
+                      // DESIGN-CONTRACT: the group band row is one uniform --grp-bg shade (in the
+                      // approved reference the per-group b-* classes on band cells are overridden by
+                      // the more-specific `thead tr.grp th` rule). Per-group colour lives on BODY tds.
+                      backgroundColor: colors.tableGroupBandBg,
                       color: colors.mutedText,
                       borderRight: `1px solid ${colors.tableColumnRule}`,
                       borderBottom: `1px solid ${colors.tableColumnRule}`,
