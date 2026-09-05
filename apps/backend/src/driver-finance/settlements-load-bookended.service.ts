@@ -7,6 +7,11 @@ import { applyAutoDeductionsToSettlement } from "../settlements/auto-deductions/
 import { computeSettlementContractTerms, SETTLEMENT_CONTRACT_TERMS_FLAG } from "./settlement-contract-terms.service.js";
 import { appendSettlementLineFromDriverBillIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
 import { fromMdataStatus } from "../dispatch/load-state-machine.js";
+import {
+  settlementEarningsSumSql,
+  settlementDeductionsSumSql,
+  settlementReimbursementsSumSql,
+} from "./settlement-line-buckets.js";
 
 /**
  * OFF-by-default flag (per-entity-only; routed through the canonical `isEnabled` resolver, NOT a
@@ -262,8 +267,12 @@ export async function aggregateSettlementTotals(
   }>(
     `
       SELECT
-        COALESCE(SUM(CASE WHEN line_type IN ('earnings', 'extra_pay', 'team_split_primary', 'team_split_secondary') THEN amount ELSE 0 END), 0) AS earnings,
-        COALESCE(SUM(CASE WHEN line_type IN ('deduction', 'abandonment_chargeback') THEN amount ELSE 0 END), 0) AS deductions,
+        -- Canonical buckets in ./settlement-line-buckets.ts -- SAME expressions the settlements LIST
+        -- read uses for the open-settlement accrual, so what the owner sees while a settlement is open
+        -- equals what gets written here on close. earnings now includes deadhead_pay (empty-leg driver
+        -- pay); it previously fell through ELSE 0 and dropped the whole deadhead leg out of gross.
+        ${settlementEarningsSumSql()} AS earnings,
+        ${settlementDeductionsSumSql()} AS deductions,
         -- ACCT-F5619: dispute_adjustment folded into the same bucket as reimbursement (both are
         -- positive-direction corrections owed back to the driver, unrelated to base pay) -- the
         -- CHECK constraint has permitted this line_type since 202607380000, but this aggregation
@@ -273,7 +282,7 @@ export async function aggregateSettlementTotals(
         -- does NOT claim the amount was disbursed; see the OPEN board finding
         -- SETTLEMENT-DISPUTE-APPROVAL-HAS-NO-DISBURSEMENT-PATH for the still-unresolved cash
         -- question, deliberately left untouched here pending an owner accounting-treatment decision.
-        COALESCE(SUM(CASE WHEN line_type IN ('reimbursement', 'dispute_adjustment') THEN amount ELSE 0 END), 0) AS reimbursements
+        ${settlementReimbursementsSumSql()} AS reimbursements
       FROM driver_finance.settlement_lines
       WHERE settlement_id = $1
         -- ACCT-F156: settlement_lines soft-deletes via is_active, so an inactive line stays here with
