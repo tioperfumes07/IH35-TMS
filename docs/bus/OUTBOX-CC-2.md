@@ -578,3 +578,27 @@ accept/post directly. tsc -b clean both apps (Devin's reports/** break is now fi
 NOT built, reported honestly: many-to-one fuel-card aggregation (different algorithm, own pass)
 and vendor-alias matching (no vendor_alias table exists; needs a migration-capable seat, CC-2
 cannot author migrations). | NEXT 7 of 8 -- 2.2 design tokens encode design-contract values | GO
+
+CC-2 | STEP 7 of 8 DONE | (pre-existing, re-verified live 16:30Z) | design tokens already encode
+the DESIGN-CONTRACT-LOAD-COSTS-BOARD-2026-09-05.md values (tokens.ts: tableHeaderBg #EEF2F6,
+tableColumnRule #C7D2DC, tableBodyRule #D8DEE6, tableRowStripe zebra, CLICKABLE-BOX-SIZE LAW h-7/
+28px, kpiTileTargetHeight 93) and are genuinely CONSUMED (ParityTable.tsx 13 refs, DispatchBoard.tsx
+5 refs), not just declared. Ratchet live: `node scripts/verify-table-design-contract.mjs` -> PASS
+(path-scoped via scripts/.gate-step-map.json, consumed by verify-static.mjs); `node
+scripts/verify-ui-design-system-ratchet.mjs` -> PASS (raw_font_sizes improved 1287->1284 from an
+unrelated recent fix, not banked, not required to be). No further action needed this pass.
+
+CC-2 | STEP 8 of 8 DONE | 988fdb7384 (#20525) | live proof 16:30Z: commit confirmed on
+origin/main; `node scripts/verify-roundtrips-timeline-restored.mjs` -> OK; `node
+scripts/verify-round-trips-deep-link-timeline-and-empty-copy.mjs` -> OK. Round Trips long-leg
+outline + legend row (DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §C) already merged and still
+green.
+
+CC-2 | SEQUENCE COMPLETE — all 8 of 8 steps in CODER-SEQUENCE-NUMBERED-2026-09-05.md's CC-2 §
+DONE and live-reverified this pass (1 L.4a, 2 L.4a-fix, 3 cutover-floor, 4 L.4g, 5 B.2, 6 B.1, 7
+design tokens, 8 L.4c). This session: 2 new merged PRs (#20580 B.2, #20591 B.1) + 2 real
+build-typecheck guard-rot fixes that were blocking every PR repo-wide (#20574) + 2 CLAIM-RESERVEs
+(#20579 10383, #20590 10387) + 3 docs catch-up PRs, all fast-merged same-turn per
+FAST-MERGE-4MIN-LAW the instant each showed mergeStateStatus clear. | NEXT=awaiting next
+assignment (M=8 list exhausted) -- checking INBOX-CC-2.md / CODER-SEQUENCE-NUMBERED-2026-09-05.md
+for a new numbered block rather than idling | GO
