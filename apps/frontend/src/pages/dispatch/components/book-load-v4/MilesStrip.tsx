@@ -24,6 +24,11 @@ type Props = {
   onUseHistoryMiles?: { (): void };
   /** P0 State C */
   newLane?: boolean;
+  /** DSP-48 (owner ruling 2026-09-05, "Google distance = REFERENCE ONLY"): a car-routing
+   *  distance/time for comparison against the typed Practical miles above — grey, read-only,
+   *  NEVER editable and NEVER copied into any miles input (LAW §2). null/undefined = not
+   *  computed yet (no coordinates, provider not configured, or still loading). */
+  googleReferencePractical?: { miles: number; minutes: number } | null;
 };
 
 function numFromInput(raw: string): number | null {
@@ -39,6 +44,13 @@ function formatMiles(n: number | null | undefined): string {
 
 function inputValue(n: number | null | undefined): string {
   return n != null && Number.isFinite(n) && !(n <= 0) ? String(n) : "";
+}
+
+/** "18 h 40 m" — DSP-48's own example format. */
+function formatDuration(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return hours > 0 ? `${hours} h ${minutes} m` : `${minutes} m`;
 }
 
 function provenanceClass(fillConfidence?: LaneMileageFillConfidence | "operator"): string {
@@ -79,6 +91,7 @@ export function MilesStrip({
   historyOffer = null,
   onUseHistoryMiles,
   newLane = false,
+  googleReferencePractical = null,
 }: Props) {
   // fillConfidence drives chrome; provenance is the operator sentence.
   const cell = "flex flex-1 flex-col items-center justify-center border-r border-slate-200 px-2 py-2 text-center last:border-r-0";
@@ -213,6 +226,16 @@ export function MilesStrip({
           {fillConfidence === "check_zip"
             ? `Filled from a lane whose ZIP does not match. Check these miles before you book. ${provenance}`
             : provenance}
+        </p>
+      ) : null}
+      {googleReferencePractical ? (
+        <p
+          className="border-t border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-500"
+          data-testid="book-load-google-reference-miles"
+          title="Google car routing — reference only"
+        >
+          Google ref {googleReferencePractical.miles.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mi ·{" "}
+          {formatDuration(googleReferencePractical.minutes)}
         </p>
       ) : null}
     </div>

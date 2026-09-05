@@ -78,6 +78,10 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "codex/tel-39-driver-mirror",
     new Set(["db/migrations/202613772200_samsara_driver_activation_status.sql"]),
   ],
+  [
+    "codex/tel-40-stops-geofence",
+    new Set(["db/migrations/202613772300_tel40_stop_geocode_evidence_and_radii.sql"]),
+  ],
 ]);
 
 export function isOwnerAuthorizedOneOff(branch, files) {

@@ -89,3 +89,5 @@ CASCADE | K.6 BRD-21 DONE | ea2bba7fe0 | origin/main | planners filter deactivat
 CASCADE | K.7 BRD-23 DONE | d7700e7101 | origin/main | planner ranges 7d/14d/30d/custom with DatePicker; guard + selftest PASS | NEXT K.8 design law sweep
 
 CASCADE | LST-DUP DONE | a4c2c833cd | verify-duplicate-masters-report --selftest 15/15 PASS | drivers groups 89 | NEXT await lead
+
+CASCADE | LST-LOC DONE | 049c547426 | verify-locations-list --selftest PASS | locations 12 · geocoded 9 · geofence 0 | NEXT await lead

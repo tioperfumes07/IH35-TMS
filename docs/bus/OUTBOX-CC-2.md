@@ -902,3 +902,28 @@ itself is independently confirmed live) -- will paste once deployed. The 114-sto
 backfill (running the new endpoint across every already-booked load, not just one at a time) is
 a natural next step, not built here. | NEXT=awaiting next REGISTER item / standing queue
 (Dispatch cleanliness list was in progress before this interrupt -- resuming that) | GO
+
+CC-2 | DSP-48 DONE | 4ad92aa63c | verify-google-reference-miles --selftest 5/5 | test-verified
+worked example (DSP-48's own numbers, mocked Routes API response -- no live GOOGLE_PLACES_API_KEY
+reaches this sandbox and FE/API deploy is stale, so no live load number is available yet): input
+distanceMeters=1954226 duration="67200s" -> computeRouteReference() returns exactly {miles:
+1214.3, minutes: 1120} = "Google ref 1,214.3 mi · 18 h 40 m", matching the task's own example
+byte-for-byte (routes-api-client.test.ts, 3/3 passing) | NEXT await lead
+Built: POST /api/v1/geocoding/route-reference (wizard live-preview, 5-min cache, server-side
+key) + a SEPARATE persisted path wired into bookLoad() itself (non-blocking, same shape as this
+session's auto-geofence hook) that computes+persists each practical-route leg's Google reference
+at book time + a 30-day expiry cron (mirrors cash-advance-request-expiry-cron.ts) + MilesStrip.tsx's
+new read-only grey line (hover "Google car routing — reference only", never an input, never wired
+to onPracticalChange/onShortestChange) + the never-touches-money guard.
+NOT built / genuinely open (routed, not guessed): (1) mdata.load_stop_legs migration -- CC-2
+cannot author migrations, routed to CC-1 with a proposed schema (docs/bus/INBOX-CC-1.md,
+PR #20755); every persist call is try/catch degrade-safe on the missing table (added to
+verify-phantom-relations.mjs's KNOWN_PHANTOM_DEBT, HOLD-FOR-JORGE) so today's booking already
+computes correctly and will start persisting the moment that migration lands, no code change
+needed. (2) The wizard's live-preview wiring (calling the new endpoint with picked-stop
+coordinates and passing the result into MilesStrip) needs BookLoadModalV4.tsx -- same standing
+GATE-ROT-07 WIP conflict as D5, built everything else in an isolated worktree instead of
+guessing past it. (3) The "Empty" (yard->pickup) leg reference isn't computed yet -- resolving a
+company "yard" point (likely geo.geofences location_kind='yard' polygon centroid) is a real open
+design question, flagged rather than fabricated; this PR's persisted path covers the practical
+route only. PR #20763 (feature), #20759 (claim 10423), #20755 (migration routing to CC-1).

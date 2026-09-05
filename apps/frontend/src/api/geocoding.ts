@@ -42,3 +42,18 @@ export function geocodePlace(placeId: string, session: string) {
     `/api/v1/geocoding/place/${encodeURIComponent(placeId)}?session=${encodeURIComponent(session)}`
   );
 }
+
+// DSP-48 (owner ruling 2026-09-05, "Google distance = REFERENCE ONLY"): one Google Routes
+// computeRoutes call per leg, server-side key, 5-min cache. A grey, read-only comparison figure
+// — never editable, never copied into miles_practical/miles_shortest, never into pay/RPM/
+// settlement (LAW §2, enforced by scripts/verify-google-reference-miles.mjs).
+export type RouteReferenceLatLng = { lat: number; lng: number };
+export type RouteReferenceLeg = { from: RouteReferenceLatLng; to: RouteReferenceLatLng };
+export type RouteReferenceResult = { miles: number; minutes: number; cached?: boolean } | null;
+
+export function geocodeRouteReference(legs: RouteReferenceLeg[]) {
+  return apiRequest<{ enabled: boolean; legs: RouteReferenceResult[] }>("/api/v1/geocoding/route-reference", {
+    method: "POST",
+    body: { legs },
+  });
+}

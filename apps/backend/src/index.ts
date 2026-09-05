@@ -356,6 +356,7 @@ import { registerForm425cExhibitsRoutes } from "./reports/form-425c/exhibits/rou
 import { registerTaxDocumentRoutes } from "./tax-documents/tax-documents.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
 import { registerListsCountsRoutes } from "./lists/lists-counts.routes.js";
+import { registerLocationsListRoutes } from "./lists/locations-list.routes.js";
 import { registerDriverCatalogDeprecatedRoutes } from "./lists/driver-catalogs.routes.js";
 import { registerNamesMasterRoutes } from "./lists/names-master.routes.js";
 import { registerDriversReferenceRoutes } from "./lists/drivers-reference.routes.js";
@@ -411,6 +412,7 @@ import { initializeRecurringTemplatesCron } from "./cron/recurring-templates.cro
 import { initializeRecurringBillGeneratorWorker, stopRecurringBillGeneratorWorker } from "./jobs/recurring-bill-generator-worker.js";
 import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh-cron.js";
 import { initializeCashAdvanceRequestExpiryCron } from "./cron/cash-advance-request-expiry-cron.js";
+import { initializeGoogleReferenceMilesExpiryCron } from "./cron/google-reference-miles-expiry-cron.js";
 import { initializeChatConfirmationEscalationCron } from "./cron/chat-confirmation-escalation.cron.js";
 import { initializeSamsaraHealthCheckCron } from "./cron/samsara-health-cron.js";
 import { initializeModelLifecycleMonitorCron } from "./cron/model-lifecycle-monitor.cron.js";
@@ -514,6 +516,7 @@ import { registerBillPaymentGlRoutes } from "./accounting/bill-payment-gl.routes
 import { registerRelatedPartyLoanRoutes } from "./accounting/related-party-loan-posting/routes.js";
 import { registerCashForecastManualRoutes } from "./forecast/cash-forecast-manual.routes.js";
 import { registerGeocodingRoutes } from "./integrations/trimble/geocoding.routes.js";
+import { registerRouteReferenceRoutes } from "./integrations/google/route-reference.routes.js";
 import { registerGooglePlacesRoutes } from "./integrations/google/places.routes.js";
 import { registerSafetyOfficerRoleHomeRoutes } from "./safety-officer/role-views/routes.js";
 import { registerDriverManagerRoleHomeRoutes } from "./driver-manager/role-views/routes.js";
@@ -799,6 +802,7 @@ async function main() {
   // PC*MILER/Trimble geocoding proxy — always mounts; PCMILER_ENABLED flag is checked inside the handler
   // (registration must NOT depend on an env var — that 404'd the forecast routes). Key stays server-side.
   await registerGeocodingRoutes(app);
+  await registerRouteReferenceRoutes(app);
   // Google address-autocomplete proxy (RULING 3, 2026-09-02) — address field only, never miles.
   // Same always-mounts / gate-inside-handler shape as the Trimble route above.
   await registerGooglePlacesRoutes(app);
@@ -1188,6 +1192,7 @@ async function main() {
   await registerTaxDocumentRoutes(app);
   await registerListsHubRoutes(app);
   await registerListsCountsRoutes(app);
+  await registerLocationsListRoutes(app);
   await registerDriversReferenceRoutes(app);
   await registerOemPartsRoutes(app);
   await registerNamesMasterRoutes(app);
@@ -1360,6 +1365,7 @@ async function main() {
 
     try {
       initializeCashAdvanceRequestExpiryCron(app);
+      initializeGoogleReferenceMilesExpiryCron(app);
       app.log.info("[STARTUP] cash-advance-request-expiry-cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] cash-advance-request-expiry-cron failed");
