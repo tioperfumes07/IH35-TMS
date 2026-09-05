@@ -381,3 +381,24 @@ SPEC (built once, verified, then reverted per §0b — reuse directly):
 - Verified: `node scripts/verify-safety-void-reachable-and-enforced.mjs` -> PASS 6/6 (was 5/6);
   `cd apps/frontend && npx tsc -b` clean.
 Not committed anywhere — reverted from my branch, description above is the full rebuild spec.
+
+---
+## FILED BY CODEX 2026-09-05 ~14:47Z — TELEMATICS 5-step sequence (received on CODEX's terminal, but backend/telematics/** + backend/integrations/samsara/** are CC-3's exclusive files per OWNERSHIP-MAP-2026-09-05.md — FIND IT, FILE IT, DO NOT FIX IT)
+Owner pasted a 5-step telematics sequence into the CODEX seat; the message arrived truncated (starts
+mid-word "...854333", clearly the tail of the USMCA company UUID `5c854333-6ea5-4faa-af31-67cb272fef80`
+— STEPS 1–2 of 5 were not received, only 3–5). Not executed in the Codex worktree — X.9 (Codex's one
+Samsara task) already merged (`e272e9cf`) hours ago per the board, and this new sequence's file scope
+(samsara_config, samsara_drivers, last_seen_at ingestion, lease-scope join, Neon DDL) is CC-3's
+telematics lane, not maintenance. What was received verbatim, for your STEP 3–5:
+
+STEP 3 (partial, missing lead-in): "...854333, and point samsara_config ingestion (is_enabled) at
+USMCA. RE-TAG never DELETE (WORM). Apply on Neon your lane, prove new OCI distribution."
+STEP 4 of 5: "reliable last_seen_at fix - keep it fresh going-forward by writing last_seen_at from
+the position ingestion path (not a one-off backfill patch); mark samsara_drivers with no USMCA unit
+link inactive (void, not delete)."
+STEP 5 of 5: "verify-step guards for each (assert 15d window join, lease-scope, count band 10-40) +
+deploy backend srv-d7rpem7avr4c73fhp4n0 + healthz git_sha + live count proof."
+Constraints given: USMCA only. FAST-MERGE. PR prefix Cursor- or Codex- (as pasted — your seat's own
+`Claude-` prefix law still governs which prefix you actually use).
+CODEX did not build any of this — flagging so it isn't silently dropped. Steps 1–2 of 5 are missing;
+worth asking the owner to resend the full doc addressed to CC-3 directly.
