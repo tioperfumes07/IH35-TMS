@@ -1,4 +1,4 @@
-// Google Geocoding (Places) — SERVER-SIDE ONLY.
+// Google Places API (New) Text Search + Geocoding fallback — SERVER-SIDE ONLY.
 //
 // KEY HANDLING (hard rules, same as trimble-maps-client.ts): GOOGLE_PLACES_API_KEY is read ONLY
 // here (backend), NEVER sent to the browser, NEVER logged. The whole integration is gated behind
@@ -33,7 +33,8 @@ export function isGooglePlacesConfigured(): boolean {
 }
 
 // Same shape as trimble-maps-client.ts's GeocodeResult so callers (AddressGeocodeInput,
-// stopGeocodePatches) can consume either provider without a frontend change.
+// stopGeocodePatches) can consume either provider without a frontend change. `name` is additive:
+// the business/place name when the match came from Places Text Search (e.g. "Tyson Foods").
 export type AddressResult = {
   formatted: string;
   address_line1: string;
@@ -43,6 +44,7 @@ export type AddressResult = {
   zip: string;
   lat: number | null;
   lon: number | null;
+  name?: string;
 };
 
 type GoogleAddressComponent = { long_name: string; short_name: string; types: string[] };
@@ -58,14 +60,88 @@ function component(components: GoogleAddressComponent[], type: string, useShort 
   return useShort ? hit.short_name : hit.long_name;
 }
 
-/** Forward geocode a free-typed address. Returns parsed candidates. Throws on config/HTTP errors
- *  (caller maps to 502). Mirrors singleSearchGeocode's contract exactly. */
-export async function searchAddress(query: string, maxResults = 5): Promise<AddressResult[]> {
-  const cfg = loadConfig();
-  if (!cfg) throw new Error("google_places_not_configured");
+function fromComponents(
+  comps: GoogleAddressComponent[],
+  formatted: string,
+  lat: number | null,
+  lon: number | null,
+  name?: string,
+): AddressResult {
+  const streetNumber = component(comps, "street_number");
+  const route = component(comps, "route");
+  return {
+    formatted,
+    address_line1: [streetNumber, route].filter(Boolean).join(" "),
+    city: component(comps, "locality") || component(comps, "postal_town") || component(comps, "sublocality"),
+    state: component(comps, "administrative_area_level_1", true),
+    country: component(comps, "country", true),
+    zip: component(comps, "postal_code"),
+    lat,
+    lon,
+    ...(name ? { name } : {}),
+  };
+}
+
+// ---- Places API (New) Text Search — owner 2026-09-05: "one of those search comboboxes where you type in
+// tyson and it starts giving locations". Text Search answers business names AND street addresses with the
+// full address broken into components. Field mask is the Essentials/Pro set only (no photos, reviews,
+// hours) so each call stays in the lowest SKU. Bias: continental US + Mexico (our lanes), no hard filter.
+type PlacesNewComponent = { longText?: string; shortText?: string; types?: string[] };
+type PlacesNewPlace = {
+  id?: string;
+  displayName?: { text?: string };
+  formattedAddress?: string;
+  addressComponents?: PlacesNewComponent[];
+  location?: { latitude?: number; longitude?: number };
+  types?: string[];
+};
+const PLACES_FIELD_MASK =
+  "places.id,places.displayName,places.formattedAddress,places.addressComponents,places.location,places.types";
+
+async function textSearch(query: string, maxResults: number, apiKey: string): Promise<AddressResult[]> {
+  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": PLACES_FIELD_MASK,
+    },
+    body: JSON.stringify({
+      textQuery: query,
+      pageSize: Math.min(Math.max(maxResults, 1), 20),
+      languageCode: "en",
+      // Rectangle covering the continental US + Mexico. Bias only (never a filter).
+      locationBias: {
+        rectangle: {
+          low: { latitude: 14.0, longitude: -125.0 },
+          high: { latitude: 49.5, longitude: -66.0 },
+        },
+      },
+    }),
+  });
+  if (!res.ok) throw new Error(`google_places_text_http_${res.status}`);
+  const data = (await res.json()) as { places?: PlacesNewPlace[] };
+  const places = Array.isArray(data.places) ? data.places : [];
+  return places.map((pl) => {
+    const comps: GoogleAddressComponent[] = (pl.addressComponents ?? []).map((c) => ({
+      long_name: c.longText ?? "",
+      short_name: c.shortText ?? c.longText ?? "",
+      types: c.types ?? [],
+    }));
+    const lat = typeof pl.location?.latitude === "number" ? pl.location.latitude : null;
+    const lon = typeof pl.location?.longitude === "number" ? pl.location.longitude : null;
+    const name = pl.displayName?.text?.trim();
+    const formatted = pl.formattedAddress ?? "";
+    // A bare street address comes back with displayName == the address; only keep name when it adds information.
+    const keepName = name && formatted && !formatted.toLowerCase().startsWith(name.toLowerCase()) ? name : undefined;
+    return fromComponents(comps, formatted, lat, lon, keepName);
+  });
+}
+
+async function geocode(query: string, maxResults: number, apiKey: string): Promise<AddressResult[]> {
   const url =
     `https://maps.googleapis.com/maps/api/geocode/json` +
-    `?address=${encodeURIComponent(query)}&components=country:US|country:MX&key=${encodeURIComponent(cfg.apiKey)}`;
+    `?address=${encodeURIComponent(query)}&components=country:US|country:MX&key=${encodeURIComponent(apiKey)}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`google_places_http_${res.status}`);
   const data = (await res.json()) as { status?: string; results?: GoogleGeocodeResult[] };
@@ -75,19 +151,27 @@ export async function searchAddress(query: string, maxResults = 5): Promise<Addr
     throw new Error(`google_places_status_${data.status}`);
   }
   const results = Array.isArray(data.results) ? data.results.slice(0, maxResults) : [];
-  return results.map((r): AddressResult => {
-    const comps = r.address_components ?? [];
-    const streetNumber = component(comps, "street_number");
-    const route = component(comps, "route");
-    return {
-      formatted: r.formatted_address ?? "",
-      address_line1: [streetNumber, route].filter(Boolean).join(" "),
-      city: component(comps, "locality") || component(comps, "postal_town") || component(comps, "sublocality"),
-      state: component(comps, "administrative_area_level_1", true),
-      country: component(comps, "country", true),
-      zip: component(comps, "postal_code"),
-      lat: typeof r.geometry?.location?.lat === "number" ? r.geometry.location.lat : null,
-      lon: typeof r.geometry?.location?.lng === "number" ? r.geometry.location.lng : null,
-    };
-  });
+  return results.map((r) =>
+    fromComponents(
+      r.address_components ?? [],
+      r.formatted_address ?? "",
+      typeof r.geometry?.location?.lat === "number" ? r.geometry.location.lat : null,
+      typeof r.geometry?.location?.lng === "number" ? r.geometry.location.lng : null,
+    ),
+  );
+}
+
+/** Address / business-name lookup for the Book Load address field. Places Text Search (New) first — it
+ *  answers "tyson" with every Tyson location — then the Geocoding API as fallback for strings Text Search
+ *  cannot place. Throws on config/HTTP errors (caller maps to 502). Mirrors singleSearchGeocode's contract. */
+export async function searchAddress(query: string, maxResults = 5): Promise<AddressResult[]> {
+  const cfg = loadConfig();
+  if (!cfg) throw new Error("google_places_not_configured");
+  const viaPlaces = await textSearch(query, maxResults, cfg.apiKey);
+  // Keep only rows that resolved to a real street-level or postal-level address (a bare "United States"
+  // or "Laredo, TX" row is noise in an address picker).
+  const usable = viaPlaces.filter((r) => r.address_line1 || r.zip);
+  if (usable.length > 0) return usable.slice(0, maxResults);
+  const viaGeocode = await geocode(query, maxResults, cfg.apiKey);
+  return viaGeocode.filter((r) => r.address_line1 || r.zip);
 }

@@ -106,6 +106,7 @@ export function AddressGeocodeInput({
                   setOpen(false);
                 }}
               >
+                {r.name ? <span className="font-semibold">{r.name} · </span> : null}
                 {r.formatted}
               </button>
             </li>

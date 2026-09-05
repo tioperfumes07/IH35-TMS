@@ -11,6 +11,7 @@ export type GeocodeResult = {
   zip: string;
   lat: number | null;
   lon: number | null;
+  name?: string;
 };
 
 export function geocodeSearch(q: string) {

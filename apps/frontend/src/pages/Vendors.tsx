@@ -5,7 +5,7 @@ import { ParityTable, type ParityColumn } from "../components/parity/ParityTable
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { listBills, listVendorBalances } from "../api/accounting";
-import { listAllVendors, listVendorPaymentMethods, type VendorPaymentMethod } from "../api/mdata";
+import { listAllVendors, listVendorPaymentMethods, getVendorRollups, type VendorPaymentMethod, type VendorRollup } from "../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../lib/quality-badge";
 import { formatUsdCents } from "../lib/money";
 import { Button } from "../components/Button";
@@ -220,6 +220,19 @@ export function VendorsPage() {
     queryFn: () => listVendorBalances(companyId, { all: true }),
     enabled: Boolean(companyId),
   });
+  // CC-3 V.1 / Wave 3 Step 3 — vendor counterparty roll-up (Purchases YTD / Last Purchase / Last Transaction).
+  const vendorRollupsQuery = useQuery({
+    queryKey: ["mdata", "vendor-rollups", companyId],
+    queryFn: () => getVendorRollups(companyId),
+    enabled: Boolean(companyId),
+  });
+  const rollupByVendorId = useMemo(() => {
+    const map = new Map<string, VendorRollup>();
+    for (const row of vendorRollupsQuery.data ?? []) {
+      map.set(row.vendor_id, row);
+    }
+    return map;
+  }, [vendorRollupsQuery.data]);
   // LIST-EMPTY-1: shared list-state status — children render "No vendors found."
   // only once this settles, never during the roster fetch.
   // ACCT-F5793 — combined with inactiveVendorsQuery so the empty-state gate also waits for the
@@ -569,6 +582,7 @@ export function VendorsPage() {
           vendors={vendorsSorted}
           status={vendorsStatus}
           openByVendorId={openByVendorId}
+          rollupByVendorId={rollupByVendorId}
           onSelectVendor={(vendorId) => {
             setSelectedVendorId(vendorId);
             setViewMode("master-detail");

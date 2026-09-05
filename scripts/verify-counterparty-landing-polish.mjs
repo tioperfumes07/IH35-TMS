@@ -6,7 +6,7 @@
  * WHAT IT ASSERTS:
  *  1. CustomersListView has columns labelled "Loads", "Booked YTD", and "Last Load".
  *  2. VendorsListView has columns labelled "Purchases YTD" and "Last Purchase"
- *     (even if they are "—" placeholders until CC-3 V.1 ships the vendor roll-up endpoint).
+ *     wired to live vendor roll-up data (formatUsdCents + mmmDd, not "—" placeholders).
  *  3. No cell renderer visibly outputs the literal text "None", "null", or "undefined".
  *  4. Money columns use formatUsdCents (via fmtMoney) — never a raw number cast.
  *  5. Date columns use mmmDd (or a dash fallback) — never toLocaleDateString.
@@ -109,10 +109,11 @@ checkFile("vendors", VENDORS_PATH, [
     const hasLabel = /label:\s*["']Last Purchase["']/.test(src);
     return hasLabel ? null : 'missing "Last Purchase" column (label: "Last Purchase")';
   },
-  // 2c. CC-3 V.1 comment present
+  // 2c. Vendor roll-up data wired (not "—" placeholders)
   (src) => {
-    const hasComment = /CC-3\s*V\.1.*wire.*vendor.*roll-up/i.test(src);
-    return hasComment ? null : 'missing CC-3 V.1 comment referencing vendor roll-up endpoint';
+    // The file must reference rollup data (rollupByVendorId or rollup prop)
+    const hasRollup = /rollupByVendorId|rollup\??\.purchases_ytd_cents|rollup\??\.last_purchase_date/i.test(src);
+    return hasRollup ? null : 'missing vendor roll-up data wiring (rollupByVendorId or rollup prop)';
   },
   // 3. No visible "None" / "null" / "undefined" text in render functions
   (src) => {
