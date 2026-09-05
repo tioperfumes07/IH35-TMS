@@ -1,8 +1,9 @@
 /**
  * GAP-25 — Active Driver Set Recompute Service
  *
- * Computes the active driver set for an operating company by finding drivers
- * with recorded activity (last_seen_at or webhook events) within `threshold_days`.
+ * Computes the active driver set for an operating carrier from the physical
+ * fleet it currently leases: a live vehicle position plus an overlapping
+ * vehicle-driver assignment. Integration mirror freshness is not movement.
  *
  * Writes a snapshot row to integrations.active_driver_set_cache and prunes
  * snapshots beyond the 30-row retention window per OCI.
@@ -11,7 +12,7 @@
 import type { PoolClient } from "pg";
 
 export const MAX_SNAPSHOTS_PER_OCI = 30;
-export const DEFAULT_THRESHOLD_DAYS = 7;
+export const DEFAULT_THRESHOLD_DAYS = 15;
 
 export interface ActiveDriverSetSnapshot {
   uuid: string;
@@ -23,9 +24,9 @@ export interface ActiveDriverSetSnapshot {
 }
 
 /**
- * Queries samsara_drivers and samsara_webhook_events to find drivers active
- * within the last `threshold_days` days, writes a new cache snapshot, and
- * prunes old snapshots beyond MAX_SNAPSHOTS_PER_OCI.
+ * Queries canonical assignment and latest-position telemetry for drivers active
+ * within the last `threshold_days` days, writes a new cache snapshot, and prunes
+ * old snapshots beyond MAX_SNAPSHOTS_PER_OCI.
  */
 export async function recomputeActiveDriverSet(
   client: PoolClient,
@@ -37,30 +38,37 @@ export async function recomputeActiveDriverSet(
     [operating_company_id]
   );
 
-  const cutoff = new Date(Date.now() - threshold_days * 24 * 60 * 60 * 1000).toISOString();
-
-  // Active drivers: seen directly OR referenced in a recent webhook event
+  // Rule 49: the Samsara mirror's last_seen_at is a dead integration heartbeat,
+  // not evidence that a driver moved. Resolve activity from the latest physical
+  // position and the assignment window, and scope the truck by its current lease.
   const activeRes = await client.query<{ local_driver_id: string; total: string }>(
     `
-      SELECT
-        d.local_driver_id::text,
+      SELECT DISTINCT
+        d.id::text AS local_driver_id,
         COUNT(*) OVER () AS total
-      FROM integrations.samsara_drivers d
-      WHERE d.operating_company_id = $1::uuid
-        AND d.local_driver_id IS NOT NULL
-        AND (
-          d.last_seen_at >= $2::timestamptz
-          OR EXISTS (
-            SELECT 1
-            FROM integrations.samsara_webhook_events e
-            WHERE e.operating_company_id = $1::uuid
-              AND e.received_at >= $2::timestamptz
-              AND (e.payload -> 'driver' ->> 'id') = d.samsara_driver_id
-          )
-        )
-      ORDER BY d.local_driver_id
+      FROM telematics.vehicle_driver_assignments a
+      JOIN telematics.vehicle_latest_position p
+        ON p.unit_id = a.unit_id
+      JOIN mdata.units u
+        ON u.id = a.unit_id
+       AND u.currently_leased_to_company_id = $1::uuid
+       AND u.status = 'InService'
+       AND u.is_sample_data IS NOT TRUE
+       AND u.deactivated_at IS NULL
+       AND u.sold_date IS NULL
+       AND u.disposed_date IS NULL
+       AND u.is_oos IS NOT TRUE
+      JOIN mdata.drivers d
+        ON d.id = a.driver_id
+       AND d.is_sample_data IS NOT TRUE
+       AND d.deactivated_at IS NULL
+       AND d.status IS DISTINCT FROM 'Terminated'::mdata.driver_status
+      WHERE p.captured_at >= now() - ($2::int * interval '1 day')
+        AND a.started_at <= now()
+        AND (a.ended_at IS NULL OR a.ended_at >= now() - ($2::int * interval '1 day'))
+      ORDER BY d.id::text
     `,
-    [operating_company_id, cutoff]
+    [operating_company_id, threshold_days]
   );
 
   const totalDriverRes = await client.query<{ total: string }>(

@@ -14,7 +14,7 @@ function makeSnapshot(overrides: Record<string, unknown> = {}) {
     uuid: "cccccccc-0000-4000-8000-000000000003",
     operating_company_id: OCI_A,
     snapshot_at: new Date().toISOString(),
-    threshold_days: 7,
+    threshold_days: 15,
     active_driver_uuids: ["dddddddd-0000-4000-8000-000000000004"],
     total_driver_count: 5,
     ...overrides,
@@ -29,7 +29,7 @@ function makeClient(
   const snapshot = makeSnapshot({ active_driver_uuids: activeUuids, total_driver_count: total, operating_company_id: ociId });
   const querySpy = vi.fn().mockImplementation((sql: string) => {
     if (sql.includes("set_config")) return Promise.resolve({ rows: [] });
-    if (sql.includes("samsara_drivers") && sql.includes("local_driver_id")) {
+    if (sql.includes("FROM telematics.vehicle_driver_assignments") && sql.includes("local_driver_id")) {
       return Promise.resolve({
         rows: activeUuids.map((id) => ({ local_driver_id: id, total: String(activeUuids.length) })),
       });
@@ -83,6 +83,20 @@ describe("recomputeActiveDriverSet", () => {
     );
     expect(setCalls.length).toBeGreaterThan(0);
     expect(setCalls[0][1]).toContain(OCI_A);
+  });
+
+  it("derives activity from live positions, assignment overlap, and current unit lease", async () => {
+    const client = makeClient();
+    await recomputeActiveDriverSet(client, OCI_A);
+
+    const activeSql = (client.query as ReturnType<typeof vi.fn>).mock.calls
+      .map(([sql]: [string]) => sql)
+      .find((sql: string) => sql.includes("FROM telematics.vehicle_driver_assignments"));
+    expect(activeSql).toContain("JOIN telematics.vehicle_latest_position p");
+    expect(activeSql).toContain("u.currently_leased_to_company_id = $1::uuid");
+    expect(activeSql).toContain("p.captured_at >= now() - ($2::int * interval '1 day')");
+    expect(activeSql).toContain("a.ended_at IS NULL OR a.ended_at >=");
+    expect(activeSql).not.toContain("last_seen_at");
   });
 
   it("produces an empty active set when no drivers are active", async () => {

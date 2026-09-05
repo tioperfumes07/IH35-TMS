@@ -3,7 +3,7 @@
  *
  * GET  /api/integrations/samsara/active-drivers
  *   Returns the cached active-driver set for the authenticated tenant.
- *   Query params: threshold_days (7|14|30, default 7), max_age_minutes (default 15)
+ *   Query params: threshold_days (7|14|15|30, default 15), max_age_minutes (default 15)
  *
  * POST /api/integrations/samsara/active-drivers/recompute
  *   Manually triggers an immediate recompute and returns the new snapshot.
@@ -19,9 +19,9 @@ import { recomputeActiveDriverSet } from "./recompute.service.js";
 const getQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   threshold_days: z
-    .enum(["7", "14", "30"])
+    .enum(["7", "14", "15", "30"])
     .optional()
-    .transform((v) => Number(v ?? "7")),
+    .transform((v) => Number(v ?? "15")),
   max_age_minutes: z
     .string()
     .optional()
@@ -30,7 +30,7 @@ const getQuerySchema = z.object({
 
 const recomputeBodySchema = z.object({
   operating_company_id: z.string().uuid(),
-  threshold_days: z.number().int().min(1).max(90).optional().default(7),
+  threshold_days: z.number().int().min(1).max(90).optional().default(15),
 });
 
 function officeUser(req: FastifyRequest, reply: FastifyReply) {
