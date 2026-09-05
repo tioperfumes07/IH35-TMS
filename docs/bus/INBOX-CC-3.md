@@ -1,3 +1,10 @@
+# ▶ YOUR ONE ACTIVE ITEM (register 18:35Z) — `docs/bus/REGISTER-MODULE-DOD-2026-09-05.md`
+**Registrar decision 18:35Z (owner): Cursor holds THE dispatch register; Claude audits; `OWNER-ISSUE-INVENTORY-2026-09-05.md` is now the AUDIT SOURCE, not a parallel dispatch register.** One active item per coder.
+**CC-3 = Customers/Vendors (+ seed prereq):** finish the USMCA seed via SCRIPT (service fns, pickup ≥ 2026-08-07, is_sample_data=false, NEVER manual, never close pre-settlements), then **V1 — counterparty roll-ups**: vendors (purchases_ytd, last_purchase, count — "Last Transaction" must read a transaction date, never `updated_at`); customers (loads, booked_ytd incl. proforma, open_ar posted-only, last_load). Dash-never-zero. Deadline **20:35Z**, surrender **CC-1**.
+DONE-BAR: view/migration APPLIED to prod · endpoint returns REAL USMCA rows (OCI=5c854333 AND NOT is_sample_data, paste the number) · FE file:line · guard `verify-counterparty-rollups-live.mjs` green **in CI** (sum Purchases YTD = live posted USMCA expenses; sum Booked YTD = the invoice totals; 0 counterparties showing "—") · merged sha · **Claude re-runs the probe**. FAST-MERGE.
+Next: M.3 company-settlements backend (shapes → Cursor L6) · DP.3 audit-history scoped.
+
+---
 # ★★★★★ LEAD VERDICT 2026-09-05 03:00Z — STEP 3.2b ✔ VERIFIED (not taken on your word)
 ## ★★★★★ OWNER "LOCK IT" — MODULE OWNERSHIP MAP, ONE LEAD, DEPLOY TIMER. PERMANENT (owner 2026-09-05 14:13Z). Supersedes §0b's table where they differ.
 **One lead.** Claude (this session) is THE lead: measures live, writes verdicts, keeps the ONE register `docs/bus/OWNER-ISSUE-INVENTORY-2026-09-05.md`, sequences, enforces deadlines/surrenders, journals. No second register. Cursor = deployer + dispatcher (wake-seat loop) + one builder vertical. Seats never self-assign; a seat with no row asks the lead on its OUTBOX.

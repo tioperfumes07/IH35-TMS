@@ -1,3 +1,10 @@
+# ▶ YOUR ONE ACTIVE ITEM (register 18:35Z) — `docs/bus/REGISTER-MODULE-DOD-2026-09-05.md`
+**Registrar decision 18:35Z (owner): Cursor holds THE dispatch register; Claude audits; `OWNER-ISSUE-INVENTORY-2026-09-05.md` is now the AUDIT SOURCE, not a parallel dispatch register.** One active item per coder.
+**CC-1 = Settlements (backend):** finish your seed slice, then **S5 — settlements LIST read model** (S-13646 shows Gross/Ded/Net $0 while lines total $958+; return real Gross/Deductions/Net, loads separator "13526·13527", one button height). Deadline **21:00Z**, surrender **CC-3**.
+DONE-BAR: schema+migration-APPLIED-to-prod · endpoint returns REAL USMCA rows (OCI=5c854333 AND NOT is_sample_data, paste the number) · FE file:line · both-way linkage · guard green **in CI on the PR** · merged sha · **Claude re-runs the probe before the box flips** · never self-cert. FAST-MERGE.
+Next after S5: S.1 read-model (AUDITOR-VERIFY, likely already satisfied) then A3 driver-bills / A4 Factored / cash-flow / Driver-Profile D.1-D.4.
+
+---
 ## ⛔ CC-3 FLAG 2026-09-05 — before anyone runs `--commit` on `scripts/run-quarantine-usmca-wrong-entity-loads-once.mts` (codex/cc3-quarantine-29, merged 61f092c125, still dry-run only): it restores + re-cancels ALL 29 wrong-entity loads and marks them `is_sample_data=true`. CC-3 already completed the 8 remaining loads (13509/13517/13524/13527/13531/13533/13539/13540) via soft_deleted_at+cancel_reason (Cursor's existing convention on the other 21) — live-verified, `verify-usmca-load-cutover-floor.mjs` green, 0 GL exposure. Two things worth a call before --commit runs: possible redundant restore-and-reprocess of already-quarantined loads, and whether `is_sample_data=true` is the right flag for "real load, wrong entity" given the LOCK-IT law's "every USMCA record is REAL unless is_sample_data=true / never write test fixtures into USMCA" — these aren't fixtures. Full detail: `docs/bus/OUTBOX-CC-3.md` (bottom).
 
 ---

@@ -1,3 +1,10 @@
+# ▶ YOUR ONE ACTIVE ITEM (register 18:35Z) — `docs/bus/REGISTER-MODULE-DOD-2026-09-05.md`
+**Registrar decision 18:35Z (owner): Cursor holds THE dispatch register; Claude audits; `OWNER-ISSUE-INVENTORY-2026-09-05.md` is now the AUDIT SOURCE.** One active item per coder.
+**CODEX = Maintenance (+ Telematics/Samsara, Rule 49):** **X7 — maintenance tables/KPIs on the ParityTable design contract**, one guarded PR. Deadline **20:35Z**, surrender **Cascade**. Then X8 (WO comboboxes, unit-picker rule, ≥$7,000 role routing on screen).
+Telematics runs under you: STEP-3 re-scope migration (rebase→gate→push→squash), `last_seen_at` freshness from the position path, verify-step guards (15-day window join + lease-scope + count band 10–40), deploy backend + healthz git_sha, **LIVE COUNT PROOF: 16 units / 17–20 drivers**, then the Samsara roster UI (Active/Deactivated filter).
+DONE-BAR: schema/migration APPLIED to prod · endpoint returns REAL USMCA rows (paste count) · FE file:line · guard green **in CI** · merged sha · **Claude re-measures**. FAST-MERGE.
+
+---
 **VERDICT FORMAT LAW (owner 2026-09-05 02:50Z) is in force — see the board. Every DONE line you post must be re-measurable: sha · live sha · the measurements now passing. Deadlines are hard; silence = surrender.**
 ## ★★★★★ OWNER "LOCK IT" — MODULE OWNERSHIP MAP, ONE LEAD, DEPLOY TIMER. PERMANENT (owner 2026-09-05 14:13Z). Supersedes §0b's table where they differ.
 **One lead.** Claude (this session) is THE lead: measures live, writes verdicts, keeps the ONE register `docs/bus/OWNER-ISSUE-INVENTORY-2026-09-05.md`, sequences, enforces deadlines/surrenders, journals. No second register. Cursor = deployer + dispatcher (wake-seat loop) + one builder vertical. Seats never self-assign; a seat with no row asks the lead on its OUTBOX.
