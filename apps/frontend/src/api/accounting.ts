@@ -1623,6 +1623,35 @@ export function getJournalEntrySourceLinks(id: string, operatingCompanyId: strin
   );
 }
 
+/** ACC-49 — one group per journal entry that touched this source document (usually one). */
+export type PostingsBySourceGroup = {
+  journal_entry_id: string;
+  entry_date: string;
+  status: JournalEntryStatus;
+  postings: JournalEntryPosting[];
+  debit_total_cents: number;
+  credit_total_cents: number;
+};
+
+/**
+ * ACC-49 — postings resolved by (source_transaction_type, source_transaction_id), the other
+ * direction from getJournalEntry: powers the Journal tab on Expense/Bill/Invoice detail, which
+ * knows its OWN id + type but not which journal_entry_uuid(s) reference it.
+ */
+export function getJournalEntryPostingsBySource(
+  sourceTransactionType: string,
+  sourceTransactionId: string,
+  operatingCompanyId: string
+) {
+  const query = new URLSearchParams({
+    source_transaction_type: sourceTransactionType,
+    source_transaction_id: sourceTransactionId,
+  });
+  return apiRequest<{ journal_entries: PostingsBySourceGroup[] }>(
+    withCompany(`/api/v1/accounting/journal-entry-postings/by-source?${query.toString()}`, operatingCompanyId)
+  );
+}
+
 export function listJournalEntryTypesForJe(operatingCompanyId: string) {
   return apiRequest<{
     rows: Array<{ id: string; code: string; display_name: string; description: string | null; is_active: boolean }>;

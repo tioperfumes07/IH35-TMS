@@ -26,6 +26,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { JournalPostingsPanel } from "../../components/accounting/PostingGrid";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 import { formatUsdCents } from "../../lib/money";
@@ -447,6 +448,7 @@ export function BillDetailPage() {
           )}
         </div>
       </DataPanel>
+      <JournalPostingsPanel sourceTransactionType="bill" sourceTransactionId={id} operatingCompanyId={selectedCompanyId} />
       <MoneyProofTrailPanel operatingCompanyId={selectedCompanyId!} documentType="bill" documentId={id} />
     </AccountingSubNavWrapper>
   );
