@@ -122,8 +122,14 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
   // disabled state fires and names the gap, exactly the fail-closed behavior the owner asked for.
   const fuelRoleRow = (coaRoles.data?.rows ?? []).find((row) => row.role === "company_fuel_advance_expense" && row.is_active && row.account_id);
   const fuelAccount = fuelRoleRow ? chart.find((row) => row.id === fuelRoleRow.account_id) : undefined;
-  const bankAccounts = paymentAccounts.filter((row) => /bank/i.test(row.account_type) || /bank/i.test(row.account_name));
-  const fuelAdvancePaymentAccounts = bankAccounts.length ? bankAccounts : paymentAccounts;
+  // Owner order 2026-09-05: "Payment account by ROLE operating_bank" -- the same fail-closed,
+  // bind-by-role pattern as the fuel category above, applied to the fuel advance's bank leg.
+  // USMCA has zero accounts with account_type literally "Bank" (Bug 3 in the filed finding), so the
+  // prior name/type-widened fallback (bankAccounts.length ? bankAccounts : paymentAccounts) always
+  // fell through to every Asset account, receivables included. Missing role -> operatingBankAccount
+  // is undefined -> the field renders disabled and names the gap, same as fuelAccount above.
+  const operatingBankRoleRow = (coaRoles.data?.rows ?? []).find((row) => row.role === "operating_bank" && row.is_active && row.account_id);
+  const operatingBankAccount = operatingBankRoleRow ? chart.find((row) => row.id === operatingBankRoleRow.account_id) : undefined;
   const draftTotal = drafts.reduce((sum, row) => sum + Math.max(0, Math.round(Number(row.amount || 0) * 100)), 0);
   const displayNumber = (index: number) => savedCount + index === 0 ? load.load_number : `${load.load_number}-${savedCount + index}`;
   const update = (id: string, patch: Partial<Draft>) => setDrafts((rows) => rows.map((row) => row.id === id ? { ...row, ...patch, error: null } : row));
@@ -154,9 +160,9 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
               ? !load.assigned_primary_driver_id
                 ? "Assign a driver to this load before recording a fuel advance."
                 : !fuelAccount
-                  ? "No Fuel expense account found in this entity's chart of accounts — add one before recording a fuel advance."
-                  : !row.paymentAccountId
-                    ? "Bank account is required."
+                  ? "No Fuel expense account found — designate the company_fuel_advance_expense role on the CoaRoles page before recording a fuel advance."
+                  : !operatingBankAccount
+                    ? "No operating bank account found — designate the operating_bank role on the CoaRoles page before recording a fuel advance."
                     : !(amountCents > 0)
                       ? "Amount must be greater than zero."
                       : null
@@ -181,7 +187,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
             // Company expense, never a driver liability: DR fuel expense / CR bank, through the same
             // createExpense write path as any other paid-now cost — driver_id is set so the line
             // shows whose fuel this was, but nothing here writes driver_finance.* or a receivable.
-            await createExpense(opco, { category_account_id: fuelAccount!.id, expense_date: row.date, amount_cents: amountCents, payment_account_uuid: row.paymentAccountId, driver_id: load.assigned_primary_driver_id!, load_id: load.id, expense_number: displayNumber(index), memo: `Fuel advance · Load ${load.load_number}`, is_sample_data: false });
+            await createExpense(opco, { category_account_id: fuelAccount!.id, expense_date: row.date, amount_cents: amountCents, payment_account_uuid: operatingBankAccount!.id, driver_id: load.assigned_primary_driver_id!, load_id: load.id, expense_number: displayNumber(index), memo: `Fuel advance · Load ${load.load_number}`, is_sample_data: false });
           } else {
             await createBrokerAdvance(opco, { load_id: load.id, customer_id: load.customer_id, category: row.advanceCategory as BrokerAdvanceCategory, instrument_type: row.instrumentType.trim(), instrument_reference: row.instrumentReference.trim(), amount_cents: amountCents, received_at: row.date, bank_account_id: row.paymentAccountId || null });
           }
@@ -220,7 +226,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
         </div> : row.kind === "fuel_advance" ? <div className="grid grid-cols-2 gap-3 p-3">
           <Field label="Date"><DatePicker data-testid="load-cost-field-date" className="mt-1 h-8 w-full" value={row.date} onChange={(value) => update(row.id, { date: value })} /></Field>
           <Field label="Category"><div data-testid="load-cost-field-fuel-category" className="mt-1 flex h-8 w-full items-center rounded-sm border border-gray-200 bg-gray-50 px-2 text-xs text-gray-600">{fuelAccount ? `${fuelAccount.account_number ? `${fuelAccount.account_number} · ` : ""}${fuelAccount.account_name} (auto)` : "No Fuel expense account found"}</div></Field>
-          <Field label="Paid from (bank)"><select data-testid="load-cost-field-fuel-bank" className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={row.paymentAccountId} onChange={(e) => update(row.id, { paymentAccountId: e.target.value })}><option value="">Select bank account</option>{fuelAdvancePaymentAccounts.map((a) => <option key={a.id} value={a.id}>{a.account_number ? `${a.account_number} · ` : ""}{a.account_name}</option>)}</select></Field>
+          <Field label="Paid from (bank)"><div data-testid="load-cost-field-fuel-bank" className="mt-1 flex h-8 w-full items-center rounded-sm border border-gray-200 bg-gray-50 px-2 text-xs text-gray-600">{operatingBankAccount ? `${operatingBankAccount.account_number ? `${operatingBankAccount.account_number} · ` : ""}${operatingBankAccount.account_name} (auto)` : "No operating bank account found"}</div></Field>
           <Field label="Amount"><div data-testid="load-cost-field-amount"><MoneyInput className="mt-1 h-8 w-full" valueCents={row.amount ? Math.round(Number(row.amount) * 100) : null} onChangeCents={(cents) => update(row.id, { amount: cents == null ? "" : String(cents / 100) })} /></div></Field>
         </div> : <div className="grid grid-cols-2 gap-3 p-3">
           <Field label="Date"><DatePicker data-testid="load-cost-field-date" className="mt-1 h-8 w-full" value={row.date} onChange={(value) => update(row.id, { date: value })} /></Field>

@@ -1846,6 +1846,10 @@ export const COA_ROLE_VALUES = [
   // ACCT-F25053 — company fuel-advance debit account, bound by role instead of name-matched
   // (LoadDetailCostsTab.tsx's `+ Fuel advance` control). Seeded for USMCA -> 5000 Fuel & Diesel.
   "company_fuel_advance_expense",
+  // ACCT-F345 — the default disbursement/payment source account (backend resolver.service.ts had
+  // this since ACCT-F345; the frontend enum never picked it up). Bound live for USMCA -> 1000 Bank
+  // of America - Operating. Used by LoadDetailCostsTab.tsx's fuel-advance "Paid from" leg.
+  "operating_bank",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
