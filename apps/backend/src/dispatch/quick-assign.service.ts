@@ -8,6 +8,7 @@ import {
   assertDriverQualifiedForLoad,
   DriverNotQualifiedError,
 } from "./driver-qualification.service.js";
+import { advanceDraftStatusIfCrewed } from "./draft-crew-status-advance.js";
 
 type QuickAssignInput = {
   operating_company_id: string;
@@ -268,6 +269,11 @@ export async function quickAssignLoad(
         ],
       );
       if (!assignmentUpdate.rows[0]?.id) throw new Error("E_LOAD_NOT_FOUND");
+
+      // WIZ-STATUS-01 DURABLE FIX (owner order 2026-09-05) — this write path assigns a primary
+      // driver straight to mdata.loads without going through updateDispatchLoad()'s own status
+      // advance; a draft load quick-assigned a driver here would otherwise stay draft forever.
+      await advanceDraftStatusIfCrewed(client, input.load_id, input.operating_company_id);
 
       const previousTrailerId = await resolveCurrentTrailerId(
         client,
