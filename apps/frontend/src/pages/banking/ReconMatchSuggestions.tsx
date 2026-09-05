@@ -17,6 +17,7 @@ const SUGGESTION_ENTITY_KIND: Record<ReconcileSuggestionType, EntityKind> = {
   work_order: "work_order",
   ar_invoice: "invoice",
   bill: "bill",
+  expense: "expense",
   factoring_batch: "factoring_batch",
 };
 

@@ -6,7 +6,7 @@ type Queryable = {
 };
 
 export type BankingReconSuggestion = {
-  obligation_type: "load" | "settlement" | "fuel" | "work_order" | "ar_invoice" | "bill" | "factoring_batch";
+  obligation_type: "load" | "settlement" | "fuel" | "work_order" | "ar_invoice" | "bill" | "expense" | "factoring_batch";
   obligation_id: string;
   label: string;
   amount_cents: number;

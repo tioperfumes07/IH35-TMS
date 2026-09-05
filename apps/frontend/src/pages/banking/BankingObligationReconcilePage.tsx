@@ -36,6 +36,7 @@ const OBLIGATION_ENTITY_KIND: Record<ObligationType, EntityKind> = {
   work_order: "work_order",
   ar_invoice: "invoice",
   bill: "bill",
+  expense: "expense",
 };
 
 export function BankingObligationReconcilePage() {
