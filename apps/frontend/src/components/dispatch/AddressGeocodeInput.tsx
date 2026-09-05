@@ -88,7 +88,10 @@ export function AddressGeocodeInput({
           setOpen(false);
           return;
         }
-        next = (sug.suggestions ?? []).map((s) => ({ kind: "suggestion", s }) as Row);
+        const predictions = (sug.suggestions ?? []).map((s) => ({ kind: "suggestion", s }) as Row);
+        const businesses = (sug.results ?? []).map((r) => ({ kind: "result", r }) as Row);
+        // Typed a number → an address: predictions first. Typed a name → a warehouse/company: businesses first.
+        next = /^\d/.test(q) ? [...predictions, ...businesses] : [...businesses, ...predictions];
         if (next.length === 0) {
           const resp = await geocodeSearch(q);
           setEnabled(Boolean(resp.enabled));
