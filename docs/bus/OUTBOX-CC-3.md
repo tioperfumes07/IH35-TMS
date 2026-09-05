@@ -227,3 +227,11 @@ not building the matching algorithm blind against data I've never seen. | FAST-M
 gate=pending this push | push=pending | merge=pending | neon=n/a (pure-function code, zero DB
 access needed for this piece) | NEXT=await CC-1's 3-migration apply, then the real sync/matching
 service against live data
+
+CC-3 | STEP-3.2 DONE (partial -- migrations drafted, code shipped, service pending) | PR #20412
+squash 679f84bb (samsara_addresses table) + PR #20418 squash 50785b89 (circle-to-polygon utility
++ geo.geofences source-id migration) | Genuinely blocked on 3.3 (the sync/matching service)
+without either (a) CC-1 applying the 3 queued migrations so there's a real table to write to, or
+(b) a live Samsara address sample to confirm the geofence_json shape and build real match
+thresholds against -- not fabricating either. Holding here rather than guessing. | NEXT
+STEP-3.3 once unblocked
