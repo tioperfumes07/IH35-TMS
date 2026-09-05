@@ -621,7 +621,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                               <button
                                 type="button"
                                 data-testid="load-detail-geocode-stops-button"
-                                className="rounded-sm border border-slate-300 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                // GLOBAL-TYPE-SIZE-BASELINE ratchet (verify-ui-design-system-ratchet.mjs):
+                                // no NEW raw text-[Npx] — inherits the Overview tab's own text-xs (12px,
+                                // the locked body size) instead of a one-off arbitrary value.
+                                className="rounded-sm border border-slate-300 px-1.5 py-0.5 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                                 disabled={geocodeStopsMutation.isPending}
                                 onClick={() => geocodeStopsMutation.mutate()}
                               >
