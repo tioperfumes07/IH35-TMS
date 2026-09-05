@@ -43,6 +43,10 @@ function auditBoard(src) {
     f.push(`${BOARD}: filter pills must be square (rounded-sm), never rounded-full`);
   if (!/rounded-sm/.test(pillMapper))
     f.push(`${BOARD}: filter pills must use a square rounded-sm class`);
+  // L.1c (DESIGN-CONTRACT §14): the 19-column board must not compress below min-width 1660 —
+  // it scrolls horizontally in the overflow-x wrapper instead of truncating columns.
+  if (!/minWidthPx=\{1660\}/.test(src))
+    f.push(`${BOARD}: ParityTable must be given minWidthPx={1660} so wide columns scroll, not truncate`);
   return f;
 }
 
@@ -66,6 +70,8 @@ function main() {
     if (auditBoard(m4).length === 0) { console.error("SELFTEST FAIL: reverting a cost cell to fmt (zero) did not trip"); process.exit(1); }
     const m3 = boardSrc.replace(/data-testid=\{`load-costs-pill-\$\{id\}`\}([^\n]*)rounded-sm/, "data-testid={`load-costs-pill-${id}`}$1rounded-full");
     if (auditBoard(m3).length === 0) { console.error("SELFTEST FAIL: rounded-full pill did not trip"); process.exit(1); }
+    const m5 = boardSrc.replace(/minWidthPx=\{1660\}/, "");
+    if (auditBoard(m5).length === 0) { console.error("SELFTEST FAIL: removing minWidthPx did not trip"); process.exit(1); }
     console.log("SELFTEST OK: guard trips on all mutations");
   }
 
