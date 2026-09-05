@@ -86,6 +86,68 @@ export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) 
     return reply.send({ crossings: payload });
   });
 
+  // X.5 — read-only contract consumed by the Driver Instruction Sheet. Whether the Customs
+  // treatment is shown remains exclusively owned by LoadDetailDrawer.loadHasCrossBorder(); this
+  // endpoint deliberately does not introduce a second cross-border predicate.
+  app.get("/api/v1/border-crossing/loads/:id/driver-instructions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const instruction = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const result = await client.query(
+        `
+          SELECT
+            l.id::text AS load_id,
+            COALESCE(port.name, instruction_crossing.port_of_entry, border_stop.city) AS port_of_entry,
+            COALESCE(port.cbp_port_code, (regexp_match(border_stop.stop_notes, 'CBP[[:space:]]+([0-9A-Za-z-]+)'))[1]) AS cbp_port_code,
+            instruction_crossing.customs_broker_id::text AS customs_broker_id,
+            broker.vendor_name AS customs_broker_name,
+            broker.phone AS customs_broker_phone,
+            broker.email AS customs_broker_email,
+            COALESCE(instruction_crossing.manifest_number, instruction_crossing.ace_emanifest_ref, instruction_crossing.emanifest_reference) AS pedimento_entry_number,
+            COALESCE(instruction_crossing.notes, l.border_routing, border_stop.stop_notes) AS crossing_instructions
+          FROM mdata.loads l
+          LEFT JOIN LATERAL (
+            SELECT instruction_crossing.*
+            FROM mdata.unit_border_crossings instruction_crossing
+            WHERE instruction_crossing.load_id = l.id
+              AND instruction_crossing.operating_company_id = l.operating_company_id
+            ORDER BY instruction_crossing.wizard_completed_at DESC NULLS LAST,
+                     instruction_crossing.crossing_date DESC,
+                     instruction_crossing.id
+            LIMIT 1
+          ) instruction_crossing ON true
+          LEFT JOIN LATERAL (
+            SELECT load_stop.city, load_stop.stop_notes
+            FROM mdata.load_stops load_stop
+            WHERE load_stop.load_id = l.id
+              AND load_stop.stop_type = 'border'
+              AND load_stop.soft_deleted_at IS NULL
+            ORDER BY load_stop.sequence_number, load_stop.id
+            LIMIT 1
+          ) border_stop ON true
+          LEFT JOIN reference.ports_of_entry port ON port.id = instruction_crossing.port_of_entry_id
+          LEFT JOIN mdata.vendors broker
+            ON broker.id = instruction_crossing.customs_broker_id
+           AND broker.operating_company_id = l.operating_company_id
+           AND broker.deactivated_at IS NULL
+          WHERE l.id = $1::uuid
+            AND l.operating_company_id = $2::uuid
+            AND l.soft_deleted_at IS NULL
+        `,
+        [params.data.id, query.data.operating_company_id]
+      );
+      return result.rows[0] ?? null;
+    });
+
+    if (!instruction) return reply.code(404).send({ error: "not_found" });
+    return reply.send({ instruction });
+  });
+
   app.get("/api/v1/border-crossing/history/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
