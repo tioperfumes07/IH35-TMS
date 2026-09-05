@@ -37,7 +37,6 @@ import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 import { getCurrentClocks } from "../telematics/hos-clocks.service.js";
 import { getLatestHosClocksByDriver } from "../integrations/samsara/samsara-hos-clocks-pull.service.js";
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
-import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { countActiveDispatchLoads, countInTransitDispatchLoads } from "./active-loads-count.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
@@ -1609,17 +1608,11 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       if (result.kind === "error") {
         return reply.code(result.status).send(result.payload);
       }
-      const createdLoadId = String(result.row.id ?? "");
-      const createdCompanyId = String(result.row.operating_company_id ?? body.data.operating_company_id);
-      if (createdLoadId && createdCompanyId) {
-        // Non-blocking hook: load booking response should not wait on geocoding/geofence creation.
-        void autoCreateGeofencesForLoad(authUser.uuid, {
-          operating_company_id: createdCompanyId,
-          load_id: createdLoadId,
-        }).catch((err) => {
-          req.log.warn({ err, load_id: createdLoadId }, "auto_geofence_post_book_failed");
-        });
-      }
+      // Inv #40 (owner order 2026-09-05): the auto-geofence/Samsara-address hook moved INTO
+      // bookLoad() itself (book-load.service.ts) so every caller gets it, not only this HTTP
+      // route -- measured before the fix, only 6 of 57 loads had ever gone through this route
+      // and therefore ever fired it. Do not re-add it here; that would double-fire it for every
+      // HTTP-booked load once bookLoad() already does it.
       return reply.code(201).send(result.row);
     } catch (error) {
       const code = (error as { code?: string }).code;

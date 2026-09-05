@@ -25,6 +25,7 @@ import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.js";
 import { buildLoadSaveProof } from "./load-save-proof.js";
 import { linkLoadToPresettlementAtBookingInClientTx } from "./presettlement-link.service.js";
+import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
 
 type BookLoadStop = {
   // 'border' = a port-of-entry crossing stop captured in Book Load for a cross-border (NB/SB) load.
@@ -1031,6 +1032,33 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     return { kind: "error", status: 400, payload: { error: "solo_or_team_assignment_required_not_both" } };
   }
 
+  const result = await bookLoadInTransaction(input);
+
+  // Inv #40 (owner order 2026-09-05, SAMSARA-CAPABILITIES-AND-INTEGRATION-PLAN-2026-09-05.md §4):
+  // this hook used to fire ONLY from the HTTP route (dispatch/loads.routes.ts), so any OTHER
+  // caller of bookLoad() -- a seed script, a future service-to-service call -- silently skipped
+  // Samsara place/geofence creation entirely (measured: 6 of 57 loads had ever triggered it,
+  // because only 6 went through the HTTP path). Moved here, into the one function every caller
+  // goes through, so it fires regardless of entry point. Runs AFTER the booking transaction
+  // commits (its own separate withCurrentUser transaction, same non-blocking best-effort shape
+  // the HTTP route always used) -- a geofence/Samsara failure must never roll back or delay the
+  // load booking response.
+  if (result.kind === "ok") {
+    const createdLoadId = String(result.row.id ?? "");
+    if (createdLoadId) {
+      void autoCreateGeofencesForLoad(input.requestingUserUuid, {
+        operating_company_id: input.operating_company_id,
+        load_id: createdLoadId,
+      }).catch((err) => {
+        console.error("auto_geofence_post_book_failed", { err, load_id: createdLoadId });
+      });
+    }
+  }
+
+  return result;
+}
+
+async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResult> {
   return withCurrentUser(input.requestingUserUuid, async (client) => {
     await setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id);
 
