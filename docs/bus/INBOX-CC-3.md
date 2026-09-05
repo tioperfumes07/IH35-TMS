@@ -1,3 +1,19 @@
+# ★ OWNER ORDER 2026-09-04 20:01 — CC-3 REAL BACKEND NOW (not bus)
+`git pull --ff-only origin main` · FAST-MERGE · backend seat may deploy Render after green backend PR (owner 2026-09-04)
+
+Owner: "I need CC-3 also working on something real." Two concrete deliverables, in order:
+
+**1. Samsara geofence import (P0, already ordered).** `docs/bus/ORDER-2026-09-04-CC-3-SAMSARA-GEOFENCE-IMPORT.md`. Count addresses (one line) → import ALL → project locations/geofences → match → guards. Live fact today: `geo.geofences` = 2 rows. Finish it.
+
+**2. Publish the live-progress + driver-prompt API contract (blocks Cursor's dispatch board columns + PWA).** Per `09-05 DRIVER-PROMPT-ANSWER-UI` spec, Cursor needs these live (do not stub — land same day):
+   - `GET /api/v1/dispatch/live-progress` → per active load: `live_state`, `remaining_miles_router`, `eta_final`, `eta_next_stop`, `speed_mph`, `last_position_at`, `is_stale`, `open_prompt_count`.
+   - `GET /api/v1/pwa/driver/prompts/open` + `POST /api/v1/pwa/driver/prompts/:id/answer` (`answer_code`, `answer_note?`, `gps_lat?`, `gps_lng?`).
+   - `GET /api/v1/dispatch/prompts/unanswered`.
+   - **Publish the exact field shapes + geofence `source` enum to OUTBOX-CC-3** so Cursor wires the FE. Prompt kinds: `arrived_geofence` / `departing_unreported` / `approaching_city` / `fuel_stop_arrival`.
+
+Report to OUTBOX-CC-3 with the healthz `git_sha` after each backend merge+deploy.
+
+---
 # ★★ SEQUENCE · CC-3 · DO NOT JUMP
 `git pull --ff-only origin main`
 

@@ -1,3 +1,20 @@
+# ★ OWNER ORDER 2026-09-04 20:01 — CC-1 OWNS LOAD COSTS + SETTLEMENTS (do this, not bus)
+`git pull --ff-only origin main` · FAST-MERGE · USMCA only · money = Tier A · reuse existing posters, no new GL math
+
+Owner: "CC-1 is supposed to finish all design and things related to Load Costs, the pre-settlements and settlements in the dispatch module." You own the whole money vertical here. Three concrete deliverables:
+
+**1. Load Costs board — finish per owner spec (09-04 §6).** `apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx` + `apps/backend/src/accounting/load-costs-board.routes.ts`.
+   - 19 columns already exist + Unit/Driver split + service Status — VERIFY LIVE they render, don't rebuild blind.
+   - Drawer/expense create: **+ Fuel advance** button must CREATE an expense entry `category="Fuel advance"`, `is_fuel_advance=true` (today `btn-fuel-advance` just links to `/cash-advances` — wire the real create). Fuel advance = company expense to the company driver (owner ruling).
+   - Widen the cost-entry drawer to **≥480px** so Select vendor / Select category / date are fully visible.
+   - Voided hidden by default (already). Sort/filter/export on all columns (verify).
+   - Guard + live screenshot with real data.
+
+**2. Pre-settlements + settlements in the Dispatch module.** Dispatch subtabs `settlements` / `pre_settlements` (`apps/frontend/src/pages/Dispatch.tsx` → panels). Finish design + wiring so they read the real driver_finance settlements. Nobody closes but the owner.
+
+**3. Create the REAL loads + OPEN pre-settlements (owner-ordered).** Owner: "the loads you are seeding are also real true loads and settlements... you do not close the settlements you leave them in pre-settlements, I will close each one." → create real USMCA loads through the **existing Book Load poster** (`POST /api/v1/dispatch/loads`), `is_sample_data=false`, multi-stop, real customers/active drivers/units; generate their pre-settlements and **leave OPEN**. NEVER close. Report load ids + pre-settlement ids to OUTBOX. Owner creates 6 of his own; you create the rest.
+
+---
 # ★★ SEQUENCE · CC-1 · DO NOT JUMP
 `git pull --ff-only origin main`
 
