@@ -16,3 +16,6 @@ DEVIN | STEP 5 of 8 DONE | e8958e838f | origin/main | Report EXPORT parity: 23 p
 DEVIN | STEP 6 of 8 DONE | fb5a2daa22 | origin/main | Report LANDING filter bar: 28 pages visible-on-first-load ≥3 controls; guard verify-report-landing-filter-bar.mjs PASS | NEXT 7 of 8
 DEVIN | STEP 7 of 8 DONE | 6f9e8f790b | origin/main | LFI-20+ catalog lists: 70 sortable: false→true + 19 voided/inactive toggle; guard verify-catalog-lists-voided-toggle.mjs PASS | NEXT 8 of 8
 DEVIN | STEP 8 of 8 DONE | eb2c03a914 | origin/main | Counterparty landing polish: 3 customer roll-up cols + 2 vendor placeholders + dash-never-zero; guard verify-counterparty-landing-polish.mjs PASS | SEQUENCE COMPLETE
+DEVIN | LH DONE | 8f1410c226 | origin/main | Driver Load History: status filter + date range + rate/pickup/delivery cols + CSV + Print + click-to-load; guard verify-driver-load-history.mjs PASS (10/10) | NEXT K9
+DEVIN | K9 DONE | f0decd1a91 | origin/main | Customers+Vendors landing filter bar ≥5 inline controls (0 clicks); guard verify-k9-landing-filter-bar.mjs PASS (Customers 6, Vendors 6) | NEXT K4-7
+DEVIN | K4-7 DONE | 8f1410c226+20f429e3d1 | origin/main | Planners BRD-19/20/21/23: Grid/List toggle + sortable columns + landing filter + CSV/print per list; guards verify-planners-lists-parity.mjs PASS (31/31) + verify-planners-list-views.mjs PASS (23/23) | NEXT (await register)
