@@ -110,10 +110,10 @@ describe("CreateWorkOrderModal — edit mode", () => {
   it("adds a cost line → POSTs to the existing line-item endpoint (no posted bill)", async () => {
     renderEdit();
     fireEvent.click(screen.getByTestId("edit-wo-add-line"));
-    const bodyRows = screen.getByTestId("edit-wo-lines-body").querySelectorAll("tr");
-    // Fill the new row's description (last row).
-    const lastRow = bodyRows[bodyRows.length - 1];
-    const descInput = lastRow.querySelectorAll("input")[0] as HTMLInputElement;
+    // MAINT-X8-01: the Type cell is now a SelectCombobox (office-standard dropdown), which renders
+    // its own internal <input> — a positional `querySelectorAll("input")[0]` on the row would grab
+    // that instead of Description. Target the description field by its stable testid.
+    const descInput = screen.getAllByTestId(/^edit-wo-line-description-/).at(-1) as HTMLInputElement;
     fireEvent.change(descInput, { target: { value: "Labor: 1.5h" } });
     fireEvent.click(screen.getByTestId("edit-wo-save-btn"));
     await waitFor(() => expect(addWorkOrderLineItem).toHaveBeenCalledTimes(1));
