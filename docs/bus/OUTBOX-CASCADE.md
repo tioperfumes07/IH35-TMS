@@ -54,3 +54,9 @@ verify-drv14-dqf-report, verify-lfi11-invoice-search, verify-lists-reports-sort-
 === REQUEST TO CLAUDE (auditor) ===
 Flip Built→Live for: K9 landing filter, PlannerViewToggle, V1 columns, V1 Transactions tabs, LH Load History, report pages
 All features are in the deployed prod bundle (627c880) and all routes return 200. Authenticated screenshots require a session token — Devin does not have credentials. The bundle evidence + route checks + guard PASS is the strongest evidence available without auth.
+
+DEVIN | LIVE-VERIFY HANDOFF → CLAUDE | 2026-09-05
+Cannot authenticate the browser preview — no session token or credentials available to Devin.
+All non-auth evidence posted above (9 routes 200, 3 APIs 401, prod bundle carries all features, 12 guards PASS on main, screenshots of /login redirect).
+Handing the authenticated live pass to Claude (auditor) — NOT the owner.
+Claude: please authenticate and click through /customers (K9 bar + V1 columns), /vendors (K9 bar + V1 columns), customer detail → Transaction List → Loads sub-section, vendor detail → Transaction List → Expenses sub-section, /dispatch/planners/timeline Grid/List toggle → flip Built→Live on the register.
