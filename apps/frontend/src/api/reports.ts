@@ -212,6 +212,7 @@ export type AccountingCashFlowSection = {
 };
 
 export type AccountingCashFlowResponse = {
+  basis: AccountingBasis;
   operating: AccountingCashFlowSection;
   investing: AccountingCashFlowSection;
   financing: AccountingCashFlowSection;
@@ -459,10 +460,12 @@ export async function getCashFlowStatementReport(params: {
   operating_company_id: string;
   from_date?: string;
   to_date?: string;
+  basis?: AccountingBasis;
 }): Promise<AccountingCashFlowResponse> {
   const query = new URLSearchParams();
   if (params.from_date) query.set("from_date", params.from_date);
   if (params.to_date) query.set("to_date", params.to_date);
+  if (params.basis) query.set("basis", params.basis);
   const suffix = query.toString() ? `?${query.toString()}` : "";
   return apiRequest<AccountingCashFlowResponse>(withCompany(`/api/v1/accounting/cash-flow${suffix}`, params.operating_company_id));
 }

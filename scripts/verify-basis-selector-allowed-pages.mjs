@@ -17,10 +17,16 @@ const allowedImportPages = new Set([
   // RPT-PAR-1: management report package page — basis selector drives P&L/BS/TB
   // sub-report rendering within the package view.
   "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx",
+  // ACCT-CASHFLOW-BASIS-LOCK-CONFLICT (owner ruling 2026-09-05, "cash flow should always have cash and
+  // accrual selector, as in QuickBooks"): the accrual-only lock on this ONE page is deliberately
+  // LIFTED here, by design, in the same PR that adds the real selector — this is exactly the visible,
+  // deliberate policy change this guard's own design intent (see the module docstring precedent this
+  // list already follows) exists to make impossible to do silently. ARAgingPage/APAgingPage below are
+  // NOT touched — a separate, still-standing owner decision (cash-basis/engine.ts Q4/Q8).
+  "apps/frontend/src/pages/reports/CashFlowStatementPage.tsx",
 ]);
 
 const deniedPages = [
-  "apps/frontend/src/pages/reports/CashFlowStatementPage.tsx",
   "apps/frontend/src/pages/reports/ARAgingPage.tsx",
   "apps/frontend/src/pages/reports/APAgingPage.tsx",
 ];

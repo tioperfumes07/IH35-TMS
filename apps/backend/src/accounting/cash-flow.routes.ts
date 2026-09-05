@@ -34,13 +34,20 @@ export async function registerCashFlowRoutes(app: FastifyInstance) {
     }
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
+    // ACCT-CASHFLOW-BASIS-LOCK-CONFLICT (owner ruling 2026-09-05): this route always accepted `basis` in
+    // its own query schema but never passed it through to getCashFlowReport(), and hardcoded the
+    // response's `basis` field to the literal string "accrual" regardless of what was requested OR
+    // computed -- a real, live dishonesty (the response claimed a basis the report was never actually
+    // computed under). Fixed: basis flows through, and the response reports getCashFlowReport()'s own
+    // real `basis` field (never overridden here again).
     const report = await getCashFlowReport({
       userId: user.uuid,
       operating_company_id: query.data.operating_company_id,
       from_date: query.data.from_date,
       to_date: query.data.to_date,
+      basis: query.data.basis,
     });
 
-    return reply.code(200).send({ ...report, basis: "accrual" });
+    return reply.code(200).send(report);
   });
 }
