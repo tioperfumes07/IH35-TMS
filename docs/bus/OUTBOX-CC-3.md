@@ -468,3 +468,27 @@ CC-3 | FEED 13558–13562 BLOCKED | All five loads exist live with proforma invo
 CC-3 | M.3 API SHAPE FIXED, ENDPOINT LANDING IN THIS PR | GET /api/v1/driver-finance/pre-settlements/by-driver/:driverId?operating_company_id=<uuid> → 200 `{ settlement, lines, deductions, reconciliation:{gross_pay,deductions_total,escrow_contribution_total,reimbursements_total,net_pay} }`; ordinary empty → same shape with settlement=null and empty rows. Lines remain individual active costs. Escrow is one idempotent $25 line per driver bill/load, capped against posted + open accrued balance; load-bookended close sums those lines and never adds the legacy flat $250. | HANDOFF CC-2: booking-time call in owned dispatch/book-load.service.ts must invoke appendEscrowContributionLineIfMissing after bill+settlement link; CC-3-owned add-load/status/close paths are wired.
 
 CC-3 | M.3 PRE-SETTLEMENT BACKEND DONE | PR #20605 · merge ba74c3967f · backend tsc=0 · focused Vitest 7 passed/8 DB-capability skipped · 3 mutation-proven guards wired through step 10337 · post-merge guard forensic PASS. | NEXT company-settlement list/detail backend; feed blockers remain 13556 driver identity + 13558–13562 QBO refs.
+
+CC-3 | SEED 14 RE-VERIFIED, NOT RE-SEEDED | live Neon check (bypass_rls=lucia, USMCA) of all 14 load
+numbers from the "still to seed" list (13512,13513,13520,13528,13532,13535,13536,13537,13541,13542,
+13544,13551,13554,13556): 13 are already live and active (soft_deleted_at NULL) — this was STEP 1
+of 6's own work (PR #20555), not new. 12 of the 13 carry exactly 1 invoice + 1 driver_bill each; the
+13th (13554) correctly carries 0 of each per its own signed source document (no rate printed —
+acct_f289_proforma_skipped_zero_rate / skipped_no_pay_rate, never invented, matches the STEP 1 DONE
+report verbatim). The 14th, 13556 (Hummingbird Logistix, Laredo TX -> Medley FL, $4,000, Faro 036/QBO
+401422), remains genuinely BLOCKED — both authoritative reconciliation workbooks show NO DRIVER for
+this load; never guessing one. Nothing to re-seed; running the seed script again would either no-op
+(idempotent skip on existing load_number) or, for 13556, hit the same missing-driver wall. Hard floor
+(pickup >= 2026-08-07) already enforced in scripts/seed-missing-usmca-loads.ts per STEP 2's guard
+(verify-seed-script-usmca-cutover-floor.mjs) — no July/Transportation load has been or will be seeded
+through this script. STANDING BLOCKER, needs the owner/source: who drove load 13556?
+
+CC-3 | M.3 COMPANY-SETTLEMENTS LIST ROUTE DONE | 16566c8065 (PR #20631) | GET /api/v1/accounting/
+company-settlements — reads accounting.company_settlements directly, reuses buildCompanySettlementReport()
+for net_revenue_cents per row (never a second waterfall calc), null (never fake $0.00) on a voided
+row. Live-run against Neon prod: status=200, body {"company_settlements":[]} — matches a direct Neon
+count of 0 real rows (no driver settlement has ever closed in USMCA yet; pre-settlements stay OPEN
+per standing law, so this is the correct empty state, not a defect). Detail half already existed
+(company-settlement-report.routes.ts, #20605-era). M.3 list/detail vertical is now closed on the
+backend side; Cursor's L.6 (company settlements FE) can consume both routes. NEXT: nothing further
+queued for M.3 from this seat.
