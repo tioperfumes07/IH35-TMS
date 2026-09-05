@@ -459,3 +459,4 @@ docs/bus/INBOX-CC-1.md (banking owner: Cursor). Three stale ratchets in under 30
 tip strongly suggests the concurrent-merge rate is outrunning whoever's job it is to keep these
 baselines current — worth a standing owner/lead decision on who re-freezes them, rather than every
 seat individually discovering + bumping the one blocking its own push.
+CC-3 | WRONG-ENTITY QUARANTINE 29 DONE | PR #20582 f616f42979 + correct-grain hotfix #20588 062d016f33; LIVE: 29/29 cancelled · 29/29 visible · 29/29 is_sample_data · 29 void invoices · 159 void expenses · 29 void driver bills · 58 void settlement lines; all 12 shared pre-settlements remain OPEN; corrective parent-restore audit d3acfd7e… | NEXT re-point seed to reconciled 36-load universe / seed missing 14
