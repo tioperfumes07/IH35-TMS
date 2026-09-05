@@ -22,6 +22,10 @@ const holdBodySchema = z.object({
   reason: z.string().trim().min(3),
 });
 
+const voidBodySchema = z.object({
+  reason: z.string().trim().min(3),
+});
+
 const ackRequestBodySchema = z.object({
   channel: z.enum(["whatsapp", "sms", "email"]),
   message: z.string().trim().min(3).max(2000),
@@ -371,6 +375,92 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
       return true;
     });
     if (!updated) return reply.code(404).send({ error: "liability_not_found" });
+    return { ok: true };
+  });
+
+  // ACCT-SETL-LIAB-VOID-GAP — driver_finance.driver_liabilities has carried a full void register
+  // (voided_at/void_reason/voided_by_user_id/void_reversal_entry_id) since GO-22 (migration
+  // 202613490001, owner order 2026-09-02), but no route ever wrote it: a mistake in the loan/
+  // advance/bill chain had no exit under append-only law, exactly the gap GO-22 was ordered to
+  // close. void_reversal_entry_id is deliberately left NULL here — this table is a subledger
+  // record, never itself posted to GL directly (confirmed: no journal_entry_id/posting_batch_id
+  // column exists on it, and no poster references it as a JE source); the money-relevant GL impact
+  // only happens later, when a settlement deduction spawned FROM this liability is actually
+  // applied. If that has already happened for this liability, current_balance/paid_to_date already
+  // reflect it — voiding here stops FUTURE recovery, it does not (and cannot, from this route
+  // alone) reverse money already collected.
+  app.patch("/api/v1/liabilities/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    // Owner-only, matching mark-paid-off's gate immediately above — forgiving a driver's debt is at
+    // least as consequential a call as marking it collected.
+    if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden_owner_only" });
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const body = voidBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    const companyId = query.data.operating_company_id;
+
+    const result = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const pre = await client.query<{ id: string; voided_at: string | null }>(
+        `SELECT id, voided_at::text AS voided_at
+           FROM driver_finance.driver_liabilities
+          WHERE id = $1 AND operating_company_id = $2::uuid
+          LIMIT 1 FOR UPDATE`,
+        [params.data.id, companyId]
+      );
+      if (!pre.rows[0]) return { kind: "not_found" as const };
+      if (pre.rows[0].voided_at) return { kind: "already_voided" as const };
+
+      await client.query(
+        `
+          UPDATE driver_finance.driver_liabilities
+          SET current_balance = 0,
+              status = 'voided',
+              voided_at = now(),
+              void_reason = $3,
+              voided_by_user_id = $4::uuid
+          WHERE id = $1
+            AND operating_company_id = $2::uuid
+        `,
+        [params.data.id, companyId, body.data.reason, user.uuid]
+      );
+
+      // Cascade: stop any future recovery. deduction_schedule has no cancelled/voided concept of its
+      // own (append-only forward schedule) — reuse the SAME hold_until_period/hold_reason mechanism
+      // the /hold route already uses, just permanent rather than the +14-day temporary hold, so a
+      // voided liability can never silently resume deducting once its hold happens to expire.
+      await client.query(
+        `
+          UPDATE driver_finance.deduction_schedule
+          SET hold_until_period = '9999-12-31'::date,
+              hold_reason = $2,
+              updated_at = now()
+          WHERE liability_id = $1
+        `,
+        [params.data.id, `Parent liability voided: ${body.data.reason}`]
+      );
+
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "liability.voided",
+        {
+          resource_type: "driver_finance.driver_liabilities",
+          resource_id: params.data.id,
+          operating_company_id: companyId,
+          reason: body.data.reason,
+        },
+        "warning",
+        "ACCT-SETL-LIAB-VOID-GAP"
+      );
+      return { kind: "ok" as const };
+    });
+
+    if (result.kind === "not_found") return reply.code(404).send({ error: "liability_not_found" });
+    if (result.kind === "already_voided") return reply.code(409).send({ error: "liability_already_voided" });
     return { ok: true };
   });
 }

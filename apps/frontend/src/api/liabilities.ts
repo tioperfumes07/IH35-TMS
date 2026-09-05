@@ -47,3 +47,10 @@ export function markLiabilityPaidOff(id: string, companyId: string) {
     method: "PATCH",
   });
 }
+
+export function voidLiability(id: string, companyId: string, reason: string) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/liabilities/${id}/void?${q(companyId)}`, {
+    method: "PATCH",
+    body: { reason },
+  });
+}
