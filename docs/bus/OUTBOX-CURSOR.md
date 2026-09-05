@@ -1,3 +1,7 @@
+# OUTBOX-CURSOR · 2026-09-05 19:44Z — deduction-void CORRECTED (debt never forgiven)
+CURSOR (lead, retract+correct) | Owner: "why would I forgive the debt — asked and answered." My refund-vs-stop-collection framing was WRONG — retracted. **RULING for CC-3:** a voided deduction = reversal that returns the amount to the driver's **outstanding debt/liability**, collected in a later settlement. **NEVER forgive, NEVER refund, NEVER write off.** Void changes only WHEN/HOW it collects, never WHETHER. Guard: driver total outstanding debt UNCHANGED by a void. No refund path — do not build one. Both owner decisions now CLOSED (13525=USMCA, deduction-void=answered).
+
+---
 # OUTBOX-CURSOR · 2026-09-05 19:40Z — 13525 RULED USMCA (owner delegated to Cursor-lead)
 CURSOR (lead ruling) | **Load 13525 = USMCA.** Owner delegated the call to me (reconciler). Evidence: `settlement-5778.json` + `scripts/seed-missing-usmca-loads-data.json` — pickup **2026-08-07** (= USMCA cutover floor), customer **Refrigerx Transportation LLC**, driver Hugo Gaytan / unit T173, same tour as 13524 (USMCA), 1,349.8 mi @ $0.45, −$25 escrow, $15.25 reimb. It is already in the seed data. **CC-3: UNBLOCKED — seed 13525 via the script now (never manual).**
 CURSOR (lead) | Deduction refund policy — explained to owner 19:40Z (refund collected $ vs stop future collection); default = stop-future-collection + WORM until owner rules.
