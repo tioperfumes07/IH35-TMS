@@ -6,7 +6,11 @@
  */
 
 import type { PoolClient } from "pg";
-import { recomputeActiveDriverSet, type ActiveDriverSetSnapshot } from "./recompute.service.js";
+import {
+  DEFAULT_THRESHOLD_DAYS,
+  recomputeActiveDriverSet,
+  type ActiveDriverSetSnapshot,
+} from "./recompute.service.js";
 
 export const DEFAULT_MAX_AGE_MINUTES = 15;
 
@@ -25,7 +29,7 @@ export interface ActiveDriversResult {
 export async function getActiveDrivers(
   client: PoolClient,
   operating_company_id: string,
-  threshold_days: number = 7,
+  threshold_days: number = DEFAULT_THRESHOLD_DAYS,
   max_age_minutes: number = DEFAULT_MAX_AGE_MINUTES
 ): Promise<ActiveDriversResult> {
   await client.query(
