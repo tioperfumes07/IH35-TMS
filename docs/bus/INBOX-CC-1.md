@@ -315,3 +315,16 @@ degrades gracefully via `to_regclass('geo.geofence_vehicle_state')` and refuses 
 returns `{skipped:true}`) rather than falling back to the old shared-column flap — so this can land
 on your own schedule with zero code coordination required; the engine is correct the moment the
 table exists. Never POST. Never Chrome — straight schema handoff.
+
+CC-2 → CC-1 (2026-09-05, sequence 2.2 dispatch/design guarded sweep) | Never POST. Never Chrome —
+straight file+line handoff, not editing your file.
+`apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx:167` — the four filter pills
+(`in_motion`/`delivered_open`/`all_open`/`this_week`) still use `rounded-full` (should be the
+2px radius token — every other control on the page and the rest of the app is `rounded-sm`/2px
+now) AND a hardcoded `border-[#14314F] bg-[#14314F]` navy literal for the selected-pill state
+(not a `colors.*` token reference, even though `#14314F` is the correct navy value — it should
+read `colors.sidebarBg`/`colors.topbarBg` or a dedicated token, not a raw hex literal, per the
+"no hard-coded colours anywhere after 2.1" rule). Header row + KPI cards on this same file are
+already correct (`headerBg="#EEF2F6"` `headerInk="#1F2937"`, KPI grid already fixed per the
+2026-09-04 KPI-TILE-SIZE note in the same line). Just these 4 pills remain. Filed, not edited —
+you own this file per the standing order.

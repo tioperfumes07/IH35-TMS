@@ -109,7 +109,7 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
     <button
       type="button"
       className="w-full text-center font-bold uppercase tracking-wide"
-      style={{ fontSize: typography.sectionSubhead, color: colors.columnHeader }}
+      style={{ fontSize: typography.sectionSubhead, color: colors.tableHeaderText }}
       onClick={() => clickSort(key)}
     >
       {label}
@@ -157,19 +157,26 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
       {!query.isLoading && !query.isError && rows.length > 0 ? (
         <div className="overflow-x-auto">
           <div className="min-w-[640px]">
-            <div className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1.2fr] border-b border-[#E5E7EB] bg-[#F7F8FA]">
-              <div className="px-[7px] py-[7px]">{headerBtn("load", "Load")}</div>
-              <div className="px-[7px] py-[7px]">{headerBtn("revenue", "Revenue")}</div>
-              <div className="px-[7px] py-[7px]">{headerBtn("costs", "Costs so far")}</div>
-              <div className="px-[7px] py-[7px]">{headerBtn("driver", "Driver pay so far")}</div>
-              <div className="px-[7px] py-[7px]">{headerBtn("margin", "Approximate margin")}</div>
+            <div
+              className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1.2fr] border-b"
+              style={{ backgroundColor: colors.tableHeaderBg, borderColor: colors.tableColumnRule }}
+            >
+              <div className="px-[7px] py-[7px] sticky left-0" style={{ backgroundColor: colors.tableHeaderBg }}>{headerBtn("load", "Load")}</div>
+              <div className="border-l px-[7px] py-[7px]" style={{ borderColor: colors.tableColumnRule }}>{headerBtn("revenue", "Revenue")}</div>
+              <div className="border-l px-[7px] py-[7px]" style={{ borderColor: colors.tableColumnRule }}>{headerBtn("costs", "Costs so far")}</div>
+              <div className="border-l px-[7px] py-[7px]" style={{ borderColor: colors.tableColumnRule }}>{headerBtn("driver", "Driver pay so far")}</div>
+              <div className="border-l px-[7px] py-[7px]" style={{ borderColor: colors.tableColumnRule }}>{headerBtn("margin", "Approximate margin")}</div>
             </div>
-            {rows.map((row) => (
+            {rows.map((row, i) => (
               <div
                 key={row.load.id}
-                className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1.2fr] border-b border-[#E5E7EB] last:border-b-0"
+                className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1.2fr] border-b last:border-b-0"
+                style={{ borderColor: colors.tableColumnRule, backgroundColor: i % 2 === 1 ? colors.tableRowStripe : undefined }}
               >
-                <div className="px-[7px] py-[7px]" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219" }}>
+                <div
+                  className="px-[7px] py-[7px] sticky left-0"
+                  style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", backgroundColor: i % 2 === 1 ? colors.tableRowStripe : "#fff" }}
+                >
                   <EntityLink kind="load" id={row.load.id} label={entityLabel(row.load.load_number, row.load.id, "Load")} />
                   <Link
                     className="ml-2 text-[#16A34A] underline-offset-2 hover:underline"
@@ -178,16 +185,16 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
                     Costs
                   </Link>
                 </div>
-                <div className="px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219" }}>
+                <div className="border-l px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
                   {formatMoney(row.revenue)}
                 </div>
-                <div className="px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219" }}>
+                <div className="border-l px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
                   {formatMoney(row.costSoFar)}
                 </div>
-                <div className="px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219" }}>
+                <div className="border-l px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
                   {formatMoney(row.driverPay)}
                 </div>
-                <div className="px-[7px] py-[7px] text-center tabular-nums font-semibold" style={{ fontSize: typography.bodyTextSmall, color: "#16A34A" }}>
+                <div className="border-l px-[7px] py-[7px] text-center tabular-nums font-semibold" style={{ fontSize: typography.bodyTextSmall, color: "#16A34A", borderColor: colors.tableColumnRule }}>
                   {formatMoney(row.margin)}
                 </div>
               </div>
