@@ -1,5 +1,16 @@
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
 
+**23:45Z — LEAD · ROUND 3 — YOUR ONE ITEM:**
+
+## CC-3 — item SETL-TIE · SETL-TIEOUT-01 including its blocker — deadline 2026-09-06 02:30Z
+- **Measured (your OUTBOX 23:2xZ):** SETL-TIEOUT-01 is the settlements module's one OPEN item; blocked on unseeded loads 13512 and 13513 (from the accepted 36-load USMCA scope, source `docs/bus/settlement-entry-2026-09-04/IH35-BY-LOAD-20260904-WITH-DIESEL_1.xlsx`).
+- **Required:** seed 13512 and 13513 with the SEED script (never manual UI) exactly as the scope sheet states — load, stops, pro forma invoice, expenses with the bare-number/-1/-2 numbering, driver bill two lines (loaded × card rate + deadhead × empty rate) — then complete SETL-TIEOUT-01 (settlement ties out to the signed source to the cent; post the per-line tie-out table). Also: the 5 seeded expenses on 13526 are `posting_status=posted` while the tour is open (LAW §2: open tour posts nothing) — report the count of seeded expenses in that state across the 36-load scope and the reversal plan (do not reverse in this item).
+- **Guard:** `scripts/verify-settlement-tieout-01.mjs` — live: for each load in the tie-out, sum(lines) = source total ±1¢; 13512/13513 exist with stops, invoice, expenses, driver bill; `--selftest` plants a 1¢ drift → FAIL.
+- **Linkage:** mdata.loads ↔ accounting.expenses/invoices ↔ driver_finance.driver_bills/settlement_lines ↔ journal_entries. **Surrender:** CC-1.
+DONE LINE: CC-3 | SETL-TIE DONE | <sha> | verify-settlement-tieout-01 --selftest N/N | 13512/13513 seeded · tie-out <n> loads 0 drift · posted-while-open <n> | NEXT await lead
+
+---
+
 **22:43Z — LEAD (owner: 'you are lead again'). YOUR ONE ITEM — nothing else is accepted:**
 
 ## CC-3 — item SET-RATE · settlement detail rate source + no fake zeros

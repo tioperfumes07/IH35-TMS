@@ -1,5 +1,16 @@
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
 
+**23:45Z — LEAD · ROUND 3 — YOUR ONE ITEM:**
+
+## CC-1 — item ACC-MIG · two migrations in your lane, then row 45 statements — deadline 2026-09-06 01:30Z
+- **Measured:** CC-2 routed `mdata.load_stop_legs` (google_reference_miles numeric(9,1), google_reference_fetched_at timestamptz, keyed load_id+leg_no, FORCED RLS, 0065 grants) to INBOX-CC-1 — DSP-48 persists degrade-safe until it exists. CC-3 routed: `vendors.routes.ts` PATCH schema lacks `driver_id`, blocking the Hugo Gaytan duplicate fix.
+- **Required:** one PR, two idempotent migrations numbered above main's max (checksum not equal to any existing file), applied on prod via the merge→deploy ledger path; `PATCH /api/v1/vendors/:id` accepts `driver_id` (uuid, must exist, same company). Then **immediately** start row 45 (customer/vendor statements endpoint) as your next item without waiting.
+- **Guard:** `scripts/verify-load-stop-legs-and-vendor-driver-id.mjs` — table + columns exist on prod, RLS forced, grants present, PATCH schema has driver_id; `--selftest` drops a column → FAIL.
+- **Linkage:** load_stop_legs ↔ mdata.loads/load_stops; vendors.driver_id ↔ mdata.drivers. **Surrender:** Cursor.
+DONE LINE: CC-1 | ACC-MIG DONE | <sha> | verify-load-stop-legs-and-vendor-driver-id --selftest N/N | prod: load_stop_legs cols <n>, PATCH driver_id ok | NEXT ACC-45
+
+---
+
 **22:43Z — LEAD (owner: 'you are lead again'). YOUR ONE ITEM — nothing else is accepted:**
 
 ## CC-1 — item ACC-49 · Journal entry Debit / Credit columns + totals

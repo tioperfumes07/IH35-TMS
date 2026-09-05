@@ -84,3 +84,34 @@ DONE LINE: CASCADE | LST-LOC DONE | <sha> | verify-locations-list --selftest N/N
 - **Guard:** `scripts/verify-parity-table-footer-follows-columns.mjs` — component test: reorder columns → footer cell order matches header; hide column → footer cell removed; no caller passes raw `footer`; `--selftest` reintroduces a raw footer on one page → FAIL.
 - **Linkage:** shared component; no data linkage. **One PR.** **Surrender:** Cursor.
 DONE LINE: CC-2 | DSP-TBL DONE | <sha> | verify-parity-table-footer-follows-columns --selftest N/N | 26 callers migrated · 0 raw footers | NEXT await lead
+
+---
+# ROUND 3 — issued 23:45Z
+
+## CC-1 — item ACC-MIG · two migrations in your lane, then row 45 statements — deadline 2026-09-06 01:30Z
+- **Measured:** CC-2 routed `mdata.load_stop_legs` (google_reference_miles numeric(9,1), google_reference_fetched_at timestamptz, keyed load_id+leg_no, FORCED RLS, 0065 grants) to INBOX-CC-1 — DSP-48 persists degrade-safe until it exists. CC-3 routed: `vendors.routes.ts` PATCH schema lacks `driver_id`, blocking the Hugo Gaytan duplicate fix.
+- **Required:** one PR, two idempotent migrations numbered above main's max (checksum not equal to any existing file), applied on prod via the merge→deploy ledger path; `PATCH /api/v1/vendors/:id` accepts `driver_id` (uuid, must exist, same company). Then **immediately** start row 45 (customer/vendor statements endpoint) as your next item without waiting.
+- **Guard:** `scripts/verify-load-stop-legs-and-vendor-driver-id.mjs` — table + columns exist on prod, RLS forced, grants present, PATCH schema has driver_id; `--selftest` drops a column → FAIL.
+- **Linkage:** load_stop_legs ↔ mdata.loads/load_stops; vendors.driver_id ↔ mdata.drivers. **Surrender:** Cursor.
+DONE LINE: CC-1 | ACC-MIG DONE | <sha> | verify-load-stop-legs-and-vendor-driver-id --selftest N/N | prod: load_stop_legs cols <n>, PATCH driver_id ok | NEXT ACC-45
+
+## CC-3 — item SETL-TIE · SETL-TIEOUT-01 including its blocker — deadline 2026-09-06 02:30Z
+- **Measured (your OUTBOX 23:2xZ):** SETL-TIEOUT-01 is the settlements module's one OPEN item; blocked on unseeded loads 13512 and 13513 (from the accepted 36-load USMCA scope, source `docs/bus/settlement-entry-2026-09-04/IH35-BY-LOAD-20260904-WITH-DIESEL_1.xlsx`).
+- **Required:** seed 13512 and 13513 with the SEED script (never manual UI) exactly as the scope sheet states — load, stops, pro forma invoice, expenses with the bare-number/-1/-2 numbering, driver bill two lines (loaded × card rate + deadhead × empty rate) — then complete SETL-TIEOUT-01 (settlement ties out to the signed source to the cent; post the per-line tie-out table). Also: the 5 seeded expenses on 13526 are `posting_status=posted` while the tour is open (LAW §2: open tour posts nothing) — report the count of seeded expenses in that state across the 36-load scope and the reversal plan (do not reverse in this item).
+- **Guard:** `scripts/verify-settlement-tieout-01.mjs` — live: for each load in the tie-out, sum(lines) = source total ±1¢; 13512/13513 exist with stops, invoice, expenses, driver bill; `--selftest` plants a 1¢ drift → FAIL.
+- **Linkage:** mdata.loads ↔ accounting.expenses/invoices ↔ driver_finance.driver_bills/settlement_lines ↔ journal_entries. **Surrender:** CC-1.
+DONE LINE: CC-3 | SETL-TIE DONE | <sha> | verify-settlement-tieout-01 --selftest N/N | 13512/13513 seeded · tie-out <n> loads 0 drift · posted-while-open <n> | NEXT await lead
+
+## CC-2 — DSP-TBL (already queued, unblocked NOW — DSP-48 accepted) — deadline 2026-09-06 03:00Z
+ParityTable footer follows column order/visibility; 26 callers migrated; guard `verify-parity-table-footer-follows-columns.mjs`. Spec in this file above. **Surrender:** Cursor.
+
+## CASCADE / DEVIN — item RPT-06 · report landing filter bars (your own REMAINING from #20602) — deadline 2026-09-06 02:30Z
+- **Measured:** #20602 (Devin) gave 23 data-bearing pages under `pages/reports/**` CSV + Print and listed "STEP 6 report landing filter bar" as REMAINING. K.9 guard pattern exists for Customers/Vendors (≥5 inline controls, 0 clicks).
+- **Required:** every one of the 23 report pages has an INLINE filter bar visible on first load: Date range (From/To + presets This week · This month · Last month · YTD) · Entity-appropriate second filter (driver / unit / customer / vendor as the report warrants) · Status where the report has one · Search. Filters drive the query (URL-synced), CSV export respects them. No CollapsedListFilters-only pattern. Same component for all 23 (one shared `ReportFilterBar`).
+- **Guard:** `scripts/verify-report-landing-filter-bar.mjs` — all 23 pages mount ReportFilterBar with a date range; `--selftest` removes it from one page → FAIL.
+- **Linkage:** reports read models only. **One PR between you.** **Surrender:** Codex.
+DONE LINE: CASCADE | RPT-06 DONE | <sha> | verify-report-landing-filter-bar --selftest N/N | 23/23 pages · date range + <n> filters | NEXT await lead
+
+## CURSOR — LDT-1 UNLOCKED 23:45Z (LDT-0 accepted; FE deploy e12f6cc3 in flight, lead re-measures on it). Deadline 04:00Z as issued. Spec: register LDT-1 + the LIVE renders. Includes: wizard live-preview wiring of route-reference (CC-2's blocked piece — you own BookLoadModalV4.tsx now) and Empty leg from the USMCA yard geofence 188cf90c (Mines Rd).
+
+## CODEX — TEL-40 continues: after API deploy e12f6cc3 is live, rerun the backfill and post the live guard numbers. Then next item TEL-41 (Samsara POST /places for each new geofence — rows 40–43) is HELD until the owner confirms; do not start it.

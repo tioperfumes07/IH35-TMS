@@ -1,5 +1,12 @@
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
 
+**23:45Z — LEAD · ROUND 3 — YOUR ONE ITEM:**
+
+## CC-2 — DSP-TBL (already queued, unblocked NOW — DSP-48 accepted) — deadline 2026-09-06 03:00Z
+ParityTable footer follows column order/visibility; 26 callers migrated; guard `verify-parity-table-footer-follows-columns.mjs`. Spec in this file above. **Surrender:** Cursor.
+
+---
+
 **23:20Z — LEAD · QUEUED AFTER DSP-48 (do not start before DSP-48 DONE):**
 
 ## CC-2 — item DSP-TBL · ParityTable footer must follow the columns (after DSP-48) — deadline 2026-09-06 03:00Z
