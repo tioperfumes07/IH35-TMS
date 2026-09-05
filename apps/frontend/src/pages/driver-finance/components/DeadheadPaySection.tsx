@@ -39,6 +39,7 @@ type Line = {
   description: string;
   miles?: number;
   rate?: number;
+  rate_source?: string | null;
   amount: number;
 };
 
@@ -89,17 +90,28 @@ const COLUMNS: Array<ParityColumn<Line>> = [
       return [line.dest_city, line.dest_state].filter(Boolean).join(", ") || "—";
     },
   },
-  // S.1 — same real-data + formatting fix as EarningsSection.tsx (driver_bills join, design-contract
-  // precision: miles 1-decimal + thousands separator, rate 4-decimal dollars-per-mile).
+  // SET-RATE (LAW §8 "zero is a claim") — same fix as EarningsSection.tsx: an empty leg with no
+  // telematics/dispatch miles captured renders "—" with the reason on hover, never a fake 0.0/
+  // $0.0000 triple that reads as a real zero-mile, zero-rate deadhead run.
   {
     key: "miles",
     label: "Empty mi",
-    render: (line) => <>{line.miles != null ? line.miles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : "—"}</>,
+    render: (line) =>
+      line.miles != null ? (
+        <>{line.miles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</>
+      ) : (
+        <span title="no telematics miles for this leg">—</span>
+      ),
   },
   {
     key: "rate",
     label: "Rate",
-    render: (line) => <>{line.rate != null ? `$${line.rate.toFixed(4)}` : "—"}</>,
+    render: (line) =>
+      line.rate != null ? (
+        <>${line.rate.toFixed(4)}</>
+      ) : (
+        <span title="no telematics miles for this leg">—</span>
+      ),
   },
   {
     key: "amount",

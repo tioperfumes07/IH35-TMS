@@ -283,12 +283,16 @@ export function SettlementDetailPage() {
           ? line.source_table.replace(/^driver_finance\./, "")
           : null,
     description: String(line.description ?? ""),
-    // S.1 — miles/rate_cents now come from the backend's driver_bills join (settlements.routes.ts);
-    // rate is dollars-per-mile at 4-decimal precision, so divide cents by 100 without rounding away
-    // the sub-cent (e.g. $0.4800/mi is 48 cents exactly, but a rate like $0.485 would round to 2
-    // decimals under a naive cents formatter — keep the raw quotient, format at render time).
-    miles: Number(line.miles ?? 0),
-    rate: Number(line.rate_cents ?? 0) / 100,
+    // SET-RATE (owner order 2026-09-05, LAW §8 "zero is a claim"): `?? 0` on miles/rate_cents used
+    // to turn a genuinely-unknown leg (no telematics/dispatch miles captured) into a rendered
+    // 0.0 / $0.0000 / $0.00 triple — indistinguishable from a real zero-mile, zero-rate line. Miles
+    // undefined here so EarningsSection's `line.miles != null` check renders "—", never a fake 0.
+    // rate_cents now comes from settlements.routes.ts's rate_basis join, derived FROM this same
+    // sl.amount — amount == miles * rate is a mathematical identity, not a hope (see that query's
+    // SET-RATE comment). Keep the raw quotient, format at render time (4-decimal dollars-per-mile).
+    miles: line.miles == null ? undefined : Number(line.miles),
+    rate: line.rate_cents == null ? undefined : Number(line.rate_cents) / 100,
+    rate_source: typeof line.rate_source === "string" ? line.rate_source : null,
     amount: Number(line.amount ?? 0),
   }));
   // 25-task #12 — deadhead_pay is its own settlement_lines row (MILES SPEC), rendered as its own
@@ -312,10 +316,11 @@ export function SettlementDetailPage() {
           ? line.source_table.replace(/^driver_finance\./, "")
           : null,
     description: String(line.description ?? ""),
-    // S.1 — same backend-join source as Earnings above; the SELECT's own CASE picks miles_deadhead/
-    // rate_empty_per_mile_cents for a deadhead_pay line, so this is the same field names, different data.
-    miles: Number(line.miles ?? 0),
-    rate: Number(line.rate_cents ?? 0) / 100,
+    // SET-RATE — same rate_basis join as Earnings above (its own CASE picks miles_deadhead/
+    // rate_empty_per_mile_cents for a deadhead_pay line); same "never fake a 0" fix.
+    miles: line.miles == null ? undefined : Number(line.miles),
+    rate: line.rate_cents == null ? undefined : Number(line.rate_cents) / 100,
+    rate_source: typeof line.rate_source === "string" ? line.rate_source : null,
     amount: Number(line.amount ?? 0),
   }));
   const extra = lines.filter((line) => String(line.line_type) === "extra_pay").map((line) => ({
@@ -366,10 +371,13 @@ export function SettlementDetailPage() {
   // per-mile rate actually paid (first line with a non-zero rate — never a hardcoded default). Net = loaded +
   // empty + additional + reimbursements − deductions (all cents), matching the reference's Net pay tile.
   const kpi = useMemo(() => {
-    const loadedMiles = earnings.reduce((s, r) => s + r.miles, 0);
-    const loadedRate = earnings.find((r) => r.rate > 0)?.rate ?? 0;
-    const emptyMiles = deadhead.reduce((s, r) => s + r.miles, 0);
-    const emptyRate = deadhead.find((r) => r.rate > 0)?.rate ?? loadedRate;
+    // SET-RATE — miles/rate are now `undefined` (not a fake 0) for a leg with no telematics miles
+    // captured; the KPI aggregate still sums only the known legs (an unknown leg contributes 0 to
+    // the total, same as before) without ever claiming a fabricated per-line 0.0/$0.0000.
+    const loadedMiles = earnings.reduce((s, r) => s + (r.miles ?? 0), 0);
+    const loadedRate = earnings.find((r) => (r.rate ?? 0) > 0)?.rate ?? 0;
+    const emptyMiles = deadhead.reduce((s, r) => s + (r.miles ?? 0), 0);
+    const emptyRate = deadhead.find((r) => (r.rate ?? 0) > 0)?.rate ?? loadedRate;
     const deductionBreakdown = deductions
       .map((d) => `${d.description} ${formatUsdCents(d.this_period_amount)}`)
       .join(" · ");
