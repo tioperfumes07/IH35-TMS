@@ -871,3 +871,34 @@ NEXT (per this directive): D5 Book Load auto-geofence FE trigger (coordinate Cod
 #20706); the remaining FE piece per this new phrasing is the wizard's Samsara-address-picker
 coordinate work with Codex's #41 (Samsara Routes integration) -- picking this up now.
 | NEXT=D5 FE trigger / Codex #41 coordination | GO
+
+CC-2 | D5 FULLY CLOSED 22:36Z (all 4 halves) -- deadline 23:30Z MET, ~54 min early. Owner ruling
+this turn: don't wait on Codex #41 (nothing posted there to coordinate against); GATE-ROT-07's
+WIP in BookLoadModalV4.tsx is another seat's, not mine -- built this in an isolated git worktree
+off origin/main, never touched that file, staged only files I authored.
+Root cause (finally correctly identified): telematics/auto-geofence.service.ts's
+geocodeStopIfNeeded() was a literal stub returning null unconditionally, by original design
+("external geocoder integration can be added without changing CAP-2 callsites") -- that
+integration already existed (Trimble/Google provider chain, built + owner-confirmed LIVE for the
+Book Load wizard's address field, docs/bus/STATUS-NOW.md 18:24Z) but was never wired into this
+callsite. THIS, not the trigger location, is why 0/114 stops ever got coordinates even after
+today's earlier trigger fix (#20684).
+FIX: new apps/backend/src/telematics/stop-geocode-fallback.service.ts reuses the SAME Trimble/
+Google chain (no new integration); geocodeStopIfNeeded() now calls it (self-heals every future
+booking); new tenant-scoped POST /api/v1/dispatch/loads/:id/geocode-stops backfills an
+already-booked load's stops on demand; new "Geocode stops" button on Load Detail's existing
+Geofence field (from #20706) wires the trigger end to end. Guard
+verify-booking-stop-geocode.mjs (claimed 10419, PR #20744) selftest 5/5, live PASS. PRs: #20747
+(feature) + #20751 (self-caught + same-turn-fixed a raw text-[11px] ratchet regression my own
+button introduced -- committed the local fix but merged from a stale local commit that didn't
+have it; caught on post-merge forensic re-check against the actual merged tip, not assumed clean).
+Also routed (not fixed, Maintenance/Codex's surface): verify-fleet-table-type-column-present.mjs
+red on origin/main itself (another required-check emergency, unrelated to my diff) -- FleetTable.tsx's
+"type" column looks like a legitimate ternary->switch refactor that the guard's exact-string regex
+never got updated for; filed to Codex's inbox rather than guess-editing either side.
+REMAINING on D5 (tracked, not dropped): live paste-count of a real geocoded stop pending the next
+FE/API deploy (2h40m+ stale per today's audit -- not something I control; the provider chain
+itself is independently confirmed live) -- will paste once deployed. The 114-stop historical
+backfill (running the new endpoint across every already-booked load, not just one at a time) is
+a natural next step, not built here. | NEXT=awaiting next REGISTER item / standing queue
+(Dispatch cleanliness list was in progress before this interrupt -- resuming that) | GO
