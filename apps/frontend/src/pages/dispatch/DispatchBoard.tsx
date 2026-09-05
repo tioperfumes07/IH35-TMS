@@ -1245,6 +1245,7 @@ export function DispatchBoard({
               <ParityTable
                 columns={parityColumns}
                 columnGroups={boardColumnGroups}
+                stickyLeftCount={4}
                 rows={rows}
                 rowKey={(row) => row.id}
                 loading={sectionLoading}
@@ -1353,6 +1354,7 @@ export function DispatchBoard({
         <ParityTable
           columns={parityColumns}
           columnGroups={boardColumnGroups}
+          stickyLeftCount={4}
           rows={sortedRows}
           rowKey={(row) => row.id}
           loading={loading}

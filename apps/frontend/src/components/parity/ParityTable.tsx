@@ -129,6 +129,10 @@ export type ParityTableProps<T> = {
   columnLayout?: "fixed" | "auto";
   /** Drag-to-resize columns (widths persist with storageKey). Default true. */
   enableColumnResize?: boolean;
+  /** Sticky-left the first N columns, in current visible order, on horizontal scroll
+   *  (DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §14: "first four columns sticky-left"). Unset/0 =
+   *  no sticky columns, every other table's existing behaviour is unchanged. */
+  stickyLeftCount?: number;
   /** Drag-a-header-to-move-it column reordering (order persists per storageKey, alongside width).
    * Default true — set false only for a table with a real reason columns must stay fixed (a
    * written reason, per COLUMN LAW). */
@@ -453,6 +457,7 @@ export function ParityTable<T>({
   columnLayout = "fixed",
   enableColumnResize = true,
   enableColumnReorder = true,
+  stickyLeftCount = 0,
   columnOrder: controlledColumnOrder,
   onColumnOrderChange,
   autoFitColumns = true,
@@ -711,6 +716,25 @@ export function ParityTable<T>({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- colWidths only gates which columns are
     // (re)computed; including it would recompute every autofit width on every manual drag-resize.
   }, [autoFitColumns, visibleColumns, pageRows, d.font]);
+
+  // STICKY-LEFT (DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §14: "first four columns sticky-left").
+  // Sticks the first `stickyLeftCount` columns in CURRENT visible order (not by key), so dragging a
+  // column into/out of the leading run moves the sticky boundary with it rather than pinning a
+  // stale key set. `left` is the cumulative width of the sticky columns before this one, same
+  // width source (`colWidths` manual-resize wins, else `autoFitWidths`, else the 120px fallback
+  // every other width lookup in this file already uses) as the header/cell width itself, so the
+  // sticky offset never drifts out of sync with the actual rendered column width.
+  const stickyLeftPx = useMemo(() => {
+    const offsets: Record<string, number> = {};
+    if (!stickyLeftCount || stickyLeftCount <= 0) return offsets;
+    let cum = (renderExpanded ? 32 : 0) + (selectable ? 32 : 0);
+    for (let i = 0; i < Math.min(stickyLeftCount, visibleColumns.length); i += 1) {
+      const key = String(visibleColumns[i].key);
+      offsets[key] = cum;
+      cum += colWidths[key] ?? autoFitWidths[key] ?? 120;
+    }
+    return offsets;
+  }, [stickyLeftCount, visibleColumns, colWidths, autoFitWidths, renderExpanded, selectable]);
 
   // Phase A2: group the CURRENT page's rows in their CURRENT order (stable — first appearance of
   // each key sets group order; rows are never re-sorted). Pagination math above is untouched.
@@ -1089,6 +1113,17 @@ export function ParityTable<T>({
               borderRight: `1px solid ${colors.tableBodyRule}`,
               borderBottom: `1px solid ${colors.tableBodyRule}`,
               ...(cellBg ? { backgroundColor: cellBg } : {}),
+              ...(String(column.key) in stickyLeftPx
+                ? {
+                    position: "sticky" as const,
+                    left: stickyLeftPx[String(column.key)],
+                    zIndex: 1,
+                    // A sticky body cell needs its OWN opaque background (it renders over rows
+                    // scrolling past underneath it) — fall back to white when no zebra/group/
+                    // selection tint applies, same as every other cell would show as its row bg.
+                    backgroundColor: cellBg ?? "#FFFFFF",
+                  }
+                : {}),
             }}
           >
             {column.render
@@ -1416,6 +1451,14 @@ export function ParityTable<T>({
                     borderBottom: `2px solid ${colors.tableColumnRule}`,
                     ...(w ? (columnLayout === "auto" ? { minWidth: w } : { width: w }) : {}),
                     ...(dragOverKey === key ? { outlineColor: colors.navy } : {}),
+                    ...(key in stickyLeftPx
+                      ? {
+                          position: "sticky" as const,
+                          left: stickyLeftPx[key],
+                          zIndex: 3,
+                          backgroundColor: dragOverKey === key ? colors.accentTint : resolvedHeaderBg,
+                        }
+                      : {}),
                   }}
                 >
                   {column.sortable !== false ? (
