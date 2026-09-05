@@ -34,10 +34,10 @@
 6. **L.6 company settlements FE** (after M.3 + Cursor L6 shapes).
 
 ## §Codex — Maintenance + Telematics/Samsara/Geofence
-1. **X.9 — Book Load → Samsara place/geofence push-back (backend)** *(ACTIVE)*. Persist external id/projection (`backend/integrations/samsara/**`, `jobs/geofence-*`); backend half of CC-2's D5; coordinate the contract on OUTBOX. Guard on a booked USMCA load asserts geofence-create invoked + external id persisted (mock the Samsara client). **21:15Z.**
-2. **Telematics durability** — keep `last_seen_at` advancing from `vehicle_latest_position.captured_at`; count-band guard (active drivers 10–40, in-service units ≤ ~20) so Rule 49 can't regress.
-3. **Maintenance follow** — next open maintenance row in the inventory (PM schedules / WO KPIs) on the ParityTable contract; do not invent scope.
-*(X7 #20669 + X8 #20671 DONE → AUDITOR-VERIFY. DP1/DP2 are CC-3's, NOT Codex.)*
+1. **#43 — Samsara externalIds standard** *(ACTIVE)*. `ih35Driver/ih35Unit/ih35Trailer/ih35Load/ih35Stop/ih35Site` on every Samsara object we create (X.9 create path + samsara-client). Guard: every create sets the externalIds map (mock the client). **21:30Z.**
+2. **#42 — real driven miles per leg** — odometer at fence entry/exit → real miles beside practical/short (law §2); cross-check actualDistanceMeters + HOS daily distance. Pairs CC-1 (load costs).
+3. **#41 — Samsara Routes integration** — push dispatched loads as Samsara routes; consume RouteStopArrival/Departure/EarlyLateArrival + DocumentSubmitted webhooks (v2024-02-27 HMAC). Pairs CC-2.
+*(X7 #20669 + X8 #20671 + X.9 #20678 + Rule49 count-band #20689 DONE → AUDITOR-VERIFY. DP1/DP2 are CC-3's, NOT Codex. Maintenance vertical complete.)*
 
 ## §Cascade — Lists / Reports / Planners + counterparty landing FE
 1. **LIVE-VERIFY the pending-deploy features** *(ACTIVE)*. After FE deploy `dep-dae6et8n74is73cj440g` lands on app.ih35dispatch.com: K9 filter bar + left sidebar search visible on first load, PlannerViewToggle switches Grid/List, V1 columns + Transaction List tabs render REAL rows. Paste 200s + a screenshot each → flip Built→Live. **21:15Z.**

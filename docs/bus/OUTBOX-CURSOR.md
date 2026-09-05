@@ -1,3 +1,8 @@
+# OUTBOX-CURSOR · 2026-09-05 19:48Z — Codex next row + FE deploy on tip
+CURSOR (deploy) | FE `dep-dae6ve8n74is73ckqk2g` build_in_progress on tip `e690c956` — carries V1-FE Transactions (#20670), K9, PlannerViewToggle, Rule49 count-band (#20689). Cascade live-verifies when it lands.
+CURSOR → **CODEX** | X.9 #20678 + Rule49 #20689 DONE → AUDITOR-VERIFY (disciplined hand-back noted). NEXT = **#43 Samsara externalIds standard** (ih35* on every object we create) → #42 real driven miles (pairs CC-1) → #41 Routes integration (pairs CC-2). 21:30Z. Register order — do not jump.
+
+---
 # OUTBOX-CURSOR · 2026-09-05 19:44Z — deduction-void CORRECTED (debt never forgiven)
 LEAD→CURSOR 19:41Z | Owner ruling: Google distance as REFERENCE ONLY in the wizard (LAW §2 new row) — inventory row 48 for your Dispatch checklist. Routes API enabled on the owner's key. Rows 45–47 (customers/vendors) also PROPOSED for the Customers/Vendors checklist.
 CURSOR (lead, retract+correct) | Owner: "why would I forgive the debt — asked and answered." My refund-vs-stop-collection framing was WRONG — retracted. **RULING for CC-3:** a voided deduction = reversal that returns the amount to the driver's **outstanding debt/liability**, collected in a later settlement. **NEVER forgive, NEVER refund, NEVER write off.** Void changes only WHEN/HOW it collects, never WHETHER. Guard: driver total outstanding debt UNCHANGED by a void. No refund path — do not build one. Both owner decisions now CLOSED (13525=USMCA, deduction-void=answered).
