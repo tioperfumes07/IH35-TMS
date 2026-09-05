@@ -1,0 +1,100 @@
+{
+  "settlement_number": 5777,
+  "start_date": "2026-08-11",
+  "end_date": "2026-08-17",
+  "driver_name": "Jorge Luis Infante Corona",
+  "unit": "T177",
+  "trailer": "FB-56704",
+  "loads": [
+    {
+      "load_number": "13519",
+      "customer_name": "Semares Forwarding Services",
+      "pickup": {"location_name": "Semares", "city": "Laredo", "state": "TX", "zip": "78040", "date": "2026-08-11"},
+      "delivery": {"location_name": "Global Manufacturing, Inc", "city": "EDISON", "state": "NJ", "zip": "08817", "date": "2026-08-14"},
+      "linehaul_miles_doc": 1958.9,
+      "linehaul_rate": 2.501,
+      "linehaul_amount": 4900.00,
+      "loaded_miles": 1890.2,
+      "loaded_rate": 0.50,
+      "loaded_amount": 945.10,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": 1,
+      "picks_amount": 0,
+      "drops_count": 1,
+      "drops_amount": 0,
+      "fuel_rows": [
+        {"date": "2026-08-12", "vendor": "LOVES", "location": "21548FM471S NATALIA,TX, TX", "invoice": "99519884", "gallons": 153.686, "cpg": 5.329, "receipt": 818.99, "actual": 818.99},
+        {"date": "2026-08-13", "vendor": "LOVES", "location": "10465 LONESOME PINE TRAIL M,TN, TN", "invoice": "99448116", "gallons": 179.306, "cpg": 5.689, "receipt": 1020.07, "actual": 1020.07}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-13", "vendor": "LOVES", "location": "10465 LONESOME PINE TRAIL M,TN", "invoice": "99448116", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 47.45}
+      ],
+      "additional_pay_rows": [
+        {"date": null, "description": "Driver Pay-Enlonada", "amount": 25.00},
+        {"date": null, "description": "Driver Pay-Desenlonada", "amount": 25.00}
+      ],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": []
+    },
+    {
+      "load_number": "13521",
+      "customer_name": "Core Logistics Brokerage",
+      "pickup": {"location_name": "HERC RENTALS", "city": "MANASSAS", "state": "VA", "zip": "20109", "date": "2026-08-16"},
+      "delivery": {"location_name": "HERC RENTALS", "city": "CORPUS CHRISTI", "state": "TX", "zip": "78408", "date": "2026-08-17"},
+      "linehaul_miles_doc": 1971.8,
+      "linehaul_rate": 1.775,
+      "linehaul_amount": 3500.00,
+      "loaded_miles": 1557.7,
+      "loaded_rate": 0.50,
+      "loaded_amount": 778.85,
+      "empty_miles": 368.1,
+      "empty_rate": 0.50,
+      "empty_amount": 184.05,
+      "picks_count": 1,
+      "picks_amount": 0,
+      "drops_count": 1,
+      "drops_amount": 0,
+      "fuel_rows": [
+        {"date": "2026-08-15", "vendor": "LOVES", "location": "10465 LONESOME PINE TRAIL M,TN, TN", "invoice": "99450055", "gallons": 180.199, "cpg": 5.719, "receipt": 1030.56, "actual": 1030.56},
+        {"date": "2026-08-16", "vendor": "LOVES", "location": "20HWY607PICAYUNE,MS, MS", "invoice": "99798243", "gallons": 90.111, "cpg": 5.549, "receipt": 500.03, "actual": 500.03}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-15", "vendor": "LOVES", "location": "10465 LONESOME PINE TRAIL M,TN", "invoice": "99450055", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 32.90}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-17", "description": "Admin fee - GAS", "amount": -10.00}
+      ],
+      "_deadhead_context": [
+        {"type": "empty_before_pickup", "date": "2026-08-16", "location_name": "Global Manufacturing, Inc", "city": "EDISON", "state": "NJ", "zip": "08817"},
+        {"type": "empty_after_delivery", "date": "2026-08-17", "location_name": "EBT Yard", "city": "Laredo", "state": "TX", "zip": "78045"}
+      ]
+    }
+  ],
+  "company_settlement_totals": {
+    "invoiced": 8400.00,
+    "quick_pay_pct": 2.13,
+    "quick_pay_amount": -178.50,
+    "driver_salary": -1908.00,
+    "additional_driver_pay": -50.00,
+    "fuel": -3369.65,
+    "company_expenses": -80.35,
+    "net_revenue": 2813.50,
+    "total_miles": 3930.7,
+    "mpg": 6.515
+  },
+  "driver_settlement_totals": {
+    "total_loaded_miles": 3447.9,
+    "total_empty_miles": 368.1,
+    "total_miles": 3816.0,
+    "salary": 1908.00,
+    "additional_pay_total": 50.00,
+    "reimbursed_expenses_total": null,
+    "deductions_total": -10.00,
+    "total_due": 1948.00,
+    "mpg": 6.515
+  }
+}

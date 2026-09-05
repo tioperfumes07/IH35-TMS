@@ -1,0 +1,85 @@
+{
+  "settlement_number": 5774,
+  "start_date": "2026-08-07",
+  "end_date": "2026-08-14",
+  "driver_name": "JOSE ANTONIO VICENTE MARTINEZ",
+  "unit": "T171",
+  "trailer": "10209",
+  "loads": [
+    {
+      "load_number": "13517",
+      "customer_name": "Refrigerx Transportation LLC",
+      "pickup": {"location_name": "US COLD MINES", "city": "LAREDO", "state": "TX", "zip": "78045", "date": "2026-08-07"},
+      "delivery": {"location_name": "TRADE JOE'S KENTUCKY", "city": "FRANKLIN", "state": "KY", "zip": "42134", "date": "2026-08-10"},
+      "linehaul_miles_doc": 1132.8,
+      "linehaul_rate": 3.355,
+      "linehaul_amount": 3800.00,
+      "loaded_miles": 1097.6,
+      "loaded_rate": 0.43,
+      "loaded_amount": 471.97,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-07", "vendor": "LOVES", "location": "101 PINNACLE ROAD LAREDO,TX", "invoice": "9982105", "gallons": 141.998, "cpg": 5.249, "receipt": 745.35, "actual": 745.35},
+        {"date": "2026-08-09", "vendor": "LOVES", "location": "2050HWY#70E JACKSON,TN", "invoice": "99462767", "gallons": 150.039, "cpg": 5.409, "receipt": 811.56, "actual": 811.56}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-07", "vendor": "LOVES", "location": "101 PINNACLE ROAD LAREDO,TX", "invoice": "9982105", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 5.32},
+        {"date": "2026-08-09", "vendor": "LOVES", "location": "2050HWY#70E JACKSON,TN", "invoice": "99462767", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 32.07},
+        {"date": "2026-08-07", "vendor": "FUEL AMERICA", "location": "13602MINES ROAD LAREDO,TX", "invoice": "01049493", "description": "Fuel-Reefer Diesel", "reimb_flag": "Drv", "comp_exp_flag": "Y", "amount": 45.47}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [
+        {"date": null, "vendor": "FUEL AMERICA", "description": "Fuel-Reefer Diesel", "amount": 45.47}
+      ],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-14", "description": "Driver-Escrow For Claims", "amount": -25.00}
+      ]
+    },
+    {
+      "load_number": "13518",
+      "customer_name": "CTS Xpress LLC",
+      "pickup": {"location_name": "Americold", "city": "LOUISVILLE", "state": "KY", "zip": "40208", "date": "2026-08-11"},
+      "delivery": {"location_name": "Sr Forwarding", "city": "Laredo", "state": "TX", "zip": "78045", "date": "2026-08-14"},
+      "linehaul_miles_doc": 1396.4,
+      "linehaul_rate": 2.865,
+      "linehaul_amount": 4000.00,
+      "loaded_miles": 1214.8,
+      "loaded_rate": 0.43,
+      "loaded_amount": 522.36,
+      "empty_miles": 134.0,
+      "empty_rate": 0.43,
+      "empty_amount": 57.62,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-12", "vendor": "LOVES", "location": "2971HWY48SOUTH DICKSON,TN", "invoice": "99121316", "gallons": 180.010, "cpg": 5.349, "receipt": 962.87, "actual": 962.87}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-12", "vendor": "LOVES", "location": "2971HWY48SOUTH DICKSON,TN", "invoice": "99121316", "description": "Driver Reimbursement-Fuel-Def", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 18.70},
+        {"date": "2026-08-12", "vendor": "THORNTON", "location": "120LUYBEN HILLS RD KINGSTON S", "invoice": "01011813", "description": "Fuel-Reefer Diesel", "reimb_flag": "Drv", "comp_exp_flag": "Y", "amount": 70.00},
+        {"date": "2026-08-12", "vendor": "LOVES", "location": "1001 Hwy 76 White House , TN", "invoice": null, "description": "Road Service-Truck Tire Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 1084.80}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [
+        {"date": null, "vendor": "THORNTON", "description": "Fuel-Reefer Diesel", "amount": 70.00}
+      ],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-14", "description": "Driver-Escrow For Claims", "amount": -25.00},
+        {"date": "2026-08-14", "description": "Admin fee - GAS", "amount": -10.00}
+      ],
+      "_deadhead_context": [
+        {"date": "2026-08-10", "location": "FRANKLIN, KY 42134"}
+      ]
+    }
+  ],
+  "company_settlement_totals": {"invoiced": 7800.00, "quick_pay_pct": 0.73, "quick_pay_amount": -57.00, "driver_salary": -1051.95, "fuel": -2519.78, "company_expenses": -1256.36, "net_revenue": 2914.91, "total_miles": 2529.2, "mpg": 5.358},
+  "driver_settlement_totals": {"total_loaded_miles": 2312.4, "total_empty_miles": 134.0, "total_miles": 2446.4, "salary": 1051.95, "deductions_total": -60.00, "total_due": 1107.42, "mpg": 5.358}
+}

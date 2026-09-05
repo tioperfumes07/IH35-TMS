@@ -1,0 +1,86 @@
+{
+  "settlement_number": 5779,
+  "start_date": "2026-08-18",
+  "end_date": "2026-08-17",
+  "driver_name": "LUIS ARMANDO SOSA PEREZ",
+  "unit": "T170",
+  "trailer": "201050",
+  "loads": [
+    {
+      "load_number": "13526",
+      "customer_name": "JRAYL TRANSPORT",
+      "pickup": {"location_name": "ALERIS/IMCO/COMMONWEALTH ALUMINUM", "city": "Uhrichsville", "state": "OH", "zip": "44683", "date": "2026-08-18"},
+      "delivery": {"location_name": "SENOX RENTAL", "city": "MESQUITE", "state": "TX", "zip": "75149", "date": "2026-08-19"},
+      "linehaul_miles_doc": 1643.2,
+      "linehaul_rate": 2.130,
+      "linehaul_amount": 3500.00,
+      "loaded_miles": 1122.1,
+      "loaded_rate": 0.45,
+      "loaded_amount": 504.95,
+      "empty_miles": 487.9,
+      "empty_rate": 0.45,
+      "empty_amount": 219.56,
+      "picks_count": 1,
+      "picks_amount": 0,
+      "drops_count": 1,
+      "drops_amount": 0,
+      "fuel_rows": [
+        {"date": "2026-08-17", "vendor": "LOVES", "location": "203NHAUGHTON HWY GREENUP,IL, IL", "invoice": "99264345", "gallons": 134.954, "cpg": 5.649, "receipt": 762.36, "actual": 762.36},
+        {"date": "2026-08-19", "vendor": "LOVES", "location": "215EAST I-30NSVC RD MTVERNON, TX", "invoice": "99291854", "gallons": 117.384, "cpg": 5.589, "receipt": 656.06, "actual": 656.06}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-17", "vendor": "LOVES", "location": "203NHAUGHTON HWY GREENUP,IL", "invoice": "99264345", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 27.37},
+        {"date": "2026-08-17", "vendor": "PILOTMBRIDGE,OH", "location": "61700SOUTHGATE ROAD CA", "invoice": "2027277", "description": "Scale Expense:OTR-Scale Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 15.25},
+        {"date": "2026-08-19", "vendor": "LOVES", "location": "215EAST I-30NSVC RD MTVERNON", "invoice": "99291854", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 21.27}
+      ],
+      "additional_pay_rows": [
+        {"date": null, "description": "Driver Pay-Bonus 60 MILLAS EXTRA X.45 CENTAVOS", "amount": 27.00}
+      ],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-20", "description": "Driver-Escrow For Claims - Driver-Escrow For Claims", "amount": -25.00},
+        {"date": "2026-08-20", "description": "Admin fee - GAS", "amount": -10.00}
+      ]
+    },
+    {
+      "load_number": "13527",
+      "customer_name": "EGRO TRANSPORT LLC",
+      "pickup": {"location_name": "EBT Yard", "city": "Laredo", "state": "TX", "zip": "78045", "date": "2026-08-14"},
+      "delivery": {"location_name": "STEERE ENTERPRISES", "city": "TALLMADGE", "state": "OH", "zip": "44278", "date": "2026-08-17"},
+      "linehaul_miles_doc": 1602.9,
+      "linehaul_rate": 1.872,
+      "linehaul_amount": 3000.00,
+      "loaded_miles": 1547.0,
+      "loaded_rate": 0.45,
+      "loaded_amount": 696.15,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": 1,
+      "picks_amount": 0,
+      "drops_count": 1,
+      "drops_amount": 0,
+      "fuel_rows": [
+        {"date": "2026-08-14", "vendor": "LOVES", "location": "101PINNACLE ROAD LAREDO TX, TX", "invoice": "99985047", "gallons": 50.319, "cpg": 5.489, "receipt": 276.20, "actual": 276.20},
+        {"date": "2026-08-14", "vendor": "LOVES", "location": "21548FM47SNATALIA,TX, TX", "invoice": "2880342", "gallons": 48.070, "cpg": 5.389, "receipt": 259.05, "actual": 259.05},
+        {"date": "2026-08-15", "vendor": "LOVES", "location": "215EAST I-30N.SVCRD MT.VERNON,, TX", "invoice": "3615837", "gallons": 145.078, "cpg": 5.489, "receipt": 796.33, "actual": 796.33},
+        {"date": "2026-08-16", "vendor": "LOVES", "location": "203NHAUGHTON HWY GREENUP,IL, IL", "invoice": "1132371", "gallons": 99.039, "cpg": 5.549, "receipt": 549.57, "actual": 549.57}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-14", "vendor": "LOVES", "location": "21548FM47SNATALIA,TX", "invoice": "2880342", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 47.91},
+        {"date": "2026-08-16", "vendor": "LOVES", "location": "203NHAUGHTON HWY GREENUP,IL", "invoice": "1132371", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 30.96}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-20", "description": "Driver-Escrow For Claims - Driver-Escrow For Claims", "amount": -25.00}
+      ]
+    }
+  ],
+  "_deadhead_context": [
+    {"load_number": "13526", "type": "Empty", "date": "2026-08-18", "location": "TALLMADGE, OH 44278"},
+    {"load_number": "13526", "type": "Empty (after delivery)", "date": "2026-08-20", "location": "Laredo, TX 78045 / EBT Yard"}
+  ],
+  "company_settlement_totals": {"invoiced": 6500.00, "quick_pay_pct": null, "quick_pay_amount": null, "driver_salary": -1420.66, "additional_driver_pay": -27.00, "fuel": -3299.57, "company_expenses": -142.76, "net_revenue": 1610.01, "total_miles": 3246.1, "mpg": 5.457},
+  "driver_settlement_totals": {"total_loaded_miles": 2669.1, "total_empty_miles": 487.9, "total_miles": 3157.0, "salary": 1420.66, "additional_pay_total": 27.00, "deductions_total": -60.00, "total_due": 1387.66, "mpg": 5.457}
+}

@@ -1,0 +1,129 @@
+{
+  "settlement_number": 5775,
+  "start_date": "2026-08-04",
+  "end_date": "2026-08-14",
+  "driver_name": "ALFONSO HIDALGO CHAVEZ",
+  "unit": "T164",
+  "trailer": "8258",
+  "_note": "Trailer number changes mid-settlement per PDF Trk/Trlr labels: Trlr 8258 for Load 13506, then Trlr 35505 for Loads 13514 and 13516. Top-level 'trailer' reflects the settlement's starting trailer (Load 13506); see each load's own 'trailer' field for the exact value used on that load.",
+  "loads": [
+    {
+      "load_number": "13506",
+      "trailer": "8258",
+      "customer_name": "DH Express Inc",
+      "pickup": {"location_name": "Dr Ikes True Value", "city": "Laedo", "state": "TX", "zip": "78040", "date": "2026-08-04"},
+      "delivery": {"location_name": "G D Trucking", "city": "COAL CITY", "state": "IL", "zip": "60416", "date": "2026-08-07"},
+      "linehaul_miles_doc": 1306.0,
+      "linehaul_rate": 2.986,
+      "linehaul_amount": 3900.00,
+      "loaded_miles": 1292.4,
+      "loaded_rate": 0.45,
+      "loaded_amount": 581.58,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-05", "vendor": "LOVES", "location": "101 PINNACLE ROAD LAREDO,TX", "invoice": "1911564", "gallons": 65.984, "cpg": 5.349, "receipt": 352.95, "actual": 352.95},
+        {"date": "2026-08-06", "vendor": "LOVES", "location": "21548FM 471S NATALIA,TXTX", "invoice": "99515499", "gallons": 141.401, "cpg": 5.289, "receipt": 747.87, "actual": 747.87}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-05", "vendor": "LOVES", "location": "101PINNACLE ROAD LAREDO,TX", "invoice": "1911564", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 34.39},
+        {"date": "2026-08-06", "vendor": "LOVES", "location": "21548FM 471S NATALIA,TXTX", "invoice": "99515499", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 14.72},
+        {"date": "2026-08-06", "vendor": "LOVES", "location": "1501CORSICANA HWY HILLSBORO,TX", "invoice": "1360475", "description": "Scale Expense:OTR-Scale Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 15.25}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-14", "description": "Driver-Escrow For Claims", "amount": -25.00}
+      ]
+    },
+    {
+      "load_number": "13514",
+      "trailer": "35505",
+      "customer_name": "Magna Logistics Group LLC",
+      "pickup": {"location_name": "ARDBUWI - ARDAGH GLASS INC. BURLINGTON", "city": "BURLINGTON", "state": "WI", "zip": "53105", "date": "2026-08-10"},
+      "delivery": {"location_name": "BUSHOTX2 - BUSKE #2 WAREHOUSE", "city": "HOUSTON", "state": "TX", "zip": "77029", "date": "2026-08-12"},
+      "linehaul_miles_doc": 1249.1,
+      "linehaul_rate": 2.162,
+      "linehaul_amount": 2700.00,
+      "loaded_miles": 1119.2,
+      "loaded_rate": 0.45,
+      "loaded_amount": 503.64,
+      "empty_miles": 109.3,
+      "empty_rate": 0.45,
+      "empty_amount": 49.19,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-08", "vendor": "LOVES", "location": "9191STATE ROUTE 140 HAMEL.IL", "invoice": "2873954", "gallons": 140.039, "cpg": 5.349, "receipt": 749.07, "actual": 749.07},
+        {"date": "2026-08-11", "vendor": "LOVES", "location": "1500HWY 72W FREDERICKTOWN,MD", "invoice": "2402527", "gallons": 144.009, "cpg": 5.189, "receipt": 747.26, "actual": 747.26},
+        {"date": "2026-08-12", "vendor": "LOVES", "location": "4440NORTH MC CARTY STREET H,TX", "invoice": "6092647", "gallons": 60.026, "cpg": 5.499, "receipt": 330.08, "actual": 330.08}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-08", "vendor": "LOVES", "location": "9191STATE ROUTE 140HAMEL,IL", "invoice": "99648329", "description": "Driver Reimbursement-Fuel-Def", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 38.55},
+        {"date": "2026-08-11", "vendor": "LOVES", "location": "1500HWY 72W FREDERICKTOWN,MD", "invoice": "2402527", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 24.40},
+        {"date": "2026-08-12", "vendor": "PILOT", "location": "4440NORTH MC CARTY STREET H,TX", "invoice": "6092647", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 24.88},
+        {"date": "2026-08-10", "vendor": "LOVES", "location": "100ECOMMERCE CT ELKHORN,WI", "invoice": "2066083", "description": "Driver Reimbursement-TPE-Scale Expense", "reimb_flag": "Drv", "comp_exp_flag": "Y", "amount": 15.25}
+      ],
+      "additional_pay_rows": [
+        {"date": null, "description": "Driver Pay-Layover-Estancia 8 y 9 de Agosto", "amount": 50.00}
+      ],
+      "reimbursement_rows": [
+        {"date": null, "vendor": "LOVES", "description": "Driver Reimbursement-TPE-Scale Expense", "amount": 15.25}
+      ],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-14", "description": "Driver-Escrow For Claims", "amount": -25.00}
+      ],
+      "_deadhead_context": [
+        {"date": "2026-08-07", "location": "COAL CITY, IL 60416"}
+      ],
+      "_note": "EXPENSES table lists invoice 6092647 (2026-08-12, 4440NORTH MC CARTY STREET H,TX, $24.88 Fuel-DEF) with vendor 'PILOT', but the FUEL PURCHASES table lists the same invoice number/date/location/amount pairing under vendor 'LOVES' ($330.08 diesel purchase, invoice 6092647). This vendor name is inconsistent between the two tables in the Company Settlement PDF; transcribed each table's vendor exactly as printed rather than reconciling."
+    },
+    {
+      "load_number": "13516",
+      "trailer": "35505",
+      "customer_name": "Sethmar Transportation",
+      "pickup": {"location_name": "QUANTIX SCS", "city": "BAYTOWN", "state": "TX", "zip": "77523", "date": "2026-08-13"},
+      "delivery": {"location_name": "Cavazos Forwarding", "city": "LAREDO", "state": "TX", "zip": "78045", "date": "2026-08-14"},
+      "linehaul_miles_doc": 405.4,
+      "linehaul_rate": 1.727,
+      "linehaul_amount": 700.00,
+      "loaded_miles": 351.6,
+      "loaded_rate": 0.45,
+      "loaded_amount": 158.22,
+      "empty_miles": 25.6,
+      "empty_rate": 0.45,
+      "empty_amount": 11.52,
+      "picks_count": 1,
+      "picks_amount": 0.00,
+      "drops_count": 1,
+      "drops_amount": 0.00,
+      "fuel_rows": [
+        {"date": "2026-08-13", "vendor": "LOVES", "location": "705HWY225DEERPARK,TX", "invoice": "1597119", "gallons": 50.128, "cpg": 5.589, "receipt": 280.17, "actual": 280.17}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-13", "vendor": "LOVES", "location": "7005LA PORTE SWY DEER PARK,TX", "invoice": "1597129", "description": "Scale Expense:OTR-Scale Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 15.25}
+      ],
+      "additional_pay_rows": [
+        {"date": null, "description": "Driver Pay-Bono por Contratacion 1/4", "amount": 50.00}
+      ],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-14", "description": "Driver-Escrow For Claims", "amount": -25.00},
+        {"date": "2026-08-14", "description": "Admin fee - GAS", "amount": -10.00},
+        {"date": "2026-08-05", "description": "CASH ADVANCE WIRE TRANSFER", "amount": -148.00}
+      ],
+      "_deadhead_context": [
+        {"date": "2026-08-12", "location": "HOUSTON, TX 77029"}
+      ]
+    }
+  ],
+  "company_settlement_totals": {"invoiced": 7300.00, "quick_pay_pct": 2.20, "quick_pay_amount": -160.50, "driver_salary": -1304.15, "additional_driver_pay": -100.00, "fuel": -3207.40, "company_expenses": -182.69, "net_revenue": 2345.26, "total_miles": 2960.5, "mpg": 4.921},
+  "driver_settlement_totals": {"total_loaded_miles": 2763.2, "total_empty_miles": 134.9, "total_miles": 2898.1, "salary": 1304.15, "additional_pay_total": 100.00, "reimbursed_expenses_total": 15.25, "deductions_total": -233.00, "total_due": 1186.40, "mpg": 4.921}
+}

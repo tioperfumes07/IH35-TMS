@@ -1,0 +1,102 @@
+{
+  "_note": "Company_Settlement_5782.pdf was present in ~/Downloads/ earlier this session (confirmed independently by a peer CC-3 session, which read the file in full — 186.1KB, matching xlsx tie-out exactly — before it disappeared from the directory) but is NOT present as of this script's own directory checks (verified three ways: ls -la, test -f, case-insensitive find). This is a real file-loss incident during the session, not a pre-existing gap in the settlement packet, and has been flagged to the owner/lead: check Trash, and nothing should be programmatically deleting/moving source PDFs out of Downloads while multiple agents read them concurrently. customer_name/fuel_rows/expense_rows/company_settlement_totals below are transcribed from the peer session's verbatim report of its own direct PDF read (cross-checked by the peer against docs/bus/settlement-entry-2026-09-04/IH35-SETTLEMENT-TIEOUT-2026-09-04.xlsx, which still carries this settlement's row and to which these figures foot exactly: diesel $3,301.67, other-expense $243.29) — a secondhand transcription, not a fabrication, and clearly labelled as such. The one figure genuinely unrecoverable from any source is the vendor name on the $120.00 Warehouse-Lumper Fee Expense line (the peer reports the PDF's own Vendor column was blank there) — left null rather than guessed.",
+  "settlement_number": 5782,
+  "start_date": "2026-08-17",
+  "end_date": "2026-08-24",
+  "driver_name": "HUGO GAYTAN SARABIA",
+  "unit": "T173",
+  "trailer": "10380 / 10870",
+  "loads": [
+    {
+      "load_number": "13529",
+      "customer_name": "DLS Dardini Logistics Services",
+      "trailer": "10380",
+      "pickup": {"location_name": "Mastronardi Produce", "city": "LAREDO", "state": "TX", "zip": "78045", "date": "2026-08-17"},
+      "delivery": {"location_name": "Aldi Petersburg", "city": "PETERSBURG", "state": "VA", "zip": "23803", "date": "2026-08-19"},
+      "linehaul_miles_doc": null,
+      "linehaul_rate": null,
+      "linehaul_amount": 3900.00,
+      "loaded_miles": 1618.9,
+      "loaded_rate": 0.45,
+      "loaded_amount": 728.51,
+      "empty_miles": 0,
+      "empty_rate": null,
+      "empty_amount": 0,
+      "picks_count": null,
+      "picks_amount": null,
+      "drops_count": null,
+      "drops_amount": null,
+      "fuel_rows": [
+        {"date": "2026-08-17", "vendor": "LOVES", "location": null, "invoice": "99524227", "gallons": null, "cpg": null, "receipt": 731.46, "actual": 731.46},
+        {"date": "2026-08-19", "vendor": "LOVES", "location": null, "invoice": "99365532", "gallons": null, "cpg": null, "receipt": 746.43, "actual": 746.43}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-19", "vendor": "LOVES", "location": null, "invoice": "99365532", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 34.27},
+        {"date": "2026-08-17", "vendor": "LOVES", "location": null, "invoice": "2881598", "description": "Scale Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 15.25}
+      ],
+      "additional_pay_rows": [],
+      "reimbursement_rows": [],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-24", "description": "Driver-Escrow For Claims - Driver-Escrow For Claims", "amount": -25.00}
+      ],
+      "_note": "customer_name/linehaul_amount/fuel_rows/expense_rows from the peer session's direct PDF read (secondhand, flagged) — see top-level _note."
+    },
+    {
+      "load_number": "13540",
+      "customer_name": "IM Specialized Logistics, LLC.",
+      "trailer": "10870",
+      "pickup": {"location_name": "Smithfield Foods Inc Clinton", "city": "CLINTON", "state": "NC", "zip": "28328", "date": "2026-08-22"},
+      "delivery": {"location_name": "MS World Wide", "city": "Laredo", "state": "TX", "zip": "78045", "date": "2026-08-24"},
+      "linehaul_miles_doc": null,
+      "linehaul_rate": null,
+      "linehaul_amount": 3120.00,
+      "loaded_miles": 1511.7,
+      "loaded_rate": 0.45,
+      "loaded_amount": 680.27,
+      "empty_miles": 178.5,
+      "empty_rate": 0.45,
+      "empty_amount": 80.33,
+      "picks_count": null,
+      "picks_amount": null,
+      "drops_count": null,
+      "drops_amount": null,
+      "fuel_rows": [
+        {"date": "2026-08-22", "vendor": "LOVES", "location": null, "invoice": "99587271", "gallons": null, "cpg": null, "receipt": 833.27, "actual": 833.27},
+        {"date": "2026-08-23", "vendor": "LOVES", "location": null, "invoice": "99497016", "gallons": null, "cpg": null, "receipt": 990.51, "actual": 990.51}
+      ],
+      "expense_rows": [
+        {"date": "2026-08-22", "vendor": "LOVES", "location": null, "invoice": "99587271", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 22.13},
+        {"date": "2026-08-23", "vendor": "LOVES", "location": null, "invoice": "99497016", "description": "Fuel-DEF-Diesel Exhaust Fluid", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 33.64},
+        {"date": "2026-08-15", "vendor": "TYSON", "location": null, "invoice": null, "description": "Lumper-Viaje Pasado", "reimb_flag": "Drv", "comp_exp_flag": "Y", "amount": 18.00},
+        {"date": "2026-08-25", "vendor": null, "location": null, "invoice": "758101", "description": "Warehouse-Lumper Fee Expense", "reimb_flag": null, "comp_exp_flag": "Y", "amount": 120.00}
+      ],
+      "additional_pay_rows": [
+        {"date": null, "description": "Driver Pay-Layover-Estancia 21 de Agosto", "amount": 25.00}
+      ],
+      "reimbursement_rows": [
+        {"date": null, "description": "TYSON LUMPER VIAJE PASADO", "amount": 18.00}
+      ],
+      "deduction_rows_from_driver_settlement": [
+        {"date": "2026-08-24", "description": "Driver-Escrow For Claims - Driver-Escrow For Claims", "amount": -25.00},
+        {"date": "2026-08-24", "description": "Admin fee - GAS", "amount": -10.00},
+        {"date": "2026-08-24", "description": "Admin fee - BASCULA PAGADA EN VIAJE PASADO", "amount": -15.25}
+      ],
+      "_note": "customer_name/linehaul_amount/fuel_rows/expense_rows from the peer session's direct PDF read (secondhand, flagged) — see top-level _note. The $120.00 Warehouse-Lumper Fee Expense row has NO vendor name in the source PDF itself (per the peer's report) — left null, never invented; the seed script must skip/report this one line rather than guess a vendor."
+    }
+  ],
+  "_deadhead_context": [
+    {"load_number": "13540", "type": "Empty", "date": "2026-08-19", "location": "PETERSBURG, VA 23803 / Aldi Petersburg"}
+  ],
+  "company_settlement_totals": {
+    "invoiced": 7020.00,
+    "quick_pay_pct": null,
+    "quick_pay_amount": null,
+    "driver_salary": -1489.11,
+    "fuel": -3301.67,
+    "company_expenses": -243.29,
+    "net_revenue": null,
+    "total_miles": null,
+    "mpg": null
+  },
+  "driver_settlement_totals": {"total_loaded_miles": 3130.6, "total_empty_miles": 178.5, "total_miles": 3309.1, "salary": 1489.11, "additional_pay_total": 25.00, "reimbursed_expenses_total": 18.00, "deductions_total": -75.25, "total_due": 1456.86, "mpg": 5.782}
+}
