@@ -1,0 +1,78 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Driver Settlement Detail — Reference Render 2026-09-05</title>
+<style>
+:root{--ink:#111827;--muted:#6B7280;--th-bg:#EEF2F6;--th-rule:#C7D2DC;--td-rule:#D8DEE6;--zebra:#FAFBFC;--kpi-bg:#F4F7FA;--dash:#B6BDC7;--navy:#14314F;--rev:#EEF4FA;--cost:#FDF6F3;--pay:#F4F1FA;--page:#F7F8FA;--surface:#fff;--border:#E5E7EB}
+body{margin:0;background:var(--page);font:12px/1.35 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink)}
+.page{padding:16px 20px;max-width:1440px}
+.crumb{font-size:11px;color:var(--muted);margin-bottom:6px}
+.ident{display:flex;align-items:baseline;gap:14px;margin-bottom:10px}
+.ident h1{font-size:22px;font-weight:600;margin:0}
+.ident .meta{font-size:12px;color:var(--muted)}
+.pill{display:inline-block;height:20px;line-height:20px;padding:0 8px;border-radius:2px;font-size:11px;font-weight:700;text-transform:uppercase;background:#E6F4EA;color:#1B5E20}
+.actions{display:flex;gap:6px;margin-left:auto}
+.btn{height:28px;line-height:26px;padding:0 10px;border:1px solid var(--th-rule);border-radius:2px;background:#fff;font-size:12px;font-weight:600;color:var(--ink)}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:10px 0 14px}
+.kpi{height:93px;box-sizing:border-box;background:var(--kpi-bg);border:1px solid var(--th-rule);border-radius:4px;padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between}
+.kpi .l{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#4B5563}
+.kpi .v{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:11px;color:var(--muted)}
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:4px;margin-bottom:12px}
+.sec header{display:flex;align-items:center;height:32px;padding:0 10px;border-bottom:1px solid var(--td-rule)}
+.sec header h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0;color:#4B5563}
+.sec header .sub{margin-left:8px;font-size:11px;color:var(--muted)}
+.sec header .add{margin-left:auto}
+.scroll{overflow-x:auto}
+table{border-collapse:separate;border-spacing:0;table-layout:auto;min-width:980px;width:100%}
+th{position:sticky;top:0;background:var(--th-bg);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#4B5563;text-align:left;padding:0 8px;height:28px;border-right:1px solid var(--th-rule);border-bottom:1px solid var(--th-rule);white-space:nowrap}
+td{padding:0 8px;height:28px;border-right:1px solid var(--td-rule);border-bottom:1px solid var(--td-rule);white-space:nowrap;font-variant-numeric:tabular-nums}
+tr:nth-child(even) td{background:var(--zebra)}
+th.num,td.num{text-align:right}
+td.dash{color:var(--dash);text-align:center}
+td.edit{background:#FFFDF5;outline:1px dashed #D9C77A;outline-offset:-2px}
+td.numbox input{width:72px;height:22px;border:1px solid var(--th-rule);border-radius:2px;padding:0 6px;font:inherit}
+tfoot td{font-weight:700;background:var(--th-bg);border-top:1px solid var(--th-rule)}
+.rev th{background:var(--rev)}.cost th{background:var(--cost)}.pay th{background:var(--pay)}
+.legend{font-size:11px;color:var(--muted);margin-top:6px}
+</style></head><body><div class="page">
+<div class="crumb">Settlements › Driver settlements › S-13642</div>
+<div class="ident"><h1>Driver settlement S-13642</h1><span class="meta">Concepcion Garcia · Unit T171 · Tour 2026-07-14 → 2026-07-21 · Loads 13497, 13498</span><span class="pill">Open</span>
+<div class="actions"><button class="btn">Print</button><button class="btn">Unlock</button><button class="btn">Reverse</button><button class="btn primary">Close settlement</button></div></div>
+<div class="kpis">
+<div class="kpi"><div class="l">Loaded pay</div><div class="v">$1,929.60</div><div class="s">4,020 mi @ $0.4800</div></div>
+<div class="kpi"><div class="l">Empty miles pay</div><div class="v">$249.97</div><div class="s">521 mi @ $0.4800</div></div>
+<div class="kpi"><div class="l">Additional pay</div><div class="v">$25.00</div><div class="s">1 line</div></div>
+<div class="kpi"><div class="l">Reimbursements</div><div class="v">$0.00</div><div class="s">0 lines</div></div>
+<div class="kpi"><div class="l">Deductions</div><div class="v">−$35.00</div><div class="s">Escrow $25.00 · Admin fee GAS $10.00</div></div>
+<div class="kpi"><div class="l">Net pay</div><div class="v">$2,169.57</div><div class="s">Foot vs printed: match</div></div>
+</div>
+
+<section class="sec pay"><header><h2>Earnings — loaded miles</h2><span class="sub">one line per load · from the driver bill · edit the bill, not the line</span></header>
+<div class="scroll"><table><thead><tr><th>Number</th><th>Load #</th><th>Date</th><th>From</th><th>To</th><th class="num">Loaded mi</th><th class="num">Rate</th><th class="num">Amount</th><th>Driver bill</th></tr></thead>
+<tbody><tr><td>S-13642-1</td><td>13497</td><td>07/14/2026</td><td>Laredo, TX</td><td>Indianapolis, IN</td><td class="num">1,319.7</td><td class="num">$0.4800</td><td class="num">$633.46</td><td>13497</td></tr>
+<tr><td>S-13642-2</td><td>13498</td><td>07/18/2026</td><td>Indianapolis, IN</td><td>Laredo, TX</td><td class="num">2,700.3</td><td class="num">$0.4800</td><td class="num">$1,296.14</td><td>13498</td></tr></tbody>
+<tfoot><tr><td colspan="5">Subtotal</td><td class="num">4,020.0</td><td class="dash">—</td><td class="num">$1,929.60</td><td></td></tr></tfoot></table></div></section>
+
+<section class="sec pay"><header><h2>Empty miles</h2><span class="sub">deadhead to the pickup · same rate today, never hardcoded</span></header>
+<div class="scroll"><table><thead><tr><th>Number</th><th>Load #</th><th>Date</th><th>From (prev. delivery)</th><th>To (pickup)</th><th class="num">Empty mi</th><th class="num">Rate</th><th class="num">Amount</th><th>Driver bill</th></tr></thead>
+<tbody><tr><td>S-13642-3</td><td>13497</td><td>07/14/2026</td><td>Laredo yard</td><td>Laredo, TX</td><td class="num">12.0</td><td class="num">$0.4800</td><td class="num">$5.76</td><td>13497</td></tr>
+<tr><td>S-13642-4</td><td>13498</td><td>07/18/2026</td><td>Indianapolis, IN</td><td>Indianapolis, IN</td><td class="num">509.0</td><td class="num">$0.4800</td><td class="num">$244.21</td><td>13498</td></tr></tbody>
+<tfoot><tr><td colspan="5">Subtotal</td><td class="num">521.0</td><td class="dash">—</td><td class="num">$249.97</td><td></td></tr></tfoot></table></div></section>
+
+<section class="sec rev"><header><h2>Additional pay</h2><span class="sub">extra delivery / drop · layover · detention</span><button class="btn add">+ Add additional pay</button></header>
+<div class="scroll"><table><thead><tr><th>Number</th><th>Load #</th><th>Date</th><th>Type</th><th>Description</th><th class="num">Amount</th><th>Status</th></tr></thead>
+<tbody><tr><td class="numbox"><input value="S-13642-5"></td><td class="edit">13498</td><td class="edit">07/19/2026</td><td class="edit">Extra delivery / drop</td><td class="edit">Second drop, Terre Haute</td><td class="num edit">$25.00</td><td>Approved</td></tr>
+<tr><td class="numbox"><input placeholder="auto"></td><td class="edit dash">—</td><td class="edit dash">—</td><td class="edit dash">—</td><td class="edit dash">—</td><td class="num edit dash">—</td><td>New</td></tr></tbody>
+<tfoot><tr><td colspan="5">Subtotal</td><td class="num">$25.00</td><td></td></tr></tfoot></table></div></section>
+
+<section class="sec cost"><header><h2>Reimbursements</h2><span class="sub">driver paid out of pocket · receipt required</span><button class="btn add">+ Add reimbursement</button></header>
+<div class="scroll"><table><thead><tr><th>Number</th><th>Load #</th><th>Date</th><th>Vendor</th><th>Category</th><th>Vendor invoice #</th><th>Receipt</th><th class="num">Amount</th></tr></thead>
+<tbody><tr><td class="numbox"><input placeholder="auto"></td><td class="edit dash">—</td><td class="edit dash">—</td><td class="edit dash">—</td><td class="edit dash">—</td><td class="edit dash">—</td><td class="dash">—</td><td class="num edit dash">—</td></tr></tbody>
+<tfoot><tr><td colspan="7">Subtotal</td><td class="num">$0.00</td></tr></tfoot></table></div></section>
+
+<section class="sec cost"><header><h2>Deductions</h2><span class="sub">escrow $25.00 per load only where printed · admin fee GAS · advances</span><button class="btn add">+ Add deduction</button></header>
+<div class="scroll"><table><thead><tr><th>Number</th><th>Load #</th><th>Date</th><th>Type</th><th>Description</th><th class="num">Amount</th><th>Posting account</th></tr></thead>
+<tbody><tr><td>S-13642-6</td><td>13497</td><td>07/21/2026</td><td class="edit">Escrow</td><td class="edit">Escrow contribution</td><td class="num edit">−$25.00</td><td>2310 Driver Escrow</td></tr>
+<tr><td>S-13642-7</td><td class="dash">—</td><td>07/21/2026</td><td class="edit">Admin fee – GAS</td><td class="edit">Admin fee</td><td class="num edit">−$10.00</td><td>4900 Admin Fee Income</td></tr></tbody>
+<tfoot><tr><td colspan="5">Subtotal</td><td class="num">−$35.00</td><td></td></tr></tfoot></table></div></section>
+<div class="legend">Yellow-outlined cells are editable while the settlement is OPEN; every cell locks at Close. Earnings and Empty miles read from the driver bill — editing them opens the bill. Numbers are the load number spine: S-&lt;settlement&gt;-&lt;n&gt;, typed value wins, blank auto-assigns. Dash = not measured, never blank, never zero.</div>
+</div></body></html>
