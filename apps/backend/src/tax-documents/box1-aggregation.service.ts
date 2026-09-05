@@ -47,8 +47,19 @@ export const BOX1_CHARGEBACK_LINE_TYPE = "abandonment_chargeback" as const;
 
 /**
  * Computes each driver's annual Box-1 nonemployee-compensation total for `taxYear`, cash-basis
- * (comp is reportable in the year PAID — driver_settlements.paid_at/payment_cleared_at — not the
- * year the work was performed, per the IRS cash-method rule for information returns).
+ * (comp is reportable in the year PAID — the year the payment was ISSUED — not the year the work
+ * was performed, per the IRS cash-method rule for information returns).
+ *
+ * SETL-TAX-YEAR-USES-CLEARED-DATE fix (2026-09-05): the year bucket keys on
+ * `COALESCE(s.payment_sent_at, s.paid_at)`, NEVER `payment_cleared_at`. `payment_sent_at` (set
+ * when the electronic sent_to_bank transition fires) and `paid_at` (set when the manual_paid
+ * transition fires) are the two mutually-exclusive "the company issued this payment" events —
+ * `settlement-payment.service.ts`'s state machine only ever takes ONE of those two branches per
+ * settlement. `payment_cleared_at` is a THIRD, LATER, reconciliation-only event (bank confirmed
+ * the electronic payment cleared) that can land in the next tax year for a payment issued in the
+ * prior one (e.g. issued Dec 31, clears Jan 2) — using it here would silently move real income
+ * across a year boundary on a 1099, which is wrong on the government's own cash-basis rule: the
+ * payer's books, not the bank's clearing house, control this.
  */
 export async function aggregateBox1CompForTaxYear(
   client: Queryable,
@@ -69,8 +80,8 @@ export async function aggregateBox1CompForTaxYear(
       JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id
       WHERE s.operating_company_id = $1::uuid
         AND sl.line_type = ANY($2::text[])
-        AND COALESCE(s.payment_cleared_at, s.paid_at) IS NOT NULL
-        AND date_part('year', COALESCE(s.payment_cleared_at, s.paid_at))::int = $3::int
+        AND COALESCE(s.payment_sent_at, s.paid_at) IS NOT NULL
+        AND date_part('year', COALESCE(s.payment_sent_at, s.paid_at))::int = $3::int
       GROUP BY s.driver_id
     `,
     [operatingCompanyId, [...BOX1_INCLUDED_LINE_TYPES], taxYear]
@@ -86,8 +97,8 @@ export async function aggregateBox1CompForTaxYear(
       JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id
       WHERE s.operating_company_id = $1::uuid
         AND sl.line_type = $2
-        AND COALESCE(s.payment_cleared_at, s.paid_at) IS NOT NULL
-        AND date_part('year', COALESCE(s.payment_cleared_at, s.paid_at))::int = $3::int
+        AND COALESCE(s.payment_sent_at, s.paid_at) IS NOT NULL
+        AND date_part('year', COALESCE(s.payment_sent_at, s.paid_at))::int = $3::int
       GROUP BY s.driver_id
     `,
     [operatingCompanyId, BOX1_CHARGEBACK_LINE_TYPE, taxYear]
