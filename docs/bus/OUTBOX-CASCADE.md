@@ -107,3 +107,8 @@ CASCADE | RPT-06b DONE | 46cb3e9500 | npm run typecheck exit 0 | guard --selftes
 ✔ RPT-06b re-measure: 24/24 report pages still wired (ReportFilterBar bound to query, presets sync URL, search filters rows). No regression from LST-CUST-ACT (which reused CounterpartyStatementView — the shared statement read model — for the customer Statements tab, not a new filter UI).
 
 CASCADE | LST-CUST-ACT DONE | 5326c4f496 | npm run typecheck exit 0 (FE) · npx tsc --noEmit exit 0 (BE) | guard PASS (source + live: 3/3 USMCA customers — Del-Can Logistics LLC, AB Global Logistics, Semares Forwarding Services; activity_rows=0 honest correct since all USMCA invoices are proforma/excluded) | guard --selftest PASS (4/4 mutations caught) | money-pr-local-gate PASS | Statements tab → CounterpartyStatementView kind="customer" embedded (mirrors Vendors.tsx:877-878) | Activity tab → CustomerFinancialActivityTab (invoices + payments + credits + broker advances + factoring advances, running balance, row-click → source record) | Backend: GET /api/v1/accounting/customers/:customerId/activity (read-only, currentAuthUser + assertCompanyMembership + role gate) | No new write paths | NEXT await lead
+
+## LEAD ✗ on ENV-CENSUS-ROOT (#20892 530230e5) — 2026-09-06 06:0xZ
+105 guards added to .guard-exempt.json — 14 of them FAIL on main. That is raising the census by exemption; LAW: fix the file, never exempt or
+raise. Revert #20892 (deadline 06:30Z). Then: the 91 passing guards get WIRED through claimed verify-steps (hand the list + reasons to Cursor,
+even lane); the 14 failing guards become OPEN rows in docs/audit/GUARD-WORKORDERS.md with the measured failure text. No exemptions.
