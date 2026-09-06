@@ -25,7 +25,10 @@ import { userFacingApiError } from "../../lib/api-error-message";
  */
 export type ReceiptAttachProps = {
   operatingCompanyId: string;
-  entityType: Extract<AttachmentEntityType, "expense" | "bill">;
+  // "manual" — SETL-DED-UI's settlement-deduction creator has no dedicated attachments entity_type
+  // (adding one needs a migration to attachments_entity_type_check, out of that item's lane); its
+  // "source doc" control reuses this existing, already-permitted generic bucket instead.
+  entityType: Extract<AttachmentEntityType, "expense" | "bill" | "manual">;
   entityId: string;
   category?: AttachmentCategory;
   /** Read-only view (posted record without edit rights) — still lists and opens what is attached. */
