@@ -901,7 +901,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                 AND c.operating_company_id = l.operating_company_id
           LEFT JOIN LATERAL (
-            SELECT city, state, scheduled_arrival_at
+            SELECT city, state, scheduled_arrival_at, appointment_start_at
             FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'pickup'
               AND soft_deleted_at IS NULL
@@ -909,7 +909,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             LIMIT 1
           ) sp ON true
           LEFT JOIN LATERAL (
-            SELECT city, state, scheduled_arrival_at
+            SELECT city, state, scheduled_arrival_at, appointment_start_at
             FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'delivery'
               AND soft_deleted_at IS NULL
@@ -957,6 +957,11 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             sp.state AS pickup_state,
             sd.city AS delivery_city,
             sd.state AS delivery_state,
+            -- RT-FIX (lead, 2026-09-06): the Round Trips timeline positioned bars on created_at because the list
+            -- never carried the stop dates — every backfilled August load stacked on the day it was booked.
+            -- First pickup / last delivery appointment (or scheduled arrival), from the same sp/sd laterals.
+            COALESCE(sp.appointment_start_at, sp.scheduled_arrival_at) AS pickup_scheduled_at,
+            COALESCE(sd.appointment_start_at, sd.scheduled_arrival_at) AS delivery_scheduled_at,
             -- gap-21: Active Load → Invoice reverse linkage (read-only drill-through, §10 Linkage Law).
             -- Surfaces the load's most-recent non-void invoice so the dispatch board can show billing
             -- state per load. Pure display enrichment — no write / no GL posting. accounting.invoices is
@@ -1006,7 +1011,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.loads ml ON ml.id = l.id
                                   AND ml.operating_company_id = l.operating_company_id
           LEFT JOIN LATERAL (
-            SELECT city, state, scheduled_arrival_at
+            SELECT city, state, scheduled_arrival_at, appointment_start_at
             FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'pickup'
               AND soft_deleted_at IS NULL
@@ -1014,7 +1019,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             LIMIT 1
           ) sp ON true
           LEFT JOIN LATERAL (
-            SELECT city, state, scheduled_arrival_at
+            SELECT city, state, scheduled_arrival_at, appointment_start_at
             FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'delivery'
               AND soft_deleted_at IS NULL
