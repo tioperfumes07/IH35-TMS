@@ -363,8 +363,8 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
       {/* LDT-2 DESIGN (owner 2026-09-06 04:2xZ "THE DESIGN … I WANT ALL THE SHIT IN THESE PICTURES"): the approved render
           (LOAD-DETAIL-TABS-RENDERS-2026-09-05.html § Stops) shows LEG MILES and ARRIVAL & DEPARTURE EVENTS as two INLINE
           cards — every leg row with practical · short · real · google ref, the fence/driver/manual events as a timeline —
-          not two one-line buttons hiding the data behind a pop-up. Every value is read from mdata.load_stops (planned),
-          geo.geofence_events (actual), telematics odometer (real) and load_stop_legs (miles). Nothing typed here. */}
+          not two one-line buttons hiding the data behind a pop-up. Every value is read from the planned stop record (planned),
+          geofence events (actual), telematics odometer (real) and stop legs (miles). Nothing typed here. */}
       {data ? <StopsDesignCards data={data} /> : null}
 
       {openStop ? <StopDetailPopup stop={openStop} onClose={() => setOpenStop(null)} /> : null}
