@@ -2,7 +2,7 @@ import { formatUsdCents } from "../../../lib/money";
 import type { TourReadout } from "../../../api/tourReadout";
 
 const DASH = "—";
-const money = (c: number | null | undefined, cur = "USD") => (c == null ? DASH : formatUsdCents(c, cur));
+const money = (c: number | null | undefined) => (c == null ? DASH : formatUsdCents(c));
 
 /**
  * SETL-DETAIL-01 (lead ROUND 14) — COMPANY WATERFALL: Invoiced − Quick Pay 0.50% − Driver −
@@ -15,7 +15,7 @@ const money = (c: number | null | undefined, cur = "USD") => (c == null ? DASH :
  * rather than inventing a 0.50% or a fuel/expense split with no source. Flagged in the DONE line —
  * a real backend gap for company-settlement-report.service.ts to close, not a UI omission.
  */
-export function CompanyWaterfallSection({ readout, currencyCode = "USD" }: { readout: TourReadout; currencyCode?: string }) {
+export function CompanyWaterfallSection({ readout }: { readout: TourReadout; currencyCode?: string }) {
   const cs = readout.company_settlement;
   const tot = readout.totals;
   if (!cs || !tot) return null;
@@ -29,7 +29,7 @@ export function CompanyWaterfallSection({ readout, currencyCode = "USD" }: { rea
       <div className="ldt-rows">
         <div className="ldt-row">
           <span>Invoiced</span>
-          <span className="ldt-m" data-testid="waterfall-invoiced">{money(cs.revenue_cents, currencyCode)}</span>
+          <span className="ldt-m" data-testid="waterfall-invoiced">{money(cs.revenue_cents)}</span>
         </div>
         <div className="ldt-row">
           <span>
@@ -40,20 +40,20 @@ export function CompanyWaterfallSection({ readout, currencyCode = "USD" }: { rea
         </div>
         <div className="ldt-row">
           <span>Driver</span>
-          <span className="ldt-m">−{money(cs.driver_pay_cents, currencyCode)}</span>
+          <span className="ldt-m">−{money(cs.driver_pay_cents)}</span>
         </div>
         <div className="ldt-row">
           <span>
             Costs (Additional + Fuel + Company expenses)
             <span className="ldt-sub">not yet split into Additional/Fuel/Company-expenses sub-lines</span>
           </span>
-          <span className="ldt-m">−{money(cs.costs_cents, currencyCode)}</span>
+          <span className="ldt-m">−{money(cs.costs_cents)}</span>
         </div>
         <div className="ldt-row big">
           <span>
             Net · {tot.margin_pct == null ? DASH : `${tot.margin_pct.toFixed(1)}%`}
           </span>
-          <span className="ldt-m" data-testid="waterfall-net">{money(cs.margin_cents, currencyCode)}</span>
+          <span className="ldt-m" data-testid="waterfall-net">{money(cs.margin_cents)}</span>
         </div>
       </div>
     </section>

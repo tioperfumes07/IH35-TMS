@@ -112,3 +112,5 @@ CASCADE | LST-CUST-ACT DONE | 5326c4f496 | npm run typecheck exit 0 (FE) · npx 
 105 guards added to .guard-exempt.json — 14 of them FAIL on main. That is raising the census by exemption; LAW: fix the file, never exempt or
 raise. Revert #20892 (deadline 06:30Z). Then: the 91 passing guards get WIRED through claimed verify-steps (hand the list + reasons to Cursor,
 even lane); the 14 failing guards become OPEN rows in docs/audit/GUARD-WORKORDERS.md with the measured failure text. No exemptions.
+
+CASCADE | LIVE-VERIFY-5D DONE | 66135567d7 (origin/main) | 20 items audited: 17 render with real USMCA data, 3 not deployed (banking match, LDT-D, entity doc upload) | Neon row counts: loads=49, settlements=16, invoices=48, expenses=207, vendors=604, customers=1213, banking=425, driver_bills=49, jes=627, drivers=92, units=16, safety_events=7, work_orders=17 | Frontend 17/17 routes HTTP 200 | Bundle 10/14 features deployed | FINDINGS: banking match not deployed, LDT-D not deployed, 0 vendor bills, backend behind main | NEXT await lead
