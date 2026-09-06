@@ -288,6 +288,11 @@ export type VendorBill = {
   journal_entry_date?: string | null;
   journal_entry_memo?: string | null;
   unit_id?: string | null;
+  /** LDT-1 (additive, 2026-09-06) — category account + receipt count for the Load Costs cards. */
+  coa_account_id?: string | null;
+  coa_account_number?: string | null;
+  coa_account_name?: string | null;
+  attachment_count?: number | null;
   /** GO-18 — accounting.bills.driver_id. Not driver_uuid. */
   driver_id?: string | null;
   unit_display_id?: string | null;
@@ -722,6 +727,13 @@ export type ExpenseListRow = {
   matched_bank_transaction_description?: string | null;
   trailer_id: string | null;
   trailer_display_id: string | null;
+  /** LDT-1 (additive, 2026-09-06) — the Load Costs cards read these straight off the list row. */
+  vendor_document_number?: string | null;
+  payment_account_number?: string | null;
+  payment_account_name?: string | null;
+  category_account_number?: string | null;
+  category_account_name?: string | null;
+  attachment_count?: number | null;
 };
 
 export function listExpenses(

@@ -100,6 +100,7 @@ import { registerLoadProfitabilityRoutes } from "./dispatch/load-profitability.r
 import { registerCancellationsReportRoutes } from "./dispatch/cancellations-report.routes.js";
 import { registerLoadCancellationsAnalyticsRoutes } from "./dispatch/load-cancellations-analytics.routes.js";
 import { registerLoadGeofenceTimelineRoutes } from "./dispatch/load-geofence-timeline.routes.js";
+import { registerLoadStopsRecordRoutes } from "./dispatch/load-stops-record.routes.js";
 import { registerTripPairingBoardRoutes } from "./dispatch/trip-pairing-board.routes.js";
 import { registerDriverCommunicationsRoutes } from "./drivers/communications.routes.js";
 import { registerDriverAdvancesRoutes } from "./drivers/advances.routes.js";
@@ -913,6 +914,7 @@ async function main() {
   await registerCancellationsReportRoutes(app);
   await registerLoadCancellationsAnalyticsRoutes(app);
   await registerLoadGeofenceTimelineRoutes(app);
+  await registerLoadStopsRecordRoutes(app);
   await registerTripPairingBoardRoutes(app);
   await registerDriverCommunicationsRoutes(app);
   await registerDriverAdvancesRoutes(app);

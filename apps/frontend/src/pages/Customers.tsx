@@ -8,7 +8,9 @@ import { formatUsdCents } from "../lib/money";
 import { customerIsSelectable } from "../lib/customer-selectable";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { listAllInvoices, listAllPayments, type Invoice, type Payment } from "../api/accounting";
+import { listAllInvoices, type Invoice } from "../api/accounting";
+import { getCustomerActivity, type CustomerActivityRow } from "../api/customers";
+import { CounterpartyStatementView } from "./reports/CounterpartyStatementPage";
 import { listAllDispatchLoads, type DispatchLoad } from "../api/dispatch";
 import { listAllAccountingRecurringTemplates } from "../api/accountingRecurringTemplate";
 import { companyToday, addDaysIso } from "../lib/businessDate";
@@ -62,7 +64,7 @@ type CustomerTabId =
 
 const CUSTOMER_TABS: Array<{ id: CustomerTabId; label: string }> = [
   { id: "transaction_list", label: "Transaction List" },
-  { id: "activity_feed", label: "Activity Feed" },
+  { id: "activity_feed", label: "Activity" },
   { id: "statements", label: "Statements" },
   { id: "recurring_transactions", label: "Recurring Transactions" },
   { id: "projects", label: "Projects" },
@@ -211,7 +213,10 @@ function humanizeCustomerEvent(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function CustomerActivityFeed({
+// Preserved (Rule 07 — never delete): the original audit-events feed. The "Activity" tab now
+// renders PoisonedActivityTab (the money-event union); this component is exported so it
+// remains available for re-use without breaking the no-unused-locals typecheck.
+export function CustomerActivityFeed({
   operatingCompanyId,
   customerId,
 }: {
@@ -328,6 +333,115 @@ function CustomerActivityFeed({
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// LST-CUST-ACT: financial activity feed — the UNION of every customer money event (invoices,
+// payments, credit memos, broker advances, factoring advances) from the new read-only backend
+// route. Mirrors the vendor "Activity" read model (CC-1 ACC-45): same ParityTable shape, same
+// text-xs / slate-gray tokens, row click drills into the source record.
+function CustomerFinancialActivityTab({
+  operatingCompanyId,
+  customerId,
+}: {
+  operatingCompanyId: string;
+  customerId: string;
+}) {
+  const navigate = useNavigate();
+  const query = useQuery({
+    queryKey: ["customers", "financial-activity", operatingCompanyId, customerId],
+    queryFn: () => getCustomerActivity({ operating_company_id: operatingCompanyId, customer_id: customerId }),
+    enabled: Boolean(operatingCompanyId && customerId),
+    retry: false,
+  });
+
+  const columns = useMemo<ParityColumn<CustomerActivityRow>[]>(
+    () => [
+      { key: "date", label: "Date", sortable: true, render: (r) => formatDateUS(r.date) },
+      {
+        key: "type",
+        label: "Type",
+        sortable: true,
+        render: (r) => {
+          switch (r.type) {
+            case "invoice":
+              return "Invoice";
+            case "payment":
+              return "Payment";
+            case "credit_memo":
+              return "Credit memo";
+            case "broker_advance":
+              return "Broker advance";
+            case "factoring_advance":
+              return "Factoring advance";
+            default:
+              return r.type;
+          }
+        },
+      },
+      { key: "reference", label: "Reference", render: (r) => r.reference || "—" },
+      { key: "load_number", label: "Load", render: (r) => r.load_number ?? "—" },
+      {
+        key: "amount_cents",
+        label: "Amount",
+        sortable: true,
+        sortValue: (r) => r.amount_cents,
+        render: (r) => fmtMoney(r.amount_cents),
+      },
+      {
+        key: "balance_after_cents",
+        label: "Balance After",
+        sortable: true,
+        sortValue: (r) => r.balance_after_cents,
+        render: (r) => fmtMoney(r.balance_after_cents),
+      },
+      { key: "status", label: "Status", sortable: true, render: (r) => r.status },
+    ],
+    [],
+  );
+
+  if (query.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load customer financial activity"
+        status={0}
+        message={(query.error as Error)?.message}
+        onRetry={() => void query.refetch()}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <ParityTable
+        rows={query.data?.rows ?? []}
+        columns={columns}
+        rowKey={(r) => `${r.type}-${r.id}`}
+        loading={query.isPending || (query.isFetching && !query.data)}
+        emptyText="No financial activity for this customer."
+        storageKey="customer-financial-activity"
+        exportFilename="customer-financial-activity"
+        onRowClick={(r) => {
+          switch (r.type) {
+            case "invoice":
+              navigate(`/accounting/invoices/${r.id}`);
+              break;
+            case "payment":
+              navigate(`/accounting/payments/${r.id}`);
+              break;
+            case "credit_memo":
+              navigate(`/accounting/credit-memos/${r.id}`);
+              break;
+            case "broker_advance":
+              navigate(`/accounting/broker-advances/${r.id}`);
+              break;
+            case "factoring_advance":
+              navigate(`/accounting/factoring-advances/${r.id}`);
+              break;
+          }
+        }}
+      />
     </div>
   );
 }
@@ -769,18 +883,7 @@ export function CustomersPage() {
         from_date: dateFrom || undefined,
         to_date: dateTo || undefined,
       }),
-    enabled: Boolean(companyId && selectedCustomer?.id && (activeTab === "statements" || activeTab === "late_fees")),
-  });
-  const statementPaymentsQuery = useQuery({
-    queryKey: ["customers", "statement-payments", companyId, selectedCustomer?.id ?? "", dateFrom, dateTo],
-    queryFn: () =>
-      listAllPayments(companyId, {
-        customer_id: selectedCustomer!.id,
-        status: "all",
-        date_from: dateFrom || undefined,
-        date_to: dateTo || undefined,
-      }),
-    enabled: Boolean(companyId && selectedCustomer?.id && activeTab === "statements"),
+    enabled: Boolean(companyId && selectedCustomer?.id && activeTab === "late_fees"),
   });
   const recurringQuery = useQuery({
     queryKey: ["customers", "recurring-templates", companyId, selectedCustomer?.id ?? ""],
@@ -876,19 +979,6 @@ export function CustomersPage() {
       { key: "status", label: "Status", render: (r) => (isVoidInvoice(r) ? "Voided" : r.status) },
       { key: "total", label: "Total", render: (r) => fmtMoney(r.total_cents) },
       { key: "open", label: "Open", render: (r) => fmtMoney(invoiceOpenCentsForDisplay(r)) },
-    ],
-    [],
-  );
-  const statementPaymentColumns = useMemo<ParityColumn<Payment>[]>(
-    () => [
-      {
-        key: "payment",
-        label: "Payment",
-        render: (r) => <EntityLinkOrTombstone kind="payment" id={r.id} name={r.display_id} noun="Payment" />,
-      },
-      { key: "date", label: "Date", render: (r) => formatDateUS(r.payment_date) },
-      { key: "method", label: "Method", render: (r) => (r.voided_at ? "Voided" : r.payment_method) },
-      { key: "amount", label: "Amount", render: (r) => fmtMoney(r.amount_cents) },
     ],
     [],
   );
@@ -1298,7 +1388,7 @@ export function CustomersPage() {
                   onEdit={() => navigate(`/customers/${selectedCustomer.id}`)}
                 />
               ) : activeTab === "activity_feed" ? (
-                <CustomerActivityFeed
+                <CustomerFinancialActivityTab
                   operatingCompanyId={companyId}
                   customerId={selectedCustomer.id}
                 />
@@ -1315,44 +1405,7 @@ export function CustomersPage() {
                   targetLabel={selectedCustomer.name}
                 />
               ) : activeTab === "statements" ? (
-                <div className="space-y-4">
-                  <p className="text-xs text-gray-600">
-                    Statement is invoices and payments already on this customer for the selected date range.
-                    Totals come from those rows only — this tab does not invent a customer ledger.
-                  </p>
-                  {statementInvoicesQuery.isError || statementPaymentsQuery.isError ? (
-                    <ListErrorState
-                      title="Couldn't load statement rows"
-                      status={0}
-                      message={
-                        (statementInvoicesQuery.error as Error | undefined)?.message ??
-                        (statementPaymentsQuery.error as Error | undefined)?.message
-                      }
-                      onRetry={() =>
-                        void Promise.all([statementInvoicesQuery.refetch(), statementPaymentsQuery.refetch()])
-                      }
-                    />
-                  ) : (
-                    <>
-                      <ParityTable
-                        rows={statementInvoicesQuery.data?.invoices ?? []}
-                        columns={statementInvoiceColumns}
-                        rowKey={(r) => r.id}
-                        loading={statementInvoicesQuery.isLoading}
-                        emptyText="No invoices for this customer in the selected date range."
-                        storageKey="customer-statements-invoices"
-                      />
-                      <ParityTable
-                        rows={statementPaymentsQuery.data?.rows ?? []}
-                        columns={statementPaymentColumns}
-                        rowKey={(r) => r.id}
-                        loading={statementPaymentsQuery.isLoading}
-                        emptyText="No payments for this customer in the selected date range."
-                        storageKey="customer-statements-payments"
-                      />
-                    </>
-                  )}
-                </div>
+                <CounterpartyStatementView kind="customer" counterpartyId={selectedCustomer.id} embedded />
               ) : activeTab === "recurring_transactions" ? (
                 <div className="space-y-3">
                   <p className="text-xs text-gray-600">

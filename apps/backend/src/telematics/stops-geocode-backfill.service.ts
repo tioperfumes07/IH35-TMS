@@ -48,7 +48,19 @@ async function candidateStops(client: DbClient, companyId: string, loadId?: stri
      WHERE l.operating_company_id = $1::uuid
        AND l.soft_deleted_at IS NULL AND l.status NOT IN ('cancelled','delivered')
        AND s.soft_deleted_at IS NULL ${loadClause}
-       AND (s.latitude IS NULL OR s.longitude IS NULL)
+       AND (
+         s.latitude IS NULL OR s.longitude IS NULL
+         OR (
+           s.latitude IS NOT NULL AND s.longitude IS NOT NULL
+           AND coalesce(s.geocode_precision, 'rooftop') <> 'locality'
+           AND NOT EXISTS (
+             SELECT 1 FROM geo.geofences g
+              WHERE g.operating_company_id = $1::uuid
+                AND g.location_ref_id = s.location_id
+                AND g.is_active
+           )
+         )
+       )
      ORDER BY l.load_number, s.sequence_number`, values)).rows;
 }
 
@@ -80,9 +92,12 @@ export async function geocodeStopsWithClient(client: DbClient, actorId: string, 
   const failures: StopGeocodeFailure[] = [];
   let geocoded = 0, locations = 0, fences = 0, rooftop = 0, locality = 0, lastProviderAt = 0;
   for (const stop of stops) {
+    const hasPickerCoordinates = stop.latitude != null && stop.longitude != null;
     const hasCanonicalCoordinates = stop.location_latitude != null && stop.location_longitude != null;
-    if (!hasCanonicalCoordinates) lastProviderAt = await paceProviderCalls(lastProviderAt);
-    const outcome = hasCanonicalCoordinates
+    if (!hasPickerCoordinates && !hasCanonicalCoordinates) lastProviderAt = await paceProviderCalls(lastProviderAt);
+    const outcome = hasPickerCoordinates
+      ? { ok: true as const, latitude: stop.latitude!, longitude: stop.longitude!, source: "picker", confidence: 1, precision: "rooftop" as const }
+      : hasCanonicalCoordinates
       ? { ok: true as const, latitude: stop.location_latitude!, longitude: stop.location_longitude!, source: "location_existing", confidence: 1, precision: "range" as const }
       : await geocodeAddressWithEvidence(stop);
     if (!outcome.ok || (outcome.latitude === 0 && outcome.longitude === 0)) {
@@ -100,7 +115,7 @@ export async function geocodeStopsWithClient(client: DbClient, actorId: string, 
       if (updated.rows[0]) { geocoded += 1; locality += 1; }
       continue;
     }
-    const locationId = await findOrCreateLocation(client, companyId, actorId, stop, outcome.latitude, outcome.longitude, outcome.source);
+    const locationId = stop.location_id ?? await findOrCreateLocation(client, companyId, actorId, stop, outcome.latitude, outcome.longitude, outcome.source);
     const updated = await client.query<{ id: string }>(`
       UPDATE mdata.load_stops SET location_id=$2::uuid, latitude=$3, longitude=$4,
         geocode_source=$5, geocode_confidence=$6, geocode_precision=$7, geocode_attempted_at=now(), geocode_failure_reason=NULL, updated_at=now()

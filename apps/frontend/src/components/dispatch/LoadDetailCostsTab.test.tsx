@@ -35,6 +35,18 @@ const getAllAccounts = vi.fn().mockResolvedValue({ accounts: [] });
 vi.mock("../../api/banking", () => ({
   getAllAccounts: (...args: unknown[]) => getAllAccounts(...args),
 }));
+const listAttachments = vi.fn().mockResolvedValue({ rows: [] });
+vi.mock("../../api/attachments", async () => {
+  const actual = await vi.importActual<typeof import("../../api/attachments")>("../../api/attachments");
+  return {
+    ...actual,
+    listAttachments: (...args: unknown[]) => listAttachments(...args),
+    createAttachmentUploadUrl: vi.fn(),
+    finalizeAttachment: vi.fn(),
+    getAttachmentDownloadUrl: vi.fn(),
+    deleteAttachment: vi.fn(),
+  };
+});
 vi.mock("../../api/mdata", () => ({
   listVendors: vi.fn().mockResolvedValue({ vendors: [] }),
 }));
@@ -73,10 +85,17 @@ function renderTab(opts: { canEdit?: boolean; canEditReason?: string } = {}) {
   );
 }
 
-// LDT-1: the Costs tab is a stacked register of entry CARDS. The NUMBER is an auto label (never typed) —
-// first cost on 13508 is "13508" — and each card carries an Expense·paid now / Bill·owed toggle and a
-// Receipt control. Advances reach the register via the single "+ New" dropdown.
-describe("LoadDetailCostsTab — card register (LDT-1)", () => {
+/** LDT-1: kinds beyond Expense | Bill (advance, fuel advance) are added through the ONE "+ New" menu and
+ *  land as a new entry card. Returns nothing; the newest card is the last one in the DOM. */
+async function addViaMenu(itemTestId: string) {
+  fireEvent.click(await screen.findByTestId("load-costs-add-top"));
+  fireEvent.click(await screen.findByTestId(itemTestId));
+}
+const last = <T extends HTMLElement>(els: T[]) => els[els.length - 1];
+
+// "+ New → Cash advance · from broker" adds an Advance card; Save calls createBrokerAdvance with the
+// load's real FKs (SET-15 / SET-24 write path). Never a driver liability, never reduces the invoice.
+describe("LoadDetailCostsTab — entry cards + SET-15 advance received", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     listExpenses.mockResolvedValue({ rows: [] });
@@ -87,74 +106,83 @@ describe("LoadDetailCostsTab — card register (LDT-1)", () => {
     getAllAccounts.mockResolvedValue({ accounts: [{ id: "bank-1", display_name: "Operating Bank", institution_name: "BofA", account_mask: "1234" }] });
   });
 
-  it("renders the first card with the auto number label, an Expense/Bill toggle and a Receipt control", async () => {
+  it("renders ENTRY CARDS (LDT-1): derived number label, Expense|Bill toggle, receipt control, fixed totals footer, bank section", async () => {
     renderTab();
-    const register = within(screen.getByTestId("load-costs-register"));
-    expect(await screen.findByTestId("load-cost-number")).toHaveTextContent("13508");
-    expect(register.getByTestId("load-cost-toggle-expense")).toBeInTheDocument();
-    expect(register.getByTestId("load-cost-toggle-bill")).toBeInTheDocument();
-    expect(register.getByTestId("load-cost-receipt")).toBeInTheDocument();
-    // Margin footer replaces the KPI strip and renders regardless.
-    expect(screen.getByTestId("load-costs-margin")).toBeInTheDocument();
-    expect(screen.getByTestId("load-costs-bank-section")).toBeInTheDocument();
+    const number = await screen.findByTestId("load-cost-number");
+    // The NUMBER is derived — first cost = load number — and never typed.
+    expect(number).toHaveTextContent("13508");
+    expect(screen.queryByTestId("load-cost-field-number")).not.toBeInTheDocument();
+    const card = screen.getByTestId("load-costs-entry");
+    expect(card).toHaveClass("ldt-entry");
+    expect(within(card).getByTestId("load-cost-field-type")).toHaveTextContent("Expense · paid now");
+    expect(within(card).getByTestId("load-cost-field-type")).toHaveTextContent("Bill · owed");
+    // Receipt control on the card (documents.attachments draft id), before anything is saved.
+    expect(within(card).getByTestId("load-cost-receipt")).toBeInTheDocument();
+    expect(within(card).getByTestId("load-cost-receipt-input")).toHaveAttribute("accept", "image/*,application/pdf");
+    // Fixed footer with the four money lines + the bank section.
+    const totals = screen.getByTestId("load-costs-totals");
+    expect(screen.getByTestId("load-costs-margin")).toHaveClass("ldt-footer");
+    expect(screen.getByTestId("load-costs-margin")).toHaveClass("sticky");
+    expect(within(totals).getByTestId("load-costs-total-revenue")).toHaveTextContent("$5,000.00");
+    expect(within(totals).getByTestId("load-costs-total-margin")).toHaveTextContent("$5,000.00 · 100.0%");
+    expect(screen.getByTestId("load-costs-bank-section")).toHaveTextContent("What the bank will do with these");
+    // The five live split buckets still exist (footer breakdown pop-up).
+    for (const h of ["Late Fee", "Lumper", "Fuel", "R&M Exp", "Other"]) {
+      fireEvent.click(within(totals).getByTestId("load-costs-total-costs").closest("tr")!);
+      expect(within(screen.getByTestId("load-costs-popup")).getByText(h)).toBeInTheDocument();
+      fireEvent.click(screen.getByLabelText("Close"));
+    }
   });
 
-  it("the auto number becomes the expense_number when the card is saved", async () => {
-    listCatalogAccounts.mockResolvedValue({ accounts: [
-      { id: "acct-other", account_number: "6500", account_name: "Tolls", account_type: "Expense" },
-      { id: "acct-bank", account_number: "1000", account_name: "Operating Bank", account_type: "Bank" },
-    ] });
-    createExpense.mockResolvedValue({ expense_id: "exp-1", posting_status: "posted" });
-    const listVendors = (await import("../../api/mdata")).listVendors as unknown as ReturnType<typeof vi.fn>;
-    listVendors.mockResolvedValue({ vendors: [{ id: "vend-1", name: "Pilot" }] });
+  it("switching to Bill swaps Paid with for the vendor's own invoice number and the hint says credit Accounts Payable", async () => {
     renderTab();
-    fireEvent.change(await screen.findByTestId("load-cost-field-vendor"), { target: { value: "Pilot" } });
-    fireEvent.click(await screen.findByText("Pilot"));
-    fireEvent.change(screen.getByTestId("load-cost-field-category"), { target: { value: "Tolls" } });
-    fireEvent.click(await screen.findByText("6500 · Tolls"));
-    fireEvent.change(screen.getByTestId("load-cost-field-paid-with"), { target: { value: "acct-bank" } });
-    fireEvent.change(screen.getByTestId("load-cost-field-amount").querySelector("input")!, { target: { value: "40.00" } });
-    fireEvent.click(screen.getByTestId("load-costs-save-all"));
-    await waitFor(() => expect(createExpense).toHaveBeenCalledTimes(1));
-    expect(createExpense).toHaveBeenCalledWith(
-      "5c854333-6ea5-4faa-af31-67cb272fef80",
-      expect.objectContaining({ expense_number: "13508", amount_cents: 4000 })
-    );
+    const card = await screen.findByTestId("load-costs-entry");
+    expect(within(card).getByTestId("load-cost-field-paid-with")).toBeInTheDocument();
+    fireEvent.click(within(within(card).getByTestId("load-cost-field-type")).getByText("Bill · owed"));
+    expect(within(card).queryByTestId("load-cost-field-paid-with")).not.toBeInTheDocument();
+    const inv = within(card).getByTestId("load-cost-field-vendor-invoice");
+    expect(inv).toHaveValue("");
+    expect(inv).toHaveAttribute("placeholder", "off the paper");
+    expect(within(card).getByTestId("load-cost-caption")).toHaveTextContent("credit Accounts Payable");
   });
 
-  it('"Paid with" lists only bank/credit-card accounts — never receivables or factoring', async () => {
+  it("Paid with offers bank / card / fuel-card accounts only — never a receivable, factoring or driver-advance account", async () => {
     listCatalogAccounts.mockResolvedValue({ accounts: [
-      { id: "acct-bank", account_number: "1000", account_name: "BofA Operating", account_type: "Bank" },
-      { id: "acct-card", account_number: "2000", account_name: "Fuel Card", account_type: "CreditCard" },
-      { id: "acct-recv", account_number: "1240", account_name: "Freight Claims Receivable", account_type: "OtherCurrentAsset" },
-      { id: "acct-fac", account_number: "1296", account_name: "Faro Factoring", account_type: "OtherCurrentAsset" },
+      { id: "bank", account_number: "1000", account_name: "Bank of America - Operating (USMCA)", account_type: "Asset", account_subtype: "Checking", system_purpose: "bank_operating" },
+      { id: "amex", account_number: "2500", account_name: "Amex Credit Card Payable", account_type: "Liability", account_subtype: "CreditCard", system_purpose: null },
+      { id: "relay", account_number: "1295", account_name: "Relay Fuel Wallet", account_type: "Asset", account_subtype: "Other Current Assets", system_purpose: "relay_fuel_wallet" },
+      { id: "recv", account_number: "1240", account_name: "Freight Claims Receivable", account_type: "Asset", account_subtype: "OtherCurrentAsset", system_purpose: "disputed_deduction_receivable" },
+      { id: "faro", account_number: "1296", account_name: "Faro Factoring - USMCA", account_type: "Asset", account_subtype: "Other Current Assets", system_purpose: "faro_factoring_wallet" },
+      { id: "adv", account_number: "DRIVERCASHAD", account_name: "Driver Cash Advance", account_type: "Asset", account_subtype: "Employee Cash Advances", system_purpose: null },
     ] });
     renderTab();
     const select = await screen.findByTestId("load-cost-field-paid-with");
-    await waitFor(() => expect(within(select).getAllByRole("option").length).toBeGreaterThan(1));
-    const optionText = within(select).getAllByRole("option").map((o) => o.textContent).join(" | ");
-    expect(optionText).toContain("BofA Operating");
-    expect(optionText).toContain("Fuel Card");
-    expect(optionText).not.toContain("Freight Claims Receivable");
-    expect(optionText).not.toContain("Faro Factoring");
+    await waitFor(() => expect(within(select).getAllByRole("option")).toHaveLength(4));
+    const labels = within(select).getAllByRole("option").map((o) => o.textContent);
+    expect(labels.join(" | ")).toContain("1000 Bank of America - Operating (USMCA) · bank");
+    expect(labels.join(" | ")).toContain("2500 Amex Credit Card Payable · card");
+    expect(labels.join(" | ")).toContain("1295 Relay Fuel Wallet · fuel card");
+    expect(labels.join(" | ")).not.toContain("Receivable");
+    expect(labels.join(" | ")).not.toContain("Faro");
+    expect(labels.join(" | ")).not.toContain("Cash Advance");
   });
 
-  it('"+ New" → Cash advance calls createBrokerAdvance with the load\'s real FKs and the chosen bank', async () => {
+  it("+ New → Cash advance calls createBrokerAdvance with the load's real FKs and the chosen bank account", async () => {
     renderTab();
-    fireEvent.click(await screen.findByTestId("load-costs-add-top"));
-    fireEvent.click(await screen.findByTestId("load-costs-add-advance-top"));
+    await addViaMenu("load-costs-add-advance-top");
 
-    expect(await screen.findByTestId("load-cost-field-advance-category")).toBeInTheDocument();
-    expect(screen.getByTestId("load-cost-field-instrument-type")).toBeInTheDocument();
+    expect(screen.getByTestId("load-cost-field-advance-category")).toBeInTheDocument();
+    expect(await screen.findByTestId("load-cost-field-instrument-type")).toBeInTheDocument();
     expect(screen.getByTestId("load-cost-field-instrument-reference")).toBeInTheDocument();
     expect(screen.getByTestId("load-cost-field-advance-bank")).toBeInTheDocument();
+    // The advance card has no Paid-with (that is the untouched Expense card's field, still present once).
+    expect(screen.getAllByTestId("load-cost-field-paid-with")).toHaveLength(1);
 
     fireEvent.change(screen.getByTestId("load-cost-field-advance-category"), { target: { value: "diesel" } });
     fireEvent.change(screen.getByTestId("load-cost-field-instrument-type"), { target: { value: "Comchek" } });
     fireEvent.change(screen.getByTestId("load-cost-field-instrument-reference"), { target: { value: "CHK-9931" } });
     fireEvent.change(screen.getByTestId("load-cost-field-advance-bank"), { target: { value: "bank-1" } });
-    const amounts = screen.getAllByTestId("load-cost-field-amount");
-    fireEvent.change(amounts[amounts.length - 1].querySelector("input")!, { target: { value: "150.00" } });
+    fireEvent.change(last(screen.getAllByTestId("load-cost-field-amount")).querySelector("input")!, { target: { value: "150.00" } });
 
     fireEvent.click(screen.getByTestId("load-costs-save-all"));
 
@@ -171,17 +199,56 @@ describe("LoadDetailCostsTab — card register (LDT-1)", () => {
         bank_account_id: "bank-1",
       })
     );
+    expect(createExpense).not.toHaveBeenCalled();
+    expect(createVendorBill).not.toHaveBeenCalled();
+  });
+
+  it("the derived NUMBER (load number for the first cost) is sent as the expense_number", async () => {
+    listCatalogAccounts.mockResolvedValue({ accounts: [
+      { id: "acct-other", account_number: "6500", account_name: "Tolls", account_type: "Expense" },
+      { id: "acct-bank", account_number: "1000", account_name: "Operating Bank", account_type: "Asset", account_subtype: "Checking", system_purpose: "bank_operating" },
+    ] });
+    createExpense.mockResolvedValue({ expense_id: "exp-1", posting_status: "posted" });
+    const listVendors = (await import("../../api/mdata")).listVendors as unknown as ReturnType<typeof vi.fn>;
+    listVendors.mockResolvedValue({ vendors: [{ id: "vend-1", name: "Pilot" }] });
+    renderTab();
+    await screen.findByTestId("load-cost-number");
+    fireEvent.change(screen.getByTestId("load-cost-field-vendor"), { target: { value: "Pilot" } });
+    fireEvent.click(await screen.findByText("Pilot"));
+    fireEvent.change(screen.getByTestId("load-cost-field-category"), { target: { value: "Tolls" } });
+    fireEvent.click(await screen.findByText("6500 Tolls"));
+    fireEvent.change(screen.getByTestId("load-cost-field-paid-with"), { target: { value: "acct-bank" } });
+    fireEvent.change(screen.getByTestId("load-cost-field-amount").querySelector("input")!, { target: { value: "40.00" } });
+    fireEvent.click(screen.getByTestId("load-costs-save-all"));
+    await waitFor(() => expect(createExpense).toHaveBeenCalledTimes(1));
+    expect(createExpense).toHaveBeenCalledWith(
+      "5c854333-6ea5-4faa-af31-67cb272fef80",
+      // The receipt follows the record: attachment_draft_id is the card's documents.attachments draft id.
+      expect.objectContaining({ expense_number: "13508", amount_cents: 4000, attachment_draft_id: expect.any(String) })
+    );
+  });
+
+  it("blocks save with a specific reason, on the card, when diesel/repair/other has no bank account chosen", async () => {
+    renderTab();
+    await addViaMenu("load-costs-add-advance-top");
+    fireEvent.change(screen.getByTestId("load-cost-field-advance-category"), { target: { value: "repair" } });
+    fireEvent.change(screen.getByTestId("load-cost-field-instrument-type"), { target: { value: "EFT" } });
+    fireEvent.change(screen.getByTestId("load-cost-field-instrument-reference"), { target: { value: "EFT-1" } });
+    fireEvent.change(last(screen.getAllByTestId("load-cost-field-amount")).querySelector("input")!, { target: { value: "50.00" } });
+    // The card says why in English and Save all is disabled while a touched card is blocked.
+    await waitFor(() => expect(last(screen.getAllByTestId("load-cost-hint"))).toHaveTextContent("Bank account is required — diesel / repair / other cash lands in our bank."));
+    expect(screen.getByTestId("load-costs-save-all")).toBeDisabled();
+    fireEvent.click(screen.getByTestId("load-costs-save-all"));
+    expect(createBrokerAdvance).not.toHaveBeenCalled();
   });
 
   it("driver_pay may omit the bank account — the broker may have paid the driver directly", async () => {
     renderTab();
-    fireEvent.click(await screen.findByTestId("load-costs-add-top"));
-    fireEvent.click(await screen.findByTestId("load-costs-add-advance-top"));
-    fireEvent.change(await screen.findByTestId("load-cost-field-advance-category"), { target: { value: "driver_pay" } });
+    await addViaMenu("load-costs-add-advance-top");
+    fireEvent.change(screen.getByTestId("load-cost-field-advance-category"), { target: { value: "driver_pay" } });
     fireEvent.change(screen.getByTestId("load-cost-field-instrument-type"), { target: { value: "Comchek" } });
     fireEvent.change(screen.getByTestId("load-cost-field-instrument-reference"), { target: { value: "CHK-2" } });
-    const amounts = screen.getAllByTestId("load-cost-field-amount");
-    fireEvent.change(amounts[amounts.length - 1].querySelector("input")!, { target: { value: "75.00" } });
+    fireEvent.change(last(screen.getAllByTestId("load-cost-field-amount")).querySelector("input")!, { target: { value: "75.00" } });
     fireEvent.click(screen.getByTestId("load-costs-save-all"));
     await waitFor(() => expect(createBrokerAdvance).toHaveBeenCalledTimes(1));
     expect(createBrokerAdvance).toHaveBeenCalledWith(
@@ -190,14 +257,11 @@ describe("LoadDetailCostsTab — card register (LDT-1)", () => {
     );
   });
 
-  it("blocks save with a specific hint when the advance's required fields are blank", async () => {
+  it("says on the card what an advance still needs when its required fields are blank", async () => {
     renderTab();
-    fireEvent.click(await screen.findByTestId("load-costs-add-top"));
-    fireEvent.click(await screen.findByTestId("load-costs-add-advance-top"));
-    fireEvent.click(screen.getByTestId("load-costs-save-all"));
-    await waitFor(() =>
-      expect(screen.getAllByTestId("load-cost-hint").some((el) => el.textContent === "Advance category is required.")).toBe(true)
-    );
+    await addViaMenu("load-costs-add-advance-top");
+    await waitFor(() => expect(last(screen.getAllByTestId("load-cost-hint"))).toHaveTextContent("Pick the advance category (diesel, driver pay, repair, other)."));
+    expect(screen.getByTestId("load-costs-save-all")).toBeDisabled();
     expect(createBrokerAdvance).not.toHaveBeenCalled();
   });
 
@@ -222,13 +286,19 @@ describe("LoadDetailCostsTab — card register (LDT-1)", () => {
       ],
     });
     renderTab();
-    expect(await screen.findByTestId("load-cost-saved-advance")).toHaveTextContent("Advance · Diesel · Comchek CHK-9931");
-    expect(screen.getByTestId("load-costs-margin")).toBeInTheDocument();
+    const saved = await screen.findByTestId("load-cost-saved-advance");
+    expect(saved).toHaveTextContent("Advance received · Diesel");
+    expect(saved).toHaveTextContent("Comchek CHK-9931");
+    expect(saved).toHaveTextContent("$150.00");
+    // Never a cost: margin stays the full rate.
+    expect(screen.getByTestId("load-costs-total-margin")).toHaveTextContent("$5,000.00");
+    // The KPI strip (revenue/costs/driver pay/margin) renders regardless.
+    expect(screen.getByTestId("load-costs-kpis")).toBeInTheDocument();
   });
 });
 
 // The `{canEdit ? ... : null}` gate must never silently degrade the tab: it shows an honest reason,
-// and the margin footer keeps rendering regardless of canEdit.
+// and the KPI strip keeps rendering regardless of canEdit.
 describe("LoadDetailCostsTab — canEdit gate", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -244,7 +314,7 @@ describe("LoadDetailCostsTab — canEdit gate", () => {
       "You don't have permission to add costs to this load right now."
     );
     expect(screen.queryByTestId("load-costs-add-top")).not.toBeInTheDocument();
-    expect(screen.getByTestId("load-costs-margin")).toBeInTheDocument();
+    expect(screen.getByTestId("load-costs-kpis")).toBeInTheDocument();
   });
 
   it("uses the caller-supplied reason when one is given", async () => {
@@ -267,8 +337,8 @@ describe("LoadDetailCostsTab — fuel advance", () => {
     listCatalogAccounts.mockResolvedValue({
       accounts: [
         { id: "acct-fuel", account_number: "6100", account_name: "Fuel Expense", account_type: "Expense" },
-        { id: "acct-bank", account_number: "1000", account_name: "Operating Bank", account_type: "Bank" },
-        { id: "acct-card", account_number: "1010", account_name: "Fuel Card", account_type: "Other Current Asset" },
+        { id: "acct-bank", account_number: "1000", account_name: "Operating Bank", account_type: "Asset", account_subtype: "Checking", system_purpose: "bank_operating" },
+        { id: "acct-card", account_number: "1010", account_name: "Fuel Card", account_type: "Asset", account_subtype: "Other Current Assets", system_purpose: "relay_fuel_wallet" },
       ],
     });
     listCoaRoles.mockResolvedValue({
@@ -283,11 +353,11 @@ describe("LoadDetailCostsTab — fuel advance", () => {
   it("+ Fuel advance resolves the Fuel account + operating bank by role and Save posts a driver-linked company expense", async () => {
     renderTab();
 
-    fireEvent.click(await screen.findByTestId("load-costs-add-top"));
-    fireEvent.click(await screen.findByTestId("load-costs-add-fuel-advance-top"));
+    // "+ New" is one QuickBooks-style dropdown — open it, then pick Fuel advance.
+    await addViaMenu("load-costs-add-fuel-advance-top");
 
     const categoryLabels = await screen.findAllByTestId("load-cost-field-fuel-category");
-    expect(categoryLabels[categoryLabels.length - 1]).toHaveTextContent("6100 · Fuel Expense (auto)");
+    expect(categoryLabels[categoryLabels.length - 1]).toHaveTextContent("6100 Fuel Expense (by role)");
     const bankLabels = screen.getAllByTestId("load-cost-field-fuel-bank");
     const bankLabel = bankLabels[bankLabels.length - 1];
     expect(bankLabel.textContent).toContain("Operating Bank");
@@ -307,6 +377,7 @@ describe("LoadDetailCostsTab — fuel advance", () => {
         driver_id: "driver-1",
         load_id: "load-1",
         amount_cents: 20000,
+        attachment_draft_id: expect.any(String),
       })
     );
     expect(createVendorBill).not.toHaveBeenCalled();
@@ -325,13 +396,11 @@ describe("LoadDetailCostsTab — fuel advance", () => {
       </QueryClientProvider>
     );
 
-    fireEvent.click(await screen.findByTestId("load-costs-add-top"));
-    fireEvent.click(await screen.findByTestId("load-costs-add-fuel-advance-top"));
-    fireEvent.click(screen.getByTestId("load-costs-save-all"));
-
+    await addViaMenu("load-costs-add-fuel-advance-top");
     await waitFor(() =>
       expect(screen.getAllByTestId("load-cost-hint").some((el) => el.textContent === "Assign a driver to this load before recording a fuel advance.")).toBe(true)
     );
+    expect(screen.getByTestId("load-costs-save-all")).toBeDisabled();
     expect(createExpense).not.toHaveBeenCalled();
   });
 });
