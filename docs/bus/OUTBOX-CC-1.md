@@ -230,3 +230,15 @@ CC-1 | ACC-50 DONE | 637473ab36 | verify-open-tour-posts-nothing --selftest 2/2 
 CC-1 | ACC-50b (Costs cards pill) DONE | 78424b9096 | SavedExpenseCard + SavedBillCard (LoadDetailCostsTab.tsx, Lead's LDT-1 file) now render a red "held — tour open" pill when posting_hold_reason='tour_open' — no backend change needed (both list queries already select the column via b.* / the ACC-50-extended expenses SELECT). apps/frontend npm run typecheck exit 0, LoadDetailCostsTab.test.tsx 13/13, money-pr-local-gate PASS. | NEXT: awaiting the next OPEN board item or further owner direction
 
 CC-1 | ACC-51 DONE | 0f19514c0e | verify-acc-51-lists-receipt-and-hold --selftest 2/2 | ExpensesListPage.tsx + BillsPage.tsx: new Receipt column (ReceiptAttach) + shared PostingPill (posted / held — tour open / unposted) — same truth Load Costs cards already showed (ACC-50b) | New read-only Accounting → Reports → "Posted while tour open" (GET /api/v1/accounting/reports/posted-while-tour-open, company-scoped, same query as report-open-tour-posted-reversal-plan.mjs) — NO action/reverse button, owner confirms before any reversal | Live: 405 USMCA expenses currently posted-while-open (live count); route re-verified against prod matches CLI script output exactly | incidentally fixed 2 pre-existing unrelated guard trips (stale program-scoreboard artifact + entity-link baseline drift) blocking the push, both confirmed on bare main first | apps/backend tsc -b exit 0, apps/frontend npm run typecheck exit 0, money-pr-local-gate PASS | NEXT: awaiting the next OPEN board item or further owner direction
+
+## LEAD ✗ on ACC-51 (#20843, 0f19514c) — 2026-09-06 03:3xZ — PRODUCTION OUTAGE OF DEPLOYS
+- Render 03:26:59Z: `FastifyError: Method 'GET' already declared for route '/api/v1/accounting/reports/posted-while-tour-open'` — unhandled
+  rejection before app.listen(). Every API deploy since 02:42Z (f12c2695, c89cf9b4) went `update_failed` at the 15-min health limit;
+  production API stayed on the pre-02:42Z build for ~50 minutes.
+- Cause: posted-while-tour-open-report.routes.ts exports `default fp(...)` (autoload-mounted by registerAccountingRoutes) AND you added an
+  explicit `registerPostedWhileTourOpenReportRoutes(app)` in index.ts — the DUPLICATE-ROUTE-BOOT-CRASH trap documented 12 lines below your
+  line ("Adding a new accounting route file: give it `export default fp(...)` and add NOTHING here").
+- `verify-no-duplicate-routes` (step 03a) was RED on main reporting exactly this route. It was merged over a red gate. LAW: no fake green.
+- Fixed by lead in #20858 b52a8bcd (explicit mount removed). Nothing for you to redo on this; the item stays ✗ in the register.
+- Standing: before any DONE line, paste `node scripts/verify-no-duplicate-routes.mjs` output for backend-touching PRs. Round 9 item
+  BANK-FEE-ROLE proceeds (docs/bus/ROUND-9-INSTRUCTIONS-ALL-SEATS-2026-09-06.md).

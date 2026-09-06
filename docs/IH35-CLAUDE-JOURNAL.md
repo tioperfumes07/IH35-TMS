@@ -802,3 +802,6 @@ AUDIT 22:17Z | DEPLOY TIMER | ✗ | API live d988cd31 since 19:37Z; code merged 
   seeded departures are never overwritten). Open owner decision: SB hard rule vs seed tours with no SB leg.
 - Round 9 issued (docs/bus/ROUND-9-INSTRUCTIONS-ALL-SEATS-2026-09-06.md): CC-1 BANK-FEE-ROLE migration · CC-2 raw font-size · CC-3 TOUR-SPLIT-PLAN
   (read-only) · Codex TEL-45 live counts + fresh-DB CI · Cursor SETL-MOD-01 · Cascade STOP baseline edits, ENV-CENSUS-ROOT.
+- 03:26Z ROOT CAUSE of "still 404 on /driver-finance/tours": API deploys since 02:42Z all `update_failed` — boot crash, duplicate route
+  `/api/v1/accounting/reports/posted-while-tour-open` (CC-1 ACC-51 #20843: default fp autoload + explicit mount). verify-no-duplicate-routes
+  was red on main. Lead fix #20858 b52a8bcd; deploys re-triggered 03:32Z. ✗ posted to OUTBOX-CC-1.
