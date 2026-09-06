@@ -7803,5 +7803,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1056
+  "total_claimed": 1056,
+  "10493": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-banking-match-qbo-engine (BANK-MATCH-QBO owner 2026-09-06: match candidates scored on the payee name, QuickBooks Find match filters Show/Payee/Date/Amount, Payee · Ref no. · Description · Open balance columns, 90/20-day window)"
+  }
 }
