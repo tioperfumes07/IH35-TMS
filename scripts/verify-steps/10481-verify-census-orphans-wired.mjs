@@ -10,6 +10,7 @@ export const CENSUS_ORPHAN_GUARDS = [
   "verify-banking-plaid-category-suggestion.mjs",
   "verify-banking-reconcile-expense-candidate.mjs",
   "verify-bill-payments-void-biconditional.mjs",
+  "verify-bills-union-driver-bills.mjs",
   "verify-book-and-send-distributes-instructions.mjs",
   "verify-book-load-captures-border-crossing.mjs",
   "verify-book-load-footer-save-controls.mjs",
