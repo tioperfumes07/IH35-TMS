@@ -81,7 +81,7 @@ const FORBIDDEN_BACKEND_MARKERS = [
 const REQUIRED_FRONTEND_MARKERS = [
   ["PRESET_OPTIONS", "date-range presets missing (7d/14d/30d/This month/Next month/Custom)"],
   ["MultiSelectDropdown", "type multi-select filter missing"],
-  ["GearMenu", "gear (column visibility) control missing"],
+  ["ParityTable", "registers must use the shared ParityTable (gear/column-visibility/export), not a hand-written table"],
   ["exportRowsCsv", "CSV export missing"],
   ["useSearchParams", "controls are not URL-persisted"],
   ["AdjustPopover", "roll-over/hide click-to-adjust popover missing"],
@@ -129,6 +129,13 @@ export function check({
   }
   if (!/getRollingLedger/.test(frontend)) {
     f.push(`${FRONTEND_FILE}: tab does not call the rolling-ledger API`);
+  }
+  // ROUND 16.7 item 0: a hand-written <table> regressed verify-go26-consolidation-ratchet.mjs
+  // for every branch. Defense in depth here too, scoped to real markup (not a comment mentioning
+  // the tag — verify-go26-consolidation-ratchet.mjs's own false-positive class, avoided by
+  // requiring the tag to be immediately followed by a space or '>').
+  if (/<table[\s>]/i.test(frontend)) {
+    f.push(`${FRONTEND_FILE}: hand-written <table> markup found -- use the shared ParityTable component instead`);
   }
   for (const [marker, msg] of REQUIRED_FRONTEND_MARKERS) {
     if (!frontend.includes(marker)) f.push(`${FRONTEND_FILE}: ${msg}`);
@@ -230,6 +237,13 @@ function selftest() {
       mutate: () => ({
         ...good,
         frontend: good.frontend.replaceAll("AdjustPopover", "strippedNoPopover"),
+      }),
+    },
+    {
+      name: "ParityTable stripped from the tab (would regress to a hand-written table)",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll("ParityTable", "StrippedRawTable"),
       }),
     },
   ];

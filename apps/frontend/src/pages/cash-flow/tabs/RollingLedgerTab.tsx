@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Settings } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import {
   getRollingLedger,
   getCashFlowAdjustmentReasons,
   createCashFlowRowAdjustment,
   type RollingLedgerResult,
   type RollingLedgerRow,
+  type RollingLedgerDay,
   type CashFlowAdjustmentReason,
 } from "../../../api/cashFlow";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
@@ -15,14 +16,18 @@ import { formatUsdCents } from "../../../lib/money";
 import { EntityLink, resolveEntityRoute } from "../../../components/shared/EntityLink";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 // CASH-FLOW-02 (owner order 2026-09-06 20:1x/20:2x/20:5xZ). A daily snapshot with roll-over:
-// every expected dollar carries its own due date and stays until paid/matched. Owner-corrected
-// layout (20:5xZ): compact 8-tile KPI strip, LEFT Expected Income (38%) / RIGHT Expected Expenses
-// (62%) split, day grid below, a Banking-style always-visible From/To date filter (not a
-// collapsed preset picker), and a click-to-adjust pop-up on any row (Projected date, a real
-// reason catalog, a note, a "Record it" link to the row's own real detail/payment surface, and an
-// audited "Stop showing here").
+// every expected dollar carries its own due date and stays until paid/matched.
+//
+// ROUND 16.7 item 0 (owner 2026-09-06 21:1xZ): the prior pass rendered 3 hand-written HTML
+// table markup blocks, which regressed scripts/verify-go26-consolidation-ratchet.mjs
+// (raw_table_outside_infra) for every branch. All 3 registers (Expected income, Expected
+// expenses, Day grid) now use the shared ParityTable component instead — this is also END STATE
+// 3+7 of the fuller redesign anyway, so it is not thrown-away work. The KPI-tile restyle,
+// chip-based presets, and expense type-grouping from the rest of ROUND 16.7 are a separate,
+// larger pass building on this.
 
 const TYPE_OPTIONS = [
   { value: "Bill", label: "Bills" },
@@ -61,34 +66,6 @@ function presetRange(preset: DatePreset, today: string): { from: string; to: str
   return { from: start.toISOString().slice(0, 10), to: end.toISOString().slice(0, 10) };
 }
 
-type IncomeColumnKey = "type" | "counterparty" | "load" | "dueCol" | "in" | "amount" | "status";
-type ExpenseColumnKey = "type" | "no" | "name" | "period" | "dueCol" | "days" | "amount" | "status" | "reason" | "action";
-
-const INCOME_COLUMN_LABELS: Record<IncomeColumnKey, string> = {
-  type: "Type",
-  counterparty: "Customer · No.",
-  load: "Load",
-  dueCol: "Due",
-  in: "In",
-  amount: "Expected",
-  status: "Status",
-};
-const ALL_INCOME_COLUMNS = Object.keys(INCOME_COLUMN_LABELS) as IncomeColumnKey[];
-
-const EXPENSE_COLUMN_LABELS: Record<ExpenseColumnKey, string> = {
-  type: "Type",
-  no: "No.",
-  name: "Name",
-  period: "Period",
-  dueCol: "Due",
-  days: "Days",
-  amount: "Amount",
-  status: "Status",
-  reason: "Reason / source",
-  action: "Action",
-};
-const ALL_EXPENSE_COLUMNS = Object.keys(EXPENSE_COLUMN_LABELS) as ExpenseColumnKey[];
-
 function formatCents(cents: number, opts?: { sign?: boolean }): string {
   const abs = Math.abs(cents);
   const dollars = formatUsdCents(abs);
@@ -116,6 +93,17 @@ const STATUS_CLASS: Record<RollingLedgerRow["status"], string> = {
   due_today: "border-slate-200 bg-slate-100 text-slate-700",
   upcoming: "border-slate-200 bg-white text-slate-500",
 };
+
+function StatusPill({ row }: { row: RollingLedgerRow }) {
+  return (
+    <>
+      <span className={`inline-flex rounded-full border px-1.5 py-0.5 text-xs ${row.is_rollover_echo ? "border-slate-200 bg-slate-100 text-slate-500" : STATUS_CLASS[row.status]}`}>
+        {row.is_rollover_echo ? "Rolled" : row.type === "Factor advance" || row.type === "Factor reserve" ? "Factored" : STATUS_LABEL[row.status]}
+      </span>
+      {row.reason_label && <div className="mt-0.5 text-xs text-slate-400">rolled — {row.reason_label}</div>}
+    </>
+  );
+}
 
 function csvEscape(value: string): string {
   if (value.includes(",") || value.includes('"') || value.includes("\n")) return `"${value.replace(/"/g, '""')}"`;
@@ -151,51 +139,6 @@ function exportRowsCsv(rows: RollingLedgerRow[]): void {
   URL.revokeObjectURL(url);
 }
 
-function GearMenu<K extends string>({
-  columns,
-  labels,
-  visible,
-  onToggle,
-}: {
-  columns: K[];
-  labels: Record<K, string>;
-  visible: Set<K>;
-  onToggle: (key: K) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, [open]);
-  return (
-    <div ref={ref} className="relative inline-block">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="inline-flex h-5 w-5 items-center justify-center rounded-sm border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
-        aria-label="Columns"
-      >
-        <Settings className="h-3 w-3" />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-sm border border-slate-200 bg-white p-2 text-left shadow-md">
-          {columns.map((key) => (
-            <label key={key} className="flex items-center gap-2 rounded-sm px-2 py-1 text-xs font-normal normal-case text-slate-700 hover:bg-slate-50">
-              <input type="checkbox" checked={visible.has(key)} onChange={() => onToggle(key)} className="h-3.5 w-3.5" />
-              {labels[key]}
-            </label>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 type AdjustPopoverProps = {
   row: RollingLedgerRow;
   reasons: CashFlowAdjustmentReason[];
@@ -218,7 +161,7 @@ function AdjustPopover({ row, reasons, applies, onClose, onSubmit, pending }: Ad
   const canSave = hide ? hiddenReason.trim().length > 0 && reasonCode : reasonCode && projectedDate;
 
   return (
-    <div className="col-span-full my-1 rounded-sm border border-slate-400 bg-white p-3 text-xs shadow-md" data-testid="rolling-ledger-adjust-popover">
+    <div className="rounded-sm border border-slate-400 bg-white p-3 text-xs shadow-md" data-testid="rolling-ledger-adjust-popover">
       <div className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-600">
         Adjust expectation · {row.document_label} · {row.counterparty} · {formatCents(row.amount_cents || 0)} due {fmtDateShort(row.due_date)}
       </div>
@@ -322,10 +265,6 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
   const showRolledOver = searchParams.get("rl_rolled") !== "hide";
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [adjustingRowKey, setAdjustingRowKey] = useState<string | null>(null);
-  const [incomeColumns, setIncomeColumns] = useState<Set<IncomeColumnKey>>(new Set(ALL_INCOME_COLUMNS));
-  const [expenseColumns, setExpenseColumns] = useState<Set<ExpenseColumnKey>>(
-    new Set(ALL_EXPENSE_COLUMNS.filter((c) => c !== "action" || true))
-  );
 
   const updateParams = (updates: Record<string, string | null>) => {
     const next = new URLSearchParams(searchParams);
@@ -381,6 +320,8 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     setPresetMenuOpen(false);
   };
 
+  const rowKeyOf = (row: RollingLedgerRow) => `${row.row_kind}-${row.document_kind}-${row.document_id}-${row.due_date}`;
+
   const allRows = useMemo(() => {
     if (!data) return [];
     let rows = data.rows;
@@ -404,6 +345,12 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       .sort((a, b) => (a.due_date < b.due_date ? -1 : 1));
   }, [allRows, selectedDate, today]);
 
+  const adjustingRow = useMemo(() => {
+    if (!adjustingRowKey) return null;
+    return allRows.find((r) => rowKeyOf(r) === adjustingRowKey) ?? null;
+  }, [allRows, adjustingRowKey]);
+  const adjustingRowIsIncome = adjustingRow?.row_kind === "income";
+
   const kpis = useMemo(() => {
     if (!data) return null;
     const todayDay = data.days.find((d) => d.date === today) ?? data.days[0];
@@ -425,6 +372,131 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     };
   }, [data, allRows, today]);
 
+  const incomeColumns: ParityColumn<RollingLedgerRow>[] = [
+    { key: "type", label: "Type", render: (row) => row.type },
+    {
+      key: "counterparty",
+      label: "Customer · No.",
+      render: (row) => (
+        <>
+          <EntityLink kind={row.document_kind} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} />{" "}
+          <span className="text-slate-400">{row.counterparty}</span>
+        </>
+      ),
+    },
+    {
+      key: "load",
+      label: "Load",
+      render: (row) =>
+        row.load_id ? (
+          <EntityLink kind="load" id={row.load_id} label={row.load_number ?? row.load_id} onClick={(e) => e.stopPropagation()} />
+        ) : (
+          <span className="text-slate-400">—</span>
+        ),
+    },
+    { key: "due_date", label: "Due", render: (row) => fmtDateShort(row.due_date), sortValue: (row) => row.due_date },
+    {
+      key: "in",
+      label: "In",
+      sortable: false,
+      render: (row) => (row.days_overdue > 0 ? `+${row.days_overdue}d` : row.days_overdue === 0 ? "today" : `${-row.days_overdue}d`),
+    },
+    {
+      key: "amount_cents",
+      label: "Expected",
+      className: "text-right",
+      cellClass: "text-right font-mono font-medium",
+      render: (row) => <span className={row.amount_cents === 0 ? "text-slate-400" : "text-slate-800"}>{formatCents(row.amount_cents)}</span>,
+    },
+    { key: "status", label: "Status", sortable: false, render: (row) => <StatusPill row={row} /> },
+  ];
+
+  const expenseColumns: ParityColumn<RollingLedgerRow>[] = [
+    { key: "type", label: "Type", render: (row) => row.type },
+    { key: "no", label: "No.", render: (row) => <EntityLink kind={row.document_kind} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} /> },
+    { key: "counterparty", label: "Name", render: (row) => row.counterparty },
+    { key: "period", label: "Period", sortable: false, render: (row) => `${fmtDateShort(row.origin_date)} → ${fmtDateShort(row.due_date)}` },
+    { key: "due_date", label: "Due", render: (row) => fmtDateShort(row.due_date), sortValue: (row) => row.due_date },
+    {
+      key: "days_overdue",
+      label: "Days",
+      render: (row) => (row.days_overdue > 0 ? String(row.days_overdue) : row.days_overdue === 0 ? "today" : "—"),
+    },
+    {
+      key: "amount_cents",
+      label: "Amount",
+      className: "text-right",
+      cellClass: "text-right font-mono font-medium",
+      render: (row) => <span className={row.amount_cents === 0 ? "text-slate-400" : "text-slate-800"}>{formatCents(row.amount_cents)}</span>,
+    },
+    { key: "status", label: "Status", sortable: false, render: (row) => <StatusPill row={row} /> },
+    {
+      key: "reason",
+      label: "Reason / source",
+      sortable: false,
+      render: (row) => (row.reason_label ? `${row.reason_label}${row.reason_note ? " — " + row.reason_note : ""}` : "—"),
+    },
+    {
+      key: "action",
+      label: "Action",
+      sortable: false,
+      render: (row) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setAdjustingRowKey(adjustingRowKey === rowKeyOf(row) ? null : rowKeyOf(row));
+          }}
+          className="rounded-sm border border-slate-300 bg-white px-1.5 py-0.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+        >
+          Roll over ▾
+        </button>
+      ),
+    },
+  ];
+
+  const dayGridColumns: ParityColumn<RollingLedgerDay>[] = [
+    {
+      key: "date",
+      label: "Date",
+      render: (day) => (
+        <>
+          {fmtDate(day.date)}
+          {day.date === today && <span className="ml-1 text-xs text-slate-400">(today)</span>}
+        </>
+      ),
+    },
+    { key: "income_due_cents", label: "Income due", className: "text-right", cellClass: "text-right", render: (day) => (day.income_due_cents === 0 ? "—" : formatCents(day.income_due_cents)) },
+    { key: "expenses_due_cents", label: "Expenses due", className: "text-right", cellClass: "text-right", render: (day) => (day.expenses_due_cents === 0 ? "—" : formatCents(day.expenses_due_cents)) },
+    {
+      key: "income_carry_over_cents",
+      label: "Income carried",
+      className: "text-right",
+      cellClass: "text-right text-slate-400",
+      render: (day) => (day.income_carry_over_cents === 0 ? "—" : formatCents(day.income_carry_over_cents)),
+    },
+    {
+      key: "expenses_carry_over_cents",
+      label: "Expenses carried",
+      className: "text-right",
+      cellClass: "text-right text-slate-400",
+      render: (day) => (day.expenses_carry_over_cents === 0 ? "—" : formatCents(day.expenses_carry_over_cents)),
+    },
+    {
+      key: "net_cents",
+      label: "Net",
+      className: "text-right",
+      cellClass: "text-right",
+      render: (day) => <span className={day.net_cents < 0 ? "text-slate-800" : "text-slate-600"}>{day.net_cents === 0 ? "—" : formatCents(day.net_cents, { sign: true })}</span>,
+    },
+    {
+      key: "running_cash_cents",
+      label: "Running cash",
+      className: "text-right",
+      cellClass: "text-right font-medium text-slate-800",
+      render: (day) => (day.running_cash_cents === null ? "—" : formatCents(day.running_cash_cents, { sign: true })),
+    },
+  ];
 
   return (
     <div className="space-y-3" data-testid="cash-flow-rolling-ledger-tab">
@@ -537,249 +609,84 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
           {/* Split layout: LEFT Expected Income 38% / RIGHT Expected Expenses 62% (owner correction). */}
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-[38fr_62fr]">
             <div className="overflow-hidden rounded-sm border border-slate-800 bg-white">
-              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-100 px-2.5 py-1.5">
+              <div className="border-b border-slate-200 bg-slate-100 px-2.5 py-1.5">
                 <span className="text-xs font-bold uppercase tracking-wide text-slate-700">Expected income</span>
-                <span className="flex items-center gap-1.5 text-xs text-slate-500">
-                  {incomeRows.length} rows
-                  <GearMenu columns={ALL_INCOME_COLUMNS} labels={INCOME_COLUMN_LABELS} visible={incomeColumns} onToggle={(k) => setIncomeColumns((p) => { const n = new Set(p); n.has(k) ? n.delete(k) : n.add(k); return n; })} />
-                </span>
+                <span className="ml-2 text-xs text-slate-500">{incomeRows.length} rows</span>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[560px] text-xs" data-testid="rolling-ledger-income-table">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50 text-left text-slate-500">
-                      {incomeColumns.has("type") && <th className="px-2 py-1.5">{INCOME_COLUMN_LABELS.type}</th>}
-                      {incomeColumns.has("counterparty") && <th className="px-2 py-1.5">{INCOME_COLUMN_LABELS.counterparty}</th>}
-                      {incomeColumns.has("load") && <th className="px-2 py-1.5">{INCOME_COLUMN_LABELS.load}</th>}
-                      {incomeColumns.has("dueCol") && <th className="px-2 py-1.5">{INCOME_COLUMN_LABELS.dueCol}</th>}
-                      {incomeColumns.has("in") && <th className="px-2 py-1.5">{INCOME_COLUMN_LABELS.in}</th>}
-                      {incomeColumns.has("amount") && <th className="px-2 py-1.5 text-right">{INCOME_COLUMN_LABELS.amount}</th>}
-                      {incomeColumns.has("status") && <th className="px-2 py-1.5">{INCOME_COLUMN_LABELS.status}</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {incomeRows.length === 0 && (
-                      <tr>
-                        <td colSpan={incomeColumns.size || 1} className="px-2 py-6 text-center text-slate-400">
-                          No expected income in range.
-                        </td>
-                      </tr>
-                    )}
-                    {incomeRows.map((row) => {
-                      const rowKey = `${row.row_kind}-${row.document_kind}-${row.document_id}-${row.due_date}`;
-                      return (
-                        <>
-                          <tr
-                            key={rowKey}
-                            onClick={() => setAdjustingRowKey(adjustingRowKey === rowKey ? null : rowKey)}
-                            className="cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50"
-                            title="click → adjust expectation"
-                          >
-                            {incomeColumns.has("type") && <td className="px-2 py-1.5 text-slate-700">{row.type}</td>}
-                            {incomeColumns.has("counterparty") && (
-                              <td className="px-2 py-1.5">
-                                <EntityLink kind={row.document_kind} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} />{" "}
-                                <span className="text-slate-400">{row.counterparty}</span>
-                              </td>
-                            )}
-                            {incomeColumns.has("load") && (
-                              <td className="px-2 py-1.5">
-                                {row.load_id ? (
-                                  <EntityLink kind="load" id={row.load_id} label={row.load_number ?? row.load_id} onClick={(e) => e.stopPropagation()} />
-                                ) : (
-                                  <span className="text-slate-400">—</span>
-                                )}
-                              </td>
-                            )}
-                            {incomeColumns.has("dueCol") && <td className="px-2 py-1.5 text-slate-500">{fmtDateShort(row.due_date)}</td>}
-                            {incomeColumns.has("in") && (
-                              <td className="px-2 py-1.5 text-slate-500">{row.days_overdue > 0 ? `+${row.days_overdue}d` : row.days_overdue === 0 ? "today" : `${-row.days_overdue}d`}</td>
-                            )}
-                            {incomeColumns.has("amount") && (
-                              <td className={`px-2 py-1.5 text-right font-mono font-medium ${row.amount_cents === 0 ? "text-slate-400" : "text-slate-800"}`}>
-                                {formatCents(row.amount_cents)}
-                              </td>
-                            )}
-                            {incomeColumns.has("status") && (
-                              <td className="px-2 py-1.5">
-                                <span className={`inline-flex rounded-full border px-1.5 py-0.5 text-xs ${row.is_rollover_echo ? "border-slate-200 bg-slate-100 text-slate-500" : STATUS_CLASS[row.status]}`}>
-                                  {row.is_rollover_echo ? "Rolled" : row.type === "Factor advance" || row.type === "Factor reserve" ? "Factored" : STATUS_LABEL[row.status]}
-                                </span>
-                                {row.reason_label && <div className="mt-0.5 text-xs text-slate-400">rolled — {row.reason_label}</div>}
-                              </td>
-                            )}
-                          </tr>
-                          {adjustingRowKey === rowKey && (
-                            <tr>
-                              <td colSpan={incomeColumns.size || 1} className="p-0">
-                                <AdjustPopover
-                                  row={row}
-                                  reasons={reasons}
-                                  applies="income"
-                                  onClose={() => setAdjustingRowKey(null)}
-                                  pending={adjustMutation.isPending}
-                                  onSubmit={({ projectedDate, reasonCode, note, hiddenReason }) =>
-                                    adjustMutation.mutate({ row, projectedDate, reasonCode, note, hiddenReason })
-                                  }
-                                />
-                              </td>
-                            </tr>
-                          )}
-                        </>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <ParityTable
+                rows={incomeRows}
+                columns={incomeColumns}
+                rowKey={rowKeyOf}
+                storageKey="cash-flow-income"
+                emptyText="No expected income in range."
+                onRowClick={(row) => setAdjustingRowKey(adjustingRowKey === rowKeyOf(row) ? null : rowKeyOf(row))}
+                data-testid="rolling-ledger-income-table"
+              />
+              {adjustingRow && adjustingRowIsIncome && (
+                <div className="border-t border-slate-200 p-2">
+                  <AdjustPopover
+                    row={adjustingRow}
+                    reasons={reasons}
+                    applies="income"
+                    onClose={() => setAdjustingRowKey(null)}
+                    pending={adjustMutation.isPending}
+                    onSubmit={({ projectedDate, reasonCode, note, hiddenReason }) =>
+                      adjustMutation.mutate({ row: adjustingRow, projectedDate, reasonCode, note, hiddenReason })
+                    }
+                  />
+                </div>
+              )}
             </div>
 
             <div className="overflow-hidden rounded-sm border border-slate-800 bg-white">
-              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-100 px-2.5 py-1.5">
+              <div className="border-b border-slate-200 bg-slate-100 px-2.5 py-1.5">
                 <span className="text-xs font-bold uppercase tracking-wide text-slate-700">
                   Expected expenses{selectedDate ? ` · ${fmtDate(selectedDate)}` : ""}
                 </span>
-                <span className="flex items-center gap-1.5 text-xs text-slate-500">
-                  {expenseRowsToday.length} rows
-                  <GearMenu columns={ALL_EXPENSE_COLUMNS} labels={EXPENSE_COLUMN_LABELS} visible={expenseColumns} onToggle={(k) => setExpenseColumns((p) => { const n = new Set(p); n.has(k) ? n.delete(k) : n.add(k); return n; })} />
-                </span>
+                <span className="ml-2 text-xs text-slate-500">{expenseRowsToday.length} rows</span>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px] text-xs" data-testid="rolling-ledger-expense-table">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50 text-left text-slate-500">
-                      {expenseColumns.has("type") && <th className="px-2 py-1.5">{EXPENSE_COLUMN_LABELS.type}</th>}
-                      {expenseColumns.has("no") && <th className="px-2 py-1.5">{EXPENSE_COLUMN_LABELS.no}</th>}
-                      {expenseColumns.has("name") && <th className="px-2 py-1.5">{EXPENSE_COLUMN_LABELS.name}</th>}
-                      {expenseColumns.has("period") && <th className="px-2 py-1.5">{EXPENSE_COLUMN_LABELS.period}</th>}
-                      {expenseColumns.has("dueCol") && <th className="px-2 py-1.5">{EXPENSE_COLUMN_LABELS.dueCol}</th>}
-                      {expenseColumns.has("days") && <th className="px-2 py-1.5">{EXPENSE_COLUMN_LABELS.days}</th>}
-                      {expenseColumns.has("amount") && <th className="px-2 py-1.5 text-right">{EXPENSE_COLUMN_LABELS.amount}</th>}
-                      {expenseColumns.has("status") && <th className="px-2 py-1.5">{EXPENSE_COLUMN_LABELS.status}</th>}
-                      {expenseColumns.has("reason") && <th className="px-2 py-1.5">{EXPENSE_COLUMN_LABELS.reason}</th>}
-                      {expenseColumns.has("action") && <th className="px-2 py-1.5">{EXPENSE_COLUMN_LABELS.action}</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {expenseRowsToday.length === 0 && (
-                      <tr>
-                        <td colSpan={expenseColumns.size || 1} className="px-2 py-6 text-center text-slate-400">
-                          No expected expenses due or carried.
-                        </td>
-                      </tr>
-                    )}
-                    {expenseRowsToday.map((row) => {
-                      const rowKey = `${row.row_kind}-${row.document_kind}-${row.document_id}-${row.due_date}`;
-                      return (
-                        <>
-                          <tr key={rowKey} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                            {expenseColumns.has("type") && <td className="px-2 py-1.5 text-slate-700">{row.type}</td>}
-                            {expenseColumns.has("no") && (
-                              <td className="px-2 py-1.5">
-                                <EntityLink kind={row.document_kind} id={row.document_id} label={row.document_label} />
-                              </td>
-                            )}
-                            {expenseColumns.has("name") && <td className="px-2 py-1.5 text-slate-700">{row.counterparty}</td>}
-                            {expenseColumns.has("period") && <td className="px-2 py-1.5 text-slate-500">{fmtDateShort(row.origin_date)} → {fmtDateShort(row.due_date)}</td>}
-                            {expenseColumns.has("dueCol") && <td className="px-2 py-1.5 text-slate-500">{fmtDateShort(row.due_date)}</td>}
-                            {expenseColumns.has("days") && <td className="px-2 py-1.5 text-slate-500">{row.days_overdue > 0 ? row.days_overdue : row.days_overdue === 0 ? "today" : "—"}</td>}
-                            {expenseColumns.has("amount") && (
-                              <td className={`px-2 py-1.5 text-right font-mono font-medium ${row.amount_cents === 0 ? "text-slate-400" : "text-slate-800"}`}>
-                                {formatCents(row.amount_cents)}
-                              </td>
-                            )}
-                            {expenseColumns.has("status") && (
-                              <td className="px-2 py-1.5">
-                                <span className={`inline-flex rounded-full border px-1.5 py-0.5 text-xs ${row.is_rollover_echo ? "border-slate-200 bg-slate-100 text-slate-500" : STATUS_CLASS[row.status]}`}>
-                                  {row.is_rollover_echo ? "Rolled" : STATUS_LABEL[row.status]}
-                                </span>
-                              </td>
-                            )}
-                            {expenseColumns.has("reason") && <td className="px-2 py-1.5 text-slate-500">{row.reason_label ? `${row.reason_label}${row.reason_note ? " — " + row.reason_note : ""}` : "—"}</td>}
-                            {expenseColumns.has("action") && (
-                              <td className="px-2 py-1.5">
-                                <button
-                                  type="button"
-                                  onClick={() => setAdjustingRowKey(adjustingRowKey === rowKey ? null : rowKey)}
-                                  className="rounded-sm border border-slate-300 bg-white px-1.5 py-0.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                                >
-                                  Roll over ▾
-                                </button>
-                              </td>
-                            )}
-                          </tr>
-                          {adjustingRowKey === rowKey && (
-                            <tr>
-                              <td colSpan={expenseColumns.size || 1} className="p-0">
-                                <AdjustPopover
-                                  row={row}
-                                  reasons={reasons}
-                                  applies="expense"
-                                  onClose={() => setAdjustingRowKey(null)}
-                                  pending={adjustMutation.isPending}
-                                  onSubmit={({ projectedDate, reasonCode, note, hiddenReason }) =>
-                                    adjustMutation.mutate({ row, projectedDate, reasonCode, note, hiddenReason })
-                                  }
-                                />
-                              </td>
-                            </tr>
-                          )}
-                        </>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <ParityTable
+                rows={expenseRowsToday}
+                columns={expenseColumns}
+                rowKey={rowKeyOf}
+                storageKey="cash-flow-expenses"
+                emptyText="No expected expenses due or carried."
+                data-testid="rolling-ledger-expense-table"
+              />
+              {adjustingRow && !adjustingRowIsIncome && (
+                <div className="border-t border-slate-200 p-2">
+                  <AdjustPopover
+                    row={adjustingRow}
+                    reasons={reasons}
+                    applies="expense"
+                    onClose={() => setAdjustingRowKey(null)}
+                    pending={adjustMutation.isPending}
+                    onSubmit={({ projectedDate, reasonCode, note, hiddenReason }) =>
+                      adjustMutation.mutate({ row: adjustingRow, projectedDate, reasonCode, note, hiddenReason })
+                    }
+                  />
+                </div>
+              )}
             </div>
           </div>
 
           {/* Day grid */}
-          <div className="overflow-x-auto rounded-sm border border-slate-800 bg-white">
-            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-100 px-2.5 py-1.5">
+          <div className="overflow-hidden rounded-sm border border-slate-800 bg-white">
+            <div className="border-b border-slate-200 bg-slate-100 px-2.5 py-1.5">
               <span className="text-xs font-bold uppercase tracking-wide text-slate-700">
                 Day grid · {fmtDateShort(from)} → {fmtDateShort(to)}
               </span>
-              <span className="text-xs text-slate-500">click a date → its rows above · carried = still-open older items</span>
+              <span className="ml-2 text-xs text-slate-500">click a date → its rows above · carried = still-open older items</span>
             </div>
-            <table className="w-full min-w-[720px] text-xs" data-testid="rolling-ledger-day-grid">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-left text-slate-500">
-                  <th className="px-2 py-1.5">Date</th>
-                  <th className="px-2 py-1.5 text-right">Income due</th>
-                  <th className="px-2 py-1.5 text-right">Expenses due</th>
-                  <th className="px-2 py-1.5 text-right">Income carried</th>
-                  <th className="px-2 py-1.5 text-right">Expenses carried</th>
-                  <th className="px-2 py-1.5 text-right">Net</th>
-                  <th className="px-2 py-1.5 text-right">Running cash</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.days.map((day) => (
-                  <tr
-                    key={day.date}
-                    onClick={() => setSelectedDate(day.date === selectedDate ? null : day.date)}
-                    className={`cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50 ${
-                      day.date === today ? "bg-slate-50 font-medium" : ""
-                    } ${day.date === selectedDate ? "bg-slate-100" : ""} ${day.date < today ? "text-slate-400" : ""}`}
-                    data-testid={`rolling-ledger-day-${day.date}`}
-                  >
-                    <td className="px-2 py-1.5">
-                      {fmtDate(day.date)}
-                      {day.date === today && <span className="ml-1 text-xs text-slate-400">(today)</span>}
-                    </td>
-                    <td className="px-2 py-1.5 text-right">{day.income_due_cents === 0 ? "—" : formatCents(day.income_due_cents)}</td>
-                    <td className="px-2 py-1.5 text-right">{day.expenses_due_cents === 0 ? "—" : formatCents(day.expenses_due_cents)}</td>
-                    <td className="px-2 py-1.5 text-right text-slate-400">{day.income_carry_over_cents === 0 ? "—" : formatCents(day.income_carry_over_cents)}</td>
-                    <td className="px-2 py-1.5 text-right text-slate-400">{day.expenses_carry_over_cents === 0 ? "—" : formatCents(day.expenses_carry_over_cents)}</td>
-                    <td className={`px-2 py-1.5 text-right ${day.net_cents < 0 ? "text-slate-800" : "text-slate-600"}`}>
-                      {day.net_cents === 0 ? "—" : formatCents(day.net_cents, { sign: true })}
-                    </td>
-                    <td className="px-2 py-1.5 text-right font-medium text-slate-800">
-                      {day.running_cash_cents === null ? "—" : formatCents(day.running_cash_cents, { sign: true })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <ParityTable
+              rows={data.days}
+              columns={dayGridColumns}
+              rowKey={(day) => day.date}
+              storageKey="cash-flow-day-grid"
+              rowClassName={(day) => `${day.date === today ? "bg-slate-50 font-medium" : ""} ${day.date === selectedDate ? "bg-slate-100" : ""} ${day.date < today ? "text-slate-400" : ""}`}
+              onRowClick={(day) => setSelectedDate(day.date === selectedDate ? null : day.date)}
+              data-testid="rolling-ledger-day-grid"
+            />
           </div>
         </>
       )}
