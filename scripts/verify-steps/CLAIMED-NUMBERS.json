@@ -7993,5 +7993,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-06",
     "purpose": "verify-factoring-layout-tabs-first"
+  },
+  "10653": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-reimbursement-reversal-routes-to-expense"
   }
 }
