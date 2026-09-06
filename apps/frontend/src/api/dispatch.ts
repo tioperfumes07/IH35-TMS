@@ -73,6 +73,8 @@ export type DispatchLoad = {
   rate_total_cents?: number | null;
   currency_code?: string | null;
   pickup_scheduled_at?: string | null;
+  /** RT-FIX: last delivery stop appointment_start_at ?? scheduled_arrival_at, from the list's sd lateral. */
+  delivery_scheduled_at?: string | null;
   scheduled_delivery_date?: string | null;
   effective_delivery_date?: string | null;
   delivery_appointment_start_at?: string | null;
