@@ -827,5 +827,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "CASH-FLOW-02 owner refinement (2026-09-06 20:2x/20:5xZ): additive catalogs.cash_flow_adjustment_reasons (seeded reason catalog: customer paying late / factor hold / dispute / short-pay / late delivery / breakdown / other) + accounting.cash_flow_row_adjustments (append-only roll-over-with-reason + audited hide-from-snapshot ledger for Rolling Ledger rows)"
+  },
+  "202613870000": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "additive: accounting.cash_flow_row_adjustments gains a bigserial seq column. Found live-testing 202613860000's own read-model overlay: two adjustments on the same row created inside ONE transaction share an identical now() timestamp (frozen per-transaction in Postgres), making the DISTINCT ON ... ORDER BY created_at DESC latest-adjustment-wins tie-break non-deterministic. seq is monotonic regardless of transaction timing; the overlay query re-orders on it instead."
   }
 }
