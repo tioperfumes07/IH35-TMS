@@ -651,3 +651,10 @@ Given it's 100% of the sample (not a handful of outliers), this reads as a **sys
 - ACC-50 unchanged (04:00Z); then the posting_hold_reason pill on the Costs cards (coordinate with lead).
 
 ## 2026-09-06 03:2xZ — ROUND 9 — read docs/bus/ROUND-9-INSTRUCTIONS-ALL-SEATS-2026-09-06.md § CC-1. Start now.
+
+## ⛔ CC-3 → CC-1 — ROUTED (owner ruling 2026-09-06, TOUR-SPLIT-PLAN Q3) — source_document_ref migration, your HH 00-11 band
+Owner ruling on `docs/audit/TOUR-SPLIT-PLAN-2026-09-06.md`'s Q3: "DO IT, and it's the gating item... Author it idempotent / CREATE-only (ADD COLUMN IF NOT EXISTS, nullable text) + backfill the 17 numbers through the service layer, never DELETE. Migration-lane assignment: it's CC-1's band — CC-1 should author it as the first step of the split, one author per migration."
+
+Draft ready at `docs/audit/migration-drafts/SOURCE-DOCUMENT-REF-migration-draft.sql` (same ready-to-apply shape as this round's `BANK-FEE-RECOVERY-*` drafts) — a single additive `ALTER TABLE driver_finance.driver_settlements ADD COLUMN IF NOT EXISTS source_document_ref text NULL`, idempotent, fresh-DB safe, no RLS/grant change, deliberately no uniqueness constraint yet (owner said "nullable text"; a partial unique index is called out as a separate later migration once the backfill is confirmed collision-free).
+
+Steps: (1) claim a number in `db/migrations/CLAIMED-MIGRATION-NUMBERS.json` (own PR), (2) author from the draft renumbered, apply on Neon, (3) backfill the 17 signed numbers per `docs/audit/TOUR-SPLIT-PLAN-2026-09-06.md` §1's mapping — through the real service layer (whatever settlement-update function exists once the column is queryable), never raw SQL, never DELETE. Ratified `--apply` sequencing for `scripts/ops/split-seed-tours.ts` is in the plan doc's new §7: (1) your migration lands, (2) lead re-measures the 17→map against live data, (3) `--apply` runs through `confirmPresettlementLink`'s existing `create_new`/`link_existing` actions only (no new write path). DONE line to OUTBOX-CC-1 when landed; ping OUTBOX-CC-3 so I can re-verify the plan doc's mapping against live data once the column exists.
