@@ -5885,12 +5885,17 @@
   "10533": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
-    "purpose": "verify-bank-rules-usmca-seed (BANK-RULES-USMCA lead 2026-09-06: suggestion engine falls back to the raw bank description -- description_normalized was NULL on all 364 USMCA lines -- plus the USMCA bank-rule seed through POST /api/v1/banking/rules + refresh-suggestion, dry-run by default)"
+    "purpose": "verify-invoice-issue-date-from-load (INV-03, owner CONSOLIDATED item 1: invoice issue_date resolves the source load's real pickup-stop date instead of defaulting to companyBusinessDate()) -- renumbered from 10517 after a duplicate-key collision with another session's claim (see #21030). RESTORED 2026-09-06 20:0xZ after PR #21034/#21035 (BANK-RULES-USMCA) overwrote this key's purpose text with theirs via a second, non-conflicting claim on the SAME key -- their guard is the actual duplicate file and has been renumbered to 10539 in this commit; this entry's original purpose is the correct, currently-wired one (file scripts/verify-steps/10533-verify-invoice-issue-date-from-load.mjs has been live on main since #21019/#21030, never moved)."
   },
   "10537": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-invoice-due-date-from-terms (INV-06, owner CONSOLIDATED item 3: audited backfill of the 39+ sent invoices whose due_date was stamped from the mint moment instead of invoice_date + customer terms, through the real recomputeInvoiceDatesFromDelivery service, never raw UPDATE) -- renumbered from 10521 after a duplicate-key collision with another session's claim"
+  },
+  "10539": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-bank-rules-usmca-seed (BANK-RULES-USMCA lead 2026-09-06: suggestion engine falls back to the raw bank description -- description_normalized was NULL on all 364 USMCA lines -- plus the USMCA bank-rule seed through POST /api/v1/banking/rules + refresh-suggestion, dry-run by default) -- RENUMBERED from 10533 2026-09-06 20:0xZ: 10533 was already claimed+wired for verify-invoice-issue-date-from-load since #21019/#21030; this claim (#21034, cc-1-band 10533 mistakenly used for a banking/cc-2-lane guard) collided on the same key and its file has been git-mv'd to 10539-verify-bank-rules-usmca-seed.mjs, content byte-identical, no logic change."
   },
   "_band": {
     "cc-1": "n%4===1",
