@@ -238,6 +238,12 @@ export type ParityTableProps<T> = {
    * other row when one expands. Applies in both controlled and uncontrolled modes.
    */
   expandMode?: "multi" | "single";
+  /**
+   * LDT-EXPAND (owner 2026-09-06 03:5xZ "I DO NOT SEE THE APP LIKE THE PICTURES … THE BOXES"): the only expand
+   * target was the 6px "▸" glyph, so clicking the row did nothing. When true, a click anywhere on the row
+   * (outside links / buttons / inputs) toggles the expanded panel. Ignored when onRowClick is supplied.
+   */
+  expandOnRowClick?: boolean;
 
   /**
    * OPTIONAL QBO-style group bands (ParityTable Phase A2). Omitting keeps byte-identical current
@@ -505,6 +511,7 @@ export function ParityTable<T>({
   expandedKeys: controlledExpandedKeys,
   onExpandedChange,
   expandMode = "multi",
+  expandOnRowClick = false,
   groupBy,
   page: controlledPage,
   onPageChange,
@@ -1095,12 +1102,15 @@ export function ParityTable<T>({
         // near-invisible hairline next to every other border in this app (gray-200, the same
         // weight the table's own outer frame/toolbar/pager already use). One border weight.
         className={`border-t border-gray-200 ${
-          onRowClick ? "cursor-pointer hover:bg-gray-50" : ""
+          onRowClick || (expandOnRowClick && renderExpanded) ? "cursor-pointer hover:bg-gray-50" : ""
         } ${rowClassName ? rowClassName(row) : ""}`}
         style={{ height: d.rowH, ...(selected.has(id) ? { backgroundColor: colors.accentTint } : {}) }}
         onClick={onRowClick ? (event) => {
           if (isParityTableInteractiveTarget(event.target)) return;
           onRowClick(row);
+        } : (expandOnRowClick && renderExpanded) ? (event) => {
+          if (isParityTableInteractiveTarget(event.target)) return;
+          toggleExpanded(id);
         } : undefined}
         onContextMenu={onRowContextMenu ? (event) => onRowContextMenu(row, event) : undefined}
       >
@@ -1110,7 +1120,8 @@ export function ParityTable<T>({
               type="button"
               aria-label={isExpanded ? "Collapse row" : "Expand row"}
               aria-expanded={isExpanded}
-              className="text-gray-500 hover:text-gray-800"
+              className={`${MIN_HIT_TARGET_CLASS} text-gray-500 hover:text-gray-800`}
+              data-testid="parity-expand-toggle"
               onClick={() => toggleExpanded(id)}
             >
               {isExpanded ? "▾" : "▸"}
