@@ -79,6 +79,20 @@ export function bucketRecoveryRoleKey(deductionType: string): string {
   // create-side/consume-side vocabulary mismatch class as the 'fuel'/'fuel_advance_recovery' alias
   // directly above; fixed the same way.
   if (t === "company_vehicle_fuel") return "company_fuel_advance_expense";
+  // SET-24 GL ROUTING (owner ROUND 16.13 ruling, 2026-09-06): a recovered duplicate REIMBURSEMENT is
+  // the reversal of an expense, never income. The generic `${t}_recovery` fallback below would derive
+  // 'reimbursement_reversal_recovery' — a role that is never bound anywhere — and this deduction_type
+  // must NEVER fall through to bucket_recovery's real fallback path either, because that path (see
+  // classifyDeductionTarget's caller, settlement-payrun-close.service.ts's loadOtherDeductionsByRole)
+  // is the ONLY consumer of this function's return value and would otherwise route through 'other' ->
+  // other_recovery -> account 7200 "Driver Admin Fee & Chargeback Income" (INCOME) — exactly what the
+  // ruling forbids. Reuse the EXISTING 'reimbursement_expense' role instead: it is the SAME role every
+  // real driver_finance.driver_reimbursements row already resolves through at settlement-materialize
+  // time (settlement-lines-materialize.service.ts), verified live to be the one account ALL
+  // reimbursement types share (Lumper/Fuel-DEF/Bonus/Layover/other) — so crediting it here correctly
+  // reverses the original expense, "per row" in the sense that the row names the source (via
+  // reversed_reimbursement_id), even though today every reimbursement resolves to that one account.
+  if (t === "reimbursement_reversal") return "reimbursement_expense";
   return `${t}_recovery`;
 }
 

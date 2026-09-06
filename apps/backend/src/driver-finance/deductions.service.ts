@@ -41,7 +41,13 @@ export type SettlementDeductionSourceType =
   | "wire_fee"
   | "ach_fee"
   | "company_vehicle_fuel"
-  | "escrow_contribution";
+  | "escrow_contribution"
+  // SET-24 GL ROUTING (owner ROUND 16.13 ruling, 2026-09-06): a recovered duplicate REIMBURSEMENT
+  // is the reversal of an expense, never income — never route it through 'other' -> other_recovery
+  // -> 7200 (Driver Admin Fee & Chargeback Income). This type instead credits the ORIGINAL expense
+  // account of the voided reimbursement named by reversedReimbursementId below (see
+  // bucketRecoveryRoleKey in settlement-bill-payment.math.ts).
+  | "reimbursement_reversal";
 
 export type CreateSettlementDeductionInput = {
   driverId: string;
@@ -77,6 +83,14 @@ export type CreateSettlementDeductionInput = {
    */
   sourceBankTransactionId?: string | null;
   /**
+   * SET-24 GL ROUTING: required when sourceType is 'reimbursement_reversal', the id of the voided
+   * driver_finance.driver_reimbursements row this deduction reverses (FK-constrained). One deduction
+   * row per reversed reimbursement — a correction that voids N reimbursements is N rows, never an
+   * array on one row (matches this table's existing singular source_*_id FK convention). Non-reversal
+   * sources MUST leave this undefined.
+   */
+  reversedReimbursementId?: string;
+  /**
    * NOTE (BANK-DOM-06): this shared writer deliberately does NOT accept a fuel-transaction
    * provenance column. That column lives on a HELD, not-yet-applied migration (202609150000) —
    * every caller of createSettlementDeduction (cash advances, fines, tolls, citations, ...) runs
@@ -102,6 +116,7 @@ export type SettlementDeductionRow = {
   load_id: string | null;
   bucket_id: string | null;
   source_bank_transaction_id: string | null;
+  reversed_reimbursement_id: string | null;
   created_at: string;
 };
 
@@ -118,6 +133,7 @@ const RETURNING_COLUMNS = `
   load_id,
   bucket_id,
   source_bank_transaction_id,
+  reversed_reimbursement_id,
   created_at::text AS created_at
 `;
 
@@ -131,6 +147,16 @@ export async function createSettlementDeduction(
     throw new Error("E_INVALID_INPUT: amountCents must be a positive integer");
   if (!input.reason?.trim()) throw new Error("E_INVALID_INPUT: reason is required");
   if (!input.createdByUserId?.trim()) throw new Error("E_INVALID_INPUT: createdByUserId is required");
+  // SET-24 GL ROUTING: the FK is what makes classifyDeductionTarget's per-row account resolution
+  // possible — a 'reimbursement_reversal' deduction with no linked reimbursement would have nothing
+  // to resolve an account from, and would fail closed at settlement-close time anyway (see
+  // bucketRecoveryRoleKey). Refuse it here instead, at the point of creation.
+  if (input.sourceType === "reimbursement_reversal" && !input.reversedReimbursementId?.trim()) {
+    throw new Error("E_INVALID_INPUT: reversedReimbursementId is required for sourceType 'reimbursement_reversal'");
+  }
+  if (input.sourceType !== "reimbursement_reversal" && input.reversedReimbursementId) {
+    throw new Error("E_INVALID_INPUT: reversedReimbursementId is only valid for sourceType 'reimbursement_reversal'");
+  }
 
   // B2-B dedupe: in-transaction pre-check so a double-approve of the same
   // escrow pending row cannot double-charge. There is no unique index on
@@ -167,13 +193,15 @@ export async function createSettlementDeduction(
         load_id,
         bucket_id,
         source_bank_transaction_id,
+        reversed_reimbursement_id,
         remaining_balance_cents
       )
       -- A3-2: initialise the carry-forward balance to the full amount on insert (status defaults to
       -- 'pending'). The recovery engine treats NULL as = amount_cents (A3-1 lock); this just makes
       -- new rows explicit going forward. $4 = amount_cents. $8 = load_id (direct trace, nullable),
-      -- $9 = bucket_id (recover-from-driver), $10 = source_bank_transaction_id (BLOCK-6b provenance).
-      VALUES ($1, $2, $3, $4, $5, NULL, $6, $7, $8, $9, $10, $4)
+      -- $9 = bucket_id (recover-from-driver), $10 = source_bank_transaction_id (BLOCK-6b provenance),
+      -- $11 = reversed_reimbursement_id (SET-24 GL routing, nullable).
+      VALUES ($1, $2, $3, $4, $5, NULL, $6, $7, $8, $9, $10, $11, $4)
       RETURNING ${RETURNING_COLUMNS}
     `,
     [
@@ -187,6 +215,7 @@ export async function createSettlementDeduction(
       input.loadId ?? null,
       input.bucketId ?? null,
       input.sourceBankTransactionId ?? null,
+      input.reversedReimbursementId ?? null,
     ]
   );
 
@@ -208,6 +237,7 @@ export async function createSettlementDeduction(
       bucket_id: input.bucketId ?? null,
       source_bank_transaction_id: input.sourceBankTransactionId ?? null,
       load_id: input.loadId ?? null,
+      reversed_reimbursement_id: input.reversedReimbursementId ?? null,
     },
     "info",
     "PREREQ-B-SETTLEMENT-DEDUCTION-SVC"
