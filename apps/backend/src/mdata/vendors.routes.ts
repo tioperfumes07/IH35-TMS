@@ -153,6 +153,9 @@ const createVendorBodySchema = z.object({
 
 const updateVendorBodySchema = z
   .object({
+    // FAC-10 — quarantine preserves the vendor row while removing it from active operational
+    // surfaces. This field already exists on mdata.vendors and PATCH remains the audited writer.
+    is_sample_data: z.boolean().optional(),
     name: z.string().trim().min(1).max(200).optional(),
     vendor_code: z.string().trim().max(100).nullable().optional(),
     vendor_type: vendorTypeWriteSchema.optional(),
@@ -809,6 +812,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     if ("account_number" in b) add("account_number", b.account_number ?? null);
     if ("tax_id" in b) add("tax_id", b.tax_id ?? null);
     if ("notes" in b) add("notes", b.notes ?? null);
+    if ("is_sample_data" in b) add("is_sample_data", b.is_sample_data);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
     add("updated_by_user_id", authUser.uuid);
 
