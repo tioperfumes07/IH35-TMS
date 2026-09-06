@@ -807,35 +807,35 @@
       "claimed_at": "2026-09-04",
       "purpose": "FLT-08 unit evidence categories — seed registration, IFTA, Form 2290 and title document types for the canonical shared uploader; require expiry where compliance is date-bound"
     },
-    "202613590001": {
-      "claimed_by": "claude",
-      "claimed_at": "2026-09-03",
-      "purpose": "GO-19-2b Section 2: catalogs.lane_mileage CHECK constraint (short_miles IS NULL OR short_miles <= practical_miles) -- short_miles stays NULL until a trustworthy source exists, this constraint enforces the one invariant when a value IS present"
-    },
-    "202613600001": {
-      "claimed_by": "claude",
-      "claimed_at": "2026-09-03",
-      "purpose": "GO-19-2b Section 5: catalogs.point_mileage table (coordinate-keyed reference mileage, entity-neutral like lane_mileage -- computed once by the self-hosted OSM routing engine, reused forever)"
-    },
-    "202613800100": {
-      "claimed_by": "claude",
+    "202613881200": {
+      "claimed_by": "cursor",
       "claimed_at": "2026-09-06",
-      "purpose": "LDT-5: driver_finance.driver_settlements.settlement_model backfill 'load_bookended' for settlements created by the presettlement link (first_load_id set, model NULL) -- root cause of 'No active pre-settlement found' (pre-settlement.routes.ts filters settlement_model='load_bookended'; confirmPresettlementLink never set it; 15/15 open USMCA settlements NULL on Neon 2026-09-06 01:5xZ)"
-    },
-    "202613860000": {
-      "claimed_by": "claude",
-      "claimed_at": "2026-09-06",
-      "purpose": "CASH-FLOW-02 owner refinement (2026-09-06 20:2x/20:5xZ): additive catalogs.cash_flow_adjustment_reasons (seeded reason catalog: customer paying late / factor hold / dispute / short-pay / late delivery / breakdown / other) + accounting.cash_flow_row_adjustments (append-only roll-over-with-reason + audited hide-from-snapshot ledger for Rolling Ledger rows)"
-    },
-    "202613870000": {
-      "claimed_by": "claude",
-      "claimed_at": "2026-09-06",
-      "purpose": "additive: accounting.cash_flow_row_adjustments gains a bigserial seq column. Found live-testing 202613860000's own read-model overlay: two adjustments on the same row created inside ONE transaction share an identical now() timestamp (frozen per-transaction in Postgres), making the DISTINCT ON ... ORDER BY created_at DESC latest-adjustment-wins tie-break non-deterministic. seq is monotonic regardless of transaction timing; the overlay query re-orders on it instead."
-    },
-    "202613880000": {
-      "claimed_by": "claude",
-      "claimed_at": "2026-09-06",
-      "purpose": "comment-only: CANONICAL-CHECK declaration for accounting.cash_flow_row_adjustments (202613860000 is applied on prod -- checksum-freeze law -- so the block cannot be added to it; this migration re-issues the identical CREATE TABLE IF NOT EXISTS as a guaranteed no-op, same pattern as 202613840000). Clears verify-no-duplicate-financial-ledger RED on main since #21067."
+      "purpose": "WORM trigger for accounting.cash_flow_row_adjustments (added in 202613860000 without WORM protection). Idempotent CREATE TRIGGER IF NOT EXISTS via DO block. RG-16 guard sweep."
     }
+  },
+  "202613590001": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "GO-19-2b Section 2: catalogs.lane_mileage CHECK constraint (short_miles IS NULL OR short_miles <= practical_miles) -- short_miles stays NULL until a trustworthy source exists, this constraint enforces the one invariant when a value IS present"
+  },
+  "202613600001": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-03",
+    "purpose": "GO-19-2b Section 5: catalogs.point_mileage table (coordinate-keyed reference mileage, entity-neutral like lane_mileage -- computed once by the self-hosted OSM routing engine, reused forever)"
+  },
+  "202613800100": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "LDT-5: driver_finance.driver_settlements.settlement_model backfill 'load_bookended' for settlements created by the presettlement link (first_load_id set, model NULL) -- root cause of 'No active pre-settlement found' (pre-settlement.routes.ts filters settlement_model='load_bookended'; confirmPresettlementLink never set it; 15/15 open USMCA settlements NULL on Neon 2026-09-06 01:5xZ)"
+  },
+  "202613860000": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "CASH-FLOW-02 owner refinement (2026-09-06 20:2x/20:5xZ): additive catalogs.cash_flow_adjustment_reasons (seeded reason catalog: customer paying late / factor hold / dispute / short-pay / late delivery / breakdown / other) + accounting.cash_flow_row_adjustments (append-only roll-over-with-reason + audited hide-from-snapshot ledger for Rolling Ledger rows)"
+  },
+  "202613870000": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "additive: accounting.cash_flow_row_adjustments gains a bigserial seq column. Found live-testing 202613860000's own read-model overlay: two adjustments on the same row created inside ONE transaction share an identical now() timestamp (frozen per-transaction in Postgres), making the DISTINCT ON ... ORDER BY created_at DESC latest-adjustment-wins tie-break non-deterministic. seq is monotonic regardless of transaction timing; the overlay query re-orders on it instead."
   }
 }
