@@ -149,3 +149,13 @@ button.ldt-pill { cursor: pointer; }
 .ldt-stage.now { background: var(--ldt-accent); color: #fff; }
 .ldt-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; font-size: 11.5px; border: 1px solid var(--ldt-accent); border-radius: 2px; background: var(--ldt-paper); color: var(--ldt-accent); cursor: pointer; }
 .ldt-chip:disabled { opacity: .6; cursor: default; }
+
+/* BANK-DESIGN-1 (owner 2026-09-06: "A DARKER OUTLINE IN BOTH LARGE BOXES … CLEARER DIVISION BETWEEN THE SUGGESTIONS …
+   DATE, THEN DESCRIPTION … CLEANER LIKE QUICKBOOKS … THE NEW COLORS IN BANKING"). `.strong` = the dark 1px outline that
+   separates the transaction being categorized from the register behind it; `.ldt-rows-match` = the candidate register:
+   DATE · DESCRIPTION · TYPE · AMOUNT · GAP, one line per candidate, a full rule between every two. */
+.ldt-card.strong { border-color: var(--ldt-ink2); }
+.ldt-rows-match .ldt-row { grid-template-columns: 84px minmax(0, 1fr) 118px 104px 120px auto; border-bottom: 1px solid var(--ldt-rule); }
+.ldt-rows-match .ldt-row:last-child { border-bottom: 0; }
+.ldt-rows-match .ldt-row > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ldt-rows-match .ldt-row.best { background: var(--ldt-accent-soft); }
