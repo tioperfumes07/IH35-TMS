@@ -15,6 +15,13 @@ import { postBillGlIfEnabled } from "./bill-gl.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCompanyScope } from "./shared.js";
 import { isLoadTourOpen } from "./tour-open-gate.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+
+// Same flag every other expense-GL-posting call site gates on (expenses.routes.ts's own
+// EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED") — a local literal, not an import from
+// that routes file, matching fuel-posting/maybe-post-from-fuel-transaction.service.ts's own
+// FUEL_EXPENSE_GL_POSTING_FLAG_KEY precedent (a service file never imports a *.routes.ts module).
+const EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -70,7 +77,26 @@ export async function postHeldDocumentsForClosedTour(
 
   const result: TourClosePostingResult = { expenses_posted: [], expenses_still_held: [], bills_posted: [], bills_still_held: [] };
 
+  // SETL-GATE-01 — every postSourceTransaction() call site must honor its per-entity posting flag
+  // (verify-all-posting-paths-gated.mjs). This batch runs unconditionally once a tour closes, so the
+  // flag is checked ONCE up front (it cannot change mid-loop) rather than per expense — matches
+  // expenses.routes.ts's own explicit "Post to GL" gate: when OFF, every held expense simply stays
+  // held (posting_hold_reason stays 'tour_open'), exactly the flag-OFF no-op every other expense-GL
+  // posting call site already implements. Bills are unaffected — postBillGlIfEnabled below already
+  // gates itself internally.
+  const expensePostingEnabled =
+    heldExpenses.rows.length === 0
+      ? false
+      : await withCompanyScope(actor.userId, operatingCompanyId, (client: DbClient) =>
+          isEnabled(client as never, EXPENSE_GL_POSTING_FLAG_KEY, { operating_company_id: operatingCompanyId, user_uuid: actor.userId })
+        );
+
   for (const expense of heldExpenses.rows) {
+    if (!expensePostingEnabled) {
+      // Flag OFF — no-op, same as every other expense-GL posting call site. Stays held.
+      result.expenses_still_held.push(expense.id);
+      continue;
+    }
     if (!expense.payment_account_uuid && !expense.vendor_uuid) {
       // orphan guard, same as the manual /:id/post gate — never invent a payee to force a post.
       result.expenses_still_held.push(expense.id);
