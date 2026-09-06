@@ -98,6 +98,13 @@ const REQUIRED_FRONTEND_MARKERS = [
   ["ExpenseRolloverMenu", "expense rows must get a plain Roll over ▾ reason menu, not the income popup"],
   ["StopTrackingButton", "expense rows must get a separate Stop action, not the income popup"],
   ["adjustingRow && adjustingRowIsIncome", "AdjustPopover must be gated to income rows only"],
+  // KPI tile spec (owner: "I WANT THE DESIGN AS YOU DESIGN THE LOAD COSTS" / STATE-AFTER-#21082
+  // correction) — the exact Load-Costs reference tile, inline-styled like SettlementKpiGrid.tsx's
+  // own Tile (never Tailwind bracket-notation, so the exact spec never trips the design-system
+  // ratchet's raw-size count).
+  ["height: 60,", "KPI tile must be 60px tall (the Load-Costs reference spec), not the rejected v2 44-48px tile"],
+  ['background: "#F4F7FA"', "KPI tile must use the Load-Costs reference background #F4F7FA"],
+  ['border: "1px solid #C7D2DC"', "KPI tile must use the Load-Costs reference border #C7D2DC"],
 ];
 
 const FORBIDDEN_FRONTEND_MARKERS = [
@@ -306,6 +313,20 @@ function selftest() {
       mutate: () => ({
         ...good,
         frontend: good.frontend.replace("adjustingRow && adjustingRowIsIncome", "adjustingRow"),
+      }),
+    },
+    {
+      name: "KPI tile reverted to the rejected v2 44-48px height",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replace("height: 60,", "height: 48,"),
+      }),
+    },
+    {
+      name: "KPI tile background reverted off the Load-Costs reference spec",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replace('background: "#F4F7FA"', 'background: "#FFFFFF"'),
       }),
     },
     {

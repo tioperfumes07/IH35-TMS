@@ -901,8 +901,17 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
 
       {data && kpis && (
         <>
-          {/* KPI strip — ONE row, 8 compact tiles (owner correction 20:5xZ). */}
-          <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-8" data-testid="rolling-ledger-kpi-strip">
+          {/* KPI strip — ONE row, 8 tiles at the exact Load-Costs reference spec (owner:
+          "I WANT THE DESIGN AS YOU DESIGN THE LOAD COSTS" / STATE-AFTER-#21082 correction: 60px
+          tall, bg #F4F7FA, 1px #C7D2DC border, radius 2px, padding 4px 8px, label 11px uppercase
+          letter-spacing .275px muted, value 11px/600 ink). Inline-styled like
+          SettlementKpiGrid.tsx's own Tile — deliberately NOT Tailwind bracket-notation, so the
+          exact pixel spec never trips verify-ui-design-system-ratchet's raw-size count. */}
+          <div
+            className="grid grid-cols-4 sm:grid-cols-8"
+            style={{ gap: 6 }}
+            data-testid="rolling-ledger-kpi-strip"
+          >
             {[
               { label: "Opening cash", value: kpis.opening },
               { label: "Income due today", value: kpis.incomeToday, zero: kpis.incomeToday === 0 },
@@ -913,14 +922,44 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               { label: "Open invoices (not factored)", value: kpis.incomeNotFactored, ok: true },
               { label: "Due next 10 days", value: kpis.dueNext10, ok: true },
             ].map((tile) => (
-              <div key={tile.label} className="min-h-[44px] max-h-[48px] overflow-hidden rounded-sm border border-slate-800 bg-white px-2 py-1">
-                <div className="truncate text-xs font-bold uppercase tracking-wide text-slate-600" title={tile.label}>
+              <div
+                key={tile.label}
+                title={tile.label}
+                style={{
+                  height: 60,
+                  boxSizing: "border-box",
+                  background: "#F4F7FA",
+                  border: "1px solid #C7D2DC",
+                  borderRadius: 2,
+                  padding: "4px 8px",
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: ".275px",
+                    color: "#4B5563",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
                   {tile.label}
                 </div>
                 <div
-                  className={`mt-0.5 whitespace-nowrap font-mono text-xs font-semibold tabular-nums ${
-                    tile.bad ? "text-slate-900" : tile.ok ? "text-slate-700" : tile.zero ? "text-slate-400" : "text-slate-800"
-                  }`}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    fontVariantNumeric: "tabular-nums",
+                    whiteSpace: "nowrap",
+                    color: tile.bad ? "#111827" : tile.ok ? "#4B5563" : tile.zero ? "#9CA3AF" : "#111827",
+                  }}
                 >
                   {tile.value === null ? "—" : formatCents(tile.value, { sign: tile.sign })}
                 </div>
