@@ -10,6 +10,7 @@ import { SettlementDetailPage } from "./SettlementDetailPage";
 import { SettlementDisputesTab } from "./components/SettlementDisputesTab";
 import { SettlementsTable } from "./components/SettlementsTable";
 import { SettlementsToursRegister } from "./SettlementsToursRegister";
+import { SettlementsCompanyDriverTab, CompanySettlementsRegisterTab } from "./SettlementsCompanyDriverTab";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { formatUsdCents } from "../../lib/money";
@@ -49,7 +50,19 @@ export function SettlementsPage() {
   const [reverseOpen, setReverseOpen] = useState(false);
   const [pendingReverseIds, setPendingReverseIds] = useState<string[]>([]);
   const [pendingReverseLabels, setPendingReverseLabels] = useState<Record<string, string>>({});
-  const activeTab = searchParams.get("tab") === "disputes" ? "disputes" : "settlements";
+  // ROUND 16.3 — the owner asked for a Company & Driver side-by-side view and a Company settlements
+  // register alongside the existing Driver settlements register + Disputes.
+  const tabParam = searchParams.get("tab");
+  const activeTab =
+    tabParam === "disputes"
+      ? "disputes"
+      : tabParam === "company_driver"
+        ? "company_driver"
+        : tabParam === "company_settlements"
+          ? "company_settlements"
+          : "settlements";
+  // Drill target from the Company settlements register → the side-by-side (resolves to a driver settlement).
+  const companySettlementParam = searchParams.get("company_settlement_id");
   // SETL-MOD-01 — the Settlements list defaults to the tour readout (one row per tour, the SAME
   // GET /api/v1/driver-finance/tours the Load-costs Pre-Settlement/Settlement tabs read). The prior
   // payment-centric per-settlement table is preserved under ?view=payments (never deleted — it owns
@@ -231,15 +244,43 @@ export function SettlementsPage() {
       <div className="flex items-center gap-2">
         <Button
           size="sm"
+          variant={activeTab === "company_driver" ? "primary" : "secondary"}
+          data-testid="tab-company-driver"
+          onClick={() => {
+            const next = new URLSearchParams(searchParams);
+            next.set("tab", "company_driver");
+            next.delete("company_settlement_id");
+            setSearchParams(next);
+          }}
+        >
+          Company &amp; Driver
+        </Button>
+        <Button
+          size="sm"
           variant={activeTab === "settlements" ? "primary" : "secondary"}
           onClick={() => {
             const next = new URLSearchParams(searchParams);
             next.delete("tab");
             next.delete("settlement_id");
+            next.delete("company_settlement_id");
             setSearchParams(next);
           }}
         >
-          Settlements
+          Driver settlements
+        </Button>
+        <Button
+          size="sm"
+          variant={activeTab === "company_settlements" ? "primary" : "secondary"}
+          data-testid="tab-company-settlements"
+          onClick={() => {
+            const next = new URLSearchParams(searchParams);
+            next.set("tab", "company_settlements");
+            next.delete("settlement_id");
+            next.delete("company_settlement_id");
+            setSearchParams(next);
+          }}
+        >
+          Company settlements
         </Button>
         <Button
           size="sm"
@@ -248,12 +289,42 @@ export function SettlementsPage() {
             const next = new URLSearchParams(searchParams);
             next.set("tab", "disputes");
             next.delete("settlement_id");
+            next.delete("company_settlement_id");
             setSearchParams(next);
           }}
         >
           Settlement Disputes
         </Button>
       </div>
+
+      {activeTab === "company_driver" ? (
+        <SettlementsCompanyDriverTab
+          companyId={companyId}
+          settlementId={selectedSettlementId}
+          companySettlementId={companySettlementParam}
+          onSelectSettlement={(id) => {
+            const next = new URLSearchParams(searchParams);
+            next.set("tab", "company_driver");
+            next.delete("company_settlement_id");
+            if (id) next.set("settlement_id", id);
+            else next.delete("settlement_id");
+            setSearchParams(next);
+          }}
+        />
+      ) : null}
+
+      {activeTab === "company_settlements" ? (
+        <CompanySettlementsRegisterTab
+          companyId={companyId}
+          onOpen={(csId) => {
+            const next = new URLSearchParams(searchParams);
+            next.set("tab", "company_driver");
+            next.delete("settlement_id");
+            next.set("company_settlement_id", csId);
+            setSearchParams(next);
+          }}
+        />
+      ) : null}
 
       {activeTab === "settlements" ? (
         <>
