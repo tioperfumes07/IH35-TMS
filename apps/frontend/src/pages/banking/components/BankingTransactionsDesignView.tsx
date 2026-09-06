@@ -336,7 +336,7 @@ function buildMatchCandidateColumns(
           <button
             type="button"
             data-testid="banking-match-candidate-confirm"
-            className="rounded-sm border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-sm border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
             disabled={!canConfirm || isConfirming}
             title={
               isBill
