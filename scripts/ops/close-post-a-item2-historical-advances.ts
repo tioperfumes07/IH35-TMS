@@ -46,9 +46,13 @@ const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
 const OWNER_ROLE = "Owner";
 
-// Filled in only once the owner's ✔ quote for THIS re-dry-run (with items 1+2 both applied) is
-// posted verbatim to docs/bus/OUTBOX-CC-3.md — never before.
-const LEAD_APPROVAL_QUOTE = "";
+// Lead ROUND 16.13 (2026-09-06 22:3xZ), quoted verbatim: "CLOSE-POST-A ITEM 2 — ✔ APPLY. Dry-run
+// 6 rows = $1,205.96 = the Neon sum of the six \"cash advance wire transfer\" deductions (lead read
+// 20:2xZ), disbursement method historical_backfill (additive, TS-only validation — accepted), dates
+// per the signed settlement documents, reference = the signed settlement line, no bank account
+// where no bank line matched. Run --apply now."
+const LEAD_APPROVAL_QUOTE =
+  'CLOSE-POST-A ITEM 2 — ✔ APPLY. Dry-run 6 rows = $1,205.96 = the Neon sum of the six "cash advance wire transfer" deductions (lead read 20:2xZ), disbursement method historical_backfill (additive, TS-only validation — accepted), dates per the signed settlement documents, reference = the signed settlement line, no bank account where no bank line matched. Run --apply now.';
 
 const ROWS: Array<{
   settlement_display_id: string;
