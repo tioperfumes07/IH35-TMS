@@ -12,6 +12,7 @@ import { SelectCombobox } from "../../components/Combobox";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useStagedListFilters } from "../../components/table";
 import { arAgingCustomerProfileHref, arAgingInvoiceListHref } from "./agingDrillThrough";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -47,6 +48,11 @@ export function ARAgingPage() {
   const deepLinkCustomerId = searchParams.get("customer_id")?.trim() ?? "";
   const emptyFilters: ARAgingFilters = { asOfDate: today, minBal: "", bucketFilter: "all", customerId: "" };
   const [appliedFilters, setAppliedFilters] = useState<ARAgingFilters>({ ...emptyFilters, customerId: deepLinkCustomerId });
+  const staged = useStagedListFilters({
+    applied: appliedFilters,
+    empty: emptyFilters,
+    onApply: setAppliedFilters,
+  });
   const [reportSearch, setReportSearch] = useState("");
   const exportAction = useExportAction();
   useEffect(() => {
@@ -245,9 +251,9 @@ export function ARAgingPage() {
 
       <ReportFilterBar
         testIdPrefix="reports-ar-aging"
-        fromDate={appliedFilters.asOfDate}
+        fromDate={staged.draft.asOfDate}
         toDate={null}
-        onFromDateChange={(d) => setAppliedFilters((p) => ({ ...p, asOfDate: d ?? today }))}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, asOfDate: d ?? today }))}
         onToDateChange={() => {}}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
@@ -256,16 +262,18 @@ export function ARAgingPage() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Customer</span>
           <EntityPicker
             kind="customer"
             operatingCompanyId={companyId}
-            value={appliedFilters.customerId || null}
+            value={staged.draft.customerId || null}
             onChange={(next) => {
               const updated = next ?? "";
-              setAppliedFilters((p) => ({ ...p, customerId: updated }));
+              staged.setDraft((p) => ({ ...p, customerId: updated }));
               const params = new URLSearchParams(searchParams);
               if (updated) params.set("customer_id", updated);
               else params.delete("customer_id");
@@ -279,8 +287,8 @@ export function ARAgingPage() {
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Min bal ($)</span>
           <MoneyInput
-            valueDollars={appliedFilters.minBal ? Number(appliedFilters.minBal) : null}
-            onChangeDollars={(d) => setAppliedFilters((p) => ({ ...p, minBal: d == null ? "" : String(d) }))}
+            valueDollars={staged.draft.minBal ? Number(staged.draft.minBal) : null}
+            onChangeDollars={(d) => staged.setDraft((p) => ({ ...p, minBal: d == null ? "" : String(d) }))}
             ariaLabel="Min balance ($)"
             className="w-24"
           />
@@ -289,8 +297,8 @@ export function ARAgingPage() {
           <span className="font-semibold text-slate-600">Bucket</span>
           <SelectCombobox
             className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
-            value={appliedFilters.bucketFilter}
-            onChange={(e) => setAppliedFilters((p) => ({ ...p, bucketFilter: e.target.value as ARAgingFilters["bucketFilter"] }))}
+            value={staged.draft.bucketFilter}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, bucketFilter: e.target.value as ARAgingFilters["bucketFilter"] }))}
           >
             <option value="all">All</option>
             <option value="61+">61+ days</option>

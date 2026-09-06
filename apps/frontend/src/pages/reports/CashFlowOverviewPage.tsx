@@ -234,7 +234,7 @@ export function CashFlowOverviewPage() {
         testIdPrefix="reports-cash-flow-overview"
         fromDate={appliedAsOf}
         toDate={null}
-        onFromDateChange={(d) => setAppliedAsOf(d ?? today)}
+        onFromDateChange={(asOf) => { if (asOf) setAppliedAsOf(asOf); }}
         onToDateChange={() => {}}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
