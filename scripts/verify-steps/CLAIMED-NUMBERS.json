@@ -7948,7 +7948,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1061,
+  "total_claimed": 1062,
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
@@ -7963,5 +7963,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-settlement-list-accrual (SET-05: pins the SET-ACCRUAL fix in settlements.routes.ts -- both list-query blocks must show line-derived accrual for pre-close settlements, never a stale /bin/zsh header; live half checks real USMCA data)"
+  },
+  "10613": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-no-duplicate-settlement-deductions (SET-24: driver_finance.driver_reimbursements had 7 live duplicate groups/14 rows never swept, same seed-backfill-loop-ran-twice signature as the earlier deductions dedup -- voided via a scoped WORM-audited UPDATE, guard covers both tables)"
   }
 }
