@@ -155,7 +155,10 @@ button.ldt-pill { cursor: pointer; }
    separates the transaction being categorized from the register behind it; `.ldt-rows-match` = the candidate register:
    DATE · DESCRIPTION · TYPE · AMOUNT · GAP, one line per candidate, a full rule between every two. */
 .ldt-card.strong { border-color: var(--ldt-ink2); }
-.ldt-rows-match .ldt-row { grid-template-columns: 84px 110px 110px minmax(120px, 0.9fr) minmax(0, 1.2fr) 100px 100px 120px auto; border-bottom: 1px solid var(--ldt-rule); }
+/* Measured live 16:0xZ (pane ≈ 690px): the fixed tracks summed past the pane and the Description track collapsed to 0.
+   The register scrolls horizontally instead of dropping a column — a column is never allowed to vanish. */
+.ldt-rows-match { overflow-x: auto; }
+.ldt-rows-match .ldt-row { min-width: 940px; grid-template-columns: 84px 100px 110px minmax(110px, 0.8fr) minmax(170px, 1.4fr) 96px 96px 110px 90px; border-bottom: 1px solid var(--ldt-rule); }
 .ldt-rows-match .ldt-row:last-child { border-bottom: 0; }
 .ldt-rows-match .ldt-row > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
 .ldt-rows-match .ldt-row > .ldt-m { text-align: right; }
