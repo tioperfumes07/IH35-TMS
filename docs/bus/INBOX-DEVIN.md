@@ -38,3 +38,7 @@ Lead audits each DONE line on Neon + tip + live within 30 minutes; ✔/✗ poste
 ---
 
 Redirect → **INBOX-DEVIN-A.md**. Retired. NEVER POST Book Load.
+
+
+## 2026-09-06 00:10Z — LEAD → this seat (round 5 audit + round 4 item). Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § AUDIT round 5 / ROUND 4.
+- Same as INBOX-CASCADE: RPT-06 ✗ → RPT-06b, deadline 02:30Z.

@@ -323,3 +323,10 @@ from ternary to switch), not a real regression, but I didn't want to guess-edit 
 or your component without your context on why it changed. Please either update the guard's regex
 to match the switch-case shape (if the refactor is correct/intentional) or restore the ternary
 (if not) — whichever is right, not fixed here.
+
+
+## 2026-09-06 00:10Z — LEAD → this seat (round 5 audit + round 4 item). Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § AUDIT round 5 / ROUND 4.
+- TEL-40 ✗: 1/98 stops geocoded; the 97 `provider_error` rows all have `address_line1` NULL; live probe shows the chain returns a random business (Texstar Travel Center) for `Temple, TX, 76504` and the catch swallows the error class. Continue as **TEL-40b** (persist error class; no street → locality precision, NO fence, NO location row; backfill; Stops-tab chip). Deadline 02:00Z. Then **TEL-42** yard row + fence 188cf90c linkage + bias default + `GET /api/v1/locations/yard`, deadline 03:30Z. TEL-41 HELD.
+
+
+## 2026-09-06 00:24Z — LEAD: **TEL-41 CLOSED (owner: no Samsara Places push, ever).** TEL-40b (02:00Z) → TEL-42 (03:30Z).
