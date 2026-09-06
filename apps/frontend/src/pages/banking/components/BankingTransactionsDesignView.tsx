@@ -1685,9 +1685,16 @@ export function BankingTransactionsDesignView({
           matchedJournalEntryId)
     );
     return (
-      <div className="grid grid-cols-1 gap-2 lg:grid-cols-2" data-testid="banking-categorize-expanded-panel">
-        <div className="p-1">
-          <p className="mb-2 text-xs font-semibold text-gray-900">{transactionLabel(tx)}</p>
+      // BANK-DESIGN-1 (owner 2026-09-06): the expanded row is TWO outlined boxes — CATEGORIZE (left) and MATCH
+      // CANDIDATES (right) — each an .ldt-card.strong (dark 1px outline, .ldt-ch header band), the Load-costs palette.
+      // Nothing inside either box was removed or reordered except the candidate rows (see .ldt-rows-match below).
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2" data-testid="banking-categorize-expanded-panel">
+        <div className="ldt-card strong" data-testid="banking-categorize-box">
+          <div className="ldt-ch">
+            <span>Categorize</span>
+            <span className="ldt-open truncate" title={transactionLabel(tx)}>{transactionLabel(tx)}</span>
+          </div>
+          <div className="p-2">
           <div
             className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5"
             data-testid="banking-tx-categorization-links-panel"
@@ -2350,11 +2357,18 @@ export function BankingTransactionsDesignView({
               </Button>
             </div>
           </div>
+          </div>
         </div>
 
-        <div ref={matchPaneRef} className="border-t border-gray-200 pt-2 lg:border-t-0 lg:border-l lg:pl-3 lg:pt-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Match candidates</p>
-          <p className="mt-0.5 text-[11px] text-gray-500">
+        <div ref={matchPaneRef} className="ldt-card strong" data-testid="banking-match-candidates-box">
+          <div className="ldt-ch">
+            <span>Match candidates</span>
+            <span className="ldt-open" data-testid="banking-match-candidates-count">
+              {matchCandidatesQuery.isSuccess ? `${(matchCandidatesQuery.data?.candidates ?? []).length} found` : ""}
+            </span>
+          </div>
+          <div className="p-2">
+          <p className="ldt-muted">
             Recommended matches (±7 days) from live ledger data. If none fit, Search all like QuickBooks.
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -2399,47 +2413,52 @@ export function BankingTransactionsDesignView({
           (matchCandidatesQuery.data?.candidates ?? []).length === 0 ? (
             <p className="mt-2 text-xs text-gray-500">No match candidates found for this transaction.</p>
           ) : null}
-          <div className="mt-2 space-y-1.5">
-            {[...(matchCandidatesQuery.data?.candidates ?? [])]
-              .sort((a, b) => b.match_score - a.match_score)
-              .map((candidate: BankMatchCandidate) => (
-                <div
-                  key={`${tx.id}-mc-${candidate.ledger_entry_kind}-${candidate.ledger_entry_id}`}
-                  className="rounded-sm border border-gray-100 px-2 py-1.5 text-xs"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      <EntityLink
-                        kind={MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind]}
-                        id={candidate.ledger_entry_id}
-                        label={MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
-                        className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-700 hover:underline"
-                      />
-                      {candidate.auto_match ? (
-                        <span className="inline-flex items-center rounded-sm bg-slate-800 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
-                          Best match
-                        </span>
-                      ) : null}
-                    </div>
-                    <span className="shrink-0 font-semibold text-gray-900">
-                      {formatUsdCents(Math.abs(Number(candidate.amount_cents ?? 0)))}
-                    </span>
-                  </div>
-                  <div className="mt-1 truncate text-gray-700" title={candidate.memo}>
-                    {candidate.memo?.trim() ? candidate.memo : "—"}
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500">
-                    <span>Date: {String(candidate.event_date ?? "").slice(0, 10) || "—"}</span>
-                    <span>Amount gap: {formatUsdCents(Math.abs(Number(candidate.amount_gap_cents ?? 0)))}</span>
-                    <span>Date gap: {candidate.date_gap_days}d</span>
-                    <span>Score: {candidate.match_score.toFixed(3)}</span>
-                  </div>
+          {/* BANK-DESIGN-1: the suggestions are ONE register, QuickBooks "Find match" order — DATE · DESCRIPTION · TYPE
+              (drill-through) · AMOUNT · GAP (amount / days) · Best match — every candidate on one line, a full
+              --ldt-rule between every two, best match tinted --ldt-accent-soft. Score kept as the row title. */}
+          {(matchCandidatesQuery.data?.candidates ?? []).length > 0 ? (
+            <div className="ldt-card mt-2">
+              <div className="ldt-rows ldt-rows-match" data-testid="banking-match-candidates-register">
+                <div className="ldt-row head">
+                  <span>Date</span>
+                  <span>Description</span>
+                  <span>Type</span>
+                  <span className="ldt-m">Amount</span>
+                  <span>Gap</span>
+                  <span />
                 </div>
-              ))}
-          </div>
+                {[...(matchCandidatesQuery.data?.candidates ?? [])]
+                  .sort((a, b) => b.match_score - a.match_score)
+                  .map((candidate: BankMatchCandidate) => (
+                    <div
+                      key={`${tx.id}-mc-${candidate.ledger_entry_kind}-${candidate.ledger_entry_id}`}
+                      className={`ldt-row${candidate.auto_match ? " best" : ""}`}
+                      data-testid="banking-match-candidate-row"
+                      title={`Score ${candidate.match_score.toFixed(3)}`}
+                    >
+                      <span className="ldt-k">{String(candidate.event_date ?? "").slice(0, 10) || "—"}</span>
+                      <span title={candidate.memo}>{candidate.memo?.trim() ? candidate.memo : "—"}</span>
+                      <span>
+                        <EntityLink
+                          kind={MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind]}
+                          id={candidate.ledger_entry_id}
+                          label={MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
+                          className="ldt-pill ok hover:underline"
+                        />
+                      </span>
+                      <span className="ldt-m">{formatUsdCents(Math.abs(Number(candidate.amount_cents ?? 0)))}</span>
+                      <span className="ldt-k">
+                        {formatUsdCents(Math.abs(Number(candidate.amount_gap_cents ?? 0)))} · {candidate.date_gap_days}d
+                      </span>
+                      <span>{candidate.auto_match ? <span className="ldt-pill ok">Best match</span> : null}</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ) : null}
 
-          <div className="mt-3 border-t border-gray-100 pt-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+          <div className="mt-3 border-t pt-2" style={{ borderColor: "var(--ldt-rule)" }}>
+            <p className="ldt-muted font-semibold uppercase tracking-wide">
               Similar past categorizations
             </p>
             {!viewSettings.enableSuggestedCategorization ? (
@@ -2458,7 +2477,8 @@ export function BankingTransactionsDesignView({
                 <button
                   key={`${tx.id}-s-${index}`}
                   type="button"
-                  className="block w-full rounded-sm border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
+                  className="block w-full rounded-sm border px-2 py-1 text-left text-xs hover:bg-gray-50"
+                  style={{ borderColor: "var(--ldt-rule)" }}
                   onClick={() => {
                     const suggestedKind = String(suggestion.category ?? suggestion.kind ?? "").trim();
                     const suggestedAccountId = String(
@@ -2484,6 +2504,7 @@ export function BankingTransactionsDesignView({
                 </button>
               ))}
             </div>
+          </div>
           </div>
         </div>
       </div>
