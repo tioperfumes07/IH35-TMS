@@ -968,3 +968,29 @@ hold-merge-gate unaffected. Filed GUARD-WORKORDERS.md TEL42-YARD-MIGRATION-FK-FR
 hardcoded YARD_FALLBACK, unchanged by TEL-42 -- that PR added the route/service, it did
 not repoint the wizard's own call to it; its own TODO(TEL-42) comment already names this,
 Cursor's lane. | NEXT await lead
+
+CC-2 | LCB-REG DONE | a8ae0e4605 | verify-load-costs-page-registers --selftest 10/10 (live
+PASS: real fetchers wired, 0 raw notes, 0 new hex) | Dispatch -> Load costs page: Broker
+advances (GET /api/v1/accounting/broker-advances, already built) and Documents (new GET
+/api/v1/accounting/load-costs-board/documents, UNIONs docs.files' two load-link mechanisms
++ documents.attachments -- live-verified 414 real rows for USMCA, 0 overlap between the
+two docs.files paths before relying on UNION ALL) went from a static note each to real
+registers. Driver pay: found and fixed a silent bug -- listDriverBills() returns {
+driver_bills }, this page read .rows, so the register was ALWAYS empty regardless of real
+data; now shows the SET-RATE loaded-mi-x-rate / empty-mi-x-rate / gross breakdown per bill
+(LoadDetailCostsTab.tsx's own display convention). Fuel advances: merged in the OTHER real
+fuel-advance kind (company fuel-advance expenses, driver_id set, category =
+company_fuel_advance_expense CoA role -- LoadDetailCostsTab.tsx's own write path) alongside
+cash advances, each row labelled which kind it is. Also fixed a real race caught in a live
+test run (not by inspection): the first cut baked the load-number lookup into each
+register's own queryFn closure -- since the board query and a register's own query resolve
+independently, whichever settled first froze its snapshot forever, so a fast register could
+show blank/UUID load cells even after the board's own data arrived a moment later; moved to
+the "Load" column's own render (loadCell(loadsById)), evaluated fresh every render. Also
+fixed the task's own named stale guard: scripts/verify-load-costs-on-time-requires-
+appointment.mjs was throwing on every run against ALREADY-CORRECT code (STEP-1.3a's
+Booked/In-transit split, an unrelated earlier PR, changed the branch's shape; the guard's
+regex still expected the old single-line form) -- rewritten to assert the real invariant
+(a not-yet-delivered load can never render On Time/Late) instead of a literal string match.
+New apps/frontend/src/pages/accounting/LoadCostsBoardPage.registers.test.tsx (4/4, renders
+the real page against mocked APIs). | NEXT await lead
