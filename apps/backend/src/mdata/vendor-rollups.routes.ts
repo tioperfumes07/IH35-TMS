@@ -66,6 +66,18 @@ export async function registerVendorRollupsRoutes(app: FastifyInstance) {
           // Backward-compatible: purchases_ytd_cents / purchases_total_cents / last_purchase_date /
           // expense_count keep their EXPENSES-only meaning for existing consumers; spend_* and
           // open_balance_cents are additive.
+          //
+          // VENDOR-BALANCE-TRUTH (owner order 2026-09-06, ROUND 14, inventory #15): open_balance_cents
+          // used to be derived HERE, independently, as a bare not-equal-to-paid status denylist (that would
+          // wrongly count a status='void' bill as "open" -- it checked b.voided_at but never
+          // b.revoked_at, the canonical bill-void marker per accounting/bills.service.ts's own
+          // voidBill/voidBillPayment) -- a SECOND, drift-prone open-balance computation alongside
+          // the canonical accounting.vendor_balances VIEW (which the Vendors list's split-pane
+          // detail panel already reads via listVendorBalances/GET /api/v1/accounting/vendor-balances,
+          // and which correctly uses an explicit open-status allowlist + excludes revoked_at). Two
+          // sources of truth for the same number is exactly the class of bug the owner flagged.
+          // Fixed by reading open_balance_cents FROM the canonical VIEW instead of re-deriving it --
+          // one read model, not two that can silently disagree the moment a void/revoked bill exists.
           return client.query(
             `WITH exp AS (
                SELECT e.vendor_uuid::text AS vid,
@@ -85,8 +97,7 @@ export async function registerVendorRollupsRoutes(app: FastifyInstance) {
                  SUM(b.amount_cents) AS total,
                  SUM(b.amount_cents) FILTER (WHERE b.bill_date >= $2::date) AS ytd,
                  SUM(b.amount_cents) FILTER (WHERE b.bill_date >= date_trunc('month', now())::date) AS mtd,
-                 MAX(b.bill_date) AS last_d,
-                 SUM(b.amount_cents - COALESCE(b.paid_cents, 0)) FILTER (WHERE b.status <> 'paid') AS open_cents
+                 MAX(b.bill_date) AS last_d
                FROM accounting.bills b
                WHERE b.operating_company_id = $1::uuid
                  AND b.voided_at IS NULL
@@ -103,9 +114,12 @@ export async function registerVendorRollupsRoutes(app: FastifyInstance) {
                (COALESCE(exp.ytd, 0) + COALESCE(bil.ytd, 0))::bigint AS spend_ytd_cents,
                (COALESCE(exp.mtd, 0) + COALESCE(bil.mtd, 0))::bigint AS spend_mtd_cents,
                GREATEST(exp.last_d, bil.last_d) AS last_activity_date,
-               COALESCE(bil.open_cents, 0)::bigint AS open_balance_cents
+               COALESCE(vb.balance_cents, 0)::bigint AS open_balance_cents
              FROM exp
-             FULL OUTER JOIN bil ON exp.vid = bil.vid`,
+             FULL OUTER JOIN bil ON exp.vid = bil.vid
+             LEFT JOIN accounting.vendor_balances vb
+               ON vb.operating_company_id = $1::uuid
+              AND vb.vendor_id = COALESCE(exp.vid, bil.vid)`,
             [resolvedOperatingCompanyId, yearStart]
           );
         });
