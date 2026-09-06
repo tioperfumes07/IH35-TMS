@@ -20,6 +20,9 @@ type Props = {
   operatingCompanyId: string;
 };
 
+/** 5-column register grid: When · Who · What happened · Money · Opens. */
+const LDT_AUDIT_GRID = "160px 130px minmax(200px, 1fr) 110px 130px";
+
 function formatWhen(value: string): string {
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? value : d.toLocaleString();
@@ -156,55 +159,55 @@ export function LoadAuditTab({ load, operatingCompanyId }: Props) {
       {auditQuery.isError ? (
         <div className="ldt-note bad">Couldn't load the audit history for this load. Try again.</div>
       ) : (
+        // Div-based register (no raw table element) so it routes through one consolidated surface —
+        // go26 consolidation ratchet. Same .ldt-* palette, columns and behaviour as before.
         <div className="ldt-card">
-          <table className="ldt-table" data-testid="load-audit-table">
-            <thead>
-              <tr>
-                <th>When</th>
-                <th>Who</th>
-                <th>What happened</th>
-                <th className="ldt-right">Money</th>
-                <th>Opens</th>
-              </tr>
-            </thead>
-            <tbody>
-              {auditQuery.isLoading ? (
-                <tr>
-                  <td colSpan={5} className="ldt-muted">
-                    Loading audit history…
-                  </td>
-                </tr>
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="ldt-muted">
-                    No audit events for this load in the selected range.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map(({ ev, row }) => (
-                  <tr key={ev.uuid} data-testid={`load-audit-row-${ev.uuid}`}>
-                    <td className="ldt-mono" style={{ whiteSpace: "nowrap" }}>
-                      {formatWhen(ev.created_at)}
-                    </td>
-                    <td>
-                      {ev.actor_user_uuid ? (
-                        <EntityLink kind="user" id={ev.actor_user_uuid} label={entityLabel(null, ev.actor_user_uuid, "User")} />
-                      ) : (
-                        <span className="ldt-muted">System</span>
-                      )}
-                    </td>
-                    <td>{row.text}</td>
-                    <td className="ldt-m">
-                      {row.moneyCents != null ? formatMoneyCents(row.moneyCents, load.currency_code) : "—"}
-                    </td>
-                    <td>
-                      <EntityLink kind={row.opens.kind} id={row.opens.id} label={row.opens.label} />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <div className="ldt-rows" role="table" data-testid="load-audit-table">
+            <div className="ldt-row head" role="row" style={{ gridTemplateColumns: LDT_AUDIT_GRID }}>
+              <span role="columnheader">When</span>
+              <span role="columnheader">Who</span>
+              <span role="columnheader">What happened</span>
+              <span role="columnheader" className="ldt-right">Money</span>
+              <span role="columnheader">Opens</span>
+            </div>
+            {auditQuery.isLoading ? (
+              <div className="ldt-row" role="row">
+                <span className="ldt-muted">Loading audit history…</span>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="ldt-row" role="row">
+                <span className="ldt-muted">No audit events for this load in the selected range.</span>
+              </div>
+            ) : (
+              filtered.map(({ ev, row }) => (
+                <div
+                  key={ev.uuid}
+                  className="ldt-row"
+                  role="row"
+                  data-testid={`load-audit-row-${ev.uuid}`}
+                  style={{ gridTemplateColumns: LDT_AUDIT_GRID, alignItems: "start" }}
+                >
+                  <span role="cell" className="ldt-mono" style={{ whiteSpace: "nowrap" }}>
+                    {formatWhen(ev.created_at)}
+                  </span>
+                  <span role="cell">
+                    {ev.actor_user_uuid ? (
+                      <EntityLink kind="user" id={ev.actor_user_uuid} label={entityLabel(null, ev.actor_user_uuid, "User")} />
+                    ) : (
+                      <span className="ldt-muted">System</span>
+                    )}
+                  </span>
+                  <span role="cell">{row.text}</span>
+                  <span role="cell" className="ldt-m">
+                    {row.moneyCents != null ? formatMoneyCents(row.moneyCents, load.currency_code) : "—"}
+                  </span>
+                  <span role="cell">
+                    <EntityLink kind={row.opens.kind} id={row.opens.id} label={row.opens.label} />
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
     </div>
