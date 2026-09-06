@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { listSettlementDeductions } from "../../api/driverFinance";
 import { Button } from "../../components/Button";
@@ -15,6 +15,7 @@ import { colors } from "../../design/tokens";
 import { formatUsdCents } from "../../lib/money";
 import { entityLabel } from "../../lib/entity-label";
 import { CappedListNotice } from "../../components/CappedListNotice";
+import { CreateSettlementDeductionDrawer } from "./components/CreateSettlementDeductionDrawer";
 
 const EMPTY_FILTERS = { driverId: "" };
 
@@ -29,6 +30,8 @@ const EMPTY_FILTERS = { driverId: "" };
  */
 export function PendingSettlementDeductionsPanel() {
   const { selectedCompanyId } = useCompanyContext();
+  const queryClient = useQueryClient();
+  const [createOpen, setCreateOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   // LST-F5187 — EntityPicker must write ?driver_id= (not local-only filter state).
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
@@ -93,6 +96,13 @@ export function PendingSettlementDeductionsPanel() {
   return (
     <div data-testid="drivers-pending-settlement-deductions">
       <DataPanel title="Pending settlement deductions" accentColor={colors.crit.strong}>
+        <div className="mb-2 flex justify-end px-2">
+          {/* SETL-DED-UI — the deduction creator: type limited to the four typed, GL-bound kinds
+              (SETL-DED-GL), no "other". */}
+          <Button type="button" size="sm" data-testid="settlement-deductions-add" onClick={() => setCreateOpen(true)}>
+            + Add deduction
+          </Button>
+        </div>
         <div className="relative mb-2 flex flex-wrap items-end gap-2 px-2" data-testid="settlement-deductions-filters">
           <label className="text-[11px] text-slate-600">
             Driver
@@ -187,6 +197,12 @@ export function PendingSettlementDeductionsPanel() {
           className="px-2 py-1 text-xs text-slate-600"
         />
       </DataPanel>
+      <CreateSettlementDeductionDrawer
+        open={createOpen}
+        operatingCompanyId={selectedCompanyId}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => void queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-deductions"] })}
+      />
     </div>
   );
 }

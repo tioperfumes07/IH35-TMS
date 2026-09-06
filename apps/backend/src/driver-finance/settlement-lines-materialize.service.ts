@@ -235,14 +235,16 @@ export async function materializeSettlementLines(
     //     (resolveDriverEscrowLiabilityAccount) — explicitly NOT bucketRecoveryRoleKey's generic
     //     'escrow_contribution_recovery' guess.
     //   wire_fee / ach_fee -> a dedicated 'bank_fee_recovery' role (6300 Bank Service Charges & Wire
-    //     Fees) is the semantically correct target, but that role does not exist in
-    //     chart_of_accounts_roles' DB-level CHECK constraint yet and CC-3 has NO migration lane
-    //     (standing law) — the existing 'factor_wire_fee' role already bound to 6300 is NOT reused
-    //     here because it is a LIVE, actively-posted Faro-factoring role (poster.service.ts) and
-    //     commingling an unrelated driver-fee recovery into it would corrupt factoring reconciliation.
-    //     Correctly stays unresolved/pending with an honest reason (LAW: never a guessed account)
-    //     until a seat with migration authority adds the role. Filed to the board, not silently worked
-    //     around.
+    //     Fees) is the semantically correct target — the existing 'factor_wire_fee' role already
+    //     bound to 6300 is NOT reused here because it is a LIVE, actively-posted Faro-factoring role
+    //     (poster.service.ts) and commingling an unrelated driver-fee recovery into it would corrupt
+    //     factoring reconciliation. 'bank_fee_recovery' is a real CoaRole (resolver.service.ts) but,
+    //     as of this writing, NOT yet admitted by chart_of_accounts_roles' DB-level CHECK constraint
+    //     — CC-3 has no migration lane (standing law); a ready-to-apply draft migration + seed live
+    //     in docs/audit/migration-drafts/BANK-FEE-RECOVERY-*.sql for a migration-lane seat. This
+    //     branch already resolves it BY ROLE like every other typed kind (isCoaRole + resolveRole
+    //     AccountOptional) — it correctly returns null/pending today (never a guessed account) and
+    //     needs ZERO further code change the moment the migration lands and the role is bound.
     // Any OTHER/legacy deduction_type (including the grandfathered pre-existing 'other' rows) keeps
     // the original bucketRecoveryRoleKey fallback.
     let roleKey = bucketRecoveryRoleKey(d.deduction_type);
@@ -250,8 +252,8 @@ export async function materializeSettlementLines(
     let unresolvedReason: string | undefined;
     if (d.deduction_type === "wire_fee" || d.deduction_type === "ach_fee") {
       roleKey = "bank_fee_recovery";
-      postingAccountId = null;
-      unresolvedReason = `role 'bank_fee_recovery' is not yet admitted by chart_of_accounts_roles' CHECK constraint — needs a migration CC-3 has no lane for (deduction_type '${d.deduction_type}'); filed to the board`;
+      postingAccountId = isCoaRole(roleKey) ? await resolveRoleAccountOptional(client, input.operatingCompanyId, roleKey) : null;
+      if (!postingAccountId) unresolvedReason = `no COA role account bound for role 'bank_fee_recovery' (deduction_type '${d.deduction_type}') — needs a migration to admit the role into chart_of_accounts_roles' CHECK constraint; see docs/audit/migration-drafts/BANK-FEE-RECOVERY-*.sql`;
     } else if (d.deduction_type === "company_vehicle_fuel") {
       roleKey = "company_fuel_advance_expense";
       postingAccountId = isCoaRole(roleKey) ? await resolveRoleAccountOptional(client, input.operatingCompanyId, roleKey) : null;
