@@ -11,6 +11,12 @@
 //   2. tiles are 93px tall on the reference surface (#F4F7FA) + rule (#C7D2DC)
 //   3. all six current labels are present
 //   4. the detail page mounts the grid fed from the shared tour-readout (never a second, drifting source)
+//   5. SETL-KPI-CENTS-01 (2026-09-06, found live via S-13648 Chrome proof): reimbursementCents/
+//      deductionCents/driverPayCents' legacy fallback convert their DOLLAR-denominated source
+//      (`summary.*`) to true cents (`Math.round(... * 100)`) before handing them to a `...Cents` prop —
+//      the exact bug was `reimbursementCents={summary.reimbTotal}` (dollars fed raw into a cents-typed
+//      prop, rendering a real $161.00 as $1.61 on screen); and deductionBreakdown's per-line text uses
+//      formatUsd (dollars), never formatUsdCents, on the same dollar-denominated `this_period_amount`.
 // It asserts NO posting/GL path — this is a read-only summary of already-computed settlement totals.
 import { readFileSync } from "node:fs";
 
@@ -38,6 +44,13 @@ function verify(grid, page) {
   if (!/revenueCents=\{readout\?\.company_settlement\?\.revenue_cents/.test(page)) f.push("page-revenue");
   if (!/companyMarginCents=\{readout\?\.company_settlement\?\.margin_cents/.test(page)) f.push("page-margin");
   if (!/netPayCents=\{kpi\.netPayCents\}/.test(page)) f.push("page-net");
+  // 5 — SETL-KPI-CENTS-01: dollar-denominated legacy totals must be converted to cents before feeding
+  // a `...Cents` prop. Bare `summary.reimbTotal` / `summary.deductionTotal` (no `* 100`) is the exact
+  // regression that rendered $161.00 as $1.61 live on S-13648.
+  if (!/reimbursementCents=\{Math\.round\(summary\.reimbTotal \* 100\)\}/.test(page)) f.push("page-reimb-cents-conversion");
+  if (!/deductionCents=\{Math\.round\(summary\.deductionTotal \* 100\)\}/.test(page)) f.push("page-deduction-cents-conversion");
+  if (!/formatUsd\(d\.this_period_amount\)/.test(page)) f.push("page-deduction-breakdown-dollars");
+  if (/formatUsdCents\(d\.this_period_amount\)/.test(page)) f.push("page-deduction-breakdown-double-cents");
   return f;
 }
 
@@ -57,6 +70,9 @@ if (process.argv.includes("--selftest")) {
     [grid, page.replace('netPayCents={kpi.netPayCents}', 'netPayCents={0}')],
     [grid, page.replace('revenueCents={readout?.company_settlement?.revenue_cents', 'revenueCents={0} //readout?.company_settlement?.revenue_cents')],
     [grid, page.replace('companyMarginCents={readout?.company_settlement?.margin_cents', 'companyMarginCents={0} //readout?.company_settlement?.margin_cents')],
+    [grid, page.replace('reimbursementCents={Math.round(summary.reimbTotal * 100)}', 'reimbursementCents={summary.reimbTotal}')],
+    [grid, page.replace('deductionCents={Math.round(summary.deductionTotal * 100)}', 'deductionCents={summary.deductionTotal}')],
+    [grid, page.replace('formatUsd(d.this_period_amount)', 'formatUsdCents(d.this_period_amount)')],
   ];
   for (const [g, p] of mutations) {
     if (g === grid && p === page) fail("a selftest mutation did not change the source — the check is stale");

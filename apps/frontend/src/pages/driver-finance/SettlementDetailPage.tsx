@@ -22,7 +22,7 @@ import {
   type SettlementDisputeCategory,
   type OpenDriverBill,
 } from "../../api/driverFinance";
-import { formatUsdCents } from "../../lib/money";
+import { formatUsd, formatUsdCents } from "../../lib/money";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { openCanonicalDocument, openPrintableDocument } from "../../lib/openPrintableDocument";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -387,6 +387,16 @@ export function SettlementDetailPage() {
   // Miles/rate come from the S.1 driver_bills join already mapped onto earnings/deadhead above; rate is the
   // per-mile rate actually paid (first line with a non-zero rate — never a hardcoded default). Net = loaded +
   // empty + additional + reimbursements − deductions (all cents), matching the reference's Net pay tile.
+  //
+  // SETL-KPI-CENTS-01 (found live via S-13648 Chrome proof, 2026-09-06): `earnings`/`deadhead`/`extra`/
+  // `reimbursements`/`deductions` rows carry DOLLAR amounts (same convention the legacy NetPaySummary
+  // widget below renders directly, no /100 math) — NOT cents, despite every other tile on this grid
+  // (revenueCents/driverPayCents/companyMarginCents) sourcing true cents from `readout.*_cents`. Feeding
+  // a dollar sum into a `...Cents`-typed prop that SettlementKpiGrid's Tile formats via `formatUsdCents`
+  // (÷100) silently shows the driver's money at 1% of its real value (e.g. $161.00 rendered "$1.61").
+  // Fix: convert to true cents here, at the single point this useMemo already centralizes those sums,
+  // so every consumer of `kpi.netPayCents` / `kpi.deductionBreakdown` gets a real cents value, matching
+  // the contract its own name and the JSDoc above already claimed ("all cents") but never delivered.
   const kpi = useMemo(() => {
     // SET-RATE — miles/rate are now `undefined` (not a fake 0) for a leg with no telematics miles
     // captured; the KPI aggregate still sums only the known legs (an unknown leg contributes 0 to
@@ -395,11 +405,13 @@ export function SettlementDetailPage() {
     const loadedRate = earnings.find((r) => (r.rate ?? 0) > 0)?.rate ?? 0;
     const emptyMiles = deadhead.reduce((s, r) => s + (r.miles ?? 0), 0);
     const emptyRate = deadhead.find((r) => (r.rate ?? 0) > 0)?.rate ?? loadedRate;
+    // this_period_amount is DOLLARS (see SETL-KPI-CENTS-01 above) — formatUsd, never formatUsdCents.
     const deductionBreakdown = deductions
-      .map((d) => `${d.description} ${formatUsdCents(d.this_period_amount)}`)
+      .map((d) => `${d.description} ${formatUsd(d.this_period_amount)}`)
       .join(" · ");
-    const netPayCents =
+    const netPayDollars =
       summary.earningsTotal + summary.deadheadTotal + summary.extraTotal + summary.reimbTotal - summary.deductionTotal;
+    const netPayCents = Math.round(netPayDollars * 100);
     return { loadedMiles, loadedRate, emptyMiles, emptyRate, deductionBreakdown, netPayCents };
   }, [earnings, deadhead, deductions, summary]);
 
@@ -582,11 +594,11 @@ export function SettlementDetailPage() {
       <SettlementKpiGrid
         revenueCents={readout?.company_settlement?.revenue_cents ?? 0}
         revenueSub={`${readout?.legs.length ?? 0} load${(readout?.legs.length ?? 0) === 1 ? "" : "s"}`}
-        driverPayCents={readout?.driver_settlement?.gross_cents ?? summary.earningsTotal + summary.deadheadTotal}
+        driverPayCents={readout?.driver_settlement?.gross_cents ?? Math.round((summary.earningsTotal + summary.deadheadTotal) * 100)}
         driverPaySub={`${kpi.loadedMiles.toLocaleString("en-US", { maximumFractionDigits: 0 })} mi loaded`}
-        reimbursementCents={summary.reimbTotal}
+        reimbursementCents={Math.round(summary.reimbTotal * 100)}
         reimbursementLines={reimbursements.length}
-        deductionCents={summary.deductionTotal}
+        deductionCents={Math.round(summary.deductionTotal * 100)}
         deductionBreakdown={kpi.deductionBreakdown}
         netPayCents={kpi.netPayCents}
         companyMarginCents={readout?.company_settlement?.margin_cents ?? 0}
