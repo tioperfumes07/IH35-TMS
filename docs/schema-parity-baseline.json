@@ -330,7 +330,8 @@
       "operating_company_id",
       "original_due_date",
       "projected_due_date",
-      "reason_id"
+      "reason_id",
+      "seq"
     ],
     "accounting.cash_forecast_settings": [
       "fuel_estimate_weekly_cents",
