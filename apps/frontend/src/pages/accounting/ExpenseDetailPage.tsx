@@ -1,4 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
+import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
 import { formatDateUS } from "../../lib/formatDate";
 import { humanMemo } from "./ManualJEListPage";
 import { Link, useParams } from "react-router-dom";
@@ -253,6 +254,11 @@ export function ExpenseDetailPage() {
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Expense #</span>
           <span className="text-xs text-gray-900">{expenseListLabel(expense.expense_number)}</span>
+        </DataPanelRow>
+        {/* LDT-1 (2026-09-06): receipt on EVERY expense editor — documents.attachments entity_type 'expense'. */}
+        <DataPanelRow>
+          <span className="text-xs font-semibold text-gray-600">Receipt</span>
+          <ReceiptAttach operatingCompanyId={selectedCompanyId!} entityType="expense" entityId={expense.id} readOnly={Boolean(expense.voided_at)} testId="expense-detail-receipt" />
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Date</span>

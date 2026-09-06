@@ -277,6 +277,10 @@ type BillRow = {
   // matched directly — 'bill' is not a valid ledger_entry_kind (see 202607011600 migration
   // comment); reconciliation happens at the bill_payment level, so this rolls that up to the bill.
   is_reconciled: boolean;
+  /** LDT-1 (additive): category account + receipt count for the Load Costs cards. */
+  coa_account_number?: string | null;
+  coa_account_name?: string | null;
+  attachment_count?: number | null;
 };
 
 type BillPaymentRow = {
@@ -990,9 +994,22 @@ export async function listBillsByVendor(
                ${BILL_JOURNAL_ENTRY_DATE_SQL} AS journal_entry_date,
                ${BILL_JOURNAL_ENTRY_MEMO_SQL} AS journal_entry_memo,
                wo.display_id AS linked_work_order_display_id,
-               claim.claim_number AS insurance_claim_number
+               claim.claim_number AS insurance_claim_number,
+               -- LDT-1 (2026-09-06, lead): Load Costs cards read the bill's category account and receipt
+               -- count from the same list row. Additive, nullable.
+               coa.account_number AS coa_account_number,
+               coa.account_name AS coa_account_name,
+               (
+                 SELECT COUNT(*)::int
+                 FROM documents.attachments att
+                 WHERE att.operating_company_id = b.operating_company_id
+                   AND att.entity_type = 'bill'
+                   AND att.entity_id = b.id
+                   AND att.is_deleted = false
+               ) AS attachment_count
         FROM accounting.bills b
         ${BILL_VENDOR_RESOLVE_JOIN_SQL}
+        LEFT JOIN catalogs.accounts coa ON coa.id = b.coa_account_id AND coa.operating_company_id = b.operating_company_id
         LEFT JOIN maintenance.work_orders wo
           ON wo.id = b.linked_work_order_uuid
          AND wo.operating_company_id = b.operating_company_id
@@ -1090,9 +1107,22 @@ export async function listAllBillsForCompany(
                ${BILL_JOURNAL_ENTRY_DATE_SQL} AS journal_entry_date,
                ${BILL_JOURNAL_ENTRY_MEMO_SQL} AS journal_entry_memo,
                wo.display_id AS linked_work_order_display_id,
-               claim.claim_number AS insurance_claim_number
+               claim.claim_number AS insurance_claim_number,
+               -- LDT-1 (2026-09-06, lead): Load Costs cards read the bill's category account and receipt
+               -- count from the same list row. Additive, nullable.
+               coa.account_number AS coa_account_number,
+               coa.account_name AS coa_account_name,
+               (
+                 SELECT COUNT(*)::int
+                 FROM documents.attachments att
+                 WHERE att.operating_company_id = b.operating_company_id
+                   AND att.entity_type = 'bill'
+                   AND att.entity_id = b.id
+                   AND att.is_deleted = false
+               ) AS attachment_count
         FROM accounting.bills b
         ${BILL_VENDOR_RESOLVE_JOIN_SQL}
+        LEFT JOIN catalogs.accounts coa ON coa.id = b.coa_account_id AND coa.operating_company_id = b.operating_company_id
         LEFT JOIN maintenance.work_orders wo
           ON wo.id = b.linked_work_order_uuid
          AND wo.operating_company_id = b.operating_company_id

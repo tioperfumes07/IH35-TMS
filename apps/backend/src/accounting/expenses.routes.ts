@@ -391,9 +391,32 @@ export async function queryExpensesList(
             AND rm.match_state IN ('auto_matched', 'user_matched')
         )                                            AS is_reconciled,
         ${EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL}   AS matched_bank_transaction_id,
-        ${EXPENSE_MATCHED_BANK_TRANSACTION_LABEL_SQL} AS matched_bank_transaction_description
+        ${EXPENSE_MATCHED_BANK_TRANSACTION_LABEL_SQL} AS matched_bank_transaction_description,
+        -- LDT-1 (2026-09-06, lead): the Load Costs cards render Paid-with, Category and the receipt count
+        -- straight from this list — no second read path. Additive columns, nullable, no filter change.
+        pa.account_number                            AS payment_account_number,
+        pa.account_name                              AS payment_account_name,
+        ca.account_number                            AS category_account_number,
+        ca.account_name                              AS category_account_name,
+        (
+          SELECT COUNT(*)::int
+          FROM documents.attachments att
+          WHERE att.operating_company_id = e.operating_company_id
+            AND att.entity_type = 'expense'
+            AND att.entity_id = e.id
+            AND att.is_deleted = false
+        )                                            AS attachment_count
       FROM accounting.expenses e
       LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
+      LEFT JOIN catalogs.accounts pa ON pa.id = e.payment_account_uuid AND pa.operating_company_id = e.operating_company_id
+      LEFT JOIN LATERAL (
+        SELECT acc.account_number, acc.account_name
+        FROM accounting.expense_lines el
+        JOIN catalogs.accounts acc ON acc.id = el.expense_account_uuid
+        WHERE el.expense_id = e.id
+        ORDER BY el.line_sequence ASC
+        LIMIT 1
+      ) ca ON true
       LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid AND dr.operating_company_id = e.operating_company_id
       LEFT JOIN mdata.loads l ON l.id = e.load_id AND l.operating_company_id = e.operating_company_id
       LEFT JOIN mdata.equipment tr ON tr.id = e.trailer_id

@@ -614,6 +614,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
             : "fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[600px]"
         }
         data-testid="load-detail-drawer"
+        data-surface="load-detail"
         data-drawer-tab={activeTab}
         data-load-id={loadId}
         role="dialog"

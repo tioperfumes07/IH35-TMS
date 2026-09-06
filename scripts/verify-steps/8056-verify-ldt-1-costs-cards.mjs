@@ -1,12 +1,7 @@
-#!/usr/bin/env node
-// Verify-step 8056 — LDT-1 Costs cards + receipt on every creator + Paid-with bank/card-only fix.
-// Cursor lane (even band). Claimed on origin/main in CLAIMED-NUMBERS.json before authoring (Rule 37).
-import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-
-const guard = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "verify-ldt-1-costs-cards.mjs");
-for (const args of [[guard], [guard, "--selftest"]]) {
-  const r = spawnSync(process.execPath, args, { stdio: "inherit" });
-  if (r.status !== 0) process.exit(r.status ?? 1);
-}
+export default {
+  name: "verify:ldt-1-costs-cards",
+  run(ctx) {
+    ctx.run("node", ["scripts/verify-ldt-1-costs-cards.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-ldt-1-costs-cards.mjs"]);
+  },
+};
