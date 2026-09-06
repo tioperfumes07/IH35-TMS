@@ -1,3 +1,5 @@
+// TABLE_DATE_OMIT: this table has no date column by design (not a time-series view).
+
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
