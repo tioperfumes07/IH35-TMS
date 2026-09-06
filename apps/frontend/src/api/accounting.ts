@@ -969,6 +969,28 @@ export function listDriverBills(operatingCompanyId: string, params: { include_vo
   );
 }
 
+export type BillRegisterRow =
+  | { bill_type: "vendor_bill"; bill: VendorBill }
+  | { bill_type: "driver_bill"; bill: DriverBillListRow };
+
+export type BillRegisterResponse = {
+  rows: BillRegisterRow[];
+  totals: Record<"vendor_bill" | "driver_bill", { count: number; amount_cents: number }>;
+};
+
+export function listBillRegister(
+  operatingCompanyId: string,
+  params: Parameters<typeof listBills>[1] & { bill_type?: "all" | "vendor_bill" | "driver_bill" } = {}
+) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== "") query.set(key, String(value));
+  }
+  return apiRequest<BillRegisterResponse>(
+    withCompany(`/api/v1/accounting/bills/register?${query.toString()}`, operatingCompanyId)
+  );
+}
+
 export function listBillPayments(
   operatingCompanyId: string,
   params: {
