@@ -569,6 +569,8 @@ export function DispatchBoard({
     refetchInterval: 60_000,
   });
   const inShopUnits = inShopUnitsQuery.isError ? [] : (inShopUnitsQuery.data ?? []);
+  // DispatchInShopUnit's real key is unit_id (api/dispatch.ts) — .id never existed on this type;
+  // this line only typechecked before because a prior tsc pass didn't reach it.
   const inShopUnitIds = useMemo(() => new Set(inShopUnits.map((unit) => unit.unit_id)), [inShopUnits]);
 
   const triSignalsQuery = useQuery({
