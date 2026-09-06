@@ -16,6 +16,8 @@ function audit(files) {
   if (!service.includes("'deadhead_to_pickup'::text AS segment_kind") || !service.includes("'loaded'")) failures.push("yard-to-pickup empty and pickup-to-delivery loaded legs missing");
   if (!service.includes("end_odo.odometer_mi >= start_odo.odometer_mi")) failures.push("non-monotonic odometers must fail closed");
   if (!service.includes("yard_exit_id AS start_event_id") || !service.includes("pickup_exit_id, delivery_enter_id")) failures.push("segment derivation must retain both immutable event boundaries");
+  if (!service.includes("ge.occurred_at BETWEEN lc.pickup_window_at - interval '24 hours'") || !service.includes("lc.delivery_window_at + interval '24 hours'")) failures.push("yard event must be bounded by the assigned load stop window");
+  if (!service.includes("competing_load.assigned_unit_id = lc.unit_id") || !service.includes("competing_load.id <> lc.load_id")) failures.push("yard event must resolve deterministically to the closest assigned-unit load");
   if ((service.match(/vl\.odometer_mi IS NOT NULL/g) ?? []).length < 2) failures.push("estimated/partial segment row is not writer-blocked");
   if (service.includes("COALESCE(start_odo.odometer_mi") || service.includes("COALESCE(end_odo.odometer_mi")) failures.push("estimated odometer fallback is forbidden");
   if (!files[CRON].includes('cron.schedule("*/15 * * * *"') || !files[INDEX].includes("initializeRealDrivenMilesSegmentsCron(app)")) failures.push("15-minute materializer is not mounted");
@@ -40,6 +42,7 @@ if (process.argv.includes("--selftest")) {
     { file: SERVICE, from: "end_odo.odometer_mi >= start_odo.odometer_mi", to: "true" },
     { file: SERVICE, from: "vl.odometer_mi IS NOT NULL", to: "COALESCE(vl.odometer_mi, 0) IS NOT NULL" },
     { file: SERVICE, from: "yard_exit_id AS start_event_id", to: "NULL::uuid AS start_event_id" },
+    { file: SERVICE, from: "competing_load.assigned_unit_id = lc.unit_id", to: "competing_load.assigned_unit_id IS NOT NULL" },
     { file: CRON, from: 'cron.schedule("*/15 * * * *"', to: 'cron.schedule("0 * * * *"' },
     { file: TOUR, from: "materializeRealDrivenMilesSegments(client", to: "removedMaterializer(client" },
   ];

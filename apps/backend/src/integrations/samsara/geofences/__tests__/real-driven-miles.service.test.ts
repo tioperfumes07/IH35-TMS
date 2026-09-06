@@ -31,6 +31,9 @@ describe("Samsara real driven miles per load leg", () => {
     const insert = writes.find((q) => q.sql.includes("INSERT INTO telematics.load_odometer_segments"));
     expect(insert?.sql).toContain("yard_exit_id AS start_event_id");
     expect(insert?.sql).toContain("pickup_exit_id, delivery_enter_id");
+    expect(insert?.sql).toContain("ge.occurred_at BETWEEN lc.pickup_window_at - interval '24 hours'");
+    expect(insert?.sql).toContain("competing_load.assigned_unit_id = lc.unit_id");
+    expect(insert?.sql).toContain("competing_load.id <> lc.load_id");
     expect(insert?.sql.match(/interval '10 minutes'/g)).toHaveLength(4);
   });
 
