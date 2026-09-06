@@ -5852,6 +5852,21 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-parity-expand-toggle-box (B1 EXPAND-BOX, owner CONSOLIDATED 2026-09-06 item 4: ParityTable expand-toggle 24x24/glyph 12px/no border -> 28x28/1px var(--ldt-rule) border/radius 4/glyph 16px/hover var(--ldt-accent-soft)/aria-expanded, one shared component so every register gets it)"
   },
+  "10517": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-invoice-issue-date-from-load (INV-03, owner CONSOLIDATED 2026-09-06 18:30Z item 1: POST /api/v1/accounting/invoices fell back to companyBusinessDate() for issue_date even when created from a real load -- now derives issue_date from the load's real pickup-stop date, today only when there is no source load)"
+  },
+  "10521": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-invoice-due-date-from-terms (INV-06, owner CONSOLIDATED item 3: audited backfill of the 39+ sent invoices whose due_date was stamped from the mint moment instead of invoice_date + customer terms, through the real recomputeInvoiceDatesFromDelivery service, never raw UPDATE)"
+  },
+  "10525": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-expense-number-never-null (INV-13, owner CONSOLIDATED item 5: no expense-mint path, including cash-advances/lumper-cash-advance-split.ts, may write a NULL expense_number on any USMCA expense)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
