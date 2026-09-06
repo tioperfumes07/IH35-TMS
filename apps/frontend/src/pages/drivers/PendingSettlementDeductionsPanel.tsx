@@ -96,7 +96,23 @@ export function PendingSettlementDeductionsPanel() {
   const deductionColumns = useMemo<Array<ParityColumn<SettlementDeductionListRow>>>(() => [
     { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> },
     { key: "deduction_type", label: "Type", sortable: true },
-    { key: "reason", label: "Reason", sortable: true, render: (row) => row.reason?.trim() || "—" },
+    {
+      key: "reason",
+      label: "Reason",
+      sortable: true,
+      // SET-24 GL ROUTING: a 'reimbursement_reversal' row's real story — which expense account it
+      // credits and which voided reimbursement it reverses — is not something an operator can see
+      // from the generic reason text, so it gets an explicit label instead of the raw reason.
+      render: (row) =>
+        row.deduction_type === "reimbursement_reversal" ? (
+          <span>
+            Reimbursement reversal · reverses {row.reimbursement_reversal_expense_account ?? "—"} · voided{" "}
+            {row.reversed_reimbursement_id ? <EntityLink kind="driver_reimbursement" id={row.reversed_reimbursement_id} label={row.reversed_reimbursement_id.slice(0, 8)} /> : "—"}
+          </span>
+        ) : (
+          row.reason?.trim() || "—"
+        ),
+    },
     { key: "load_number", label: "Load", sortable: true, render: (row) => row.load_id ? <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} /> : "—" },
     { key: "applied_to_settlement_display_id", label: "Settlement", sortable: true, render: (row) => row.applied_to_settlement_id ? <EntityLink kind="settlement" id={row.applied_to_settlement_id} label={entityLabel(row.applied_to_settlement_display_id, row.applied_to_settlement_id, "Settlement")} /> : "—" },
     { key: "status", label: "Status", sortable: true, render: (row) => <StatusBadge status={row.status} /> },

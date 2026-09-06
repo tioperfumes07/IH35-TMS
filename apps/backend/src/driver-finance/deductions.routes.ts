@@ -7,6 +7,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { DeductionVoidError, voidSettlementDeduction } from "./settlement-deduction-void.service.js";
 import { createSettlementDeduction } from "./deductions.service.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
+import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 
 const deductionIdParamsSchema = z.object({ id: z.string().uuid() });
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
@@ -123,6 +124,7 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
               l.load_number                     AS load_number,
               d.applied_to_settlement_id::text  AS applied_to_settlement_id,
               s.display_id                      AS applied_to_settlement_display_id,
+              d.reversed_reimbursement_id::text AS reversed_reimbursement_id,
               d.created_at::text                AS created_at
             FROM driver_finance.driver_settlement_deductions d
             LEFT JOIN mdata.drivers dr
@@ -140,7 +142,30 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
           `,
           values
         );
-        return res.rows;
+
+        // SET-24 GL ROUTING: 'reimbursement_reversal' rows credit the SAME reimbursement_expense
+        // role account every real reimbursement does (bucketRecoveryRoleKey) — resolve it ONCE per
+        // request (company-wide role, not per-row) and attach its display name so the UI can show
+        // "reverses <expense account>" without guessing or re-deriving GL logic client-side.
+        let reimbursementExpenseAccountLabel: string | null = null;
+        if (res.rows.some((r: { deduction_type?: string }) => r.deduction_type === "reimbursement_reversal")) {
+          const acctId = await resolveRoleAccountOptional(client, operating_company_id, "reimbursement_expense");
+          if (acctId) {
+            const acctRes = await client.query(
+              `SELECT account_number, account_name FROM catalogs.accounts WHERE id = $1::uuid LIMIT 1`,
+              [acctId]
+            );
+            const acct = acctRes.rows[0] as { account_number: string | null; account_name: string | null } | undefined;
+            if (acct) {
+              reimbursementExpenseAccountLabel = [acct.account_number, acct.account_name].filter(Boolean).join(" ").trim() || null;
+            }
+          }
+        }
+
+        return res.rows.map((r: Record<string, unknown>) => ({
+          ...r,
+          reimbursement_reversal_expense_account: r.deduction_type === "reimbursement_reversal" ? reimbursementExpenseAccountLabel : null,
+        }));
       });
 
       return reply.code(200).send({ deductions: rows });

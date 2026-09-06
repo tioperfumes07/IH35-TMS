@@ -507,6 +507,10 @@ export type SettlementDeductionListRow = {
   load_number: string | null;
   applied_to_settlement_id: string | null;
   applied_to_settlement_display_id: string | null;
+  /** SET-24 GL ROUTING: set only when deduction_type === 'reimbursement_reversal'. */
+  reversed_reimbursement_id: string | null;
+  /** Display name of the account this reversal credits ("<number> <name>"), resolved server-side. */
+  reimbursement_reversal_expense_account: string | null;
   created_at: string;
 };
 
