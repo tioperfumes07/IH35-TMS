@@ -5767,6 +5767,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-reg-parse-data-backfill (ROUND 11 REG-PARSE-DATA: accounting.expenses.merchant_address/source_settlement_ref columns + backfill through a real service, never raw UPDATE; vendor_document_number cleaned to receipt-no-only; expense_lines.description cleaned to item-only)"
   },
+  "10467": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-deliver-seed-40 (DELIVER-SEED-40 owner order: safety shape of scripts/ops/deliver-seeded-usmca-loads.ts -- owner hand-list held, real delivered_at evidence required and correctly formatted, both real transitions fired through the real route, --apply never the default)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
