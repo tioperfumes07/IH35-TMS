@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Download, MessageSquare, Paperclip, Printer, Settings } from "lucide-react";
 import {
+  acceptBankReconMatch,
   categorizeBankTransaction,
   categorizeTransactionsBulk,
   getAllAccounts,
@@ -198,7 +199,13 @@ function formatDaysOff(days: number | null) {
 // show/hide + density, drag-resize, drag-reorder) — same column-parity conversion Trip Pairing's
 // buildTripPairingColumns already did for its own hand-built register. A factory (not a bare
 // array) because Difference/Days off need the CURRENT bank transaction's own amount/date.
-function buildMatchCandidateColumns(tx: PlaidBankTransaction): ParityColumn<BankMatchCandidate>[] {
+function buildMatchCandidateColumns(
+  tx: PlaidBankTransaction,
+  matchAction: {
+    confirmingKey: string | null;
+    onConfirm: (candidate: BankMatchCandidate) => void;
+  }
+): ParityColumn<BankMatchCandidate>[] {
   return [
     {
       key: "event_date",
@@ -309,6 +316,44 @@ function buildMatchCandidateColumns(tx: PlaidBankTransaction): ParityColumn<Bank
       sortable: false,
       alwaysVisible: true,
       render: (c) => (c.auto_match ? <span className="ldt-pill ok">Best match</span> : null),
+    },
+    {
+      key: "match_action",
+      label: "",
+      sortable: false,
+      alwaysVisible: true,
+      testId: "banking-match-candidate-action-header",
+      render: (c) => {
+        // Same eligibility as MatchDrawer's confirmMutation: a bill goes through CHAIN-04 (bill
+        // payment recording), not a plain accept; a non-exact amount is held for variance review,
+        // never silently confirmed. Never guessed — mirrors MatchDrawer.tsx canConfirm exactly.
+        const isBill = c.ledger_entry_kind === "bill";
+        const isExactMatch = c.amount_gap_cents === 0;
+        const canConfirm = !isBill && isExactMatch;
+        const key = `${c.ledger_entry_kind}-${c.ledger_entry_id}`;
+        const isConfirming = matchAction.confirmingKey === key;
+        return (
+          <button
+            type="button"
+            data-testid="banking-match-candidate-confirm"
+            className="rounded-sm border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={!canConfirm || isConfirming}
+            title={
+              isBill
+                ? "Recording the bill payment is CHAIN-04 (Part 2b)"
+                : !isExactMatch
+                ? "Amount does not match exactly — open the match drawer to review the variance"
+                : "Confirm this match — links and clears the transaction, no journal entry posted"
+            }
+            onClick={(e) => {
+              e.stopPropagation();
+              matchAction.onConfirm(c);
+            }}
+          >
+            {isConfirming ? "Matching…" : "Match"}
+          </button>
+        );
+      },
     },
   ];
 }
@@ -551,6 +596,12 @@ export function BankingTransactionsDesignView({
   // drawer / Transfer modal / CC Payment modal is currently open. Reuses the EXISTING, already-gated
   // posters (acceptBankReconMatch, createTransfer, recordCcPayment) — no new GL math.
   const [matchDrawerTxId, setMatchDrawerTxId] = useState<string | null>(null);
+  // ROUND 16.18 (owner, 2026-09-06 23:0xZ): "in match candidats and wanting to mtach there is no
+  // match button there" — the inline candidates register (buildMatchCandidateColumns) had zero
+  // action column; confirming a match required opening the separate MatchDrawer. This wires the
+  // SAME acceptBankReconMatch call the drawer already uses (no new GL math, no second match flow)
+  // directly onto the inline row so the owner never has to leave the row to confirm an exact match.
+  const [confirmingMatchKey, setConfirmingMatchKey] = useState<string | null>(null);
   const [transferModalTx, setTransferModalTx] = useState<PlaidBankTransaction | null>(null);
   const [ccPaymentModalTx, setCcPaymentModalTx] = useState<PlaidBankTransaction | null>(null);
   // ACCT-F5621 — the transaction whose attachments/notes drawer is currently open. Replaces the two
@@ -1983,7 +2034,11 @@ export function BankingTransactionsDesignView({
       // CANDIDATES (right) — each an .ldt-card.strong (dark 1px outline, .ldt-ch header band), the Load-costs palette.
       // Nothing inside either box was removed or reordered except the candidate register, which
       // BANK-MATCH-QBO-c moved onto <ParityTable> (see .ldt-rows-match-table below).
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2" data-testid="banking-categorize-expanded-panel">
+      {/* ROUND 16.18 (owner, 2026-09-06 23:0xZ): "the categorize box shouold be smaller ... this way
+          the match candidates window, renders more appropriate" — same narrower-left/wider-right
+          split already established for Cash Flow's Expected Income/Expenses. Categorize does not
+          need half the screen; Match Candidates' 10-column register does. */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[2fr_3fr]" data-testid="banking-categorize-expanded-panel">
         <div className="ldt-card strong" data-testid="banking-categorize-box">
           <div className="ldt-ch">
             <span>Categorize</span>
@@ -2746,13 +2801,6 @@ export function BankingTransactionsDesignView({
             >
               Search all
             </button>
-            <button
-              type="button"
-              className="rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-700"
-              onClick={() => setMatchDrawerTxId(tx.id)}
-            >
-              Open match drawer
-            </button>
           </div>
           {matchCandidatesQuery.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading match candidates...</p> : null}
           {matchCandidatesQuery.isError ? (
@@ -2771,7 +2819,30 @@ export function BankingTransactionsDesignView({
           {(matchCandidatesQuery.data?.candidates ?? []).length > 0 ? (
             <div className="ldt-card mt-2 ldt-rows-match-table">
               <ParityTable
-                columns={buildMatchCandidateColumns(tx)}
+                columns={buildMatchCandidateColumns(tx, {
+                  confirmingKey: confirmingMatchKey,
+                  onConfirm: (candidate) => {
+                    const key = `${candidate.ledger_entry_kind}-${candidate.ledger_entry_id}`;
+                    setConfirmingMatchKey(key);
+                    acceptBankReconMatch({
+                      operating_company_id: companyId,
+                      bank_transaction_id: tx.id,
+                      ledger_entry_kind: candidate.ledger_entry_kind as
+                        | "payment"
+                        | "bill_payment"
+                        | "transfer"
+                        | "je"
+                        | "expense",
+                      ledger_entry_id: candidate.ledger_entry_id,
+                    })
+                      .then(() => {
+                        pushToast("Match confirmed — transaction cleared.", "success");
+                        onDataChanged();
+                      })
+                      .catch((error) => pushToast(userFacingApiError(error, "Match failed"), "error"))
+                      .finally(() => setConfirmingMatchKey(null));
+                  },
+                })}
                 rows={[...(matchCandidatesQuery.data?.candidates ?? [])].sort((a, b) => b.match_score - a.match_score)}
                 rowKey={(c) => `${c.ledger_entry_kind}-${c.ledger_entry_id}`}
                 rowTestId={() => "banking-match-candidate-row"}
@@ -2780,6 +2851,26 @@ export function BankingTransactionsDesignView({
                 gearButtonTestId="banking-match-gear"
                 tableTestId="banking-match-candidates-register"
                 stickyHeader={false}
+                // ROUND 16.18 (owner): "we also have a search rows box and a range filter ... but you
+                // already have that in date from date to. and search payee memo ref should render the
+                // same as search rows box. so remove search rows box and range." The panel above this
+                // table already owns Date from/to (matchDateFrom/matchDateTo) and a payee/memo/ref
+                // search box — ParityTable's own generic Search rows + Range popover are the duplicate.
+                suppressToolbarSearch
+                suppressToolbarRange
+                // ROUND 16.18 (owner): "the gear icon, move it in the same row as open match drawer."
+                // ParityTable's own gear always renders in this toolbar row (line ~1330 below) — moving
+                // "Open match drawer" into the toolbar slot puts both in that same row, rather than
+                // touching the shared gear used by every other ParityTable consumer.
+                toolbar={
+                  <button
+                    type="button"
+                    className="rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-700"
+                    onClick={() => setMatchDrawerTxId(tx.id)}
+                  >
+                    Open match drawer
+                  </button>
+                }
               />
             </div>
           ) : null}
