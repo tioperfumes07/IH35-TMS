@@ -367,25 +367,23 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
       {/* FIXED TOTALS FOOTER — never moves with columns */}
       <div data-testid="load-costs-margin" className="sticky bottom-0 z-10 ldt-card ldt-footer">
         <div data-testid="load-costs-totals">
-        <table className="ldt-table">
-          <tbody>
-            <tr><td>Line haul revenue</td><td className="m" data-testid="load-costs-total-revenue">{formatMoneyCents(revenue, currency)}</td></tr>
-            <tr className="click" onClick={() => setPopup({ title: `Costs on load ${load.load_number}`, body: <SplitTable split={split} currency={currency} /> })}><td>Costs on this load — {entryCount + drafts.filter((d) => d.amount).length} entries <span className="ldt-sub">{BUCKETS.filter((b) => split[b]).map((b) => `${BUCKET_LABEL[b]} ${formatMoneyCents(split[b], currency)}`).join(" · ") || "no split yet"}</span></td><td className="m" data-testid="load-costs-total-costs">{formatMoneyCents(savedCosts + draftTotal, currency)}</td></tr>
-            <tr className="click" onClick={() => setPopup({ title: "Driver pay on this load", body: <DriverPayTable rows={driverBillRows} currency={currency} /> })}><td>Driver pay — {driverPayBasis}</td><td className="m" data-testid="load-costs-total-driver-pay">{formatMoneyCents(driverPay, currency)}</td></tr>
-            <tr className="big"><td>Margin on load {load.load_number}</td><td className="m" data-testid="load-costs-total-margin">{formatMoneyCents(margin, currency)} · {pct}</td></tr>
-          </tbody>
-        </table>
+        <div className="ldt-rows">
+          <div className="ldt-row"><span>Line haul revenue</span><span className="ldt-m" data-testid="load-costs-total-revenue">{formatMoneyCents(revenue, currency)}</span></div>
+          <div className="ldt-row click" role="button" tabIndex={0} onClick={() => setPopup({ title: `Costs on load ${load.load_number}`, body: <SplitTable split={split} currency={currency} /> })}><span>Costs on this load — {entryCount + drafts.filter((d) => d.amount).length} entries <span className="ldt-sub">{BUCKETS.filter((b) => split[b]).map((b) => `${BUCKET_LABEL[b]} ${formatMoneyCents(split[b], currency)}`).join(" · ") || "no split yet"}</span></span><span className="ldt-m" data-testid="load-costs-total-costs">{formatMoneyCents(savedCosts + draftTotal, currency)}</span></div>
+          <div className="ldt-row click" role="button" tabIndex={0} onClick={() => setPopup({ title: "Driver pay on this load", body: <DriverPayTable rows={driverBillRows} currency={currency} /> })}><span>Driver pay — {driverPayBasis}</span><span className="ldt-m" data-testid="load-costs-total-driver-pay">{formatMoneyCents(driverPay, currency)}</span></div>
+          <div className="ldt-row big"><span>Margin on load {load.load_number}</span><span className="ldt-m" data-testid="load-costs-total-margin">{formatMoneyCents(margin, currency)} · {pct}</span></div>
+        </div>
         </div>
       </div>
 
       {/* WHAT THE BANK WILL DO WITH THESE */}
       <div className="ldt-card" data-testid="load-costs-bank-section">
         <div className="ldt-ch">What the bank will do with these<Link className="ldt-open" to="/banking/transactions">open the bank feed ↗</Link></div>
-        <table className="ldt-table"><tbody>
-          {liveExpenses.map((r) => <tr key={r.id}><td>{(r.vendor_name ?? "Vendor").toUpperCase()} — {formatMoneyCents(num(r.total_amount_cents), currency)}<span className="ldt-sub">{acctLabel(r.payment_account_number, r.payment_account_name)} · {r.matched_bank_transaction_description ? `bank: ${r.matched_bank_transaction_description}` : "not yet in the feed"}</span></td><td className="m">{r.matched_bank_transaction_id ? <span className="ldt-pill ok">Matched to {load.load_number}</span> : <span className="ldt-pill warn">Will be offered when it lands</span>}</td></tr>)}
-          {liveBills.map((r) => <tr key={r.id}><td>{r.vendor_name ?? "Vendor"} — {formatMoneyCents(num(r.amount_cents), currency)}<span className="ldt-sub">Bill · {num(r.paid_cents) > 0 ? `paid ${formatMoneyCents(num(r.paid_cents), currency)}` : "unpaid"}</span></td><td className="m">{num(r.paid_cents) > 0 ? <span className="ldt-pill ok">Matches on the bill payment</span> : <span className="ldt-pill warn">Matches on the bill payment, not now</span>}</td></tr>)}
-          {!liveExpenses.length && !liveBills.length ? <tr><td className="ldt-muted">Nothing for the bank yet — save a cost and it becomes a candidate for the match.</td><td /></tr> : null}
-        </tbody></table>
+        <div className="ldt-rows">
+          {liveExpenses.map((r) => <div className="ldt-row" key={r.id}><span>{(r.vendor_name ?? "Vendor").toUpperCase()} — {formatMoneyCents(num(r.total_amount_cents), currency)}<span className="ldt-sub">{acctLabel(r.payment_account_number, r.payment_account_name)} · {r.matched_bank_transaction_description ? `bank: ${r.matched_bank_transaction_description}` : "not yet in the feed"}</span></span><span className="ldt-m">{r.matched_bank_transaction_id ? <span className="ldt-pill ok">Matched to {load.load_number}</span> : <span className="ldt-pill warn">Will be offered when it lands</span>}</span></div>)}
+          {liveBills.map((r) => <div className="ldt-row" key={r.id}><span>{r.vendor_name ?? "Vendor"} — {formatMoneyCents(num(r.amount_cents), currency)}<span className="ldt-sub">Bill · {num(r.paid_cents) > 0 ? `paid ${formatMoneyCents(num(r.paid_cents), currency)}` : "unpaid"}</span></span><span className="ldt-m">{num(r.paid_cents) > 0 ? <span className="ldt-pill ok">Matches on the bill payment</span> : <span className="ldt-pill warn">Matches on the bill payment, not now</span>}</span></div>)}
+          {!liveExpenses.length && !liveBills.length ? <div className="ldt-row"><span className="ldt-muted">Nothing for the bank yet — save a cost and it becomes a candidate for the match.</span><span /></div> : null}
+        </div>
       </div>
       {savedCount || savedAdvances.length ? <Link className="ldt-link" to={`/accounting/expenses?load_id=${encodeURIComponent(load.id)}`}>Open saved costs</Link> : null}
     </>
@@ -459,56 +457,58 @@ function SavedBillCard({ row, opco, currency, canEdit, onPop }: { row: VendorBil
 }
 
 function ExpensePop({ row, currency }: { row: ExpenseListRow; currency: string }) {
-  return <table className="ldt-table"><tbody>
-    <tr><td>Number</td><td className="m">{row.expense_number ?? DASH}</td></tr>
-    <tr><td>Date</td><td className="m">{row.transaction_date}</td></tr>
-    <tr><td>Vendor</td><td className="m">{row.vendor_name ?? DASH}</td></tr>
-    <tr><td>Category</td><td className="m">{acctLabel(row.category_account_number, row.category_account_name)}</td></tr>
-    <tr><td>Paid with</td><td className="m">{acctLabel(row.payment_account_number, row.payment_account_name)}</td></tr>
-    <tr><td>Vendor document no.</td><td className="m">{row.vendor_document_number ?? DASH}</td></tr>
-    <tr><td>Amount</td><td className="m">{formatMoneyCents(num(row.total_amount_cents), currency)}</td></tr>
-    <tr><td>Status · posting</td><td className="m">{row.status} · {row.posting_status}</td></tr>
-    <tr><td>Bank</td><td className="m">{row.matched_bank_transaction_description ?? "not matched yet"}</td></tr>
-    <tr><td>Journal entry</td><td className="m">{row.journal_entry_id ? <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_memo ?? "open"} /> : "none yet"}</td></tr>
-    <tr><td>Receipts on file</td><td className="m">{row.attachment_count ?? 0}</td></tr>
-    <tr><td>Memo</td><td className="m">{row.memo ?? DASH}</td></tr>
-  </tbody></table>;
+  return <div className="ldt-rows">
+    <div className="ldt-row"><span>Number</span><span className="ldt-m">{row.expense_number ?? DASH}</span></div>
+    <div className="ldt-row"><span>Date</span><span className="ldt-m">{row.transaction_date}</span></div>
+    <div className="ldt-row"><span>Vendor</span><span className="ldt-m">{row.vendor_name ?? DASH}</span></div>
+    <div className="ldt-row"><span>Category</span><span className="ldt-m">{acctLabel(row.category_account_number, row.category_account_name)}</span></div>
+    <div className="ldt-row"><span>Paid with</span><span className="ldt-m">{acctLabel(row.payment_account_number, row.payment_account_name)}</span></div>
+    <div className="ldt-row"><span>Vendor document no.</span><span className="ldt-m">{row.vendor_document_number ?? DASH}</span></div>
+    <div className="ldt-row"><span>Amount</span><span className="ldt-m">{formatMoneyCents(num(row.total_amount_cents), currency)}</span></div>
+    <div className="ldt-row"><span>Status · posting</span><span className="ldt-m">{row.status} · {row.posting_status}</span></div>
+    <div className="ldt-row"><span>Bank</span><span className="ldt-m">{row.matched_bank_transaction_description ?? "not matched yet"}</span></div>
+    <div className="ldt-row"><span>Journal entry</span><span className="ldt-m">{row.journal_entry_id ? <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_memo ?? "open"} /> : "none yet"}</span></div>
+    <div className="ldt-row"><span>Receipts on file</span><span className="ldt-m">{row.attachment_count ?? 0}</span></div>
+    <div className="ldt-row"><span>Memo</span><span className="ldt-m">{row.memo ?? DASH}</span></div>
+  </div>;
 }
 
 function BillPop({ row, currency }: { row: VendorBill; currency: string }) {
-  return <table className="ldt-table"><tbody>
-    <tr><td>Bill no.</td><td className="m">{row.display_id ?? DASH}</td></tr>
-    <tr><td>Vendor invoice no.</td><td className="m">{row.bill_number ?? DASH}</td></tr>
-    <tr><td>Date · due</td><td className="m">{row.bill_date} · {row.due_date ?? DASH}</td></tr>
-    <tr><td>Vendor</td><td className="m">{row.vendor_name ?? DASH}</td></tr>
-    <tr><td>Category</td><td className="m">{acctLabel(row.coa_account_number, row.coa_account_name)}</td></tr>
-    <tr><td>Amount · paid · balance</td><td className="m">{formatMoneyCents(num(row.amount_cents), currency)} · {formatMoneyCents(num(row.paid_cents), currency)} · {formatMoneyCents(num(row.amount_cents) - num(row.paid_cents), currency)}</td></tr>
-    <tr><td>Status</td><td className="m">{row.status}</td></tr>
-    <tr><td>Receipts on file</td><td className="m">{row.attachment_count ?? 0}</td></tr>
-    <tr><td>Memo</td><td className="m">{row.memo ?? DASH}</td></tr>
-  </tbody></table>;
+  return <div className="ldt-rows">
+    <div className="ldt-row"><span>Bill no.</span><span className="ldt-m">{row.display_id ?? DASH}</span></div>
+    <div className="ldt-row"><span>Vendor invoice no.</span><span className="ldt-m">{row.bill_number ?? DASH}</span></div>
+    <div className="ldt-row"><span>Date · due</span><span className="ldt-m">{row.bill_date} · {row.due_date ?? DASH}</span></div>
+    <div className="ldt-row"><span>Vendor</span><span className="ldt-m">{row.vendor_name ?? DASH}</span></div>
+    <div className="ldt-row"><span>Category</span><span className="ldt-m">{acctLabel(row.coa_account_number, row.coa_account_name)}</span></div>
+    <div className="ldt-row"><span>Amount · paid · balance</span><span className="ldt-m">{formatMoneyCents(num(row.amount_cents), currency)} · {formatMoneyCents(num(row.paid_cents), currency)} · {formatMoneyCents(num(row.amount_cents) - num(row.paid_cents), currency)}</span></div>
+    <div className="ldt-row"><span>Status</span><span className="ldt-m">{row.status}</span></div>
+    <div className="ldt-row"><span>Receipts on file</span><span className="ldt-m">{row.attachment_count ?? 0}</span></div>
+    <div className="ldt-row"><span>Memo</span><span className="ldt-m">{row.memo ?? DASH}</span></div>
+  </div>;
 }
 
 function SplitTable({ split, currency }: { split: Record<Bucket, number>; currency: string }) {
   const total = BUCKETS.reduce((s, b) => s + split[b], 0);
-  return <table className="ldt-table"><thead><tr><th>Bucket (live board split)</th><th className="m">Amount</th></tr></thead><tbody>
-    {BUCKETS.map((b) => <tr key={b}><td>{BUCKET_LABEL[b]}</td><td className="m">{split[b] ? formatMoneyCents(split[b], currency) : DASH}</td></tr>)}
-    <tr className="tot"><td>Total</td><td className="m">{formatMoneyCents(total, currency)}</td></tr>
-  </tbody></table>;
+  return <div className="ldt-rows">
+    <div className="ldt-row head"><span>Bucket (live board split)</span><span className="ldt-m">Amount</span></div>
+    {BUCKETS.map((b) => <div className="ldt-row" key={b}><span>{BUCKET_LABEL[b]}</span><span className="ldt-m">{split[b] ? formatMoneyCents(split[b], currency) : DASH}</span></div>)}
+    <div className="ldt-row tot"><span>Total</span><span className="ldt-m">{formatMoneyCents(total, currency)}</span></div>
+  </div>;
 }
 
 function DriverPayTable({ rows, currency }: { rows: DriverBillRow[]; currency: string }) {
   if (!rows.length) return <p className="ldt-muted">No driver bill on this load yet — it is minted when the load is booked with a driver.</p>;
-  return <table className="ldt-table"><thead><tr><th>Line</th><th className="m">Miles</th><th className="m">Rate</th><th className="m">Amount</th></tr></thead><tbody>
-    {rows.map((b, i) => <FragmentRows key={b.id ?? i} b={b} currency={currency} />)}
-  </tbody></table>;
+  return <div className="ldt-rows ldt-rows-4">
+    <div className="ldt-row head"><span>Line</span><span className="ldt-m">Miles</span><span className="ldt-m">Rate</span><span className="ldt-m">Amount</span></div>
+    {rows.map((b, i) => <DriverPayLines key={b.id ?? i} b={b} currency={currency} />)}
+  </div>;
 }
-function FragmentRows({ b, currency }: { b: DriverBillRow; currency: string }) {
+function DriverPayLines({ b, currency }: { b: DriverBillRow; currency: string }) {
   const loaded = b.loaded_pay_cents != null ? num(b.loaded_pay_cents) : num(b.gross_amount_cents) - num(b.deadhead_pay_cents);
   return <>
-    <tr><td>Loaded miles <span className="ldt-sub">basis {b.miles_basis_type ?? "unknown"} · law: short miles</span></td><td className="m">{fmtMiles(b.miles_basis)}</td><td className="m">{fmtRate(b.rate_per_mile_cents)}</td><td className="m">{formatMoneyCents(loaded, currency)}</td></tr>
-    <tr><td>Empty miles <span className="ldt-sub">deadhead attributed to this pickup</span></td><td className="m">{fmtMiles(b.miles_deadhead)}</td><td className="m">{fmtRate(b.rate_empty_per_mile_cents)}</td><td className="m">{b.deadhead_pay_cents == null ? DASH : formatMoneyCents(num(b.deadhead_pay_cents), currency)}</td></tr>
-    <tr className="tot"><td>Gross · {b.status}</td><td /><td /><td className="m">{formatMoneyCents(num(b.gross_amount_cents), currency)}</td></tr>
+    <div className="ldt-row"><span>Loaded miles <span className="ldt-sub">basis {b.miles_basis_type ?? "unknown"} · law: short miles</span></span><span className="ldt-m">{fmtMiles(b.miles_basis)}</span><span className="ldt-m">{fmtRate(b.rate_per_mile_cents)}</span><span className="ldt-m">{formatMoneyCents(loaded, currency)}</span></div>
+    <div className="ldt-row"><span>Empty miles <span className="ldt-sub">deadhead attributed to this pickup</span></span><span className="ldt-m">{fmtMiles(b.miles_deadhead)}</span><span className="ldt-m">{fmtRate(b.rate_empty_per_mile_cents)}</span><span className="ldt-m">{b.deadhead_pay_cents == null ? DASH : formatMoneyCents(num(b.deadhead_pay_cents), currency)}</span></div>
+    <div className="ldt-row tot"><span>Gross · {b.status}</span><span /><span /><span className="ldt-m">{formatMoneyCents(num(b.gross_amount_cents), currency)}</span></div>
   </>;
 }
 
