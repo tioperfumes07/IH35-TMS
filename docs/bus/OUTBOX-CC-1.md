@@ -495,3 +495,20 @@ CC-1 | JE-DR-CR ALREADY DONE | (pre-existing, ACC-49) | live: verify-je-debit-cr
 CC-1 | VENDOR-BALANCE-TRUTH DONE | a4838c456e (#21004) | live: top-5-by-spend USMCA vendors, list vs the fixed read model — LOVES ytd=$67,003.86 mtd=$6,294.42 open=$0.00 (matches pre-fix exactly; USMCA has 0 accounting.bills rows today so open_balance_cents was already $0 both ways — the fix removes a real drift RISK, not a visible number today) | root cause: vendor-rollups.routes.ts derived open_balance_cents independently via a bare status<>'paid' bill denylist that never checked revoked_at (the canonical void marker) — a second read model alongside the canonical accounting.vendor_balances VIEW the list's own detail panel already used | fix: open_balance_cents now reads from that one canonical VIEW | guard verify-vendor-balance-single-read-model.mjs (step 10513) | NEXT: none.
 
 All 5 ROUND 14 items closed: LEDGER-NAME-01 (#20966), TRIP-LOCAL-ENUM (#20992), CASH-FLOW-01 (#20998), JE-DR-CR (already done), VENDOR-BALANCE-TRUTH (#21004). Awaiting next assignment.
+
+## CC-1 | CONSOLIDATED 2026-09-06 18:30Z — items 1 & 2
+
+CC-1 | INV-03 DONE | d4af2f25a0 (#21019) | live: verify-invoice-issue-date-from-load.mjs --selftest 2/2, static OK | POST /api/v1/accounting/invoices now resolves the source load's real pickup-stop date (mdata.load_stops, stop_type='pickup') as issueDate's second-choice source (after an explicit caller value, before the today-fallback which now survives ONLY when there is no source load) | NEXT INV-06.
+
+CC-1 | CF-01 DONE (confirmed, #20998 already merged before this box landed) | 5f49c796d4 | live: all 3 claimed guard files exist and pass --
+  scripts/verify-steps/10501-verify-cash-flow-closed-settlement-expected-expense.mjs --selftest OK
+  scripts/verify-steps/10505-verify-invoice-dates-from-real-delivery.mjs --selftest OK (4/4)
+  scripts/verify-steps/10509-verify-cash-flow-avp-actuals-honest-unavailable.mjs --selftest OK (4/4)
+  Day-by-day USMCA (SQL replay of the corrected logic, unchanged since first posted):
+    09-01 income $8,200.00 / expense $0.00 / net +$8,200.00
+    09-02 income $1,000.00 / expense $0.00 / net +$1,000.00
+    09-03 income $4,000.00 / expense $0.00 / net +$4,000.00
+    09-04 income $0.00 / expense $0.00 / net $0.00 (honest zero)
+    09-05 income $0.00 / expense $0.00 / net $0.00 (honest zero)
+    09-06 income $0.00 / expense $30,125.94 / net -$30,125.94 (was $0 before the fix)
+  NEXT INV-06.
