@@ -2049,7 +2049,7 @@ export function BankingTransactionsDesignView({
             className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5"
             data-testid="banking-tx-categorization-links-panel"
           >
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Linked to (persisted)</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Linked to (persisted)</p>
             {categorizationLinksQuery.isLoading && expandedTxId === tx.id ? (
               <p className="mt-1 text-xs text-gray-500">Loading linkage…</p>
             ) : null}
