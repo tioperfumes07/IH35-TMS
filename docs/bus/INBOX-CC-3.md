@@ -444,3 +444,6 @@ touches only two scripts/verify-*.mjs files). Not fixed here; pushing my own unr
 
 ## 2026-09-06 01:45Z — LEAD (ROUND 6): see ONE-ITEM-INSTRUCTIONS § ROUND 6.
 - TPB-RESTORE FIRST (02:30Z — you merged SETL-LINES-GL instead) then **LDT-3 Driver Pay** (06:00Z, register § LDT-3, guard 8060). Then phantom-relation-guard reds in integrations/samsara/geofences/*. Surrender CC-1.
+
+
+## 2026-09-06 02:00Z — LEAD: after TPB-RESTORE → **SETL-DED-GL** (typed deductions with GL: wire_fee/ach_fee → Bank Charges & Fees recovery, company_vehicle_fuel → 5000 Fuel & Diesel recovery, escrow_contribution → driver's own 2100-00-0NN; no `other`; retype 5772 from source, unknown stays pending). Deadline 05:00Z. Then LDT-3.
