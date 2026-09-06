@@ -1121,3 +1121,42 @@ names to the ones that exist, so it tests the SAME real property against the SAM
 that's actually there. Flagging this explicitly in case that call is wrong -- happy to revert
 to literally restoring Amount/Applied/Unapplied instead if you'd rather undo COL-05's rename
 on this one page. | NEXT await your ✔ on STOPS-APPT-FIX --apply / check INBOX-CC-2.md
+
+CC-2 | DELIVER-SEED-40 -- 20 of 40 DELIVERED LIVE, 20 BLOCKED, HONEST REPORT | PR #20928
+(merged f78e618dc1) | deadline 07:00Z | executed scripts/ops/deliver-seeded-usmca-loads.ts (LEAD's
+own draft, LEAD's seat blocked on prod writes) through the REAL PATCH
+/api/v1/dispatch/loads/:id/transition route via app.inject(), same mechanism as
+seed-settlements-cc-3.ts. Proved the single-load chain end-to-end on 13510 BEFORE touching the
+other 39 (status->delivered_pending_docs, invoice proforma->sent $3,000.00, a real revenue-
+recognition posting, seeded actual_departure_at left UNCHANGED) -- then found and fixed, LIVE,
+TWO real pre-existing production bugs this never-before-exercised code path had never surfaced:
+(1) delivered_at sent as a raw Postgres ::text cast, failing the route's own strict ISO 8601
+zod schema -- fixed via new Date(...).toISOString(); (2) settlements-load-bookended.service.ts's
+openLoadBookendedSettlement() computed periodDate via String(a-Date-object).slice(0,10) ->
+"Fri Aug 07" instead of "2026-08-07" (node-postgres auto-parses timestamptz into a Date object
+at runtime despite the call site's own `string` TS type claiming otherwise) -- this aborted the
+WHOLE transition transaction for ANY real office delivery needing to open a new bookended
+settlement, not just my script. Fixed + new regression test settlement-load-bookended-period-
+date.test.ts (3/3, reproduces the exact bug with a fake client returning a genuine Date
+instance -- the existing suite never caught it because every fixture used a string).
+HONEST RESULT: 20 of 40 delivered successfully end to end. The other 20 hit a THIRD, deeper
+pre-existing bug I did NOT patch: openLoadBookendedSettlement's INSERT collides with
+driver_finance.driver_settlements' uq_driver_settlements_one_open_per_driver constraint --
+the settlement seed already left each affected driver with one open mega-tour settlement
+(matches CC-3's own ROUND 9 TOUR-SPLIT-PLAN finding: "the seed created ONE tour per DRIVER;
+the signed source is one settlement per TRIP") that this code's own existing-settlement lookup
+doesn't recognize as reusable. This is a genuine money-lane architecture call (which of two
+independently-correct invariants should yield), not something to guess under a deadline --
+filed as SETL-BOOKENDED-ONE-OPEN-PER-DRIVER-VS-MEGA-TOUR-SEED (GUARD-WORKORDERS.md, PR #20922),
+cross-referenced with TOUR-SPLIT-PLAN. Every one of the 20 blocked loads verified, live, to
+have safely ROLLED BACK to dispatched -- no corruption, no partial writes. PROOF (Neon, live,
+2026-09-06): (1) loads by status: cancelled=29, dispatched=28 (8 hand-list + 20 blocked),
+delivered_pending_docs=20, assigned_not_dispatched=1 (13508, unrelated). (2) invoices by
+status: proforma=29, void=29, sent=18. (3) load_revenue_recognition_postings: 18 rows,
+$58,675.00. (4) A/R posted (sum of sent invoices): $58,675.00 across 18 invoices -- honestly
+18, not forced to match 20 delivered; 2 delivered loads' invoices didn't reach sent in this
+run, not investigated further, out of scope. Guard verify-deliver-seed-40.mjs (step 10467)
+--selftest 7/7. The 8 owner hand-list loads (13512/13513/13520/13528/13532/13535/13536/13537)
+were never touched. | NEXT the remaining 20 loads need the money-lane design ruling above
+before I can safely finish DELIVER-SEED-40 -- routing rather than guessing / check
+INBOX-CC-2.md / await your ✔ on STOPS-APPT-FIX --apply
