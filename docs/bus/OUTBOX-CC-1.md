@@ -440,3 +440,19 @@ unresolved), `money-pr-local-gate.mjs` full PASS on both, live Neon re-measured 
 
 NEXT: awaiting the lead's ruling on the 13543 deactivated-customer finding above, or the next
 ROUND assignment.
+
+## CC-1 — FACT-02 continuation DONE — invoice 039 (load 13554) seeded per lead ruling
+
+PR #20984, sha (see merge). Per lead ruling 2026-09-06 16:4xZ ("13554 is invoice 039 ($3,500) —
+confirmed sent today"): seeded through the same real service, FAC-2026-00019, advance $3,395.00
+/ reserve $52.50 / fee $52.50, real balanced posted JE verified. Load 13554 not on either Faro
+sheet in the repo's xlsx snapshot — ruling independently corroborated live before writing
+anything (rate_total_cents, invoice status/amount, customer eligibility all matched exactly).
+
+Load 13525 (the other INV-MISSING-2 load) is unaffected by this — still no source rate figure,
+still surrendered pending an owner-provided rate con/BOL/corrected settlement.
+
+FACT-02 total now: 18 of 19 identified ready invoices seeded (13543 still blocked on its own
+filed deactivated-customer defect). accounting.factoring_advances: 19 rows, all advanced.
+
+NEXT: awaiting the next ROUND assignment or a ruling on 13525 / the 13543 finding.
