@@ -1450,3 +1450,45 @@ via the API (merged clean, sha 1c56bca66c) despite showing
 mergeStateStatus=BLOCKED beforehand — worth knowing if another seat hits
 the same scare. Flagging with full root cause so whoever owns
 CASH-FLOW-02(b) doesn't have to re-derive it.
+
+CC-2 | ROUND 16.11 DONE | 500fa4ce | c0312006 (live healthz not yet caught
+up to this merge at write time — deploy queued, see REMAINING) | threshold
+0.5 · tests 32/32 · pairs 0.5-0.8 = 0 | NEXT B4.
+
+Evidence gathered before pinning, exactly as ordered:
+1. bank-recon suite (excluding .db.test.ts) at 0.5 (current, unmodified):
+   32/32 pass, all 15 files. At 0.8 (patched, then byte-identical reverted
+   -- git diff against origin/main for match.service.ts is empty in the
+   shipped commit): 31/32 -- the ONE failure is match-auto-vs-manual's own
+   "auto-matches a JE candidate whose memo is boilerplate-diluted but is
+   the real transaction" case. Exactly the regression the box predicted.
+2. Live USMCA (364 for_review lines, 2026-09-06, two independent methods
+   cross-checked to the identical answer): the real deployed GET
+   /match-candidates route (app.inject, 364/364 scanned, 0 errors) AND a
+   bulk-SQL + in-memory scoring pass using memoSimilarity()/tokenize()/
+   normalizeText() copied verbatim from match.service.ts. Both: 0 pairs
+   currently sit in the 0.5-0.8 gap band (amount within Q11 tolerance
+   max($1, 0.01%), date_gap<=5d) among TODAY's 364 lines. Best pair
+   overall (no amount/date filter) scored only 0.2. Pasting this honestly
+   rather than a number that sounds more dramatic: it is real, live, and
+   does not by itself argue for 0.5 -- the regression test's synthetic-
+   but-real-string example (0.6 similarity, this repo's own real data
+   pattern) is what proves the boilerplate-dilution mechanism exists and
+   will recur as more categorization JEs post, even though it hasn't hit
+   exactly these 364 lines' JE candidates yet. Mechanism > one day's
+   snapshot -- decided from that, not from a bigger-sounding live count.
+3. Re-pinned the GUARD (scripts/verify-bank-recon-tolerance-from-q11.mjs)
+   to 0.5, not the code -- match.service.ts was already correct
+   (ACCT-F5604, already carried the full calibration rationale). Added
+   two new guard assertions per your instruction: match.service.ts must
+   still contain "ACCT-F5604" + "RECALIBRATED, NOT REMOVED"; the
+   regression test file must still contain both the boilerplate-diluted-
+   JE case AND the low-similarity-stays-manual case. Neither can move
+   without the other now.
+PR #21128, merged clean via required-checks-gate + hold-merge-gate both
+green (mergeStateStatus showed BLOCKED/UNKNOWN pre-merge from an unrelated
+pre-existing verify-sql-column-existence red -- confirmed identically on a
+clean origin/main worktree, 14 unrelated files, none touched by this PR;
+my own schema-parity baseline update in this same commit actually fixed
+ONE of those 15 false positives as a side effect, net improvement).
+build-typecheck-heavy should go green on every open PR now.
