@@ -395,3 +395,48 @@ Watching, not duplicating.
 
 NEXT: awaiting lead ✔ on MEGA-TOUR-RULING's recommended fix (still open, no schema/data change made
 yet per that item's own scope) and any further ROUND 11 assignment.
+
+## CC-1 — ROUND 13 DONE — LEDGER-NAME-01 + FACT-02, both ahead of deadline
+
+**LEDGER-NAME-01** (deadline 16:00Z, PR #20966, sha 9d62c0a2d7, FINDING ACCT-F25104) —
+`verify-no-duplicate-financial-ledger` was RED: `accounting.broker_advances` name-collides with
+canonical `driver_finance.driver_advances`. A NAME collision, not semantic (owner ruling
+2026-09-04, quoted in the migration: broker advances never touch driver_finance). The already-
+applied `202613630001` had a CANONICAL-CHECK block but never named the colliding table by name.
+Since that migration is live on prod (never edit an applied migration), added
+`202613840000_broker_advances_canonical_check_driver_finance.sql` — an additive, byte-identical
+re-declaration of the same `CREATE TABLE IF NOT EXISTS` (guaranteed no-op, live-verified column-
+for-column against the real table) carrying a CANONICAL-CHECK that explicitly names
+`driver_finance.driver_advances`. Guard now green: `0 unresolved duplicate ledgers`.
+
+**FACT-02** (deadline 17:30Z, PR #20974, sha 339628b11a, FINDING ACCT-F25105) — seeded 17 of 18
+Faro-matched, ready-to-factor USMCA invoices through the real
+`POST /api/v1/accounting/factoring-advances` + `.../:id/advance` service (Faro terms 1.5%/1.5%,
+`app.inject()`, never raw SQL). `accounting.factoring_advances` now 18 rows (was 1), all
+`advanced`, sum advance $54,999.00. All 18 confirmed to have a real, balanced, posted JE (sample
+verified DR 1090 $3,492 + DR 1230 $54 + DR 6400 $54 = CR 2150 $3,600). A/R untouched (ASC 860
+secured borrowing). Every Faro line kept in the report per the owner's own instruction.
+
+**⛔ NEW FINDING, filed not fixed (out of FACT-02's own scope) — deactivated-customer JOIN-drop
+in factoring-advances create route:** invoice 13543 (customer "PFL Logistics CO.",
+`deactivated_at`='2026-08-31T02:14:45Z') 404'd `invoice_not_found` from
+`POST /api/v1/accounting/factoring-advances`. Root cause: the route's invoice-eligibility query
+(`apps/backend/src/accounting/factoring-advances.routes.ts`, the `POST /api/v1/accounting/
+factoring-advances` handler) INNER JOINs `mdata.customers` on `customer_id` with no
+`deactivated_at` filter written in the SQL itself — but under the route's real (non-bypass) RLS
+session, a deactivated customer row is very likely hidden by `mdata.customers`' own soft-delete
+RLS predicate, so the JOIN silently drops the invoice and the route reports the misleading
+`invoice_not_found` (the invoice is fine; its customer is deactivated). Two real problems here:
+(1) a deactivated customer should probably still resolve for factoring eligibility purposes (the
+invoice/receivable doesn't stop existing because the customer record was later deactivated), or
+at minimum (2) the error should say `customer_deactivated`, not `invoice_not_found` — the current
+message sends whoever debugs this looking at the wrong table entirely. Invoice 13543 is untouched
+(`factoring_status='not_factored'`), safe to retry once ruled on. Whoever owns
+`factoring-advances.routes.ts` (accounting module, CC-1) picks this up next unless reassigned —
+flagging here first per "find it, file it" since it surfaced mid-FACT-02, not the task itself.
+
+**Verified, fresh main tip, both PRs merged:** `verify-no-duplicate-financial-ledger` OK (0
+unresolved), `money-pr-local-gate.mjs` full PASS on both, live Neon re-measured post-merge.
+
+NEXT: awaiting the lead's ruling on the 13543 deactivated-customer finding above, or the next
+ROUND assignment.

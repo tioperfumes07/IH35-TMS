@@ -1242,3 +1242,30 @@ WORM held. Finding SETL-BOOKENDED-ONE-OPEN-PER-DRIVER-VS-MEGA-TOUR-SEED
 closed in docs/audit/GUARD-WORKORDERS.md with this evidence.
 
 DELIVER-SEED-40 + DELIVER-SEED-FINISH: COMPLETE.
+
+STOPS-APPT-FIX — APPLIED (LEAD ✔ ROUND 13, PR #20969, merged). LEAD_APPROVAL_QUOTE
+filled with the ✔ quoted verbatim: "STOPS-APPT-FIX dry-run (98 stops / 49
+loads) read; ✔ --apply, post before/after counts."
+
+FIRST ATTEMPT hit a new bug live: the surgical PATCH route's zod schema
+rejected all 98 stops with "Invalid ISO datetime" — scheduled_arrival_at
+comes back from Postgres via ::text cast ("2026-08-19 05:00:00+00", space
+separator, no offset colon), which fails strict ISO 8601. 0 rows changed,
+clean failure (same class of bug as DELIVER-SEED-40's delivered_at issue
+earlier this session). FIXED by re-formatting via
+new Date(s.scheduled_arrival_at).toISOString() before sending. Re-ran:
+98/98 succeeded, 0 failed. Guard updated to lock the fix in (--selftest
+9/9, 2 new cases).
+
+BEFORE: 98 target stops (48 originally-dispatched USMCA loads, now split
+across dispatched/delivered_pending_docs, plus load 13508) all had
+appointment_start_at IS NULL despite a real, seeded scheduled_arrival_at.
+
+AFTER: 0 target stops remain NULL. Fresh Neon re-query of the exact same
+scope: 0/98. Sample (load 13508 stop #1, pickup): scheduled_arrival_at
+"2026-08-07 05:00:00+00" -> appointment_start_at "2026-08-07 05:00:00+00"
+(now visible in the field Round Trips/the tour readout actually reads).
+Zero of the 29 cancelled USMCA loads touched. No raw SQL for writes — every
+write went through PATCH /api/v1/mdata/loads/:id/stops/:stopId.
+
+STOPS-APPT-FIX: COMPLETE.

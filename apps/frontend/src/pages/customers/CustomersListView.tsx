@@ -256,6 +256,8 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
         rows={enrichedRows}
         rowKey={(row) => row.id}
         storageKey="customers-list"
+        pageSizeOptions={[25, 50, 100, 250, 300]}
+        allowAllPageSize
         initialPageSize={50}
         sortKey={sortKey}
         sortDirection={sortDirection}
