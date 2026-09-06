@@ -81,6 +81,8 @@ function paidWithRuleHolds(paidSrc) {
     { n: "1100 Accounts Receivable (A/R)", account_type: "Asset", account_subtype: "Accounts Receivable (A/R)", system_purpose: "accounts_receivable", want: null },
     { n: "2100 Driver Escrow - Held in Trust", account_type: "Liability", account_subtype: "Trust Accounts - Liabilities", system_purpose: "driver_escrow_liability", want: null },
     { n: "1230 Factoring Reserves", account_type: "Asset", account_subtype: "OtherCurrentAsset", system_purpose: "factoring_reserves", want: null },
+    // Live defect 01:33Z on load 13567: leaked through /fuel/ — must be rejected.
+    { n: "1250 Driver Fuel-Overage Receivable", account_type: "Asset", account_subtype: "OtherCurrentAsset", system_purpose: "driver_fuel_overage_receivable", want: null },
   ];
   const problems = [];
   for (const a of live) {
@@ -179,6 +181,7 @@ function main() {
     const mut = (file, from, to) => ({ ...files, [file]: files[file].replace(from, to) });
     const mutations = [
       ["Paid-with admits a receivable", mut(PAID, "if (BANK_SUBTYPES.test(subtype) && /asset/i.test(account.account_type)) return \"bank\";", "if (/asset/i.test(account.account_type)) return \"bank\";")],
+      ["Paid-with fuel rule admits the fuel-overage receivable", mut(PAID, "if (/receivable|payable|liabilit|escrow|reserve|advance/.test(purpose)) return null;\n  if (/fuel.*(wallet|card)|(wallet|card).*fuel/.test(purpose)) return \"fuel_card\";", "if (/fuel/.test(purpose)) return \"fuel_card\";")],
       ["Costs tab drops paidWithAccounts", mut(TAB, "paidWithAccounts(chart)", "chart")],
       ["receipt removed from the draft card", mut(TAB, /<CardReceipt[^>]*entityId=\{row\.attachmentDraftId\}[^/]*\/>/, "<span />")],
       ["attachment_draft_id dropped on createExpense", mut(TAB, /(createExpense\(opco, \{[^\n]*?), attachment_draft_id: row\.attachmentDraftId/, "$1")],

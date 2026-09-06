@@ -31,7 +31,10 @@ export type PaidWithKind = "bank" | "credit_card" | "fuel_card";
 export function paidWithKind(account: Pick<CatalogAccount, "account_type" | "account_subtype" | "system_purpose" | "account_name">): PaidWithKind | null {
   const purpose = (account.system_purpose ?? "").toLowerCase();
   const subtype = (account.account_subtype ?? "").trim();
-  if (/fuel/.test(purpose)) return "fuel_card";
+  // Fuel CARD / wallet only. Live defect 2026-09-06 01:33Z: `/fuel/` also admitted 1250 Driver Fuel-Overage
+  // Receivable (system_purpose driver_fuel_overage_receivable) — a receivable is never "paid with".
+  if (/receivable|payable|liabilit|escrow|reserve|advance/.test(purpose)) return null;
+  if (/fuel.*(wallet|card)|(wallet|card).*fuel/.test(purpose)) return "fuel_card";
   if (PAID_WITH_PURPOSES.has(purpose)) return purpose.includes("card") ? "credit_card" : "bank";
   if (CARD_SUBTYPES.test(subtype)) return "credit_card";
   if (BANK_SUBTYPES.test(subtype) && /asset/i.test(account.account_type)) return "bank";
