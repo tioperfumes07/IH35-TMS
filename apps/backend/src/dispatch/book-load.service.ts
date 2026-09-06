@@ -1049,6 +1049,28 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     return { kind: "error", status: 400, payload: { error: "solo_or_team_assignment_required_not_both" } };
   }
 
+  // DSP-49 (owner order 2026-09-06, "every load carries its pickup and delivery appointments" —
+  // measured live 02:15Z: load 13526's stops have NO appointment window, so the Round Trips
+  // timeline had to fall back to created_at). The wizard (BookLoadStopsSection.tsx) enforces this
+  // client-side, but a real booking action must never trust the client alone -- book-load.service
+  // is the ONE path every caller (HTTP route, a future seed/import script) goes through, matching
+  // this file's own established rule for the geofence/Google-reference hooks above. Sorted by
+  // sequence_number so this is correct regardless of the array's own send order; "has an
+  // appointment" accepts either scheduled_arrival_at (the wizard's single fixed-time field) OR
+  // appointment_start_at (a start+end window) -- never invents a missing time, only refuses to
+  // book without one.
+  const sortedStops = [...(input.stops ?? [])].sort((a, b) => a.sequence_number - b.sequence_number);
+  const firstPickup = sortedStops.find((s) => s.stop_type === "pickup");
+  const deliveries = sortedStops.filter((s) => s.stop_type === "delivery");
+  const lastDelivery = deliveries[deliveries.length - 1];
+  const hasAppointment = (s: BookLoadStop | undefined) => Boolean(s?.scheduled_arrival_at || s?.appointment_start_at);
+  if (!hasAppointment(firstPickup)) {
+    return { kind: "error", status: 400, payload: { error: "pickup_appointment_required" } };
+  }
+  if (!hasAppointment(lastDelivery)) {
+    return { kind: "error", status: 400, payload: { error: "delivery_appointment_required" } };
+  }
+
   const result = await bookLoadInTransaction(input);
 
   // Inv #40 (owner order 2026-09-05, SAMSARA-CAPABILITIES-AND-INTEGRATION-PLAN-2026-09-05.md §4):

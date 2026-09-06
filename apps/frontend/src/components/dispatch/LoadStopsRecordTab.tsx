@@ -68,6 +68,25 @@ function locationText(stop: StopsRecordStop): string {
   return parts.length ? parts.join(", ") : DASH;
 }
 
+// DSP-49 — "no appointment on file" gap, same definition as scripts/report-loads-missing-appointments.mjs:
+// the REAL field (appointment_start_at) on the first pickup and last delivery, not the scheduled_arrival_at
+// fallback appointmentText() displays. A load can carry a rough scheduled_arrival_at and still be missing the
+// real appointment window the Round Trips timeline and tour readout position on.
+function missingRequiredAppointments(stops: StopsRecordStop[]): Array<{ label: string; sequence: number }> {
+  const pickups = stops.filter((s) => s.stop_type === "pickup").sort((a, b) => a.sequence - b.sequence);
+  const deliveries = stops.filter((s) => s.stop_type === "delivery").sort((a, b) => a.sequence - b.sequence);
+  const firstPickup = pickups[0];
+  const lastDelivery = deliveries[deliveries.length - 1];
+  const missing: Array<{ label: string; sequence: number }> = [];
+  if (firstPickup && !firstPickup.appointment_start_at) {
+    missing.push({ label: "pickup", sequence: firstPickup.sequence });
+  }
+  if (lastDelivery && !lastDelivery.appointment_start_at) {
+    missing.push({ label: "delivery", sequence: lastDelivery.sequence });
+  }
+  return missing;
+}
+
 // Every box is a drill-down pop-up (owner: "i want all those to pop up just like here when we click").
 function StopsPopup({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   useEffect(() => {
@@ -249,6 +268,7 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
   const data = query.data;
   const stops: StopsRecordStop[] = data?.stops ?? [];
   const anyGeocodeMissing = stops.some((s) => s.geocode_missing);
+  const missingAppointments = missingRequiredAppointments(stops);
   const stopColumns: Array<ParityColumn<StopsRecordStop>> = [
     { key: "sequence", label: "#" },
     { key: "stop_type", label: "Type", render: (stop) => stopTypeLabel(stop.stop_type) },
@@ -286,6 +306,32 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
           ) : null}
         </div>
       </div>
+
+      {missingAppointments.length > 0 ? (
+        <div
+          className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[#f6e3df] bg-[#f6e3df] px-2 py-1.5 text-xs text-[#93301f]"
+          data-testid="stops-record-appointment-missing"
+          role="alert"
+        >
+          <span>
+            No appointment on file —{" "}
+            {missingAppointments
+              .map((m) => `${m.label} #${m.sequence}`)
+              .join(" and ")}{" "}
+            {missingAppointments.length > 1 ? "have" : "has"} no appointment window recorded.
+          </span>
+          {onEditStops ? (
+            <button
+              type="button"
+              className="font-semibold underline hover:no-underline"
+              data-testid="stops-record-appointment-missing-edit"
+              onClick={onEditStops}
+            >
+              Edit stops
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {stops.length === 0 ? (
         <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-center text-xs text-gray-500">
