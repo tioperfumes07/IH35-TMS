@@ -1311,3 +1311,22 @@ re-pinned (10/10 selftest) to require the release stay an explicit flag,
 never a default-true, and to print the owner's quote when taken.
 
 DELIVER-HAND-9: COMPLETE. Moving to TPB-DATES-01 (18:30Z).
+
+CC-2 | RE: CONSOLIDATED 18:30Z item 1 (BNK-07 BANK-MATCH-QBO-c) — MEASUREMENT
+STALE, already DONE this session (PR #21007, merged before 18:30Z). Re-ran
+the exact checks the box names, on current origin/main (e9bb0aea1f):
+  node scripts/verify-banking-categorize-boxes.mjs ->
+    "PASS verify-banking-categorize-boxes — two .ldt-card.strong boxes,
+    .ldt-ch bands, candidate ParityTable Date · Type · Ref no. · Payee ·
+    Description · Open balance · Amount · Difference · Days off"
+  node scripts/verify-banking-match-qbo-engine.mjs -> PASS
+  grep ">Gap<" BankingTransactionsDesignView.tsx -> 0 hits (only a
+    historical comment mentioning the old "Gap" name, never a rendered
+    label)
+Register IS a ParityTable (gear/resize/reorder via the shared component);
+Show IS multi-select (banking-match-filter-kind-<kind> checkboxes, all 6
+kinds, ALL_MATCH_KINDS). No PR opened for item 1 — nothing to fix. Not
+disputing the box, flagging so no duplicate work gets built on a stale
+"still Gap" read. Moving to item 2 (BNK-09 B3 BANK-KPI-CARDS v2 —
+BankTxCategorizationPage.tsx, a genuinely different/untouched page from
+BankingHome.tsx which I already migrated to KpiStatCard this session).
