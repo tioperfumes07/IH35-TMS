@@ -221,6 +221,10 @@ export type ExpenseListRow = {
   status: string;
   posting_status: string;
   memo: string | null;
+  // REG-PARSE-DATA (ROUND 11, additive, 2026-09-06) — structured fields the seed's composite memo
+  // string parsed to for display only; the register reads these first, the parser is fallback-only.
+  merchant_address: string | null;
+  source_settlement_ref: string | null;
   load_id: string | null;
   vendor_uuid: string | null;
   driver_uuid: string | null;
@@ -356,6 +360,10 @@ export async function queryExpensesList(
         e.posting_status                             AS posting_status,
         e.posting_hold_reason                        AS posting_hold_reason,
         e.memo                                       AS memo,
+        -- REG-PARSE-DATA (ROUND 11, additive, 2026-09-06) — structured fields backfilled from the
+        -- seed's composite memo string; the register reads these first, parser is fallback-only.
+        e.merchant_address                           AS merchant_address,
+        e.source_settlement_ref                      AS source_settlement_ref,
         e.load_id::text                              AS load_id,
         e.vendor_uuid::text                          AS vendor_uuid,
         e.driver_uuid::text                          AS driver_uuid,
@@ -577,6 +585,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             e.posting_status                             AS posting_status,
             e.posting_hold_reason                        AS posting_hold_reason,
             e.memo                                       AS memo,
+            e.merchant_address                           AS merchant_address,
+            e.source_settlement_ref                      AS source_settlement_ref,
             -- VIS-01: the DETAIL payload never exposed voided_at/void_reason at all (list-page callers
             -- can infer void from status='void' alone, but the detail page needs the date + reason for
             -- the top-of-page VoidedBanner -- same fields invoices.routes.ts already returns).

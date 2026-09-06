@@ -1,10 +1,10 @@
 {
-  "healthzSha": "67bded3",
-  "generated_at": "2026-09-06T02:28:06.632Z",
+  "healthzSha": "f6c8707",
+  "generated_at": "2026-09-06T06:34:38.385Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "67bded3",
+    "deployedSha": "f6c8707",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 20833,
-      "title": "docs(bus): LDT-5/6 live record; Round Trips measured (RT-FIX); ROUND 7 items",
+      "number": 20926,
+      "title": "FINDING: GATE-LIVELOCK — every backend deploy fails in pre-deploy `db:migrate` with \"modified after apply\" on `202613790001_tel42_ih35_yard_location.sql`. Measured: prod branch br-fancy-credit-akjnd07a ledger checksum for that file = `3a8f9d6d05cb74e25b4e90144839f307e497ef6a3090a9cb7bdca1714735d61a` (applied 2026-09-06T01:26:47Z); current disk `shasum -a 256` = `41983dd0b96b14e017f6948eca539a1c389c49914c6d5e273c7477696467f109`. First observed failure: Render deploy dep-daeg5t0u01pc73eblh30 (commit 38bcdb00), status pre_deploy_failed at 2026-09-06T06:08:53Z (\"==> Pre-deploy has failed / Exited with status 1\"). db:verify:critical-runtime skips on Render, so the failing step is db:migrate's checksum-drift refusal (scripts/db-migrate.mjs:543-547).",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 09:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20833",
-      "sha": "5d858fb7bd",
-      "committedAtIso": "2026-09-05T21:25:36-05:00"
+      "mergedAtCt": "09/06/2026, 01:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20926",
+      "sha": "f6c8707657",
+      "committedAtIso": "2026-09-06T01:27:50-05:00"
     },
     {
-      "number": 20832,
-      "title": "CLAIM-RESERVE: 10437 verify-acc-51-lists-receipt-and-hold",
+      "number": 20925,
+      "title": "docs(bus): CC-1 FACT-01 progress report (steps 1-3) + REG-PARSE-DATA paused status",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 09:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20832",
-      "sha": "90084c7a91",
-      "committedAtIso": "2026-09-05T21:25:04-05:00"
+      "mergedAtCt": "09/06/2026, 01:23 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20925",
+      "sha": "ae1f91dc23",
+      "committedAtIso": "2026-09-06T01:23:25-05:00"
     },
     {
-      "number": 20831,
-      "title": "fix(load-detail): LDT-5/6 live follow-up — cancelled legs excluded from tour totals (TR 13527 added $3,000 phantom revenue on S-13646, measured 02:19Z); drawer wide for every designed tab (Pre-Settlement was crammed at 600px); readiness pills wrap",
+      "number": 20923,
+      "title": "FINDING: FACT-01-STEP3 — Faro's real invoice/advance data has no repeatable, honest match check against TMS",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 09:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20831",
-      "sha": "67bded37a7",
-      "committedAtIso": "2026-09-05T21:24:28-05:00"
+      "mergedAtCt": "09/06/2026, 01:23 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20923",
+      "sha": "6a945bea34",
+      "committedAtIso": "2026-09-06T01:23:22-05:00"
     },
     {
-      "number": 20829,
-      "title": "FINDING: TEL-43 real driven miles lacked reconciliation",
+      "number": 20924,
+      "title": "CLAIM-RESERVE: 10467 verify-deliver-seed-40",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 09:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20829",
-      "sha": "66dd8120b0",
-      "committedAtIso": "2026-09-05T21:22:15-05:00"
+      "mergedAtCt": "09/06/2026, 01:15 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20924",
+      "sha": "51fae950be",
+      "committedAtIso": "2026-09-06T01:15:35-05:00"
     },
     {
-      "number": 20827,
-      "title": "CLAIM-RESERVE: 10435 verify-load-costs-page-registers",
+      "number": 20922,
+      "title": "docs(audit): file DELIVER-SEED-40 settlement findings (one fixed, one open)",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 09:17 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20827",
-      "sha": "c72ace8de4",
-      "committedAtIso": "2026-09-05T21:17:36-05:00"
+      "mergedAtCt": "09/06/2026, 01:14 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20922",
+      "sha": "b995f04b9c",
+      "committedAtIso": "2026-09-06T01:14:10-05:00"
     },
     {
-      "number": 20828,
-      "title": "feat(load-detail): LDT-5 + LDT-6 — Pre-Settlement = the open TOUR from ONE readout with \"Close tour → Settlement (human confirms)\"; Settlement = driver + company settlement, frozen when closed; root cause of \"No active pre-settlement found\" fixed (settlement_model)",
+      "number": 20921,
+      "title": "FINDING: VC-LIST-01 (owner ROUND 11, measured live 05:29Z on /vendors 619 + /customers 1,235): every OPEN BALANCE $0.00; a single \"Sort by name\" select (no column asc/desc); page size 25/50/100/250 with no All; type/category/status filters don't visibly filter; STATUS showed quality chips, not active/inactive.",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 09:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20828",
-      "sha": "8a60a0cd31",
-      "committedAtIso": "2026-09-05T21:14:10-05:00"
+      "mergedAtCt": "09/06/2026, 01:05 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20921",
+      "sha": "38bcdb008c",
+      "committedAtIso": "2026-09-06T01:05:56-05:00"
     },
     {
-      "number": 0,
-      "title": "docs(bus): CURSOR CUR-2 RE-CONFIRM — already merged cda6f7b4e3, no rebuild",
+      "number": 20920,
+      "title": "Cursor-claim: reserve verify-step 10462 (VC-LIST-01)",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 09:11 PM CT",
-      "url": "",
-      "sha": "2f488bad7c",
-      "committedAtIso": "2026-09-05T21:11:51-05:00"
+      "mergedAtCt": "09/06/2026, 01:00 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20920",
+      "sha": "cf12ee3f83",
+      "committedAtIso": "2026-09-06T01:00:02-05:00"
     },
     {
-      "number": 0,
-      "title": "docs(bus): CURSOR LDT-7 DONE + RT-RESTORE already-satisfied report",
+      "number": 20919,
+      "title": "CC-3: ROUND 11 status board post + EXP-ADDR-SPLIT coordination note to CC-1",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 09:06 PM CT",
-      "url": "",
-      "sha": "07b927e710",
-      "committedAtIso": "2026-09-05T21:06:51-05:00"
+      "mergedAtCt": "09/06/2026, 12:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20919",
+      "sha": "00d8e0ca2c",
+      "committedAtIso": "2026-09-06T00:56:13-05:00"
     },
     {
-      "number": 20826,
-      "title": "FINDING: DISP-LDT7 — load Audit tab printed machine codes and block ids, not English",
+      "number": 20918,
+      "title": "FINDING: EXP-ADDR-SPLIT — merchant address normalizer (number-glue + doubled-state), 20 live samples (owner ROUND 11)",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 09:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20826",
-      "sha": "d2b02e28eb",
-      "committedAtIso": "2026-09-05T21:05:45-05:00"
+      "mergedAtCt": "09/06/2026, 12:55 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20918",
+      "sha": "a51f835afa",
+      "committedAtIso": "2026-09-06T00:55:24-05:00"
     },
     {
-      "number": 20825,
-      "title": "docs(bus): CC-1 ACC-50b (Costs cards pill) DONE line",
+      "number": 20917,
+      "title": "FINDING: DED-DUP + EXP-DATE — duplicate seed deductions voided, one future-dated expense corrected (owner ROUND 10 addenda)",
       "state": "merged",
-      "mergedAtCt": "09/05/2026, 08:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20825",
-      "sha": "6c9841d1b7",
-      "committedAtIso": "2026-09-05T20:55:10-05:00"
+      "mergedAtCt": "09/06/2026, 12:53 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20917",
+      "sha": "b8a19f850d",
+      "committedAtIso": "2026-09-06T00:53:33-05:00"
     }
   ]
 }
