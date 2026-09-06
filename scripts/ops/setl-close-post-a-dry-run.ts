@@ -27,7 +27,13 @@ const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd"; // identity.users tioperfumes07@gmail.com, role Owner
 const ACH_PAYMENT_METHOD_ID = "574d600c-7afe-4da7-a234-61148ffecc1f"; // catalogs.payment_methods "ACH transfer", USMCA
 
-const CLOSED_SETTLEMENT_DISPLAY_IDS = ["S-13642", "S-13644", "S-13646", "S-13648", "S-13649", "S-13650", "S-13652", "S-13656"];
+// Re-measured live 2026-09-06 ~17:2xZ: CC-2's DELIVER-HAND-9 closed 5 more since the original 8
+// (S-13643/45/47/54/55) — 13 of 15 now closed. Only S-13651/S-13653 remain open (the "$0 shells,
+// cancelled loads only" pair the task itself names).
+const CLOSED_SETTLEMENT_DISPLAY_IDS = [
+  "S-13642", "S-13643", "S-13644", "S-13645", "S-13646", "S-13647", "S-13648",
+  "S-13649", "S-13650", "S-13652", "S-13654", "S-13655", "S-13656",
+];
 
 async function main() {
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 3 });
@@ -58,7 +64,7 @@ async function main() {
   let totalDr = 0;
   let totalCr = 0;
   const report: string[] = [];
-  report.push(`SETL-CLOSE-POST-A DRY-RUN — ${settlements.length} JE(s) (the 8 already-closed settlements; the other 7 are gated on DELIVER-HAND-9, see OUTBOX note)`);
+  report.push(`SETL-CLOSE-POST-A DRY-RUN — ${settlements.length} JE(s) (13 of 15 now closed after DELIVER-HAND-9; only S-13651/S-13653 remain open, the named "$0 shells" pair)`);
 
   const acctLabel = new Map<string, string>();
   async function labelFor(accountId: string): Promise<string> {

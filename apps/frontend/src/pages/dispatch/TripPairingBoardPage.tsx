@@ -64,7 +64,11 @@ function legChip(leg: TripLeg) {
             {leg.trip_type}
             {dest ? ` · ${dest}` : ""}
           </span>
-          {dateRange ? <span className="text-[10px] font-normal opacity-90">{dateRange}</span> : null}
+          {/* GLOBAL-TYPE-SIZE-BASELINE (Claude + Jorge 2026-06-07): the scale is locked, and
+              verify-ui-design-system-ratchet.mjs forbids any NEW raw text-[Npx] occurrence even
+              at an already-locked value — no separate size class needed here at all: this span
+              inherits the parent's own text-[11px] (pre-existing, unchanged) by default. */}
+          {dateRange ? <span className="font-normal opacity-90">{dateRange}</span> : null}
         </span>
       }
     />
@@ -157,7 +161,7 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
               // before the 2026-08-07 USMCA cutover. "—" would read as "never went north", which
               // is false; say what's actually true instead.
               <span
-                className="inline-flex w-fit items-center rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600"
+                className="inline-flex w-fit items-center rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-600"
                 title="This tour's first USMCA leg is not Northbound because the real Northbound ran under IH35 TRANSPORTATION before the 2026-08-07 USMCA cutover — it is not missing data."
               >
                 NB · pre-cutover (Transportation)
@@ -187,7 +191,7 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
         const sinceDate = formatDateUS(lastLeg?.delivery_date ?? t.return_avail_date);
         return (
           <div className="flex flex-col items-start gap-1">
-            <span className="inline-flex items-center rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600">
+            <span className="inline-flex items-center rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-600">
               open{sinceDate ? ` — up north since ${sinceDate}` : ""}
             </span>
             <button
