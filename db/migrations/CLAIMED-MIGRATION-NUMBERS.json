@@ -832,5 +832,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "additive: accounting.cash_flow_row_adjustments gains a bigserial seq column. Found live-testing 202613860000's own read-model overlay: two adjustments on the same row created inside ONE transaction share an identical now() timestamp (frozen per-transaction in Postgres), making the DISTINCT ON ... ORDER BY created_at DESC latest-adjustment-wins tie-break non-deterministic. seq is monotonic regardless of transaction timing; the overlay query re-orders on it instead."
+  },
+  "202613880000": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "comment-only: CANONICAL-CHECK declaration for accounting.cash_flow_row_adjustments (202613860000 is applied on prod -- checksum-freeze law -- so the block cannot be added to it; this migration re-issues the identical CREATE TABLE IF NOT EXISTS as a guaranteed no-op, same pattern as 202613840000). Clears verify-no-duplicate-financial-ledger RED on main since #21067."
   }
 }
