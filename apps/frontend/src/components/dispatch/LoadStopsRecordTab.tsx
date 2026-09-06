@@ -1,3 +1,5 @@
+// TABLE_DATE_OMIT: this table has no date column by design (not a time-series view).
+
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {

@@ -1,3 +1,5 @@
+// TABLE_DATE_OMIT: this table has no date column by design (not a time-series view).
+
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
