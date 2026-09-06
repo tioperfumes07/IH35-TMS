@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
-import { getCustomerBillingSummary, listAllAtRiskCustomerRelationshipScores, type Customer } from "../../api/mdata";
+import { getCustomerBillingSummary, listAllAtRiskCustomerRelationshipScores, type Customer, type CustomerFinanceRollup } from "../../api/mdata";
 import { customerQualityKind, customerQualityClass } from "../../lib/quality-badge";
 import { bulkUpdate } from "../../api/bulk";
 import { ParityTable } from "../../components/parity/ParityTable";
@@ -19,6 +19,18 @@ import { mmmDd } from "../../lib/formatDate";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
+}
+
+// ROUND 16.10 — a null day-count or dollar figure means no real ledger source for THIS customer,
+// never a fabricated 0 (LAW §8 "zero is a claim").
+function fmtDays(value: number | null): string {
+  return value == null ? "—" : `${Math.round(value)} d`;
+}
+function fmtFinanceCents(value: number | null): string {
+  return value == null ? "—" : fmtMoney(value);
+}
+function fmtPct(value: number | null): string {
+  return value == null ? "—" : `${value.toFixed(1)}%`;
 }
 
 function qualityBadge(customer: Customer) {
@@ -50,6 +62,9 @@ type CustomerRow = Customer & {
   ar_open_cents: number | null;
   last_load_iso: string | null;
   factored_label: string;
+  // ROUND 16.10 (owner 2026-09-06 21:59Z) — null (not 0) whenever the customer has no rollup row
+  // or a specific figure has no real ledger source (LAW §8 "zero is a claim").
+  finance: CustomerFinanceRollup | null;
 };
 
 // CC-3 V.1 roll-up: per-customer profitability merged from the customer-profitability endpoint.
@@ -74,10 +89,12 @@ type Props = {
   openBalancesAvailable: boolean;
   /** CC-3 V.1 roll-up: per-customer YTD profitability keyed by customer_id. */
   profitabilityByCustomerId: Map<string, CustomerProfitability>;
+  /** ROUND 16.10: per-customer days-to-pay + cost-of-finance rollup, keyed by customer_id. */
+  financeByCustomerId: Map<string, CustomerFinanceRollup>;
   onSelectCustomer?: (customerId: string) => void;
 };
 
-export function CustomersListView({ companyId, customers, status, openByCustomerId, openBalancesAvailable, profitabilityByCustomerId, onSelectCustomer }: Props) {
+export function CustomersListView({ companyId, customers, status, openByCustomerId, openBalancesAvailable, profitabilityByCustomerId, financeByCustomerId, onSelectCustomer }: Props) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   // Same BULK_WRITE_ROLES gate the old BulkActionBar enforced internally (useBulkPermission) —
@@ -151,9 +168,10 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
           // VC-LIST-01: Factored? — a customer whose credit limit is sourced from a factor is a
           // factored account (credit_limit_source = 'factor').
           factored_label: c.credit_limit_source === "factor" ? "Yes" : "No",
+          finance: financeByCustomerId.get(c.id) ?? null,
         };
       }),
-    [filtered, openBalancesAvailable, openByCustomerId, atRiskCustomerIds, atRiskQuery.isError, profitabilityByCustomerId]
+    [filtered, openBalancesAvailable, openByCustomerId, atRiskCustomerIds, atRiskQuery.isError, profitabilityByCustomerId, financeByCustomerId]
   );
 
   // LIST-EMPTY-1: empty row renders only once the roster fetch settles.
@@ -481,6 +499,92 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
               ) : (
                 <span className="text-gray-400">No</span>
               ),
+          },
+          // ROUND 16.10 (owner 2026-09-06 21:59Z): "EVERY CUSTOMER IN THE RATING ... AVERAGE
+          // PAYMENT TO FACTORING OR TO US ... HOW MUCH IT IS COSTING US IN FINANCE, IN FACTORING
+          // FEES, IN LATE FEES, ETC." One read model (getCustomerFinanceRollup), list AND detail
+          // both read it. late_fee_cents stays "—" (never $0.00) — no late-fee source exists
+          // anywhere in the ledger (checked mdata.customer_quality_events: 0 rows carry a real
+          // dollar_impact_amount).
+          {
+            key: "avg_days_to_pay_us",
+            label: "Avg days → us",
+            sortable: true,
+            cellClass: "text-right tabular-nums",
+            sortValue: (row) => row.finance?.avg_days_to_pay_us ?? -1,
+            render: (row) => fmtDays(row.finance?.avg_days_to_pay_us ?? null),
+          },
+          {
+            key: "avg_days_to_pay_factor",
+            label: "Avg days → factor",
+            sortable: true,
+            cellClass: "text-right tabular-nums",
+            sortValue: (row) => row.finance?.avg_days_to_pay_factor ?? -1,
+            render: (row) => fmtDays(row.finance?.avg_days_to_pay_factor ?? null),
+          },
+          {
+            key: "avg_days_late",
+            label: "Avg days late",
+            sortable: true,
+            defaultHidden: true,
+            cellClass: "text-right tabular-nums",
+            sortValue: (row) => row.finance?.avg_days_late ?? -1,
+            render: (row) => fmtDays(row.finance?.avg_days_late ?? null),
+          },
+          {
+            key: "factoring_fee_cents",
+            label: "Factoring fees",
+            sortable: true,
+            defaultHidden: true,
+            cellClass: "text-right tabular-nums",
+            sortValue: (row) => row.finance?.factoring_fee_cents ?? -1,
+            render: (row) => fmtFinanceCents(row.finance?.factoring_fee_cents ?? null),
+          },
+          {
+            key: "factoring_interest_cents",
+            label: "Factor interest",
+            sortable: true,
+            defaultHidden: true,
+            cellClass: "text-right tabular-nums",
+            sortValue: (row) => row.finance?.factoring_interest_cents ?? -1,
+            render: (row) => fmtFinanceCents(row.finance?.factoring_interest_cents ?? null),
+          },
+          {
+            key: "late_fee_cents",
+            label: "Late fees",
+            sortable: false,
+            defaultHidden: true,
+            cellClass: "text-right tabular-nums",
+            render: () => (
+              <span className="text-gray-400" title="No late-fee source in the ledger">
+                —
+              </span>
+            ),
+          },
+          {
+            key: "reserve_held_cents",
+            label: "Reserve held",
+            sortable: true,
+            defaultHidden: true,
+            cellClass: "text-right tabular-nums",
+            sortValue: (row) => row.finance?.reserve_held_cents ?? -1,
+            render: (row) => fmtFinanceCents(row.finance?.reserve_held_cents ?? null),
+          },
+          {
+            key: "finance_cost_total_cents",
+            label: "Finance cost",
+            sortable: true,
+            cellClass: "text-right tabular-nums",
+            sortValue: (row) => row.finance?.finance_cost_total_cents ?? -1,
+            render: (row) => fmtFinanceCents(row.finance?.finance_cost_total_cents ?? null),
+          },
+          {
+            key: "finance_cost_pct",
+            label: "Finance %",
+            sortable: true,
+            cellClass: "text-right tabular-nums",
+            sortValue: (row) => row.finance?.finance_cost_pct ?? -1,
+            render: (row) => fmtPct(row.finance?.finance_cost_pct ?? null),
           },
           {
             key: "credit_limit",

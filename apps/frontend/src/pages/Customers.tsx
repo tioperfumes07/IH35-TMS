@@ -17,7 +17,7 @@ import { listAllAccountingRecurringTemplates } from "../api/accountingRecurringT
 import { companyToday, addDaysIso } from "../lib/businessDate";
 import { ApiError } from "../api/client";
 import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./accounting/InvoicesListPage";
-import { createCustomer, getCustomerBillingSummary, listAllCustomers, listPaymentTermOptions, type Customer, type CustomerBillingSummary } from "../api/mdata";
+import { createCustomer, getCustomerBillingSummary, listAllCustomers, listPaymentTermOptions, getCustomerFinanceRollup, type Customer, type CustomerBillingSummary, type CustomerFinanceRollup } from "../api/mdata";
 import {
   CustomerProfileForm,
   emptyCustomerProfileValues,
@@ -885,6 +885,20 @@ export function CustomersPage() {
     return map;
   }, [profitabilityQuery.data?.by_customer, revenueMtdByCustomerId]);
 
+  // ROUND 16.10 (owner 2026-09-06 21:59Z): per-customer days-to-pay + cost-of-finance, one read
+  // model shared by the list AND the detail "Cost of finance" card (never re-derived).
+  const financeRollupQuery = useQuery({
+    queryKey: ["customers", "finance-rollup", companyId],
+    queryFn: () => getCustomerFinanceRollup(companyId),
+    enabled: Boolean(companyId),
+    retry: false,
+  });
+  const financeByCustomerId = useMemo(() => {
+    const map = new Map<string, CustomerFinanceRollup>();
+    for (const row of financeRollupQuery.data ?? []) map.set(row.customer_id, row);
+    return map;
+  }, [financeRollupQuery.data]);
+
   const summaryQuery = useQuery({
     queryKey: ["customers", "billing-summary", companyId, selectedCustomer?.id ?? ""],
     queryFn: () => getCustomerBillingSummary(selectedCustomer!.id, companyId),
@@ -1236,6 +1250,7 @@ export function CustomersPage() {
               openByCustomerId={openByCustomerId}
               openBalancesAvailable={!allInvoicesQuery.isError}
               profitabilityByCustomerId={profitabilityByCustomerId}
+              financeByCustomerId={financeByCustomerId}
               onSelectCustomer={(customerId) => {
                 setSelectedCustomerId(customerId);
                 setViewMode("master-detail");
