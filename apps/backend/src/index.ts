@@ -410,6 +410,7 @@ import { initializeQboCdcPollCron } from "./cron/qbo-cdc-poll.cron.js";
 import { initializeDepreciationAutopostCron } from "./cron/depreciation-autopost.cron.js";
 import { initializeBankDriftAlertsCron } from "./cron/bank-drift-alerts.cron.js";
 import { initializeCashFlowProjectionSnapshotCron } from "./cron/cash-flow-projection-snapshot.cron.js";
+import { initializeCashFlowRollingLedgerNotifyCron } from "./cron/cash-flow-rolling-ledger-notify.cron.js";
 import { initializeRecurringTemplatesCron } from "./cron/recurring-templates.cron.js";
 import { initializeRecurringBillGeneratorWorker, stopRecurringBillGeneratorWorker } from "./jobs/recurring-bill-generator-worker.js";
 import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh-cron.js";
@@ -1304,6 +1305,15 @@ async function main() {
       app.log.info("[STARTUP] cash-flow-projection-snapshot cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] cash-flow-projection-snapshot cron failed");
+    }
+
+    try {
+      // CASH-FLOW-02 part (b) (owner order 2026-09-06 20:1xZ): a Rolling Ledger row overdue more
+      // than 3 days raises exactly one in-app notification, deduped by entity, never re-fired.
+      initializeCashFlowRollingLedgerNotifyCron(app);
+      app.log.info("[STARTUP] cash-flow-rolling-ledger-notify cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] cash-flow-rolling-ledger-notify cron failed");
     }
 
     try {
