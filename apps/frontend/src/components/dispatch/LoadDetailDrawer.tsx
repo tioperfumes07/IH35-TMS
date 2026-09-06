@@ -1281,6 +1281,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                       <div className="text-xs text-gray-500">
                         Scheduled: {stop.scheduled_arrival_at ? new Date(stop.scheduled_arrival_at).toLocaleString() : "-"}
                       </div>
+                      {stop.geocode_precision === "locality" ? (
+                        <span data-testid="stop-geocode-locality-chip" className="mt-1 inline-flex rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                          city-level only — no arrival fence
+                        </span>
+                      ) : null}
                     </div>
                   ))}
                   {load && load.stops.length === 0 ? <div className="text-xs text-gray-500">No stops found.</div> : null}
