@@ -69,12 +69,34 @@ function LegendSwatch({ color, dashed, label }: { color?: string; dashed?: boole
   );
 }
 
+// TPB-RESTORE (owner, 2026-09-06: "if there was more than one, a column should expand and have a
+// new one there") — MEASURED: #19364 (2026-09-01) collapsed every TR ("triangulation") leg into ONE
+// column as stacked chips with "↳ leg 2" text; a unit running 2-3 relay legs showed them buried in
+// a single cell instead of the owner's requested Northbound · Triangulation 1 · Triangulation 2 ·
+// … · Southbound layout. computeMaxTriangulationLegs derives how many separate Triangulation
+// columns the CURRENTLY VISIBLE rows need — the count EXPANDS (or shrinks to 0) with the data, never
+// a fixed single column.
+export function computeMaxTriangulationLegs(tours: Pick<TripPairingUnitRow, "legs">[]): number {
+  return tours.length === 0 ? 0 : Math.max(0, ...tours.map((t) => t.legs.filter((l) => l.trip_type === "TR").length));
+}
+
 // TRIP-PAIRING-BOARD-PARITYTABLE (GO-05 wave 1): "Assigned trips" is a genuine row-list (one row
 // per unit/tour) — the raw <table> had no existing sort/resize to preserve, so this is a straight
 // column-parity conversion onto ParityTable's drag-resize + drag-reorder + gear chrome. A factory
 // (not a bare module-level array) because the Southbound column's "+ Find Southbound" button needs
-// the component's own setBookUnitId.
-function buildTripPairingColumns(onBookReturn: (unitId: string) => void): ParityColumn<TripPairingUnitRow>[] {
+// the component's own setBookUnitId, and TPB-RESTORE's Triangulation columns need trCount.
+function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount: number): ParityColumn<TripPairingUnitRow>[] {
+  // One SEPARATE column per triangulation leg index — never a stacked/collapsed single column.
+  // Each cell renders exactly one leg (or "—"); no "↳ leg N" text anywhere.
+  const triangulationColumns: ParityColumn<TripPairingUnitRow>[] = Array.from({ length: trCount }, (_, i) => ({
+    key: `triangulation-${i + 1}`,
+    label: `Triangulation ${i + 1}`,
+    sortable: false, // single-leg chip — no single sortable value
+    render: (t) => {
+      const leg = t.legs.filter((l) => l.trip_type === "TR")[i] ?? null;
+      return leg ? legChip(leg) : <span className="text-slate-400">—</span>;
+    },
+  }));
   return [
   {
     key: "unit",
@@ -105,25 +127,7 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void): Parity
       );
     },
   },
-  {
-    key: "triangulation",
-    label: "▶ Triangulation(s)",
-    sortable: false, // multi-leg chip list — no single sortable value
-    render: (t) => {
-      const trLegs = t.legs.filter((l) => l.trip_type === "TR");
-      return (
-        <div className="flex flex-col gap-1">
-          {trLegs.map((l, i) => (
-            <span key={l.load_id} className="flex items-center gap-1">
-              {i > 0 ? <span className="text-slate-400">↳ leg {i + 1}</span> : null}
-              {legChip(l)}
-            </span>
-          ))}
-          {trLegs.length === 0 ? <span className="text-slate-400">—</span> : null}
-        </div>
-      );
-    },
-  },
+  ...triangulationColumns,
   {
     key: "southbound",
     label: "▼ Southbound (return)",
@@ -175,7 +179,6 @@ export function TripPairingBoardPage() {
   const [segment, setSegment] = useState<Segment>("All");
   // C1a "+ Book NB" shell — opens the Book Load wizard prefilled with the unit.
   const [bookUnitId, setBookUnitId] = useState<string | null>(null);
-  const tripPairingColumns = useMemo(() => buildTripPairingColumns(setBookUnitId), []);
 
   const query = useQuery({
     queryKey: ["trip-pairing-board", companyId],
@@ -206,6 +209,11 @@ export function TripPairingBoardPage() {
   const showUnbooked = segment === "All" || segment === "NB";
   const unbooked = showUnbooked ? (data?.unbooked ?? []).filter(matches) : [];
   const tours = (data?.tours ?? []).filter(matches).filter(tourInSegment);
+
+  // TPB-RESTORE: the Triangulation column COUNT tracks the currently visible rows (post
+  // search+segment filter) — it expands (or shrinks to 0) with the data, never fixed.
+  const trCount = useMemo(() => computeMaxTriangulationLegs(tours), [tours]);
+  const tripPairingColumns = useMemo(() => buildTripPairingColumns(setBookUnitId, trCount), [trCount]);
 
   if (!companyId) {
     return (
