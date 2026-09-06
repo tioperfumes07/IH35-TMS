@@ -98,7 +98,7 @@ const COLUMNS: Array<ParityColumn<LocationRow>> = [
   {
     key: "address_line1",
     label: "Address",
-    sortable: false,
+    sortable: true,
     render: (row) => <span className="text-slate-700">{dash(row.address_line1)}</span>,
   },
   {
@@ -122,7 +122,7 @@ const COLUMNS: Array<ParityColumn<LocationRow>> = [
   {
     key: "latitude",
     label: "Lat/Lng",
-    sortable: false,
+    sortable: true,
     render: (row) => {
       if (row.latitude == null || row.longitude == null) {
         return <span className="text-slate-500">not geocoded</span>;
@@ -196,6 +196,7 @@ export function LocationsListPage() {
   const [geocodedFilter, setGeocodedFilter] = useState<TriFilter>("all");
   const [geofenceFilter, setGeofenceFilter] = useState<TriFilter>("all");
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
+  const [showInactive, setShowInactive] = useState(false);
   const [activeRow, setActiveRow] = useState<LocationRow | null>(null);
 
   const listQuery = useQuery({
@@ -211,8 +212,12 @@ export function LocationsListPage() {
     enabled: Boolean(companyId),
   });
 
-  const rows = listQuery.data?.rows ?? [];
-  const count = listQuery.data?.count ?? 0;
+  const allRows = listQuery.data?.rows ?? [];
+  // LFI-20+ (owner 2026-09-05): deactivated locations hidden by default — the list route itself
+  // returns every location regardless of deactivated_at, so this is a client-side filter, same
+  // shape as MaintenancePartsCatalog.tsx's showInactive.
+  const rows = showInactive ? allRows : allRows.filter((r) => !r.deactivated_at);
+  const count = rows.length;
 
   const breadcrumb = useMemo(() => ["Lists & Catalogs", "Locations"], []);
 
@@ -312,6 +317,17 @@ export function LocationsListPage() {
           </select>
         </label>
       </div>
+
+      <label className="flex items-center gap-1 text-xs text-gray-600">
+        <input
+          type="checkbox"
+          checked={showInactive}
+          onChange={(e) => setShowInactive(e.target.checked)}
+          className="h-3.5 w-3.5 rounded-sm border-gray-300"
+          data-testid="locations-list-filter-show-inactive"
+        />
+        Show inactive
+      </label>
 
       {listQuery.isError ? (
         <ListErrorState
