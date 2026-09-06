@@ -26,6 +26,7 @@ import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.j
 import { buildLoadSaveProof } from "./load-save-proof.js";
 import { linkLoadToPresettlementAtBookingInClientTx } from "./presettlement-link.service.js";
 import { geocodeStopsBackfill } from "../telematics/stops-geocode-backfill.service.js";
+import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
 import { computeAndPersistGoogleReferenceMilesForLoad } from "./google-reference-miles.service.js";
 
 type BookLoadStop = {
@@ -1113,11 +1114,24 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
   // commits (its own separate withCurrentUser transaction, same non-blocking best-effort shape
   // the HTTP route always used) -- a geofence/Samsara failure must never roll back or delay the
   // load booking response.
+  //
+  // TEL40-GEOFENCE-HOOK-DROPPED-FROM-BOOKLOAD (found + filed CC-2 2026-09-05, restored here):
+  // TEL-40 (ab250b0225, #20771) REPLACED the autoCreateGeofencesForLoad call below with
+  // geocodeStopsBackfill in this exact slot instead of adding it alongside -- a freshly booked
+  // load stopped auto-creating its geofences at all, only the stop-geocode backfill still fired.
+  // Both are legitimate, independent post-book side effects (this comment's own original wording
+  // already said "await/catch them independently") -- restored side by side below.
   if (result.kind === "ok") {
     const createdLoadId = String(result.row.id ?? "");
     if (createdLoadId) {
-      void geocodeStopsBackfill(input.requestingUserUuid, input.operating_company_id, createdLoadId).catch((err) => {
+      void autoCreateGeofencesForLoad(input.requestingUserUuid, {
+        operating_company_id: input.operating_company_id,
+        load_id: createdLoadId,
+      }).catch((err) => {
         console.error("auto_geofence_post_book_failed", { err, load_id: createdLoadId });
+      });
+      void geocodeStopsBackfill(input.requestingUserUuid, input.operating_company_id, createdLoadId).catch((err) => {
+        console.error("stops_geocode_backfill_post_book_failed", { err, load_id: createdLoadId });
       });
       // DSP-48 (owner ruling 2026-09-05, "Google distance = REFERENCE ONLY"): quotes + persists
       // the Google Routes reference distance for each practical-route leg, purely for operator
