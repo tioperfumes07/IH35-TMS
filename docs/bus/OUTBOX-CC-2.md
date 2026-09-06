@@ -1269,3 +1269,18 @@ Zero of the 29 cancelled USMCA loads touched. No raw SQL for writes — every
 write went through PATCH /api/v1/mdata/loads/:id/stops/:stopId.
 
 STOPS-APPT-FIX: COMPLETE.
+
+ROUND 13 progress — OPT-PANEL-01 ✔ (PR #20973, merged), INV-COPIES-01 ✔ (PR
+#20978, merged, 38/38 PDFs in ~/Downloads/USMCA-INVOICES-2026-09-06/),
+MatchDrawer/manual-match-picker test fixes ✔ (PR #20980): stale
+VARIANCE_HELD_NOTE assertion (BANK-F9998 F8 already changed the wording,
+test never updated) + BankReconciliationPage.tsx's worklist row (the
+merchant-name label's own click handler unconditionally stopped
+propagation before the row's select handler could fire, so the manual-
+match panel never opened — fixed by forwarding the click to row-select too,
+shared component itself untouched). vitest 8/8. BANK-MATCH-QBO (#20975)
+confirmed additive — MatchDrawer keeps working unmodified against the new
+match-candidates shape; adopting the new columns (counterparty_name /
+reference / description / open_balance_cents / payee_similarity + filters)
+into the drawer is queued, no deadline given — moving to LB-CHROME-1 now
+(deadline 18:30Z, time-boxed, surrender Cursor), column-adoption after.
