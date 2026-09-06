@@ -90,7 +90,14 @@ async function main() {
         method: "PATCH",
         url: `/api/v1/dispatch/loads/${x.id}/transition?operating_company_id=${USMCA_COMPANY_ID}`,
         headers,
-        payload: target === "delivered_pending_docs" ? { new_status: target, delivered_at: x.delivered_at } : { new_status: target },
+        // BUG FOUND before this script ever ran live (CC-2 2026-09-06): x.delivered_at comes from
+        // Postgres's own `::text` cast on a timestamptz, e.g. "2026-08-19 05:00:00+00" (space
+        // separator, no offset colon) — the transition route's zod schema
+        // (z.string().datetime({ offset: true })) requires strict ISO 8601
+        // ("2026-08-19T05:00:00.000Z") and rejects the Postgres text form outright, which would
+        // have 400'd delivered_pending_docs on every single load. Re-parsed through Date here —
+        // same real, already-recorded instant, correctly formatted, never a different moment.
+        payload: target === "delivered_pending_docs" ? { new_status: target, delivered_at: new Date(x.delivered_at).toISOString() } : { new_status: target },
       });
       results.push(`${target}=${res.statusCode}`);
       if (res.statusCode >= 300) { results.push(res.body.slice(0, 200)); break; }
