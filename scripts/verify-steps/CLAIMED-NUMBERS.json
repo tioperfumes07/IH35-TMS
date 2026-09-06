@@ -5852,10 +5852,15 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-parity-expand-toggle-box (B1 EXPAND-BOX, owner CONSOLIDATED 2026-09-06 item 4: ParityTable expand-toggle 24x24/glyph 12px/no border -> 28x28/1px var(--ldt-rule) border/radius 4/glyph 16px/hover var(--ldt-accent-soft)/aria-expanded, one shared component so every register gets it)"
   },
+  "10516": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-list-page-size-all (VC-10 / VC-LIST-02, owner CONSOLIDATED 2026-09-06 18:30Z item 2: SidebarPagination page-size options were [25,50,100,250] with no All and Vendors/Customers held the sidebar page size in a bare useState(50) that reset on reload -> add an All option (ALL_PAGE_SIZE sentinel) on both master-detail lists and persist the chosen size via useListPageSizePref)"
+  },
   "10517": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
-    "purpose": "verify-settlement-detail-kpi-grid (SETL-DETAIL-01 guard, existed since PR #21001 but was never wired into package.json or a verify-step -- wiring it now, plus the SETL-KPI-CENTS-01 fix it now also pins)"
+    "purpose": "verify-invoice-issue-date-from-load (INV-03, owner CONSOLIDATED 2026-09-06 18:30Z item 1: POST /api/v1/accounting/invoices fell back to companyBusinessDate() for issue_date even when created from a real load -- now derives issue_date from the load's real pickup-stop date, today only when there is no source load)"
   },
   "10519": {
     "claimed_by": "claude",
@@ -5865,7 +5870,7 @@
   "10521": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
-    "purpose": "verify-settlement-detail-reference (SETL-DETAIL-01 guard, existed since PR #21001 but was never wired into package.json or a verify-step -- wiring it now)"
+    "purpose": "verify-invoice-due-date-from-terms (INV-06, owner CONSOLIDATED item 3: audited backfill of the 39+ sent invoices whose due_date was stamped from the mint moment instead of invoice_date + customer terms, through the real recomputeInvoiceDatesFromDelivery service, never raw UPDATE)"
   },
   "10525": {
     "claimed_by": "claude",
@@ -7878,7 +7883,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1058,
+  "total_claimed": 1056,
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
