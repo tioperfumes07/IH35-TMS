@@ -7,6 +7,7 @@
 import { spawnSync } from "node:child_process";
 
 export const CENSUS_ORPHAN_GUARDS = [
+  "verify-driver-equipment-tab-columns.mjs",
   "verify-in-shop-units-single-predicate.mjs",
   "verify-banking-plaid-category-suggestion.mjs",
   "verify-banking-reconcile-expense-candidate.mjs",
