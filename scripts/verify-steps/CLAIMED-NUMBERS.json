@@ -5852,15 +5852,25 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-parity-expand-toggle-box (B1 EXPAND-BOX, owner CONSOLIDATED 2026-09-06 item 4: ParityTable expand-toggle 24x24/glyph 12px/no border -> 28x28/1px var(--ldt-rule) border/radius 4/glyph 16px/hover var(--ldt-accent-soft)/aria-expanded, one shared component so every register gets it)"
   },
-  "10517": {
+  "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
-    "purpose": "verify-invoice-issue-date-from-load (INV-03, owner CONSOLIDATED 2026-09-06 18:30Z item 1: POST /api/v1/accounting/invoices fell back to companyBusinessDate() for issue_date even when created from a real load -- now derives issue_date from the load's real pickup-stop date, today only when there is no source load)"
+    "purpose": "STALE -- this number collided with another session's verify-settlement-detail-kpi-grid claim (same JSON file, two non-conflicting text insertions -- neither PR touched the other's byte range, so git merged both). Renumbered to 10533-verify-invoice-issue-date-from-load.mjs. Kept here (renamed key) instead of deleted so this entry is never silently reused."
   },
-  "10521": {
+  "10521-DUPLICATE-RENUMBERED-TO-10537": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
-    "purpose": "verify-invoice-due-date-from-terms (INV-06, owner CONSOLIDATED item 3: audited backfill of the 39+ sent invoices whose due_date was stamped from the mint moment instead of invoice_date + customer terms, through the real recomputeInvoiceDatesFromDelivery service, never raw UPDATE)"
+    "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
+  },
+  "10533": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-invoice-issue-date-from-load (INV-03, owner CONSOLIDATED 2026-09-06 18:30Z item 1: POST /api/v1/accounting/invoices fell back to companyBusinessDate() for issue_date even when created from a real load -- now derives issue_date from the load's real pickup-stop date, today only when there is no source load) -- renumbered from 10517 after a duplicate-key collision with another session's claim"
+  },
+  "10537": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-invoice-due-date-from-terms (INV-06, owner CONSOLIDATED item 3: audited backfill of the 39+ sent invoices whose due_date was stamped from the mint moment instead of invoice_date + customer terms, through the real recomputeInvoiceDatesFromDelivery service, never raw UPDATE) -- renumbered from 10521 after a duplicate-key collision with another session's claim"
   },
   "10525": {
     "claimed_by": "claude",
