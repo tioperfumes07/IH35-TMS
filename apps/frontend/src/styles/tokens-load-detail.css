@@ -121,3 +121,14 @@ button.ldt-pill { cursor: pointer; }
 .ldt-modal-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--ldt-rule); background: var(--ldt-rule2); }
 .ldt-modal-title { font-family: var(--ldt-display); font-size: 17px; color: var(--ldt-ink); }
 .ldt-modal-body { padding: 12px 14px; font-size: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+/* Key/value readout rows (not data registers — those are ParityTable). */
+.ldt-rows { display: flex; flex-direction: column; font-size: 12px; }
+.ldt-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--ldt-rule2); color: var(--ldt-ink); }
+.ldt-rows-4 .ldt-row { grid-template-columns: 1fr 90px 90px 110px; }
+.ldt-row:last-child { border-bottom: 0; }
+.ldt-row.head { background: var(--ldt-rule2); color: var(--ldt-ink2); font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+.ldt-row.tot { background: var(--ldt-paper); font-weight: 600; }
+.ldt-row.big { background: var(--ldt-accent-soft); color: var(--ldt-accent); font-weight: 700; font-size: 13px; }
+.ldt-row.click { cursor: pointer; }
+.ldt-row.click:hover { background: var(--ldt-accent-soft); }
