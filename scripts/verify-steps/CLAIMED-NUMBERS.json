@@ -7988,5 +7988,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-customer-finance-cost-rollup"
+  },
+  "10594": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-factoring-layout-tabs-first"
   }
 }
