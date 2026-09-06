@@ -2034,10 +2034,10 @@ export function BankingTransactionsDesignView({
       // CANDIDATES (right) — each an .ldt-card.strong (dark 1px outline, .ldt-ch header band), the Load-costs palette.
       // Nothing inside either box was removed or reordered except the candidate register, which
       // BANK-MATCH-QBO-c moved onto <ParityTable> (see .ldt-rows-match-table below).
-      {/* ROUND 16.18 (owner, 2026-09-06 23:0xZ): "the categorize box shouold be smaller ... this way
-          the match candidates window, renders more appropriate" — same narrower-left/wider-right
-          split already established for Cash Flow's Expected Income/Expenses. Categorize does not
-          need half the screen; Match Candidates' 10-column register does. */}
+      // ROUND 16.18 (owner, 2026-09-06 23:0xZ): "the categorize box shouold be smaller ... this way
+      // the match candidates window, renders more appropriate" — same narrower-left/wider-right
+      // split already established for Cash Flow's Expected Income/Expenses. Categorize does not
+      // need half the screen; Match Candidates' 10-column register does.
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[2fr_3fr]" data-testid="banking-categorize-expanded-panel">
         <div className="ldt-card strong" data-testid="banking-categorize-box">
           <div className="ldt-ch">
