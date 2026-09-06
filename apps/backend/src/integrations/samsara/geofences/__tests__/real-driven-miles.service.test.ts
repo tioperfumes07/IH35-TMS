@@ -1,7 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { classifySegmentKind, materializeRealDrivenMilesSegments } from "../real-driven-miles.service.js";
+import { classifySegmentKind, getRealDrivenMilesSegmentStatus, materializeRealDrivenMilesSegments } from "../real-driven-miles.service.js";
 
 describe("Samsara real driven miles per load leg", () => {
+  it("names the measured blocker instead of logging an ambiguous empty result", async () => {
+    const client = { query: async (sql: string) => sql.includes("SELECT\n       (SELECT count(*)")
+      ? { rows: [{ events: "14", odometer_rows: "182995", segments: "0" }] }
+      : { rows: [] } };
+    await expect(getRealDrivenMilesSegmentStatus(client as never, "company")).resolves.toEqual({
+      events: 14,
+      odometer_rows: 182995,
+      segments: 0,
+      blocker: "no_qualifying_event_odometer_pairs",
+    });
+  });
+
   it("classifies operational legs without folding detours into planned mileage", () => {
     expect(classifySegmentKind("pickup", "delivery")).toBe("loaded");
     expect(classifySegmentKind("delivery", "pickup")).toBe("deadhead_to_pickup");

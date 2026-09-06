@@ -13,6 +13,13 @@ export type MaterializedMilesSegment = {
   driven_miles: number;
 };
 
+export type RealDrivenMilesSegmentStatus = {
+  events: number;
+  odometer_rows: number;
+  segments: number;
+  blocker: "geofence_events_missing" | "odometer_rows_missing" | "no_qualifying_event_odometer_pairs" | null;
+};
+
 const ACTIVE_LOAD_STATUSES = [
   "assigned_not_dispatched",
   "dispatched",
@@ -21,6 +28,31 @@ const ACTIVE_LOAD_STATUSES = [
   "at_delivery",
   "delivered_pending_docs",
 ] as const;
+
+export async function getRealDrivenMilesSegmentStatus(
+  client: QueryClient,
+  operatingCompanyId: string
+): Promise<RealDrivenMilesSegmentStatus> {
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+  const result = await client.query<{ events: string | number; odometer_rows: string | number; segments: string | number }>(
+    `SELECT
+       (SELECT count(*) FROM geo.geofence_events WHERE operating_company_id = $1::uuid) AS events,
+       (SELECT count(*) FROM telematics.vehicle_locations WHERE operating_company_id = $1::uuid AND odometer_mi IS NOT NULL) AS odometer_rows,
+       (SELECT count(*) FROM telematics.load_odometer_segments WHERE operating_company_id = $1::uuid) AS segments`,
+    [operatingCompanyId]
+  );
+  const events = Number(result.rows[0]?.events ?? 0);
+  const odometerRows = Number(result.rows[0]?.odometer_rows ?? 0);
+  const segments = Number(result.rows[0]?.segments ?? 0);
+  const blocker = events === 0
+    ? "geofence_events_missing"
+    : odometerRows === 0
+      ? "odometer_rows_missing"
+      : segments === 0
+        ? "no_qualifying_event_odometer_pairs"
+        : null;
+  return { events, odometer_rows: odometerRows, segments, blocker };
+}
 
 /**
  * Reconcile the immutable evidence spine into one real-mile row per completed operational leg.
