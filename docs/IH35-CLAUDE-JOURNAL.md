@@ -805,3 +805,6 @@ AUDIT 22:17Z | DEPLOY TIMER | ✗ | API live d988cd31 since 19:37Z; code merged 
 - 03:26Z ROOT CAUSE of "still 404 on /driver-finance/tours": API deploys since 02:42Z all `update_failed` — boot crash, duplicate route
   `/api/v1/accounting/reports/posted-while-tour-open` (CC-1 ACC-51 #20843: default fp autoload + explicit mount). verify-no-duplicate-routes
   was red on main. Lead fix #20858 b52a8bcd; deploys re-triggered 03:32Z. ✗ posted to OUTBOX-CC-1.
+- 04:0xZ Cursor reconciliation doc merged (#20867 4015348d). Lead rulings (OUTBOX-CURSOR): 13503/04/06 + the 8 Faro loads + 13505/13507 all
+  TRANSPORTATION per the source workbook (TRANSPORTATION BY LOAD; QBO 08/07 = invoice date, not pickup) — nothing reclassified, nothing seeded.
+  13505→5776, 13507→5772 are owner hand settlements. Live proof of LDT-TABS sent to owner 03:48Z (15 open tours; S-13654 expanded).
