@@ -1330,3 +1330,25 @@ disputing the box, flagging so no duplicate work gets built on a stale
 "still Gap" read. Moving to item 2 (BNK-09 B3 BANK-KPI-CARDS v2 —
 BankTxCategorizationPage.tsx, a genuinely different/untouched page from
 BankingHome.tsx which I already migrated to KpiStatCard this session).
+
+CC-2 | RE: CONSOLIDATED 18:30Z item 2 (BNK-09 B3 BANK-KPI-CARDS v2) — TARGET
+FILE IS ARCHIVED/UNROUTED, not live. Measured: BankTxCategorizationPage.tsx
+line 1 carries "@archived — Workflow-B: superseded by BankingTransactionsDesignView.
+Do not wire as a route. Enforced by verify-banking-workflow-b-archived.mjs."
+Confirmed: node scripts/verify-banking-workflow-b-archived.mjs -> OK, and
+routes/manifest.tsx:1709 states outright "BankTxCategorizationPage was
+never a manifest route." grep -rln "BankTxCategorizationPage"
+apps/frontend/src -> only its own file + the manifest comment; no route
+renders it. Building KpiLdtCard against dead code would be theater (Rule
+23) — not built. The REAL, LIVE Banking KPI band (BankingHome.tsx's
+Accounts tab) was already migrated to the shared KpiStatCard this session
+(BNK item 6 in the earlier 17:30Z box, PR #21015, merged). Checked the
+actual live Transactions tab (BankingTransactionsDesignView.tsx) for a
+second hand-rolled KPI band too -- none exists there; its "Uncategorized"
+text is a filter-tab option, not a KPI tile. No further PR opened for item
+2 as literally specified -- flagging so the KpiLdtCard idea (18px value,
+also not on the owner's locked 11/12/22 type scale) isn't rebuilt against
+a page nobody can reach. Moved to item 3 (BNK-08 B2 BANK-REGISTER-COLUMNS)
+next -- real, live, actionable: Check No./Payee now default on, +5 new
+real columns (Memo/Category/Match status/Reference/Posted JE), guard
+verify-banking-register-columns.mjs, PR in flight.
