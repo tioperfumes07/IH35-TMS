@@ -140,6 +140,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
           mergeSuggestionPreferHigher(
             suggestionFromRules(rules, {
               description_normalized: row.description_normalized as string | null,
+              description: row.description as string | null,
               amount_cents: Number(row.amount_cents),
               bank_account_id: String(row.bank_account_id),
             }),
@@ -478,6 +479,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
       );
       const sug = suggestionFromRules(rulesRes.rows as BankingRuleRow[], {
         description_normalized: row.description_normalized as string | null,
+              description: row.description as string | null,
         amount_cents: Number(row.amount_cents),
         bank_account_id: String(row.bank_account_id),
       });
