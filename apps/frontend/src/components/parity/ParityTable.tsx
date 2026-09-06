@@ -178,8 +178,27 @@ export type ParityTableProps<T> = {
    * row-level test/e2e selectors. Additive — omitting it renders no per-row testid.
    */
   rowTestId?: (row: T) => string;
-  /** Optional tfoot (KPI drill sums). Additive — omit for unchanged tables. */
+  /**
+   * @deprecated DSP-TBL (owner ruling 2026-09-05, "totals stay stuck"): a raw ReactNode footer
+   * is one hand-built `<tr>` the caller must keep in sync with column order/visibility by hand —
+   * reorder or hide a column and the totals silently misalign with the header above them. Use
+   * `footerCells` instead (keyed by column, follows the same ordered visible-column list the
+   * header does). Kept for back-compat; still renders, but logs a dev-only console.warn once per
+   * mount so a caller update is visible without a red build. Never delete (Rule 07).
+   */
   footer?: ReactNode;
+  /**
+   * DSP-TBL (owner ruling 2026-09-05): per-column footer content, keyed by `column.key` (as a
+   * string — same convention every other column-keyed lookup in this file uses). A value may be
+   * a plain ReactNode or `(visibleRows: T[]) => ReactNode` when the total depends on the current
+   * rows (sorted/filtered, pre-pagination — the same rows a "grand total" caption already summed
+   * over in every existing caller). Rendered as one `<td>` per column in `visibleColumns`' own
+   * order — reorder/hide the column and its footer cell moves/disappears with it, automatically.
+   * Money/right-aligned columns inherit their own `cellClass`/`className` in the footer cell too,
+   * so a numeric total right-aligns without a separate flag. A column with no entry renders an
+   * empty `<td>` in its slot (never omitted — that would desync colSpan-free alignment).
+   */
+  footerCells?: Partial<Record<string, ReactNode | ((visibleRows: T[]) => ReactNode)>>;
 
   /**
    * OPTIONAL controlled-sort mode (BANK-SORT-ROLLOUT-ACCT). Omitting these three props keeps the
@@ -498,8 +517,22 @@ export function ParityTable<T>({
   headerInk,
   headerWeight,
   footer,
+  footerCells,
 }: ParityTableProps<T>) {
   const persisted = useMemo(() => loadPersisted(storageKey), [storageKey]);
+
+  // DSP-TBL — dev-only, once-per-mount nudge toward footerCells. Never in prod (bundlers strip
+  // NODE_ENV-gated blocks like this one), never a build failure, never more than one line.
+  const warnedRawFooter = useRef(false);
+  if (footer != null && !warnedRawFooter.current) {
+    warnedRawFooter.current = true;
+    if (!import.meta.env.PROD) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `ParityTable: the "footer" prop is deprecated (DSP-TBL, owner ruling 2026-09-05) — a raw footer desyncs from column reorder/hide. Use "footerCells" (keyed by column) instead. storageKey="${storageKey ?? "(none)"}"`
+      );
+    }
+  }
 
   const isSortControlled = onSortChange != null;
   // Phase A4: external sort passthrough REQUIRES controlled sort — without onSortChange the
@@ -1588,7 +1621,36 @@ export function ParityTable<T>({
             pageRows.map((row, i) => renderDataRow(row, i))
           )}
         </tbody>
-        {footer ? (
+        {footerCells ? (
+          <tfoot data-testid="parity-table-footer">
+            <tr
+              className="border-t-2 border-slate-700 font-semibold"
+              // Same shade as the group-band row (colors.tableGroupBandBg, --grp-bg) — a totals
+              // row reads as its own "band" of the same visual language, not a plain data row.
+              style={{ backgroundColor: colors.tableGroupBandBg }}
+            >
+              {renderExpanded ? <td className="w-8 px-2" /> : null}
+              {selectable ? <td className="w-8 px-2" /> : null}
+              {visibleColumns.map((column) => {
+                const key = String(column.key);
+                const entry = footerCells[key];
+                const content = typeof entry === "function" ? entry(sortedRows) : entry;
+                return (
+                  <td
+                    key={key}
+                    data-testid={column.testId ? `${column.testId}-footer` : undefined}
+                    // Same alignment class as this column's own body cells (cellClass ?? className)
+                    // — a money/right-aligned column's total right-aligns with zero extra config.
+                    className={`px-2 py-1.5 font-mono ${column.cellClass ?? column.className ?? ""}`}
+                  >
+                    {content ?? null}
+                  </td>
+                );
+              })}
+              {rowActions ? <td className="w-10 px-2" /> : null}
+            </tr>
+          </tfoot>
+        ) : footer ? (
           <tfoot data-testid="parity-table-footer">
             <tr className="border-t-2 border-slate-700 bg-slate-50 font-semibold">{footer}</tr>
           </tfoot>
