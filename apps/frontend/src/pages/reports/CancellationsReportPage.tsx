@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { DatePicker } from "../../components/forms/DatePicker";
+import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getCancellationsReport, type CancellationBucket } from "../../api/reports";
@@ -11,8 +11,7 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { mmmDd } from "../../lib/formatDate";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
+import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 
 import { formatUsdCents } from "../../lib/money";
 
@@ -132,16 +131,10 @@ function CancellationBucketTable({
 export function CancellationsReportPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  // LV-REPORTS-CANCELLATIONS-FILTER-SILENT-APPLY / CLS-REPORTS-FILTER-APPLY-CANCEL-RESET —
-  // From/To must stage until Apply; Cancel restores draft; Reset clears both draft + applied.
+  const [searchParams, setSearchParams] = useSearchParams();
   const emptyFilters = { from: "", to: "", reason: "" };
   const [applied, setApplied] = useState(emptyFilters);
   const [reportSearch, setReportSearch] = useState("");
-  const staged = useStagedListFilters({
-    applied,
-    empty: emptyFilters,
-    onApply: setApplied,
-  });
 
   const query = useQuery({
     queryKey: ["reports", "cancellations", companyId, applied.from, applied.to],
@@ -158,7 +151,12 @@ export function CancellationsReportPage() {
   const data = query.data;
   const total = data?.total ?? { count: 0, total_charge_cents: 0, billable_count: 0 };
   const tableLoading = query.isPending || (query.isFetching && !data);
-  const activeFilterCount = (applied.from ? 1 : 0) + (applied.to ? 1 : 0) + (applied.reason ? 1 : 0);
+
+  const q = reportSearch.toLowerCase();
+  const filterBuckets = (buckets: CancellationBucket[]) => {
+    if (!q) return buckets;
+    return buckets.filter((b) => String(b.label ?? "").toLowerCase().includes(q) || String(b.key ?? "").toLowerCase().includes(q));
+  };
 
   return (
     <div className="space-y-3">
@@ -186,53 +184,30 @@ export function CancellationsReportPage() {
         toDate={applied.to || null}
         onFromDateChange={(d) => setApplied((p) => ({ ...p, from: d ?? "" }))}
         onToDateChange={(d) => setApplied((p) => ({ ...p, to: d ?? "" }))}
-        onPresetSelect={(_preset: ReportPreset) => {}}
+        onPresetSelect={(preset) => {
+          const next = new URLSearchParams(searchParams);
+          next.set("preset", preset);
+          setSearchParams(next, { replace: true });
+        }}
         search={reportSearch}
         onSearchChange={setReportSearch}
-      />
-
-      <CollapsedListFilters
-        activeFilterCount={activeFilterCount}
-        defaultOpen={true}
-        onApply={staged.apply}
-        onReset={staged.reset}
-        onCancel={staged.cancel}
-        applyDisabled={!staged.dirty}
-        testIdPrefix="reports-cancellations"
-        className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs"
       >
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-0.5 font-semibold text-gray-700">
-            From
-            <DatePicker
-              value={staged.draft.from}
-              onChange={(next) => staged.setDraft((p) => ({ ...p, from: next }))}
-            />
-          </label>
-          <label className="flex flex-col gap-0.5 font-semibold text-gray-700">
-            To
-            <DatePicker
-              value={staged.draft.to}
-              onChange={(next) => staged.setDraft((p) => ({ ...p, to: next }))}
-            />
-          </label>
-          <label className="flex flex-col gap-0.5 font-semibold text-gray-700">
-            Reason
-            <select
-              className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-              value={staged.draft.reason}
-              onChange={(e) => staged.setDraft((p) => ({ ...p, reason: e.target.value }))}
-              data-testid="reports-cancellations-reason"
-            >
-              <option value="">All reasons</option>
-              <option value="customer_cancel">Customer cancel</option>
-              <option value="carrier_cancel">Carrier cancel</option>
-              <option value="weather">Weather</option>
-              <option value="other">Other</option>
-            </select>
-          </label>
-        </div>
-      </CollapsedListFilters>
+        <label className="flex items-center gap-1 text-xs text-slate-600">
+          <span className="font-semibold text-slate-600">Reason</span>
+          <select
+            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            value={applied.reason}
+            onChange={(e) => setApplied((p) => ({ ...p, reason: e.target.value }))}
+            data-testid="reports-cancellations-reason"
+          >
+            <option value="">All reasons</option>
+            <option value="customer_cancel">Customer cancel</option>
+            <option value="carrier_cancel">Carrier cancel</option>
+            <option value="weather">Weather</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+      </ReportFilterBar>
 
       {query.isError ? (
         <ListErrorState
@@ -262,7 +237,7 @@ export function CancellationsReportPage() {
               <CancellationBucketTable
                 key={prop}
                 title={title}
-                rows={data?.[prop] ?? []}
+                rows={filterBuckets(data?.[prop] ?? [])}
                 storageKey={storageKey}
                 entityKind={entityKind}
                 formatAsDate={formatAsDate}
