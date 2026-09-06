@@ -7738,5 +7738,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-source-document-ref-backfill (ROUND 10: driver_finance.driver_settlements.source_document_ref column + backfill of the 10 signed-settlement-number KEEP rows from docs/audit/TOUR-SPLIT-PLAN-2026-09-06.md \u00a71, through a real service function, never raw SQL/DELETE)"
+  },
+  "10459": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-stops-appt-fix-backfill-safe (ROUND 10 STOPS-APPT-FIX: appointment_start_at backfill from scheduled_arrival_at for the 48 dispatched + 13508 loads only, never cancelled, via the safe surgical PATCH route, --apply gated on a non-empty LEAD_APPROVAL_QUOTE)"
   }
 }
