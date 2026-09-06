@@ -317,6 +317,21 @@
       "label",
       "operating_company_id"
     ],
+    "accounting.cash_flow_row_adjustments": [
+      "created_at",
+      "created_by_user_id",
+      "document_id",
+      "document_kind",
+      "hidden_at",
+      "hidden_by_user_id",
+      "hidden_reason",
+      "id",
+      "note",
+      "operating_company_id",
+      "original_due_date",
+      "projected_due_date",
+      "reason_id"
+    ],
     "accounting.cash_forecast_settings": [
       "fuel_estimate_weekly_cents",
       "insurance_weekly_cents",
@@ -2410,6 +2425,15 @@
       "reason_code",
       "sort_order",
       "updated_at"
+    ],
+    "catalogs.cash_flow_adjustment_reasons": [
+      "applies_to",
+      "code",
+      "created_at",
+      "display_order",
+      "id",
+      "is_active",
+      "label"
     ],
     "catalogs.catalog_registry": [
       "code",

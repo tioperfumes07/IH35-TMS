@@ -93,7 +93,7 @@ export async function registerCustomerInvoicesRoutes(app: FastifyInstance) {
             s.display_id AS linked_settlement_display_id
           FROM accounting.invoices i
           LEFT JOIN mdata.loads l ON l.id = i.source_load_id AND l.operating_company_id = i.operating_company_id
-          LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id AND u.operating_company_id = l.operating_company_id
+          LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           LEFT JOIN LATERAL (
             SELECT ds.id, ds.display_id
             FROM driver_finance.driver_settlements ds

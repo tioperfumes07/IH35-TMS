@@ -1039,7 +1039,7 @@ export async function listBillsByVendor(
                  u.unit_number
           FROM accounting.bill_lines bl
           JOIN mdata.loads l ON l.id = bl.load_id AND l.operating_company_id = b.operating_company_id
-          LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id AND u.operating_company_id = l.operating_company_id
+          LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           WHERE bl.bill_id = b.id AND bl.load_id IS NOT NULL
           ORDER BY bl.line_sequence ASC
           LIMIT 1
