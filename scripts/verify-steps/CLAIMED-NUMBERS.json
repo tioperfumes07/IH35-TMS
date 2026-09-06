@@ -5792,6 +5792,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-banking-categorize-boxes (BANK-DESIGN-1 owner 2026-09-06: two .ldt-card.strong boxes in the Banking categorize row, match candidates as one Date · Description · Type · Amount · Gap register, Load-costs palette)"
   },
+  "10481": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-census-orphans-wired (ENV-CENSUS-ROOT root fix: ONE step that RUNS every verify-*.mjs that was merged without CI wiring — 107 on main after #20932 reverted the mass exemption — so verify:guard-wired reports 0 orphan and every still-failing guard is named in CI instead of hidden)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
