@@ -7978,5 +7978,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-close-post-a-item2-historical-advances"
+  },
+  "10641": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-set24-correction-dry-run"
   }
 }
