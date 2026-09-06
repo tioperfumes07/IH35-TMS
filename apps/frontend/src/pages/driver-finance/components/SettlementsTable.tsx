@@ -97,12 +97,12 @@ export function SettlementsTable({
         sortable: true,
         sortValue: (row) => Number(row.load_count ?? 0),
         cellClass: "tabular-nums",
+        // SETTLEMENTS-LIST-TRUTH — a bare flex gap between adjacent load-number links reads as
+        // one run-on number ("1352513529"), not two loads. A visible separator between links
+        // (never between a link and nothing) makes the boundary unambiguous.
         render: (row) => {
           const links = row.load_links ?? [];
           if (links.length > 0) {
-            // SETTLEMENTS-LIST-TRUTH — a bare flex gap between adjacent load-number links reads as
-            // one run-on number ("1352513529"), not two loads. A visible separator between links
-            // (never between a link and nothing) makes the boundary unambiguous.
             return (
               <span className="flex flex-wrap items-center gap-1">
                 {links.map((link, i) => (
