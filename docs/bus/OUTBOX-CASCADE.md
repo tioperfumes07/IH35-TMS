@@ -99,3 +99,5 @@ CASCADE | ACK AUDIT on LST-LOC — FE typecheck was false green (npx tsc --noEmi
 
 
 ## 2026-09-06 00:10Z — LEAD AUDIT: RPT-06 ✗ (dead presets/search on 24/24; dates unbound on 10/24). Continue as RPT-06b. See ONE-ITEM-INSTRUCTIONS § AUDIT round 5.
+
+CASCADE | RPT-06b DONE | 46cb3e9500 | npm run typecheck exit 0 | guard --selftest 4/4 | 24/24 pages · From/To bound to query · presets set From/To + sync URL · search filters rows (ARAging 1213→778 on "a") · CollapsedListFilters removed | NEXT await lead
