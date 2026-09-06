@@ -1993,6 +1993,30 @@ export function getVendorRollups(operatingCompanyId: string) {
   return apiRequest<VendorRollup[]>(`/api/v1/mdata/vendor-rollups?${query.toString()}`);
 }
 
+// ROUND 16.10 (owner 2026-09-06 21:59Z): per-customer days-to-pay + cost-of-finance rollup.
+// late_fee_cents/avg_days_to_pay_us/avg_days_to_pay_factor/avg_days_late are null (never 0) when
+// no real ledger source exists for that customer — LAW §8 "zero is a claim".
+export type CustomerFinanceRollup = {
+  customer_id: string;
+  customer_name: string;
+  invoices_count: number;
+  revenue_cents: number;
+  avg_days_to_pay_us: number | null;
+  avg_days_to_pay_factor: number | null;
+  avg_days_late: number | null;
+  factoring_fee_cents: number;
+  factoring_interest_cents: number;
+  late_fee_cents: number | null;
+  reserve_held_cents: number;
+  finance_cost_total_cents: number;
+  finance_cost_pct: number | null;
+};
+
+export function getCustomerFinanceRollup(operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<CustomerFinanceRollup[]>(`/api/v1/mdata/customer-finance-rollup?${query.toString()}`);
+}
+
 // GO-24: mdata.locations is the live stop-location catalog (FK'd from mdata.load_stops.location_id,
 // catalogs.locations does NOT exist — never create it). Typed so the Book Load stop location picker
 // can read name/city/state/postal_code/lat/lng off a selected row without an `unknown` cast.
