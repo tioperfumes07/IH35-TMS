@@ -97,9 +97,23 @@ const expenseColumns: Array<ParityColumn<ExpenseRow>> = [
   { key: "status", label: "Status", render: (exp) => exp.status ?? "—" },
 ];
 
-export function CounterpartyStatementView({ kind }: { kind: "customer" | "vendor" }) {
+/**
+ * ACC-45 (row 45): `counterpartyId`/`embedded` let this SAME view mount inline as a "Statements"
+ * tab (Vendors.tsx list-drawer, no route param to read) as well as the standalone
+ * /customers/:id/statement · /vendors/:id/statement pages it already served — one read model, one
+ * rendering, never a second statement view that could drift from this one on what "balanced" means.
+ */
+export function CounterpartyStatementView({
+  kind,
+  counterpartyId: counterpartyIdProp,
+  embedded = false,
+}: {
+  kind: "customer" | "vendor";
+  counterpartyId?: string;
+  embedded?: boolean;
+}) {
   const { id } = useParams<{ id: string }>();
-  const counterpartyId = id ?? "";
+  const counterpartyId = counterpartyIdProp ?? id ?? "";
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const defaultRange = currentMonthRange();
@@ -138,17 +152,25 @@ export function CounterpartyStatementView({ kind }: { kind: "customer" | "vendor
 
   return (
     <div className="space-y-4 print:space-y-2">
-      <PageHeader
-        title={query.data ? `Statement — ${query.data.counterparty_name}` : "Statement of account"}
-        subtitle={kind === "customer" ? "Customer accounts receivable statement" : "Vendor accounts payable statement"}
-        backHref={backHref}
-        breadcrumb={[kind === "customer" ? "Customers" : "Vendors", "Statement"]}
-        actions={
+      {embedded ? (
+        <div className="flex justify-end">
           <Button size="sm" variant="secondary" disabled={!query.data} onClick={() => openPrintableDocument(printPath)}>
             Print
           </Button>
-        }
-      />
+        </div>
+      ) : (
+        <PageHeader
+          title={query.data ? `Statement — ${query.data.counterparty_name}` : "Statement of account"}
+          subtitle={kind === "customer" ? "Customer accounts receivable statement" : "Vendor accounts payable statement"}
+          backHref={backHref}
+          breadcrumb={[kind === "customer" ? "Customers" : "Vendors", "Statement"]}
+          actions={
+            <Button size="sm" variant="secondary" disabled={!query.data} onClick={() => openPrintableDocument(printPath)}>
+              Print
+            </Button>
+          }
+        />
+      )}
 
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {query.isError ? <p className="text-xs text-red-700">Failed to load statement — {String((query.error as Error)?.message ?? "unknown error")}</p> : null}

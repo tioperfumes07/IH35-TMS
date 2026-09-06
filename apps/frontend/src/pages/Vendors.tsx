@@ -28,14 +28,26 @@ import { EntityLink } from "../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 import { ReferenceSelect, type ReferenceOption } from "../components/parity/ReferenceSelect";
 import { useCatalogQuery } from "../hooks/useCatalogQuery";
+import { CounterpartyStatementView } from "./reports/CounterpartyStatementPage";
+import { EntityActivityFeed } from "../components/shared/EntityActivityFeed";
 
-type VendorTabId = "transaction_list" | "vendor_details" | "notes";
+type VendorTabId = "transaction_list" | "vendor_details" | "statements" | "activity" | "notes";
 const VENDOR_LIST_TAB_IDS = ["all", "active", "inactive", "by-category"] as const;
 type VendorListTabId = (typeof VENDOR_LIST_TAB_IDS)[number];
 
+// ACC-45 (row 45, OWNER-ISSUE-INVENTORY-2026-09-05.md #45): "statements and all that … should
+// appear in their history" (owner 19:26Z). Customers.tsx already had Statements/Activity Feed
+// tabs; Vendors.tsx had exactly these 3 and no parity. Statements reuses the SAME real statement-
+// of-account read model (CounterpartyStatementView, opening→ledger→closing) the standalone
+// /vendors/:id/statement page already used; Activity reuses the SAME audit_events read
+// (EntityActivityFeed, extracted from Customers.tsx's own feed) — no new backend needed for
+// either, audit-events-list.routes.ts already maps entity_type "vendor" -> resource_type
+// "mdata.vendors".
 const VENDOR_TABS: Array<{ id: VendorTabId; label: string }> = [
   { id: "transaction_list", label: "Transaction List" },
   { id: "vendor_details", label: "Vendor Details" },
+  { id: "statements", label: "Statements" },
+  { id: "activity", label: "Activity" },
   { id: "notes", label: "Notes" },
 ];
 const VENDOR_TAB_IDS = new Set<string>(VENDOR_TABS.map((t) => t.id));
@@ -862,6 +874,16 @@ export function VendorsPage() {
                     <div><dt className="text-xs font-semibold text-gray-500">Phone</dt><dd>{selectedVendor.phone || "—"}</dd></div>
                   </dl>
                 </div>
+              ) : activeTab === "statements" ? (
+                <CounterpartyStatementView kind="vendor" counterpartyId={selectedVendor.id} embedded />
+              ) : activeTab === "activity" ? (
+                <EntityActivityFeed
+                  operatingCompanyId={companyId}
+                  entityType="vendor"
+                  entityId={selectedVendor.id}
+                  storageKey="vendor-activity-feed"
+                  emptyText="No recorded activity for this vendor."
+                />
               ) : (
                 <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-500">{selectedVendorPublicNotes || "No notes."}</div>
               )}
