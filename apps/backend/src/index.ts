@@ -515,6 +515,7 @@ import { registerHomeWidgetRoutes } from "./home/home-widgets.routes.js";
 import { registerOwnerTodaysAttentionRoutes } from "./owner/todays-attention/routes.js";
 import { registerAccountingRoleHomeRoutes } from "./accounting/role-home/routes.js";
 import { registerBillGlDraftRoutes } from "./accounting/bill-gl-draft.routes.js";
+import { registerPostedWhileTourOpenReportRoutes } from "./accounting/posted-while-tour-open-report.routes.js";
 import { registerBillPaymentGlRoutes } from "./accounting/bill-payment-gl.routes.js";
 import { registerRelatedPartyLoanRoutes } from "./accounting/related-party-loan-posting/routes.js";
 import { registerCashForecastManualRoutes } from "./forecast/cash-forecast-manual.routes.js";
@@ -1006,6 +1007,7 @@ async function main() {
   await registerOwnerTodaysAttentionRoutes(app);
   await registerAccountingRoleHomeRoutes(app);
   await registerBillGlDraftRoutes(app);
+  await registerPostedWhileTourOpenReportRoutes(app);
   await registerBillPaymentGlRoutes(app);
   await registerRelatedPartyLoanRoutes(app);
   await registerSafetyOfficerRoleHomeRoutes(app);
