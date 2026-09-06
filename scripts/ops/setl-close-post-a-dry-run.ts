@@ -14,9 +14,13 @@
  * live: not landed — see the OUTBOX-CC-3 note posted alongside this script). Once they are closed,
  * re-run a sibling script against all 15 for the complete 15-JE set.
  *
- * Payment method used for the preview's cash leg: "ACH transfer" (a real, active USMCA payment
- * method) — illustrative only; the actual disbursement method is chosen at real close time and does
- * not change gross/escrow/net.
+ * Payment method used for the preview's cash leg: SETL-CLOSE-POST-A ✔ CONDITIONS item 1 (lead,
+ * 2026-09-06 19:45Z) — "the close must NOT credit 1000 Bank. Credit 2170 Driver Net-Pay Clearing
+ * ... for the net pay of all 13." resolvePaymentMethod() has no account-type restriction (verified
+ * live — see setl-close-post-a-clearing-payment-method.ts's header), so no service fix was needed;
+ * the one real gap (no existing payment_method pointed at 2170) is closed by that script, which
+ * created payment_method id 81f95ee0-fb05-4b73-a0b6-867e02ed2117 "Driver Net-Pay Clearing" ->
+ * gl_account_id b8c4f9d4-e9db-4642-a8bc-d3ca27ea1d80 (2170), live-verified. Swapped in below.
  *
  * Usage: DATABASE_URL=<neon prod> npx tsx scripts/ops/setl-close-post-a-dry-run.ts
  */
@@ -25,7 +29,7 @@ import { closeSettlementPayRun } from "../../apps/backend/src/driver-finance/set
 
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd"; // identity.users tioperfumes07@gmail.com, role Owner
-const ACH_PAYMENT_METHOD_ID = "574d600c-7afe-4da7-a234-61148ffecc1f"; // catalogs.payment_methods "ACH transfer", USMCA
+const CLEARING_PAYMENT_METHOD_ID = "81f95ee0-fb05-4b73-a0b6-867e02ed2117"; // catalogs.payment_methods "Driver Net-Pay Clearing" -> 2170, USMCA
 
 // Re-measured live 2026-09-06 ~17:2xZ: CC-2's DELIVER-HAND-9 closed 5 more since the original 8
 // (S-13643/45/47/54/55) — 13 of 15 now closed. Only S-13651/S-13653 remain open (the "$0 shells,
@@ -87,7 +91,7 @@ async function main() {
         {
           operatingCompanyId: USMCA_COMPANY_ID,
           settlementId: s.id,
-          paymentMethodId: ACH_PAYMENT_METHOD_ID,
+          paymentMethodId: CLEARING_PAYMENT_METHOD_ID,
           previewOnly: true,
         },
         { userId: OWNER_USER_ID }
