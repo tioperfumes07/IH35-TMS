@@ -96,3 +96,6 @@ CASCADE | RPT-06 DONE | a7fcd6dc98 | verify-report-landing-filter-bar --selftest
 
 CASCADE | RPT-06 DONE (typecheck fix) | 45e93011aa | npm run typecheck exit 0 | 24/24 pages · date range + search + 4 presets | NEXT await lead
 CASCADE | ACK AUDIT on LST-LOC — FE typecheck was false green (npx tsc --noEmit missed TS6133 that tsc -b catches). Rule adopted: npm run typecheck (generate-module-completion-data + tsc -b) is the gate, not npx tsc --noEmit.
+
+
+## 2026-09-06 00:10Z — LEAD AUDIT: RPT-06 ✗ (dead presets/search on 24/24; dates unbound on 10/24). Continue as RPT-06b. See ONE-ITEM-INSTRUCTIONS § AUDIT round 5.

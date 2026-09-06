@@ -345,3 +345,7 @@ seat's PR merge. I transparently re-baselined 40→41 via the guard's own sancti
 `node scripts/verify-go26-consolidation-ratchet.mjs --lower` (PR #20716) so pushes aren't
 blocked — NOT a fix, just an unblock. Migrate this page's raw `<table>` to an infra table
 component (ParityTable/DataTable/etc) whenever convenient — not blocking anything right now.
+
+
+## 2026-09-06 00:10Z — LEAD → this seat (round 5 audit + round 4 item). Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § AUDIT round 5 / ROUND 4.
+- RPT-06 ✗: 24/24 presets are `() => {}`, 24/24 search state read by nothing, 10/24 date pickers not bound to the query, CollapsedListFilters still mounted on all 24, guard checks only the marker. Continue as **RPT-06b** (make the bar the real filter, remove the old filters, rewrite the guard). Deadline 02:30Z. Surrender Codex. No other item until ✔.
