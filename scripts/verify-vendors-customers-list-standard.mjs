@@ -12,6 +12,8 @@
 //      accounting.expenses (Open balance = unpaid non-void bills; Spend = bills + expenses), and the
 //      list reads spend_mtd_cents / spend_ytd_cents / open_balance_cents; customers read invoice-based
 //      A/R (ar_open_cents, excl void + pro forma) and Revenue (MTD/YTD).
+//   4. VC-LIST-02 (owner "ALL PAGE SIZE", 2026-09-06): both lists pass allowAllPageSize so the
+//      ParityTable page-size control offers "All" (renders every row; sort survives it).
 //
 // --selftest mutates each load-bearing fact and requires each mutation to FAIL; clean sources pass.
 import fs from "node:fs";
@@ -46,6 +48,9 @@ function analyze(vlist, clist, rollup) {
     errors.push("VendorsListView does not read spend_mtd_cents / spend_ytd_cents from the rollup (Spend must be real)");
   // At least the name column sorts (sortable headers, not a single sort-by-name select).
   if (!/sortable:\s*true/.test(vlist)) errors.push("VendorsListView has no sortable column headers");
+  // VC-LIST-02 (owner "ALL PAGE SIZE", 2026-09-06): the page-size control must offer "All".
+  if (!/allowAllPageSize\b/.test(vlist))
+    errors.push("VendorsListView ParityTable lacks allowAllPageSize (owner 'ALL PAGE SIZE')");
 
   // --- Customers list ---
   if (!/<ParityTable\b/.test(clist)) errors.push("CustomersListView does not render <ParityTable>");
@@ -67,6 +72,9 @@ function analyze(vlist, clist, rollup) {
   if (!/ar_open_cents/.test(clist)) errors.push("CustomersListView does not read ar_open_cents (invoice-based A/R)");
   if (!/revenue_mtd_cents/.test(clist)) errors.push("CustomersListView does not read revenue_mtd_cents (Revenue MTD)");
   if (!/sortable:\s*true/.test(clist)) errors.push("CustomersListView has no sortable column headers");
+  // VC-LIST-02 — customers page-size control must offer "All" too.
+  if (!/allowAllPageSize\b/.test(clist))
+    errors.push("CustomersListView ParityTable lacks allowAllPageSize (owner 'ALL PAGE SIZE')");
 
   // --- Backend rollup: REAL balance source (bills + expenses) ---
   if (!/accounting\.bills/.test(rollup)) errors.push("vendor-rollups does not aggregate accounting.bills (Open balance / Spend must include bills)");
@@ -102,6 +110,9 @@ if (process.argv.includes("--selftest")) {
     ["rollup drops bills aggregate", [vlist, clist, rollup.replace(/accounting\.bills/g, "accounting.nope")]],
     ["rollup drops open_balance_cents", [vlist, clist, rollup.replace(/open_balance_cents/g, "gone_cents")]],
     ["rollup counts voided bills", [vlist, clist, rollup.replace(/voided_at IS NULL/g, "TRUE")]],
+    // VC-LIST-02 — dropping the "All" page-size option on either list must FAIL.
+    ["vendors drop All page size", [vlist.replace(/allowAllPageSize/g, "noAllPageSize"), clist, rollup]],
+    ["customers drop All page size", [vlist, clist.replace(/allowAllPageSize/g, "noAllPageSize"), rollup]],
   ];
   let caught = 0;
   for (const [label, [v, c, r]] of mutations) {
