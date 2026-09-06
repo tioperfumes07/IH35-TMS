@@ -468,30 +468,58 @@ export type BankMatchCandidate = {
   amount_cents: number;
   event_date: string;
   memo: string;
+  // BANK-MATCH-QBO (owner 2026-09-06): the QuickBooks "Find match" columns.
+  counterparty_kind?: "vendor" | "customer" | null;
+  counterparty_id?: string | null;
+  counterparty_name?: string | null;
+  reference?: string | null;
+  description?: string | null;
+  open_balance_cents?: number | null;
+  payee_similarity?: number;
   amount_gap_cents: number;
   date_gap_days: number;
   memo_similarity: number;
   match_score: number;
   auto_match: boolean;
+  exact_amount?: boolean;
 };
 
-// Ranked match candidates for one bank transaction (Match drawer). Read-only.
+export type BankMatchFilters = {
+  searchAll?: boolean;
+  q?: string;
+  windowDays?: number;
+  /** Show: which record types (QuickBooks "Show" dropdown). Empty = all. */
+  kinds?: BankMatchCandidateKind[];
+  payee?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  /** Dollars as typed. */
+  amountMin?: number;
+  amountMax?: number;
+};
+
+// Ranked match candidates for one bank transaction (Match drawer / inline pane). Read-only.
 // companyId is the active entity from useCompanyContext; the server re-scopes + membership-guards it.
-// QBO parity: searchAll widens ±365d; q filters memo/payee/ref contains.
-export function getMatchCandidates(
-  bankTxnId: string,
-  companyId: string,
-  opts?: { searchAll?: boolean; q?: string; windowDays?: number }
-) {
+// QBO parity: default window 90 days before / 20 after; searchAll widens ±365d; q searches memo /
+// payee / ref; kinds / payee / date / amount are the QuickBooks "Find match" filters.
+export function getMatchCandidates(bankTxnId: string, companyId: string, opts?: BankMatchFilters) {
   const params = new URLSearchParams();
   params.set("operating_company_id", companyId);
   if (opts?.searchAll) params.set("search_all", "1");
   if (opts?.q?.trim()) params.set("q", opts.q.trim());
   if (opts?.windowDays != null) params.set("window_days", String(opts.windowDays));
+  if (opts?.kinds?.length) params.set("kinds", opts.kinds.join(","));
+  if (opts?.payee?.trim()) params.set("payee", opts.payee.trim());
+  if (opts?.dateFrom) params.set("date_from", opts.dateFrom);
+  if (opts?.dateTo) params.set("date_to", opts.dateTo);
+  if (opts?.amountMin != null && Number.isFinite(opts.amountMin)) params.set("amount_min", String(opts.amountMin));
+  if (opts?.amountMax != null && Number.isFinite(opts.amountMax)) params.set("amount_max", String(opts.amountMax));
   return apiRequest<{
     candidates: BankMatchCandidate[];
     match_candidates_count: number;
-    window_days?: number;
+    window_days?: number | null;
+    days_before?: number;
+    days_after?: number;
     search_query?: string | null;
     bank_transaction_id?: string;
   }>(`/api/v1/banking/transactions/${bankTxnId}/match-candidates?${params.toString()}`);

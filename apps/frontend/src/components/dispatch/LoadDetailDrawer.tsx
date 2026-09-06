@@ -14,10 +14,9 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
 import { FlatFieldGrid } from "../layout/FlatFieldGrid";
-import { DocumentsTab } from "../documents/DocumentsTab";
 import { getDownloadUrl, listAllFiles } from "../../api/docs";
 import { CancelLoadModal } from "./CancelLoadModal";
-import { LoadBolPanel } from "./LoadBolPanel";
+import { LdtDocumentsTab } from "./tabs/LdtDocumentsTab";
 import { LoadDetailDriverPayTab } from "./LoadDetailDriverPayTab";
 import { LoadDetailCostsTab } from "./LoadDetailCostsTab";
 import { MoneyProofTrailPanel } from "../accounting/MoneyProofTrailPanel";
@@ -1377,58 +1376,16 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
           {activeTab === "Documents" ? (
             load ? (
               <div className="space-y-2">
-                <div className="rounded-sm border border-slate-200 bg-slate-100 p-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-xs text-slate-700">
-                      Factoring package (rate confirmation + POD/BOL + invoice)
-                      <div className="mt-1 text-[11px] text-slate-700">
-                        {packageState.meta.generated_at
-                          ? `Generated ${new Date(packageState.meta.generated_at).toLocaleString()}`
-                          : "Not generated yet"}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => void generateFactoringPackage()} disabled={!isPackageEligible}>
-                        Generate package PDF
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() =>
-                          // DSP-MONEY-F7276 — this call had no .catch(): a failed metadata PATCH
-                          // (network/RLS/validation) became an unhandled promise rejection with no
-                          // failure signal shown to the operator at all.
-                          void persistPackageMeta({
-                            ...packageState.meta,
-                            emailed_at: new Date().toISOString(),
-                          })
-                            .then(() => pushToast("Marked as emailed to factoring company", "success"))
-                            .catch((error) => pushToast(userFacingApiError(error, "Could not mark package as emailed"), "error"))
-                        }
-                        disabled={!packageState.meta.generated_at}
-                      >
-                        Email package
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() =>
-                          // DSP-MONEY-F7276 — same unhandled-rejection gap as the Email button above.
-                          void persistPackageMeta({
-                            ...packageState.meta,
-                            uploaded_at: new Date().toISOString(),
-                          })
-                            .then(() => pushToast("Marked as uploaded to factoring portal", "success"))
-                            .catch((error) => pushToast(userFacingApiError(error, "Could not mark package as uploaded"), "error"))
-                        }
-                        disabled={!packageState.meta.generated_at}
-                      >
-                        Mark uploaded
-                      </Button>
-                    </div>
-                  </div>
-                  {!isPackageEligible ? <div className="mt-1 text-[11px] text-slate-700">Package auto-generates once load is delivered/closed.</div> : null}
-                </div>
+                {/* LDT-D — Documents tab: one table Date · Type · Name · Size · Linked to · Open.
+                    Shared read: useLoadDocuments (consumed by LDT-D, LDT-4 Factoring, LDT-2 Stops).
+                    Customs never appears here (owner). */}
+                <LdtDocumentsTab
+                  loadId={load.id}
+                  operatingCompanyId={load.operating_company_id}
+                  loadNumber={load.load_number}
+                  canEdit={canEdit}
+                />
+                {/* Driver Instructions PDF + Portal/SMS/WhatsApp distribution (kept — additive-only) */}
                 <div className="rounded-sm border border-slate-300 bg-slate-100 p-2">
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-xs text-slate-700">Driver Instructions PDF + Portal/SMS/WhatsApp distribution</div>
@@ -1461,10 +1418,6 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                     </div>
                   </div>
                 </div>
-                {/* CLS-DISP-WIRE-09 — BOL generate on the canonical load drawer (EntityLink path),
-                    not only /dispatch/pod-review. Same LoadBolPanel as Pod Review. */}
-                <LoadBolPanel loadId={load.id} companyId={load.operating_company_id} />
-                <DocumentsTab entityType="load" entityId={load.id} entityName={load.load_number} operatingCompanyId={load.operating_company_id} />
               </div>
             ) : (
               <div className="text-xs text-gray-500">Loading...</div>

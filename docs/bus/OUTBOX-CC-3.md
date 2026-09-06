@@ -660,3 +660,17 @@ CC-3 | SETL-POST-01 DRY-RUN DONE | docs/audit/SETL-POST-01-DRY-RUN-2026-09-06.md
 CC-3 | TRIP-TYPE-SB DRY-RUN DONE (still owed since Round 11) | scripts/ops/trip-type-sb-fix.ts --dry-run | live: 12/12 target loads (13513 13515 13516 13518 13532 13534 13544 13548 13552 13562 13567 13568) confirmed trip_type=TR + delivery stop = Laredo, TX; cross-checked all 9 of their tours have zero existing SB-typed loads (none double-counts an already-correct leg). --apply hard-refused until LEAD_APPROVAL_QUOTE is set (same convention as backfill-appointments-from-seed.ts) — real fix goes through PATCH /api/v1/dispatch/loads/:id (updateDispatchLoad), never raw SQL. Readout rule (sb_delivered.hard=false only when source_document_ref set and no Laredo leg) NOT yet built — awaiting this trip_type fix landing first since the rule reads trip_type. Awaiting lead ✔ to apply.
 
 NEXT await lead (INV-MISSING-2 rate source, SETL-POST-01 owner 15:30Z decision + escrow-account provisioning, TRIP-TYPE-SB apply ✔).
+
+CC-3 | TRIP-TYPE-SB APPLY DONE | scripts/ops/trip-type-sb-fix.ts --apply under lead ✔ "TRIP-TYPE-SB approved by lead 2026-09-06: the 12 TR loads with a Laredo, TX delivery stop and no SB leg on their tour become SB" | 12/12 loads applied via real PATCH /api/v1/dispatch/loads/:id, 0 failed: 13513 13515 13516 13518 13532 13534 13544 13548 13552 13562 13567 13568, all trip_type TR -> SB | 9 tours touched: 465b863c(13513) a85dab33(13515,13534) 147d4b47(13516) 06de22b5(13518,13568) 3e44d25a(13532,13544) 53b3f41e(13548) ddfa0137(13552) 41f2516e(13562) 61f298ed(13567) | audit.row_changes: 12 rows, new_data.trip_type='SB', matches 1:1 | live-reverified: all 12 read back trip_type=SB.
+
+CC-3 | TRIP-TYPE-SB tour-readout re-run, 9 tours (live, buildTourReadout, resolved via each load's real presettlement_link_id — settlement is the money truth per the route's own comment, not mdata.loads.tour_id):
+  - S-13654 (13513): sb_delivered FAIL — NB 13512 + SB 13513 both still `dispatched`, neither delivered. can_close=false (open).
+  - S-13647 (13515,13534): sb_delivered FAIL — TR 13520 still `dispatched`. can_close=false (open).
+  - S-13644 (13516): sb_delivered OK (the SB fix resolved it) — but tour already closed 07:54:24Z, so can_close=false regardless (SETL-POST-01's decoupled-close gap, not this fix).
+  - S-13643 (13518,13568): sb_delivered FAIL — TR 13528 + TR 13536 still `dispatched`. can_close=false (open).
+  - S-13655 (13532,13544): sb_delivered FAIL — the SB leg itself (13532) is still `dispatched`, not delivered. can_close=false (open).
+  - S-13642 (13548): sb_delivered OK — already closed 07:53:20Z, can_close=false (already-closed only).
+  - S-13652 (13552): sb_delivered OK — already closed 07:53:59Z, can_close=false (already-closed only).
+  - S-13649 (13562): sb_delivered OK — already closed 07:55:20Z, can_close=false (already-closed only).
+  - S-13646 (13567): sb_delivered OK — already closed 06:03:23Z, can_close=false (already-closed only).
+  5/9 now clear the "no SB leg" hard blocker (the 5 SETL-POST-01 settlements, closed before this fix but through the decoupled trip-bookend path that never checked readiness anyway). The other 4 remain blocked on real, separate undelivered legs — not the SB gate. sb_delivered.hard readout rule NOT yet touched (still reads trip_type live, now correct — no code change needed there).

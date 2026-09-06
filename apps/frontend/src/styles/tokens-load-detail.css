@@ -155,7 +155,7 @@ button.ldt-pill { cursor: pointer; }
    separates the transaction being categorized from the register behind it; `.ldt-rows-match` = the candidate register:
    DATE · DESCRIPTION · TYPE · AMOUNT · GAP, one line per candidate, a full rule between every two. */
 .ldt-card.strong { border-color: var(--ldt-ink2); }
-.ldt-rows-match .ldt-row { grid-template-columns: 84px minmax(0, 1fr) 118px 104px 120px auto; border-bottom: 1px solid var(--ldt-rule); }
+.ldt-rows-match .ldt-row { grid-template-columns: 84px 110px 110px minmax(120px, 0.9fr) minmax(0, 1.2fr) 100px 100px 120px auto; border-bottom: 1px solid var(--ldt-rule); }
 .ldt-rows-match .ldt-row:last-child { border-bottom: 0; }
 .ldt-rows-match .ldt-row > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
 .ldt-rows-match .ldt-row > .ldt-m { text-align: right; }

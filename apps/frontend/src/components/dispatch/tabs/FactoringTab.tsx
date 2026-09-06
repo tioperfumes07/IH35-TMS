@@ -20,7 +20,7 @@ import {
   listBrokerAdvances,
   listFactoringAdvances,
 } from "../../../api/accounting";
-import { listAllFiles, getDownloadUrl, type DocsFile } from "../../../api/docs";
+import { getDownloadUrl, type DocsFile } from "../../../api/docs";
 import { createFactor, listFactors } from "../../../api/factoring";
 import { apiRequest } from "../../../api/client";
 import { Button } from "../../Button";
@@ -31,6 +31,7 @@ import { EntityLink } from "../../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../shared/EntityLinkOrTombstone";
 import { QueryErrorNote } from "./QueryErrorNote";
 import { formatMoneyCents } from "../constants";
+import { useLoadDocuments } from "./useLoadDocuments";
 
 // ─── .ldt-* palette (GLOBAL-TYPE-SIZE-BASELINE tokens) ────────────────────────
 
@@ -205,14 +206,6 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
   const load = loadQ.data;
   const currency = load?.currency_code ?? "USD";
 
-  // documents for this load
-  const docsQ = useQuery({
-    queryKey: ["factoring-tab", "docs", operatingCompanyId, loadId],
-    queryFn: () => listAllFiles({ operating_company_id: operatingCompanyId, entity_type: "load", entity_id: loadId }),
-    enabled: Boolean(operatingCompanyId && loadId),
-  });
-  const docs = docsQ.data?.files ?? [];
-
   // invoice linked to this load
   const invoicesQ = useQuery({
     queryKey: ["factoring-tab", "invoices", "by-load", operatingCompanyId, loadId],
@@ -221,11 +214,13 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
   });
   const linkedInvoice = useMemo(() => invoicesQ.data?.invoices?.[0] ?? null, [invoicesQ.data]);
 
-  // invoice docs (for PDF link)
-  const invoiceDocsQ = useQuery({
-    queryKey: ["factoring-tab", "invoice-docs", operatingCompanyId, linkedInvoice?.id],
-    queryFn: () => listAllFiles({ operating_company_id: operatingCompanyId, entity_type: "invoice", entity_id: linkedInvoice!.id }),
-    enabled: Boolean(operatingCompanyId && linkedInvoice?.id),
+  // documents for this load — SHARED READ (useLoadDocuments). LDT-D Documents tab and
+  // LDT-2 Stops tab consume the same hook + query key, so BOL/POD chips never drift.
+  const { packetDocuments, isError: docsLoadError, refetch: refetchDocs } = useLoadDocuments({
+    operatingCompanyId,
+    loadId,
+    invoiceId: linkedInvoice?.id,
+    enabled: Boolean(operatingCompanyId && loadId),
   });
 
   // active factors for submission
@@ -279,9 +274,9 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
   const { meta, visibleNotes: _visibleNotes } = useMemo(() => parseMeta(load?.notes), [load?.notes]);
 
   const isDeliverable = DELIVERED_STATUSES.includes((load?.status ?? "") as never);
-  const hasRateConf = docs.some((f) => f.category_code === "rate_confirmation");
-  const hasBol = docs.some((f) => f.category_code === "bol");
-  const hasPod = docs.some((f) => f.category_code === "pod");
+  const hasRateConf = Boolean(packetDocuments.rateCon);
+  const hasBol = Boolean(packetDocuments.bol);
+  const hasPod = Boolean(packetDocuments.pod);
   const hasInvoice = Boolean(linkedInvoice);
   const packetComplete = hasRateConf && hasBol && hasPod && hasInvoice;
 
@@ -289,11 +284,11 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
   const stepIndex = STEP_ORDER.indexOf(step);
   const isFactorIdSet = selectedFactorId !== "";
 
-  // specific docs for packet chips
-  const rateConfFile = docs.find((f) => f.category_code === "rate_confirmation") ?? null;
-  const bolFile = docs.find((f) => f.category_code === "bol") ?? null;
-  const podFile = docs.find((f) => f.category_code === "pod") ?? null;
-  const invoicePdfFile = (invoiceDocsQ.data?.files ?? []).find((f) => f.mime_type.includes("pdf")) ?? null;
+  // specific docs for packet chips — from the SHARED READ (packetDocuments)
+  const rateConfFile = packetDocuments.rateCon;
+  const bolFile = packetDocuments.bol;
+  const podFile = packetDocuments.pod;
+  const invoicePdfFile = packetDocuments.invoicePdf;
 
   // net cash = advance_amount_cents - factor_fee_cents
   const netCashCents = (factoringAdvance?.advance_amount_cents ?? 0) - (factoringAdvance?.factor_fee_cents ?? 0);
@@ -530,14 +525,9 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
             <div className="ldt-row"><span>Invoice PDF</span><PacketChip label="Invoice PDF" file={invoicePdfFile} /></div>
           </div>
           {/* Error notes for failed fetches (honest failure, not silent empty) */}
-          {docsQ.isError ? (
+          {docsLoadError ? (
             <div className="mt-2">
-              <QueryErrorNote label="load documents" onRetry={() => docsQ.refetch()} />
-            </div>
-          ) : null}
-          {invoiceDocsQ.isError ? (
-            <div className="mt-2">
-              <QueryErrorNote label="invoice documents" onRetry={() => invoiceDocsQ.refetch()} />
+              <QueryErrorNote label="load documents" onRetry={() => void refetchDocs()} />
             </div>
           ) : null}
           {!isDeliverable ? (
@@ -587,7 +577,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
             {step !== "POD" && isDeliverable && !meta.generated_at ? (
               <div className="rounded-sm border border-slate-300 bg-slate-100 p-3">
                 <p className="mb-2 text-xs text-slate-700">
-                  {docsQ.isError || invoicesQ.isError
+                  {docsLoadError || invoicesQ.isError
                     ? "Couldn't verify document completeness — see packet above and retry before relying on this."
                     : packetComplete
                     ? "All documents present. Mark packet ready for dispatcher approval."
