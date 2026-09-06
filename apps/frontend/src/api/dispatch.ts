@@ -229,6 +229,7 @@ export type DispatchBookLoadPayload = {
     postal_code?: string;
     latitude?: number;
     longitude?: number;
+    geocode_precision?: "rooftop" | "range" | "locality" | null;
   }>;
   save_mode: "draft" | "book_dispatch";
   override_token?: string;
@@ -759,6 +760,7 @@ export type RefinedLoadStop = {
   notes: string | null;
   latitude: number | null;
   longitude: number | null;
+  geocode_precision?: "rooftop" | "range" | "locality" | null;
   signature_required: boolean;
   photo_required: boolean;
   pickup_time_type_id?: string | null;

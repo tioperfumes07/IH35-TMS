@@ -82,6 +82,10 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "codex/tel-40-stops-geofence",
     new Set(["db/migrations/202613772300_tel40_stop_geocode_evidence_and_radii.sql"]),
   ],
+  [
+    "codex/tel40b",
+    new Set(["db/migrations/202613790000_tel40b_stop_geocode_precision.sql"]),
+  ],
 ]);
 
 export function isOwnerAuthorizedOneOff(branch, files) {
