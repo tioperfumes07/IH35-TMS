@@ -9,6 +9,7 @@ import { generateExpenseNumber } from "../expense-attribution/expense-number.js"
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { resolveExpenseCategoryId } from "./expense-category-catalog.js";
 import { postSourceTransaction, reversePostedSourceTransactionInClientTx, PostingEngineError } from "./posting-engine.service.js";
+import { expenseOpenTourLoadId, TOUR_OPEN_HOLD_REASON } from "./tour-open-gate.service.js";
 import { todayIso } from "./void.service.js";
 import { canVoid, isVoidEnforcementEnabled } from "./void.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
@@ -353,6 +354,7 @@ export async function queryExpensesList(
         e.total_amount_cents::text                   AS total_amount_cents,
         e.status                                     AS status,
         e.posting_status                             AS posting_status,
+        e.posting_hold_reason                        AS posting_hold_reason,
         e.memo                                       AS memo,
         e.load_id::text                              AS load_id,
         e.vendor_uuid::text                          AS vendor_uuid,
@@ -573,6 +575,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             e.total_amount_cents::text                   AS total_amount_cents,
             e.status                                     AS status,
             e.posting_status                             AS posting_status,
+            e.posting_hold_reason                        AS posting_hold_reason,
             e.memo                                       AS memo,
             -- VIS-01: the DETAIL payload never exposed voided_at/void_reason at all (list-page callers
             -- can infer void from status='void' alone, but the detail page needs the date + reason for
@@ -1295,10 +1298,29 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       const expenseId = created.expense_id ?? "";
       let posting_status: "posted" | "unposted" = "unposted";
       let journal_entry_id: string | null = null;
+      let posting_hold_reason: string | null = null;
       if (expenseId && created.category_account_id && created.has_payment_account) {
-        const flagOn = await withCompanyScope(user.uuid, body.operating_company_id, (client) =>
-          isEnabled(client, EXPENSE_GL_POSTING_FLAG_KEY, { operating_company_id: body.operating_company_id, user_uuid: String(user.uuid) })
+        // ACC-50 (LAW §2, ROUND 5) — "open tour posts nothing." Checked BEFORE the posting flag:
+        // an expense on a still-open tour must never post even when EXPENSE_GL_POSTING_ENABLED is
+        // on. Held here means posting_status stays 'unposted' with a named reason instead of the
+        // engine ever being called — same shape as the flag-off path, just with an honest cause.
+        const openTourLoadId = await withCompanyScope(user.uuid, body.operating_company_id, (client) =>
+          expenseOpenTourLoadId(client, body.operating_company_id, expenseId)
         );
+        if (openTourLoadId) posting_hold_reason = TOUR_OPEN_HOLD_REASON;
+        if (openTourLoadId) {
+          await withCompanyScope(user.uuid, body.operating_company_id, (client) =>
+            client.query(
+              `UPDATE accounting.expenses SET posting_hold_reason=$2, updated_at=now() WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
+              [expenseId, TOUR_OPEN_HOLD_REASON, body.operating_company_id]
+            )
+          );
+        }
+        const flagOn =
+          !openTourLoadId &&
+          (await withCompanyScope(user.uuid, body.operating_company_id, (client) =>
+            isEnabled(client, EXPENSE_GL_POSTING_FLAG_KEY, { operating_company_id: body.operating_company_id, user_uuid: String(user.uuid) })
+          ));
         if (flagOn) {
           try {
             const posting = await postSourceTransaction(
@@ -1323,7 +1345,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         }
       }
 
-      return reply.code(201).send({ ...payload, posting_status, journal_entry_id });
+      return reply.code(201).send({ ...payload, posting_status, journal_entry_id, posting_hold_reason });
     } catch (error) {
       const code = (error as { code?: string }).code;
       if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });
@@ -1516,6 +1538,15 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       if (!exp) return { kind: "not_found" as const };
       if (exp.status === "void") return { kind: "not_eligible" as const };
       if (exp.posting_status !== "unposted") return { kind: "already_posted" as const };
+      // ACC-50 (LAW §2) — a manual "Post to GL" click can never override the open-tour hold either.
+      const openTourLoadId = await expenseOpenTourLoadId(client, oci, expenseId);
+      if (openTourLoadId) {
+        await client.query(
+          `UPDATE accounting.expenses SET posting_hold_reason=$2, updated_at=now() WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
+          [expenseId, TOUR_OPEN_HOLD_REASON, oci]
+        );
+        return { kind: "tour_open" as const, load_id: openTourLoadId };
+      }
       // orphan guard (decision 3): no payment account AND no vendor → reject (no orphan payable). Clean 409 here;
       // buildExpenseLines keeps the same guard as the engine-level backstop.
       if (!exp.payment_account_uuid && !exp.vendor_uuid) return { kind: "orphan" as const };
@@ -1535,6 +1566,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     if (pre.kind === "not_eligible") return reply.code(409).send({ error: "expense_not_posting_eligible" });
     if (pre.kind === "already_posted") return reply.code(409).send({ error: "expense_already_posted" });
     if (pre.kind === "orphan") return reply.code(409).send({ error: "expense_orphan_no_payment_account_or_vendor" });
+    if (pre.kind === "tour_open")
+      return reply.code(409).send({ error: "expense_tour_open", posting_hold_reason: TOUR_OPEN_HOLD_REASON, load_id: pre.load_id });
 
     // Step B: post the balanced JE (own tx, idempotent — re-post returns the existing batch).
     let journalEntryId: string;

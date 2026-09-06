@@ -225,6 +225,12 @@ export function BillDetailPage() {
         actions={
           <div className="flex items-center gap-2">
             <StatusBadge variant={statusVariant(bill.status)}>{bill.status}</StatusBadge>
+            {/* ACC-50 (LAW §2) — "open tour posts nothing": this bill has a line naming a load
+                whose tour/settlement is still open, so it was held instead of posting, even if
+                bill GL posting is enabled for this entity. Clears itself once the tour closes. */}
+            {bill.posting_hold_reason === "tour_open" ? (
+              <StatusBadge variant="crit">held — tour open</StatusBadge>
+            ) : null}
             {bill.is_reconciled ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
                 <svg aria-hidden="true" viewBox="0 0 12 12" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2">
