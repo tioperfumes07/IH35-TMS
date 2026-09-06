@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { closeTour, getTourReadoutForLoad, type TourReadout } from "../../api/tourReadout";
+import { closeTour, getTourReadout, getTourReadoutForLoad, type TourReadout } from "../../api/tourReadout";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useToast } from "../Toast";
 import { EntityLink } from "../shared/EntityLink";
@@ -17,12 +17,17 @@ const money = (c: number | null | undefined, cur = "USD") => (c == null ? DASH :
 const pct = (p: number | null | undefined) => (p == null ? DASH : `${p.toFixed(1)}%`);
 const miles = (m: number | null | undefined) => (m == null ? DASH : m.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
 
-export function TourPreSettlementTab({ loadId, operatingCompanyId, currencyCode = "USD" }: { loadId: string; operatingCompanyId: string; currencyCode?: "USD" | "MXN" }) {
+/** Keyed by a load (drawer) OR by a settlement (Load costs board → Pre-Settlement tab, LDT-TABS). Same readout either way. */
+export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId, currencyCode = "USD" }: { loadId?: string; settlementId?: string; operatingCompanyId: string; currencyCode?: "USD" | "MXN" }) {
   const qc = useQueryClient();
   const { pushToast } = useToast();
   const [popup, setPopup] = useState<null | { title: string; body: ReactNode }>(null);
   const [confirming, setConfirming] = useState(false);
-  const q = useQuery({ queryKey: ["tour-readout", "load", operatingCompanyId, loadId], queryFn: () => getTourReadoutForLoad(loadId, operatingCompanyId) });
+  const q = useQuery({
+    queryKey: ["tour-readout", settlementId ? "settlement" : "load", operatingCompanyId, settlementId ?? loadId],
+    queryFn: () => (settlementId ? getTourReadout(settlementId, operatingCompanyId) : getTourReadoutForLoad(loadId!, operatingCompanyId)),
+    enabled: Boolean(settlementId || loadId),
+  });
   const close = useMutation({
     mutationFn: () => closeTour(q.data!.tour!.settlement_id, operatingCompanyId),
     onSuccess: async () => { pushToast("Tour closed — settlement is now frozen", "success"); setConfirming(false); await qc.invalidateQueries({ queryKey: ["tour-readout"] }); await qc.invalidateQueries({ queryKey: ["load-costs"] }); },
