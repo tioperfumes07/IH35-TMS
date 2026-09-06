@@ -259,3 +259,69 @@ NEXT: awaiting owner/lead word on completing FACT-01 step 1's remaining 22 loads
 CC-1 | REG-PARSE-DATA DONE | 23873223a8 | verify-reg-parse-data-backfill --selftest 8/8 | migration 202613830000 (additive accounting.expenses.merchant_address + source_settlement_ref) claimed on main first (#20912), applied live to Neon tiny-field-89581227 via RESET ROLE, registered in both _system._schema_migrations + ih35_migrations.applied_migrations | Backfilled through a real, audited service function (backfillExpenseParsedFields, apps/backend/src/accounting/expense-parse-backfill.service.ts) — never raw SQL; memo (WORM) never rewritten | LIVE BEFORE: 384 composite-memo rows, 0 with merchant_address, 0 with source_settlement_ref | LIVE AFTER: 384 composite-memo rows, 379 with merchant_address, 315 with source_settlement_ref (69 are the "missing-USMCA-seed" rows — genuinely no signed settlement number, left null not guessed), 0 still purely string-composite | vendor_document_number: 200 cleaned to receipt-number-only, 184 kept their original suffixed value (self-caught live collision on uq_expenses_tms_native_vendor_document_number — a real UNIQUE index; the suffix disambiguates multiple expense rows sharing one receipt number for the same vendor, e.g. a fuel stop's "Diesel" + "Fuel-DEF" rows — service now probes for a sibling before cleaning, never guesses) | Integrated CC-3's normalizeMerchantAddress (#20918) mid-build — ran a correction pass over all 379 merchant_address rows: 320 renormalized, 59 already clean, 0 still glued-number or doubled-trailing-state after | GET /api/v1/expenses now returns both fields; LoadCostsBoardPage.tsx's register reads them first, falls back to parseExpenseMemo only when null | verify-no-duplicate-routes.mjs: "verify:no-duplicate-routes OK (no dist/ required)" (no route file touched) | apps/backend tsc -b exit 0, apps/frontend npm run typecheck exit 0 | NEXT: awaiting the next OPEN board item or owner confirmation on FACT-01
 
 CC-1 | EXP-ADDR-WIRE — ALREADY DONE (measurement in the directive was stale, pre-dates the merge above). accounting.expenses.merchant_address + source_settlement_ref exist live (migration 202613830000, PR #20912/#20933), backfilled via backfillExpenseParsedFields which calls CC-3's normalizeMerchantAddress at write time, expenses list route returns both fields, Load Costs register reads them first with parseExpenseMemo as fallback-only, before/after counts pasted in the REG-PARSE-DATA DONE line directly above. Nothing further to build here — see that entry for full live proof. Moving to MEGA-TOUR-RULING now.
+## CC-1 (money-lane) → CC-2 · MEGA-TOUR-RULING — RULING, NOT A FIX (no schema/data change here, per instruction)
+
+**Ruling: uq_driver_settlements_one_open_per_driver is CORRECT and stays UNCHANGED. A mega-tour
+settlement collapses to ONE open settlement per driver for now — every one of that driver's live
+loads attaches to it via `driver_finance.settlement_lines`, exactly as it already does for the 20
+loads that delivered cleanly. This is NOT a genuine conflict between two independently-correct
+invariants — it is one real bug in `openLoadBookendedSettlement`'s reuse-detection query, in ONE
+file. Fixing that query (not the constraint, not the seed) unblocks all 20 remaining loads.**
+
+**ROOT CAUSE, measured on Neon (tiny-field-89581227), not guessed:**
+`openLoadBookendedSettlement`'s "does this driver already have a reusable open settlement" lookup
+(`apps/backend/src/driver-finance/settlements-load-bookended.service.ts`) requires
+`EXISTS (SELECT 1 FROM mdata.loads fl WHERE fl.id = s.first_load_id ... AND fl.status <> 'cancelled')`
+— i.e. it only calls a settlement "live" if its single `first_load_id` load is not cancelled
+(ACCT-F266's real, necessary anti-orphan protection). But the mega-tour seed assigned each driver's
+`first_load_id` essentially arbitrarily — it is just "one of the driver's loads," not "the load that
+still matters." Live count right now: of the 11 still-open USMCA mega-tour settlements, **8 have a
+`first_load_id` pointing at a load that is `cancelled`** (S-13642, S-13643, S-13644, S-13649,
+S-13650, S-13651, S-13652, S-13653) — yet 6 of those 8 have real, LIVE (non-cancelled) loads
+correctly attached via `settlement_lines` right now (checked live: S-13642→2, S-13643→7, S-13644→4,
+S-13649→5, S-13650→2, S-13652→2 live loads each via `settlement_lines` → `driver_bills` →
+`mdata.loads`; S-13651/S-13653 currently have zero settlement_lines at all — genuinely nothing left
+to attach for those two drivers today). So for those 6+ drivers, the reuse query wrongly reports
+"no reusable settlement" — `openLoadBookendedSettlement` falls through to INSERT a second open
+settlement for a driver who already has one, and `uq_driver_settlements_one_open_per_driver`
+correctly refuses the duplicate (23505). The constraint did its job; the query asked it the wrong
+question.
+
+**Why this is not "pick an invariant, one has to yield":** the seed's one-open-settlement-per-driver
+mega-tour and the DB's one-open-settlement-per-driver constraint are not in tension — they say the
+SAME thing. The only thing broken is the SIGNAL `openLoadBookendedSettlement` uses to decide
+"reusable": a single arbitrary `first_load_id`'s status, instead of the settlement's REAL load
+membership (which already exists, live, in `settlement_lines` — the exact same derivation
+`docs/audit/TOUR-SPLIT-PLAN-2026-09-06.md` and this session's own `SOURCE-DOCUMENT-REF` backfill
+already use as canonical).
+
+**RECOMMENDED FIX (not applied — awaiting lead ✔ per the no-schema/data-change instruction):**
+widen the `EXISTS` anchor-liveness check in `openLoadBookendedSettlement`'s reuse query to pass when
+EITHER (a) `first_load_id`'s load is non-cancelled (today's check, unchanged — still correct for the
+normal single-trip settlement, and for a future post-split per-trip settlement whose first_load_id
+IS the trip's real anchor), OR (b) the settlement has at least one active
+(`sl.is_active = true`) `settlement_lines` row tracing through `driver_bills` to a non-cancelled
+`mdata.loads` row. Zero schema change (settlement_lines already exists), zero data change (no row
+touched), one query in one file, one existing regression-test file already covers this function
+(`settlement-load-bookended.test.ts` — add cases for a cancelled-anchor/live-lines settlement and a
+cancelled-anchor/zero-lines settlement). Does not touch, conflict with, or need to wait for CC-3's
+separate TOUR-SPLIT-PLAN split (once that split runs, each new per-trip settlement's own
+`first_load_id` will correctly be its real anchor, and this same widened check still holds — a
+strict superset, never a regression).
+
+**S-13651 / S-13653 (zero settlement_lines today):** these two drivers currently have nothing live
+left to attach (their only settlement_lines-eligible loads are cancelled or not yet materialized) —
+not part of the 20-load blocker; no action needed on them from this ruling.
+
+**Scope respected:** no schema or data change made by this ruling — measurement only, live reads
+under the lucia bypass, rolled back. The 8 owner hand-list loads (13512, 13513, 13520, 13528, 13532,
+13535, 13536, 13537) were not queried for write and remain untouched.
+
+**Next, once lead ✔'s the fix above:** CC-2 (or CC-1, whoever picks it up) makes the one-query change
++ the two regression-test cases + a guard (`verify-load-bookended-settlement-reuse-checks-lines`
+or similar) asserting the widened EXISTS clause is present and a live re-run of the 20 blocked
+loads' transitions succeeds. Cross-referencing `docs/audit/GUARD-WORKORDERS.md`'s
+`SETL-BOOKENDED-ONE-OPEN-PER-DRIVER-VS-MEGA-TOUR-SEED` row (PR #20922) — this ruling answers exactly
+the open question that row raised, in favor of option (a) there (extend the reuse lookup), not
+option (b) (wait for the full tour split first).
+
