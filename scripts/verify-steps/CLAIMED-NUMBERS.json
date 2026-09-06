@@ -7938,5 +7938,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
+  },
+  "10593": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-one-void-convention (INV-09/ACC-08, owner CONSOLIDATED 2026-09-06 18:30Z item 6: locks the accounting.bills voided_at/revoked_at sync-trigger invariant live-reconfirmed correct on 09-05 and again today -- the broader 4-table naming-consistency question stays filed as an owner-decision-needed item, not guessed)"
   }
 }
