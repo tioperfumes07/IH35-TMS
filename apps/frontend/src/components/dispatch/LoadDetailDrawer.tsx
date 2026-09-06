@@ -22,6 +22,8 @@ import { LoadDetailDriverPayTab } from "./LoadDetailDriverPayTab";
 import { LoadDetailCostsTab } from "./LoadDetailCostsTab";
 import { MoneyProofTrailPanel } from "../accounting/MoneyProofTrailPanel";
 import { LoadDetailSettlementTab } from "./LoadDetailSettlementTab";
+import { TourPreSettlementTab } from "./TourPreSettlementTab";
+import { TourSettlementTab } from "./TourSettlementTab";
 import { LoadDetailGeofenceTimelineTab } from "./LoadDetailGeofenceTimelineTab";
 import { LoadStopsRecordTab } from "./LoadStopsRecordTab";
 import { LoadAuditTab } from "./LoadAuditTab";
@@ -1294,11 +1296,18 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
 
           {activeTab === "Settlement" ? (
             load ? (
-              <LoadDetailSettlementTab
-                loadId={load.id}
-                operatingCompanyId={load.operating_company_id}
-                currencyCode={load.currency_code}
-              />
+              // LDT-6 (render § Settlement): the tour readout — driver + company settlement, frozen when closed.
+              // The legacy summary stays mounted below it (additive-only) until its guards move to the readout.
+              <>
+                <TourSettlementTab loadId={load.id} operatingCompanyId={load.operating_company_id} currencyCode={load.currency_code === "MXN" ? "MXN" : "USD"} />
+                <details className="mt-3 text-xs" data-testid="settlement-legacy-summary"><summary className="ldt-muted">Legacy settlement summary</summary>
+                  <LoadDetailSettlementTab
+                    loadId={load.id}
+                    operatingCompanyId={load.operating_company_id}
+                    currencyCode={load.currency_code}
+                  />
+                </details>
+              </>
             ) : (
               <div className="text-xs text-gray-500">Loading…</div>
             )
@@ -1541,14 +1550,23 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
           ) : null}
 
           {activeTab === "Pre-Settlement" ? (
-            load?.assigned_primary_driver_id ? (
-              <PreSettlementPanel
-                driverId={load.assigned_primary_driver_id}
-                operatingCompanyId={load.operating_company_id}
-                onSettled={() => refetchLoad()}
-              />
+            load ? (
+              // LDT-5 (render § Pre-Settlement): the open TOUR this load is on, from the one readout, with
+              // "Close tour → Settlement (human confirms)". The per-driver panel stays reachable below (additive-only).
+              <>
+                <TourPreSettlementTab loadId={load.id} operatingCompanyId={load.operating_company_id} currencyCode={load.currency_code === "MXN" ? "MXN" : "USD"} />
+                {load.assigned_primary_driver_id ? (
+                  <details className="mt-3 text-xs" data-testid="presettlement-legacy-panel"><summary className="ldt-muted">Driver pre-settlement panel (settle &amp; pay)</summary>
+                    <PreSettlementPanel
+                      driverId={load.assigned_primary_driver_id}
+                      operatingCompanyId={load.operating_company_id}
+                      onSettled={() => refetchLoad()}
+                    />
+                  </details>
+                ) : null}
+              </>
             ) : (
-              <div className="text-xs text-gray-500">No driver assigned to this load.</div>
+              <div className="text-xs text-gray-500">Loading…</div>
             )
           ) : null}
 
