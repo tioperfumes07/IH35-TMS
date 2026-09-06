@@ -1922,6 +1922,11 @@
     "lane": "cursor",
     "note": "LST-F3352 Lists back-arrow + Catalog Index dual-path"
   },
+  "3354": {
+    "claimed_at": "2026-09-06",
+    "claimed_by": "cursor",
+    "purpose": "verify-settlements-module-two-card-detail"
+  },
   "3353": {
     "claimed_at": "2026-08-14",
     "claimed_by": "cc-1",
@@ -7723,10 +7728,20 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1053,
+  "total_claimed": 1054,
   "10449": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-load-costs-load-page (LDT-PAGE: /accounting/load-costs/:loadId renders the approved load page \u2014 breadcrumb, shared header stats, tab row \u2014 via LoadDetailDrawer mode=page; board links point at it)"
+  },
+  "10457": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-source-document-ref-backfill (ROUND 10: driver_finance.driver_settlements.source_document_ref column + backfill of the 10 signed-settlement-number KEEP rows from docs/audit/TOUR-SPLIT-PLAN-2026-09-06.md \u00a71, through a real service function, never raw SQL/DELETE)"
+  },
+  "10459": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-stops-appt-fix-backfill-safe (ROUND 10 STOPS-APPT-FIX: appointment_start_at backfill from scheduled_arrival_at for the 48 dispatched + 13508 loads only, never cancelled, via the safe surgical PATCH route, --apply gated on a non-empty LEAD_APPROVAL_QUOTE)"
   }
 }

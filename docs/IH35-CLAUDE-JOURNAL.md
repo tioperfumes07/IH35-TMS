@@ -808,3 +808,17 @@ AUDIT 22:17Z | DEPLOY TIMER | ✗ | API live d988cd31 since 19:37Z; code merged 
 - 04:0xZ Cursor reconciliation doc merged (#20867 4015348d). Lead rulings (OUTBOX-CURSOR): 13503/04/06 + the 8 Faro loads + 13505/13507 all
   TRANSPORTATION per the source workbook (TRANSPORTATION BY LOAD; QBO 08/07 = invoice date, not pickup) — nothing reclassified, nothing seeded.
   13505→5776, 13507→5772 are owner hand settlements. Live proof of LDT-TABS sent to owner 03:48Z (15 open tours; S-13654 expanded).
+
+## 2026-09-06 · 03:50–04:45Z · Owner: "I DO NOT SEE THE APP LIKE THE PICTURES … THE DESIGN … ALL THE SHIT IN THESE PICTURES"
+- Owner re-uploaded LOAD-DETAIL-TABS-RENDERS(-LIVE)-2026-09-05.html (identical to docs/design/reference). The approved surface is a full
+  LOAD PAGE (Accounting › Load costs › <load>: header stat boxes, tab row, tab body) reached by clicking a load on Dispatch → Load costs.
+  Live it was the side drawer at /dispatch/loads/:id opened by a 6px caret; owner never saw it.
+- Shipped + deployed: #20870 (row click expands board rows) · #20878 LDT-PAGE (/accounting/load-costs/:loadId via LoadDetailDrawer
+  mode="page"; guard verify-load-costs-load-page step 10449 claimed b9a88e17) · #20888 LDT-DESIGN-1 (Stops: inline LEG MILES + EVENTS cards;
+  Driver Pay: BASIS/SOURCE, DEDUCTIONS | POSTING debit/credit; Factoring: segmented stage bar, THE MONEY | PACKET, removed LDT-4's global
+  <style> that flattened every tab's cards; header TOUR OPEN chip). Live proof screenshots sent 04:44Z (13568: Stops, Driver Pay, Factoring).
+- Data defect seen live on 13568 Driver Pay: escrow (−$25) and Admin fee (−$10) deductions each appear TWICE (settlement 5794 backfill) →
+  CC-3 to measure/de-duplicate via the real void path.
+- Round 10 issued 04:3xZ (Cursor SETL-MOD-02 · CC-1 SOURCE-DOCUMENT-REF migration, no live wire_fee test deduction · CC-2 STOPS-APPT-FIX
+  dry-run · CC-3 catalog-picker test + Factoring guards red on main · Codex TEL-46 + route-manifest-parity · Cascade ENV-CENSUS status).
+- Cursor reconciliation rulings (2ede3257): all disputed loads stay Transportation per source workbook; 13505/13507 = owner hand settlements.
