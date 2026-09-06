@@ -65,6 +65,12 @@ const REQUIRED_BACKEND_MARKERS = [
   ["row.due_date < dateStr", "carry-forward predicate (due_date < day, still open) missing"],
   // running cash from the live bank balance, never hardcoded
   ["sumAuthoritativeDepositoryCashCents", "running cash does not derive from the live authoritative bank balance"],
+  // roll-over-with-reason + audited hide (owner refinement 20:2xZ)
+  ["applyRowAdjustments", "roll-over/hide overlay missing from the read model"],
+  ["a.seq DESC", "adjustment overlay does not order by the monotonic seq column (same-transaction ordering bug)"],
+  ["is_rollover_echo: true", "roll-over does not leave a $0 echo row on the original due date"],
+  ["createCashFlowRowAdjustment", "no service function to create a roll-over/hide adjustment"],
+  ["unknown_or_inactive_cash_flow_adjustment_reason_code", "reason-code resolution does not fail closed on an unknown code"],
 ];
 
 const FORBIDDEN_BACKEND_MARKERS = [
@@ -75,9 +81,13 @@ const FORBIDDEN_BACKEND_MARKERS = [
 const REQUIRED_FRONTEND_MARKERS = [
   ["PRESET_OPTIONS", "date-range presets missing (7d/14d/30d/This month/Next month/Custom)"],
   ["MultiSelectDropdown", "type multi-select filter missing"],
-  ["ColumnsGear", "gear (column visibility) control missing"],
+  ["GearMenu", "gear (column visibility) control missing"],
   ["exportRowsCsv", "CSV export missing"],
   ["useSearchParams", "controls are not URL-persisted"],
+  ["AdjustPopover", "roll-over/hide click-to-adjust popover missing"],
+  ["getCashFlowAdjustmentReasons", "tab does not load the real reason catalog"],
+  ["createCashFlowRowAdjustment", "tab does not call the real roll-over/hide route"],
+  ["reason_label", "tab does not render the adjustment's reason on a rolled/hidden row"],
 ];
 
 const REQUIRED_CRON_MARKERS = [
@@ -201,6 +211,27 @@ function selftest() {
         cron: good.cron.replace("existing.rows.length > 0) return { created: false }", "false) return { created: false }"),
       }),
     },
+    {
+      name: "roll-over overlay stripped from the read model",
+      mutate: () => ({
+        ...good,
+        backend: good.backend.replaceAll("applyRowAdjustments", "strippedNoOverlay"),
+      }),
+    },
+    {
+      name: "adjustment ordering reverted to the same-transaction-unsafe created_at",
+      mutate: () => ({
+        ...good,
+        backend: good.backend.replace("a.seq DESC", "a.created_at DESC"),
+      }),
+    },
+    {
+      name: "AdjustPopover stripped from the tab",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll("AdjustPopover", "strippedNoPopover"),
+      }),
+    },
   ];
   for (const plant of plants) {
     n++;
@@ -312,6 +343,21 @@ if (process.argv.includes("--selftest")) {
       counts["notify-eligible users (USMCA)"] = notifyRes.rows.length;
     } catch (err) {
       liveFindings.push(`notify cron dedup/recipient query failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+
+    // Roll-over/hide schema: the reason catalog + the append-only adjustments table (with its
+    // seq column, the same-transaction-ordering fix) must both be real and reachable.
+    try {
+      const reasonRes = await client.query(`SELECT count(*)::int AS n FROM catalogs.cash_flow_adjustment_reasons WHERE is_active = true`);
+      counts["active adjustment reasons"] = reasonRes.rows[0]?.n ?? 0;
+      const seqRes = await client.query(
+        `SELECT column_name FROM information_schema.columns WHERE table_schema='accounting' AND table_name='cash_flow_row_adjustments' AND column_name='seq'`
+      );
+      if (seqRes.rows.length === 0) {
+        liveFindings.push("accounting.cash_flow_row_adjustments.seq column not found -- same-transaction ordering fix not applied live");
+      }
+    } catch (err) {
+      liveFindings.push(`roll-over/hide schema query failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     await client.query("ROLLBACK");

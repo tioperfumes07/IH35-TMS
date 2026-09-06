@@ -1008,6 +1008,12 @@ export type RollingLedgerRow = {
   /** id of the governing accounting.cash_flow_row_adjustments row, for a further roll-over/hide
    *  action from the UI. */
   adjustment_id?: string;
+  /** Real mdata.loads linkage when this row traces back to one specific load (Invoice rows via
+   *  source_load_id, Load-not-invoiced rows are already the load itself) — never fabricated;
+   *  absent when a row has no single load behind it (Bill, Driver bill, Expense, Loan payment,
+   *  Factor advance/reserve can span or predate a load). */
+  load_id?: string | null;
+  load_number?: string | null;
 };
 
 export type RollingLedgerDay = {
@@ -1319,6 +1325,8 @@ export async function getRollingLedgerRows(
     issue_date: string | null;
     due_date: string | null;
     amount_open_cents: number;
+    load_id: string | null;
+    load_number: string | null;
   }>(
     `
     SELECT
@@ -1327,9 +1335,12 @@ export async function getRollingLedgerRows(
       COALESCE(c.customer_name, 'Customer') AS customer_name,
       i.issue_date::text AS issue_date,
       i.due_date::text AS due_date,
-      COALESCE(i.amount_open_cents, 0)::int AS amount_open_cents
+      COALESCE(i.amount_open_cents, 0)::int AS amount_open_cents,
+      l.id::text AS load_id,
+      l.load_number AS load_number
     FROM accounting.invoices i
     LEFT JOIN mdata.customers c ON c.id = i.customer_id AND c.operating_company_id = $1::uuid
+    LEFT JOIN mdata.loads l ON l.id = i.source_load_id AND l.operating_company_id = $1::uuid
     WHERE i.operating_company_id = $1::uuid
       AND i.status IN ('sent', 'partial')
       AND i.voided_at IS NULL
@@ -1354,6 +1365,8 @@ export async function getRollingLedgerRows(
       amount_cents: inv.amount_open_cents,
       days_overdue: daysOverdue,
       status: rowStatus(daysOverdue),
+      load_id: inv.load_id,
+      load_number: inv.load_number,
     });
   }
 
@@ -1506,6 +1519,8 @@ export async function getRollingLedgerRows(
       amount_cents: l.rate_total_cents,
       days_overdue: daysOverdue,
       status: rowStatus(daysOverdue),
+      load_id: l.id,
+      load_number: l.load_number,
     });
   }
 
