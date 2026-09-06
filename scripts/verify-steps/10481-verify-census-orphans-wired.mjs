@@ -60,6 +60,7 @@ export const CENSUS_ORPHAN_GUARDS = [
   "verify-driver-liability-void-route-wired.mjs",
   "verify-driver-load-history.mjs",
   "verify-driver-profile-deductions-escrow-wired.mjs",
+  "verify-driver-safety-dispatch-linkage.mjs",
   "verify-drv14-dqf-report.mjs",
   "verify-duplicate-masters-report.mjs",
   "verify-edit-load-assigned-driver-not-draft.mjs",
