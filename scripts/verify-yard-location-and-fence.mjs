@@ -17,6 +17,16 @@ function validateYardRows(rows) {
   return active.length === 1 ? [] : [`expected exactly one active IH35 yard, found ${active.length}`];
 }
 
+function freshDbContractFailures(source) {
+  const contractFailures = [];
+  if (!source.includes("FROM org.companies c")) contractFailures.push("fresh-DB company existence guard missing");
+  if (!source.includes("IF yard_id IS NULL")) contractFailures.push("fresh-DB yard absence guard missing");
+  if (source.includes("INTO STRICT yard_id") || source.includes("RAISE EXCEPTION 'TEL-42 canonical yard fence")) {
+    contractFailures.push("migration must not require production seed rows on a fresh DB");
+  }
+  return contractFailures;
+}
+
 const failures = [];
 const requireText = (source, token, message) => { if (!source.includes(token)) failures.push(message); };
 requireText(migration, "IH35 Yard — 23918 Mines Rd", "canonical yard name missing");
@@ -24,6 +34,7 @@ requireText(migration, "owner_ruling_2026-09-05", "owner ruling source missing")
 requireText(migration, "27.65149", "yard latitude missing");
 requireText(migration, "-99.63094", "yard longitude missing");
 requireText(migration, "188cf90c-d970-4ab0-9795-d23394b38af1", "canonical fence id missing");
+failures.push(...freshDbContractFailures(migration));
 requireText(migration, "radius_m = 76", "measured half-side radius missing");
 requireText(migration, "uq_mdata_locations_one_ih35_yard_per_company", "one-yard unique index missing");
 requireText(routes, '/api/v1/locations/yard', "yard endpoint missing");
@@ -40,6 +51,12 @@ if (process.argv.includes("--selftest")) {
     { is_ih35_yard: true, deactivated_at: null },
   ];
   if (validateYardRows(planted).length !== 1) failures.push("selftest failed to catch planted second yard row");
+  const freshDbMutation = migration
+    .replace("FROM org.companies c", "")
+    .replace("IF yard_id IS NULL THEN\n    RETURN;\n  END IF;", "SELECT yard_id INTO STRICT yard_id;");
+  if (freshDbContractFailures(freshDbMutation).length === 0) {
+    failures.push("selftest failed to catch planted fresh-DB dependency");
+  }
 }
 
 const databaseUrl = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
@@ -72,4 +89,4 @@ if (failures.length) {
   console.error("FAIL verify-yard-location-and-fence\n" + failures.map((x) => `- ${x}`).join("\n"));
   process.exit(1);
 }
-console.log(`PASS verify-yard-location-and-fence${process.argv.includes("--selftest") ? " --selftest 1/1" : ""}`);
+console.log(`PASS verify-yard-location-and-fence${process.argv.includes("--selftest") ? " --selftest 2/2" : ""}`);
