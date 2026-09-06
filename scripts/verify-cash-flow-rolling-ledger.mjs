@@ -80,7 +80,7 @@ const FORBIDDEN_BACKEND_MARKERS = [
 
 const REQUIRED_FRONTEND_MARKERS = [
   ["PRESET_OPTIONS", "date-range presets missing (7d/14d/30d/This month/Next month/Custom)"],
-  ["MultiSelectDropdown", "type multi-select filter missing"],
+  ["TypeFilterDropdown", "type multi-select filter missing (Banking's dropdown-button-with-chevron pattern)"],
   ["ParityTable", "registers must use the shared ParityTable (gear/column-visibility/export), not a hand-written table"],
   ["exportRowsCsv", "CSV export missing"],
   ["useSearchParams", "controls are not URL-persisted"],
@@ -88,6 +88,23 @@ const REQUIRED_FRONTEND_MARKERS = [
   ["getCashFlowAdjustmentReasons", "tab does not load the real reason catalog"],
   ["createCashFlowRowAdjustment", "tab does not call the real roll-over/hide route"],
   ["reason_label", "tab does not render the adjustment's reason on a rolled/hidden row"],
+  // ROUND 16.7 CORRECTION (owner: "THAT IS NOT THE QBO STYLE FILTER I ALREADY TOLD YOU") —
+  // Banking's exact filter-bar components/patterns reused, never restyled from scratch.
+  ["Combobox", "Filter-by-description must reuse Banking's Combobox, not a plain <input>"],
+  ["SegmentedControl", "All/Income/Expenses and By day/By type must use Banking's segmented-button pattern"],
+  ['"Filter by description"', "description filter placeholder must match Banking's exact wording"],
+  ["DayNavigatorCard", "day-navigator card (‹ date · Today ›) missing from the page skeleton"],
+  // "THE ADJUST EXPECTATION ... WILL ONLY COME IN EXPECTED INCOME SIDE" — no popup on expenses.
+  ["ExpenseRolloverMenu", "expense rows must get a plain Roll over ▾ reason menu, not the income popup"],
+  ["StopTrackingButton", "expense rows must get a separate Stop action, not the income popup"],
+  ["adjustingRow && adjustingRowIsIncome", "AdjustPopover must be gated to income rows only"],
+];
+
+const FORBIDDEN_FRONTEND_MARKERS = [
+  [
+    /adjustingRow && !adjustingRowIsIncome[\s\S]{0,80}<AdjustPopover/,
+    "AdjustPopover must never render for expense rows (income-only per the ROUND 16.7 CORRECTION)",
+  ],
 ];
 
 const REQUIRED_CRON_MARKERS = [
@@ -139,6 +156,9 @@ export function check({
   }
   for (const [marker, msg] of REQUIRED_FRONTEND_MARKERS) {
     if (!frontend.includes(marker)) f.push(`${FRONTEND_FILE}: ${msg}`);
+  }
+  for (const [re, msg] of FORBIDDEN_FRONTEND_MARKERS) {
+    if (re.test(frontend)) f.push(`${FRONTEND_FILE}: ${msg}`);
   }
 
   for (const [marker, msg] of REQUIRED_CRON_MARKERS) {
@@ -201,7 +221,7 @@ function selftest() {
       name: "type filter stripped from the tab",
       mutate: () => ({
         ...good,
-        frontend: good.frontend.replaceAll("MultiSelectDropdown", "StrippedNoFilter"),
+        frontend: good.frontend.replaceAll("TypeFilterDropdown", "StrippedNoFilter"),
       }),
     },
     {
@@ -244,6 +264,58 @@ function selftest() {
       mutate: () => ({
         ...good,
         frontend: good.frontend.replaceAll("ParityTable", "StrippedRawTable"),
+      }),
+    },
+    {
+      name: "Combobox description filter reverted to a plain <input> (ROUND 16.7 CORRECTION)",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll("Combobox", "StrippedPlainInput"),
+      }),
+    },
+    {
+      name: "SegmentedControl stripped (All/Income/Expenses, By day/By type)",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll("SegmentedControl", "StrippedChips"),
+      }),
+    },
+    {
+      name: "day-navigator card stripped from the page skeleton",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll("DayNavigatorCard", "strippedNoNavigator"),
+      }),
+    },
+    {
+      name: "expense roll-over menu stripped",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll("ExpenseRolloverMenu", "strippedNoRolloverMenu"),
+      }),
+    },
+    {
+      name: "expense Stop action stripped",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll("StopTrackingButton", "strippedNoStopButton"),
+      }),
+    },
+    {
+      name: "AdjustPopover income gate removed (would also render for expense rows)",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replace("adjustingRow && adjustingRowIsIncome", "adjustingRow"),
+      }),
+    },
+    {
+      name: "AdjustPopover wrongly reintroduced on the expense side",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replace(
+          'data-testid="rolling-ledger-expense-table"\n                />',
+          'data-testid="rolling-ledger-expense-table"\n                />\n                {adjustingRow && !adjustingRowIsIncome && (<AdjustPopover row={adjustingRow} reasons={reasons} applies="expense" onClose={() => setAdjustingRowKey(null)} pending={adjustMutation.isPending} onSubmit={() => {}} />)}'
+        ),
       }),
     },
   ];
