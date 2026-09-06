@@ -5842,6 +5842,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-vendor-balance-single-read-model (VENDOR-BALANCE-TRUTH owner order 2026-09-06, inventory #15: vendor-rollups.routes.ts derived open_balance_cents independently via a bare status<>'paid' bill denylist -- a second, drift-prone computation alongside the canonical accounting.vendor_balances VIEW already used by the Vendors list detail panel; now reads open_balance_cents from that one canonical read model)"
   },
+  "10514": {
+    "claimed_by": "cascade",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-cv-transaction-columns (CV-TRANSACTION-COLUMNS inv #46: Vendors.tsx:462-467 + Customers.tsx:974-976 rendered em-dash for Load # · Settlement # · Truck # · Pick-up · Delivery · Loaded miles; backend read model now joins mdata.loads / driver_finance.driver_settlements / mdata.units and frontend renders real data, sortable, in the gear)"
+  },
   "10515": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
