@@ -408,6 +408,9 @@ function SavedExpenseCard({ row, opco, currency, canEdit, onPop }: { row: Expens
       <span className="ldt-toggle"><button type="button" className="on" disabled>{TYPE_LABEL.expense}</button><button type="button" disabled>{TYPE_LABEL.bill}</button></span>
       <span className="ldt-emeta">
         {voided ? <span className="ldt-pill bad">void</span> : posted ? <span className="ldt-pill ok">posted</span> : <span className="ldt-pill warn">saved · not posted</span>}
+        {/* ACC-50 (LAW §2) — real reason, not the generic "not posted": this expense's load has a
+            tour/settlement still open, so it holds even with GL posting enabled. */}
+        {!voided && !posted && row.posting_hold_reason === "tour_open" ? <span className="ldt-pill bad">held — tour open</span> : null}
         {!voided ? (matched ? <span className="ldt-pill ok">matched to bank</span> : <span className="ldt-pill warn">waiting for the bank</span>) : null}
         <span className="ldt-k">{BUCKET_LABEL[bucketOf("expense", row.category_account_name ?? row.line_description ?? "")]}</span>
         {row.journal_entry_id ? <EntityLink kind="journal_entry" id={row.journal_entry_id} label="JE" /> : null}
@@ -440,6 +443,9 @@ function SavedBillCard({ row, opco, currency, canEdit, onPop }: { row: VendorBil
       <span className="ldt-toggle"><button type="button" disabled>{TYPE_LABEL.expense}</button><button type="button" className="on" disabled>{TYPE_LABEL.bill}</button></span>
       <span className="ldt-emeta">
         {voided ? <span className="ldt-pill bad">void</span> : paid ? <span className="ldt-pill ok">paid</span> : <span className="ldt-pill warn">owed</span>}
+        {/* ACC-50 (LAW §2) — this bill has a line naming a load whose tour/settlement is still
+            open, so it holds instead of posting even with bill GL posting enabled. */}
+        {!voided && row.posting_hold_reason === "tour_open" ? <span className="ldt-pill bad">held — tour open</span> : null}
         <span className="ldt-k">{BUCKET_LABEL[bucketOf("bill", row.coa_account_name ?? "")]}</span>
         {row.journal_entry_id ? <EntityLink kind="journal_entry" id={row.journal_entry_id} label="JE" /> : null}
       </span>
