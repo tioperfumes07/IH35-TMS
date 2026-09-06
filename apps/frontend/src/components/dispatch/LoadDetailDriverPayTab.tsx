@@ -5,6 +5,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
+import { MoneyProofTrailPanel } from "../accounting/MoneyProofTrailPanel";
 
 /**
  * LDT-3 (owner item, 2026-09-05, deadline 06:00Z) — Load → Driver Pay tab.
@@ -243,6 +244,10 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
       <div className="ldt-note warn">
         Nothing posts here while the tour is open (LAW §2 "open = pre-settlement"). The Amount column is computed <b>from the same rate the line stores</b> — miles × rate is the only path. The real journal entry is created when the driver's settlement pay run closes.
       </div>
+      {/* RG-22 — kind="driver_bill" EntityLink above deliberately resolves to plain text (no
+          dedicated route); this is the real click-to-ledger path for the driver bill once it has
+          posted, same shared panel every other document type on the settlement/accounting pages use. */}
+      <MoneyProofTrailPanel operatingCompanyId={operatingCompanyId} documentType="driver_bill" documentId={bill.id} />
     </div>
   );
 }
