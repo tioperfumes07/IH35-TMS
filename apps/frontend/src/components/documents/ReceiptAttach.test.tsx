@@ -26,7 +26,7 @@ describe("ReceiptAttach", () => {
     listAttachments.mockResolvedValue({ rows: [] });
   });
 
-  it("renders the photo/PDF capture input, an honest 'no receipt' state, and lists what is on file", async () => {
+  it("renders the photo/PDF capture input, attach-only when there is no receipt, and lists what is on file", async () => {
     listAttachments.mockResolvedValueOnce({ rows: [{ id: "a1", entity_type: "expense", entity_id: "e1", category: "receipt", filename: "loves-99264345.jpg", content_type: "image/jpeg", size_bytes: 204800, uploaded_at: "2026-09-06T00:00:00Z" }] });
     render(<ReceiptAttach operatingCompanyId="5c854333-6ea5-4faa-af31-67cb272fef80" entityType="expense" entityId="e1" testId="r" />);
     expect(screen.getByTestId("r-input")).toHaveAttribute("accept", "image/*,application/pdf");
@@ -50,7 +50,9 @@ describe("ReceiptAttach", () => {
     listAttachments.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: "att-1", entity_type: "bill", entity_id: "draft-1", category: "receipt", filename: "invoice.pdf", content_type: "application/pdf", size_bytes: 1000, uploaded_at: "2026-09-06T00:00:00Z" }] });
     const onCountChange = vi.fn();
     render(<ReceiptAttach operatingCompanyId="5c854333-6ea5-4faa-af31-67cb272fef80" entityType="bill" entityId="draft-1" testId="r" onCountChange={onCountChange} />);
-    await waitFor(() => expect(screen.getByTestId("r-count")).toHaveTextContent("no receipt"));
+    // REG-PARSE (owner 2026-09-06): no receipt → only "+ attach" renders, no "no receipt" pill.
+    await waitFor(() => expect(screen.getByTestId("r-add")).toHaveTextContent("+ attach"));
+    expect(screen.queryByTestId("r-count")).toBeNull();
     const file = new File([new Uint8Array([1, 2, 3])], "invoice.pdf", { type: "application/pdf" });
     fireEvent.change(screen.getByTestId("r-input"), { target: { files: [file] } });
     await waitFor(() => { const err = screen.queryByTestId("r-error"); if (err) throw new Error("component error: " + err.textContent); expect(finalizeAttachment).toHaveBeenCalledTimes(1); });
