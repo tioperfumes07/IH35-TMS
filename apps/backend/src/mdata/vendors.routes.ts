@@ -181,6 +181,13 @@ const updateVendorBodySchema = z
     tax_id: z.string().trim().max(100).nullable().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     deactivated_at: z.string().datetime().nullable().optional(),
+    // ACC-MIG (CC-3 handoff, "Hugo Gaytan duplicate fix"): mdata.vendors.driver_id already existed
+    // live (populated by the driver-hire path via ensure-driver-vendor.shared.ts) but this PATCH
+    // body had no field for it at all, so a vendor row could never be RE-linked to a different
+    // driver_id once created — e.g. a surviving active driver record has no vendor because the
+    // existing vendor row is still pointed at a deactivated duplicate driver_id, with no write path
+    // to fix that. Existence + same-company checked below, same pattern as default_expense_account_id.
+    driver_id: z.string().uuid().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
@@ -242,6 +249,27 @@ function sendDefaultExpenseAccountNotExpenseRejected(reply: FastifyReply, accoun
       ? `The default expense account must be an Expense-type account (this one is ${accountType}).`
       : "The default expense account must be an Expense-type account.",
     fieldErrors: { default_expense_account_id: "Select an Expense-type account" },
+  });
+}
+
+/** ACC-MIG: driver_id must be a real mdata.drivers row in the SAME company as the vendor being patched. */
+async function checkDriverExistsSameCompany(
+  client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
+  driverId: string,
+  operatingCompanyId: string
+): Promise<boolean> {
+  const res = await client.query(
+    `SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [driverId, operatingCompanyId]
+  );
+  return res.rows.length > 0;
+}
+
+function sendVendorDriverIdRejected(reply: FastifyReply) {
+  return reply.code(422).send({
+    error: "vendor_driver_id_not_found_same_company",
+    message: "driver_id must reference an existing driver in the same company as this vendor.",
+    fieldErrors: { driver_id: "Driver not found in this company" },
   });
 }
 
@@ -711,7 +739,8 @@ export async function registerVendorRoutes(app: FastifyInstance) {
 
     const needsScopedVendor = Boolean(
       ("name" in b && b.name) ||
-      ("default_expense_account_id" in b && b.default_expense_account_id)
+      ("default_expense_account_id" in b && b.default_expense_account_id) ||
+      ("driver_id" in b && b.driver_id)
     );
     const patchScopedCompanyId = needsScopedVendor
       ? await resolveVendorRowOperatingCompanyId(authUser.uuid, parsedParams.data.id)
@@ -743,6 +772,12 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       );
       if (!check.ok) return sendDefaultExpenseAccountNotExpenseRejected(reply, check.accountType);
     }
+    if ("driver_id" in b && b.driver_id) {
+      const exists = await withCurrentUser(authUser.uuid, async (client) =>
+        checkDriverExistsSameCompany(client, b.driver_id as string, patchScopedCompanyId as string)
+      );
+      if (!exists) return sendVendorDriverIdRejected(reply);
+    }
 
     const setParts: string[] = [];
     const values: unknown[] = [];
@@ -756,6 +791,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     if ("phone" in b) add("phone", b.phone ?? null);
     if ("email" in b) add("email", b.email ?? null);
     if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
+    if ("driver_id" in b) add("driver_id", b.driver_id ?? null);
     if ("address" in b) add("address_line1", b.address ?? null);
     // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
     if ("address_line2" in b) add("address_line2", b.address_line2 ?? null);
