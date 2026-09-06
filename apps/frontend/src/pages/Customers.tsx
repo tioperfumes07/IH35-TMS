@@ -43,6 +43,7 @@ import { CustomersListView } from "./customers/CustomersListView";
 import { CustomersSyncPanel } from "./customers/CustomersSyncPanel";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { useViewModePref } from "../hooks/useViewModePref";
+import { useListPageSizePref } from "../hooks/useListPageSizePref";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateTimeUS, formatDateUS, mmmDd } from "../lib/formatDate";
 import { customerStatusLabel, customerTypeLabel } from "../lib/customerStatusLabel";
@@ -574,7 +575,8 @@ export function CustomersPage() {
     },
   });
   const [sidebarPage, setSidebarPage] = useState(1);
-  const [sidebarPageSize, setSidebarPageSize] = useState(50);
+  // VC-10 / VC-LIST-02 — persisted page size (survives reload); "All" is a valid stored value.
+  const [sidebarPageSize, setSidebarPageSize] = useListPageSizePref("customers", 50);
   // CUSTOMER-CREATE-DEAD-CLICK: drawer open must be URL-only. Dual useState + setSearchParams lost
   // the first click when the page remounted (15 parallel list queries) before ?create=1 flushed —
   // setCreateOpen(true) landed on an unmounted instance and the new instance still read create !== 1.

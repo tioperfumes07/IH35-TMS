@@ -104,6 +104,7 @@ export function CustomerListSidebar({
         totalCount={totalCount}
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}
+        allowAll
         loading={listState.isLoading}
       />
       <input
@@ -184,6 +185,7 @@ export function CustomerListSidebar({
           totalCount={totalCount}
           onPageChange={onPageChange}
           onPageSizeChange={onPageSizeChange}
+          allowAll
           loading={listState.isLoading}
         />
       </div>
