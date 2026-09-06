@@ -16,9 +16,11 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 
 // §7 navy ruling (Jorge 2026-06-23): NB/TR/SB render in the navy family — no blue/purple/green pills.
 // Three distinguishable navy-family shades replace the old SB green (#16a34a) and any blue/purple.
-const TRIP_COLOR: Record<"NB" | "TR" | "SB", string> = { NB: "#1F2A44", TR: "#64748b", SB: "#334155" };
+// TRIP-LOCAL-ENUM (owner order 2026-09-06): LOCAL (Laredo->Laredo) gets its own navy-family shade,
+// same rule — no blue/purple/green.
+const TRIP_COLOR: Record<"NB" | "TR" | "SB" | "LOCAL", string> = { NB: "#1F2A44", TR: "#64748b", SB: "#334155", LOCAL: "#0f172a" };
 
-type Segment = "All" | "NB" | "TR" | "SB" | "open" | "upnorth";
+type Segment = "All" | "NB" | "TR" | "SB" | "LOCAL" | "open" | "upnorth";
 // SORT-A1-FALSE-POSITIVE: named `text`, not `label` — this is a segment-toggle caption array, not
 // a ParityTable column list, but verify-sortable-columns-and-void-visibility's heuristic gate
 // (file mentions ParityTable -> scan every `{..label..}` object for a `sortable` key) can't tell
@@ -29,6 +31,7 @@ const SEGMENTS: { key: Segment; text: string }[] = [
   { key: "NB", text: "NB" },
   { key: "TR", text: "TR" },
   { key: "SB", text: "SB" },
+  { key: "LOCAL", text: "LOCAL" },
   { key: "open", text: "Open returns" },
   { key: "upnorth", text: "Up north 30d+" },
 ];
@@ -199,6 +202,7 @@ export function TripPairingBoardPage() {
       case "NB": return t.legs.some((l) => l.trip_type === "NB");
       case "TR": return t.legs.some((l) => l.trip_type === "TR");
       case "SB": return t.has_sb;
+      case "LOCAL": return t.legs.some((l) => l.trip_type === "LOCAL");
       case "open": return t.open_return;
       case "upnorth": return (t.up_north_days ?? 0) >= 30;
       default: return true;
@@ -389,11 +393,12 @@ export function TripPairingBoardPage() {
             />
           </section>
 
-          {/* Legend — five states (NB/TR/SB navy-family per §7; open-return dashed; settlement-open amber). */}
+          {/* Legend — six states (NB/TR/SB/LOCAL navy-family per §7; open-return dashed; settlement-open amber). */}
           <div className="flex flex-wrap items-center gap-4 rounded-sm border border-slate-200 bg-white px-3 py-2">
             <LegendSwatch color={TRIP_COLOR.NB} label="NB Northbound" />
             <LegendSwatch color={TRIP_COLOR.TR} label="TR Triangulation" />
             <LegendSwatch color={TRIP_COLOR.SB} label="SB Southbound return" />
+            <LegendSwatch color={TRIP_COLOR.LOCAL} label="LOCAL Laredo—Laredo" />
             <LegendSwatch dashed label="Open return" />
             <LegendSwatch color="#b45309" label="Up north — settlement open" />
           </div>

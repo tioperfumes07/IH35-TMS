@@ -103,7 +103,7 @@ export type UpdateDispatchLoadFields = Partial<{
   border_routing: string | null;
   /** FAIL-B4 — sample/demo flag, editable after creation. */
   is_sample_data: boolean;
-  trip_type: "NB" | "TR" | "SB";
+  trip_type: "NB" | "TR" | "SB" | "LOCAL";
   tour_id: string | null;
   // DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500 (2026-08-27): commodity/cargo_weight_lbs/
   // reefer_setpoint_temp_f were REMOVED here — mdata.loads has never had these columns (verified live,

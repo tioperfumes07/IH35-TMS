@@ -275,7 +275,9 @@ const createDispatchLoadBodySchema = z.object({
   // Trip Pairing (Block 04): optional at the API for now (Phase 1, additive — no break for in-flight
   // clients); the wizard makes it REQUIRED on the UI, and a follow-up flips this to required once the
   // selector ships on all clients. NB starts a tour; TR/SB pass the tour_id to join.
-  trip_type: z.enum(["NB", "TR", "SB"]).optional(),
+  // TRIP-LOCAL-ENUM (owner order 2026-09-06): Laredo->Laredo = LOCAL, mdata.trip_type_enum
+  // migration 202613850000.
+  trip_type: z.enum(["NB", "TR", "SB", "LOCAL"]).optional(),
   tour_id: z.string().uuid().optional(),
   assigned_unit_id: z.string().uuid().optional(),
   // W-FIX-3b: persisted after load creation to dispatch.load_assignment_history.new_trailer_id.
@@ -407,7 +409,9 @@ const updateDispatchLoadBodySchema = z.object({
   miles_practical: z.number().min(0).multipleOf(0.1).nullable().optional(),
   miles_shortest: z.number().min(0).multipleOf(0.1).nullable().optional(),
   miles_deadhead: z.number().min(0).multipleOf(0.1).nullable().optional(),
-  trip_type: z.enum(["NB", "TR", "SB"]).optional(),
+  // TRIP-LOCAL-ENUM (owner order 2026-09-06): Laredo->Laredo = LOCAL, mdata.trip_type_enum
+  // migration 202613850000.
+  trip_type: z.enum(["NB", "TR", "SB", "LOCAL"]).optional(),
   // DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500 (2026-08-27): commodity/cargo_weight_lbs/
   // reefer_setpoint_temp_f were REMOVED here because mdata.loads had never had these columns
   // (verified live, no migration ever added them), so accepting them fed update-load.service.ts's
