@@ -8,7 +8,7 @@ Lead: 2026-09-06 21:15Z. Lane: guards only. SURRENDER: Cascade.
 ## Red guards on main
 | Guard | Verdict | PR | Sha |
 |-------|---------|----|----|
-| RG-16 verify-book-load-authgate-entity-labels | PENDING | | |
+| RG-16 verify-book-load-authgate-entity-labels | GUARD RE-PINNED + WORM trigger + units column fix | #21096 | 289f77b991 |
 | RG-17 verify-book-load-toast-server-status | PENDING | | |
 | RG-18 verify-dispatch-cancellation-write-identity | PENDING | | |
 | RG-19 verify-dispatch-load-deeplink-opens-drawer | PENDING | | |
