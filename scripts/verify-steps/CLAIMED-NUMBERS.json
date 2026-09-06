@@ -1922,6 +1922,11 @@
     "lane": "cursor",
     "note": "LST-F3352 Lists back-arrow + Catalog Index dual-path"
   },
+  "3354": {
+    "claimed_at": "2026-09-06",
+    "claimed_by": "cursor",
+    "purpose": "verify-settlements-module-two-card-detail"
+  },
   "3353": {
     "claimed_at": "2026-08-14",
     "claimed_by": "cc-1",
