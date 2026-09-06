@@ -18,6 +18,7 @@ import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
 import { listTours, type TourListRow } from "../../api/tourReadout";
 import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
 import { useToast } from "../../components/Toast";
+import { parseExpenseMemo } from "../../lib/expense-memo";
 
 type FilterPill = "in_motion" | "delivered_open" | "all_open" | "this_week";
 // LOAD-COSTS-COMPLETE item (3) (owner's exact board-column list, 2026-09-04): Load · Unit · Driver ·
@@ -176,6 +177,8 @@ function ExpandPanel({ row, companyId }: { row: BoardRow; companyId: string }) {
 type RegisterRow = {
   id: string; number: string; date: string | null; party: string; loadNumber: string | null; loadId: string | null;
   detail: string; amountCents: number; status: string; receiptEntity?: "expense" | "bill";
+  /** REG-PARSE (owner 2026-09-06): the seed's composite memo split into its own columns — never one messy string. */
+  address?: string | null; receiptNumber?: string | null; settlementNumber?: string | null;
   // LCB-REG (owner 2026-09-05) additions — each optional block is populated by exactly one tab's
   // own fetcher; ParityTable columns for a tab read only the fields that tab writes.
   /** driver_pay: SET-RATE law breakdown -- loaded/empty miles × their own per-mile rates. */
@@ -192,7 +195,11 @@ const REGISTER_COLUMNS: Array<ParityColumn<RegisterRow>> = [
   { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateUS(r.date) : DASH },
   { key: "party", label: "Vendor / Driver", testId: "reg-col-party", sortable: true, sortValue: r => r.party, render: r => r.party || DASH },
   { key: "load", label: "Load", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="font-semibold text-slate-700 underline" to={`/accounting/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
-  { key: "detail", label: "Description", testId: "reg-col-detail", sortable: false, render: r => <span className="text-[#4B5563]">{r.detail || DASH}</span> },
+  { key: "detail", label: "Description", testId: "reg-col-detail", sortable: true, sortValue: r => r.detail, render: r => <span className="text-[#4B5563]">{r.detail || DASH}</span> },
+  // REG-PARSE (owner 2026-09-06 05:2xZ): receipt number, address and settlement number are their own columns.
+  { key: "receipt_number", label: "Receipt no.", testId: "reg-col-receipt-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.receiptNumber ?? "", render: r => r.receiptNumber ? <span className="ldt-k">{r.receiptNumber}</span> : DASH },
+  { key: "address", label: "Address", testId: "reg-col-address", sortable: true, sortValue: r => r.address ?? "", render: r => <span className="text-[#4B5563]">{r.address || DASH}</span> },
+  { key: "settlement_number", label: "Settlement", testId: "reg-col-settlement", sortable: true, className: "whitespace-nowrap", sortValue: r => r.settlementNumber ?? "", render: r => r.settlementNumber ? <span className="ldt-k">{r.settlementNumber}</span> : DASH },
   { key: "amount", label: "Amount", testId: "reg-col-amount", sortable: true, className: NUM, sortValue: r => r.amountCents, render: r => fmt(r.amountCents) },
   { key: "status", label: "Status", testId: "reg-col-status", sortable: true, className: "whitespace-nowrap text-center", sortValue: r => r.status, render: r => <span className="inline-block rounded-sm border border-[#C7D2DC] bg-[#EEF2F6] px-2 py-px font-bold uppercase text-[#4B5563]" style={{ fontSize: 10 }}>{r.status}</span> },
 ];
@@ -323,7 +330,12 @@ function TransactionRegister({ tab, companyId, loadsById, navigate }: { tab: Cos
     queryFn: async (): Promise<RegisterRow[]> => {
       if (tab === "bills") {
         const res = await listBills(companyId, { limit: REGISTER_LIMIT });
-        return (res.rows ?? []).filter(b => b.status !== "voided").map(b => ({ receiptEntity: "bill" as const, id: b.id, number: b.display_id ?? "—", date: b.bill_date, party: b.vendor_name ?? "Vendor not set", loadNumber: null, loadId: null, detail: b.bill_number ? `Vendor invoice ${b.bill_number}` : (b.memo ?? "Bill · owed"), amountCents: Number(b.amount_cents), status: b.status === "paid" ? "Paid" : "Owed" }));
+        return (res.rows ?? []).filter(b => b.status !== "voided").map(b => {
+          const parsed = parseExpenseMemo(b.memo, b.bill_number ?? null);
+          return { receiptEntity: "bill" as const, id: b.id, number: b.display_id ?? "—", date: b.bill_date, party: b.vendor_name ?? "Vendor not set", loadNumber: null, loadId: null,
+            detail: parsed.description ?? b.memo ?? "Bill · owed", address: parsed.address, receiptNumber: b.bill_number ?? parsed.receiptNumber, settlementNumber: parsed.settlementNumber,
+            amountCents: Number(b.amount_cents), status: b.status === "paid" ? "Paid" : "Owed" };
+        });
       }
       if (tab === "driver_pay") {
         // FIX (LCB-REG, live-measured): listDriverBills() returns { driver_bills }, not { rows } —
@@ -391,7 +403,13 @@ function TransactionRegister({ tab, companyId, loadsById, navigate }: { tab: Cos
       // transactions found" over 207 real entries. Page through the API at its own cap until exhausted.
       const rows = (await listAllExpenses(companyId)).filter(x => x.status !== "void");
       const filtered = tab === "repairs_maintenance" ? rows.filter(x => x.linked_work_order_uuid != null) : rows;
-      return filtered.map(x => ({ receiptEntity: "expense" as const, id: x.id, number: x.expense_number ?? "—", date: x.transaction_date, party: x.vendor_name ?? ([x.driver_first_name, x.driver_last_name].filter(Boolean).join(" ") || "Vendor not set"), loadNumber: x.load_number, loadId: x.load_id, detail: tab === "repairs_maintenance" && x.work_order_display_id ? `Work order ${x.work_order_display_id}` : (x.line_description ?? x.memo ?? "Expense"), amountCents: Number(x.total_amount_cents), status: x.status === "posted" ? "Posted" : x.status === "active" ? "Recorded" : x.status === "draft" ? "Draft" : x.status }));
+      return filtered.map(x => {
+        const parsed = parseExpenseMemo(x.line_description ?? x.memo, x.vendor_document_number ?? null);
+        return { receiptEntity: "expense" as const, id: x.id, number: x.expense_number ?? "—", date: x.transaction_date, party: x.vendor_name ?? ([x.driver_first_name, x.driver_last_name].filter(Boolean).join(" ") || "Vendor not set"), loadNumber: x.load_number, loadId: x.load_id,
+          detail: tab === "repairs_maintenance" && x.work_order_display_id ? `Work order ${x.work_order_display_id}` : (parsed.description ?? x.line_description ?? x.memo ?? "Expense"),
+          address: parsed.address, receiptNumber: parsed.receiptNumber, settlementNumber: parsed.settlementNumber,
+          amountCents: Number(x.total_amount_cents), status: x.status === "posted" ? "Posted" : x.status === "active" ? "Recorded" : x.status === "draft" ? "Draft" : x.status };
+      });
     },
   });
   const rows = q.data ?? [];

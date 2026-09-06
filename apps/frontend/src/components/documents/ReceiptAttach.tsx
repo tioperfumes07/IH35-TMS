@@ -128,16 +128,22 @@ export function ReceiptAttach({ operatingCompanyId, entityType, entityId, catego
             {progress !== null ? `uploading ${progress}%` : count ? "+ add" : "+ attach"}
           </button>
         ) : null}
-        <button
-          type="button"
-          data-testid={`${testId}-count`}
-          className={`ldt-pill ${count ? "ok" : "warn"}`}
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          title={count ? "Open receipts" : "No receipt on file"}
-        >
-          {count === 0 ? "no receipt" : count === 1 ? "1 receipt" : `${count} receipts`}
-        </button>
+        {/* REG-PARSE (owner 2026-09-06): "IN RECEIPT IT SHOULD JUST HAVE ATTACH; IF THERE IS NO RECEIPT THERE IS NO ATTACHMENT" —
+            the count pill renders only when a receipt exists. Read-only rows with none show a dash. */}
+        {count > 0 ? (
+          <button
+            type="button"
+            data-testid={`${testId}-count`}
+            className="ldt-pill ok"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            title="Open receipts"
+          >
+            {count === 1 ? "1 receipt" : `${count} receipts`}
+          </button>
+        ) : readOnly ? (
+          <span data-testid={`${testId}-count`} className="ldt-muted">—</span>
+        ) : null}
         <input
           ref={inputRef}
           type="file"
