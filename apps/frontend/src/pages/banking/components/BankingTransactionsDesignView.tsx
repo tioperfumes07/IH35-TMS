@@ -3419,6 +3419,14 @@ export function BankingTransactionsDesignView({
         loading={transactionsQuery.isLoading}
         emptyText={emptyStateText}
         storageKey="banking-transactions"
+        // B4 BANK-TOOLBAR-ONE (owner CONSOLIDATED 2026-09-06 18:30Z, item 4): this page owns its
+        // own "Filter by description" search (Combobox, above) — ParityTable's own native
+        // UniversalListToolbar search was rendering a SECOND, competing search box for the exact
+        // same rows, the same defect class LV-WORK-ORDERS-CONSOLE-DUPLICATE-SEARCH already named
+        // this suppress prop for. Range stays (ParityTable's own Amount/date-column range picker
+        // covers ground the page's hardcoded From/To transaction-date fields don't — the owner's
+        // own spec explicitly keeps "Range (ParityTable's)" in the consolidated bar).
+        suppressToolbarSearch
         enableColumnResize
         stickyHeader
         selectable
