@@ -2,9 +2,11 @@
 /**
  * verify-cash-flow-rolling-ledger.mjs
  *
- * CASH-FLOW-02 (owner order 2026-09-06 20:1xZ), part (a): "I NEED DATES ... EXPECTED INCOME
+ * CASH-FLOW-02 (owner order 2026-09-06 20:1xZ). Part (a): "I NEED DATES ... EXPECTED INCOME
  * SHOULD COME AUTOMATICALLY FROM THE LOADS ... IF ON SEPT 3 I DID NOT PAY A BILL, IT NEEDS TO
- * KEEP CARRYING OVER EVERY DAY ... SHOW BY DATE ... TOTALS PER DATE".
+ * KEEP CARRYING OVER EVERY DAY ... SHOW BY DATE ... TOTALS PER DATE". Part (b): "DATE SELECTOR
+ * ... FILTER SO WE CAN ADD OR REMOVE TYPE OF TRANSACTIONS ... CALENDAR ... FULLY BUILT", plus an
+ * overdue-3-days in-app notification, once per row.
  *
  * Static checks pin the shape the owner asked for so it can never silently regress:
  *   1. getRollingLedgerRows sources every named category: bills, driver settlements, driver
@@ -18,11 +20,16 @@
  *   4. The route takes a real from/to range (no hardcoded 7-day loop like buildSevenDayStrip).
  *   5. Every row carries an EntityLink-compatible document_kind + document_id (LAW OF THE LAND —
  *      total connectivity), never a bare label.
+ *   6. (part b) The tab has real date-range presets, a type multi-select filter, a gear for
+ *      column visibility, and a CSV export — not just a bare From/To pair.
+ *   7. (part b) The overdue-notify cron dedupes by entity_type+entity_id+source_block before
+ *      inserting — a row raises exactly one notification, never a daily flood.
  *
  * Live check: calls getRollingLedger directly against Neon (RLS bypass, read-only) for USMCA and
  * asserts the day-grid arithmetic identity holds — for every day, net_cents === income_due_cents -
  * expenses_due_cents, and running_cash_cents is monotonically consistent with opening_cash_cents +
- * cumulative net.
+ * cumulative net. Also re-derives the notify cron's dedup predicate directly in SQL and confirms
+ * it is reachable (real table/columns).
  *
  * Usage:
  *   node scripts/verify-cash-flow-rolling-ledger.mjs
@@ -37,6 +44,7 @@ const LABEL = "verify-cash-flow-rolling-ledger";
 const BACKEND_FILE = "apps/backend/src/cash-flow/cash-flow.service.ts";
 const ROUTES_FILE = "apps/backend/src/cash-flow/cash-flow.routes.ts";
 const FRONTEND_FILE = "apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx";
+const CRON_FILE = "apps/backend/src/cron/cash-flow-rolling-ledger-notify.cron.ts";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 function load(rel) {
@@ -64,10 +72,27 @@ const FORBIDDEN_BACKEND_MARKERS = [
   [/for \(let i = 0; i < 7; i\+\+\)[\s\S]{0,200}getRollingLedger/, "getRollingLedger must not reuse a hardcoded 7-day loop"],
 ];
 
+const REQUIRED_FRONTEND_MARKERS = [
+  ["PRESET_OPTIONS", "date-range presets missing (7d/14d/30d/This month/Next month/Custom)"],
+  ["MultiSelectDropdown", "type multi-select filter missing"],
+  ["ColumnsGear", "gear (column visibility) control missing"],
+  ["exportRowsCsv", "CSV export missing"],
+  ["useSearchParams", "controls are not URL-persisted"],
+];
+
+const REQUIRED_CRON_MARKERS = [
+  ["OVERDUE_THRESHOLD_DAYS = 3", "overdue threshold is not 3 days"],
+  ["entity_type = $2", "notify dedup does not check entity_type"],
+  ["entity_id = $3::uuid", "notify dedup does not check entity_id"],
+  ["source_block = $4", "notify dedup does not check source_block"],
+  ["existing.rows.length > 0) return { created: false }", "notify does not skip when a prior notification already exists"],
+];
+
 export function check({
   backend = load(BACKEND_FILE),
   routes = load(ROUTES_FILE),
   frontend = load(FRONTEND_FILE),
+  cron = load(CRON_FILE),
 } = {}) {
   const f = [];
 
@@ -95,12 +120,24 @@ export function check({
   if (!/getRollingLedger/.test(frontend)) {
     f.push(`${FRONTEND_FILE}: tab does not call the rolling-ledger API`);
   }
+  for (const [marker, msg] of REQUIRED_FRONTEND_MARKERS) {
+    if (!frontend.includes(marker)) f.push(`${FRONTEND_FILE}: ${msg}`);
+  }
+
+  for (const [marker, msg] of REQUIRED_CRON_MARKERS) {
+    if (!cron.includes(marker)) f.push(`${CRON_FILE}: ${msg}`);
+  }
 
   return f;
 }
 
 function selftest() {
-  const good = { backend: load(BACKEND_FILE), routes: load(ROUTES_FILE), frontend: load(FRONTEND_FILE) };
+  const good = {
+    backend: load(BACKEND_FILE),
+    routes: load(ROUTES_FILE),
+    frontend: load(FRONTEND_FILE),
+    cron: load(CRON_FILE),
+  };
   if (check(good).length) {
     console.error(`${LABEL} SELFTEST FAIL — good fixtures rejected: ${check(good).join(" | ")}`);
     process.exit(1);
@@ -134,6 +171,34 @@ function selftest() {
       mutate: () => ({
         ...good,
         frontend: good.frontend.replaceAll("EntityLink", "PlainSpanNotLinked"),
+      }),
+    },
+    {
+      name: "date-range presets stripped from the tab",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll("PRESET_OPTIONS", "STRIPPED"),
+      }),
+    },
+    {
+      name: "type filter stripped from the tab",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll("MultiSelectDropdown", "StrippedNoFilter"),
+      }),
+    },
+    {
+      name: "CSV export stripped from the tab",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll("exportRowsCsv", "strippedNoExport"),
+      }),
+    },
+    {
+      name: "notify dedup check stripped from the cron",
+      mutate: () => ({
+        ...good,
+        cron: good.cron.replace("existing.rows.length > 0) return { created: false }", "false) return { created: false }"),
       }),
     },
   ];
@@ -230,6 +295,23 @@ if (process.argv.includes("--selftest")) {
       } catch (err) {
         liveFindings.push(`source "${label}" query failed: ${err instanceof Error ? err.message : String(err)}`);
       }
+    }
+
+    // Part (b) notify cron: the dedup lookup (entity_type+entity_id+source_block) and the
+    // recipient lookup (identity.users.role -- fixed under ACCT-F25116 to cast to text) must both
+    // be real, reachable queries.
+    try {
+      await client.query(
+        `SELECT id FROM notifications.user_notifications WHERE operating_company_id = $1::uuid AND entity_type = $2 AND entity_id = $3::uuid AND source_block = $4 LIMIT 1`,
+        [USMCA, "expense", "00000000-0000-0000-0000-000000000000", "cash-flow-rolling-ledger"]
+      );
+      const notifyRes = await client.query(
+        `SELECT DISTINCT u.id::text FROM identity.users u LEFT JOIN org.user_company_access uca ON uca.user_id = u.id WHERE u.deactivated_at IS NULL AND u.role::text = ANY($2::text[]) AND (u.default_company_id = $1::uuid OR uca.company_id = $1::uuid)`,
+        [USMCA, ["Owner", "Administrator", "Manager"]]
+      );
+      counts["notify-eligible users (USMCA)"] = notifyRes.rows.length;
+    } catch (err) {
+      liveFindings.push(`notify cron dedup/recipient query failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     await client.query("ROLLBACK");
