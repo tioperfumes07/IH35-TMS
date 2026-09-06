@@ -325,3 +325,73 @@ loads' transitions succeeds. Cross-referencing `docs/audit/GUARD-WORKORDERS.md`'
 the open question that row raised, in favor of option (a) there (extend the reuse lookup), not
 option (b) (wait for the full tour split first).
 
+
+## CC-1 — CENSUS MONEY ROWS — DONE, all 5 sub-items, ahead of 11:00Z deadline
+
+One PR + one guard per sub-item, "fix the target, not the guard" honored throughout — but 3 of
+the 5 turned out to be the guard itself asserting a RETRACTED or SUPERSEDED design against code
+that was already correct. Each case is fully evidenced below; nothing was neutered to fake green.
+
+**#5 `verify-load-costs-drawer-wide`** (PR #20952, sha 7db98bdb3d, FINDING ACCT-F25100) — genuine
+code defect. `LoadDetailDrawer.tsx`'s width ternary branched on `activeTab !== "Overview"` (a
+broader LDT-1..7 behavior) instead of an explicit `activeTab === "Costs"` branch, so the guard
+could not prove the 12-column Load Costs register is provably wide. Fixed with one
+`WIDE_DRAWER_CLASS` module constant (one literal occurrence, mutation-proof), Costs gets its own
+branch, every other tab keeps the existing behavior. New verify-step 10485 (claimed #20947).
+
+**#1 `verify-broker-advance-never-driver-liability-never-invoice-face`** (PR #20955, sha
+dbf011718e, FINDING ACCT-F25101) — guard was too coarse. It banned every `driver_finance.`
+reference in `broker-advances.service.ts`, but LOAD-COSTS-COMPLETE item (2) (PR #20317, owner
+order) legitimately added a SELECT-only read of an EXISTING `driver_finance.driver_bills` row to
+pay it down via a real JE — creates no new liability. Tightened the check to the real invariant:
+no INSERT/UPDATE/DELETE against driver_liabilities/driver_advances/settlement_lines/driver_bills;
+a read of driver_bills stays allowed. Also fixed a real `--selftest` escape (non-`replaceAll` only
+killed one of two literal occurrences of the amount-validation line). New verify-step 10489
+(claimed #20953). `broker-advances.service.ts` itself: unmodified.
+
+**#2 `verify-settlement-deduction-void-branches`** (PR #20956, sha 9a57fa141d, FINDING
+ACCT-F25102) — guard enforced a RETRACTED ruling. It demanded a reversing JE on an APPLIED
+(fully-collected) deduction — the ORIGINAL owner ruling. That was explicitly retracted by a LATER
+ruling (owner: "why would I forgive the debt — asked and answered", 2026-09-05 19:44Z, confirmed
+identically in STANDING-DIRECTIVES-2026-09-05.md / OUTBOX-CURSOR.md / INBOX-CC-3.md): a void never
+forgives/refunds — a reversing JE crediting the driver back for an already-collected deduction IS
+the forgiveness the owner rejected. `settlement-deduction-void.service.ts` was already rewritten
+to the corrected ruling; only the guard's APPLIED-branch assertion was stale. Fixed to require the
+OPPOSITE (no JE, no `void_reversal_entry_id`). Already wired via the 10481 census-orphan batch
+step — no new verify-step needed. `settlement-deduction-void.service.ts` itself: unmodified.
+
+**#3 `verify-settlement-lines-driver-bill-miles-rate-join`** (PR #20958, sha 5c8b2ea296, FINDING
+ACCT-F25103) — guard enforced its OWN original spec (S.1), superseded the SAME DAY by the
+owner-ordered SET-RATE item (PR #20760, measured live: load 13526 showed $0.6000/mi next to a
+$724.50/1,610mi amount — really $0.4500/mi). `settlements.routes.ts` now derives `rate_cents` from
+`sl.amount / miles` (a mathematical identity with Amount), and the frontend maps an unknown leg to
+`undefined` → "—" (LAW §8 "zero is a claim") instead of a fake 0 — exactly what this guard's
+original `?? 0` / bare-column-passthrough checks demanded AGAINST. Corrected to require the
+SET-RATE identity and the fake-zero-free mapping; also fixed two `--selftest` mutations that had
+silently drifted into no-ops. Already wired via the 10481 batch — no new verify-step needed.
+Backend/frontend source: unmodified.
+
+**#4 `verify-load-costs-board-manifest`** — already green on main (fixed by #20927, "Load board =
+ONE grouped table..." + CI root fixes) before I reached it. Confirmed live, no PR needed from me.
+
+**Verification, this session, on fresh main tip (post-merge of all 4 PRs above):**
+```
+verify-load-costs-drawer-wide                                    -> PASS verify-load-costs-drawer-wide
+verify-broker-advance-never-driver-liability-never-invoice-face  -> OK
+verify-settlement-deduction-void-branches                        -> OK
+verify-settlement-lines-driver-bill-miles-rate-join              -> OK
+verify-load-costs-board-manifest                                 -> PASS (40/40 ids)
+scripts/verify-steps/10481-verify-census-orphans-wired.mjs       -> 1/107 fail (verify-book-load-footer-save-controls.mjs only — unrelated, WIZ-49d owner hold, not a CC-1 census item)
+```
+
+Every PR ran `--selftest` + standalone + `money-pr-local-gate.mjs` full PASS +
+`verify-no-duplicate-routes.mjs` OK before push. **Posting green standalone here so Cursor wires
+these into whatever downstream census tracker reads OUTBOX-CC-1.**
+
+Also worth flagging: while working this, saw `CLAIM-RESERVE: 10483
+verify-load-bookended-settlement-reuse-checks-lines` (#20954) land on main — looks like CC-2 (or
+whoever picked it up) is already building the MEGA-TOUR-RULING fix from earlier this session.
+Watching, not duplicating.
+
+NEXT: awaiting lead ✔ on MEGA-TOUR-RULING's recommended fix (still open, no schema/data change made
+yet per that item's own scope) and any further ROUND 11 assignment.
