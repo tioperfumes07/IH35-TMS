@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { listBills, listDriverBills, listExpenses } from "../../api/accounting";
+import { listBills, listBrokerAdvances, listCoaRoles, listDriverBills, listExpenses, type BrokerAdvanceRow } from "../../api/accounting";
 import { listCashAdvances } from "../../api/cashAdvances";
 import { apiRequest } from "../../api/client";
+import { getAttachmentDownloadUrl } from "../../api/attachments";
+import { getDownloadUrl } from "../../api/docs";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -12,6 +14,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useDispatchLoad } from "../../api/loads";
 import { LoadDetailCostsTab } from "../../components/dispatch/LoadDetailCostsTab";
 import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
+import { useToast } from "../../components/Toast";
 
 type FilterPill = "in_motion" | "delivered_open" | "all_open" | "this_week";
 // LOAD-COSTS-COMPLETE item (3) (owner's exact board-column list, 2026-09-04): Load · Unit · Driver ·
@@ -162,7 +165,20 @@ function ExpandPanel({ row, companyId }: { row: BoardRow; companyId: string }) {
 // renders ITS OWN register of that transaction type (real rows), scoped to USMCA. "Costs" stays the
 // per-load overview board. Read-only — this board never posts (create is the header + New menu, which
 // routes to the create screens).
-type RegisterRow = { id: string; number: string; date: string | null; party: string; loadNumber: string | null; loadId: string | null; detail: string; amountCents: number; status: string; receiptEntity?: "expense" | "bill" };
+type RegisterRow = {
+  id: string; number: string; date: string | null; party: string; loadNumber: string | null; loadId: string | null;
+  detail: string; amountCents: number; status: string; receiptEntity?: "expense" | "bill";
+  // LCB-REG (owner 2026-09-05) additions — each optional block is populated by exactly one tab's
+  // own fetcher; ParityTable columns for a tab read only the fields that tab writes.
+  /** driver_pay: SET-RATE law breakdown -- loaded/empty miles × their own per-mile rates. */
+  loadedMiles?: string | null; loadedRateCents?: string | null;
+  emptyMiles?: string | null; emptyRateCents?: string | null; grossCents?: number;
+  /** broker_advances */
+  category?: string; instrument?: string; appliedStatus?: string;
+  /** documents */
+  docType?: string; filename?: string; sizeBytes?: number | null; docSource?: "docs.files" | "documents.attachments";
+  attachmentEntityType?: "expense" | "bill"; attachmentEntityId?: string;
+};
 const REGISTER_COLUMNS: Array<ParityColumn<RegisterRow>> = [
   { key: "number", label: "Number", testId: "reg-col-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.number, render: r => <span className="font-semibold text-slate-700">{r.number}</span> },
   { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateUS(r.date) : DASH },
@@ -177,11 +193,111 @@ function receiptColumn(companyId: string): ParityColumn<RegisterRow> {
   return { key: "receipt", label: "Receipt", testId: "reg-col-receipt", sortable: false, render: r => r.receiptEntity ? <ReceiptAttach operatingCompanyId={companyId} entityType={r.receiptEntity} entityId={r.id} testId="reg-receipt" /> : <span className="text-slate-400">{DASH}</span> };
 }
 
+// LCB-REG — Driver pay register (owner 2026-09-05, "loaded mi × rate · empty mi × rate · gross per
+// bill"): SET-RATE law -- a rate/miles figure a driver bill never tracked renders "—", never a
+// fabricated 0 (same honesty rule as the board's own Empty Miles/Deadhead Pay columns above).
+function milesRateCell(miles: string | null | undefined, rateCents: string | null | undefined) {
+  if (miles == null && rateCents == null) return DASH;
+  return <>{fmtMiles(miles ?? null)} <span className="ldt-sub" style={{ display: "inline" }}>×</span> {fmtRate(rateCents ?? null)}</>;
+}
+/** LCB-REG palette rule: .ldt-* classes only, no new hex — .ldt-pill carries its own ok/warn/bad
+ *  tokens (--ldt-accent / --ldt-warn / --ldt-bad) instead of a literal colour per status word. */
+function statusPill(status: string) {
+  const tone = /paid|applied|posted|active/i.test(status) ? "ok" : /void|not applied|—/i.test(status) ? "bad" : "warn";
+  return <span className={`ldt-pill ${tone}`}>{status || DASH}</span>;
+}
+const DRIVER_PAY_COLUMNS: Array<ParityColumn<RegisterRow>> = [
+  { key: "number", label: "Number", testId: "reg-col-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.number, render: r => <span className="font-semibold">{r.number}</span> },
+  { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateUS(r.date) : DASH },
+  { key: "party", label: "Driver", testId: "reg-col-party", sortable: true, sortValue: r => r.party, render: r => r.party || DASH },
+  { key: "load", label: "Load", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="ldt-link" style={{ display: "inline" }} to={`/dispatch/loads/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
+  { key: "loaded", label: "Loaded mi × rate", testId: "reg-col-loaded", sortable: false, className: `${NUM} ldt-m`, render: r => milesRateCell(r.loadedMiles, r.loadedRateCents) },
+  { key: "empty", label: "Empty mi × rate", testId: "reg-col-empty", sortable: false, className: `${NUM} ldt-m`, render: r => milesRateCell(r.emptyMiles, r.emptyRateCents) },
+  { key: "gross", label: "Gross", testId: "reg-col-gross", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.grossCents ?? 0, render: r => r.grossCents == null ? DASH : fmt(r.grossCents) },
+  { key: "status", label: "Status", testId: "reg-col-status", sortable: true, className: "whitespace-nowrap text-center", sortValue: r => r.status, render: r => statusPill(r.status) },
+];
+
+/** LCB-REG — the "load" cell for tabs whose own API doesn't return load_number (broker advances,
+ *  documents): resolved from the board's own rows, at RENDER time via this closure, never baked
+ *  into the row during the tab's own queryFn. The board query and a register's own query race
+ *  independently -- baking the lookup in at fetch time would freeze on whichever finished first
+ *  (a real bug caught live: the board query resolving after the register left "load" permanently
+ *  blank even once the board data arrived, since React Query never re-runs a settled queryFn just
+ *  because an outside value it once read has since changed). */
+function loadCell(loadsById: Map<string, string>): ParityColumn<RegisterRow> {
+  return {
+    key: "load", label: "Load", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap",
+    sortValue: r => (r.loadId ? loadsById.get(r.loadId) : null) ?? r.loadNumber ?? "",
+    render: r => {
+      if (!r.loadId) return DASH;
+      const label = loadsById.get(r.loadId) ?? r.loadNumber ?? r.loadId;
+      return <Link className="ldt-link" style={{ display: "inline" }} to={`/dispatch/loads/${r.loadId}?tab=Costs`}>{label}</Link>;
+    },
+  };
+}
+
+// LCB-REG — Broker advances register: "date · load · category · instrument · amount ·
+// applied-to-invoice status" (owner's exact column list).
+const BROKER_ADVANCE_COLUMNS = (loadsById: Map<string, string>): Array<ParityColumn<RegisterRow>> => [
+  { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateUS(r.date) : DASH },
+  loadCell(loadsById),
+  { key: "category", label: "Category", testId: "reg-col-category", sortable: true, sortValue: r => r.category ?? "", render: r => r.category ? r.category.replaceAll("_", " ") : DASH },
+  { key: "instrument", label: "Instrument", testId: "reg-col-instrument", sortable: false, render: r => r.instrument || DASH },
+  { key: "amount", label: "Amount", testId: "reg-col-amount", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.amountCents, render: r => fmt(r.amountCents) },
+  { key: "status", label: "Applied to invoice", testId: "reg-col-status", sortable: true, className: "whitespace-nowrap text-center", sortValue: r => r.appliedStatus ?? "", render: r => statusPill(r.appliedStatus ?? "") },
+];
+
+function formatBytes(bytes: number | null | undefined) {
+  if (!bytes) return DASH;
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+/** LCB-REG — Documents register: "date · load · type · filename · size · open". Open resolves the
+ * download URL from whichever mechanism the row actually came from (docs.files vs the older
+ * documents.attachments), or renders ReceiptAttach when the row IS an expense/bill's own receipt. */
+function DocumentOpenCell({ row, companyId }: { row: RegisterRow; companyId: string }) {
+  const { pushToast } = useToast();
+  if (row.docSource === "documents.attachments" && row.attachmentEntityType && row.attachmentEntityId) {
+    return <ReceiptAttach operatingCompanyId={companyId} entityType={row.attachmentEntityType} entityId={row.attachmentEntityId} testId="reg-receipt" />;
+  }
+  return (
+    <button
+      type="button"
+      data-testid="reg-doc-open"
+      className="ldt-link"
+      onClick={() => {
+        void (async () => {
+          try {
+            const result = row.docSource === "documents.attachments"
+              ? await getAttachmentDownloadUrl(row.id, companyId).then(r => r.download_url)
+              : await getDownloadUrl(row.id).then(r => r.presigned_url);
+            window.open(result, "_blank", "noopener,noreferrer");
+          } catch {
+            pushToast("Could not open this document.", "error");
+          }
+        })();
+      }}
+    >
+      Open
+    </button>
+  );
+}
+const DOCUMENT_COLUMNS = (companyId: string, loadsById: Map<string, string>): Array<ParityColumn<RegisterRow>> => [
+  { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateUS(r.date) : DASH },
+  loadCell(loadsById),
+  { key: "type", label: "Type", testId: "reg-col-type", sortable: true, sortValue: r => r.docType ?? "", render: r => r.docType || DASH },
+  { key: "filename", label: "Filename", testId: "reg-col-filename", sortable: true, sortValue: r => r.filename ?? "", render: r => <span className="ldt-sub" style={{ display: "inline" }}>{r.filename || DASH}</span> },
+  { key: "size", label: "Size", testId: "reg-col-size", sortable: true, className: NUM, sortValue: r => r.sizeBytes ?? 0, render: r => formatBytes(r.sizeBytes) },
+  { key: "open", label: "Open", testId: "reg-col-open", sortable: false, render: r => <DocumentOpenCell row={r} companyId={companyId} /> },
+];
+
 const REGISTER_LIMIT = 500;
-function TransactionRegister({ tab, companyId }: { tab: CostTab; companyId: string }) {
+function TransactionRegister({ tab, companyId, loadsById, navigate }: { tab: CostTab; companyId: string; loadsById: Map<string, string>; navigate: (path: string) => void }) {
+  const coaRoles = useQuery({ queryKey: ["load-costs-board", "coa-roles", companyId], queryFn: () => listCoaRoles(companyId), enabled: Boolean(companyId) && tab === "fuel_advances" });
   const q = useQuery({
-    queryKey: ["load-costs-board", "register", tab, companyId],
-    enabled: Boolean(companyId) && tab !== "costs" && tab !== "documents" && tab !== "broker_advances",
+    queryKey: ["load-costs-board", "register", tab, companyId, coaRoles.data],
+    enabled: Boolean(companyId) && tab !== "costs" && (tab !== "fuel_advances" || coaRoles.isFetched),
     retry: false,
     queryFn: async (): Promise<RegisterRow[]> => {
       if (tab === "bills") {
@@ -189,12 +305,63 @@ function TransactionRegister({ tab, companyId }: { tab: CostTab; companyId: stri
         return (res.rows ?? []).filter(b => b.status !== "voided").map(b => ({ receiptEntity: "bill" as const, id: b.id, number: b.display_id ?? "—", date: b.bill_date, party: b.vendor_name ?? "Vendor not set", loadNumber: null, loadId: null, detail: b.bill_number ? `Vendor invoice ${b.bill_number}` : (b.memo ?? "Bill · owed"), amountCents: Number(b.amount_cents), status: b.status === "paid" ? "Paid" : "Owed" }));
       }
       if (tab === "driver_pay") {
-        const res = await listDriverBills(companyId, { limit: REGISTER_LIMIT }) as { rows?: Array<Record<string, unknown>> };
-        return (res.rows ?? []).map(d => ({ id: String(d.id), number: String(d.display_id ?? d.bill_number ?? d.load_number ?? "—"), date: (d.bill_date ?? d.created_at ?? null) as string | null, party: String((d.driver_name ?? `${d.driver_first_name ?? ""} ${d.driver_last_name ?? ""}`.trim()) || "Driver"), loadNumber: (d.load_number ?? null) as string | null, loadId: (d.load_id ?? null) as string | null, detail: "Driver pay", amountCents: Number(d.amount_cents ?? d.total_amount_cents ?? 0), status: String(d.status ?? "—") }));
+        // FIX (LCB-REG, live-measured): listDriverBills() returns { driver_bills }, not { rows } —
+        // the prior read of res.rows was always undefined, so this register was silently always
+        // empty regardless of how many real driver bills existed.
+        const res = await listDriverBills(companyId, { limit: REGISTER_LIMIT });
+        return (res.driver_bills ?? []).filter(d => d.voided_at == null).map(d => ({
+          id: d.id, number: d.bill_number ?? d.load_number ?? "—", date: d.created_at,
+          party: d.driver_name ?? "Driver", loadNumber: d.load_number, loadId: d.load_id,
+          detail: "Driver pay", amountCents: Number(d.gross_amount_cents ?? 0), status: d.status,
+          loadedMiles: d.miles_basis == null ? null : String(d.miles_basis), loadedRateCents: d.rate_per_mile_cents == null ? null : String(d.rate_per_mile_cents),
+          emptyMiles: d.miles_deadhead == null ? null : String(d.miles_deadhead), emptyRateCents: d.rate_empty_per_mile_cents == null ? null : String(d.rate_empty_per_mile_cents),
+          grossCents: d.gross_amount_cents ?? undefined,
+        }));
       }
       if (tab === "fuel_advances") {
-        const res = await listCashAdvances(companyId, {}) as { advances?: Array<Record<string, unknown>> };
-        return (res.advances ?? []).filter(a => a.purpose === "fuel_deposit").map(a => ({ id: String(a.id), number: String(a.display_id ?? a.reference ?? "—"), date: (a.disbursed_at ?? a.created_at ?? null) as string | null, party: String(a.driver_name ?? a.recipient_name ?? "Driver"), loadNumber: (a.load_number ?? null) as string | null, loadId: (a.load_id ?? null) as string | null, detail: "Fuel advance", amountCents: Number(a.amount_cents ?? a.amount ?? 0), status: String(a.status ?? "—") }));
+        // LCB-REG (owner 2026-09-05): fuel advances are TWO real transaction kinds, merged and
+        // labelled which is which — a cash advance the driver draws down at a truck stop, and a
+        // company fuel expense (driver_id set, category = the company_fuel_advance_expense CoA
+        // role, per LoadDetailCostsTab.tsx's own fuel-advance write path) posted directly.
+        const [advancesRes, expensesRes] = await Promise.all([
+          listCashAdvances(companyId, {}) as Promise<{ advances?: Array<Record<string, unknown>> }>,
+          listExpenses(companyId, { limit: REGISTER_LIMIT }),
+        ]);
+        const cashRows: RegisterRow[] = (advancesRes.advances ?? []).filter(a => a.purpose === "fuel_deposit").map(a => ({ id: String(a.id), number: String(a.display_id ?? a.reference ?? "—"), date: (a.disbursed_at ?? a.created_at ?? null) as string | null, party: String(a.driver_name ?? a.recipient_name ?? "Driver"), loadNumber: (a.load_number ?? null) as string | null, loadId: (a.load_id ?? null) as string | null, detail: "Fuel cash advance", amountCents: Number(a.amount_cents ?? a.amount ?? 0), status: String(a.status ?? "—") }));
+        const fuelRole = (coaRoles.data?.rows ?? []).find(role => role.role === "company_fuel_advance_expense" && role.is_active && role.account_number);
+        const expenseRows: RegisterRow[] = fuelRole
+          ? (expensesRes.rows ?? [])
+              .filter(x => x.status !== "void" && x.driver_uuid != null && x.category_account_number === fuelRole.account_number)
+              .map(x => ({ receiptEntity: "expense" as const, id: x.id, number: x.expense_number ?? "—", date: x.transaction_date, party: [x.driver_first_name, x.driver_last_name].filter(Boolean).join(" ") || "Driver", loadNumber: x.load_number, loadId: x.load_id, detail: "Company fuel expense", amountCents: Number(x.total_amount_cents), status: x.status === "posted" ? "Posted" : x.status === "active" ? "Recorded" : x.status === "draft" ? "Draft" : x.status }))
+          : [];
+        return [...cashRows, ...expenseRows];
+      }
+      if (tab === "broker_advances") {
+        const res = await listBrokerAdvances(companyId);
+        return (res.rows ?? [])
+          .filter((a: BrokerAdvanceRow) => !a.voided_at)
+          .map((a: BrokerAdvanceRow) => ({
+            id: a.id, number: a.instrument_reference, date: a.received_at, party: "—",
+            loadNumber: loadsById.get(a.load_id) ?? null, loadId: a.load_id,
+            detail: `${a.category} advance`, amountCents: Number(a.amount_cents), status: a.applied_to_invoice_id ? "Applied" : "Not applied",
+            category: a.category, instrument: `${a.instrument_type} · ${a.instrument_reference}`,
+            appliedStatus: a.applied_to_invoice_id ? "Applied" : "Not applied",
+          }));
+      }
+      if (tab === "documents") {
+        const res = await apiRequest<{ rows: Array<Record<string, unknown>> }>(
+          `/api/v1/accounting/load-costs-board/documents?operating_company_id=${encodeURIComponent(companyId)}`
+        );
+        return (res.rows ?? []).map(d => ({
+          id: String(d.id), number: "—", date: (d.date ?? null) as string | null, party: "—",
+          loadNumber: loadsById.get(String(d.load_id)) ?? null, loadId: d.load_id == null ? null : String(d.load_id),
+          detail: String(d.type ?? "Document"), amountCents: 0, status: "",
+          docType: String(d.type ?? "Document"), filename: String(d.filename ?? "—"),
+          sizeBytes: d.size_bytes == null ? null : Number(d.size_bytes),
+          docSource: d.source === "documents.attachments" ? "documents.attachments" : "docs.files",
+          attachmentEntityType: d.entity_type === "expense" || d.entity_type === "bill" ? d.entity_type : undefined,
+          attachmentEntityId: d.entity_id == null ? undefined : String(d.entity_id),
+        }));
       }
       // expenses + repairs_maintenance both read from expenses; R&M narrows to work-order-linked lines.
       const res = await listExpenses(companyId, { limit: REGISTER_LIMIT });
@@ -203,17 +370,47 @@ function TransactionRegister({ tab, companyId }: { tab: CostTab; companyId: stri
       return filtered.map(x => ({ receiptEntity: "expense" as const, id: x.id, number: x.expense_number ?? "—", date: x.transaction_date, party: x.vendor_name ?? ([x.driver_first_name, x.driver_last_name].filter(Boolean).join(" ") || "Vendor not set"), loadNumber: x.load_number, loadId: x.load_id, detail: tab === "repairs_maintenance" && x.work_order_display_id ? `Work order ${x.work_order_display_id}` : (x.line_description ?? x.memo ?? "Expense"), amountCents: Number(x.total_amount_cents), status: x.status === "posted" ? "Posted" : x.status === "active" ? "Recorded" : x.status === "draft" ? "Draft" : x.status }));
     },
   });
-  if (tab === "documents") return <p data-testid="reg-note" className="p-4 text-xs text-[#6B7280]">Documents are attached per load — open a load to see its documents.</p>;
-  if (tab === "broker_advances") return <p data-testid="reg-note" className="p-4 text-xs text-[#6B7280]">Broker advances are recorded against a load — open a load, or the Cash Advances register, to see them.</p>;
   const rows = q.data ?? [];
+  const goToLoad = (r: RegisterRow) => { if (r.loadId) navigate(`/dispatch/loads/${r.loadId}?tab=Costs`); };
+  const columns =
+    tab === "driver_pay" ? DRIVER_PAY_COLUMNS
+    : tab === "broker_advances" ? BROKER_ADVANCE_COLUMNS(loadsById)
+    : tab === "documents" ? DOCUMENT_COLUMNS(companyId, loadsById)
+    : tab === "expenses" || tab === "bills" || tab === "repairs_maintenance" ? [...REGISTER_COLUMNS, receiptColumn(companyId)]
+    : REGISTER_COLUMNS;
   // DSP-TBL (owner ruling 2026-09-05): footerCells replaces the raw colSpan=5 footer — the
-  // "Totals (N)" label now lives in the "number" column's cell, the amount total stays keyed to
-  // "amount" so it never drifts if a column is reordered/hidden. `total`/`rows.length` recomputed
-  // from the callback's own visibleRows for consistency with the new per-column model.
-  return <div data-testid="load-costs-register"><ParityTable columns={tab === "expenses" || tab === "bills" || tab === "repairs_maintenance" ? [...REGISTER_COLUMNS, receiptColumn(companyId)] : REGISTER_COLUMNS} rows={rows} rowKey={r => r.id} loading={q.isLoading} emptyText={`No ${tab.replaceAll("_", " ")} transactions found.`} storageKey={`load-costs-register-${tab}`} exportFilename={`load-costs-${tab}`} tableTestId={`load-costs-register-${tab}`} footerCells={{
-    number: (visibleRows) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} data-testid="reg-totals-label">Totals ({visibleRows.length})</span>,
-    amount: (visibleRows) => <span className="text-gray-900" data-testid="reg-totals-amount">{fmt(visibleRows.reduce((n, r) => n + r.amountCents, 0))}</span>,
-  }} /></div>;
+  // "Totals (N)" label now lives in the leftmost column's cell, the money total stays keyed to
+  // its own column so it never drifts if a column is reordered/hidden.
+  const footerCells =
+    tab === "driver_pay" ? {
+      number: (visibleRows: RegisterRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} data-testid="reg-totals-label">Totals ({visibleRows.length})</span>,
+      gross: (visibleRows: RegisterRow[]) => <span className="text-gray-900" data-testid="reg-totals-amount">{fmt(visibleRows.reduce((n, r) => n + (r.grossCents ?? 0), 0))}</span>,
+    }
+    : tab === "broker_advances" ? {
+      date: (visibleRows: RegisterRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} data-testid="reg-totals-label">Totals ({visibleRows.length})</span>,
+      amount: (visibleRows: RegisterRow[]) => <span className="text-gray-900" data-testid="reg-totals-amount">{fmt(visibleRows.reduce((n, r) => n + r.amountCents, 0))}</span>,
+    }
+    : tab === "documents" ? {
+      date: (visibleRows: RegisterRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} data-testid="reg-totals-label">Totals ({visibleRows.length})</span>,
+    }
+    : {
+      number: (visibleRows: RegisterRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} data-testid="reg-totals-label">Totals ({visibleRows.length})</span>,
+      amount: (visibleRows: RegisterRow[]) => <span className="text-gray-900" data-testid="reg-totals-amount">{fmt(visibleRows.reduce((n, r) => n + r.amountCents, 0))}</span>,
+    };
+  return <div data-testid="load-costs-register"><ParityTable
+    columns={columns}
+    rows={rows}
+    rowKey={r => r.id}
+    loading={q.isLoading || (tab === "fuel_advances" && coaRoles.isLoading)}
+    emptyText={`No ${tab.replaceAll("_", " ")} transactions found.`}
+    storageKey={`load-costs-register-${tab}`}
+    exportFilename={`load-costs-${tab}`}
+    tableTestId={`load-costs-register-${tab}`}
+    enableColumnReorder
+    enableColumnResize
+    onRowClick={tab === "driver_pay" || tab === "broker_advances" ? goToLoad : undefined}
+    footerCells={footerCells}
+  /></div>;
 }
 
 export function LoadCostsBoardPage() {
@@ -231,6 +428,10 @@ export function LoadCostsBoardPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const query = useQuery({ queryKey: ["accounting", "load-costs-board", companyId, showVoided, sortKey, sortDirection], queryFn: () => apiRequest<{ rows: BoardRow[]; unmatched_bank_count: number }>(`/api/v1/accounting/load-costs-board?operating_company_id=${encodeURIComponent(companyId)}&show_voided=${showVoided}&load_costs_sort=${encodeURIComponent(sortKey)}&sort_direction=${sortDirection}`), enabled: Boolean(companyId), retry: false });
   const rows = query.data?.rows ?? [];
+  // LCB-REG — Broker advances/Documents registers aren't filtered by the board's status pills (an
+  // advance or a document on a load that's since closed is still real); they resolve a load's
+  // display number from the FULL unfiltered board, not `visible`.
+  const loadsById = useMemo(() => new Map(rows.map(r => [r.load_id, r.load_number])), [rows]);
   const statusFiltered = useMemo(() => rows.filter(r => matches(r, filter)), [rows, filter]);
   const activeTab = COST_TABS.find(t => t.id === costTab) ?? COST_TABS[0];
   const visible = useMemo(() => statusFiltered.filter(r => activeTab.has(r)), [statusFiltered, activeTab]);
@@ -292,7 +493,7 @@ export function LoadCostsBoardPage() {
   ];
   return <main className="space-y-4" data-surface="load-detail" style={{ background: "var(--ldt-paper)", padding: 12 }} data-testid="load-costs-shell"><button type="button" data-testid="load-costs-back" className="text-xs font-semibold text-slate-700" onClick={() => navigate(-1)}>← Back</button><header data-testid="load-costs-title"><h1 className="font-semibold text-[#0F1219]" style={{ fontSize: 22 }}>Load costs</h1><p className="text-xs text-[#6B7280]">Live loads, recorded costs, and approximate margin. This board reads; it never posts.</p></header>{query.isError ? <ListErrorState title="Could not load the costs board." status={(query.error as { status?: number })?.status ?? 0} onRetry={() => void query.refetch()} /> : null}<section className="overflow-hidden rounded border border-[#E5E7EB] bg-white"><div data-testid="load-costs-topbar" className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3"><h2 className="font-semibold" style={{ fontSize: 22 }}>Costs</h2><div className="flex flex-wrap items-center gap-2"><div className="flex gap-1">{/* DESIGN-CONTRACT chips: radius 2px, height 22px, border 1px --line2; ACTIVE = #14314F white
     (the contract's own active-chip value -- distinct from the header row, which stays light ink). */}
-{(["in_motion", "delivered_open", "all_open", "this_week"] as const).map(id => <button key={id} data-testid={`load-costs-pill-${id}`} type="button" onClick={() => setFilter(id)} className={`ldt-btn ${filter === id ? "p" : "g"} capitalize`} style={{ height: 22 }}>{id.replaceAll("_", " ")}</button>)}</div><label className="flex items-center gap-1.5 text-xs text-[#4B5563]"><input data-testid="load-costs-show-voided" type="checkbox" checked={showVoided} onChange={e => setShowVoided(e.target.checked)} />Show voided</label></div></div><div data-testid="load-costs-tabs" className="flex flex-wrap gap-1 border-b border-[#E5E7EB] px-4 py-2">{COST_TABS.map(t => { const c = tabCount(t); return <button key={t.id} type="button" data-testid={`load-costs-tab-${t.id}`} aria-selected={costTab === t.id} onClick={() => setCostTab(t.id)} className={`ldt-btn ${costTab === t.id ? "p" : "g"}`}>{t.label}<span className={`inline-flex min-w-[16px] items-center justify-center rounded-sm px-1 ${costTab === t.id ? "bg-white/20 text-white" : "bg-gray-100 text-[#6B7280]"}`} style={{ fontSize: 10 }}>{c == null || c === 0 ? "—" : c}</span></button>; })}</div>{!activeTab.measured ? <p data-testid="load-costs-tab-note" className="px-4 pb-2 pt-1 text-xs text-[#6B7280]">Open a load to see its {activeTab.label.toLowerCase()} — this total is not yet aggregated on the board.</p> : null}<div className="grid grid-cols-2 gap-2 p-2 sm:grid-cols-3 lg:grid-cols-6" data-note="KPI-TILE-SIZE LAW 2026-09-04: gap-2 + padding replaces border-b, matching Safety's own KPI-row grid (was over the 101px ceiling with no gap)"><DrillKpiCard testId="kpi-loads-in-motion" label="Loads in motion" value={rows.filter(r => MOTION.includes(r.status)).length} hint={`${visible.length} rows`} onClick={() => setFilter("in_motion")} /><DrillKpiCard testId="kpi-revenue-booked" label="Revenue booked" value={fmt(revenue)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-costs-recorded" label="Costs recorded" value={fmt(costs)} hint={`${visible.reduce((n, r) => n + r.expense_count + r.bill_count, 0)} entries`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-driver-pay" label="Driver pay accruing" value={fmt(driver)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-approx-margin" label="Approximate margin" value={revenue ? `${(margin / revenue * 100).toFixed(1)}%` : "—"} hint={fmt(margin)} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-bank-unmatched" label="Bank items unmatched" value={query.data?.unmatched_bank_count ?? 0} hint="Open bank items" to="/banking/transactions" /></div>{costTab !== "costs" ? <TransactionRegister tab={costTab} companyId={companyId} /> : <div><ParityTable columns={columns} rows={visible} rowKey={r => r.load_id} loading={query.isLoading} emptyText="No loads found for this company." storageKey="load-costs-board-v3" enableColumnReorder enableColumnResize renderExpanded={r => <ExpandPanel row={r} companyId={companyId} />} expandMode="single" suppressToolbarRange exportFilename="load-costs" tableTestId="accounting-load-costs-board" sortKey={sortKey} sortDirection={sortDirection} onSortChange={(key, direction) => { setSortKey(key); setSortDirection(direction); }} sortMode="external" columnGroups={COLUMN_GROUPS} headerBg="#EEF2F6" headerInk="#1F2937" minWidthPx={1660} columnLayout="auto" footerCells={{
+{(["in_motion", "delivered_open", "all_open", "this_week"] as const).map(id => <button key={id} data-testid={`load-costs-pill-${id}`} type="button" onClick={() => setFilter(id)} className={`ldt-btn ${filter === id ? "p" : "g"} capitalize`} style={{ height: 22 }}>{id.replaceAll("_", " ")}</button>)}</div><label className="flex items-center gap-1.5 text-xs text-[#4B5563]"><input data-testid="load-costs-show-voided" type="checkbox" checked={showVoided} onChange={e => setShowVoided(e.target.checked)} />Show voided</label></div></div><div data-testid="load-costs-tabs" className="flex flex-wrap gap-1 border-b border-[#E5E7EB] px-4 py-2">{COST_TABS.map(t => { const c = tabCount(t); return <button key={t.id} type="button" data-testid={`load-costs-tab-${t.id}`} aria-selected={costTab === t.id} onClick={() => setCostTab(t.id)} className={`ldt-btn ${costTab === t.id ? "p" : "g"}`}>{t.label}<span className={`inline-flex min-w-[16px] items-center justify-center rounded-sm px-1 ${costTab === t.id ? "bg-white/20 text-white" : "bg-gray-100 text-[#6B7280]"}`} style={{ fontSize: 10 }}>{c == null || c === 0 ? "—" : c}</span></button>; })}</div>{!activeTab.measured ? <p data-testid="load-costs-tab-note" className="px-4 pb-2 pt-1 text-xs text-[#6B7280]">Open a load to see its {activeTab.label.toLowerCase()} — this total is not yet aggregated on the board.</p> : null}<div className="grid grid-cols-2 gap-2 p-2 sm:grid-cols-3 lg:grid-cols-6" data-note="KPI-TILE-SIZE LAW 2026-09-04: gap-2 + padding replaces border-b, matching Safety's own KPI-row grid (was over the 101px ceiling with no gap)"><DrillKpiCard testId="kpi-loads-in-motion" label="Loads in motion" value={rows.filter(r => MOTION.includes(r.status)).length} hint={`${visible.length} rows`} onClick={() => setFilter("in_motion")} /><DrillKpiCard testId="kpi-revenue-booked" label="Revenue booked" value={fmt(revenue)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-costs-recorded" label="Costs recorded" value={fmt(costs)} hint={`${visible.reduce((n, r) => n + r.expense_count + r.bill_count, 0)} entries`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-driver-pay" label="Driver pay accruing" value={fmt(driver)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-approx-margin" label="Approximate margin" value={revenue ? `${(margin / revenue * 100).toFixed(1)}%` : "—"} hint={fmt(margin)} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-bank-unmatched" label="Bank items unmatched" value={query.data?.unmatched_bank_count ?? 0} hint="Open bank items" to="/banking/transactions" /></div>{costTab !== "costs" ? <TransactionRegister tab={costTab} companyId={companyId} loadsById={loadsById} navigate={navigate} /> : <div><ParityTable columns={columns} rows={visible} rowKey={r => r.load_id} loading={query.isLoading} emptyText="No loads found for this company." storageKey="load-costs-board-v3" enableColumnReorder enableColumnResize renderExpanded={r => <ExpandPanel row={r} companyId={companyId} />} expandMode="single" suppressToolbarRange exportFilename="load-costs" tableTestId="accounting-load-costs-board" sortKey={sortKey} sortDirection={sortDirection} onSortChange={(key, direction) => { setSortKey(key); setSortDirection(direction); }} sortMode="external" columnGroups={COLUMN_GROUPS} headerBg="#EEF2F6" headerInk="#1F2937" minWidthPx={1660} columnLayout="auto" footerCells={{
               // DSP-TBL (owner ruling 2026-09-05): footerCells replaces the raw colSpan=6 footer
               // — every total now stays keyed to its own column, so reordering/hiding a column
               // (enableColumnReorder is on for this board) can never desync a total from the
