@@ -9,6 +9,7 @@ import {
   type StopsRecordStop,
 } from "../../api/dispatch";
 import { Button } from "../Button";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
 type Props = {
   loadId: string;
@@ -103,53 +104,20 @@ function StopsPopup({ title, onClose, children }: { title: string; onClose: () =
 
 function LegMilesPopup({ data, onClose }: { data: StopsRecordResponse; onClose: () => void }) {
   const { legs, load } = data;
+  const displayedLegs: StopsRecordLeg[] = legs.length > 0 ? legs : [
+    { leg_index: 0, leg_kind: "deadhead_to_pickup", from_label: "Yard", to_label: "Pickup (deadhead, attributed to this pickup)", practical_miles: null, short_miles: null, real_miles: null, google_reference_miles: null },
+    { leg_index: 1, leg_kind: "loaded", from_label: "Pickup", to_label: "Delivery", practical_miles: load.miles_practical, short_miles: load.miles_shortest, real_miles: null, google_reference_miles: null },
+  ];
+  const columns: Array<ParityColumn<StopsRecordLeg>> = [
+    { key: "leg", label: "Leg", render: (leg) => `${leg.from_label} → ${leg.to_label}` },
+    { key: "practical_miles", label: "Practical", render: (leg) => fmtMiles(leg.practical_miles), cellClass: "text-right tabular-nums" },
+    { key: "short_miles", label: "Short", render: (leg) => fmtMiles(leg.short_miles), cellClass: "text-right tabular-nums" },
+    { key: "real_miles", label: "Real", render: (leg) => fmtMiles(leg.real_miles), cellClass: "text-right tabular-nums" },
+    { key: "google_reference_miles", label: "Google ref", render: (leg) => fmtMiles(leg.google_reference_miles), cellClass: "text-right tabular-nums" },
+  ];
   return (
     <StopsPopup title="Leg miles" onClose={onClose}>
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
-            <th className="px-2 py-1">Leg</th>
-            <th className="px-2 py-1 text-right">Practical</th>
-            <th className="px-2 py-1 text-right">Short</th>
-            <th className="px-2 py-1 text-right">Real</th>
-            <th className="px-2 py-1 text-right">Google ref</th>
-          </tr>
-        </thead>
-        <tbody>
-          {legs.length === 0 ? (
-            // No load_stop_legs rows: show the two conceptual legs from the load (honest — the
-            // deadhead is stored on the load, not on a leg).
-            <>
-              <tr className="border-b border-gray-100">
-                <td className="px-2 py-1">Yard → Pickup (deadhead, attributed to this pickup)</td>
-                <td className="px-2 py-1 text-right tabular-nums">{DASH}</td>
-                <td className="px-2 py-1 text-right tabular-nums">{DASH}</td>
-                <td className="px-2 py-1 text-right tabular-nums">{DASH}</td>
-                <td className="px-2 py-1 text-right tabular-nums">{DASH}</td>
-              </tr>
-              <tr className="border-b border-gray-100">
-                <td className="px-2 py-1">Pickup → Delivery</td>
-                <td className="px-2 py-1 text-right tabular-nums">{fmtMiles(load.miles_practical)}</td>
-                <td className="px-2 py-1 text-right tabular-nums">{fmtMiles(load.miles_shortest)}</td>
-                <td className="px-2 py-1 text-right tabular-nums">{DASH}</td>
-                <td className="px-2 py-1 text-right tabular-nums">{DASH}</td>
-              </tr>
-            </>
-          ) : (
-            legs.map((leg: StopsRecordLeg) => (
-              <tr key={leg.leg_index} className="border-b border-gray-100" data-testid="stops-record-leg-row">
-                <td className="px-2 py-1">
-                  {leg.from_label} → {leg.to_label}
-                </td>
-                <td className="px-2 py-1 text-right tabular-nums">{fmtMiles(leg.practical_miles)}</td>
-                <td className="px-2 py-1 text-right tabular-nums">{fmtMiles(leg.short_miles)}</td>
-                <td className="px-2 py-1 text-right tabular-nums">{fmtMiles(leg.real_miles)}</td>
-                <td className="px-2 py-1 text-right tabular-nums">{fmtMiles(leg.google_reference_miles)}</td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+      <ParityTable rows={displayedLegs} columns={columns} rowKey={(leg) => String(leg.leg_index)} tableTestId="stops-record-legs-table" rowTestId={() => "stops-record-leg-row"} storageKey="load-stops-record-legs" suppressToolbarSearch suppressToolbarRange initialPageSize={25} />
       <p className="mt-2 text-xs text-gray-500">
         Deadhead {fmtMiles(load.miles_deadhead)} mi is stored on the load, not on a leg. Real driven miles need an
         odometer reading at each fence — unavailable until the stops are geocoded and the fences fire.
@@ -228,16 +196,14 @@ function StopDetailPopup({ stop, onClose }: { stop: StopsRecordStop; onClose: ()
   ];
   return (
     <StopsPopup title={`Stop #${stop.sequence} · ${stopTypeLabel(stop.stop_type)}`} onClose={onClose}>
-      <table className="w-full">
-        <tbody>
-          {rows.map(([k, v]) => (
-            <tr key={k} className="border-b border-gray-100">
-              <td className="px-2 py-1 text-gray-500">{k}</td>
-              <td className="px-2 py-1 text-right text-gray-800">{v}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="ldt-rows" data-testid="stops-record-detail-rows">
+        {rows.map(([k, v]) => (
+          <div key={k} className="ldt-row grid grid-cols-2 border-b border-gray-100 px-2 py-1">
+            <span className="text-gray-500">{k}</span>
+            <span className="text-right text-gray-800">{v}</span>
+          </div>
+        ))}
+      </div>
       {stop.geocode_missing ? (
         <p className="mt-2 text-xs text-[#93301f]">
           No coordinates on file — no arrival fence can fire. Use “Geocode missing” on the tab to run the address
@@ -283,6 +249,18 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
   const data = query.data;
   const stops: StopsRecordStop[] = data?.stops ?? [];
   const anyGeocodeMissing = stops.some((s) => s.geocode_missing);
+  const stopColumns: Array<ParityColumn<StopsRecordStop>> = [
+    { key: "sequence", label: "#" },
+    { key: "stop_type", label: "Type", render: (stop) => stopTypeLabel(stop.stop_type) },
+    { key: "location", label: "Location", render: (stop) => <>{locationText(stop)}{stop.geocode_missing ? <span className="ml-1 inline-flex rounded-sm bg-[#f6e3df] px-1.5 py-0.5 text-xs font-medium text-[#93301f]">Geocode missing</span> : null}</> },
+    { key: "appointment", label: "Appt window", render: appointmentText },
+    { key: "arrived_at", label: "Arrived", render: (stop) => fmtTs(stop.arrived_at), cellClass: "tabular-nums" },
+    { key: "departed_at", label: "Departed", render: (stop) => fmtTs(stop.departed_at), cellClass: "tabular-nums" },
+    { key: "dwell_minutes", label: "Dwell", render: (stop) => fmtDuration(stop.dwell_minutes), cellClass: "tabular-nums" },
+    { key: "detention_minutes", label: "Detention", render: (stop) => stop.detention_minutes > 0 ? <span className="text-[#93301f]">{fmtDuration(stop.detention_minutes)}</span> : DASH, cellClass: "tabular-nums" },
+    { key: "source", label: "Source" },
+    { key: "doc_count", label: "Docs", cellClass: "tabular-nums" },
+  ];
 
   return (
     <div className="space-y-3" data-testid="stops-record">
@@ -314,58 +292,7 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
           No stops found.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-gray-200">
-          <table className="w-full min-w-[900px] text-xs" data-testid="stops-record-table">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
-                <th className="px-2 py-1.5">#</th>
-                <th className="px-2 py-1.5">Type</th>
-                <th className="px-2 py-1.5">Location</th>
-                <th className="px-2 py-1.5">Appt window</th>
-                <th className="px-2 py-1.5">Arrived</th>
-                <th className="px-2 py-1.5">Departed</th>
-                <th className="px-2 py-1.5">Dwell</th>
-                <th className="px-2 py-1.5">Detention</th>
-                <th className="px-2 py-1.5">Source</th>
-                <th className="px-2 py-1.5">Docs</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stops.map((stop) => (
-                <tr
-                  key={stop.stop_id}
-                  className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
-                  data-testid="stops-record-row"
-                  onClick={() => setOpenStop(stop)}
-                >
-                  <td className="px-2 py-1.5 text-gray-800">{stop.sequence}</td>
-                  <td className="px-2 py-1.5 text-gray-800">{stopTypeLabel(stop.stop_type)}</td>
-                  <td className="px-2 py-1.5 text-gray-700">
-                    {locationText(stop)}
-                    {stop.geocode_missing ? (
-                      <span className="ml-1 inline-flex rounded-sm bg-[#f6e3df] px-1.5 py-0.5 text-xs font-medium text-[#93301f]">
-                        Geocode missing
-                      </span>
-                    ) : null}
-                  </td>
-                  <td className="px-2 py-1.5 text-gray-700">{appointmentText(stop)}</td>
-                  <td className="px-2 py-1.5 tabular-nums text-gray-700">{fmtTs(stop.arrived_at)}</td>
-                  <td className="px-2 py-1.5 tabular-nums text-gray-700">{fmtTs(stop.departed_at)}</td>
-                  <td className="px-2 py-1.5 tabular-nums text-gray-700">{fmtDuration(stop.dwell_minutes)}</td>
-                  <td className="px-2 py-1.5 tabular-nums text-gray-700">
-                    {stop.detention_minutes > 0 ? (
-                      <span className="text-[#93301f]">{fmtDuration(stop.detention_minutes)}</span>
-                    ) : (
-                      DASH
-                    )}
-                  </td>
-                  <td className="px-2 py-1.5 text-gray-700">{stop.source}</td>
-                  <td className="px-2 py-1.5 tabular-nums text-gray-700">{stop.doc_count}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable rows={stops} columns={stopColumns} rowKey={(stop) => stop.stop_id} onRowClick={setOpenStop} tableTestId="stops-record-table" rowTestId={() => "stops-record-row"} storageKey="load-stops-record" minWidthPx={900} suppressToolbarSearch suppressToolbarRange initialPageSize={25} />
       )}
 
       {geocodeMutation.isError ? (
