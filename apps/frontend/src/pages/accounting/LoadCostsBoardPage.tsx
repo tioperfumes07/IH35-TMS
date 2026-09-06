@@ -404,10 +404,18 @@ function TransactionRegister({ tab, companyId, loadsById, navigate }: { tab: Cos
       const rows = (await listAllExpenses(companyId)).filter(x => x.status !== "void");
       const filtered = tab === "repairs_maintenance" ? rows.filter(x => x.linked_work_order_uuid != null) : rows;
       return filtered.map(x => {
-        const parsed = parseExpenseMemo(x.line_description ?? x.memo, x.vendor_document_number ?? null);
+        // REG-PARSE-DATA (ROUND 11): merchant_address/source_settlement_ref are the durable,
+        // backfilled columns — read them (+ the now-cleaned line_description/vendor_document_number)
+        // FIRST. parseExpenseMemo only runs as a fallback for a row the backfill never touched
+        // (merchant_address AND source_settlement_ref both null — pre-backfill shape, or a real,
+        // non-seed expense that never had a composite memo to begin with).
+        const structured = x.merchant_address != null || x.source_settlement_ref != null;
+        const parsed = structured ? null : parseExpenseMemo(x.line_description ?? x.memo, x.vendor_document_number ?? null);
         return { receiptEntity: "expense" as const, id: x.id, number: x.expense_number ?? "—", date: x.transaction_date, party: x.vendor_name ?? ([x.driver_first_name, x.driver_last_name].filter(Boolean).join(" ") || "Vendor not set"), loadNumber: x.load_number, loadId: x.load_id,
-          detail: tab === "repairs_maintenance" && x.work_order_display_id ? `Work order ${x.work_order_display_id}` : (parsed.description ?? x.line_description ?? x.memo ?? "Expense"),
-          address: parsed.address, receiptNumber: parsed.receiptNumber, settlementNumber: parsed.settlementNumber,
+          detail: tab === "repairs_maintenance" && x.work_order_display_id ? `Work order ${x.work_order_display_id}` : (structured ? (x.line_description ?? "Expense") : (parsed!.description ?? x.line_description ?? x.memo ?? "Expense")),
+          address: structured ? (x.merchant_address ?? null) : parsed!.address,
+          receiptNumber: structured ? (x.vendor_document_number ?? null) : parsed!.receiptNumber,
+          settlementNumber: structured ? (x.source_settlement_ref ?? null) : parsed!.settlementNumber,
           amountCents: Number(x.total_amount_cents), status: x.status === "posted" ? "Posted" : x.status === "active" ? "Recorded" : x.status === "draft" ? "Draft" : x.status };
       });
     },
