@@ -898,6 +898,17 @@ export function CustomersPage() {
       }),
     enabled: Boolean(companyId && selectedCustomer?.id),
   });
+  // VC-DETAIL-01 (owner ROUND 14, 2026-09-06): the Transactions tab is ONE ParityTable of the
+  // customer's invoices + payments (Date · Type · Ref no. · Description · Amount · Balance),
+  // sortable, exportable. Reuses the SAME read-only union read model the Activity tab already uses
+  // (GET /accounting/customers/:id/activity — invoices, payments, credit memos, advances with a
+  // running A/R balance) — no new backend. AB Global proof: 3 sent invoices → ≥3 invoice rows.
+  const customerTxnActivityQuery = useQuery({
+    queryKey: ["customers", "txn-activity", companyId, selectedCustomer?.id ?? ""],
+    queryFn: () => getCustomerActivity({ operating_company_id: companyId, customer_id: selectedCustomer!.id }),
+    enabled: Boolean(companyId && selectedCustomer?.id && activeTab === "transaction_list"),
+    retry: false,
+  });
   const loadsQuery = useQuery({
     queryKey: ["customers", "loads", companyId, selectedCustomer?.id ?? ""],
     queryFn: () => listAllDispatchLoads({
@@ -976,6 +987,41 @@ export function CustomersPage() {
       { key: "pickup_date", label: "Pick-up date", defaultHidden: true, render: () => "—" },
       { key: "delivery_date", label: "Delivery date", defaultHidden: true, render: () => "—" },
       { key: "loaded_miles", label: "Loaded miles", defaultHidden: true, render: () => "—" },
+    ],
+    [],
+  );
+
+  // VC-DETAIL-01 — unified customer Transactions columns (invoices + payments) matching the vendor
+  // Transactions shape: Date · Type · Ref no. · Description · Amount · Balance.
+  const customerTransactionTypeLabel = (t: CustomerActivityRow["type"]) => {
+    switch (t) {
+      case "invoice": return "Invoice";
+      case "payment": return "Payment";
+      case "credit_memo": return "Credit memo";
+      case "broker_advance": return "Broker advance";
+      case "factoring_advance": return "Factoring advance";
+      default: return t;
+    }
+  };
+  const customerTransactionColumns = useMemo<ParityColumn<CustomerActivityRow>[]>(
+    () => [
+      { key: "date", label: "Date", sortable: true, sortValue: (r) => r.date ?? "", render: (r) => formatDateUS(r.date) || "—" },
+      { key: "type", label: "Type", sortable: true, sortValue: (r) => r.type, render: (r) => customerTransactionTypeLabel(r.type) },
+      {
+        key: "ref",
+        label: "Ref no.",
+        sortable: true,
+        sortValue: (r) => r.reference ?? "",
+        render: (r) =>
+          r.type === "invoice" ? (
+            <EntityLinkOrTombstone kind="invoice" id={r.id} name={r.reference} noun="Invoice" />
+          ) : (
+            r.reference || "—"
+          ),
+      },
+      { key: "description", label: "Description", sortable: true, sortValue: (r) => r.load_number ?? "", render: (r) => (r.load_number ? `Load ${r.load_number}` : "—") },
+      { key: "amount", label: "Amount", sortable: true, sortValue: (r) => r.amount_cents, cellClass: "text-right tabular-nums", render: (r) => fmtMoney(r.amount_cents) },
+      { key: "balance", label: "Balance", sortable: true, sortValue: (r) => r.balance_after_cents, cellClass: "text-right tabular-nums", render: (r) => fmtMoney(r.balance_after_cents) },
     ],
     [],
   );
@@ -1223,13 +1269,18 @@ export function CustomersPage() {
                     <div>
                       <h2 className="text-page-title font-semibold text-gray-900">{selectedCustomer.name}</h2>
                       <p className="text-xs text-gray-500">{selectedCustomer.customer_code || "Customer"} — {selectedCustomer.customer_type ?? "Type not set"}</p>
-                      <div className="mt-1 flex items-center gap-2">
+                      {/* VC-DETAIL-01 — Status = active/inactive (deactivated_at); the quality chip is
+                          its own separate chip, never the Status value. */}
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <span className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${selectedCustomer.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-slate-100 text-slate-700"}`} data-testid="customer-detail-status">
+                          {selectedCustomer.deactivated_at ? "Inactive" : "Active"}
+                        </span>
                         <span
                           className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
                             customerQualityRating(selectedCustomer.quality_payment_score, selectedCustomer.quality_overall_flag).className
                           }`}
                         >
-                          {customerQualityRating(selectedCustomer.quality_payment_score, selectedCustomer.quality_overall_flag).label}
+                          Quality: {customerQualityRating(selectedCustomer.quality_payment_score, selectedCustomer.quality_overall_flag).label}
                         </span>
                         <span className="text-xs text-gray-500">
                           FMCSA: {selectedCustomer.fmcsa_authority_status_at_verification ?? "Not verified"}
@@ -1278,8 +1329,14 @@ export function CustomersPage() {
                     />
                   ) : (
                     <div data-testid="customer-financial-summary-values">
+                      {/* VC-DETAIL-01 — Open balance + Revenue read the SAME rollup the Customers list
+                          reads: Open A/R from the invoice-based openByCustomerId map (excludes void +
+                          pro forma, identical to the list column), Revenue (YTD) from the customer-
+                          profitability rollup (revenue_cents == the list's booked_ytd_cents). */}
                       <p className="text-xs text-gray-600">Open balance</p>
-                      <p className="text-page-title font-semibold text-gray-900">{fmtMoney(summaryQuery.data?.aging_buckets?.total_open ?? 0)}</p>
+                      <p className="text-page-title font-semibold text-gray-900" data-testid="customer-detail-open-balance">{!allInvoicesQuery.isError ? fmtMoney(openByCustomerId.get(selectedCustomer.id) ?? 0) : "Unavailable"}</p>
+                      <p className="mt-2 text-xs text-gray-600">Revenue (YTD)</p>
+                      <p className="text-page-title font-semibold text-gray-900" data-testid="customer-detail-revenue-ytd">{fmtMoney(profitabilityByCustomerId.get(selectedCustomer.id)?.revenue_cents ?? 0)}</p>
                       <p className="mt-2 text-xs text-gray-600">Overdue payment</p>
                       <p className="text-page-title font-semibold text-red-700">{fmtMoney(overdue)}</p>
                     </div>
@@ -1299,6 +1356,26 @@ export function CustomersPage() {
                   <ListErrorState title="Couldn't load customer transactions" status={0} message={(invoicesQuery.error as Error)?.message} onRetry={() => void invoicesQuery.refetch()} />
                 ) : (
                   <>
+                    {/* VC-DETAIL-01 — headline Transactions table: one ParityTable of this customer's
+                        invoices + payments (Date · Type · Ref no. · Description · Amount · Balance),
+                        sortable, exportable. The detailed Invoices / Loads tables below are preserved
+                        (§7, additive). */}
+                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Transactions</h4>
+                    {customerTxnActivityQuery.isError ? (
+                      <ListErrorState title="Couldn't load customer transactions" status={0} message={(customerTxnActivityQuery.error as Error)?.message} onRetry={() => void customerTxnActivityQuery.refetch()} />
+                    ) : (
+                      <ParityTable
+                        rows={customerTxnActivityQuery.data?.rows ?? []}
+                        columns={customerTransactionColumns}
+                        rowKey={(r) => `${r.type}-${r.id}`}
+                        loading={customerTxnActivityQuery.isPending || (customerTxnActivityQuery.isFetching && !customerTxnActivityQuery.data)}
+                        storageKey="customer-transactions-unified"
+                        emptyText="No invoices or payments for this customer."
+                        exportFilename="customer-transactions-all"
+                        allowAllPageSize
+                      />
+                    )}
+                    <h4 className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500">Invoices</h4>
                     <ParityTable
                   rows={txRows}
                   columns={txColumns}
