@@ -611,7 +611,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
           // The Costs tab hosts the 12-column QuickBooks register (natural width ~1365px). At the
           // default 600px it is crammed behind a horizontal scrollbar and reads as "no creator", so
           // the drawer widens for that tab only, capped at the viewport on smaller screens.
-          activeTab === "Costs"
+          // LDT-1..7 (2026-09-06): every designed tab is a wide readout (cards, legs table, checklists) — the 600px
+          // drawer crams them behind horizontal scroll (measured live 02:19Z on 13526 Pre-Settlement). Wide for all
+          // designed tabs; Overview keeps the narrow drawer.
+          activeTab !== "Overview"
             ? "fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[92vw] xl:w-[1400px]"
             : "fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[600px]"
         }

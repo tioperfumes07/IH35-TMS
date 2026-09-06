@@ -52,8 +52,8 @@ export function TourPreSettlementTab({ loadId, operatingCompanyId, currencyCode 
       <div className="ldt-rows ldt-rows-legs">
         <div className="ldt-row head"><span>Leg</span><span>Load</span><span>Lane</span><span className="ldt-m">Revenue</span><span className="ldt-m">Costs</span><span className="ldt-m">Driver pay</span><span className="ldt-m">Margin</span></div>
         {r.legs.map((l) => (
-          <div key={l.load_id} className={`ldt-row click${l.is_this_load ? " this" : ""}`} role="button" tabIndex={0} data-testid="tour-leg" onClick={() => setPopup({ title: `Leg ${l.trip_type ?? ""} · load ${l.load_number}`, body: <LegPop leg={l} cur={currencyCode} /> })}>
-            <span>{l.trip_type ?? DASH}</span><span className="ldt-k"><EntityLink kind="load" id={l.load_id} label={l.load_number} /></span><span>{l.lane || DASH}<span className="ldt-sub">{l.status}{l.is_delivered ? " · delivered" : ""}</span></span>
+          <div key={l.load_id} className={`ldt-row click${l.is_this_load ? " this" : ""}${l.is_cancelled ? " cancelled" : ""}`} role="button" tabIndex={0} data-testid="tour-leg" onClick={() => setPopup({ title: `Leg ${l.trip_type ?? ""} · load ${l.load_number}`, body: <LegPop leg={l} cur={currencyCode} /> })}>
+            <span>{l.trip_type ?? DASH}</span><span className="ldt-k"><EntityLink kind="load" id={l.load_id} label={l.load_number} /></span><span>{l.lane || DASH}<span className="ldt-sub">{l.status}{l.is_delivered ? " · delivered" : ""}{l.is_cancelled ? " · excluded from the tour totals" : ""}</span></span>
             <span className="ldt-m">{money(l.revenue_cents, currencyCode)}</span><span className="ldt-m">{money(l.costs_cents, currencyCode)}</span><span className="ldt-m">{money(l.driver_pay_cents, currencyCode)}</span><span className="ldt-m">{money(l.margin_cents, currencyCode)} · {pct(l.margin_pct)}</span>
           </div>
         ))}
