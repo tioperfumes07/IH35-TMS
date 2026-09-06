@@ -9,6 +9,7 @@ import {
 } from "../../api/dispatch";
 import { Button } from "../Button";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+import { useLoadDocuments } from "./tabs/useLoadDocuments";
 
 type Props = {
   loadId: string;
@@ -250,6 +251,14 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
     queryFn: () => getLoadStopsRecord(loadId, operatingCompanyId),
   });
 
+  // LDT-D shared read — BOL/POD chips come from the SAME rows as the Documents tab
+  // and the Factoring packet (useLoadDocuments). Never a separate docs fetch.
+  const { packetDocuments } = useLoadDocuments({
+    operatingCompanyId,
+    loadId,
+    enabled: Boolean(loadId && operatingCompanyId),
+  });
+
   const geocodeMutation = useMutation({
     mutationFn: () => geocodeDispatchLoadStops(loadId, operatingCompanyId),
     onSuccess: () => {
@@ -286,7 +295,23 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
     { key: "dwell_minutes", label: "Dwell", render: (stop) => fmtDuration(stop.dwell_minutes), cellClass: "tabular-nums" },
     { key: "detention_minutes", label: "Detention", render: (stop) => stop.detention_minutes > 0 ? <span className="text-[#93301f]">{fmtDuration(stop.detention_minutes)}</span> : DASH, cellClass: "tabular-nums" },
     { key: "source", label: "Source" },
-    { key: "doc_count", label: "Docs", cellClass: "tabular-nums" },
+    { key: "doc_count", label: "Docs", render: (stop) => (
+      // LDT-D shared read — BOL/POD chips from useLoadDocuments (same rows as
+      // Documents tab + Factoring packet). Pickup → BOL chip; Delivery → POD chip.
+      <div className="flex flex-wrap gap-1" data-testid="stops-record-docs-chips">
+        {stop.stop_type === "pickup" ? (
+          <span className={`inline-flex items-center rounded-sm border px-1.5 py-0.5 text-xs font-medium ${packetDocuments.bol ? "border-gray-300 bg-gray-50 text-gray-700" : "border-gray-200 text-gray-400"}`} data-testid="stops-record-bol-chip">
+            BOL
+          </span>
+        ) : null}
+        {stop.stop_type === "delivery" ? (
+          <span className={`inline-flex items-center rounded-sm border px-1.5 py-0.5 text-xs font-medium ${packetDocuments.pod ? "border-gray-300 bg-gray-50 text-gray-700" : "border-gray-200 text-gray-400"}`} data-testid="stops-record-pod-chip">
+            POD
+          </span>
+        ) : null}
+        <span className="tabular-nums text-gray-500">{stop.doc_count}</span>
+      </div>
+    ) },
   ];
 
   return (
