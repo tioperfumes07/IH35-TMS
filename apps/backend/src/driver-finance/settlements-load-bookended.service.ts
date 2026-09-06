@@ -177,7 +177,16 @@ export async function openLoadBookendedSettlement(
   }
 
   const settlementNumber = settlementDisplayIdFromLoadNumber(load.load_number);
-  const periodDate = String(tripStartedAt).slice(0, 10);
+  // BUG FOUND LIVE 2026-09-06 (DELIVER-SEED-40): pickupAt/tripStartedAt is typed `string | null`
+  // above, but node-postgres auto-parses a timestamptz column (ls.actual_departure_at) into a
+  // native JS Date object at runtime -- the TS annotation does not enforce that. String(dateObj)
+  // calls Date.prototype.toString() ("Fri Aug 07 2026 00:00:00 GMT+0000 (...)"), not ISO, so
+  // .slice(0, 10) produced "Fri Aug 07" -- Postgres then rejected it with "invalid input syntax
+  // for type date" (22007), aborting the WHOLE surrounding transition transaction for every load
+  // needing to open a NEW settlement here (loads joining an already-open settlement never hit
+  // this line at all, which is why some loads silently succeeded and others didn't). new Date(...)
+  // normalizes correctly whether tripStartedAt arrives as a Date object or an ISO string.
+  const periodDate = new Date(tripStartedAt).toISOString().slice(0, 10);
 
   const inserted = await client.query<{ id: string; display_id: string | null }>(
     `
