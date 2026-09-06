@@ -17,6 +17,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { KpiStatCard } from "../../components/layout/KpiStatCard";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityEmptyState } from "../../components/shared/EntityEmptyState";
 import { PlaidLinkButton } from "../../components/banking/PlaidLinkButton";
@@ -543,58 +544,47 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               })()}
             </div>
           ) : null}
+          {/* B3 BANK-KPI-CARDS (owner CONSOLIDATED 2026-09-06, item 6): this band was 6 hand-built
+              h-16 buttons (11px/11px on #E5E7EB) — now the same KpiStatCard component Factoring's
+              Reserve Tracker uses (11px uppercase label / 22px bold value), extracted to
+              components/layout/KpiStatCard.tsx so both pages render the literal same component. */}
           <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
-            <button
-              type="button"
+            <KpiStatCard
+              label="Cash posting"
+              value={formatUsd(cashPosting)}
               onClick={() => navigate("/lists/accounting/chart-of-accounts")}
-              className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
-            >
-              <div className="truncate text-[11px] uppercase text-gray-500">Cash posting</div>
-              <div className="truncate font-semibold" title={formatUsd(cashPosting)}>{formatUsd(cashPosting)}</div>
-            </button>
-            <button
-              type="button"
+            />
+            <KpiStatCard
+              label="DIP balance"
+              value={money.format(dipBalance)}
               onClick={() => (dipAccountId ? navigate(`/banking/accounts/${dipAccountId}`) : setActiveTab("accounts"))}
-              className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
-            >
-              <div className="truncate text-[11px] uppercase text-gray-500">DIP balance</div>
-              <div className="truncate font-semibold" title={money.format(dipBalance)}>{money.format(dipBalance)}</div>
-            </button>
-            <button
-              type="button"
+            />
+            <KpiStatCard
+              label="Uncategorized"
+              value={String(uncategorizedCount)}
+              tone="attention"
               onClick={() => {
                 setTransactionsInitialFilter("uncategorized");
                 navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`);
               }}
-              className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-100"
-            >
-              <div className="truncate text-[11px] uppercase text-slate-700">Uncategorized</div>
-              <div className="truncate font-semibold text-slate-700" title={String(uncategorizedCount)}>{uncategorizedCount}</div>
-            </button>
-            <button
-              type="button"
+            />
+            <KpiStatCard
+              label="Recon accts"
+              value={String(reconAccounts)}
               onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}
-              className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
-            >
-              <div className="truncate text-[11px] uppercase text-gray-500">Recon accts</div>
-              <div className="truncate font-semibold" title={String(reconAccounts)}>{reconAccounts}</div>
-            </button>
-            <button
-              type="button"
+            />
+            <KpiStatCard
+              label="Factoring res"
+              value={money.format(factoringReserve)}
+              tone="attention"
               onClick={() => navigate("/factoring/reserve-tracker")}
-              className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-200"
-            >
-              <div className="truncate text-[11px] uppercase text-slate-700">Factoring res</div>
-              <div className="truncate font-semibold text-slate-700" title={money.format(factoringReserve)}>{money.format(factoringReserve)}</div>
-            </button>
-            <button
-              type="button"
+            />
+            <KpiStatCard
+              label="Escrow feed"
+              value={money.format(escrowFeed)}
+              tone="attention"
               onClick={() => navigate(BANKING_TAB_PATH.driver_escrow)}
-              className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-200"
-            >
-              <div className="truncate text-[11px] uppercase text-slate-700">Escrow feed</div>
-              <div className="truncate font-semibold text-slate-700" title={money.format(escrowFeed)}>{money.format(escrowFeed)}</div>
-            </button>
+            />
           </div>
 
           <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.3fr_1fr_1fr]">
