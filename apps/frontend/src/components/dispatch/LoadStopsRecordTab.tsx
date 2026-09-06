@@ -190,7 +190,7 @@ function StopsDesignCards({ data }: { data: StopsRecordResponse }) {
         </section>
       </div>
       <div className="ldt-note" data-testid="stops-source-note">
-        Every value here is read from <code>mdata.load_stops</code> (planned), <code>geo.geofence_events</code> (actual), <code>telematics.vehicle_locations.odometer_mi</code> (real) and <code>load_stop_legs</code> (miles). Nothing on this tab is typed. Editing goes back to the wizard.
+        Every value here is read from planned stops, geofence arrival events, real odometer readings and leg mileage. Nothing on this tab is typed. Editing goes back to the wizard.
       </div>
     </>
   );

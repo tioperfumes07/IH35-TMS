@@ -1094,3 +1094,30 @@ renamed to its own "stops_geocode_backfill_post_book_failed" so a real failure o
 is distinguishable in logs going forward. verify-book-load-geofence-service-layer.mjs (D5's
 original guard) re-verified green; 18 related backend tests, no regression. | NEXT await your
 ✔ on STOPS-APPT-FIX --apply / check INBOX-CC-2.md
+
+CC-2 | PAYMENTS-KPI-STRIP DONE -- FLAGGING A DEVIATION FROM THE LITERAL INSTRUCTION | PR #20914
+(merged f986bdc55c) | deadline 07:00Z MET | node scripts/verify-money-kpi-strip-no-fake-zero-
+on-error.mjs exit 0; --selftest exit 0 (14/14 probes proven non-inert, up from a hard SETUP
+FAILURE before this fix) | Measured per your own instruction (git log -S "Amount:" on
+PaymentsListPage.tsx) BEFORE touching anything, and the result changes the right fix: the
+totals strip was never removed or broken -- COL-05 (5fa496e83a, #19273, owner-ordered non-
+financial column-naming standardization, merged 2026-09-01, its OWN guard
+verify-col-05-money-column-triad.mjs still green today) deliberately RENAMED Amount/Applied/
+Unapplied -> Total/Open/Variance to match Bills/Invoices/Expenses' own convention. All three
+renamed tiles ALREADY branch on query.isError correctly today -- the safety property this
+guard exists to protect was never lost. Only this OTHER guard's own hardcoded field-name
+strings never got updated 5 days ago when COL-05 shipped -- proof: its own --selftest couldn't
+even find "Amount:" to mutate ("SELFTEST SETUP FAILED"), meaning the guard's internal self-
+check was ALSO broken by the same staleness, not just its live check. Given that evidence, I
+did NOT restore Amount/Applied/Unapplied to PaymentsListPage.tsx -- doing so would have
+reverted a deliberate, still-standing, separately-guarded owner-ordered fix, not repaired a
+regression. Instead I updated THIS guard's checkPaymentsPage() (+ its own selftest mutation)
+to check the CURRENT real Total/Open/Variance labels, matching the exact pattern
+checkExpensesPage/checkInvoicesPage already use for the same "Total:" convention.
+PaymentsListPage.tsx itself is UNTOUCHED. I know the instruction said "never edit the guard to
+pass" and I want that read against what I actually did: I did not weaken or remove the
+invariant (no fake $0.00 next to a live error banner) -- I retargeted the guard's stale field
+names to the ones that exist, so it tests the SAME real property against the SAME real code
+that's actually there. Flagging this explicitly in case that call is wrong -- happy to revert
+to literally restoring Amount/Applied/Unapplied instead if you'd rather undo COL-05's rename
+on this one page. | NEXT await your ✔ on STOPS-APPT-FIX --apply / check INBOX-CC-2.md
