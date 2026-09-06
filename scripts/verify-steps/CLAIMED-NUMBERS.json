@@ -5860,7 +5860,7 @@
   "10517": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
-    "purpose": "verify-invoice-issue-date-from-load (INV-03, owner CONSOLIDATED 2026-09-06 18:30Z item 1: POST /api/v1/accounting/invoices fell back to companyBusinessDate() for issue_date even when created from a real load -- now derives issue_date from the load's real pickup-stop date, today only when there is no source load)"
+    "purpose": "verify-settlement-detail-kpi-grid (SETL-DETAIL-01 guard, existed since PR #21001 but was never wired into package.json or a verify-step -- wiring it now, plus the SETL-KPI-CENTS-01 fix it now also pins)"
   },
   "10519": {
     "claimed_by": "claude",
@@ -5870,7 +5870,7 @@
   "10521": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
-    "purpose": "verify-invoice-due-date-from-terms (INV-06, owner CONSOLIDATED item 3: audited backfill of the 39+ sent invoices whose due_date was stamped from the mint moment instead of invoice_date + customer terms, through the real recomputeInvoiceDatesFromDelivery service, never raw UPDATE)"
+    "purpose": "verify-settlement-detail-reference (SETL-DETAIL-01 guard, existed since PR #21001 but was never wired into package.json or a verify-step -- wiring it now)"
   },
   "10525": {
     "claimed_by": "claude",
@@ -5885,7 +5885,7 @@
   "10533": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
-    "purpose": "verify-invoice-issue-date-from-load (INV-03, owner CONSOLIDATED 2026-09-06 18:30Z item 1: POST /api/v1/accounting/invoices fell back to companyBusinessDate() for issue_date even when created from a real load -- now derives issue_date from the load's real pickup-stop date, today only when there is no source load) -- renumbered from 10517 after a duplicate-key collision with another session's claim"
+    "purpose": "verify-bank-rules-usmca-seed (BANK-RULES-USMCA lead 2026-09-06: suggestion engine falls back to the raw bank description -- description_normalized was NULL on all 364 USMCA lines -- plus the USMCA bank-rule seed through POST /api/v1/banking/rules + refresh-suggestion, dry-run by default)"
   },
   "10537": {
     "claimed_by": "claude",
@@ -7883,7 +7883,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1056,
+  "total_claimed": 1058,
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
