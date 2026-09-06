@@ -330,3 +330,6 @@ While shipping SET-RATE (PR #20760, settlement detail rate display), measured li
 
 ## 2026-09-06 01:45Z — LEAD (ROUND 6): see ONE-ITEM-INSTRUCTIONS § ROUND 6.
 - DSP-48b unchanged (03:30Z); then the Load costs page registers (Fuel advances · Broker advances · Driver pay · Documents) in the .ldt-* design with real rows + fix verify-load-costs-on-time-requires-appointment.mjs (stale regex since the 'Booked' branch). Instructions follow on this INBOX.
+
+
+## 2026-09-06 02:00Z — LEAD: **LCB-REG** is your item now (full text ONE-ITEM-INSTRUCTIONS § 2026-09-06 02:00Z). Broker advances + Documents become real registers; Driver pay two-line basis; Fuel advances = company fuel-advance expenses + cash advances; .ldt-* palette; fix the stale on-time guard. Deadline 05:30Z. Surrender Cascade.

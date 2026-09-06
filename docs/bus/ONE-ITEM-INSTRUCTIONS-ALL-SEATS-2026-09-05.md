@@ -268,3 +268,10 @@ Lead audits each DONE line on Neon + tip + live within 30 minutes; ✔/✗ poste
 - **CASCADE/DEVIN:** LST-CUST-ACT (04:00Z) → **LDT-4 Factoring** (06:00Z, guard 8062, surrender Cursor).
 - **CC-1:** ACC-50 (04:00Z) → posting_hold pill on the Costs cards (with lead). **CC-2:** DSP-48b (03:30Z) → Load costs page registers (Fuel advances · Broker advances · Driver pay · Documents) in the .ldt-* design + fix the stale on-time guard.
 Full item text for LDT-2/3/4/7: the register § LDT-n (unchanged) + this round's additions: .ldt-* palette mandatory (no hex — guard), unknown numbers render "—" never 0, every box a pop-up, receipts via ReceiptAttach.
+
+
+---
+# 2026-09-06 02:00Z — OWNER RULING + two items
+- **Owner:** every settlement line carries a GL; "Admin fee" = wire fee / ACH fee / company-vehicle fuel → **CC-3 SETL-DED-GL** (typed deductions with bound roles, escrow → driver's own liability sub-account; retype 5772's three lines from source, unknown stays pending) — after TPB-RESTORE, before LDT-3. Deadline 05:00Z. Surrender CC-1.
+- **CC-2 LCB-REG** (after DSP-48b — done): Dispatch → Load costs page register tabs in the .ldt-* design: Broker advances = real register (GET /api/v1/accounting/broker-advances), Documents = real register (documents.attachments + docs.file_links for the board's loads, ReceiptAttach on expense/bill rows), Driver pay = loaded × rate · empty × rate · gross per bill ("—" never 0), Fuel advances = company fuel-advance expenses (driver_id set, role company_fuel_advance_expense) + cash advances labelled; ParityTable + footerCells kept; fix the stale verify-load-costs-on-time-requires-appointment.mjs regex. Guard verify-load-costs-page-registers.mjs (--selftest swaps a register back to the note → FAIL). Deadline 05:30Z. Surrender Cascade.
+- Register corrections (CC-2 report): wizard Google-reference line shipped by Cursor #20801; yard service by Codex TEL-42; DSP-48b persisted the legs incl. the empty leg from the yard service.
