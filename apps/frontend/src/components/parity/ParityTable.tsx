@@ -265,6 +265,11 @@ export type ParityTableProps<T> = {
     collapsedKeys?: string[];
     /** Presence = controlled mode (mirrors onExpandedChange / onSortChange). */
     onCollapsedChange?: (keys: string[]) => void;
+    /**
+     * LB-DESIGN-1: fixed band order; keys listed here render a band even with ZERO rows on the page (the approved
+     * Dispatch board shows "IN SHOP 0"). Keys not listed follow in first-seen order.
+     */
+    orderedKeys?: string[];
   };
 
   /**
@@ -794,6 +799,7 @@ export function ParityTable<T>({
   // Phase A2: group the CURRENT page's rows in their CURRENT order (stable — first appearance of
   // each key sets group order; rows are never re-sorted). Pagination math above is untouched.
   const groupGetKey = groupBy?.getKey;
+  const groupOrderedKeys = groupBy?.orderedKeys;
   const groupedPageRows = useMemo(() => {
     if (!groupGetKey) return null;
     const order: string[] = [];
@@ -807,8 +813,13 @@ export function ParityTable<T>({
         order.push(key);
       }
     }
+    if (groupOrderedKeys && groupOrderedKeys.length > 0) {
+      const fixed = groupOrderedKeys.map((key) => ({ key, rows: byKey.get(key) ?? [] }));
+      const rest = order.filter((key) => !groupOrderedKeys.includes(key)).map((key) => ({ key, rows: byKey.get(key)! }));
+      return [...fixed, ...rest];
+    }
     return order.map((key) => ({ key, rows: byKey.get(key)! }));
-  }, [groupGetKey, pageRows]);
+  }, [groupGetKey, groupOrderedKeys, pageRows]);
 
   const selectedRows = useMemo(
     () => rows.filter((r) => selected.has(rowKey(r))),

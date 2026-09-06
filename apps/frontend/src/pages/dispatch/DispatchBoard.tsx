@@ -495,7 +495,8 @@ export function DispatchBoard({
   const [rowOverrides, setRowOverrides] = useState<Record<string, RowOverride>>({});
   const [quickAssignLoad, setQuickAssignLoad] = useState<BoardLoad | null>(null);
   const [sectionFilters, setSectionFilters] = useState<Record<string, string>>({});
-  const [sectionSorts, setSectionSorts] = useState<Record<string, SectionSort>>({});
+  // LB-DESIGN-1: the List board is ONE grouped table; per-section sorts collapsed into the single tableSort.
+  const sectionSorts: Record<string, SectionSort> = {};
   // Table board-mode owns a SINGLE global sort (the whole fleet in one flat grid), distinct from the
   // per-section sorts the grouped List uses. Null until the operator sorts — falls back to the URL/default.
   const [tableSort, setTableSort] = useState<SectionSort | null>(null);
@@ -1116,7 +1117,10 @@ export function DispatchBoard({
     // centered over left-aligned data' is a defect)". ParityTable's own table-wide text-center
     // (CENTER-EVERYTHING LAW, the correct default for every OTHER board) is overridden per-column
     // here since the reference explicitly calls out centered dispatch-board headers as wrong.
+    // LB-DESIGN-1 (owner 2026-09-06: "WE DO NOT STACK … ONLY IN SINGLE ROW"): every board cell is ONE line. Measured live
+    // 06:0xZ: LIVE GPS and driver-status cells wrapped to three lines and pushed every row to 82px.
     className: "text-left",
+    cellClass: "whitespace-nowrap",
     render: column.cell,
     // DESIGN-CONTRACT (owner 13:29Z, #37): "Live loc wider (180)" — the GPS city/state + freshness
     // content was clipping at the auto-fit width; 180px is a floor, not a fixed width (auto-fit
@@ -1206,123 +1210,103 @@ export function DispatchBoard({
           </div>
         </div>
 
-        {boardSections.map((section) => {
-          const allRows = section.rows;
-          const rows = visibleSectionRows(section.key, allRows);
-          const sectionSort = sectionSorts[section.key] ?? { key: dispatchSortKey, direction: dispatchSortDir };
-          const sectionLoading =
-            section.key === "awaiting"
-              ? unitsWithoutLoadQuery.isLoading
-              : section.key === "in_shop"
-                ? inShopUnitsQuery.isLoading
-                : loading;
+        {/* LB-DESIGN-1 (owner 2026-09-06 06:1xZ "GO TO LOAD BOARDS AND MAKE SURE THEY ARE MY DESIGN … WE DO NOT STACK HEADERS, ONLY
+            SINGLE ROW"; docs/design/reference/DISPATCH-BOARD-PREVIEW-2026-09-05.pdf § 2 "LOAD BOARD — 30 COLUMNS, GROUPED, DRAGGABLE"):
+            ONE table. The status sections are BAND ROWS inside the grid (AWAITING ASSIGNMENT 16 · BOOKED 1 · IN SHOP 0), not four
+            stacked tables each carrying its own header row, its own filter box and its own pager. Measured live 05:55Z: the List
+            view repeated the full 30-column header for every section and wrapped cells to 80px rows. */}
+        {boardSections.map((section) =>
+          section.key === "awaiting" && unitsWithoutLoadQuery.isError ? (
+            <ListErrorState
+              key="awaiting-error"
+              title="Couldn't load unassigned units"
+              status={(unitsWithoutLoadQuery.error as { status?: number } | null)?.status ?? 0}
+              message={unitsWithoutLoadQuery.error instanceof Error ? unitsWithoutLoadQuery.error.message : "Unassigned-unit feed failed"}
+              onRetry={() => void unitsWithoutLoadQuery.refetch()}
+              className="py-4"
+            />
+          ) : section.key === "in_shop" && inShopUnitsQuery.isError ? (
+            <ListErrorState
+              key="in-shop-error"
+              title="Couldn't load in-shop units"
+              status={(inShopUnitsQuery.error as { status?: number } | null)?.status ?? 0}
+              message={inShopUnitsQuery.error instanceof Error ? inShopUnitsQuery.error.message : "In-shop unit feed failed"}
+              onRetry={() => void inShopUnitsQuery.refetch()}
+              className="py-4"
+            />
+          ) : null,
+        )}
+        {(() => {
+          const sectionOf = new Map<string, (typeof boardSections)[number]>();
+          const listRows: BoardLoad[] = [];
+          for (const section of boardSections) {
+            for (const row of visibleSectionRows(section.key, section.rows)) {
+              sectionOf.set(row.id, section);
+              listRows.push(row);
+            }
+          }
+          const activeSort: SectionSort = tableSort ?? { key: dispatchSortKey, direction: dispatchSortDir };
+          const sortedWithinSection = activeSort.key
+            ? [...listRows].sort((a, b) => {
+                const sa = boardSections.indexOf(sectionOf.get(a.id)!);
+                const sb = boardSections.indexOf(sectionOf.get(b.id)!);
+                if (sa !== sb) return sa - sb;
+                const cmp = compareDispatch(dispatchSortValue(a, activeSort.key), dispatchSortValue(b, activeSort.key));
+                return activeSort.direction === "asc" ? cmp : -cmp;
+              })
+            : listRows;
+          const anyLoading = loading || unitsWithoutLoadQuery.isLoading || inShopUnitsQuery.isLoading;
           return (
-            <div key={section.key} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
-              <div
-                className="flex items-center justify-between gap-3 rounded-t-sm border border-gray-200 border-b-0 px-3 py-1.5"
-                data-testid={`dispatch-board-section-${section.key}`}
-                style={{
-                  backgroundColor: colors.tableHeaderBg,
-                  color: colors.tableHeaderText,
-                  borderColor: colors.tableColumnRule,
-                }}
-              >
-                <div
-                  className="text-center text-[11px] font-semibold uppercase tracking-wide"
-                  style={{ color: colors.tableHeaderText }}
-                >
-                  {section.title}
-                  <span
-                    className="ml-2 rounded-sm px-1.5 text-xs font-bold"
-                    style={{ backgroundColor: colors.cardBg, color: colors.mutedText, border: `1px solid ${colors.tableColumnRule}` }}
-                  >
-                    {rows.length}{rows.length === allRows.length ? "" : ` of ${allRows.length}`}
-                  </span>
-                </div>
-                {!isHistoryBoard ? (
-                  <label
-                    className="flex h-7 items-center gap-2 text-xs font-medium normal-case tracking-normal"
-                    style={{ color: colors.tableHeaderText }}
-                  >
-                    Filter {section.title}
-                    <input
-                      type="search"
-                      value={sectionFilters[section.key] ?? ""}
-                      onChange={(event) => setSectionFilters((current) => ({ ...current, [section.key]: event.target.value }))}
-                      placeholder={`Search ${section.title.toLocaleLowerCase()}`}
-                      className="h-7 w-48 rounded-sm border border-gray-300 bg-white px-2 text-xs font-normal text-gray-900"
-                      data-testid={`dispatch-board-filter-${section.key}`}
-                    />
-                  </label>
-                ) : null}
-              </div>
-
-              {section.key === "in_shop" && inShopUnitsQuery.isError ? (
-                <ListErrorState
-                  title="Couldn't load in-shop units"
-                  status={(inShopUnitsQuery.error as { status?: number } | null)?.status ?? 0}
-                  message={
-                    inShopUnitsQuery.error instanceof Error
-                      ? inShopUnitsQuery.error.message
-                      : "In-shop unit feed failed"
-                  }
-                  onRetry={() => void inShopUnitsQuery.refetch()}
-                  className="py-4"
-                />
-              ) : null}
-              {section.key === "awaiting" && unitsWithoutLoadQuery.isError ? (
-                <ListErrorState
-                  title="Couldn't load unassigned units"
-                  status={(unitsWithoutLoadQuery.error as { status?: number } | null)?.status ?? 0}
-                  message={
-                    unitsWithoutLoadQuery.error instanceof Error
-                      ? unitsWithoutLoadQuery.error.message
-                      : "Unassigned-unit feed failed"
-                  }
-                  onRetry={() => void unitsWithoutLoadQuery.refetch()}
-                  className="py-4"
-                />
-              ) : null}
-
-              <ParityTable
-                columns={parityColumns}
-                columnGroups={boardColumnGroups}
-                stickyLeftCount={4}
-                columnLayout="auto"
-                frameColor={colors.tableColumnRule}
-                gearButtonTestId="dispatch-board-column-chooser"
-                rows={rows}
-                rowKey={(row) => row.id}
-                loading={sectionLoading}
-                emptyText={
-                  allRows.length === 0
-                    ? (section.placeholder ?? "No rows.")
-                    : `No ${section.title.toLocaleLowerCase()} rows match this section filter.`
-                }
-                onRowClick={handleRowClick}
-                selectable
-                selectedKeys={Array.from(selection.selectedIds)}
-                onSelectionChange={(keys) => selection.setSelectedIds(new Set(keys))}
-                maxSelectable={200}
-                onSelectionCapExceeded={() => pushToast("Cannot select more than 200 rows.", "error")}
-                sortKey={sectionSort.key}
-                sortDirection={sectionSort.direction}
-                onSortChange={(key, direction) =>
-                  setSectionSorts((current) => ({ ...current, [section.key]: { key, direction } }))
-                }
-                sortMode="external"
-                suppressToolbarSearch
-                suppressToolbarRange
-                hidePager
-                storageKey="dispatch-board"
-                enableColumnReorder
-                enableColumnResize
-                tableTestId={`dispatch-board-section-table-${section.key}`}
-                rowTestId={(row) => `dispatch-board-row-${row.id}`}
-              />
-            </div>
+            <ParityTable
+              columns={parityColumns}
+              columnGroups={boardColumnGroups}
+              stickyLeftCount={4}
+              columnLayout="auto"
+              frameColor={colors.tableColumnRule}
+              gearButtonTestId="dispatch-board-column-chooser"
+              rows={sortedWithinSection}
+              rowKey={(row) => row.id}
+              loading={anyLoading}
+              emptyText="No loads match your filters."
+              groupBy={{
+                getKey: (row) => sectionOf.get(row.id)?.key ?? "other",
+                renderHeader: (key, rows) => {
+                  const section = boardSections.find((s) => s.key === key);
+                  const all = section?.rows.length ?? rows.length;
+                  return (
+                    <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide" data-testid={`dispatch-board-section-${key}`} style={{ color: colors.tableHeaderText }}>
+                      <span>{section?.title ?? key}</span>
+                      <span className="rounded-sm px-1.5 text-xs font-bold normal-case tracking-normal" style={{ backgroundColor: colors.cardBg, color: colors.mutedText, border: `1px solid ${colors.tableColumnRule}` }}>
+                        {rows.length}{rows.length === all ? "" : ` of ${all}`}
+                      </span>
+                      {section?.placeholder && rows.length === 0 ? <span className="font-normal normal-case tracking-normal text-gray-500">{section.placeholder}</span> : null}
+                    </div>
+                  );
+                },
+                collapsible: true,
+                orderedKeys: boardSections.map((s) => s.key),
+              }}
+              onRowClick={handleRowClick}
+              selectable
+              selectedKeys={Array.from(selection.selectedIds)}
+              onSelectionChange={(keys) => selection.setSelectedIds(new Set(keys))}
+              maxSelectable={200}
+              onSelectionCapExceeded={() => pushToast("Cannot select more than 200 rows.", "error")}
+              sortKey={activeSort.key}
+              sortDirection={activeSort.direction}
+              onSortChange={(key, direction) => setTableSort({ key, direction })}
+              sortMode="external"
+              suppressToolbarSearch
+              suppressToolbarRange
+              hidePager
+              storageKey="dispatch-board"
+              enableColumnReorder
+              enableColumnResize
+              tableTestId="dispatch-board-section-table-all"
+              rowTestId={(row) => `dispatch-board-row-${row.id}`}
+            />
           );
-        })}
+        })()}
 
         <div className="flex items-center justify-between border-t border-gray-200 pt-2 text-xs">
           <Button type="button" variant="secondary" size="sm" disabled={!hasPrev} onClick={() => onPageChange(Math.max(0, offset - limit))}>
