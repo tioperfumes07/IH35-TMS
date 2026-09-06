@@ -1196,3 +1196,49 @@ selftest, live OK).
 Requesting your ✔ on --apply. On receipt I will quote it verbatim into
 LEAD_APPROVAL_QUOTE in a follow-up commit and run --apply exactly once — no
 action taken until then.
+
+DELIVER-SEED-FINISH — DONE, 20/20 (PR #20960 fix, PR #20955/56/57/58/59 unrelated,
+finding closed docs/audit/GUARD-WORKORDERS.md). CC-1's MEGA-TOUR-RULING landed
+(docs/bus/OUTBOX-CC-1.md): the blocker was one query bug in
+openLoadBookendedSettlement's reuse-detection EXISTS, not a real invariant
+conflict — a settlement whose first_load_id anchor happened to be cancelled
+was wrongly reported "not reusable" even when it had real, live loads
+attached via settlement_lines. FIX: widened the EXISTS to also accept a
+settlement with an active settlement_lines row tracing through driver_bills
+(canonical per ACCT-F275/ACCT-F290) to a non-cancelled load — strict
+superset, zero schema/data change. 3 new regression tests + guard
+verify-load-bookended-settlement-reuse-checks-lines.mjs (step 10483).
+Fixing this also exposed and fixed a collateral bug in
+verify-settlement-bookends-resolve-canonical-bill-path.mjs (its own selftest
+mutation was silently hitting my new query's unrelated driver_bills join
+instead of its real target — scoped the mutation correctly). All shipped in
+PR #20960, merged.
+
+LIVE RE-RUN: scripts/ops/deliver-seeded-usmca-loads.ts --apply (no --only —
+its natural status='dispatched' scope now matches exactly the 20 remaining
+loads). ALL 20 succeeded: in_transit=200 · delivered_pending_docs=200 for
+every one, 0 failures. Loads: 13511, 13514, 13516, 13518, 13522, 13538,
+13541, 13543, 13546, 13547, 13548, 13549, 13552, 13555, 13558, 13559, 13562,
+13565, 13566, 13568.
+
+NEON PROOF (br-fancy-credit-akjnd07a, post-run):
+1) loads by status: dispatched=8 (exactly the 8 owner hand-list — 13512,
+   13513, 13520, 13528, 13532, 13535, 13536, 13537 — confirmed live, all
+   still 'dispatched', untouched), delivered_pending_docs=40 (20 from the
+   first DELIVER-SEED-40 batch + these 20), cancelled=29,
+   assigned_not_dispatched=1 (load 13508).
+2) invoices by status: sent=38, proforma=9, void=29. (18 sent from the first
+   batch + a clean 20/20 this batch — the 2-invoice gap is the SAME
+   pre-existing one from the first batch, not a new one; not investigated
+   further, same as originally reported.)
+3) accounting.load_revenue_recognition_postings: 38 rows, $112,755.00 total.
+4) A/R posted (sum of sent invoices): $112,755.00 across 38 invoices —
+   matches revrec exactly.
+
+All 40 of the original 40 owner-ordered loads are now delivered end-to-end.
+The 8 owner hand-list loads were never touched, at any point across both
+batches. Seeded evidence (actual_arrival_at/actual_departure_at) untouched —
+WORM held. Finding SETL-BOOKENDED-ONE-OPEN-PER-DRIVER-VS-MEGA-TOUR-SEED
+closed in docs/audit/GUARD-WORKORDERS.md with this evidence.
+
+DELIVER-SEED-40 + DELIVER-SEED-FINISH: COMPLETE.
