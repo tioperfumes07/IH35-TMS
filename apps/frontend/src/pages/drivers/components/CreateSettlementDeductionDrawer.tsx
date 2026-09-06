@@ -160,7 +160,7 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
             data-testid="create-settlement-deduction-reason"
           />
           {reason.length > 0 && reasonTooShort ? (
-            <span className="mt-1 block text-[11px] text-red-600">Reason needs at least 10 characters.</span>
+            <span className="mt-1 block text-xs text-red-600">Reason needs at least 10 characters.</span>
           ) : null}
         </label>
 
