@@ -1,4 +1,5 @@
 // Google Places API (New) Text Search + Geocoding fallback — SERVER-SIDE ONLY.
+import { getYardBiasCoordinates } from "../../mdata/yard-location.service.js";
 //
 // KEY HANDLING (hard rules, same as trimble-maps-client.ts): GOOGLE_PLACES_API_KEY is read ONLY
 // here (backend), NEVER sent to the browser, NEVER logged. The whole integration is gated behind
@@ -151,15 +152,18 @@ function num(v: string | undefined, d: number): number {
   const n = v == null ? NaN : Number(v);
   return Number.isFinite(n) ? n : d;
 }
-const US_MX_BIAS = {
-  circle: {
-    center: {
-      latitude: num(process.env.GEOCODE_BIAS_LAT, 27.5036),
-      longitude: num(process.env.GEOCODE_BIAS_LNG, -99.5076),
+function usMxBias() {
+  const yard = getYardBiasCoordinates();
+  return {
+    circle: {
+      center: {
+        latitude: num(process.env.GEOCODE_BIAS_LAT, yard.latitude),
+        longitude: num(process.env.GEOCODE_BIAS_LNG, yard.longitude),
+      },
+      radius: Math.min(50000, Math.max(1000, num(process.env.GEOCODE_BIAS_RADIUS_M, 50000))),
     },
-    radius: Math.min(50000, Math.max(1000, num(process.env.GEOCODE_BIAS_RADIUS_M, 50000))),
-  },
-};
+  };
+}
 
 type PlacesNewPrediction = {
   placePrediction?: {
@@ -184,7 +188,7 @@ export async function autocomplete(input: string, sessionToken: string, maxResul
       languageCode: "en",
       includedRegionCodes: ["us", "mx"],
       includeQueryPredictions: false,
-      locationBias: US_MX_BIAS,
+      locationBias: usMxBias(),
     }),
   });
   if (!res.ok) throw new Error(`google_places_autocomplete_http_${res.status}`);

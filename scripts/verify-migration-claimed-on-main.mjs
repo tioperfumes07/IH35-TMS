@@ -59,6 +59,10 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "codex/tel40b",
     new Set(["db/migrations/202613790000_tel40b_stop_geocode_precision.sql"]),
   ],
+  [
+    "codex/tel42",
+    new Set(["db/migrations/202613790001_tel42_ih35_yard_location.sql"]),
+  ],
 ]);
 
 function isOwnerAuthorizedOneOff(branch, files) {
