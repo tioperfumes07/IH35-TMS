@@ -157,5 +157,8 @@ button.ldt-pill { cursor: pointer; }
 .ldt-card.strong { border-color: var(--ldt-ink2); }
 .ldt-rows-match .ldt-row { grid-template-columns: 84px minmax(0, 1fr) 118px 104px 120px auto; border-bottom: 1px solid var(--ldt-rule); }
 .ldt-rows-match .ldt-row:last-child { border-bottom: 0; }
-.ldt-rows-match .ldt-row > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ldt-rows-match .ldt-row > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.ldt-rows-match .ldt-row > .ldt-m { text-align: right; }
+/* The expanded panel sits inside a <td> whose text-align is center; a register and a form read left. */
+[data-testid="banking-categorize-expanded-panel"] { text-align: left; }
 .ldt-rows-match .ldt-row.best { background: var(--ldt-accent-soft); }
