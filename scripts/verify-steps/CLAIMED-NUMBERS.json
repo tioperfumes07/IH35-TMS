@@ -5877,6 +5877,16 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-vendor-open-balance-includes-expenses (VC-01, owner CONSOLIDATED item 4: spend totals include both expenses and bills, last_activity_date is always a real transaction date never vendor.updated_at; Open Balance stays bills-only by design -- accounting.expenses has no open/unpaid state, verified live)"
   },
+  "10533": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-invoice-issue-date-from-load (INV-03, owner CONSOLIDATED 2026-09-06 18:30Z item 1: POST /api/v1/accounting/invoices fell back to companyBusinessDate() for issue_date even when created from a real load -- now derives issue_date from the load's real pickup-stop date, today only when there is no source load) -- renumbered from 10517 after a duplicate-key collision with another session's claim"
+  },
+  "10537": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-invoice-due-date-from-terms (INV-06, owner CONSOLIDATED item 3: audited backfill of the 39+ sent invoices whose due_date was stamped from the mint moment instead of invoice_date + customer terms, through the real recomputeInvoiceDatesFromDelivery service, never raw UPDATE) -- renumbered from 10521 after a duplicate-key collision with another session's claim"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -7868,5 +7878,15 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1058
+  "total_claimed": 1058,
+  "10517-DUPLICATE-RENUMBERED-TO-10533": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "STALE -- this number collided with another session's verify-settlement-detail-kpi-grid claim (same JSON file, two non-conflicting text insertions -- neither PR touched the other's byte range, so git merged both). Renumbered to 10533-verify-invoice-issue-date-from-load.mjs. Kept here (renamed key) instead of deleted so this entry is never silently reused."
+  },
+  "10521-DUPLICATE-RENUMBERED-TO-10537": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
+  }
 }
