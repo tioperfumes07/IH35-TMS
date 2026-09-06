@@ -822,5 +822,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "LDT-5: driver_finance.driver_settlements.settlement_model backfill 'load_bookended' for settlements created by the presettlement link (first_load_id set, model NULL) -- root cause of 'No active pre-settlement found' (pre-settlement.routes.ts filters settlement_model='load_bookended'; confirmPresettlementLink never set it; 15/15 open USMCA settlements NULL on Neon 2026-09-06 01:5xZ)"
+  },
+  "202613860000": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "CASH-FLOW-02 owner refinement (2026-09-06 20:2x/20:5xZ): additive catalogs.cash_flow_adjustment_reasons (seeded reason catalog: customer paying late / factor hold / dispute / short-pay / late delivery / breakdown / other) + accounting.cash_flow_row_adjustments (append-only roll-over-with-reason + audited hide-from-snapshot ledger for Rolling Ledger rows)"
   }
 }
