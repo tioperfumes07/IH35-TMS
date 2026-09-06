@@ -188,7 +188,7 @@ export type DispatchBookLoadPayload = {
   requested_load_number?: string;
   addToOpenPresettlement?: boolean;
   reservation_uuid?: string;
-  trip_type?: "NB" | "TR" | "SB";
+  trip_type?: "NB" | "TR" | "SB" | "LOCAL";
   tour_id?: string;
   trailer_type?: "refrigerated_van" | "dry_van" | "flatbed" | "lowboy" | "power_only_no_trailer" | "power_only_customer_trailer";
   assigned_unit_id?: string;
@@ -367,24 +367,25 @@ export function listUnitsWithoutLoad(operatingCompanyId: string) {
 
 /** Live maintenance roster row — same source as Maintenance Fleet Table (read-only). */
 export type DispatchInShopUnit = {
-  id: string;
+  unit_id: string;
   unit_number: string;
+  work_order_id: string;
+  work_order_display_id: string;
+  opened_at: string;
+  expected_ready_at: string | null;
+  shop_or_vendor: string;
+  days_down: number;
   status: string;
-  is_oos?: boolean;
-  open_wo_count?: number;
-  oos_reason?: string | null;
 };
 
 /** In-shop board section: maintenance/repair — distinct from Fleet OOS (is_oos / OutOfService). */
 export function isDispatchInShopUnit(unit: DispatchInShopUnit): boolean {
-  if (unit.is_oos || unit.status === "OutOfService") return false;
-  if (unit.status === "InMaintenance") return true;
-  return (unit.open_wo_count ?? 0) > 0;
+  return Boolean(unit.unit_id && unit.work_order_id);
 }
 
 export function listDispatchInShopUnits(operatingCompanyId: string) {
   return apiRequest<{ rows: DispatchInShopUnit[] }>(
-    `/api/v1/maintenance/fleet-table/rows?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+    `/api/v1/maintenance/in-shop-units?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
   );
 }
 
@@ -585,7 +586,7 @@ export function getDispatchLoadPositions(operatingCompanyId: string, loadIds: st
 // Trip Pairing Board (Block 05).
 export type TripLeg = {
   load_id: string;
-  trip_type: "NB" | "TR" | "SB";
+  trip_type: "NB" | "TR" | "SB" | "LOCAL";
   status: string;
   delivery_city: string | null;
   delivery_state: string | null;

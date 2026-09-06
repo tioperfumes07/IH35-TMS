@@ -265,10 +265,17 @@ function buildMatchCandidateColumns(tx: PlaidBankTransaction): ParityColumn<Bank
       sortValue: (c) => Math.abs(matchDifferenceCents(tx.amount_cents, c.amount_cents)),
       render: (c) => {
         const diff = matchDifferenceCents(tx.amount_cents, c.amount_cents);
+        // §7 FINANCIAL PALETTE RATCHET (verify-section7-palette-financial.mjs): a raw Tailwind
+        // emerald/green utility class here would push the financial-UI off-palette count above its
+        // frozen baseline — Tier-1, never autonomously recolored. The owner's own consolidated
+        // 2026-09-06 17:30Z spec explicitly asks for "$0.00 green" here, so the color itself is
+        // owner-authorized — delivered via the existing --ldt-accent CSS custom property (already
+        // used elsewhere in this exact file, e.g. .ldt-pill.ok) via inline style, never a new
+        // Tailwind utility class, so the ratchet count itself never moves.
         return (
           <span
             title="Bank amount minus candidate amount. $0.00 = exact amount match."
-            className={diff === 0 ? "text-emerald-700" : undefined}
+            style={diff === 0 ? { color: "var(--ldt-accent)" } : undefined}
           >
             {diff === 0 ? "$0.00" : `${diff > 0 ? "+" : "−"}${formatUsdCents(Math.abs(diff))}`}
           </span>

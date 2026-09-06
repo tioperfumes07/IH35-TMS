@@ -146,7 +146,7 @@ export type DispatchLoadRow = {
   miles_deadhead?: number | null;
   loaded_miles?: number | null;
   /** mdata.loads.trip_type — never infer from geography. */
-  trip_type?: "NB" | "TR" | "SB" | null;
+  trip_type?: "NB" | "TR" | "SB" | "LOCAL" | null;
 };
 
 export type LoadsListResponse = {
@@ -170,7 +170,7 @@ export type LoadDetail = DispatchLoadRow & {
   // from this type when they were still phantom columns.
   commodity?: string | null;
   cargo_weight_lbs?: number | null;
-  trip_type?: "NB" | "TR" | "SB" | null;
+  trip_type?: "NB" | "TR" | "SB" | "LOCAL" | null;
   piece_count?: number | null;
   customer_po_number?: string | null;
   // render-v6 §B reefer/tarp detail (migration 202606231400).

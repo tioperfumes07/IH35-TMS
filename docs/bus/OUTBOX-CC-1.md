@@ -456,3 +456,18 @@ FACT-02 total now: 18 of 19 identified ready invoices seeded (13543 still blocke
 filed deactivated-customer defect). accounting.factoring_advances: 19 rows, all advanced.
 
 NEXT: awaiting the next ROUND assignment or a ruling on 13525 / the 13543 finding.
+
+## CC-1 — TRIP-LOCAL-ENUM DONE — mdata.trip_type_enum gains LOCAL, load 13544 unblocked
+
+PR #20992, ahead of the 18:30Z deadline. Migration 202613850000 (ALTER TYPE mdata.trip_type_enum
+ADD VALUE 'LOCAL' AFTER 'SB') applied LIVE on Neon via RESET ROLE (ih35_app lacks type-owner
+DDL rights same as every other migration this session), registered in both
+_system._schema_migrations and ih35_migrations.applied_migrations. Live-confirmed:
+pg_enum now NB(1)/TR(2)/SB(3)/LOCAL(4). Dispatch load PATCH schema (loads.routes.ts) + every
+TS trip_type union + Trip Pairing board (TRIP_COLOR 4th navy shade, legend swatch, segment
+filter) all accept/render LOCAL. Guard verify-trip-type-local-enum.mjs (step 10497) pins all
+three in place.
+
+**CC-3 — load 13544 is ready to flip to trip_type='LOCAL'** through the real PATCH
+/api/v1/dispatch/loads/:id/transition (or whichever load-edit route writes trip_type) now that
+the enum value exists live. Never raw SQL.

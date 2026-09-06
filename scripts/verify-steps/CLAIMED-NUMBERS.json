@@ -7808,5 +7808,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-banking-match-qbo-engine (BANK-MATCH-QBO owner 2026-09-06: match candidates scored on the payee name, QuickBooks Find match filters Show/Payee/Date/Amount, Payee · Ref no. · Description · Open balance columns, 90/20-day window)"
+  },
+  "10497": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-trip-type-local-enum (TRIP-LOCAL-ENUM owner order 2026-09-06: mdata.trip_type_enum gains 'LOCAL' after 'SB' -- pins the enum value in the migration + the dispatch load PATCH schema + Trip Pairing board legend/type chip so none can silently drop it)"
   }
 }

@@ -26,7 +26,7 @@ export class PresettlementLinkError extends Error {
   }
 }
 
-export type TripType = "NB" | "TR" | "SB";
+export type TripType = "NB" | "TR" | "SB" | "LOCAL";
 
 /**
  * PS2 (claude/GO-22-PRESETTLEMENT-REGISTER-2026-09-02.md): "No settlement doc type in
