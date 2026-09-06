@@ -441,6 +441,79 @@ export function geocodeDispatchLoadStops(id: string, operatingCompanyId: string)
   );
 }
 
+// LDT-2 — Stops tab read model (read-only record; edits go to the wizard §C).
+export type StopsRecordStop = {
+  stop_id: string;
+  sequence: number;
+  stop_type: string;
+  address_line1: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  geocode_precision: string | null;
+  geocode_missing: boolean;
+  appointment_window_type: string | null;
+  appointment_start_at: string | null;
+  appointment_end_at: string | null;
+  scheduled_arrival_at: string | null;
+  arrived_at: string | null;
+  departed_at: string | null;
+  dwell_minutes: number | null;
+  free_time_minutes: number;
+  detention_minutes: number;
+  detention_status: "accruing" | "closed" | "billed" | null;
+  source: "Geofence + driver" | "Driver only" | "Manual";
+  contact_name: string | null;
+  contact_phone: string | null;
+  gate_dock_text: string | null;
+  signature_required: boolean;
+  photo_required: boolean;
+  lumper_required: boolean;
+  lumper_amount_cents: number | null;
+  doc_count: number;
+};
+
+export type StopsRecordLeg = {
+  leg_index: number;
+  leg_kind: string;
+  from_label: string;
+  to_label: string;
+  practical_miles: number | null;
+  short_miles: number | null;
+  real_miles: number | null;
+  google_reference_miles: number | null;
+};
+
+export type StopsRecordEvent = {
+  occurred_at: string;
+  event_kind: string;
+  source: "Geofence + driver" | "Driver only" | "Manual";
+  sequence: number | null;
+  point_lat: number | null;
+  point_lng: number | null;
+};
+
+export type StopsRecordResponse = {
+  load: {
+    miles_practical: number | null;
+    miles_shortest: number | null;
+    miles_deadhead: number | null;
+  };
+  stops: StopsRecordStop[];
+  legs: StopsRecordLeg[];
+  events: StopsRecordEvent[];
+  geofence_event_count: number;
+};
+
+export function getLoadStopsRecord(loadId: string, operatingCompanyId: string) {
+  return apiRequest<StopsRecordResponse>(
+    `/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/stops-record?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
 export function getUnitDispatchStatus(unitId: string, operatingCompanyId: string) {
   return apiRequest<Record<string, unknown>>(
     `/api/v1/dispatch/units/${unitId}/dispatch-status?operating_company_id=${encodeURIComponent(operatingCompanyId)}`

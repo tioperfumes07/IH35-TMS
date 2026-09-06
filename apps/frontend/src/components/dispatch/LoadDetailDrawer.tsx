@@ -23,10 +23,10 @@ import { LoadDetailCostsTab } from "./LoadDetailCostsTab";
 import { MoneyProofTrailPanel } from "../accounting/MoneyProofTrailPanel";
 import { LoadDetailSettlementTab } from "./LoadDetailSettlementTab";
 import { LoadDetailGeofenceTimelineTab } from "./LoadDetailGeofenceTimelineTab";
+import { LoadStopsRecordTab } from "./LoadStopsRecordTab";
 import { EntityAuditHistoryTab } from "../audit/EntityAuditHistoryTab";
 import { STATUS_LABEL, formatMoneyCents } from "./constants";
 import { LoadReassignModal } from "../../pages/dispatch/LoadReassignModal";
-import { MultiStopEditor } from "../../pages/dispatch/MultiStopEditor";
 import { LoadTemplateLibrary, SaveLoadTemplateModal, templateJsonFromLoadDetail } from "../../pages/dispatch/LoadTemplateLibrary";
 import { AbandonmentReportModal } from "../../pages/loads/AbandonmentReportModal";
 import { PreSettlementPanel } from "./PreSettlementPanel";
@@ -1266,31 +1266,14 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
 
           {activeTab === "Stops" ? (
             load ? (
-              canEdit ? (
-                <MultiStopEditor loadId={load.id} operatingCompanyId={load.operating_company_id} />
-              ) : (
-                <div className="space-y-2">
-                  {load?.stops?.map((stop) => (
-                    <div key={stop.id} className="rounded-sm border border-gray-200 p-3 text-xs">
-                      <div className="font-semibold text-gray-800">
-                        #{stop.sequence_number} · {stop.stop_type}
-                      </div>
-                      <div className="text-gray-600">
-                        {stop.city ?? "-"}, {stop.state ?? "-"} ({stop.country ?? "-"})
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Scheduled: {stop.scheduled_arrival_at ? new Date(stop.scheduled_arrival_at).toLocaleString() : "-"}
-                      </div>
-                      {stop.geocode_precision === "locality" ? (
-                        <span data-testid="stop-geocode-locality-chip" className="mt-1 inline-flex rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                          city-level only — no arrival fence
-                        </span>
-                      ) : null}
-                    </div>
-                  ))}
-                  {load && load.stops.length === 0 ? <div className="text-xs text-gray-500">No stops found.</div> : null}
-                </div>
-              )
+              // LDT-2 — Stops is a read-only RECORD of what happened (arrivals, departures, dwell,
+              // detention, source, docs, leg miles, geofence events). Every stop field is edited in
+              // the Book Load wizard §C (Edit stops), never inline here.
+              <LoadStopsRecordTab
+                loadId={load.id}
+                operatingCompanyId={load.operating_company_id}
+                onEditStops={canEdit ? () => setEditWizardOpen(true) : undefined}
+              />
             ) : (
               <div className="text-xs text-gray-500">Loading stops…</div>
             )
