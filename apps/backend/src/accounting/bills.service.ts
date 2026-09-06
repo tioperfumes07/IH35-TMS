@@ -281,6 +281,15 @@ type BillRow = {
   coa_account_number?: string | null;
   coa_account_name?: string | null;
   attachment_count?: number | null;
+  /** CV-TRANSACTION-COLUMNS (inv #46) — load/settlement/unit linkage for vendor bill transactions tab. */
+  linked_load_id?: string | null;
+  linked_load_number?: string | null;
+  linked_settlement_id?: string | null;
+  linked_settlement_display_id?: string | null;
+  linked_unit_number?: string | null;
+  linked_pickup_date?: string | null;
+  linked_delivery_date?: string | null;
+  linked_loaded_miles?: number | null;
 };
 
 type BillPaymentRow = {
@@ -1006,7 +1015,16 @@ export async function listBillsByVendor(
                    AND att.entity_type = 'bill'
                    AND att.entity_id = b.id
                    AND att.is_deleted = false
-               ) AS attachment_count
+               ) AS attachment_count,
+               -- CV-TRANSACTION-COLUMNS (inv #46): load/settlement/unit linkage via bill_lines → loads.
+               load_link.load_id AS linked_load_id,
+               load_link.load_number AS linked_load_number,
+               load_link.pickup_date AS linked_pickup_date,
+               load_link.delivery_date AS linked_delivery_date,
+               load_link.miles_practical AS linked_loaded_miles,
+               load_link.unit_number AS linked_unit_number,
+               settlement_link.settlement_id AS linked_settlement_id,
+               settlement_link.settlement_display_id AS linked_settlement_display_id
         FROM accounting.bills b
         ${BILL_VENDOR_RESOLVE_JOIN_SQL}
         LEFT JOIN catalogs.accounts coa ON coa.id = b.coa_account_id AND coa.operating_company_id = b.operating_company_id
@@ -1016,6 +1034,25 @@ export async function listBillsByVendor(
         LEFT JOIN insurance.claim claim
           ON claim.id = b.insurance_claim_id
          AND claim.tenant_id = b.operating_company_id
+        LEFT JOIN LATERAL (
+          SELECT bl.load_id, l.load_number, l.pickup_date, l.delivery_date, l.miles_practical,
+                 u.unit_number
+          FROM accounting.bill_lines bl
+          JOIN mdata.loads l ON l.id = bl.load_id AND l.operating_company_id = b.operating_company_id
+          LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id AND u.operating_company_id = l.operating_company_id
+          WHERE bl.bill_id = b.id AND bl.load_id IS NOT NULL
+          ORDER BY bl.line_sequence ASC
+          LIMIT 1
+        ) load_link ON true
+        LEFT JOIN LATERAL (
+          SELECT s.id::text AS settlement_id, s.display_id AS settlement_display_id
+          FROM driver_finance.driver_settlements s
+          WHERE s.operating_company_id = b.operating_company_id
+            AND s.voided_at IS NULL
+            AND (s.first_load_id = load_link.load_id OR s.last_load_id = load_link.load_id)
+          ORDER BY s.created_at DESC
+          LIMIT 1
+        ) settlement_link ON true
         WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
         ORDER BY ${billListOrderBy(options.sort, options.dir)}
         LIMIT $${values.length - 1}

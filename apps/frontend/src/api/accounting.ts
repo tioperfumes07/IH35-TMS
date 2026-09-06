@@ -79,6 +79,13 @@ export type Invoice = {
   created_at: string;
   updated_at: string;
   lines?: InvoiceLine[];
+  /** CV-TRANSACTION-COLUMNS (inv #46) — settlement/unit/pickup/delivery/miles linkage for customer invoice transactions tab. */
+  linked_settlement_id?: string | null;
+  linked_settlement_display_id?: string | null;
+  linked_unit_number?: string | null;
+  linked_pickup_date?: string | null;
+  linked_delivery_date?: string | null;
+  linked_loaded_miles?: number | null;
   payment_applications?: Array<{
     id: string;
     payment_id: string;
@@ -306,6 +313,15 @@ export type VendorBill = {
   linked_cash_advance_display_id?: string | null;
   /** ACC-50 (LAW §2) — why this bill hasn't posted yet, e.g. "tour_open". Null when never held. */
   posting_hold_reason?: string | null;
+  /** CV-TRANSACTION-COLUMNS (inv #46) — load/settlement/unit linkage for vendor bill transactions tab. */
+  linked_load_id?: string | null;
+  linked_load_number?: string | null;
+  linked_settlement_id?: string | null;
+  linked_settlement_display_id?: string | null;
+  linked_unit_number?: string | null;
+  linked_pickup_date?: string | null;
+  linked_delivery_date?: string | null;
+  linked_loaded_miles?: number | null;
 };
 
 /** ACCT-F603 — never pass legacy QBO vendor_id text to EntityLink (404s /vendors/472). */
