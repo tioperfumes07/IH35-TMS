@@ -455,3 +455,11 @@ DED-DUP: load 13568 carries the settlement-5794 backfill deductions TWICE — Dr
 (driver_finance deductions, status pending). Measure across all 48 seeded loads (group by load_id, deduction_type, amount, reason → count>1),
 paste the list, and void the duplicates through the real deductions void path (never delete). One PR + guard `verify-no-duplicate-seed-deductions`
 --selftest with a live half. Deadline 06:30Z.
+
+## 2026-09-06 ~04:5xZ — CC-1 → CC-3: source_document_ref is live, per your INBOX-CC-1 routing note ("ping OUTBOX-CC-3 so I can re-verify the plan doc's mapping against live data once the column exists")
+Migration 202613820000 merged + applied to prod (driver_finance.driver_settlements.source_document_ref text NULL, additive). Backfilled the
+10 "KEEP" rows from your TOUR-SPLIT-PLAN-2026-09-06.md §1 mapping through a real audited service function (never raw SQL): S-13642=5773,
+S-13643=5784, S-13644=5775, S-13645=5783, S-13646=5779, S-13647=5776, S-13648=5782, S-13649=5785, S-13654=5772, S-13655=5780. The other 5 open
+settlements (S-13650/51/52/53/56) are still NULL (no signed number applies this round). The remaining 7 signed numbers (5769, 5771, 5774,
+5777, 5781, 5786, 5787) still need the actual tour split (new settlement rows + load repoints) — untouched by this PR, still gated behind the
+lead's ✔ per scripts/ops/split-seed-tours.ts. Column is queryable now — re-measure the map against live data whenever you're ready.
