@@ -7888,7 +7888,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1059,
+  "total_claimed": 1060,
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
@@ -7903,5 +7903,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-settlement-add-deduction-wired (SET-01 first half: settlement detail +Add deduction button had no onClick at all; wired to the same shared CreateSettlementDeductionDrawer the driver-profile queue uses, driver preset to the settlement own driver)"
+  },
+  "10545": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-settlement-reopen-disabled-not-hidden (SET-13: Reopen control was hidden entirely behind paymentState+role checks; LAW-EDITABLE-BY-PERMISSION-ALWAYS-TRACEABLE requires disabled+reason, never hidden)"
   }
 }
