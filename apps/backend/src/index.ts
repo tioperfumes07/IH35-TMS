@@ -424,6 +424,7 @@ import { initializeSamsaraMasterSyncCron } from "./cron/samsara-master-sync.cron
 import { initializeSamsaraHosPullCron } from "./cron/samsara-hos-pull.cron.js";
 import { initializeSamsaraPositionsCron } from "./cron/samsara-positions-cron.js";
 import { initializeReeferHoursPollCron } from "./cron/reefer-hours-poll.cron.js";
+import { initializeRealDrivenMilesSegmentsCron } from "./cron/real-driven-miles-segments.cron.js";
 import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
 import { initializeBankReconAutoMatchCron } from "./cron/bank-recon-auto-match.cron.js";
 import { initializeDraftCrewStatusSelfHealCron } from "./cron/draft-crew-status-selfheal.cron.js";
@@ -1433,6 +1434,13 @@ async function main() {
       app.log.info("[STARTUP] reefer-hours-poll-cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] reefer-hours-poll-cron failed");
+    }
+
+    try {
+      initializeRealDrivenMilesSegmentsCron(app);
+      app.log.info("[STARTUP] real-driven-miles-segments-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] real-driven-miles-segments-cron failed");
     }
 
     try {
