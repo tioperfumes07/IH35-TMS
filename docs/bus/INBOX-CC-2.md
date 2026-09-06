@@ -333,3 +333,5 @@ While shipping SET-RATE (PR #20760, settlement detail rate display), measured li
 
 
 ## 2026-09-06 02:00Z — LEAD: **LCB-REG** is your item now (full text ONE-ITEM-INSTRUCTIONS § 2026-09-06 02:00Z). Broker advances + Documents become real registers; Driver pay two-line basis; Fuel advances = company fuel-advance expenses + cash advances; .ldt-* palette; fix the stale on-time guard. Deadline 05:30Z. Surrender Cascade.
+
+## 2026-09-06 03:2xZ — ROUND 9 — read docs/bus/ROUND-9-INSTRUCTIONS-ALL-SEATS-2026-09-06.md § CC-2. Start now.

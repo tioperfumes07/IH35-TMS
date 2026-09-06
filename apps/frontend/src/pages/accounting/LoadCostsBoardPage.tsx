@@ -425,7 +425,7 @@ function TransactionRegister({ tab, companyId, loadsById, navigate }: { tab: Cos
 // expanded row is the SAME TourPreSettlementTab / TourSettlementTab (legs · costs · Ready to close? · Close tour →
 // Settlement (human confirms) | driver + company settlement, frozen) keyed by settlement — one read model.
 const TOUR_COLUMNS = (state: "open" | "closed"): ParityColumn<TourListRow>[] => [
-  { key: "tour", label: "Tour", testId: "tour-col-id", sortable: true, className: "whitespace-nowrap", sortValue: r => r.display_id ?? "", render: r => <span className="font-semibold text-slate-700">{r.display_id ?? r.settlement_id.slice(0, 8)}</span> },
+  { key: "tour", label: "Tour", testId: "tour-col-id", sortable: true, className: "whitespace-nowrap", sortValue: r => r.display_id ?? "", render: r => <Link className="ldt-link font-semibold" style={{ display: "inline" }} to={`/driver-finance/settlements?settlement_id=${encodeURIComponent(r.settlement_id)}`}>{r.display_id ?? "Settlement"}</Link> },
   { key: "driver", label: "Driver", testId: "tour-col-driver", sortable: true, sortValue: r => r.driver_name ?? "", render: r => r.driver_name ?? DASH },
   { key: "unit", label: "Unit", testId: "tour-col-unit", sortable: true, sortValue: r => r.unit_number ?? "", render: r => r.unit_number ?? DASH },
   { key: "legs", label: "Legs", testId: "tour-col-legs", sortable: true, sortValue: r => r.leg_count, render: r => <span title={r.legs_label}>{r.leg_count === 0 ? DASH : `${r.leg_count} · ${r.legs_label}`}</span> },

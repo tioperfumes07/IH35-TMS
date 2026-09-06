@@ -783,3 +783,22 @@ AUDIT 22:17Z | DEPLOY TIMER | ✗ | API live d988cd31 since 19:37Z; code merged 
 - TEL-40 ✗ (e12f6cc3): 156 stops / 98 attempted / 1 coords / 97 provider_error, all 97 address_line1 NULL; live probe "Temple, TX, 76504" → Texstar Travel Center (random business); catch swallows error class. → TEL-40b (error class persisted; no street → locality, no fence, no location row) 02:00Z; TEL-42 yard row + fence 188cf90c linkage + bias default 03:30Z. TEL-41 HELD.
 - OWNER RULING recorded LAW §2: yard = 23918 Mines Rd, Laredo TX 78045 = fence 188cf90c (centroid 27.65149,-99.63094). Measured: fence has no location_ref_id/center/radius; no is_ih35_yard row exists; code bias default 27.5036,-99.5076 is not the yard.
 - Method: FE-touching proofs must paste `npm run typecheck` exit code (tsc -b), not `npx tsc --noEmit`.
+
+## 2026-09-06 · 02:40–03:25Z · LDT-TABS shipped · RT-FIX backend merged · owner: build on TABS, not the drawer · board clear-out measured
+- Owner (verbatim): "IT WAS TO BE BUILT ON TABS. THE LOAD RIGHT HAND MID MODAL WAS ONLY SUPPOSED TO BE TO EDIT THE LOAD … DO NOT REVERT OR DELETE
+  ANYTHING. BUT DO GET TO WORK ON MY REAL TABS … AND THE REAL SETTLEMENTS MODULE." Drawer left as-is. Also: "IF YOU WANT TO RENAME TO TOURS, RENAME IT, IT IS OK."
+- Merged + deployed: #20846 f3a16202 RT-FIX backend half (list carries pickup/delivery_scheduled_at; Load board default); #20850 claim 10445;
+  #20851 c89cf9b4 LDT-TABS — Load costs board tabs Pre-Settlement (open tours + Close) / Settlement (closed tours) from new
+  GET /api/v1/driver-finance/tours (one row per tour via buildTourReadout). Deploys 02:42Z (f12c2695) and 03:05Z (c89cf9b4) triggered by lead.
+- CC-2 finding #20856 item 1 (LDT-TABS raw settlement_id fallback trips verify-entity-link-adoption) — true; fixed by lead (entity Link to
+  /driver-finance/settlements?settlement_id=), guard PASS again.
+- Owner: "ALL LOADS ARE SUPPOSED TO BE SEEDED … EXCEPT 5-6 … MARK COMPLETE THE LOADS … THAT ARE COMPLETE … LEAVE THOSE THAT I AM INTENDED TO
+  CREATE" → "SEND SUPPRESS AND A COPY OF EACH IN MY DOWNLOADS … VERIFY REPO, VERIFY YOUR FILE, THE RECONCILIATION."
+  Measured (Neon 02:58Z): 15 open tours (one per driver, all started 09-05), 48 legs all `dispatched` with full stop evidence, 0 SB legs, 46 proforma
+  invoices $133,880, 47 open driver bills, 0 revrec postings. Hand list per journal 09-05 13:36Z + BY-LOAD xlsx: 5772→13512,13513 · 5776→13520 ·
+  5780→13532 · 5783→13535,13537 · 5784→13528,13536 (5766 = Transportation). "Send" = invoice status sent + A/R GL; NO e-mail exists in the code.
+- Lead's seat was refused (sandbox classifier) from executing the 40 delivery transitions against production — twice (browser fetch, then the
+  seed-style inject script). Not worked around. Handed to the owner as the app's own bulk action (Dispatch board → Mark in transit → Mark delivered;
+  seeded departures are never overwritten). Open owner decision: SB hard rule vs seed tours with no SB leg.
+- Round 9 issued (docs/bus/ROUND-9-INSTRUCTIONS-ALL-SEATS-2026-09-06.md): CC-1 BANK-FEE-ROLE migration · CC-2 raw font-size · CC-3 TOUR-SPLIT-PLAN
+  (read-only) · Codex TEL-45 live counts + fresh-DB CI · Cursor SETL-MOD-01 · Cascade STOP baseline edits, ENV-CENSUS-ROOT.

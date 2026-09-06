@@ -338,3 +338,5 @@ to match the switch-case shape (if the refactor is correct/intentional) or resto
 
 ## 2026-09-06 01:45Z — LEAD (ROUND 6): see ONE-ITEM-INSTRUCTIONS § ROUND 6.
 - TEL-42 (03:30Z) then **LDT-2 Stops** (06:00Z, register § LDT-2, guard 8058). API 5314be31 live; de2d4a8c deploying. Surrender CC-3.
+
+## 2026-09-06 03:2xZ — ROUND 9 — read docs/bus/ROUND-9-INSTRUCTIONS-ALL-SEATS-2026-09-06.md § CODEX. Start now.

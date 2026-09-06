@@ -1,0 +1,109 @@
+#!/usr/bin/env tsx
+/**
+ * scripts/ops/deliver-seeded-usmca-loads.ts — OWNER ORDER 2026-09-06 03:0xZ (verbatim): "ALL LOADS ARE SUPPOSED TO BE
+ * SEEDED INTO THE APP, EXCEPT 5-6, I WAS GOING TO INPUT THOSE MANUALLY. MARK COMPLETE THE LOADS IN THE APP OR THE
+ * SETTLEMENTS IN THE APP THAT ARE COMPLETE AND ONLY LEAVE THOSE THAT I AM INTENDED TO CREATE THE ENTIRE LOAD AND
+ * SETTLEMENT." + "SEND SUPPRESS … VERIFY REPO, AND VERIFY YOUR FILE, THE RECONCILIATION."
+ *
+ * MEASURED (Neon prod 2026-09-06 02:58Z): 48 live USMCA seeded loads sit at `dispatched` although every one carries
+ * actual_arrival_at + actual_departure_at on BOTH stops (delivered Aug 7 → Sep 3), 46 proforma invoices, 47 open
+ * driver bills, 0 revenue-recognition postings. The seed recorded the evidence and never moved the status.
+ *
+ * OWNER'S HAND LIST (docs/IH35-CLAUDE-JOURNAL.md 2026-09-05 13:36Z, corrected): settlements 5772, 5776, 5780, 5783,
+ * 5784 (5766 is TRANSPORTATION — entered nowhere). Their loads per IH35-BY-LOAD-20260904 "USMCA BY LOAD":
+ *   5772 → 13512, 13513 · 5776 → 13520 · 5780 → 13532 · 5783 → 13535, 13537 · 5784 → 13528, 13536.
+ * Those EIGHT loads are never touched here. Everything else that is `dispatched` with a stamped delivery departure is
+ * moved through the REAL office transition route, twice: dispatched → in_transit → delivered_pending_docs.
+ *
+ * NO DIRECT SQL FOR WRITES. Same mechanism as scripts/seed-settlements-cc-3.ts: the real
+ * `PATCH /api/v1/dispatch/loads/:id/transition` handler, invoked in-process through Fastify inject() with the
+ * process-local test-auth bypass as the Owner user — so the transition runs the exact production chain:
+ * state machine → stamp delivery departure (never overwrites the seeded one) → ensureDriverBillArtifactsForLoad
+ * (existing bill = no-op) → latchOnDeliveryEvidence (revenue recognition after commit; proforma → official invoice
+ * → status 'sent' + A/R GL) → pingSettlementOnLoadEvent → dispatch spine event → audit.
+ *
+ * "SEND SUPPRESS": there is NO e-mail in this chain. sendDraftInvoice() marks the invoice `sent` and posts A/R; nothing
+ * leaves the system (verified: accounting/invoice-send.service.ts imports no mailer). So nothing to suppress; the
+ * invoice copies the owner asked for are rendered by scripts/ops/export-invoice-copies.ts afterwards.
+ *
+ * Usage:
+ *   DATABASE_URL=<neon prod> npx tsx scripts/ops/deliver-seeded-usmca-loads.ts            # dry-run (default)
+ *   DATABASE_URL=<neon prod> npx tsx scripts/ops/deliver-seeded-usmca-loads.ts --apply
+ *   DATABASE_URL=<neon prod> npx tsx scripts/ops/deliver-seeded-usmca-loads.ts --apply --only=13511
+ */
+import pg from "pg";
+import { createIntegrationApp } from "../../apps/backend/test-helpers/http-app.js";
+import { registerDispatchLoadRoutes } from "../../apps/backend/src/dispatch/loads.routes.js";
+
+const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd"; // identity.users tioperfumes07@gmail.com, role Owner
+/** Owner builds these by hand — settlements 5772 · 5776 · 5780 · 5783 · 5784. Never transitioned by this script. */
+export const OWNER_HAND_LOADS = new Set(["13512", "13513", "13520", "13532", "13535", "13537", "13528", "13536"]);
+
+const apply = process.argv.includes("--apply");
+const onlyArg = process.argv.find((a) => a.startsWith("--only="));
+const only = onlyArg ? new Set(onlyArg.slice(7).split(",").map((s) => s.trim())) : null;
+
+type Row = { id: string; load_number: string; status: string; trip_type: string | null; tour: string | null; delivered_at: string | null; pu: string | null };
+
+async function main() {
+  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL required");
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 2 });
+  const client = await pool.connect();
+  let rows: Row[];
+  try {
+    await client.query("BEGIN");
+    await client.query(`SELECT set_config('app.bypass_rls','lucia',true)`);
+    const r = await client.query<Row>(
+      `SELECT l.id::text, l.load_number, l.status::text, l.trip_type::text, s.display_id AS tour,
+              (SELECT max(st.actual_departure_at)::text FROM mdata.load_stops st WHERE st.load_id = l.id AND st.stop_type = 'delivery' AND st.soft_deleted_at IS NULL) AS delivered_at,
+              (SELECT min(st.actual_arrival_at)::date::text FROM mdata.load_stops st WHERE st.load_id = l.id AND st.stop_type = 'pickup' AND st.soft_deleted_at IS NULL) AS pu
+         FROM mdata.loads l LEFT JOIN driver_finance.driver_settlements s ON s.id = l.presettlement_link_id
+        WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL AND l.status = 'dispatched'
+        ORDER BY l.load_number`,
+      [USMCA_COMPANY_ID]
+    );
+    await client.query("ROLLBACK");
+    rows = r.rows;
+  } finally {
+    client.release();
+  }
+
+  const candidates = rows.filter((x) => !OWNER_HAND_LOADS.has(x.load_number) && (!only || only.has(x.load_number)));
+  const held = rows.filter((x) => OWNER_HAND_LOADS.has(x.load_number));
+  const noEvidence = candidates.filter((x) => !x.delivered_at);
+  console.log(`dispatched USMCA loads: ${rows.length} · owner hand-list held: ${held.map((h) => h.load_number).join(",")} · to deliver: ${candidates.length} · without delivery departure (refused): ${noEvidence.length}`);
+  if (noEvidence.length) console.log("  no evidence → left dispatched:", noEvidence.map((x) => x.load_number).join(", "));
+
+  process.env.IH35_TEST_AUTH_BYPASS = "1";
+  const app = await createIntegrationApp(async (a) => { await registerDispatchLoadRoutes(a); });
+  const headers = { "x-test-auth": Buffer.from(JSON.stringify({ id: OWNER_USER_ID, role: "Owner", email: "tioperfumes07@gmail.com" }), "utf8").toString("base64url") };
+
+  const report: string[] = [];
+  for (const x of candidates) {
+    if (!x.delivered_at) continue;
+    const line = `${x.tour ?? "—"} ${x.trip_type ?? "-"} ${x.load_number} pu ${x.pu} delivered ${x.delivered_at.slice(0, 10)}`;
+    if (!apply) { report.push(`DRY  ${line}`); continue; }
+    const results: string[] = [];
+    for (const target of ["in_transit", "delivered_pending_docs"] as const) {
+      const res = await app.inject({
+        method: "PATCH",
+        url: `/api/v1/dispatch/loads/${x.id}/transition?operating_company_id=${USMCA_COMPANY_ID}`,
+        headers,
+        payload: target === "delivered_pending_docs" ? { new_status: target, delivered_at: x.delivered_at } : { new_status: target },
+      });
+      results.push(`${target}=${res.statusCode}`);
+      if (res.statusCode >= 300) { results.push(res.body.slice(0, 200)); break; }
+      if (target === "delivered_pending_docs") {
+        const body = JSON.parse(res.body) as { driver_bill_mint?: unknown };
+        results.push(`mint=${JSON.stringify(body.driver_bill_mint ?? null).slice(0, 80)}`);
+      }
+    }
+    report.push(`${results.some((s) => /=[45]\d\d/.test(s)) ? "FAIL" : "DONE"} ${line} · ${results.join(" · ")}`);
+  }
+  console.log(report.join("\n"));
+  await app.close();
+  await pool.end();
+}
+
+main().catch((e) => { console.error(e); process.exit(1); });

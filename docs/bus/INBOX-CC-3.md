@@ -447,3 +447,5 @@ touches only two scripts/verify-*.mjs files). Not fixed here; pushing my own unr
 
 
 ## 2026-09-06 02:00Z — LEAD: after TPB-RESTORE → **SETL-DED-GL** (typed deductions with GL: wire_fee/ach_fee → Bank Charges & Fees recovery, company_vehicle_fuel → 5000 Fuel & Diesel recovery, escrow_contribution → driver's own 2100-00-0NN; no `other`; retype 5772 from source, unknown stays pending). Deadline 05:00Z. Then LDT-3.
+
+## 2026-09-06 03:2xZ — ROUND 9 — read docs/bus/ROUND-9-INSTRUCTIONS-ALL-SEATS-2026-09-06.md § CC-3. Start now.

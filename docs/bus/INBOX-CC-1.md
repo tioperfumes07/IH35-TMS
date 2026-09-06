@@ -649,3 +649,5 @@ Given it's 100% of the sample (not a handful of outliers), this reads as a **sys
 
 ## 2026-09-06 01:45Z — LEAD (ROUND 6): see ONE-ITEM-INSTRUCTIONS § ROUND 6.
 - ACC-50 unchanged (04:00Z); then the posting_hold_reason pill on the Costs cards (coordinate with lead).
+
+## 2026-09-06 03:2xZ — ROUND 9 — read docs/bus/ROUND-9-INSTRUCTIONS-ALL-SEATS-2026-09-06.md § CC-1. Start now.
