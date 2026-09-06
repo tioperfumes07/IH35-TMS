@@ -1042,6 +1042,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                             { label: "Lumper amount", value: stop.lumper_amount_cents != null ? formatMoneyCents(stop.lumper_amount_cents, load.currency_code) : "—" },
                           ]}
                         />
+                        {stop.geocode_precision === "locality" ? (
+                          <span data-testid="stop-geocode-locality-chip" className="mt-1 inline-flex rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                            city-level only — no arrival fence
+                          </span>
+                        ) : null}
                       </div>
                     ))}
                     {(load.stops ?? []).length === 0 ? <div className="text-xs text-gray-500">No stops on this load.</div> : null}
