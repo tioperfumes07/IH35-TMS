@@ -85,6 +85,13 @@ export type AvpLineItem = {
   // actually captured, distinct from prediction_date (the day it projects). null/undefined for
   // every other line — never fabricated for a live-computed figure.
   projected_captured_at?: string | null;
+  // CASH-FLOW-01 (owner order 2026-09-06, ROUND 14, "dash-never-zero"): actual_cents on an
+  // income/expenses line is derived in part from banking.bank_transactions once categorized.
+  // With 0 (or very low) bank-transaction coverage categorized, a $0 actual reads as "confirmed
+  // zero cash moved" when the truth is "we cannot see actuals yet" -- two different claims. Set
+  // true only when bank_categorization_coverage.categorized_count === 0 for the whole company;
+  // undefined/false everywhere else (never fabricated for a line that has real coverage).
+  actual_unavailable?: boolean;
 };
 
 export type ActualVsProjectedResult = {
@@ -99,6 +106,12 @@ export type ActualVsProjectedResult = {
     total_actual_expense_cents: number;
     expense_variance_pct: number | null;
   };
+  // CASH-FLOW-01 (owner order 2026-09-06): company-wide (not date-range-scoped -- the honesty
+  // signal is about whether actuals can be trusted AT ALL, not just this window) coverage of
+  // banking.bank_transactions.categorized_at. When categorized_count is 0, every income/expenses
+  // line's actual_cents in this response is marked actual_unavailable -- the caller/UI must show
+  // "N of M bank lines categorized -- actuals unavailable", never a bare $0.
+  bank_categorization_coverage: { categorized_count: number; total_count: number };
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -341,13 +354,26 @@ export async function getDailyPrediction(
           OR s.bank_settle_date IS NOT NULL
           OR (
             COALESCE(s.payment_state, 'unpaid') = 'unpaid'
-            AND s.status IN ('locked', 'final', 'approved', 'posted')
+            -- CASH-FLOW-01 (owner order 2026-09-06, ROUND 14): 'closed' is the real terminal
+            -- close state written by settlements-load-bookended.service.ts (closeLoadBookendedSettlementForDriver
+            -- / stampTripClosedForBookendedSettlement, SET status = 'closed') -- omitted here meant
+            -- every closed-but-unpaid settlement (measured live: 8 of 8 status='closed' settlements,
+            -- net_pay total $13,252.98) silently dropped out of Expected Expenses. locked/final/
+            -- approved/posted are the OLDER settlement-engine terminal states this predicate
+            -- predates; 'closed' is the current one actually written today.
+            AND s.status IN ('locked', 'final', 'approved', 'posted', 'closed')
           )
         )
         AND COALESCE(
           s.bank_settle_date,
           s.payment_sent_at::date,
           s.payment_queued_at::date,
+          -- No dedicated driver-pay pay-lag config exists anywhere in the codebase (checked:
+          -- no pay_lag/PAY_LAG/scheduled_pay_date column or constant). trip_closed_at is the real,
+          -- named close timestamp (settlements-load-bookended.service.ts stamps it in the SAME
+          -- UPDATE as status='closed'); period_end is set to that same date on close, so this is
+          -- not a fallback change, just naming which real column period_end mirrors here -- never
+          -- inventing a lag day-count with no rule behind it.
           s.period_end
         ) = $2::date
       ORDER BY s.display_id ASC NULLS LAST, s.id ASC
@@ -607,7 +633,10 @@ async function buildSevenDayStrip(
                 OR s.bank_settle_date IS NOT NULL
                 OR (
                   COALESCE(s.payment_state, 'unpaid') = 'unpaid'
-                  AND s.status IN ('locked', 'final', 'approved', 'posted')
+                  -- CASH-FLOW-01: same 'closed' fix as getDailyPrediction above -- kept in sync so
+                  -- the 7-day strip and the single-day prediction never disagree on which
+                  -- settlements are due.
+                  AND s.status IN ('locked', 'final', 'approved', 'posted', 'closed')
                 )
               )
               AND COALESCE(
@@ -891,6 +920,30 @@ export async function getActualVsProjected(
     });
   }
 
+  // CASH-FLOW-01 (owner order 2026-09-06): measured live 2026-09-06 -- 0 of 362 USMCA bank lines
+  // categorized. A $0 actual on that footing is not "confirmed zero cash moved", it is "we cannot
+  // see actuals yet" -- LAW §8 "zero is a claim". Company-wide (not date-range-scoped) on purpose.
+  const coverageRes = await client.query<{ categorized_count: string; total_count: string }>(
+    `
+      SELECT
+        COUNT(*) FILTER (WHERE bt.categorized_at IS NOT NULL)::text AS categorized_count,
+        COUNT(*)::text AS total_count
+      FROM banking.bank_transactions bt
+      JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
+      WHERE ba.operating_company_id = $1::uuid
+    `,
+    [operatingCompanyId]
+  );
+  const bankCategorizationCoverage = {
+    categorized_count: Number(coverageRes.rows[0]?.categorized_count ?? 0),
+    total_count: Number(coverageRes.rows[0]?.total_count ?? 0),
+  };
+  if (bankCategorizationCoverage.categorized_count === 0) {
+    for (const line of lines) {
+      if (line.category === "income" || line.category === "expenses") line.actual_unavailable = true;
+    }
+  }
+
   return {
     from,
     to,
@@ -903,6 +956,7 @@ export async function getActualVsProjected(
       total_actual_expense_cents: totalActExp,
       expense_variance_pct: variancePct(totalProjExp, totalActExp),
     },
+    bank_categorization_coverage: bankCategorizationCoverage,
   };
 }
 
