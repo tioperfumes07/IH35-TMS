@@ -8003,5 +8003,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
+  },
+  "10596": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-factoring-register-shared-manifest"
   }
 }
