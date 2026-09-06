@@ -248,6 +248,17 @@ const updateStopBodySchema = z
     scheduled_departure_at: isoDatetimeSchema.nullable().optional(),
     actual_arrival_at: isoDatetimeSchema.nullable().optional(),
     actual_departure_at: isoDatetimeSchema.nullable().optional(),
+    // STOPS-APPT-FIX (2026-09-06, ROUND 10 lead order) — the real appointment-window fields Round
+    // Trips/tour readout/LoadStopsRecordTab's own appointmentText() read (DSP-49). Before this, the
+    // ONLY route that could write appointment_start_at/appointment_end_at was the destructive
+    // replace-all POST /api/v1/loads/:loadId/stops (dispatch-refinements.service.ts's
+    // replaceLoadStopsRefined, which soft-deletes and re-INSERTs every stop on the load — wiping
+    // actual_arrival_at/actual_departure_at and orphaning any FK'd stop_id, e.g. geofence bindings
+    // or load_stop_legs). This surgical single-column PATCH lets a caller (a human editing one
+    // stop, or a scoped backfill script) set the real appointment window WITHOUT touching anything
+    // else on the row.
+    appointment_start_at: isoDatetimeSchema.nullable().optional(),
+    appointment_end_at: isoDatetimeSchema.nullable().optional(),
     status: stopStatusSchema.optional(),
     notes: z.string().trim().max(5000).nullable().optional(),
   })
@@ -2017,6 +2028,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       add("actual_departure_at", b.actual_departure_at ?? null);
       add("actual_departure_source", b.actual_departure_at ? "manual" : null);
     }
+    if ("appointment_start_at" in b) add("appointment_start_at", b.appointment_start_at ?? null);
+    if ("appointment_end_at" in b) add("appointment_end_at", b.appointment_end_at ?? null);
     if ("status" in b) add("status", b.status);
     if ("notes" in b) add("notes", b.notes ?? null);
 
@@ -2043,7 +2056,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           `
             SELECT
               id, load_id, sequence_number, stop_type, location_id, address_line1, city, state, country,
-              scheduled_arrival_at, scheduled_departure_at, actual_arrival_at, actual_departure_at, status, notes, created_at, updated_at
+              scheduled_arrival_at, scheduled_departure_at, actual_arrival_at, actual_departure_at,
+              appointment_start_at, appointment_end_at, status, notes, created_at, updated_at
             FROM mdata.load_stops
             WHERE load_id = $1
               AND id = $2
@@ -2064,7 +2078,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               AND soft_deleted_at IS NULL
             RETURNING
               id, load_id, sequence_number, stop_type, location_id, address_line1, city, state, country,
-              scheduled_arrival_at, scheduled_departure_at, actual_arrival_at, actual_departure_at, status, notes, created_at, updated_at
+              scheduled_arrival_at, scheduled_departure_at, actual_arrival_at, actual_departure_at,
+              appointment_start_at, appointment_end_at, status, notes, created_at, updated_at
           `,
           values
         );
