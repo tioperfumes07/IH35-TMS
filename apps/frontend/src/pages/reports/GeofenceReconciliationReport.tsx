@@ -133,7 +133,7 @@ export function GeofenceReconciliationReport() {
         testIdPrefix="reports-geofence-recon"
         fromDate={appliedDate}
         toDate={null}
-        onFromDateChange={(d) => setAppliedDate(d ?? yesterday)}
+        onFromDateChange={(date) => { if (date) setAppliedDate(date); }}
         onToDateChange={() => {}}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);

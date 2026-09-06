@@ -23,6 +23,9 @@ type ReportFilterBarProps = {
   statusFilter?: string;
   onStatusFilterChange?: (value: string) => void;
   statusOptions?: Array<{ value: string; label: string }>;
+  /** When provided, an Apply button renders and calls this on click. Used with useStagedListFilters. */
+  onApply?: () => void;
+  applyDisabled?: boolean;
 };
 
 const PRESET_BUTTONS: Array<{ preset: ReportPreset; label: string }> = [
@@ -82,6 +85,8 @@ export function ReportFilterBar({
   statusFilter,
   onStatusFilterChange,
   statusOptions,
+  onApply,
+  applyDisabled,
 }: ReportFilterBarProps) {
   const [, setSearchParams] = useSearchParams();
 
@@ -222,6 +227,20 @@ export function ReportFilterBar({
               ))}
             </select>
           </label>
+        </>
+      ) : null}
+      {onApply ? (
+        <>
+          <div className="mx-1 h-5 w-px bg-slate-200" />
+          <button
+            type="button"
+            onClick={onApply}
+            disabled={applyDisabled}
+            className="h-7 rounded-sm border border-slate-700 bg-slate-700 px-3 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+            data-testid={`${testIdPrefix}-apply`}
+          >
+            Apply
+          </button>
         </>
       ) : null}
     </div>

@@ -48,7 +48,7 @@ export function CashFlowReport() {
     if (!data) return null;
     const q = reportSearch.toLowerCase();
     if (!q) return data;
-    const matches = String(data.as_of_date ?? "").toLowerCase().includes(q) || String(data.operating_company_id ?? "").toLowerCase().includes(q);
+    const matches = String(data.as_of_date ?? "").toLowerCase().includes(q);
     return matches ? data : null;
   }, [query.data, reportSearch]);
 
@@ -68,8 +68,8 @@ export function CashFlowReport() {
           onClick={() => {
             if (!summary) return;
             const lines = [
-              "operating_company_id,as_of_date,operating_balance_cents,scoped_load_count",
-              `${summary.operating_company_id},${summary.as_of_date},${summary.operating_balance_cents},${summary.scoped_load_count}`,
+              "as_of_date,operating_balance_cents,scoped_load_count",
+              `${summary.as_of_date},${summary.operating_balance_cents},${summary.scoped_load_count}`,
             ];
             const blob = new Blob([lines.join("\n")], { type: "text/csv" });
             const url = URL.createObjectURL(blob);
