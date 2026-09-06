@@ -7703,5 +7703,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-load-costs-tour-tabs (LDT-TABS: Load costs board Pre-Settlement = open tours + Close, Settlement = closed tours; GET /api/v1/driver-finance/tours from the one tour readout)"
+  },
+  "10447": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-appointments-required-on-book (DSP-49: Book Load requires a pickup appointment on the first pickup and a delivery appointment on the last delivery, both frontend Controller-gated and backend-rejected)"
   }
 }
