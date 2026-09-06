@@ -129,15 +129,20 @@ export function VendorListSidebar({
         <ResizableTable
           tableId="vendors-master-list"
           columns={[
-            { id: "name", label: "Name", defaultWidth: 180, align: "left" },
-            { id: "open_balance", label: "Open Balance", defaultWidth: 110, align: "right" },
-            { id: "status", label: "Status", defaultWidth: 100, align: "left" },
+            { id: "name", label: "Name", defaultWidth: 170, align: "left" },
+            { id: "open_balance", label: "Open Balance", defaultWidth: 100, align: "right" },
+            // VC-DETAIL-01 (owner ROUND 14, 2026-09-06): Status is active/inactive (deactivated_at),
+            // NOT the quality chip. The quality chip moves to its own column so a vendor with no
+            // history no longer reads "No history" under a header that should say Active/Inactive.
+            { id: "status", label: "Status", defaultWidth: 80, align: "left" },
+            { id: "quality", label: "Quality", defaultWidth: 90, align: "left" },
           ]}
         >
           {(widths) => (
             <tbody>
               {pagedVendors.map((vendor) => {
                 const rating = vendorQualityLabel(vendor.notes);
+                const isInactive = vendor.deactivated_at != null;
                 const selected = selectedVendorId === vendor.id;
                 return (
                   <tr
@@ -157,6 +162,11 @@ export function VendorListSidebar({
                     </td>
                     <td style={{ width: widths.open_balance }} className="px-2 py-1.5 text-right text-xs tabular-nums text-gray-700">{fmtMoney(openByVendorId.get(vendor.id) ?? 0)}</td>
                     <td style={{ width: widths.status }} className="px-2 py-1.5">
+                      <span className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${isInactive ? "bg-gray-200 text-gray-700" : "bg-slate-100 text-slate-700"}`}>
+                        {isInactive ? "Inactive" : "Active"}
+                      </span>
+                    </td>
+                    <td style={{ width: widths.quality }} className="px-2 py-1.5">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${rating.className}`}>{rating.label}</span>
                     </td>
                   </tr>
