@@ -71,6 +71,52 @@ export type ActualVsProjectedResult = {
   };
 };
 
+// CASH-FLOW-02 (owner order 2026-09-06 20:1xZ): rolling A/R+A/P ledger — every open obligation
+// carries real dates and stays on every day on/after its due date until paid/matched.
+export type RollingLedgerRowKind = "income" | "expense";
+
+export type RollingLedgerDocumentKind =
+  | "bill"
+  | "settlement"
+  | "driver_bill"
+  | "expense"
+  | "loan_amortization_row"
+  | "invoice"
+  | "factoring_advance"
+  | "load";
+
+export type RollingLedgerRow = {
+  row_kind: RollingLedgerRowKind;
+  type: string;
+  document_kind: RollingLedgerDocumentKind;
+  document_id: string;
+  document_label: string;
+  counterparty: string;
+  origin_date: string;
+  due_date: string;
+  amount_cents: number;
+  days_overdue: number;
+  status: "overdue" | "due_today" | "upcoming";
+};
+
+export type RollingLedgerDay = {
+  date: string;
+  income_due_cents: number;
+  expenses_due_cents: number;
+  income_carry_over_cents: number;
+  expenses_carry_over_cents: number;
+  net_cents: number;
+  running_cash_cents: number | null;
+};
+
+export type RollingLedgerResult = {
+  from: string;
+  to: string;
+  opening_cash_cents: number | null;
+  rows: RollingLedgerRow[];
+  days: RollingLedgerDay[];
+};
+
 export type CashFlowAdjustment = {
   id: string;
   operating_company_id: string;
@@ -99,6 +145,15 @@ export function getActualVsProjected(
 ): Promise<ActualVsProjectedResult> {
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId, from, to });
   return apiRequest<ActualVsProjectedResult>(`/api/v1/cash-flow/actual-vs-projected?${params}`);
+}
+
+export function getRollingLedger(
+  operatingCompanyId: string,
+  from: string,
+  to: string
+): Promise<RollingLedgerResult> {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId, from, to });
+  return apiRequest<RollingLedgerResult>(`/api/v1/cash-flow/rolling-ledger?${params}`);
 }
 
 export function addCashFlowAdjustment(payload: {

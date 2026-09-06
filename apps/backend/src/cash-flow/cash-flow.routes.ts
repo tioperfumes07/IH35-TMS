@@ -10,6 +10,7 @@ import {
   getActualVsProjected,
   addAdjustment,
   archiveAdjustment,
+  getRollingLedger,
 } from "./cash-flow.service.js";
 
 const companyQuerySchema = z.object({
@@ -21,6 +22,14 @@ const dailyPredictionQuerySchema = companyQuerySchema.extend({
 });
 
 const actualVsProjectedQuerySchema = companyQuerySchema.extend({
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "from must be YYYY-MM-DD"),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "to must be YYYY-MM-DD"),
+});
+
+// CASH-FLOW-02: same from/to shape as actual-vs-projected, capped to a sane 120-day window server
+// side (the FE date-range presets top out at 30 days/next month; 120 leaves headroom for a
+// deliberate "Custom" range without letting an unbounded range scan the whole ledger history).
+const rollingLedgerQuerySchema = companyQuerySchema.extend({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "from must be YYYY-MM-DD"),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "to must be YYYY-MM-DD"),
 });
@@ -84,6 +93,31 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
         user_uuid: user.uuid,
       });
       return getActualVsProjected(client, query.data.operating_company_id, query.data.from, query.data.to, cashFollowsEta);
+    });
+    return reply.send(result);
+  });
+
+  app.get("/api/v1/cash-flow/rolling-ledger", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+
+    const query = rollingLedgerQuerySchema.safeParse(req.query);
+    if (!query.success) {
+      return reply.status(400).send({ error: "validation_error", details: query.error.flatten() });
+    }
+    if (query.data.to < query.data.from) {
+      return reply.status(400).send({ error: "validation_error", details: "to must not be before from" });
+    }
+    const rangeDays = Math.round(
+      (new Date(query.data.to + "T00:00:00Z").getTime() - new Date(query.data.from + "T00:00:00Z").getTime()) / 86_400_000
+    );
+    if (rangeDays > 120) {
+      return reply.status(400).send({ error: "validation_error", details: "date range must be 120 days or fewer" });
+    }
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
+    const result = await withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [query.data.operating_company_id]);
+      return getRollingLedger(client, query.data.operating_company_id, query.data.from, query.data.to);
     });
     return reply.send(result);
   });

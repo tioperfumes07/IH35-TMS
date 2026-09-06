@@ -25,7 +25,7 @@ import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking
 import { sumAuthoritativeDepositoryCashCents } from "../banking/internal-wallet-balance.js";
 import { projectedCashDateSql } from "./projected-cash-date.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
-import { isFactoringPathLoadStatus } from "../dispatch/delivery-evidence-status.js";
+import { isFactoringPathLoadStatus, DELIVERY_EVIDENCE_MDATA_STATUSES } from "../dispatch/delivery-evidence-status.js";
 
 type Queryable = pg.PoolClient;
 
@@ -958,6 +958,601 @@ export async function getActualVsProjected(
     },
     bank_categorization_coverage: bankCategorizationCoverage,
   };
+}
+
+// ─── Rolling Ledger (CASH-FLOW-02) ────────────────────────────────────────────
+// Owner order 2026-09-06 20:1xZ, verbatim: "I NEED DATES. FROM WHEN IS THAT DRIVER PAY, BILL,
+// EXPENSE ... EXPECTED INCOME SHOULD COME AUTOMATICALLY FROM THE LOADS ... IF ON SEPT 3 I DID NOT
+// PAY A BILL, IT NEEDS TO KEEP CARRYING OVER EVERY DAY ... SHOW BY DATE ... TOTALS PER DATE".
+//
+// This is a REAL rolling A/P + A/R ledger, distinct from getDailyPrediction (a single-day gross
+// projection) and getActualVsProjected (a payments-received accuracy report): every OPEN
+// (unpaid/unmatched) obligation is a single row carrying its own origin_date/due_date, and that
+// SAME row appears on every day in [from, to] on/after its due_date until it is paid or matched --
+// it never silently drops off a day just because that day has passed. This is an "AS OF NOW,
+// projected across the range" ledger (we only have CURRENT open/paid state, not a point-in-time
+// replay of what was open on each past date) -- documented here so DOD-D (purpose matches
+// economics) is never mis-read as a promise of true historical replay.
+export type RollingLedgerRowKind = "income" | "expense";
+
+export type RollingLedgerRow = {
+  row_kind: RollingLedgerRowKind;
+  /** Human label, e.g. "Bill", "Driver pay", "Driver bill", "Expense — unmatched", "Loan payment",
+   *  "Invoice", "Factor advance", "Factor reserve", "Load (not invoiced)". */
+  type: string;
+  /** EntityLink kind (apps/frontend/src/components/shared/EntityLink.tsx EntityKind union). */
+  document_kind:
+    | "bill"
+    | "settlement"
+    | "driver_bill"
+    | "expense"
+    | "loan_amortization_row"
+    | "invoice"
+    | "factoring_advance"
+    | "load";
+  document_id: string;
+  document_label: string;
+  counterparty: string;
+  origin_date: string;
+  due_date: string;
+  amount_cents: number;
+  /** today - due_date in days (positive = overdue, 0 = due today, negative = not yet due). */
+  days_overdue: number;
+  status: "overdue" | "due_today" | "upcoming";
+};
+
+export type RollingLedgerDay = {
+  date: string;
+  income_due_cents: number;
+  expenses_due_cents: number;
+  /** Sum of rows whose due_date is strictly before this date and still open (carried forward). */
+  income_carry_over_cents: number;
+  expenses_carry_over_cents: number;
+  net_cents: number;
+  running_cash_cents: number | null;
+};
+
+export type RollingLedgerResult = {
+  from: string;
+  to: string;
+  opening_cash_cents: number | null;
+  rows: RollingLedgerRow[];
+  days: RollingLedgerDay[];
+};
+
+function daysBetween(a: string, b: string): number {
+  const da = new Date(a + "T00:00:00Z").getTime();
+  const db = new Date(b + "T00:00:00Z").getTime();
+  return Math.round((da - db) / 86_400_000);
+}
+
+function rowStatus(daysOverdue: number): RollingLedgerRow["status"] {
+  if (daysOverdue > 0) return "overdue";
+  if (daysOverdue === 0) return "due_today";
+  return "upcoming";
+}
+
+/**
+ * Every currently-OPEN expected-expense / expected-income row, USMCA-scoped, real dates, never
+ * fabricated. Six sources per the owner's own END STATE list:
+ *   EXPENSES: accounting.bills (unpaid) · driver_finance.driver_settlements (closed, unpaid) ·
+ *     driver_finance.driver_bills (open) · accounting.expenses (posted, no matched bank line) ·
+ *     finance.loan_amortization_rows (unposted, where a real schedule exists -- currently 0 rows
+ *     for USMCA, correctly renders empty rather than fabricating a schedule).
+ *   INCOME: accounting.invoices (sent, open balance, not factored) · accounting.factoring_advances
+ *     (advanced but wire not yet matched -> advance; collected but reserve not yet released ->
+ *     reserve) · mdata.loads delivered/confirmed with no invoice at all yet (flagged "not invoiced").
+ */
+export async function getRollingLedgerRows(
+  client: Queryable,
+  operatingCompanyId: string,
+  today: string
+): Promise<RollingLedgerRow[]> {
+  const rows: RollingLedgerRow[] = [];
+
+  // ── EXPENSES ──────────────────────────────────────────────────────────────
+
+  // 1) accounting.bills — unpaid, not void/revoked. vendor_id is TEXT (safe-cast v.id::text, never
+  // b.vendor_id::uuid — see driver-finance-driver-bills-not-accounting-bills / vendor-credits-vendor-id-safe-cast landmines).
+  const billRows = await client.query<{
+    id: string;
+    display_id: string | null;
+    vendor_name: string;
+    bill_date: string | null;
+    due_date: string;
+    remaining_cents: number;
+  }>(
+    `
+    SELECT
+      b.id::text,
+      b.display_id,
+      COALESCE(v.vendor_name, 'Vendor') AS vendor_name,
+      b.bill_date::text AS bill_date,
+      b.due_date::text AS due_date,
+      GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0)::int AS remaining_cents
+    FROM accounting.bills b
+    LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_id AND v.operating_company_id = $1::uuid
+    WHERE b.operating_company_id = $1::uuid
+      AND ${notVoidedSql("b")}
+      AND b.due_date IS NOT NULL
+      AND GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0) > 0
+    ORDER BY b.due_date ASC
+    `,
+    [operatingCompanyId]
+  );
+  for (const b of billRows.rows) {
+    const daysOverdue = daysBetween(today, b.due_date);
+    rows.push({
+      row_kind: "expense",
+      type: "Bill",
+      document_kind: "bill",
+      document_id: b.id,
+      document_label: b.display_id ?? b.id.slice(0, 8),
+      counterparty: b.vendor_name,
+      origin_date: b.bill_date ?? b.due_date,
+      due_date: b.due_date,
+      amount_cents: b.remaining_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+    });
+  }
+
+  // 2) driver_finance.driver_settlements — closed and unpaid (same predicate as
+  // getDailyPrediction's driver_pay query, kept in sync so this ledger and the daily strip never
+  // disagree on which settlements are due).
+  try {
+    const settlementRows = await client.query<{
+      id: string;
+      display_id: string | null;
+      driver_name: string;
+      created_at: string;
+      due_date: string;
+      amount_cents: number;
+    }>(
+      `
+      SELECT
+        s.id::text,
+        s.display_id,
+        COALESCE(NULLIF(TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), ''), 'Driver') AS driver_name,
+        s.created_at::date::text AS created_at,
+        COALESCE(s.bank_settle_date, s.payment_sent_at::date, s.payment_queued_at::date, s.period_end)::text AS due_date,
+        ROUND(COALESCE(s.net_pay, 0) * 100)::int AS amount_cents
+      FROM driver_finance.driver_settlements s
+      LEFT JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
+      WHERE s.operating_company_id = $1::uuid
+        AND s.reversed_at IS NULL
+        AND COALESCE(s.net_pay, 0) > 0
+        AND COALESCE(s.payment_state, 'unpaid') NOT IN ('cleared', 'manual_paid', 'bounced')
+        AND s.status = 'closed'
+        AND COALESCE(s.bank_settle_date, s.payment_sent_at::date, s.payment_queued_at::date, s.period_end) IS NOT NULL
+      ORDER BY due_date ASC
+      `,
+      [operatingCompanyId]
+    );
+    for (const s of settlementRows.rows) {
+      const daysOverdue = daysBetween(today, s.due_date);
+      rows.push({
+        row_kind: "expense",
+        type: "Driver pay",
+        document_kind: "settlement",
+        document_id: s.id,
+        document_label: s.display_id ?? s.id.slice(0, 8),
+        counterparty: s.driver_name,
+        origin_date: s.created_at,
+        due_date: s.due_date,
+        amount_cents: s.amount_cents,
+        days_overdue: daysOverdue,
+        status: rowStatus(daysOverdue),
+      });
+    }
+  } catch (err) {
+    logger.warn("cash-flow rolling-ledger: driver_settlements subquery failed", {
+      operating_company_id: operatingCompanyId,
+      error_stack: err instanceof Error ? err.stack : String(err),
+    });
+  }
+
+  // 3) driver_finance.driver_bills — open (not yet folded into a settlement, not voided). No
+  // due_date column exists on this table (checked live schema — never invented one); due = its own
+  // created_at date, i.e. due immediately, the honest reading of "open with no separate term".
+  try {
+    const driverBillRows = await client.query<{
+      id: string;
+      bill_number: string | null;
+      driver_name: string;
+      created_at: string;
+      amount_cents: number;
+    }>(
+      `
+      SELECT
+        db.id::text,
+        db.bill_number,
+        COALESCE(NULLIF(TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), ''), 'Driver') AS driver_name,
+        db.created_at::date::text AS created_at,
+        COALESCE(db.gross_amount_cents, 0)::int AS amount_cents
+      FROM driver_finance.driver_bills db
+      LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
+      WHERE db.operating_company_id = $1::uuid
+        AND db.settled_in_settlement_id IS NULL
+        AND db.voided_at IS NULL
+        AND COALESCE(db.gross_amount_cents, 0) > 0
+      ORDER BY db.created_at ASC
+      `,
+      [operatingCompanyId]
+    );
+    for (const db_ of driverBillRows.rows) {
+      const daysOverdue = daysBetween(today, db_.created_at);
+      rows.push({
+        row_kind: "expense",
+        type: "Driver bill",
+        document_kind: "driver_bill",
+        document_id: db_.id,
+        document_label: db_.bill_number ?? db_.id.slice(0, 8),
+        counterparty: db_.driver_name,
+        origin_date: db_.created_at,
+        due_date: db_.created_at,
+        amount_cents: db_.amount_cents,
+        days_overdue: daysOverdue,
+        status: rowStatus(daysOverdue),
+      });
+    }
+  } catch (err) {
+    logger.warn("cash-flow rolling-ledger: driver_bills subquery failed", {
+      operating_company_id: operatingCompanyId,
+      error_stack: err instanceof Error ? err.stack : String(err),
+    });
+  }
+
+  // 4) accounting.expenses — posted, not voided, no matched bank line yet
+  // (banking.bank_transactions.matched_expense_id — the real match column, checked live schema).
+  const expenseRows = await client.query<{
+    id: string;
+    expense_number: string | null;
+    vendor_name: string;
+    transaction_date: string;
+    amount_cents: number;
+  }>(
+    `
+    SELECT
+      e.id::text,
+      e.expense_number,
+      COALESCE(v.vendor_name, 'Expense') AS vendor_name,
+      e.transaction_date::text AS transaction_date,
+      COALESCE(e.total_amount_cents, 0)::int AS amount_cents
+    FROM accounting.expenses e
+    LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = $1::uuid
+    WHERE e.operating_company_id = $1::uuid
+      AND e.status = 'posted'
+      AND e.voided_at IS NULL
+      AND COALESCE(e.total_amount_cents, 0) > 0
+      AND NOT EXISTS (
+        SELECT 1 FROM banking.bank_transactions bt
+        WHERE bt.matched_expense_id = e.id AND bt.voided_at IS NULL
+      )
+    ORDER BY e.transaction_date ASC
+    `,
+    [operatingCompanyId]
+  );
+  for (const e of expenseRows.rows) {
+    const daysOverdue = daysBetween(today, e.transaction_date);
+    rows.push({
+      row_kind: "expense",
+      type: "Expense — unmatched",
+      document_kind: "expense",
+      document_id: e.id,
+      document_label: e.expense_number ?? e.id.slice(0, 8),
+      counterparty: e.vendor_name,
+      origin_date: e.transaction_date,
+      due_date: e.transaction_date,
+      amount_cents: e.amount_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+    });
+  }
+
+  // 5) finance.loan_amortization_rows — unposted, where a real schedule exists. 0 rows for USMCA
+  // today (live-checked) — this correctly renders nothing rather than fabricating a fake schedule.
+  try {
+    const loanRows = await client.query<{
+      id: string;
+      loan_name: string;
+      due_date: string;
+      payment_cents: number;
+    }>(
+      `
+      SELECT
+        lr.id::text,
+        COALESCE(l.name, l.lender, 'Loan') AS loan_name,
+        lr.due_date::text AS due_date,
+        COALESCE(lr.payment_cents, 0)::int AS payment_cents
+      FROM finance.loan_amortization_rows lr
+      JOIN finance.loans l ON l.id = lr.loan_id
+      WHERE lr.operating_company_id = $1::uuid
+        AND lr.posted = false
+        AND lr.is_active = true
+        AND lr.deleted_at IS NULL
+        AND COALESCE(lr.payment_cents, 0) > 0
+      ORDER BY lr.due_date ASC
+      `,
+      [operatingCompanyId]
+    );
+    for (const l of loanRows.rows) {
+      const daysOverdue = daysBetween(today, l.due_date);
+      rows.push({
+        row_kind: "expense",
+        type: "Loan payment",
+        document_kind: "loan_amortization_row",
+        document_id: l.id,
+        document_label: l.loan_name,
+        counterparty: l.loan_name,
+        origin_date: l.due_date,
+        due_date: l.due_date,
+        amount_cents: l.payment_cents,
+        days_overdue: daysOverdue,
+        status: rowStatus(daysOverdue),
+      });
+    }
+  } catch (err) {
+    logger.warn("cash-flow rolling-ledger: loan_amortization_rows subquery failed", {
+      operating_company_id: operatingCompanyId,
+      error_stack: err instanceof Error ? err.stack : String(err),
+    });
+  }
+
+  // ── INCOME ────────────────────────────────────────────────────────────────
+
+  // 1) accounting.invoices — sent, real open balance, NOT factored (factored invoices are tracked
+  // via factoring_advances below instead, so a factored invoice's cash isn't double-counted here).
+  const invoiceRows = await client.query<{
+    id: string;
+    display_id: string | null;
+    customer_name: string;
+    issue_date: string | null;
+    due_date: string | null;
+    amount_open_cents: number;
+  }>(
+    `
+    SELECT
+      i.id::text,
+      i.display_id,
+      COALESCE(c.customer_name, 'Customer') AS customer_name,
+      i.issue_date::text AS issue_date,
+      i.due_date::text AS due_date,
+      COALESCE(i.amount_open_cents, 0)::int AS amount_open_cents
+    FROM accounting.invoices i
+    LEFT JOIN mdata.customers c ON c.id = i.customer_id AND c.operating_company_id = $1::uuid
+    WHERE i.operating_company_id = $1::uuid
+      AND i.status IN ('sent', 'partial')
+      AND i.voided_at IS NULL
+      AND COALESCE(i.factoring_status, 'not_factored') = 'not_factored'
+      AND COALESCE(i.amount_open_cents, 0) > 0
+    ORDER BY i.due_date ASC NULLS LAST
+    `,
+    [operatingCompanyId]
+  );
+  for (const inv of invoiceRows.rows) {
+    const due = inv.due_date ?? inv.issue_date ?? today;
+    const daysOverdue = daysBetween(today, due);
+    rows.push({
+      row_kind: "income",
+      type: "Invoice",
+      document_kind: "invoice",
+      document_id: inv.id,
+      document_label: inv.display_id ?? inv.id.slice(0, 8),
+      counterparty: inv.customer_name,
+      origin_date: inv.issue_date ?? due,
+      due_date: due,
+      amount_cents: inv.amount_open_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+    });
+  }
+
+  // 2) accounting.factoring_advances — advanced but the wire hasn't matched a bank line yet
+  // (banking.bank_transactions.matched_advance_id), and separately, collected but the reserve
+  // hasn't been released yet (released_at IS NULL).
+  const advanceRows = await client.query<{
+    id: string;
+    display_id: string | null;
+    vendor_name: string;
+    advanced_at: string;
+    advance_amount_cents: number;
+  }>(
+    `
+    SELECT
+      fa.id::text,
+      fa.display_id,
+      COALESCE(v.vendor_name, 'Factor') AS vendor_name,
+      fa.advanced_at::date::text AS advanced_at,
+      COALESCE(fa.advance_amount_cents, 0)::int AS advance_amount_cents
+    FROM accounting.factoring_advances fa
+    LEFT JOIN mdata.vendors v ON v.id = fa.factoring_company_vendor_id AND v.operating_company_id = $1::uuid
+    WHERE fa.operating_company_id = $1::uuid
+      AND fa.advanced_at IS NOT NULL
+      AND COALESCE(fa.advance_amount_cents, 0) > 0
+      AND NOT EXISTS (
+        SELECT 1 FROM banking.bank_transactions bt
+        WHERE bt.matched_advance_id = fa.id AND bt.voided_at IS NULL
+      )
+    ORDER BY fa.advanced_at ASC
+    `,
+    [operatingCompanyId]
+  );
+  for (const a of advanceRows.rows) {
+    const daysOverdue = daysBetween(today, a.advanced_at);
+    rows.push({
+      row_kind: "income",
+      type: "Factor advance",
+      document_kind: "factoring_advance",
+      document_id: a.id,
+      document_label: a.display_id ?? a.id.slice(0, 8),
+      counterparty: a.vendor_name,
+      origin_date: a.advanced_at,
+      due_date: a.advanced_at,
+      amount_cents: a.advance_amount_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+    });
+  }
+
+  const reserveRows = await client.query<{
+    id: string;
+    display_id: string | null;
+    vendor_name: string;
+    collected_at: string;
+    reserve_amount_cents: number;
+  }>(
+    `
+    SELECT
+      fa.id::text,
+      fa.display_id,
+      COALESCE(v.vendor_name, 'Factor') AS vendor_name,
+      fa.collected_at::date::text AS collected_at,
+      COALESCE(fa.reserve_amount_cents, 0)::int AS reserve_amount_cents
+    FROM accounting.factoring_advances fa
+    LEFT JOIN mdata.vendors v ON v.id = fa.factoring_company_vendor_id AND v.operating_company_id = $1::uuid
+    WHERE fa.operating_company_id = $1::uuid
+      AND fa.collected_at IS NOT NULL
+      AND fa.released_at IS NULL
+      AND COALESCE(fa.reserve_amount_cents, 0) > 0
+    ORDER BY fa.collected_at ASC
+    `,
+    [operatingCompanyId]
+  );
+  for (const r of reserveRows.rows) {
+    const daysOverdue = daysBetween(today, r.collected_at);
+    rows.push({
+      row_kind: "income",
+      type: "Factor reserve",
+      document_kind: "factoring_advance",
+      document_id: r.id,
+      document_label: r.display_id ?? r.id.slice(0, 8),
+      counterparty: r.vendor_name,
+      origin_date: r.collected_at,
+      due_date: r.collected_at,
+      amount_cents: r.reserve_amount_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+    });
+  }
+
+  // 3) mdata.loads — delivered/confirmed, genuinely NOT invoiced at all yet (no proforma AND no
+  // real invoice of any status for this load). Status list is the canonical
+  // DELIVERY_EVIDENCE_MDATA_STATUSES + 'delivered' (delivery-evidence-status.ts — the same
+  // single source of truth isConfirmedLoadStatus/isFactoringPathLoadStatus already use in this
+  // file; never a guessed enum value — 'invoiced'/'paid'/'closed' are excluded on purpose, they
+  // already imply an invoice exists, which the NOT EXISTS below also independently guards). Due =
+  // last delivery stop + customer's payment terms (COALESCE to 0 days when no terms are
+  // configured — never a fabricated default).
+  const notInvoicedStatuses = ["delivered", ...DELIVERY_EVIDENCE_MDATA_STATUSES];
+  const notInvoicedRows = await client.query<{
+    id: string;
+    load_number: string;
+    customer_name: string;
+    delivery_date: string | null;
+    terms_days: number | null;
+    rate_total_cents: number;
+  }>(
+    `
+    SELECT
+      l.id::text,
+      l.load_number,
+      COALESCE(c.customer_name, 'Customer') AS customer_name,
+      fd.scheduled_arrival_at::date::text AS delivery_date,
+      pt.days_until_due AS terms_days,
+      COALESCE(l.rate_total_cents, 0)::int AS rate_total_cents
+    FROM mdata.loads l
+    LEFT JOIN mdata.customers c ON c.id = l.customer_id AND c.operating_company_id = $1::uuid
+    LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id AND pt.operating_company_id = $1::uuid
+    ${lastDeliveryStopLateralSql("l")}
+    WHERE l.operating_company_id = $1::uuid
+      AND ${ACTIVE_LOAD_FILTER}
+      AND l.status::text = ANY($2::text[])
+      AND ${noLiveProformaInvoiceSql("l")}
+      AND NOT EXISTS (
+        SELECT 1 FROM accounting.invoices i2
+        WHERE i2.source_load_id = l.id AND i2.operating_company_id = l.operating_company_id AND i2.voided_at IS NULL
+      )
+      AND COALESCE(l.rate_total_cents, 0) > 0
+    ORDER BY fd.scheduled_arrival_at ASC NULLS LAST
+    `,
+    [operatingCompanyId, notInvoicedStatuses]
+  );
+  for (const l of notInvoicedRows.rows) {
+    const origin = l.delivery_date ?? today;
+    const termsDays = l.terms_days ?? 0;
+    const due = new Date(origin + "T00:00:00Z");
+    due.setUTCDate(due.getUTCDate() + termsDays);
+    const dueStr = due.toISOString().slice(0, 10);
+    const daysOverdue = daysBetween(today, dueStr);
+    rows.push({
+      row_kind: "income",
+      type: "Load (not invoiced)",
+      document_kind: "load",
+      document_id: l.id,
+      document_label: l.load_number,
+      counterparty: l.customer_name,
+      origin_date: origin,
+      due_date: dueStr,
+      amount_cents: l.rate_total_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+    });
+  }
+
+  return rows;
+}
+
+/** Day grid: for each date in [from, to], sum rows due that day and rows carried forward from an
+ * earlier due date that are still open, plus a running cash balance from the live bank total. */
+export async function getRollingLedger(
+  client: Queryable,
+  operatingCompanyId: string,
+  from: string,
+  to: string
+): Promise<RollingLedgerResult> {
+  const today = companyBusinessDate();
+  const rows = await getRollingLedgerRows(client, operatingCompanyId, today);
+
+  const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
+  const openingCashCents = await sumAuthoritativeDepositoryCashCents(client, operatingCompanyId, {
+    hideFilterOnBankAccounts: bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts"),
+    hideFilterOnBaAlias: bankAccountHiddenFilterSql(hideOn, "ba"),
+  }).catch(() => null);
+
+  const days: RollingLedgerDay[] = [];
+  let running = openingCashCents;
+  const start = new Date(from + "T00:00:00Z");
+  const end = new Date(to + "T00:00:00Z");
+  for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+    const dateStr = d.toISOString().slice(0, 10);
+    let incomeDue = 0;
+    let expensesDue = 0;
+    let incomeCarry = 0;
+    let expensesCarry = 0;
+    for (const row of rows) {
+      if (row.due_date === dateStr) {
+        if (row.row_kind === "income") incomeDue += row.amount_cents;
+        else expensesDue += row.amount_cents;
+      } else if (row.due_date < dateStr) {
+        if (row.row_kind === "income") incomeCarry += row.amount_cents;
+        else expensesCarry += row.amount_cents;
+      }
+    }
+    const netCents = incomeDue - expensesDue;
+    if (running !== null) running += netCents;
+    days.push({
+      date: dateStr,
+      income_due_cents: incomeDue,
+      expenses_due_cents: expensesDue,
+      income_carry_over_cents: incomeCarry,
+      expenses_carry_over_cents: expensesCarry,
+      net_cents: netCents,
+      running_cash_cents: running,
+    });
+  }
+
+  return { from, to, opening_cash_cents: openingCashCents, rows, days };
 }
 
 // ─── Add Adjustment ───────────────────────────────────────────────────────────
