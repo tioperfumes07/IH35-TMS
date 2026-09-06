@@ -10,10 +10,16 @@
 //   3. both calls run on the SAME `client` (same transaction) as the JE post above them — never a
 //      second, out-of-transaction computation that could commit one settlement without the other.
 //
+// LIVE HALF: a closed, load_bookended, non-voided driver settlement with NO row in
+// accounting.company_settlement_driver_settlements is exactly the defect the owner reported — fails
+// closed against prod (or any DATABASE_URL supplied), skips gracefully with no creds / in CI.
+//
 //   node scripts/verify-close-creates-company-settlement.mjs
 //   node scripts/verify-close-creates-company-settlement.mjs --selftest
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 
+const require = createRequire(import.meta.url);
 const FILE = "apps/backend/src/driver-finance/settlement-payrun-close.service.ts";
 const LABEL = "verify-close-creates-company-settlement";
 const fail = (m) => { console.error(`FAIL ${LABEL}: ${m}`); process.exit(1); };
@@ -39,7 +45,7 @@ export function verify(src) {
   return f;
 }
 
-if (process.argv.includes("--selftest")) {
+function selftest() {
   const src = read(FILE);
   const baseline = verify(src);
   if (baseline.length) fail(`baseline not green — real checks failing: ${baseline.join(", ")}`);
@@ -70,9 +76,76 @@ if (process.argv.includes("--selftest")) {
     if (verify(s).length === 0) fail("a mutation still passed — a check is too weak");
   }
   console.log(`OK ${LABEL} --selftest: baseline green, ${mutations.length} mutations all caught.`);
-  process.exit(0);
+  return 0;
 }
 
-const failures = verify(read(FILE));
-if (failures.length) fail(`close-path company-settlement wiring drifted: ${failures.join(", ")}`);
-console.log(`OK ${LABEL}: both settlement-payrun-close.service.ts close branches create/close the company settlement in the same transaction.`);
+async function liveCheck() {
+  const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
+  if (!connectionString) {
+    console.log(`${LABEL} SKIP (live half) — no DATABASE_URL/DATABASE_DIRECT_URL; live check not possible here.`);
+    return 0;
+  }
+  const liveRequested = process.env.COMPANY_SETTLEMENT_CLOSE_LIVE === "1";
+  if (!liveRequested && (process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true")) {
+    console.log(`${LABEL} SKIP (live half) — CI's database is a fixture playground; run with COMPANY_SETTLEMENT_CLOSE_LIVE=1 against prod.`);
+    return 0;
+  }
+
+  const { buildPgClientConfig } = require("./lib/pg-connection-options.cjs");
+  const pg = require("pg");
+  const client = new pg.Client(buildPgClientConfig(connectionString));
+  try {
+    await client.connect();
+  } catch (error) {
+    console.log(`${LABEL} SKIP (live half) — database unreachable (${error.code ?? error.message}).`);
+    await client.end().catch(() => {});
+    return 0;
+  }
+
+  try {
+    await client.query("BEGIN");
+    await client.query("RESET ROLE");
+    await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
+    const res = await client.query(`
+      SELECT ds.display_id
+        FROM driver_finance.driver_settlements ds
+        JOIN org.companies c ON c.id = ds.operating_company_id
+       WHERE c.code = 'USMCA'
+         AND ds.status = 'closed'
+         AND ds.settlement_model = 'load_bookended'
+         AND ds.voided_at IS NULL
+         AND NOT EXISTS (
+           SELECT 1 FROM accounting.company_settlement_driver_settlements j
+            WHERE j.driver_settlement_id = ds.id
+         )
+       ORDER BY ds.display_id
+    `);
+    await client.query("ROLLBACK");
+
+    if (res.rows.length > 0) {
+      console.error(`${LABEL} FAIL — ${res.rows.length} closed USMCA settlement(s) with NO company settlement: ${res.rows.map((r) => r.display_id).join(", ")}`);
+      return 1;
+    }
+    console.log(`${LABEL} PASS (live) — every closed, load_bookended USMCA driver settlement has a linked company settlement.`);
+    return 0;
+  } finally {
+    await client.end().catch(() => {});
+  }
+}
+
+async function main() {
+  if (process.argv.includes("--selftest")) return selftest();
+
+  const staticFailures = verify(read(FILE));
+  if (staticFailures.length) {
+    console.error(`${LABEL} FAIL: close-path company-settlement wiring drifted: ${staticFailures.join(", ")}`);
+    return 1;
+  }
+  console.log(`${LABEL} static half OK: both settlement-payrun-close.service.ts close branches create/close the company settlement in the same transaction.`);
+
+  return liveCheck();
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  process.exit(await main());
+}
