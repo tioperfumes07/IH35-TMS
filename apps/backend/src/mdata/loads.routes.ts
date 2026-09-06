@@ -1651,6 +1651,14 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        // INV-MISSING-2-RLS-GAP (found live 2026-09-06): this route never set app.operating_company_id,
+        // unlike its siblings (loads.routes.ts:673/2230). mdata.loads' own RLS is role-scoped so the
+        // UPDATE below silently worked anyway — but a rate_total_cents change here triggers
+        // resyncProformaInvoiceFromLoadRate -> buildInvoiceFromLoad, which INSERTs an entity-scoped
+        // accounting.invoices row; that INSERT's own trg_assign_trace_no trigger upserts
+        // lib.trace_counters (FORCE RLS, policy checks app.operating_company_id) and 500s
+        // (42501) with the GUC unset. Setting it here matches every other write route in this file.
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
         const oldRes = await client.query(
           `
             SELECT
