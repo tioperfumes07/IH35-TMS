@@ -1051,3 +1051,29 @@ verify-driver-bill-rate-per-mile-not-blended --selftest 4/4, new behavioral test
 driver-bill-rate-per-mile.test.ts 4/4 (per_mile_pay card, GO-21-B5 override reproducing the
 exact 13512/$0.45 case CC-3 measured, flat per_load_pay -> null, team split -> same rate both
 rows), no regression in 26 related tests. | NEXT check INBOX-CC-2.md / await lead
+
+CC-2 | STOPS-APPT-FIX DRY-RUN DONE | PR #20899 (merged 198bb52c72) | deadline 06:00Z MET |
+scope live-measured: exactly 98 stops across 49 loads (48 dispatched + load 13508
+assigned_not_dispatched) qualify -- WHERE appointment_start_at IS NULL AND
+scheduled_arrival_at IS NOT NULL AND status != 'cancelled', confirmed zero overlap with the 29
+cancelled USMCA loads. Every target stop already carries a real actual_arrival_at AND
+actual_departure_at (this is historical, already-completed seed data) -- no invented time, this
+copies an EXISTING scheduled_arrival_at into appointment_start_at, the field Round Trips/tour
+readout/LoadStopsRecordTab's own appointmentText() actually read. ROOT CAUSE for the write path:
+the only existing route that could write appointment_start_at was the destructive replace-all
+POST /api/v1/loads/:loadId/stops (soft-deletes + re-INSERTs every stop, would have wiped
+actual_arrival_at/actual_departure_at and orphaned FK'd stop_ids) -- FIX extends the safe
+surgical PATCH /api/v1/mdata/loads/:id/stops/:stopId route to accept
+appointment_start_at/appointment_end_at instead, touching only that one column.
+scripts/ops/backfill-appointments-from-seed.ts (--dry-run default, NO DIRECT SQL FOR WRITES,
+writes go through that real route via app.inject() same as seed-settlements-cc-3.ts) --apply is
+HARD-REFUSED unless LEAD_APPROVAL_QUOTE (empty by default) is set to the lead's real quoted ✔,
+matching split-seed-tours.ts's own convention. Guard verify-stops-appt-fix-backfill-safe.mjs
+(step 10459) --selftest 8/8. Full 98-line dry-run output pasted in PR #20899's body -- 49 load
+numbers match DSP-49's own live-measured list exactly. --apply NOT run this PR -- awaiting your
+✔ quoted here or in a reply, then LEAD_APPROVAL_QUOTE gets set in a follow-up commit and
+--apply's own output gets pasted. Also found + filed (not fixed, out of lane, confirmed
+pre-existing via isolated clean origin/main checkout before pushing): LDT-DESIGN-1-INTERNAL-
+LANGUAGE -- PR #20888's Stops/Factoring "source note" footers quote raw schema.table names to
+the operator, tripping verify-no-internal-language-in-prod-ui.mjs (PR #20901, routed LEAD, own
+PR). | NEXT await your ✔ on STOPS-APPT-FIX --apply / check INBOX-CC-2.md
