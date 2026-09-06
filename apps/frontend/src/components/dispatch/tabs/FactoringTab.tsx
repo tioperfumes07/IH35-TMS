@@ -443,6 +443,19 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
               data-testid="factoring-tab-view-in-submission-queue"
               className="text-xs font-medium text-slate-700 hover:underline"
             />
+            {/* LDT-4 restyle (bd00b7cac1) dropped this invoice reverse-drill (was a CheckItem note
+                in the pre-LDT-4 readiness checklist that LDT-4 replaced with the packet/step UI) —
+                restored here (Rule 07: never delete) with the exact same real data binding. */}
+            {linkedInvoice?.id ? (
+              <EntityLinkOrTombstone
+                kind="invoice"
+                id={linkedInvoice.id}
+                name={linkedInvoice.display_id}
+                noun="Invoice"
+                className="text-xs font-medium text-slate-700 hover:underline"
+                data-testid="load-factoring-invoice-link"
+              />
+            ) : null}
             {linkedInvoice?.factoring_advance_id ? (
               <>
                 <EntityLink
