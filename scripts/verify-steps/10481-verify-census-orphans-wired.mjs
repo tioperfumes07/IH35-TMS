@@ -114,6 +114,7 @@ export const CENSUS_ORPHAN_GUARDS = [
   "verify-table-design-contract.mjs",
   "verify-trailer-lists-exclude-interchange.mjs",
   "verify-unit-picker-excludes-archived-deactivated.mjs",
+  "verify-usmca-no-active-test-vendors.mjs",
 ];
 
 export default {
