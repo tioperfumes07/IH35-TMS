@@ -1,4 +1,5 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
 import { colors } from "../../design/tokens";
@@ -718,6 +719,36 @@ export function DispatchBoard({
     setBoardModeState(mode);
     persistBoardMode(mode);
   };
+
+  // LB-CHROME-1 (LEAD ROUND 13, 2026-09-06 — Dispatch Board Preview PDF §1): this board's own
+  // "Board view" toggle used to render in its own bordered card, stacked directly under
+  // Dispatch.tsx's own Kanban/List/Round Trips/Trip Pairing row -- two separate full-width
+  // rows reading as duplicated chrome. Dispatch.tsx now renders a stable anchor
+  // (#dispatch-board-mode-slot) inside THAT SAME row when the List view is active; if present,
+  // portal this toggle into it so both groups render on the literal same line/height as ONE
+  // segmented toolbar. No state lifted, no props added -- boardMode/setBoardMode stay entirely
+  // owned here, so DispatchBoard's own standalone tests (which never mount Dispatch.tsx, so the
+  // anchor never exists) keep rendering the original fallback card unchanged.
+  const [modeSlot, setModeSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setModeSlot(document.getElementById("dispatch-board-mode-slot"));
+  }, []);
+  const boardModeToggle = (
+    <>
+      {BOARD_MODES.map((mode) => (
+        <Button
+          key={mode.id}
+          type="button"
+          size="sm"
+          variant={boardMode === mode.id ? "primary" : "secondary"}
+          data-testid={mode.testId}
+          onClick={() => setBoardMode(mode.id)}
+        >
+          {mode.label}
+        </Button>
+      ))}
+    </>
+  );
 
   const addLoadMutation = useMutation({
     mutationFn: ({ settlementId, loadId, ocId }: { settlementId: string; loadId: string; ocId: string }) =>
@@ -1651,21 +1682,14 @@ export function DispatchBoard({
 
   return (
     <div className="space-y-2" data-testid="dispatch-board">
-      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Board view</span>
-        {BOARD_MODES.map((mode) => (
-          <Button
-            key={mode.id}
-            type="button"
-            size="sm"
-            variant={boardMode === mode.id ? "primary" : "secondary"}
-            data-testid={mode.testId}
-            onClick={() => setBoardMode(mode.id)}
-          >
-            {mode.label}
-          </Button>
-        ))}
-      </div>
+      {modeSlot
+        ? createPortal(boardModeToggle, modeSlot)
+        : (
+          <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Board view</span>
+            {boardModeToggle}
+          </div>
+        )}
 
       <BulkActionBar
         selectedCount={selection.count}
