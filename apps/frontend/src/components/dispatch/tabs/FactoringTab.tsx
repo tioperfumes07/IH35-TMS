@@ -548,7 +548,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
         </div>
         </div>
         <div className="ldt-note" data-testid="factoring-links-note">
-          Every figure links: <code>accounting.invoices</code> ↔ <code>factoring_advances</code> ↔ <code>broker_advances</code> ↔ <code>journal_entries</code>. A/R stays on the books; the invoice is never derecognized. Chargebacks appear here only when driver-caused and approved.
+          Every figure links: the invoice ↔ factoring advances ↔ broker advances ↔ journal entries. A/R stays on the books; the invoice is never derecognized. Chargebacks appear here only when driver-caused and approved.
         </div>
 
         {/* ── Chargebacks (LDT-4) — only when driver-caused and approved ────── */}

@@ -837,8 +837,32 @@ export function CustomersPage() {
     enabled: Boolean(companyId),
     retry: false,
   });
+  // VC-LIST-01 (owner ROUND 11): Revenue (MTD) reuses the SAME customer-profitability endpoint
+  // scoped to the current calendar month — no new backend, identical basis to Revenue (YTD).
+  const profitabilityMonthStart = `${companyToday().slice(0, 7)}-01`;
+  const profitabilityMtdQuery = useQuery({
+    queryKey: ["customers", "profitability-mtd", companyId, profitabilityMonthStart, companyToday()],
+    queryFn: () =>
+      getCustomerProfitability({
+        operating_company_id: companyId,
+        period_start: profitabilityMonthStart,
+        period_end: companyToday(),
+      }),
+    enabled: Boolean(companyId),
+    retry: false,
+  });
+  const revenueMtdByCustomerId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of profitabilityMtdQuery.data?.by_customer ?? []) {
+      map.set(row.customer_id, row.revenue_cents);
+    }
+    return map;
+  }, [profitabilityMtdQuery.data?.by_customer]);
   const profitabilityByCustomerId = useMemo(() => {
-    const map = new Map<string, { load_count: number; revenue_cents: number; last_load_iso: string | null }>();
+    const map = new Map<
+      string,
+      { load_count: number; revenue_cents: number; revenue_mtd_cents: number; ar_open_cents: number; past_due: boolean; last_load_iso: string | null }
+    >();
     const today = companyToday();
     for (const row of profitabilityQuery.data?.by_customer ?? []) {
       const lastLoadIso =
@@ -846,11 +870,17 @@ export function CustomersPage() {
       map.set(row.customer_id, {
         load_count: row.load_count,
         revenue_cents: row.revenue_cents,
+        revenue_mtd_cents: revenueMtdByCustomerId.get(row.customer_id) ?? 0,
+        // ar_aging_balance_cents is invoice-based A/R (accounting.invoices status IN ('sent','partial'),
+        // non-void, open > 0) — EXCLUDES pro forma + void per the owner rule. USMCA today: 47 pro forma
+        // + 29 void, 0 finalized → Open A/R legitimately $0.
+        ar_open_cents: row.ar_aging_balance_cents ?? 0,
+        past_due: (row.flags ?? []).includes("past_due"),
         last_load_iso: lastLoadIso,
       });
     }
     return map;
-  }, [profitabilityQuery.data?.by_customer]);
+  }, [profitabilityQuery.data?.by_customer, revenueMtdByCustomerId]);
 
   const summaryQuery = useQuery({
     queryKey: ["customers", "billing-summary", companyId, selectedCustomer?.id ?? ""],
